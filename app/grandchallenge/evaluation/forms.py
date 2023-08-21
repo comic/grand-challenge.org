@@ -78,6 +78,7 @@ algorithm_setting_options = (
     "workstation",
     "workstation_config",
     "hanging_protocol",
+    "optional_hanging_protocols",
     "view_content",
 )
 

@@ -44,7 +44,7 @@ from grandchallenge.evaluation.utils import (
     StatusChoices,
     SubmissionKindChoices,
 )
-from grandchallenge.hanging_protocols.models import ViewContentMixin
+from grandchallenge.hanging_protocols.models import ViewContentMixin, HangingProtocol
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
@@ -447,6 +447,11 @@ class Phase(UUIDModel, ViewContentMixin):
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
+    )
+    optional_hanging_protocols = models.ManyToManyField(
+        HangingProtocol,
+        related_name = "optional_hanging_protocols_of_evaluation",
+        blank=True,
     )
     total_number_of_submissions_allowed = models.PositiveSmallIntegerField(
         blank=True,
