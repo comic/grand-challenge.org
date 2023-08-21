@@ -6,14 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('hanging_protocols', '0010_alter_hangingprotocol_json'),
-        ('reader_studies', '0046_alter_question_overlay_segments'),
+        ("hanging_protocols", "0010_alter_hangingprotocol_json"),
+        ("reader_studies", "0046_alter_question_overlay_segments"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='readerstudy',
-            name='optional_hanging_protocols',
-            field=models.ManyToManyField(blank=True, related_name='optional_hanging_protocols_of_reader_study', to='hanging_protocols.hangingprotocol'),
+            model_name="readerstudy",
+            name="optional_hanging_protocols",
+            field=models.ManyToManyField(
+                blank=True,
+                related_name="optional_hanging_protocols_of_reader_study",
+                to="hanging_protocols.hangingprotocol",
+            ),
         ),
     ]

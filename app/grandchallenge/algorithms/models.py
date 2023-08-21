@@ -47,7 +47,10 @@ from grandchallenge.core.utils.access_requests import (
 )
 from grandchallenge.credits.models import Credit
 from grandchallenge.evaluation.utils import get
-from grandchallenge.hanging_protocols.models import ViewContentMixin, HangingProtocol
+from grandchallenge.hanging_protocols.models import (
+    HangingProtocol,
+    ViewContentMixin,
+)
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
@@ -105,7 +108,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     )
     optional_hanging_protocols = models.ManyToManyField(
         HangingProtocol,
-        related_name = "optional_hanging_protocols_of_algorithm",
+        related_name="optional_hanging_protocols_of_algorithm",
         blank=True,
     )
     public = models.BooleanField(

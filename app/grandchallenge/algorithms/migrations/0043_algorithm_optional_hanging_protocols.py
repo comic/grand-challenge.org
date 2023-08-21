@@ -6,14 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('hanging_protocols', '0010_alter_hangingprotocol_json'),
-        ('algorithms', '0042_algorithm_time_limit'),
+        ("hanging_protocols", "0010_alter_hangingprotocol_json"),
+        ("algorithms", "0042_algorithm_time_limit"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='algorithm',
-            name='optional_hanging_protocols',
-            field=models.ManyToManyField(blank=True, related_name='optional_hanging_protocols_of_algorithm', to='hanging_protocols.hangingprotocol'),
+            model_name="algorithm",
+            name="optional_hanging_protocols",
+            field=models.ManyToManyField(
+                blank=True,
+                related_name="optional_hanging_protocols_of_algorithm",
+                to="hanging_protocols.hangingprotocol",
+            ),
         ),
     ]

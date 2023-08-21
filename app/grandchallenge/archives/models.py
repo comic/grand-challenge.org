@@ -23,7 +23,10 @@ from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
     process_access_request,
 )
-from grandchallenge.hanging_protocols.models import ViewContentMixin, HangingProtocol
+from grandchallenge.hanging_protocols.models import (
+    HangingProtocol,
+    ViewContentMixin,
+)
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
