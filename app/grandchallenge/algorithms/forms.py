@@ -82,6 +82,10 @@ class ModelFactsTextField(Field):
 
 
 class JobCreateForm(SaveFormInitMixin, Form):
+    algorithm_image = ModelChoiceField(
+        queryset=None, disabled=True, required=True, widget=HiddenInput
+    )
+
     def __init__(self, *args, algorithm, user, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -89,6 +93,14 @@ class JobCreateForm(SaveFormInitMixin, Form):
         self._user = user
 
         self.helper = FormHelper()
+
+        active_image = self._algorithm.active_image
+
+        if active_image:
+            self.fields[
+                "algorithm_image"
+            ].queryset = AlgorithmImage.objects.filter(pk=active_image.pk)
+            self.fields["algorithm_image"].initial = active_image
 
         for inp in self._algorithm.inputs.all():
             self.fields[inp.slug] = InterfaceFormField(
@@ -108,6 +120,9 @@ class JobCreateForm(SaveFormInitMixin, Form):
 
         if self.jobs_limit is not None and self.jobs_limit < 1:
             raise ValidationError("You have run out of algorithm credits")
+
+        if not cleaned_data.get("algorithm_image"):
+            raise ValidationError("This algorithm is not ready to be used")
 
         return cleaned_data
 

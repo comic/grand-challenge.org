@@ -308,7 +308,9 @@ def test_create_job_json_input_field_validation(
         user=creator,
     )
     assert response.context["form"].errors == {
-        slug: ["This field is required."]
+        slug: ["This field is required."],
+        "algorithm_image": ["This field is required."],
+        "__all__": ["This algorithm is not ready to be used"],
     }
 
 
@@ -433,12 +435,19 @@ class TestJobCreateLimits:
 
         assert not form.is_valid()
         assert form.errors == {
-            "__all__": ["You have run out of algorithm credits"]
+            "__all__": ["You have run out of algorithm credits"],
+            "algorithm_image": ["This field is required."],
         }
 
     def test_form_valid_for_editor(self):
         algorithm = AlgorithmFactory(credits_per_job=100)
         algorithm.inputs.clear()
+        algorithm_image = AlgorithmImageFactory(
+            algorithm=algorithm,
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+        )
         user = UserFactory()
 
         user.user_credit.credits = 0
@@ -446,16 +455,30 @@ class TestJobCreateLimits:
 
         algorithm.add_editor(user=user)
 
-        form = JobCreateForm(algorithm=algorithm, user=user, data={})
+        form = JobCreateForm(
+            algorithm=algorithm,
+            user=user,
+            data={"algorithm_image": str(algorithm_image.pk)},
+        )
 
         assert form.is_valid()
 
     def test_form_valid_with_credits(self):
         algorithm = AlgorithmFactory(credits_per_job=1)
         algorithm.inputs.clear()
+        algorithm_image = AlgorithmImageFactory(
+            algorithm=algorithm,
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+        )
         user = UserFactory()
 
-        form = JobCreateForm(algorithm=algorithm, user=user, data={})
+        form = JobCreateForm(
+            algorithm=algorithm,
+            user=user,
+            data={"algorithm_image": str(algorithm_image.pk)},
+        )
 
         assert form.is_valid()
 
