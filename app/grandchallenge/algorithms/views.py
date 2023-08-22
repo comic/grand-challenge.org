@@ -477,7 +477,11 @@ class JobCreate(
         interfaces = {ci.slug: ci for ci in self.algorithm.inputs.all()}
 
         for slug, value in form.cleaned_data.items():
+            if slug == "algorithm_image":
+                continue
+
             ci = interfaces[slug]
+
             if ci.is_image_kind:
                 if value:
                     widget = form.data[f"WidgetChoice-{ci.slug}"]
@@ -518,7 +522,7 @@ class JobCreate(
 
         job = Job.objects.create(
             creator=self.request.user,
-            algorithm_image=self.algorithm.active_image,
+            algorithm_image=form.cleaned_data["algorithm_image"],
             extra_logs_viewer_groups=[self.algorithm.editors_group],
             input_civ_set=component_interface_values,
             time_limit=self.algorithm.time_limit,
