@@ -10,11 +10,11 @@
     <script src="../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="../../../_static/jquery.js"></script>
-        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-        <script src="../../../_static/doctools.js"></script>
-        <script src="../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
@@ -244,7 +244,9 @@
 <span class="p">}</span>
 
 
-<div class="viewcode-block" id="ReaderStudy"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy">[docs]</a><span class="k">class</span> <span class="nc">ReaderStudy</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">TitleSlugDescriptionModel</span><span class="p">,</span> <span class="n">ViewContentMixin</span><span class="p">):</span>
+<div class="viewcode-block" id="ReaderStudy">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy">[docs]</a>
+<span class="k">class</span> <span class="nc">ReaderStudy</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">TitleSlugDescriptionModel</span><span class="p">,</span> <span class="n">ViewContentMixin</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Reader Study model.</span>
 
@@ -503,13 +505,18 @@
                     <span class="n">perm</span><span class="o">=</span><span class="n">perm</span><span class="p">,</span> <span class="n">user_or_group</span><span class="o">=</span><span class="n">group</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">workstation</span>
                 <span class="p">)</span>
 
-<div class="viewcode-block" id="ReaderStudy.clean"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.clean">[docs]</a>    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="ReaderStudy.clean">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.clean">[docs]</a>
+    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">case_text</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">case_text</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">view_content</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">view_content</span> <span class="o">=</span> <span class="p">{}</span></div>
 
-<div class="viewcode-block" id="ReaderStudy.save"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ReaderStudy.save">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.save">[docs]</a>
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
 
         <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
@@ -520,6 +527,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">assign_permissions</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assign_workstation_permissions</span><span class="p">()</span></div>
 
+
     <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">ct</span> <span class="o">=</span> <span class="n">ContentType</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
             <span class="n">app_label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span>
@@ -527,29 +535,47 @@
         <span class="n">Follow</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">object_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span> <span class="n">content_type</span><span class="o">=</span><span class="n">ct</span><span class="p">)</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-<div class="viewcode-block" id="ReaderStudy.is_editor"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.is_editor">[docs]</a>    <span class="k">def</span> <span class="nf">is_editor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+<div class="viewcode-block" id="ReaderStudy.is_editor">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.is_editor">[docs]</a>
+    <span class="k">def</span> <span class="nf">is_editor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Checks if ``user`` is an editor for this ``ReaderStudy``.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">user</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">editors_group</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="ReaderStudy.add_editor"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.add_editor">[docs]</a>    <span class="k">def</span> <span class="nf">add_editor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ReaderStudy.add_editor">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.add_editor">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_editor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Adds ``user`` as an editor for this ``ReaderStudy``.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">user</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">editors_group</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="ReaderStudy.remove_editor"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.remove_editor">[docs]</a>    <span class="k">def</span> <span class="nf">remove_editor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ReaderStudy.remove_editor">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.remove_editor">[docs]</a>
+    <span class="k">def</span> <span class="nf">remove_editor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Removes ``user`` as an editor for this ``ReaderStudy``.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">user</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">editors_group</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="ReaderStudy.is_reader"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.is_reader">[docs]</a>    <span class="k">def</span> <span class="nf">is_reader</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ReaderStudy.is_reader">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.is_reader">[docs]</a>
+    <span class="k">def</span> <span class="nf">is_reader</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Checks if ``user`` is a reader for this ``ReaderStudy``.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">user</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">readers_group</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="ReaderStudy.add_reader"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.add_reader">[docs]</a>    <span class="k">def</span> <span class="nf">add_reader</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ReaderStudy.add_reader">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.add_reader">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_reader</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Adds ``user`` as a reader for this ``ReaderStudy``.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">user</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">readers_group</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="ReaderStudy.remove_reader"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.remove_reader">[docs]</a>    <span class="k">def</span> <span class="nf">remove_reader</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ReaderStudy.remove_reader">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.remove_reader">[docs]</a>
+    <span class="k">def</span> <span class="nf">remove_reader</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Removes ``user`` as a reader for this ``ReaderStudy``.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">user</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">readers_group</span><span class="p">)</span></div>
+
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">help_text</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -591,7 +617,9 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The number of answerable questions for this ``ReaderStudy``.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">answerable_questions</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
 
-<div class="viewcode-block" id="ReaderStudy.add_ground_truth"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.add_ground_truth">[docs]</a>    <span class="k">def</span> <span class="nf">add_ground_truth</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>  <span class="c1"># noqa: C901</span>
+<div class="viewcode-block" id="ReaderStudy.add_ground_truth">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.add_ground_truth">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_ground_truth</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>  <span class="c1"># noqa: C901</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Add ground truth answers provided by ``data`` for this ``ReaderStudy``.&quot;&quot;&quot;</span>
         <span class="n">answers</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">gt</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
@@ -662,7 +690,10 @@
             <span class="n">answer</span><span class="p">[</span><span class="s2">&quot;answer_obj&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">display_set</span> <span class="o">=</span> <span class="n">answer</span><span class="p">[</span><span class="s2">&quot;display_set&quot;</span><span class="p">]</span>
             <span class="n">answer</span><span class="p">[</span><span class="s2">&quot;answer_obj&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="ReaderStudy.get_progress_for_user"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.get_progress_for_user">[docs]</a>    <span class="k">def</span> <span class="nf">get_progress_for_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ReaderStudy.get_progress_for_user">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.get_progress_for_user">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_progress_for_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the percentage of completed hangings and questions for ``user``.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;questions&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;hangings&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;diff&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
@@ -699,13 +730,16 @@
             <span class="s2">&quot;diff&quot;</span><span class="p">:</span> <span class="n">questions</span> <span class="o">-</span> <span class="n">hangings</span><span class="p">,</span>
         <span class="p">}</span></div>
 
+
     <span class="nd">@cached_property</span>
     <span class="k">def</span> <span class="nf">questions_with_ground__truth</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">questions</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
             <span class="n">gt_count</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span><span class="s2">&quot;answer&quot;</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="n">Q</span><span class="p">(</span><span class="n">answer__is_ground_truth</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
         <span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">gt_count__gte</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
-<div class="viewcode-block" id="ReaderStudy.score_for_user"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.score_for_user">[docs]</a>    <span class="k">def</span> <span class="nf">score_for_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+<div class="viewcode-block" id="ReaderStudy.score_for_user">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.score_for_user">[docs]</a>
+    <span class="k">def</span> <span class="nf">score_for_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the average and total score for answers given by ``user``.&quot;&quot;&quot;</span>
 
         <span class="k">return</span> <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
@@ -713,6 +747,7 @@
             <span class="n">question__in</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">questions_with_ground__truth</span><span class="p">,</span>
             <span class="n">is_ground_truth</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="p">)</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="s2">&quot;score&quot;</span><span class="p">),</span> <span class="n">Avg</span><span class="p">(</span><span class="s2">&quot;score&quot;</span><span class="p">))</span></div>
+
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span> <span class="nf">scores_by_user</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -863,15 +898,24 @@
         <span class="k">return</span> <span class="p">(</span><span class="n">highest</span> <span class="o">+</span> <span class="mi">10</span><span class="p">)</span> <span class="o">//</span> <span class="mi">10</span> <span class="o">*</span> <span class="mi">10</span></div>
 
 
-<div class="viewcode-block" id="ReaderStudyUserObjectPermission"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudyUserObjectPermission">[docs]</a><span class="k">class</span> <span class="nc">ReaderStudyUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ReaderStudyUserObjectPermission">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudyUserObjectPermission">[docs]</a>
+<span class="k">class</span> <span class="nc">ReaderStudyUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">ReaderStudy</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="ReaderStudyGroupObjectPermission"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudyGroupObjectPermission">[docs]</a><span class="k">class</span> <span class="nc">ReaderStudyGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ReaderStudyGroupObjectPermission">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudyGroupObjectPermission">[docs]</a>
+<span class="k">class</span> <span class="nc">ReaderStudyGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">ReaderStudy</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="delete_reader_study_groups_hook"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.delete_reader_study_groups_hook">[docs]</a><span class="nd">@receiver</span><span class="p">(</span><span class="n">post_delete</span><span class="p">,</span> <span class="n">sender</span><span class="o">=</span><span class="n">ReaderStudy</span><span class="p">)</span>
+
+<div class="viewcode-block" id="delete_reader_study_groups_hook">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.delete_reader_study_groups_hook">[docs]</a>
+<span class="nd">@receiver</span><span class="p">(</span><span class="n">post_delete</span><span class="p">,</span> <span class="n">sender</span><span class="o">=</span><span class="n">ReaderStudy</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">delete_reader_study_groups_hook</span><span class="p">(</span><span class="o">*</span><span class="n">_</span><span class="p">,</span> <span class="n">instance</span><span class="p">:</span> <span class="n">ReaderStudy</span><span class="p">,</span> <span class="n">using</span><span class="p">,</span> <span class="o">**</span><span class="n">__</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Deletes the related groups.</span>
@@ -890,7 +934,10 @@
         <span class="k">pass</span></div>
 
 
-<div class="viewcode-block" id="DisplaySet"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.DisplaySet">[docs]</a><span class="k">class</span> <span class="nc">DisplaySet</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
+
+<div class="viewcode-block" id="DisplaySet">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.DisplaySet">[docs]</a>
+<span class="k">class</span> <span class="nc">DisplaySet</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
     <span class="n">reader_study</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="n">ReaderStudy</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;display_sets&quot;</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span>
     <span class="p">)</span>
@@ -899,12 +946,15 @@
     <span class="p">)</span>
     <span class="n">order</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
-<div class="viewcode-block" id="DisplaySet.save"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.DisplaySet.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="DisplaySet.save">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.DisplaySet.save">[docs]</a>
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assign_permissions</span><span class="p">()</span></div>
+
 
     <span class="k">def</span> <span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">assign_perm</span><span class="p">(</span>
@@ -987,15 +1037,24 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;image__name&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span></div>
 
 
-<div class="viewcode-block" id="DisplaySetUserObjectPermission"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.DisplaySetUserObjectPermission">[docs]</a><span class="k">class</span> <span class="nc">DisplaySetUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
+
+<div class="viewcode-block" id="DisplaySetUserObjectPermission">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.DisplaySetUserObjectPermission">[docs]</a>
+<span class="k">class</span> <span class="nc">DisplaySetUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">DisplaySet</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="DisplaySetGroupObjectPermission"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.DisplaySetGroupObjectPermission">[docs]</a><span class="k">class</span> <span class="nc">DisplaySetGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
+
+<div class="viewcode-block" id="DisplaySetGroupObjectPermission">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.DisplaySetGroupObjectPermission">[docs]</a>
+<span class="k">class</span> <span class="nc">DisplaySetGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">DisplaySet</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="AnswerType"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.AnswerType">[docs]</a><span class="k">class</span> <span class="nc">AnswerType</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
+
+<div class="viewcode-block" id="AnswerType">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.AnswerType">[docs]</a>
+<span class="k">class</span> <span class="nc">AnswerType</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
     <span class="c1"># WARNING: Do not change the display text, these are used in the front end</span>
     <span class="n">TEXT</span> <span class="o">=</span> <span class="s2">&quot;TEXT&quot;</span><span class="p">,</span> <span class="s2">&quot;Text&quot;</span>
     <span class="n">SINGLE_LINE_TEXT</span> <span class="o">=</span> <span class="s2">&quot;STXT&quot;</span><span class="p">,</span> <span class="s2">&quot;Single line text&quot;</span>
@@ -1064,6 +1123,7 @@
         <span class="p">]</span></div>
 
 
+
 <span class="n">ANSWER_TYPE_TO_INTERFACE_KIND_MAP</span> <span class="o">=</span> <span class="p">{</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">:</span> <span class="p">[</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">STRING</span><span class="p">],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">SINGLE_LINE_TEXT</span><span class="p">:</span> <span class="p">[</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">STRING</span><span class="p">],</span>
@@ -1105,7 +1165,9 @@
 <span class="p">}</span>
 
 
-<div class="viewcode-block" id="QuestionWidgetKindChoices"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.QuestionWidgetKindChoices">[docs]</a><span class="k">class</span> <span class="nc">QuestionWidgetKindChoices</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
+<div class="viewcode-block" id="QuestionWidgetKindChoices">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.QuestionWidgetKindChoices">[docs]</a>
+<span class="k">class</span> <span class="nc">QuestionWidgetKindChoices</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
     <span class="n">ACCEPT_REJECT</span> <span class="o">=</span> <span class="s2">&quot;ACCEPT_REJECT&quot;</span><span class="p">,</span> <span class="s2">&quot;Accept/Reject Findings&quot;</span>
     <span class="n">NUMBER_INPUT</span> <span class="o">=</span> <span class="s2">&quot;NUMBER_INPUT&quot;</span><span class="p">,</span> <span class="s2">&quot;Number input&quot;</span>
     <span class="n">NUMBER_RANGE</span> <span class="o">=</span> <span class="s2">&quot;NUMBER_RANGE&quot;</span><span class="p">,</span> <span class="s2">&quot;Number Range&quot;</span>
@@ -1118,6 +1180,7 @@
     <span class="p">)</span>
     <span class="n">SELECT</span> <span class="o">=</span> <span class="s2">&quot;SELECT&quot;</span><span class="p">,</span> <span class="s2">&quot;Select&quot;</span>
     <span class="n">RADIO_SELECT</span> <span class="o">=</span> <span class="s2">&quot;RADIO_SELECT&quot;</span><span class="p">,</span> <span class="s2">&quot;Radio Select&quot;</span></div>
+
 
 
 <span class="n">ANSWER_TYPE_TO_QUESTION_WIDGET</span> <span class="o">=</span> <span class="p">{</span>
@@ -1195,10 +1258,14 @@
 <span class="p">}</span>
 
 
-<div class="viewcode-block" id="Question"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question">[docs]</a><span class="k">class</span> <span class="nc">Question</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">OverlaySegmentsMixin</span><span class="p">):</span>
+<div class="viewcode-block" id="Question">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question">[docs]</a>
+<span class="k">class</span> <span class="nc">Question</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">OverlaySegmentsMixin</span><span class="p">):</span>
     <span class="n">AnswerType</span> <span class="o">=</span> <span class="n">AnswerType</span>
 
-<div class="viewcode-block" id="Question.ImagePort"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question.ImagePort">[docs]</a>    <span class="k">class</span> <span class="nc">ImagePort</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
+<div class="viewcode-block" id="Question.ImagePort">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question.ImagePort">[docs]</a>
+    <span class="k">class</span> <span class="nc">ImagePort</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
         <span class="n">MAIN</span> <span class="o">=</span> <span class="s2">&quot;M&quot;</span><span class="p">,</span> <span class="s2">&quot;Main&quot;</span>
         <span class="n">SECONDARY</span> <span class="o">=</span> <span class="s2">&quot;S&quot;</span><span class="p">,</span> <span class="s2">&quot;Secondary&quot;</span>
         <span class="n">TERTIARY</span> <span class="o">=</span> <span class="s2">&quot;TERTIARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Tertiary&quot;</span>
@@ -1220,14 +1287,21 @@
         <span class="n">NOVEMDENARY</span> <span class="o">=</span> <span class="s2">&quot;NOVEMDENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Novemdenary&quot;</span>
         <span class="n">VIGINTENARY</span> <span class="o">=</span> <span class="s2">&quot;VIGINTENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Vigintenary&quot;</span></div>
 
+
     <span class="c1"># What is the orientation of the question form when presented on the</span>
     <span class="c1"># front end?</span>
-<div class="viewcode-block" id="Question.Direction"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question.Direction">[docs]</a>    <span class="k">class</span> <span class="nc">Direction</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
+<div class="viewcode-block" id="Question.Direction">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question.Direction">[docs]</a>
+    <span class="k">class</span> <span class="nc">Direction</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
         <span class="n">HORIZONTAL</span> <span class="o">=</span> <span class="s2">&quot;H&quot;</span><span class="p">,</span> <span class="s2">&quot;Horizontal&quot;</span>
         <span class="n">VERTICAL</span> <span class="o">=</span> <span class="s2">&quot;V&quot;</span><span class="p">,</span> <span class="s2">&quot;Vertical&quot;</span></div>
 
-<div class="viewcode-block" id="Question.ScoringFunction"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question.ScoringFunction">[docs]</a>    <span class="k">class</span> <span class="nc">ScoringFunction</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
+
+<div class="viewcode-block" id="Question.ScoringFunction">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question.ScoringFunction">[docs]</a>
+    <span class="k">class</span> <span class="nc">ScoringFunction</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
         <span class="n">ACCURACY</span> <span class="o">=</span> <span class="s2">&quot;ACC&quot;</span><span class="p">,</span> <span class="s2">&quot;Accuracy score&quot;</span></div>
+
 
     <span class="n">SCORING_FUNCTIONS</span> <span class="o">=</span> <span class="p">{</span><span class="n">ScoringFunction</span><span class="o">.</span><span class="n">ACCURACY</span><span class="p">:</span> <span class="n">accuracy_score</span><span class="p">}</span>
 
@@ -1366,7 +1440,9 @@
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">kind__in</span><span class="o">=</span><span class="n">allowed_interfaces</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Question.calculate_score"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question.calculate_score">[docs]</a>    <span class="k">def</span> <span class="nf">calculate_score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">answer</span><span class="p">,</span> <span class="n">ground_truth</span><span class="p">):</span>
+<div class="viewcode-block" id="Question.calculate_score">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question.calculate_score">[docs]</a>
+    <span class="k">def</span> <span class="nf">calculate_score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">answer</span><span class="p">,</span> <span class="n">ground_truth</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Calculates the score for ``answer`` by applying ``scoring_function``</span>
 <span class="sd">        to ``answer`` and ``ground_truth``.</span>
@@ -1389,13 +1465,17 @@
             <span class="n">gt</span> <span class="o">=</span> <span class="p">[</span><span class="n">ground_truth</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">SCORING_FUNCTIONS</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">scoring_function</span><span class="p">](</span><span class="n">gt</span><span class="p">,</span> <span class="n">ans</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Question.save"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="Question.save">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question.save">[docs]</a>
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assign_permissions</span><span class="p">()</span></div>
+
 
     <span class="k">def</span> <span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># Allow the editors and readers groups to view this question</span>
@@ -1410,12 +1490,15 @@
             <span class="bp">self</span><span class="p">,</span>
         <span class="p">)</span>
 
-<div class="viewcode-block" id="Question.clean"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question.clean">[docs]</a>    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Question.clean">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question.clean">[docs]</a>
+    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_answer_type</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_interface</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_widget</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_widget_options</span><span class="p">()</span></div>
+
 
     <span class="k">def</span> <span class="nf">_clean_answer_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># Make sure that the image port is only set when using drawn</span>
@@ -1552,7 +1635,9 @@
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">EMPTY_ANSWER_VALUES</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span><span class="p">]</span>
 
-<div class="viewcode-block" id="Question.is_answer_valid"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question.is_answer_valid">[docs]</a>    <span class="k">def</span> <span class="nf">is_answer_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">answer</span><span class="p">):</span>
+<div class="viewcode-block" id="Question.is_answer_valid">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question.is_answer_valid">[docs]</a>
+    <span class="k">def</span> <span class="nf">is_answer_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">answer</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validates ``answer`` against ``ANSWER_TYPE_SCHEMA``.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span> <span class="o">==</span> <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">HEADING</span><span class="p">:</span>  <span class="c1"># Never valid</span>
             <span class="k">return</span> <span class="kc">False</span>
@@ -1576,6 +1661,7 @@
                 <span class="sa">f</span><span class="s2">&quot;#/definitions/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span><span class="si">}</span><span class="s2"> needs to be defined in &quot;</span>
                 <span class="s2">&quot;ANSWER_TYPE_SCHEMA.&quot;</span>
             <span class="p">)</span></div>
+
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">validators</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1611,15 +1697,24 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">reader_study</span><span class="o">.</span><span class="n">get_absolute_url</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;#questions&quot;</span></div>
 
 
-<div class="viewcode-block" id="QuestionUserObjectPermission"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.QuestionUserObjectPermission">[docs]</a><span class="k">class</span> <span class="nc">QuestionUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
+
+<div class="viewcode-block" id="QuestionUserObjectPermission">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.QuestionUserObjectPermission">[docs]</a>
+<span class="k">class</span> <span class="nc">QuestionUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Question</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="QuestionGroupObjectPermission"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.QuestionGroupObjectPermission">[docs]</a><span class="k">class</span> <span class="nc">QuestionGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
+
+<div class="viewcode-block" id="QuestionGroupObjectPermission">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.QuestionGroupObjectPermission">[docs]</a>
+<span class="k">class</span> <span class="nc">QuestionGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Question</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="CategoricalOption"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.CategoricalOption">[docs]</a><span class="k">class</span> <span class="nc">CategoricalOption</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+
+<div class="viewcode-block" id="CategoricalOption">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.CategoricalOption">[docs]</a>
+<span class="k">class</span> <span class="nc">CategoricalOption</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
     <span class="n">question</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="n">Question</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;options&quot;</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span>
     <span class="p">)</span>
@@ -1630,7 +1725,10 @@
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="s1">&#39;&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;not &#39;</span><span class="si">}</span><span class="s2">default)&quot;</span></div>
 
 
-<div class="viewcode-block" id="Answer"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Answer">[docs]</a><span class="k">class</span> <span class="nc">Answer</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
+
+<div class="viewcode-block" id="Answer">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Answer">[docs]</a>
+<span class="k">class</span> <span class="nc">Answer</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An ``Answer`` can be provided to a ``Question`` that is a part of a</span>
 <span class="sd">    ``ReaderStudy``.</span>
@@ -1688,7 +1786,9 @@
     <span class="k">def</span> <span class="nf">history_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;answer&quot;</span><span class="p">,</span> <span class="s2">&quot;history_date&quot;</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Answer.validate"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Answer.validate">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Answer.validate">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Answer.validate">[docs]</a>
+    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span>  <span class="c1"># noqa: C901</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">creator</span><span class="p">,</span>
@@ -1767,6 +1867,7 @@
             <span class="k">for</span> <span class="n">validator</span> <span class="ow">in</span> <span class="n">question</span><span class="o">.</span><span class="n">validators</span><span class="p">:</span>
                 <span class="n">validator</span><span class="p">(</span><span class="n">answer</span><span class="p">)</span></div>
 
+
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">answer_text</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">question</span><span class="o">.</span><span class="n">answer_type</span> <span class="o">==</span> <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">:</span>
@@ -1787,17 +1888,23 @@
             <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">answer</span>
 
-<div class="viewcode-block" id="Answer.calculate_score"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Answer.calculate_score">[docs]</a>    <span class="k">def</span> <span class="nf">calculate_score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ground_truth</span><span class="p">):</span>
+<div class="viewcode-block" id="Answer.calculate_score">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Answer.calculate_score">[docs]</a>
+    <span class="k">def</span> <span class="nf">calculate_score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ground_truth</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the score for this ``Answer`` based on ``ground_truth``.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">score</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">question</span><span class="o">.</span><span class="n">calculate_score</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">answer</span><span class="p">,</span> <span class="n">ground_truth</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">score</span></div>
 
-<div class="viewcode-block" id="Answer.save"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Answer.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="Answer.save">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Answer.save">[docs]</a>
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assign_permissions</span><span class="p">()</span></div>
+
 
     <span class="k">def</span> <span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># Allow the editors and creator to view this answer</span>
@@ -1815,15 +1922,24 @@
         <span class="n">assign_perm</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;change_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">creator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="AnswerUserObjectPermission"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.AnswerUserObjectPermission">[docs]</a><span class="k">class</span> <span class="nc">AnswerUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
+
+<div class="viewcode-block" id="AnswerUserObjectPermission">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.AnswerUserObjectPermission">[docs]</a>
+<span class="k">class</span> <span class="nc">AnswerUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Answer</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="AnswerGroupObjectPermission"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.AnswerGroupObjectPermission">[docs]</a><span class="k">class</span> <span class="nc">AnswerGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
+
+<div class="viewcode-block" id="AnswerGroupObjectPermission">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.AnswerGroupObjectPermission">[docs]</a>
+<span class="k">class</span> <span class="nc">AnswerGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Answer</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="ReaderStudyPermissionRequest"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudyPermissionRequest">[docs]</a><span class="k">class</span> <span class="nc">ReaderStudyPermissionRequest</span><span class="p">(</span><span class="n">RequestBase</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ReaderStudyPermissionRequest">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudyPermissionRequest">[docs]</a>
+<span class="k">class</span> <span class="nc">ReaderStudyPermissionRequest</span><span class="p">(</span><span class="n">RequestBase</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    When a user wants to read a reader study, editors have the option of</span>
 <span class="sd">    reviewing each user before accepting or rejecting them. This class records</span>
@@ -1869,11 +1985,14 @@
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">object_name</span><span class="si">}</span><span class="s2"> registration request by user </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">username</span><span class="si">}</span><span class="s2">&quot;</span>
 
-<div class="viewcode-block" id="ReaderStudyPermissionRequest.save"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudyPermissionRequest.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="ReaderStudyPermissionRequest.save">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudyPermissionRequest.save">[docs]</a>
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
             <span class="n">process_access_request</span><span class="p">(</span><span class="n">request_object</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span></div>
+
 
     <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">ct</span> <span class="o">=</span> <span class="n">ContentType</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
@@ -1884,6 +2003,7 @@
 
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">(</span><span class="n">RequestBase</span><span class="o">.</span><span class="n">Meta</span><span class="p">):</span>
         <span class="n">unique_together</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;reader_study&quot;</span><span class="p">,</span> <span class="s2">&quot;user&quot;</span><span class="p">),)</span></div>
+
 </pre></div>
 
            </div>

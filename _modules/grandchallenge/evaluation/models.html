@@ -10,11 +10,11 @@
     <script src="../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="../../../_static/jquery.js"></script>
-        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-        <script src="../../../_static/doctools.js"></script>
-        <script src="../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
@@ -179,7 +179,9 @@
 <span class="p">}</span>
 
 
-<div class="viewcode-block" id="Phase"><a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase">[docs]</a><span class="k">class</span> <span class="nc">Phase</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">ViewContentMixin</span><span class="p">):</span>
+<div class="viewcode-block" id="Phase">
+<a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase">[docs]</a>
+<span class="k">class</span> <span class="nc">Phase</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">ViewContentMixin</span><span class="p">):</span>
     <span class="c1"># This must match the syntax used in jquery datatables</span>
     <span class="c1"># https://datatables.net/reference/option/order</span>
     <span class="n">ASCENDING</span> <span class="o">=</span> <span class="s2">&quot;asc&quot;</span>
@@ -540,14 +542,19 @@
             <span class="p">(</span><span class="s2">&quot;create_phase_workspace&quot;</span><span class="p">,</span> <span class="s2">&quot;Create Phase Workspace&quot;</span><span class="p">),</span>
         <span class="p">)</span>
 
-<div class="viewcode-block" id="Phase.__init__"><a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Phase.__init__">
+<a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_orig_public</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">public</span></div>
+
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="s2"> Evaluation for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">short_name</span><span class="si">}</span><span class="s2">&quot;</span>
 
-<div class="viewcode-block" id="Phase.save"><a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Phase.save">
+<a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase.save">[docs]</a>
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -580,7 +587,10 @@
             <span class="k">lambda</span><span class="p">:</span> <span class="n">calculate_ranks</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;phase_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">})</span>
         <span class="p">)</span></div>
 
-<div class="viewcode-block" id="Phase.clean"><a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase.clean">[docs]</a>    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="Phase.clean">
+<a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase.clean">[docs]</a>
+    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_kind</span> <span class="o">==</span> <span class="n">SubmissionKindChoices</span><span class="o">.</span><span class="n">ALGORITHM</span><span class="p">:</span>
@@ -626,6 +636,7 @@
                 <span class="s2">&quot;submissions_limit_per_user_per_period to 0, or set appropriate phase start / end dates.&quot;</span>
             <span class="p">)</span></div>
 
+
     <span class="k">def</span> <span class="nf">set_default_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
             <span class="p">[</span><span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">slug</span><span class="o">=</span><span class="s2">&quot;predictions-csv-file&quot;</span><span class="p">)]</span>
@@ -654,7 +665,9 @@
     <span class="k">def</span> <span class="nf">submission_limit_period_timedelta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">submission_limit_period</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Phase.get_next_submission"><a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase.get_next_submission">[docs]</a>    <span class="k">def</span> <span class="nf">get_next_submission</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+<div class="viewcode-block" id="Phase.get_next_submission">
+<a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase.get_next_submission">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_next_submission</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Determines the number of submissions left for the user,</span>
 <span class="sd">        and when they can next submit.</span>
@@ -709,6 +722,7 @@
             <span class="s2">&quot;remaining_submissions&quot;</span><span class="p">:</span> <span class="n">remaining_submissions</span><span class="p">,</span>
             <span class="s2">&quot;next_submission_at&quot;</span><span class="p">:</span> <span class="n">next_sub_at</span><span class="p">,</span>
         <span class="p">}</span></div>
+
 
     <span class="k">def</span> <span class="nf">has_pending_evaluations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
@@ -826,6 +840,7 @@
             <span class="p">)</span>
         <span class="k">except</span> <span class="n">ObjectDoesNotExist</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span></div>
+
 
 
 <span class="k">class</span> <span class="nc">PhaseUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>

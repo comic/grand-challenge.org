@@ -10,11 +10,11 @@
     <script src="../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="../../../_static/jquery.js"></script>
-        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-        <script src="../../../_static/doctools.js"></script>
-        <script src="../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
@@ -144,7 +144,9 @@
 <span class="n">DEFAULT_OUTPUT_INTERFACE_SLUG</span> <span class="o">=</span> <span class="s2">&quot;generic-overlay&quot;</span>
 
 
-<div class="viewcode-block" id="InterfaceKindChoices"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKindChoices">[docs]</a><span class="k">class</span> <span class="nc">InterfaceKindChoices</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
+<div class="viewcode-block" id="InterfaceKindChoices">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKindChoices">[docs]</a>
+<span class="k">class</span> <span class="nc">InterfaceKindChoices</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Interface kind choices.&quot;&quot;&quot;</span>
 
     <span class="n">STRING</span> <span class="o">=</span> <span class="s2">&quot;STR&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;String&quot;</span><span class="p">)</span>
@@ -195,18 +197,26 @@
     <span class="n">ZIP</span> <span class="o">=</span> <span class="s2">&quot;ZIP&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;ZIP file&quot;</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="InterfaceSuperKindChoices"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceSuperKindChoices">[docs]</a><span class="k">class</span> <span class="nc">InterfaceSuperKindChoices</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
+
+<div class="viewcode-block" id="InterfaceSuperKindChoices">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceSuperKindChoices">[docs]</a>
+<span class="k">class</span> <span class="nc">InterfaceSuperKindChoices</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
     <span class="n">IMAGE</span> <span class="o">=</span> <span class="s2">&quot;I&quot;</span><span class="p">,</span> <span class="s2">&quot;Image&quot;</span>
     <span class="n">FILE</span> <span class="o">=</span> <span class="s2">&quot;F&quot;</span><span class="p">,</span> <span class="s2">&quot;File&quot;</span>
     <span class="n">VALUE</span> <span class="o">=</span> <span class="s2">&quot;V&quot;</span><span class="p">,</span> <span class="s2">&quot;Value&quot;</span></div>
 
 
-<div class="viewcode-block" id="InterfaceKind"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind">[docs]</a><span class="k">class</span> <span class="nc">InterfaceKind</span><span class="p">:</span>
+
+<div class="viewcode-block" id="InterfaceKind">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind">[docs]</a>
+<span class="k">class</span> <span class="nc">InterfaceKind</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Interface kind.&quot;&quot;&quot;</span>
 
     <span class="n">InterfaceKindChoices</span> <span class="o">=</span> <span class="n">InterfaceKindChoices</span>
 
-<div class="viewcode-block" id="InterfaceKind.interface_type_json"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_type_json">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="InterfaceKind.interface_type_json">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_type_json">[docs]</a>
+    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">interface_type_json</span><span class="p">():</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Interface kinds that are json serializable:</span>
 
@@ -681,7 +691,10 @@
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_ELLIPSES</span><span class="p">,</span>
         <span class="p">}</span></div>
 
-<div class="viewcode-block" id="InterfaceKind.interface_type_image"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_type_image">[docs]</a>    <span class="nd">@staticmethod</span>
+
+<div class="viewcode-block" id="InterfaceKind.interface_type_image">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_type_image">[docs]</a>
+    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">interface_type_image</span><span class="p">():</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Interface kinds that are images:</span>
 
@@ -695,7 +708,10 @@
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">SEGMENTATION</span><span class="p">,</span>
         <span class="p">}</span></div>
 
-<div class="viewcode-block" id="InterfaceKind.interface_type_file"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_type_file">[docs]</a>    <span class="nd">@staticmethod</span>
+
+<div class="viewcode-block" id="InterfaceKind.interface_type_file">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_type_file">[docs]</a>
+    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">interface_type_file</span><span class="p">():</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Interface kinds that are files:</span>
 
@@ -717,7 +733,9 @@
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">THUMBNAIL_PNG</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">OBJ</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MP4</span><span class="p">,</span>
-        <span class="p">}</span></div></div>
+        <span class="p">}</span></div>
+</div>
+
 
 
 <span class="k">class</span> <span class="nc">OverlaySegmentsMixin</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
@@ -781,7 +799,9 @@
         <span class="n">abstract</span> <span class="o">=</span> <span class="kc">True</span>
 
 
-<div class="viewcode-block" id="ComponentInterface"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterface">[docs]</a><span class="k">class</span> <span class="nc">ComponentInterface</span><span class="p">(</span><span class="n">OverlaySegmentsMixin</span><span class="p">):</span>
+<div class="viewcode-block" id="ComponentInterface">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterface">[docs]</a>
+<span class="k">class</span> <span class="nc">ComponentInterface</span><span class="p">(</span><span class="n">OverlaySegmentsMixin</span><span class="p">):</span>
     <span class="n">Kind</span> <span class="o">=</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span>
 
     <span class="n">title</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
@@ -845,9 +865,12 @@
         <span class="p">),</span>
     <span class="p">)</span>
 
-<div class="viewcode-block" id="ComponentInterface.__init__"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterface.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="ComponentInterface.__init__">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterface.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_overlay_segments_orig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">overlay_segments</span></div>
+
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_kind_display</span><span class="p">()</span><span class="si">}</span><span class="s2">)&quot;</span>
@@ -967,11 +990,14 @@
 
         <span class="k">return</span> <span class="n">civ</span>
 
-<div class="viewcode-block" id="ComponentInterface.clean"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterface.clean">[docs]</a>    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="ComponentInterface.clean">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterface.clean">[docs]</a>
+    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_overlay_segments</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_store_in_database</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_relative_path</span><span class="p">()</span></div>
+
 
     <span class="k">def</span> <span class="nf">_clean_overlay_segments</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="p">(</span>
@@ -1054,7 +1080,9 @@
                 <span class="sa">f</span><span class="s2">&quot;Interface </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="si">}</span><span class="s2"> objects cannot be stored in the database&quot;</span>
             <span class="p">)</span>
 
-<div class="viewcode-block" id="ComponentInterface.validate_against_schema"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterface.validate_against_schema">[docs]</a>    <span class="k">def</span> <span class="nf">validate_against_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<div class="viewcode-block" id="ComponentInterface.validate_against_schema">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterface.validate_against_schema">[docs]</a>
+    <span class="k">def</span> <span class="nf">validate_against_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validates values against both default and custom schemas&quot;&quot;&quot;</span>
         <span class="n">JSONValidator</span><span class="p">(</span>
             <span class="n">schema</span><span class="o">=</span><span class="p">{</span>
@@ -1066,8 +1094,10 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="p">:</span>
             <span class="n">JSONValidator</span><span class="p">(</span><span class="n">schema</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="p">)(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">)</span></div>
 
+
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
         <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">,)</span></div>
+
 
 
 <span class="k">def</span> <span class="nf">component_interface_value_path</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
@@ -1082,7 +1112,9 @@
     <span class="p">)</span>
 
 
-<div class="viewcode-block" id="ComponentInterfaceValue"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterfaceValue">[docs]</a><span class="k">class</span> <span class="nc">ComponentInterfaceValue</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<div class="viewcode-block" id="ComponentInterfaceValue">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterfaceValue">[docs]</a>
+<span class="k">class</span> <span class="nc">ComponentInterfaceValue</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Encapsulates the value of an interface at a certain point in the graph.&quot;&quot;&quot;</span>
 
     <span class="nb">id</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BigAutoField</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -1193,11 +1225,14 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Component Interface Value </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2"> for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="si">}</span><span class="s2">&quot;</span>
 
-<div class="viewcode-block" id="ComponentInterfaceValue.__init__"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterfaceValue.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="ComponentInterfaceValue.__init__">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterfaceValue.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_value_orig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_image_orig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">[</span><span class="s2">&quot;image&quot;</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_file_orig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">file</span></div>
+
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1205,7 +1240,9 @@
             <span class="bp">self</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="n">field</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">fields</span><span class="p">]</span>
         <span class="p">)</span>
 
-<div class="viewcode-block" id="ComponentInterfaceValue.save"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterfaceValue.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="ComponentInterfaceValue.save">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterfaceValue.save">[docs]</a>
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_value_orig</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">default_value</span><span class="p">)</span>
@@ -1224,7 +1261,10 @@
             <span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="ComponentInterfaceValue.clean"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterfaceValue.clean">[docs]</a>    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ComponentInterfaceValue.clean">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterfaceValue.clean">[docs]</a>
+    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
         <span class="n">attributes</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">attribute</span>
@@ -1245,6 +1285,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate_file_only</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate_value</span><span class="p">()</span></div>
+
 
     <span class="k">def</span> <span class="nf">_validate_image_only</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">:</span>
@@ -1301,18 +1342,27 @@
         <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">,)</span></div>
 
 
-<div class="viewcode-block" id="ComponentJobManager"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentJobManager">[docs]</a><span class="k">class</span> <span class="nc">ComponentJobManager</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">QuerySet</span><span class="p">):</span>
-<div class="viewcode-block" id="ComponentJobManager.with_duration"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentJobManager.with_duration">[docs]</a>    <span class="k">def</span> <span class="nf">with_duration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ComponentJobManager">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentJobManager">[docs]</a>
+<span class="k">class</span> <span class="nc">ComponentJobManager</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">QuerySet</span><span class="p">):</span>
+<div class="viewcode-block" id="ComponentJobManager.with_duration">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentJobManager.with_duration">[docs]</a>
+    <span class="k">def</span> <span class="nf">with_duration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Annotate the queryset with the duration of completed jobs&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">duration</span><span class="o">=</span><span class="n">F</span><span class="p">(</span><span class="s2">&quot;completed_at&quot;</span><span class="p">)</span> <span class="o">-</span> <span class="n">F</span><span class="p">(</span><span class="s2">&quot;started_at&quot;</span><span class="p">))</span></div>
 
-<div class="viewcode-block" id="ComponentJobManager.average_duration"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentJobManager.average_duration">[docs]</a>    <span class="k">def</span> <span class="nf">average_duration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ComponentJobManager.average_duration">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentJobManager.average_duration">[docs]</a>
+    <span class="k">def</span> <span class="nf">average_duration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the average duration that completed jobs ran for&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">with_duration</span><span class="p">()</span>
             <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">duration</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
             <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">Avg</span><span class="p">(</span><span class="s2">&quot;duration&quot;</span><span class="p">))[</span><span class="s2">&quot;duration__avg&quot;</span><span class="p">]</span>
         <span class="p">)</span></div>
+
 
     <span class="k">def</span> <span class="nf">total_duration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
@@ -1329,6 +1379,7 @@
                 <span class="n">ComponentJob</span><span class="o">.</span><span class="n">FAILURE</span><span class="p">,</span>
             <span class="p">]</span>
         <span class="p">)</span></div>
+
 
 
 <span class="k">class</span> <span class="nc">ComponentJob</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
@@ -1600,7 +1651,9 @@
     <span class="p">)</span>
 
 
-<div class="viewcode-block" id="ImportStatusChoices"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ImportStatusChoices">[docs]</a><span class="k">class</span> <span class="nc">ImportStatusChoices</span><span class="p">(</span><span class="n">IntegerChoices</span><span class="p">):</span>
+<div class="viewcode-block" id="ImportStatusChoices">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ImportStatusChoices">[docs]</a>
+<span class="k">class</span> <span class="nc">ImportStatusChoices</span><span class="p">(</span><span class="n">IntegerChoices</span><span class="p">):</span>
     <span class="n">INITIALIZED</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Initialized&quot;</span>
     <span class="n">QUEUED</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Queued&quot;</span>
     <span class="n">RETRY</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;Re-Queued&quot;</span>
@@ -1608,6 +1661,7 @@
     <span class="n">CANCELLED</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="s2">&quot;Cancelled&quot;</span>
     <span class="n">FAILED</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="s2">&quot;Failed&quot;</span>
     <span class="n">COMPLETED</span> <span class="o">=</span> <span class="mi">6</span><span class="p">,</span> <span class="s2">&quot;Completed&quot;</span></div>
+
 
 
 <span class="k">class</span> <span class="nc">ComponentImageManager</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Manager</span><span class="p">):</span>
