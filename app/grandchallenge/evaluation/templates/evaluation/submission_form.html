@@ -3,6 +3,7 @@
 {% load url %}
 {% load guardian_tags %}
 {% load bleach %}
+{% load naturaldelta %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -58,6 +59,12 @@
                     <a href="{% url 'evaluation:phase-update' challenge_short_name=challenge.short_name slug=phase.slug %}">
                         Phase Settings</a>.
                 </p>
+                {% if phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM %}
+                    <p>
+                        Algorithm jobs created for this phase will have a time limit of
+                        {{ phase.algorithm_time_limit|naturaldelta }} per case.
+                    </p>
+                {% endif %}
                 <p>
                     As an admin for this challenge you can create as many submissions as you like.
                 </p>
@@ -116,6 +123,11 @@
                     in total
                 {% endif %}
                 to this phase.
+
+                {% if phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM %}
+                    Algorithm jobs created for this phase will have a time limit of
+                    {{ phase.algorithm_time_limit|naturaldelta }} per case.
+                {% endif %}
             </div>
 
             {% if phase.submissions_close_at %}
