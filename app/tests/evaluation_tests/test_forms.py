@@ -224,6 +224,7 @@ def test_algorithm_for_phase_form():
     form = AlgorithmForPhaseForm(
         workstation_config=WorkstationConfigFactory.build(),
         hanging_protocol=HangingProtocolFactory.build(),
+        optional_hanging_protocols=[HangingProtocolFactory.build()],
         view_content="{}",
         display_editors=True,
         contact_email="test@test.com",
@@ -241,6 +242,7 @@ def test_algorithm_for_phase_form():
     assert form.fields["outputs"].disabled
     assert form.fields["workstation_config"].disabled
     assert form.fields["hanging_protocol"].disabled
+    assert form.fields["optional_hanging_protocols"].disabled
     assert form.fields["view_content"].disabled
     assert form.fields["display_editors"].disabled
     assert form.fields["workstation"].disabled
@@ -259,6 +261,7 @@ def test_algorithm_for_phase_form():
         form.fields["outputs"],
         form.fields["workstation_config"],
         form.fields["hanging_protocol"],
+        form.fields["optional_hanging_protocols"],
         form.fields["view_content"],
         form.fields["display_editors"],
         form.fields["workstation"],
@@ -293,6 +296,7 @@ def test_algorithm_for_phase_form_validation():
     form = AlgorithmForPhaseForm(
         workstation_config=WorkstationConfigFactory(),
         hanging_protocol=HangingProtocolFactory(),
+        optional_hanging_protocols=[HangingProtocolFactory.build()],
         view_content=None,
         display_editors=True,
         contact_email="test@test.com",
@@ -322,6 +326,7 @@ def test_algorithm_for_phase_form_validation():
     form = AlgorithmForPhaseForm(
         workstation_config=WorkstationConfigFactory(),
         hanging_protocol=HangingProtocolFactory(),
+        optional_hanging_protocols=[HangingProtocolFactory.build()],
         view_content=None,
         display_editors=True,
         contact_email="test@test.com",
