@@ -665,7 +665,9 @@ def test_create_algorithm_for_phase_presets(client):
         == phase.hanging_protocol
     )
     assert (
-        response.context_data["form"]["optional_hanging_protocols"].initial.get()
+        response.context_data["form"][
+            "optional_hanging_protocols"
+        ].initial.get()
         == optional_protocol
     )
     assert (
@@ -712,7 +714,9 @@ def test_create_algorithm_for_phase_presets(client):
             ].initial.pk,
             "optional_hanging_protocols": response.context_data["form"][
                 "optional_hanging_protocols"
-            ].initial.get().pk,
+            ]
+            .initial.get()
+            .pk,
             "workstation_config": response.context_data["form"][
                 "workstation_config"
             ].initial.pk,
@@ -729,10 +733,7 @@ def test_create_algorithm_for_phase_presets(client):
     assert algorithm.inputs.get() == ci1
     assert algorithm.outputs.get() == ci2
     assert algorithm.hanging_protocol == phase.hanging_protocol
-    assert (
-        algorithm.optional_hanging_protocols.get()
-        == optional_protocol
-    )
+    assert algorithm.optional_hanging_protocols.get() == optional_protocol
     assert algorithm.workstation_config == phase.workstation_config
     assert algorithm.view_content == phase.view_content
     assert algorithm.workstation.slug == settings.DEFAULT_WORKSTATION_SLUG
