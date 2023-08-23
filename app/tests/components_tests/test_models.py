@@ -1265,7 +1265,7 @@ def test_can_change_from_empty(django_capture_on_commit_callbacks):
     ai = AlgorithmImageFactory(image=None)
 
     with django_capture_on_commit_callbacks() as callbacks:
-        ai.image = "blah"
+        ai.image = ContentFile(b"Foo1", name="blah")
         ai.save()
 
     assert len(callbacks) == 1
