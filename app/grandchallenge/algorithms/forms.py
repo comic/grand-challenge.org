@@ -449,7 +449,9 @@ class AlgorithmForPhaseForm(UserAlgorithmsForPhaseMixin, ModelForm):
         self.fields["workstation_config"].disabled = True
         self.fields["hanging_protocol"].initial = hanging_protocol
         self.fields["hanging_protocol"].disabled = True
-        self.fields["optional_hanging_protocols"].initial = optional_hanging_protocols
+        self.fields[
+            "optional_hanging_protocols"
+        ].initial = optional_hanging_protocols
         self.fields["optional_hanging_protocols"].disabled = True
         self.fields["view_content"].initial = view_content
         self.fields["view_content"].disabled = True

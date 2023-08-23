@@ -6,14 +6,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('hanging_protocols', '0010_alter_hangingprotocol_json'),
-        ('archives', '0015_archivegroupobjectpermission_archiveitemgroupobjectpermission_archiveitemuserobjectpermission_archiv'),
+        ("hanging_protocols", "0010_alter_hangingprotocol_json"),
+        (
+            "archives",
+            "0015_archivegroupobjectpermission_archiveitemgroupobjectpermission_archiveitemuserobjectpermission_archiv",
+        ),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='archive',
-            name='optional_hanging_protocols',
-            field=models.ManyToManyField(blank=True, help_text='Optional alternative hanging protocols for this archive', related_name='optional_hanging_protocols_of_archive', to='hanging_protocols.hangingprotocol'),
+            model_name="archive",
+            name="optional_hanging_protocols",
+            field=models.ManyToManyField(
+                blank=True,
+                help_text="Optional alternative hanging protocols for this archive",
+                related_name="optional_hanging_protocols_of_archive",
+                to="hanging_protocols.hangingprotocol",
+            ),
         ),
     ]

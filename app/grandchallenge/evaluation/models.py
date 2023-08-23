@@ -44,10 +44,7 @@ from grandchallenge.evaluation.utils import (
     StatusChoices,
     SubmissionKindChoices,
 )
-from grandchallenge.hanging_protocols.models import (
-    HangingProtocol,
-    ViewContentMixin,
-)
+from grandchallenge.hanging_protocols.models import ViewContentMixin
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
