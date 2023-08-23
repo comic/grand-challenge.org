@@ -1369,7 +1369,7 @@ class ComponentJob(models.Model):
 
     objects = ComponentJobManager.as_manager()
 
-    def update_status(
+    def update_status(  # noqa: C901
         self,
         *,
         status: STATUS_CHOICES,
@@ -1377,6 +1377,7 @@ class ComponentJob(models.Model):
         stderr: str = "",
         error_message="",
         duration: timedelta | None = None,
+        compute_cost_euro_cents=None,
         runtime_metrics=None,
     ):
         self.status = status
@@ -1404,6 +1405,9 @@ class ComponentJob(models.Model):
             if duration and self.started_at:
                 # TODO: maybe add separate timings for provisioning, executing, parsing and total
                 self.started_at = self.completed_at - duration
+
+        if compute_cost_euro_cents is not None:
+            self.compute_cost_euro_cents = compute_cost_euro_cents
 
         if runtime_metrics is not None:
             self.runtime_metrics = runtime_metrics
