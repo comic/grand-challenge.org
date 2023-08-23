@@ -81,6 +81,7 @@
 <span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">timedelta</span>
 <span class="kn">from</span> <span class="nn">json</span> <span class="kn">import</span> <span class="n">JSONDecodeError</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">ceil</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">from</span> <span class="nn">celery</span> <span class="kn">import</span> <span class="n">signature</span>
@@ -1164,6 +1165,14 @@
         <span class="n">to</span><span class="o">=</span><span class="n">Image</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span>
     <span class="p">)</span>
 
+    <span class="n">storage_cost_per_year_usd_cents</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
+        <span class="c1"># We store usd here as the exchange rate regularly changes</span>
+        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The storage cost per year for this image in USD Cents, excluding Tax&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
     <span class="n">_user_upload_validated</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="nd">@property</span>
@@ -1259,6 +1268,10 @@
                 <span class="s2">&quot;You cannot change the value, file or image of an existing CIV. &quot;</span>
                 <span class="s2">&quot;Please create a new CIV instead.&quot;</span>
             <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_file_orig</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">file</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_image_orig</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_storage_cost</span><span class="p">()</span>
+
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
@@ -1337,6 +1350,19 @@
                 <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">validate_against_schema</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_user_upload_validated</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">update_storage_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">storage_cost_per_year_usd_cents</span> <span class="o">=</span> <span class="n">ceil</span><span class="p">(</span>
+                <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">size</span> <span class="o">/</span> <span class="n">settings</span><span class="o">.</span><span class="n">TERABYTE</span><span class="p">)</span>
+                <span class="o">*</span> <span class="n">settings</span><span class="o">.</span><span class="n">COMPONENTS_S3_USD_CENTS_PER_YEAR_PER_TB</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">storage_cost_per_year_usd_cents</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">storage_cost_per_year_usd_cents</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
         <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">,)</span></div>
@@ -1423,6 +1449,14 @@
     <span class="n">error_message</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
     <span class="n">started_at</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">completed_at</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">compute_cost_euro_cents</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
+        <span class="c1"># We store euro here as the costs were incurred at a time when</span>
+        <span class="c1"># the exchange rate may have been different</span>
+        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The total compute cost for this job in Euro Cents, excluding Tax&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">input_prefixes</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">JSONField</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span>
         <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -1464,7 +1498,7 @@
 
     <span class="n">objects</span> <span class="o">=</span> <span class="n">ComponentJobManager</span><span class="o">.</span><span class="n">as_manager</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">update_status</span><span class="p">(</span>
+    <span class="k">def</span> <span class="nf">update_status</span><span class="p">(</span>  <span class="c1"># noqa: C901</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">status</span><span class="p">:</span> <span class="n">STATUS_CHOICES</span><span class="p">,</span>
@@ -1472,6 +1506,7 @@
         <span class="n">stderr</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
         <span class="n">error_message</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
         <span class="n">duration</span><span class="p">:</span> <span class="n">timedelta</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">compute_cost_euro_cents</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">runtime_metrics</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">status</span>
@@ -1499,6 +1534,9 @@
             <span class="k">if</span> <span class="n">duration</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">started_at</span><span class="p">:</span>
                 <span class="c1"># TODO: maybe add separate timings for provisioning, executing, parsing and total</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">started_at</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">completed_at</span> <span class="o">-</span> <span class="n">duration</span>
+
+        <span class="k">if</span> <span class="n">compute_cost_euro_cents</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">compute_cost_euro_cents</span> <span class="o">=</span> <span class="n">compute_cost_euro_cents</span>
 
         <span class="k">if</span> <span class="n">runtime_metrics</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">runtime_metrics</span> <span class="o">=</span> <span class="n">runtime_metrics</span>
@@ -1738,6 +1776,14 @@
     <span class="p">)</span>
     <span class="n">status</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span><span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
+    <span class="n">storage_cost_per_year_usd_cents</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
+        <span class="c1"># We store usd here as the exchange rate regularly changes</span>
+        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The storage cost per year for this image in USD Cents, excluding Tax&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
     <span class="n">requires_gpu</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">requires_memory_gb</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 
@@ -1751,6 +1797,7 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_image_orig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_is_in_registry_orig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_in_registry</span>
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">out</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">verbose_name</span><span class="o">.</span><span class="n">title</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">&quot;</span>
@@ -1787,12 +1834,18 @@
             <span class="k">if</span> <span class="n">image_needs_validation</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="o">=</span> <span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">QUEUED</span>
                 <span class="n">validate_image_now</span> <span class="o">=</span> <span class="kc">True</span>
-
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="ow">and</span> <span class="n">image_needs_validation</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="o">=</span> <span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">QUEUED</span>
             <span class="n">validate_image_now</span> <span class="o">=</span> <span class="kc">True</span>
 
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_image_orig</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_in_registry</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_in_registry_orig</span>
+        <span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_storage_cost</span><span class="p">()</span>
+
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="n">validate_image_now</span><span class="p">:</span>
             <span class="n">on_commit</span><span class="p">(</span>
                 <span class="n">validate_docker_image</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
@@ -1877,6 +1930,25 @@
             <span class="k">return</span> <span class="s2">&quot;info&quot;</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">&quot;secondary&quot;</span>
+
+    <span class="k">def</span> <span class="nf">update_storage_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">storage_cost_per_year_usd_cents</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">return</span>
+
+        <span class="n">storage_cost_per_year_usd_cents_per_tb</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">settings</span><span class="o">.</span><span class="n">COMPONENTS_S3_USD_CENTS_PER_YEAR_PER_TB</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_in_registry</span><span class="p">:</span>
+            <span class="n">storage_cost_per_year_usd_cents_per_tb</span> <span class="o">+=</span> <span class="p">(</span>
+                <span class="n">settings</span><span class="o">.</span><span class="n">COMPONENTS_ECR_USD_CENTS_PER_YEAR_PER_TB</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">storage_cost_per_year_usd_cents</span> <span class="o">=</span> <span class="n">ceil</span><span class="p">(</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">size</span> <span class="o">/</span> <span class="n">settings</span><span class="o">.</span><span class="n">TERABYTE</span><span class="p">)</span>
+            <span class="o">*</span> <span class="n">storage_cost_per_year_usd_cents_per_tb</span>
+        <span class="p">)</span>
 </pre></div>
 
            </div>
