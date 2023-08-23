@@ -1055,6 +1055,14 @@ class ComponentInterfaceValue(models.Model):
         to=Image, null=True, blank=True, on_delete=models.PROTECT
     )
 
+    storage_cost_per_year_usd_cents = models.PositiveSmallIntegerField(
+        # We store usd here as the exchange rate differs per month
+        editable=False,
+        null=True,
+        default=None,
+        help_text="The storage cost per year for this image in USD Cents, excluding Tax",
+    )
+
     _user_upload_validated = False
 
     @property
@@ -1615,12 +1623,12 @@ class ComponentImage(models.Model):
     )
     status = models.TextField(editable=False)
 
-    storage_cost_per_month_usd_cents = models.PositiveSmallIntegerField(
+    storage_cost_per_year_usd_cents = models.PositiveSmallIntegerField(
         # We store usd here as the exchange rate differs per month
         editable=False,
         null=True,
         default=None,
-        help_text="The storage cost per month for this image in USD Cents, excluding Tax",
+        help_text="The storage cost per year for this image in USD Cents, excluding Tax",
     )
 
     requires_gpu = models.BooleanField(default=False)
@@ -1772,16 +1780,16 @@ class ComponentImage(models.Model):
 
     def update_storage_cost(self):
         image_size_bytes = self.image.size
-        storage_cost_per_month_usd_cents_per_tb = (
-            settings.COMPONENTS_S3_USD_CENTS_PER_MONTH_PER_TB
+        storage_cost_per_year_usd_cents_per_tb = (
+            settings.COMPONENTS_S3_USD_CENTS_PER_YEAR_PER_TB
         )
 
         if self.is_in_registry:
-            storage_cost_per_month_usd_cents_per_tb += (
-                settings.COMPONENTS_ECR_USD_CENTS_PER_MONTH_PER_TB
+            storage_cost_per_year_usd_cents_per_tb += (
+                settings.COMPONENTS_ECR_USD_CENTS_PER_YEAR_PER_TB
             )
 
-        self.storage_cost_per_month_usd_cents = ceil(
+        self.storage_cost_per_year_usd_cents = ceil(
             (image_size_bytes / settings.TERABYTE)
-            * storage_cost_per_month_usd_cents_per_tb
+            * storage_cost_per_year_usd_cents_per_tb
         )

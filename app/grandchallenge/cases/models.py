@@ -337,14 +337,6 @@ class Image(UUIDModel):
         help_text="What is the field of view of this image?",
     )
 
-    storage_cost_per_month_usd_cents = models.PositiveSmallIntegerField(
-        # We store usd here as the exchange rate differs per month
-        editable=False,
-        null=True,
-        default=None,
-        help_text="The storage cost per month for this image in USD Cents, excluding Tax",
-    )
-
     def __str__(self):
         return f"Image {self.name} {self.shape_without_color}"
 
