@@ -637,7 +637,7 @@ def test_create_algorithm_for_phase_presets(client):
     phase.algorithm_inputs.set([ci1])
     phase.algorithm_outputs.set([ci2])
     phase.hanging_protocol = HangingProtocolFactory()
-    phase.optional_hanging_protocols.set([HangingProtocolFactory.build()])
+    phase.optional_hanging_protocols.set([HangingProtocolFactory()])
     phase.workstation_config = WorkstationConfigFactory()
     phase.view_content = {"main": [ci1.slug]}
     phase.algorithm_time_limit = 10 * 60

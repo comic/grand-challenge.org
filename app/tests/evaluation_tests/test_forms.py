@@ -296,7 +296,7 @@ def test_algorithm_for_phase_form_validation():
     form = AlgorithmForPhaseForm(
         workstation_config=WorkstationConfigFactory(),
         hanging_protocol=HangingProtocolFactory(),
-        optional_hanging_protocols=[HangingProtocolFactory.build()],
+        optional_hanging_protocols=[HangingProtocolFactory()],
         view_content=None,
         display_editors=True,
         contact_email="test@test.com",
@@ -326,7 +326,7 @@ def test_algorithm_for_phase_form_validation():
     form = AlgorithmForPhaseForm(
         workstation_config=WorkstationConfigFactory(),
         hanging_protocol=HangingProtocolFactory(),
-        optional_hanging_protocols=[HangingProtocolFactory.build()],
+        optional_hanging_protocols=[HangingProtocolFactory()],
         view_content=None,
         display_editors=True,
         contact_email="test@test.com",
