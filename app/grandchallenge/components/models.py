@@ -1056,7 +1056,7 @@ class ComponentInterfaceValue(models.Model):
     )
 
     storage_cost_per_year_usd_cents = models.PositiveSmallIntegerField(
-        # We store usd here as the exchange rate differs per month
+        # We store usd here as the exchange rate regularly changes
         editable=False,
         null=True,
         default=None,
@@ -1153,6 +1153,10 @@ class ComponentInterfaceValue(models.Model):
                 "You cannot change the value, file or image of an existing CIV. "
                 "Please create a new CIV instead."
             )
+
+        if self._file_orig != self.file or self._image_orig != self.image:
+            self.update_storage_cost()
+
         super().save(*args, **kwargs)
 
     def clean(self):
@@ -1227,6 +1231,19 @@ class ComponentInterfaceValue(models.Model):
                 raise ValidationError(e)
             self.interface.validate_against_schema(value=value)
         self._user_upload_validated = True
+
+    def update_storage_cost(self):
+        if self.file:
+            self.storage_cost_per_year_usd_cents = ceil(
+                (self.file.size / settings.TERABYTE)
+                * settings.COMPONENTS_S3_USD_CENTS_PER_YEAR_PER_TB
+            )
+        elif self.image:
+            self.storage_cost_per_year_usd_cents = (
+                self.image.storage_cost_per_year_usd_cents
+            )
+        else:
+            raise NotImplementedError
 
     class Meta:
         ordering = ("pk",)
@@ -1624,7 +1641,7 @@ class ComponentImage(models.Model):
     status = models.TextField(editable=False)
 
     storage_cost_per_year_usd_cents = models.PositiveSmallIntegerField(
-        # We store usd here as the exchange rate differs per month
+        # We store usd here as the exchange rate regularly changes
         editable=False,
         null=True,
         default=None,
@@ -1779,7 +1796,6 @@ class ComponentImage(models.Model):
             return "secondary"
 
     def update_storage_cost(self):
-        image_size_bytes = self.image.size
         storage_cost_per_year_usd_cents_per_tb = (
             settings.COMPONENTS_S3_USD_CENTS_PER_YEAR_PER_TB
         )
@@ -1790,6 +1806,6 @@ class ComponentImage(models.Model):
             )
 
         self.storage_cost_per_year_usd_cents = ceil(
-            (image_size_bytes / settings.TERABYTE)
+            (self.image.size / settings.TERABYTE)
             * storage_cost_per_year_usd_cents_per_tb
         )
