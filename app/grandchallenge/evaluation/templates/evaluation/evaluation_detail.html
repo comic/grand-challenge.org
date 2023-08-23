@@ -205,11 +205,17 @@
 
             {% if incomplete_jobs %}
                 <div class="card-body">
-                    <h3 class="card-title">Incomplete Jobs</h3>
+                    <h3 class="card-title">Prerequisite Jobs</h3>
 
                     <p>
-                        The following algorithm jobs need to complete before the evaluation method
-                        can be executed on the predictions.
+                        The successful completion of the algorithm jobs listed below is a prerequisite for executing
+                        the evaluation method on the predictions.
+                        Any algorithm jobs mentioned here that have not encountered failures or been cancelled are
+                        presently undergoing execution within the platform.
+                        Your patience is appreciated during this process.
+                        If any of these algorithm jobs have unfortunately failed, it is typically necessary to get in
+                        touch with the participant to address any issues within their algorithm container.
+                        A job is only marked as cancelled if another job within this set has experienced a failure.
                     </p>
 
                     <table class="table table-borderless table-hover table-sm">

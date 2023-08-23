@@ -70,6 +70,11 @@
     {% if perms.challenges.view_challengerequest %}
         <h4>Estimated Costs</h4>
         {% include 'pages/phase_costs_partial.html' with phases=algorithm_phases statistics_for_phases=statistics_for_phases %}
+
+        {% if challenge_request.budget %}
+            <h4>Accepted Budget</h4>
+            {% include "challenges/partials/budget_table.html" with object=challenge_request %}
+        {% endif %}
     {% endif %}
 {% endblock %}
 

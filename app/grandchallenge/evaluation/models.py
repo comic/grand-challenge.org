@@ -425,7 +425,7 @@ class Phase(UUIDModel, ViewContentMixin):
             "have access to their previous submissions and evaluations from this "
             "phase if they exist, and they will no longer see the "
             "respective submit and leaderboard tabs for this phase. "
-            "For you as admin these tabs remain visible."
+            "For you as admin these tabs remain visible. "
             "Note that hiding a phase is only possible if submissions for "
             "this phase are closed for participants."
         ),
@@ -456,7 +456,7 @@ class Phase(UUIDModel, ViewContentMixin):
     total_number_of_submissions_allowed = models.PositiveSmallIntegerField(
         blank=True,
         null=True,
-        help_text="Total number of submissions allowed for this phase for all users together.",
+        help_text="Total number of successful submissions allowed for this phase for all users together.",
     )
 
     class Meta:
@@ -662,7 +662,8 @@ class Phase(UUIDModel, ViewContentMixin):
     @property
     def open_for_submissions(self):
         return (
-            self.submission_period_is_open_now
+            self.public
+            and self.submission_period_is_open_now
             and self.submissions_limit_per_user_per_period > 0
             and not self.exceeds_total_number_of_submissions_allowed
         )
@@ -674,18 +675,32 @@ class Phase(UUIDModel, ViewContentMixin):
             and self.percent_of_total_submissions_allowed >= 100
         )
 
-    @property
+    @cached_property
     def percent_of_total_submissions_allowed(self):
-        if self.total_number_of_submissions_allowed:
+        if self.total_number_of_submissions_allowed is None:
+            return None
+        elif self.total_number_of_submissions_allowed == 0:
+            return 100
+        else:
+            # Allow all submissions by challenge admins
+            # and do not count cancellations or failures
             return round(
                 (
-                    self.submission_set.count()
+                    self.submission_set.exclude(
+                        evaluation__status__in=[
+                            Evaluation.FAILURE,
+                            Evaluation.CANCELLED,
+                        ]
+                    )
+                    .exclude(
+                        creator__in=self.challenge.admins_group.user_set.all()
+                    )
+                    .distinct()
+                    .count()
                     / self.total_number_of_submissions_allowed
                 )
                 * 100
             )
-        else:
-            return None
 
     @property
     def status(self):
@@ -722,13 +737,6 @@ class Phase(UUIDModel, ViewContentMixin):
             return "Not accepting submissions"
         else:
             raise NotImplementedError(f"{self.status} not implemented")
-
-    @property
-    def inconsistent_submission_information(self):
-        return (
-            self.submissions_limit_per_user_per_period == 0
-            and self.submission_period_is_open_now
-        )
 
     @cached_property
     def active_image(self):
@@ -873,6 +881,17 @@ class Submission(UUIDModel):
     class Meta:
         unique_together = (("phase", "predictions_file", "algorithm_image"),)
 
+    @cached_property
+    def is_evaluated_with_active_image(self):
+        active_image = self.phase.active_image
+        if active_image:
+            return Evaluation.objects.filter(
+                submission=self, method=active_image
+            ).exists()
+        else:
+            # No active image, so nothing to do to evaluate with it
+            return True
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
@@ -936,6 +955,9 @@ class Evaluation(UUIDModel, ComponentJob):
     )
     rank_score = models.FloatField(default=0.0)
     rank_per_metric = models.JSONField(default=dict)
+
+    class Meta(UUIDModel.Meta, ComponentJob.Meta):
+        unique_together = ("submission", "method")
 
     def save(self, *args, **kwargs):
         adding = self._state.adding

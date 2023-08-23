@@ -3,6 +3,7 @@
 {% load url %}
 {% load guardian_tags %}
 {% load bleach %}
+{% load naturaldelta %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -35,6 +36,8 @@
 
     {% if "change_challenge" in challenge_perms %}
 
+        {% include "evaluation/partials/phase_closed_warning.html" with phase=phase %}
+
         {% if request.resolver_match.view_name != "evaluation:submission-create-legacy" %}
 
             <div class="alert alert-info" role="alert">
@@ -56,6 +59,12 @@
                     <a href="{% url 'evaluation:phase-update' challenge_short_name=challenge.short_name slug=phase.slug %}">
                         Phase Settings</a>.
                 </p>
+                {% if phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM %}
+                    <p>
+                        Algorithm jobs created for this phase will have a time limit of
+                        {{ phase.algorithm_time_limit|naturaldelta }} per case.
+                    </p>
+                {% endif %}
                 <p>
                     As an admin for this challenge you can create as many submissions as you like.
                 </p>
@@ -67,16 +76,6 @@
                     if you would like to create a submission on the behalf of one of the participants of this challenge.
                 </p>
             </div>
-            {% if phase.inconsistent_submission_information %}
-                <div class="alert alert-warning pb-1" role="alert">
-                        <p><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> The submission limit for this phase is 0, but the start and end dates indicate that this phase should be open to submissions now. The submission limit needs to be above 0 for participants to submit to this phase.</p>
-                </div>
-            {% endif %}
-            {% if not phase.active_image %}
-                <div class="alert alert-danger pb-1" role="alert">
-                    <p><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> There is no valid evaluation method for this phase. Please upload a method container <a href="{% url 'evaluation:method-create' challenge_short_name=challenge.short_name slug=phase.slug %}">here</a>. </p>
-                </div>
-            {% endif %}
 
         {% endif %}
 
@@ -124,6 +123,11 @@
                     in total
                 {% endif %}
                 to this phase.
+
+                {% if phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM %}
+                    Algorithm jobs created for this phase will have a time limit of
+                    {{ phase.algorithm_time_limit|naturaldelta }} per case.
+                {% endif %}
             </div>
 
             {% if phase.submissions_close_at %}

@@ -147,6 +147,12 @@ class TestObjectPermissionRequiredViews:
                 e.submission.phase.challenge,
             ),
             (
+                "evaluation-create",
+                {"slug": e.submission.phase.slug, "pk": e.submission.pk},
+                "change_challenge",
+                e.submission.phase.challenge,
+            ),
+            (
                 "submission-detail",
                 {"pk": e.submission.pk, "slug": e.submission.phase.slug},
                 "view_submission",
@@ -503,9 +509,8 @@ def test_create_algorithm_for_phase_permission(client, uploaded_image):
         user=admin,
     )
     assert response.status_code == 403
-    assert (
-        "You need to verify your account before you can do this, you can request this from your profile page."
-        in str(response.content)
+    assert "You need to verify your account before you can do this" in str(
+        response.content
     )
 
     VerificationFactory(user=admin, is_verified=True)
@@ -570,9 +575,8 @@ def test_create_algorithm_for_phase_permission(client, uploaded_image):
         user=participant,
     )
     assert response.status_code == 403
-    assert (
-        "You need to verify your account before you can do this, you can request this from your profile page."
-        in str(response.content)
+    assert "You need to verify your account before you can do this" in str(
+        response.content
     )
 
     VerificationFactory(user=participant, is_verified=True)

@@ -18,6 +18,8 @@
 
     <h2>Evaluation Methods for {{ phase.title }}</h2>
 
+    {% include "evaluation/partials/phase_closed_warning.html" with phase=phase %}
+
     <p>
         <a class="btn btn-primary"
            href="{% url 'evaluation:method-create' challenge_short_name=challenge.short_name slug=phase.slug %}">
