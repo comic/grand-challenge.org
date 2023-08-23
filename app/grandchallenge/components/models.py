@@ -1796,6 +1796,10 @@ class ComponentImage(models.Model):
             return "secondary"
 
     def update_storage_cost(self):
+        if not self.image:
+            self.storage_cost_per_year_usd_cents = None
+            return
+
         storage_cost_per_year_usd_cents_per_tb = (
             settings.COMPONENTS_S3_USD_CENTS_PER_YEAR_PER_TB
         )
