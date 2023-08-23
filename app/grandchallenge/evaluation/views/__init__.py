@@ -764,7 +764,7 @@ class PhaseAlgorithmCreate(
             {
                 "workstation_config": self.phase.workstation_config,
                 "hanging_protocol": self.phase.hanging_protocol,
-                "optional_hanging_protocols": self.phase.optional_hanging_protocols,
+                "optional_hanging_protocols": self.phase.optional_hanging_protocols.all(),
                 "view_content": self.phase.view_content,
                 "display_editors": True,
                 "contact_email": self.request.user.email,

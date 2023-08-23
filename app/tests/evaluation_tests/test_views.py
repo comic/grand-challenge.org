@@ -634,10 +634,11 @@ def test_create_algorithm_for_phase_presets(client):
     phase.archive = ArchiveFactory()
     ci1 = ComponentInterfaceFactory()
     ci2 = ComponentInterfaceFactory()
+    optional_protocol = HangingProtocolFactory()
     phase.algorithm_inputs.set([ci1])
     phase.algorithm_outputs.set([ci2])
     phase.hanging_protocol = HangingProtocolFactory()
-    phase.optional_hanging_protocols.set([HangingProtocolFactory()])
+    phase.optional_hanging_protocols.set([optional_protocol])
     phase.workstation_config = WorkstationConfigFactory()
     phase.view_content = {"main": [ci1.slug]}
     phase.algorithm_time_limit = 10 * 60
@@ -662,6 +663,10 @@ def test_create_algorithm_for_phase_presets(client):
     assert (
         response.context_data["form"]["hanging_protocol"].initial
         == phase.hanging_protocol
+    )
+    assert (
+        response.context_data["form"]["optional_hanging_protocols"].initial.get()
+        == optional_protocol
     )
     assert (
         response.context_data["form"]["workstation_config"].initial
@@ -705,6 +710,9 @@ def test_create_algorithm_for_phase_presets(client):
             "hanging_protocol": response.context_data["form"][
                 "hanging_protocol"
             ].initial.pk,
+            "optional_hanging_protocols": response.context_data["form"][
+                "optional_hanging_protocols"
+            ].initial.get().pk,
             "workstation_config": response.context_data["form"][
                 "workstation_config"
             ].initial.pk,
@@ -722,8 +730,8 @@ def test_create_algorithm_for_phase_presets(client):
     assert algorithm.outputs.get() == ci2
     assert algorithm.hanging_protocol == phase.hanging_protocol
     assert (
-        algorithm.optional_hanging_protocols
-        == phase.optional_hanging_protocols
+        algorithm.optional_hanging_protocols.get()
+        == optional_protocol
     )
     assert algorithm.workstation_config == phase.workstation_config
     assert algorithm.view_content == phase.view_content
@@ -738,6 +746,7 @@ def test_create_algorithm_for_phase_presets(client):
     # try to set different values
     ci3, ci4 = ComponentInterfaceFactory.create_batch(2)
     hp = HangingProtocolFactory()
+    oph = HangingProtocolFactory()
     ws = WorkstationFactory()
     wsc = WorkstationConfigFactory()
 
@@ -757,6 +766,7 @@ def test_create_algorithm_for_phase_presets(client):
             "outputs": [ci2.pk],
             "workstation": ws.pk,
             "hanging_protocol": hp.pk,
+            "optional_hanging_protocols": [oph.pk],
             "workstation_config": wsc.pk,
             "view_content": "{}",
         },
@@ -767,6 +777,7 @@ def test_create_algorithm_for_phase_presets(client):
     assert alg2.inputs.get() == ci1
     assert alg2.outputs.get() == ci2
     assert alg2.hanging_protocol == phase.hanging_protocol
+    assert alg2.optional_hanging_protocols.get() == optional_protocol
     assert alg2.workstation_config == phase.workstation_config
     assert alg2.view_content == phase.view_content
     assert alg2.workstation.slug == settings.DEFAULT_WORKSTATION_SLUG
