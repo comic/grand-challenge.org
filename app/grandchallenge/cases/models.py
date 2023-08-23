@@ -1,4 +1,5 @@
 import logging
+from math import ceil
 
 from actstream.actions import follow
 from actstream.models import Follow
@@ -19,6 +20,7 @@ from panimg.models import (
     ImageType,
     PatientSex,
 )
+from storages.utils import clean_name
 
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import protected_s3_storage
@@ -373,6 +375,12 @@ class Image(UUIDModel):
             result.append(color_components)
         return result
 
+    @property
+    def storage_cost_per_year_usd_cents(self):
+        return sum(
+            file.storage_cost_per_year_usd_cents for file in self.files.all()
+        )
+
     def get_metaimage_files(self):
         """
         Return ImageFile object for the related MHA file or MHD and RAW files.
@@ -532,6 +540,29 @@ class ImageFile(UUIDModel):
         storage=protected_s3_storage,
         max_length=200,
     )
+
+    @property
+    def storage_cost_per_year_usd_cents(self):
+        stored_bytes = self.file.size
+
+        if self.image_type == self.IMAGE_TYPE_DZI:
+            paginator = self.file.storage.connection.meta.client.get_paginator(
+                "list_objects"
+            )
+            images_prefix = clean_name(
+                self.file.name.replace(".dzi", "_files")
+            )
+            pages = paginator.paginate(
+                Bucket=self.file.storage.bucket_name, Prefix=images_prefix
+            )
+            for page in pages:
+                for entry in page.get("Contents", ()):
+                    stored_bytes += entry["Size"]
+
+        return ceil(
+            (stored_bytes / settings.TERABYTE)
+            * settings.COMPONENTS_S3_USD_CENTS_PER_YEAR_PER_TB
+        )
 
     def __init__(self, *args, directory=None, **kwargs):
         super().__init__(*args, **kwargs)
