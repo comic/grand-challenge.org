@@ -126,6 +126,12 @@ DOCUMENTATION_HELP_FORUM_SLUG = os.environ.get(
 # About Flatpage
 FLATPAGE_ABOUT_URL = os.environ.get("FLATPAGE_ABOUT_URL", "/about/")
 
+# All costs exclude Tax
+COMPONENTS_TAX_RATE_PERCENT = 0.21
+COMPONENTS_USD_TO_EUR = os.environ.get("COMPONENTS_USD_TO_EUR", "0.92472705")
+COMPONENTS_S3_USD_CENTS_PER_MONTH_PER_TB = 1024  # Last calculated 23/08/2023
+COMPONENTS_ECR_USD_CENTS_PER_MONTH_PER_TB = 3300  # Last calculated 23/08/2023
+
 # Costs (in US dollar cents)
 # based on 0.023 / GB / month S3 standard pricing
 CHALLENGES_S3_STORAGE_COST_CENTS_PER_TB_PER_YEAR = int(

@@ -3,6 +3,7 @@ import logging
 import re
 from datetime import timedelta
 from json import JSONDecodeError
+from math import ceil
 from pathlib import Path
 
 from celery import signature
@@ -1294,6 +1295,14 @@ class ComponentJob(models.Model):
     error_message = models.CharField(max_length=1024, default="")
     started_at = models.DateTimeField(null=True)
     completed_at = models.DateTimeField(null=True)
+    compute_cost_euro_cents = models.PositiveSmallIntegerField(
+        # We store euro here as the costs were incurred at a time when
+        # the exchange rate may have been different
+        editable=False,
+        null=True,
+        default=None,
+        help_text="The total compute cost for this job in Euro Cents, excluding Tax",
+    )
     input_prefixes = models.JSONField(
         default=dict,
         editable=False,
@@ -1606,6 +1615,14 @@ class ComponentImage(models.Model):
     )
     status = models.TextField(editable=False)
 
+    storage_cost_per_month_usd_cents = models.PositiveSmallIntegerField(
+        # We store usd here as the exchange rate differs per month
+        editable=False,
+        null=True,
+        default=None,
+        help_text="The storage cost per month for this image in USD Cents, excluding Tax",
+    )
+
     requires_gpu = models.BooleanField(default=False)
     requires_memory_gb = models.PositiveIntegerField(default=4)
 
@@ -1619,6 +1636,7 @@ class ComponentImage(models.Model):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._image_orig = self.image
+        self._is_in_registry_orig = self.is_in_registry
 
     def __str__(self):
         out = f"{self._meta.verbose_name.title()} {self.pk}"
@@ -1655,12 +1673,18 @@ class ComponentImage(models.Model):
             if image_needs_validation:
                 self.import_status = ImportStatusChoices.QUEUED
                 validate_image_now = True
-
         elif self.image and image_needs_validation:
             self.import_status = ImportStatusChoices.QUEUED
             validate_image_now = True
 
+        if (
+            self.image != self._image_orig
+            or self.is_in_registry != self._is_in_registry_orig
+        ):
+            self.update_storage_cost()
+
         super().save(*args, **kwargs)
+
         if validate_image_now:
             on_commit(
                 validate_docker_image.signature(
@@ -1745,3 +1769,19 @@ class ComponentImage(models.Model):
             return "info"
         else:
             return "secondary"
+
+    def update_storage_cost(self):
+        image_size_bytes = self.image.size
+        storage_cost_per_month_usd_cents_per_tb = (
+            settings.COMPONENTS_S3_USD_CENTS_PER_MONTH_PER_TB
+        )
+
+        if self.is_in_registry:
+            storage_cost_per_month_usd_cents_per_tb += (
+                settings.COMPONENTS_ECR_USD_CENTS_PER_MONTH_PER_TB
+            )
+
+        self.storage_cost_per_month_usd_cents = ceil(
+            (image_size_bytes / settings.TERABYTE)
+            * storage_cost_per_month_usd_cents_per_tb
+        )
