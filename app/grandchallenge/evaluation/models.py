@@ -452,8 +452,8 @@ class Phase(UUIDModel, ViewContentMixin):
         on_delete=models.SET_NULL,
     )
     optional_hanging_protocols = models.ManyToManyField(
-        HangingProtocol,
-        related_name="optional_hanging_protocols_of_evaluation",
+        "hanging_protocols.HangingProtocol",
+        related_name="optional_hanging_protocols_of_phase",
         blank=True,
     )
     total_number_of_submissions_allowed = models.PositiveSmallIntegerField(
