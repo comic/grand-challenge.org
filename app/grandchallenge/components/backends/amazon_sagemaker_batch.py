@@ -610,7 +610,6 @@ class AmazonSageMakerBatchExecutor(Executor):
                 "name": instance_type.name,
                 "cpu": instance_type.cpu,
                 "memory": instance_type.memory,
-                "usd_cents_per_hour": instance_type.usd_cents_per_hour,
                 "gpus": instance_type.gpus,
                 "gpu_type": None
                 if instance_type.gpu_type is None
