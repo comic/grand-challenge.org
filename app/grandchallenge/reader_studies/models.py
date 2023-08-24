@@ -204,8 +204,9 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     )
     optional_hanging_protocols = models.ManyToManyField(
         "hanging_protocols.HangingProtocol",
-        related_name="optional_hanging_protocols_of_reader_study",
+        related_name="optional_of_reader_study",
         blank=True,
+        help_text="Optional alternative hanging protocols for this reader study",
     )
     public = models.BooleanField(
         default=False,

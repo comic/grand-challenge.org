@@ -91,7 +91,7 @@ class Archive(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     )
     optional_hanging_protocols = models.ManyToManyField(
         "hanging_protocols.HangingProtocol",
-        related_name="optional_hanging_protocols_of_archive",
+        related_name="optional_of_archive",
         blank=True,
         help_text="Optional alternative hanging protocols for this archive",
     )

@@ -105,8 +105,9 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     )
     optional_hanging_protocols = models.ManyToManyField(
         "hanging_protocols.HangingProtocol",
-        related_name="optional_hanging_protocols_of_algorithm",
+        related_name="optional_of_algorithm",
         blank=True,
+        help_text="Optional alternative hanging protocols for this algorithm",
     )
     public = models.BooleanField(
         default=False,
