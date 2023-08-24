@@ -171,7 +171,6 @@ def _set_user_permissions(users):
     add_archive_perm = Permission.objects.get(codename="add_archive")
     users["archive"].user_permissions.add(add_archive_perm)
     users["demo"].user_permissions.add(add_archive_perm)
-    assign_perm("hanging_protocols.add_hangingprotocol", users["demo"])
 
 
 def _create_help_forum():
