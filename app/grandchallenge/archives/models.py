@@ -91,6 +91,7 @@ class Archive(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     )
     optional_hanging_protocols = models.ManyToManyField(
         "hanging_protocols.HangingProtocol",
+        through="OptionalProtocolsArchive",
         related_name="optional_of_archive",
         blank=True,
         help_text="Optional alternative hanging protocols for this archive",
@@ -364,3 +365,12 @@ class ArchivePermissionRequest(RequestBase):
 
     class Meta(RequestBase.Meta):
         unique_together = (("archive", "user"),)
+
+
+class OptionalProtocolsArchive(models.Model):
+    # Through table for optional hanging protocols
+    # https://docs.djangoproject.com/en/4.2/topics/db/models/#intermediary-manytomany
+    archive = models.ForeignKey(Archive, on_delete=models.CASCADE)
+    hanging_protocol = models.ForeignKey(
+        "hanging_protocols.HangingProtocol", on_delete=models.CASCADE
+    )

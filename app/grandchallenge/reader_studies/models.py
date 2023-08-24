@@ -204,6 +204,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     )
     optional_hanging_protocols = models.ManyToManyField(
         "hanging_protocols.HangingProtocol",
+        through="OptionalProtocolsReaderStudy",
         related_name="optional_of_reader_study",
         blank=True,
         help_text="Optional alternative hanging protocols for this reader study",
@@ -1812,3 +1813,12 @@ class ReaderStudyPermissionRequest(RequestBase):
 
     class Meta(RequestBase.Meta):
         unique_together = (("reader_study", "user"),)
+
+
+class OptionalProtocolsReaderStudy(models.Model):
+    # Through table for optional hanging protocols
+    # https://docs.djangoproject.com/en/4.2/topics/db/models/#intermediary-manytomany
+    reader_study = models.ForeignKey(ReaderStudy, on_delete=models.CASCADE)
+    hanging_protocol = models.ForeignKey(
+        "hanging_protocols.HangingProtocol", on_delete=models.CASCADE
+    )

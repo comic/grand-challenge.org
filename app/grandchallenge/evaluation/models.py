@@ -450,6 +450,7 @@ class Phase(UUIDModel, ViewContentMixin):
     )
     optional_hanging_protocols = models.ManyToManyField(
         "hanging_protocols.HangingProtocol",
+        through="OptionalProtocolsPhase",
         related_name="optional_of_phase",
         blank=True,
         help_text="Optional alternative hanging protocols for this phase",
@@ -1271,4 +1272,13 @@ class CombinedLeaderboardPhase(models.Model):
     phase = models.ForeignKey(Phase, on_delete=models.CASCADE)
     combined_leaderboard = models.ForeignKey(
         CombinedLeaderboard, on_delete=models.CASCADE
+    )
+
+
+class OptionalProtocolsPhase(models.Model):
+    # Through table for optional hanging protocols
+    # https://docs.djangoproject.com/en/4.2/topics/db/models/#intermediary-manytomany
+    phase = models.ForeignKey(Phase, on_delete=models.CASCADE)
+    hanging_protocol = models.ForeignKey(
+        "hanging_protocols.HangingProtocol", on_delete=models.CASCADE
     )

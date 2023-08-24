@@ -51,3 +51,8 @@ def test_hanging_protocol_serializer_field(
 
     assert serializer.data["hanging_protocol"]["json"] == hp.json
     assert serializer.data["view_content"] == {"main": "test"}
+
+
+# def test_optional_hanging_protocol_serializer_field(
+
+# )
