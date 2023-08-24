@@ -376,9 +376,10 @@ class Image(UUIDModel):
         return result
 
     @property
-    def storage_cost_per_year_usd_cents(self):
+    def storage_cost_per_year_usd_millicents(self):
         return sum(
-            file.storage_cost_per_year_usd_cents for file in self.files.all()
+            file.storage_cost_per_year_usd_millicents
+            for file in self.files.all()
         )
 
     def get_metaimage_files(self):
@@ -542,7 +543,7 @@ class ImageFile(UUIDModel):
     )
 
     @property
-    def storage_cost_per_year_usd_cents(self):
+    def storage_cost_per_year_usd_millicents(self):
         stored_bytes = self.file.size
 
         if self.image_type == self.IMAGE_TYPE_DZI:
@@ -561,7 +562,7 @@ class ImageFile(UUIDModel):
 
         return ceil(
             (stored_bytes / settings.TERABYTE)
-            * settings.COMPONENTS_S3_USD_CENTS_PER_YEAR_PER_TB
+            * settings.COMPONENTS_S3_USD_MILLICENTS_PER_YEAR_PER_TB
         )
 
     def __init__(self, *args, directory=None, **kwargs):

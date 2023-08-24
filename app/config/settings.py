@@ -131,8 +131,12 @@ COMPONENTS_TAX_RATE_PERCENT = 0.21
 COMPONENTS_USD_TO_EUR = float(
     os.environ.get("COMPONENTS_USD_TO_EUR", "0.92472705")
 )
-COMPONENTS_S3_USD_CENTS_PER_YEAR_PER_TB = 12300  # Last calculated 23/08/2023
-COMPONENTS_ECR_USD_CENTS_PER_YEAR_PER_TB = 39600  # Last calculated 23/08/2023
+COMPONENTS_S3_USD_MILLICENTS_PER_YEAR_PER_TB = (
+    12_300_000  # Last calculated 23/08/2023
+)
+COMPONENTS_ECR_USD_MILLICENTS_PER_YEAR_PER_TB = (
+    39_600_000  # Last calculated 23/08/2023
+)
 
 # Costs (in US dollar cents)
 # based on 0.023 / GB / month S3 standard pricing

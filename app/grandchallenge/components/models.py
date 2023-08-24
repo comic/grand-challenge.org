@@ -1055,7 +1055,7 @@ class ComponentInterfaceValue(models.Model):
         to=Image, null=True, blank=True, on_delete=models.PROTECT
     )
 
-    storage_cost_per_year_usd_cents = models.PositiveSmallIntegerField(
+    storage_cost_per_year_usd_millicents = models.PositiveIntegerField(
         # We store usd here as the exchange rate regularly changes
         editable=False,
         null=True,
@@ -1234,13 +1234,13 @@ class ComponentInterfaceValue(models.Model):
 
     def update_storage_cost(self):
         if self.file:
-            self.storage_cost_per_year_usd_cents = ceil(
+            self.storage_cost_per_year_usd_millicents = ceil(
                 (self.file.size / settings.TERABYTE)
-                * settings.COMPONENTS_S3_USD_CENTS_PER_YEAR_PER_TB
+                * settings.COMPONENTS_S3_USD_MILLICENTS_PER_YEAR_PER_TB
             )
         elif self.image:
-            self.storage_cost_per_year_usd_cents = (
-                self.image.storage_cost_per_year_usd_cents
+            self.storage_cost_per_year_usd_millicents = (
+                self.image.storage_cost_per_year_usd_millicents
             )
         else:
             raise NotImplementedError
@@ -1320,7 +1320,7 @@ class ComponentJob(models.Model):
     error_message = models.CharField(max_length=1024, default="")
     started_at = models.DateTimeField(null=True)
     completed_at = models.DateTimeField(null=True)
-    compute_cost_euro_cents = models.PositiveSmallIntegerField(
+    compute_cost_euro_millicents = models.PositiveIntegerField(
         # We store euro here as the costs were incurred at a time when
         # the exchange rate may have been different
         editable=False,
@@ -1377,7 +1377,7 @@ class ComponentJob(models.Model):
         stderr: str = "",
         error_message="",
         duration: timedelta | None = None,
-        compute_cost_euro_cents=None,
+        compute_cost_euro_millicents=None,
         runtime_metrics=None,
     ):
         self.status = status
@@ -1406,8 +1406,8 @@ class ComponentJob(models.Model):
                 # TODO: maybe add separate timings for provisioning, executing, parsing and total
                 self.started_at = self.completed_at - duration
 
-        if compute_cost_euro_cents is not None:
-            self.compute_cost_euro_cents = compute_cost_euro_cents
+        if compute_cost_euro_millicents is not None:
+            self.compute_cost_euro_millicents = compute_cost_euro_millicents
 
         if runtime_metrics is not None:
             self.runtime_metrics = runtime_metrics
@@ -1644,7 +1644,7 @@ class ComponentImage(models.Model):
     )
     status = models.TextField(editable=False)
 
-    storage_cost_per_year_usd_cents = models.PositiveSmallIntegerField(
+    storage_cost_per_year_usd_millicents = models.PositiveIntegerField(
         # We store usd here as the exchange rate regularly changes
         editable=False,
         null=True,
@@ -1801,19 +1801,19 @@ class ComponentImage(models.Model):
 
     def update_storage_cost(self):
         if not self.image:
-            self.storage_cost_per_year_usd_cents = None
+            self.storage_cost_per_year_usd_millicents = None
             return
 
-        storage_cost_per_year_usd_cents_per_tb = (
-            settings.COMPONENTS_S3_USD_CENTS_PER_YEAR_PER_TB
+        storage_cost_per_year_usd_millicents_per_tb = (
+            settings.COMPONENTS_S3_USD_MILLICENTS_PER_YEAR_PER_TB
         )
 
         if self.is_in_registry:
-            storage_cost_per_year_usd_cents_per_tb += (
-                settings.COMPONENTS_ECR_USD_CENTS_PER_YEAR_PER_TB
+            storage_cost_per_year_usd_millicents_per_tb += (
+                settings.COMPONENTS_ECR_USD_MILLICENTS_PER_YEAR_PER_TB
             )
 
-        self.storage_cost_per_year_usd_cents = ceil(
+        self.storage_cost_per_year_usd_millicents = ceil(
             (self.image.size / settings.TERABYTE)
-            * storage_cost_per_year_usd_cents_per_tb
+            * storage_cost_per_year_usd_millicents_per_tb
         )

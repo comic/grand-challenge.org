@@ -127,7 +127,7 @@ class Executor(ABC):
         ...
 
     @property
-    def compute_cost_euro_cents(self):
+    def compute_cost_euro_millicents(self):
         duration = self.duration
         if duration is None:
             return None
@@ -135,6 +135,7 @@ class Executor(ABC):
             return ceil(
                 (self.duration.total_seconds() / 3600)
                 * self.usd_cents_per_hour
+                * 1000
                 * settings.COMPONENTS_USD_TO_EUR
             )
 

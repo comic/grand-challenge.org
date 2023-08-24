@@ -738,7 +738,7 @@ def execute_job(  # noqa: C901
                 stdout=executor.stdout,
                 stderr=executor.stderr,
                 duration=executor.duration,
-                compute_cost_euro_cents=executor.compute_cost_euro_cents,
+                compute_cost_euro_millicents=executor.compute_cost_euro_millicents,
             )
             on_commit(
                 parse_job_outputs.signature(**job.signature_kwargs).apply_async
@@ -795,7 +795,7 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
                 stdout=executor.stdout,
                 stderr=executor.stderr,
                 duration=executor.duration,
-                compute_cost_euro_cents=executor.compute_cost_euro_cents,
+                compute_cost_euro_millicents=executor.compute_cost_euro_millicents,
                 runtime_metrics=executor.runtime_metrics,
                 error_message="Time limit exceeded",
             )
@@ -810,7 +810,7 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
             stdout=executor.stdout,
             stderr=executor.stderr,
             duration=executor.duration,
-            compute_cost_euro_cents=executor.compute_cost_euro_cents,
+            compute_cost_euro_millicents=executor.compute_cost_euro_millicents,
             runtime_metrics=executor.runtime_metrics,
             error_message=str(e),
         )
@@ -820,7 +820,7 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
             stdout=executor.stdout,
             stderr=executor.stderr,
             duration=executor.duration,
-            compute_cost_euro_cents=executor.compute_cost_euro_cents,
+            compute_cost_euro_millicents=executor.compute_cost_euro_millicents,
             runtime_metrics=executor.runtime_metrics,
             error_message="An unexpected error occurred",
         )
@@ -831,7 +831,7 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
             stdout=executor.stdout,
             stderr=executor.stderr,
             duration=executor.duration,
-            compute_cost_euro_cents=executor.compute_cost_euro_cents,
+            compute_cost_euro_millicents=executor.compute_cost_euro_millicents,
             runtime_metrics=executor.runtime_metrics,
         )
         on_commit(
