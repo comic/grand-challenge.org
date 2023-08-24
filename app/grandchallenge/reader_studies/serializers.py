@@ -93,7 +93,7 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
     )
     optional_hanging_protocols = HangingProtocolSerializer(
         many=True,
-        source="algorithm_image.algorithm.optional_hanging_protocols",
+        source="reader_study.optional_hanging_protocols",
         read_only=True,
         required=False,
     )
