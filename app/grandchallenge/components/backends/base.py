@@ -4,6 +4,7 @@ import logging
 import os
 from abc import ABC, abstractmethod
 from json import JSONDecodeError
+from math import ceil
 from pathlib import Path
 from tempfile import SpooledTemporaryFile, TemporaryDirectory
 from typing import NamedTuple
@@ -117,13 +118,26 @@ class Executor(ABC):
 
     @property
     @abstractmethod
-    def cents_per_hour(self):
+    def usd_cents_per_hour(self):
         ...
 
     @property
     @abstractmethod
     def runtime_metrics(self):
         ...
+
+    @property
+    def compute_cost_euro_millicents(self):
+        duration = self.duration
+        if duration is None:
+            return None
+        else:
+            return ceil(
+                (self.duration.total_seconds() / 3600)
+                * self.usd_cents_per_hour
+                * 1000
+                * settings.COMPONENTS_USD_TO_EUR
+            )
 
     @property
     def job_path_parts(self):

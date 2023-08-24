@@ -90,7 +90,7 @@ class DockerExecutor(DockerConnectionMixin, Executor):
             return None
 
     @property
-    def cents_per_hour(self):
+    def usd_cents_per_hour(self):
         return 100
 
     @property

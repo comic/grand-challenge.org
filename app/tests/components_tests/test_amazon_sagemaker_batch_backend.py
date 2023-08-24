@@ -469,7 +469,6 @@ def test_set_runtime_metrics(settings):
             "gpus": 0,
             "memory": 8,
             "name": "ml.m5.large",
-            "cents_per_hour": 13,
         },
         "metrics": [
             {

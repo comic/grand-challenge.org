@@ -864,7 +864,6 @@ def test_runtime_metrics_chart():
                 "gpus": 0,
                 "memory": 8,
                 "name": "ml.m5.large",
-                "cents_per_hour": 13,
             },
             "metrics": [
                 {
@@ -1265,7 +1264,7 @@ def test_can_change_from_empty(django_capture_on_commit_callbacks):
     ai = AlgorithmImageFactory(image=None)
 
     with django_capture_on_commit_callbacks() as callbacks:
-        ai.image = "blah"
+        ai.image = ContentFile(b"Foo1", name="blah")
         ai.save()
 
     assert len(callbacks) == 1
