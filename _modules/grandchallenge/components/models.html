@@ -115,6 +115,7 @@
 <span class="kn">from</span> <span class="nn">grandchallenge.charts.specs</span> <span class="kn">import</span> <span class="n">components_line</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.schemas</span> <span class="kn">import</span> <span class="n">INTERFACE_VALUE_SCHEMA</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.tasks</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_repo_login_and_run</span><span class="p">,</span>
     <span class="n">assign_docker_image_from_upload</span><span class="p">,</span>
     <span class="n">deprovision_job</span><span class="p">,</span>
     <span class="n">provision_job</span><span class="p">,</span>
@@ -1931,23 +1932,36 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">&quot;secondary&quot;</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">size_in_registry</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_in_registry</span><span class="p">:</span>
+            <span class="n">command</span> <span class="o">=</span> <span class="n">_repo_login_and_run</span><span class="p">(</span>
+                <span class="n">command</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;crane&quot;</span><span class="p">,</span> <span class="s2">&quot;manifest&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">original_repo_tag</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="n">manifest</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">command</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="nb">sum</span><span class="p">(</span><span class="n">layer</span><span class="p">[</span><span class="s2">&quot;size&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;layers&quot;</span><span class="p">])</span>
+                <span class="o">+</span> <span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;config&quot;</span><span class="p">][</span><span class="s2">&quot;size&quot;</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+
     <span class="k">def</span> <span class="nf">update_storage_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">storage_cost_per_year_usd_millicents</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="k">return</span>
 
-        <span class="n">storage_cost_per_year_usd_millicents_per_tb</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">settings</span><span class="o">.</span><span class="n">COMPONENTS_S3_USD_MILLICENTS_PER_YEAR_PER_TB</span>
-        <span class="p">)</span>
+        <span class="n">s3_storage_cost_per_year_usd_millicents</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">size</span> <span class="o">/</span> <span class="n">settings</span><span class="o">.</span><span class="n">TERABYTE</span>
+        <span class="p">)</span> <span class="o">*</span> <span class="n">settings</span><span class="o">.</span><span class="n">COMPONENTS_S3_USD_MILLICENTS_PER_YEAR_PER_TB</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_in_registry</span><span class="p">:</span>
-            <span class="n">storage_cost_per_year_usd_millicents_per_tb</span> <span class="o">+=</span> <span class="p">(</span>
-                <span class="n">settings</span><span class="o">.</span><span class="n">COMPONENTS_ECR_USD_MILLICENTS_PER_YEAR_PER_TB</span>
-            <span class="p">)</span>
+        <span class="n">registry_storage_cost_per_year_usd_millicents</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">size_in_registry</span> <span class="o">/</span> <span class="n">settings</span><span class="o">.</span><span class="n">TERABYTE</span>
+        <span class="p">)</span> <span class="o">*</span> <span class="n">settings</span><span class="o">.</span><span class="n">COMPONENTS_ECR_USD_MILLICENTS_PER_YEAR_PER_TB</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">storage_cost_per_year_usd_millicents</span> <span class="o">=</span> <span class="n">ceil</span><span class="p">(</span>
-            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">size</span> <span class="o">/</span> <span class="n">settings</span><span class="o">.</span><span class="n">TERABYTE</span><span class="p">)</span>
-            <span class="o">*</span> <span class="n">storage_cost_per_year_usd_millicents_per_tb</span>
+            <span class="n">s3_storage_cost_per_year_usd_millicents</span>
+            <span class="o">+</span> <span class="n">registry_storage_cost_per_year_usd_millicents</span>
         <span class="p">)</span>
 </pre></div>
 
