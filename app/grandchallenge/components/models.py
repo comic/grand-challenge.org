@@ -37,6 +37,7 @@ from grandchallenge.cases.widgets import FlexibleImageField
 from grandchallenge.charts.specs import components_line
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.tasks import (
+    _repo_login_and_run,
     assign_docker_image_from_upload,
     deprovision_job,
     provision_job,
@@ -1799,21 +1800,34 @@ class ComponentImage(models.Model):
         else:
             return "secondary"
 
+    @property
+    def size_in_registry(self):
+        if self.is_in_registry:
+            command = _repo_login_and_run(
+                command=["crane", "manifest", self.original_repo_tag]
+            )
+            manifest = json.loads(command.stdout.decode("utf-8"))
+            return (
+                sum(layer["size"] for layer in manifest["layers"])
+                + manifest["config"]["size"]
+            )
+        else:
+            return 0
+
     def update_storage_cost(self):
         if not self.image:
             self.storage_cost_per_year_usd_millicents = None
             return
 
-        storage_cost_per_year_usd_millicents_per_tb = (
-            settings.COMPONENTS_S3_USD_MILLICENTS_PER_YEAR_PER_TB
-        )
+        s3_storage_cost_per_year_usd_millicents = (
+            self.image.size / settings.TERABYTE
+        ) * settings.COMPONENTS_S3_USD_MILLICENTS_PER_YEAR_PER_TB
 
-        if self.is_in_registry:
-            storage_cost_per_year_usd_millicents_per_tb += (
-                settings.COMPONENTS_ECR_USD_MILLICENTS_PER_YEAR_PER_TB
-            )
+        registry_storage_cost_per_year_usd_millicents = (
+            self.size_in_registry / settings.TERABYTE
+        ) * settings.COMPONENTS_ECR_USD_MILLICENTS_PER_YEAR_PER_TB
 
         self.storage_cost_per_year_usd_millicents = ceil(
-            (self.image.size / settings.TERABYTE)
-            * storage_cost_per_year_usd_millicents_per_tb
+            s3_storage_cost_per_year_usd_millicents
+            + registry_storage_cost_per_year_usd_millicents
         )
