@@ -105,7 +105,7 @@ def test_check_post_processor_result():
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "source_dir, filename, expected_costs",
-    [(RESOURCE_PATH, "valid_tiff.tif", 2), (RESOURCE_PATH, "no_dzi.tif", 1)],
+    [(RESOURCE_PATH, "valid_tiff.tif", 4), (RESOURCE_PATH, "no_dzi.tif", 3)],
 )
 def test_post_processing(
     source_dir,
