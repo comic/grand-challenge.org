@@ -1155,8 +1155,8 @@ class ComponentInterfaceValue(models.Model):
                 "Please create a new CIV instead."
             )
 
-        # if self._file_orig != self.file or self._image_orig != self.image:
-        #    self.update_storage_cost()
+        if self._file_orig != self.file or self._image_orig != self.image:
+            self.update_storage_cost()
 
         super().save(*args, **kwargs)
 
@@ -1666,7 +1666,7 @@ class ComponentImage(models.Model):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._image_orig = self.image
-        # self._is_in_registry_orig = self.is_in_registry
+        self._is_in_registry_orig = self.is_in_registry
 
     def __str__(self):
         out = f"{self._meta.verbose_name.title()} {self.pk}"
@@ -1707,11 +1707,11 @@ class ComponentImage(models.Model):
             self.import_status = ImportStatusChoices.QUEUED
             validate_image_now = True
 
-        # if (
-        #     self.image != self._image_orig
-        #     or self.is_in_registry != self._is_in_registry_orig
-        # ):
-        #     self.update_storage_cost()
+        if (
+            self.image != self._image_orig
+            or self.is_in_registry != self._is_in_registry_orig
+        ):
+            self.update_storage_cost()
 
         super().save(*args, **kwargs)
 
