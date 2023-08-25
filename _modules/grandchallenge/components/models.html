@@ -1798,7 +1798,7 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_image_orig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_is_in_registry_orig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_in_registry</span>
+        <span class="c1"># self._is_in_registry_orig = self.is_in_registry</span>
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">out</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">verbose_name</span><span class="o">.</span><span class="n">title</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">&quot;</span>
@@ -1839,11 +1839,11 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="o">=</span> <span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">QUEUED</span>
             <span class="n">validate_image_now</span> <span class="o">=</span> <span class="kc">True</span>
 
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_image_orig</span>
-            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_in_registry</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_in_registry_orig</span>
-        <span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">update_storage_cost</span><span class="p">()</span>
+        <span class="c1"># if (</span>
+        <span class="c1">#     self.image != self._image_orig</span>
+        <span class="c1">#     or self.is_in_registry != self._is_in_registry_orig</span>
+        <span class="c1"># ):</span>
+        <span class="c1">#     self.update_storage_cost()</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
