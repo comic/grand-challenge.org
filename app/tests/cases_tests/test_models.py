@@ -117,7 +117,7 @@ def test_image_file_cleanup(uploaded_image):
     filename = f"{uuid.uuid4()}.zraw"
 
     i = ImageFactory()
-    f = ImageFileFactory(image=i)
+    f = ImageFileFactory(image=i, file=None)
     f.file.save(filename, File(uploaded_image()))
 
     storage = f.file.storage

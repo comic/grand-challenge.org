@@ -3,7 +3,6 @@ import logging
 import re
 from datetime import timedelta
 from json import JSONDecodeError
-from math import ceil
 from pathlib import Path
 
 from celery import signature
@@ -29,6 +28,7 @@ from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
+from django_deprecate_fields import deprecate_field
 from django_extensions.db.fields import AutoSlugField
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
@@ -1057,12 +1057,19 @@ class ComponentInterfaceValue(models.Model):
         to=Image, null=True, blank=True, on_delete=models.PROTECT
     )
 
-    storage_cost_per_year_usd_millicents = models.PositiveIntegerField(
-        # We store usd here as the exchange rate regularly changes
+    storage_cost_per_year_usd_millicents = deprecate_field(
+        models.PositiveIntegerField(
+            # We store usd here as the exchange rate regularly changes
+            editable=False,
+            null=True,
+            default=None,
+            help_text="The storage cost per year for this image in USD Cents, excluding Tax",
+        )
+    )
+    size_in_storage = models.PositiveIntegerField(
         editable=False,
-        null=True,
-        default=None,
-        help_text="The storage cost per year for this image in USD Cents, excluding Tax",
+        default=0,
+        help_text="The number of bytes stored in the storage backend",
     )
 
     _user_upload_validated = False
@@ -1156,8 +1163,8 @@ class ComponentInterfaceValue(models.Model):
                 "Please create a new CIV instead."
             )
 
-        if self._file_orig != self.file or self._image_orig != self.image:
-            self.update_storage_cost()
+        if self._file_orig != self.file:
+            self.update_size_in_storage()
 
         super().save(*args, **kwargs)
 
@@ -1234,16 +1241,9 @@ class ComponentInterfaceValue(models.Model):
             self.interface.validate_against_schema(value=value)
         self._user_upload_validated = True
 
-    def update_storage_cost(self):
+    def update_size_in_storage(self):
         if self.file:
-            self.storage_cost_per_year_usd_millicents = ceil(
-                (self.file.size / settings.TERABYTE)
-                * settings.COMPONENTS_S3_USD_MILLICENTS_PER_YEAR_PER_TB
-            )
-        elif self.image:
-            self.storage_cost_per_year_usd_millicents = (
-                self.image.storage_cost_per_year_usd_millicents
-            )
+            self.update_size_in_storage = self.file.size
         else:
             raise NotImplementedError
 
@@ -1646,12 +1646,25 @@ class ComponentImage(FieldChangeMixin, models.Model):
     )
     status = models.TextField(editable=False)
 
-    storage_cost_per_year_usd_millicents = models.PositiveIntegerField(
-        # We store usd here as the exchange rate regularly changes
+    storage_cost_per_year_usd_millicents = deprecate_field(
+        models.PositiveIntegerField(
+            # We store usd here as the exchange rate regularly changes
+            editable=False,
+            null=True,
+            default=None,
+            help_text="The storage cost per year for this image in USD Cents, excluding Tax",
+        )
+    )
+
+    size_in_storage = models.PositiveIntegerField(
         editable=False,
-        null=True,
-        default=None,
-        help_text="The storage cost per year for this image in USD Cents, excluding Tax",
+        default=0,
+        help_text="The number of bytes stored in the storage backend",
+    )
+    size_in_registry = models.PositiveIntegerField(
+        editable=False,
+        default=0,
+        help_text="The number of bytes stored in the registry",
     )
 
     requires_gpu = models.BooleanField(default=False)
@@ -1704,7 +1717,7 @@ class ComponentImage(FieldChangeMixin, models.Model):
             validate_image_now = True
 
         if self.has_changed("image") or self.has_changed("is_in_registry"):
-            self.update_storage_cost()
+            self.update_size_in_storage()
 
         super().save(*args, **kwargs)
 
@@ -1793,8 +1806,7 @@ class ComponentImage(FieldChangeMixin, models.Model):
         else:
             return "secondary"
 
-    @property
-    def size_in_registry(self):
+    def calculate_size_in_registry(self):
         if self.is_in_registry:
             command = _repo_login_and_run(
                 command=["crane", "manifest", self.original_repo_tag]
@@ -1807,20 +1819,10 @@ class ComponentImage(FieldChangeMixin, models.Model):
         else:
             return 0
 
-    def update_storage_cost(self):
+    def update_size_in_storage(self):
         if not self.image:
-            self.storage_cost_per_year_usd_millicents = None
-            return
-
-        s3_storage_cost_per_year_usd_millicents = (
-            self.image.size / settings.TERABYTE
-        ) * settings.COMPONENTS_S3_USD_MILLICENTS_PER_YEAR_PER_TB
-
-        registry_storage_cost_per_year_usd_millicents = (
-            self.size_in_registry / settings.TERABYTE
-        ) * settings.COMPONENTS_ECR_USD_MILLICENTS_PER_YEAR_PER_TB
-
-        self.storage_cost_per_year_usd_millicents = ceil(
-            s3_storage_cost_per_year_usd_millicents
-            + registry_storage_cost_per_year_usd_millicents
-        )
+            self.size_in_storage = 0
+            self.size_in_registry = 0
+        else:
+            self.size_in_storage = self.image.size
+            self.size_in_registry = self.calculate_size_in_registry()
