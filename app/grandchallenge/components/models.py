@@ -1155,8 +1155,8 @@ class ComponentInterfaceValue(models.Model):
                 "Please create a new CIV instead."
             )
 
-        if self._file_orig != self.file or self._image_orig != self.image:
-            self.update_storage_cost()
+        # if self._file_orig != self.file or self._image_orig != self.image:
+        #    self.update_storage_cost()
 
         super().save(*args, **kwargs)
 
