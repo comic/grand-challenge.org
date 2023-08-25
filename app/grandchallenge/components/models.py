@@ -1328,7 +1328,7 @@ class ComponentJob(models.Model):
         editable=False,
         null=True,
         default=None,
-        help_text="The total compute cost for this job in Euro Cents, excluding Tax",
+        help_text="The total compute cost for this job in Euro Cents, including Tax",
     )
     input_prefixes = models.JSONField(
         default=dict,

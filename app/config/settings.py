@@ -128,6 +128,8 @@ FLATPAGE_ABOUT_URL = os.environ.get("FLATPAGE_ABOUT_URL", "/about/")
 
 # All costs exclude Tax
 COMPONENTS_TAX_RATE_PERCENT = 0.21
+if COMPONENTS_TAX_RATE_PERCENT > 1:
+    raise ImproperlyConfigured("Tax rate should be less than 1")
 COMPONENTS_USD_TO_EUR = float(
     os.environ.get("COMPONENTS_USD_TO_EUR", "0.92472705")
 )
