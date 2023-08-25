@@ -47,6 +47,7 @@ from grandchallenge.components.validators import (
     validate_no_slash_at_ends,
     validate_safe_path,
 )
+from grandchallenge.core.models import FieldChangeMixin
 from grandchallenge.core.storage import (
     private_s3_storage,
     protected_s3_storage,
@@ -1589,7 +1590,7 @@ class ComponentImageManager(models.Manager):
         return self.executable_images().filter(is_desired_version=True)
 
 
-class ComponentImage(models.Model):
+class ComponentImage(FieldChangeMixin, models.Model):
     SHIM_IMAGE = True
 
     ImportStatusChoices = ImportStatusChoices
@@ -1663,11 +1664,6 @@ class ComponentImage(models.Model):
     )
     is_desired_version = models.BooleanField(default=False, editable=False)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._image_orig = self.image
-        self._is_in_registry_orig = self.is_in_registry
-
     def __str__(self):
         out = f"{self._meta.verbose_name.title()} {self.pk}"
 
@@ -1697,8 +1693,8 @@ class ComponentImage(models.Model):
         )
         validate_image_now = False
 
-        if self._image_orig:
-            if self.image != self._image_orig:
+        if self.initial_value("image"):
+            if self.has_changed("image"):
                 raise RuntimeError("The image cannot be changed")
             if image_needs_validation:
                 self.import_status = ImportStatusChoices.QUEUED
@@ -1707,10 +1703,7 @@ class ComponentImage(models.Model):
             self.import_status = ImportStatusChoices.QUEUED
             validate_image_now = True
 
-        if (
-            self.image != self._image_orig
-            or self.is_in_registry != self._is_in_registry_orig
-        ):
+        if self.has_changed("image") or self.has_changed("is_in_registry"):
             self.update_storage_cost()
 
         super().save(*args, **kwargs)
