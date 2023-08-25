@@ -533,7 +533,7 @@ class ImageFile(FieldChangeMixin, UUIDModel):
         storage=protected_s3_storage,
         max_length=200,
     )
-    size_in_storage = models.PositiveIntegerField(
+    size_in_storage = models.PositiveBigIntegerField(
         editable=False,
         default=0,
         help_text="The number of bytes stored in the storage backend",

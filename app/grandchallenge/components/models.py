@@ -1066,7 +1066,7 @@ class ComponentInterfaceValue(models.Model):
             help_text="The storage cost per year for this image in USD Cents, excluding Tax",
         )
     )
-    size_in_storage = models.PositiveIntegerField(
+    size_in_storage = models.PositiveBigIntegerField(
         editable=False,
         default=0,
         help_text="The number of bytes stored in the storage backend",
@@ -1656,12 +1656,12 @@ class ComponentImage(FieldChangeMixin, models.Model):
         )
     )
 
-    size_in_storage = models.PositiveIntegerField(
+    size_in_storage = models.PositiveBigIntegerField(
         editable=False,
         default=0,
         help_text="The number of bytes stored in the storage backend",
     )
-    size_in_registry = models.PositiveIntegerField(
+    size_in_registry = models.PositiveBigIntegerField(
         editable=False,
         default=0,
         help_text="The number of bytes stored in the registry",
