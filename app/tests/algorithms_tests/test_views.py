@@ -983,7 +983,9 @@ def test_algorithm_job_create_with_image_input(
 def test_algorithm_image_activate(
     settings, client, algorithm_io_image, mocker
 ):
-    mocker.patch.object(AlgorithmImage, "size_in_registry", 100)
+    mocker.patch.object(
+        AlgorithmImage, "calculate_size_in_registry", lambda x: 100
+    )
 
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)

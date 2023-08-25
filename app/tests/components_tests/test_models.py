@@ -1180,9 +1180,7 @@ def test_validate_voxel_values():
 
 
 @pytest.mark.django_db
-def test_can_execute(mocker):
-    mocker.patch.object(AlgorithmImage, "size_in_registry", 100)
-
+def test_can_execute():
     ai = AlgorithmImageFactory(image=None)
 
     assert ai.can_execute is False
