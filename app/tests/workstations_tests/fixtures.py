@@ -26,7 +26,7 @@ class TwoWorkstationSets(NamedTuple):
 
 def workstation_set():
     ws = WorkstationFactory()
-    wsi = WorkstationImageFactory(workstation=ws)
+    wsi = WorkstationImageFactory(workstation=ws, image=None)
     e, u, u1 = UserFactory(), UserFactory(), UserFactory()
 
     for user in [e, u, u1]:
