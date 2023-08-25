@@ -81,7 +81,6 @@
 <span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">timedelta</span>
 <span class="kn">from</span> <span class="nn">json</span> <span class="kn">import</span> <span class="n">JSONDecodeError</span>
-<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">ceil</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">from</span> <span class="nn">celery</span> <span class="kn">import</span> <span class="n">signature</span>
@@ -107,6 +106,7 @@
 <span class="kn">from</span> <span class="nn">django.utils.text</span> <span class="kn">import</span> <span class="n">get_valid_filename</span>
 <span class="kn">from</span> <span class="nn">django.utils.timezone</span> <span class="kn">import</span> <span class="n">now</span>
 <span class="kn">from</span> <span class="nn">django.utils.translation</span> <span class="kn">import</span> <span class="n">gettext_lazy</span> <span class="k">as</span> <span class="n">_</span>
+<span class="kn">from</span> <span class="nn">django_deprecate_fields</span> <span class="kn">import</span> <span class="n">deprecate_field</span>
 <span class="kn">from</span> <span class="nn">django_extensions.db.fields</span> <span class="kn">import</span> <span class="n">AutoSlugField</span>
 <span class="kn">from</span> <span class="nn">panimg.models</span> <span class="kn">import</span> <span class="n">MAXIMUM_SEGMENTS_LENGTH</span>
 
@@ -125,6 +125,7 @@
     <span class="n">validate_no_slash_at_ends</span><span class="p">,</span>
     <span class="n">validate_safe_path</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.core.models</span> <span class="kn">import</span> <span class="n">FieldChangeMixin</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.core.storage</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">private_s3_storage</span><span class="p">,</span>
     <span class="n">protected_s3_storage</span><span class="p">,</span>
@@ -1166,12 +1167,19 @@
         <span class="n">to</span><span class="o">=</span><span class="n">Image</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span>
     <span class="p">)</span>
 
-    <span class="n">storage_cost_per_year_usd_millicents</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span>
-        <span class="c1"># We store usd here as the exchange rate regularly changes</span>
+    <span class="n">storage_cost_per_year_usd_millicents</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span>
+        <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span>
+            <span class="c1"># We store usd here as the exchange rate regularly changes</span>
+            <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The storage cost per year for this image in USD Cents, excluding Tax&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">size_in_storage</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveBigIntegerField</span><span class="p">(</span>
         <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The storage cost per year for this image in USD Cents, excluding Tax&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The number of bytes stored in the storage backend&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">_user_upload_validated</span> <span class="o">=</span> <span class="kc">False</span>
@@ -1270,8 +1278,8 @@
                 <span class="s2">&quot;Please create a new CIV instead.&quot;</span>
             <span class="p">)</span>
 
-        <span class="c1"># if self._file_orig != self.file or self._image_orig != self.image:</span>
-        <span class="c1">#    self.update_storage_cost()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_file_orig</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_size_in_storage</span><span class="p">()</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
@@ -1352,16 +1360,9 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">validate_against_schema</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_user_upload_validated</span> <span class="o">=</span> <span class="kc">True</span>
 
-    <span class="k">def</span> <span class="nf">update_storage_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">update_size_in_storage</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">storage_cost_per_year_usd_millicents</span> <span class="o">=</span> <span class="n">ceil</span><span class="p">(</span>
-                <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">size</span> <span class="o">/</span> <span class="n">settings</span><span class="o">.</span><span class="n">TERABYTE</span><span class="p">)</span>
-                <span class="o">*</span> <span class="n">settings</span><span class="o">.</span><span class="n">COMPONENTS_S3_USD_MILLICENTS_PER_YEAR_PER_TB</span>
-            <span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">storage_cost_per_year_usd_millicents</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">storage_cost_per_year_usd_millicents</span>
-            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_size_in_storage</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">size</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
@@ -1456,7 +1457,7 @@
         <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The total compute cost for this job in Euro Cents, excluding Tax&quot;</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The total compute cost for this job in Euro Cents, including Tax&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">input_prefixes</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">JSONField</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span>
@@ -1721,7 +1722,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">executable_images</span><span class="p">()</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_desired_version</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">ComponentImage</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">ComponentImage</span><span class="p">(</span><span class="n">FieldChangeMixin</span><span class="p">,</span> <span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
     <span class="n">SHIM_IMAGE</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="n">ImportStatusChoices</span> <span class="o">=</span> <span class="n">ImportStatusChoices</span>
@@ -1777,12 +1778,25 @@
     <span class="p">)</span>
     <span class="n">status</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span><span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
-    <span class="n">storage_cost_per_year_usd_millicents</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span>
-        <span class="c1"># We store usd here as the exchange rate regularly changes</span>
+    <span class="n">storage_cost_per_year_usd_millicents</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span>
+        <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span>
+            <span class="c1"># We store usd here as the exchange rate regularly changes</span>
+            <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The storage cost per year for this image in USD Cents, excluding Tax&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">size_in_storage</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveBigIntegerField</span><span class="p">(</span>
         <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The storage cost per year for this image in USD Cents, excluding Tax&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The number of bytes stored in the storage backend&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">size_in_registry</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveBigIntegerField</span><span class="p">(</span>
+        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The number of bytes stored in the registry&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">requires_gpu</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -1794,11 +1808,6 @@
         <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Add any information (e.g. version ID) about this image here.&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">is_desired_version</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_image_orig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span>
-        <span class="c1"># self._is_in_registry_orig = self.is_in_registry</span>
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">out</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">verbose_name</span><span class="o">.</span><span class="n">title</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">&quot;</span>
@@ -1829,8 +1838,8 @@
         <span class="p">)</span>
         <span class="n">validate_image_now</span> <span class="o">=</span> <span class="kc">False</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_image_orig</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_image_orig</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span><span class="p">(</span><span class="s2">&quot;image&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_changed</span><span class="p">(</span><span class="s2">&quot;image&quot;</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;The image cannot be changed&quot;</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">image_needs_validation</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="o">=</span> <span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">QUEUED</span>
@@ -1839,11 +1848,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="o">=</span> <span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">QUEUED</span>
             <span class="n">validate_image_now</span> <span class="o">=</span> <span class="kc">True</span>
 
-        <span class="c1"># if (</span>
-        <span class="c1">#     self.image != self._image_orig</span>
-        <span class="c1">#     or self.is_in_registry != self._is_in_registry_orig</span>
-        <span class="c1"># ):</span>
-        <span class="c1">#     self.update_storage_cost()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_changed</span><span class="p">(</span><span class="s2">&quot;image&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_changed</span><span class="p">(</span><span class="s2">&quot;is_in_registry&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_size_in_storage</span><span class="p">()</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
@@ -1932,8 +1938,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">&quot;secondary&quot;</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">size_in_registry</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">calculate_size_in_registry</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_in_registry</span><span class="p">:</span>
             <span class="n">command</span> <span class="o">=</span> <span class="n">_repo_login_and_run</span><span class="p">(</span>
                 <span class="n">command</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;crane&quot;</span><span class="p">,</span> <span class="s2">&quot;manifest&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">original_repo_tag</span><span class="p">]</span>
@@ -1946,23 +1951,13 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="mi">0</span>
 
-    <span class="k">def</span> <span class="nf">update_storage_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">update_size_in_storage</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">storage_cost_per_year_usd_millicents</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="k">return</span>
-
-        <span class="n">s3_storage_cost_per_year_usd_millicents</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">size</span> <span class="o">/</span> <span class="n">settings</span><span class="o">.</span><span class="n">TERABYTE</span>
-        <span class="p">)</span> <span class="o">*</span> <span class="n">settings</span><span class="o">.</span><span class="n">COMPONENTS_S3_USD_MILLICENTS_PER_YEAR_PER_TB</span>
-
-        <span class="n">registry_storage_cost_per_year_usd_millicents</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">size_in_registry</span> <span class="o">/</span> <span class="n">settings</span><span class="o">.</span><span class="n">TERABYTE</span>
-        <span class="p">)</span> <span class="o">*</span> <span class="n">settings</span><span class="o">.</span><span class="n">COMPONENTS_ECR_USD_MILLICENTS_PER_YEAR_PER_TB</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">storage_cost_per_year_usd_millicents</span> <span class="o">=</span> <span class="n">ceil</span><span class="p">(</span>
-            <span class="n">s3_storage_cost_per_year_usd_millicents</span>
-            <span class="o">+</span> <span class="n">registry_storage_cost_per_year_usd_millicents</span>
-        <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">size_in_storage</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">size_in_registry</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">size_in_storage</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">size</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">size_in_registry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_size_in_registry</span><span class="p">()</span>
 </pre></div>
 
            </div>
