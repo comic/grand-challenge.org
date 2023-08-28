@@ -105,8 +105,8 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     )
     optional_hanging_protocols = models.ManyToManyField(
         "hanging_protocols.HangingProtocol",
-        through="OptionalProtocolsAlgorithm",
-        related_name="optional_of_algorithm",
+        through="OptionalHangingProtocolAlgorithm",
+        related_name="optional_for_algorithm",
         blank=True,
         help_text="Optional alternative hanging protocols for this algorithm",
     )
@@ -932,7 +932,7 @@ class AlgorithmPermissionRequest(RequestBase):
         unique_together = (("algorithm", "user"),)
 
 
-class OptionalProtocolsAlgorithm(models.Model):
+class OptionalHangingProtocolAlgorithm(models.Model):
     # Through table for optional hanging protocols
     # https://docs.djangoproject.com/en/4.2/topics/db/models/#intermediary-manytomany
     algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
