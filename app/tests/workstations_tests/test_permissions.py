@@ -5,11 +5,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from guardian.shortcuts import get_perms
 
-from grandchallenge.workstations.models import (
-    Session,
-    Workstation,
-    WorkstationImage,
-)
+from grandchallenge.workstations.models import Session, Workstation
 from tests.factories import SessionFactory, UserFactory, WorkstationFactory
 from tests.utils import get_view_for_user
 
@@ -56,10 +52,7 @@ def test_workstation_editor_permissions(
     two_workstation_sets,
     viewname,
     authenticated_staff_user,
-    mocker,
 ):
-    mocker.patch.object(WorkstationImage, "size_in_registry", 100)
-
     tests = (
         (two_workstation_sets.ws1.editor, 200),
         (two_workstation_sets.ws1.user, 403),
@@ -104,10 +97,8 @@ def test_workstation_editor_permissions(
     ],
 )
 def test_workstation_user_permissions(
-    client, two_workstation_sets, viewname, authenticated_staff_user, mocker
+    client, two_workstation_sets, viewname, authenticated_staff_user
 ):
-    mocker.patch.object(WorkstationImage, "size_in_registry", 100)
-
     tests = (
         (two_workstation_sets.ws1.editor, 200),
         (two_workstation_sets.ws1.user, 200),
@@ -152,10 +143,8 @@ def test_workstation_user_permissions(
     ],
 )
 def test_workstation_redirect_permissions(
-    client, two_workstation_sets, viewname, authenticated_staff_user, mocker
+    client, two_workstation_sets, viewname, authenticated_staff_user
 ):
-    mocker.patch.object(WorkstationImage, "size_in_registry", 100)
-
     # Make ws1 the default
     Workstation.objects.get(slug=settings.DEFAULT_WORKSTATION_SLUG).delete()
 

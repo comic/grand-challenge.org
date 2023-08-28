@@ -137,6 +137,7 @@ class Executor(ABC):
                 * self.usd_cents_per_hour
                 * 1000
                 * settings.COMPONENTS_USD_TO_EUR
+                * (1 + settings.COMPONENTS_TAX_RATE_PERCENT)
             )
 
     @property

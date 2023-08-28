@@ -1180,10 +1180,8 @@ def test_validate_voxel_values():
 
 
 @pytest.mark.django_db
-def test_can_execute(mocker):
-    mocker.patch.object(AlgorithmImage, "size_in_registry", 100)
-
-    ai = AlgorithmImageFactory()
+def test_can_execute():
+    ai = AlgorithmImageFactory(image=None)
 
     assert ai.can_execute is False
     assert ai not in AlgorithmImage.objects.executable_images()
@@ -1218,7 +1216,10 @@ def test_can_execute_with_sagemaker(settings):
     settings.COMPONENTS_CREATE_SAGEMAKER_MODEL = False
 
     ai = AlgorithmImageFactory(
-        is_manifest_valid=True, is_in_registry=True, is_on_sagemaker=False
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_on_sagemaker=False,
+        image=None,
     )
 
     assert ai.can_execute is True
@@ -1332,6 +1333,7 @@ def test_mark_desired_version():
         algorithm=alg,
         is_manifest_valid=True,
         is_in_registry=True,
+        image=None,
     )
     i3.is_desired_version = True
     i3.save()

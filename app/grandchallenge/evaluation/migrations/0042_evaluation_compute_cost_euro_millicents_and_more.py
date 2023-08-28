@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
             field=models.PositiveIntegerField(
                 default=None,
                 editable=False,
-                help_text="The total compute cost for this job in Euro Cents, excluding Tax",
+                help_text="The total compute cost for this job in Euro Cents, including Tax",
                 null=True,
             ),
         ),

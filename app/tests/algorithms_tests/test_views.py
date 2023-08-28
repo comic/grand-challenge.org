@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 from django.contrib.auth.models import Group
+from django.core.files.base import ContentFile
 from django.utils import timezone
 from django.utils.text import slugify
 from guardian.shortcuts import assign_perm, remove_perm
@@ -979,7 +980,13 @@ def test_algorithm_job_create_with_image_input(
 
 
 @pytest.mark.django_db
-def test_algorithm_image_activate(settings, client, algorithm_io_image):
+def test_algorithm_image_activate(
+    settings, client, algorithm_io_image, mocker
+):
+    mocker.patch.object(
+        AlgorithmImage, "calculate_size_in_registry", lambda x: 100
+    )
+
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -989,8 +996,12 @@ def test_algorithm_image_activate(settings, client, algorithm_io_image):
         algorithm=alg,
         is_manifest_valid=True,
         is_in_registry=True,
-        image__from_path=algorithm_io_image,
+        image=None,
     )
+    for image in {i1, i2}:
+        with open(algorithm_io_image, "rb") as f:
+            image.image.save(algorithm_io_image, ContentFile(f.read()))
+
     i2.is_desired_version = True
     i2.save()
 
