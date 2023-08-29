@@ -201,8 +201,8 @@ class GrandChallengeFrameworkTestCase(TestCase):
         ][0]
 
         self.assertTrue(
-            "Please Confirm Your E-mail" in validation_mail.subject,
-            "There was no email sent which had 'Please Confirm Your E-mail' "
+            "Please Confirm Your Email Address" in validation_mail.subject,
+            "There was no email sent which had 'Please Confirm Your Email Address' "
             "in the subject line",
         )
         # validate the user with the link that was emailed
