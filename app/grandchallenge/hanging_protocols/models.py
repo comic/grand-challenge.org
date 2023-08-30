@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.template import loader
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
@@ -225,7 +226,7 @@ class HangingProtocol(UUIDModel, TitleSlugDescriptionModel):
         height_px = 18
         stroke_width = width_px * 0.05
         padding = stroke_width / 2
-        svg = f'<svg width="{width_px!r}" height="{height_px!r}" fill-opacity="0">\n'
+        rects = []
         for i, vi in enumerate(self.json):
             w = (width_px - 2 * padding) / len(self.json)
             h = height_px - 2 * padding
@@ -236,9 +237,17 @@ class HangingProtocol(UUIDModel, TitleSlugDescriptionModel):
                 h = (height_px - 2 * padding) * vi["h"] / height
                 x = padding + (width_px - 2 * padding) * vi["x"] / width
                 y = padding + (height_px - 2 * padding) * vi["y"] / height
-            svg += f'\t<rect x="{x!r}" y="{y!r}" width="{w!r}" height="{h!r}" stroke-width="{stroke_width!r}" />\n'
-        svg += "</svg>"
-        return svg
+            rects.append({"x": x, "y": y, "w": w, "h": h})
+
+        template = loader.get_template("hanging_protocols/svg_icon.html")
+        return template.render(
+            {
+                "width_px": width_px,
+                "height_px": height_px,
+                "stroke_width": stroke_width,
+                "rects": rects,
+            }
+        )
 
 
 class HangingProtocolUserObjectPermission(UserObjectPermissionBase):
