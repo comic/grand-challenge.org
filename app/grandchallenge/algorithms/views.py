@@ -123,7 +123,10 @@ class AlgorithmList(FilterMixin, PermissionListMixin, ListView):
         return (
             super()
             .get_queryset()
-            .prefetch_related("publications", "optional_hanging_protocols")
+            .prefetch_related(
+                "publications",
+                "optional_hanging_protocols",
+            )
         )
 
     def get_context_data(self, *args, **kwargs):

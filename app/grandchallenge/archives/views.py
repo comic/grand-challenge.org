@@ -81,6 +81,7 @@ class ArchiveList(FilterMixin, PermissionListMixin, ListView):
     permission_required = (
         f"{model._meta.app_label}.view_{model._meta.model_name}"
     )
+    queryset = Archive.objects.prefetch_related("optional_hanging_protocols")
     ordering = "-created"
     filter_class = ArchiveFilter
     paginate_by = 40
@@ -107,13 +108,6 @@ class ArchiveList(FilterMixin, PermissionListMixin, ListView):
 
         return context
 
-    def get_queryset(self):
-        return (
-            super()
-            .get_queryset()
-            .prefetch_related("optional_hanging_protocols")
-        )
-
 
 class ArchiveCreate(PermissionRequiredMixin, UserFormKwargsMixin, CreateView):
     model = Archive
@@ -136,7 +130,6 @@ class ArchiveDetail(
         f"{model._meta.app_label}.use_{model._meta.model_name}"
     )
     raise_exception = True
-
     queryset = Archive.objects.prefetch_related("optional_hanging_protocols")
 
     def on_permission_check_fail(self, request, response, obj=None):
@@ -749,7 +742,8 @@ class ArchiveItemViewSet(
     CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet
 ):
     queryset = ArchiveItem.objects.all().prefetch_related(
-        "archive__hanging_protocol"
+        "archive__hanging_protocol",
+        "archive__optional_hanging_protocols",
     )
     serializer_class = ArchiveItemSerializer
     permission_classes = [DjangoObjectPermissions]

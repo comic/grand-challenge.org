@@ -218,7 +218,6 @@ class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
         f"{ReaderStudy._meta.app_label}.view_{ReaderStudy._meta.model_name}"
     )
     raise_exception = True
-
     queryset = ReaderStudy.objects.prefetch_related(
         "optional_hanging_protocols"
     )
