@@ -213,6 +213,33 @@ class HangingProtocol(UUIDModel, TitleSlugDescriptionModel):
                 self,
             )
 
+    @property
+    def svg_icon(self):
+        width = len(self.json)
+        height = 1
+        if "x" in self.json[0]:
+            width = max(vi["x"] + vi["w"] for vi in self.json)
+            height = max(vi["y"] + vi["h"] for vi in self.json)
+
+        width_px = 32
+        height_px = 18
+        stroke_width = width_px * .05
+        padding = stroke_width / 2
+        svg = f'<svg width="{width_px}" height="{height_px}" fill-opacity="0">\n'
+        for i, vi in enumerate(self.json):
+            w = (width_px - 2 * padding) / len(self.json)
+            h = height_px - 2 * padding
+            x = padding + i * w
+            y = padding
+            if "x" in self.json[0]:
+                w = (width_px - 2 * padding) * vi["w"] / width
+                h = (height_px - 2 * padding) * vi["h"] / height
+                x = padding + (width_px - 2 * padding) * vi["x"] / width
+                y = padding + (height_px - 2 * padding) * vi["y"] / height
+            svg += f'\t<rect x="{x}" y="{y}" width="{w}" height="{h}" stroke-width="{stroke_width}" />\n'
+        svg += "</svg>"
+        return svg
+
 
 class HangingProtocolUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(
