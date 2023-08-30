@@ -10,7 +10,6 @@ from base64 import b64encode
 from lzma import LZMAError
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
-from warnings import warn
 
 import boto3
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
@@ -1093,19 +1092,3 @@ def validate_voxel_values(*, civ_pk):
             civ.image.save()
 
     civ.interface._validate_voxel_values(civ.image)
-
-
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
-def update_size_in_storage():
-    CIV = apps.get_model(  # noqa: N806
-        app_label="components",
-        model_name="componentinterfacevalue",
-    )
-
-    for queryset in [ImageFile.objects.all(), CIV.objects.exclude(file="")]:
-        for obj in queryset.filter(size_in_storage=0).iterator():
-            try:
-                obj.update_size_in_storage()
-                obj.save()
-            except Exception as exc:
-                warn(f"Could not update {obj}: {exc}")
