@@ -1243,7 +1243,7 @@ class ComponentInterfaceValue(models.Model):
 
     def update_size_in_storage(self):
         if self.file:
-            self.update_size_in_storage = self.file.size
+            self.size_in_storage = self.file.size
         else:
             raise NotImplementedError
 
