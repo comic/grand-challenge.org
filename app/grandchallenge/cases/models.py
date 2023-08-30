@@ -618,4 +618,5 @@ def delete_image_files(*_, instance: ImageFile, **__):
     We use a signal rather than overriding delete() to catch usages of
     bulk_delete.
     """
-    instance.file.storage.delete(name=instance.file.name)
+    if instance.file:
+        instance.file.storage.delete(name=instance.file.name)
