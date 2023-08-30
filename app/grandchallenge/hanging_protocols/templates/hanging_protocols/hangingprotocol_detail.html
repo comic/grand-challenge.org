@@ -18,7 +18,10 @@
 {% endblock %}
 
 {% block content %}
-    <h3>{{ object.title }}</h3>
+    <h3>
+        <span style="stroke: #000">{{ object.svg_icon|safe }}</span>
+        {{ object.title }}
+    </h3>
     {% get_obj_perms request.user for object as "user_perms" %}
     <div class="row col-12 p-0 m-0">
         <span class="col-10 p-0 d-flex align-items-center">Created by {{ object.creator|user_profile_link }}</span>
