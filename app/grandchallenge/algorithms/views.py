@@ -120,7 +120,14 @@ class AlgorithmList(FilterMixin, PermissionListMixin, ListView):
     paginate_by = 40
 
     def get_queryset(self):
-        return super().get_queryset().prefetch_related("publications")
+        return (
+            super()
+            .get_queryset()
+            .prefetch_related(
+                "publications",
+                "optional_hanging_protocols",
+            )
+        )
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -156,6 +163,7 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
         "algorithm_container_images__build__webhook_message",
         "algorithm_container_images__creator",
         "editors_group__user_set",
+        "optional_hanging_protocols",
     )
 
     def on_permission_check_fail(self, request, response, obj=None):

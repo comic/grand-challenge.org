@@ -81,6 +81,7 @@ algorithm_setting_options = (
     "workstation",
     "workstation_config",
     "hanging_protocol",
+    "optional_hanging_protocols",
     "view_content",
 )
 
@@ -196,6 +197,16 @@ class PhaseUpdateForm(
             "hanging_protocol": format_lazy(
                 (
                     "The hanging protocol to use for the algorithms submitted to this phase. "
+                    "If a suitable protocol does not exist you can "
+                    '<a href="{}">create a new one</a>. For a list of existing '
+                    'hanging protocols, go <a href="{}">here</a>.'
+                ),
+                reverse_lazy("hanging-protocols:create"),
+                reverse_lazy("hanging-protocols:list"),
+            ),
+            "optional hanging protocols": format_lazy(
+                (
+                    "Additional, optional hanging protocols to use for the algorithms submitted to this phase. "
                     "If a suitable protocol does not exist you can "
                     '<a href="{}">create a new one</a>. For a list of existing '
                     'hanging protocols, go <a href="{}">here</a>.'

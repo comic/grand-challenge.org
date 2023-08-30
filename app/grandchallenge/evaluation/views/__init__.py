@@ -194,6 +194,7 @@ class PhaseUpdate(
     permission_required = "change_phase"
     raise_exception = True
     login_url = reverse_lazy("account_login")
+    queryset = Phase.objects.prefetch_related("optional_hanging_protocols")
 
     def get_object(self, queryset=None):
         return Phase.objects.get(
@@ -363,7 +364,9 @@ class SubmissionList(LoginRequiredMixin, PermissionListMixin, ListView):
                 "creator__verification",
                 "phase__challenge",
             )
-            .prefetch_related("evaluation_set")
+            .prefetch_related(
+                "evaluation_set", "phase__optional_hanging_protocols"
+            )
         )
 
 
@@ -377,6 +380,13 @@ class SubmissionDetail(
     permission_required = "view_submission"
     raise_exception = True
     login_url = reverse_lazy("account_login")
+
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .prefetch_related("phase__optional_hanging_protocols")
+        )
 
 
 class TeamContextMixin:
@@ -462,14 +472,18 @@ class EvaluationList(
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        queryset = queryset.filter(
-            submission__phase__challenge=self.request.challenge,
-            submission__phase=self.phase,
-        ).select_related(
-            "submission__creator__user_profile",
-            "submission__creator__verification",
-            "submission__phase__challenge",
-            "submission__algorithm_image__algorithm",
+        queryset = (
+            queryset.filter(
+                submission__phase__challenge=self.request.challenge,
+                submission__phase=self.phase,
+            )
+            .select_related(
+                "submission__creator__user_profile",
+                "submission__creator__verification",
+                "submission__phase__challenge",
+                "submission__algorithm_image__algorithm",
+            )
+            .prefetch_related("submission__phase__optional_hanging_protocols")
         )
 
         if self.request.challenge.is_admin(self.request.user):
@@ -502,14 +516,18 @@ class EvaluationAdminList(
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        return queryset.filter(
-            submission__phase__challenge=self.request.challenge,
-            submission__phase=self.phase,
-        ).select_related(
-            "submission__creator__user_profile",
-            "submission__creator__verification",
-            "submission__phase__challenge",
-            "submission__algorithm_image__algorithm",
+        return (
+            queryset.filter(
+                submission__phase__challenge=self.request.challenge,
+                submission__phase=self.phase,
+            )
+            .select_related(
+                "submission__creator__user_profile",
+                "submission__creator__verification",
+                "submission__phase__challenge",
+                "submission__algorithm_image__algorithm",
+            )
+            .prefetch_related("submission__phase__optional_hanging_protocols")
         )
 
     def get_context_data(self, *args, **kwargs):
@@ -813,6 +831,7 @@ class PhaseAlgorithmCreate(
             {
                 "workstation_config": self.phase.workstation_config,
                 "hanging_protocol": self.phase.hanging_protocol,
+                "optional_hanging_protocols": self.phase.optional_hanging_protocols.all(),
                 "view_content": self.phase.view_content,
                 "display_editors": True,
                 "contact_email": self.request.user.email,

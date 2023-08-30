@@ -161,6 +161,13 @@ class ReaderStudyList(FilterMixin, PermissionListMixin, ListView):
 
         return context
 
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .prefetch_related("optional_hanging_protocols")
+        )
+
 
 class ReaderStudyCreate(
     PermissionRequiredMixin, UserFormKwargsMixin, CreateView
@@ -211,6 +218,9 @@ class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
         f"{ReaderStudy._meta.app_label}.view_{ReaderStudy._meta.model_name}"
     )
     raise_exception = True
+    queryset = ReaderStudy.objects.prefetch_related(
+        "optional_hanging_protocols"
+    )
 
     def on_permission_check_fail(self, request, response, obj=None):
         response = self.get(request)

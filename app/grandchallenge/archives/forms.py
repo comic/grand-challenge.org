@@ -81,6 +81,7 @@ class ArchiveForm(
             "workstation",
             "workstation_config",
             "hanging_protocol",
+            "optional_hanging_protocols",
             "view_content",
             "algorithms",
             "public",
@@ -95,6 +96,7 @@ class ArchiveForm(
             "modalities": Select2MultipleWidget,
             "structures": Select2MultipleWidget,
             "organizations": Select2MultipleWidget,
+            "optional_hanging_protocols": Select2MultipleWidget,
         }
         widgets.update(ViewContentMixin.Meta.widgets)
         help_texts = {
@@ -119,6 +121,16 @@ class ArchiveForm(
             "hanging_protocol": format_lazy(
                 (
                     "The hanging protocol to use for this archive. "
+                    "If a suitable protocol does not exist you can "
+                    '<a href="{}">create a new one</a>. For a list of existing '
+                    'hanging protocols, go <a href="{}">here</a>.'
+                ),
+                reverse_lazy("hanging-protocols:create"),
+                reverse_lazy("hanging-protocols:list"),
+            ),
+            "optional_hanging_protocols": format_lazy(
+                (
+                    "Other hanging protocols that can be used for this algorithm. "
                     "If a suitable protocol does not exist you can "
                     '<a href="{}">create a new one</a>. For a list of existing '
                     'hanging protocols, go <a href="{}">here</a>.'

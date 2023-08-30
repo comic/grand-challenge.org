@@ -96,6 +96,12 @@ class JobSerializer(serializers.ModelSerializer):
         read_only=True,
         allow_null=True,
     )
+    optional_hanging_protocols = HangingProtocolSerializer(
+        many=True,
+        source="algorithm_image.algorithm.optional_hanging_protocols",
+        read_only=True,
+        required=False,
+    )
     view_content = JSONField(
         source="algorithm_image.algorithm.view_content", read_only=True
     )
@@ -114,6 +120,7 @@ class JobSerializer(serializers.ModelSerializer):
             "started_at",
             "completed_at",
             "hanging_protocol",
+            "optional_hanging_protocols",
             "view_content",
         ]
 

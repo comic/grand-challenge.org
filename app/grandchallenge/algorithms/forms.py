@@ -206,6 +206,7 @@ class AlgorithmForm(
             "workstation",
             "workstation_config",
             "hanging_protocol",
+            "optional_hanging_protocols",
             "view_content",
             "job_create_page_markdown",
             "additional_terms_markdown",
@@ -222,6 +223,7 @@ class AlgorithmForm(
             "publications": Select2MultipleWidget,
             "modalities": Select2MultipleWidget,
             "structures": Select2MultipleWidget,
+            "optional_hanging_protocols": Select2MultipleWidget,
             "organizations": Select2MultipleWidget,
             "display_editors": Select(
                 choices=(("", "-----"), (True, "Yes"), (False, "No"))
@@ -250,7 +252,17 @@ class AlgorithmForm(
             "description": "Short description of this algorithm, max 1024 characters. This will appear in the info modal on the algorithm overview list.",
             "hanging_protocol": format_lazy(
                 (
-                    "The hanging protocol to use for this algorithm. "
+                    "The default hanging protocol to use for this algorithm. "
+                    "If a suitable protocol does not exist you can "
+                    '<a href="{}">create a new one</a>. For a list of existing '
+                    'hanging protocols, go <a href="{}">here</a>.'
+                ),
+                reverse_lazy("hanging-protocols:create"),
+                reverse_lazy("hanging-protocols:list"),
+            ),
+            "optional_hanging_protocols": format_lazy(
+                (
+                    "Other optional hanging protocols that can be used for this algorithm. "
                     "If a suitable protocol does not exist you can "
                     '<a href="{}">create a new one</a>. For a list of existing '
                     'hanging protocols, go <a href="{}">here</a>.'
@@ -285,6 +297,7 @@ class AlgorithmForm(
                 "workstation",
                 "workstation_config",
                 "hanging_protocol",
+                "optional_hanging_protocols",
                 "view_content",
                 "inputs",
                 "outputs",
@@ -385,6 +398,7 @@ class AlgorithmForPhaseForm(UserAlgorithmsForPhaseMixin, ModelForm):
             "workstation",
             "workstation_config",
             "hanging_protocol",
+            "optional_hanging_protocols",
             "view_content",
             "image_requires_gpu",
             "image_requires_memory_gb",
@@ -397,6 +411,7 @@ class AlgorithmForPhaseForm(UserAlgorithmsForPhaseMixin, ModelForm):
             "description": TextInput,
             "workstation_config": HiddenInput(),
             "hanging_protocol": HiddenInput(),
+            "optional_hanging_protocols": MultipleHiddenInput(),
             "view_content": HiddenInput(),
             "display_editors": HiddenInput(),
             "contact_email": HiddenInput(),
@@ -430,6 +445,7 @@ class AlgorithmForPhaseForm(UserAlgorithmsForPhaseMixin, ModelForm):
         *args,
         workstation_config,
         hanging_protocol,
+        optional_hanging_protocols,
         view_content,
         display_editors,
         contact_email,
@@ -448,6 +464,10 @@ class AlgorithmForPhaseForm(UserAlgorithmsForPhaseMixin, ModelForm):
         self.fields["workstation_config"].disabled = True
         self.fields["hanging_protocol"].initial = hanging_protocol
         self.fields["hanging_protocol"].disabled = True
+        self.fields[
+            "optional_hanging_protocols"
+        ].initial = optional_hanging_protocols
+        self.fields["optional_hanging_protocols"].disabled = True
         self.fields["view_content"].initial = view_content
         self.fields["view_content"].disabled = True
         self.fields["display_editors"].initial = display_editors
