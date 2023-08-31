@@ -249,7 +249,7 @@ class HangingProtocol(UUIDModel, TitleSlugDescriptionModel):
                 "svg_width_px": settings.HANGING_PROTOCOL_SVG_WIDTH,
                 "svg_height_px": settings.HANGING_PROTOCOL_SVG_HEIGHT,
                 "svg_stroke_width": settings.HANGING_PROTOCOL_SVG_WIDTH * 0.05,
-                "rects": self.svg_rects,
+                "object": self,
             }
         )
 
