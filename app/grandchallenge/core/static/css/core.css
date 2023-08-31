@@ -209,7 +209,7 @@ ul.socialaccount_providers > li {
   .text-truncate-container p{
       -webkit-line-clamp: 3;
   }
-  .carousel-img-container {
+  .carousel-img {
       height: 15rem;
   }
 }
