@@ -6,4 +6,4 @@ from grandchallenge.hanging_protocols.models import HangingProtocol
 class HangingProtocolSerializer(serializers.ModelSerializer):
     class Meta:
         model = HangingProtocol
-        fields = ["json", "title", "id", "svg_icon"]
+        fields = ["json", "title", "pk", "svg_icon"]
