@@ -40,7 +40,7 @@ class TestHangingProtocolSerializer:
         self, rf, factory, item_factory, relation, serializer
     ):
         """Each item should get the hanging protocol and content from the parent"""
-        hp = HangingProtocolFactory()
+        hp = HangingProtocolFactory(json=[{"viewport_name": "main"}])
         object = factory(hanging_protocol=hp, view_content={"main": "test"})
 
         item = item_factory(**{relation: object})
@@ -51,25 +51,33 @@ class TestHangingProtocolSerializer:
         serializer = serializer(item, context={"request": request})
 
         assert serializer.data["hanging_protocol"]["json"] == hp.json
+        assert serializer.data["hanging_protocol"]["title"] == hp.title
+        assert serializer.data["hanging_protocol"]["pk"] == str(hp.pk)
         assert serializer.data["view_content"] == {"main": "test"}
+        assert (
+            serializer.data["hanging_protocol"]["svg_icon"]
+            == """<svg width="32" height="18" fill-opacity="0">\n\n    <rect\n        x="0.8"\n        y="0.8"\n        width="30.4"\n        height="16.4"\n        stroke-width="1.6"\n    />\n\n</svg>\n"""
+        )
 
     def test_optional_hanging_protocol_serializer_field(
         self, rf, factory, item_factory, relation, serializer
     ):
         """Each item should get the optional hanging protocol from the parent"""
-        hp1, hp2 = HangingProtocolFactory.create_batch(2)
+        hps = HangingProtocolFactory.create_batch(3)
         object = factory()
-        object.optional_hanging_protocols.set([hp2, hp1])
+        object.optional_hanging_protocols.set(hps)
         item = item_factory(**{relation: object})
 
         request = rf.get("/foo")
         request.user = UserFactory()
 
         serializer = serializer(item, context={"request": request})
-        oph1 = serializer.data["optional_hanging_protocols"][0]["json"]
-        oph2 = serializer.data["optional_hanging_protocols"][1]["json"]
-        assert hp1.json in [oph1, oph2]
-        assert hp2.json in [oph1, oph2]
+        assert len(serializer.data["optional_hanging_protocols"]) == 3
+        for protocol in serializer.data["optional_hanging_protocols"]:
+            hp = next(x for x in hps if protocol["pk"] == str(x.pk))
+            assert protocol["json"] == hp.json
+            assert protocol["title"] == hp.title
+            assert protocol["svg_icon"] == hp.svg_icon
 
     def test_no_optional_hanging_protocol_serializer_field(
         self, rf, factory, item_factory, relation, serializer
