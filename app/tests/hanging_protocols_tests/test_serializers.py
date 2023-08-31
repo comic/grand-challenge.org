@@ -56,7 +56,7 @@ class TestHangingProtocolSerializer:
         assert serializer.data["view_content"] == {"main": "test"}
         assert (
             serializer.data["hanging_protocol"]["svg_icon"]
-            == """<svg width="32" height="18" fill-opacity="0">\n\n    <rect\n        x="0.8"\n        y="0.8"\n        width="30.4"\n        height="16.4"\n        stroke-width="1.6"\n    />\n\n</svg>\n"""
+            == """<svg width="32" height="18" fill-opacity="0"><rect x="0.8" y="0.8" width="30.4" height="16.4" stroke-width="1.6" /></svg>"""
         )
 
     def test_optional_hanging_protocol_serializer_field(

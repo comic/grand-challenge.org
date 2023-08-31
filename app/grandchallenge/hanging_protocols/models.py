@@ -216,7 +216,7 @@ class HangingProtocol(UUIDModel, TitleSlugDescriptionModel):
             )
 
     @property
-    def svg_icon(self):
+    def svg_icon(self) -> str:
         width = len(self.json)
         height = 1
 
