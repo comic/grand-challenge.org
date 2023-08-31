@@ -1,12 +1,12 @@
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
-from django.template import loader
+from django.utils.html import format_html
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.models import TitleSlugDescriptionModel, UUIDModel
 from grandchallenge.core.validators import JSONValidator
+from grandchallenge.subdomains.utils import reverse
 
 
 class ViewportNames(models.TextChoices):
@@ -216,42 +216,52 @@ class HangingProtocol(UUIDModel, TitleSlugDescriptionModel):
             )
 
     @property
-    def svg_rects(self):
+    def svg_icon(self):
         width = len(self.json)
         height = 1
+
         if "x" in self.json[0]:
             width = max(vi["x"] + vi["w"] for vi in self.json)
             height = max(vi["y"] + vi["h"] for vi in self.json)
 
-        width_px = settings.HANGING_PROTOCOL_SVG_WIDTH
-        height_px = settings.HANGING_PROTOCOL_SVG_HEIGHT
+        width_px = 32
+        height_px = 18
         stroke_width = width_px * 0.05
         padding = stroke_width / 2
-        rects = []
+
+        svg = format_html(
+            '<svg width="{width_px}" height="{height_px}" fill-opacity="0">',
+            width_px=width_px,
+            height_px=height_px,
+        )
+
         for i, vi in enumerate(self.json):
             w = (width_px - 2 * padding) / len(self.json)
             h = height_px - 2 * padding
             x = padding + i * w
             y = padding
+
             if "x" in self.json[0]:
                 w = (width_px - 2 * padding) * vi["w"] / width
                 h = (height_px - 2 * padding) * vi["h"] / height
                 x = padding + (width_px - 2 * padding) * vi["x"] / width
                 y = padding + (height_px - 2 * padding) * vi["y"] / height
-            rects.append({"x": x, "y": y, "w": w, "h": h})
-        return rects
 
-    @property
-    def svg_icon(self):
-        template = loader.get_template("hanging_protocols/svg_icon.html")
-        return template.render(
-            {
-                "svg_width_px": settings.HANGING_PROTOCOL_SVG_WIDTH,
-                "svg_height_px": settings.HANGING_PROTOCOL_SVG_HEIGHT,
-                "svg_stroke_width": settings.HANGING_PROTOCOL_SVG_WIDTH * 0.05,
-                "object": self,
-            }
-        )
+            svg += format_html(
+                '<rect x="{x}" y="{y}" width="{width}" height="{height}" stroke-width="{stroke_width}" />',
+                x=x,
+                y=y,
+                width=w,
+                height=h,
+                stroke_width=stroke_width,
+            )
+
+        svg += format_html("</svg>")
+
+        return svg
+
+    def get_absolute_url(self):
+        return reverse("hanging-protocols:detail", kwargs={"slug": self.slug})
 
 
 class HangingProtocolUserObjectPermission(UserObjectPermissionBase):

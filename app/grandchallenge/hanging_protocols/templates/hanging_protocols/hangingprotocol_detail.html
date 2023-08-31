@@ -19,7 +19,7 @@
 
 {% block content %}
     <h3>
-        <span style="stroke: #000">{% include './svg_icon.html' %}</span>
+        <span style="stroke: #000">{{ object.svg_icon }}</span>
         {{ object.title }}
     </h3>
     {% get_obj_perms request.user for object as "user_perms" %}
