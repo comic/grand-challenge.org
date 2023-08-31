@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.template import loader
@@ -215,15 +216,15 @@ class HangingProtocol(UUIDModel, TitleSlugDescriptionModel):
             )
 
     @property
-    def svg_icon(self):
+    def svg_rects(self):
         width = len(self.json)
         height = 1
         if "x" in self.json[0]:
             width = max(vi["x"] + vi["w"] for vi in self.json)
             height = max(vi["y"] + vi["h"] for vi in self.json)
 
-        width_px = 32
-        height_px = 18
+        width_px = settings.HANGING_PROTOCOL_SVG_WIDTH
+        height_px = settings.HANGING_PROTOCOL_SVG_HEIGHT
         stroke_width = width_px * 0.05
         padding = stroke_width / 2
         rects = []
@@ -238,14 +239,17 @@ class HangingProtocol(UUIDModel, TitleSlugDescriptionModel):
                 x = padding + (width_px - 2 * padding) * vi["x"] / width
                 y = padding + (height_px - 2 * padding) * vi["y"] / height
             rects.append({"x": x, "y": y, "w": w, "h": h})
+        return rects
 
+    @property
+    def svg_icon(self):
         template = loader.get_template("hanging_protocols/svg_icon.html")
         return template.render(
             {
-                "width_px": width_px,
-                "height_px": height_px,
-                "stroke_width": stroke_width,
-                "rects": rects,
+                "svg_width_px": settings.HANGING_PROTOCOL_SVG_WIDTH,
+                "svg_height_px": settings.HANGING_PROTOCOL_SVG_HEIGHT,
+                "svg_stroke_width": settings.HANGING_PROTOCOL_SVG_WIDTH * 0.05,
+                "rects": self.svg_rects,
             }
         )
 
