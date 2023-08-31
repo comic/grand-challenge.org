@@ -9,6 +9,7 @@ from grandchallenge.hanging_protocols.models import (
     ViewContentMixin,
 )
 from tests.factories import UserFactory
+from tests.hanging_protocols_tests.factories import HangingProtocolFactory
 
 
 @pytest.mark.django_db
@@ -410,3 +411,37 @@ def test_view_content_validation():
 
     hp = model(view_content={"main": ["test"]})
     hp.full_clean()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "json,svg",
+    (
+        (
+            [{"viewport_name": "main"}],
+            """<svg width="32" height="18" fill-opacity="0">\n\n    <rect\n        x="0.8"\n        y="0.8"\n        width="30.4"\n        height="16.4"\n        stroke-width="1.6"\n    />\n\n</svg>\n""",
+        ),
+        (
+            [{"viewport_name": "main"}, {"viewport_name": "secondary"}],
+            """<svg width="32" height="18" fill-opacity="0">\n\n    <rect\n        x="0.8"\n        y="0.8"\n        width="15.2"\n        height="16.4"\n        stroke-width="1.6"\n    />\n\n    <rect\n        x="16.0"\n        y="0.8"\n        width="15.2"\n        height="16.4"\n        stroke-width="1.6"\n    />\n\n</svg>\n""",
+        ),
+        (
+            [
+                {"h": 4, "w": 4, "x": 0, "y": 0, "viewport_name": "main"},
+                {"h": 1, "w": 1, "x": 3, "y": 3, "viewport_name": "secondary"},
+                {"h": 4, "w": 4, "x": 4, "y": 0, "viewport_name": "tertiary"},
+                {
+                    "h": 2,
+                    "w": 2,
+                    "x": 6,
+                    "y": 2,
+                    "viewport_name": "quaternary",
+                },
+            ],
+            """<svg width="32" height="18" fill-opacity="0">\n\n    <rect\n        x="0.8"\n        y="0.8"\n        width="15.2"\n        height="16.4"\n        stroke-width="1.6"\n    />\n\n    <rect\n        x="12.2"\n        y="13.1"\n        width="3.8"\n        height="4.1"\n        stroke-width="1.6"\n    />\n\n    <rect\n        x="16.0"\n        y="0.8"\n        width="15.2"\n        height="16.4"\n        stroke-width="1.6"\n    />\n\n    <rect\n        x="23.599999999999998"\n        y="9.0"\n        width="7.6"\n        height="8.2"\n        stroke-width="1.6"\n    />\n\n</svg>\n""",
+        ),
+    ),
+)
+def test_hanging_protocol_svg(json, svg):
+    hp = HangingProtocolFactory(json=json)
+    assert hp.svg_icon == svg
