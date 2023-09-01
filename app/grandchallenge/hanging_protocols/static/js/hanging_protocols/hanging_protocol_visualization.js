@@ -1,4 +1,4 @@
-possibleViewPorts =  JSON.parse(document.getElementById('possibleViewPorts').textContent);
+const possibleViewPorts =  JSON.parse(document.getElementById('possibleViewPorts').textContent);
 
 function insertAfter(newNode, existingNode) {
     existingNode.parentNode.insertBefore(newNode, existingNode.nextSibling);
