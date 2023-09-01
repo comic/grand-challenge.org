@@ -46,7 +46,7 @@ function createViewportDiv(divId, viewportNum, viewportSpec, totalHeight, totalW
     viewportDiv.style.opacity = '0.5';
     viewportDiv.style.position = 'absolute';
     viewportDiv.style.fontSize = '1.5em';
-    viewportDiv.style.zIndex = '-' + viewportSpec.order;
+    viewportDiv.style.zIndex = 20 - viewportSpec.order;
     viewportDiv.style.width = isNaN(viewportSpec.w) ? (1 / parseFloat(totalWidth) * 100).toFixed(2) + '%' : (viewportSpec.w / parseFloat(totalWidth) * 100).toFixed(2) + '%';
     viewportDiv.style.height = isNaN(viewportSpec.h) ? "100%" : (viewportSpec.h / parseFloat(totalHeight) * 100).toFixed(2) + '%';
     viewportDiv.style.left = isNaN(viewportSpec.x) ? (viewportNum / parseFloat(totalWidth) * 100).toFixed(2) + '%' : (viewportSpec.x / parseFloat(totalWidth) * 100).toFixed(2) + '%';
