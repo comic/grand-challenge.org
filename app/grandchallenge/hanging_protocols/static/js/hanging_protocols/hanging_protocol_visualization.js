@@ -37,6 +37,7 @@ function getGridDimensions(json) {
 
 function createViewportDiv(divId, viewportNum, viewportSpec, totalHeight, totalWidth) {
     let viewportDiv = document.createElement("div");
+function createViewportDiv(divId, viewportNum, viewportSpec, totalHeight, totalWidth, maxOrder) {
     viewportDiv.setAttribute('id', viewportSpec.viewport_name);
     if (possibleViewPorts.includes(viewportSpec.viewport_name)) {
         viewportDiv.style.background = '#7b8a8b';
@@ -46,7 +47,7 @@ function createViewportDiv(divId, viewportNum, viewportSpec, totalHeight, totalW
     viewportDiv.style.opacity = '0.5';
     viewportDiv.style.position = 'absolute';
     viewportDiv.style.fontSize = '1.5em';
-    viewportDiv.style.zIndex = 20 - viewportSpec.order;
+    viewportDiv.style.zIndex = (-(viewportSpec.order - maxOrder)).toFixed(0);
     viewportDiv.style.width = isNaN(viewportSpec.w) ? (1 / parseFloat(totalWidth) * 100).toFixed(2) + '%' : (viewportSpec.w / parseFloat(totalWidth) * 100).toFixed(2) + '%';
     viewportDiv.style.height = isNaN(viewportSpec.h) ? "100%" : (viewportSpec.h / parseFloat(totalHeight) * 100).toFixed(2) + '%';
     viewportDiv.style.left = isNaN(viewportSpec.x) ? (viewportNum / parseFloat(totalWidth) * 100).toFixed(2) + '%' : (viewportSpec.x / parseFloat(totalWidth) * 100).toFixed(2) + '%';
@@ -71,9 +72,10 @@ function updateHangingProtocolVisualization(parentDivId, jsonString){
         let jsonSpec = JSON.parse(jsonString);
         let validJsonSpec = jsonSpec.filter(viewPort => typeof viewPort.viewport_name !== "undefined");
         [totalHeight, totalWidth] = getGridDimensions(validJsonSpec);
+        const maxOrder = Math.max(validJsonSpec.map(v => v.order))
         removeAllChildNodes(document.getElementById(parentDivId));
         for (let i = 0; i < validJsonSpec.length; i++) {
-            createViewportDiv(parentDivId, i, validJsonSpec[i], totalHeight, totalWidth);
+            createViewportDiv(parentDivId, i, validJsonSpec[i], totalHeight, totalWidth, maxOrder);
         }
     } catch (err) {
     }
