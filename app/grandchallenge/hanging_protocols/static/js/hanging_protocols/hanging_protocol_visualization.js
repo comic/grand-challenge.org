@@ -29,15 +29,14 @@ function getGridDimensions(json) {
       }
     }
 
-    let totalWidth = (dims.x.length != json.length || dims.w.length != json.length) ? json.length : Math.max(...dims.x.map(function(num, idx) {return num+dims.w[idx]}));
-    let totalHeight = (dims.y.length != json.length || dims.h.length != json.length) ? 1 : Math.max(...dims.y.map(function(num, idx) {return num+dims.h[idx]}));
+    const totalWidth = (dims.x.length != json.length || dims.w.length != json.length) ? json.length : Math.max(...dims.x.map(function(num, idx) {return num+dims.w[idx]}));
+    const totalHeight = (dims.y.length != json.length || dims.h.length != json.length) ? 1 : Math.max(...dims.y.map(function(num, idx) {return num+dims.h[idx]}));
 
     return [totalHeight, totalWidth]
 }
 
-function createViewportDiv(divId, viewportNum, viewportSpec, totalHeight, totalWidth) {
-    let viewportDiv = document.createElement("div");
 function createViewportDiv(divId, viewportNum, viewportSpec, totalHeight, totalWidth, maxOrder) {
+    const viewportDiv = document.createElement("div");
     viewportDiv.setAttribute('id', viewportSpec.viewport_name);
     if (possibleViewPorts.includes(viewportSpec.viewport_name)) {
         viewportDiv.style.background = '#7b8a8b';
@@ -69,9 +68,9 @@ function updateHangingProtocolVisualization(parentDivId, jsonString){
     parentDivId = parentDivId || "hpVisualization";
     showOrHideVisualizationDiv(parentDivId, jsonString);
     try {
-        let jsonSpec = JSON.parse(jsonString);
-        let validJsonSpec = jsonSpec.filter(viewPort => typeof viewPort.viewport_name !== "undefined");
-        [totalHeight, totalWidth] = getGridDimensions(validJsonSpec);
+        const jsonSpec = JSON.parse(jsonString);
+        const validJsonSpec = jsonSpec.filter(viewPort => typeof viewPort.viewport_name !== "undefined");
+        const [totalHeight, totalWidth] = getGridDimensions(validJsonSpec);
         const maxOrder = Math.max(validJsonSpec.map(v => v.order))
         removeAllChildNodes(document.getElementById(parentDivId));
         for (let i = 0; i < validJsonSpec.length; i++) {
