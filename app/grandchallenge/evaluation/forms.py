@@ -289,7 +289,7 @@ class SubmissionForm(
         self.helper.layout.append(
             HTML(
                 format_lazy(
-                    "<a class='btn btn-primary' href={}> Create a new Algorithm</a>",
+                    "<a class='btn btn-primary' href={}> Create a New Algorithm</a>",
                     reverse(
                         "evaluation:phase-algorithm-create",
                         kwargs={
