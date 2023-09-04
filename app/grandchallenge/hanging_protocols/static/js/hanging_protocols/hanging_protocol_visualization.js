@@ -71,7 +71,7 @@ function updateHangingProtocolVisualization(parentDivId, jsonString){
         const jsonSpec = JSON.parse(jsonString);
         const validJsonSpec = jsonSpec.filter(viewPort => typeof viewPort.viewport_name !== "undefined");
         const [totalHeight, totalWidth] = getGridDimensions(validJsonSpec);
-        const maxOrder = Math.max(validJsonSpec.map(v => v.order));
+        const maxOrder = Math.max(...validJsonSpec.map(v => v.order));
         removeAllChildNodes(document.getElementById(parentDivId));
         for (let i = 0; i < validJsonSpec.length; i++) {
             createViewportDiv(parentDivId, i, validJsonSpec[i], totalHeight, totalWidth, maxOrder);
