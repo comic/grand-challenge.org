@@ -286,6 +286,20 @@ class SubmissionForm(
 
     def __init__(self, *args, user, phase: Phase, **kwargs):  # noqa: C901
         super().__init__(*args, user=user, phase=phase, **kwargs)
+        self.helper.layout.append(
+            HTML(
+                format_lazy(
+                    "<a class='btn btn-primary' href={}> Create a new Algorithm</a>",
+                    reverse(
+                        "evaluation:phase-algorithm-create",
+                        kwargs={
+                            "slug": phase.slug,
+                            "challenge_short_name": phase.challenge.short_name,
+                        },
+                    ),
+                )
+            )
+        )
         self.fields["creator"].queryset = get_user_model().objects.filter(
             pk=user.pk
         )
@@ -346,16 +360,9 @@ class SubmissionForm(
                 "challenge. The algorithms need to work with the following inputs: {} "
                 "and the following outputs: {}. If you have not created your "
                 "algorithm yet you can "
-                "do so <a href={}>on this page</a>.",
+                "do so below</a>.",
                 oxford_comma(self._algorithm_inputs),
                 oxford_comma(self._algorithm_outputs),
-                reverse(
-                    "evaluation:phase-algorithm-create",
-                    kwargs={
-                        "slug": phase.slug,
-                        "challenge_short_name": phase.challenge.short_name,
-                    },
-                ),
             )
         else:
             del self.fields["algorithm_image"]
