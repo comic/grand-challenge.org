@@ -1328,6 +1328,9 @@ DISALLOWED_EMAIL_DOMAINS = {
     "cerist.dz",
     "ciitvehari.edu.pk",
     "mail.dcu.ie",
+    "snu.ac.kr",
+    "cau.ac.kr",
+    "deepnoid.com",
     *blocklist,
 }
 
