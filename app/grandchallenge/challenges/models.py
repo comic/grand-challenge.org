@@ -16,6 +16,7 @@ from django.core.validators import (
     validate_slug,
 )
 from django.db import models
+from django.db.models import Sum
 from django.db.models.signals import post_delete, pre_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
@@ -35,12 +36,15 @@ from machina.apps.forum_permission.models import (
 )
 from stdimage import JPEGField
 
+from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.anatomy.models import BodyStructure
+from grandchallenge.cases.models import ImageFile
 from grandchallenge.challenges.emails import (
     send_challenge_requested_email_to_requester,
     send_challenge_requested_email_to_reviewers,
 )
 from grandchallenge.challenges.utils import ChallengeTypeChoices
+from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import (
     get_banner_path,
@@ -56,6 +60,7 @@ from grandchallenge.core.validators import (
     ExtensionValidator,
     MimeTypeValidator,
 )
+from grandchallenge.evaluation.models import Evaluation, Method
 from grandchallenge.evaluation.tasks import assign_evaluation_permissions
 from grandchallenge.evaluation.utils import (
     StatusChoices,
@@ -350,6 +355,83 @@ class Challenge(ChallengeBase):
     def upcoming_workshop_date(self):
         if self.workshop_date and self.workshop_date > datetime.date.today():
             return self.workshop_date
+
+    @cached_property
+    def algorithm_jobs(self):
+        return Job.objects.filter(
+            inputs__archive_items__archive__phase__challenge=self
+        ).distinct()
+
+    @cached_property
+    def evaluation_jobs(self):
+        return Evaluation.objects.filter(
+            submission__phase__challenge=self
+        ).distinct()
+
+    @cached_property
+    def size_in_storage_and_registry(self):
+        archive_image_storage = (
+            ImageFile.objects.filter(
+                image__componentinterfacevalue__archive_items__archive__phase__challenge=self
+            )
+            .distinct()
+            .aggregate(Sum("size_in_storage"))
+        )
+        archive_file_storage = (
+            ComponentInterfaceValue.objects.filter(
+                archive_items__archive__phase__challenge=self
+            )
+            .distinct()
+            .aggregate(Sum("size_in_storage"))
+        )
+
+        output_image_storage = (
+            ImageFile.objects.filter(
+                image__componentinterfacevalue__evaluation_evaluations_as_input__in=self.evaluation_jobs
+            )
+            .distinct()
+            .aggregate(Sum("size_in_storage"))
+        )
+        output_file_storage = (
+            ComponentInterfaceValue.objects.filter(
+                evaluation_evaluations_as_input__in=self.evaluation_jobs
+            )
+            .distinct()
+            .aggregate(Sum("size_in_storage"))
+        )
+
+        algorithm_storage = (
+            AlgorithmImage.objects.filter(job__in=self.algorithm_jobs)
+            .distinct()
+            .aggregate(Sum("size_in_storage"), Sum("size_in_registry"))
+        )
+
+        method_storage = (
+            Method.objects.filter(phase__challenge=self)
+            .distinct()
+            .aggregate(Sum("size_in_storage"), Sum("size_in_registry"))
+        )
+
+        return (
+            archive_image_storage,
+            archive_file_storage,
+            output_image_storage,
+            output_file_storage,
+            algorithm_storage,
+            method_storage,
+        )
+
+    @cached_property
+    def compute_cost_euro_millicents(self):
+        algorithm_job_costs = self.algorithm_jobs.aggregate(
+            Sum("compute_cost_euro_millicents")
+        )
+
+        evaluation_costs = self.evaluation_jobs.aggregate(
+            Sum("compute_cost_euro_millicents")
+        )
+
+        return algorithm_job_costs, evaluation_costs
 
     def save(self, *args, **kwargs):
         adding = self._state.adding

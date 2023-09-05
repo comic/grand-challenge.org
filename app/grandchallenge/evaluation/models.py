@@ -20,7 +20,6 @@ from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.archives.models import Archive
-from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.models import (
     ComponentImage,
     ComponentInterface,
@@ -147,7 +146,7 @@ class Phase(UUIDModel, ViewContentMixin):
     SubmissionKindChoices = SubmissionKindChoices
 
     challenge = models.ForeignKey(
-        Challenge, on_delete=models.PROTECT, editable=False
+        "challenges.Challenge", on_delete=models.PROTECT, editable=False
     )
     archive = models.ForeignKey(
         Archive,
@@ -1083,7 +1082,7 @@ class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
         SUM = "SUM", "Sum"
 
     challenge = models.ForeignKey(
-        Challenge, on_delete=models.PROTECT, editable=False
+        "challenges.Challenge", on_delete=models.PROTECT, editable=False
     )
     phases = models.ManyToManyField(Phase, through="CombinedLeaderboardPhase")
     combination_method = models.CharField(
