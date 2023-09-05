@@ -143,8 +143,8 @@
                     <dt>Submission File</dt>
                     <dd>
                         {% if object.predictions_file %}
-                            <a href="{{ object.predictions_file.url }}" class="btn btn-primary">
-                                <i class="fa fa-download"></i> {{ object.predictions_file.url.name }}
+                            <a href="{{ object.predictions_file.url }}">
+                                <i class="fa fa-download"></i> {{ object.predictions_file.name }}
                             </a>
                         {% else %}
                             No submission file provided.
