@@ -57,7 +57,7 @@ django-summernote = "*"
 bleach = {version = "*", extras = ["css"]}
 jsonschema = "*"
 django-autocomplete-light = "*"
-django-storages = ">=1.13.1"
+django-storages = ">=1.13.1,<1.14"
 boto3 = ">1.18.8"
 whitenoise = "*"
 brotli = "*"
