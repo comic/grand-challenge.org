@@ -98,7 +98,6 @@
 
 <span class="kn">from</span> <span class="nn">grandchallenge.algorithms.models</span> <span class="kn">import</span> <span class="n">AlgorithmImage</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.archives.models</span> <span class="kn">import</span> <span class="n">Archive</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.challenges.models</span> <span class="kn">import</span> <span class="n">Challenge</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.models</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">ComponentImage</span><span class="p">,</span>
     <span class="n">ComponentInterface</span><span class="p">,</span>
@@ -227,7 +226,7 @@
     <span class="n">SubmissionKindChoices</span> <span class="o">=</span> <span class="n">SubmissionKindChoices</span>
 
     <span class="n">challenge</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
-        <span class="n">Challenge</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span>
+        <span class="s2">&quot;challenges.Challenge&quot;</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span>
     <span class="p">)</span>
     <span class="n">archive</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="n">Archive</span><span class="p">,</span>
@@ -1176,7 +1175,7 @@
         <span class="n">SUM</span> <span class="o">=</span> <span class="s2">&quot;SUM&quot;</span><span class="p">,</span> <span class="s2">&quot;Sum&quot;</span>
 
     <span class="n">challenge</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
-        <span class="n">Challenge</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span>
+        <span class="s2">&quot;challenges.Challenge&quot;</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span>
     <span class="p">)</span>
     <span class="n">phases</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span><span class="n">Phase</span><span class="p">,</span> <span class="n">through</span><span class="o">=</span><span class="s2">&quot;CombinedLeaderboardPhase&quot;</span><span class="p">)</span>
     <span class="n">combination_method</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
