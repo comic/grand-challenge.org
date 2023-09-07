@@ -13,8 +13,8 @@
     {% else %}
         <option value="{{ widget.attrs.widget_choices.UNDEFINED }}">Choose data source...</option>
     {% endif %}
-    <option value="{{ widget.attrs.widget_choices.IMAGE_SEARCH }}">Select previously uploaded image</option>
-    <option value="{{ widget.attrs.widget_choices.IMAGE_UPLOAD }}">Upload new image</option>
+    <option value="{{ widget.attrs.widget_choices.IMAGE_SEARCH }}">Select an existing image</option>
+    <option value="{{ widget.attrs.widget_choices.IMAGE_UPLOAD }}">Upload a new image</option>
 </select>
 
 <div id="values-{{ widget.name }}">
