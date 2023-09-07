@@ -357,7 +357,7 @@ class SubmissionForm(
                     },
                 ),
             )
-            if not self.fields["algorithm_image"].queryset:
+            if not self.fields["algorithm_image"]:
                 self.helper.layout = Layout(
                     ButtonHolder(
                         HTML(
