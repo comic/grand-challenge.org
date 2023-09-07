@@ -368,12 +368,8 @@ class SubmissionForm(
                                 "<p>The algorithm needs to have {} as inputs, and {} as outputs to be submitted to this phase</p>"
                                 "</div>"
                                 "<a class='btn btn-primary' href={}> Create a New Algorithm</a>",
-                                oxford_comma(
-                                    self._phase.algorithm_inputs.all()
-                                ),
-                                oxford_comma(
-                                    self._phase.algorithm_outputs.all()
-                                ),
+                                oxford_comma(self._algorithm_inputs),
+                                oxford_comma(self._algorithm_outputs),
                                 reverse(
                                     "evaluation:phase-algorithm-create",
                                     kwargs={
