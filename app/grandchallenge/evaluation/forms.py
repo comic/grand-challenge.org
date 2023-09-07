@@ -1,7 +1,7 @@
 from bleach import clean
 from crispy_forms.bootstrap import Tab, TabHolder
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import HTML, ButtonHolder, Layout, Submit
+from crispy_forms.layout import HTML, ButtonHolder, Field, Layout, Submit
 from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -286,20 +286,7 @@ class SubmissionForm(
 
     def __init__(self, *args, user, phase: Phase, **kwargs):  # noqa: C901
         super().__init__(*args, user=user, phase=phase, **kwargs)
-        self.helper.layout.append(
-            HTML(
-                format_lazy(
-                    "<a class='btn btn-primary' href={}> Create a New Algorithm</a>",
-                    reverse(
-                        "evaluation:phase-algorithm-create",
-                        kwargs={
-                            "slug": phase.slug,
-                            "challenge_short_name": phase.challenge.short_name,
-                        },
-                    ),
-                )
-            )
-        )
+
         self.fields["creator"].queryset = get_user_model().objects.filter(
             pk=user.pk
         )
@@ -352,7 +339,6 @@ class SubmissionForm(
             ].queryset = self.user_active_images_for_phase.order_by(
                 "algorithm__title"
             )
-
             self._algorithm_inputs = self._phase.algorithm_inputs.all()
             self._algorithm_outputs = self._phase.algorithm_outputs.all()
             self.fields["algorithm_image"].help_text = format_lazy(
@@ -360,10 +346,46 @@ class SubmissionForm(
                 "challenge. The algorithms need to work with the following inputs: {} "
                 "and the following outputs: {}. If you have not created your "
                 "algorithm yet you can "
-                "do so below</a>.",
+                "do so <a href={}>on this page</a>.",
                 oxford_comma(self._algorithm_inputs),
                 oxford_comma(self._algorithm_outputs),
+                reverse(
+                    "evaluation:phase-algorithm-create",
+                    kwargs={
+                        "slug": phase.slug,
+                        "challenge_short_name": phase.challenge.short_name,
+                    },
+                ),
             )
+            if not self.fields["algorithm_image"].queryset:
+                self.helper.layout = Layout(
+                    ButtonHolder(
+                        HTML(
+                            format_lazy(
+                                "<div class='alert alert-info'>"
+                                "<h4> You do not have any algorithms that can be submitted to this challenge.</h4>"
+                                "<p>You can create a new algorithm for this phase by clicking the button below.</p> "
+                                "<p>The algorithm needs to have {} as inputs, and {} as outputs to be submitted to this phase</p>"
+                                "</div>"
+                                "<a class='btn btn-primary' href={}> Create a New Algorithm</a>",
+                                oxford_comma(
+                                    self._phase.algorithm_inputs.all()
+                                ),
+                                oxford_comma(
+                                    self._phase.algorithm_outputs.all()
+                                ),
+                                reverse(
+                                    "evaluation:phase-algorithm-create",
+                                    kwargs={
+                                        "slug": phase.slug,
+                                        "challenge_short_name": phase.challenge.short_name,
+                                    },
+                                ),
+                            )
+                        )
+                    ),
+                    Field("algorithm_image", type="hidden"),
+                )
         else:
             del self.fields["algorithm_image"]
 
