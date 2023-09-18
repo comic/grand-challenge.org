@@ -28,13 +28,29 @@ def clean(html: str):
 
 
 @register.filter
-def md2html(markdown: str | None, link_blank_target=False):
+def md2html_email(markdown: str | None):
+    return md2html(
+        markdown=markdown,
+        link_blank_target=True,
+        create_permalink_for_headers=False,
+    )
+
+
+@register.filter
+def md2html(
+    markdown: str | None,
+    link_blank_target=False,
+    create_permalink_for_headers=True,
+):
     """Convert markdown to clean html"""
 
     extensions = settings.MARKDOWNX_MARKDOWN_EXTENSIONS
 
     if link_blank_target:
         extensions.append(LinkBlankTargetExtension())
+
+    if create_permalink_for_headers:
+        extensions.append(settings.MARKDOWNX_MARKDOWN_PERMALINK_EXTENSION)
 
     html = render_markdown(
         text=markdown or "",

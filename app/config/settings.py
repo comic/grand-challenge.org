@@ -779,15 +779,16 @@ BLEACH_STRIP = strtobool(os.environ.get("BLEACH_STRIP", "True"))
 
 # The markdown processor
 MARKDOWNX_MEDIA_PATH = datetime.now().strftime("i/%Y/%m/%d/")
+MARKDOWNX_MARKDOWN_PERMALINK_EXTENSION = TocExtension(
+    permalink=True,
+    permalink_class="headerlink text-muted small pl-1",
+)
 MARKDOWNX_MARKDOWN_EXTENSIONS = [
     "markdown.extensions.fenced_code",
     "markdown.extensions.tables",
     "markdown.extensions.sane_lists",
     "markdown.extensions.codehilite",
     "markdown.extensions.attr_list",
-    TocExtension(
-        permalink=True, permalink_class="headerlink text-muted small pl-1"
-    ),
     BS4Extension(),
 ]
 MARKDOWNX_MARKDOWNIFY_FUNCTION = (
