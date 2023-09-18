@@ -273,11 +273,9 @@
                         {% csrf_token %}
                         <input type="hidden" name="published"
                                value="true">
-                        {% if object.status == object.SUCCESS %}
                         <button type="submit" class="btn btn-success">
                             Publish this result on the leaderboard(s)
                         </button>
-                        {% endif %}
                     </form>
                 {% endif %}
             </div>
