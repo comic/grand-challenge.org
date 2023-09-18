@@ -258,9 +258,11 @@
                         {% csrf_token %}
                         <input type="hidden" name="published"
                                value="false">
+                        {% if object.status == object.SUCCESS %}
                         <button type="submit" class="btn btn-danger">
                             Exclude this result from the leaderboard(s)
                         </button>
+                        {% endif %}
                     </form>
                 {% else %}
                     <i class="fas fa-eye-slash text-danger"></i> This result is not
@@ -271,9 +273,11 @@
                         {% csrf_token %}
                         <input type="hidden" name="published"
                                value="true">
+                        {% if object.status == object.SUCCESS %}
                         <button type="submit" class="btn btn-success">
                             Publish this result on the leaderboard(s)
                         </button>
+                        {% endif %}
                     </form>
                 {% endif %}
             </div>
