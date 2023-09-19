@@ -373,6 +373,7 @@ def _get_shim_env_vars(*, original_config):
             val=entrypoint
         ),
         "no_proxy": "amazonaws.com",
+        "PYTHONUNBUFFERED": "1",
     }
 
 
