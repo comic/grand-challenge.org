@@ -58,6 +58,7 @@ def test_workstation_config_create_view(client):
         method=client.post,
         data={"title": "foo"},
     )
+    assert response.status_code == 200
     assert WorkstationConfig.objects.count() == 1
     assert WorkstationConfig.objects.get(title="foo").creator == user
 
@@ -93,6 +94,7 @@ def test_workstation_config_update_view(client):
         method=client.post,
         data={"title": "bar"},
     )
+    assert response.status_code == 200
     wc.refresh_from_db()
     assert wc.title == "bar"
 
