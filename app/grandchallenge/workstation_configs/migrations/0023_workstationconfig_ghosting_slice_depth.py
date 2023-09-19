@@ -17,6 +17,7 @@ class Migration(migrations.Migration):
             name="ghosting_slice_depth",
             field=models.PositiveSmallIntegerField(
                 default=3,
+                blank=True,
                 help_text="The number of slices a polygon annotation should remain visible for on slices surrounding the annotation slice.",
             ),
         ),
