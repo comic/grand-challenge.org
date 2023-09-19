@@ -29,17 +29,22 @@ def clean(html: str):
 
 
 @register.filter
+def md2html(markdown: str | None):
+    """Filter to convert markdown to clean html"""
+    return markdown_to_clean_html(markdown)
+
+
+@register.filter
 def md2email_html(markdown: str | None):
-    """Converts markdown to clean html intended for emailing"""
-    return md2html(
+    """Filter to convert markdown to clean html intended for emailing"""
+    return markdown_to_clean_html(
         markdown,
         link_blank_target=True,
         create_permalink_for_headers=False,
     )
 
 
-@register.filter
-def md2html(
+def markdown_to_clean_html(
     markdown: str | None,
     *,
     link_blank_target=False,
