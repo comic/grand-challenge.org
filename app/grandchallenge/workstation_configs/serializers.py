@@ -66,7 +66,6 @@ class WorkstationConfigSerializer(ModelSerializer):
     default_image_interpolation = CharField(
         source="get_default_image_interpolation_display", read_only=True
     )
-    ghosting_slice_depth = IntegerField()
     default_overlay_alpha = FloatField()
     default_zoom_scale = FloatField()
 

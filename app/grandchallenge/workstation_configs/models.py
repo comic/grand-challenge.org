@@ -76,7 +76,6 @@ OVERLAY_SEGMENTS_SCHEMA = {
     },
 }
 
-
 KEY_BINDINGS_SCHEMA = {
     "$schema": "http://json-schema.org/draft-06/schema",
     "$id": "http://example.com/example.json",
@@ -203,9 +202,8 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         help_text="The orientation that defines the 3D-intersection plane used to render slabs of 3D images",
     )
 
-    ghosting_slice_depth = models.IntegerField(
+    ghosting_slice_depth = models.PositiveSmallIntegerField(
         default=3,
-        validators=[MinValueValidator(limit_value=0)],
         help_text="The number of slices a polygon annotation should remain visible for on slices surrounding the annotation slice.",
     )
 
