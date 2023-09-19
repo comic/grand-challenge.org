@@ -206,7 +206,7 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
     ghosting_slice_depth = models.IntegerField(
         default=3,
         validators=[MinValueValidator(limit_value=0)],
-        help_text="The number of slices a polygon annotation should remain visible for on slices surrounding the annotation slice."
+        help_text="The number of slices a polygon annotation should remain visible for on slices surrounding the annotation slice.",
     )
 
     overlay_luts = models.ManyToManyField(
@@ -524,7 +524,6 @@ class WindowPreset(TitleSlugDescriptionModel):
 
 
 class LookUpTable(TitleSlugDescriptionModel):
-
     COLOR_INTERPOLATION_RGB = "RGB"
     COLOR_INTERPOLATION_HLS = "HLS"
     COLOR_INTERPOLATION_HLS_POS = "HLSpos"
