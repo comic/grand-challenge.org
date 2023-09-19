@@ -47,7 +47,7 @@ def md2html(
 ):
     """Convert markdown to clean html"""
 
-    extensions = settings.MARKDOWNX_MARKDOWN_EXTENSIONS
+    extensions = [*settings.MARKDOWNX_MARKDOWN_EXTENSIONS]
 
     if link_blank_target:
         extensions.append(LinkBlankTargetExtension())
