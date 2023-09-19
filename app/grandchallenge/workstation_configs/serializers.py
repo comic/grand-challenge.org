@@ -1,4 +1,4 @@
-from rest_framework.fields import CharField, FloatField, IntegerField
+from rest_framework.fields import CharField, FloatField
 from rest_framework.relations import SlugRelatedField
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
