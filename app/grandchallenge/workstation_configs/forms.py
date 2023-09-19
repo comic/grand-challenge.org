@@ -26,6 +26,7 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
             "default_overlay_lut",
             "default_image_interpolation",
             "default_overlay_interpolation",
+            "ghosting_slice_depth",
             "overlay_segments",
             "key_bindings",
             "default_zoom_scale",

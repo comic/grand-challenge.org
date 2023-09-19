@@ -1,4 +1,4 @@
-from rest_framework.fields import CharField, FloatField
+from rest_framework.fields import CharField, FloatField, IntegerField
 from rest_framework.relations import SlugRelatedField
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
@@ -66,6 +66,7 @@ class WorkstationConfigSerializer(ModelSerializer):
     default_image_interpolation = CharField(
         source="get_default_image_interpolation_display", read_only=True
     )
+    ghosting_slice_depth = IntegerField()
     default_overlay_alpha = FloatField()
     default_zoom_scale = FloatField()
 
@@ -92,6 +93,7 @@ class WorkstationConfigSerializer(ModelSerializer):
             "default_overlay_lut",
             "default_overlay_interpolation",
             "default_image_interpolation",
+            "ghosting_slice_depth",
             "overlay_segments",
             "key_bindings",
             "default_zoom_scale",

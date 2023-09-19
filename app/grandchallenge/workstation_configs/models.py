@@ -203,6 +203,12 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         help_text="The orientation that defines the 3D-intersection plane used to render slabs of 3D images",
     )
 
+    ghosting_slice_depth = models.IntegerField(
+        default=3,
+        validators=[MinValueValidator(limit_value=0)],
+        help_text="The number of slices a polygon annotation should remain visible for on slices surrounding the annotation slice."
+    )
+
     overlay_luts = models.ManyToManyField(
         to="LookUpTable",
         blank=True,
