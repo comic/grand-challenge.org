@@ -11,7 +11,6 @@ from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
 from django.urls import reverse
 from machina import MACHINA_MAIN_STATIC_DIR, MACHINA_MAIN_TEMPLATE_DIR
-from markdown.extensions.toc import TocExtension
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import ignore_logger
@@ -785,9 +784,6 @@ MARKDOWNX_MARKDOWN_EXTENSIONS = [
     "markdown.extensions.sane_lists",
     "markdown.extensions.codehilite",
     "markdown.extensions.attr_list",
-    TocExtension(
-        permalink=True, permalink_class="headerlink text-muted small pl-1"
-    ),
     BS4Extension(),
 ]
 MARKDOWNX_MARKDOWNIFY_FUNCTION = (

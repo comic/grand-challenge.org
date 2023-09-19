@@ -22,7 +22,7 @@
             {# The html email body is set to width:600px #}
             <div class="bg-white rounded p-2" style="width:600px;">
                 <p>Dear user, </p>
-                {{ object.body|md2html }}
+                {{ object.body|md2email_html }}
                 <p>&mdash; Your Grand Challenge Team</p>
             </div>
         </div>

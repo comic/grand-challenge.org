@@ -9,7 +9,7 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.utils.timezone import now
 
-from grandchallenge.core.templatetags.bleach import md2html
+from grandchallenge.core.templatetags.bleach import md2email_html
 from grandchallenge.emails.models import Email
 from grandchallenge.emails.utils import SendActionChoices
 from grandchallenge.subdomains.utils import reverse
@@ -87,7 +87,7 @@ def send_bulk_email(action, email_pk):
         return
     subject = email.subject
     body = email.body
-    html_body = md2html(body)
+    html_body = md2email_html(body)
     receivers = get_receivers(action=action)
     paginator = Paginator(receivers, 100)
     site = Site.objects.get_current()
