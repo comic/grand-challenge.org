@@ -171,6 +171,13 @@ class ChallengeStatistics(TemplateView):
             .order_by("created__year", "created__month", "phase__pk")
         )
 
+        creators = (
+            Submission.objects.filter(phase__in=public_phases)
+            .values("phase__pk")
+            .annotate(creators_count=Count("creator"))
+            .order_by("phase__pk")
+        )
+
         context.update(
             {
                 "participants": world_map(
@@ -213,6 +220,21 @@ class ChallengeStatistics(TemplateView):
                     short_name=self.request.challenge.short_name,
                     status=ChallengeRequest.ChallengeRequestStatusChoices.ACCEPTED,
                 ).first(),
+                "creators": stacked_bar(
+                    values=[
+                        {
+                            "Creators": datum["creators_count"],
+                            "Phase": datum["phase__pk"],
+                        }
+                        for datum in creators
+                    ],
+                    lookup="Creators",
+                    title="Creators per Phase",
+                    facet="Phase",
+                    domain=[
+                        (phase.pk, phase.title) for phase in public_phases
+                    ],
+                ),
             }
         )
 

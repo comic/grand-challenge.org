@@ -48,6 +48,13 @@
         {% endfor %}
     </dl>
 
+    <dl class="inline">
+        {% for phase_title, creators_count in creators.totals.items %}
+            <dt>Total unique submitters to the {{ phase_title }} phase</dt>
+            <dd>{{ creators_count|intcomma }}</dd>
+        {% endfor %}
+    </dl>
+
     {% if perms.challenges.change_challenge %}
         <h4>Submission limit monitoring</h4>
         <p>Percentage of submissions made to each algorithm submission phase out of the maximum number of submissions defined for the respective phase.</p>
