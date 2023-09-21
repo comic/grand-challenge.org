@@ -959,7 +959,7 @@ class CombinedLeaderboardDelete(
 
     def get_success_url(self):
         return reverse(
-            "update",
+            "challenge-update",
             kwargs={
                 "challenge_short_name": self.request.challenge.short_name,
             },
