@@ -247,36 +247,38 @@
                 </div>
             {% endif %}
 
-            <div class="card-body">
-                <h3 class="card-title">Visibility</h3>
+            {% if object.status == object.SUCCESS %}
+                <div class="card-body">
+                    <h3 class="card-title">Visibility</h3>
 
-                {% if object.published %}
-                    <i class="fas fa-eye"></i> This result is published on the
-                    leaderboard(s)
-                    <form method="post"
-                          action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=object.pk %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="published"
-                               value="false">
-                        <button type="submit" class="btn btn-danger">
-                            Exclude this result from the leaderboard(s)
-                        </button>
-                    </form>
-                {% else %}
-                    <i class="fas fa-eye-slash text-danger"></i> This result is not
-                    published on the leaderboard(s)
-                    <br>
-                    <form method="post"
-                          action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=object.pk %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="published"
-                               value="true">
-                        <button type="submit" class="btn btn-success">
-                            Publish this result on the leaderboard(s)
-                        </button>
-                    </form>
-                {% endif %}
-            </div>
+                    {% if object.published %}
+                        <i class="fas fa-eye"></i> This result is published on the
+                        leaderboard(s)
+                        <form method="post"
+                              action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=object.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="published"
+                                   value="false">
+                            <button type="submit" class="btn btn-danger">
+                                Exclude this result from the leaderboard(s)
+                            </button>
+                        </form>
+                    {% else %}
+                        <i class="fas fa-eye-slash text-danger"></i> This result is not
+                        published on the leaderboard(s)
+                        <br>
+                        <form method="post"
+                              action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=object.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="published"
+                                   value="true">
+                            <button type="submit" class="btn btn-success">
+                                Publish this result on the leaderboard(s)
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            {% endif %}
 
             {% if predictions %}
                 <div class="card-body">
