@@ -610,3 +610,46 @@ def test_combined_leaderboard_ranks(combined_ranks, expected_ranks):
     combined_ranks = [{"combined_rank": cr} for cr in combined_ranks]
     CombinedLeaderboard._rank_combined_rank_scores(combined_ranks)
     assert [cr["rank"] for cr in combined_ranks] == expected_ranks
+
+
+@pytest.mark.django_db
+def test_count_valid_archive_items():
+    archive = ArchiveFactory()
+    phase = PhaseFactory(archive=archive)
+    i1, i2, i3 = ComponentInterfaceFactory.create_batch(3)
+
+    phase.algorithm_inputs.set([i1, i2])
+
+    # Valid archive item
+    ai1 = ArchiveItemFactory(archive=archive)
+    ai1.values.add(ComponentInterfaceValueFactory(interface=i1))
+    ai1.values.add(ComponentInterfaceValueFactory(interface=i2))
+
+    # Valid, but with extra value
+    ai2 = ArchiveItemFactory(archive=archive)
+    ai2.values.add(ComponentInterfaceValueFactory(interface=i1))
+    ai2.values.add(ComponentInterfaceValueFactory(interface=i2))
+    ai2.values.add(ComponentInterfaceValueFactory(interface=i3))
+
+    # Invalid, missing all values
+    _ = ArchiveItemFactory(archive=archive)
+
+    # Invalid, incomplete
+    ai4 = ArchiveItemFactory(archive=archive)
+    ai4.values.add(ComponentInterfaceValueFactory(interface=i1))
+
+    # Invalid, incomplete but right number of values
+    ai5 = ArchiveItemFactory(archive=archive)
+    ai5.values.add(ComponentInterfaceValueFactory(interface=i1))
+    ai5.values.add(ComponentInterfaceValueFactory(interface=i3))
+
+    cciv1 = ComponentInterfaceValueFactory(interface=i1)
+    cciv2 = ComponentInterfaceValueFactory(interface=i2)
+
+    # Valid, reusing interfaces
+    ai6 = ArchiveItemFactory(archive=archive)
+    ai6.values.set([cciv1, cciv2])
+    ai7 = ArchiveItemFactory(archive=archive)
+    ai7.values.set([cciv1, cciv2])
+
+    assert {*phase.valid_archive_items} == {ai1, ai2, ai6, ai7}
