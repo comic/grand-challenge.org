@@ -61,8 +61,11 @@
                 </p>
                 {% if phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM %}
                     <p>
-                        Algorithm jobs created for this phase will have a time limit of
-                        {{ phase.algorithm_time_limit|naturaldelta }} per case.
+                        For each submission, {{ phase.count_valid_archive_items }}
+                        algorithm job{{ phase.count_valid_archive_items|pluralize }} will be created
+                        from the {{ phase.count_valid_archive_items }} valid item{{ phase.count_valid_archive_items|pluralize }}
+                        in <a href="{{ phase.archive.get_absolute_url }}">{{ phase.archive }}</a>.
+                        Each individual algorithm job will have a time limit of {{ phase.algorithm_time_limit|naturaldelta }}.
                     </p>
                 {% endif %}
                 <p>

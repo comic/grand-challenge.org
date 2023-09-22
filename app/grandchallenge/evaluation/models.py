@@ -9,6 +9,7 @@ from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.db.models import Count, Q
 from django.db.transaction import on_commit
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -19,7 +20,7 @@ from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.algorithms.models import AlgorithmImage
-from grandchallenge.archives.models import Archive
+from grandchallenge.archives.models import Archive, ArchiveItem
 from grandchallenge.components.models import (
     ComponentImage,
     ComponentInterface,
@@ -754,6 +755,25 @@ class Phase(UUIDModel, ViewContentMixin):
             )
         except ObjectDoesNotExist:
             return None
+
+    @cached_property
+    def valid_archive_items(self):
+        """Returns the archive items that are valid for this phase"""
+        if self.archive and self.algorithm_inputs:
+            return self.archive.items.annotate(
+                interface_match_count=Count(
+                    "values",
+                    filter=Q(
+                        values__interface__in={*self.algorithm_inputs.all()}
+                    ),
+                )
+            ).filter(interface_match_count=len(self.algorithm_inputs.all()))
+        else:
+            return ArchiveItem.objects.none()
+
+    @cached_property
+    def count_valid_archive_items(self):
+        return self.valid_archive_items.count()
 
 
 class PhaseUserObjectPermission(UserObjectPermissionBase):
