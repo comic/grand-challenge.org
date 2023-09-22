@@ -203,7 +203,7 @@
         <div class="card card-danger border-danger">
             <div class="card-header bg-danger text-white">Evaluation Admin</div>
 
-            {% if incomplete_jobs and object.status != object.SUCCESS %}
+            {% if object.status != object.SUCCESS and incomplete_jobs %}
                 <div class="card-body">
                     <h3 class="card-title">Prerequisite Jobs</h3>
 
