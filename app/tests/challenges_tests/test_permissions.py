@@ -21,7 +21,9 @@ def test_challenge_logged_in_permissions(view, client, challenge_set):
 @pytest.mark.django_db
 def test_challenge_update_permissions(client, two_challenge_sets):
     validate_admin_only_view(
-        two_challenge_set=two_challenge_sets, viewname="update", client=client
+        two_challenge_set=two_challenge_sets,
+        viewname="challenge-update",
+        client=client,
     )
 
 
