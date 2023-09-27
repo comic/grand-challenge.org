@@ -2,6 +2,7 @@
 {% load url %}
 {% load humanize %}
 {% load static %}
+{% load costs %}
 
 {% block title %}
     Statistics - {{ block.super }}
@@ -64,7 +65,7 @@
                 {% if phase.total_number_of_submissions_allowed %}
                     <div class="col-3">
                         <div class="progress">
-                            <div class="progress-bar {% if phase.percent_of_total_submissions_allowed == 100 %}bg-danger {% elif phase.percent_of_total_submissions_allowed > 70 %}bg-warning {% else %} bg-success {% endif %}" style="width: {{ phase.percent_of_total_submissions_allowed }}%" role="progressbar" aria-valuenow="{{ phase.percent_of_total_submissions_allowed }}" aria-valuemin="0" aria-valuemax="100">{{ phase.percent_of_total_submissions_allowed }}%</div>
+                            <div class="progress-bar {% if phase.percent_of_total_submissions_allowed >= 100 %}bg-danger {% elif phase.percent_of_total_submissions_allowed > 70 %}bg-warning {% else %} bg-success {% endif %}" style="width: {{ phase.percent_of_total_submissions_allowed }}%" role="progressbar" aria-valuenow="{{ phase.percent_of_total_submissions_allowed }}" aria-valuemin="0" aria-valuemax="100">{{ phase.percent_of_total_submissions_allowed }}%</div>
                         </div>
                     </div>
                 {% else %}
@@ -76,6 +77,18 @@
 
     {% if perms.challenges.view_challengerequest %}
         <h4>Estimated Costs</h4>
+
+        <dl class="inline">
+            <dt>Total Compute Costs</dt>
+            <dd>{{ challenge.compute_cost_euro_millicents|millicents_to_euro }}</dd>
+
+            <dt>Object Storage Costs per Year</dt>
+            <dd>{{ challenge.size_in_storage|storage_bytes_to_euro_per_year }}</dd>
+
+            <dt>Registry Storage Costs per Year</dt>
+            <dd>{{ challenge.size_in_registry|registry_bytes_to_euro_per_year }}</dd>
+        </dl>
+
         {% include 'pages/phase_costs_partial.html' with phases=algorithm_phases statistics_for_phases=statistics_for_phases %}
 
         {% if challenge_request.budget %}

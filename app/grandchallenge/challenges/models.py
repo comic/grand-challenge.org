@@ -318,11 +318,30 @@ class Challenge(ChallengeBase):
         default="",
         help_text="This email will be listed as the contact email for the challenge and will be visible to all users of Grand Challenge.",
     )
+
     accumulated_compute_cost_in_cents = models.IntegerField(
         default=0, blank=True
     )
     accumulated_docker_storage_cost_in_cents = models.IntegerField(
         default=0, blank=True
+    )
+
+    compute_cost_euro_millicents = models.PositiveIntegerField(
+        # We store euro here as the costs were incurred at a time when
+        # the exchange rate may have been different
+        editable=False,
+        default=0,
+        help_text="The total compute cost for this job in Euro Cents, including Tax",
+    )
+    size_in_storage = models.PositiveBigIntegerField(
+        editable=False,
+        default=0,
+        help_text="The number of bytes stored in the storage backend",
+    )
+    size_in_registry = models.PositiveBigIntegerField(
+        editable=False,
+        default=0,
+        help_text="The number of bytes stored in the registry",
     )
 
     objects = ChallengeManager()
@@ -368,8 +387,7 @@ class Challenge(ChallengeBase):
             submission__phase__challenge=self
         ).distinct()
 
-    @cached_property
-    def size_in_storage_and_registry(self):
+    def update_size_in_storage_and_registry(self):
         archive_image_storage = (
             ImageFile.objects.filter(
                 image__componentinterfacevalue__archive_items__archive__phase__challenge=self
@@ -412,17 +430,23 @@ class Challenge(ChallengeBase):
             .aggregate(Sum("size_in_storage"), Sum("size_in_registry"))
         )
 
-        return (
+        items = [
             archive_image_storage,
             archive_file_storage,
             output_image_storage,
             output_file_storage,
             algorithm_storage,
             method_storage,
+        ]
+
+        self.size_in_storage = sum(
+            item["size_in_storage__sum"] or 0 for item in items
+        )
+        self.size_in_registry = sum(
+            item.get("size_in_registry__sum") or 0 for item in items
         )
 
-    @cached_property
-    def compute_cost_euro_millicents(self):
+    def update_compute_cost_euro_millicents(self):
         algorithm_job_costs = self.algorithm_jobs.aggregate(
             Sum("compute_cost_euro_millicents")
         )
@@ -431,7 +455,11 @@ class Challenge(ChallengeBase):
             Sum("compute_cost_euro_millicents")
         )
 
-        return algorithm_job_costs, evaluation_costs
+        items = [algorithm_job_costs, evaluation_costs]
+
+        self.compute_cost_euro_millicents = sum(
+            item["compute_cost_euro_millicents__sum"] or 0 for item in items
+        )
 
     def save(self, *args, **kwargs):
         adding = self._state.adding

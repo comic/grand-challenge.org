@@ -200,3 +200,21 @@ def update_challenge_cost_statistics():
     calculate_costs_per_challenge(phase_stats=phase_stats)
     monthly_challenge_costs = get_monthly_challenge_costs(phase_stats)
     cache.set("monthly_challenge_costs", monthly_challenge_costs, timeout=None)
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def update_compute_costs_and_storage_size():
+    challenges = Challenge.objects.all()
+
+    for c in challenges:
+        c.update_size_in_storage_and_registry()
+        c.update_compute_cost_euro_millicents()
+
+    Challenge.objects.bulk_update(
+        challenges,
+        [
+            "size_in_storage",
+            "size_in_registry",
+            "compute_cost_euro_millicents",
+        ],
+    )
