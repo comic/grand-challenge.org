@@ -174,7 +174,7 @@ class ChallengeStatistics(TemplateView):
         creators = (
             Submission.objects.filter(phase__in=public_phases)
             .values("phase__pk")
-            .annotate(creators_count=Count("creator"))
+            .annotate(creators_count=Count("creator__pk", distinct=True))
             .order_by("phase__pk")
         )
 
