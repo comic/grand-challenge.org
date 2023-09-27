@@ -986,6 +986,7 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
     "visibility_timeout": int(1.1 * CELERY_TASK_TIME_LIMIT)
 }
 CELERY_BROKER_CONNECTION_MAX_RETRIES = 0
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 if os.environ.get("BROKER_TYPE", "").lower() == "sqs":
     CELERY_BROKER_URL = "sqs://"
