@@ -326,7 +326,7 @@ class Challenge(ChallengeBase):
         default=0, blank=True
     )
 
-    compute_cost_euro_millicents = models.PositiveIntegerField(
+    compute_cost_euro_millicents = models.PositiveBigIntegerField(
         # We store euro here as the costs were incurred at a time when
         # the exchange rate may have been different
         editable=False,

@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="challenge",
             name="compute_cost_euro_millicents",
-            field=models.PositiveIntegerField(
+            field=models.PositiveBigIntegerField(
                 default=0,
                 editable=False,
                 help_text="The total compute cost for this job in Euro Cents, including Tax",
