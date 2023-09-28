@@ -14,6 +14,7 @@ from grandchallenge.core.admin import (
     GroupObjectPermissionAdmin,
     UserObjectPermissionAdmin,
 )
+from grandchallenge.invoices.models import PaymentStatusChoices
 
 
 @admin.register(Challenge)
@@ -28,9 +29,26 @@ class ChallengeAdmin(ModelAdmin):
         "compute_cost_euro_millicents",
         "size_in_storage",
         "size_in_registry",
+        "available_compute_euro",
     )
     list_filter = ("hidden",)
     search_fields = ("short_name",)
+
+    def get_queryset(self, *args, **kwargs):
+        queryset = super().get_queryset(*args, **kwargs)
+        return queryset.prefetch_related("invoices")
+
+    def available_compute_euro(self, obj):
+        available_compute = -obj.compute_cost_euro_millicents / 1000 / 100
+
+        for invoice in obj.invoices.all():
+            if invoice.payment_status in {
+                PaymentStatusChoices.COMPLIMENTARY,
+                PaymentStatusChoices.PAID,
+            }:
+                available_compute += invoice.compute_costs_euros
+
+        return available_compute
 
 
 @admin.register(ChallengeRequest)

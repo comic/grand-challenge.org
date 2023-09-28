@@ -4,10 +4,10 @@ from grandchallenge.challenges.models import Challenge
 
 
 class PaymentStatusChoices(models.TextChoices):
-    initialized = "INITIALIZED", "Initialized"
-    issued = "ISSUED", "Issued"
-    complimentary = "COMPLIMENTARY", "Complimentary"
-    paid = "PAID", "Paid"
+    INITIALIZED = "INITIALIZED", "Initialized"
+    ISSUED = "ISSUED", "Issued"
+    COMPLIMENTARY = "COMPLIMENTARY", "Complimentary"
+    PAID = "PAID", "Paid"
 
 
 class Invoice(models.Model):
@@ -74,5 +74,5 @@ class Invoice(models.Model):
     payment_status = models.CharField(
         max_length=13,
         choices=PaymentStatusChoices.choices,
-        default=PaymentStatusChoices.initialized,
+        default=PaymentStatusChoices.INITIALIZED,
     )
