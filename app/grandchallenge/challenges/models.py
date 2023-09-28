@@ -66,6 +66,7 @@ from grandchallenge.evaluation.utils import (
     StatusChoices,
     SubmissionKindChoices,
 )
+from grandchallenge.invoices.models import PaymentStatusChoices
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.pages.models import Page
@@ -750,6 +751,26 @@ class Challenge(ChallengeBase):
         return any(
             phase.total_number_of_submissions_allowed
             for phase in self.phase_set.all()
+        )
+
+    @cached_property
+    def approved_compute_costs_euro_millicents(self):
+        approved_compute_costs_euros = 0
+
+        for invoice in self.invoices.all():
+            if invoice.payment_status in {
+                PaymentStatusChoices.COMPLIMENTARY,
+                PaymentStatusChoices.PAID,
+            }:
+                approved_compute_costs_euros += invoice.compute_costs_euros
+
+        return approved_compute_costs_euros * 1000 * 100
+
+    @property
+    def available_compute_euro_millicents(self):
+        return (
+            self.approved_compute_costs_euro_millicents
+            - self.compute_cost_euro_millicents
         )
 
 

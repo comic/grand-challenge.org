@@ -14,7 +14,7 @@ from grandchallenge.core.admin import (
     GroupObjectPermissionAdmin,
     UserObjectPermissionAdmin,
 )
-from grandchallenge.invoices.models import PaymentStatusChoices
+from grandchallenge.core.templatetags.costs import millicents_to_euro
 
 
 @admin.register(Challenge)
@@ -29,7 +29,7 @@ class ChallengeAdmin(ModelAdmin):
         "compute_cost_euro_millicents",
         "size_in_storage",
         "size_in_registry",
-        "available_compute_euro",
+        "available_compute_euros",
     )
     list_filter = ("hidden",)
     search_fields = ("short_name",)
@@ -38,17 +38,8 @@ class ChallengeAdmin(ModelAdmin):
         queryset = super().get_queryset(*args, **kwargs)
         return queryset.prefetch_related("invoices")
 
-    def available_compute_euro(self, obj):
-        available_compute = -obj.compute_cost_euro_millicents / 1000 / 100
-
-        for invoice in obj.invoices.all():
-            if invoice.payment_status in {
-                PaymentStatusChoices.COMPLIMENTARY,
-                PaymentStatusChoices.PAID,
-            }:
-                available_compute += invoice.compute_costs_euros
-
-        return available_compute
+    def available_compute_euros(self, obj):
+        return millicents_to_euro(obj.available_compute_euro_millicents)
 
 
 @admin.register(ChallengeRequest)

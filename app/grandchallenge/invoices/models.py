@@ -1,7 +1,5 @@
 from django.db import models
 
-from grandchallenge.challenges.models import Challenge
-
 
 class PaymentStatusChoices(models.TextChoices):
     INITIALIZED = "INITIALIZED", "Initialized"
@@ -27,7 +25,9 @@ class Invoice(models.Model):
     )
 
     challenge = models.ForeignKey(
-        to=Challenge, on_delete=models.PROTECT, related_name="invoices"
+        to="challenges.Challenge",
+        on_delete=models.PROTECT,
+        related_name="invoices",
     )
 
     support_costs_euros = models.PositiveIntegerField(
