@@ -21,7 +21,15 @@ class ChallengeAdmin(ModelAdmin):
     readonly_fields = ("creator",)
     autocomplete_fields = ("publications",)
     ordering = ("-created",)
-    list_display = ("short_name", "created", "compute_cost_euro_millicents")
+    list_display = (
+        "short_name",
+        "created",
+        "hidden",
+        "compute_cost_euro_millicents",
+        "size_in_storage",
+        "size_in_registry",
+    )
+    list_filter = ("hidden",)
     search_fields = ("short_name",)
 
 
