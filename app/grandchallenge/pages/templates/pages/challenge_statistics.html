@@ -79,8 +79,14 @@
         <h4>Estimated Costs</h4>
 
         <dl class="inline">
-            <dt>Total Compute Costs</dt>
+            <dt>Approved Compute Costs</dt>
+            <dd>{{ challenge.approved_compute_costs_euro_millicents|millicents_to_euro }}</dd>
+
+            <dt>Total Compute Costs Incurred</dt>
             <dd>{{ challenge.compute_cost_euro_millicents|millicents_to_euro }}</dd>
+
+            <dt>Available Compute Costs</dt>
+            <dd>{{ challenge.available_compute_euro_millicents|millicents_to_euro }}</dd>
 
             <dt>Object Storage Costs per Year</dt>
             <dd>{{ challenge.size_in_storage|storage_bytes_to_euro_per_year }}</dd>

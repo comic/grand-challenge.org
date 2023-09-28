@@ -14,6 +14,7 @@ from grandchallenge.core.admin import (
     GroupObjectPermissionAdmin,
     UserObjectPermissionAdmin,
 )
+from grandchallenge.core.templatetags.costs import millicents_to_euro
 
 
 @admin.register(Challenge)
@@ -21,8 +22,24 @@ class ChallengeAdmin(ModelAdmin):
     readonly_fields = ("creator",)
     autocomplete_fields = ("publications",)
     ordering = ("-created",)
-    list_display = ("short_name", "created", "compute_cost_euro_millicents")
+    list_display = (
+        "short_name",
+        "created",
+        "hidden",
+        "compute_cost_euro_millicents",
+        "size_in_storage",
+        "size_in_registry",
+        "available_compute_euros",
+    )
+    list_filter = ("hidden",)
     search_fields = ("short_name",)
+
+    def get_queryset(self, *args, **kwargs):
+        queryset = super().get_queryset(*args, **kwargs)
+        return queryset.prefetch_related("invoices")
+
+    def available_compute_euros(self, obj):
+        return millicents_to_euro(obj.available_compute_euro_millicents)
 
 
 @admin.register(ChallengeRequest)

@@ -597,6 +597,7 @@ LOCAL_APPS = [
     "grandchallenge.hanging_protocols",
     "grandchallenge.charts",
     "grandchallenge.forums",
+    "grandchallenge.invoices",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -1225,9 +1226,13 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.algorithms.tasks.set_credits_per_job",
         "schedule": crontab(hour=4, minute=30),
     },
+    "update_compute_costs_and_storage_size": {
+        "task": "update_compute_costs_and_storage_size",
+        "schedule": crontab(hour="5,11,17,23", minute=0),
+    },
     "update_challenge_cost_statistics": {
         "task": "grandchallenge.challenges.tasks.update_challenge_cost_statistics",
-        "schedule": crontab(hour=5, minute=0),
+        "schedule": crontab(hour=5, minute=15),
     },
     "update_site_statistics": {
         "task": "grandchallenge.statistics.tasks.update_site_statistics_cache",
