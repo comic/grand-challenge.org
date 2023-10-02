@@ -9,7 +9,6 @@ from tests.notifications_tests.factories import NotificationFactory
 
 
 @pytest.mark.django_db
-@pytest.mark.xfail
 def test_notification_email():
     user1, user2 = UserFactory.create_batch(2)
     user2.is_active = False
@@ -31,7 +30,6 @@ def test_notification_email():
 
 
 @pytest.mark.django_db
-@pytest.mark.xfail
 def test_notification_email_last_sent_at_updated():
     user1 = UserFactory()
     _ = NotificationFactory(user=user1, type=Notification.Type.GENERIC)
@@ -42,7 +40,6 @@ def test_notification_email_last_sent_at_updated():
 
 
 @pytest.mark.django_db
-@pytest.mark.xfail
 def test_notification_email_only_about_new_unread_notifications():
     user1 = UserFactory()
     _ = NotificationFactory(user=user1, type=Notification.Type.GENERIC)
@@ -62,7 +59,6 @@ def test_notification_email_only_about_new_unread_notifications():
 
 
 @pytest.mark.django_db
-@pytest.mark.xfail
 def test_notification_email_opt_out():
     user1 = UserFactory()
     user1.user_profile.receive_notification_emails = False
@@ -78,3 +74,24 @@ def test_notification_email_opt_out():
 
     send_unread_notification_emails()
     assert len(mail.outbox) == 1
+
+
+@pytest.mark.django_db
+def test_notification_email_counts():
+    user1, user2, user3 = UserFactory.create_batch(3)
+    _ = NotificationFactory(user=user1, type=Notification.Type.GENERIC)
+    _ = NotificationFactory(user=user2, type=Notification.Type.GENERIC)
+    _ = NotificationFactory(user=user2, type=Notification.Type.GENERIC)
+
+    assert len(mail.outbox) == 0
+    send_unread_notification_emails()
+    assert len(mail.outbox) == 2
+
+    assert mail.outbox[0].to[0] == user1.email
+    assert "You have 1 new notification" in mail.outbox[0].body
+
+    assert mail.outbox[1].to[0] == user2.email
+    assert "You have 2 new notifications" in mail.outbox[1].body
+
+    send_unread_notification_emails()
+    assert len(mail.outbox) == 2
