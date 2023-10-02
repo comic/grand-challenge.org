@@ -1,44 +1,49 @@
 from celery import shared_task
-from django.core.paginator import Paginator
+from django.conf import settings
+from django.contrib.sites.models import Site
+from django.db.models import Count, F, Q
 from django.utils.timezone import now
 
 from grandchallenge.notifications.emails import send_unread_notifications_email
 from grandchallenge.profiles.models import UserProfile
 
 
-@shared_task
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
 def send_unread_notification_emails():
+    site = Site.objects.get_current()
+
     profiles = (
         UserProfile.objects.filter(
             receive_notification_emails=True,
-            user__notification__read=False,
             user__is_active=True,
         )
-        .distinct()
-        .prefetch_related("user__notification_set")
-        .order_by("pk")
-    )
-    paginator = Paginator(profiles, 1000)
-
-    for page_nr in paginator.page_range:
-        current_page_profiles = paginator.page(page_nr).object_list
-        current_time = now()
-        recipients = {}
-        for profile in current_page_profiles:
-            unread_notifications = [
-                n
-                for n in profile.user.notification_set.all()
-                if not n.read
-                and (
-                    profile.notification_email_last_sent_at is None
-                    or n.created > profile.notification_email_last_sent_at
-                )
-            ]
-            if unread_notifications:
-                recipients[profile] = len(unread_notifications)
-                profile.notification_email_last_sent_at = current_time
-
-        UserProfile.objects.bulk_update(
-            current_page_profiles, ["notification_email_last_sent_at"]
+        .annotate(
+            unread_notification_count=Count(
+                "user__notification__pk",
+                filter=Q(user__notification__read=False)
+                & (
+                    Q(notification_email_last_sent_at__isnull=True)
+                    | Q(
+                        user__notification__created__gt=F(
+                            "notification_email_last_sent_at"
+                        )
+                    )
+                ),
+                distinct=True,
+            )
         )
-        send_unread_notifications_email(recipients)
+        .filter(unread_notification_count__gt=0)
+        .distinct()
+        .select_related("user")
+    )
+
+    for profile in profiles.iterator():
+        profile.notification_email_last_sent_at = now()
+        profile.save(update_fields=["notification_email_last_sent_at"])
+
+        send_unread_notifications_email(
+            site=site,
+            username=profile.user.username,
+            email=profile.user.email,
+            n_notifications=profile.unread_notification_count,
+        )
