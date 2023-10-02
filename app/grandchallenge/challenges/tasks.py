@@ -218,3 +218,12 @@ def update_compute_costs_and_storage_size():
             "compute_cost_euro_millicents",
         ],
     )
+
+
+@shared_task(
+    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"],
+    name="update_compute_costs_and_storage_size",
+)
+def null_task():
+    # Drop erroneously created tasks
+    pass
