@@ -9,7 +9,6 @@ from tests.notifications_tests.factories import NotificationFactory
 
 
 @pytest.mark.django_db
-@pytest.mark.xfail
 def test_notification_email():
     user1, user2 = UserFactory.create_batch(2)
     user2.is_active = False
@@ -31,7 +30,6 @@ def test_notification_email():
 
 
 @pytest.mark.django_db
-@pytest.mark.xfail
 def test_notification_email_last_sent_at_updated():
     user1 = UserFactory()
     _ = NotificationFactory(user=user1, type=Notification.Type.GENERIC)
@@ -42,7 +40,6 @@ def test_notification_email_last_sent_at_updated():
 
 
 @pytest.mark.django_db
-@pytest.mark.xfail
 def test_notification_email_only_about_new_unread_notifications():
     user1 = UserFactory()
     _ = NotificationFactory(user=user1, type=Notification.Type.GENERIC)
@@ -62,7 +59,6 @@ def test_notification_email_only_about_new_unread_notifications():
 
 
 @pytest.mark.django_db
-@pytest.mark.xfail
 def test_notification_email_opt_out():
     user1 = UserFactory()
     user1.user_profile.receive_notification_emails = False

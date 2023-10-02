@@ -8,8 +8,6 @@ from grandchallenge.profiles.models import UserProfile
 
 @shared_task
 def send_unread_notification_emails():
-    return
-
     profiles = (
         UserProfile.objects.filter(
             receive_notification_emails=True,
