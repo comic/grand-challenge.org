@@ -135,6 +135,8 @@ class ChallengeSeries(models.Model):
 
 
 class ChallengeBase(models.Model):
+    StatusChoices = StatusChoices
+
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
@@ -610,6 +612,25 @@ class Challenge(ChallengeBase):
         else:
             status = StatusChoices.CLOSED
         return status
+
+    @property
+    def should_be_open_but_is_over_budget(self):
+        return self.available_compute_euro_millicents <= 0 and any(
+            phase.submission_period_is_open_now
+            and phase.submissions_limit_per_user_per_period > 0
+            for phase in self.phase_set.all()
+        )
+
+    @cached_property
+    def percent_budget_consumed(self):
+        if self.approved_compute_costs_euro_millicents:
+            return int(
+                100
+                * self.compute_cost_euro_millicents
+                / self.approved_compute_costs_euro_millicents
+            )
+        else:
+            return 100
 
     @property
     def challenge_type(self):

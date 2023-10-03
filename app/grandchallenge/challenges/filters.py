@@ -6,13 +6,6 @@ from grandchallenge.core.filters import TitleDescriptionModalityStructureFilter
 from grandchallenge.evaluation.utils import StatusChoices
 from grandchallenge.task_categories.models import TaskType
 
-STATUS_CHOICES = (
-    (StatusChoices.OPEN, "Accepting submissions now"),
-    (StatusChoices.OPENING_SOON, "Opening submissions soon"),
-    (StatusChoices.CLOSED, "Not accepting submissions"),
-    (StatusChoices.COMPLETED, "Completed"),
-)
-
 
 class ChallengeFilter(TitleDescriptionModalityStructureFilter):
     task_types = ModelMultipleChoiceFilter(
@@ -26,7 +19,7 @@ class ChallengeFilter(TitleDescriptionModalityStructureFilter):
         label="Challenge Series",
     )
     status = ChoiceFilter(
-        choices=STATUS_CHOICES,
+        choices=StatusChoices.choices,
         method="filter_by_status",
         label="Challenge status",
     )
