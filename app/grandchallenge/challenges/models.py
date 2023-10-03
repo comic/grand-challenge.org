@@ -16,7 +16,7 @@ from django.core.validators import (
     validate_slug,
 )
 from django.db import models
-from django.db.models import Sum
+from django.db.models import ExpressionWrapper, F, Q, Sum
 from django.db.models.signals import post_delete, pre_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
@@ -78,10 +78,30 @@ from grandchallenge.task_categories.models import TaskType
 logger = logging.getLogger(__name__)
 
 
-class ChallengeManager(models.Manager):
-    def non_hidden(self):
-        """Filter the hidden challenge"""
-        return self.filter(hidden=False)
+class ChallengeSet(models.QuerySet):
+    def with_available_compute(self):
+        return self.annotate(
+            approved_compute_costs_euro_millicents=(
+                Sum(
+                    "invoices__compute_costs_euros",
+                    filter=Q(
+                        invoices__payment_status__in=[
+                            PaymentStatusChoices.COMPLIMENTARY,
+                            PaymentStatusChoices.PAID,
+                        ]
+                    ),
+                    output_field=models.PositiveBigIntegerField(),
+                    default=0,
+                )
+                * 1000
+                * 100
+            ),
+            available_compute_euro_millicents=ExpressionWrapper(
+                F("approved_compute_costs_euro_millicents")
+                - F("compute_cost_euro_millicents"),
+                output_field=models.BigIntegerField(),
+            ),
+        )
 
 
 def validate_nounderscores(value):
@@ -345,7 +365,7 @@ class Challenge(ChallengeBase):
         help_text="The number of bytes stored in the registry",
     )
 
-    objects = ChallengeManager()
+    objects = ChallengeSet.as_manager()
 
     class Meta:
         verbose_name = "challenge"
@@ -751,26 +771,6 @@ class Challenge(ChallengeBase):
         return any(
             phase.total_number_of_submissions_allowed
             for phase in self.phase_set.all()
-        )
-
-    @cached_property
-    def approved_compute_costs_euro_millicents(self):
-        approved_compute_costs_euros = 0
-
-        for invoice in self.invoices.all():
-            if invoice.payment_status in {
-                PaymentStatusChoices.COMPLIMENTARY,
-                PaymentStatusChoices.PAID,
-            }:
-                approved_compute_costs_euros += invoice.compute_costs_euros
-
-        return approved_compute_costs_euros * 1000 * 100
-
-    @property
-    def available_compute_euro_millicents(self):
-        return (
-            self.approved_compute_costs_euro_millicents
-            - self.compute_cost_euro_millicents
         )
 
 
