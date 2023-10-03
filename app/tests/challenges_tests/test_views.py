@@ -472,41 +472,21 @@ def test_challenge_request_date_check(client):
     )
 
 
-@pytest.mark.parametrize(
-    "viewname, reverse_kwargs, data",
-    [
-        ("challenges:cost-overview", None, None),
-        ("challenges:costs-per-phase", True, None),
-        ("challenges:challenge-cost-row", True, None),
-        ("challenges:costs-per-year", None, {"year": "2021"}),
-        ("challenges:year-cost-row", None, {"year": "2021"}),
-    ],
-)
 @pytest.mark.django_db
-def test_challenge_cost_page_permissions(
-    client, viewname, reverse_kwargs, data
-):
+def test_challenge_cost_page_permissions(client):
     user, reviewer = UserFactory.create_batch(2)
     assign_perm("challenges.view_challengerequest", reviewer)
-    if reverse_kwargs:
-        challenge = ChallengeFactory()
-        reverse_kwargs_for_view = {"pk": challenge.pk}
-    else:
-        reverse_kwargs_for_view = None
+
     response = get_view_for_user(
-        viewname=viewname,
-        reverse_kwargs=reverse_kwargs_for_view,
+        viewname="challenges:cost-overview",
         client=client,
         user=user,
-        data=data,
     )
     assert response.status_code == 403
 
     response = get_view_for_user(
-        viewname=viewname,
-        reverse_kwargs=reverse_kwargs_for_view,
+        viewname="challenges:cost-overview",
         client=client,
         user=reviewer,
-        data=data,
     )
     assert response.status_code == 200

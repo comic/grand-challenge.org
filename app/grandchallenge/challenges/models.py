@@ -25,6 +25,7 @@ from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.text import get_valid_filename
 from django.utils.translation import gettext_lazy as _
+from django_deprecate_fields import deprecate_field
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 from guardian.utils import get_anonymous_user
@@ -134,6 +135,8 @@ class ChallengeSeries(models.Model):
 
 
 class ChallengeBase(models.Model):
+    StatusChoices = StatusChoices
+
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
@@ -336,11 +339,11 @@ class Challenge(ChallengeBase):
         help_text="This email will be listed as the contact email for the challenge and will be visible to all users of Grand Challenge.",
     )
 
-    accumulated_compute_cost_in_cents = models.IntegerField(
-        default=0, blank=True
+    accumulated_compute_cost_in_cents = deprecate_field(
+        models.IntegerField(default=0, blank=True)
     )
-    accumulated_docker_storage_cost_in_cents = models.IntegerField(
-        default=0, blank=True
+    accumulated_docker_storage_cost_in_cents = deprecate_field(
+        models.IntegerField(default=0, blank=True)
     )
 
     compute_cost_euro_millicents = models.PositiveBigIntegerField(
@@ -609,6 +612,25 @@ class Challenge(ChallengeBase):
         else:
             status = StatusChoices.CLOSED
         return status
+
+    @property
+    def should_be_open_but_is_over_budget(self):
+        return self.available_compute_euro_millicents <= 0 and any(
+            phase.submission_period_is_open_now
+            and phase.submissions_limit_per_user_per_period > 0
+            for phase in self.phase_set.all()
+        )
+
+    @cached_property
+    def percent_budget_consumed(self):
+        if self.approved_compute_costs_euro_millicents:
+            return int(
+                100
+                * self.compute_cost_euro_millicents
+                / self.approved_compute_costs_euro_millicents
+            )
+        else:
+            return None
 
     @property
     def challenge_type(self):

@@ -1,11 +1,8 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core.cache import cache
-from django.db.models import F, Q
+from django.db.models import Q
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
-from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.views.generic import (
     CreateView,
@@ -28,10 +25,6 @@ from grandchallenge.challenges.models import Challenge, ChallengeRequest
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
 from grandchallenge.datatables.views import Column, PaginatedTableListView
-from grandchallenge.evaluation.utils import (
-    StatusChoices,
-    SubmissionKindChoices,
-)
 from grandchallenge.subdomains.mixins import ChallengeSubdomainObjectMixin
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.verifications.views import VerificationRequiredMixin
@@ -239,167 +232,19 @@ class ChallengeRequestBudgetUpdate(
 
 
 class ChallengeCostOverview(
-    LoginRequiredMixin, PermissionRequiredMixin, TemplateView
+    LoginRequiredMixin, PermissionRequiredMixin, ListView
 ):
     template_name = "challenges/challenge_costs_overview.html"
     permission_required = "challenges.view_challengerequest"
+    model = Challenge
 
-    def get_context_data(self, **kwargs):
-        challenges = (
-            Challenge.objects.filter(
-                phase__submission_kind=SubmissionKindChoices.ALGORITHM
-            )
-            .distinct()
-            .prefetch_related("phase_set__submission_set")
-            .annotate(
-                total_cost=F("accumulated_compute_cost_in_cents")
-                + F("accumulated_docker_storage_cost_in_cents")
-            )
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .with_available_compute()
+            .prefetch_related("phase_set")
         )
-        context = super().get_context_data()
-        context.update(
-            {
-                "challenges": challenges,
-                "monthly_challenge_costs": cache.get(
-                    "monthly_challenge_costs"
-                ),
-                "challenge_status_choices": {
-                    status.name: status.name for status in StatusChoices
-                },
-            }
-        )
-        return context
-
-
-class ChallengeCostsPerPhaseView(
-    LoginRequiredMixin, PermissionRequiredMixin, TemplateView
-):
-    template_name = "challenges/challenge_costs_per_phase.html"
-    permission_required = "challenges.view_challengerequest"
-
-    @cached_property
-    def challenge(self):
-        return get_object_or_404(
-            Challenge.objects.prefetch_related(
-                "phase_set__submission_set"
-            ).all(),
-            pk=self.kwargs["pk"],
-        )
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(
-            {
-                "challenge": self.challenge,
-                "total_cost": self.challenge.accumulated_docker_storage_cost_in_cents
-                + self.challenge.accumulated_compute_cost_in_cents,
-                "statistics_for_phases": cache.get("statistics_for_phases"),
-                "phases": self.challenge.phase_set.all(),
-                "challenge_status_choices": {
-                    status.name: status.name for status in StatusChoices
-                },
-            }
-        )
-        return context
-
-
-class ChallengeCostsRow(
-    LoginRequiredMixin, PermissionRequiredMixin, TemplateView
-):
-    template_name = "challenges/challenge_cost_row.html"
-    permission_required = "challenges.view_challengerequest"
-
-    @cached_property
-    def challenge(self):
-        return get_object_or_404(
-            Challenge.objects.prefetch_related(
-                "phase_set__submission_set"
-            ).all(),
-            pk=self.kwargs["pk"],
-        )
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(
-            {
-                "challenge": self.challenge,
-                "total_cost": self.challenge.accumulated_docker_storage_cost_in_cents
-                + self.challenge.accumulated_compute_cost_in_cents,
-                "challenge_status_choices": {
-                    status.name: status.name for status in StatusChoices
-                },
-            }
-        )
-        return context
-
-
-class ChallengeCostsPerYearView(
-    LoginRequiredMixin, PermissionRequiredMixin, TemplateView
-):
-    template_name = "challenges/challenge_costs_per_year.html"
-    permission_required = "challenges.view_challengerequest"
-
-    def get_context_data(self, **kwargs):
-        monthly_challenge_costs = cache.get("monthly_challenge_costs")
-        year = self.request.GET.get("year", None)
-        context = super().get_context_data(**kwargs)
-        if monthly_challenge_costs and year:
-            context.update(
-                {
-                    "year": year,
-                    "total_compute_cost": monthly_challenge_costs[int(year)][
-                        "total_compute_cost"
-                    ]
-                    if int(year) in monthly_challenge_costs.keys()
-                    else None,
-                    "total_docker_cost": monthly_challenge_costs[int(year)][
-                        "total_docker_cost"
-                    ]
-                    if int(year) in monthly_challenge_costs.keys()
-                    else None,
-                    "total_cost": monthly_challenge_costs[int(year)][
-                        "grand_total"
-                    ]
-                    if int(year) in monthly_challenge_costs.keys()
-                    else None,
-                    "values": monthly_challenge_costs[int(year)]
-                    if int(year) in monthly_challenge_costs.keys()
-                    else None,
-                }
-            )
-        return context
-
-
-class YearCostsRow(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
-    template_name = "challenges/year_cost_row.html"
-    permission_required = "challenges.view_challengerequest"
-
-    def get_context_data(self, **kwargs):
-        monthly_challenge_costs = cache.get("monthly_challenge_costs")
-        year = self.request.GET.get("year", None)
-        context = super().get_context_data(**kwargs)
-        if monthly_challenge_costs and year:
-            context.update(
-                {
-                    "year": year,
-                    "total_compute_cost": monthly_challenge_costs[int(year)][
-                        "total_compute_cost"
-                    ]
-                    if int(year) in monthly_challenge_costs.keys()
-                    else None,
-                    "total_docker_cost": monthly_challenge_costs[int(year)][
-                        "total_docker_cost"
-                    ]
-                    if int(year) in monthly_challenge_costs.keys()
-                    else None,
-                    "total_cost": monthly_challenge_costs[int(year)][
-                        "grand_total"
-                    ]
-                    if int(year) in monthly_challenge_costs.keys()
-                    else None,
-                }
-            )
-        return context
 
 
 class ChallengeCostCalculation(

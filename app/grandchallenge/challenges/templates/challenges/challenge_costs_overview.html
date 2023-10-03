@@ -2,9 +2,7 @@
 
 {% load url %}
 {% load static %}
-{% load dict_lookup %}
-{% load divide_by %}
-{% load humanize %}
+{% load costs %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -21,64 +19,45 @@
 {% endblock %}
 
 {% block content %}
-    <h3 class="mb-3">Challenge cost overview</h3>
-    <p>By challenge (only Type 2 challenges included)</p>
-    <div class="table-responsive">
-        <table class="table table-hover table-borderless table-sm">
-            <thead class="thead-light">
-                <tr>
-                    <th class="pl-3">Challenge</th>
-                    <th class="text-center">Status</th>
-                    <th class="text-center">Compute costs</th>
-                    <th class="text-center">Docker storage costs</th>
-                    <th class="text-center">Total costs</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for challenge in challenges %}
-                    <tr hx-get="{% url 'challenges:costs-per-phase' pk=challenge.pk %}"
-                        hx-swap="outerHTML"
-                    >
-                        <td class="pl-3"><a href="{{ challenge.get_absolute_url }}">{{ challenge.short_name }}</a></td>
-                        <td class="text-center">
-                            <span class="badge {% if challenge.status.name == challenge_status_choices.OPEN %}badge-success {% elif challenge.status.name == challenge_status_choices.OPENING_SOON %} badge-warning {% else %} badge-danger {% endif %}above-stretched-link text-wrap p-2">{{ challenge.status.name }}</span><br>
-                        </td>
-                        <td class="text-right">{{ challenge.accumulated_compute_cost_in_cents|divide_by:100|intcomma }} €</td>
-                        <td class="text-right">{{ challenge.accumulated_docker_storage_cost_in_cents|divide_by:100|intcomma }} €</td>
-                        <td class="text-right">{{ challenge.total_cost|divide_by:100|intcomma }} €</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+    <h3 class="mb-3">Challenge Cost Overview</h3>
 
-    <p>By month (only Type 2 challenges included)</p>
     <div class="table-responsive">
-        <table class="table table-hover table-borderless table-sm">
+        <table class="table table-hover table-borderless table-sm" id="challengeCostsOverviewTable">
             <thead class="thead-light">
                 <tr>
-                    <th class="pl-3" style="width:25%"></th>
-                    <th class="text-right" style="width:25%">Challenge compute costs</th>
-                    <th class="text-right" style="width:25%">Challenge docker costs</th>
-                    <th class="text-right" style="width:25%">Total</th>
+                    <th>Challenge</th>
+                    <th>Status</th>
+                    <th>Should be Open</th>
+                    <th>Percentage Budget Consumed</th>
+                    <th>Approved Compute Costs</th>
+                    <th>Total Compute Costs Incurred</th>
+                    <th>Available Compute Costs</th>
+                    <th>Object Storage Costs per Year</th>
+                    <th>Registry Storage Costs per Year</th>
                 </tr>
             </thead>
             <tbody>
-                {% for year, values in monthly_challenge_costs.items %}
-                    {% get_dict_values values 'total_compute_cost' as total_compute_cost %}
-                    {% get_dict_values values 'total_docker_cost' as total_docker_cost %}
-                    {% get_dict_values values 'grand_total' as total_cost %}
-                    <tr hx-get="{% url 'challenges:costs-per-year' %}"
-                        hx-swap="outerHTML"
-                        hx-vals='{"year": {{ year }}}'
-                    >
-                        <td class="pl-3" style="width:25%">{{ year }}</td>
-                        <td class="text-right" style="width:25%">{{ total_compute_cost|floatformat:'2'|intcomma }} €</td>
-                        <td class="text-right" style="width:25%">{{ total_docker_cost|floatformat:'2'|intcomma }} €</td>
-                        <td class="text-right" style="width:25%">{{ total_cost|floatformat:'2'|intcomma }} €</td>
+                {% for challenge in object_list %}
+                    <tr>
+                        <td><a href="{% url 'pages:statistics' challenge_short_name=challenge.short_name %}">{{ challenge.short_name }}</a></td>
+                        <td>
+                            <span class="badge {% if challenge.status == challenge.StatusChoices.OPEN %}badge-success {% elif challenge.status == challenge.StatusChoices.OPENING_SOON %} badge-warning {% else %} badge-danger {% endif %}above-stretched-link text-wrap p-2">{{ challenge.status.name }}</span><br>
+                        </td>
+                        <td>{% if challenge.should_be_open_but_is_over_budget %}<i class="fa fa-exclamation-triangle text-danger"></i>{% endif %}</td>
+                        <td><div class="{% if challenge.percent_budget_consumed >= 100 %}text-danger{% elif challenge.percent_budget_consumed >= 70 %}text-warning{% else %}text-success{% endif %}">{{ challenge.percent_budget_consumed }} %</div></td>
+                        <td>{{ challenge.approved_compute_costs_euro_millicents|millicents_to_euro }}</td>
+                        <td>{{ challenge.compute_cost_euro_millicents|millicents_to_euro }}</td>
+                        <td>{{ challenge.available_compute_euro_millicents|millicents_to_euro }}</td>
+                        <td>{{ challenge.size_in_storage|storage_bytes_to_euro_per_year }}</td>
+                        <td>{{ challenge.size_in_registry|registry_bytes_to_euro_per_year }}</td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="module" src="{% static 'js/challenges/challenge_costs_overview.mjs' %}"></script>
 {% endblock %}

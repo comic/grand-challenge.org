@@ -1,4 +1,3 @@
-import enum
 from collections import OrderedDict
 from collections.abc import Callable, Iterable
 from typing import NamedTuple
@@ -150,11 +149,11 @@ def _scores_to_ranks(
     return ranks
 
 
-class StatusChoices(enum.Enum):
-    CLOSED = ("CLOSED",)
-    OPEN = ("OPEN",)
-    OPENING_SOON = ("OPEN_SOON",)
-    COMPLETED = ("COMPLETED",)
+class StatusChoices(models.TextChoices):
+    OPEN = "OPEN", "Accepting submissions now"
+    OPENING_SOON = "OPEN_SOON", "Opening submissions soon"
+    CLOSED = "CLOSED", "Not accepting submissions"
+    COMPLETED = "COMPLETED", "Completed"
 
 
 class SubmissionKindChoices(models.IntegerChoices):
