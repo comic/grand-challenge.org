@@ -661,28 +661,6 @@ class Challenge(ChallengeBase):
     def visible_phases(self):
         return self.phase_set.filter(public=True)
 
-    @property
-    def exceeds_total_number_of_submissions_allowed(self):
-        return any(
-            phase.exceeds_total_number_of_submissions_allowed
-            for phase in self.phase_set.all()
-        )
-
-    @property
-    def exceeds_70_percent_of_submission_allowed(self):
-        return any(
-            phase.percent_of_total_submissions_allowed > 70
-            for phase in self.phase_set.all()
-            if phase.percent_of_total_submissions_allowed
-        )
-
-    @property
-    def total_number_of_submissions_defined(self):
-        return any(
-            phase.total_number_of_submissions_allowed
-            for phase in self.phase_set.all()
-        )
-
 
 class ChallengeUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(Challenge, on_delete=models.CASCADE)

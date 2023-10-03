@@ -15,6 +15,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
 from django.utils.timezone import localtime
+from django_deprecate_fields import deprecate_field
 from django_extensions.db.fields import AutoSlugField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
@@ -472,10 +473,12 @@ class Phase(UUIDModel, ViewContentMixin):
         blank=True,
         help_text="Optional alternative hanging protocols for this phase",
     )
-    total_number_of_submissions_allowed = models.PositiveSmallIntegerField(
-        blank=True,
-        null=True,
-        help_text="Total number of successful submissions allowed for this phase for all users together.",
+    total_number_of_submissions_allowed = deprecate_field(
+        models.PositiveSmallIntegerField(
+            blank=True,
+            null=True,
+            help_text="Total number of successful submissions allowed for this phase for all users together.",
+        )
     )
 
     objects = PhaseManager()
@@ -688,40 +691,6 @@ class Phase(UUIDModel, ViewContentMixin):
             and self.submissions_limit_per_user_per_period > 0
             and self.challenge.available_compute_euro_millicents > 0
         )
-
-    @property
-    def exceeds_total_number_of_submissions_allowed(self):
-        return (
-            self.percent_of_total_submissions_allowed
-            and self.percent_of_total_submissions_allowed >= 100
-        )
-
-    @cached_property
-    def percent_of_total_submissions_allowed(self):
-        if self.total_number_of_submissions_allowed is None:
-            return None
-        elif self.total_number_of_submissions_allowed == 0:
-            return 100
-        else:
-            # Allow all submissions by challenge admins
-            # and do not count cancellations or failures
-            return round(
-                (
-                    self.submission_set.exclude(
-                        evaluation__status__in=[
-                            Evaluation.FAILURE,
-                            Evaluation.CANCELLED,
-                        ]
-                    )
-                    .exclude(
-                        creator__in=self.challenge.admins_group.user_set.all()
-                    )
-                    .distinct()
-                    .count()
-                    / self.total_number_of_submissions_allowed
-                )
-                * 100
-            )
 
     @property
     def status(self):
