@@ -630,7 +630,7 @@ class Challenge(ChallengeBase):
                 / self.approved_compute_costs_euro_millicents
             )
         else:
-            return 100
+            return None
 
     @property
     def challenge_type(self):
