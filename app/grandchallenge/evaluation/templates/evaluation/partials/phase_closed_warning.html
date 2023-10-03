@@ -1,7 +1,7 @@
 {% load url %}
 
 {% if not phase.active_image %}
-    <div class="alert alert-warning" role="alert">
+    <div class="alert alert-danger" role="alert">
         <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
         Nobody can submit to this phase as there is no valid evaluation method.
         Please <a href="{% url 'evaluation:method-create' challenge_short_name=challenge.short_name slug=phase.slug %}">
@@ -10,7 +10,7 @@
 {% endif %}
 
 {% if not phase.open_for_submissions %}
-    <div class="alert alert-warning" role="alert">
+    <div class="alert alert-danger" role="alert">
         <i class="fa fa-exclamation-triangle" aria-hidden="true"></i> Participants are not able to submit to this phase
         as:
         <ul class="mb-1">
@@ -37,9 +37,9 @@
                     Settings</a>.
                 </li>
             {% endif %}
-            {% if phase.exceeds_total_number_of_submissions_allowed %}
+            {% if phase.challenge.available_compute_euro_millicents <= 0 %}
                 <li>
-                    The total number of submissions has exceeded the budgeted limit. Please contact support.
+                    This challenge has exceeded its budget. Please contact support.
                 </li>
             {% endif %}
         </ul>

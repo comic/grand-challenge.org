@@ -21,6 +21,7 @@ from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.archives.models import Archive, ArchiveItem
+from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.models import (
     ComponentImage,
     ComponentInterface,
@@ -101,6 +102,22 @@ EXTRA_RESULT_COLUMNS_SCHEMA = {
 }
 
 
+class PhaseManager(models.Manager):
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .prefetch_related(
+                # This should be a select_related, but I cannot find a way
+                # to use a custom model manager with select_related
+                models.Prefetch(
+                    "challenge",
+                    queryset=Challenge.objects.with_available_compute(),
+                )
+            )
+        )
+
+
 class Phase(UUIDModel, ViewContentMixin):
     # This must match the syntax used in jquery datatables
     # https://datatables.net/reference/option/order
@@ -147,7 +164,7 @@ class Phase(UUIDModel, ViewContentMixin):
     SubmissionKindChoices = SubmissionKindChoices
 
     challenge = models.ForeignKey(
-        "challenges.Challenge", on_delete=models.PROTECT, editable=False
+        Challenge, on_delete=models.PROTECT, editable=False
     )
     archive = models.ForeignKey(
         Archive,
@@ -461,6 +478,8 @@ class Phase(UUIDModel, ViewContentMixin):
         help_text="Total number of successful submissions allowed for this phase for all users together.",
     )
 
+    objects = PhaseManager()
+
     class Meta:
         unique_together = (("challenge", "title"), ("challenge", "slug"))
         ordering = ("challenge", "submissions_open_at", "created")
@@ -667,7 +686,7 @@ class Phase(UUIDModel, ViewContentMixin):
             self.public
             and self.submission_period_is_open_now
             and self.submissions_limit_per_user_per_period > 0
-            and not self.exceeds_total_number_of_submissions_allowed
+            and self.challenge.available_compute_euro_millicents > 0
         )
 
     @property
@@ -1102,7 +1121,7 @@ class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
         SUM = "SUM", "Sum"
 
     challenge = models.ForeignKey(
-        "challenges.Challenge", on_delete=models.PROTECT, editable=False
+        Challenge, on_delete=models.PROTECT, editable=False
     )
     phases = models.ManyToManyField(Phase, through="CombinedLeaderboardPhase")
     combination_method = models.CharField(
