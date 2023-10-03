@@ -25,6 +25,7 @@ from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.text import get_valid_filename
 from django.utils.translation import gettext_lazy as _
+from django_deprecate_fields import deprecate_field
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 from guardian.utils import get_anonymous_user
@@ -336,11 +337,11 @@ class Challenge(ChallengeBase):
         help_text="This email will be listed as the contact email for the challenge and will be visible to all users of Grand Challenge.",
     )
 
-    accumulated_compute_cost_in_cents = models.IntegerField(
-        default=0, blank=True
+    accumulated_compute_cost_in_cents = deprecate_field(
+        models.IntegerField(default=0, blank=True)
     )
-    accumulated_docker_storage_cost_in_cents = models.IntegerField(
-        default=0, blank=True
+    accumulated_docker_storage_cost_in_cents = deprecate_field(
+        models.IntegerField(default=0, blank=True)
     )
 
     compute_cost_euro_millicents = models.PositiveBigIntegerField(
