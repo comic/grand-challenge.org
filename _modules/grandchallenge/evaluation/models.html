@@ -93,12 +93,14 @@
 <span class="kn">from</span> <span class="nn">django.utils.functional</span> <span class="kn">import</span> <span class="n">cached_property</span>
 <span class="kn">from</span> <span class="nn">django.utils.text</span> <span class="kn">import</span> <span class="n">get_valid_filename</span>
 <span class="kn">from</span> <span class="nn">django.utils.timezone</span> <span class="kn">import</span> <span class="n">localtime</span>
+<span class="kn">from</span> <span class="nn">django_deprecate_fields</span> <span class="kn">import</span> <span class="n">deprecate_field</span>
 <span class="kn">from</span> <span class="nn">django_extensions.db.fields</span> <span class="kn">import</span> <span class="n">AutoSlugField</span>
 <span class="kn">from</span> <span class="nn">guardian.models</span> <span class="kn">import</span> <span class="n">GroupObjectPermissionBase</span><span class="p">,</span> <span class="n">UserObjectPermissionBase</span>
 <span class="kn">from</span> <span class="nn">guardian.shortcuts</span> <span class="kn">import</span> <span class="n">assign_perm</span><span class="p">,</span> <span class="n">remove_perm</span>
 
 <span class="kn">from</span> <span class="nn">grandchallenge.algorithms.models</span> <span class="kn">import</span> <span class="n">AlgorithmImage</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.archives.models</span> <span class="kn">import</span> <span class="n">Archive</span><span class="p">,</span> <span class="n">ArchiveItem</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.challenges.models</span> <span class="kn">import</span> <span class="n">Challenge</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.models</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">ComponentImage</span><span class="p">,</span>
     <span class="n">ComponentInterface</span><span class="p">,</span>
@@ -179,6 +181,22 @@
 <span class="p">}</span>
 
 
+<span class="k">class</span> <span class="nc">PhaseManager</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Manager</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="nb">super</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">get_queryset</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span>
+                <span class="c1"># This should be a select_related, but I cannot find a way</span>
+                <span class="c1"># to use a custom model manager with select_related</span>
+                <span class="n">models</span><span class="o">.</span><span class="n">Prefetch</span><span class="p">(</span>
+                    <span class="s2">&quot;challenge&quot;</span><span class="p">,</span>
+                    <span class="n">queryset</span><span class="o">=</span><span class="n">Challenge</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">with_available_compute</span><span class="p">(),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+
 <div class="viewcode-block" id="Phase">
 <a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase">[docs]</a>
 <span class="k">class</span> <span class="nc">Phase</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">ViewContentMixin</span><span class="p">):</span>
@@ -227,7 +245,7 @@
     <span class="n">SubmissionKindChoices</span> <span class="o">=</span> <span class="n">SubmissionKindChoices</span>
 
     <span class="n">challenge</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
-        <span class="s2">&quot;challenges.Challenge&quot;</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span>
+        <span class="n">Challenge</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span>
     <span class="p">)</span>
     <span class="n">archive</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="n">Archive</span><span class="p">,</span>
@@ -535,11 +553,15 @@
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Optional alternative hanging protocols for this phase&quot;</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">total_number_of_submissions_allowed</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
-        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Total number of successful submissions allowed for this phase for all users together.&quot;</span><span class="p">,</span>
+    <span class="n">total_number_of_submissions_allowed</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span>
+        <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
+            <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Total number of successful submissions allowed for this phase for all users together.&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
+
+    <span class="n">objects</span> <span class="o">=</span> <span class="n">PhaseManager</span><span class="p">()</span>
 
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
         <span class="n">unique_together</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;challenge&quot;</span><span class="p">,</span> <span class="s2">&quot;title&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;challenge&quot;</span><span class="p">,</span> <span class="s2">&quot;slug&quot;</span><span class="p">))</span>
@@ -759,42 +781,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">public</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_period_is_open_now</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">submissions_limit_per_user_per_period</span> <span class="o">&gt;</span> <span class="mi">0</span>
-            <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">exceeds_total_number_of_submissions_allowed</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">available_compute_euro_millicents</span> <span class="o">&gt;</span> <span class="mi">0</span>
         <span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">exceeds_total_number_of_submissions_allowed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">percent_of_total_submissions_allowed</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">percent_of_total_submissions_allowed</span> <span class="o">&gt;=</span> <span class="mi">100</span>
-        <span class="p">)</span>
-
-    <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">percent_of_total_submissions_allowed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_number_of_submissions_allowed</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_number_of_submissions_allowed</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="mi">100</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Allow all submissions by challenge admins</span>
-            <span class="c1"># and do not count cancellations or failures</span>
-            <span class="k">return</span> <span class="nb">round</span><span class="p">(</span>
-                <span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">submission_set</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
-                        <span class="n">evaluation__status__in</span><span class="o">=</span><span class="p">[</span>
-                            <span class="n">Evaluation</span><span class="o">.</span><span class="n">FAILURE</span><span class="p">,</span>
-                            <span class="n">Evaluation</span><span class="o">.</span><span class="n">CANCELLED</span><span class="p">,</span>
-                        <span class="p">]</span>
-                    <span class="p">)</span>
-                    <span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
-                        <span class="n">creator__in</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span><span class="o">.</span><span class="n">user_set</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
-                    <span class="p">)</span>
-                    <span class="o">.</span><span class="n">distinct</span><span class="p">()</span>
-                    <span class="o">.</span><span class="n">count</span><span class="p">()</span>
-                    <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_number_of_submissions_allowed</span>
-                <span class="p">)</span>
-                <span class="o">*</span> <span class="mi">100</span>
-            <span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">status</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1195,7 +1183,7 @@
         <span class="n">SUM</span> <span class="o">=</span> <span class="s2">&quot;SUM&quot;</span><span class="p">,</span> <span class="s2">&quot;Sum&quot;</span>
 
     <span class="n">challenge</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
-        <span class="s2">&quot;challenges.Challenge&quot;</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span>
+        <span class="n">Challenge</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span>
     <span class="p">)</span>
     <span class="n">phases</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span><span class="n">Phase</span><span class="p">,</span> <span class="n">through</span><span class="o">=</span><span class="s2">&quot;CombinedLeaderboardPhase&quot;</span><span class="p">)</span>
     <span class="n">combination_method</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
