@@ -15,12 +15,14 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
 from django.utils.timezone import localtime
+from django_deprecate_fields import deprecate_field
 from django_extensions.db.fields import AutoSlugField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.archives.models import Archive, ArchiveItem
+from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.models import (
     ComponentImage,
     ComponentInterface,
@@ -101,6 +103,22 @@ EXTRA_RESULT_COLUMNS_SCHEMA = {
 }
 
 
+class PhaseManager(models.Manager):
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .prefetch_related(
+                # This should be a select_related, but I cannot find a way
+                # to use a custom model manager with select_related
+                models.Prefetch(
+                    "challenge",
+                    queryset=Challenge.objects.with_available_compute(),
+                )
+            )
+        )
+
+
 class Phase(UUIDModel, ViewContentMixin):
     # This must match the syntax used in jquery datatables
     # https://datatables.net/reference/option/order
@@ -147,7 +165,7 @@ class Phase(UUIDModel, ViewContentMixin):
     SubmissionKindChoices = SubmissionKindChoices
 
     challenge = models.ForeignKey(
-        "challenges.Challenge", on_delete=models.PROTECT, editable=False
+        Challenge, on_delete=models.PROTECT, editable=False
     )
     archive = models.ForeignKey(
         Archive,
@@ -455,11 +473,15 @@ class Phase(UUIDModel, ViewContentMixin):
         blank=True,
         help_text="Optional alternative hanging protocols for this phase",
     )
-    total_number_of_submissions_allowed = models.PositiveSmallIntegerField(
-        blank=True,
-        null=True,
-        help_text="Total number of successful submissions allowed for this phase for all users together.",
+    total_number_of_submissions_allowed = deprecate_field(
+        models.PositiveSmallIntegerField(
+            blank=True,
+            null=True,
+            help_text="Total number of successful submissions allowed for this phase for all users together.",
+        )
     )
+
+    objects = PhaseManager()
 
     class Meta:
         unique_together = (("challenge", "title"), ("challenge", "slug"))
@@ -667,42 +689,8 @@ class Phase(UUIDModel, ViewContentMixin):
             self.public
             and self.submission_period_is_open_now
             and self.submissions_limit_per_user_per_period > 0
-            and not self.exceeds_total_number_of_submissions_allowed
+            and self.challenge.available_compute_euro_millicents > 0
         )
-
-    @property
-    def exceeds_total_number_of_submissions_allowed(self):
-        return (
-            self.percent_of_total_submissions_allowed
-            and self.percent_of_total_submissions_allowed >= 100
-        )
-
-    @cached_property
-    def percent_of_total_submissions_allowed(self):
-        if self.total_number_of_submissions_allowed is None:
-            return None
-        elif self.total_number_of_submissions_allowed == 0:
-            return 100
-        else:
-            # Allow all submissions by challenge admins
-            # and do not count cancellations or failures
-            return round(
-                (
-                    self.submission_set.exclude(
-                        evaluation__status__in=[
-                            Evaluation.FAILURE,
-                            Evaluation.CANCELLED,
-                        ]
-                    )
-                    .exclude(
-                        creator__in=self.challenge.admins_group.user_set.all()
-                    )
-                    .distinct()
-                    .count()
-                    / self.total_number_of_submissions_allowed
-                )
-                * 100
-            )
 
     @property
     def status(self):
@@ -1102,7 +1090,7 @@ class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
         SUM = "SUM", "Sum"
 
     challenge = models.ForeignKey(
-        "challenges.Challenge", on_delete=models.PROTECT, editable=False
+        Challenge, on_delete=models.PROTECT, editable=False
     )
     phases = models.ManyToManyField(Phase, through="CombinedLeaderboardPhase")
     combination_method = models.CharField(

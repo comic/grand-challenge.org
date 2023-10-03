@@ -14,6 +14,7 @@ from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.evaluation.models import CombinedLeaderboard, Evaluation
 from grandchallenge.evaluation.tasks import update_combined_leaderboard
 from grandchallenge.evaluation.utils import SubmissionKindChoices
+from grandchallenge.invoices.models import PaymentStatusChoices
 from grandchallenge.workstations.models import Workstation
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.factories import ArchiveFactory
@@ -32,6 +33,7 @@ from tests.factories import (
     WorkstationFactory,
 )
 from tests.hanging_protocols_tests.factories import HangingProtocolFactory
+from tests.invoices_tests.factories import InvoiceFactory
 from tests.utils import get_view_for_user
 from tests.verification_tests.factories import VerificationFactory
 
@@ -326,6 +328,12 @@ def test_submission_time_limit(client, two_challenge_sets):
     phase.submissions_limit_per_user_per_period = 10
     phase.save()
 
+    InvoiceFactory(
+        challenge=phase.challenge,
+        compute_costs_euros=10,
+        payment_status=PaymentStatusChoices.COMPLIMENTARY,
+    )
+
     SubmissionFactory(
         phase=phase, creator=two_challenge_sets.challenge_set_1.participant
     )
@@ -496,6 +504,12 @@ def test_create_algorithm_for_phase_permission(client, uploaded_image):
     admin, participant, user = UserFactory.create_batch(3)
     phase.challenge.add_admin(admin)
     phase.challenge.add_participant(participant)
+
+    InvoiceFactory(
+        challenge=phase.challenge,
+        compute_costs_euros=10,
+        payment_status=PaymentStatusChoices.COMPLIMENTARY,
+    )
 
     # admin can make a submission only if they are verified
     # and if the phase has been configured properly
@@ -807,6 +821,12 @@ def test_create_algorithm_for_phase_limits(client):
     phase.algorithm_outputs.set([ci2])
     phase.submissions_limit_per_user_per_period = 10
     phase.save()
+
+    InvoiceFactory(
+        challenge=phase.challenge,
+        compute_costs_euros=10,
+        payment_status=PaymentStatusChoices.COMPLIMENTARY,
+    )
 
     u1, u2, u3 = UserFactory.create_batch(3)
     for user in [u1, u2, u3]:

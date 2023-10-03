@@ -16,7 +16,7 @@ from django.core.validators import (
     validate_slug,
 )
 from django.db import models
-from django.db.models import Sum
+from django.db.models import ExpressionWrapper, F, Q, Sum
 from django.db.models.signals import post_delete, pre_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
@@ -36,15 +36,12 @@ from machina.apps.forum_permission.models import (
 )
 from stdimage import JPEGField
 
-from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.anatomy.models import BodyStructure
-from grandchallenge.cases.models import ImageFile
 from grandchallenge.challenges.emails import (
     send_challenge_requested_email_to_requester,
     send_challenge_requested_email_to_reviewers,
 )
 from grandchallenge.challenges.utils import ChallengeTypeChoices
-from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import (
     get_banner_path,
@@ -60,7 +57,6 @@ from grandchallenge.core.validators import (
     ExtensionValidator,
     MimeTypeValidator,
 )
-from grandchallenge.evaluation.models import Evaluation, Method
 from grandchallenge.evaluation.tasks import assign_evaluation_permissions
 from grandchallenge.evaluation.utils import (
     StatusChoices,
@@ -78,10 +74,30 @@ from grandchallenge.task_categories.models import TaskType
 logger = logging.getLogger(__name__)
 
 
-class ChallengeManager(models.Manager):
-    def non_hidden(self):
-        """Filter the hidden challenge"""
-        return self.filter(hidden=False)
+class ChallengeSet(models.QuerySet):
+    def with_available_compute(self):
+        return self.annotate(
+            approved_compute_costs_euro_millicents=(
+                Sum(
+                    "invoices__compute_costs_euros",
+                    filter=Q(
+                        invoices__payment_status__in=[
+                            PaymentStatusChoices.COMPLIMENTARY,
+                            PaymentStatusChoices.PAID,
+                        ]
+                    ),
+                    output_field=models.PositiveBigIntegerField(),
+                    default=0,
+                )
+                * 1000
+                * 100
+            ),
+            available_compute_euro_millicents=ExpressionWrapper(
+                F("approved_compute_costs_euro_millicents")
+                - F("compute_cost_euro_millicents"),
+                output_field=models.BigIntegerField(),
+            ),
+        )
 
 
 def validate_nounderscores(value):
@@ -345,7 +361,7 @@ class Challenge(ChallengeBase):
         help_text="The number of bytes stored in the registry",
     )
 
-    objects = ChallengeManager()
+    objects = ChallengeSet.as_manager()
 
     class Meta:
         verbose_name = "challenge"
@@ -375,92 +391,6 @@ class Challenge(ChallengeBase):
     def upcoming_workshop_date(self):
         if self.workshop_date and self.workshop_date > datetime.date.today():
             return self.workshop_date
-
-    @cached_property
-    def algorithm_jobs(self):
-        return Job.objects.filter(
-            inputs__archive_items__archive__phase__challenge=self
-        ).distinct()
-
-    @cached_property
-    def evaluation_jobs(self):
-        return Evaluation.objects.filter(
-            submission__phase__challenge=self
-        ).distinct()
-
-    def update_size_in_storage_and_registry(self):
-        archive_image_storage = (
-            ImageFile.objects.filter(
-                image__componentinterfacevalue__archive_items__archive__phase__challenge=self
-            )
-            .distinct()
-            .aggregate(Sum("size_in_storage"))
-        )
-        archive_file_storage = (
-            ComponentInterfaceValue.objects.filter(
-                archive_items__archive__phase__challenge=self
-            )
-            .distinct()
-            .aggregate(Sum("size_in_storage"))
-        )
-
-        output_image_storage = (
-            ImageFile.objects.filter(
-                image__componentinterfacevalue__evaluation_evaluations_as_input__in=self.evaluation_jobs
-            )
-            .distinct()
-            .aggregate(Sum("size_in_storage"))
-        )
-        output_file_storage = (
-            ComponentInterfaceValue.objects.filter(
-                evaluation_evaluations_as_input__in=self.evaluation_jobs
-            )
-            .distinct()
-            .aggregate(Sum("size_in_storage"))
-        )
-
-        algorithm_storage = (
-            AlgorithmImage.objects.filter(job__in=self.algorithm_jobs)
-            .distinct()
-            .aggregate(Sum("size_in_storage"), Sum("size_in_registry"))
-        )
-
-        method_storage = (
-            Method.objects.filter(phase__challenge=self)
-            .distinct()
-            .aggregate(Sum("size_in_storage"), Sum("size_in_registry"))
-        )
-
-        items = [
-            archive_image_storage,
-            archive_file_storage,
-            output_image_storage,
-            output_file_storage,
-            algorithm_storage,
-            method_storage,
-        ]
-
-        self.size_in_storage = sum(
-            item["size_in_storage__sum"] or 0 for item in items
-        )
-        self.size_in_registry = sum(
-            item.get("size_in_registry__sum") or 0 for item in items
-        )
-
-    def update_compute_cost_euro_millicents(self):
-        algorithm_job_costs = self.algorithm_jobs.aggregate(
-            Sum("compute_cost_euro_millicents")
-        )
-
-        evaluation_costs = self.evaluation_jobs.aggregate(
-            Sum("compute_cost_euro_millicents")
-        )
-
-        items = [algorithm_job_costs, evaluation_costs]
-
-        self.compute_cost_euro_millicents = sum(
-            item["compute_cost_euro_millicents__sum"] or 0 for item in items
-        )
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -730,48 +660,6 @@ class Challenge(ChallengeBase):
     @cached_property
     def visible_phases(self):
         return self.phase_set.filter(public=True)
-
-    @property
-    def exceeds_total_number_of_submissions_allowed(self):
-        return any(
-            phase.exceeds_total_number_of_submissions_allowed
-            for phase in self.phase_set.all()
-        )
-
-    @property
-    def exceeds_70_percent_of_submission_allowed(self):
-        return any(
-            phase.percent_of_total_submissions_allowed > 70
-            for phase in self.phase_set.all()
-            if phase.percent_of_total_submissions_allowed
-        )
-
-    @property
-    def total_number_of_submissions_defined(self):
-        return any(
-            phase.total_number_of_submissions_allowed
-            for phase in self.phase_set.all()
-        )
-
-    @cached_property
-    def approved_compute_costs_euro_millicents(self):
-        approved_compute_costs_euros = 0
-
-        for invoice in self.invoices.all():
-            if invoice.payment_status in {
-                PaymentStatusChoices.COMPLIMENTARY,
-                PaymentStatusChoices.PAID,
-            }:
-                approved_compute_costs_euros += invoice.compute_costs_euros
-
-        return approved_compute_costs_euros * 1000 * 100
-
-    @property
-    def available_compute_euro_millicents(self):
-        return (
-            self.approved_compute_costs_euro_millicents
-            - self.compute_cost_euro_millicents
-        )
 
 
 class ChallengeUserObjectPermission(UserObjectPermissionBase):

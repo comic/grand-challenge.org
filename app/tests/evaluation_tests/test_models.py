@@ -8,12 +8,17 @@ from django.utils.timezone import now
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.components.models import ComponentInterface
-from grandchallenge.evaluation.models import CombinedLeaderboard, Evaluation
+from grandchallenge.evaluation.models import (
+    CombinedLeaderboard,
+    Evaluation,
+    Phase,
+)
 from grandchallenge.evaluation.tasks import (
     calculate_ranks,
     create_evaluation,
     update_combined_leaderboard,
 )
+from grandchallenge.invoices.models import PaymentStatusChoices
 from tests.algorithms_tests.factories import AlgorithmImageFactory
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import (
@@ -28,6 +33,7 @@ from tests.evaluation_tests.factories import (
     SubmissionFactory,
 )
 from tests.factories import ChallengeFactory, ImageFactory, UserFactory
+from tests.invoices_tests.factories import InvoiceFactory
 
 
 @pytest.fixture
@@ -114,8 +120,18 @@ def test_create_evaluation_is_idempotent(
 @pytest.mark.django_db
 class TestPhaseLimits:
     def setup_method(self):
-        self.phase = PhaseFactory()
+        phase = PhaseFactory()
+
+        InvoiceFactory(
+            challenge=phase.challenge,
+            compute_costs_euros=10,
+            payment_status=PaymentStatusChoices.COMPLIMENTARY,
+        )
+
+        # Fetch from the db to get the cost annotations
+        self.phase = Phase.objects.get(pk=phase.pk)
         self.user = UserFactory()
+
         evaluation_kwargs = {
             "submission__creator": self.user,
             "submission__phase": self.phase,
@@ -202,7 +218,7 @@ class TestPhaseLimits:
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "submissions_limit_per_user_per_period,submissions_open,submissions_close,submissions_limit,open_for_submissions,expected_status",
+    "submissions_limit_per_user_per_period,submissions_open,submissions_close,compute_costs_euros,open_for_submissions,expected_status",
     [
         (0, None, None, 10, False, "Not accepting submissions"),
         (
@@ -296,14 +312,14 @@ class TestPhaseLimits:
             "Opening submissions",
         ),
         (10, None, None, 1, False, "Not accepting submissions"),
-        (10, None, None, None, True, "Accepting submissions"),
+        (10, None, None, 10, True, "Accepting submissions"),
     ],
 )
 def test_open_for_submission(
     submissions_limit_per_user_per_period,
     submissions_open,
     submissions_close,
-    submissions_limit,
+    compute_costs_euros,
     open_for_submissions,
     expected_status,
 ):
@@ -313,10 +329,19 @@ def test_open_for_submission(
     )
     phase.submissions_open_at = submissions_open
     phase.submissions_close_at = submissions_close
-    phase.total_number_of_submissions_allowed = submissions_limit
     phase.save()
 
-    SubmissionFactory.create_batch(5, phase=phase)
+    phase.challenge.compute_cost_euro_millicents = 5 * 1000 * 100
+    phase.challenge.save()
+
+    InvoiceFactory(
+        challenge=phase.challenge,
+        compute_costs_euros=compute_costs_euros,
+        payment_status=PaymentStatusChoices.COMPLIMENTARY,
+    )
+
+    # Fetch from the db to get the cost annotations
+    phase = Phase.objects.get(pk=phase.pk)
 
     assert phase.open_for_submissions == open_for_submissions
     assert expected_status in phase.submission_status_string
@@ -378,7 +403,7 @@ def test_combined_leaderboards(
             == f"<bound method Signature.apply_async of grandchallenge.evaluation.tasks.update_combined_leaderboard(pk={leaderboard.pk!r})>"
         )
 
-    with django_assert_max_num_queries(6):
+    with django_assert_max_num_queries(7):
         update_combined_leaderboard(pk=leaderboard.pk)
 
     assert (

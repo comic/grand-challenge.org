@@ -4,6 +4,9 @@ from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.db.models import Count, Max
 
+from grandchallenge.challenges.costs import (
+    annotate_compute_costs_and_storage_size,
+)
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
 from grandchallenge.evaluation.models import Evaluation, Submission
 from grandchallenge.evaluation.utils import SubmissionKindChoices
@@ -206,9 +209,8 @@ def update_challenge_cost_statistics():
 def update_compute_costs_and_storage_size():
     challenges = Challenge.objects.all()
 
-    for c in challenges:
-        c.update_size_in_storage_and_registry()
-        c.update_compute_cost_euro_millicents()
+    for challenge in challenges:
+        annotate_compute_costs_and_storage_size(challenge=challenge)
 
     Challenge.objects.bulk_update(
         challenges,

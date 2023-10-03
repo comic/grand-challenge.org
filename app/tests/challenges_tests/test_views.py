@@ -6,9 +6,11 @@ from django.utils.timezone import now
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
+from grandchallenge.invoices.models import PaymentStatusChoices
 from grandchallenge.verifications.models import Verification
 from tests.evaluation_tests.factories import PhaseFactory
 from tests.factories import ChallengeFactory, UserFactory
+from tests.invoices_tests.factories import InvoiceFactory
 from tests.utils import get_view_for_user
 
 
@@ -271,6 +273,12 @@ def test_challenge_card_status(
     phase1 = PhaseFactory(challenge=ch)
     phase2 = PhaseFactory(challenge=ch)
     u = UserFactory()
+
+    InvoiceFactory(
+        challenge=ch,
+        compute_costs_euros=10,
+        payment_status=PaymentStatusChoices.COMPLIMENTARY,
+    )
 
     phase1.submissions_limit_per_user_per_period = (
         phase1_submissions_limit_per_user_per_period
