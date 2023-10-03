@@ -10,7 +10,7 @@
         <li class="breadcrumb-item"><a
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
         <li class="breadcrumb-item active"
-            aria-current="page">{{ object.title }} Add a New Phase</li>
+            aria-current="page">{% if object %}Update {{ object.title }} Phase{% else %}Add a New Phase{% endif %}</li>
     </ol>
 {% endblock %}
 
