@@ -164,6 +164,7 @@ class Phase(UUIDModel, ViewContentMixin):
     )
 
     SubmissionKindChoices = SubmissionKindChoices
+    StatusChoices = StatusChoices
 
     challenge = models.ForeignKey(
         Challenge, on_delete=models.PROTECT, editable=False

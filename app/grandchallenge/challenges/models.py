@@ -356,7 +356,7 @@ class Challenge(ChallengeBase):
         # the exchange rate may have been different
         editable=False,
         default=0,
-        help_text="The total compute cost for this job in Euro Cents, including Tax",
+        help_text="The total compute cost for this challenge in Euro Cents, including Tax",
     )
     size_in_storage = models.PositiveBigIntegerField(
         editable=False,
