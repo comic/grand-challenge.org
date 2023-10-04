@@ -1,9 +1,6 @@
-import calendar
-import datetime
 import logging
 import uuid
 from statistics import mean, median
-from typing import NamedTuple
 
 from celery import shared_task
 from django.apps import apps
@@ -11,8 +8,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Count, F, Q
-from django.db.models.functions import Extract
+from django.db.models import Count, Q
 from django.db.transaction import on_commit
 from redis.exceptions import LockError
 
@@ -26,11 +22,7 @@ from grandchallenge.components.models import (
 from grandchallenge.components.tasks import _retry
 from grandchallenge.core.cache import _cache_key_from_method
 from grandchallenge.core.validators import get_file_mimetype
-from grandchallenge.evaluation.utils import (
-    Metric,
-    SubmissionKindChoices,
-    rank_results,
-)
+from grandchallenge.evaluation.utils import Metric, rank_results
 from grandchallenge.notifications.models import Notification, NotificationType
 
 logger = logging.getLogger(__name__)
@@ -568,132 +560,3 @@ def assign_submission_permissions(*, phase_pk: uuid.UUID):
     )
     for sub in Submission.objects.filter(phase__id=phase_pk):
         sub.assign_permissions()
-
-
-def get_phase_statistics(phase):
-    Job = apps.get_model(  # noqa: N806
-        app_label="algorithms", model_name="Job"
-    )
-    start_date = datetime.datetime.strptime("1/1/2021", "%d/%m/%Y")
-    end_date = datetime.datetime.now()
-    jobs = (
-        Job.objects.filter(
-            outputs__evaluation_evaluations_as_input__submission__phase=phase,
-        )
-        .distinct()
-        .annotate(year=Extract("started_at", "year"))
-        .annotate(month=Extract("started_at", "month"))
-        .annotate(duration=F("completed_at") - F("started_at"))
-        .exclude(duration=None)
-        .exclude(started_at__year__lte=start_date.year)
-    )
-
-    monthly_costs = {}
-    algorithms_submitted_per_month = {}
-    algorithm_count_per_month = {}
-    current_date = start_date
-
-    while current_date < end_date:
-        year = current_date.year
-        month = current_date.month
-        if year not in monthly_costs:
-            monthly_costs[year] = {}
-            algorithms_submitted_per_month[year] = {}
-            algorithm_count_per_month[year] = {}
-        month_name = current_date.strftime("%B")
-        monthly_costs[year][month_name] = 0
-        algorithms_submitted_per_month[year][month_name] = []
-        algorithm_count_per_month[year][month_name] = 0
-        if month == 12:
-            current_date = current_date.replace(year=year + 1, month=1)
-        else:
-            current_date = current_date.replace(month=month + 1)
-
-    for job in jobs:
-        monthly_costs[job.year][calendar.month_name[job.month]] += round(
-            job.duration.total_seconds()
-            * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
-            / 3600
-            / 100,
-            ndigits=2,
-        )
-        alg_pk = job.algorithm_image.algorithm.pk
-        if (
-            alg_pk
-            not in algorithms_submitted_per_month[job.year][
-                calendar.month_name[job.month]
-            ]
-        ):
-            algorithms_submitted_per_month[job.year][
-                calendar.month_name[job.month]
-            ].append(alg_pk)
-            algorithm_count_per_month[job.year][
-                calendar.month_name[job.month]
-            ] += 1
-
-    phase_stats = {
-        "average_duration": jobs.average_duration(),
-        "total_duration": jobs.total_duration(),
-        "monthly_costs": monthly_costs,
-        "algorithm_count_per_month": algorithm_count_per_month,
-    }
-    return phase_stats
-
-
-class PhaseStatistics(NamedTuple):
-    challenge_title: str
-    average_algorithm_job_run_time: datetime.timedelta
-    accumulated_algorithm_job_run_time: datetime.timedelta
-    average_submission_compute_cost: float
-    total_phase_compute_cost: float
-    archive_item_count: int
-    monthly_costs: dict
-    algorithm_count_per_month: dict
-
-
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
-def update_phase_statistics():
-    Phase = apps.get_model(  # noqa: N806
-        app_label="evaluation", model_name="Phase"
-    )
-    phases = (
-        Phase.objects.filter(submission_kind=SubmissionKindChoices.ALGORITHM)
-        .annotate(archive_item_count=Count("archive__items"))
-        .all()
-    )
-    phase_dict = {}
-    for phase in phases:
-        phase_stats = get_phase_statistics(phase)
-
-        try:
-            average_submission_compute_cost = round(
-                phase.archive_item_count
-                * phase_stats["average_duration"].total_seconds()
-                * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
-                / 3600
-                / 100,
-                ndigits=2,
-            )
-            total_phase_compute_cost = round(
-                phase_stats["total_duration"].total_seconds()
-                * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
-                / 3600
-                / 100,
-                ndigits=2,
-            )
-        except AttributeError:
-            average_submission_compute_cost = None
-            total_phase_compute_cost = None
-
-        phase_dict[str(phase.pk)] = PhaseStatistics(
-            phase.challenge.title,
-            phase_stats["average_duration"],
-            phase_stats["total_duration"],
-            average_submission_compute_cost,
-            total_phase_compute_cost,
-            phase.archive_item_count,
-            phase_stats["monthly_costs"],
-            phase_stats["algorithm_count_per_month"],
-        )
-
-    cache.set("statistics_for_phases", phase_dict, timeout=None)
