@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", function(event) {
     $('#challengeCostsOverviewTable').DataTable({
-        order: [[2, "desc"]],
+        order: [[3, "desc"]],
         lengthChange: false,
         pageLength: 100,
         columnDefs: [

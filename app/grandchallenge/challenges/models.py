@@ -16,7 +16,7 @@ from django.core.validators import (
     validate_slug,
 )
 from django.db import models
-from django.db.models import ExpressionWrapper, F, Q, Sum
+from django.db.models import ExpressionWrapper, F, Max, Q, Sum
 from django.db.models.signals import post_delete, pre_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
@@ -98,6 +98,11 @@ class ChallengeSet(models.QuerySet):
                 - F("compute_cost_euro_millicents"),
                 output_field=models.BigIntegerField(),
             ),
+        )
+
+    def with_most_recent_submission_datetime(self):
+        return self.annotate(
+            most_recent_submission_datetime=Max("phase__submission__created")
         )
 
 
@@ -600,7 +605,7 @@ class Challenge(ChallengeBase):
         user.groups.remove(self.admins_group)
         unfollow(user=user, obj=self.forum, send_action=False)
 
-    @property
+    @cached_property
     def status(self):
         phase_status = {phase.status for phase in self.phase_set.all()}
         if StatusChoices.OPEN in phase_status:
@@ -613,7 +618,7 @@ class Challenge(ChallengeBase):
             status = StatusChoices.CLOSED
         return status
 
-    @property
+    @cached_property
     def should_be_open_but_is_over_budget(self):
         return self.available_compute_euro_millicents <= 0 and any(
             phase.submission_period_is_open_now
@@ -632,7 +637,7 @@ class Challenge(ChallengeBase):
         else:
             return None
 
-    @property
+    @cached_property
     def challenge_type(self):
         phase_types = {phase.submission_kind for phase in self.phase_set.all()}
         # as long as one of the phases is type 2,
