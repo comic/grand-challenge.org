@@ -1,4 +1,6 @@
-from django.db.models import Sum
+from datetime import timedelta
+
+from django.db.models import Count, Sum
 
 from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.cases.models import ImageFile
@@ -6,9 +8,33 @@ from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.evaluation.models import Evaluation, Method
 
 
+def annotate_job_duration_and_compute_costs(*, phase):
+    algorithm_jobs = (
+        Job.objects.with_duration()
+        .filter(inputs__archive_items__archive__phase=phase)
+        .distinct()
+    )
+    evaluation_jobs = Evaluation.objects.filter(
+        submission__phase=phase
+    ).distinct()
+
+    update_average_algorithm_job_duration(
+        phase=phase, algorithm_jobs=algorithm_jobs
+    )
+    update_compute_cost_euro_millicents(
+        obj=phase,
+        algorithm_jobs=algorithm_jobs,
+        evaluation_jobs=evaluation_jobs,
+    )
+
+
 def annotate_compute_costs_and_storage_size(*, challenge):
-    algorithm_jobs = get_algorithm_jobs_for_challenge(challenge=challenge)
-    evaluation_jobs = get_evaluation_jobs_for_challenge(challenge=challenge)
+    algorithm_jobs = Job.objects.filter(
+        inputs__archive_items__archive__phase__challenge=challenge
+    ).distinct()
+    evaluation_jobs = Evaluation.objects.filter(
+        submission__phase__challenge=challenge
+    ).distinct()
 
     update_size_in_storage_and_registry(
         challenge=challenge,
@@ -16,22 +42,10 @@ def annotate_compute_costs_and_storage_size(*, challenge):
         evaluation_jobs=evaluation_jobs,
     )
     update_compute_cost_euro_millicents(
-        challenge=challenge,
+        obj=challenge,
         algorithm_jobs=algorithm_jobs,
         evaluation_jobs=evaluation_jobs,
     )
-
-
-def get_algorithm_jobs_for_challenge(*, challenge):
-    return Job.objects.filter(
-        inputs__archive_items__archive__phase__challenge=challenge
-    ).distinct()
-
-
-def get_evaluation_jobs_for_challenge(*, challenge):
-    return Evaluation.objects.filter(
-        submission__phase__challenge=challenge
-    ).distinct()
 
 
 def update_size_in_storage_and_registry(
@@ -97,7 +111,7 @@ def update_size_in_storage_and_registry(
 
 
 def update_compute_cost_euro_millicents(
-    *, challenge, algorithm_jobs, evaluation_jobs
+    *, obj, algorithm_jobs, evaluation_jobs
 ):
     algorithm_job_costs = algorithm_jobs.aggregate(
         Sum("compute_cost_euro_millicents")
@@ -109,6 +123,22 @@ def update_compute_cost_euro_millicents(
 
     items = [algorithm_job_costs, evaluation_costs]
 
-    challenge.compute_cost_euro_millicents = sum(
+    obj.compute_cost_euro_millicents = sum(
         item["compute_cost_euro_millicents__sum"] or 0 for item in items
     )
+
+
+def update_average_algorithm_job_duration(*, phase, algorithm_jobs):
+    aggregates = algorithm_jobs.filter(
+        status=Job.SUCCESS, duration__gt=timedelta(seconds=0)
+    ).aggregate(
+        total_job_duration=Sum("duration"),
+        job_count=Count("pk", distinct=True),
+    )
+
+    if all(aggregates.values()):
+        phase.average_algorithm_job_duration = (
+            aggregates["total_job_duration"] / aggregates["job_count"]
+        )
+    else:
+        phase.average_algorithm_job_duration = None

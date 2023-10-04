@@ -5,9 +5,10 @@ from django.db.models import Count, Max
 
 from grandchallenge.challenges.costs import (
     annotate_compute_costs_and_storage_size,
+    annotate_job_duration_and_compute_costs,
 )
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.evaluation.models import Evaluation
+from grandchallenge.evaluation.models import Evaluation, Phase
 
 
 @shared_task
@@ -58,15 +59,27 @@ def update_challenge_results_cache():
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def update_compute_costs_and_storage_size():
     challenges = Challenge.objects.all()
+    phases = Phase.objects.all()
 
     for challenge in challenges:
         annotate_compute_costs_and_storage_size(challenge=challenge)
+
+    for phase in phases:
+        annotate_job_duration_and_compute_costs(phase=phase)
 
     Challenge.objects.bulk_update(
         challenges,
         [
             "size_in_storage",
             "size_in_registry",
+            "compute_cost_euro_millicents",
+        ],
+    )
+
+    Phase.objects.bulk_update(
+        phases,
+        [
+            "average_algorithm_job_duration",
             "compute_cost_euro_millicents",
         ],
     )

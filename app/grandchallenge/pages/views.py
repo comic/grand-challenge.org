@@ -2,7 +2,7 @@ from datetime import datetime
 
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.db.models import Avg, Count, F, Q, Sum
+from django.db.models import Count, Q
 from django.http import Http404
 from django.views.generic import (
     CreateView,
@@ -210,27 +210,7 @@ class ChallengeStatistics(TemplateView):
                         distinct=True,
                     ),
                     num_creators=Count("submission__creator", distinct=True),
-                    num_archive_items=Count("archive__items"),
-                    average_job_duration=Avg(
-                        F(
-                            "archive__items__values__algorithms_jobs_as_input__completed_at"
-                        )
-                        - F(
-                            "archive__items__values__algorithms_jobs_as_input__started_at"
-                        )
-                    ),
-                    total_job_compute_cost_euro_millicents=Sum(
-                        "archive__items__values__algorithms_jobs_as_input__compute_cost_euro_millicents",
-                        default=0,
-                    ),
-                    total_evaluation_compute_cost_euro_millicents=Sum(
-                        "submission__evaluation__compute_cost_euro_millicents",
-                        default=0,
-                    ),
-                    total_compute_cost_euro_millicents=F(
-                        "total_evaluation_compute_cost_euro_millicents"
-                    )
-                    + F("total_job_compute_cost_euro_millicents"),
+                    num_archive_items=Count("archive__items", distinct=True),
                 ),
             }
         )
