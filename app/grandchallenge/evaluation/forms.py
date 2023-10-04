@@ -14,6 +14,7 @@ from django_select2.forms import Select2Widget
 from django_summernote.widgets import SummernoteInplaceWidget
 
 from grandchallenge.algorithms.forms import UserAlgorithmsForPhaseMixin
+from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.core.forms import (
     SaveFormInitMixin,
@@ -422,6 +423,9 @@ class SubmissionForm(
 
             raise ValidationError(error_message)
 
+        has_available_compute = (
+            self._phase.challenge.available_compute_euro_millicents > 0
+        )
         is_challenge_admin = self._phase.challenge.is_admin(user=creator)
         has_remaining_submissions = (
             self._phase.get_next_submission(user=creator)[
@@ -433,12 +437,16 @@ class SubmissionForm(
             user=creator
         )
 
-        can_submit = not has_pending_evaluations and (
-            has_remaining_submissions or is_challenge_admin
+        can_submit = (
+            has_available_compute
+            and not has_pending_evaluations
+            and (has_remaining_submissions or is_challenge_admin)
         )
 
         if not can_submit:
-            error_message = "A new submission cannot be created for this user"
+            error_message = (
+                "A new submission cannot be created for this user at this time"
+            )
             self.add_error(None, error_message)
             raise ValidationError(error_message)
 
@@ -502,3 +510,21 @@ class EvaluationForm(SaveFormInitMixin, forms.Form):
             codename="view_submission",
         )
         self.fields["submission"].initial = submission
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        # Fetch from the db to get the cost annotations
+        # Maybe this is solved with GeneratedField (Django 5)?
+        challenge = (
+            Challenge.objects.filter(
+                pk=cleaned_data["submission"].phase.challenge.pk
+            )
+            .with_available_compute()
+            .get()
+        )
+
+        if challenge.available_compute_euro_millicents <= 0:
+            raise ValidationError("This challenge has exceeded its budget")
+
+        return cleaned_data

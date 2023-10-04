@@ -111,6 +111,7 @@ class PhaseManager(models.Manager):
             .prefetch_related(
                 # This should be a select_related, but I cannot find a way
                 # to use a custom model manager with select_related
+                # Maybe this is solved with GeneratedField (Django 5)?
                 models.Prefetch(
                     "challenge",
                     queryset=Challenge.objects.with_available_compute(),

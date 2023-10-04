@@ -160,16 +160,21 @@
 
                     <p>
                         This submission has not been evaluated with the active evaluation method for this phase.
+                        {% if challenge.available_compute_euro_millicents <= 0 %}
+                            However, an evaluation cannot be created as this challenge has exceeded its budget.
+                        {% endif %}
                     </p>
 
-                    <form method="post"
-                          action="{% url 'evaluation:evaluation-create' challenge_short_name=challenge.short_name slug=object.phase.slug pk=object.pk %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="submission" value="{{ object.pk }}">
-                        <button type="submit" class="btn btn-xs btn-primary">
-                            Re-Evaluate with the Active Method
-                        </button>
-                    </form>
+                    {% if challenge.available_compute_euro_millicents > 0 %}
+                        <form method="post"
+                              action="{% url 'evaluation:evaluation-create' challenge_short_name=challenge.short_name slug=object.phase.slug pk=object.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="submission" value="{{ object.pk }}">
+                            <button type="submit" class="btn btn-xs btn-primary">
+                                Re-Evaluate with the Active Method
+                            </button>
+                        </form>
+                    {% endif %}
                 </div>
             {% endif %}
         </div>

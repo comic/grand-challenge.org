@@ -129,6 +129,7 @@ class TestPhaseLimits:
         )
 
         # Fetch from the db to get the cost annotations
+        # Maybe this is solved with GeneratedField (Django 5)?
         self.phase = Phase.objects.get(pk=phase.pk)
         self.user = UserFactory()
 
@@ -341,6 +342,7 @@ def test_open_for_submission(
     )
 
     # Fetch from the db to get the cost annotations
+    # Maybe this is solved with GeneratedField (Django 5)?
     phase = Phase.objects.get(pk=phase.pk)
 
     assert phase.open_for_submissions == open_for_submissions
