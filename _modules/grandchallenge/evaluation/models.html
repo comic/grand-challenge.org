@@ -93,7 +93,6 @@
 <span class="kn">from</span> <span class="nn">django.utils.functional</span> <span class="kn">import</span> <span class="n">cached_property</span>
 <span class="kn">from</span> <span class="nn">django.utils.text</span> <span class="kn">import</span> <span class="n">get_valid_filename</span>
 <span class="kn">from</span> <span class="nn">django.utils.timezone</span> <span class="kn">import</span> <span class="n">localtime</span>
-<span class="kn">from</span> <span class="nn">django_deprecate_fields</span> <span class="kn">import</span> <span class="n">deprecate_field</span>
 <span class="kn">from</span> <span class="nn">django_extensions.db.fields</span> <span class="kn">import</span> <span class="n">AutoSlugField</span>
 <span class="kn">from</span> <span class="nn">guardian.models</span> <span class="kn">import</span> <span class="n">GroupObjectPermissionBase</span><span class="p">,</span> <span class="n">UserObjectPermissionBase</span>
 <span class="kn">from</span> <span class="nn">guardian.shortcuts</span> <span class="kn">import</span> <span class="n">assign_perm</span><span class="p">,</span> <span class="n">remove_perm</span>
@@ -189,6 +188,7 @@
             <span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span>
                 <span class="c1"># This should be a select_related, but I cannot find a way</span>
                 <span class="c1"># to use a custom model manager with select_related</span>
+                <span class="c1"># Maybe this is solved with GeneratedField (Django 5)?</span>
                 <span class="n">models</span><span class="o">.</span><span class="n">Prefetch</span><span class="p">(</span>
                     <span class="s2">&quot;challenge&quot;</span><span class="p">,</span>
                     <span class="n">queryset</span><span class="o">=</span><span class="n">Challenge</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">with_available_compute</span><span class="p">(),</span>
@@ -243,6 +243,7 @@
     <span class="p">)</span>
 
     <span class="n">SubmissionKindChoices</span> <span class="o">=</span> <span class="n">SubmissionKindChoices</span>
+    <span class="n">StatusChoices</span> <span class="o">=</span> <span class="n">StatusChoices</span>
 
     <span class="n">challenge</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="n">Challenge</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span>
@@ -553,12 +554,18 @@
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Optional alternative hanging protocols for this phase&quot;</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">total_number_of_submissions_allowed</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span>
-        <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
-            <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Total number of successful submissions allowed for this phase for all users together.&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
+
+    <span class="n">average_algorithm_job_duration</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DurationField</span><span class="p">(</span>
+        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The average duration of successful algorithm jobs for this phase&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">compute_cost_euro_millicents</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveBigIntegerField</span><span class="p">(</span>
+        <span class="c1"># We store euro here as the costs were incurred at a time when</span>
+        <span class="c1"># the exchange rate may have been different</span>
+        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The total compute cost for this phase in Euro Cents, including Tax&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">objects</span> <span class="o">=</span> <span class="n">PhaseManager</span><span class="p">()</span>
