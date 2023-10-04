@@ -1,8 +1,10 @@
 {% extends "base.html" %}
 {% load url %}
 {% load humanize %}
+{% load naturaldelta %}
 {% load static %}
 {% load costs %}
+{% load divide_by %}
 
 {% block title %}
     Statistics - {{ block.super }}
@@ -49,39 +51,80 @@
         {% endfor %}
     </dl>
 
-    <dl class="inline">
-        {% for phase_title, creators_count in creators.totals.items %}
-            <dt>Total unique submitters to the {{ phase_title }} phase</dt>
-            <dd>{{ creators_count|intcomma }}</dd>
-        {% endfor %}
-    </dl>
-
     {% if perms.challenges.view_challengerequest %}
         <h4>Estimated Costs</h4>
 
-        <dl class="inline">
-            <dt>Approved Compute Costs</dt>
-            <dd>{{ challenge.approved_compute_costs_euro_millicents|millicents_to_euro }}</dd>
+        <p>
+            Note that the total compute cost for the challenge may be less than the
+            sum of the total compute costs for each phase.
+            This can be caused by re-use of archive items between phases.
+        </p>
 
-            <dt>Total Compute Costs Incurred</dt>
-            <dd>{{ challenge.compute_cost_euro_millicents|millicents_to_euro }}</dd>
+        <div class="table-responsive">
+            <table class="table table-hover table-borderless table-sm" id="challengeCostsOverviewTable">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Challenge Status</th>
+                        <th>Should be Open</th>
+                        <th>Percentage Budget Consumed</th>
+                        <th>Approved Compute Costs</th>
+                        <th>Total Compute Costs Incurred</th>
+                        <th>Available Compute Costs</th>
+                        <th>Object Storage Costs per Year</th>
+                        <th>Registry Storage Costs per Year</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <span class="badge {% if challenge.status == challenge.StatusChoices.OPEN %}badge-success{% elif challenge.status == challenge.StatusChoices.OPENING_SOON %}badge-warning{% else %}badge-danger{% endif %}">{{ challenge.status.name }}</span>
+                        </td>
+                        <td>{% if challenge.should_be_open_but_is_over_budget %}<i class="fa fa-exclamation-triangle text-danger"></i>{% endif %}</td>
+                        <td data-order="{% if challenge.percent_budget_consumed is None %}-1{% else %}{{ challenge.percent_budget_consumed }}{% endif %}" class="{% if challenge.percent_budget_consumed >= 100 %}text-danger{% elif challenge.percent_budget_consumed >= 70 %}text-warning{% else %}text-success{% endif %}">{% if challenge.percent_budget_consumed is not None %}{{ challenge.percent_budget_consumed }}&nbsp;%{% endif %}</td>
+                        <td data-order="{{ challenge.approved_compute_costs_euro_millicents }}">{{ challenge.approved_compute_costs_euro_millicents|millicents_to_euro }}</td>
+                        <td data-order="{{ challenge.compute_cost_euro_millicents }}">{{ challenge.compute_cost_euro_millicents|millicents_to_euro }}</td>
+                        <td data-order="{{ challenge.available_compute_euro_millicents }}" class="{% if challenge.available_compute_euro_millicents <= 0 %}text-danger{% endif %}">{{ challenge.available_compute_euro_millicents|millicents_to_euro }}</td>
+                        <td data-order="{{ challenge.size_in_storage }}">{{ challenge.size_in_storage|storage_bytes_to_euro_per_year }}</td>
+                        <td data-order="{{ challenge.size_in_registry }}">{{ challenge.size_in_registry|registry_bytes_to_euro_per_year }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
 
-            <dt>Available Compute Costs</dt>
-            <dd>{{ challenge.available_compute_euro_millicents|millicents_to_euro }}</dd>
-
-            <dt>Object Storage Costs per Year</dt>
-            <dd>{{ challenge.size_in_storage|storage_bytes_to_euro_per_year }}</dd>
-
-            <dt>Registry Storage Costs per Year</dt>
-            <dd>{{ challenge.size_in_registry|registry_bytes_to_euro_per_year }}</dd>
-        </dl>
-
-        {% include 'pages/phase_costs_partial.html' with phases=algorithm_phases statistics_for_phases=statistics_for_phases %}
-
-        {% if challenge_request.budget %}
-            <h4>Accepted Budget</h4>
-            {% include "challenges/partials/budget_table.html" with object=challenge_request %}
-        {% endif %}
+        <div class="table-responsive">
+            <table class="table table-hover table-borderless table-sm" id="phaseCostsOverviewTable">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Phase</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Number of Archive Items</th>
+                        <th>Number of Submissions</th>
+                        <th>Number of Successful Submissions</th>
+                        <th>Number of Unique Creators</th>
+                        <th>Average Job Duration</th>
+                        <th>Total Compute Cost</th>
+                        <th>Average Submission Cost</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for phase in annotated_phases %}
+                        <tr>
+                            <td>{{ phase.title }}</td>
+                            <td>{{ phase.get_submission_kind_display }}</td>
+                            <td><span class="badge {% if phase.status == phase.StatusChoices.OPEN %}badge-success{% elif phase.status == phase.StatusChoices.OPENING_SOON %}badge-warning{% else %}badge-danger{% endif %}">{{ phase.status.name }}</span></td>
+                            <td>{{ phase.num_archive_items }}</td>
+                            <td>{{ phase.num_submissions }}</td>
+                            <td>{{ phase.num_successful_submissions }}</td>
+                            <td>{{ phase.num_creators }}</td>
+                            <td data-order="{{ phase.average_algorithm_job_duration.total_seconds }}">{{ phase.average_algorithm_job_duration|naturaldelta }}</td>
+                            <td data-order="{{ phase.compute_cost_euro_millicents }}">{{ phase.compute_cost_euro_millicents|millicents_to_euro }}</td>
+                            <td data-order="{% if phase.num_successful_submissions %}{{ phase.compute_cost_euro_millicents|divide_by:phase.num_successful_submissions }}{% else %}-1{% endif %}">{% if phase.num_successful_submissions %}{{ phase.compute_cost_euro_millicents|divide_by:phase.num_successful_submissions|millicents_to_euro }}{% endif %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% endif %}
 {% endblock %}
 
@@ -92,4 +135,6 @@
     <script src="{% static 'vendored/vega-lite/vega-lite.min.js' %}"></script>
     <script src="{% static 'vendored/vega-embed/vega-embed.min.js' %}"></script>
     <script type="module" src="{% static "js/charts/render_charts.mjs" %}"></script>
+
+    <script type="module" src="{% static 'js/evaluation/phase_costs_overview.mjs' %}"></script>
 {% endblock %}

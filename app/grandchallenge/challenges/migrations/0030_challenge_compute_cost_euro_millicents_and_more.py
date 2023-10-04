@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
             field=models.PositiveBigIntegerField(
                 default=0,
                 editable=False,
-                help_text="The total compute cost for this job in Euro Cents, including Tax",
+                help_text="The total compute cost for this challenge in Euro Cents, including Tax",
             ),
         ),
         migrations.AddField(

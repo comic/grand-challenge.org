@@ -9,7 +9,7 @@
     </div>
 {% endif %}
 
-{% if not phase.open_for_submissions %}
+{% if not phase.open_for_submissions and phase.challenge.available_compute_euro_millicents > 0 %}
     <div class="alert alert-danger" role="alert">
         <i class="fa fa-exclamation-triangle" aria-hidden="true"></i> Participants are not able to submit to this phase
         as:
@@ -37,12 +37,14 @@
                     Settings</a>.
                 </li>
             {% endif %}
-            {% if phase.challenge.available_compute_euro_millicents <= 0 %}
-                <li>
-                    This challenge has exceeded its budget. Please contact support.
-                </li>
-            {% endif %}
         </ul>
+    </div>
+{% endif %}
+
+{% if phase.challenge.available_compute_euro_millicents <= 0 %}
+    <div class="alert alert-danger" role="alert">
+        <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+        No submissions are possible as this challenge has exceeded its budget. Please contact support.
     </div>
 {% endif %}
 

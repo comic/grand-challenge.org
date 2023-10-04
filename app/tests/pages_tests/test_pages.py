@@ -1,24 +1,10 @@
-from datetime import timedelta
 from itertools import chain
 
 import pytest
-from django.conf import settings
 from django.db.models import BLANK_CHOICE_DASH
-from django.utils.timezone import now
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.components.models import (
-    ComponentInterface,
-    ComponentInterfaceValue,
-)
-from grandchallenge.evaluation.tasks import get_phase_statistics
-from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.pages.models import Page
-from tests.algorithms_tests.factories import (
-    AlgorithmImageFactory,
-    AlgorithmJobFactory,
-)
-from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
 from tests.factories import ChallengeFactory, PageFactory, UserFactory
 from tests.utils import get_view_for_user, validate_admin_only_view
 
@@ -346,58 +332,3 @@ def test_challenge_statistics_page_permissions(client):
     )
     assert response.status_code == 200
     assert "Estimated Costs" in response.rendered_content
-
-
-@pytest.mark.django_db
-def test_average_job_duration_calculation():
-    challenge = ChallengeFactory()
-    phase1, phase2 = PhaseFactory.create_batch(
-        2, challenge=challenge, submission_kind=SubmissionKindChoices.ALGORITHM
-    )
-
-    ai = AlgorithmImageFactory()
-
-    j1 = AlgorithmJobFactory(
-        algorithm_image=ai,
-        started_at=now() - timedelta(days=2),
-        completed_at=now(),
-    )
-    _ = AlgorithmJobFactory(
-        algorithm_image=ai,
-        started_at=now() - timedelta(minutes=2),
-        completed_at=now(),
-    )
-    j1.outputs.add(
-        ComponentInterfaceValue.objects.create(
-            interface=ComponentInterface.objects.get(slug="metrics-json-file"),
-            value=True,
-        )
-    )
-    e1 = EvaluationFactory(submission__phase=phase1)
-    e1.inputs.add(j1.outputs.first())
-
-    duration = get_phase_statistics(phase=phase1)
-
-    assert (
-        round(duration["average_duration"].total_seconds(), ndigits=2)
-        == timedelta(days=2).total_seconds()
-    )
-    assert (
-        round(duration["total_duration"].total_seconds(), ndigits=2)
-        == timedelta(days=2).total_seconds()
-    )
-    assert duration["monthly_costs"][now().year][
-        j1.started_at.strftime("%B")
-    ] == round(
-        duration["total_duration"].total_seconds()
-        * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
-        / 3600
-        / 100,
-        ndigits=2,
-    )
-    assert (
-        duration["algorithm_count_per_month"][now().year][
-            j1.started_at.strftime("%B")
-        ]
-        == 1
-    )

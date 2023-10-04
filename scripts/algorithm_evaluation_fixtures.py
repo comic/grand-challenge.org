@@ -16,6 +16,7 @@ from grandchallenge.components.models import (
 from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.evaluation.models import Method, Phase
 from grandchallenge.evaluation.utils import SubmissionKindChoices
+from grandchallenge.invoices.models import Invoice
 from grandchallenge.workstations.models import Workstation
 
 
@@ -121,6 +122,14 @@ def _create_challenge(
         logo=create_uploaded_image(),
     )
     c.add_participant(participant)
+
+    Invoice.objects.create(
+        challenge=c,
+        support_costs_euros=0,
+        compute_costs_euros=10,
+        storage_costs_euros=0,
+        payment_status=Invoice.PaymentStatusChoices.PAID,
+    )
 
     p = Phase.objects.create(challenge=c, title="Phase 1")
 

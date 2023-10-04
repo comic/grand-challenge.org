@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", function(event) {
-    $('#challengeCostsOverviewTable').DataTable({
-        order: [[3, "desc"]],
+    $('#phaseCostsOverviewTable').DataTable({
+        order: [[0, "asc"]],
         lengthChange: false,
         pageLength: 100,
         columnDefs: [

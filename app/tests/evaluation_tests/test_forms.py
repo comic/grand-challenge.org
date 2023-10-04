@@ -130,6 +130,7 @@ class TestSubmissionForm:
         )
 
         # Fetch from the db to get the cost annotations
+        # Maybe this is solved with GeneratedField (Django 5)?
         p = Phase.objects.get(pk=p.pk)
 
         ai = AlgorithmImageFactory(
@@ -182,6 +183,7 @@ class TestSubmissionForm:
         )
 
         # Fetch from the db to get the cost annotations
+        # Maybe this is solved with GeneratedField (Django 5)?
         phase = Phase.objects.get(pk=phase.pk)
 
         form = SubmissionForm(

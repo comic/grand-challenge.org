@@ -2,7 +2,6 @@ from datetime import datetime
 
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core.cache import cache
 from django.db.models import Count, Q
 from django.http import Http404
 from django.views.generic import (
@@ -16,11 +15,9 @@ from django.views.generic import (
 from django_countries import countries
 from guardian.mixins import LoginRequiredMixin
 
-from grandchallenge.challenges.models import ChallengeRequest
 from grandchallenge.charts.specs import stacked_bar, world_map
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
-from grandchallenge.evaluation.models import Submission
-from grandchallenge.evaluation.utils import SubmissionKindChoices
+from grandchallenge.evaluation.models import Evaluation, Submission
 from grandchallenge.pages.forms import PageCreateForm, PageUpdateForm
 from grandchallenge.pages.models import Page
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
@@ -171,13 +168,6 @@ class ChallengeStatistics(TemplateView):
             .order_by("created__year", "created__month", "phase__pk")
         )
 
-        creators = (
-            Submission.objects.filter(phase__in=public_phases)
-            .values("phase__pk")
-            .annotate(creators_count=Count("creator__pk", distinct=True))
-            .order_by("phase__pk")
-        )
-
         context.update(
             {
                 "participants": world_map(
@@ -210,30 +200,17 @@ class ChallengeStatistics(TemplateView):
                         (phase.pk, phase.title) for phase in public_phases
                     ],
                 ),
-                "algorithm_phases": self.request.challenge.phase_set.prefetch_related(
-                    "submission_set"
-                ).filter(
-                    submission_kind=SubmissionKindChoices.ALGORITHM
-                ),
-                "statistics_for_phases": cache.get("statistics_for_phases"),
-                "challenge_request": ChallengeRequest.objects.filter(
-                    short_name=self.request.challenge.short_name,
-                    status=ChallengeRequest.ChallengeRequestStatusChoices.ACCEPTED,
-                ).first(),
-                "creators": stacked_bar(
-                    values=[
-                        {
-                            "Creators": datum["creators_count"],
-                            "Phase": datum["phase__pk"],
-                        }
-                        for datum in creators
-                    ],
-                    lookup="Creators",
-                    title="Creators per Phase",
-                    facet="Phase",
-                    domain=[
-                        (phase.pk, phase.title) for phase in public_phases
-                    ],
+                "annotated_phases": self.request.challenge.phase_set.annotate(
+                    num_submissions=Count("submission", distinct=True),
+                    num_successful_submissions=Count(
+                        "submission",
+                        filter=Q(
+                            submission__evaluation__status=Evaluation.SUCCESS
+                        ),
+                        distinct=True,
+                    ),
+                    num_creators=Count("submission__creator", distinct=True),
+                    num_archive_items=Count("archive__items", distinct=True),
                 ),
             }
         )

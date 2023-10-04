@@ -15,7 +15,6 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
 from django.utils.timezone import localtime
-from django_deprecate_fields import deprecate_field
 from django_extensions.db.fields import AutoSlugField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
@@ -111,6 +110,7 @@ class PhaseManager(models.Manager):
             .prefetch_related(
                 # This should be a select_related, but I cannot find a way
                 # to use a custom model manager with select_related
+                # Maybe this is solved with GeneratedField (Django 5)?
                 models.Prefetch(
                     "challenge",
                     queryset=Challenge.objects.with_available_compute(),
@@ -163,6 +163,7 @@ class Phase(UUIDModel, ViewContentMixin):
     )
 
     SubmissionKindChoices = SubmissionKindChoices
+    StatusChoices = StatusChoices
 
     challenge = models.ForeignKey(
         Challenge, on_delete=models.PROTECT, editable=False
@@ -473,12 +474,18 @@ class Phase(UUIDModel, ViewContentMixin):
         blank=True,
         help_text="Optional alternative hanging protocols for this phase",
     )
-    total_number_of_submissions_allowed = deprecate_field(
-        models.PositiveSmallIntegerField(
-            blank=True,
-            null=True,
-            help_text="Total number of successful submissions allowed for this phase for all users together.",
-        )
+
+    average_algorithm_job_duration = models.DurationField(
+        editable=False,
+        null=True,
+        help_text="The average duration of successful algorithm jobs for this phase",
+    )
+    compute_cost_euro_millicents = models.PositiveBigIntegerField(
+        # We store euro here as the costs were incurred at a time when
+        # the exchange rate may have been different
+        editable=False,
+        default=0,
+        help_text="The total compute cost for this phase in Euro Cents, including Tax",
     )
 
     objects = PhaseManager()
