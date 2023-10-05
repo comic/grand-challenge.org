@@ -11,7 +11,10 @@ from grandchallenge.evaluation.models import Evaluation, Method
 def annotate_job_duration_and_compute_costs(*, phase):
     algorithm_jobs = (
         Job.objects.with_duration()
-        .filter(inputs__archive_items__archive__phase=phase)
+        .filter(
+            inputs__archive_items__archive__phase=phase,
+            algorithm_image__submission__phase=phase,
+        )
         .distinct()
     )
     evaluation_jobs = Evaluation.objects.filter(
@@ -30,7 +33,8 @@ def annotate_job_duration_and_compute_costs(*, phase):
 
 def annotate_compute_costs_and_storage_size(*, challenge):
     algorithm_jobs = Job.objects.filter(
-        inputs__archive_items__archive__phase__challenge=challenge
+        inputs__archive_items__archive__phase__challenge=challenge,
+        algorithm_image__submission__phase__challenge=challenge,
     ).distinct()
     evaluation_jobs = Evaluation.objects.filter(
         submission__phase__challenge=challenge
