@@ -60,6 +60,7 @@ class PhaseAdmin(admin.ModelAdmin):
         "title",
         "challenge",
         "submission_kind",
+        "open_for_submissions",
         "submissions_open_at",
         "submissions_close_at",
         "submissions_limit_per_user_per_period",
