@@ -1,6 +1,6 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.db.models import Q
+from django.db.models import F, Q
 from django.http import HttpResponse
 from django.template.response import TemplateResponse
 from django.utils.html import format_html
@@ -245,6 +245,9 @@ class ChallengeCostOverview(
             .with_available_compute()
             .with_most_recent_submission_datetime()
             .prefetch_related("phase_set")
+            .order_by(
+                F("most_recent_submission_datetime").desc(nulls_last=True)
+            )
         )
 
 
