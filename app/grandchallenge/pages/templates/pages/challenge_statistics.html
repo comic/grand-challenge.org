@@ -58,6 +58,7 @@
             <table class="table table-hover table-borderless table-sm" id="challengeCostsOverviewTable">
                 <thead class="thead-light">
                     <tr>
+                        <th>Number</th>
                         <th>Issued</th>
                         <th>Support Costs</th>
                         <th>Compute Costs</th>
@@ -69,6 +70,7 @@
                 <tbody>
                     {% for invoice in challenge.invoices.all %}
                         <tr>
+                            <td>{{ invoice.internal_invoice_number }}</td>
                             <td>{{ invoice.issued_on }}</td>
                             <td>€ {{ invoice.support_costs_euros }}</td>
                             <td>€ {{ invoice.compute_costs_euros }}</td>
