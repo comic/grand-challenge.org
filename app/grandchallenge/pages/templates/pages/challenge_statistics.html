@@ -52,13 +52,38 @@
     </dl>
 
     {% if perms.challenges.view_challengerequest %}
-        <h4>Estimated Costs</h4>
+        <h4>Invoices</h4>
 
-        <p>
-            Note that the total compute cost for the challenge may be less than the
-            sum of the total compute costs for each phase.
-            This can be caused by re-use of archive items between phases.
-        </p>
+        <div class="table-responsive">
+            <table class="table table-hover table-borderless table-sm" id="challengeCostsOverviewTable">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Number</th>
+                        <th>Issued</th>
+                        <th>Support Costs</th>
+                        <th>Compute Costs</th>
+                        <th>Storage Costs</th>
+                        <th>Reference</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invoice in challenge.invoices.all %}
+                        <tr>
+                            <td>{{ invoice.internal_invoice_number }}</td>
+                            <td>{{ invoice.issued_on }}</td>
+                            <td>€ {{ invoice.support_costs_euros }}</td>
+                            <td>€ {{ invoice.compute_costs_euros }}</td>
+                            <td>€ {{ invoice.storage_costs_euros }}</td>
+                            <td>{{ invoice.external_reference }}</td>
+                            <td><span class="badge {% if invoice.payment_status == invoice.PaymentStatusChoices.INITIALIZED %}badge-info{% elif invoice.payment_status == invoice.PaymentStatusChoices.ISSUED %}badge-warning{% else %}badge-success{% endif %}">{{ invoice.get_payment_status_display }}</span></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <h4>Challenge Costs</h4>
 
         <div class="table-responsive">
             <table class="table table-hover table-borderless table-sm" id="challengeCostsOverviewTable">
@@ -91,6 +116,14 @@
             </table>
         </div>
 
+        <h4>Phase Costs</h4>
+
+        <p>
+            Note that the total compute cost for the challenge may be less than the
+            sum of the total compute costs for each phase.
+            This can be caused by re-use of archive items between phases.
+        </p>
+
         <div class="table-responsive">
             <table class="table table-hover table-borderless table-sm" id="phaseCostsOverviewTable">
                 <thead class="thead-light">
@@ -102,9 +135,9 @@
                         <th>Number of Submissions</th>
                         <th>Number of Successful Submissions</th>
                         <th>Number of Unique Creators</th>
-                        <th>Average Job Duration</th>
+                        <th>Average Algorithm Job Duration</th>
                         <th>Total Compute Cost</th>
-                        <th>Average Submission Cost</th>
+                        <th>Estimated Cost per Successful Submission</th>
                     </tr>
                 </thead>
                 <tbody>

@@ -320,7 +320,7 @@ def test_challenge_statistics_page_permissions(client):
         challenge=challenge,
     )
     assert response.status_code == 200
-    assert "Estimated Costs" not in response.rendered_content
+    assert "Challenge Costs" not in response.rendered_content
 
     assign_perm("challenges.view_challengerequest", user)
 
@@ -331,4 +331,4 @@ def test_challenge_statistics_page_permissions(client):
         challenge=challenge,
     )
     assert response.status_code == 200
-    assert "Estimated Costs" in response.rendered_content
+    assert "Challenge Costs" in response.rendered_content

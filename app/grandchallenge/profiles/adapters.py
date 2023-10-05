@@ -4,7 +4,7 @@ from allauth.account.utils import (
     user_email,
     user_username,
 )
-from allauth.exceptions import ImmediateHttpResponse
+from allauth.core.exceptions import ImmediateHttpResponse
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from allauth.socialaccount.models import SocialLogin
 from allauth_2fa.utils import user_has_valid_totp_device

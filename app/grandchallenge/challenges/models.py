@@ -16,7 +16,7 @@ from django.core.validators import (
     validate_slug,
 )
 from django.db import models
-from django.db.models import ExpressionWrapper, F, Q, Sum
+from django.db.models import ExpressionWrapper, F, OuterRef, Q, Subquery, Sum
 from django.db.models.signals import post_delete, pre_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
@@ -98,6 +98,18 @@ class ChallengeSet(models.QuerySet):
                 - F("compute_cost_euro_millicents"),
                 output_field=models.BigIntegerField(),
             ),
+        )
+
+    def with_most_recent_submission_datetime(self):
+        from grandchallenge.evaluation.models import Submission
+
+        latest_submission = Submission.objects.filter(
+            phase__challenge=OuterRef("pk")
+        ).order_by("-created")
+        return self.annotate(
+            most_recent_submission_datetime=Subquery(
+                latest_submission.values("created")[:1]
+            )
         )
 
 

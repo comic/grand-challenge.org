@@ -59,13 +59,9 @@ def update_challenge_results_cache():
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def update_compute_costs_and_storage_size():
     challenges = Challenge.objects.all()
-    phases = Phase.objects.all()
 
     for challenge in challenges:
         annotate_compute_costs_and_storage_size(challenge=challenge)
-
-    for phase in phases:
-        annotate_job_duration_and_compute_costs(phase=phase)
 
     Challenge.objects.bulk_update(
         challenges,
@@ -75,6 +71,11 @@ def update_compute_costs_and_storage_size():
             "compute_cost_euro_millicents",
         ],
     )
+
+    phases = Phase.objects.all()
+
+    for phase in phases:
+        annotate_job_duration_and_compute_costs(phase=phase)
 
     Phase.objects.bulk_update(
         phases,
