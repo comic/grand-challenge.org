@@ -86,19 +86,17 @@ def test_approved_compute_costs_euro_millicents():
     p4 = PhaseFactory(challenge=c4)
     s4 = SubmissionFactory(phase=p4)
 
-    expected_budget = [1, 20, 30, 0]
-    expected_submission = [None, s2.created, None, s4.created]
-
-    for idx, challenge in enumerate(
-        Challenge.objects.order_by("short_name")
+    for challenge, expected_budget, expected_datetime in zip(
+        Challenge.objects.filter(pk__in=[c1.pk, c2.pk, c3.pk, c4.pk])
+        .order_by("short_name")
         .with_available_compute()
-        .with_most_recent_submission_datetime()
+        .with_most_recent_submission_datetime(),
+        [1, 20, 30, 0],
+        [None, s2.created, None, s4.created],
+        strict=True,
     ):
         assert (
             challenge.approved_compute_costs_euro_millicents
-            == expected_budget[idx] * 1000 * 100
+            == expected_budget * 1000 * 100
         )
-        assert (
-            challenge.most_recent_submission_datetime
-            == expected_submission[idx]
-        )
+        assert challenge.most_recent_submission_datetime == expected_datetime
