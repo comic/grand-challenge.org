@@ -651,8 +651,8 @@ class Job(UUIDModel, ComponentJob):
         default=False,
         help_text=(
             "If True, allow anyone to download this result along "
-            "with the input image. Otherwise, only the job creator and "
-            "algorithm editor(s) will have permission to download and view "
+            "with the input image. Otherwise, only the job creator "
+            "will have permission to download and view "
             "this result."
         ),
     )
