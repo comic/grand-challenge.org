@@ -32,14 +32,14 @@
 
 {% if object.submission.phase.scoring_method_choice != object.submission.phase.ABSOLUTE %}
 
-    <b>{{ object.rank_score|floatformat }}</b>
+    <strong>{{ object.rank_score|floatformat }}</strong>
 
     <split></split>
 {% endif %}
 
 {% with object.metrics_json_file|get_jsonpath:object.submission.phase.score_jsonpath as metric %}
     {% if object.submission.phase.scoring_method_choice == object.submission.phase.ABSOLUTE %}
-        <b>{% endif %}
+        <strong>{% endif %}
     {% filter remove_whitespace %}
         {{ metric|floatformat:object.submission.phase.score_decimal_places }}
         {% if object.submission.phase.score_error_jsonpath %}
@@ -53,14 +53,13 @@
         {% endif %}
     {% endfilter %}
     {% if object.submission.phase.scoring_method_choice == object.submission.phase.ABSOLUTE %}
-        </b>{% endif %}
+        </strong>{% endif %}
     <split></split>
 {% endwith %}
 
 {% for col in object.submission.phase.extra_results_columns %}
     {% with object.metrics_json_file|get_jsonpath:col.path as metric %}
         {% filter remove_whitespace %}
-            <b>
             {{ metric|floatformat:object.submission.phase.score_decimal_places }}
             {% if col.error_path %}
                 &nbsp;±&nbsp;
@@ -71,7 +70,6 @@
                 {{ object.rank_per_metric|get_key:col.path }}
                 )
             {% endif %}
-            </b>
         {% endfilter %}
         <split></split>
     {% endwith %}
