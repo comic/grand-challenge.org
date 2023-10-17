@@ -4,8 +4,9 @@
 {% load humanize %}
 {% load remove_whitespace %}
 {% load url %}
-
-{{ object.rank|ordinal }}
+<a href="{{ object.get_absolute_url }}">
+    {{ object.rank|ordinal }}
+</a>
 <split></split>
 
 {{ object.submission.creator|user_profile_link }}
@@ -30,50 +31,48 @@
 <split></split>
 
 {% if object.submission.phase.scoring_method_choice != object.submission.phase.ABSOLUTE %}
-    <a href="{{ object.get_absolute_url }}">
-        <b>{{ object.rank_score|floatformat }}</b>
-    </a>
+
+    <b>{{ object.rank_score|floatformat }}</b>
+
     <split></split>
 {% endif %}
 
 {% with object.metrics_json_file|get_jsonpath:object.submission.phase.score_jsonpath as metric %}
-    <a href="{{ object.get_absolute_url }}">
-        {% if object.submission.phase.scoring_method_choice == object.submission.phase.ABSOLUTE %}
-            <b>{% endif %}
-        {% filter remove_whitespace %}
-            {{ metric|floatformat:object.submission.phase.score_decimal_places }}
-            {% if object.submission.phase.score_error_jsonpath %}
-                &nbsp;±&nbsp;
-                {{ object.metrics_json_file|get_jsonpath:object.submission.phase.score_error_jsonpath|floatformat:object.submission.phase.score_decimal_places }}
-            {% endif %}
-            {% if object.submission.phase.scoring_method_choice != object.submission.phase.ABSOLUTE %}
-                &nbsp;(
-                {{ object.rank_per_metric|get_key:object.submission.phase.score_jsonpath }}
-                )
-            {% endif %}
-        {% endfilter %}
-        {% if object.submission.phase.scoring_method_choice == object.submission.phase.ABSOLUTE %}
-            </b>{% endif %}
-    </a>
+    {% if object.submission.phase.scoring_method_choice == object.submission.phase.ABSOLUTE %}
+        <b>{% endif %}
+    {% filter remove_whitespace %}
+        {{ metric|floatformat:object.submission.phase.score_decimal_places }}
+        {% if object.submission.phase.score_error_jsonpath %}
+            &nbsp;±&nbsp;
+            {{ object.metrics_json_file|get_jsonpath:object.submission.phase.score_error_jsonpath|floatformat:object.submission.phase.score_decimal_places }}
+        {% endif %}
+        {% if object.submission.phase.scoring_method_choice != object.submission.phase.ABSOLUTE %}
+            &nbsp;(
+            {{ object.rank_per_metric|get_key:object.submission.phase.score_jsonpath }}
+            )
+        {% endif %}
+    {% endfilter %}
+    {% if object.submission.phase.scoring_method_choice == object.submission.phase.ABSOLUTE %}
+        </b>{% endif %}
     <split></split>
 {% endwith %}
 
 {% for col in object.submission.phase.extra_results_columns %}
     {% with object.metrics_json_file|get_jsonpath:col.path as metric %}
-        <a href="{{ object.get_absolute_url }}">
-            {% filter remove_whitespace %}
-                {{ metric|floatformat:object.submission.phase.score_decimal_places }}
-                {% if col.error_path %}
-                    &nbsp;±&nbsp;
-                    {{ object.metrics_json_file|get_jsonpath:col.error_path|floatformat:object.submission.phase.score_decimal_places }}
-                {% endif %}
-                {% if object.submission.phase.scoring_method_choice != object.submission.phase.ABSOLUTE %}
-                    &nbsp;(
-                    {{ object.rank_per_metric|get_key:col.path }}
-                    )
-                {% endif %}
-            {% endfilter %}
-        </a>
+        {% filter remove_whitespace %}
+            <b>
+            {{ metric|floatformat:object.submission.phase.score_decimal_places }}
+            {% if col.error_path %}
+                &nbsp;±&nbsp;
+                {{ object.metrics_json_file|get_jsonpath:col.error_path|floatformat:object.submission.phase.score_decimal_places }}
+            {% endif %}
+            {% if object.submission.phase.scoring_method_choice != object.submission.phase.ABSOLUTE %}
+                &nbsp;(
+                {{ object.rank_per_metric|get_key:col.path }}
+                )
+            {% endif %}
+            </b>
+        {% endfilter %}
         <split></split>
     {% endwith %}
 {% endfor %}
