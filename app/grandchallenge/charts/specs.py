@@ -133,6 +133,12 @@ def horizontal_bar(*, values, lookup, title):
 def world_map(*, values):
     return {
         "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "title": {
+            "text": "The countries and their borders are sourced from Natural Earth",
+            "fontSize": "10",
+            "color": "#95a5a6",
+            "anchor": "end",
+        },
         "width": "container",
         "height": "container",
         "padding": 0,
