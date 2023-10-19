@@ -14,11 +14,11 @@
        data-target="#filterForm"
        aria-expanded="false"
        aria-controls="filterForm">
-        <i class="fas fa-filter"></i>&nbsp;Filter  {% if not model_name %}{{ filter.Meta.model|meta_attr:'verbose_name_plural'|title }}{% else %} {{ model_name|title }}s {% endif %}
+        <i class="fas fa-filter mr-1"></i>Filter  {% if not model_name %}{{ filter.Meta.model|meta_attr:'verbose_name_plural'|title }}{% else %} {{ model_name|title }}s {% endif %}
     </a>
     {% if filters_applied %}
         <a class="btn btn-danger" href="?">
-            <i class="fas fa-times"></i>&nbsp;Remove Filters
+            <i class="fas fa-times mr-1"></i>Remove Filters
         </a>
     {% endif %}
 </p>

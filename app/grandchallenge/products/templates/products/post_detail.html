@@ -50,8 +50,8 @@
 
                 {% for tag in object.tags.all %}
                     <div class="row">
-                        <p><i class="fas fa-angle-right text-radboud"
-                            aria-hidden="true"></i>&nbsp;&nbsp;
+                        <p><i class="fas fa-angle-right text-radboud mr-1"
+                            aria-hidden="true"></i>
                             <a href="{% url 'products:blogs-list' %}?tags={{ tag.pk }}">{{ tag.name }}</a></p>
                     </div>
                 {% endfor %}
@@ -64,8 +64,8 @@
 
                 {% for company in object.companies.all %}
                     <div class="row">
-                        <p><i class="fas fa-angle-right text-radboud"
-                            aria-hidden="true"></i>&nbsp;&nbsp;
+                        <p><i class="fas fa-angle-right text-radboud mr-1"
+                            aria-hidden="true"></i>
                             <a href="{% url 'products:company-detail' slug=company.slug %}">{{ company.company_name }}</a></p>
                     </div>
                 {% endfor %}

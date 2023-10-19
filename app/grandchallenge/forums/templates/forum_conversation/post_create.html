@@ -25,7 +25,7 @@
         <form method="post" action="." class="form" enctype="multipart/form-data" novalidate>{% csrf_token %}
           {% include "forum_conversation/partials/post_form.html" %}
           <div class="form-actions">
-            <input type="submit" name="preview" class="btn btn-large btn-default" value="{% trans "Preview" %}" />&nbsp;
+            <input type="submit" name="preview" class="btn btn-large btn-default mr-1" value="{% trans "Preview" %}" />
             <input type="submit" class="btn btn-large btn-primary" value="{% trans "Submit" %}" />
           </div>
         </form>
@@ -46,7 +46,7 @@
             <h4 class="subject">{{ post.subject }}</h4>
             <p><small class="text-muted">
             {% spaceless %}
-              <i class="fa fa-clock-o"></i>&nbsp;
+              <i class="fa fa-clock-o mr-1"></i>
               {% if post.poster %}
                 {% url 'forum_member:profile' post.poster_id as poster_url %}
                 {% blocktrans trimmed with poster_url=poster_url username=post.poster|forum_member_display_name creation_date=post.created %}

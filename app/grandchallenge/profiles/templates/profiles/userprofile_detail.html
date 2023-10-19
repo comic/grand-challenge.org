@@ -58,49 +58,49 @@
                             {% if not profile.user.verification %}
                                 <a class="list-group-item list-group-item-action"
                                    href="{% url 'verifications:create' %}">
-                                    <i class="fas fa-user-check"></i>&nbsp;Request Verification
+                                    <i class="fas fa-user-check mr-1"></i>Request Verification
                                 </a>
                             {% else %}
                                 <a class="list-group-item list-group-item-action"
                                    href="{% url 'verifications:detail' %}">
-                                    <i class="fas fa-user-check"></i>&nbsp;Verification Status
+                                    <i class="fas fa-user-check mr-1"></i>Verification Status
                                 </a>
                             {% endif %}
                             <a class="list-group-item list-group-item-action"
                                href='{% url 'profile-update' user.username %}'><i
-                                    class="fa fa-edit fa-fw"></i>&nbsp;{% trans "Edit profile" %}</a>
+                                    class="fa fa-edit fa-fw mr-1"></i>{% trans "Edit profile" %}</a>
                             {% if profile.user.has_usable_password %}
                                 <a class="list-group-item list-group-item-action"
                                    href='{% url 'account_change_password' %}'><i
-                                        class="fa fa-key fa-fw"></i>&nbsp;{% trans "Change password" %}
+                                        class="fa fa-key fa-fw mr-1"></i>{% trans "Change password" %}
                                 </a>
                             {% endif %}
                             <a class="list-group-item list-group-item-action"
                                href='{% url 'api-tokens:list' %}'><i
-                                    class="fas fa-unlock fa-fw"></i>&nbsp;{% trans "Manage API Tokens" %}</a>
+                                    class="fas fa-unlock fa-fw mr-1"></i>{% trans "Manage API Tokens" %}</a>
                         {% if request.user|has_2fa_enabled %}
                             <a class="list-group-item list-group-item-action" href="{% url 'two-factor-backup-tokens' %}" title="Two-Factor Authentication Settings"><i
-                                   class="fas fa-qrcode fa-fw"></i>{% trans "2FA Settings" %}</a>
+                                   class="fas fa-qrcode fa-fw mr-1"></i>{% trans "2FA Settings" %}</a>
                         {% else %}
                             <a class="list-group-item list-group-item-action" href="{% url 'two-factor-setup' %}" title="Enable Two-Factor Authentication"><i
-                                   class="fas fa-qrcode fa-fw"></i>{% trans "Enable 2FA" %}</a>
+                                   class="fas fa-qrcode fa-fw mr-1"></i>{% trans "Enable 2FA" %}</a>
                         {% endif %}
                         </ul>
                     {% endif %}
 
                     <ul class="list-unstyled">
                         {% if profile.country %}
-                            <li class="my-1"><i class="fa fa-fw fa-map-marker-alt"></i>&nbsp;{{ profile.country.name }}
+                            <li class="my-1"><i class="fa fa-fw fa-map-marker-alt mr-1"></i>{{ profile.country.name }}
                             </li>
                         {% endif %}
                         {% if profile.institution %}
-                            <li class="my-1"><i class="fa fa-fw fa-university"></i>&nbsp;{{ profile.institution }}</li>
+                            <li class="my-1"><i class="fa fa-fw fa-university mr-1"></i>{{ profile.institution }}</li>
                         {% endif %}
                         {% if profile.department %}
-                            <li class="my-1"><i class="fa fa-fw fa-building"></i>&nbsp;{{ profile.department }}</li>
+                            <li class="my-1"><i class="fa fa-fw fa-building mr-1"></i>{{ profile.department }}</li>
                         {% endif %}
                         {% if profile.website %}
-                            <li class="my-1"><i class="fa fa-fw fa-link"></i>&nbsp;<a
+                            <li class="my-1"><i class="fa fa-fw fa-link mr-1"></i><a
                                     href="{{ profile.website }}">Website</a></li>
                         {% endif %}
                     </ul>

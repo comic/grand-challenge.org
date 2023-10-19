@@ -45,9 +45,9 @@
                         </div>
                     </div>
                     <div class="col-2 col-md-1 p-1">
-                        <div class="h-100 d-flex align-items-center">
+                        <div class="h-100 d-flex align-items-center mr-1">
                             <div>
-                                &nbsp;{{ user.progress.questions|floatformat }}%
+                               {{ user.progress.questions|floatformat }}%
                             </div>
                         </div>
                     </div>
@@ -56,7 +56,7 @@
                             <button class="btn btn-primary"
                                     {% workstation_session_control_data workstation=reader_study.workstation context_object=reader_study reader_study=reader_study user=user.obj %}
                             >
-                                <i class="fa fa-eye"></i> View User's Answers
+                                <i class="fa fa-eye mr-1"></i>View User's Answers
                             </button>
                         </div>
                     </div>
@@ -71,7 +71,7 @@
                                     data-warning="This will delete all answers for user '{{ user.obj }}'. This action cannot be undone."
                                     data-user="{{ user.obj }}"
                                     data-action="Delete Answers">
-                                <i class="fa fa-trash-alt"></i>&nbsp;Delete User's Answers
+                                <i class="fa fa-trash-alt mr-1"></i>Delete User's Answers
                             </button>
                         </div>
                     </div>

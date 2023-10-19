@@ -78,8 +78,8 @@ class UserAutocomplete(LoginRequiredMixin, autocomplete.Select2QuerySetView):
             return format_html(
                 '<img class="rounded-circle align-middle" src="{}" width ="20" height ="20"> '
                 "&nbsp; <b>{}</b> &nbsp; {} &nbsp;"
-                '<i class="fas fa-user-check text-success"></i>'
-                "&nbsp;Verified email address at {}",
+                '<i class="fas fa-user-check text-success mr-1"></i>'
+                "Verified email address at {}",
                 result.user_profile.get_mugshot_url(),
                 result.get_username(),
                 result.get_full_name().title(),

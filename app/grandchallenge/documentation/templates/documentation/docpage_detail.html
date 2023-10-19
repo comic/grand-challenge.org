@@ -50,7 +50,7 @@
                             <a class="nav-link rounded {% if page == currentdocpage or currentdocpage in subpages %}active{% endif %} text-white bg-dark"
                                id="{{ page.slug }}"
                                href="{% url 'documentation:detail' slug=page.slug %}">
-                                    {{ page.title }} &nbsp;&nbsp;<i class="fas fa-caret-down"></i>
+                                    {{ page.title }}<i class="fas fa-caret-down ml-2"></i>
                             </a>
                                 <ul class="rounded {% if currentdocpage == page or currentdocpage in subpages %}collapse show{% else %}collapse hide{% endif %} list-group">
                                     {% for subpage in page.children.all %}
@@ -68,7 +68,7 @@
                                                 <a class="nav-link rounded {% if subpage == currentdocpage  %}active font-weight-bold{% endif %} text-primary bg-light"
                                                    id="{{ subpage.slug }}"
                                                    href="{% url 'documentation:detail' slug=subpage.slug %}">
-                                                        {{ subpage.title }} &nbsp;&nbsp;<i class="fas fa-caret-down"></i>
+                                                        {{ subpage.title }}<i class="fas fa-caret-down ml-2"></i>
                                                 </a>
                                             </li>
                                             <ul class="rounded {% if currentdocpage == subpage or currentdocpage in subpage_subpages %}collapse show{% else %}collapse hide{% endif %} list-group">
@@ -86,7 +86,7 @@
                                                             <a class="nav-link rounded {% if tertiarypage == currentdocpage %}active font-weight-bold{% endif %} text-primary"
                                                                id="{{ tertiarypage.slug }}"
                                                                href="{% url 'documentation:detail' slug=tertiarypage.slug %}">
-                                                                    {{ tertiarypage.title }}&nbsp;&nbsp;<i class="fas fa-caret-down"></i>
+                                                                    {{ tertiarypage.title }}<i class="fas fa-caret-down ml-2"></i>
                                                             </a>
                                                         </li>
                                                         <ul class="border-left border-right border-bottom {% if currentdocpage == tertiarypage or currentdocpage in tertiarypage.children.all %} collapse show {% else %} collapse hide {% endif %} list-group mb-1">

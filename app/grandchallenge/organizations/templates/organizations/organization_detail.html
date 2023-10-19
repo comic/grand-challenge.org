@@ -26,21 +26,21 @@
             <a class="nav-link active" id="v-pills-home-tab" data-toggle="pill"
                href="#v-pills-home" role="tab" aria-controls="v-pills-home"
                aria-selected="true"><i
-                    class="fas fa-info fa-fw"></i>&nbsp;Information
+                    class="fas fa-info fa-fw mr-1"></i>Information
             </a>
 
             {% if "change_organization" in object_perms %}
                 <a class="nav-link" id="v-pills-editors-tab" data-toggle="pill"
                    href="#v-pills-editors" role="tab" aria-controls="v-pills-editors"
-                   aria-selected="false"><i class="fas fa-user fa-fw"></i>&nbsp;Editors
+                   aria-selected="false"><i class="fas fa-user fa-fw mr-1"></i>Editors
                 </a>
                 <a class="nav-link" id="v-pills-members-tab" data-toggle="pill"
                    href="#v-pills-members" role="tab" aria-controls="v-pills-members"
-                   aria-selected="false"><i class="fas fa-users fa-fw"></i>&nbsp;Members
+                   aria-selected="false"><i class="fas fa-users fa-fw mr-1"></i>Members
                 </a>
                 <a class="nav-link"
                    href="{% url 'organizations:update' slug=object.slug %}">
-                    <i class="fa fa-edit fa-fw"></i>&nbsp;Edit Organization
+                    <i class="fa fa-edit fa-fw mr-1"></i>Edit Organization
                 </a>
             {% endif %}
         </div>
@@ -59,14 +59,14 @@
             {{ object.detail_page_markdown|md2html }}
 
             <dl class="row">
-                <dt class="col-sm-3 mt-2"><i class="fa fa-fw fa-map-marker-alt"></i>&nbsp;Location</dt>
+                <dt class="col-sm-3 mt-2"><i class="fa fa-fw fa-map-marker-alt mr-1"></i>Location</dt>
                 <dd class="col-sm-9 mt-2">{{ object.location.name }}</dd>
 
-                <dt class="col-sm-3 mt-2"><i class="fa fa-fw fa-link"></i>&nbsp;Website</dt>
+                <dt class="col-sm-3 mt-2"><i class="fa fa-fw fa-link mr-1"></i>Website</dt>
                 <dd class="col-sm-9 mt-2"><a href="{{ object.website }}">{{ object.website }}</a></dd>
 
                 {% if object.editors_group.user_set.all %}
-                    <dt class="col-sm-3 mt-2"><i class="fa fa-fw fa-users"></i>&nbsp;Editors</dt>
+                    <dt class="col-sm-3 mt-2"><i class="fa fa-fw fa-users mr-1"></i>Editors</dt>
                     <dd class="col-sm-9 mt-2">{% for editor in object.editors_group.user_set.all %}<p>{{ editor|user_profile_link }}</p>{% endfor %}</dd>
                 {% endif %}
 
@@ -100,7 +100,7 @@
                                 </h5>
                                 <span class="badge badge-info above-stretched-link"
                                       title="{{ object|meta_attr:'verbose_name'|title }} {% firstof object.title object.short_name %}">
-                                    <i class="far fa-circle fa-fw"></i>&nbsp;{{ object|meta_attr:'verbose_name'|title }}
+                                    <i class="far fa-circle fa-fw mr-1"></i>{{ object|meta_attr:'verbose_name'|title }}
                                 </span>
                                 <p class="card-text">
                                     {{ object.description }}
@@ -127,7 +127,7 @@
                 <p>
                     <a class="btn btn-primary"
                        href="{% url 'organizations:editors-update' slug=object.slug %}">
-                        <i class="fa fa-plus"></i> Add Editors
+                        <i class="fa fa-plus mr-1"></i>Add Editors
                     </a>
                 </p>
             </div>

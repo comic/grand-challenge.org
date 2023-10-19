@@ -38,21 +38,21 @@
               <li class="nav-item">
                 <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'admins:list' or request.resolver_match.view_name == 'admins:update' %}active{% endif %}"
                     href="{% url 'admins:list' challenge_short_name=challenge.short_name %}">
-                    <i class="fas fa-user fa-fw"></i>&nbsp;Admins
+                    <i class="fas fa-user fa-fw mr-1"></i>Admins
                     <span class="badge badge-pill badge-secondary align-middle">{{ challenge.get_admins.count }}</span>
                 </a>
               </li>
               <li class="nav-item">
                   <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'participants:list' %}active{% endif %}"
                     href="{% url 'participants:list' challenge_short_name=challenge.short_name %}">
-                    <i class="fas fa-users fa-fw"></i>&nbsp;Participants
+                    <i class="fas fa-users fa-fw mr-1"></i>Participants
                       <span class="badge badge-pill badge-secondary align-middle">{{ challenge.get_participants.count }}</span>
                   </a>
               </li>
               <li class="nav-item">
                  <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'participants:registration-list' %}active{% endif %}"
                     href="{% url 'participants:registration-list' challenge_short_name=challenge.short_name %}">
-                    <i class="fas fa-question fa-fw"></i>&nbsp;Participation Requests
+                    <i class="fas fa-question fa-fw mr-1"></i>Participation Requests
                         {% if challenge.access_request_handling != 'ACCEPT_ALL' %}
                             {% with num_requests=pending_requests.count %} <span
                               class="badge badge-pill badge-secondary align-middle">{{ num_requests }}</span>
@@ -67,7 +67,7 @@
                   <li class="nav-item">
                     <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'evaluation:phase-create' %}active{% endif %}"
                         href="{% url 'evaluation:phase-create' challenge_short_name=challenge.short_name %}">
-                        <i class="fas fa-plus fa-fw"></i>&nbsp;Add a new Phase</a>
+                        <i class="fas fa-plus fa-fw mr-1"></i>Add a new Phase</a>
                   </li>
             <li class="navbar-header rounded bg-light pl-3 py-1 mt-2 mb-1"><a>Combined Leaderboards</a></li>
                 {% for combined_leaderboard in challenge.combinedleaderboard_set.all %}
@@ -76,7 +76,7 @@
                <li class="nav-item">
                 <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'evaluation:combined-leaderboard-create' %}active{% endif %}"
                     href="{% url 'evaluation:combined-leaderboard-create' challenge_short_name=challenge.short_name %}">
-                    <i class="fas fa-plus fa-fw"></i>&nbsp;Add a new Combined Leaderboard</a>
+                    <i class="fas fa-plus fa-fw mr-1"></i>Add a new Combined Leaderboard</a>
               </li>
           </ul>
     </div>
