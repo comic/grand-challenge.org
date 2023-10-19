@@ -30,6 +30,21 @@
         <div class="alert alert-danger">The phase that this evaluation belongs to, is no longer active.</div>
     {% endif %}
 
+        <ul class="nav">
+      <li class="nav-item">
+        <a class="nav-link active" aria-current="page" href="#">Active</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Link</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Link</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>
+      </li>
+    </ul>
+
     <h2>Evaluation</h2>
 
     <dl>
@@ -249,9 +264,19 @@
 
             <div class="card-body">
                 <h3 class="card-title">Results</h3>
-                   <button class="btn btn-primary" target="_blank" href="{% url 'algorithms:job-list' slug=object.submission.algorithm_image.algorithm.slug %}">
-                       Go to results of {{ object.submission.algorithm_image.algorithm.title }} <i class="fas fa-angle-double-right"></i>
-                   </button>
+
+                 {% if object.submission.predictions_file %}
+                    <a href="{{ object.submission.predictions_file.url }}"
+                       class="btn btn-primary">
+                        <i class="fas fa-download"></i>&nbsp;&nbsp;Download the submission file for this result
+                    </a>
+                {% endif %}
+
+                {% if object.submission.phase.submission_kind == evaluation.submission.phase.SubmissionKindChoices.ALGORITHM %}
+                    <a class="btn btn-primary" href="{% url 'algorithms:job-list' slug=object.submission.algorithm_image.algorithm.slug %}">
+                       <i class="fas fa-angle-double-right"></i>&nbsp;&nbsp;Go to the results of {{ object.submission.algorithm_image.algorithm.title|truncatechars:30 }}
+                   </a>
+                {% endif %}
             </div>
 
             {% if object.status == object.SUCCESS %}
@@ -295,17 +320,6 @@
                         class="btn btn-primary">
                         <i class="fa fa-download"></i>
                         Download the predictions.json file for this evaluation
-                    </a>
-                </div>
-            {% endif %}
-
-            {% if object.submission.predictions_file %}
-                <div class="card-body">
-                    <h3 class="card-title">Submission File</h3>
-                    <a href="{{ object.submission.predictions_file.url }}"
-                       class="btn btn-primary">
-                        <i class="fa fa-download"></i>
-                        Download the submission file for this result
                     </a>
                 </div>
             {% endif %}
