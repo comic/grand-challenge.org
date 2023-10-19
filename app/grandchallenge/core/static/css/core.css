@@ -2,6 +2,7 @@ html {
     overflow-y: scroll;
     position: relative;
     min-height: 100%;
+    scroll-behavior: smooth;
 }
 
 p {
