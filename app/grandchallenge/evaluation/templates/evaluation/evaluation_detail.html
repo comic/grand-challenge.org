@@ -294,10 +294,10 @@
                             {% csrf_token %}
                             <input type="hidden" name="published"
                                    value="false">
-                            <button type="submit" class="btn btn-danger">
+                            <a type="submit" class="btn btn-danger">
                                 <i class="fas fa-eye-slash"></i>&nbsp;&nbsp;
                                     Exclude this result from the leaderboard(s)
-                            </button>
+                            </a>
                         </form>
                     {% else %}
                         <i class="fas fa-eye-slash text-danger"></i> This result is not
@@ -308,10 +308,10 @@
                             {% csrf_token %}
                             <input type="hidden" name="published"
                                    value="true">
-                            <button type="submit" class="btn btn-success">
+                            <a type="submit" class="btn btn-success">
                                 <i class="fas fa-eye"></i>&nbsp;&nbsp;
                                 Publish this result on the leaderboard(s)
-                            </button>
+                            </a>
                         </form>
                     {% endif %}
                 </div>
