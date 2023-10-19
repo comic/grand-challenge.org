@@ -30,22 +30,14 @@
         <div class="alert alert-danger">The phase that this evaluation belongs to, is no longer active.</div>
     {% endif %}
 
-        <ul class="nav">
-      <li class="nav-item">
-        <a class="nav-link active" aria-current="page" href="#">Active</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Link</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Link</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>
-      </li>
-    </ul>
-
     <h2>Evaluation</h2>
+
+    {% if "change_challenge" in challenge_perms %}
+        <a href="#admin" class="btn btn-danger mb-3">
+            <i class="fas fa-arrow-down"></i>&nbsp;&nbsp;
+            Admin section
+        </a>
+    {% endif %}
 
     <dl>
 
@@ -215,7 +207,7 @@
     {% endif %}
 
     {% if "change_challenge" in challenge_perms %}
-        <div class="card card-danger border-danger">
+        <div class="card card-danger border-danger" id="admin">
             <div class="card-header bg-danger text-white">Evaluation Admin</div>
 
             {% if object.status != object.SUCCESS and incomplete_jobs %}
