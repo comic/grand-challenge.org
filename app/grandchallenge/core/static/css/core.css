@@ -3,6 +3,7 @@ html {
     position: relative;
     min-height: 100%;
     scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
 }
 
 p {
