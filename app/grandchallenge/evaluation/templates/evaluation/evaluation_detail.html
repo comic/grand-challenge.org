@@ -287,17 +287,17 @@
                     <h3 class="card-title">Visibility</h3>
 
                     {% if object.published %}
-                        <i class="fas fa-eye"></i> This result is published on the
+                        <i class="fas fa-eye text-success"></i> This result is published on the
                         leaderboard(s)
                         <form method="post"
                               action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=object.pk %}">
                             {% csrf_token %}
                             <input type="hidden" name="published"
                                    value="false">
-                            <a type="submit" class="btn btn-danger">
+                            <button type="submit" class="btn btn-danger">
                                 <i class="fas fa-eye-slash"></i>&nbsp;&nbsp;
                                     Exclude this result from the leaderboard(s)
-                            </a>
+                            </button>
                         </form>
                     {% else %}
                         <i class="fas fa-eye-slash text-danger"></i> This result is not
@@ -308,10 +308,10 @@
                             {% csrf_token %}
                             <input type="hidden" name="published"
                                    value="true">
-                            <a type="submit" class="btn btn-success">
+                            <button type="submit" class="btn btn-success">
                                 <i class="fas fa-eye"></i>&nbsp;&nbsp;
                                 Publish this result on the leaderboard(s)
-                            </a>
+                            </button>
                         </form>
                     {% endif %}
                 </div>
