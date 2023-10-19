@@ -32,13 +32,6 @@
 
     <h2>Evaluation</h2>
 
-    {% if "change_challenge" in challenge_perms %}
-        <a href="#admin" class="btn btn-danger mb-3">
-            <i class="fas fa-arrow-down"></i>&nbsp;&nbsp;
-            Admin section
-        </a>
-    {% endif %}
-
     <dl>
 
         <dt>ID</dt>
@@ -207,7 +200,7 @@
     {% endif %}
 
     {% if "change_challenge" in challenge_perms %}
-        <div class="card card-danger border-danger" id="admin">
+        <div class="card card-danger border-danger">
             <div class="card-header bg-danger text-white">Evaluation Admin</div>
 
             {% if object.status != object.SUCCESS and incomplete_jobs %}
