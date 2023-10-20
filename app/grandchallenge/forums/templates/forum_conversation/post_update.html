@@ -24,7 +24,7 @@
         <form method="post" action="." class="form" enctype="multipart/form-data" novalidate>{% csrf_token %}
           {% include "forum_conversation/partials/post_form.html" %}
           <div class="form-actions">
-            <input type="submit" name="preview" class="btn btn-large btn-default mr-1" value="{% trans "Preview" %}" />
+            <input type="submit" name="preview" class="btn btn-large btn-default" value="{% trans "Preview" %}" />&nbsp;
             <input type="submit" class="btn btn-large btn-primary" value="{% trans "Submit" %}" />
           </div>
         </form>

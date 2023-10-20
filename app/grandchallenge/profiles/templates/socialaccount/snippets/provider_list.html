@@ -17,7 +17,7 @@
         <a title="{{ provider.name }}"
            class="socialaccount_provider {{ provider.id }} btn btn-large btn-primary btn-block"
            href="{% provider_login_url provider.id process=process scope=scope auth_params=auth_params %}">
-            <i class="fab fa-{{ provider.name|lower }} fa-fw mr-1"></i>{{ provider.name }}
+            <i class="fab fa-{{ provider.name|lower }} fa-fw"></i>&nbsp;{{ provider.name }}
         </a>
     </li>
 {% endfor %}

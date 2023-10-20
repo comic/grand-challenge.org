@@ -47,8 +47,8 @@
                     <ul class="list-group list-group-flush">
                         {% for tag in object.tags.all %}
                             <li class="list-group-item border-0">
-                                <a href="{% url 'blogs:list' %}?tags={{ tag.pk }}"><i class="fa fa-tags mr-1"
-                                                                                      aria-hidden="true"></i>{{ tag.name }}
+                                <a href="{% url 'blogs:list' %}?tags={{ tag.pk }}"><i class="fa fa-tags"
+                                                                                      aria-hidden="true"></i>&nbsp;&nbsp;{{ tag.name }}
                                 </a>
                             </li>
                         {% endfor %}

@@ -23,7 +23,7 @@
   <div class="forumlist-top-controls col-12">
     {% if request.user.is_authenticated %}
     <div class="float-right">
-      <a href="{% url 'forum_tracking:mark_subforums_read' forum.pk %}" class="d-inline-block"><i class="fa fa-check-circle-o mr-1"></i>{% trans "Mark subforums read" %}</a>
+      <a href="{% url 'forum_tracking:mark_subforums_read' forum.pk %}" class="d-inline-block"><i class="fa fa-check-circle-o">&nbsp;</i>{% trans "Mark subforums read" %}</a>
     </div>
     {% endif %}
   </div>
@@ -36,7 +36,7 @@
     {% get_permission 'can_add_topic' forum request.user as user_can_add_topic %}
     {% get_permission 'can_read_forum' forum request.user as user_can_read_forum %}
     {% if user_can_add_topic %}
-    <a href="{% url 'forum_conversation:topic_create' forum.slug forum.pk %}" class="btn btn-primary btn-sm"><i class="fa fa-comments fa-lg mr-1"></i>{% trans "New topic" %}</a>
+    <a href="{% url 'forum_conversation:topic_create' forum.slug forum.pk %}" class="btn btn-primary btn-sm"><i class="fa fa-comments fa-lg"></i>&nbsp;{% trans "New topic" %}</a>
     {% endif %}
     {% if user_can_read_forum and request.user|is_following:forum %}
         {% get_follow_object_pk request.user forum as follow_object_pk %}
@@ -82,7 +82,7 @@
 <div class="mt-3 mb-5 row">
   <div class="col-6 col-md-4 forum-actions-block">
     {% if user_can_add_topic %}
-    <a href="{% url 'forum_conversation:topic_create' forum.slug forum.pk %}" class="btn btn-primary btn-sm"><i class="fa fa-comments fa-lg mr-1"></i>{% trans "New topic" %}</a>
+    <a href="{% url 'forum_conversation:topic_create' forum.slug forum.pk %}" class="btn btn-primary btn-sm"><i class="fa fa-comments fa-lg"></i>&nbsp;{% trans "New topic" %}</a>
     {% endif %}
   </div>
   <div class="col-12 col-md-8">

@@ -31,7 +31,7 @@
             <a class="nav-link" id="v-pills-information-tab" data-toggle="pill"
                href="#information" role="tab" aria-controls="v-pills-information"
                aria-selected="true"><i
-                    class="fas fa-info fa-fw mr-1"></i>Information
+                    class="fas fa-info fa-fw"></i>&nbsp;Information
             </a>
 
             {% if "change_algorithm" in algorithm_perms %}
@@ -40,42 +40,42 @@
                    aria-controls="v-pills-containers"
                    aria-selected="false">
                     {# @formatter:off #}
-                    <i class="fab fa-docker fa-fw mr-1"></i>Containers{% if not object.active_image %}
-                    <i class="fas fa-exclamation-triangle text-danger ml-1"></i>{% endif %}
+                    <i class="fab fa-docker fa-fw"></i>&nbsp;Containers{% if not object.active_image %}&nbsp;
+                    <i class="fas fa-exclamation-triangle text-danger"></i>{% endif %}
                     {# @formatter:on #}
                 </a>
                 <a class="nav-link" id="v-pills-editors-tab" data-toggle="pill"
                    href="#editors" role="tab" aria-controls="v-pills-editors"
-                   aria-selected="false"><i class="fas fa-user fa-fw mr-1"></i>Editors
+                   aria-selected="false"><i class="fas fa-user fa-fw"></i>&nbsp;Editors
                 </a>
                 <a class="nav-link" id="v-pills-users-tab" data-toggle="pill"
                    href="#users" role="tab" aria-controls="v-pills-users"
-                   aria-selected="false"><i class="fas fa-users fa-fw mr-1"></i>Users
+                   aria-selected="false"><i class="fas fa-users fa-fw"></i>&nbsp;Users
                 </a>
                 <a class="nav-link"
                    href="{% url 'algorithms:permission-request-list' slug=object.slug %}"
-                ><i class="fas fa-question fa-fw mr-1"></i>Requests<span
-                        class="badge badge-pill badge-secondary align-middle ml-1">{{ pending_permission_requests }}</span>
+                ><i class="fas fa-question fa-fw"></i>&nbsp;Requests&nbsp;<span
+                        class="badge badge-pill badge-secondary align-middle">{{ pending_permission_requests }}</span>
                 </a>
             {% endif %}
 
             {% if "execute_algorithm" in algorithm_perms and object.active_image %}
                 <a class="nav-link"
                    href="{% url 'algorithms:job-create' slug=object.slug %}">
-                    <i class="fas fa-file-import fa-fw mr-1"></i>Try-out Algorithm
+                    <i class="fas fa-file-import fa-fw"></i>&nbsp;Try-out Algorithm
                 </a>
             {% endif %}
 
 
             <a class="nav-link"
                href="{% url 'algorithms:job-list' slug=object.slug %}">
-                <i class="fas fa-file-export fa-fw mr-1"></i>Results
+                <i class="fas fa-file-export fa-fw"></i>&nbsp;Results
             </a>
 
             {% if "execute_algorithm" not in algorithm_perms %}
                 <a class="nav-link"
                    href="{% url 'algorithms:permission-request-create' slug=object.slug %}">
-                    <i class="fa fa-question fa-fw mr-1"></i>Request Access
+                    <i class="fa fa-question fa-fw"></i>&nbsp;Request Access
                 </a>
             {% endif %}
         </ul>
@@ -185,8 +185,8 @@
                 <div class="col-9">
                     <ul class="pl-3 pb-0 mb-0">
                         {% for input in object.inputs.all %}
-                            <li>{{ input.title }}{% if input.description %}
-                                <span class="text-muted ml-1"> ({{ input.description }})</span>{% endif %}</li>
+                            <li>{{ input.title }}&nbsp;{% if input.description %}
+                                <span class="text-muted"> ({{ input.description }})</span>{% endif %}</li>
                         {% endfor %}
                     </ul>
                 </div>
@@ -196,8 +196,8 @@
                 <div class="col-9">
                     <ul class="pl-3 pb-0 mb-0">
                         {% for output in object.outputs.all %}
-                            <li>{{ output.title }}{% if output.description %}
-                                <span class="text-muted ml-1"> ({{ output.description }})</span>{% endif %}</li>
+                            <li>{{ output.title }}&nbsp;{% if output.description %}
+                                <span class="text-muted"> ({{ output.description }})</span>{% endif %}</li>
                         {% endfor %}
                     </ul>
                 </div>
@@ -346,7 +346,7 @@
                 <p>
                     <a class="btn btn-primary"
                        href="{% url 'algorithms:editors-update' slug=object.slug %}">
-                        <i class="fa fa-plus mr-1"></i>Add Editors
+                        <i class="fa fa-plus"></i> Add Editors
                     </a>
                 </p>
             </div>

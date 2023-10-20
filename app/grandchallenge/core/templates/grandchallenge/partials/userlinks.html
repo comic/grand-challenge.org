@@ -15,15 +15,15 @@
             {% if challenge.display_forum_link %}
                 <a class="dropdown-item"
                    href="{% url 'forum:forum' slug=challenge.forum.slug pk=challenge.forum.pk %}">
-                    <i class="fas fa-comments fa-fw mr-1"></i>
-                    {% firstof challenge.title challenge.short_name %} Forum
+                    <i class="fas fa-comments fa-fw"></i>
+                    &nbsp;{% firstof challenge.title challenge.short_name %} Forum
                 </a>
             {% endif %}
             {% if challenge.contact_email %}
                 <a class="dropdown-item"
                    href="mailto:{{ challenge.contact_email|random_encode|clean }}">
-                    <i class="fas fa-envelope fa-fw mr-1"></i>
-                    Email {% firstof challenge.title challenge.short_name %} Organizers
+                    <i class="fas fa-envelope fa-fw"></i>
+                    &nbsp;Email {% firstof challenge.title challenge.short_name %} Organizers
                 </a>
             {% endif %}
             <div class="dropdown-divider"></div>
@@ -31,13 +31,13 @@
         <h6 class="dropdown-header">{{ request.site.name }} Support</h6>
         <a class="dropdown-item"
            href="{% url 'documentation:home' %}">
-            <i class="fas fa-book fa-fw mr-1"></i>
-            {{ request.site.name }} Documentation
+            <i class="fas fa-book fa-fw"></i>
+            &nbsp;{{ request.site.name }} Documentation
         </a>
         <a class="dropdown-item"
            href="{% url 'forum:forum' slug=DOCUMENTATION_HELP_FORUM_SLUG pk=DOCUMENTATION_HELP_FORUM_PK %}">
-            <i class="fas fa-comments fa-fw mr-1"></i>
-            {{ request.site.name }} Forum
+            <i class="fas fa-comments fa-fw"></i>
+            &nbsp;{{ request.site.name }} Forum
         </a>
     </div>
 </li>
