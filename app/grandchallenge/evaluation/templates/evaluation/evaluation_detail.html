@@ -247,12 +247,41 @@
                 </div>
             {% endif %}
 
+            <div class="card-body">
+                <h3 class="card-title">Predictions</h3>
+
+                 {% if object.submission.predictions_file %}
+                     <a href="{{ object.submission.predictions_file.url }}"
+                        class="btn btn-primary">
+                         <i class="fas fa-download mr-1"></i>
+                         Download the submission file for this evaluation
+                     </a>
+                {% endif %}
+
+                {% if predictions %}
+                    <a href="data:text/plain;charset=utf-8,{{ predictions|json_dumps|urlencode }}"
+                        download="predictions.json"
+                        class="btn btn-primary">
+                        <i class="fa fa-download mr-1"></i>
+                        Download the predictions.json file for this evaluation
+                    </a>
+                {% endif %}
+
+                {% if object.submission.phase.submission_kind == evaluation.submission.phase.SubmissionKindChoices.ALGORITHM %}
+                    <a class="btn btn-primary"
+                       href="{% url 'algorithms:job-list' slug=object.submission.algorithm_image.algorithm.slug %}">
+                        <i class="fas fa-angle-double-right mr-1"></i>
+                        Go to the results of {{ object.submission.algorithm_image.algorithm.title|truncatechars:30 }}
+                    </a>
+                {% endif %}
+            </div>
+
             {% if object.status == object.SUCCESS %}
                 <div class="card-body">
                     <h3 class="card-title">Visibility</h3>
 
                     {% if object.published %}
-                        <i class="fas fa-eye"></i> This result is published on the
+                        <i class="fas fa-eye text-success"></i> This result is published on the
                         leaderboard(s)
                         <form method="post"
                               action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=object.pk %}">
@@ -260,7 +289,8 @@
                             <input type="hidden" name="published"
                                    value="false">
                             <button type="submit" class="btn btn-danger">
-                                Exclude this result from the leaderboard(s)
+                                <i class="fas fa-eye-slash mr-1"></i>
+                                    Exclude this result from the leaderboard(s)
                             </button>
                         </form>
                     {% else %}
@@ -273,33 +303,11 @@
                             <input type="hidden" name="published"
                                    value="true">
                             <button type="submit" class="btn btn-success">
+                                <i class="fas fa-eye mr-1"></i>
                                 Publish this result on the leaderboard(s)
                             </button>
                         </form>
                     {% endif %}
-                </div>
-            {% endif %}
-
-            {% if predictions %}
-                <div class="card-body">
-                    <h3 class="card-title">Predictions</h3>
-                    <a href="data:text/plain;charset=utf-8,{{ predictions|json_dumps|urlencode }}"
-                        download="predictions.json"
-                        class="btn btn-primary">
-                        <i class="fa fa-download"></i>
-                        Download the predictions.json file for this evaluation
-                    </a>
-                </div>
-            {% endif %}
-
-            {% if object.submission.predictions_file %}
-                <div class="card-body">
-                    <h3 class="card-title">Submission File</h3>
-                    <a href="{{ object.submission.predictions_file.url }}"
-                       class="btn btn-primary">
-                        <i class="fa fa-download"></i>
-                        Download the submission file for this result
-                    </a>
                 </div>
             {% endif %}
 
