@@ -253,7 +253,7 @@
                  {% if object.submission.predictions_file %}
                      <a href="{{ object.submission.predictions_file.url }}"
                         class="btn btn-primary">
-                         <i class="fas fa-download"></i>&nbsp;&nbsp;
+                         <i class="fas fa-download mr-1"></i>
                          Download the submission file for this evaluation
                      </a>
                 {% endif %}
@@ -262,7 +262,7 @@
                     <a href="data:text/plain;charset=utf-8,{{ predictions|json_dumps|urlencode }}"
                         download="predictions.json"
                         class="btn btn-primary">
-                        <i class="fa fa-download"></i>&nbsp;&nbsp;
+                        <i class="fa fa-download mr-1"></i>
                         Download the predictions.json file for this evaluation
                     </a>
                 {% endif %}
@@ -270,7 +270,7 @@
                 {% if object.submission.phase.submission_kind == evaluation.submission.phase.SubmissionKindChoices.ALGORITHM %}
                     <a class="btn btn-primary"
                        href="{% url 'algorithms:job-list' slug=object.submission.algorithm_image.algorithm.slug %}">
-                        <i class="fas fa-angle-double-right"></i>&nbsp;&nbsp;
+                        <i class="fas fa-angle-double-right mr-1"></i>
                         Go to the results of {{ object.submission.algorithm_image.algorithm.title|truncatechars:30 }}
                     </a>
                 {% endif %}
@@ -289,7 +289,7 @@
                             <input type="hidden" name="published"
                                    value="false">
                             <button type="submit" class="btn btn-danger">
-                                <i class="fas fa-eye-slash"></i>&nbsp;&nbsp;
+                                <i class="fas fa-eye-slash mr-1"></i>
                                     Exclude this result from the leaderboard(s)
                             </button>
                         </form>
@@ -303,7 +303,7 @@
                             <input type="hidden" name="published"
                                    value="true">
                             <button type="submit" class="btn btn-success">
-                                <i class="fas fa-eye"></i>&nbsp;&nbsp;
+                                <i class="fas fa-eye mr-1"></i>
                                 Publish this result on the leaderboard(s)
                             </button>
                         </form>
