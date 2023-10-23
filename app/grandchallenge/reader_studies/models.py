@@ -1,4 +1,5 @@
 import json
+from collections import OrderedDict
 
 from actstream.models import Follow
 from django.conf import settings
@@ -882,18 +883,19 @@ class DisplaySet(UUIDModel):
         return f"{url}{pqs.path}?{pqs.query_string}"
 
     @property
-    def description(self) -> str:
+    def image_pk_description_map(self) -> OrderedDict[str, str]:
         case_text = self.reader_study.case_text
-        if case_text:
-            return "".join(
-                [
-                    md2html(case_text[val.image.name])
-                    for val in self.values.all()
-                    if val.image and val.image.name in case_text
-                ]
-            )
-        else:
-            return ""
+        if not case_text:
+            return OrderedDict()
+        return OrderedDict(
+            (str(val.image.id), md2html(case_text[val.image.name]))
+            for val in self.values.all()
+            if val.image and val.image.name in case_text
+        )
+
+    @property
+    def description(self) -> str:
+        return "".join(self.image_pk_description_map.values())
 
     @property
     def standard_index(self) -> int:

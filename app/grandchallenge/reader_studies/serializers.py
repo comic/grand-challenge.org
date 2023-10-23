@@ -124,6 +124,7 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
             "optional_hanging_protocols",
             "view_content",
             "description",
+            "image_pk_description_map",
             "index",
         )
 
