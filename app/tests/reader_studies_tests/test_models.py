@@ -397,6 +397,9 @@ def test_description_is_scrubbed(client):
     assert (
         response.json()["description"] == "<p><b>My Help Text</b>naughty</p>"
     )
+    assert response.json()["image_pk_description_map"] == {
+        str(im.id): "<p><b>My Help Text</b>naughty</p>"
+    }
 
 
 @pytest.mark.django_db
@@ -670,8 +673,11 @@ def test_display_set_description():
     rs.case_text["no_image"] = "not an image"
     rs.save()
 
-    for ds in rs.display_sets.all():
+    for i_ds, ds in enumerate(rs.display_sets.all()):
         assert ds.description == result[ds.pk]
+        assert ds.image_pk_description_map == {
+            str(images[i_ds].pk): result[ds.pk]
+        }
 
 
 @pytest.mark.django_db
