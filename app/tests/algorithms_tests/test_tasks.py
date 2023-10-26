@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from actstream.models import Follow
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.files.base import File
+from django.core.files.base import ContentFile, File
 from requests import put
 
 from grandchallenge.algorithms.models import DEFAULT_INPUT_INTERFACE_SLUG, Job
@@ -154,7 +154,11 @@ def test_algorithm(
 
     # Create the algorithm image
     with django_capture_on_commit_callbacks() as callbacks:
-        alg = AlgorithmImageFactory(image__from_path=algorithm_image)
+        alg = AlgorithmImageFactory(image=None)
+
+        with open(algorithm_image, "rb") as f:
+            alg.image.save(algorithm_image, ContentFile(f.read()))
+
     recurse_callbacks(
         callbacks=callbacks,
         django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
@@ -259,7 +263,11 @@ def test_algorithm_with_invalid_output(
 
     # Create the algorithm image
     with django_capture_on_commit_callbacks() as callbacks:
-        alg = AlgorithmImageFactory(image__from_path=algorithm_image)
+        alg = AlgorithmImageFactory(image=None)
+
+        with open(algorithm_image, "rb") as f:
+            alg.image.save(algorithm_image, ContentFile(f.read()))
+
     recurse_callbacks(
         callbacks=callbacks,
         django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,

@@ -2,7 +2,6 @@ from datetime import datetime
 
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core.cache import cache
 from django.db.models import Count, Q
 from django.http import Http404
 from django.views.generic import (
@@ -18,8 +17,7 @@ from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.charts.specs import stacked_bar, world_map
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
-from grandchallenge.evaluation.models import Submission
-from grandchallenge.evaluation.utils import SubmissionKindChoices
+from grandchallenge.evaluation.models import Evaluation, Submission
 from grandchallenge.pages.forms import PageCreateForm, PageUpdateForm
 from grandchallenge.pages.models import Page
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
@@ -202,12 +200,18 @@ class ChallengeStatistics(TemplateView):
                         (phase.pk, phase.title) for phase in public_phases
                     ],
                 ),
-                "algorithm_phases": self.request.challenge.phase_set.prefetch_related(
-                    "submission_set"
-                ).filter(
-                    submission_kind=SubmissionKindChoices.ALGORITHM
+                "annotated_phases": self.request.challenge.phase_set.annotate(
+                    num_submissions=Count("submission", distinct=True),
+                    num_successful_submissions=Count(
+                        "submission",
+                        filter=Q(
+                            submission__evaluation__status=Evaluation.SUCCESS
+                        ),
+                        distinct=True,
+                    ),
+                    num_creators=Count("submission__creator", distinct=True),
+                    num_archive_items=Count("archive__items", distinct=True),
                 ),
-                "statistics_for_phases": cache.get("statistics_for_phases"),
             }
         )
 

@@ -92,6 +92,7 @@ class WorkstationConfigSerializer(ModelSerializer):
             "default_overlay_lut",
             "default_overlay_interpolation",
             "default_image_interpolation",
+            "ghosting_slice_depth",
             "overlay_segments",
             "key_bindings",
             "default_zoom_scale",

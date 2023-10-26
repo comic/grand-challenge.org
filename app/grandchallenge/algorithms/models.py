@@ -103,6 +103,13 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         blank=True,
         on_delete=models.SET_NULL,
     )
+    optional_hanging_protocols = models.ManyToManyField(
+        "hanging_protocols.HangingProtocol",
+        through="OptionalHangingProtocolAlgorithm",
+        related_name="optional_for_algorithm",
+        blank=True,
+        help_text="Optional alternative hanging protocols for this algorithm",
+    )
     public = models.BooleanField(
         default=False,
         help_text=(
@@ -644,8 +651,8 @@ class Job(UUIDModel, ComponentJob):
         default=False,
         help_text=(
             "If True, allow anyone to download this result along "
-            "with the input image. Otherwise, only the job creator and "
-            "algorithm editor(s) will have permission to download and view "
+            "with the input image. Otherwise, only the job creator "
+            "will have permission to download and view "
             "this result."
         ),
     )
@@ -923,3 +930,12 @@ class AlgorithmPermissionRequest(RequestBase):
 
     class Meta(RequestBase.Meta):
         unique_together = (("algorithm", "user"),)
+
+
+class OptionalHangingProtocolAlgorithm(models.Model):
+    # Through table for optional hanging protocols
+    # https://docs.djangoproject.com/en/4.2/topics/db/models/#intermediary-manytomany
+    algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
+    hanging_protocol = models.ForeignKey(
+        "hanging_protocols.HangingProtocol", on_delete=models.CASCADE
+    )

@@ -9,6 +9,7 @@ from grandchallenge.hanging_protocols.models import (
     ViewContentMixin,
 )
 from tests.factories import UserFactory
+from tests.hanging_protocols_tests.factories import HangingProtocolFactory
 
 
 @pytest.mark.django_db
@@ -410,3 +411,36 @@ def test_view_content_validation():
 
     hp = model(view_content={"main": ["test"]})
     hp.full_clean()
+
+
+@pytest.mark.parametrize(
+    "json,svg",
+    (
+        (
+            [{"viewport_name": "main"}],
+            """<svg width="32" height="18" fill-opacity="0"><rect x="0.8" y="0.8" width="30.4" height="16.4" stroke-width="1.6" /></svg>""",
+        ),
+        (
+            [{"viewport_name": "main"}, {"viewport_name": "secondary"}],
+            """<svg width="32" height="18" fill-opacity="0"><rect x="0.8" y="0.8" width="15.2" height="16.4" stroke-width="1.6" /><rect x="16.0" y="0.8" width="15.2" height="16.4" stroke-width="1.6" /></svg>""",
+        ),
+        (
+            [
+                {"h": 4, "w": 4, "x": 0, "y": 0, "viewport_name": "main"},
+                {"h": 1, "w": 1, "x": 3, "y": 3, "viewport_name": "secondary"},
+                {"h": 4, "w": 4, "x": 4, "y": 0, "viewport_name": "tertiary"},
+                {
+                    "h": 2,
+                    "w": 2,
+                    "x": 6,
+                    "y": 2,
+                    "viewport_name": "quaternary",
+                },
+            ],
+            """<svg width="32" height="18" fill-opacity="0"><rect x="0.8" y="0.8" width="15.2" height="16.4" stroke-width="1.6" /><rect x="12.2" y="13.1" width="3.8" height="4.1" stroke-width="1.6" /><rect x="16.0" y="0.8" width="15.2" height="16.4" stroke-width="1.6" /><rect x="23.599999999999998" y="9.0" width="7.6" height="8.2" stroke-width="1.6" /></svg>""",
+        ),
+    ),
+)
+def test_hanging_protocol_svg(json, svg):
+    hp = HangingProtocolFactory.build(json=json)
+    assert hp.svg_icon == svg

@@ -11,7 +11,6 @@ from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
 from django.urls import reverse
 from machina import MACHINA_MAIN_STATIC_DIR, MACHINA_MAIN_TEMPLATE_DIR
-from markdown.extensions.toc import TocExtension
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import ignore_logger
@@ -125,6 +124,20 @@ DOCUMENTATION_HELP_FORUM_SLUG = os.environ.get(
 
 # About Flatpage
 FLATPAGE_ABOUT_URL = os.environ.get("FLATPAGE_ABOUT_URL", "/about/")
+
+# All costs exclude Tax
+COMPONENTS_TAX_RATE_PERCENT = 0.21
+if COMPONENTS_TAX_RATE_PERCENT > 1:
+    raise ImproperlyConfigured("Tax rate should be less than 1")
+COMPONENTS_USD_TO_EUR = float(
+    os.environ.get("COMPONENTS_USD_TO_EUR", "0.92472705")
+)
+COMPONENTS_S3_USD_MILLICENTS_PER_YEAR_PER_TB = (
+    12_300_000  # Last calculated 23/08/2023
+)
+COMPONENTS_ECR_USD_MILLICENTS_PER_YEAR_PER_TB = (
+    39_600_000  # Last calculated 23/08/2023
+)
 
 # Costs (in US dollar cents)
 # based on 0.023 / GB / month S3 standard pricing
@@ -440,6 +453,7 @@ MIDDLEWARE = (
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.contrib.sites.middleware.CurrentSiteMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
     "simple_history.middleware.HistoryRequestMiddleware",
     # subdomain_middleware after CurrentSiteMiddleware
     "grandchallenge.subdomains.middleware.subdomain_middleware",
@@ -583,6 +597,7 @@ LOCAL_APPS = [
     "grandchallenge.hanging_protocols",
     "grandchallenge.charts",
     "grandchallenge.forums",
+    "grandchallenge.invoices",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -771,9 +786,6 @@ MARKDOWNX_MARKDOWN_EXTENSIONS = [
     "markdown.extensions.sane_lists",
     "markdown.extensions.codehilite",
     "markdown.extensions.attr_list",
-    TocExtension(
-        permalink=True, permalink_class="headerlink text-muted small pl-1"
-    ),
     BS4Extension(),
 ]
 MARKDOWNX_MARKDOWNIFY_FUNCTION = (
@@ -795,6 +807,10 @@ MACHINA_BASE_TEMPLATE_NAME = "base.html"
 MACHINA_PROFILE_AVATARS_ENABLED = False
 MACHINA_FORUM_NAME = "Grand Challenge Forums"
 MACHINA_MARKUP_WIDGET = "grandchallenge.core.widgets.MarkdownEditorWidget"
+MACHINA_MARKUP_LANGUAGE = (
+    "grandchallenge.core.templatetags.bleach.md2html",
+    {"link_blank_target": True},
+)
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -971,6 +987,7 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
     "visibility_timeout": int(1.1 * CELERY_TASK_TIME_LIMIT)
 }
 CELERY_BROKER_CONNECTION_MAX_RETRIES = 0
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 if os.environ.get("BROKER_TYPE", "").lower() == "sqs":
     CELERY_BROKER_URL = "sqs://"
@@ -1197,10 +1214,6 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.algorithms.tasks.update_associated_challenges",
         "schedule": crontab(hour=3, minute=0),
     },
-    "update_phase_statistics": {
-        "task": "grandchallenge.evaluation.tasks.update_phase_statistics",
-        "schedule": crontab(hour=3, minute=30),
-    },
     "send_unread_notification_emails": {
         "task": "grandchallenge.notifications.tasks.send_unread_notification_emails",
         "schedule": crontab(hour=4, minute=0),
@@ -1209,9 +1222,9 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.algorithms.tasks.set_credits_per_job",
         "schedule": crontab(hour=4, minute=30),
     },
-    "update_challenge_cost_statistics": {
-        "task": "grandchallenge.challenges.tasks.update_challenge_cost_statistics",
-        "schedule": crontab(hour=5, minute=0),
+    "update_compute_costs_and_storage_size": {
+        "task": "grandchallenge.challenges.tasks.update_compute_costs_and_storage_size",
+        "schedule": crontab(hour="5,11,17,23", minute=0),
     },
     "update_site_statistics": {
         "task": "grandchallenge.statistics.tasks.update_site_statistics_cache",
@@ -1310,6 +1323,9 @@ DISALLOWED_EMAIL_DOMAINS = {
     "cerist.dz",
     "ciitvehari.edu.pk",
     "mail.dcu.ie",
+    "snu.ac.kr",
+    "cau.ac.kr",
+    "deepnoid.com",
     *blocklist,
 }
 
@@ -1368,6 +1384,15 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = int(
 # Retina specific settings
 RETINA_GRADERS_GROUP_NAME = "retina_graders"
 RETINA_ADMINS_GROUP_NAME = "retina_admins"
+
+
+##########################
+# JSON SCHEMA
+##########################
+ALLOWED_JSON_SCHEMA_REF_SRC_REGEXES = (
+    "https://vega.github.io/schema/vega-lite/v5.json",
+)
+
 
 ##########################
 # CONTENT SECURITY POLICY

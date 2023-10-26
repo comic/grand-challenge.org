@@ -7,6 +7,7 @@ import tarfile
 import uuid
 import zlib
 from base64 import b64encode
+from lzma import LZMAError
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
@@ -372,6 +373,7 @@ def _get_shim_env_vars(*, original_config):
             val=entrypoint
         ),
         "no_proxy": "amazonaws.com",
+        "PYTHONUNBUFFERED": "1",
     }
 
 
@@ -500,7 +502,7 @@ def _extract_docker_image_file(*, instance, filename: str):
             f"{filename} not found at the root of the container image "
             f"file. Was this created with docker save?"
         )
-    except (EOFError, zlib.error):
+    except (EOFError, zlib.error, LZMAError):
         raise ValidationError("Could not decompress the container image file.")
 
 
@@ -737,6 +739,7 @@ def execute_job(  # noqa: C901
                 stdout=executor.stdout,
                 stderr=executor.stderr,
                 duration=executor.duration,
+                compute_cost_euro_millicents=executor.compute_cost_euro_millicents,
             )
             on_commit(
                 parse_job_outputs.signature(**job.signature_kwargs).apply_async
@@ -793,6 +796,7 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
                 stdout=executor.stdout,
                 stderr=executor.stderr,
                 duration=executor.duration,
+                compute_cost_euro_millicents=executor.compute_cost_euro_millicents,
                 runtime_metrics=executor.runtime_metrics,
                 error_message="Time limit exceeded",
             )
@@ -807,6 +811,7 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
             stdout=executor.stdout,
             stderr=executor.stderr,
             duration=executor.duration,
+            compute_cost_euro_millicents=executor.compute_cost_euro_millicents,
             runtime_metrics=executor.runtime_metrics,
             error_message=str(e),
         )
@@ -816,6 +821,7 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
             stdout=executor.stdout,
             stderr=executor.stderr,
             duration=executor.duration,
+            compute_cost_euro_millicents=executor.compute_cost_euro_millicents,
             runtime_metrics=executor.runtime_metrics,
             error_message="An unexpected error occurred",
         )
@@ -826,6 +832,7 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
             stdout=executor.stdout,
             stderr=executor.stderr,
             duration=executor.duration,
+            compute_cost_euro_millicents=executor.compute_cost_euro_millicents,
             runtime_metrics=executor.runtime_metrics,
         )
         on_commit(

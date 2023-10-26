@@ -7,7 +7,7 @@ from tests.utils import validate_admin_only_view
 @pytest.mark.parametrize(
     "view",
     [
-        "update",
+        "challenge-update",
         "pages:list",
         "admins:list",
         "participants:list",

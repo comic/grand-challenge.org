@@ -19,8 +19,9 @@ from panimg.models import (
     ImageType,
     PatientSex,
 )
+from storages.utils import clean_name
 
-from grandchallenge.core.models import UUIDModel
+from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import protected_s3_storage
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.modalities.models import ImagingModality
@@ -507,7 +508,7 @@ class ImageGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(Image, on_delete=models.CASCADE)
 
 
-class ImageFile(UUIDModel):
+class ImageFile(FieldChangeMixin, UUIDModel):
     IMAGE_TYPE_MHD = ImageType.MHD.value
     IMAGE_TYPE_TIFF = ImageType.TIFF.value
     IMAGE_TYPE_DZI = ImageType.DZI.value
@@ -532,6 +533,11 @@ class ImageFile(UUIDModel):
         storage=protected_s3_storage,
         max_length=200,
     )
+    size_in_storage = models.PositiveBigIntegerField(
+        editable=False,
+        default=0,
+        help_text="The number of bytes stored in the storage backend",
+    )
 
     def __init__(self, *args, directory=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -546,10 +552,16 @@ class ImageFile(UUIDModel):
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
-        super().save(*args, **kwargs)
+        if self.initial_value("file") and self.has_changed("file"):
+            raise RuntimeError("The file cannot be changed")
 
         if adding and self._directory is not None:
             self.save_directory()
+
+        if adding or self.has_changed("file"):
+            self.update_size_in_storage()
+
+        super().save(*args, **kwargs)
 
     def _directory_file_destination(self, *, file):
         base = self.file.field.upload_to(
@@ -574,6 +586,29 @@ class ImageFile(UUIDModel):
                     name=self._directory_file_destination(file=file), content=f
                 )
 
+    def update_size_in_storage(self):
+        if not self.file:
+            self.size_in_storage = 0
+            return
+
+        stored_bytes = self.file.size
+
+        if self.image_type == self.IMAGE_TYPE_DZI:
+            paginator = self.file.storage.connection.meta.client.get_paginator(
+                "list_objects"
+            )
+            images_prefix = clean_name(
+                self.file.name.replace(".dzi", "_files")
+            )
+            pages = paginator.paginate(
+                Bucket=self.file.storage.bucket_name, Prefix=images_prefix
+            )
+            for page in pages:
+                for entry in page.get("Contents", ()):
+                    stored_bytes += entry["Size"]
+
+        self.size_in_storage = stored_bytes
+
 
 @receiver(post_delete, sender=ImageFile)
 def delete_image_files(*_, instance: ImageFile, **__):
@@ -583,4 +618,5 @@ def delete_image_files(*_, instance: ImageFile, **__):
     We use a signal rather than overriding delete() to catch usages of
     bulk_delete.
     """
-    instance.file.storage.delete(name=instance.file.name)
+    if instance.file:
+        instance.file.storage.delete(name=instance.file.name)

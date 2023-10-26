@@ -14,6 +14,7 @@ from django.views.generic import (
     CreateView,
     DeleteView,
     DetailView,
+    FormView,
     ListView,
     RedirectView,
     UpdateView,
@@ -32,6 +33,7 @@ from grandchallenge.core.guardian import (
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.forms import (
     CombinedLeaderboardForm,
+    EvaluationForm,
     LegacySubmissionForm,
     MethodForm,
     MethodUpdateForm,
@@ -46,6 +48,7 @@ from grandchallenge.evaluation.models import (
     Phase,
     Submission,
 )
+from grandchallenge.evaluation.tasks import create_evaluation
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.teams.models import Team
@@ -191,6 +194,7 @@ class PhaseUpdate(
     permission_required = "change_phase"
     raise_exception = True
     login_url = reverse_lazy("account_login")
+    queryset = Phase.objects.prefetch_related("optional_hanging_protocols")
 
     def get_object(self, queryset=None):
         return Phase.objects.get(
@@ -360,7 +364,9 @@ class SubmissionList(LoginRequiredMixin, PermissionListMixin, ListView):
                 "creator__verification",
                 "phase__challenge",
             )
-            .prefetch_related("evaluation_set")
+            .prefetch_related(
+                "evaluation_set", "phase__optional_hanging_protocols"
+            )
         )
 
 
@@ -374,6 +380,13 @@ class SubmissionDetail(
     permission_required = "view_submission"
     raise_exception = True
     login_url = reverse_lazy("account_login")
+
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .prefetch_related("phase__optional_hanging_protocols")
+        )
 
 
 class TeamContextMixin:
@@ -400,6 +413,52 @@ class TeamContextMixin:
         return context
 
 
+class EvaluationCreate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    FormView,
+):
+    form_class = EvaluationForm
+    permission_required = "change_challenge"
+    login_url = reverse_lazy("account_login")
+    raise_exception = True
+    success_message = "A job to create the new evaluation is running, please check back later"
+    template_name = "evaluation/evaluation_form.html"
+
+    def get_permission_object(self):
+        return self.request.challenge
+
+    @cached_property
+    def submission(self):
+        return get_object_or_404(
+            Submission,
+            pk=self.kwargs["pk"],
+            phase__slug=self.kwargs["slug"],
+            phase__challenge=self.request.challenge,
+        )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                "user": self.request.user,
+                "submission": self.submission,
+            }
+        )
+        return kwargs
+
+    def get_success_url(self):
+        return self.submission.get_absolute_url()
+
+    def form_valid(self, form):
+        redirect = super().form_valid(form)
+        create_evaluation.apply_async(
+            kwargs={"submission_pk": str(form.cleaned_data["submission"].pk)}
+        )
+        return redirect
+
+
 class EvaluationList(
     LoginRequiredMixin,
     PermissionListMixin,
@@ -413,14 +472,18 @@ class EvaluationList(
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        queryset = queryset.filter(
-            submission__phase__challenge=self.request.challenge,
-            submission__phase=self.phase,
-        ).select_related(
-            "submission__creator__user_profile",
-            "submission__creator__verification",
-            "submission__phase__challenge",
-            "submission__algorithm_image__algorithm",
+        queryset = (
+            queryset.filter(
+                submission__phase__challenge=self.request.challenge,
+                submission__phase=self.phase,
+            )
+            .select_related(
+                "submission__creator__user_profile",
+                "submission__creator__verification",
+                "submission__phase__challenge",
+                "submission__algorithm_image__algorithm",
+            )
+            .prefetch_related("submission__phase__optional_hanging_protocols")
         )
 
         if self.request.challenge.is_admin(self.request.user):
@@ -453,14 +516,18 @@ class EvaluationAdminList(
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        return queryset.filter(
-            submission__phase__challenge=self.request.challenge,
-            submission__phase=self.phase,
-        ).select_related(
-            "submission__creator__user_profile",
-            "submission__creator__verification",
-            "submission__phase__challenge",
-            "submission__algorithm_image__algorithm",
+        return (
+            queryset.filter(
+                submission__phase__challenge=self.request.challenge,
+                submission__phase=self.phase,
+            )
+            .select_related(
+                "submission__creator__user_profile",
+                "submission__creator__verification",
+                "submission__phase__challenge",
+                "submission__algorithm_image__algorithm",
+            )
+            .prefetch_related("submission__phase__optional_hanging_protocols")
         )
 
     def get_context_data(self, *args, **kwargs):
@@ -764,6 +831,7 @@ class PhaseAlgorithmCreate(
             {
                 "workstation_config": self.phase.workstation_config,
                 "hanging_protocol": self.phase.hanging_protocol,
+                "optional_hanging_protocols": self.phase.optional_hanging_protocols.all(),
                 "view_content": self.phase.view_content,
                 "display_editors": True,
                 "contact_email": self.request.user.email,
@@ -891,7 +959,7 @@ class CombinedLeaderboardDelete(
 
     def get_success_url(self):
         return reverse(
-            "update",
+            "challenge-update",
             kwargs={
                 "challenge_short_name": self.request.challenge.short_name,
             },

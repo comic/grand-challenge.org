@@ -14,12 +14,16 @@ from django_select2.forms import Select2Widget
 from django_summernote.widgets import SummernoteInplaceWidget
 
 from grandchallenge.algorithms.forms import UserAlgorithmsForPhaseMixin
+from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.core.forms import (
     SaveFormInitMixin,
     WorkstationUserFilterMixin,
 )
-from grandchallenge.core.guardian import get_objects_for_user
+from grandchallenge.core.guardian import (
+    filter_by_permission,
+    get_objects_for_user,
+)
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.evaluation.models import (
@@ -78,6 +82,7 @@ algorithm_setting_options = (
     "workstation",
     "workstation_config",
     "hanging_protocol",
+    "optional_hanging_protocols",
     "view_content",
 )
 
@@ -193,6 +198,16 @@ class PhaseUpdateForm(
             "hanging_protocol": format_lazy(
                 (
                     "The hanging protocol to use for the algorithms submitted to this phase. "
+                    "If a suitable protocol does not exist you can "
+                    '<a href="{}">create a new one</a>. For a list of existing '
+                    'hanging protocols, go <a href="{}">here</a>.'
+                ),
+                reverse_lazy("hanging-protocols:create"),
+                reverse_lazy("hanging-protocols:list"),
+            ),
+            "optional hanging protocols": format_lazy(
+                (
+                    "Additional, optional hanging protocols to use for the algorithms submitted to this phase. "
                     "If a suitable protocol does not exist you can "
                     '<a href="{}">create a new one</a>. For a list of existing '
                     'hanging protocols, go <a href="{}">here</a>.'
@@ -408,6 +423,9 @@ class SubmissionForm(
 
             raise ValidationError(error_message)
 
+        has_available_compute = (
+            self._phase.challenge.available_compute_euro_millicents > 0
+        )
         is_challenge_admin = self._phase.challenge.is_admin(user=creator)
         has_remaining_submissions = (
             self._phase.get_next_submission(user=creator)[
@@ -419,12 +437,16 @@ class SubmissionForm(
             user=creator
         )
 
-        can_submit = not has_pending_evaluations and (
-            has_remaining_submissions or is_challenge_admin
+        can_submit = (
+            has_available_compute
+            and not has_pending_evaluations
+            and (has_remaining_submissions or is_challenge_admin)
         )
 
         if not can_submit:
-            error_message = "A new submission cannot be created for this user"
+            error_message = (
+                "A new submission cannot be created for this user at this time"
+            )
             self.add_error(None, error_message)
             raise ValidationError(error_message)
 
@@ -472,3 +494,37 @@ class CombinedLeaderboardForm(SaveFormInitMixin, forms.ModelForm):
         model = CombinedLeaderboard
         fields = ("title", "description", "phases", "combination_method")
         widgets = {"phases": forms.CheckboxSelectMultiple}
+
+
+class EvaluationForm(SaveFormInitMixin, forms.Form):
+    submission = ModelChoiceField(
+        queryset=None, disabled=True, widget=HiddenInput()
+    )
+
+    def __init__(self, submission, user, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["submission"].queryset = filter_by_permission(
+            queryset=Submission.objects.filter(pk=submission.pk),
+            user=user,
+            codename="view_submission",
+        )
+        self.fields["submission"].initial = submission
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        # Fetch from the db to get the cost annotations
+        # Maybe this is solved with GeneratedField (Django 5)?
+        challenge = (
+            Challenge.objects.filter(
+                pk=cleaned_data["submission"].phase.challenge.pk
+            )
+            .with_available_compute()
+            .get()
+        )
+
+        if challenge.available_compute_euro_millicents <= 0:
+            raise ValidationError("This challenge has exceeded its budget")
+
+        return cleaned_data

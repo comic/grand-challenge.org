@@ -10,7 +10,7 @@
         <li class="breadcrumb-item"><a
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
         <li class="breadcrumb-item active"
-            aria-current="page">{{ object.title }} Add a New Phase</li>
+            aria-current="page">{% if object %}Update {{ object.title }} Phase{% else %}Add a New Phase{% endif %}</li>
     </ol>
 {% endblock %}
 
@@ -26,6 +26,8 @@
             Use this form to create a new phase for your challenge with a separate evaluation method.
             For instance, you could have a training and test phase, or have a phase for each task.
         </p>
+    {% else %}
+        {% include "evaluation/partials/phase_closed_warning.html" with phase=object %}
     {% endif %}
 
     {% crispy form %}

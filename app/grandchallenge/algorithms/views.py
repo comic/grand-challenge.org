@@ -120,7 +120,14 @@ class AlgorithmList(FilterMixin, PermissionListMixin, ListView):
     paginate_by = 40
 
     def get_queryset(self):
-        return super().get_queryset().prefetch_related("publications")
+        return (
+            super()
+            .get_queryset()
+            .prefetch_related(
+                "publications",
+                "optional_hanging_protocols",
+            )
+        )
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -156,6 +163,7 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
         "algorithm_container_images__build__webhook_message",
         "algorithm_container_images__creator",
         "editors_group__user_set",
+        "optional_hanging_protocols",
     )
 
     def on_permission_check_fail(self, request, response, obj=None):
@@ -477,7 +485,11 @@ class JobCreate(
         interfaces = {ci.slug: ci for ci in self.algorithm.inputs.all()}
 
         for slug, value in form.cleaned_data.items():
+            if slug == "algorithm_image":
+                continue
+
             ci = interfaces[slug]
+
             if ci.is_image_kind:
                 if value:
                     widget = form.data[f"WidgetChoice-{ci.slug}"]
@@ -518,7 +530,7 @@ class JobCreate(
 
         job = Job.objects.create(
             creator=self.request.user,
-            algorithm_image=self.algorithm.active_image,
+            algorithm_image=form.cleaned_data["algorithm_image"],
             extra_logs_viewer_groups=[self.algorithm.editors_group],
             input_civ_set=component_interface_values,
             time_limit=self.algorithm.time_limit,

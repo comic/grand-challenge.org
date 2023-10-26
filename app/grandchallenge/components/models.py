@@ -28,6 +28,7 @@ from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
+from django_deprecate_fields import deprecate_field
 from django_extensions.db.fields import AutoSlugField
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
@@ -36,6 +37,7 @@ from grandchallenge.cases.widgets import FlexibleImageField
 from grandchallenge.charts.specs import components_line
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.tasks import (
+    _repo_login_and_run,
     assign_docker_image_from_upload,
     deprovision_job,
     provision_job,
@@ -45,6 +47,7 @@ from grandchallenge.components.validators import (
     validate_no_slash_at_ends,
     validate_safe_path,
 )
+from grandchallenge.core.models import FieldChangeMixin
 from grandchallenge.core.storage import (
     private_s3_storage,
     protected_s3_storage,
@@ -1054,6 +1057,21 @@ class ComponentInterfaceValue(models.Model):
         to=Image, null=True, blank=True, on_delete=models.PROTECT
     )
 
+    storage_cost_per_year_usd_millicents = deprecate_field(
+        models.PositiveIntegerField(
+            # We store usd here as the exchange rate regularly changes
+            editable=False,
+            null=True,
+            default=None,
+            help_text="The storage cost per year for this image in USD Cents, excluding Tax",
+        )
+    )
+    size_in_storage = models.PositiveBigIntegerField(
+        editable=False,
+        default=0,
+        help_text="The number of bytes stored in the storage backend",
+    )
+
     _user_upload_validated = False
 
     @property
@@ -1144,6 +1162,10 @@ class ComponentInterfaceValue(models.Model):
                 "You cannot change the value, file or image of an existing CIV. "
                 "Please create a new CIV instead."
             )
+
+        if self._file_orig != self.file:
+            self.update_size_in_storage()
+
         super().save(*args, **kwargs)
 
     def clean(self):
@@ -1218,6 +1240,12 @@ class ComponentInterfaceValue(models.Model):
                 raise ValidationError(e)
             self.interface.validate_against_schema(value=value)
         self._user_upload_validated = True
+
+    def update_size_in_storage(self):
+        if self.file:
+            self.size_in_storage = self.file.size
+        else:
+            raise NotImplementedError
 
     class Meta:
         ordering = ("pk",)
@@ -1294,6 +1322,14 @@ class ComponentJob(models.Model):
     error_message = models.CharField(max_length=1024, default="")
     started_at = models.DateTimeField(null=True)
     completed_at = models.DateTimeField(null=True)
+    compute_cost_euro_millicents = models.PositiveIntegerField(
+        # We store euro here as the costs were incurred at a time when
+        # the exchange rate may have been different
+        editable=False,
+        null=True,
+        default=None,
+        help_text="The total compute cost for this job in Euro Cents, including Tax",
+    )
     input_prefixes = models.JSONField(
         default=dict,
         editable=False,
@@ -1335,7 +1371,7 @@ class ComponentJob(models.Model):
 
     objects = ComponentJobManager.as_manager()
 
-    def update_status(
+    def update_status(  # noqa: C901
         self,
         *,
         status: STATUS_CHOICES,
@@ -1343,6 +1379,7 @@ class ComponentJob(models.Model):
         stderr: str = "",
         error_message="",
         duration: timedelta | None = None,
+        compute_cost_euro_millicents=None,
         runtime_metrics=None,
     ):
         self.status = status
@@ -1370,6 +1407,9 @@ class ComponentJob(models.Model):
             if duration and self.started_at:
                 # TODO: maybe add separate timings for provisioning, executing, parsing and total
                 self.started_at = self.completed_at - duration
+
+        if compute_cost_euro_millicents is not None:
+            self.compute_cost_euro_millicents = compute_cost_euro_millicents
 
         if runtime_metrics is not None:
             self.runtime_metrics = runtime_metrics
@@ -1550,7 +1590,7 @@ class ComponentImageManager(models.Manager):
         return self.executable_images().filter(is_desired_version=True)
 
 
-class ComponentImage(models.Model):
+class ComponentImage(FieldChangeMixin, models.Model):
     SHIM_IMAGE = True
 
     ImportStatusChoices = ImportStatusChoices
@@ -1606,6 +1646,27 @@ class ComponentImage(models.Model):
     )
     status = models.TextField(editable=False)
 
+    storage_cost_per_year_usd_millicents = deprecate_field(
+        models.PositiveIntegerField(
+            # We store usd here as the exchange rate regularly changes
+            editable=False,
+            null=True,
+            default=None,
+            help_text="The storage cost per year for this image in USD Cents, excluding Tax",
+        )
+    )
+
+    size_in_storage = models.PositiveBigIntegerField(
+        editable=False,
+        default=0,
+        help_text="The number of bytes stored in the storage backend",
+    )
+    size_in_registry = models.PositiveBigIntegerField(
+        editable=False,
+        default=0,
+        help_text="The number of bytes stored in the registry",
+    )
+
     requires_gpu = models.BooleanField(default=False)
     requires_memory_gb = models.PositiveIntegerField(default=4)
 
@@ -1615,10 +1676,6 @@ class ComponentImage(models.Model):
         help_text="Add any information (e.g. version ID) about this image here.",
     )
     is_desired_version = models.BooleanField(default=False, editable=False)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._image_orig = self.image
 
     def __str__(self):
         out = f"{self._meta.verbose_name.title()} {self.pk}"
@@ -1649,18 +1706,21 @@ class ComponentImage(models.Model):
         )
         validate_image_now = False
 
-        if self._image_orig:
-            if self.image != self._image_orig:
+        if self.initial_value("image"):
+            if self.has_changed("image"):
                 raise RuntimeError("The image cannot be changed")
             if image_needs_validation:
                 self.import_status = ImportStatusChoices.QUEUED
                 validate_image_now = True
-
         elif self.image and image_needs_validation:
             self.import_status = ImportStatusChoices.QUEUED
             validate_image_now = True
 
+        if self.has_changed("image") or self.has_changed("is_in_registry"):
+            self.update_size_in_storage()
+
         super().save(*args, **kwargs)
+
         if validate_image_now:
             on_commit(
                 validate_docker_image.signature(
@@ -1745,3 +1805,24 @@ class ComponentImage(models.Model):
             return "info"
         else:
             return "secondary"
+
+    def calculate_size_in_registry(self):
+        if self.is_in_registry:
+            command = _repo_login_and_run(
+                command=["crane", "manifest", self.original_repo_tag]
+            )
+            manifest = json.loads(command.stdout.decode("utf-8"))
+            return (
+                sum(layer["size"] for layer in manifest["layers"])
+                + manifest["config"]["size"]
+            )
+        else:
+            return 0
+
+    def update_size_in_storage(self):
+        if not self.image:
+            self.size_in_storage = 0
+            self.size_in_registry = 0
+        else:
+            self.size_in_storage = self.image.size
+            self.size_in_registry = self.calculate_size_in_registry()

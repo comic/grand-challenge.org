@@ -104,22 +104,22 @@ def test_check_post_processor_result():
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "source_dir, filename",
-    [(RESOURCE_PATH, "valid_tiff.tif"), (RESOURCE_PATH, "no_dzi.tif")],
+    "filename, expected_bytes",
+    [("valid_tiff.tif", 246717), ("no_dzi.tif", 258038)],
 )
 def test_post_processing(
-    source_dir,
     filename,
     tmpdir_factory,
     settings,
     django_capture_on_commit_callbacks,
+    expected_bytes,
 ):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
     input_directory = tmpdir_factory.mktemp("temp")
     temp_file = Path(input_directory / filename)
-    shutil.copy(source_dir / filename, temp_file)
+    shutil.copy(RESOURCE_PATH / filename, temp_file)
 
     with django_capture_on_commit_callbacks() as callbacks:
         imported_images = import_images(input_directory=input_directory)
@@ -169,3 +169,8 @@ def test_post_processing(
         assert len(all_image_files) == 1
         assert ImageFile.objects.count() == 1
         assert ImageFile.objects.filter(post_processed=True).count() == 1
+
+    assert (
+        sum(file.size_in_storage for file in ImageFile.objects.all())
+        == expected_bytes
+    )

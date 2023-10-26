@@ -6,6 +6,7 @@ from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.evaluation.forms import SubmissionForm
 from grandchallenge.evaluation.models import Phase
 from grandchallenge.evaluation.utils import SubmissionKindChoices
+from grandchallenge.invoices.models import PaymentStatusChoices
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
@@ -19,6 +20,7 @@ from tests.factories import (
     WorkstationFactory,
 )
 from tests.hanging_protocols_tests.factories import HangingProtocolFactory
+from tests.invoices_tests.factories import InvoiceFactory
 from tests.verification_tests.factories import VerificationFactory
 
 
@@ -121,6 +123,16 @@ class TestSubmissionForm:
         p.algorithm_inputs.set([ci1])
         p.algorithm_outputs.set([ci2])
 
+        InvoiceFactory(
+            challenge=p.challenge,
+            compute_costs_euros=10,
+            payment_status=PaymentStatusChoices.COMPLIMENTARY,
+        )
+
+        # Fetch from the db to get the cost annotations
+        # Maybe this is solved with GeneratedField (Django 5)?
+        p = Phase.objects.get(pk=p.pk)
+
         ai = AlgorithmImageFactory(
             is_manifest_valid=True,
             is_in_registry=True,
@@ -160,12 +172,23 @@ class TestSubmissionForm:
         user = UserFactory()
         VerificationFactory(user=user, is_verified=is_verified)
 
+        phase = PhaseFactory(
+            creator_must_be_verified=True,
+            submissions_limit_per_user_per_period=10,
+        )
+        InvoiceFactory(
+            challenge=phase.challenge,
+            compute_costs_euros=10,
+            payment_status=PaymentStatusChoices.COMPLIMENTARY,
+        )
+
+        # Fetch from the db to get the cost annotations
+        # Maybe this is solved with GeneratedField (Django 5)?
+        phase = Phase.objects.get(pk=phase.pk)
+
         form = SubmissionForm(
             user=user,
-            phase=PhaseFactory(
-                creator_must_be_verified=True,
-                submissions_limit_per_user_per_period=10,
-            ),
+            phase=phase,
             data={"creator": user},
         )
         assert bool("creator" in form.errors) is not is_verified
@@ -224,6 +247,7 @@ def test_algorithm_for_phase_form():
     form = AlgorithmForPhaseForm(
         workstation_config=WorkstationConfigFactory.build(),
         hanging_protocol=HangingProtocolFactory.build(),
+        optional_hanging_protocols=[HangingProtocolFactory.build()],
         view_content="{}",
         display_editors=True,
         contact_email="test@test.com",
@@ -241,6 +265,7 @@ def test_algorithm_for_phase_form():
     assert form.fields["outputs"].disabled
     assert form.fields["workstation_config"].disabled
     assert form.fields["hanging_protocol"].disabled
+    assert form.fields["optional_hanging_protocols"].disabled
     assert form.fields["view_content"].disabled
     assert form.fields["display_editors"].disabled
     assert form.fields["workstation"].disabled
@@ -259,6 +284,7 @@ def test_algorithm_for_phase_form():
         form.fields["outputs"],
         form.fields["workstation_config"],
         form.fields["hanging_protocol"],
+        form.fields["optional_hanging_protocols"],
         form.fields["view_content"],
         form.fields["display_editors"],
         form.fields["workstation"],
@@ -293,6 +319,7 @@ def test_algorithm_for_phase_form_validation():
     form = AlgorithmForPhaseForm(
         workstation_config=WorkstationConfigFactory(),
         hanging_protocol=HangingProtocolFactory(),
+        optional_hanging_protocols=[HangingProtocolFactory()],
         view_content=None,
         display_editors=True,
         contact_email="test@test.com",
@@ -322,6 +349,7 @@ def test_algorithm_for_phase_form_validation():
     form = AlgorithmForPhaseForm(
         workstation_config=WorkstationConfigFactory(),
         hanging_protocol=HangingProtocolFactory(),
+        optional_hanging_protocols=[HangingProtocolFactory()],
         view_content=None,
         display_editors=True,
         contact_email="test@test.com",

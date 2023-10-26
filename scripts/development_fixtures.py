@@ -117,8 +117,9 @@ def _create_users(usernames):
             username=username,
             email=f"{username}@example.com",
             is_active=True,
-            password=username,
         )
+        user.set_password(username)
+        user.save()
 
         EmailAddress.objects.create(
             user=user,
@@ -128,7 +129,9 @@ def _create_users(usernames):
         )
 
         Verification.objects.create(
-            user=user, is_verified=True, email=user.email
+            user=user,
+            email=user.email,
+            is_verified=True,
         )
         user.user_profile.receive_newsletter = True
         user.user_profile.save()

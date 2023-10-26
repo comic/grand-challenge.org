@@ -16,6 +16,7 @@ from django.core.validators import (
     validate_slug,
 )
 from django.db import models
+from django.db.models import ExpressionWrapper, F, OuterRef, Q, Subquery, Sum
 from django.db.models.signals import post_delete, pre_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
@@ -24,6 +25,7 @@ from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.text import get_valid_filename
 from django.utils.translation import gettext_lazy as _
+from django_deprecate_fields import deprecate_field
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 from guardian.utils import get_anonymous_user
@@ -61,6 +63,7 @@ from grandchallenge.evaluation.utils import (
     StatusChoices,
     SubmissionKindChoices,
 )
+from grandchallenge.invoices.models import PaymentStatusChoices
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.pages.models import Page
@@ -72,10 +75,42 @@ from grandchallenge.task_categories.models import TaskType
 logger = logging.getLogger(__name__)
 
 
-class ChallengeManager(models.Manager):
-    def non_hidden(self):
-        """Filter the hidden challenge"""
-        return self.filter(hidden=False)
+class ChallengeSet(models.QuerySet):
+    def with_available_compute(self):
+        return self.annotate(
+            approved_compute_costs_euro_millicents=(
+                Sum(
+                    "invoices__compute_costs_euros",
+                    filter=Q(
+                        invoices__payment_status__in=[
+                            PaymentStatusChoices.COMPLIMENTARY,
+                            PaymentStatusChoices.PAID,
+                        ]
+                    ),
+                    output_field=models.PositiveBigIntegerField(),
+                    default=0,
+                )
+                * 1000
+                * 100
+            ),
+            available_compute_euro_millicents=ExpressionWrapper(
+                F("approved_compute_costs_euro_millicents")
+                - F("compute_cost_euro_millicents"),
+                output_field=models.BigIntegerField(),
+            ),
+        )
+
+    def with_most_recent_submission_datetime(self):
+        from grandchallenge.evaluation.models import Submission
+
+        latest_submission = Submission.objects.filter(
+            phase__challenge=OuterRef("pk")
+        ).order_by("-created")
+        return self.annotate(
+            most_recent_submission_datetime=Subquery(
+                latest_submission.values("created")[:1]
+            )
+        )
 
 
 def validate_nounderscores(value):
@@ -112,6 +147,8 @@ class ChallengeSeries(models.Model):
 
 
 class ChallengeBase(models.Model):
+    StatusChoices = StatusChoices
+
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
@@ -313,14 +350,33 @@ class Challenge(ChallengeBase):
         default="",
         help_text="This email will be listed as the contact email for the challenge and will be visible to all users of Grand Challenge.",
     )
-    accumulated_compute_cost_in_cents = models.IntegerField(
-        default=0, blank=True
+
+    accumulated_compute_cost_in_cents = deprecate_field(
+        models.IntegerField(default=0, blank=True)
     )
-    accumulated_docker_storage_cost_in_cents = models.IntegerField(
-        default=0, blank=True
+    accumulated_docker_storage_cost_in_cents = deprecate_field(
+        models.IntegerField(default=0, blank=True)
     )
 
-    objects = ChallengeManager()
+    compute_cost_euro_millicents = models.PositiveBigIntegerField(
+        # We store euro here as the costs were incurred at a time when
+        # the exchange rate may have been different
+        editable=False,
+        default=0,
+        help_text="The total compute cost for this challenge in Euro Cents, including Tax",
+    )
+    size_in_storage = models.PositiveBigIntegerField(
+        editable=False,
+        default=0,
+        help_text="The number of bytes stored in the storage backend",
+    )
+    size_in_registry = models.PositiveBigIntegerField(
+        editable=False,
+        default=0,
+        help_text="The number of bytes stored in the registry",
+    )
+
+    objects = ChallengeSet.as_manager()
 
     class Meta:
         verbose_name = "challenge"
@@ -556,7 +612,7 @@ class Challenge(ChallengeBase):
         user.groups.remove(self.admins_group)
         unfollow(user=user, obj=self.forum, send_action=False)
 
-    @property
+    @cached_property
     def status(self):
         phase_status = {phase.status for phase in self.phase_set.all()}
         if StatusChoices.OPEN in phase_status:
@@ -569,7 +625,26 @@ class Challenge(ChallengeBase):
             status = StatusChoices.CLOSED
         return status
 
-    @property
+    @cached_property
+    def should_be_open_but_is_over_budget(self):
+        return self.available_compute_euro_millicents <= 0 and any(
+            phase.submission_period_is_open_now
+            and phase.submissions_limit_per_user_per_period > 0
+            for phase in self.phase_set.all()
+        )
+
+    @cached_property
+    def percent_budget_consumed(self):
+        if self.approved_compute_costs_euro_millicents:
+            return int(
+                100
+                * self.compute_cost_euro_millicents
+                / self.approved_compute_costs_euro_millicents
+            )
+        else:
+            return None
+
+    @cached_property
     def challenge_type(self):
         phase_types = {phase.submission_kind for phase in self.phase_set.all()}
         # as long as one of the phases is type 2,
@@ -619,28 +694,6 @@ class Challenge(ChallengeBase):
     @cached_property
     def visible_phases(self):
         return self.phase_set.filter(public=True)
-
-    @property
-    def exceeds_total_number_of_submissions_allowed(self):
-        return any(
-            phase.exceeds_total_number_of_submissions_allowed
-            for phase in self.phase_set.all()
-        )
-
-    @property
-    def exceeds_70_percent_of_submission_allowed(self):
-        return any(
-            phase.percent_of_total_submissions_allowed > 70
-            for phase in self.phase_set.all()
-            if phase.percent_of_total_submissions_allowed
-        )
-
-    @property
-    def total_number_of_submissions_defined(self):
-        return any(
-            phase.total_number_of_submissions_allowed
-            for phase in self.phase_set.all()
-        )
 
 
 class ChallengeUserObjectPermission(UserObjectPermissionBase):
@@ -893,6 +946,24 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
         return challenge
 
+    @property
+    def budget_fields(self):
+        budget_fields = (
+            "expected_number_of_teams",
+            "number_of_tasks",
+            "inference_time_limit_in_minutes",
+            "average_size_of_test_image_in_mb",
+            "phase_1_number_of_submissions_per_team",
+            "phase_1_number_of_test_images",
+            "phase_2_number_of_submissions_per_team",
+            "phase_2_number_of_test_images",
+        )
+        return {
+            field.verbose_name: field.value_to_string(self)
+            for field in self._meta.fields
+            if field.name in budget_fields
+        }
+
     @cached_property
     def budget(self):
         if (
@@ -928,6 +999,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                     self.phase_1_number_of_test_images
                     * self.average_size_of_test_image_in_mb
                     * s3_storage_costs
+                    * self.number_of_tasks
                     / 1000000
                     / 100
                     / 10,
@@ -941,6 +1013,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                     * self.expected_number_of_teams
                     * self.inference_time_limit_in_minutes
                     * compute_costs
+                    * self.number_of_tasks
                     / 60
                     / 100
                     / 10,
@@ -953,7 +1026,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                         budget["Data storage cost for phase 1"]
                         + budget["Compute costs for phase 1"]
                     )
-                    * self.number_of_tasks
                     / 10,
                 )
                 * 10
@@ -964,6 +1036,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                     self.phase_2_number_of_test_images
                     * self.average_size_of_test_image_in_mb
                     * s3_storage_costs
+                    * self.number_of_tasks
                     / 1000000
                     / 100
                     / 10,
@@ -977,6 +1050,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                     * self.expected_number_of_teams
                     * self.inference_time_limit_in_minutes
                     * compute_costs
+                    * self.number_of_tasks
                     / 60
                     / 100
                     / 10,
@@ -989,7 +1063,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                         budget["Data storage cost for phase 2"]
                         + budget["Compute costs for phase 2"]
                     )
-                    * self.number_of_tasks
                     / 10,
                 )
                 * 10

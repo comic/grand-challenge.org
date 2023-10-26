@@ -3,6 +3,7 @@
 {% load url %}
 {% load guardian_tags %}
 {% load bleach %}
+{% load naturaldelta %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -28,6 +29,10 @@
 
 {% block content %}
     <h2>{{ phase.title }} Submission</h2>
+
+    {% if "change_challenge" in challenge_perms %}
+        {% include "evaluation/partials/phase_closed_warning.html" with phase=phase %}
+    {% endif %}
 
     {{ phase.submission_page_html|clean }}
 
@@ -56,8 +61,17 @@
                     <a href="{% url 'evaluation:phase-update' challenge_short_name=challenge.short_name slug=phase.slug %}">
                         Phase Settings</a>.
                 </p>
+                {% if phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM %}
+                    <p>
+                        For each submission, {{ phase.count_valid_archive_items }}
+                        algorithm job{{ phase.count_valid_archive_items|pluralize }} will be created
+                        from the {{ phase.count_valid_archive_items }} valid item{{ phase.count_valid_archive_items|pluralize }}
+                        in <a href="{{ phase.archive.get_absolute_url }}">{{ phase.archive }}</a>.
+                        Each individual algorithm job will have a time limit of {{ phase.algorithm_time_limit|naturaldelta }}.
+                    </p>
+                {% endif %}
                 <p>
-                    As an admin for this challenge you can create as many submissions as you like.
+                    As an admin for this challenge you can create as many submissions as you like as long as there is budget available.
                 </p>
                 <hr>
                 <p class="mb-0">
@@ -67,16 +81,6 @@
                     if you would like to create a submission on the behalf of one of the participants of this challenge.
                 </p>
             </div>
-            {% if phase.inconsistent_submission_information %}
-                <div class="alert alert-warning pb-1" role="alert">
-                        <p><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> The submission limit for this phase is 0, but the start and end dates indicate that this phase should be open to submissions now. The submission limit needs to be above 0 for participants to submit to this phase.</p>
-                </div>
-            {% endif %}
-            {% if not phase.active_image %}
-                <div class="alert alert-danger pb-1" role="alert">
-                    <p><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> There is no valid evaluation method for this phase. Please upload a method container <a href="{% url 'evaluation:method-create' challenge_short_name=challenge.short_name slug=phase.slug %}">here</a>. </p>
-                </div>
-            {% endif %}
 
         {% endif %}
 
@@ -111,6 +115,19 @@
                 {% endif %}
             </div>
 
+        {% elif phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM and not form.fields.algorithm_image.queryset.exists %}
+
+            <p>
+                Currently, you do not have any Algorithm Image that can be submitted to this phase.
+                Either upload a new Algorithm Image to one of your existing Algorithms, or create a new Algorithm.
+                As soon as your new Algorithm Image is active you can return to this page to submit it to this phase.
+            </p>
+
+            <a class="btn btn-primary"
+               href="{% url 'evaluation:phase-algorithm-create' slug=phase.slug challenge_short_name=challenge.short_name %}">
+                <i class="fa fa-plus"></i> Add a new Algorithm
+            </a>
+
         {% else %}
 
             <div class="alert alert-info" role="alert">
@@ -124,6 +141,11 @@
                     in total
                 {% endif %}
                 to this phase.
+
+                {% if phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM %}
+                    Algorithm jobs created for this phase will have a time limit of
+                    {{ phase.algorithm_time_limit|naturaldelta }} per case.
+                {% endif %}
             </div>
 
             {% if phase.submissions_close_at %}

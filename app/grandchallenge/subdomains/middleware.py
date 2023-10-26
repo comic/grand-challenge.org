@@ -44,9 +44,9 @@ def challenge_subdomain_middleware(get_response):
             request.challenge = None
         else:
             request.challenge = get_object_or_404(
-                Challenge.objects.select_related("forum").prefetch_related(
-                    "phase_set"
-                ),
+                Challenge.objects.with_available_compute()
+                .select_related("forum")
+                .prefetch_related("phase_set"),
                 short_name__iexact=subdomain,
             )
 

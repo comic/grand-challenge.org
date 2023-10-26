@@ -47,11 +47,6 @@
             <a href="{% url 'profile-detail' object.creator.username %}">{{ object.creator }}</a>
         </dd>
 
-        <dt>Comment</dt>
-        <dd>
-            {{ object.comment }}
-        </dd>
-
         {% if object.algorithm_image %}
             <dt>Algorithm</dt>
             <dd>
@@ -59,16 +54,6 @@
                     Container for {{ object.algorithm_image.algorithm }} uploaded
                     by {{ object.algorithm_image.creator }} {{ object.algorithm_image.created|naturaltime }}
                 </a></dd>
-        {% endif %}
-
-        {% if "change_challenge" in challenge_perms and object.predictions_file %}
-            <dt>Submission File</dt>
-            <dd>
-                <a href="{{ object.predictions_file.url }}">
-                    <i class="fa fa-file"></i>
-                    Download the submission file
-                </a>
-            </dd>
         {% endif %}
 
     </dl>
@@ -116,6 +101,84 @@
             </tbody>
         </table>
     </div>
+
+    {% if "change_challenge" in challenge_perms %}
+        <div class="card card-danger border-danger">
+            <div class="card-header bg-danger text-white">Submission Admin</div>
+
+            <div class="card-body">
+                <dl>
+
+                    <dt>Comment</dt>
+                    <dd>
+                        {% if object.comment %}
+                            {{ object.comment }}
+                        {% else %}
+                            No comment provided.
+                        {% endif %}
+                    </dd>
+
+                    <dt>Supplementary URL ({{ object.phase.supplementary_url_label }})</dt>
+                    <dd>
+                        {% if object.supplementary_url %}
+                            <a href="{{ object.supplementary_url }}" target="_blank">
+                                <i class="fas fa-link"></i> {{ object.supplementary_url }}
+                            </a>
+                        {% else %}
+                            No supplementary URL provided.
+                        {% endif %}
+                    </dd>
+
+                    <dt>Supplementary File ({{ object.phase.supplementary_file_label }})</dt>
+                    <dd>
+                        {% if object.supplementary_file %}
+                            <a href="{{ object.supplementary_file.url }}">
+                                <i class="fa fa-file"></i> {{ object.supplementary_file.name }}
+                            </a>
+                        {% else %}
+                            No supplementary file provided.
+                        {% endif %}
+                    </dd>
+
+                    <dt>Submission File</dt>
+                    <dd>
+                        {% if object.predictions_file %}
+                            <a href="{{ object.predictions_file.url }}">
+                                <i class="fa fa-download"></i> {{ object.predictions_file.name }}
+                            </a>
+                        {% else %}
+                            No submission file provided.
+                        {% endif %}
+                    </dd>
+
+                </dl>
+            </div>
+
+            {% if not object.is_evaluated_with_active_image %}
+                <div class="card-body">
+                    <h4 class="card-title">Re-Evaluate Submission with Active Method</h4>
+
+                    <p>
+                        This submission has not been evaluated with the active evaluation method for this phase.
+                        {% if challenge.available_compute_euro_millicents <= 0 %}
+                            However, an evaluation cannot be created as this challenge has exceeded its budget.
+                        {% endif %}
+                    </p>
+
+                    {% if challenge.available_compute_euro_millicents > 0 %}
+                        <form method="post"
+                              action="{% url 'evaluation:evaluation-create' challenge_short_name=challenge.short_name slug=object.phase.slug pk=object.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="submission" value="{{ object.pk }}">
+                            <button type="submit" class="btn btn-xs btn-primary">
+                                Re-Evaluate with the Active Method
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
 {% endblock %}
 
 {% block script %}

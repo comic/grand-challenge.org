@@ -6,9 +6,11 @@ from django.utils.timezone import now
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
+from grandchallenge.invoices.models import PaymentStatusChoices
 from grandchallenge.verifications.models import Verification
 from tests.evaluation_tests.factories import PhaseFactory
 from tests.factories import ChallengeFactory, UserFactory
+from tests.invoices_tests.factories import InvoiceFactory
 from tests.utils import get_view_for_user
 
 
@@ -272,6 +274,12 @@ def test_challenge_card_status(
     phase2 = PhaseFactory(challenge=ch)
     u = UserFactory()
 
+    InvoiceFactory(
+        challenge=ch,
+        compute_costs_euros=10,
+        payment_status=PaymentStatusChoices.COMPLIMENTARY,
+    )
+
     phase1.submissions_limit_per_user_per_period = (
         phase1_submissions_limit_per_user_per_period
     )
@@ -464,41 +472,21 @@ def test_challenge_request_date_check(client):
     )
 
 
-@pytest.mark.parametrize(
-    "viewname, reverse_kwargs, data",
-    [
-        ("challenges:cost-overview", None, None),
-        ("challenges:costs-per-phase", True, None),
-        ("challenges:challenge-cost-row", True, None),
-        ("challenges:costs-per-year", None, {"year": "2021"}),
-        ("challenges:year-cost-row", None, {"year": "2021"}),
-    ],
-)
 @pytest.mark.django_db
-def test_challenge_cost_page_permissions(
-    client, viewname, reverse_kwargs, data
-):
+def test_challenge_cost_page_permissions(client):
     user, reviewer = UserFactory.create_batch(2)
     assign_perm("challenges.view_challengerequest", reviewer)
-    if reverse_kwargs:
-        challenge = ChallengeFactory()
-        reverse_kwargs_for_view = {"pk": challenge.pk}
-    else:
-        reverse_kwargs_for_view = None
+
     response = get_view_for_user(
-        viewname=viewname,
-        reverse_kwargs=reverse_kwargs_for_view,
+        viewname="challenges:cost-overview",
         client=client,
         user=user,
-        data=data,
     )
     assert response.status_code == 403
 
     response = get_view_for_user(
-        viewname=viewname,
-        reverse_kwargs=reverse_kwargs_for_view,
+        viewname="challenges:cost-overview",
         client=client,
         user=reviewer,
-        data=data,
     )
     assert response.status_code == 200

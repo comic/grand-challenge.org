@@ -84,7 +84,7 @@ class PaginatedTableListView(ListView):
                 Q(),
             )
             queryset = queryset.filter(q)
-        return queryset.order_by(order_by)
+        return queryset.order_by(order_by).distinct()
 
 
 @dataclass

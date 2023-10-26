@@ -1,8 +1,7 @@
 from django.contrib import admin
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 
-from grandchallenge.challenges.models import ChallengeRequest
 from grandchallenge.components.admin import (
     ComponentImageAdmin,
     cancel_jobs,
@@ -30,7 +29,6 @@ from grandchallenge.evaluation.models import (
     SubmissionUserObjectPermission,
 )
 from grandchallenge.evaluation.tasks import create_evaluation
-from grandchallenge.evaluation.utils import SubmissionKindChoices
 
 
 class PhaseAdminForm(ModelForm):
@@ -51,28 +49,6 @@ class PhaseAdminForm(ModelForm):
                 f"{oxford_comma(duplicate_interfaces)} present in both"
             )
 
-        submission_kind = cleaned_data["submission_kind"]
-        total_number_of_submissions_allowed = cleaned_data[
-            "total_number_of_submissions_allowed"
-        ]
-
-        if (
-            submission_kind == SubmissionKindChoices.ALGORITHM
-            and not total_number_of_submissions_allowed
-        ):
-            try:
-                request = ChallengeRequest.objects.get(
-                    short_name=self.instance.challenge.short_name
-                )
-                error_addition = f"The corresponding challenge request lists the following limits: Preliminary phase: {request.phase_1_number_of_submissions_per_team * request.expected_number_of_teams} Final test phase: {request.phase_2_number_of_submissions_per_team * request.expected_number_of_teams}. Set the limits according to the phase type. "
-            except ObjectDoesNotExist:
-                error_addition = "There is no corresponding challenge request."
-            raise ValidationError(
-                "For phases that take an algorithm as submission input, "
-                "the total_number_of_submissions_allowed needs to be set. "
-                + error_addition
-            )
-
         return cleaned_data
 
 
@@ -84,7 +60,6 @@ class PhaseAdmin(admin.ModelAdmin):
         "title",
         "challenge",
         "submission_kind",
-        "open_for_submissions",
         "submissions_open_at",
         "submissions_close_at",
         "submissions_limit_per_user_per_period",

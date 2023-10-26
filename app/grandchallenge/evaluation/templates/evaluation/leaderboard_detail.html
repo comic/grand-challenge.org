@@ -23,8 +23,12 @@
 {% block content %}
     <h2>{{ phase.title }} Leaderboard {{ request.GET.date }}</h2>
 
-    {% if not phase.public %}
-        <div class="alert alert-danger">This phase is no longer active. </div>
+    {% if "change_challenge" in challenge_perms %}
+        {% include "evaluation/partials/phase_closed_warning.html" with phase=phase %}
+
+        <a href="{% url "evaluation:phase-update" challenge_short_name=challenge.short_name slug=phase.slug %}" class="btn btn-primary text-decoration-none">
+            <i class="fa fa-edit"></i>&nbsp;&nbsp;Edit Phase Settings
+        </a>
     {% endif %}
 
     {% include "datatables/partials/datatable.html" with columns=columns %}

@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.base_user import BaseUserManager
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.forms import CheckboxInput
 from django.utils.html import format_html
 from pyswot.pyswot import _domain_parts, _is_stoplisted
 
@@ -23,6 +24,17 @@ logger = logging.getLogger(__name__)
 
 
 class VerificationForm(SaveFormInitMixin, forms.ModelForm):
+    only_account = forms.BooleanField(
+        required=True,
+        initial=False,
+        widget=CheckboxInput,
+        label="I confirm that this is my only account on Grand Challenge",
+        help_text=(
+            "You must only have one account per person - separate logins for the same person is not permitted. "
+            "If you are found to have multiple accounts they will all be permanently suspended."
+        ),
+    )
+
     def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
         self.user = user
@@ -38,7 +50,7 @@ class VerificationForm(SaveFormInitMixin, forms.ModelForm):
         self.fields[
             "email"
         ].help_text = (
-            "Please provide your work, corporate or institutional email"
+            "Please provide your work, corporate or institutional email."
         )
 
     def clean_email(self):

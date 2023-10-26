@@ -106,7 +106,7 @@
             <dt>{{ object.submission.phase.supplementary_url_label }}:</dt>
             <dd>
                 {% if object.submission.supplementary_url %}
-                    <a href="{{ object.submission.supplementary_url }}">
+                    <a href="{{ object.submission.supplementary_url }}" target="_blank">
                         <i class="fa fa-file"></i>
                     </a>
                 {% endif %}
@@ -203,13 +203,19 @@
         <div class="card card-danger border-danger">
             <div class="card-header bg-danger text-white">Evaluation Admin</div>
 
-            {% if incomplete_jobs %}
+            {% if object.status != object.SUCCESS and incomplete_jobs %}
                 <div class="card-body">
-                    <h3 class="card-title">Incomplete Jobs</h3>
+                    <h3 class="card-title">Prerequisite Jobs</h3>
 
                     <p>
-                        The following algorithm jobs need to complete before the evaluation method
-                        can be executed on the predictions.
+                        The successful completion of the algorithm jobs listed below is a prerequisite for executing
+                        the evaluation method on the predictions.
+                        Any algorithm jobs mentioned here that have not encountered failures or been cancelled are
+                        presently undergoing execution within the platform.
+                        Your patience is appreciated during this process.
+                        If any of these algorithm jobs have unfortunately failed, it is typically necessary to get in
+                        touch with the participant to address any issues within their algorithm container.
+                        A job is only marked as cancelled if another job within this set has experienced a failure.
                     </p>
 
                     <table class="table table-borderless table-hover table-sm">
@@ -242,56 +248,66 @@
             {% endif %}
 
             <div class="card-body">
-                <h3 class="card-title">Visibility</h3>
+                <h3 class="card-title">Predictions</h3>
 
-                {% if object.published %}
-                    <i class="fas fa-eye"></i> This result is published on the
-                    leaderboard(s)
-                    <form method="post"
-                          action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=object.pk %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="published"
-                               value="false">
-                        <button type="submit" class="btn btn-danger">
-                            Exclude this result from the leaderboard(s)
-                        </button>
-                    </form>
-                {% else %}
-                    <i class="fas fa-eye-slash text-danger"></i> This result is not
-                    published on the leaderboard(s)
-                    <br>
-                    <form method="post"
-                          action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=object.pk %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="published"
-                               value="true">
-                        <button type="submit" class="btn btn-success">
-                            Publish this result on the leaderboard(s)
-                        </button>
-                    </form>
+                 {% if object.submission.predictions_file %}
+                     <a href="{{ object.submission.predictions_file.url }}"
+                        class="btn btn-primary">
+                         <i class="fas fa-download mr-1"></i>
+                         Download the submission file for this evaluation
+                     </a>
                 {% endif %}
-            </div>
 
-            {% if predictions %}
-                <div class="card-body">
-                    <h3 class="card-title">Predictions</h3>
+                {% if predictions %}
                     <a href="data:text/plain;charset=utf-8,{{ predictions|json_dumps|urlencode }}"
                         download="predictions.json"
                         class="btn btn-primary">
-                        <i class="fa fa-download"></i>
+                        <i class="fa fa-download mr-1"></i>
                         Download the predictions.json file for this evaluation
                     </a>
-                </div>
-            {% endif %}
+                {% endif %}
 
-            {% if object.submission.predictions_file %}
-                <div class="card-body">
-                    <h3 class="card-title">Submission File</h3>
-                    <a href="{{ object.submission.predictions_file.url }}"
-                       class="btn btn-primary">
-                        <i class="fa fa-download"></i>
-                        Download the submission file for this result
+                {% if object.submission.phase.submission_kind == evaluation.submission.phase.SubmissionKindChoices.ALGORITHM %}
+                    <a class="btn btn-primary"
+                       href="{% url 'algorithms:job-list' slug=object.submission.algorithm_image.algorithm.slug %}">
+                        <i class="fas fa-angle-double-right mr-1"></i>
+                        Go to the results of {{ object.submission.algorithm_image.algorithm.title|truncatechars:30 }}
                     </a>
+                {% endif %}
+            </div>
+
+            {% if object.status == object.SUCCESS %}
+                <div class="card-body">
+                    <h3 class="card-title">Visibility</h3>
+
+                    {% if object.published %}
+                        <i class="fas fa-eye text-success"></i> This result is published on the
+                        leaderboard(s)
+                        <form method="post"
+                              action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=object.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="published"
+                                   value="false">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-eye-slash mr-1"></i>
+                                    Exclude this result from the leaderboard(s)
+                            </button>
+                        </form>
+                    {% else %}
+                        <i class="fas fa-eye-slash text-danger"></i> This result is not
+                        published on the leaderboard(s)
+                        <br>
+                        <form method="post"
+                              action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=object.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="published"
+                                   value="true">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-eye mr-1"></i>
+                                Publish this result on the leaderboard(s)
+                            </button>
+                        </form>
+                    {% endif %}
                 </div>
             {% endif %}
 

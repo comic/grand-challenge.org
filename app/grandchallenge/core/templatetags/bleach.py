@@ -4,6 +4,7 @@ from django import template
 from django.conf import settings
 from django.utils.safestring import mark_safe
 from markdown import markdown as render_markdown
+from markdown.extensions.toc import TocExtension
 
 from grandchallenge.core.utils.markdown import LinkBlankTargetExtension
 
@@ -28,13 +29,36 @@ def clean(html: str):
 
 
 @register.filter
-def md2html(markdown: str | None, link_blank_target=False):
+def md2email_html(markdown: str | None):
+    """Converts markdown to clean html intended for emailing"""
+    return md2html(
+        markdown,
+        link_blank_target=True,
+        create_permalink_for_headers=False,
+    )
+
+
+@register.filter
+def md2html(
+    markdown: str | None,
+    *,
+    link_blank_target=False,
+    create_permalink_for_headers=True,
+):
     """Convert markdown to clean html"""
 
-    extensions = settings.MARKDOWNX_MARKDOWN_EXTENSIONS
+    extensions = [*settings.MARKDOWNX_MARKDOWN_EXTENSIONS]
 
     if link_blank_target:
         extensions.append(LinkBlankTargetExtension())
+
+    if create_permalink_for_headers:
+        extensions.append(
+            TocExtension(
+                permalink=True,
+                permalink_class="headerlink text-muted small pl-1",
+            )
+        )
 
     html = render_markdown(
         text=markdown or "",

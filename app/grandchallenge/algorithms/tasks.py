@@ -458,7 +458,7 @@ def set_credits_per_job():
             ).get_executor(backend=settings.COMPONENTS_DEFAULT_BACKEND)
 
             cents_per_job = (
-                executor.cents_per_hour
+                executor.usd_cents_per_hour
                 * algorithm.average_duration.total_seconds()
                 / 3600
             )

@@ -864,7 +864,6 @@ def test_runtime_metrics_chart():
                 "gpus": 0,
                 "memory": 8,
                 "name": "ml.m5.large",
-                "cents_per_hour": 13,
             },
             "metrics": [
                 {
@@ -1182,7 +1181,7 @@ def test_validate_voxel_values():
 
 @pytest.mark.django_db
 def test_can_execute():
-    ai = AlgorithmImageFactory()
+    ai = AlgorithmImageFactory(image=None)
 
     assert ai.can_execute is False
     assert ai not in AlgorithmImage.objects.executable_images()
@@ -1217,7 +1216,10 @@ def test_can_execute_with_sagemaker(settings):
     settings.COMPONENTS_CREATE_SAGEMAKER_MODEL = False
 
     ai = AlgorithmImageFactory(
-        is_manifest_valid=True, is_in_registry=True, is_on_sagemaker=False
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_on_sagemaker=False,
+        image=None,
     )
 
     assert ai.can_execute is True
@@ -1265,7 +1267,7 @@ def test_can_change_from_empty(django_capture_on_commit_callbacks):
     ai = AlgorithmImageFactory(image=None)
 
     with django_capture_on_commit_callbacks() as callbacks:
-        ai.image = "blah"
+        ai.image = ContentFile(b"Foo1", name="blah")
         ai.save()
 
     assert len(callbacks) == 1
@@ -1331,6 +1333,7 @@ def test_mark_desired_version():
         algorithm=alg,
         is_manifest_valid=True,
         is_in_registry=True,
+        image=None,
     )
     i3.is_desired_version = True
     i3.save()

@@ -16,10 +16,10 @@
 
 {% block content %}
     <div class="table-responsive">
-        <table class="table table-hover table-borderless table-sm">
+        <table class="table table-hover table-borderless table-sm" id="challengeRequestsTable">
             <thead class="thead-light">
             <tr>
-                <th></th>
+                <th class="datatables-non-sortable"></th>
                 <th class="text-center">Acronym</th>
                 <th class="text-center">Creator</th>
                 <th class="text-center">Submission date</th>
@@ -28,21 +28,21 @@
             </tr>
             </thead>
             <tbody>
-                {% for object in page_obj %}
+                {% for object in object_list %}
                     <tr>
                         <td class="text-center align-middle">
-                            <a class="btn btn-dark btn-sm" href="{% url 'challenges:requests-detail' pk=object.pk %}"><i class="fa fa-search"></i></a>
+                            <a class="btn btn-dark btn-sm" href="{% url 'challenges:requests-detail' pk=object.pk %}"><i class="fa fa-book pr-2"></i>Details</a>
                         </td>
                         <td class="text-center align-middle">{{ object.short_name }}</td>
                         <td class="text-center align-middle">{{ object.creator|user_profile_link }}</td>
                         {% if object.status == object.ChallengeRequestStatusChoices.ACCEPTED %}
-                            <td class="text-center align-middle"><span class="badge p-2 badge-primary">{{ object.created|date:'F j, Y' }}</span></td>
+                            <td class="text-center align-middle" data-order="{{ object.created|date:'U' }}"><span class="badge p-2 badge-primary">{{ object.created|date:'F j, Y' }}</span></td>
                             <td class="text-center align-middle"><span class="badge p-2 badge-success">Accepted</span></td>
                         {% elif object.status == object.ChallengeRequestStatusChoices.REJECTED %}
-                            <td class="text-center align-middle"><span class="badge p-2 badge-primary">{{ object.created|date:'F j, Y' }}</span></td>
+                            <td class="text-center align-middle" data-order="{{ object.created|date:'U' }}"><span class="badge p-2 badge-primary">{{ object.created|date:'F j, Y' }}</span></td>
                             <td class="text-center align-middle"><span class="badge p-2 badge-danger">Rejected</span></td>
                         {% else %}
-                            <td class="text-center align-middle"><span class="badge p-2 {% if object.created|timedifference < 8 %} badge-success {% elif object.created|timedifference < 15 %} badge-warning {% else %} badge-danger {% endif %}">{{ object.created|date:'F j, Y' }}</span></td>
+                            <td class="text-center align-middle" data-order="{{ object.created|date:'U' }}"><span class="badge p-2 {% if object.created|timedifference < 8 %} badge-success {% elif object.created|timedifference < 15 %} badge-warning {% else %} badge-danger {% endif %}">{{ object.created|date:'F j, Y' }}</span></td>
                             <td class="text-center align-middle"><a class="btn btn-primary btn-sm" hx-get="{% url 'challenges:requests-status-update' pk=object.pk %}" hx-swap="outerHTML">Accept or decline</a></td>
                         {% endif %}
                         <td class="text-center align-middle"><a href="mailto:{{ object.contact_email }}"> {{ object.contact_email }}</a></td>
@@ -51,5 +51,10 @@
             </tbody>
         </table>
     </div>
-    {% include "grandchallenge/partials/pagination.html"  %}
+{% endblock %}
+
+
+{% block script %}
+    {{ block.super }}
+    <script type="module" src="{% static 'js/challenges/challengerequest_list_table.mjs' %}"></script>
 {% endblock %}

@@ -22,6 +22,10 @@
 
     <h2>Submissions and Evaluations for {{ phase.title }}</h2>
 
+    {% if "change_challenge" in challenge_perms %}
+        {% include "evaluation/partials/phase_closed_warning.html" with phase=phase %}
+    {% endif %}
+
     <div class="table-responsive">
         <table class="table table-hover table-borderless table-sm" id="evaluationsTable">
             <thead class="thead-light">

@@ -14,6 +14,7 @@ from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.evaluation.models import CombinedLeaderboard, Evaluation
 from grandchallenge.evaluation.tasks import update_combined_leaderboard
 from grandchallenge.evaluation.utils import SubmissionKindChoices
+from grandchallenge.invoices.models import PaymentStatusChoices
 from grandchallenge.workstations.models import Workstation
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.factories import ArchiveFactory
@@ -32,6 +33,7 @@ from tests.factories import (
     WorkstationFactory,
 )
 from tests.hanging_protocols_tests.factories import HangingProtocolFactory
+from tests.invoices_tests.factories import InvoiceFactory
 from tests.utils import get_view_for_user
 from tests.verification_tests.factories import VerificationFactory
 
@@ -143,6 +145,12 @@ class TestObjectPermissionRequiredViews:
             (
                 "submission-create-legacy",
                 {"slug": e.submission.phase.slug},
+                "change_challenge",
+                e.submission.phase.challenge,
+            ),
+            (
+                "evaluation-create",
+                {"slug": e.submission.phase.slug, "pk": e.submission.pk},
                 "change_challenge",
                 e.submission.phase.challenge,
             ),
@@ -320,6 +328,12 @@ def test_submission_time_limit(client, two_challenge_sets):
     phase.submissions_limit_per_user_per_period = 10
     phase.save()
 
+    InvoiceFactory(
+        challenge=phase.challenge,
+        compute_costs_euros=10,
+        payment_status=PaymentStatusChoices.COMPLIMENTARY,
+    )
+
     SubmissionFactory(
         phase=phase, creator=two_challenge_sets.challenge_set_1.participant
     )
@@ -491,6 +505,12 @@ def test_create_algorithm_for_phase_permission(client, uploaded_image):
     phase.challenge.add_admin(admin)
     phase.challenge.add_participant(participant)
 
+    InvoiceFactory(
+        challenge=phase.challenge,
+        compute_costs_euros=10,
+        payment_status=PaymentStatusChoices.COMPLIMENTARY,
+    )
+
     # admin can make a submission only if they are verified
     # and if the phase has been configured properly
     response = get_view_for_user(
@@ -503,9 +523,8 @@ def test_create_algorithm_for_phase_permission(client, uploaded_image):
         user=admin,
     )
     assert response.status_code == 403
-    assert (
-        "You need to verify your account before you can do this, you can request this from your profile page."
-        in str(response.content)
+    assert "You need to verify your account before you can do this" in str(
+        response.content
     )
 
     VerificationFactory(user=admin, is_verified=True)
@@ -570,9 +589,8 @@ def test_create_algorithm_for_phase_permission(client, uploaded_image):
         user=participant,
     )
     assert response.status_code == 403
-    assert (
-        "You need to verify your account before you can do this, you can request this from your profile page."
-        in str(response.content)
+    assert "You need to verify your account before you can do this" in str(
+        response.content
     )
 
     VerificationFactory(user=participant, is_verified=True)
@@ -634,9 +652,11 @@ def test_create_algorithm_for_phase_presets(client):
     phase.archive = ArchiveFactory()
     ci1 = ComponentInterfaceFactory()
     ci2 = ComponentInterfaceFactory()
+    optional_protocol = HangingProtocolFactory()
     phase.algorithm_inputs.set([ci1])
     phase.algorithm_outputs.set([ci2])
     phase.hanging_protocol = HangingProtocolFactory()
+    phase.optional_hanging_protocols.set([optional_protocol])
     phase.workstation_config = WorkstationConfigFactory()
     phase.view_content = {"main": [ci1.slug]}
     phase.algorithm_time_limit = 10 * 60
@@ -661,6 +681,12 @@ def test_create_algorithm_for_phase_presets(client):
     assert (
         response.context_data["form"]["hanging_protocol"].initial
         == phase.hanging_protocol
+    )
+    assert (
+        response.context_data["form"][
+            "optional_hanging_protocols"
+        ].initial.get()
+        == optional_protocol
     )
     assert (
         response.context_data["form"]["workstation_config"].initial
@@ -704,6 +730,11 @@ def test_create_algorithm_for_phase_presets(client):
             "hanging_protocol": response.context_data["form"][
                 "hanging_protocol"
             ].initial.pk,
+            "optional_hanging_protocols": response.context_data["form"][
+                "optional_hanging_protocols"
+            ]
+            .initial.get()
+            .pk,
             "workstation_config": response.context_data["form"][
                 "workstation_config"
             ].initial.pk,
@@ -720,6 +751,7 @@ def test_create_algorithm_for_phase_presets(client):
     assert algorithm.inputs.get() == ci1
     assert algorithm.outputs.get() == ci2
     assert algorithm.hanging_protocol == phase.hanging_protocol
+    assert algorithm.optional_hanging_protocols.get() == optional_protocol
     assert algorithm.workstation_config == phase.workstation_config
     assert algorithm.view_content == phase.view_content
     assert algorithm.workstation.slug == settings.DEFAULT_WORKSTATION_SLUG
@@ -733,6 +765,7 @@ def test_create_algorithm_for_phase_presets(client):
     # try to set different values
     ci3, ci4 = ComponentInterfaceFactory.create_batch(2)
     hp = HangingProtocolFactory()
+    oph = HangingProtocolFactory()
     ws = WorkstationFactory()
     wsc = WorkstationConfigFactory()
 
@@ -752,6 +785,7 @@ def test_create_algorithm_for_phase_presets(client):
             "outputs": [ci2.pk],
             "workstation": ws.pk,
             "hanging_protocol": hp.pk,
+            "optional_hanging_protocols": [oph.pk],
             "workstation_config": wsc.pk,
             "view_content": "{}",
         },
@@ -762,6 +796,7 @@ def test_create_algorithm_for_phase_presets(client):
     assert alg2.inputs.get() == ci1
     assert alg2.outputs.get() == ci2
     assert alg2.hanging_protocol == phase.hanging_protocol
+    assert alg2.optional_hanging_protocols.get() == optional_protocol
     assert alg2.workstation_config == phase.workstation_config
     assert alg2.view_content == phase.view_content
     assert alg2.workstation.slug == settings.DEFAULT_WORKSTATION_SLUG
@@ -786,6 +821,12 @@ def test_create_algorithm_for_phase_limits(client):
     phase.algorithm_outputs.set([ci2])
     phase.submissions_limit_per_user_per_period = 10
     phase.save()
+
+    InvoiceFactory(
+        challenge=phase.challenge,
+        compute_costs_euros=10,
+        payment_status=PaymentStatusChoices.COMPLIMENTARY,
+    )
 
     u1, u2, u3 = UserFactory.create_batch(3)
     for user in [u1, u2, u3]:

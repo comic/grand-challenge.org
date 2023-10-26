@@ -9,6 +9,7 @@ from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.db.models import Count, Q
 from django.db.transaction import on_commit
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -19,7 +20,7 @@ from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.algorithms.models import AlgorithmImage
-from grandchallenge.archives.models import Archive
+from grandchallenge.archives.models import Archive, ArchiveItem
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.models import (
     ComponentImage,
@@ -101,6 +102,23 @@ EXTRA_RESULT_COLUMNS_SCHEMA = {
 }
 
 
+class PhaseManager(models.Manager):
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .prefetch_related(
+                # This should be a select_related, but I cannot find a way
+                # to use a custom model manager with select_related
+                # Maybe this is solved with GeneratedField (Django 5)?
+                models.Prefetch(
+                    "challenge",
+                    queryset=Challenge.objects.with_available_compute(),
+                )
+            )
+        )
+
+
 class Phase(UUIDModel, ViewContentMixin):
     # This must match the syntax used in jquery datatables
     # https://datatables.net/reference/option/order
@@ -145,6 +163,7 @@ class Phase(UUIDModel, ViewContentMixin):
     )
 
     SubmissionKindChoices = SubmissionKindChoices
+    StatusChoices = StatusChoices
 
     challenge = models.ForeignKey(
         Challenge, on_delete=models.PROTECT, editable=False
@@ -425,7 +444,7 @@ class Phase(UUIDModel, ViewContentMixin):
             "have access to their previous submissions and evaluations from this "
             "phase if they exist, and they will no longer see the "
             "respective submit and leaderboard tabs for this phase. "
-            "For you as admin these tabs remain visible."
+            "For you as admin these tabs remain visible. "
             "Note that hiding a phase is only possible if submissions for "
             "this phase are closed for participants."
         ),
@@ -448,11 +467,28 @@ class Phase(UUIDModel, ViewContentMixin):
         blank=True,
         on_delete=models.SET_NULL,
     )
-    total_number_of_submissions_allowed = models.PositiveSmallIntegerField(
+    optional_hanging_protocols = models.ManyToManyField(
+        "hanging_protocols.HangingProtocol",
+        through="OptionalHangingProtocolPhase",
+        related_name="optional_for_phase",
         blank=True,
-        null=True,
-        help_text="Total number of submissions allowed for this phase for all users together.",
+        help_text="Optional alternative hanging protocols for this phase",
     )
+
+    average_algorithm_job_duration = models.DurationField(
+        editable=False,
+        null=True,
+        help_text="The average duration of successful algorithm jobs for this phase",
+    )
+    compute_cost_euro_millicents = models.PositiveBigIntegerField(
+        # We store euro here as the costs were incurred at a time when
+        # the exchange rate may have been different
+        editable=False,
+        default=0,
+        help_text="The total compute cost for this phase in Euro Cents, including Tax",
+    )
+
+    objects = PhaseManager()
 
     class Meta:
         unique_together = (("challenge", "title"), ("challenge", "slug"))
@@ -657,30 +693,11 @@ class Phase(UUIDModel, ViewContentMixin):
     @property
     def open_for_submissions(self):
         return (
-            self.submission_period_is_open_now
+            self.public
+            and self.submission_period_is_open_now
             and self.submissions_limit_per_user_per_period > 0
-            and not self.exceeds_total_number_of_submissions_allowed
+            and self.challenge.available_compute_euro_millicents > 0
         )
-
-    @property
-    def exceeds_total_number_of_submissions_allowed(self):
-        return (
-            self.percent_of_total_submissions_allowed
-            and self.percent_of_total_submissions_allowed >= 100
-        )
-
-    @property
-    def percent_of_total_submissions_allowed(self):
-        if self.total_number_of_submissions_allowed:
-            return round(
-                (
-                    self.submission_set.count()
-                    / self.total_number_of_submissions_allowed
-                )
-                * 100
-            )
-        else:
-            return None
 
     @property
     def status(self):
@@ -718,13 +735,6 @@ class Phase(UUIDModel, ViewContentMixin):
         else:
             raise NotImplementedError(f"{self.status} not implemented")
 
-    @property
-    def inconsistent_submission_information(self):
-        return (
-            self.submissions_limit_per_user_per_period == 0
-            and self.submission_period_is_open_now
-        )
-
     @cached_property
     def active_image(self):
         """
@@ -740,6 +750,25 @@ class Phase(UUIDModel, ViewContentMixin):
             )
         except ObjectDoesNotExist:
             return None
+
+    @cached_property
+    def valid_archive_items(self):
+        """Returns the archive items that are valid for this phase"""
+        if self.archive and self.algorithm_inputs:
+            return self.archive.items.annotate(
+                interface_match_count=Count(
+                    "values",
+                    filter=Q(
+                        values__interface__in={*self.algorithm_inputs.all()}
+                    ),
+                )
+            ).filter(interface_match_count=len(self.algorithm_inputs.all()))
+        else:
+            return ArchiveItem.objects.none()
+
+    @cached_property
+    def count_valid_archive_items(self):
+        return self.valid_archive_items.count()
 
 
 class PhaseUserObjectPermission(UserObjectPermissionBase):
@@ -868,6 +897,17 @@ class Submission(UUIDModel):
     class Meta:
         unique_together = (("phase", "predictions_file", "algorithm_image"),)
 
+    @cached_property
+    def is_evaluated_with_active_image(self):
+        active_image = self.phase.active_image
+        if active_image:
+            return Evaluation.objects.filter(
+                submission=self, method=active_image
+            ).exists()
+        else:
+            # No active image, so nothing to do to evaluate with it
+            return True
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
@@ -931,6 +971,9 @@ class Evaluation(UUIDModel, ComponentJob):
     )
     rank_score = models.FloatField(default=0.0)
     rank_per_metric = models.JSONField(default=dict)
+
+    class Meta(UUIDModel.Meta, ComponentJob.Meta):
+        unique_together = ("submission", "method")
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -1243,4 +1286,13 @@ class CombinedLeaderboardPhase(models.Model):
     phase = models.ForeignKey(Phase, on_delete=models.CASCADE)
     combined_leaderboard = models.ForeignKey(
         CombinedLeaderboard, on_delete=models.CASCADE
+    )
+
+
+class OptionalHangingProtocolPhase(models.Model):
+    # Through table for optional hanging protocols
+    # https://docs.djangoproject.com/en/4.2/topics/db/models/#intermediary-manytomany
+    phase = models.ForeignKey(Phase, on_delete=models.CASCADE)
+    hanging_protocol = models.ForeignKey(
+        "hanging_protocols.HangingProtocol", on_delete=models.CASCADE
     )

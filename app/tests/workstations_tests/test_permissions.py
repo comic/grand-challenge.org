@@ -48,7 +48,10 @@ def test_create_view_permission(client):
     ],
 )
 def test_workstation_editor_permissions(
-    client, two_workstation_sets, viewname, authenticated_staff_user
+    client,
+    two_workstation_sets,
+    viewname,
+    authenticated_staff_user,
 ):
     tests = (
         (two_workstation_sets.ws1.editor, 200),

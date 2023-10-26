@@ -1,8 +1,11 @@
 from datetime import timedelta
 
+from allauth.account.models import EmailAddress
 from allauth.account.signals import email_confirmed
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.sites.models import Site
+from django.core.mail import send_mail
 from django.db import models
 from django.db.models import Q
 from django.utils.html import format_html
@@ -12,10 +15,6 @@ from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.tokens import (
     email_verification_token_generator,
 )
-
-
-def email_is_trusted(*, email):
-    return is_academic(email)
 
 
 class Verification(models.Model):
@@ -38,21 +37,21 @@ class Verification(models.Model):
     def __str__(self):
         return f"Verification for {self.user}"
 
-    @property
-    def signup_email(self):
-        return self.user.email
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
 
-    @property
-    def signup_email_activated(self):
-        return self.user.emailaddress_set.filter(
-            verified=True, email=self.signup_email
-        ).exists()
+        if (
+            adding
+            and EmailAddress.objects.filter(
+                user=self.user, email=self.email, verified=True
+            ).exists()
+        ):
+            self.email_is_verified = True
 
-    @property
-    def signup_email_is_trusted(self):
-        return self.signup_email_activated and email_is_trusted(
-            email=self.signup_email
-        )
+        super().save(*args, **kwargs)
+
+        if adding and not self.email_is_verified:
+            self.send_verification_email()
 
     @property
     def token(self):
@@ -79,10 +78,32 @@ class Verification(models.Model):
             self.user.user_profile.website,
         )
 
+    def send_verification_email(self):
+        if self.email_is_verified:
+            # Nothing to do
+            return
+
+        site = Site.objects.get_current()
+        message = (
+            f"Dear {self.user.username},\n\n"
+            "Please confirm this email address for account validation by visiting the following link: "
+            f"{self.verification_url}\n\n"
+            "Please disregard this email if you did not make this validation request.\n\n"
+            "Regards,\n"
+            f"{site.name}\n"
+            f"This is an automated service email from {site.domain}."
+        )
+        send_mail(
+            subject=f"[{site.domain.lower()}] Please confirm your email address for account validation",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[self.email],
+            message=message,
+        )
+
 
 def create_verification(email_address, *_, **__):
     if (
-        email_is_trusted(email=email_address.email)
+        is_academic(email=email_address.email)
         and not Verification.objects.filter(
             Q(user=email_address.user) | Q(email__iexact=email_address.email)
         ).exists()

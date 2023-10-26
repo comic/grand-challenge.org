@@ -27,6 +27,12 @@ class ArchiveItemSerializer(serializers.ModelSerializer):
     hanging_protocol = HangingProtocolSerializer(
         source="archive.hanging_protocol", read_only=True, allow_null=True
     )
+    optional_hanging_protocols = HangingProtocolSerializer(
+        many=True,
+        source="archive.optional_hanging_protocols",
+        read_only=True,
+        required=False,
+    )
     view_content = JSONField(source="archive.view_content", read_only=True)
 
     class Meta:
@@ -36,6 +42,7 @@ class ArchiveItemSerializer(serializers.ModelSerializer):
             "archive",
             "values",
             "hanging_protocol",
+            "optional_hanging_protocols",
             "view_content",
         )
 

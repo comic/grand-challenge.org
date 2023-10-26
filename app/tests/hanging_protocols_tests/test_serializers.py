@@ -35,19 +35,61 @@ from tests.reader_studies_tests.factories import (
     ),
 )
 @pytest.mark.django_db
-def test_hanging_protocol_serializer_field(
-    rf, factory, item_factory, relation, serializer
-):
-    """Each item should get the hanging protocol and content from the parent"""
-    hp = HangingProtocolFactory()
-    object = factory(hanging_protocol=hp, view_content={"main": "test"})
+class TestHangingProtocolSerializer:
+    def test_hanging_protocol_serializer_field(
+        self, rf, factory, item_factory, relation, serializer
+    ):
+        """Each item should get the hanging protocol and content from the parent"""
+        hp = HangingProtocolFactory(json=[{"viewport_name": "main"}])
+        object = factory(hanging_protocol=hp, view_content={"main": "test"})
 
-    item = item_factory(**{relation: object})
+        item = item_factory(**{relation: object})
 
-    request = rf.get("/foo")
-    request.user = UserFactory()
+        request = rf.get("/foo")
+        request.user = UserFactory()
 
-    serializer = serializer(item, context={"request": request})
+        serializer = serializer(item, context={"request": request})
 
-    assert serializer.data["hanging_protocol"]["json"] == hp.json
-    assert serializer.data["view_content"] == {"main": "test"}
+        assert serializer.data["hanging_protocol"]["json"] == hp.json
+        assert serializer.data["hanging_protocol"]["title"] == hp.title
+        assert serializer.data["hanging_protocol"]["pk"] == str(hp.pk)
+        assert serializer.data["view_content"] == {"main": "test"}
+        assert (
+            serializer.data["hanging_protocol"]["svg_icon"]
+            == """<svg width="32" height="18" fill-opacity="0"><rect x="0.8" y="0.8" width="30.4" height="16.4" stroke-width="1.6" /></svg>"""
+        )
+
+    def test_optional_hanging_protocol_serializer_field(
+        self, rf, factory, item_factory, relation, serializer
+    ):
+        """Each item should get the optional hanging protocol from the parent"""
+        hps = HangingProtocolFactory.create_batch(3)
+        object = factory()
+        object.optional_hanging_protocols.set(hps)
+        item = item_factory(**{relation: object})
+
+        request = rf.get("/foo")
+        request.user = UserFactory()
+
+        serializer = serializer(item, context={"request": request})
+        assert len(serializer.data["optional_hanging_protocols"]) == 3
+        for protocol in serializer.data["optional_hanging_protocols"]:
+            hp = next(x for x in hps if protocol["pk"] == str(x.pk))
+            assert protocol["json"] == hp.json
+            assert protocol["title"] == hp.title
+            assert protocol["svg_icon"] == hp.svg_icon
+
+    def test_no_optional_hanging_protocol_serializer_field(
+        self, rf, factory, item_factory, relation, serializer
+    ):
+        """If no optional hanging protocols are present, none should be serialized"""
+        object = factory()
+
+        item = item_factory(**{relation: object})
+
+        request = rf.get("/foo")
+        request.user = UserFactory()
+
+        serializer = serializer(item, context={"request": request})
+
+        assert serializer.data["optional_hanging_protocols"] == []
