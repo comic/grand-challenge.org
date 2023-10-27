@@ -267,9 +267,7 @@ class ReaderStudyPublishForm(ModelForm):
 
     def clean_public(self):
         public = self.cleaned_data.get("public")
-        if public and (
-            not self.instance.description
-        ):
+        if public and not self.instance.description:
             raise ValidationError(
                 "To publish this reader study you need to provide a description."
             )
@@ -668,7 +666,6 @@ class DisplaySetUpdateForm(DisplaySetCreateForm):
 
 
 class FileForm(Form):
-
     _possible_widgets = {
         UserUploadSingleWidget,
     }
