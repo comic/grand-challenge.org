@@ -6,6 +6,7 @@
 {% load guardian_tags %}
 {% load bleach %}
 {% load meta_attr %}
+{% load string %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -96,14 +97,54 @@
 
 {% block content %}
     {% get_obj_perms request.user for object as "readerstudy_perms" %}
+    {% if 'change_readerstudy' in readerstudy_perms %}
+
+        {% if object.public and not object.description %}
+            <div class="alert alert-danger" role="alert">
+                <i class="fas fa-exclamation-triangle mr-1"></i>Please update your reader study description
+                <a href="{% url 'reader-studies:update' slug=object.slug %}">here</a>.
+            </div>
+        {% endif %}
+    {% endif %}
 
     <div class="tab-content" id="v-pills-tabContent">
 
         <div class="tab-pane fade show" id="information" role="tabpanel"
              aria-labelledby="v-pills-information-tab">
 
-            <h2>{{ object.title }}</h2>
-
+            <div class="row col-12 m-0 p-0">
+                <h2 class="col-9 p-0">{{ object.title }}</h2>
+                <div class="col-9 p-0">
+                    {{ object.description }}
+                </div>
+                <span class="col-3 p-0 text-right my-auto">
+                    {% if "read_readerstudy" in readerstudy_perms %}
+                        <button class="btn btn-primary btn-block"
+                            {% workstation_session_control_data workstation=object.workstation context_object=object reader_study=object %}
+                        >
+                            <i class="fas fa-eye"></i> Launch Reader Study
+                        </button>
+                    {% endif %}
+                    {% if "change_readerstudy" in readerstudy_perms %}
+                        <a class="btn btn-primary btn-block"
+                           href="{% url 'reader-studies:update' slug=object.slug %}">
+                            <i class="fa fa-cog"></i> Update Settings
+                        </a>
+                        {% if not object.public %}
+                            <a class="btn btn-primary btn-block"
+                               href="#publishReaderStudyModal"
+                               data-toggle="modal"
+                               data-target="#publishReaderStudyModal">
+                                <i class="fa fa-star"></i> Publish Reader Study
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                </span>
+            </div>
+            <hr>
+            {% if object.logo %}
+                <img class="w-50" loading="lazy" src="{{ object.logo.url }}" alt="Logo for {{ object.title }}">
+            {% endif %}
             {{ object.help_text_markdown|md2html }}
 
             {% if user_score.score__sum is not None and progress.hangings == 100.0 %}
@@ -114,16 +155,6 @@
                     giving you an average score
                     of {{ user_score.score__avg|floatformat:4 }}.
                 </div>
-            {% endif %}
-
-            {% if "read_readerstudy" in readerstudy_perms %}
-                <p>
-                    <button class="btn btn-primary"
-                        {% workstation_session_control_data workstation=object.workstation context_object=object reader_study=object %}
-                    >
-                        <i class="fas fa-eye"></i> Launch this Reader Study
-                    </button>
-                </p>
             {% endif %}
 
             {% if "change_readerstudy" in readerstudy_perms %}
@@ -164,12 +195,6 @@
                     {% else %}
                         Each reader will read the cases in the same order.
                     {% endif %}
-                </p>
-                <p>
-                    <a class="btn btn-primary"
-                       href="{% url 'reader-studies:update' slug=object.slug %}">
-                        <i class="fas fa-cog"></i> Update Settings
-                    </a>
                 </p>
             {% endif %}
 
@@ -426,10 +451,41 @@
         {% endif %}
     </div>
 
+    {#  modal  #}
+    <div class="modal" id="publishReaderStudyModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Make this reader study public</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Making a reader study public means that it will be publicly listed on the <a href="{% url 'reader-studies:list' %}">reader study overview page</a>. Everyone will be able to see your reader study description.</p>
+                    <p>However, users will <b>still need to request access to your reader study</b> to access it themselves, unless you have your access request handling set to "accept all users".</p>
+                    <p>To publish your reader study you need</p>
+                    <ul class="list-unstyled">
+                        <li>{% if object.description %}<i class="fas fa-check-circle text-success mr-1"></i>{% else %}<i class="fas fa-exclamation-circle text-danger mr-1"></i>{% endif %}a description of your reader study</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <div class="col-12 d-flex justify-content-center">
+                        <a type="button" class="btn btn-sm btn-secondary mr-1" href="{% url 'reader-studies:update' slug=object.slug %}">Update Settings</a>
+                    </div>
+                    <div class="col-12 d-flex justify-content-center">
+                        <a type="button" class="btn btn-sm btn-primary {% if not object.description %}disabled{% endif %}" hx-post="{% url 'reader-studies:publish' slug=object.slug %}" hx-vals='{"public": true}'>Publish Reader Study</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
 {% block script %}
     {{ block.super }}
     <script src="{% static "js/refresh_sidebar.js" %}"></script>
     {% include 'workstations/partials/session-control.html' %}
+    {{ csrf_token|to_string|json_script:"csrfToken" }}
+    <script type="module" src="{% static 'js/htmx_config_csrf.mjs' %}"></script>
 {% endblock %}

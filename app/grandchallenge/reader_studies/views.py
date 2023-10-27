@@ -101,6 +101,7 @@ from grandchallenge.reader_studies.forms import (
     ReaderStudyCopyForm,
     ReaderStudyCreateForm,
     ReaderStudyPermissionRequestUpdateForm,
+    ReaderStudyPublishForm,
     ReaderStudyUpdateForm,
 )
 from grandchallenge.reader_studies.models import (
@@ -968,6 +969,30 @@ class ReaderStudyPermissionRequestUpdate(PermissionRequestUpdate):
         context = super().get_context_data(**kwargs)
         context.update({"reader_study": self.base_object})
         return context
+
+
+class ReaderStudyPublishView(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    UpdateView,
+):
+    model = ReaderStudy
+    form_class = ReaderStudyPublishForm
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+    )
+    raise_exception = True
+
+    def form_valid(self, form):
+        super().form_valid(form)
+        response = HttpResponse()
+        response["HX-Refresh"] = "true"
+        messages.add_message(
+            self.request,
+            messages.SUCCESS,
+            "Your reader study has been published successfully.",
+        )
+        return response
 
 
 class ReaderStudyViewSet(ReadOnlyModelViewSet):

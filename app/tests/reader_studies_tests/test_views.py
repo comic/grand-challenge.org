@@ -320,6 +320,30 @@ def test_reader_study_list_view_filter(client):
 
 
 @pytest.mark.django_db
+def test_reader_study_publish_view(client):
+    user = UserFactory()
+    rs = ReaderStudyFactory()
+
+    rs.add_reader(user)
+    response = get_view_for_user(
+        viewname="reader-studies:publish",
+        reverse_kwargs={"slug": rs.slug},
+        client=client,
+        user=user,
+    )
+    assert response.status_code == 403
+
+    rs.add_editor(user)
+    response = get_view_for_user(
+        viewname="reader-studies:publish",
+        reverse_kwargs={"slug": rs.slug},
+        client=client,
+        user=user,
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
 def test_reader_study_display_set_list(client):
     user = UserFactory()
     rs = ReaderStudyFactory()

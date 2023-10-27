@@ -23,6 +23,7 @@ from grandchallenge.reader_studies.forms import (
     DisplaySetInterfacesCreateForm,
     DisplaySetUpdateForm,
     QuestionForm,
+    ReaderStudyPublishForm,
     SelectUploadWidget,
 )
 from grandchallenge.reader_studies.models import (
@@ -1061,6 +1062,21 @@ def test_reader_study_add_ground_truth_ds(client, settings):
     )
 
     assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_publish_reader_study():
+    rs = ReaderStudyFactory()
+
+    form = ReaderStudyPublishForm(instance=rs, data={"public": True})
+    assert form.is_valid() is False
+
+    # add a description
+    rs.description = "Description"
+    rs.save()
+
+    form = ReaderStudyPublishForm(instance=rs, data={"public": True})
+    assert form.is_valid()
 
 
 @pytest.mark.django_db

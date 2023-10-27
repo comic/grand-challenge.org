@@ -127,7 +127,6 @@ class ReaderStudyCreateForm(
             "workstation",
             "workstation_config",
             "is_educational",
-            "public",
             "access_request_handling",
             "allow_answer_modification",
             "shuffle_hanging_list",
@@ -185,7 +184,6 @@ class ReaderStudyUpdateForm(
             "help_text_markdown",
             "shuffle_hanging_list",
             "is_educational",
-            "public",
             "access_request_handling",
             "allow_answer_modification",
             "allow_case_navigation",
@@ -260,6 +258,22 @@ class ReaderStudyCopyForm(Form):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit("save", "Copy"))
+
+
+class ReaderStudyPublishForm(ModelForm):
+    class Meta:
+        model = ReaderStudy
+        fields = ("public",)
+
+    def clean_public(self):
+        public = self.cleaned_data.get("public")
+        if public and (
+            not self.instance.description
+        ):
+            raise ValidationError(
+                "To publish this reader study you need to provide a description."
+            )
+        return public
 
 
 class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):

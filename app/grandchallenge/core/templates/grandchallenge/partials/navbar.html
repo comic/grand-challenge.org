@@ -26,13 +26,18 @@
                         Algorithms
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if "reader-studies:" in request.resolver_match.view_name %}active{% endif %}"
+                       href="{% url 'reader-studies:list' %}">
+                        Reader Studies
+                    </a>
+                </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <i class="fa fa-ellipsis-h"></i>
                     </a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
                         <a class="dropdown-item" href="{% url 'blogs:list' %}">Blog</a>
-                        <a class="dropdown-item" href="{% url 'reader-studies:list' %}">Reader Studies</a>
                         <a class="dropdown-item" href="{% url 'archives:list' %}">Archives</a>
                         <a class="dropdown-item" href="{% url 'products:product-list' %}">Commercial products</a>
                         <div class="dropdown-divider"></div>
