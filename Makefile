@@ -33,7 +33,7 @@ build_web_test:
 
 build_web_dist:
 	@docker pull $(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(POETRY_HASH) || { \
-		docker build \
+		docker buildx build \
 			--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
 			--target base \
 			-t $(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(POETRY_HASH) \
