@@ -13,13 +13,13 @@ IMAGE_UPLOAD_HELP_TEXT = (
     "cannot exceed 10 GB. "
     "A maximum of 100 files can be uploaded per session. "
     "Please only upload one volume per session. "
-    "If your volume consists of more than this then please compress the"
+    "If your volume consists of more than this then please compress the "
     "directory and upload a single .zip file.<br>"
     "The following file formats are supported and will be converted to MHA: "
     ".mha, .mhd, .raw, .zraw, .dcm, .nii, .nii.gz, .nrrd, "
     ".fda, .fds, .tiff, .png, .jpeg and .jpg.<br>"
     "The following file formats can be uploaded and will be converted to "
-    "tif: Aperio (.svs), Hamamatsu (.vms, .vmu, .ndpi), Leica (.scn), "
+    "TIFF: Aperio (.svs), Hamamatsu (.vms, .vmu, .ndpi), Leica (.scn), "
     "MIRAX (.mrxs), Ventana (.bif) and DICOM-WSI (.dcm)."
 )
 
