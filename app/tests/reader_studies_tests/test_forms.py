@@ -153,6 +153,8 @@ def test_reader_study_create(client, uploaded_image):
         allow_case_navigation=False,
         shuffle_hanging_list=False,
         roll_over_answers_for_n_cases=0,
+        public=True,
+        description="",
     ):
         return get_view_for_user(
             viewname="reader-studies:create",
@@ -167,6 +169,8 @@ def test_reader_study_create(client, uploaded_image):
                 "allow_case_navigation": allow_case_navigation,
                 "access_request_handling": AccessRequestHandlingOptions.MANUAL_REVIEW,
                 "roll_over_answers_for_n_cases": roll_over_answers_for_n_cases,
+                "public": public,
+                "description": description,
             },
             follow=True,
             user=creator,
@@ -179,6 +183,7 @@ def test_reader_study_create(client, uploaded_image):
     ws.add_user(user=creator)
 
     roll_over_error = "Rolling over answers should not be used together with case navigation or shuffling of the hanging list"
+    public_error = "Making a reader study public requires a description"
     for navigation, shuffle in [(True, True), (True, False), (False, True)]:
         response = try_create_rs(
             allow_case_navigation=navigation,
@@ -187,10 +192,19 @@ def test_reader_study_create(client, uploaded_image):
         )
         assert "error_1_id_workstation" not in response.rendered_content
         assert roll_over_error in response.rendered_content
+        assert public_error in response.rendered_content
 
     response = try_create_rs(roll_over_answers_for_n_cases=1)
     assert "error_1_id_workstation" not in response.rendered_content
     assert roll_over_error not in response.rendered_content
+    assert public_error in response.rendered_content
+
+    response = try_create_rs(
+        roll_over_answers_for_n_cases=1, description="Some description"
+    )
+    assert "error_1_id_workstation" not in response.rendered_content
+    assert roll_over_error not in response.rendered_content
+    assert public_error not in response.rendered_content
     assert response.status_code == 200
 
     rs = ReaderStudy.objects.get(title="foo bar")

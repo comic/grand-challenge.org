@@ -163,6 +163,15 @@ class ReaderStudyCreateForm(
                 field=None,
             )
 
+        if self.cleaned_data["public"] and not self.cleaned_data["description"]:
+            self.add_error(
+                error=ValidationError(
+                    "Making a reader study public requires a description",
+                    code="invalid",
+                ),
+                field=None,
+            )
+
 
 class ReaderStudyUpdateForm(
     ReaderStudyCreateForm, ModelForm, ViewContentMixin
