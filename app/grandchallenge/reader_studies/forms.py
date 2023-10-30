@@ -163,7 +163,10 @@ class ReaderStudyCreateForm(
                 field=None,
             )
 
-        if self.cleaned_data["public"] and not self.cleaned_data["description"]:
+        if (
+            self.cleaned_data["public"]
+            and not self.cleaned_data["description"]
+        ):
             self.add_error(
                 error=ValidationError(
                     "Making a reader study public requires a description",
@@ -663,7 +666,6 @@ class DisplaySetUpdateForm(DisplaySetCreateForm):
 
 
 class FileForm(Form):
-
     _possible_widgets = {
         UserUploadSingleWidget,
     }
