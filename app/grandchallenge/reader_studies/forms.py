@@ -333,9 +333,6 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
             kind__in=ANSWER_TYPE_TO_INTERFACE_KIND_MAP[answer_type]
         )
 
-    def initial_interface(self):
-        return self.interface_choices().first()
-
     def widget_choices(self):
         answer_type = self["answer_type"].value()
         choices = [*BLANK_CHOICE_DASH]
