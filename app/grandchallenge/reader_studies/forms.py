@@ -453,7 +453,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
     interface = DynamicField(
         ModelChoiceField,
         queryset=interface_choices,
-        initial=initial_interface,
+        initial=None,
         required=False,
         help_text="Select component interface to use as a default answer for this "
         "question.",
