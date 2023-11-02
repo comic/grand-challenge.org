@@ -580,12 +580,16 @@ class EvaluationDetail(ObjectPermissionRequiredMixin, DetailView):
                 InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG,
             ]:
                 thumbnails.append(output)
-            elif output.interface.kind in [
-                InterfaceKind.InterfaceKindChoices.BOOL,
-                InterfaceKind.InterfaceKindChoices.FLOAT,
-                InterfaceKind.InterfaceKindChoices.INTEGER,
-                InterfaceKind.InterfaceKindChoices.STRING,
-            ]:
+            elif (
+                output.interface.kind
+                in [
+                    InterfaceKind.InterfaceKindChoices.BOOL,
+                    InterfaceKind.InterfaceKindChoices.FLOAT,
+                    InterfaceKind.InterfaceKindChoices.INTEGER,
+                    InterfaceKind.InterfaceKindChoices.STRING,
+                ]
+                and output.interface.store_in_database
+            ):
                 json.append(output)
 
         incomplete_jobs = filter_by_permission(
