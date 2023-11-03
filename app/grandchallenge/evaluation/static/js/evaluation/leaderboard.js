@@ -1,6 +1,5 @@
 const allowMetricsToggling = JSON.parse(document.getElementById("allowMetricsToggling").textContent)
 const displayLeaderboardDateButton = JSON.parse(document.getElementById("displayLeaderboardDateButton").textContent)
-const additionalMetrics = JSON.parse(document.getElementById("additionalMetrics").textContent)
 
 let resultsTable = $('#ajaxDataTable')
 
@@ -81,7 +80,7 @@ function getDataTablesDOMTemplate() {
 }
 
 function getDataTablesButtons() {
-    if (allowMetricsToggling === true && additionalMetrics === true) {
+    if (allowMetricsToggling === true) {
         return [
             {
                 extend: 'colvis',

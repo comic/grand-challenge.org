@@ -88,7 +88,6 @@
     {{ block.super }}
 
     {{ allow_metrics_toggling|json_script:"allowMetricsToggling" }}
-    {{ additional_metrics|json_script:"additionalMetrics" }}
     {{ display_leaderboard_date_button|json_script:"displayLeaderboardDateButton" }}
 
     <script type="text/javascript" src="{% static 'js/evaluation/leaderboard.js' %}"></script>
