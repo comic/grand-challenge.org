@@ -674,12 +674,16 @@ class JobsList(PaginatedTableListView):
                 InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG,
             }:
                 grouped_interfaces["TIMG"].append(interface)
-            elif interface.kind in {
-                InterfaceKind.InterfaceKindChoices.STRING,
-                InterfaceKind.InterfaceKindChoices.INTEGER,
-                InterfaceKind.InterfaceKindChoices.FLOAT,
-                InterfaceKind.InterfaceKindChoices.BOOL,
-            }:
+            elif (
+                interface.kind
+                in {
+                    InterfaceKind.InterfaceKindChoices.STRING,
+                    InterfaceKind.InterfaceKindChoices.INTEGER,
+                    InterfaceKind.InterfaceKindChoices.FLOAT,
+                    InterfaceKind.InterfaceKindChoices.BOOL,
+                }
+                and interface.store_in_database
+            ):
                 grouped_interfaces["JSON"].append(interface)
 
         return grouped_interfaces
@@ -733,12 +737,16 @@ class JobDetail(ObjectPermissionRequiredMixin, DetailView):
                 InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG,
             ]:
                 thumbnails.append(output)
-            elif output.interface.kind in [
-                InterfaceKind.InterfaceKindChoices.BOOL,
-                InterfaceKind.InterfaceKindChoices.FLOAT,
-                InterfaceKind.InterfaceKindChoices.INTEGER,
-                InterfaceKind.InterfaceKindChoices.STRING,
-            ]:
+            elif (
+                output.interface.kind
+                in [
+                    InterfaceKind.InterfaceKindChoices.BOOL,
+                    InterfaceKind.InterfaceKindChoices.FLOAT,
+                    InterfaceKind.InterfaceKindChoices.INTEGER,
+                    InterfaceKind.InterfaceKindChoices.STRING,
+                ]
+                and output.interface.store_in_database
+            ):
                 json.append(output)
 
         context.update(

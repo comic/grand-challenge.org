@@ -80,11 +80,7 @@
                         {% for object in json %}
                             <tr>
                                 <td>{{ object.interface.title }}</td>
-                                {% if object.interface.kind == 'STR' %}
-                                    <td>{{ object.value|slice:"1:-1" }} </td>
-                                {% else %}
-                                    <td>{{ object.value }}</td>
-                                {% endif %}
+                                <td>{{ object.value }}</td>
                             </tr>
                         {% endfor %}
                     </tbody>
