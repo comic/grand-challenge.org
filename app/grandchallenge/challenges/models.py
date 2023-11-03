@@ -407,6 +407,14 @@ class Challenge(ChallengeBase):
         if self.workshop_date and self.workshop_date > datetime.date.today():
             return self.workshop_date
 
+    @property
+    def slug(self):
+        return self.short_name
+
+    @property
+    def api_url(self) -> str:
+        return reverse("api:challenge", kwargs={"slug": self.short_name})
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
