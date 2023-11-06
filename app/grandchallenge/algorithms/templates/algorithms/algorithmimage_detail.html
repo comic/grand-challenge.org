@@ -39,7 +39,7 @@
         </a><br>
     {% endif %}
 
-    {% if object.is_manifest_valid and not object.is_desired_version and "change_algorithm" in algorithm_perms %}
+    {% if object.is_manifest_valid and not object.algorithm.image_upload_in_progress and not object.is_desired_version and "change_algorithm" in algorithm_perms %}
         <div class="my-2">Activating an image will result in this image being used for future algorithm runs:</div>
         <div class="mb-2">{% crispy image_activate_form %}</div>
     {% endif %}
