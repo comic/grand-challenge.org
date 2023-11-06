@@ -391,7 +391,7 @@ class Challenge(ChallengeBase):
         return self.short_name
 
     @property
-    def public(self):
+    def public(self) -> bool:
         """Helper property for consistency with other objects"""
         return not self.hidden
 
@@ -408,7 +408,7 @@ class Challenge(ChallengeBase):
             return self.workshop_date
 
     @property
-    def slug(self):
+    def slug(self) -> str:
         return self.short_name
 
     @property
@@ -636,7 +636,7 @@ class Challenge(ChallengeBase):
         unfollow(user=user, obj=self.forum, send_action=False)
 
     @cached_property
-    def status(self):
+    def status(self) -> str:
         phase_status = {phase.status for phase in self.phase_set.all()}
         if StatusChoices.OPEN in phase_status:
             status = StatusChoices.OPEN

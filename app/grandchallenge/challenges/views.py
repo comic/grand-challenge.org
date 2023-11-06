@@ -25,7 +25,7 @@ from grandchallenge.challenges.forms import (
     ChallengeUpdateForm,
 )
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
-from grandchallenge.challenges.serializers import ChallengeSerializer
+from grandchallenge.challenges.serializers import PublicChallengeSerializer
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
 from grandchallenge.datatables.views import Column, PaginatedTableListView
@@ -335,7 +335,7 @@ class ChallengeCostCalculation(
 
 class ChallengeViewSet(ReadOnlyModelViewSet):
     queryset = Challenge.objects.all()
-    serializer_class = ChallengeSerializer
+    serializer_class = PublicChallengeSerializer
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [ObjectPermissionsFilter]
     # We do not want to serialize the pk so lookup by short_name, but call it slug
