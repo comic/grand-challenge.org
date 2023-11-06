@@ -746,7 +746,7 @@ class LeaderboardDetail(TeamContextMixin, PaginatedTableListView):
                 "user_teams": self.user_teams,
                 "allow_metrics_toggling": len(self.phase.extra_results_columns)
                 > 0
-                or self.phase.scoring_method_choice is not self.phase.ABSOLUTE,
+                or self.phase.scoring_method_choice != self.phase.ABSOLUTE,
                 "display_leaderboard_date_button": self.phase.result_display_choice
                 == self.phase.ALL,
             }
