@@ -34,7 +34,7 @@ class PublicChallengeSerializer(serializers.ModelSerializer):
         ]
 
     def get_publications(self, obj) -> list[str]:
-        return [p.identifier for p in obj.publications.all()]
+        return [p.identifier.url for p in obj.publications.all()]
 
     def get_start_date(self, obj) -> datetime | None:
         try:
