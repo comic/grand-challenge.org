@@ -12,6 +12,7 @@ from grandchallenge.cases.views import (
     ImageViewSet,
     RawImageUploadSessionViewSet,
 )
+from grandchallenge.challenges.views import ChallengeViewSet
 from grandchallenge.components.views import ComponentInterfaceViewSet
 from grandchallenge.evaluation.views.api import EvaluationViewSet
 from grandchallenge.github.views import github_webhook
@@ -73,6 +74,9 @@ router.register(
     RawImageUploadSessionViewSet,
     basename="upload-session",
 )
+
+# Challenges
+router.register(r"challenges", ChallengeViewSet, basename="challenge")
 
 # Component Interfaces
 router.register(

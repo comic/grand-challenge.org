@@ -157,6 +157,6 @@ class StatusChoices(models.TextChoices):
 
 
 class SubmissionKindChoices(models.IntegerChoices):
-    CSV = 1, "CSV"
-    ZIP = 2, "ZIP"
+    CSV = 1, "Predictions"
+    # ZIP = 2, "ZIP"
     ALGORITHM = 3, "Algorithm"

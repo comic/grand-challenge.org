@@ -27,7 +27,7 @@ from django.utils.text import get_valid_filename
 from django.utils.translation import gettext_lazy as _
 from django_deprecate_fields import deprecate_field
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
-from guardian.shortcuts import assign_perm
+from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
 from machina.apps.forum.models import Forum
 from machina.apps.forum_permission.models import (
@@ -391,7 +391,7 @@ class Challenge(ChallengeBase):
         return self.short_name
 
     @property
-    def public(self):
+    def public(self) -> bool:
         """Helper property for consistency with other objects"""
         return not self.hidden
 
@@ -407,6 +407,14 @@ class Challenge(ChallengeBase):
         if self.workshop_date and self.workshop_date > datetime.date.today():
             return self.workshop_date
 
+    @property
+    def slug(self) -> str:
+        return self.short_name
+
+    @property
+    def api_url(self) -> str:
+        return reverse("api:challenge-detail", kwargs={"slug": self.slug})
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
@@ -416,10 +424,11 @@ class Challenge(ChallengeBase):
 
         super().save(*args, **kwargs)
 
+        self.assign_permissions()
+
         if adding:
             if self.creator:
                 self.add_admin(user=self.creator)
-            self.update_permissions()
             self.create_forum_permissions()
             self.create_default_pages()
 
@@ -435,8 +444,22 @@ class Challenge(ChallengeBase):
             )
             self.update_user_forum_permissions()
 
-    def update_permissions(self):
+    def assign_permissions(self):
+        # Editors and users can view this algorithm
+        assign_perm("view_challenge", self.admins_group, self)
+        assign_perm("view_challenge", self.participants_group, self)
+
+        # Admins can change this challenge
         assign_perm("change_challenge", self.admins_group, self)
+
+        reg_and_anon = Group.objects.get(
+            name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+        )
+
+        if self.public:
+            assign_perm("view_challenge", reg_and_anon, self)
+        else:
+            remove_perm("view_challenge", reg_and_anon, self)
 
     def create_forum_permissions(self):
         participant_group_perms = {
@@ -613,7 +636,7 @@ class Challenge(ChallengeBase):
         unfollow(user=user, obj=self.forum, send_action=False)
 
     @cached_property
-    def status(self):
+    def status(self) -> str:
         phase_status = {phase.status for phase in self.phase_set.all()}
         if StatusChoices.OPEN in phase_status:
             status = StatusChoices.OPEN
@@ -693,7 +716,15 @@ class Challenge(ChallengeBase):
 
     @cached_property
     def visible_phases(self):
-        return self.phase_set.filter(public=True)
+        # For use in list views where the phases have been prefetched
+        return [phase for phase in self.phase_set.all() if phase.public]
+
+    @cached_property
+    def first_visible_phase(self):
+        try:
+            return self.visible_phases[0]
+        except IndexError:
+            return None
 
 
 class ChallengeUserObjectPermission(UserObjectPermissionBase):
