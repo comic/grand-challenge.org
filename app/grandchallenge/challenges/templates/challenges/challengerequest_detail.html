@@ -65,7 +65,7 @@
         {% else %}
             <tr><td class="col-3 font-weight-bold">Public data license</td> <td class="col-9"><i class="fas fa-exclamation-circle text-danger pr-2"></i> The organizers do not agree to publish their public data set under a CC-BY license for the following reason: <br> <span class="ml-4">{{ object.data_license_extra }}</span></td></tr>
         {% endif %}
-        <tr><td class="col-5 font-weight-bold">Organizer's budget for hosting challenge</td> <td class="col-7">{{ object.budget_for_hosting_challenge }} €</td></tr>
+        <tr><td class="col-3 font-weight-bold">Organizer's budget for hosting challenge</td> <td class="col-9">{{ object.budget_for_hosting_challenge }} €</td></tr>
         {% if object.comments %}
             <tr><td class="col-3 font-weight-bold">Comments from organizers</td> <td class="col-9"><div class="bg-warning rounded p-3">{{ object.comments|linebreaks }}</div></td></tr>
         {% endif %}
