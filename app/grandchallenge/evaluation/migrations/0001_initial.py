@@ -204,7 +204,7 @@ class Migration(migrations.Migration):
                 (
                     "submission_kind",
                     models.PositiveSmallIntegerField(
-                        choices=[(1, "CSV"), (2, "ZIP"), (3, "Algorithm")],
+                        choices=[(1, "Predictions"), (3, "Algorithm")],
                         default=1,
                         help_text="Should participants submit a .csv/.zip file of predictions, or an algorithm?",
                     ),
