@@ -72,7 +72,8 @@ class PublicChallengeSerializer(serializers.ModelSerializer):
     def get_modified(self, obj) -> datetime:
         try:
             return max(
-                obj.modified, max(p.modified for p in obj.visible_phases)
+                obj.modified,
+                max(p.modified for p in obj.visible_phases if p.modified),
             )
         except ValueError:
             # No Phases
