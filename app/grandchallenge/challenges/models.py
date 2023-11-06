@@ -27,7 +27,7 @@ from django.utils.text import get_valid_filename
 from django.utils.translation import gettext_lazy as _
 from django_deprecate_fields import deprecate_field
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
-from guardian.shortcuts import assign_perm
+from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
 from machina.apps.forum.models import Forum
 from machina.apps.forum_permission.models import (
@@ -413,7 +413,7 @@ class Challenge(ChallengeBase):
 
     @property
     def api_url(self) -> str:
-        return reverse("api:challenge", kwargs={"slug": self.short_name})
+        return reverse("api:challenge-detail", kwargs={"slug": self.slug})
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -424,10 +424,11 @@ class Challenge(ChallengeBase):
 
         super().save(*args, **kwargs)
 
+        self.assign_permissions()
+
         if adding:
             if self.creator:
                 self.add_admin(user=self.creator)
-            self.update_permissions()
             self.create_forum_permissions()
             self.create_default_pages()
 
@@ -443,8 +444,22 @@ class Challenge(ChallengeBase):
             )
             self.update_user_forum_permissions()
 
-    def update_permissions(self):
+    def assign_permissions(self):
+        # Editors and users can view this algorithm
+        assign_perm("view_challenge", self.admins_group, self)
+        assign_perm("view_challenge", self.participants_group, self)
+
+        # Admins can change this challenge
         assign_perm("change_challenge", self.admins_group, self)
+
+        reg_and_anon = Group.objects.get(
+            name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+        )
+
+        if self.public:
+            assign_perm("view_challenge", reg_and_anon, self)
+        else:
+            remove_perm("view_challenge", reg_and_anon, self)
 
     def create_forum_permissions(self):
         participant_group_perms = {
