@@ -76,4 +76,4 @@ class PublicChallengeSerializer(serializers.ModelSerializer):
             )
         except ValueError:
             # No Phases
-            return None
+            return obj.modified
