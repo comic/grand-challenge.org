@@ -334,7 +334,9 @@ class ChallengeCostCalculation(
 
 
 class ChallengeViewSet(ReadOnlyModelViewSet):
-    queryset = Challenge.objects.all()
+    queryset = Challenge.objects.all().prefetch_related(
+        "publications", "phase_set"
+    )
     serializer_class = PublicChallengeSerializer
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [ObjectPermissionsFilter]

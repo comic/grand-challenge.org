@@ -716,7 +716,15 @@ class Challenge(ChallengeBase):
 
     @cached_property
     def visible_phases(self):
-        return self.phase_set.filter(public=True)
+        # For use in list views where the phases have been prefetched
+        return [phase for phase in self.phase_set.all() if phase.public]
+
+    @cached_property
+    def first_visible_phase(self):
+        try:
+            return self.visible_phases[0]
+        except IndexError:
+            return None
 
 
 class ChallengeUserObjectPermission(UserObjectPermissionBase):
