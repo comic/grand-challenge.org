@@ -16,7 +16,7 @@ Based on the following information provided by the challenge requester:
         {% for field, value in object.budget.items %}
             <tr {% if "Total" in field %}class="table-light"{% endif %}>
                 <td class="font-weight-bold">{{ field }}</td>
-                <td>{{ value }} €</td>
+                <td>€&nbsp;{{ value }}</td>
             </tr>
         {% endfor %}
     </table>
