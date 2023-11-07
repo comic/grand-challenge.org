@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models
+from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 
 from grandchallenge.core.models import UUIDModel
 
@@ -16,6 +17,14 @@ class ConversationUser(models.Model):
     # https://docs.djangoproject.com/en/4.2/topics/db/models/#intermediary-manytomany
     conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE)
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+
+
+class ConversationUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(Conversation, on_delete=models.CASCADE)
+
+
+class ConversationGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(Conversation, on_delete=models.CASCADE)
 
 
 class DirectMessage(UUIDModel):
