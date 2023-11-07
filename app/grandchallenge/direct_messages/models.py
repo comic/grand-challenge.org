@@ -3,6 +3,7 @@ from django.db import models
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 
 from grandchallenge.core.models import UUIDModel
+from grandchallenge.subdomains.utils import reverse
 
 
 class Conversation(UUIDModel):
@@ -11,6 +12,11 @@ class Conversation(UUIDModel):
         related_name="conversations",
         through="ConversationUser",
     )
+
+    def get_absolute_url(self):
+        return reverse(
+            "direct-messages:conversation-detail", kwargs={"pk": self.pk}
+        )
 
 
 class ConversationUser(models.Model):

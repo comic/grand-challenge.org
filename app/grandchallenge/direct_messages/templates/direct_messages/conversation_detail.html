@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load url %}
+
+{% block title %}Conversation - {{ block.super }}{% endblock %}
+
+{% block content %}
+    <h2>Conversation</h2>
+
+    {{ object.pk }}
+
+    {% for participant in object.participants.all %}
+        {{ participant }},
+    {% endfor %}
+{% endblock %}
