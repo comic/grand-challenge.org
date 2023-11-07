@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}Conversations - {{ block.super }}{% endblock %}
+
+{% block content %}
+    <h2>Conversations</h2>
+
+    {% for conversation in object_list %}
+        <p><a href="{{ conversation.get_absolute_url }}">{{ conversation }}</a></p>
+    {% endfor %}
+{% endblock %}

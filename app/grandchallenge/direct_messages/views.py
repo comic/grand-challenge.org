@@ -1,10 +1,13 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
-from django.views.generic import CreateView, DetailView
+from django.views.generic import CreateView, DetailView, ListView
 from guardian.mixins import LoginRequiredMixin
 
-from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
+from grandchallenge.core.guardian import (
+    ObjectPermissionRequiredMixin,
+    filter_by_permission,
+)
 from grandchallenge.direct_messages.forms import (
     ConversationForm,
     DirectMessageForm,
@@ -29,6 +32,18 @@ class ConversationCreate(LoginRequiredMixin, CreateView):
         form_kwargs.update({"participants": participants})
 
         return form_kwargs
+
+
+class ConversationList(LoginRequiredMixin, ListView):
+    model = Conversation
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return filter_by_permission(
+            queryset=queryset,
+            user=self.request.user,
+            codename="view_conversation",
+        )
 
 
 class ConversationDetail(
