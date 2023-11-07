@@ -1,9 +1,11 @@
 from django import forms
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from guardian.utils import get_anonymous_user
 
 from grandchallenge.core.forms import SaveFormInitMixin
-from grandchallenge.direct_messages.models import Conversation
+from grandchallenge.core.guardian import filter_by_permission
+from grandchallenge.direct_messages.models import Conversation, DirectMessage
 
 
 class ConversationForm(SaveFormInitMixin, forms.ModelForm):
@@ -31,3 +33,40 @@ class ConversationForm(SaveFormInitMixin, forms.ModelForm):
     class Meta:
         model = Conversation
         fields = ("participants",)
+
+
+class DirectMessageForm(SaveFormInitMixin, forms.ModelForm):
+    def __init__(self, *args, conversation, sender, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["conversation"].queryset = filter_by_permission(
+            queryset=Conversation.objects.filter(pk=conversation.pk),
+            user=sender,
+            codename="create_conversation_direct_message",
+        )
+        self.fields["conversation"].initial = conversation
+        self.fields["conversation"].disabled = True
+        self.fields["conversation"].widget = forms.HiddenInput()
+
+        self.fields["sender"].queryset = get_user_model().objects.filter(
+            pk=sender.pk
+        )
+        self.fields["sender"].initial = sender
+        self.fields["sender"].disabled = True
+        self.fields["sender"].widget = forms.HiddenInput()
+
+        unread_by = conversation.participants.exclude(pk=sender.pk)
+
+        self.fields["unread_by"].queryset = unread_by
+        self.fields["unread_by"].initial = unread_by
+        self.fields["unread_by"].disabled = True
+        self.fields["unread_by"].widget = forms.MultipleHiddenInput()
+
+    class Meta:
+        model = DirectMessage
+        fields = (
+            "conversation",
+            "sender",
+            "unread_by",
+            "message",
+        )

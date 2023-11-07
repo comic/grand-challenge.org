@@ -12,4 +12,10 @@
     {% for participant in object.participants.all %}
         {{ participant }},
     {% endfor %}
+
+    {% for direct_message in object.direct_messages.all %}
+        <p>{{ direct_message.message }}</p>
+    {% endfor %}
+
+    <a href="{%  url 'direct-messages:direct-message-create' pk=object.pk %}">New Message</a>
 {% endblock %}

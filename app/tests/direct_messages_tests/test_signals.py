@@ -23,8 +23,8 @@ def test_conversation_participants_permissions_signal(reverse):
         c1.participants.remove(u3, u4)
 
     assert get_users_with_set_perms(c1) == {
-        u1: {"view_conversation"},
-        u2: {"view_conversation"},
+        u1: {"view_conversation", "create_conversation_direct_message"},
+        u2: {"view_conversation", "create_conversation_direct_message"},
     }
     assert get_users_with_set_perms(c2) == {}
 

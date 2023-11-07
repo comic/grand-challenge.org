@@ -19,11 +19,11 @@ def update_permissions_on_participants_changed(
         if pk_set is None:
             # When using a _clear action, pk_set is None
             # https://docs.djangoproject.com/en/2.2/ref/signals/#m2m-changed
-            posts = instance.conversations.all()
+            conversations = instance.conversations.all()
         else:
-            posts = Conversation.objects.filter(pk__in=pk_set)
+            conversations = Conversation.objects.filter(pk__in=pk_set)
     else:
-        posts = Conversation.objects.get(pk=instance.pk)
+        conversations = Conversation.objects.get(pk=instance.pk)
         if pk_set is None:
             # When using a _clear action, pk_set is None
             # https://docs.djangoproject.com/en/2.2/ref/signals/#m2m-changed
@@ -34,4 +34,5 @@ def update_permissions_on_participants_changed(
     op = assign_perm if "add" in action else remove_perm
 
     for user in users:
-        op("view_conversation", user, posts)
+        op("view_conversation", user, conversations)
+        op("create_conversation_direct_message", user, conversations)

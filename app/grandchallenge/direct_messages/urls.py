@@ -3,6 +3,7 @@ from django.urls import path, re_path
 from grandchallenge.direct_messages.views import (
     ConversationCreate,
     ConversationDetail,
+    DirectMessageCreate,
 )
 
 app_name = "direct_messages"
@@ -15,5 +16,10 @@ urlpatterns = [
     ),
     path(
         "<uuid:pk>/", ConversationDetail.as_view(), name="conversation-detail"
+    ),
+    path(
+        "<uuid:pk>/create/",
+        DirectMessageCreate.as_view(),
+        name="direct-message-create",
     ),
 ]

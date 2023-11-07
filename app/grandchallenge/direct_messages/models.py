@@ -10,7 +10,7 @@ class Conversation(UUIDModel):
     participants = models.ManyToManyField(
         get_user_model(),
         related_name="conversations",
-        through="ConversationUser",
+        through="ConversationParticipant",
     )
 
     def get_absolute_url(self):
@@ -18,11 +18,19 @@ class Conversation(UUIDModel):
             "direct-messages:conversation-detail", kwargs={"pk": self.pk}
         )
 
+    class Meta:
+        permissions = (
+            (
+                "create_conversation_direct_message",
+                "Create a Direct Message for a Conversation",
+            ),
+        )
 
-class ConversationUser(models.Model):
+
+class ConversationParticipant(models.Model):
     # https://docs.djangoproject.com/en/4.2/topics/db/models/#intermediary-manytomany
     conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE)
-    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    participant = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
 
 
 class ConversationUserObjectPermission(UserObjectPermissionBase):
@@ -49,7 +57,7 @@ class DirectMessage(UUIDModel):
     unread_by = models.ManyToManyField(
         get_user_model(),
         related_name="unread_direct_messages",
-        through="DirectMessageUser",
+        through="DirectMessageUnreadBy",
     )
 
     is_reported_as_spam = models.BooleanField(default=False)
@@ -57,11 +65,17 @@ class DirectMessage(UUIDModel):
 
     message = models.TextField()
 
+    def get_absolute_url(self):
+        return reverse(
+            "direct-messages:conversation-detail",
+            kwargs={"pk": self.conversation.pk},
+        )
 
-class DirectMessageUser(models.Model):
+
+class DirectMessageUnreadBy(models.Model):
     # https://docs.djangoproject.com/en/4.2/topics/db/models/#intermediary-manytomany
     direct_message = models.ForeignKey(DirectMessage, on_delete=models.CASCADE)
-    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    unread_by = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
 
 
 class Mute(UUIDModel):
