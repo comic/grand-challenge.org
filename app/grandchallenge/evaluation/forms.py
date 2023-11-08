@@ -366,13 +366,17 @@ class SubmissionForm(
                 "uploads.change_userupload",
             ).filter(status=UserUpload.StatusChoices.COMPLETED)
 
+    def clean_phase(self):
+        phase = self.cleaned_data["phase"]
+        if phase.count_valid_archive_items == 0:
+            self.errors["__all__"] = [
+                "This phase is not ready for submissions yet. There are no valid archive items in the archive linked to this phase."
+            ]
+
+        return phase
+
     def clean_algorithm_image(self):
         algorithm_image = self.cleaned_data["algorithm_image"]
-
-        if self._phase.count_valid_archive_items == 0:
-            raise ValidationError(
-                "There are no valid archive items in the archive linked to this phase."
-            )
 
         if Submission.objects.filter(
             algorithm_image__image_sha256=algorithm_image.image_sha256,
