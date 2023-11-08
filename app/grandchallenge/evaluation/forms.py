@@ -369,6 +369,11 @@ class SubmissionForm(
     def clean_algorithm_image(self):
         algorithm_image = self.cleaned_data["algorithm_image"]
 
+        if self._phase.count_valid_archive_items == 0:
+            raise ValidationError(
+                "There are no valid archive items in the archive linked to this phase."
+            )
+
         if Submission.objects.filter(
             algorithm_image__image_sha256=algorithm_image.image_sha256,
             phase=self._phase,
