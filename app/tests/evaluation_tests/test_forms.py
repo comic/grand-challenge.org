@@ -4,7 +4,7 @@ from factory.django import ImageField
 from grandchallenge.algorithms.forms import AlgorithmForPhaseForm
 from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.evaluation.forms import SubmissionForm
-from grandchallenge.evaluation.models import Phase
+from grandchallenge.evaluation.models import Phase, Submission
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.invoices.models import PaymentStatusChoices
 from tests.algorithms_tests.factories import (
@@ -17,7 +17,11 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
-from tests.evaluation_tests.factories import PhaseFactory
+from tests.evaluation_tests.factories import (
+    EvaluationFactory,
+    PhaseFactory,
+    SubmissionFactory,
+)
 from tests.factories import (
     UserFactory,
     WorkstationConfigFactory,
@@ -259,6 +263,76 @@ class TestSubmissionForm:
             data={"algorithm_image": ai.pk, "creator": user, "phase": p},
         )
         assert form2.is_valid()
+
+    def test_submission_or_eval_exists_for_image(self):
+        user = UserFactory()
+        alg = AlgorithmFactory()
+        alg.add_editor(user=user)
+        ci1 = ComponentInterfaceFactory()
+        ci2 = ComponentInterfaceFactory()
+        alg.inputs.set([ci1])
+        alg.outputs.set([ci2])
+        archive = ArchiveFactory()
+        p = PhaseFactory(
+            submission_kind=SubmissionKindChoices.ALGORITHM,
+            submissions_limit_per_user_per_period=10,
+            archive=archive,
+        )
+        p.algorithm_inputs.set([ci1])
+        p.algorithm_outputs.set([ci2])
+        civ = ComponentInterfaceValueFactory(interface=ci1)
+        i = ArchiveItemFactory(archive=p.archive)
+        i.values.add(civ)
+
+        InvoiceFactory(
+            challenge=p.challenge,
+            compute_costs_euros=10,
+            payment_status=PaymentStatusChoices.COMPLIMENTARY,
+        )
+
+        # Fetch from the db to get the cost annotations
+        # Maybe this is solved with GeneratedField (Django 5)?
+        p = Phase.objects.get(pk=p.pk)
+
+        ai = AlgorithmImageFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+            algorithm=alg,
+        )
+        AlgorithmJobFactory(algorithm_image=ai, status=4)
+        SubmissionFactory(
+            phase=p,
+            algorithm_image=ai,
+        )
+
+        form = SubmissionForm(
+            user=user,
+            phase=p,
+            data={"algorithm_image": ai.pk, "creator": user, "phase": p},
+        )
+
+        assert not form.is_valid()
+        assert (
+            "A submission for this algorithm container image for this phase already exists."
+            in form.errors["algorithm_image"]
+        )
+
+        Submission.objects.all().delete()
+
+        EvaluationFactory(submission__algorithm_image=ai)
+
+        form = SubmissionForm(
+            user=user,
+            phase=p,
+            data={"algorithm_image": ai.pk, "creator": user, "phase": p},
+        )
+
+        assert not form.is_valid()
+        assert (
+            "An evaluation for this algorithm is already in progress for another phase. Please wait for the other evaluation to complete."
+            in form.errors["algorithm_image"]
+        )
 
 
 @pytest.mark.django_db
