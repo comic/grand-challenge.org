@@ -1,6 +1,6 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.db.models import F, Q
+from django.db.models import F, Prefetch, Q
 from django.http import HttpResponse
 from django.template.response import TemplateResponse
 from django.utils.html import format_html
@@ -29,6 +29,7 @@ from grandchallenge.challenges.serializers import PublicChallengeSerializer
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
 from grandchallenge.datatables.views import Column, PaginatedTableListView
+from grandchallenge.publications.models import Publication
 from grandchallenge.subdomains.mixins import ChallengeSubdomainObjectMixin
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.verifications.views import VerificationRequiredMixin
@@ -335,7 +336,14 @@ class ChallengeCostCalculation(
 
 class ChallengeViewSet(ReadOnlyModelViewSet):
     queryset = Challenge.objects.all().prefetch_related(
-        "publications", "phase_set"
+        "phase_set",
+        # Put the most cited publications first
+        Prefetch(
+            "publications",
+            queryset=Publication.objects.order_by(
+                F("referenced_by_count").desc(nulls_last=True)
+            ),
+        ),
     )
     serializer_class = PublicChallengeSerializer
     permission_classes = [DjangoObjectPermissions]
