@@ -215,11 +215,11 @@ def test_hanging_protocol_parent_id_draggable():
     form = HangingProtocolForm(
         {
             "title": "main",
-            "json": '[{"viewport_name": "main", "parent_id": "tertiary", "specialized_view": "intensity-over-time-chart"}, {"viewport_name": "secondary"}]',
+            "json": '[{"viewport_name": "main", "parent_id": "main", "specialized_view": "intensity-over-time-chart"}, {"viewport_name": "secondary"}]',
         }
     )
     assert (
-        "Viewport main has a parent_id that does not exist."
+        "Viewport main has itself set as parent_id. Choose a different viewport as parent_id."
         in form.errors["json"]
     )
 

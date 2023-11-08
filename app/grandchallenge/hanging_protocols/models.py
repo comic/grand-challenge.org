@@ -140,7 +140,6 @@ HANGING_PROTOCOL_SCHEMA = {
                             "enum": [
                                 "minimap",
                                 "3D-sideview",
-                                "intensity-over-time-chart",
                             ]
                         },
                     },
@@ -171,6 +170,17 @@ HANGING_PROTOCOL_SCHEMA = {
                     },
                 },
                 "then": {"required": ["orientation"]},
+            },
+            {
+                "if": {
+                    "required": ["specialized_view"],
+                    "properties": {
+                        "specialized_view": {
+                            "const": "intensity-over-time-chart"
+                        }
+                    },
+                },
+                "then": {"required": ["parent_id"]},
             },
         ],
     },
