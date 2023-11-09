@@ -150,7 +150,7 @@ class ChallengeRequestCreate(
         return kwargs
 
     def get_success_url(self):
-        return reverse("challenges:list")
+        return reverse("challenges:users-requests-list")
 
 
 class ChallengeRequestList(
