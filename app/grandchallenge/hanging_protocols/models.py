@@ -62,7 +62,12 @@ HANGING_PROTOCOL_SCHEMA = {
             },
             "specialized_view": {
                 "type": "string",
-                "enum": ["minimap", "3D-sideview", "clientside"],
+                "enum": [
+                    "minimap",
+                    "3D-sideview",
+                    "clientside",
+                    "intensity-over-time-chart",
+                ],
             },
             "x": {
                 "type": "integer",
@@ -132,7 +137,10 @@ HANGING_PROTOCOL_SCHEMA = {
                     "required": ["specialized_view"],
                     "properties": {
                         "specialized_view": {
-                            "enum": ["minimap", "3D-sideview"]
+                            "enum": [
+                                "minimap",
+                                "3D-sideview",
+                            ]
                         },
                     },
                 },
@@ -162,6 +170,17 @@ HANGING_PROTOCOL_SCHEMA = {
                     },
                 },
                 "then": {"required": ["orientation"]},
+            },
+            {
+                "if": {
+                    "required": ["specialized_view"],
+                    "properties": {
+                        "specialized_view": {
+                            "const": "intensity-over-time-chart"
+                        }
+                    },
+                },
+                "then": {"required": ["parent_id"]},
             },
         ],
     },
