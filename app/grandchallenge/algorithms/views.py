@@ -7,11 +7,7 @@ from django.contrib.auth.mixins import (
 )
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
-from django.core.exceptions import (
-    NON_FIELD_ERRORS,
-    PermissionDenied,
-    ValidationError,
-)
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import OuterRef, Subquery
 from django.forms.utils import ErrorList
 from django.http import HttpResponse, HttpResponseRedirect
@@ -872,7 +868,7 @@ class AlgorithmPermissionRequestCreate(
         try:
             return super().form_valid(form)
         except ValidationError as e:
-            form._errors[NON_FIELD_ERRORS] = ErrorList(e.messages)
+            form.add_error(None, ErrorList(e.messages))
             return super().form_invalid(form)
 
     def get_context_data(self, **kwargs):
