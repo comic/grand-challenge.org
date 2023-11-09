@@ -7,6 +7,7 @@ from grandchallenge.evaluation.forms import SubmissionForm
 from grandchallenge.evaluation.models import Phase, Submission
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.invoices.models import PaymentStatusChoices
+from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
@@ -29,6 +30,7 @@ from tests.factories import (
 )
 from tests.hanging_protocols_tests.factories import HangingProtocolFactory
 from tests.invoices_tests.factories import InvoiceFactory
+from tests.uploads_tests.factories import UserUploadFactory
 from tests.verification_tests.factories import VerificationFactory
 
 
@@ -208,6 +210,10 @@ class TestSubmissionForm:
 
     def test_no_valid_archive_items(self):
         user = UserFactory()
+        p_pred = PhaseFactory(
+            submission_kind=SubmissionKindChoices.CSV,
+            submissions_limit_per_user_per_period=10,
+        )
         alg = AlgorithmFactory()
         alg.add_editor(user=user)
         ci1 = ComponentInterfaceFactory()
@@ -215,23 +221,24 @@ class TestSubmissionForm:
         alg.inputs.set([ci1])
         alg.outputs.set([ci2])
         archive = ArchiveFactory()
-        p = PhaseFactory(
+        p_alg = PhaseFactory(
             submission_kind=SubmissionKindChoices.ALGORITHM,
             submissions_limit_per_user_per_period=10,
             archive=archive,
         )
-        p.algorithm_inputs.set([ci1])
-        p.algorithm_outputs.set([ci2])
+        p_alg.algorithm_inputs.set([ci1])
+        p_alg.algorithm_outputs.set([ci2])
 
-        InvoiceFactory(
-            challenge=p.challenge,
-            compute_costs_euros=10,
-            payment_status=PaymentStatusChoices.COMPLIMENTARY,
-        )
-
+        for p in [p_alg, p_pred]:
+            InvoiceFactory(
+                challenge=p.challenge,
+                compute_costs_euros=10,
+                payment_status=PaymentStatusChoices.COMPLIMENTARY,
+            )
         # Fetch from the db to get the cost annotations
         # Maybe this is solved with GeneratedField (Django 5)?
-        p = Phase.objects.get(pk=p.pk)
+        p_alg = Phase.objects.get(pk=p_alg.pk)
+        p_pred = Phase.objects.get(pk=p_pred.pk)
 
         ai = AlgorithmImageFactory(
             is_manifest_valid=True,
@@ -241,28 +248,38 @@ class TestSubmissionForm:
         )
         AlgorithmJobFactory(algorithm_image=ai, status=4)
 
-        form = SubmissionForm(
+        upload = UserUploadFactory(creator=user)
+        upload.status = UserUpload.StatusChoices.COMPLETED
+        upload.save()
+        form1 = SubmissionForm(
             user=user,
-            phase=p,
-            data={"algorithm_image": ai.pk, "creator": user, "phase": p},
+            phase=p_pred,
+            data={"creator": user, "phase": p_pred, "user_upload": upload},
+        )
+        assert form1.is_valid()
+
+        form2 = SubmissionForm(
+            user=user,
+            phase=p_alg,
+            data={"algorithm_image": ai.pk, "creator": user, "phase": p_alg},
         )
 
         assert (
             "This phase is not ready for submissions yet. There are no valid archive items in the archive linked to this phase."
-            in form.errors["__all__"]
+            in form2.errors["__all__"]
         )
-        assert not form.is_valid()
+        assert not form2.is_valid()
 
         civ = ComponentInterfaceValueFactory(interface=ci1)
-        i = ArchiveItemFactory(archive=p.archive)
+        i = ArchiveItemFactory(archive=p_alg.archive)
         i.values.add(civ)
 
-        form2 = SubmissionForm(
+        form3 = SubmissionForm(
             user=user,
-            phase=p,
-            data={"algorithm_image": ai.pk, "creator": user, "phase": p},
+            phase=p_alg,
+            data={"algorithm_image": ai.pk, "creator": user, "phase": p_alg},
         )
-        assert form2.is_valid()
+        assert form3.is_valid()
 
     def test_submission_or_eval_exists_for_image(self):
         user = UserFactory()
