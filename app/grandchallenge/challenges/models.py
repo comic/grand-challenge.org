@@ -957,8 +957,17 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         super().save(*args, **kwargs)
 
         if adding:
+            self.assign_permissions()
             send_challenge_requested_email_to_reviewers(self)
             send_challenge_requested_email_to_requester(self)
+
+    def assign_permissions(self):
+        assign_perm("view_challengerequest", self.creator, self)
+        reviewers, _ = Group.objects.get_or_create(
+            name=settings.CHALLENGES_REVIEWERS_GROUP_NAME
+        )
+        assign_perm("view_challengerequest", reviewers, self)
+        assign_perm("change_challengerequest", reviewers, self)
 
     def create_challenge(self):
         challenge = Challenge(
@@ -1125,3 +1134,15 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             return budget
         else:
             return None
+
+
+class ChallengeRequestUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(
+        ChallengeRequest, on_delete=models.CASCADE
+    )
+
+
+class ChallengeRequestGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(
+        ChallengeRequest, on_delete=models.CASCADE
+    )
