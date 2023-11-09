@@ -94,6 +94,22 @@ class UsersChallengeList(LoginRequiredMixin, PaginatedTableListView):
         return queryset
 
 
+class UsersChallengeRequestList(LoginRequiredMixin, PaginatedTableListView):
+    model = ChallengeRequest
+    template_name = "challenges/challengerequest_users_list.html"
+    row_template = "challenges/challengerequest_users_row.html"
+    search_fields = ["name", "short_name"]
+    columns = [
+        Column(title="Acronym", sort_field="short_name"),
+        Column(title="Submitted", sort_field="created"),
+        Column(title="Status", sort_field="status"),
+    ]
+    default_sort_column = 1
+
+    def get_queryset(self):
+        return super().get_queryset().filter(creator=self.request.user)
+
+
 class ChallengeUpdate(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
