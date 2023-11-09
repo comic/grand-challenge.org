@@ -1,4 +1,15 @@
 from django.contrib.auth import get_user_model
+from django.db.models import (
+    BooleanField,
+    Case,
+    Count,
+    OuterRef,
+    Prefetch,
+    Q,
+    Subquery,
+    Value,
+    When,
+)
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.views.generic import CreateView, DetailView, ListView
@@ -39,6 +50,36 @@ class ConversationList(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
+
+        most_recent_message = DirectMessage.objects.order_by("-created")
+
+        queryset = (
+            queryset.prefetch_related(
+                "participants__user_profile",
+                Prefetch(
+                    "direct_messages",
+                    queryset=most_recent_message.select_related("sender"),
+                ),
+            )
+            .annotate(
+                most_recent_message_created=Subquery(
+                    most_recent_message.filter(
+                        conversation=OuterRef("pk")
+                    ).values("created")[:1]
+                ),
+                unread_message_count=Count(
+                    "direct_messages",
+                    filter=Q(direct_messages__unread_by=self.request.user),
+                ),
+                unread_by_user=Case(
+                    When(unread_message_count=0, then=Value(False)),
+                    default=Value(True),
+                    output_field=BooleanField(),
+                ),
+            )
+            .order_by("-unread_by_user", "-most_recent_message_created")
+        )
+
         return filter_by_permission(
             queryset=queryset,
             user=self.request.user,

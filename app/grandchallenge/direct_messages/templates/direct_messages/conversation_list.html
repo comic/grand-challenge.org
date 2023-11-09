@@ -5,7 +5,35 @@
 {% block content %}
     <h2>Conversations</h2>
 
-    {% for conversation in object_list %}
-        <p><a href="{{ conversation.get_absolute_url }}">{{ conversation }}</a></p>
-    {% endfor %}
+    <div class="list-group">
+        {% for conversation in object_list %}
+            <a href="{{ conversation.get_absolute_url }}" class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1">
+                        {% for participant in conversation.participants.all %}
+                            {% if participant != request.user %}
+                                <img class="rounded-circle align-middle" src="{{ participant.user_profile.get_mugshot_url }}"
+                                     alt="User Mugshot" style="height: 1.33em"/>&nbsp;<b>{{ participant.first_name }}&nbsp;{{ participant.last_name }}</b>&nbsp;({{ participant.username }})
+                            {% endif %}
+                        {% endfor %}
+                    </h6>
+
+                    {% if conversation.unread_by_user %}
+                        <span class="text-danger">
+                            <i class="fa fa-xs fa-circle"></i>
+                        </span>
+                    {% endif %}
+                </div>
+                <p class="mb-1">
+                    {% if conversation.direct_messages.first.sender == request.user %}
+                        You:
+                    {% else %}
+                        {{ conversation.direct_messages.first.sender.first_name }}:
+                    {% endif %}
+                    {{ conversation.direct_messages.first.message|truncatewords:4 }}
+                </p>
+                <small>{{ conversation.direct_messages.first.created }}</small>
+            </a>
+        {% endfor %}
+    </div>
 {% endblock %}

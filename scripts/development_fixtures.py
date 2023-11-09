@@ -1,7 +1,9 @@
 import base64
+import itertools
 import json
 import logging
 import os
+import random
 from datetime import timedelta
 
 from allauth.account.models import EmailAddress
@@ -15,6 +17,7 @@ from django.core.files import File
 from django.core.files.base import ContentFile
 from django.db import IntegrityError
 from django.utils import timezone
+from faker import Faker
 from guardian.shortcuts import assign_perm
 from knox import crypto
 from knox.models import AuthToken
@@ -31,6 +34,7 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
 )
 from grandchallenge.core.fixtures import create_uploaded_image
+from grandchallenge.direct_messages.models import Conversation, DirectMessage
 from grandchallenge.evaluation.models import (
     CombinedLeaderboard,
     Evaluation,
@@ -83,6 +87,7 @@ def run():
     except IntegrityError as e:
         raise RuntimeError("Fixtures already initialized") from e
 
+    _create_direct_messages(users)
     _set_user_permissions(users)
     _create_task_types_regions_modalities(users)
     _create_workstation(users)
@@ -111,12 +116,15 @@ def _create_flatpages():
 
 def _create_users(usernames):
     users = {}
+    fake = Faker()
 
     for username in usernames:
         user = get_user_model().objects.create(
             username=username,
             email=f"{username}@example.com",
             is_active=True,
+            first_name=fake.first_name(),
+            last_name=fake.last_name(),
         )
         user.set_password(username)
         user.save()
@@ -138,6 +146,26 @@ def _create_users(usernames):
         users[username] = user
 
     return users
+
+
+def _create_direct_messages(users):
+    fake = Faker()
+
+    for combination in itertools.combinations(users.values(), 2):
+        conversation = Conversation.objects.create()
+        conversation.participants.set(combination)
+
+        unread = random.choice([True, False])
+
+        for _ in range(5):
+            sender = random.choice(combination)
+            message = DirectMessage.objects.create(
+                conversation=conversation,
+                sender=sender,
+                message=fake.text(max_nb_chars=160),
+            )
+            if unread:
+                message.unread_by.set({*combination} - {sender})
 
 
 def _set_user_permissions(users):
