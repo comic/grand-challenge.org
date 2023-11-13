@@ -366,6 +366,18 @@ class SubmissionForm(
                 "uploads.change_userupload",
             ).filter(status=UserUpload.StatusChoices.COMPLETED)
 
+    def clean_phase(self):
+        phase = self.cleaned_data["phase"]
+        if (
+            phase.submission_kind == SubmissionKindChoices.ALGORITHM
+            and phase.count_valid_archive_items == 0
+        ):
+            self.add_error(
+                None,
+                "This phase is not ready for submissions yet. There are no valid archive items in the archive linked to this phase.",
+            )
+        return phase
+
     def clean_algorithm_image(self):
         algorithm_image = self.cleaned_data["algorithm_image"]
 

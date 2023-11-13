@@ -1,9 +1,5 @@
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core.exceptions import (
-    NON_FIELD_ERRORS,
-    ObjectDoesNotExist,
-    ValidationError,
-)
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Q
 from django.forms.utils import ErrorList
 from django.views.generic import CreateView, ListView, UpdateView
@@ -56,7 +52,7 @@ class RegistrationRequestCreate(
             return redirect
 
         except ValidationError as e:
-            form._errors[NON_FIELD_ERRORS] = ErrorList(e.messages)
+            form.add_error(None, ErrorList(e.messages))
             return super().form_invalid(form)
 
     def get_context_data(self, **kwargs):

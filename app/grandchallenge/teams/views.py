@@ -1,5 +1,5 @@
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
+from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.forms.utils import ErrorList
 from django.shortcuts import get_object_or_404
@@ -36,7 +36,7 @@ class TeamCreate(
             return super().form_valid(form)
 
         except ValidationError as e:
-            form._errors[NON_FIELD_ERRORS] = ErrorList(e.messages)
+            form.add_error(None, ErrorList(e.messages))
             return super().form_invalid(form)
 
 
@@ -118,7 +118,7 @@ class TeamMemberCreate(
             return super().form_valid(form)
 
         except ValidationError as e:
-            form._errors[NON_FIELD_ERRORS] = ErrorList(e.messages)
+            form.add_error(None, ErrorList(e.messages))
             return super().form_invalid(form)
 
     def get_success_url(self):
