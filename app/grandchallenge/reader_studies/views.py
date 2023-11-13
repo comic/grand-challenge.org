@@ -1411,12 +1411,13 @@ class DisplaySetUpdate(
         for ci_slug, new_value in form.cleaned_data.items():
             if ci_slug == "order":
                 continue
-            instance, assigned_civs = self.create_civ_for_value(
-                instance=instance,
-                ci_slug=ci_slug,
-                new_value=new_value,
-                assigned_civs=assigned_civs,
-            )
+            with transaction.atomic():
+                instance, assigned_civs = self.create_civ_for_value(
+                    instance=instance,
+                    ci_slug=ci_slug,
+                    new_value=new_value,
+                    assigned_civs=assigned_civs,
+                )
         instance.values.remove(*assigned_civs)
 
         if (
@@ -1437,10 +1438,11 @@ class DisplaySetUpdate(
             if current_value and current_value.value != new_value:
                 assigned_civs.append(current_value)
             if new_value and current_value.value != new_value:
-                val = ComponentInterfaceValue.objects.create(
+                civ = ComponentInterfaceValue.objects.create(
                     interface=ci, value=new_value
                 )
-                instance.values.add(val)
+                civ.full_clean()
+                instance.values.add(civ)
         elif isinstance(new_value, Image):
             if not current_value or (
                 current_value and current_value.image != new_value
@@ -1467,7 +1469,7 @@ class DisplaySetUpdate(
                 )
             )
         else:
-            if current_value != new_value:
+            if current_value and current_value != new_value:
                 assigned_civs.append(current_value)
                 if new_value:
                     # If there is already a value for the provided civ's interface in
