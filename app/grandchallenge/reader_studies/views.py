@@ -1409,7 +1409,7 @@ class DisplaySetUpdate(
         instance = self.get_object()
         assigned_civs = []
         for ci_slug, new_value in form.cleaned_data.items():
-            if ci_slug == "order" or new_value is None:
+            if ci_slug == "order":
                 continue
             instance, assigned_civs = self.create_civ_for_value(
                 instance=instance,
@@ -1434,12 +1434,13 @@ class DisplaySetUpdate(
         ci = ComponentInterface.objects.get(slug=ci_slug)
         current_value = instance.values.filter(interface=ci).first()
         if ci.is_json_kind and not ci.requires_file:
-            if current_value:
+            if current_value and current_value.value != new_value:
                 assigned_civs.append(current_value)
-            val = ComponentInterfaceValue.objects.create(
-                interface=ci, value=new_value
-            )
-            instance.values.add(val)
+            if new_value and current_value.value != new_value:
+                val = ComponentInterfaceValue.objects.create(
+                    interface=ci, value=new_value
+                )
+                instance.values.add(val)
         elif isinstance(new_value, Image):
             if not current_value or (
                 current_value and current_value.image != new_value
@@ -1466,16 +1467,19 @@ class DisplaySetUpdate(
                 )
             )
         else:
-            if current_value:
+            if current_value != new_value:
                 assigned_civs.append(current_value)
-            # If there is already a value for the provided civ's interface in
-            # this display set, remove it from this display set. Cast to list
-            # to evaluate immediately.
-            assigned_civs += list(
-                instance.values.exclude(pk=new_value.pk).filter(interface=ci)
-            )
-            # Add the provided civ to the current display set
-            instance.values.add(new_value)
+                if new_value:
+                    # If there is already a value for the provided civ's interface in
+                    # this display set, remove it from this display set. Cast to list
+                    # to evaluate immediately.
+                    assigned_civs += list(
+                        instance.values.exclude(pk=new_value.pk).filter(
+                            interface=ci
+                        )
+                    )
+                    # Add the provided civ to the current display set
+                    instance.values.add(new_value)
         return instance, assigned_civs
 
 
