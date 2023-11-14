@@ -94,6 +94,25 @@ class ConversationDetail(
     raise_exception = True
     model = Conversation
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        queryset = queryset.prefetch_related(
+            Prefetch(
+                "direct_messages",
+                queryset=DirectMessage.objects.order_by("created").annotate(
+                    unread_by_user=Case(
+                        When(unread_by=self.request.user, then=Value(True)),
+                        default=Value(False),
+                        output_field=BooleanField(),
+                    )
+                ),
+            ),
+            "direct_messages__sender__user_profile",
+        )
+
+        return queryset
+
 
 class DirectMessageCreate(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, CreateView

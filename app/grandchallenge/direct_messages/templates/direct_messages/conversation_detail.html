@@ -6,14 +6,23 @@
 {% block content %}
     <h2>Conversation</h2>
 
-    {{ object.pk }}
-
-    {% for participant in object.participants.all %}
-        {{ participant }},
-    {% endfor %}
-
     {% for direct_message in object.direct_messages.all %}
-        <p>{{ direct_message.message }}</p>
+        {% ifchanged direct_message.sender direct_message.created.date %}
+            <hr>
+            <div class="d-flex w-100 justify-content-between">
+                <h6><img class="rounded-circle align-middle"
+                         src="{{ direct_message.sender.user_profile.get_mugshot_url }}"
+                         alt="User Mugshot"
+                         style="height: 1.33em"/>&nbsp;<b>{{ direct_message.sender.first_name }}&nbsp;{{ direct_message.sender.last_name }}</b>&nbsp;({{ direct_message.sender.username }})
+                </h6>
+
+                <span>{{ direct_message.created }}</span>
+
+            </div>
+        {% endifchanged %}
+
+        <p>{% if direct_message.unread_by_user %}<span class="text-danger"><i class="fa fa-xs fa-circle"></i></span>&nbsp;{% endif %}{{ direct_message.message }}</p>
+
     {% endfor %}
 
     <a href="{%  url 'direct-messages:direct-message-create' pk=object.pk %}">New Message</a>
