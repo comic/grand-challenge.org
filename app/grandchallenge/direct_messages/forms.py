@@ -1,3 +1,5 @@
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit
 from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -35,9 +37,12 @@ class ConversationForm(SaveFormInitMixin, forms.ModelForm):
         fields = ("participants",)
 
 
-class DirectMessageForm(SaveFormInitMixin, forms.ModelForm):
+class DirectMessageForm(forms.ModelForm):
     def __init__(self, *args, conversation, sender, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.layout.append(Submit("save", "Send"))
 
         self.fields["conversation"].queryset = filter_by_permission(
             queryset=Conversation.objects.filter(pk=conversation.pk),
@@ -61,6 +66,11 @@ class DirectMessageForm(SaveFormInitMixin, forms.ModelForm):
         self.fields["unread_by"].initial = unread_by
         self.fields["unread_by"].disabled = True
         self.fields["unread_by"].widget = forms.MultipleHiddenInput()
+
+        self.fields["message"].widget = forms.TextInput(
+            attrs={"placeholder": "Write a message..."}
+        )
+        self.fields["message"].label = ""
 
     class Meta:
         model = DirectMessage

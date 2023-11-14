@@ -1,5 +1,6 @@
 {% load url %}
 {% load bleach %}
+{% load crispy_forms_tags %}
 
 <div id="conversation-detail" class="overflow-auto h-75">
     {% for direct_message in object.direct_messages.all %}
@@ -30,5 +31,5 @@
 </div>
 
 <div>
-    <a href="{% url 'direct-messages:direct-message-create' pk=object.pk %}">New Message</a>
+    {% crispy form %}
 </div>

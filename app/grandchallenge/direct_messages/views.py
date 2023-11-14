@@ -24,6 +24,7 @@ from grandchallenge.direct_messages.forms import (
     DirectMessageForm,
 )
 from grandchallenge.direct_messages.models import Conversation, DirectMessage
+from grandchallenge.subdomains.utils import reverse
 
 
 class ConversationCreate(LoginRequiredMixin, CreateView):
@@ -112,6 +113,20 @@ class ConversationDetail(
         )
 
         return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+
+        form = DirectMessageForm(
+            sender=self.request.user, conversation=self.object
+        )
+        form.helper.form_action = reverse(
+            "direct-messages:direct-message-create",
+            kwargs={"pk": self.object.pk},
+        )
+
+        context.update({"form": form})
+        return context
 
 
 class DirectMessageCreate(
