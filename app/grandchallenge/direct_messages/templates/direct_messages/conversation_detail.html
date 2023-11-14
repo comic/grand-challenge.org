@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load url %}
+{% load bleach %}
 
 {% block title %}Conversation - {{ block.super }}{% endblock %}
 
@@ -7,21 +8,29 @@
     <h2>Conversation</h2>
 
     {% for direct_message in object.direct_messages.all %}
-        {% ifchanged direct_message.sender direct_message.created.date %}
+        {% ifchanged direct_message.created.date %}
             <hr>
+            <div class="d-flex w-100 justify-content-center">
+                <h6>{{ direct_message.created.date }}</h6>
+            </div>
+        {% endifchanged %}
+
+        {% ifchanged direct_message.sender direct_message.created.date %}
             <div class="d-flex w-100 justify-content-between">
-                <h6><img class="rounded-circle align-middle"
+                <h6>
+                    <img class="rounded-circle align-middle"
                          src="{{ direct_message.sender.user_profile.get_mugshot_url }}"
                          alt="User Mugshot"
                          style="height: 1.33em"/>&nbsp;<b>{{ direct_message.sender.first_name }}&nbsp;{{ direct_message.sender.last_name }}</b>&nbsp;({{ direct_message.sender.username }})
                 </h6>
-
-                <span>{{ direct_message.created }}</span>
-
+                <span>{{ direct_message.created.time }}</span>
             </div>
         {% endifchanged %}
 
-        <p>{% if direct_message.unread_by_user %}<span class="text-danger"><i class="fa fa-xs fa-circle"></i></span>&nbsp;{% endif %}{{ direct_message.message }}</p>
+        <div class="d-flex w-100 justify-content-start">
+            {% if direct_message.unread_by_user %}<span class="text-danger"><i class="fa fa-xs fa-circle"></i></span>&nbsp;{% endif %}
+            <div>{{ direct_message.message|md2html }}</div>
+        </div>
 
     {% endfor %}
 
