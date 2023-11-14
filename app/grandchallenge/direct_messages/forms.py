@@ -67,8 +67,12 @@ class DirectMessageForm(forms.ModelForm):
         self.fields["unread_by"].disabled = True
         self.fields["unread_by"].widget = forms.MultipleHiddenInput()
 
-        self.fields["message"].widget = forms.TextInput(
-            attrs={"placeholder": "Write a message..."}
+        self.fields["message"].widget = forms.Textarea(
+            attrs={
+                "placeholder": "Write a message...",
+                "rows": "3",
+                "style": "resize:none;",
+            }
         )
         self.fields["message"].label = ""
 
