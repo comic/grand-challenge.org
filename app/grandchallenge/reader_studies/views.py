@@ -1411,13 +1411,12 @@ class DisplaySetUpdate(
         for ci_slug, new_value in form.cleaned_data.items():
             if ci_slug == "order":
                 continue
-            with transaction.atomic():
-                instance, assigned_civs = self.create_civ_for_value(
-                    instance=instance,
-                    ci_slug=ci_slug,
-                    new_value=new_value,
-                    assigned_civs=assigned_civs,
-                )
+            instance, assigned_civs = self.create_civ_for_value(
+                instance=instance,
+                ci_slug=ci_slug,
+                new_value=new_value,
+                assigned_civs=assigned_civs,
+            )
         instance.values.remove(*assigned_civs)
 
         if (

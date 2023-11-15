@@ -783,7 +783,9 @@ def test_display_set_interfaces_create(
     rs.add_editor(u1)
 
     ci_file = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
-    ci_value = ComponentInterfaceFactory(kind="JSON", store_in_database=True)
+    ci_value = ComponentInterfaceFactory(
+        kind="JSON", store_in_database=True, schema={"type": "array"}
+    )
     ci_image = ComponentInterfaceFactory(kind="IMG", store_in_database=False)
     ci_image_2 = ComponentInterfaceFactory(kind="IMG", store_in_database=False)
 
@@ -806,6 +808,8 @@ def test_display_set_interfaces_create(
     assert response.status_code == 200
 
     assert not ds.values.filter(interface=ci_value).exists()
+    old_civ_count = ComponentInterfaceValue.objects.count()
+    headers = {"HTTP_HX-Request": "true"}
     response = get_view_for_user(
         viewname="reader-studies:display-set-interfaces-create",
         client=client,
@@ -813,11 +817,24 @@ def test_display_set_interfaces_create(
         data={"interface": str(ci_value.pk), ci_value.slug: '{"foo": "bar"}'},
         user=u1,
         method=client.post,
+        **headers,
     )
+    assert "JSON does not fulfill schema" in str(response.content)
+    # This shouldn't be true, but currently is
+    # (only when the request is issued as an HTMX request though!):
+    assert ComponentInterfaceValue.objects.count() == old_civ_count + 1
 
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-interfaces-create",
+        client=client,
+        reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
+        data={"interface": str(ci_value.pk), ci_value.slug: '["foo", "bar"]'},
+        user=u1,
+        method=client.post,
+    )
     assert response.status_code == 302
     civ = ds.values.get(interface=ci_value)
-    assert civ.value == {"foo": "bar"}
+    assert civ.value == ["foo", "bar"]
 
     assert not ds.values.filter(interface=ci_file).exists()
     upload = UserUploadFactory(filename="file.json", creator=u1)
