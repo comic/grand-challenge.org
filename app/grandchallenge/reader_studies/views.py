@@ -1650,11 +1650,7 @@ class DisplaySetInterfacesCreate(ObjectPermissionRequiredMixin, FormView):
         interface = form.cleaned_data["interface"]
         value = form.cleaned_data[interface.slug]
         if self.display_set:
-            try:
-                self.update_display_set(interface, value)
-            except ValidationError as e:
-                form.add_error(interface.slug, str(e))
-                return self.form_invalid(form)
+            self.update_display_set(interface, value)
         return super().form_valid(form)
 
     def get_success_url(self):

@@ -809,20 +809,16 @@ def test_display_set_interfaces_create(
 
     assert not ds.values.filter(interface=ci_value).exists()
     old_civ_count = ComponentInterfaceValue.objects.count()
-    headers = {"HTTP_HX-Request": "true"}
     response = get_view_for_user(
         viewname="reader-studies:display-set-interfaces-create",
         client=client,
         reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
-        data={"interface": str(ci_value.pk), ci_value.slug: '{"foo": "bar"}'},
+        data={"interface": str(ci_value.pk), ci_value.slug: ""},
         user=u1,
         method=client.post,
-        **headers,
     )
     assert "JSON does not fulfill schema" in str(response.content)
-    # This shouldn't be true, but currently is
-    # (only when the request is issued as an HTMX request though!):
-    assert ComponentInterfaceValue.objects.count() == old_civ_count + 1
+    assert ComponentInterfaceValue.objects.count() == old_civ_count
 
     response = get_view_for_user(
         viewname="reader-studies:display-set-interfaces-create",
