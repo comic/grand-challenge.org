@@ -2,7 +2,7 @@
 {% load bleach %}
 {% load crispy_forms_tags %}
 
-<div id="conversation-detail" class="overflow-auto h-75">
+<div id="conversation-direct-messages-panel" class="overflow-auto h-75">
     {% for direct_message in object.direct_messages.all %}
         {% ifchanged direct_message.created.date %}
             <hr>
@@ -19,7 +19,7 @@
                          alt="User Mugshot"
                          style="height: 1.33em"/>&nbsp;<b>{{ direct_message.sender.first_name }}&nbsp;{{ direct_message.sender.last_name }}</b>&nbsp;({{ direct_message.sender.username }})
                 </h6>
-                <span>{{ direct_message.created.time }}</span>
+                <span>{{ direct_message.created|time }}</span>
             </div>
         {% endifchanged %}
 

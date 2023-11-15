@@ -120,9 +120,14 @@ class ConversationDetail(
         form = DirectMessageForm(
             sender=self.request.user, conversation=self.object
         )
-        form.helper.form_action = reverse(
-            "direct-messages:direct-message-create",
-            kwargs={"pk": self.object.pk},
+        form.helper.attrs.update(
+            {
+                "hx-post": reverse(
+                    "direct-messages:direct-message-create",
+                    kwargs={"pk": self.object.pk},
+                ),
+                "hx-target": "#conversation-detail-panel",
+            }
         )
 
         context.update({"form": form})
