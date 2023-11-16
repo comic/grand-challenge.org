@@ -11,10 +11,10 @@ document.body.addEventListener("htmx:afterOnLoad", function(evt) {
 
         // TODO mark the conversation as read
 
-        //  TODO remove the unread button
+        //  TODO remove the unread button (update the select button)
     } else if (evt.target.id === "conversation-detail-panel") {
         // Event was from creating a new message in a conversation
 
-        // TODO update the message text and time in the conversation detail select
+        // TODO update the message text and time in the conversation detail select (update the select button)
     }
 });
