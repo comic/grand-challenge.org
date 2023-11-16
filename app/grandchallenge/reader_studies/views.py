@@ -1411,7 +1411,7 @@ class DisplaySetUpdate(
         for ci_slug, new_value in form.cleaned_data.items():
             if ci_slug == "order":
                 continue
-            instance, assigned_civs = self.create_civ_for_value(
+            instance, assigned_civs = self.create_civ(
                 instance=instance,
                 ci_slug=ci_slug,
                 new_value=new_value,
@@ -1429,30 +1429,33 @@ class DisplaySetUpdate(
         return HttpResponseRedirect(self.get_success_url())
 
     def create_civ_for_value(
-        self, instance, ci_slug, new_value, assigned_civs
+        self, instance, ci, current_civ, new_value, assigned_civs
     ):
-        ci = ComponentInterface.objects.get(slug=ci_slug)
-        current_value = instance.values.filter(interface=ci).first()
-        if ci.is_json_kind and not ci.requires_file:
-            if current_value and current_value.value != new_value:
-                assigned_civs.append(current_value)
-            if new_value and current_value.value != new_value:
-                civ = ComponentInterfaceValue.objects.create(
-                    interface=ci, value=new_value
-                )
+        current_value = current_civ.value if current_civ else None
+        if new_value and current_value != new_value:
+            assigned_civs.append(current_civ)
+            civ = ComponentInterfaceValue.objects.create(
+                interface=ci, value=new_value
+            )
+            civ.full_clean()
+            instance.values.add(civ)
+        elif not new_value:
+            # if the new value is None, remove the old CIV from the display set
+            assigned_civs.append(current_civ)
+        return instance, assigned_civs
+
+    def create_civ_for_image(
+        self, instance, ci, current_civ, new_value, assigned_civs
+    ):
+        current_image = current_civ.image if current_civ else None
+        if isinstance(new_value, Image) and current_image != new_value:
+            assigned_civs.append(current_civ)
+            civ, created = ComponentInterfaceValue.objects.get_or_create(
+                interface=ci, image=new_value
+            )
+            if created:
                 civ.full_clean()
-                instance.values.add(civ)
-        elif isinstance(new_value, Image):
-            if not current_value or (
-                current_value and current_value.image != new_value
-            ):
-                assigned_civs.append(current_value)
-                civ, created = ComponentInterfaceValue.objects.get_or_create(
-                    interface=ci, image=new_value
-                )
-                if created:
-                    civ.full_clean()
-                instance.values.add(civ)
+            instance.values.add(civ)
         elif isinstance(new_value, QuerySet):
             us = RawImageUploadSession.objects.create(
                 creator=self.request.user,
@@ -1467,21 +1470,43 @@ class DisplaySetUpdate(
                     immutable=True,
                 )
             )
-        else:
-            if current_value and current_value != new_value:
-                assigned_civs.append(current_value)
-                if new_value:
-                    # If there is already a value for the provided civ's interface in
-                    # this display set, remove it from this display set. Cast to list
-                    # to evaluate immediately.
-                    assigned_civs += list(
-                        instance.values.exclude(pk=new_value.pk).filter(
-                            interface=ci
-                        )
-                    )
-                    # Add the provided civ to the current display set
-                    instance.values.add(new_value)
         return instance, assigned_civs
+
+    def create_civ_for_file(
+        self, instance, ci, current_civ, new_value, assigned_civs
+    ):
+        # in this case, new_value is an instance of a CIV already (or None)
+        if new_value and current_civ != new_value:
+            assigned_civs.append(current_civ)
+            # If there is already a value for the provided civ's interface in
+            # this display set, remove it from this display set. Cast to list
+            # to evaluate immediately.
+            assigned_civs += list(
+                instance.values.exclude(pk=new_value.pk).filter(interface=ci)
+            )
+            # Add the provided civ to the current display set
+            instance.values.add(new_value)
+        elif not new_value:
+            # if no new value is provided (user selects '---' in dropdown)
+            # delete old CIV
+            assigned_civs.append(current_civ)
+        return instance, assigned_civs
+
+    def create_civ(self, instance, ci_slug, new_value, assigned_civs):
+        ci = ComponentInterface.objects.get(slug=ci_slug)
+        current_civ = instance.values.filter(interface=ci).first()
+        if ci.is_json_kind and not ci.requires_file:
+            return self.create_civ_for_value(
+                instance, ci, current_civ, new_value, assigned_civs
+            )
+        elif ci.is_image_kind:
+            return self.create_civ_for_image(
+                instance, ci, current_civ, new_value, assigned_civs
+            )
+        elif ci.requires_file:
+            return self.create_civ_for_file(
+                instance, ci, current_civ, new_value, assigned_civs
+            )
 
 
 class DisplaySetFilesUpdate(ObjectPermissionRequiredMixin, FormView):
