@@ -817,7 +817,7 @@ def test_display_set_interfaces_create(
         user=u1,
         method=client.post,
     )
-    assert "JSON does not fulfill schema" in str(response.content)
+    assert "This field is required" in str(response.content)
     assert ComponentInterfaceValue.objects.count() == old_civ_count
 
     response = get_view_for_user(
