@@ -27,11 +27,13 @@ def test_conversation_participants_permissions_signal(reverse):
             "view_conversation",
             "create_conversation_direct_message",
             "mark_conversation_read",
+            "mark_conversation_message_as_spam",
         },
         u2: {
             "view_conversation",
             "create_conversation_direct_message",
             "mark_conversation_read",
+            "mark_conversation_message_as_spam",
         },
     }
     assert get_users_with_set_perms(c2) == {}
