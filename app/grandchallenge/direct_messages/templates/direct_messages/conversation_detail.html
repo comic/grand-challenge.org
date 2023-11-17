@@ -2,7 +2,10 @@
 {% load bleach %}
 {% load crispy_forms_tags %}
 
-<div id="conversation-direct-messages-panel" class="overflow-auto flex-grow-1">
+<div id="conversation-direct-messages-panel"
+     class="overflow-auto flex-grow-1"
+     data-conversation-select-detail-url="{% url 'direct-messages:conversation-select-detail' pk=object.pk %}"
+     data-conversation-select-button-selector="#conversation-select-button-{{ object.pk }}">
     {% for direct_message in object.direct_messages.all %}
         {% ifchanged direct_message.created.date %}
             <hr>
