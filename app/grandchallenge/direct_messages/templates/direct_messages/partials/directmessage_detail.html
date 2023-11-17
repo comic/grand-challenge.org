@@ -1,7 +1,7 @@
 {% load bleach %}
 
 {% if direct_message.is_deleted %}
-    <p><em>This message was deleted.</em></p>
+    <p><em>This message has been deleted.</em></p>
 {% elif direct_message.is_reported_as_spam and direct_message.sender != request.user %}
     <p><em>This message has been removed.</em></p>
 {% else %}

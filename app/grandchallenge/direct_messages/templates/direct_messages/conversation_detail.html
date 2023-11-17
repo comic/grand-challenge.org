@@ -26,28 +26,65 @@
         {% endifchanged %}
 
         <div class="d-flex w-100 justify-content-start">
-            {% if direct_message.unread_by_user %}<span class="text-danger"><i class="fa fa-xs fa-circle"></i></span>&nbsp;{% endif %}
+            {% if direct_message.unread_by_user %}
+                <span class="text-danger"><i class="fa fa-xs fa-circle"></i></span>&nbsp;
+            {% endif %}
+
             <div>
                 {% include "direct_messages/partials/directmessage_detail.html" with preview=False %}
             </div>
+
+            <div class="ml-auto">
+                {% if direct_message.sender == request.user and not direct_message.is_deleted %}
+                    <div class="dropdown">
+                        <button class="btn btn-link dropdown-toggle btn-sm"
+                                type="button"
+                                id="dropdown-menu-{{ direct_message.pk }}"
+                                data-toggle="dropdown"
+                                aria-haspopup="true"
+                                aria-expanded="false">
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="dropdown-menu-{{ direct_message.pk }}">
+                            <form id="direct-message-delete-{{ direct_message.pk }}"
+                                  method="post"
+                                  hx-post="{% url 'direct-messages:direct-message-delete' conversation_pk=object.pk pk=direct_message.pk %}"
+                                  hx-target="#conversation-detail-panel">
+                                {% csrf_token %}
+                            </form>
+                            <button class="dropdown-item"
+                                    type="submit"
+                                    form="direct-message-delete-{{ direct_message.pk }}"
+                                    value="Delete"><i class="far fa-trash-alt text-danger"></i> Delete Message
+                            </button>
+                        </div>
+                    </div>
+                {% elif direct_message.sender != request.user and not direct_message.is_deleted and not direct_message.is_reported_as_spam %}
+                    <div class="dropdown">
+                        <button class="btn btn-link dropdown-toggle btn-sm"
+                                type="button"
+                                id="dropdown-menu-{{ direct_message.pk }}"
+                                data-toggle="dropdown"
+                                aria-haspopup="true"
+                                aria-expanded="false">
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="dropdown-menu-{{ direct_message.pk }}">
+                            <form id="direct-message-report-spam-{{ direct_message.pk }}"
+                                  method="post"
+                                  hx-post="{% url 'direct-messages:direct-message-report-spam' conversation_pk=object.pk pk=direct_message.pk %}"
+                                  hx-target="#conversation-detail-panel">
+                                {% csrf_token %}
+                                {{ report_spam_form }}
+                            </form>
+                            <button class="dropdown-item"
+                                    type="submit"
+                                    form="direct-message-report-spam-{{ direct_message.pk }}" value="Report Spam"><i class="fas fa-ban text-danger"></i> Report Message as Junk
+                            </button>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
         </div>
 
-        {% if direct_message.sender == request.user and not direct_message.is_deleted %}
-            <form method="post"
-                  hx-post="{% url 'direct-messages:direct-message-delete' conversation_pk=object.pk pk=direct_message.pk %}"
-                  hx-target="#conversation-detail-panel">
-                {% csrf_token %}
-                <input type="submit" value="Delete">
-            </form>
-        {% elif direct_message.sender != request.user and not direct_message.is_deleted and not direct_message.is_reported_as_spam %}
-            <form method="post"
-                  hx-post="{% url 'direct-messages:direct-message-report-spam' conversation_pk=object.pk pk=direct_message.pk %}"
-                  hx-target="#conversation-detail-panel">
-                {% csrf_token %}
-                {{ report_spam_form }}
-                <input type="submit" value="Report Spam">
-            </form>
-        {% endif %}
     {% endfor %}
 </div>
 
