@@ -180,12 +180,6 @@ class DirectMessageReportSpam(
     def get_permission_object(self):
         return self.conversation
 
-    def form_valid(self, form):
-        DirectMessageUnreadBy.objects.filter(
-            direct_message=self.object,
-        ).delete()
-        return super().form_valid(form)
-
     def get_success_url(self):
         return reverse(
             "direct-messages:conversation-detail",
@@ -199,12 +193,6 @@ class DirectMessageDelete(
     permission_required = "direct_messages.delete_directmessage"
     raise_exception = True
     model = DirectMessage
-
-    def form_valid(self, form):
-        DirectMessageUnreadBy.objects.filter(
-            direct_message=self.object,
-        ).delete()
-        return super().form_valid(form)
 
     def get_success_url(self):
         return reverse(

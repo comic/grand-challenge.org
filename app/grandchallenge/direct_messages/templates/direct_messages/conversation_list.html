@@ -7,25 +7,33 @@
 {% block content %}
     <h2>Conversations</h2>
 
-    <div class="d-flex w-100 align-items-stretch" style="height: 75vh">
+    {% if object_list %}
 
-        <div class="list-group overflow-auto flex-shrink-0" hx-target="#conversation-detail-panel">
-            {% for object in object_list %}
-                <button type="button"
-                    id="conversation-select-button-{{ object.pk }}"
-                    hx-get="{{ object.get_absolute_url }}"
-                    data-conversation-select-detail-url="{% url 'direct-messages:conversation-select-detail' pk=object.pk %}"
-                    class="list-group-item list-group-item-action conversation-detail-select">
+        <div class="d-flex w-100 align-items-stretch" style="height: 75vh">
+
+            <div class="list-group overflow-auto flex-shrink-0" hx-target="#conversation-detail-panel">
+                {% for object in object_list %}
+                    <button type="button"
+                            id="conversation-select-button-{{ object.pk }}"
+                            hx-get="{{ object.get_absolute_url }}"
+                            data-conversation-select-detail-url="{% url 'direct-messages:conversation-select-detail' pk=object.pk %}"
+                            class="list-group-item list-group-item-action conversation-detail-select">
                         {% include "direct_messages/partials/conversation_select_detail.html" %}
-                </button>
-            {% endfor %}
+                    </button>
+                {% endfor %}
+            </div>
+
+            <div class="card w-100">
+                <div id="conversation-detail-panel" class="card-body d-flex flex-column"></div>
+            </div>
+
         </div>
 
-        <div class="card w-100">
-            <div id="conversation-detail-panel" class="card-body d-flex flex-column"></div>
-        </div>
+    {% else %}
 
-    </div>
+        <p>You are not participating in any conversations.</p>
+
+    {% endif %}
 {% endblock %}
 
 {% block script %}
