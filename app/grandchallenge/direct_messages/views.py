@@ -2,7 +2,13 @@ from django.contrib.auth import get_user_model
 from django.db.models import BooleanField, Case, Prefetch, Value, When
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
-from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    DetailView,
+    ListView,
+    UpdateView,
+)
 from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.core.guardian import (
@@ -12,6 +18,7 @@ from grandchallenge.core.guardian import (
 from grandchallenge.direct_messages.forms import (
     ConversationForm,
     DirectMessageForm,
+    DirectMessageReportSpamForm,
 )
 from grandchallenge.direct_messages.models import (
     Conversation,
@@ -84,10 +91,10 @@ class ConversationDetail(
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
 
-        form = DirectMessageForm(
+        direct_message_form = DirectMessageForm(
             sender=self.request.user, conversation=self.object
         )
-        form.helper.attrs.update(
+        direct_message_form.helper.attrs.update(
             {
                 "hx-post": reverse(
                     "direct-messages:direct-message-create",
@@ -97,7 +104,12 @@ class ConversationDetail(
             }
         )
 
-        context.update({"form": form})
+        context.update(
+            {
+                "direct_message_form": direct_message_form,
+                "report_spam_form": DirectMessageReportSpamForm(),
+            }
+        )
         return context
 
 
@@ -151,3 +163,51 @@ class DirectMessageCreate(
             {"sender": self.request.user, "conversation": self.conversation}
         )
         return form_kwargs
+
+
+class DirectMessageReportSpam(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
+):
+    permission_required = "direct_messages.mark_conversation_message_as_spam"
+    raise_exception = True
+    model = DirectMessage
+    form_class = DirectMessageReportSpamForm
+
+    @cached_property
+    def conversation(self):
+        return self.get_object().conversation
+
+    def get_permission_object(self):
+        return self.conversation
+
+    def form_valid(self, form):
+        DirectMessageUnreadBy.objects.filter(
+            direct_message__conversation=self.conversation,
+        ).delete()
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse(
+            "direct-messages:conversation-detail",
+            kwargs={"pk": self.conversation.pk},
+        )
+
+
+class DirectMessageDelete(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DeleteView
+):
+    permission_required = "direct_messages.delete_directmessage"
+    raise_exception = True
+    model = DirectMessage
+
+    def form_valid(self, form):
+        DirectMessageUnreadBy.objects.filter(
+            direct_message=self.object,
+        ).delete()
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse(
+            "direct-messages:conversation-detail",
+            kwargs={"pk": self.object.conversation.pk},
+        )

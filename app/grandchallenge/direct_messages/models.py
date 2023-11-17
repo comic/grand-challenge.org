@@ -12,6 +12,7 @@ from django.db.models import (
     When,
 )
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.subdomains.utils import reverse
@@ -46,6 +47,21 @@ class DirectMessage(UUIDModel):
             "direct-messages:conversation-detail",
             kwargs={"pk": self.conversation.pk},
         )
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.assign_permissions()
+
+    def delete(self, *args, **kwargs):
+        self.is_deleted = True
+        self.save()
+
+    def assign_permissions(self):
+        assign_perm("delete_directmessage", self.sender, self)
 
 
 class DirectMessageUnreadBy(models.Model):
@@ -117,9 +133,10 @@ class Conversation(UUIDModel):
                 "create_conversation_direct_message",
                 "Create a Direct Message for a Conversation",
             ),
+            ("mark_conversation_read", "Mark a Conversation as read"),
             (
-                "mark_conversation_read",
-                "Mark a Conversation as read",
+                "mark_conversation_message_as_spam",
+                "Mark a Conversation Message as spam",
             ),
         )
 

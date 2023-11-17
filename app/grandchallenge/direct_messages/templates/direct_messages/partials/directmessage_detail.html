@@ -1,7 +1,13 @@
 {% load bleach %}
 
-{% if preview %}
-    {{ direct_message.message|truncatechars:32 }}
+{% if direct_message.is_deleted %}
+    <p><em>This message was deleted.</em></p>
+{% elif direct_message.is_reported_as_spam and direct_message.sender != request.user %}
+    <p><em>This message has been removed.</em></p>
 {% else %}
-    {{ direct_message.message|md2email_html }}
+    {% if preview %}
+        <p>{{ direct_message.message|truncatechars:32 }}</p>
+    {% else %}
+        {{ direct_message.message|md2email_html }}
+    {% endif %}
 {% endif %}

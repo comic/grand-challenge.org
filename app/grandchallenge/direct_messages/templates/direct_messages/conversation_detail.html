@@ -31,9 +31,28 @@
                 {% include "direct_messages/partials/directmessage_detail.html" with preview=False %}
             </div>
         </div>
+
+        {% if direct_message.sender == request.user %}
+            {% if not direct_message.is_deleted %}
+                <form method="post"
+                      hx-post="{% url 'direct-messages:direct-message-delete' conversation_pk=object.pk pk=direct_message.pk %}"
+                      hx-target="#conversation-detail-panel">
+                    {% csrf_token %}
+                    <input type="submit" value="Delete">
+                </form>
+            {% endif %}
+        {% elif not direct_message.is_reported_as_spam %}
+            <form method="post"
+                  hx-post="{% url 'direct-messages:direct-message-report-spam' conversation_pk=object.pk pk=direct_message.pk %}"
+                  hx-target="#conversation-detail-panel">
+                {% csrf_token %}
+                {{ report_spam_form }}
+                <input type="submit" value="Report Spam">
+            </form>
+        {% endif %}
     {% endfor %}
 </div>
 
 <div>
-    {% crispy form %}
+    {% crispy direct_message_form %}
 </div>

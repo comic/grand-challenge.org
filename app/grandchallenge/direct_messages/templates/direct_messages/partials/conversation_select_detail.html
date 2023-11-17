@@ -34,7 +34,8 @@
 
 {% if object.unread_by_user %}
     <form class="conversation-mark-read-form"
-            action="{% url 'direct-messages:conversation-mark-read' pk=object.pk %}" method="post">
+          action="{% url 'direct-messages:conversation-mark-read' pk=object.pk %}"
+          method="post">
         {% csrf_token %}
     </form>
 {% endif %}

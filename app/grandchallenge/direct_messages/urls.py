@@ -7,6 +7,8 @@ from grandchallenge.direct_messages.views import (
     ConversationMarkRead,
     ConversationSelectDetail,
     DirectMessageCreate,
+    DirectMessageDelete,
+    DirectMessageReportSpam,
 )
 
 app_name = "direct_messages"
@@ -35,5 +37,15 @@ urlpatterns = [
         "<uuid:pk>/create/",
         DirectMessageCreate.as_view(),
         name="direct-message-create",
+    ),
+    path(
+        "<uuid:conversation_pk>/messages/<uuid:pk>/delete/",
+        DirectMessageDelete.as_view(),
+        name="direct-message-delete",
+    ),
+    path(
+        "<uuid:conversation_pk>/messages/<uuid:pk>/report-spam/",
+        DirectMessageReportSpam.as_view(),
+        name="direct-message-report-spam",
     ),
 ]

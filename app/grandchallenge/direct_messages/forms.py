@@ -84,3 +84,13 @@ class DirectMessageForm(forms.ModelForm):
             "unread_by",
             "message",
         )
+
+
+class DirectMessageReportSpamForm(forms.ModelForm):
+    is_reported_as_spam = forms.BooleanField(
+        initial=True, required=True, widget=forms.HiddenInput
+    )
+
+    class Meta:
+        model = DirectMessage
+        fields = ("is_reported_as_spam",)

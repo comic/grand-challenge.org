@@ -37,3 +37,4 @@ def update_permissions_on_participants_changed(
         op("view_conversation", user, conversations)
         op("create_conversation_direct_message", user, conversations)
         op("mark_conversation_read", user, conversations)
+        op("mark_conversation_message_as_spam", user, conversations)
