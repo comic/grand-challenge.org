@@ -9,7 +9,14 @@ document.body.addEventListener("htmx:afterOnLoad", function(evt) {
         }
         evt.target.classList.add("active");
 
-        // TODO mark the conversation as read
+        let markReadForm = evt.target.querySelector('.conversation-mark-read-form')
+        fetch(markReadForm.action, {
+            method: markReadForm.method,
+            body: new URLSearchParams(new FormData(markReadForm)),
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        });
 
         //  TODO remove the unread button (update the select button)
     } else if (evt.target.id === "conversation-detail-panel") {

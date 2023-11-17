@@ -4,6 +4,7 @@ from grandchallenge.direct_messages.views import (
     ConversationCreate,
     ConversationDetail,
     ConversationList,
+    ConversationMarkRead,
     DirectMessageCreate,
 )
 
@@ -18,6 +19,11 @@ urlpatterns = [
     ),
     path(
         "<uuid:pk>/", ConversationDetail.as_view(), name="conversation-detail"
+    ),
+    path(
+        "<uuid:pk>/mark-read/",
+        ConversationMarkRead.as_view(),
+        name="conversation-mark-read",
     ),
     path(
         "<uuid:pk>/create/",

@@ -12,7 +12,7 @@ from django.db.models import (
 )
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
-from django.views.generic import CreateView, DetailView, ListView
+from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.core.guardian import (
@@ -23,7 +23,11 @@ from grandchallenge.direct_messages.forms import (
     ConversationForm,
     DirectMessageForm,
 )
-from grandchallenge.direct_messages.models import Conversation, DirectMessage
+from grandchallenge.direct_messages.models import (
+    Conversation,
+    DirectMessage,
+    DirectMessageUnreadBy,
+)
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -132,6 +136,22 @@ class ConversationDetail(
 
         context.update({"form": form})
         return context
+
+
+class ConversationMarkRead(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
+):
+    permission_required = "direct_messages.mark_conversation_read"
+    raise_exception = True
+    model = Conversation
+    fields = ()
+
+    def form_valid(self, form):
+        DirectMessageUnreadBy.objects.filter(
+            direct_message__conversation=self.object,
+            unread_by=self.request.user,
+        ).delete()
+        return super().form_valid(form)
 
 
 class DirectMessageCreate(

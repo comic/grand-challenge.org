@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load url %}
 
 {% block title %}Conversations - {{ block.super }}{% endblock %}
 
@@ -28,6 +29,7 @@
                             </span>
                         {% endif %}
                     </div>
+
                     <p class="mb-1">
                         {% if conversation.direct_messages.first.sender == request.user %}
                             You:
@@ -36,7 +38,12 @@
                         {% endif %}
                         {{ conversation.direct_messages.first.message|truncatewords:4 }}
                     </p>
+
                     <small>{{ conversation.direct_messages.first.created }}</small>
+
+                    <form class="conversation-mark-read-form" action="{% url 'direct-messages:conversation-mark-read' pk=conversation.pk %}" method="post">
+                        {% csrf_token %}
+                    </form>
                 </button>
             {% endfor %}
         </div>

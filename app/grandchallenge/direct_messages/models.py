@@ -24,6 +24,10 @@ class Conversation(UUIDModel):
                 "create_conversation_direct_message",
                 "Create a Direct Message for a Conversation",
             ),
+            (
+                "mark_conversation_read",
+                "Mark a Conversation as read",
+            ),
         )
 
 
