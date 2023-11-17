@@ -182,7 +182,7 @@ class DirectMessageReportSpam(
 
     def form_valid(self, form):
         DirectMessageUnreadBy.objects.filter(
-            direct_message__conversation=self.conversation,
+            direct_message=self.object,
         ).delete()
         return super().form_valid(form)
 
