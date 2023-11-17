@@ -19,14 +19,16 @@
     {% endif %}
 </div>
 
-<p class="mb-1">
+<div class="d-flex w-100 justify-content-start mb-1" style="height: 1lh;">
+    <p>
     {% if object.direct_messages.first.sender == request.user %}
-        You:
+        You:&nbsp;
     {% else %}
-        {{ object.direct_messages.first.sender.first_name }}:
+        {{ object.direct_messages.first.sender.first_name }}:&nbsp;
     {% endif %}
-    {{ object.direct_messages.first.message|truncatewords:4 }}
-</p>
+    </p>
+    {% include "direct_messages/partials/directmessage_detail.html" with direct_message=object.direct_messages.first preview=True %}
+</div>
 
 <small>{{ object.direct_messages.first.created }}</small>
 

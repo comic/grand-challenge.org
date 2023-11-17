@@ -1,0 +1,7 @@
+{% load bleach %}
+
+{% if preview %}
+    {{ direct_message.message|truncatechars:32 }}
+{% else %}
+    {{ direct_message.message|md2email_html }}
+{% endif %}
