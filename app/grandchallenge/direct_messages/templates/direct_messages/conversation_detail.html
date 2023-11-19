@@ -45,17 +45,15 @@
                                 aria-expanded="false">
                         </button>
                         <div class="dropdown-menu" aria-labelledby="dropdown-menu-{{ direct_message.pk }}">
-                            <form id="direct-message-delete-{{ direct_message.pk }}"
-                                  method="post"
+                            <form method="post"
                                   hx-post="{% url 'direct-messages:direct-message-delete' conversation_pk=object.pk pk=direct_message.pk %}"
                                   hx-target="#conversation-detail-panel">
                                 {% csrf_token %}
-                            </form>
-                            <button class="dropdown-item"
+                                <button class="dropdown-item"
                                     type="submit"
-                                    form="direct-message-delete-{{ direct_message.pk }}"
                                     value="Delete"><i class="far fa-trash-alt text-danger"></i> Delete Message
-                            </button>
+                                </button>
+                            </form>
                         </div>
                     </div>
                 {% elif direct_message.sender != request.user and not direct_message.is_deleted and not direct_message.is_reported_as_spam %}
@@ -68,17 +66,16 @@
                                 aria-expanded="false">
                         </button>
                         <div class="dropdown-menu" aria-labelledby="dropdown-menu-{{ direct_message.pk }}">
-                            <form id="direct-message-report-spam-{{ direct_message.pk }}"
-                                  method="post"
+                            <form method="post"
                                   hx-post="{% url 'direct-messages:direct-message-report-spam' conversation_pk=object.pk pk=direct_message.pk %}"
                                   hx-target="#conversation-detail-panel">
                                 {% csrf_token %}
                                 {{ report_spam_form }}
-                            </form>
-                            <button class="dropdown-item"
+                                <button class="dropdown-item"
                                     type="submit"
-                                    form="direct-message-report-spam-{{ direct_message.pk }}" value="Report Spam"><i class="fas fa-ban text-danger"></i> Report Message as Junk
-                            </button>
+                                    value="Report Spam"><i class="fas fa-ban text-danger"></i> Report Message as Junk
+                                </button>
+                            </form>
                         </div>
                     </div>
                 {% endif %}
