@@ -1,8 +1,10 @@
+from urllib.parse import urlencode
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models import BooleanField, Case, Prefetch, Value, When
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.utils.functional import cached_property
 from django.views.generic import (
     CreateView,
@@ -56,6 +58,24 @@ class ConversationCreate(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         form_kwargs.update({"participants": participants})
 
         return form_kwargs
+
+    def get_conversation_list_url(self, *, conversation_pk):
+        url = reverse("direct_messages:conversation-list")
+        query = urlencode(query={"conversation": conversation_pk})
+        return f"{url}?{query}"
+
+    def form_invalid(self, form):
+        if form.has_error(field="participants", code="CONVERSATION_EXISTS"):
+            return redirect(
+                to=self.get_conversation_list_url(
+                    conversation_pk=form.existing_conversations.get().pk
+                )
+            )
+        else:
+            return super().form_invalid(form)
+
+    def get_success_url(self):
+        return self.get_conversation_list_url(conversation_pk=self.object.pk)
 
 
 class ConversationList(LoginRequiredMixin, ListView):

@@ -3,6 +3,7 @@
 {% load profiles %}
 {% load evaluation_extras %}
 {% load static %}
+{% load crispy_forms_tags %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -202,6 +203,14 @@
     {% if "change_challenge" in challenge_perms %}
         <div class="card card-danger border-danger">
             <div class="card-header bg-danger text-white">Evaluation Admin</div>
+
+            {% if conversation_form %}
+                <div class="card-body">
+                    <h3 class="card-title">Contact User</h3>
+
+                    {% crispy conversation_form %}
+                </div>
+            {% endif %}
 
             {% if object.status != object.SUCCESS and incomplete_jobs %}
                 <div class="card-body">

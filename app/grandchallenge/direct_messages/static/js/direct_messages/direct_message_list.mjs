@@ -1,6 +1,19 @@
+document.addEventListener("DOMContentLoaded", function() {
+    // Jump to targeted conversation
+    const urlParams = new URLSearchParams(window.location.search);
+    const conversationId = urlParams.get('conversation');
+
+    if (conversationId !== null) {
+        document.getElementById(`conversation-select-button-${conversationId}`).click();
+    }
+});
+
 document.body.addEventListener("htmx:afterOnLoad", function(evt) {
+    // Scroll to bottom of message panel
     let conversationDetail = document.getElementById("conversation-direct-messages-panel");
     conversationDetail.scrollTop = conversationDetail.scrollHeight;
+
+    // TODO Activate the message writing panel
 
     if (evt.target.classList.contains("conversation-detail-select")) {
         // Event was from switching the conversation detail

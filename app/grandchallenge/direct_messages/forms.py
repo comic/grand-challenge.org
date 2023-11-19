@@ -1,18 +1,28 @@
+from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.db.models import Count, Q
 from guardian.utils import get_anonymous_user
 
-from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.direct_messages.models import Conversation, DirectMessage
 
 
-class ConversationForm(SaveFormInitMixin, forms.ModelForm):
+class ConversationForm(forms.ModelForm):
     def __init__(self, *args, participants, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.layout.append(
+            StrictButton(
+                '<i class="far fa-comment"></i> Message User',
+                type="submit",
+                css_class="btn btn-primary",
+            )
+        )
 
         self.fields["participants"].queryset = participants
         self.fields["participants"].initial = participants
@@ -28,7 +38,21 @@ class ConversationForm(SaveFormInitMixin, forms.ModelForm):
         if len(participants) < 2:
             raise ValidationError("Too few participants")
 
-        # TODO check that a conversation with this set of users does not exist
+        if existing := Conversation.objects.annotate(
+            total_participants_count=Count("participants", distinct=True),
+            relevant_participants_count=Count(
+                "participants",
+                filter=Q(participants__in=participants),
+                distinct=True,
+            ),
+        ).filter(
+            total_participants_count=len(participants),
+            relevant_participants_count=len(participants),
+        ):
+            self.existing_conversations = existing
+            raise ValidationError(
+                "Conversation already exists", code="CONVERSATION_EXISTS"
+            )
 
         return participants
 
