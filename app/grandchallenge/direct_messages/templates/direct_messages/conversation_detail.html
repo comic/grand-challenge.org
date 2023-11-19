@@ -26,18 +26,22 @@
                                 aria-expanded="false">
                         </button>
                         <div class="dropdown-menu" aria-labelledby="dropdown-menu-{{ participant.pk }}">
-                            <form method="post"
-                                  hx-post="{% url 'direct-messages:mute-create' username=participant.username %}"
-                                  hx-target="#conversation-detail-panel">
-                                {% csrf_token %}
-                                <input type="hidden" name="source" value="{{ request.user.pk }}" disabled="" id="id_source">
-                                <input type="hidden" name="target" value="{{ participant.pk }}" disabled="" id="id_target">
-                                <input type="hidden" name="conversation" value="{{ object.pk }}" id="id_conversation">
-                                <button class="dropdown-item"
-                                    type="submit"
-                                    value="Delete"><i class="fas fa-comment-slash text-danger"></i> Block User
-                                </button>
-                            </form>
+                            {% if participant in muted_users %}
+                                {# TODO unmute the user #}
+                            {% else %}
+                                <form method="post"
+                                      hx-post="{% url 'direct-messages:mute-create' username=participant.username %}"
+                                      hx-target="#conversation-detail-panel">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="source" value="{{ request.user.pk }}" disabled="">
+                                    <input type="hidden" name="target" value="{{ participant.pk }}" disabled="">
+                                    <input type="hidden" name="conversation" value="{{ object.pk }}">
+                                    <button class="dropdown-item"
+                                            type="submit"
+                                            value="Block"><i class="fas fa-comment-slash text-danger"></i> Block User
+                                    </button>
+                                </form>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -101,7 +105,7 @@
                             </form>
                         </div>
                     </div>
-                {% elif direct_message.sender != request.user and not direct_message.is_deleted and not direct_message.is_reported_as_spam %}
+                {% elif direct_message.sender != request.user and not direct_message.is_deleted and not direct_message.is_reported_as_spam and not direct_message.sender in muted_users %}
                     <div class="dropdown">
                         <button class="btn btn-link dropdown-toggle btn-sm"
                                 type="button"

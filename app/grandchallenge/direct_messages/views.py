@@ -83,6 +83,19 @@ class ConversationList(LoginRequiredMixin, ListView):
             codename="view_conversation",
         )
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+
+        context.update(
+            {
+                "muted_users": {
+                    m.target: m.pk
+                    for m in Mute.objects.filter(source=self.request.user)
+                },
+            }
+        )
+        return context
+
 
 class ConversationDetail(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
@@ -130,6 +143,13 @@ class ConversationDetail(
             {
                 "direct_message_form": direct_message_form,
                 "report_spam_form": DirectMessageReportSpamForm(),
+                "muted_users": {
+                    m.target: m.pk
+                    for m in Mute.objects.filter(
+                        source=self.request.user,
+                        target__in=self.object.participants.all(),
+                    )
+                },
             }
         )
         return context
