@@ -1,8 +1,53 @@
 {% load url %}
 {% load crispy_forms_tags %}
 
+<div class="card-header flex-shrink-0">
+    {% for participant in object.participants.all %}
+        {% if participant != request.user %}
+            <div class="d-flex w-100 justify-content-start align-items-center">
+                <img class="rounded-circle align-middle p-1"
+                     src="{{ participant.user_profile.get_mugshot_url }}"
+                     alt="User Mugshot" style="height: 2.5rem"/>
+
+                <div class="d-flex flex-column overflow-hidden">
+                        <h6 class="m-0"><b>{{ participant.first_name }}&nbsp;{{ participant.last_name }}</b>&nbsp;(<a
+                            href="{{ participant.user_profile.get_absolute_url }}">{{ participant.username }}</a>)
+                        </h6>
+                        <small>{{ participant.verification.verification_badge }} {{ participant.user_profile.department }}, {{ participant.user_profile.institution }}, {{ participant.user_profile.country.name }}.</small>
+                </div>
+
+                <div class="ml-auto">
+                    <div class="dropdown">
+                        <button class="btn btn-link dropdown-toggle btn-sm"
+                                type="button"
+                                id="dropdown-menu-{{ participant.pk }}"
+                                data-toggle="dropdown"
+                                aria-haspopup="true"
+                                aria-expanded="false">
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="dropdown-menu-{{ participant.pk }}">
+                            <form method="post"
+                                  {% comment %}
+                                  TODO mute endpoint and check if muted
+                                  hx-post="{% url 'direct-messages:mut' conversation_pk=object.pk pk=direct_message.pk %}"
+                                  {% endcomment %}
+                                  hx-target="#conversation-detail-panel">
+                                {% csrf_token %}
+                                <button class="dropdown-item"
+                                    type="submit"
+                                    value="Delete"><i class="fas fa-comment-slash text-danger"></i> Mute User
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    {% endfor %}
+</div>
+
 <div id="conversation-direct-messages-panel"
-     class="overflow-auto flex-grow-1"
+     class="card-body overflow-auto flex-grow-1"
      data-conversation-select-detail-url="{% url 'direct-messages:conversation-select-detail' pk=object.pk %}"
      data-conversation-select-button-selector="#conversation-select-button-{{ object.pk }}">
     {% for direct_message in object.direct_messages.all %}
@@ -85,6 +130,6 @@
     {% endfor %}
 </div>
 
-<div>
+<div class="card-footer flex-shrink-0">
     {% crispy direct_message_form %}
 </div>
