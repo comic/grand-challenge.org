@@ -88,13 +88,22 @@ class DirectMessageForm(forms.ModelForm):
         self.fields["sender"].disabled = True
         self.fields["sender"].widget = forms.HiddenInput()
 
-        # TODO ensure that Mutes are taken into account
-        unread_by = conversation.participants.exclude(pk=sender.pk)
+        exclude_notifications = {
+            m.source.pk
+            for m in Mute.objects.filter(
+                target=sender, source__in=conversation.participants.all()
+            )
+        }
+        exclude_notifications.add(sender.pk)
+        unread_by = conversation.participants.exclude(
+            pk__in=exclude_notifications
+        )
 
         self.fields["unread_by"].queryset = unread_by
         self.fields["unread_by"].initial = unread_by
         self.fields["unread_by"].disabled = True
         self.fields["unread_by"].widget = forms.MultipleHiddenInput()
+        self.fields["unread_by"].required = False
 
         self.fields["message"].widget = forms.Textarea(
             attrs={
