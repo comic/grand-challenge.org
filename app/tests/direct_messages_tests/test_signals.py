@@ -1,4 +1,5 @@
 import pytest
+from guardian.utils import get_anonymous_user
 
 from tests.direct_messages_tests.factories import ConversationFactory
 from tests.evaluation_tests.test_permissions import get_users_with_set_perms
@@ -47,3 +48,12 @@ def test_conversation_participants_permissions_signal(reverse):
 
     assert get_users_with_set_perms(c1) == {}
     assert get_users_with_set_perms(c2) == {}
+
+
+@pytest.mark.django_db
+def test_anon_not_participant():
+    conversation = ConversationFactory()
+
+    with pytest.raises(RuntimeError) as e:
+        conversation.participants.add(get_anonymous_user())
+        assert str(e) == "The Anonymous User cannot be added to this group"

@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
@@ -34,6 +35,11 @@ def update_permissions_on_participants_changed(
     op = assign_perm if "add" in action else remove_perm
 
     for user in users:
+        if user.username == settings.ANONYMOUS_USER_NAME:
+            raise RuntimeError(
+                "The Anonymous User cannot be added to this group"
+            )
+
         op("view_conversation", user, conversations)
         op("create_conversation_direct_message", user, conversations)
         op("mark_conversation_read", user, conversations)
