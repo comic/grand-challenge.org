@@ -1,4 +1,6 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models import BooleanField, Case, Prefetch, Value, When
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
@@ -11,6 +13,7 @@ from django.views.generic import (
 )
 from guardian.mixins import LoginRequiredMixin
 
+from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     filter_by_permission,
@@ -28,12 +31,20 @@ from grandchallenge.direct_messages.models import (
 from grandchallenge.subdomains.utils import reverse
 
 
-class ConversationCreate(LoginRequiredMixin, CreateView):
-    # TODO permissions - check the user can create conversations and that they're able to contact this (set of users)
-    # permission_required = "direct_messages.view_conversation"
+class ConversationCreate(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     raise_exception = True
     model = Conversation
     form_class = ConversationForm
+
+    def test_func(self):
+        if settings.ANONYMOUS_USER_NAME == self.kwargs["username"]:
+            return False
+        else:
+            # Only challenge admins can message their participants
+            return Challenge.objects.filter(
+                admins_group__user=self.request.user,
+                participants_group__user__username=self.kwargs["username"],
+            ).exists()
 
     def get_form_kwargs(self, *args, **kwargs):
         form_kwargs = super().get_form_kwargs(*args, **kwargs)
