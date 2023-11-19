@@ -1,5 +1,3 @@
-from urllib.parse import urlencode
-
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import UserPassesTestMixin
@@ -24,11 +22,13 @@ from grandchallenge.direct_messages.forms import (
     ConversationForm,
     DirectMessageForm,
     DirectMessageReportSpamForm,
+    MuteForm,
 )
 from grandchallenge.direct_messages.models import (
     Conversation,
     DirectMessage,
     DirectMessageUnreadBy,
+    Mute,
 )
 from grandchallenge.subdomains.utils import reverse
 
@@ -59,23 +59,14 @@ class ConversationCreate(LoginRequiredMixin, UserPassesTestMixin, CreateView):
 
         return form_kwargs
 
-    def get_conversation_list_url(self, *, conversation_pk):
-        url = reverse("direct_messages:conversation-list")
-        query = urlencode(query={"conversation": conversation_pk})
-        return f"{url}?{query}"
-
     def form_invalid(self, form):
         if form.has_error(field="participants", code="CONVERSATION_EXISTS"):
-            return redirect(
-                to=self.get_conversation_list_url(
-                    conversation_pk=form.existing_conversations.get().pk
-                )
-            )
+            return redirect(to=form.existing_conversations.get().list_view_url)
         else:
             return super().form_invalid(form)
 
     def get_success_url(self):
-        return self.get_conversation_list_url(conversation_pk=self.object.pk)
+        return self.object.list_view_url
 
 
 class ConversationList(LoginRequiredMixin, ListView):
@@ -230,3 +221,27 @@ class DirectMessageDelete(
             "direct-messages:conversation-detail",
             kwargs={"pk": self.object.conversation.pk},
         )
+
+
+class MuteCreate(LoginRequiredMixin, CreateView):
+    model = Mute
+    form_class = MuteForm
+
+    @property
+    def target(self):
+        return get_object_or_404(
+            get_user_model(), username=self.kwargs["username"]
+        )
+
+    def get_form_kwargs(self, *args, **kwargs):
+        form_kwargs = super().get_form_kwargs(*args, **kwargs)
+
+        form_kwargs.update(
+            {"source": self.request.user, "target": self.target}
+        )
+
+        return form_kwargs
+
+    def form_valid(self, form):
+        self.success_url = form.cleaned_data["conversation"].get_absolute_url()
+        return super().form_valid(form)

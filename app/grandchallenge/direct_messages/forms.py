@@ -8,7 +8,11 @@ from django.db.models import Count, Q
 from guardian.utils import get_anonymous_user
 
 from grandchallenge.core.guardian import filter_by_permission
-from grandchallenge.direct_messages.models import Conversation, DirectMessage
+from grandchallenge.direct_messages.models import (
+    Conversation,
+    DirectMessage,
+    Mute,
+)
 
 
 class ConversationForm(forms.ModelForm):
@@ -118,3 +122,49 @@ class DirectMessageReportSpamForm(forms.ModelForm):
     class Meta:
         model = DirectMessage
         fields = ("is_reported_as_spam",)
+
+
+class MuteForm(forms.ModelForm):
+    conversation = forms.ModelChoiceField(
+        queryset=Conversation.objects.none(), widget=forms.HiddenInput()
+    )
+
+    def __init__(self, *args, source, target, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["source"].queryset = get_user_model().objects.filter(
+            pk=source.pk
+        )
+        self.fields["source"].initial = source
+        self.fields["source"].disabled = True
+        self.fields["source"].widget = forms.HiddenInput()
+
+        self.fields["target"].queryset = get_user_model().objects.filter(
+            pk=target.pk
+        )
+        self.fields["target"].initial = target
+        self.fields["target"].disabled = True
+        self.fields["target"].widget = forms.HiddenInput()
+
+        self.fields["conversation"].queryset = filter_by_permission(
+            queryset=Conversation.objects.all(),
+            user=source,
+            codename="view_conversation",
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if Mute.objects.filter(
+            source=cleaned_data["source"], target=cleaned_data["target"]
+        ).exists():
+            raise ValidationError("Mute already exists")
+
+        return cleaned_data
+
+    class Meta:
+        model = Mute
+        fields = (
+            "source",
+            "target",
+        )

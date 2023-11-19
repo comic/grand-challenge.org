@@ -9,6 +9,7 @@ from grandchallenge.direct_messages.views import (
     DirectMessageCreate,
     DirectMessageDelete,
     DirectMessageReportSpam,
+    MuteCreate,
 )
 
 app_name = "direct_messages"
@@ -19,6 +20,11 @@ urlpatterns = [
         r"^create/(?P<username>[\@\.\+\w-]+)/$",
         ConversationCreate.as_view(),
         name="conversation-create",
+    ),
+    re_path(
+        r"^mute/(?P<username>[\@\.\+\w-]+)/$",
+        MuteCreate.as_view(),
+        name="mute-create",
     ),
     path(
         "<uuid:pk>/", ConversationDetail.as_view(), name="conversation-detail"

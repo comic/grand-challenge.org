@@ -1,3 +1,5 @@
+from urllib.parse import urlencode
+
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import (
@@ -87,6 +89,9 @@ class Mute(UUIDModel):
         help_text="The user who has muted the target",
     )
 
+    class Meta:
+        unique_together = (("target", "source"),)
+
 
 class ConversationQuerySet(models.QuerySet):
     def with_most_recent_message(self, *, user):
@@ -129,6 +134,12 @@ class Conversation(UUIDModel):
         return reverse(
             "direct-messages:conversation-detail", kwargs={"pk": self.pk}
         )
+
+    @property
+    def list_view_url(self):
+        url = reverse("direct_messages:conversation-list")
+        query = urlencode(query={"conversation": self.pk})
+        return f"{url}?{query}"
 
     class Meta:
         permissions = (

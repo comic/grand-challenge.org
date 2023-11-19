@@ -27,15 +27,15 @@
                         </button>
                         <div class="dropdown-menu" aria-labelledby="dropdown-menu-{{ participant.pk }}">
                             <form method="post"
-                                  {% comment %}
-                                  TODO mute endpoint and check if muted
-                                  hx-post="{% url 'direct-messages:mut' conversation_pk=object.pk pk=direct_message.pk %}"
-                                  {% endcomment %}
+                                  hx-post="{% url 'direct-messages:mute-create' username=participant.username %}"
                                   hx-target="#conversation-detail-panel">
                                 {% csrf_token %}
+                                <input type="hidden" name="source" value="{{ request.user.pk }}" disabled="" id="id_source">
+                                <input type="hidden" name="target" value="{{ participant.pk }}" disabled="" id="id_target">
+                                <input type="hidden" name="conversation" value="{{ object.pk }}" id="id_conversation">
                                 <button class="dropdown-item"
                                     type="submit"
-                                    value="Delete"><i class="fas fa-comment-slash text-danger"></i> Mute User
+                                    value="Delete"><i class="fas fa-comment-slash text-danger"></i> Block User
                                 </button>
                             </form>
                         </div>
