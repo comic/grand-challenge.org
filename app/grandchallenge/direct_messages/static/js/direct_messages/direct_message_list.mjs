@@ -13,7 +13,7 @@ document.body.addEventListener("htmx:afterOnLoad", function(evt) {
     let conversationDetail = document.getElementById("conversation-direct-messages-panel");
     conversationDetail.scrollTop = conversationDetail.scrollHeight;
 
-    // TODO Activate the message writing panel
+    document.getElementById("id_message").focus();
 
     if (evt.target.classList.contains("conversation-detail-select")) {
         // Event was from switching the conversation detail
