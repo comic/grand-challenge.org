@@ -97,8 +97,6 @@ class Mute(UUIDModel):
         help_text="The user who has muted the target",
     )
 
-    # TODO delete unread marks on creation
-
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
@@ -106,6 +104,9 @@ class Mute(UUIDModel):
 
         if adding:
             self.assign_permissions()
+            DirectMessageUnreadBy.objects.filter(
+                direct_message__sender=self.target, unread_by=self.source
+            ).delete()
 
     def assign_permissions(self):
         assign_perm("delete_mute", self.source, self)
