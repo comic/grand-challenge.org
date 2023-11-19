@@ -75,6 +75,14 @@ class DirectMessageUnreadBy(models.Model):
     unread_by = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
 
 
+class DirectMessageUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(DirectMessage, on_delete=models.CASCADE)
+
+
+class DirectMessageGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(DirectMessage, on_delete=models.CASCADE)
+
+
 class Mute(UUIDModel):
     target = models.ForeignKey(
         get_user_model(),
@@ -89,8 +97,29 @@ class Mute(UUIDModel):
         help_text="The user who has muted the target",
     )
 
+    # TODO delete unread marks on creation
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.assign_permissions()
+
+    def assign_permissions(self):
+        assign_perm("delete_mute", self.source, self)
+
     class Meta:
         unique_together = (("target", "source"),)
+
+
+class MuteUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(Mute, on_delete=models.CASCADE)
+
+
+class MuteGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(Mute, on_delete=models.CASCADE)
 
 
 class ConversationQuerySet(models.QuerySet):

@@ -22,6 +22,7 @@ from grandchallenge.direct_messages.forms import (
     ConversationForm,
     DirectMessageForm,
     DirectMessageReportSpamForm,
+    MuteDeleteForm,
     MuteForm,
 )
 from grandchallenge.direct_messages.models import (
@@ -167,6 +168,22 @@ class ConversationSelectDetail(
         queryset = super().get_queryset()
         return queryset.with_most_recent_message(user=self.request.user)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+
+        context.update(
+            {
+                "muted_users": {
+                    m.target: m.pk
+                    for m in Mute.objects.filter(
+                        source=self.request.user,
+                        target__in=self.object.participants.all(),
+                    )
+                },
+            }
+        )
+        return context
+
 
 class ConversationMarkRead(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
@@ -259,6 +276,26 @@ class MuteCreate(LoginRequiredMixin, CreateView):
         form_kwargs.update(
             {"source": self.request.user, "target": self.target}
         )
+
+        return form_kwargs
+
+    def form_valid(self, form):
+        self.success_url = form.cleaned_data["conversation"].get_absolute_url()
+        return super().form_valid(form)
+
+
+class MuteDelete(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DeleteView
+):
+    permission_required = "direct_messages.delete_mute"
+    raise_exception = True
+    model = Mute
+    form_class = MuteDeleteForm
+
+    def get_form_kwargs(self, *args, **kwargs):
+        form_kwargs = super().get_form_kwargs(*args, **kwargs)
+
+        form_kwargs.update({"user": self.request.user})
 
         return form_kwargs
 

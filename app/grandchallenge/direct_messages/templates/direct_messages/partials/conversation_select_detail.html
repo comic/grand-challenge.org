@@ -7,7 +7,9 @@
                 <img class="rounded-circle align-middle"
                      src="{{ participant.user_profile.get_mugshot_url }}"
                      alt="User Mugshot" style="height: 1.33em"/>&nbsp;
+                {% if participant in muted_users %}<s>{% endif %}
                 <b>{{ participant.first_name }}&nbsp;{{ participant.last_name }}</b>&nbsp;({{ participant.username }})
+                {% if participant in muted_users %}</s>{% endif %}
             {% endif %}
         {% endfor %}
     </h6>
@@ -20,7 +22,7 @@
 </div>
 
 <div class="d-flex w-100 justify-content-start mb-1 text-nowrap" style="height: 1.33rem;">
-    {% if object.direct_messages.first %}
+    {% if object.direct_messages.first and object.direct_messages.first.sender not in muted_users %}
         <p>
         {% if object.direct_messages.first.sender == request.user %}
             You:&nbsp;

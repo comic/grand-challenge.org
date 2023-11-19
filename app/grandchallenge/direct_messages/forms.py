@@ -88,6 +88,7 @@ class DirectMessageForm(forms.ModelForm):
         self.fields["sender"].disabled = True
         self.fields["sender"].widget = forms.HiddenInput()
 
+        # TODO ensure that Mutes are taken into account
         unread_by = conversation.participants.exclude(pk=sender.pk)
 
         self.fields["unread_by"].queryset = unread_by
@@ -168,3 +169,22 @@ class MuteForm(forms.ModelForm):
             "source",
             "target",
         )
+
+
+class MuteDeleteForm(forms.ModelForm):
+    conversation = forms.ModelChoiceField(
+        queryset=Conversation.objects.none(), widget=forms.HiddenInput()
+    )
+
+    def __init__(self, *args, user, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["conversation"].queryset = filter_by_permission(
+            queryset=Conversation.objects.all(),
+            user=user,
+            codename="view_conversation",
+        )
+
+    class Meta:
+        model = Mute
+        fields = ()

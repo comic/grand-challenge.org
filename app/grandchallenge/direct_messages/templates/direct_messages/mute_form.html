@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Create Mute - {{ block.super }}{% endblock %}
+
+{% block content %}
+    <h2>Create Mute</h2>
+
+    {% crispy form %}
+{% endblock %}

@@ -1,5 +1,6 @@
 {% load url %}
 {% load crispy_forms_tags %}
+{% load dict_lookup %}
 
 <div class="card-header flex-shrink-0">
     {% for participant in object.participants.all %}
@@ -10,8 +11,11 @@
                      alt="User Mugshot" style="height: 2.5rem"/>
 
                 <div class="d-flex flex-column overflow-hidden">
-                        <h6 class="m-0"><b>{{ participant.first_name }}&nbsp;{{ participant.last_name }}</b>&nbsp;(<a
+                        <h6 class="m-0">
+                            {% if participant in muted_users %}<s>{% endif %}
+                            <b>{{ participant.first_name }}&nbsp;{{ participant.last_name }}</b>&nbsp;(<a
                             href="{{ participant.user_profile.get_absolute_url }}">{{ participant.username }}</a>)
+                            {% if participant in muted_users %}</s>{% endif %}
                         </h6>
                         <small>{{ participant.verification.verification_badge }} {{ participant.user_profile.department }}, {{ participant.user_profile.institution }}, {{ participant.user_profile.country.name }}.</small>
                 </div>
@@ -26,8 +30,18 @@
                                 aria-expanded="false">
                         </button>
                         <div class="dropdown-menu" aria-labelledby="dropdown-menu-{{ participant.pk }}">
-                            {% if participant in muted_users %}
-                                {# TODO unmute the user #}
+                            {% get_dict_values muted_users participant as mute_pk %}
+                            {% if mute_pk %}
+                                <form method="post"
+                                      hx-post="{% url 'direct-messages:mute-delete' pk=mute_pk %}"
+                                      hx-target="#conversation-detail-panel">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="conversation" value="{{ object.pk }}">
+                                    <button class="dropdown-item"
+                                            type="submit"
+                                            value="Unlock"><i class="fas fa-comment text-success"></i> Unblock User
+                                    </button>
+                                </form>
                             {% else %}
                                 <form method="post"
                                       hx-post="{% url 'direct-messages:mute-create' username=participant.username %}"
@@ -68,7 +82,10 @@
                     <img class="rounded-circle align-middle"
                          src="{{ direct_message.sender.user_profile.get_mugshot_url }}"
                          alt="User Mugshot"
-                         style="height: 1.33em"/>&nbsp;<b>{{ direct_message.sender.first_name }}&nbsp;{{ direct_message.sender.last_name }}</b>&nbsp;(<a href="{{ direct_message.sender.user_profile.get_absolute_url }}">{{ direct_message.sender.username }}</a>)
+                         style="height: 1.33em"/>&nbsp;
+                    {% if direct_message.sender in muted_users %}<s>{% endif %}
+                    <b>{{ direct_message.sender.first_name }}&nbsp;{{ direct_message.sender.last_name }}</b>&nbsp;(<a href="{{ direct_message.sender.user_profile.get_absolute_url }}">{{ direct_message.sender.username }}</a>)
+                    {% if direct_message.sender in muted_users %}</s>{% endif %}
                 </h6>
                 <span>{{ direct_message.created|time }}</span>
             </div>
