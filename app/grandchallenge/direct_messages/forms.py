@@ -4,7 +4,6 @@ from crispy_forms.layout import Submit
 from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.db.models import Count, Q
 from guardian.utils import get_anonymous_user
 
 from grandchallenge.core.guardian import filter_by_permission
@@ -42,16 +41,8 @@ class ConversationForm(forms.ModelForm):
         if len(participants) < 2:
             raise ValidationError("Too few participants")
 
-        if existing := Conversation.objects.annotate(
-            total_participants_count=Count("participants", distinct=True),
-            relevant_participants_count=Count(
-                "participants",
-                filter=Q(participants__in=participants),
-                distinct=True,
-            ),
-        ).filter(
-            total_participants_count=len(participants),
-            relevant_participants_count=len(participants),
+        if existing := Conversation.objects.for_participants(
+            participants=participants
         ):
             self.existing_conversations = existing
             raise ValidationError(

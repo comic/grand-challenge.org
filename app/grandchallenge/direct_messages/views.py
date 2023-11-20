@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import UserPassesTestMixin
-from django.db.models import BooleanField, Case, Prefetch, Value, When
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.functional import cached_property
 from django.views.generic import (
@@ -70,7 +69,23 @@ class ConversationCreate(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         return self.object.list_view_url
 
 
-class ConversationList(LoginRequiredMixin, ListView):
+class MutedUsersMixin:
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+
+        context.update(
+            {
+                "muted_users": {
+                    m.target: m.pk
+                    for m in Mute.objects.filter(source=self.request.user)
+                },
+            }
+        )
+
+        return context
+
+
+class ConversationList(LoginRequiredMixin, MutedUsersMixin, ListView):
     model = Conversation
 
     def get_queryset(self):
@@ -84,22 +99,12 @@ class ConversationList(LoginRequiredMixin, ListView):
             codename="view_conversation",
         )
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data()
-
-        context.update(
-            {
-                "muted_users": {
-                    m.target: m.pk
-                    for m in Mute.objects.filter(source=self.request.user)
-                },
-            }
-        )
-        return context
-
 
 class ConversationDetail(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    MutedUsersMixin,
+    DetailView,
 ):
     permission_required = "direct_messages.view_conversation"
     raise_exception = True
@@ -108,19 +113,9 @@ class ConversationDetail(
     def get_queryset(self):
         queryset = super().get_queryset()
 
-        queryset = queryset.prefetch_related(
-            Prefetch(
-                "direct_messages",
-                queryset=DirectMessage.objects.order_by("created").annotate(
-                    unread_by_user=Case(
-                        When(unread_by=self.request.user, then=Value(True)),
-                        default=Value(False),
-                        output_field=BooleanField(),
-                    )
-                ),
-            ),
-            "direct_messages__sender__user_profile",
-        )
+        queryset = queryset.with_unread_by_user(
+            user=self.request.user
+        ).prefetch_related("direct_messages__sender__user_profile")
 
         return queryset
 
@@ -144,20 +139,16 @@ class ConversationDetail(
             {
                 "direct_message_form": direct_message_form,
                 "report_spam_form": DirectMessageReportSpamForm(),
-                "muted_users": {
-                    m.target: m.pk
-                    for m in Mute.objects.filter(
-                        source=self.request.user,
-                        target__in=self.object.participants.all(),
-                    )
-                },
             }
         )
         return context
 
 
 class ConversationSelectDetail(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    MutedUsersMixin,
+    DetailView,
 ):
     permission_required = "direct_messages.view_conversation"
     raise_exception = True
@@ -167,22 +158,6 @@ class ConversationSelectDetail(
     def get_queryset(self):
         queryset = super().get_queryset()
         return queryset.with_most_recent_message(user=self.request.user)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data()
-
-        context.update(
-            {
-                "muted_users": {
-                    m.target: m.pk
-                    for m in Mute.objects.filter(
-                        source=self.request.user,
-                        target__in=self.object.participants.all(),
-                    )
-                },
-            }
-        )
-        return context
 
 
 class ConversationMarkRead(

@@ -141,6 +141,10 @@ def _create_users(usernames):
             email=user.email,
             is_verified=True,
         )
+
+        user.user_profile.institution = fake.company()
+        user.user_profile.department = f"Department of {fake.job().title()}s"
+        user.user_profile.country = fake.country_code()
         user.user_profile.receive_newsletter = True
         user.user_profile.save()
         users[username] = user

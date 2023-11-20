@@ -56,7 +56,7 @@ class DirectMessage(UUIDModel):
         super().save(*args, **kwargs)
 
         if self.is_deleted or self.is_reported_as_spam:
-            DirectMessageUnreadBy.objects.filter(direct_message=self).delete()
+            self.unread_by.all().delete()
 
         if adding:
             self.assign_permissions()
@@ -125,6 +125,13 @@ class MuteGroupObjectPermission(GroupObjectPermissionBase):
 
 class ConversationQuerySet(models.QuerySet):
     def with_most_recent_message(self, *, user):
+        """
+        Adds the most recent message to each conversation
+
+        Also includes a count of the number of unread messages in that conversation,
+        and whether the conversation has unread messages which can be used for
+        ordering.
+        """
         most_recent_message = DirectMessage.objects.order_by("-created")
 
         return self.prefetch_related(
@@ -148,6 +155,40 @@ class ConversationQuerySet(models.QuerySet):
                 default=Value(True),
                 output_field=BooleanField(),
             ),
+        )
+
+    def with_unread_by_user(self, *, user):
+        """Adds whether the user has read each direct message in the conversation"""
+        return self.prefetch_related(
+            Prefetch(
+                "direct_messages",
+                queryset=DirectMessage.objects.order_by("created").annotate(
+                    unread_by_user=Case(
+                        When(unread_by=user, then=Value(True)),
+                        default=Value(False),
+                        output_field=BooleanField(),
+                    )
+                ),
+            )
+        )
+
+    def for_participants(self, *, participants):
+        """
+        Find the conversations with the given set of participants
+
+        Looks for set equality. If there are additional or missing participants
+        those conversations are excluded.
+        """
+        return self.annotate(
+            total_participants_count=Count("participants", distinct=True),
+            relevant_participants_count=Count(
+                "participants",
+                filter=Q(participants__in=participants),
+                distinct=True,
+            ),
+        ).filter(
+            total_participants_count=len(participants),
+            relevant_participants_count=len(participants),
         )
 
 
