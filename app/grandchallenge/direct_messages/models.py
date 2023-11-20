@@ -162,13 +162,15 @@ class ConversationQuerySet(models.QuerySet):
         return self.prefetch_related(
             Prefetch(
                 "direct_messages",
-                queryset=DirectMessage.objects.order_by("created").annotate(
+                queryset=DirectMessage.objects.order_by("created")
+                .annotate(
                     unread_by_user=Case(
                         When(unread_by=user, then=Value(True)),
                         default=Value(False),
                         output_field=BooleanField(),
                     )
-                ),
+                )
+                .distinct(),
             )
         )
 
