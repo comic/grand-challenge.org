@@ -1,6 +1,8 @@
-window.toggleCheckboxes = function toggleCheckboxes(source) {
+document.getElementById("SelectCheckboxes").addEventListener("click", toggleCheckboxes);
+
+function toggleCheckboxes(source) {
     $('input[name="checkbox"]').each(function () {
-        this.checked = source.checked;
+        this.checked = source.target.checked;
     })
     const nChecked = $('input[name="checkbox"]:checked').length
     if (nChecked == 0) {
