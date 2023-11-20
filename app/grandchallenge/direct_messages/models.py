@@ -56,7 +56,7 @@ class DirectMessage(UUIDModel):
         super().save(*args, **kwargs)
 
         if self.is_deleted or self.is_reported_as_spam:
-            self.unread_by.all().delete()
+            self.unread_by.clear()
 
         if adding:
             self.assign_permissions()
