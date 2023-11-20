@@ -5,6 +5,7 @@ from guardian.shortcuts import assign_perm
 from requests import put
 
 from grandchallenge.cases.widgets import WidgetChoices
+from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.notifications.models import Notification
 from grandchallenge.reader_studies.models import Answer, DisplaySet, Question
 from tests.cases_tests import RESOURCE_PATH
@@ -388,37 +389,17 @@ def test_display_set_detail(client):
 
 
 @pytest.mark.django_db
-def test_display_set_update(client):
+def test_display_set_update_permissions(client):
     u1, u2 = UserFactory.create_batch(2)
     rs = ReaderStudyFactory()
-    ds1, ds2 = DisplaySetFactory.create_batch(2, reader_study=rs)
+    ds1 = DisplaySetFactory(reader_study=rs)
     rs.add_editor(u1)
-    ci_json = ComponentInterfaceFactory(kind="JSON")
-    ci_json_file = ComponentInterfaceFactory(
-        kind="JSON", store_in_database=False
-    )
-    ci_img = ComponentInterfaceFactory(kind="IMG")
-    im1, im2 = ImageFactory.create_batch(2)
-    assign_perm("cases.view_image", u1, im2)
-    civ_json = ComponentInterfaceValueFactory(
-        interface=ci_json, value={"foo": "bar"}
-    )
-    civ_img = ComponentInterfaceValueFactory(interface=ci_img, image=im1)
-    civ_json_file = ComponentInterfaceValueFactory(interface=ci_json_file)
-    ds1.values.set([civ_json, civ_json_file, civ_img])
-
-    civ_img_new = ComponentInterfaceValueFactory(interface=ci_img, image=im2)
-    civ_json_file_new = ComponentInterfaceValueFactory(interface=ci_json_file)
-    ds2.values.add(civ_img_new, civ_json_file_new)
-
-    assert DisplaySet.objects.count() == 2
     response = get_view_for_user(
         viewname="reader-studies:display-set-update",
         client=client,
         reverse_kwargs={"pk": ds1.pk, "slug": rs.slug},
         user=u2,
     )
-
     assert response.status_code == 403
 
     response = get_view_for_user(
@@ -427,9 +408,39 @@ def test_display_set_update(client):
         reverse_kwargs={"pk": ds1.pk, "slug": rs.slug},
         user=u1,
     )
-
     assert response.status_code == 200
 
+
+@pytest.mark.django_db
+def test_display_set_update(client):
+    user = UserFactory()
+    rs = ReaderStudyFactory()
+    ds1, ds2 = DisplaySetFactory.create_batch(2, reader_study=rs)
+    rs.add_editor(user)
+    # 3 interfaces of different types
+    ci_json = ComponentInterfaceFactory(kind="JSON")
+    ci_json_file = ComponentInterfaceFactory(
+        kind="JSON", store_in_database=False
+    )
+    ci_img = ComponentInterfaceFactory(kind="IMG")
+    # create CIVs for those interfaces
+    im1, im2 = ImageFactory.create_batch(2)
+    assign_perm("cases.view_image", user, im2)
+    civ_json = ComponentInterfaceValueFactory(
+        interface=ci_json, value={"foo": "bar"}
+    )
+    civ_img = ComponentInterfaceValueFactory(interface=ci_img, image=im1)
+    civ_json_file = ComponentInterfaceValueFactory(interface=ci_json_file)
+
+    # add 3 CIVs to display set
+    ds1.values.set([civ_json, civ_json_file, civ_img])
+
+    # create new civs to update old ones
+    civ_img_new = ComponentInterfaceValueFactory(interface=ci_img, image=im2)
+    civ_json_file_new = ComponentInterfaceValueFactory(interface=ci_json_file)
+    ds2.values.set([civ_json_file_new, civ_img_new])
+
+    # test updating of all 3 interface types
     response = get_view_for_user(
         viewname="reader-studies:display-set-update",
         client=client,
@@ -441,18 +452,60 @@ def test_display_set_update(client):
             ci_json_file.slug: str(civ_json_file_new.pk),
             "order": 11,
         },
-        user=u1,
+        user=user,
         method=client.post,
     )
-
     assert response.status_code == 302
     assert ds1.values.count() == 3
     assert not ds1.values.filter(pk=civ_img.pk).exists()
     assert ds1.values.filter(pk=civ_img_new.pk).exists()
-
     assert not ds1.values.filter(pk=civ_json_file.pk).exists()
     assert ds1.values.filter(pk=civ_json_file_new.pk).exists()
     assert ds1.values.get(interface=ci_json).value == {"foo": "new"}
+
+    n_civs_old = ComponentInterfaceValue.objects.count()
+    # test saving without any changes
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-update",
+        client=client,
+        reverse_kwargs={"pk": ds1.pk, "slug": rs.slug},
+        data={
+            ci_json.slug: '{"foo": "new"}',
+            ci_img.slug: str(im2.pk),
+            f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
+            ci_json_file.slug: str(civ_json_file_new.pk),
+            "order": 11,
+        },
+        user=user,
+        method=client.post,
+    )
+    assert response.status_code == 302
+    # no new CIVs have been created
+    assert n_civs_old == ComponentInterfaceValue.objects.count()
+    assert ds1.values.count() == 3
+    assert ds1.values.filter(pk=civ_img_new.pk).exists()
+    assert ds1.values.filter(pk=civ_json_file_new.pk).exists()
+    assert ds1.values.get(interface=ci_json).value == {"foo": "new"}
+
+    # test removing json file and json value interface values
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-update",
+        client=client,
+        reverse_kwargs={"pk": ds1.pk, "slug": rs.slug},
+        data={
+            ci_img.slug: str(im2.pk),
+            f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
+            "order": 11,
+        },
+        user=user,
+        method=client.post,
+    )
+    assert response.status_code == 302
+    assert ds1.values.count() == 1
+    assert n_civs_old == ComponentInterfaceValue.objects.count()
+    assert ds1.values.filter(pk=civ_img_new.pk).exists()
+    assert not ds1.values.filter(pk=civ_json_file_new.pk).exists()
+    assert not ds1.values.filter(interface=ci_json).exists()
 
 
 @pytest.mark.django_db
@@ -730,7 +783,9 @@ def test_display_set_interfaces_create(
     rs.add_editor(u1)
 
     ci_file = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
-    ci_value = ComponentInterfaceFactory(kind="JSON", store_in_database=True)
+    ci_value = ComponentInterfaceFactory(
+        kind="JSON", store_in_database=True, schema={"type": "array"}
+    )
     ci_image = ComponentInterfaceFactory(kind="IMG", store_in_database=False)
     ci_image_2 = ComponentInterfaceFactory(kind="IMG", store_in_database=False)
 
@@ -753,18 +808,29 @@ def test_display_set_interfaces_create(
     assert response.status_code == 200
 
     assert not ds.values.filter(interface=ci_value).exists()
+    old_civ_count = ComponentInterfaceValue.objects.count()
     response = get_view_for_user(
         viewname="reader-studies:display-set-interfaces-create",
         client=client,
         reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
-        data={"interface": str(ci_value.pk), ci_value.slug: '{"foo": "bar"}'},
+        data={"interface": str(ci_value.pk), ci_value.slug: ""},
         user=u1,
         method=client.post,
     )
+    assert "This field is required" in str(response.content)
+    assert ComponentInterfaceValue.objects.count() == old_civ_count
 
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-interfaces-create",
+        client=client,
+        reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
+        data={"interface": str(ci_value.pk), ci_value.slug: '["foo", "bar"]'},
+        user=u1,
+        method=client.post,
+    )
     assert response.status_code == 302
     civ = ds.values.get(interface=ci_value)
-    assert civ.value == {"foo": "bar"}
+    assert civ.value == ["foo", "bar"]
 
     assert not ds.values.filter(interface=ci_file).exists()
     upload = UserUploadFactory(filename="file.json", creator=u1)

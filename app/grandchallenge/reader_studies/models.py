@@ -14,7 +14,7 @@ from django.core.validators import (
     RegexValidator,
 )
 from django.db import models
-from django.db.models import Avg, Count, Q, Sum
+from django.db.models import Avg, Count, Q, QuerySet, Sum
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.functional import cached_property
@@ -26,6 +26,7 @@ from simple_history.models import HistoricalRecords
 from stdimage import JPEGField
 
 from grandchallenge.anatomy.models import BodyStructure
+from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -914,6 +915,71 @@ class DisplaySet(UUIDModel):
             ).values_list("image__name", flat=True)[0]
         except (KeyError, IndexError):
             return self.values.values_list("image__name", flat=True).first()
+
+    def create_civ(self, ci_slug, new_value, user=None):
+        ci = ComponentInterface.objects.get(slug=ci_slug)
+        current_civ = self.values.filter(interface=ci).first()
+        if ci.is_json_kind and not ci.requires_file:
+            return self.create_civ_for_value(ci, current_civ, new_value)
+        elif ci.is_image_kind:
+            return self.create_civ_for_image(ci, current_civ, new_value, user)
+        elif ci.requires_file:
+            return self.create_civ_for_file(current_civ, new_value)
+        else:
+            NotImplementedError(f"CIV creation for {ci} not handled.")
+
+    def create_civ_for_value(self, ci, current_civ, new_value):
+        current_value = current_civ.value if current_civ else None
+        if new_value and current_value != new_value:
+            self.values.remove(current_civ)
+            civ = ComponentInterfaceValue.objects.create(
+                interface=ci, value=new_value
+            )
+            civ.full_clean()
+            self.values.add(civ)
+        elif not new_value:
+            # if the new value is None, remove the old CIV from the display set
+            self.values.remove(current_civ)
+
+    def create_civ_for_image(self, ci, current_civ, new_value, user):
+        current_image = current_civ.image if current_civ else None
+        if isinstance(new_value, Image) and current_image != new_value:
+            self.values.remove(current_civ)
+            civ, created = ComponentInterfaceValue.objects.get_or_create(
+                interface=ci, image=new_value
+            )
+            if created:
+                civ.full_clean()
+            self.values.add(civ)
+        elif isinstance(new_value, QuerySet):
+            # Local import to avoid circular dependency
+            from grandchallenge.reader_studies.tasks import (
+                add_image_to_display_set,
+            )
+
+            us = RawImageUploadSession.objects.create(
+                creator=user,
+            )
+            us.user_uploads.set(new_value)
+            us.process_images(
+                linked_task=add_image_to_display_set.signature(
+                    kwargs={
+                        "display_set_pk": self.pk,
+                        "interface_pk": str(ci.pk),
+                    },
+                    immutable=True,
+                )
+            )
+
+    def create_civ_for_file(self, current_civ, new_value):
+        # in this case, new_value is an instance of a CIV already (or None)
+        if new_value and current_civ != new_value:
+            self.values.remove(current_civ)
+            self.values.add(new_value)
+        elif not new_value:
+            # if no new value is provided (user selects '---' in dropdown)
+            # delete old CIV
+            self.values.remove(current_civ)
 
 
 class DisplaySetUserObjectPermission(UserObjectPermissionBase):
