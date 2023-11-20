@@ -212,7 +212,7 @@ def _create_help_forum():
 def _create_demo_challenge(users, algorithm):
     demo = Challenge.objects.create(
         short_name="demo",
-        description="demo project",
+        description="Demo Challenge",
         creator=users["demo"],
         use_workspaces=True,
         hidden=False,
