@@ -1440,7 +1440,10 @@ CSP_IMG_SRC = (
     "'self'",  # Used by Open Sea Dragon
     "https:",  # Arbitrary files used on blog posts and challenge pages
 )
-CSP_FRAME_SRC = ("https://mailchi.mp",)  # For products blog posts
+CSP_FRAME_SRC = (
+    "https://mailchi.mp",  # For products blog posts
+    "https://www.youtube-nocookie.com",  # For embedding YouTube
+)
 CSP_MEDIA_SRC = (
     *CSP_MEDIA_HOSTS,
     "https://user-images.githubusercontent.com",  # Used in blog posts
