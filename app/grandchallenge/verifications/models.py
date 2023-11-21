@@ -78,6 +78,17 @@ class Verification(models.Model):
             self.user.user_profile.website,
         )
 
+    @property
+    def verification_badge(self):
+        if self.is_verified:
+            return format_html(
+                '<i class="fas fa-user-check text-success" '
+                'title="Verified email address at {}"></i>',
+                self.email.split("@")[1],
+            )
+        else:
+            return ""
+
     def send_verification_email(self):
         if self.email_is_verified:
             # Nothing to do

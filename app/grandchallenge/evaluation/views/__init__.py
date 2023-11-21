@@ -3,6 +3,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
@@ -31,6 +32,7 @@ from grandchallenge.core.guardian import (
     filter_by_permission,
 )
 from grandchallenge.datatables.views import Column, PaginatedTableListView
+from grandchallenge.direct_messages.forms import ConversationForm
 from grandchallenge.evaluation.forms import (
     CombinedLeaderboardForm,
     EvaluationForm,
@@ -541,6 +543,25 @@ class EvaluationDetail(ObjectPermissionRequiredMixin, DetailView):
     permission_required = "view_evaluation"
     raise_exception = True
 
+    def get_conversation_form(self):
+        if self.object.submission.creator:
+            conversation_form = ConversationForm(
+                participants=get_user_model().objects.filter(
+                    pk__in={
+                        self.request.user.pk,
+                        self.object.submission.creator.pk,
+                    }
+                )
+            )
+            conversation_form.helper.form_action = reverse(
+                "direct_messages:conversation-create",
+                kwargs={"username": self.object.submission.creator.username},
+            )
+        else:
+            conversation_form = None
+
+        return conversation_form
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
@@ -613,6 +634,7 @@ class EvaluationDetail(ObjectPermissionRequiredMixin, DetailView):
                 "json": json,
                 "predictions": predictions,
                 "incomplete_jobs": incomplete_jobs,
+                "conversation_form": self.get_conversation_form(),
             }
         )
 
