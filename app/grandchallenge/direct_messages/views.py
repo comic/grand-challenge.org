@@ -208,6 +208,13 @@ class DirectMessageReportSpam(
     model = DirectMessage
     form_class = DirectMessageReportSpamForm
 
+    def get_object(self, *args, **kwargs):
+        return get_object_or_404(
+            DirectMessage,
+            pk=self.kwargs["pk"],
+            conversation__pk=self.kwargs["conversation_pk"],
+        )
+
     @cached_property
     def conversation(self):
         return self.get_object().conversation
@@ -228,6 +235,13 @@ class DirectMessageDelete(
     permission_required = "direct_messages.delete_directmessage"
     raise_exception = True
     model = DirectMessage
+
+    def get_object(self, *args, **kwargs):
+        return get_object_or_404(
+            DirectMessage,
+            pk=self.kwargs["pk"],
+            conversation__pk=self.kwargs["conversation_pk"],
+        )
 
     def get_success_url(self):
         return reverse(
@@ -268,7 +282,7 @@ class MuteDelete(
     model = Mute
     form_class = MuteDeleteForm
 
-    def get_object(self, queryset=None):
+    def get_object(self, *args, **kwargs):
         return get_object_or_404(
             Mute,
             source=self.request.user,

@@ -1,7 +1,12 @@
 import pytest
+from guardian.shortcuts import remove_perm
 from guardian.utils import get_anonymous_user
 
-from grandchallenge.direct_messages.models import Conversation, Mute
+from grandchallenge.direct_messages.models import (
+    Conversation,
+    DirectMessage,
+    Mute,
+)
 from tests.direct_messages_tests.factories import (
     ConversationFactory,
     DirectMessageFactory,
@@ -227,6 +232,7 @@ def test_mute_delete_redirect(client):
     conversation.participants.set(users)
 
     mute = MuteFactory(source=users[0], target=users[1])
+    MuteFactory(source=users[0])
 
     response = get_view_for_user(
         client=client,
@@ -241,3 +247,244 @@ def test_mute_delete_redirect(client):
 
     with pytest.raises(Mute.DoesNotExist):
         mute.refresh_from_db()
+
+
+@pytest.mark.django_db
+def test_mute_delete_permission(client):
+    users = UserFactory.create_batch(2)
+    conversation = ConversationFactory()
+    conversation.participants.set(users)
+
+    mute = MuteFactory(source=users[0], target=users[1])
+
+    remove_perm("delete_mute", users[0], mute)
+
+    response = get_view_for_user(
+        client=client,
+        viewname="direct_messages:mute-delete",
+        reverse_kwargs={"username": users[1].username},
+        user=users[0],
+        method=client.post,
+        data={"conversation": conversation.pk},
+    )
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_conversation_list_filtered(client):
+    users = UserFactory.create_batch(2)
+    conversation = ConversationFactory()
+    conversation.participants.set(users)
+
+    other_conversation = ConversationFactory()
+    other_conversation.participants.set([users[1]])
+
+    response = get_view_for_user(
+        client=client,
+        viewname="direct_messages:conversation-list",
+        user=users[0],
+    )
+    assert response.status_code == 200
+    assert {*response.context["object_list"]} == {conversation}
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "viewname",
+    [
+        "conversation-detail",
+        "conversation-select-detail",
+        "conversation-mark-read",
+        "direct-message-create",
+    ],
+)
+def test_conversation_detail_permissions(client, viewname):
+    users = UserFactory.create_batch(2)
+    conversation = ConversationFactory()
+    conversation.participants.set(users)
+
+    response = get_view_for_user(
+        client=client,
+        viewname=f"direct_messages:{viewname}",
+        reverse_kwargs={"pk": conversation.pk},
+        user=users[0],
+    )
+    assert response.status_code == 200
+
+    conversation.participants.remove(users[0])
+
+    response = get_view_for_user(
+        client=client,
+        viewname=f"direct_messages:{viewname}",
+        reverse_kwargs={"pk": conversation.pk},
+        user=users[0],
+    )
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_conversation_mark_read(client):
+    users = UserFactory.create_batch(2)
+
+    for _ in range(2):
+        conversation = ConversationFactory()
+        conversation.participants.set(users)
+
+        message = DirectMessageFactory(
+            conversation=conversation, sender=users[0]
+        )
+        message.unread_by.set(users)
+
+    response = get_view_for_user(
+        client=client,
+        viewname="direct_messages:conversation-mark-read",
+        reverse_kwargs={"pk": conversation.pk},
+        user=users[1],
+        method=client.post,
+    )
+    assert response.status_code == 302
+    assert response.url == conversation.get_absolute_url()
+
+    conversation.participants.remove(users[1])
+
+    response = get_view_for_user(
+        client=client,
+        viewname="direct_messages:conversation-mark-read",
+        reverse_kwargs={"pk": conversation.pk},
+        user=users[1],
+        method=client.post,
+    )
+    assert response.status_code == 403
+
+    conversations = Conversation.objects.order_by(
+        "created"
+    ).with_most_recent_message(user=users[1])
+
+    assert conversations[0].unread_by_user is True
+    assert conversations[1].unread_by_user is False
+
+    conversations = Conversation.objects.order_by(
+        "created"
+    ).with_most_recent_message(user=users[0])
+
+    assert conversations[0].unread_by_user is True
+    assert conversations[1].unread_by_user is True
+
+
+@pytest.mark.django_db
+def test_direct_message_report_spam(client):
+    users = UserFactory.create_batch(2)
+
+    conversation = ConversationFactory()
+    conversation.participants.set(users)
+
+    for _ in range(2):
+        message = DirectMessageFactory(
+            conversation=conversation, sender=users[0]
+        )
+        message.unread_by.set(users)
+
+    response = get_view_for_user(
+        client=client,
+        viewname="direct_messages:direct-message-report-spam",
+        reverse_kwargs={"conversation_pk": conversation.pk, "pk": message.pk},
+        user=users[1],
+        method=client.post,
+        data={"is_reported_as_spam": True},
+    )
+    assert response.status_code == 302
+    assert response.url == conversation.get_absolute_url()
+
+    conversation.participants.remove(users[1])
+
+    response = get_view_for_user(
+        client=client,
+        viewname="direct_messages:direct-message-report-spam",
+        reverse_kwargs={"conversation_pk": conversation.pk, "pk": message.pk},
+        user=users[1],
+        method=client.post,
+        data={"is_reported_as_spam": True},
+    )
+    assert response.status_code == 403
+
+    messages = DirectMessage.objects.order_by("created")
+    assert messages[0].is_reported_as_spam is False
+    assert messages[1].is_reported_as_spam is True
+
+
+@pytest.mark.django_db
+def test_direct_message_delete(client):
+    users = UserFactory.create_batch(2)
+
+    conversation = ConversationFactory()
+    conversation.participants.set(users)
+
+    for _ in range(2):
+        message = DirectMessageFactory(
+            conversation=conversation, sender=users[0]
+        )
+        message.unread_by.set(users)
+
+    response = get_view_for_user(
+        client=client,
+        viewname="direct_messages:direct-message-delete",
+        reverse_kwargs={"conversation_pk": conversation.pk, "pk": message.pk},
+        user=users[0],
+        method=client.post,
+        data={"conversation": conversation.pk},
+    )
+    assert response.status_code == 302
+    assert response.url == conversation.get_absolute_url()
+
+    response = get_view_for_user(
+        client=client,
+        viewname="direct_messages:direct-message-delete",
+        reverse_kwargs={"conversation_pk": conversation.pk, "pk": message.pk},
+        user=users[1],
+        method=client.post,
+        data={"conversation": conversation.pk},
+    )
+    assert response.status_code == 403
+
+    messages = DirectMessage.objects.order_by("created")
+    assert messages[0].is_deleted is False
+    assert messages[1].is_deleted is True
+
+
+@pytest.mark.django_db
+def test_all_views_require_login(client, settings):
+    user = UserFactory()
+    anon = get_anonymous_user()
+
+    conversation = ConversationFactory()
+    conversation.participants.set([user])
+
+    message = DirectMessageFactory(conversation=conversation)
+
+    tests = (
+        ("conversation-list", {}),
+        ("conversation-create", {"username": user.username}),
+        ("mute-create", {"username": user.username}),
+        ("mute-delete", {"username": user.username}),
+        ("conversation-detail", {"pk": conversation.pk}),
+        ("conversation-mark-read", {"pk": conversation.pk}),
+        ("conversation-select-detail", {"pk": conversation.pk}),
+        ("direct-message-create", {"pk": conversation.pk}),
+        (
+            "direct-message-delete",
+            {"pk": message.pk, "conversation_pk": conversation.pk},
+        ),
+        (
+            "direct-message-report-spam",
+            {"pk": message.pk, "conversation_pk": conversation.pk},
+        ),
+    )
+    for viewname, reverse_kwargs in tests:
+        response = get_view_for_user(
+            client=client,
+            viewname=f"direct_messages:{viewname}",
+            reverse_kwargs=reverse_kwargs,
+            user=anon,
+        )
+        assert response.status_code == 302
+        assert response.url.startswith(settings.LOGIN_URL)
