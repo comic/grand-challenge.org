@@ -156,10 +156,8 @@ class MuteForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
 
-        if Mute.objects.filter(
-            source=cleaned_data["source"], target=cleaned_data["target"]
-        ).exists():
-            raise ValidationError("Mute already exists")
+        if cleaned_data["source"] == cleaned_data["target"]:
+            raise ValidationError("You cannot mute yourself")
 
         return cleaned_data
 

@@ -1,6 +1,5 @@
 {% load url %}
 {% load crispy_forms_tags %}
-{% load dict_lookup %}
 
 <div class="card-header flex-shrink-0">
     {% for participant in object.participants.all %}
@@ -12,10 +11,10 @@
 
                 <div class="d-flex flex-column overflow-hidden">
                         <h6 class="m-0">
-                            {% if participant in muted_users %}<s>{% endif %}
+                            {% if participant.username in muted_usernames %}<s>{% endif %}
                             <b>{{ participant.first_name }}&nbsp;{{ participant.last_name }}</b>&nbsp;(<a
                             href="{{ participant.user_profile.get_absolute_url }}">{{ participant.username }}</a>)
-                            {% if participant in muted_users %}</s>{% endif %}
+                            {% if participant.username in muted_usernames %}</s>{% endif %}
                         </h6>
                         <small>{{ participant.verification.verification_badge }} {{ participant.user_profile.department }}, {{ participant.user_profile.institution }}, {{ participant.user_profile.country.name }}.</small>
                 </div>
@@ -30,10 +29,9 @@
                                 aria-expanded="false">
                         </button>
                         <div class="dropdown-menu" aria-labelledby="dropdown-menu-{{ participant.pk }}">
-                            {% get_dict_values muted_users participant as mute_pk %}
-                            {% if mute_pk %}
+                            {% if participant.username in muted_usernames %}
                                 <form method="post"
-                                      hx-post="{% url 'direct-messages:mute-delete' pk=mute_pk %}"
+                                      hx-post="{% url 'direct-messages:mute-delete' username=participant.username %}"
                                       hx-target="#conversation-detail-panel">
                                     {% csrf_token %}
                                     <input type="hidden" name="conversation" value="{{ object.pk }}">
@@ -83,9 +81,9 @@
                          src="{{ direct_message.sender.user_profile.get_mugshot_url }}"
                          alt="User Mugshot"
                          style="height: 1.33em"/>&nbsp;
-                    {% if direct_message.sender in muted_users %}<s>{% endif %}
+                    {% if direct_message.sender.username in muted_usernames %}<s>{% endif %}
                     <b>{{ direct_message.sender.first_name }}&nbsp;{{ direct_message.sender.last_name }}</b>&nbsp;(<a href="{{ direct_message.sender.user_profile.get_absolute_url }}">{{ direct_message.sender.username }}</a>)
-                    {% if direct_message.sender in muted_users %}</s>{% endif %}
+                    {% if direct_message.sender.username in muted_usernames %}</s>{% endif %}
                 </h6>
                 <span>{{ direct_message.created|time }}</span>
             </div>
@@ -122,7 +120,7 @@
                             </form>
                         </div>
                     </div>
-                {% elif direct_message.sender != request.user and not direct_message.is_deleted and not direct_message.is_reported_as_spam and not direct_message.sender in muted_users %}
+                {% elif direct_message.sender != request.user and not direct_message.is_deleted and not direct_message.is_reported_as_spam and not direct_message.sender.username in muted_usernames %}
                     <div class="dropdown">
                         <button class="btn btn-link dropdown-toggle btn-sm"
                                 type="button"

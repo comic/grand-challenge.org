@@ -28,8 +28,8 @@ urlpatterns = [
         MuteCreate.as_view(),
         name="mute-create",
     ),
-    path(
-        "mute/<uuid:pk>/delete/",
+    re_path(
+        r"mute/(?P<username>[\@\.\+\w-]+)/delete/$",
         MuteDelete.as_view(),
         name="mute-delete",
     ),

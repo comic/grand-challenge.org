@@ -1,6 +1,6 @@
 {% load bleach %}
 
-{% if direct_message.sender in muted_users %}
+{% if direct_message.sender.username in muted_usernames %}
     <p><em>You have blocked this user.</em></p>
 {% elif direct_message.is_deleted %}
     <p><em>This message has been deleted.</em></p>

@@ -75,9 +75,10 @@ class MutedUsersMixin:
 
         context.update(
             {
-                "muted_users": {
-                    m.target: m.pk
-                    for m in Mute.objects.filter(source=self.request.user)
+                "muted_usernames": {
+                    *Mute.objects.filter(source=self.request.user).values_list(
+                        "target__username", flat=True
+                    )
                 },
             }
         )
@@ -266,6 +267,13 @@ class MuteDelete(
     raise_exception = True
     model = Mute
     form_class = MuteDeleteForm
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(
+            Mute,
+            source=self.request.user,
+            target__username=self.kwargs["username"],
+        )
 
     def get_form_kwargs(self, *args, **kwargs):
         form_kwargs = super().get_form_kwargs(*args, **kwargs)
