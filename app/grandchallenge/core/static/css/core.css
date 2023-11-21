@@ -256,3 +256,12 @@ a[aria-expanded=true] .fa-chevron-right {
 a[aria-expanded=false] .fa-chevron-down {
    display: none;
 }
+
+
+.youtube {
+    display: inline-block;
+    aspect-ratio: 16/9;
+    height: auto;
+    min-width: 480px;
+    min-height: 270px;
+}

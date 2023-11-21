@@ -51,7 +51,7 @@ class EmbedYoutubeExtension(Extension):
         md.registerExtension(self)
         md.inlinePatterns.register(
             EmbedYouTubeInLineProcessor(
-                r"\[\s*youtube\s*([A-Za-z0-9_-]{11})\s*([0-9]+)\s*([0-9]+)\s*\]",
+                r"^\[\s*youtube\s*([A-Za-z0-9_-]{11})\s*([0-9]*)\s*([0-9]*)\s*\]",
                 md,
             ),
             "embed_youtube_extension",
@@ -85,7 +85,7 @@ class EmbedYouTubeInLineProcessor(InlineProcessor):
                 ]
             ),
         )
-        el.set("class", "youtube")
+        el.set("class", "youtube embedded-responsive")
 
         min_width = 480
         width = m.group(2) and int(m.group(2)) or min_width
@@ -93,9 +93,10 @@ class EmbedYouTubeInLineProcessor(InlineProcessor):
         el.set("width", str(width))
 
         min_height = 270
-        height = m.group(3) and int(m.group(3)) or min_height
-        height = max(height, min_height)
-        el.set("height", str(height))
+        height = m.group(3) and int(m.group(3))
+        if height:
+            height = max(height, min_height)
+            el.set("height", str(height))
 
         el.set("frameborder", "0")
         el.set("allowfullscreen", "")

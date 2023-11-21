@@ -58,12 +58,16 @@ def test_markdown_rendering():
     assert output == EXPECTED_HTML
 
 
-def _gen_expected_iframe(width=480, height=270):
+def _gen_expected_iframe(width=480, height=None):
+    if height is not None:
+        height_str = f'height="{height!r}" '
+    else:
+        height_str = ""
     return (
         "<p>\n"
         '<iframe allow="accelerometer; autoplay; encrypted-media; gyroscope; '
         'picture-in-picture; web-share; fullscreen" allowfullscreen="" '
-        f'class="youtube embedded-responsive" frameborder="0" height="{height!r}" '
+        f'class="youtube embedded-responsive" frameborder="0" {height_str}'
         'src="https://www.youtube-nocookie.com/embed/QCYYhkTlnhQ?disablekb=1&amp;rel=0&amp;" '
         f'width="{width!r}"><a href="https://www.youtube.com/watch?v=QCYYhkTlnhQ" '
         'target="_blank">View YouTube video</a></iframe>\n'
@@ -92,7 +96,7 @@ def _gen_expected_iframe(width=480, height=270):
         ),
         (  # minim width and height
             "[youtube QCYYhkTlnhQ 1 1]",
-            _gen_expected_iframe(),
+            _gen_expected_iframe(width=480, height=270),
         ),
     ],
 )
