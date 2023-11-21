@@ -6,7 +6,10 @@ from django.utils.safestring import mark_safe
 from markdown import markdown as render_markdown
 from markdown.extensions.toc import TocExtension
 
-from grandchallenge.core.utils.markdown import LinkBlankTargetExtension
+from grandchallenge.core.utils.markdown import (
+    EmbedYoutubeExtension,
+    LinkBlankTargetExtension,
+)
 
 register = template.Library()
 
@@ -39,11 +42,23 @@ def md2email_html(markdown: str | None):
 
 
 @register.filter
+def md2page_html(markdown: str | None):
+    """Converts markdown to clean html intended for showing as a page"""
+    return md2html(
+        markdown,
+        link_blank_target=True,
+        create_permalink_for_headers=True,
+        embed_youtube=True,
+    )
+
+
+@register.filter
 def md2html(
     markdown: str | None,
     *,
     link_blank_target=False,
     create_permalink_for_headers=True,
+    embed_youtube=False,
 ):
     """Convert markdown to clean html"""
 
@@ -59,6 +74,9 @@ def md2html(
                 permalink_class="headerlink text-muted small pl-1",
             )
         )
+
+    if embed_youtube:
+        extensions.append(EmbedYoutubeExtension())
 
     html = render_markdown(
         text=markdown or "",

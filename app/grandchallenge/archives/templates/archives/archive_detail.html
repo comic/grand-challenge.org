@@ -91,7 +91,7 @@
 
             <h2>{{ object.title }}</h2>
 
-            {{ object.detail_page_markdown|md2html }}
+            {{ object.detail_page_markdown|md2page_html }}
 
             {% if "change_archive" in object_perms %}
                 <hr>
