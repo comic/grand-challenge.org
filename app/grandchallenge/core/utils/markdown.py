@@ -1,4 +1,7 @@
+from xml.etree import ElementTree
+
 from markdown import Extension
+from markdown.inlinepatterns import InlineProcessor
 from markdown.treeprocessors import Treeprocessor
 
 
@@ -41,3 +44,68 @@ class LinkBlankTargetTreeprocessor(Treeprocessor):
             if el.tag == "a":
                 el.set("target", "_blank")
                 el.set("rel", "noopener")
+
+
+class EmbedYoutubeExtension(Extension):
+    def extendMarkdown(self, md):  # noqa: N802
+        md.registerExtension(self)
+        md.inlinePatterns.register(
+            EmbedYouTubeInLineProcessor(
+                r"\[\s*youtube\s*([A-Za-z0-9_-]{11})\s*([0-9]+)\s*([0-9]+)\s*\]",
+                md,
+            ),
+            "embed_youtube_extension",
+            0,
+        )
+
+
+class EmbedYouTubeInLineProcessor(InlineProcessor):
+    def handleMatch(self, m, data):  # noqa: N802
+        youtube_id = m.group(1)
+
+        el = ElementTree.Element("iframe")
+
+        el.set(
+            "src",
+            f"https://www.youtube-nocookie.com/embed/{youtube_id}?"
+            "disablekb=1&"  # Prevents keyboard shortcuts
+            "rel=0&",  # Disables related videos from other channels
+        )
+        el.set(
+            "allow",
+            "; ".join(
+                [
+                    "accelerometer",
+                    "autoplay",
+                    "encrypted-media",
+                    "gyroscope",
+                    "picture-in-picture",
+                    "web-share",
+                    "fullscreen",
+                ]
+            ),
+        )
+        el.set("class", "youtube")
+
+        min_width = 480
+        width = m.group(2) and int(m.group(2)) or min_width
+        width = max(width, min_width)
+        el.set("width", str(width))
+
+        min_height = 270
+        height = m.group(3) and int(m.group(3)) or min_height
+        height = max(height, min_height)
+        el.set("height", str(height))
+
+        el.set("frameborder", "0")
+        el.set("allowfullscreen", "")
+
+        alt_el = ElementTree.SubElement(el, "a")
+        alt_el.set(
+            "href",
+            f"https://www.youtube.com/watch?v={youtube_id}",
+        )
+        alt_el.set("target", "_blank")
+        alt_el.text = "View YouTube video"
+
+        return el, m.start(0), m.end(0)
