@@ -58,14 +58,15 @@ def test_request_challenge_only_when_verified(client):
 def test_view_and_update_challenge_request(
     client, challenge_reviewer, challenge_request
 ):
-    # challenge request creator cannot view or update the request
     response = get_view_for_user(
         client=client,
         viewname="challenges:requests-detail",
         reverse_kwargs={"pk": challenge_request.pk},
         user=challenge_request.creator,
     )
-    assert response.status_code == 403
+    assert response.status_code == 200
+    assert "Edit budget fields" not in str(response.content)
+
     response = get_view_for_user(
         client=client,
         viewname="challenges:requests-status-update",
@@ -73,6 +74,7 @@ def test_view_and_update_challenge_request(
         user=challenge_request.creator,
     )
     assert response.status_code == 403
+
     response = get_view_for_user(
         client=client,
         viewname="challenges:requests-budget-update",
@@ -81,7 +83,7 @@ def test_view_and_update_challenge_request(
     )
     assert response.status_code == 403
 
-    # reviewer can view and udpate
+    # reviewer can view and update
     response = get_view_for_user(
         client=client,
         viewname="challenges:requests-detail",
@@ -89,6 +91,8 @@ def test_view_and_update_challenge_request(
         user=challenge_reviewer,
     )
     assert response.status_code == 200
+    assert "Edit budget fields" in str(response.content)
+
     response = get_view_for_user(
         client=client,
         viewname="challenges:requests-status-update",
