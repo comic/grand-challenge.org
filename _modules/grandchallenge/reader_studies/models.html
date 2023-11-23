@@ -91,7 +91,7 @@
     <span class="n">MinValueValidator</span><span class="p">,</span>
     <span class="n">RegexValidator</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span><span class="p">,</span> <span class="n">transaction</span>
 <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Avg</span><span class="p">,</span> <span class="n">Count</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">QuerySet</span><span class="p">,</span> <span class="n">Sum</span>
 <span class="kn">from</span> <span class="nn">django.db.models.signals</span> <span class="kn">import</span> <span class="n">post_delete</span>
 <span class="kn">from</span> <span class="nn">django.dispatch</span> <span class="kn">import</span> <span class="n">receiver</span>
@@ -134,6 +134,7 @@
 <span class="kn">from</span> <span class="nn">grandchallenge.publications.models</span> <span class="kn">import</span> <span class="n">Publication</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.reader_studies.metrics</span> <span class="kn">import</span> <span class="n">accuracy_score</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.subdomains.utils</span> <span class="kn">import</span> <span class="n">reverse</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.uploads.models</span> <span class="kn">import</span> <span class="n">UserUpload</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.workstations.templatetags.workstations</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">get_workstation_path_and_query_string</span><span class="p">,</span>
 <span class="p">)</span>
@@ -1052,7 +1053,7 @@
         <span class="k">elif</span> <span class="n">ci</span><span class="o">.</span><span class="n">is_image_kind</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_civ_for_image</span><span class="p">(</span><span class="n">ci</span><span class="p">,</span> <span class="n">current_civ</span><span class="p">,</span> <span class="n">new_value</span><span class="p">,</span> <span class="n">user</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">ci</span><span class="o">.</span><span class="n">requires_file</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_civ_for_file</span><span class="p">(</span><span class="n">current_civ</span><span class="p">,</span> <span class="n">new_value</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_civ_for_file</span><span class="p">(</span><span class="n">ci</span><span class="p">,</span> <span class="n">current_civ</span><span class="p">,</span> <span class="n">new_value</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CIV creation for </span><span class="si">{</span><span class="n">ci</span><span class="si">}</span><span class="s2"> not handled.&quot;</span><span class="p">)</span>
 
@@ -1099,11 +1100,27 @@
                 <span class="p">)</span>
             <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">create_civ_for_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">current_civ</span><span class="p">,</span> <span class="n">new_value</span><span class="p">):</span>
-        <span class="c1"># in this case, new_value is an instance of a CIV already (or None)</span>
-        <span class="k">if</span> <span class="n">new_value</span> <span class="ow">and</span> <span class="n">current_civ</span> <span class="o">!=</span> <span class="n">new_value</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">create_civ_for_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ci</span><span class="p">,</span> <span class="n">current_civ</span><span class="p">,</span> <span class="n">new_value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_value</span><span class="p">,</span> <span class="n">ComponentInterfaceValue</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">current_civ</span> <span class="o">!=</span> <span class="n">new_value</span>
+        <span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">current_civ</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">new_value</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_value</span><span class="p">,</span> <span class="n">UserUpload</span><span class="p">):</span>
+            <span class="kn">from</span> <span class="nn">grandchallenge.reader_studies.tasks</span> <span class="kn">import</span> <span class="p">(</span>
+                <span class="n">add_file_to_display_set</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">transaction</span><span class="o">.</span><span class="n">on_commit</span><span class="p">(</span>
+                <span class="n">add_file_to_display_set</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
+                    <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
+                        <span class="s2">&quot;user_upload_pk&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">new_value</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span>
+                        <span class="s2">&quot;interface_pk&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">ci</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span>
+                        <span class="s2">&quot;display_set_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+                    <span class="p">}</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span>
+            <span class="p">)</span>
         <span class="k">elif</span> <span class="ow">not</span> <span class="n">new_value</span><span class="p">:</span>
             <span class="c1"># if no new value is provided (user selects &#39;---&#39; in dropdown)</span>
             <span class="c1"># delete old CIV</span>
