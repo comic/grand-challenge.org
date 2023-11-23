@@ -168,6 +168,20 @@ from tests.hanging_protocols_tests.factories import HangingProtocolFactory
             ],
             nullcontext(),
         ),
+        # valid specialized view: intensity-over-time-chart
+        (
+            [
+                {
+                    "viewport_name": "main",
+                },
+                {
+                    "viewport_name": "secondary",
+                    "specialized_view": "intensity-over-time-chart",
+                    "parent_id": "main",
+                },
+            ],
+            nullcontext(),
+        ),
         # All valid orientations
         *[
             (
@@ -326,6 +340,33 @@ from tests.hanging_protocols_tests.factories import HangingProtocolFactory
                     "viewport_name": "main_minimap",
                     "specialized_view": "3D-sideview",
                     "orientation": "axial",
+                },
+            ],
+            pytest.raises(ValidationError),
+        ),
+        # invalid specialized view: intensity-over-time-chart misses parent_id
+        (
+            [
+                {
+                    "viewport_name": "main",
+                },
+                {
+                    "viewport_name": "secondary",
+                    "specialized_view": "intensity-over-time-chart",
+                },
+            ],
+            pytest.raises(ValidationError),
+        ),
+        # invalid specialized view: intensity-over-time-chart has invalid parent_id
+        (
+            [
+                {
+                    "viewport_name": "main",
+                },
+                {
+                    "viewport_name": "secondary",
+                    "specialized_view": "intensity-over-time-chart",
+                    "parent_id": "invalid",
                 },
             ],
             pytest.raises(ValidationError),

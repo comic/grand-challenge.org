@@ -3,11 +3,7 @@ from random import choice
 
 from django.contrib.auth import get_user_model
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core.exceptions import (
-    NON_FIELD_ERRORS,
-    ImproperlyConfigured,
-    ValidationError,
-)
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.forms.utils import ErrorList
 from django.shortcuts import get_object_or_404
 from django.templatetags.static import static
@@ -213,7 +209,7 @@ class PermissionRequestUpdate(
             return redirect
 
         except ValidationError as e:
-            form._errors[NON_FIELD_ERRORS] = ErrorList(e.messages)
+            form.add_error(None, ErrorList(e.messages))
             return super().form_invalid(form)
 
     def get_context_data(self, **kwargs):

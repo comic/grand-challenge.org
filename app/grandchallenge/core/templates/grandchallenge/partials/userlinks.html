@@ -42,19 +42,31 @@
     </div>
 </li>
 {% if user.is_authenticated %}
-    {% if ACTSTREAM_ENABLE %}
     <li class="nav-item mr-auto">
-        {% if user.user_profile.has_unread_notifications %}
+        {% if user.directmessageunreadby_set.exists %}
             <span class="text-danger float-right mb-n3">
                 <i class="fa fa-xs fa-circle"></i>
             </span>
         {% endif %}
         <a class="nav-link pr-1"
-           href="{% url 'notifications:list' %}"
-           title="Notifications">
-            <i class="align-middle far fa-fw fa-lg fa-bell"></i>
+           href="{% url 'direct-messages:conversation-list' %}"
+           title="Conversations">
+            <i class="align-middle far fa-fw fa-lg fa-comment"></i>
         </a>
     </li>
+    {% if ACTSTREAM_ENABLE %}
+        <li class="nav-item mr-auto">
+            {% if user.user_profile.has_unread_notifications %}
+                <span class="text-danger float-right mb-n3">
+                    <i class="fa fa-xs fa-circle"></i>
+                </span>
+            {% endif %}
+            <a class="nav-link pr-1"
+               href="{% url 'notifications:list' %}"
+               title="Notifications">
+                <i class="align-middle far fa-fw fa-lg fa-bell"></i>
+            </a>
+        </li>
     {% endif %}
     <li class="nav-item dropdown">
         <a href="#" class="nav-link dropdown-toggle align-top"

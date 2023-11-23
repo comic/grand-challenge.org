@@ -4,16 +4,25 @@ from factory.django import ImageField
 from grandchallenge.algorithms.forms import AlgorithmForPhaseForm
 from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.evaluation.forms import SubmissionForm
-from grandchallenge.evaluation.models import Phase
+from grandchallenge.evaluation.models import Phase, Submission
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.invoices.models import PaymentStatusChoices
+from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
     AlgorithmJobFactory,
 )
-from tests.components_tests.factories import ComponentInterfaceFactory
-from tests.evaluation_tests.factories import PhaseFactory
+from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
+from tests.evaluation_tests.factories import (
+    EvaluationFactory,
+    PhaseFactory,
+    SubmissionFactory,
+)
 from tests.factories import (
     UserFactory,
     WorkstationConfigFactory,
@@ -21,6 +30,7 @@ from tests.factories import (
 )
 from tests.hanging_protocols_tests.factories import HangingProtocolFactory
 from tests.invoices_tests.factories import InvoiceFactory
+from tests.uploads_tests.factories import UserUploadFactory
 from tests.verification_tests.factories import VerificationFactory
 
 
@@ -116,12 +126,17 @@ class TestSubmissionForm:
         ci2 = ComponentInterfaceFactory()
         alg.inputs.set([ci1])
         alg.outputs.set([ci2])
+        archive = ArchiveFactory()
         p = PhaseFactory(
             submission_kind=SubmissionKindChoices.ALGORITHM,
             submissions_limit_per_user_per_period=10,
+            archive=archive,
         )
         p.algorithm_inputs.set([ci1])
         p.algorithm_outputs.set([ci2])
+        civ = ComponentInterfaceValueFactory(interface=ci1)
+        i = ArchiveItemFactory(archive=p.archive)
+        i.values.add(civ)
 
         InvoiceFactory(
             challenge=p.challenge,
@@ -192,6 +207,149 @@ class TestSubmissionForm:
             data={"creator": user},
         )
         assert bool("creator" in form.errors) is not is_verified
+
+    def test_no_valid_archive_items(self):
+        user = UserFactory()
+        p_pred = PhaseFactory(
+            submission_kind=SubmissionKindChoices.CSV,
+            submissions_limit_per_user_per_period=10,
+        )
+        alg = AlgorithmFactory()
+        alg.add_editor(user=user)
+        ci1 = ComponentInterfaceFactory()
+        ci2 = ComponentInterfaceFactory()
+        alg.inputs.set([ci1])
+        alg.outputs.set([ci2])
+        archive = ArchiveFactory()
+        p_alg = PhaseFactory(
+            submission_kind=SubmissionKindChoices.ALGORITHM,
+            submissions_limit_per_user_per_period=10,
+            archive=archive,
+        )
+        p_alg.algorithm_inputs.set([ci1])
+        p_alg.algorithm_outputs.set([ci2])
+
+        for p in [p_alg, p_pred]:
+            InvoiceFactory(
+                challenge=p.challenge,
+                compute_costs_euros=10,
+                payment_status=PaymentStatusChoices.COMPLIMENTARY,
+            )
+        # Fetch from the db to get the cost annotations
+        # Maybe this is solved with GeneratedField (Django 5)?
+        p_alg = Phase.objects.get(pk=p_alg.pk)
+        p_pred = Phase.objects.get(pk=p_pred.pk)
+
+        ai = AlgorithmImageFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+            algorithm=alg,
+        )
+        AlgorithmJobFactory(algorithm_image=ai, status=4)
+
+        upload = UserUploadFactory(creator=user)
+        upload.status = UserUpload.StatusChoices.COMPLETED
+        upload.save()
+        form1 = SubmissionForm(
+            user=user,
+            phase=p_pred,
+            data={"creator": user, "phase": p_pred, "user_upload": upload},
+        )
+        assert form1.is_valid()
+
+        form2 = SubmissionForm(
+            user=user,
+            phase=p_alg,
+            data={"algorithm_image": ai.pk, "creator": user, "phase": p_alg},
+        )
+
+        assert (
+            "This phase is not ready for submissions yet. There are no valid archive items in the archive linked to this phase."
+            in form2.errors["__all__"]
+        )
+        assert not form2.is_valid()
+
+        civ = ComponentInterfaceValueFactory(interface=ci1)
+        i = ArchiveItemFactory(archive=p_alg.archive)
+        i.values.add(civ)
+
+        form3 = SubmissionForm(
+            user=user,
+            phase=p_alg,
+            data={"algorithm_image": ai.pk, "creator": user, "phase": p_alg},
+        )
+        assert form3.is_valid()
+
+    def test_submission_or_eval_exists_for_image(self):
+        user = UserFactory()
+        alg = AlgorithmFactory()
+        alg.add_editor(user=user)
+        ci1 = ComponentInterfaceFactory()
+        ci2 = ComponentInterfaceFactory()
+        alg.inputs.set([ci1])
+        alg.outputs.set([ci2])
+        archive = ArchiveFactory()
+        p = PhaseFactory(
+            submission_kind=SubmissionKindChoices.ALGORITHM,
+            submissions_limit_per_user_per_period=10,
+            archive=archive,
+        )
+        p.algorithm_inputs.set([ci1])
+        p.algorithm_outputs.set([ci2])
+        civ = ComponentInterfaceValueFactory(interface=ci1)
+        i = ArchiveItemFactory(archive=p.archive)
+        i.values.add(civ)
+
+        InvoiceFactory(
+            challenge=p.challenge,
+            compute_costs_euros=10,
+            payment_status=PaymentStatusChoices.COMPLIMENTARY,
+        )
+
+        # Fetch from the db to get the cost annotations
+        # Maybe this is solved with GeneratedField (Django 5)?
+        p = Phase.objects.get(pk=p.pk)
+
+        ai = AlgorithmImageFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+            algorithm=alg,
+        )
+        AlgorithmJobFactory(algorithm_image=ai, status=4)
+        SubmissionFactory(
+            phase=p,
+            algorithm_image=ai,
+        )
+
+        form = SubmissionForm(
+            user=user,
+            phase=p,
+            data={"algorithm_image": ai.pk, "creator": user, "phase": p},
+        )
+
+        assert not form.is_valid()
+        assert (
+            "A submission for this algorithm container image for this phase already exists."
+            in form.errors["algorithm_image"]
+        )
+
+        Submission.objects.all().delete()
+
+        EvaluationFactory(submission__algorithm_image=ai)
+
+        form = SubmissionForm(
+            user=user,
+            phase=p,
+            data={"algorithm_image": ai.pk, "creator": user, "phase": p},
+        )
+
+        assert not form.is_valid()
+        assert (
+            "An evaluation for this algorithm is already in progress for another phase. Please wait for the other evaluation to complete."
+            in form.errors["algorithm_image"]
+        )
 
 
 @pytest.mark.django_db

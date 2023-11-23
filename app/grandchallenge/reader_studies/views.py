@@ -8,14 +8,12 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import (
-    NON_FIELD_ERRORS,
     ObjectDoesNotExist,
     PermissionDenied,
     ValidationError,
 )
 from django.db import transaction
 from django.db.models import Count, Q
-from django.db.models.query import QuerySet
 from django.db.transaction import on_commit
 from django.forms import Form, Media
 from django.forms.utils import ErrorList
@@ -64,10 +62,7 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 from grandchallenge.archives.forms import AddCasesForm
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
-from grandchallenge.components.models import (
-    ComponentInterface,
-    ComponentInterfaceValue,
-)
+from grandchallenge.components.models import ComponentInterface
 from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
 )
@@ -120,7 +115,6 @@ from grandchallenge.reader_studies.serializers import (
 )
 from grandchallenge.reader_studies.tasks import (
     add_file_to_display_set,
-    add_image_to_display_set,
     copy_reader_study_display_sets,
     create_display_sets_for_upload_session,
 )
@@ -470,13 +464,13 @@ class QuestionOptionMixin:
         data = options.cleaned_data
         if len(list(filter(lambda x: x.get("default"), data))) > 1:
             error = ["Only one option can be the default option"]
-            form.errors["answer_type"] = error
+            form.add_error("answer_type", error)
             return self.form_invalid(form)
         if not any(option.get("title") for option in data):
             error = [
                 "At least one option should be supplied for (multiple) choice questions"
             ]
-            form.errors["answer_type"] = error
+            form.add_error("answer_type", error)
             return self.form_invalid(form)
         with transaction.atomic():
             try:
@@ -580,7 +574,7 @@ class AddGroundTruthToReaderStudy(BaseAddObjectToReaderStudyMixin, FormView):
             )
             return super().form_valid(form)
         except ValidationError as e:
-            form.errors["ground_truth"] = e
+            form.add_error("ground_truth", e)
             return self.form_invalid(form)
 
     def get_success_url(self):
@@ -906,7 +900,7 @@ class ReaderStudyPermissionRequestCreate(
             return redirect
 
         except ValidationError as e:
-            form._errors[NON_FIELD_ERRORS] = ErrorList(e.messages)
+            form.add_error(None, ErrorList(e.messages))
             return super().form_invalid(form)
 
     def get_context_data(self, **kwargs):
@@ -1069,19 +1063,6 @@ class DisplaySetViewSet(
             return DisplaySetPostSerializer
         return DisplaySetSerializer
 
-    def create_civ(self, data):
-        interface = data.pop("interface", None)
-        value = data.pop("value", None)
-        image = data.pop("image", None)
-
-        if (interface.is_image_kind and image) or interface.is_json_kind:
-            with transaction.atomic():
-                return interface.create_instance(image=image, value=value)
-        else:
-            raise DRFValidationError(
-                f"No image, file or value provided for {interface.title}."
-            )
-
     def partial_update(self, request, pk=None):
         instance = self.get_object()
         if not instance.is_editable:
@@ -1090,48 +1071,21 @@ class DisplaySetViewSet(
                 "as answers for it already exist."
             )
         values = request.data.pop("values", None)
-        assigned_civs = []
         if values:
             serialized_data = ComponentInterfaceValuePostSerializer(
                 many=True, data=values, context={"request": request}
             )
             if serialized_data.is_valid():
-                civs = []
                 for value in serialized_data.validated_data:
                     interface = value.get("interface", None)
                     user_upload = value.get("user_upload", None)
-                    if interface.requires_file and user_upload:
-                        transaction.on_commit(
-                            add_file_to_display_set.signature(
-                                kwargs={
-                                    "user_upload_pk": str(user_upload.pk),
-                                    "interface_pk": str(interface.pk),
-                                    "display_set_pk": str(instance.pk),
-                                }
-                            ).apply_async
-                        )
-                    else:
-                        civs.append(self.create_civ(value))
-                civs = [x for x in civs if x]
-                assigned_civs = instance.values.filter(
-                    interface__in=[civ.interface for civ in civs]
-                )
-                instance.values.remove(*assigned_civs)
-                instance.values.add(*civs)
+                    image = value.get("image", None)
+                    value = value.get("value", None)
+                    instance.create_civ(
+                        interface.slug, user_upload or image or value
+                    )
             else:
                 raise DRFValidationError(serialized_data.errors)
-
-        # Create a new display set for any civs that have been replaced by a
-        # new value in this display set, to ensure it remains connected to
-        # the reader study.
-        for assigned in assigned_civs:
-            if not instance.reader_study.display_sets.filter(
-                values=assigned
-            ).exists():
-                ds = DisplaySet.objects.create(
-                    reader_study=instance.reader_study
-                )
-                ds.values.add(assigned)
         return super().partial_update(request, pk)
 
     def destroy(self, request, *args, **kwargs):
@@ -1408,18 +1362,12 @@ class DisplaySetUpdate(
         fields, whereas the form has a field for each value in those values.
         """
         instance = self.get_object()
-        assigned_civs = []
         for ci_slug, new_value in form.cleaned_data.items():
-            if ci_slug == "order" or new_value is None:
+            if ci_slug == "order":
                 continue
-            instance, assigned_civs = self.create_civ_for_value(
-                instance=instance,
-                ci_slug=ci_slug,
-                new_value=new_value,
-                assigned_civs=assigned_civs,
+            instance.create_civ(
+                ci_slug=ci_slug, new_value=new_value, user=self.request.user
             )
-        instance.values.remove(*assigned_civs)
-
         if (
             form.cleaned_data.get("order")
             and form.cleaned_data["order"] != instance.order
@@ -1428,56 +1376,6 @@ class DisplaySetUpdate(
             instance.save()
 
         return HttpResponseRedirect(self.get_success_url())
-
-    def create_civ_for_value(
-        self, instance, ci_slug, new_value, assigned_civs
-    ):
-        ci = ComponentInterface.objects.get(slug=ci_slug)
-        current_value = instance.values.filter(interface=ci).first()
-        if ci.is_json_kind and not ci.requires_file:
-            if current_value:
-                assigned_civs.append(current_value)
-            val = ComponentInterfaceValue.objects.create(
-                interface=ci, value=new_value
-            )
-            instance.values.add(val)
-        elif isinstance(new_value, Image):
-            if not current_value or (
-                current_value and current_value.image != new_value
-            ):
-                assigned_civs.append(current_value)
-                civ, created = ComponentInterfaceValue.objects.get_or_create(
-                    interface=ci, image=new_value
-                )
-                if created:
-                    civ.full_clean()
-                instance.values.add(civ)
-        elif isinstance(new_value, QuerySet):
-            us = RawImageUploadSession.objects.create(
-                creator=self.request.user,
-            )
-            us.user_uploads.set(new_value)
-            us.process_images(
-                linked_task=add_image_to_display_set.signature(
-                    kwargs={
-                        "display_set_pk": instance.pk,
-                        "interface_pk": str(ci.pk),
-                    },
-                    immutable=True,
-                )
-            )
-        else:
-            if current_value:
-                assigned_civs.append(current_value)
-            # If there is already a value for the provided civ's interface in
-            # this display set, remove it from this display set. Cast to list
-            # to evaluate immediately.
-            assigned_civs += list(
-                instance.values.exclude(pk=new_value.pk).filter(interface=ci)
-            )
-            # Add the provided civ to the current display set
-            instance.values.add(new_value)
-        return instance, assigned_civs
 
 
 class DisplaySetFilesUpdate(ObjectPermissionRequiredMixin, FormView):
@@ -1598,59 +1496,16 @@ class DisplaySetInterfacesCreate(ObjectPermissionRequiredMixin, FormView):
         context.update({"object": self.display_set})
         return context
 
-    def update_display_set(self, interface, value):
-        if interface.is_image_kind:
-            if isinstance(value, Image):
-                civ, created = ComponentInterfaceValue.objects.get_or_create(
-                    interface=interface, image=value
-                )
-                if created:
-                    civ.full_clean()
-                self.display_set.values.add(civ)
-            else:
-                us = RawImageUploadSession.objects.create(
-                    creator=self.request.user,
-                )
-                us.user_uploads.set(value)
-                us.process_images(
-                    linked_task=add_image_to_display_set.signature(
-                        kwargs={
-                            "display_set_pk": self.kwargs["pk"],
-                            "interface_pk": str(interface.pk),
-                        },
-                        immutable=True,
-                    )
-                )
-                messages.add_message(
-                    self.request, messages.SUCCESS, "Image import queued."
-                )
-        elif interface.requires_file:
-            transaction.on_commit(
-                add_file_to_display_set.signature(
-                    kwargs={
-                        "user_upload_pk": str(value.pk),
-                        "interface_pk": str(interface.pk),
-                        "display_set_pk": self.kwargs["pk"],
-                    }
-                ).apply_async
-            )
-
-            messages.add_message(
-                self.request, messages.SUCCESS, "File copy queued."
-            )
-        else:
-            civ = interface.create_instance(value=value)
-            self.display_set.values.add(civ)
-
     def form_valid(self, form):
         interface = form.cleaned_data["interface"]
         value = form.cleaned_data[interface.slug]
         if self.display_set:
-            try:
-                self.update_display_set(interface, value)
-            except ValidationError as e:
-                form.add_error(interface.slug, str(e))
-                return self.form_invalid(form)
+            self.display_set.create_civ(interface.slug, value)
+            messages.add_message(
+                self.request,
+                messages.SUCCESS,
+                "Display set updated. Any image and file imports have been queued.",
+            )
         return super().form_valid(form)
 
     def get_success_url(self):
@@ -1761,49 +1616,9 @@ class AddDisplaySetToReaderStudy(
         ds.order = data.pop("order")
         ds.save()
         for slug in data:
-            if not data[slug]:
-                # Field is not filled in the form
-                continue
-            interface = ComponentInterface.objects.get(slug=slug)
-            if interface.requires_file:
-                user_upload = data[slug]
-                transaction.on_commit(
-                    add_file_to_display_set.signature(
-                        kwargs={
-                            "user_upload_pk": str(user_upload.pk),
-                            "interface_pk": str(interface.pk),
-                            "display_set_pk": str(ds.pk),
-                        }
-                    ).apply_async
-                )
-            elif interface.is_json_kind:
-                civ = interface.create_instance(value=data[slug])
-                ds.values.add(civ)
-            elif interface.is_image_kind:
-                if isinstance(data[slug], Image):
-                    (
-                        civ,
-                        created,
-                    ) = ComponentInterfaceValue.objects.get_or_create(
-                        interface=interface, image=data[slug]
-                    )
-                    if created:
-                        civ.full_clean()
-                    ds.values.add(civ)
-                else:
-                    us = RawImageUploadSession.objects.create(
-                        creator=self.request.user,
-                    )
-                    us.user_uploads.set(data[slug])
-                    us.process_images(
-                        linked_task=add_image_to_display_set.signature(
-                            kwargs={
-                                "display_set_pk": str(ds.pk),
-                                "interface_pk": str(interface.pk),
-                            },
-                            immutable=True,
-                        )
-                    )
+            ds.create_civ(
+                ci_slug=slug, new_value=data[slug], user=self.request.user
+            )
 
     def return_errors(self, errors):
         return JsonResponse(errors, status=400)

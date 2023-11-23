@@ -175,6 +175,12 @@ urlpatterns = [
         "components/",
         include("grandchallenge.components.urls", namespace="components"),
     ),
+    path(
+        "messages/",
+        include(
+            "grandchallenge.direct_messages.urls", namespace="direct-messages"
+        ),
+    ),
 ]
 
 if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:

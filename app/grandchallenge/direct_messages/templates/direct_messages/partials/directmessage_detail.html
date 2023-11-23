@@ -1,0 +1,15 @@
+{% load bleach %}
+
+{% if direct_message.sender.username in muted_usernames %}
+    <p><em>You have blocked this user.</em></p>
+{% elif direct_message.is_deleted %}
+    <p><em>This message has been deleted.</em></p>
+{% elif direct_message.is_reported_as_spam and direct_message.sender != request.user %}
+    <p><em>This message has been removed.</em></p>
+{% else %}
+    {% if preview %}
+        <p>{{ direct_message.message|truncatechars:32 }}</p>
+    {% else %}
+        {{ direct_message.message|md2email_html }}
+    {% endif %}
+{% endif %}

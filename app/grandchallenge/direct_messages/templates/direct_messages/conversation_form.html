@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Create Conversation - {{ block.super }}{% endblock %}
+
+{% block content %}
+    <h2>Create Conversation</h2>
+
+    {% crispy form %}
+{% endblock %}
