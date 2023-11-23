@@ -100,6 +100,8 @@ class EmbedYouTubeInLineProcessor(InlineProcessor):
 
         el.set("frameborder", "0")
 
+        el.set("loading", "lazy")
+
         el.set(
             "sandbox",
             " ".join(

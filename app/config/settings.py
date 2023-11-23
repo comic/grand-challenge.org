@@ -785,6 +785,7 @@ BLEACH_ALLOWED_FRAME_ATTRIBUTES = [
     "width",
     "frameborder",
     "sandbox",
+    "loading",
 ]
 
 # The markdown processor
