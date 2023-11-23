@@ -777,6 +777,15 @@ BLEACH_ALLOWED_ATTRIBUTES = {
 BLEACH_ALLOWED_STYLES = ["height", "margin-left", "text-align", "width"]
 BLEACH_ALLOWED_PROTOCOLS = ["http", "https", "mailto"]
 BLEACH_STRIP = strtobool(os.environ.get("BLEACH_STRIP", "True"))
+BLEACH_ALLOWED_FRAME_SRC = ["https://www.youtube-nocookie.com"]
+BLEACH_ALLOWED_FRAME_ATTRIBUTES = [
+    *BLEACH_ALLOWED_ATTRIBUTES["*"],
+    "allow",
+    "height",
+    "width",
+    "frameborder",
+    "sandbox",
+]
 
 # The markdown processor
 MARKDOWNX_MEDIA_PATH = datetime.now().strftime("i/%Y/%m/%d/")
@@ -1442,7 +1451,7 @@ CSP_IMG_SRC = (
 )
 CSP_FRAME_SRC = (
     "https://mailchi.mp",  # For products blog posts
-    "https://www.youtube-nocookie.com",  # For embedding YouTube
+    *BLEACH_ALLOWED_FRAME_SRC,
 )
 CSP_MEDIA_SRC = (
     *CSP_MEDIA_HOSTS,

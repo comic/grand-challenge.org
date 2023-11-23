@@ -1,3 +1,5 @@
+from urllib.parse import urlparse
+
 import bleach
 from bleach.css_sanitizer import CSSSanitizer
 from django import template
@@ -14,13 +16,37 @@ from grandchallenge.core.utils.markdown import (
 register = template.Library()
 
 
+def allowed_iframe(tag, name, value):
+    """Returns true if the iframe tag is allowed, false otherwise"""
+    if tag != "iframe":
+        return False
+    if name in settings.BLEACH_ALLOWED_FRAME_ATTRIBUTES:
+        return True
+    if name == "src":
+        p = urlparse(value)
+        if not p.scheme or not p.netloc:
+            return False
+        source = f"{p.scheme}://{p.netloc}"
+        if source in settings.BLEACH_ALLOWED_FRAME_SRC:
+            return True
+    return False
+
+
 @register.filter
-def clean(html: str):
+def clean(html: str, allow_iframes=False):
     """Clean the html with bleach."""
+
+    allowed_tags = settings.BLEACH_ALLOWED_TAGS
+    allowed_attributes = settings.BLEACH_ALLOWED_ATTRIBUTES
+
+    if allow_iframes:
+        allowed_tags = [*allowed_tags, "iframe"]
+        allowed_attributes.update({"iframe": allowed_iframe})
+
     cleaned_html = bleach.clean(
         html,
-        tags=settings.BLEACH_ALLOWED_TAGS,
-        attributes=settings.BLEACH_ALLOWED_ATTRIBUTES,
+        tags=allowed_tags,
+        attributes=allowed_attributes,
         css_sanitizer=CSSSanitizer(
             allowed_css_properties=settings.BLEACH_ALLOWED_STYLES
         ),
@@ -84,4 +110,4 @@ def md2html(
         extension_configs=settings.MARKDOWNX_MARKDOWN_EXTENSION_CONFIGS,
     )
 
-    return clean(html)
+    return clean(html, allow_iframes=embed_youtube)
