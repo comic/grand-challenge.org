@@ -798,7 +798,7 @@ MARKDOWNX_MARKDOWN_EXTENSIONS = [
     BS4Extension(),
 ]
 MARKDOWNX_MARKDOWNIFY_FUNCTION = (
-    "grandchallenge.core.templatetags.bleach.md2html"
+    "grandchallenge.core.templatetags.bleach.md2page_html"
 )
 MARKDOWNX_MARKDOWN_EXTENSION_CONFIGS = {}
 MARKDOWNX_IMAGE_MAX_SIZE = {"size": (2000, 0), "quality": 90}
