@@ -12,11 +12,7 @@
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'challenges:list' %}">Challenges</a></li>
-        {% if request.user == object.creator %}
-            <li class="breadcrumb-item"><a href="{% url 'challenges:users-requests-list' %}">Your Challenge Requests</a></li>
-        {% else %}
-            <li class="breadcrumb-item"><a href="{% url 'challenges:requests-list' %}">Requests</a></li>
-        {% endif %}
+        <li class="breadcrumb-item"><a href="{% url 'challenges:requests-list' %}">{% if not perms.challenges.change_challengerequest %}Your{% endif %} Challenge Requests</a></li>
         <li class="breadcrumb-item active">{{ object.title }}</li>
     </ol>
 {% endblock %}

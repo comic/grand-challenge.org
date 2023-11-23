@@ -10,7 +10,6 @@ from grandchallenge.challenges.views import (
     ChallengeRequestList,
     ChallengeRequestStatusUpdate,
     UsersChallengeList,
-    UsersChallengeRequestList,
 )
 
 app_name = "challenges"
@@ -18,11 +17,6 @@ app_name = "challenges"
 urlpatterns = [
     path("", ChallengeList.as_view(), name="list"),
     path("my-challenges/", UsersChallengeList.as_view(), name="users-list"),
-    path(
-        "my-challenge-requests/",
-        UsersChallengeRequestList.as_view(),
-        name="users-requests-list",
-    ),
     path("requests/", ChallengeRequestList.as_view(), name="requests-list"),
     path(
         "requests/create/",
