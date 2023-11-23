@@ -47,9 +47,8 @@ def add_scores_for_display_set(*, instance_pk, ds_pk):
             question=instance.question,
             is_ground_truth=True,
             display_set=display_set,
-        ).first()
-        if ground_truth:
-            add_score(instance, ground_truth.answer)
+        ).get()
+        add_score(instance, ground_truth.answer)
 
 
 @shared_task(
