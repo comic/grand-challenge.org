@@ -818,7 +818,7 @@ MACHINA_FORUM_NAME = "Grand Challenge Forums"
 MACHINA_MARKUP_WIDGET = "grandchallenge.core.widgets.MarkdownEditorWidget"
 MACHINA_MARKUP_LANGUAGE = (
     "grandchallenge.core.templatetags.bleach.md2html",
-    {"link_blank_target": True},
+    {"link_blank_target": True, "embed_youtube": True},
 )
 
 AUTH_PASSWORD_VALIDATORS = [
