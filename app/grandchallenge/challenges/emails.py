@@ -1,7 +1,8 @@
 from django.conf import settings
-from django.contrib.auth.models import Group
+from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 from django.core.mail import send_mail
+from django.db.models import Q
 from django.template.loader import render_to_string
 from django.utils.html import format_html
 
@@ -25,15 +26,15 @@ def send_challenge_requested_email_to_reviewers(challengerequest):
         site_name=site.name,
         site_domain=site.domain,
     )
-    reviewers = Group.objects.get(
-        name=settings.CHALLENGES_REVIEWERS_GROUP_NAME
+    reviewers = get_user_model().objects.filter(
+        Q(groups__permissions__codename="change_challengerequest")
+        | Q(user_permissions__codename="change_challengerequest")
     )
-    recipients = reviewers.user_set.all()
     send_mail(
         subject=f"[{site.domain.lower()}] New Challenge Requested",
         message=message,
         from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email for user in recipients],
+        recipient_list=[user.email for user in reviewers],
     )
 
 
