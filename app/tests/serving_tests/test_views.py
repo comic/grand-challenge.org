@@ -223,7 +223,6 @@ def test_civ_file_download(client):
 def test_structured_challenge_submission_form_download(
     client, challenge_request, challenge_reviewer
 ):
-    """Only the reviewers should be able to download submission form pdf."""
     user = UserFactory()
     challenge_request.structured_challenge_submission_form.save(
         "test.pdf", ContentFile(b"foo,\nbar,\n")
@@ -232,7 +231,7 @@ def test_structured_challenge_submission_form_download(
     tests = [
         (403, None),
         (403, user),
-        (403, challenge_request.creator),
+        (302, challenge_request.creator),
         (302, challenge_reviewer),
     ]
 
