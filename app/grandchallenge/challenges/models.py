@@ -963,7 +963,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
     def assign_permissions(self):
         assign_perm("view_challengerequest", self.creator, self)
-        reviewers, _ = Group.objects.get_or_create(
+        reviewers = Group.objects.get(
             name=settings.CHALLENGES_REVIEWERS_GROUP_NAME
         )
         assign_perm("view_challengerequest", reviewers, self)

@@ -323,7 +323,7 @@ def test_challenge_statistics_page_permissions(client):
     assert response.status_code == 200
     assert "Challenge Costs" not in response.rendered_content
 
-    reviewers, _ = Group.objects.get_or_create(
+    reviewers = Group.objects.get(
         name=settings.CHALLENGES_REVIEWERS_GROUP_NAME
     )
     reviewers.user_set.add(user)

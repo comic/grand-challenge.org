@@ -5,7 +5,6 @@
 {% load static %}
 {% load costs %}
 {% load divide_by %}
-{% load permissions %}
 
 {% block title %}
     Statistics - {{ block.super }}
@@ -52,7 +51,7 @@
         {% endfor %}
     </dl>
 
-    {% if request.user|is_challenge_reviewer %}
+    {% if perms.challenges.view_challengerequest %}
         <h4>Invoices</h4>
 
         <div class="table-responsive">

@@ -642,7 +642,7 @@ def challenge_request():
 @pytest.fixture
 def challenge_reviewer():
     user = UserFactory()
-    reviewers, _ = Group.objects.get_or_create(
+    reviewers = Group.objects.get(
         name=settings.CHALLENGES_REVIEWERS_GROUP_NAME
     )
     reviewers.user_set.add(user)

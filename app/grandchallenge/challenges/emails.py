@@ -25,7 +25,7 @@ def send_challenge_requested_email_to_reviewers(challengerequest):
         site_name=site.name,
         site_domain=site.domain,
     )
-    reviewers, _ = Group.objects.get_or_create(
+    reviewers = Group.objects.get(
         name=settings.CHALLENGES_REVIEWERS_GROUP_NAME
     )
     recipients = reviewers.user_set.all()
