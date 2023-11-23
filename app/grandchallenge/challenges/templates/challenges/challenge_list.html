@@ -17,7 +17,7 @@
             </a>
         </div>
         <div class="col-xl-4 col-lg-5 col-md-6 mb-3 text-md-right">
-            {% if perms.challenges.change_challengerequest %}
+            {% if perms.challenges.view_challengerequest %}
                 <a class="btn btn-primary"
                    href="{% url 'challenges:requests-list' %}">
                    <i class="fas fa-question mr-1"></i>

@@ -165,9 +165,7 @@ def serve_structured_challenge_submission_form(
     except ChallengeRequest.DoesNotExist:
         raise Http404("Challenge request not found.")
 
-    if request.user.groups.filter(
-        name=settings.CHALLENGES_REVIEWERS_GROUP_NAME
-    ).exists():
+    if request.user.has_perm("view_challengerequest", challenge_request):
         return protected_storage_redirect(
             name=challenge_request.structured_challenge_submission_form.name,
             creator=request.user,
