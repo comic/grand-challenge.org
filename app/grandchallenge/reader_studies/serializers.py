@@ -237,7 +237,14 @@ class AnswerSerializer(HyperlinkedModelSerializer):
             instance=self.instance,
         )
 
-        if self.instance:
+        if self.instance and (
+            self.instance.is_ground_truth
+            or Answer.objects.filter(
+                is_ground_truth=True,
+                question=self.instance.question,
+                display_set=display_set,
+            ).exists()
+        ):
             on_commit(
                 lambda: add_scores_for_display_set.apply_async(
                     kwargs={
