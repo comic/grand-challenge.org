@@ -13,7 +13,7 @@ from django.core.validators import (
     MinValueValidator,
     RegexValidator,
 )
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Avg, Count, Q, QuerySet, Sum
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
@@ -56,6 +56,7 @@ from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
 from grandchallenge.reader_studies.metrics import accuracy_score
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.uploads.models import UserUpload
 from grandchallenge.workstations.templatetags.workstations import (
     get_workstation_path_and_query_string,
 )
@@ -924,7 +925,7 @@ class DisplaySet(UUIDModel):
         elif ci.is_image_kind:
             return self.create_civ_for_image(ci, current_civ, new_value, user)
         elif ci.requires_file:
-            return self.create_civ_for_file(current_civ, new_value)
+            return self.create_civ_for_file(ci, current_civ, new_value)
         else:
             NotImplementedError(f"CIV creation for {ci} not handled.")
 
@@ -971,11 +972,27 @@ class DisplaySet(UUIDModel):
                 )
             )
 
-    def create_civ_for_file(self, current_civ, new_value):
-        # in this case, new_value is an instance of a CIV already (or None)
-        if new_value and current_civ != new_value:
+    def create_civ_for_file(self, ci, current_civ, new_value):
+        if (
+            isinstance(new_value, ComponentInterfaceValue)
+            and current_civ != new_value
+        ):
             self.values.remove(current_civ)
             self.values.add(new_value)
+        elif isinstance(new_value, UserUpload):
+            from grandchallenge.reader_studies.tasks import (
+                add_file_to_display_set,
+            )
+
+            transaction.on_commit(
+                add_file_to_display_set.signature(
+                    kwargs={
+                        "user_upload_pk": str(new_value.pk),
+                        "interface_pk": str(ci.pk),
+                        "display_set_pk": self.pk,
+                    }
+                ).apply_async
+            )
         elif not new_value:
             # if no new value is provided (user selects '---' in dropdown)
             # delete old CIV
