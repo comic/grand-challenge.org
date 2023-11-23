@@ -85,7 +85,7 @@ class EmbedYouTubeInLineProcessor(InlineProcessor):
                 ]
             ),
         )
-        el.set("class", "youtube embedded-responsive")
+        el.set("class", "youtube")
 
         min_width = 480
         width = m.group(2) and int(m.group(2)) or min_width
@@ -99,14 +99,17 @@ class EmbedYouTubeInLineProcessor(InlineProcessor):
             el.set("height", str(height))
 
         el.set("frameborder", "0")
-        el.set("allowfullscreen", "")
 
-        alt_el = ElementTree.SubElement(el, "a")
-        alt_el.set(
-            "href",
-            f"https://www.youtube.com/watch?v={youtube_id}",
+        el.set(
+            "sandbox",
+            " ".join(
+                [
+                    "allow-scripts",
+                    "allow-same-origin",
+                    "allow-presentation",
+                    "allow-popups",
+                ]
+            ),
         )
-        alt_el.set("target", "_blank")
-        alt_el.text = "View YouTube video"
 
         return el, m.start(0), m.end(0)

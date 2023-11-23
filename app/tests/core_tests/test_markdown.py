@@ -66,11 +66,10 @@ def _gen_expected_iframe(width=480, height=None):
     return (
         "<p>\n"
         '<iframe allow="accelerometer; autoplay; encrypted-media; gyroscope; '
-        'picture-in-picture; web-share; fullscreen" allowfullscreen="" '
-        f'class="youtube embedded-responsive" frameborder="0" {height_str}'
+        f'picture-in-picture; web-share; fullscreen" class="youtube" frameborder="0" {height_str}'
+        'sandbox="allow-scripts allow-same-origin allow-presentation allow-popups" '
         'src="https://www.youtube-nocookie.com/embed/QCYYhkTlnhQ?disablekb=1&amp;rel=0&amp;" '
-        f'width="{width!r}"><a href="https://www.youtube.com/watch?v=QCYYhkTlnhQ" '
-        'target="_blank">View YouTube video</a></iframe>\n'
+        f'width="{width!r}"></iframe>\n'
         "</p>"
     )
 
