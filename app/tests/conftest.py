@@ -14,7 +14,6 @@ from django.contrib.sites.models import Site
 from django.utils.timezone import now
 from django_otp.oath import TOTP
 from django_otp.plugins.otp_totp.models import TOTPDevice
-from guardian.shortcuts import assign_perm
 
 from grandchallenge.cases.models import Image
 from grandchallenge.components.backends import docker_client
@@ -643,8 +642,10 @@ def challenge_request():
 @pytest.fixture
 def challenge_reviewer():
     user = UserFactory()
-    assign_perm("challenges.change_challengerequest", user)
-    assign_perm("challenges.view_challengerequest", user)
+    reviewers, _ = Group.objects.get_or_create(
+        name=settings.CHALLENGES_REVIEWERS_GROUP_NAME
+    )
+    reviewers.user_set.add(user)
     return user
 
 
