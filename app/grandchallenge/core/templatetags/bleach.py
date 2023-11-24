@@ -41,7 +41,10 @@ def clean(html: str, allow_iframes=False):
 
     if allow_iframes:
         allowed_tags = [*allowed_tags, "iframe"]
-        allowed_attributes.update({"iframe": allowed_iframe})
+        allowed_attributes = {
+            **allowed_attributes,
+            "iframe": allowed_iframe,
+        }
 
     cleaned_html = bleach.clean(
         html,
