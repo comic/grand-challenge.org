@@ -57,7 +57,7 @@
 
             <h2>{{ object.title }}</h2>
 
-            {{ object.detail_page_markdown|md2page|process_tags }}
+            {{ object.detail_page_markdown|md2html|process_tags }}
 
             <dl class="row">
                 <dt class="col-sm-3 mt-2"><i class="fa fa-fw fa-map-marker-alt"></i>&nbsp;Location</dt>
