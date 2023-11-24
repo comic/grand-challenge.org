@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load url %}
 {% load bleach %}
+{% load process_tags %}
 {% load guardian_tags %}
 {% load meta_attr %}
 {% load evaluation_extras %}
@@ -56,7 +57,7 @@
 
             <h2>{{ object.title }}</h2>
 
-            {{ object.detail_page_markdown|md2page_html }}
+            {{ object.detail_page_markdown|md2page|process_tags }}
 
             <dl class="row">
                 <dt class="col-sm-3 mt-2"><i class="fa fa-fw fa-map-marker-alt"></i>&nbsp;Location</dt>

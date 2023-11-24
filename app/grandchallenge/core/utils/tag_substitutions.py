@@ -66,7 +66,7 @@ class TagSubstitution:
         argspec = inspect.getfullargspec(func)
         if argspec.defaults or argspec.varargs or argspec.kwonlyargs:
             raise NotImplementedError(
-                "Only functions with positional arguments are supported for replacement callables"
+                "Only functions with positional arguments are currently supported for replacement callables"
             )
         count = len(argspec.args)
 

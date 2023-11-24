@@ -1,8 +1,5 @@
-import pytest
 from django.conf import settings
 from markdown import markdown
-
-from grandchallenge.core.utils.markdown import EmbedYoutubeExtension
 
 TEST_MARKDOWN = """
 ![](whatever.png)
@@ -56,33 +53,3 @@ def test_markdown_rendering():
     )
 
     assert output == EXPECTED_HTML
-
-
-EXPECTED_YOUTUBE_EMBED = """<p><div class="embed-responsive embed-responsive-16by9 rounded border-0">
-    <iframe
-            src="https://www.youtube-nocookie.com/embed/QCYYhkTlnhQ?disablekb=1&amp;rel=0"
-            allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-            class="embed-responsive-item"
-            loading="lazy"
-            sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
-    ></iframe>
-</div></p>"""
-
-
-@pytest.mark.parametrize(
-    "md, expected_html",
-    [
-        (
-            "[youtube QCYYhkTlnhQ]",
-            EXPECTED_YOUTUBE_EMBED,
-        ),
-        (  # Random white-spaces and newlines
-            "[  youtube\n\t QCYYhkTlnhQ ]",
-            EXPECTED_YOUTUBE_EMBED,
-        ),
-    ],
-)
-def test_youtube_embed(md, expected_html):
-    output_html = markdown(md, extensions=[EmbedYoutubeExtension()])
-
-    assert output_html == expected_html

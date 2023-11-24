@@ -1,5 +1,3 @@
-from urllib.parse import urlparse
-
 import bleach
 from bleach.css_sanitizer import CSSSanitizer
 from django import template
@@ -8,48 +6,19 @@ from django.utils.safestring import mark_safe
 from markdown import markdown as render_markdown
 from markdown.extensions.toc import TocExtension
 
-from grandchallenge.core.utils.markdown import (
-    EmbedYoutubeExtension,
-    LinkBlankTargetExtension,
-)
+from grandchallenge.core.templatetags.process_tags import process_tags
+from grandchallenge.core.utils.markdown import LinkBlankTargetExtension
 
 register = template.Library()
 
 
-def allowed_iframe(tag, name, value):
-    """Returns true if the iframe tag is allowed, false otherwise"""
-    if tag != "iframe":
-        return False
-    if name in settings.BLEACH_ALLOWED_FRAME_ATTRIBUTES:
-        return True
-    if name == "src":
-        p = urlparse(value)
-        if not p.scheme or not p.netloc:
-            return False
-        source = f"{p.scheme}://{p.netloc}"
-        if source in settings.BLEACH_ALLOWED_FRAME_SRC:
-            return True
-    return False
-
-
 @register.filter
-def clean(html: str, allow_iframes=False):
+def clean(html: str):
     """Clean the html with bleach."""
-
-    allowed_tags = settings.BLEACH_ALLOWED_TAGS
-    allowed_attributes = settings.BLEACH_ALLOWED_ATTRIBUTES
-
-    if allow_iframes:
-        allowed_tags = [*allowed_tags, "iframe"]
-        allowed_attributes = {
-            **allowed_attributes,
-            "iframe": allowed_iframe,
-        }
-
     cleaned_html = bleach.clean(
         html,
-        tags=allowed_tags,
-        attributes=allowed_attributes,
+        tags=settings.BLEACH_ALLOWED_TAGS,
+        attributes=settings.BLEACH_ALLOWED_ATTRIBUTES,
         css_sanitizer=CSSSanitizer(
             allowed_css_properties=settings.BLEACH_ALLOWED_STYLES
         ),
@@ -70,15 +39,9 @@ def md2email_html(markdown: str | None):
     )
 
 
-@register.filter
-def md2page_html(markdown: str | None):
-    """Converts markdown to clean html intended for showing as a page"""
-    return md2html(
-        markdown,
-        link_blank_target=True,
-        create_permalink_for_headers=True,
-        embed_youtube=True,
-    )
+def md2html_with_tag_processing(*args, **kwargs):
+    """Converts markdown to clean html and passes it through custom tag processing"""
+    return process_tags(md2html(*args, **kwargs))
 
 
 @register.filter
@@ -87,7 +50,6 @@ def md2html(
     *,
     link_blank_target=False,
     create_permalink_for_headers=True,
-    embed_youtube=False,
 ):
     """Convert markdown to clean html"""
 
@@ -104,13 +66,10 @@ def md2html(
             )
         )
 
-    if embed_youtube:
-        extensions.append(EmbedYoutubeExtension())
-
     html = render_markdown(
         text=markdown or "",
         extensions=extensions,
         extension_configs=settings.MARKDOWNX_MARKDOWN_EXTENSION_CONFIGS,
     )
 
-    return clean(html, allow_iframes=embed_youtube)
+    return clean(html)

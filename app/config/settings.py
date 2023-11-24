@@ -777,16 +777,6 @@ BLEACH_ALLOWED_ATTRIBUTES = {
 BLEACH_ALLOWED_STYLES = ["height", "margin-left", "text-align", "width"]
 BLEACH_ALLOWED_PROTOCOLS = ["http", "https", "mailto"]
 BLEACH_STRIP = strtobool(os.environ.get("BLEACH_STRIP", "True"))
-BLEACH_ALLOWED_FRAME_SRC = ["https://www.youtube-nocookie.com"]
-BLEACH_ALLOWED_FRAME_ATTRIBUTES = [
-    *BLEACH_ALLOWED_ATTRIBUTES["*"],
-    "allow",
-    "height",
-    "width",
-    "frameborder",
-    "sandbox",
-    "loading",
-]
 
 # The markdown processor
 MARKDOWNX_MEDIA_PATH = datetime.now().strftime("i/%Y/%m/%d/")
@@ -799,7 +789,7 @@ MARKDOWNX_MARKDOWN_EXTENSIONS = [
     BS4Extension(),
 ]
 MARKDOWNX_MARKDOWNIFY_FUNCTION = (
-    "grandchallenge.core.templatetags.bleach.md2page_html"
+    "grandchallenge.core.templatetags.bleach.md2html_with_tag_processing"
 )
 MARKDOWNX_MARKDOWN_EXTENSION_CONFIGS = {}
 MARKDOWNX_IMAGE_MAX_SIZE = {"size": (2000, 0), "quality": 90}
@@ -818,8 +808,8 @@ MACHINA_PROFILE_AVATARS_ENABLED = False
 MACHINA_FORUM_NAME = "Grand Challenge Forums"
 MACHINA_MARKUP_WIDGET = "grandchallenge.core.widgets.MarkdownEditorWidget"
 MACHINA_MARKUP_LANGUAGE = (
-    "grandchallenge.core.templatetags.bleach.md2html",
-    {"link_blank_target": True, "embed_youtube": True},
+    "grandchallenge.core.templatetags.bleach.md2html_with_tag_processing",
+    {"link_blank_target": True},
 )
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -1452,7 +1442,7 @@ CSP_IMG_SRC = (
 )
 CSP_FRAME_SRC = (
     "https://mailchi.mp",  # For products blog posts
-    *BLEACH_ALLOWED_FRAME_SRC,
+    "https://www.youtube-nocookie.com",  # Embedding YouTube videos
 )
 CSP_MEDIA_SRC = (
     *CSP_MEDIA_HOSTS,

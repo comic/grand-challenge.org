@@ -5,6 +5,7 @@
 {% load workstations %}
 {% load guardian_tags %}
 {% load bleach %}
+{% load process_tags %}
 {% load meta_attr %}
 
 {% block breadcrumbs %}
@@ -104,7 +105,7 @@
 
             <h2>{{ object.title }}</h2>
 
-            {{ object.help_text_markdown|md2page_html }}
+            {{ object.help_text_markdown|md2html|process_tags }}
 
             {% if user_score.score__sum is not None and progress.hangings == 100.0 %}
                 <div class="alert alert-info" role="alert">

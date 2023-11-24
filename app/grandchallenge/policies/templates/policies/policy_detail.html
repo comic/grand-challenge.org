@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load url %}
 {% load bleach %}
+{% load process_tags %}
 
 {% block title %}
     {{ object.title }} - {{ block.super }}
@@ -15,5 +16,5 @@
 {% block content %}
     <h1>{{ object.title }}</h1>
 
-    {{ object.body|md2page_html }}
+    {{ object.body|md2html|process_tags }}
 {% endblock %}

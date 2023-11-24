@@ -42,7 +42,7 @@ from grandchallenge.core.storage import (
     get_social_image_path,
     public_s3_storage,
 )
-from grandchallenge.core.templatetags.bleach import md2html, md2page_html
+from grandchallenge.core.templatetags.bleach import md2html, process_tags
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
@@ -484,7 +484,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     @property
     def help_text(self) -> str:
         """The cleaned help text from the markdown sources"""
-        return md2page_html(self.help_text_markdown)
+        return process_tags(md2html(self.help_text_markdown))
 
     @cached_property
     def study_image_names(self):
