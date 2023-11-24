@@ -61,7 +61,7 @@ def test_markdown_rendering():
 EXPECTED_YOUTUBE_EMBED = (
     "<p>\n"
     '<iframe allow="accelerometer; autoplay; encrypted-media; gyroscope; '
-    'picture-in-picture; web-share; fullscreen" class="embed-responsive rounded youtube" '
+    'picture-in-picture; web-share; fullscreen" class="embed-responsive embed-responsive-16by9 rounded" '
     'frameborder="0" loading="lazy" sandbox="allow-scripts allow-same-origin '
     'allow-presentation allow-popups" '
     'src="https://www.youtube-nocookie.com/embed/QCYYhkTlnhQ?disablekb=1&amp;rel=0&amp;"></iframe>\n'

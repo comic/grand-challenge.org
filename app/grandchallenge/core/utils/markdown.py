@@ -90,8 +90,8 @@ class EmbedYouTubeInLineProcessor(InlineProcessor):
             " ".join(
                 [
                     "embed-responsive",
+                    "embed-responsive-16by9",
                     "rounded",
-                    "youtube",
                 ]
             ),
         )

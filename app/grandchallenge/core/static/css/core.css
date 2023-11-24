@@ -256,8 +256,3 @@ a[aria-expanded=true] .fa-chevron-right {
 a[aria-expanded=false] .fa-chevron-down {
    display: none;
 }
-
-
-.youtube {
-    aspect-ratio: 16/9;
-}
