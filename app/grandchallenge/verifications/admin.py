@@ -82,6 +82,9 @@ class VerificationAdmin(admin.ModelAdmin):
 
         return ", ".join(usernames)
 
+    def user_info(self, instance):
+        return instance.user.user_profile.user_info
+
     @admin.display(boolean=True)
     def email_is_academic(self, instance):
         return is_academic(email=instance.email)

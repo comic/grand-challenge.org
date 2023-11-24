@@ -16,3 +16,19 @@
             aria-current="page">Participants</li>
     </ol>
 {% endblock %}
+
+{% block tableExtraHeaders %}
+    <th>Message</th>
+{% endblock tableExtraHeaders %}
+
+{% block tableExtraBody %}
+    <td>
+        {% if user != request.user %}
+            <form method="post"
+                  action="{% url 'direct_messages:conversation-create' username=user.username %}">
+                {% csrf_token %}
+                <button class="btn btn btn-primary" type="submit"><i class="far fa-comment"></i>&nbsp;Message User</button>
+            </form>
+        {% endif %}
+    </td>
+{% endblock tableExtraBody %}

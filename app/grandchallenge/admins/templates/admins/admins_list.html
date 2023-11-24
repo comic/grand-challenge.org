@@ -30,7 +30,7 @@
 
 {% block tableExtraBody %}
     <td>
-        {% if user.pk != this_admin_pk %}
+        {% if user != request.user %}
             <form method="post"
                   action="{% url 'admins:update' challenge_short_name=challenge.short_name %}">
                 {% csrf_token %}

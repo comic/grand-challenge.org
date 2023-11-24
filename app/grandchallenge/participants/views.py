@@ -80,7 +80,9 @@ class RegistrationRequestList(
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        queryset = queryset.filter(Q(challenge=self.request.challenge))
+        queryset = queryset.filter(
+            Q(challenge=self.request.challenge)
+        ).select_related("user__user_profile", "user__verification")
         return queryset
 
 
