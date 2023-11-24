@@ -97,6 +97,6 @@ def _arg_dependent_replacement(arg):
         ),
     ],
 )
-def test_safe_substitutions_width(inp, content, typ):
+def test_safe_substitutions_with_arguments(inp, content, typ):
     result = TagSubstitution(tag_name="foo", replacement=content)(inp)
     assert isinstance(result, typ)
