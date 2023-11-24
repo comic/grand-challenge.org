@@ -259,9 +259,5 @@ a[aria-expanded=false] .fa-chevron-down {
 
 
 .youtube {
-    display: inline-block;
     aspect-ratio: 16/9;
-    height: auto;
-    min-width: 480px;
-    min-height: 270px;
 }

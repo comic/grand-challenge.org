@@ -58,20 +58,15 @@ def test_markdown_rendering():
     assert output == EXPECTED_HTML
 
 
-def _gen_expected_iframe(width=480, height=None):
-    if height is not None:
-        height_str = f'height="{height!r}" '
-    else:
-        height_str = ""
-    return (
-        "<p>\n"
-        '<iframe allow="accelerometer; autoplay; encrypted-media; gyroscope; '
-        f'picture-in-picture; web-share; fullscreen" class="youtube" frameborder="0" {height_str}'
-        'sandbox="allow-scripts allow-same-origin allow-presentation allow-popups" '
-        'src="https://www.youtube-nocookie.com/embed/QCYYhkTlnhQ?disablekb=1&amp;rel=0&amp;" '
-        f'width="{width!r}"></iframe>\n'
-        "</p>"
-    )
+EXPECTED_YOUTUBE_EMBED = (
+    "<p>\n"
+    '<iframe allow="accelerometer; autoplay; encrypted-media; gyroscope; '
+    'picture-in-picture; web-share; fullscreen" class="embed-responsive youtube" '
+    'frameborder="0" loading="lazy" sandbox="allow-scripts allow-same-origin '
+    'allow-presentation allow-popups" '
+    'src="https://www.youtube-nocookie.com/embed/QCYYhkTlnhQ?disablekb=1&amp;rel=0&amp;"></iframe>\n'
+    "</p>"
+)
 
 
 @pytest.mark.parametrize(
@@ -79,23 +74,15 @@ def _gen_expected_iframe(width=480, height=None):
     [
         (
             "[youtube QCYYhkTlnhQ]",
-            _gen_expected_iframe(),
+            EXPECTED_YOUTUBE_EMBED,
         ),
         (  # Random white-spaces and newlines
             "[  youtube\n\t QCYYhkTlnhQ ]",
-            _gen_expected_iframe(),
+            EXPECTED_YOUTUBE_EMBED,
         ),
-        (  # add width
-            "[youtube QCYYhkTlnhQ 600]",
-            _gen_expected_iframe(width=600),
-        ),
-        (  # add width and height
-            "[youtube QCYYhkTlnhQ 600 500]",
-            _gen_expected_iframe(width=600, height=500),
-        ),
-        (  # minim width and height
-            "[youtube QCYYhkTlnhQ 1 1]",
-            _gen_expected_iframe(width=480, height=270),
+        (  # Does not hit
+            "fda [  youtube QCYYhkTlnhQ ]",
+            "<p>fda [  youtube QCYYhkTlnhQ ]</p>",
         ),
     ],
 )

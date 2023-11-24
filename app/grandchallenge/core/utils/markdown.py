@@ -85,18 +85,16 @@ class EmbedYouTubeInLineProcessor(InlineProcessor):
                 ]
             ),
         )
-        el.set("class", "youtube")
-
-        min_width = 480
-        width = m.group(2) and int(m.group(2)) or min_width
-        width = max(width, min_width)
-        el.set("width", str(width))
-
-        min_height = 270
-        height = m.group(3) and int(m.group(3))
-        if height:
-            height = max(height, min_height)
-            el.set("height", str(height))
+        el.set(
+            "class",
+            " ".join(
+                [
+                    "embed-responsive",
+                    "rounded",
+                    "youtube",
+                ]
+            ),
+        )
 
         el.set("frameborder", "0")
 
