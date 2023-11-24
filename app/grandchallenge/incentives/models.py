@@ -5,7 +5,7 @@ from django.utils.html import format_html
 class Incentive(models.Model):
     """Store the incentive options, eg, Monetary, Publication, Speaking Engagement."""
 
-    incentive = models.CharField(max_length=16, blank=False, unique=True)
+    incentive = models.CharField(max_length=24, blank=False, unique=True)
 
     class Meta:
         ordering = ("incentive",)
