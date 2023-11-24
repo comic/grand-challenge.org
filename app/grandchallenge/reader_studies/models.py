@@ -484,7 +484,9 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     @property
     def help_text(self) -> str:
         """The cleaned help text from the markdown sources"""
-        return process_tags(md2html(self.help_text_markdown))
+        return process_tags(
+            md2html(self.help_text_markdown, link_blank_target=True)
+        )
 
     @cached_property
     def study_image_names(self):
