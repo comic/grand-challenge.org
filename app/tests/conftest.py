@@ -2,7 +2,6 @@ import os
 import warnings
 import zipfile
 from collections import namedtuple
-from datetime import timedelta
 from pathlib import Path
 from typing import NamedTuple
 
@@ -11,10 +10,8 @@ from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import Group
 from django.contrib.sites.models import Site
-from django.utils.timezone import now
 from django_otp.oath import TOTP
 from django_otp.plugins.otp_totp.models import TOTPDevice
-from factory.fuzzy import FuzzyText
 
 from grandchallenge.cases.models import Image
 from grandchallenge.components.backends import docker_client
@@ -41,7 +38,6 @@ from tests.evaluation_tests.factories import MethodFactory, PhaseFactory
 from tests.factories import (
     SUPER_SECURE_TEST_PASSWORD,
     ChallengeFactory,
-    ChallengeRequestFactory,
     ImageFactory,
     UserFactory,
 )
@@ -620,43 +616,6 @@ def component_interfaces():
 @pytest.fixture
 def uploaded_image():
     return create_uploaded_image
-
-
-def generate_challenge_request():
-    return ChallengeRequestFactory(
-        title=FuzzyText(),
-        creator=UserFactory(),
-        start_date=now(),
-        end_date=now() + timedelta(days=1),
-        expected_number_of_teams=10,
-        inference_time_limit_in_minutes=10,
-        average_size_of_test_image_in_mb=10,
-        phase_1_number_of_submissions_per_team=10,
-        phase_2_number_of_submissions_per_team=0,
-        phase_1_number_of_test_images=100,
-        phase_2_number_of_test_images=0,
-        number_of_tasks=1,
-        structured_challenge_submission_doi="10.5281/zenodo.6362337",
-    )
-
-
-@pytest.fixture
-def challenge_request():
-    return generate_challenge_request()
-
-
-@pytest.fixture
-def two_challenge_requests():
-    two_challenge_requests = namedtuple(
-        "two_challenge_requests",
-        [
-            "request1",
-            "request2",
-        ],
-    )
-    return two_challenge_requests(
-        generate_challenge_request(), generate_challenge_request()
-    )
 
 
 @pytest.fixture

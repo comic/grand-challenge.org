@@ -2,7 +2,7 @@ import pytest
 
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.models import Verification
-from tests.factories import UserFactory
+from tests.factories import ChallengeRequestFactory, UserFactory
 from tests.utils import (
     get_view_for_user,
     validate_admin_only_view,
@@ -64,8 +64,9 @@ def test_request_challenge_only_when_verified(client):
 )
 @pytest.mark.django_db
 def test_view_and_update_challenge_request(
-    client, viewname, challenge_reviewer, challenge_request
+    client, viewname, challenge_reviewer
 ):
+    challenge_request = ChallengeRequestFactory()
     user = UserFactory()
     response = get_view_for_user(
         client=client,
@@ -99,24 +100,19 @@ def test_view_and_update_challenge_request(
 
 
 @pytest.mark.django_db
-def test_challenge_request_list_view_permissions(
-    client, challenge_reviewer, two_challenge_requests
-):
+def test_challenge_request_list_view_permissions(client, challenge_reviewer):
+    r1, r2 = ChallengeRequestFactory.create_batch(2)
     # requester can only view their own request
     response = get_view_for_user(
         viewname="challenges:requests-list",
         client=client,
         method=client.get,
-        user=two_challenge_requests.request1.creator,
+        user=r1.creator,
     )
     assert response.status_code == 200
     assert len(response.context["object_list"]) == 1
-    assert two_challenge_requests.request1.title in str(
-        response.context["object_list"]
-    )
-    assert two_challenge_requests.request2.title not in str(
-        response.context["object_list"]
-    )
+    assert r1.title in str(response.context["object_list"])
+    assert r2.title not in str(response.context["object_list"])
 
     # challenge reviewer can view all requests
     response = get_view_for_user(
@@ -126,9 +122,5 @@ def test_challenge_request_list_view_permissions(
         user=challenge_reviewer,
     )
     assert response.status_code == 200
-    assert two_challenge_requests.request1.title in str(
-        response.context["object_list"]
-    )
-    assert two_challenge_requests.request2.title in str(
-        response.context["object_list"]
-    )
+    assert r1.title in str(response.context["object_list"])
+    assert r2.title in str(response.context["object_list"])
