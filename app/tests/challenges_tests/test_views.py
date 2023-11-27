@@ -9,7 +9,11 @@ from grandchallenge.challenges.models import Challenge, ChallengeRequest
 from grandchallenge.invoices.models import PaymentStatusChoices
 from grandchallenge.verifications.models import Verification
 from tests.evaluation_tests.factories import PhaseFactory
-from tests.factories import ChallengeFactory, UserFactory
+from tests.factories import (
+    ChallengeFactory,
+    ChallengeRequestFactory,
+    UserFactory,
+)
 from tests.invoices_tests.factories import InvoiceFactory
 from tests.utils import get_view_for_user
 
@@ -307,8 +311,8 @@ def test_challenge_card_status(
 def test_challenge_request_workflow(
     client,
     challenge_reviewer,
-    challenge_request,
 ):
+    challenge_request = ChallengeRequestFactory()
     # requesting a challenge sends email to requester and reviewer(s)
     requester1 = challenge_request.creator
     assert len(mail.outbox) == 2
@@ -367,7 +371,8 @@ def test_challenge_request_workflow(
 
 
 @pytest.mark.django_db
-def test_budget_field_update(client, challenge_request, challenge_reviewer):
+def test_budget_field_update(client, challenge_reviewer):
+    challenge_request = ChallengeRequestFactory()
     assert challenge_request.expected_number_of_teams == 10
     response = get_view_for_user(
         client=client,

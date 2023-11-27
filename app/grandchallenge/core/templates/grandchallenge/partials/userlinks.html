@@ -88,6 +88,9 @@
                href="{% url 'challenges:users-list' %}">
                 Your Challenges</a>
             <a class="dropdown-item"
+               href="{% url 'challenges:requests-list' %}">
+                Your Challenge Requests</a>
+            <a class="dropdown-item"
                href="{% url 'cases:raw-image-upload-session-list' %}">
                 Your Uploads</a>
             {% if 'emails.view_email' in perms %}

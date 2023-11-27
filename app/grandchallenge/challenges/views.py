@@ -27,7 +27,10 @@ from grandchallenge.challenges.forms import (
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
 from grandchallenge.challenges.serializers import PublicChallengeSerializer
 from grandchallenge.core.filters import FilterMixin
-from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
+from grandchallenge.core.guardian import (
+    ObjectPermissionRequiredMixin,
+    PermissionListMixin,
+)
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.publications.models import Publication
 from grandchallenge.subdomains.mixins import ChallengeSubdomainObjectMixin
@@ -134,23 +137,25 @@ class ChallengeRequestCreate(
         return kwargs
 
     def get_success_url(self):
-        return reverse("challenges:list")
+        return reverse("challenges:requests-list")
 
 
-class ChallengeRequestList(
-    LoginRequiredMixin, PermissionRequiredMixin, ListView
-):
+class ChallengeRequestList(LoginRequiredMixin, PermissionListMixin, ListView):
     model = ChallengeRequest
-    permission_required = "challenges.view_challengerequest"
+    permission_required = "view_challengerequest"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
 
 
 class ChallengeRequestDetail(
     LoginRequiredMixin,
-    PermissionRequiredMixin,
+    ObjectPermissionRequiredMixin,
     DetailView,
 ):
     model = ChallengeRequest
-    permission_required = "challenges.view_challengerequest"
+    permission_required = "view_challengerequest"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
     detail_view_fields = (
         "title",
         "short_name",
@@ -188,13 +193,15 @@ class ChallengeRequestDetail(
 
 class ChallengeRequestStatusUpdate(
     LoginRequiredMixin,
-    PermissionRequiredMixin,
+    ObjectPermissionRequiredMixin,
     UpdateView,
 ):
     model = ChallengeRequest
     form_class = ChallengeRequestStatusUpdateForm
-    permission_required = "challenges.change_challengerequest"
+    permission_required = "change_challengerequest"
     template_name = "challenges/challengerequest_status_form.html"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
 
     def form_valid(self, form):
         super().form_valid(form)
@@ -221,12 +228,14 @@ class ChallengeRequestStatusUpdate(
 
 class ChallengeRequestBudgetUpdate(
     LoginRequiredMixin,
-    PermissionRequiredMixin,
+    ObjectPermissionRequiredMixin,
     UpdateView,
 ):
     model = ChallengeRequest
     form_class = ChallengeRequestBudgetUpdateForm
-    permission_required = "challenges.change_challengerequest"
+    permission_required = "change_challengerequest"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
     template_name = "challenges/challengerequest_budget_form.html"
 
     def form_valid(self, form):

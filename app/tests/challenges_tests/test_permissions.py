@@ -2,7 +2,7 @@ import pytest
 
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.models import Verification
-from tests.factories import UserFactory
+from tests.factories import ChallengeRequestFactory, UserFactory
 from tests.utils import (
     get_view_for_user,
     validate_admin_only_view,
@@ -54,52 +54,73 @@ def test_request_challenge_only_when_verified(client):
     assert response.status_code == 200
 
 
+@pytest.mark.parametrize(
+    "viewname",
+    [
+        "challenges:requests-detail",
+        "challenges:requests-status-update",
+        "challenges:requests-budget-update",
+    ],
+)
 @pytest.mark.django_db
 def test_view_and_update_challenge_request(
-    client, challenge_reviewer, challenge_request
+    client, viewname, challenge_reviewer
 ):
-    # challenge request creator cannot view or update the request
+    challenge_request = ChallengeRequestFactory()
+    user = UserFactory()
     response = get_view_for_user(
         client=client,
-        viewname="challenges:requests-detail",
+        viewname=viewname,
         reverse_kwargs={"pk": challenge_request.pk},
-        user=challenge_request.creator,
-    )
-    assert response.status_code == 403
-    response = get_view_for_user(
-        client=client,
-        viewname="challenges:requests-status-update",
-        reverse_kwargs={"pk": challenge_request.pk},
-        user=challenge_request.creator,
-    )
-    assert response.status_code == 403
-    response = get_view_for_user(
-        client=client,
-        viewname="challenges:requests-budget-update",
-        reverse_kwargs={"pk": challenge_request.pk},
-        user=challenge_request.creator,
+        user=user,
     )
     assert response.status_code == 403
 
-    # reviewer can view and udpate
     response = get_view_for_user(
         client=client,
-        viewname="challenges:requests-detail",
+        viewname=viewname,
+        reverse_kwargs={"pk": challenge_request.pk},
+        user=challenge_request.creator,
+    )
+    if "detail" in viewname:
+        assert response.status_code == 200
+        assert "Edit budget fields" not in str(response.content)
+    else:
+        assert response.status_code == 403
+
+    response = get_view_for_user(
+        client=client,
+        viewname=viewname,
         reverse_kwargs={"pk": challenge_request.pk},
         user=challenge_reviewer,
     )
     assert response.status_code == 200
+    if "detail" in viewname:
+        assert "Edit budget fields" in str(response.content)
+
+
+@pytest.mark.django_db
+def test_challenge_request_list_view_permissions(client, challenge_reviewer):
+    r1, r2 = ChallengeRequestFactory.create_batch(2)
+    # requester can only view their own request
     response = get_view_for_user(
+        viewname="challenges:requests-list",
         client=client,
-        viewname="challenges:requests-status-update",
-        reverse_kwargs={"pk": challenge_request.pk},
+        method=client.get,
+        user=r1.creator,
+    )
+    assert response.status_code == 200
+    assert len(response.context["object_list"]) == 1
+    assert r1.title in str(response.context["object_list"])
+    assert r2.title not in str(response.context["object_list"])
+
+    # challenge reviewer can view all requests
+    response = get_view_for_user(
+        viewname="challenges:requests-list",
+        client=client,
+        method=client.get,
         user=challenge_reviewer,
     )
     assert response.status_code == 200
-    response = get_view_for_user(
-        client=client,
-        viewname="challenges:requests-budget-update",
-        reverse_kwargs={"pk": challenge_request.pk},
-        user=challenge_reviewer,
-    )
-    assert response.status_code == 200
+    assert r1.title in str(response.context["object_list"])
+    assert r2.title in str(response.context["object_list"])

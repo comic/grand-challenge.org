@@ -6,7 +6,7 @@ from django.conf import settings
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.challenges.tasks import update_challenge_results_cache
 from tests.evaluation_tests.factories import EvaluationFactory
-from tests.factories import ChallengeFactory
+from tests.factories import ChallengeFactory, ChallengeRequestFactory
 
 
 @pytest.mark.django_db
@@ -35,7 +35,8 @@ def test_challenge_update(two_challenge_sets, django_assert_num_queries):
 
 
 @pytest.mark.django_db
-def test_challenge_creation_from_request(challenge_request):
+def test_challenge_creation_from_request():
+    challenge_request = ChallengeRequestFactory()
     # an algorithm submission phase gets created
     challenge_request.create_challenge()
     assert Challenge.objects.count() == 1
@@ -46,7 +47,8 @@ def test_challenge_creation_from_request(challenge_request):
 
 
 @pytest.mark.django_db
-def test_challenge_request_budget_calculation(challenge_request):
+def test_challenge_request_budget_calculation():
+    challenge_request = ChallengeRequestFactory()
     assert (
         challenge_request.budget["Data storage cost for phase 1"]
         == math.ceil(

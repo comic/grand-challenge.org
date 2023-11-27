@@ -88,6 +88,7 @@ ANONYMOUS_USER_NAME = "AnonymousUser"
 USER_LOGIN_TIMEOUT_DAYS = 14
 REGISTERED_USERS_GROUP_NAME = "__registered_users_group__"
 REGISTERED_AND_ANON_USERS_GROUP_NAME = "__registered_and_anonymous_users__"
+CHALLENGES_REVIEWERS_GROUP_NAME = "__challengerequest_reviewers__"
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name

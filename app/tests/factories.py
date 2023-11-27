@@ -1,9 +1,11 @@
+import datetime
 import hashlib
 
 import factory
 import factory.fuzzy
 from django.conf import settings
 from django.contrib.auth.models import Group
+from factory import fuzzy
 
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
@@ -68,6 +70,18 @@ class ChallengeRequestFactory(factory.django.DjangoModelFactory):
 
     creator = factory.SubFactory(UserFactory)
     short_name = factory.Sequence(lambda n: f"test-challenge-{n}")
+    title = factory.fuzzy.FuzzyText()
+    start_date = fuzzy.FuzzyDate(datetime.date(1970, 1, 1))
+    end_date = fuzzy.FuzzyDate(datetime.date(1971, 1, 1))
+    expected_number_of_teams = 10
+    inference_time_limit_in_minutes = 10
+    average_size_of_test_image_in_mb = 10
+    phase_1_number_of_submissions_per_team = 10
+    phase_2_number_of_submissions_per_team = 0
+    phase_1_number_of_test_images = 100
+    phase_2_number_of_test_images = 0
+    number_of_tasks = 1
+    structured_challenge_submission_doi = "10.5281/zenodo.6362337"
 
 
 class PageFactory(factory.django.DjangoModelFactory):

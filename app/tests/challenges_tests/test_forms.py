@@ -7,7 +7,11 @@ from grandchallenge.challenges.forms import (
     ChallengeRequestForm,
     ChallengeRequestStatusUpdateForm,
 )
-from tests.factories import ChallengeFactory, UserFactory
+from tests.factories import (
+    ChallengeFactory,
+    ChallengeRequestFactory,
+    UserFactory,
+)
 
 
 @pytest.mark.django_db
@@ -68,9 +72,8 @@ def test_challenge_request_budget_fields_required():
 
 
 @pytest.mark.django_db
-def test_accept_challenge_request(
-    client, challenge_reviewer, challenge_request
-):
+def test_accept_challenge_request(client, challenge_reviewer):
+    challenge_request = ChallengeRequestFactory()
     _ = ChallengeFactory(short_name=challenge_request.short_name)
     form = ChallengeRequestStatusUpdateForm(
         data={
@@ -86,7 +89,8 @@ def test_accept_challenge_request(
 
 
 @pytest.mark.django_db
-def test_budget_update_form(challenge_request):
+def test_budget_update_form():
+    challenge_request = ChallengeRequestFactory()
     # all budget fields need to be filled
     data = {
         "expected_number_of_teams": 100,

@@ -1,8 +1,9 @@
 from itertools import chain
 
 import pytest
+from django.conf import settings
+from django.contrib.auth.models import Group
 from django.db.models import BLANK_CHOICE_DASH
-from guardian.shortcuts import assign_perm
 
 from grandchallenge.pages.models import Page
 from tests.factories import ChallengeFactory, PageFactory, UserFactory
@@ -322,8 +323,10 @@ def test_challenge_statistics_page_permissions(client):
     assert response.status_code == 200
     assert "Challenge Costs" not in response.rendered_content
 
-    assign_perm("challenges.view_challengerequest", user)
-
+    reviewers = Group.objects.get(
+        name=settings.CHALLENGES_REVIEWERS_GROUP_NAME
+    )
+    reviewers.user_set.add(user)
     response = get_view_for_user(
         viewname="pages:statistics",
         client=client,
