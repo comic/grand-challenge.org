@@ -63,6 +63,7 @@ from grandchallenge.evaluation.utils import (
     StatusChoices,
     SubmissionKindChoices,
 )
+from grandchallenge.incentives.models import Incentive
 from grandchallenge.invoices.models import PaymentStatusChoices
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
@@ -188,6 +189,11 @@ class ChallengeBase(models.Model):
         BodyStructure,
         blank=True,
         help_text="What structures are used in this challenge?",
+    )
+    incentives = models.ManyToManyField(
+        Incentive,
+        blank=True,
+        help_text="What incentives are there for users to participate in this challenge?",
     )
 
     class Meta:

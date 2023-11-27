@@ -346,6 +346,7 @@ class ChallengeCostCalculation(
 class ChallengeViewSet(ReadOnlyModelViewSet):
     queryset = Challenge.objects.all().prefetch_related(
         "phase_set",
+        "incentives",
         # Put the most cited publications first
         Prefetch(
             "publications",

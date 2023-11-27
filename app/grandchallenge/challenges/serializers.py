@@ -13,6 +13,7 @@ class PublicChallengeSerializer(serializers.ModelSerializer):
     start_date = SerializerMethodField()
     end_date = SerializerMethodField()
     modified = SerializerMethodField()
+    incentives = SerializerMethodField()
 
     class Meta:
         model = Challenge
@@ -31,6 +32,7 @@ class PublicChallengeSerializer(serializers.ModelSerializer):
             "publications",
             "created",
             "modified",
+            "incentives",
         ]
 
     def get_publications(self, obj) -> list[str]:
@@ -78,3 +80,6 @@ class PublicChallengeSerializer(serializers.ModelSerializer):
         except ValueError:
             # No Phases
             return obj.modified
+
+    def get_incentives(self, obj) -> list[str]:
+        return [incentive.incentive for incentive in obj.incentives.all()]
