@@ -14,6 +14,7 @@ from django.contrib.sites.models import Site
 from django.utils.timezone import now
 from django_otp.oath import TOTP
 from django_otp.plugins.otp_totp.models import TOTPDevice
+from factory.fuzzy import FuzzyText
 
 from grandchallenge.cases.models import Image
 from grandchallenge.components.backends import docker_client
@@ -621,9 +622,9 @@ def uploaded_image():
     return create_uploaded_image
 
 
-@pytest.fixture
-def challenge_request():
+def generate_challenge_request():
     return ChallengeRequestFactory(
+        title=FuzzyText(),
         creator=UserFactory(),
         start_date=now(),
         end_date=now() + timedelta(days=1),
@@ -636,6 +637,25 @@ def challenge_request():
         phase_2_number_of_test_images=0,
         number_of_tasks=1,
         structured_challenge_submission_doi="10.5281/zenodo.6362337",
+    )
+
+
+@pytest.fixture
+def challenge_request():
+    return generate_challenge_request()
+
+
+@pytest.fixture
+def two_challenge_requests():
+    two_challenge_requests = namedtuple(
+        "two_challenge_requests",
+        [
+            "request1",
+            "request2",
+        ],
+    )
+    return two_challenge_requests(
+        generate_challenge_request(), generate_challenge_request()
     )
 
 
