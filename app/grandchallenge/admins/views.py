@@ -22,7 +22,6 @@ class AdminsList(LoginRequiredMixin, ObjectPermissionRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context.update(
             {
-                "this_admin_pk": self.request.user.pk,
                 "admin_remove_action": AdminsForm.REMOVE,
             }
         )

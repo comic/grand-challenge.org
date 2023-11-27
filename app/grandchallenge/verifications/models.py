@@ -68,17 +68,6 @@ class Verification(models.Model):
         )
 
     @property
-    def user_info(self):
-        return format_html(
-            "<span>{} <br/> {} <br/> {} <br/> {} <br/> {}</span>",
-            self.user.get_full_name(),
-            self.user.user_profile.institution,
-            self.user.user_profile.department,
-            self.user.user_profile.country,
-            self.user.user_profile.website,
-        )
-
-    @property
     def verification_badge(self):
         if self.is_verified:
             return format_html(

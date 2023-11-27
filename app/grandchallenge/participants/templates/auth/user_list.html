@@ -14,10 +14,7 @@
             <thead class="thead-light">
             <tr>
                 <th>Username</th>
-                <th>Name</th>
-                <th>Institution</th>
-                <th>Department</th>
-                <th>Location</th>
+                <th>Info</th>
                 <th>Website</th>
                 {% block tableExtraHeaders %}
                 {% endblock tableExtraHeaders %}
@@ -32,21 +29,16 @@
                         {{ user|user_profile_link }}
                     </td>
                     <td>
-                        {{ user.get_full_name }}
+                        {{ user.user_profile.user_info }}
                     </td>
                     <td>
-                        {{ user.user_profile.institution }}
-                    </td>
-                    <td>
-                        {{ user.user_profile.department }}
-                    </td>
-                    <td>
-                        {{ user.user_profile.country.name }}
-                    </td>
-                    <td>
-                        <a href="{{ user.user_profile.website }}">
-                            {{ user.user_profile.website }}
+                        {% if user.user_profile.website %}
+                        <a href="{{ user.user_profile.website }}"
+                            target="_blank"
+                            title="Users Website {{ user.user_profile.website }}">
+                            <i class="fas fa-link"></i>
                         </a>
+                        {% endif %}
                     </td>
                     {% block tableExtraBody %}
                     {% endblock tableExtraBody %}

@@ -26,8 +26,7 @@
                 <th>Created</th>
                 <th>Updated</th>
                 <th>Username</th>
-                <th>Name</th>
-                <th>Affiliation</th>
+                <th>Info</th>
                 <th>Status</th>
                 <th>Accept / Reject</th>
             </tr>
@@ -47,10 +46,7 @@
                         {{ regrequest.user|user_profile_link }}
                     </td>
                     <td>
-                        {{ regrequest.user.get_full_name }}
-                    </td>
-                    <td>
-                        {{ regrequest.user_affiliation }}
+                        {{ regrequest.user.user_profile.user_info }}
                     </td>
                     <td data-order="{{ regrequest.status }}">
                         {% if regrequest.status == regrequest.PENDING %}
