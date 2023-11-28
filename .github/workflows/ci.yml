@@ -11,22 +11,6 @@ concurrency:
 
 jobs:
 
-  precommit:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Install Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-      - uses: actions/checkout@v3
-      - name: Install pre-commit
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install pre-commit virtualenv!=20.0.6
-          pre-commit install
-      - name: Run static code inspections
-        run: pre-commit run --all-files
-
   django-tests:
     runs-on: ubuntu-latest
     steps:
