@@ -1,5 +1,4 @@
-"""
-Tools for importing arXiv ids, modified from https://github.com/manubot/manubot
+"""Tools for importing arXiv ids, modified from https://github.com/manubot/manubot.
 
 # BSD-2-Clause Plus Patent License
 
@@ -108,9 +107,8 @@ def date_to_date_parts(date):  # noqa: C901
 
 
 def get_arxiv_csl(*, arxiv_id):
-    """
-    Generate a CSL Item for an unversioned arXiv identifier
-    using arXiv's OAI_PMH v2.0 API <https://arxiv.org/help/oa>.
+    """Generate a CSL Item for an unversioned arXiv identifier using arXiv's OAI_PMH v2.0 API <https://arxiv.org/help/oa>.
+
     This endpoint does not support versioned `arxiv_id`.
     """
     # XML namespace prefixes

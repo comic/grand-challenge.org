@@ -606,7 +606,7 @@ class ImageFile(FieldChangeMixin, UUIDModel):
 
 @receiver(post_delete, sender=ImageFile)
 def delete_image_files(*_, instance: ImageFile, **__):
-    """Deletes the related image files, note that DZI files are not handled!
+    """Deletes the related image files, note that DZI files are not handled.
 
     We use a signal rather than overriding delete() to catch usages of bulk_delete.
 

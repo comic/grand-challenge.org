@@ -361,11 +361,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
 
     @cached_property
     def active_image(self):
-        """
-        Returns
-        -------
-            The desired version for this algorithm or None
-        """
+        """The desired version for this algorithm or None."""
         try:
             return (
                 self.algorithm_container_images.executable_images()

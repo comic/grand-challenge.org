@@ -88,11 +88,7 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
 
     @cached_property
     def active_image(self):
-        """
-        Returns
-        -------
-            The desired image version for this workstation or None
-        """
+        """The desired image version for this workstation or None."""
         try:
             return (
                 self.workstationimage_set.executable_images()
@@ -416,11 +412,7 @@ class Session(UUIDModel):
 
     @property
     def task_kwargs(self) -> dict:
-        """
-        Returns
-        -------
-            The kwargs that need to be passed to celery to get this object
-        """
+        """The kwargs that need to be passed to celery to get this object."""
         return {
             "app_label": self._meta.app_label,
             "model_name": self._meta.model_name,
@@ -429,31 +421,19 @@ class Session(UUIDModel):
 
     @property
     def hostname(self) -> str:
-        """
-        Returns
-        -------
-            The unique hostname for this session
-        """
+        """The unique hostname for this session."""
         return (
             f"{self.pk}-{self._meta.model_name}-{self._meta.app_label}".lower()
         )
 
     @property
     def expires_at(self) -> datetime:
-        """
-        Returns
-        -------
-            The time when this session expires.
-        """
+        """The time when this session expires."""
         return self.created + self.maximum_duration
 
     @property
     def environment(self) -> dict:
-        """
-        Returns
-        -------
-            The environment variables that should be set on the container.
-        """
+        """The environment variables that should be set on the container."""
         env = {var["name"]: var["value"] for var in self.extra_env_vars}
 
         env.update(
@@ -489,11 +469,7 @@ class Session(UUIDModel):
 
     @property
     def service(self) -> Service:
-        """
-        Returns
-        -------
-            The service for this session, could be active or inactive.
-        """
+        """The service for this session, could be active or inactive."""
         return Service(
             job_id=f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
             exec_image_repo_tag=self.workstation_image.original_repo_tag,
@@ -502,11 +478,7 @@ class Session(UUIDModel):
 
     @property
     def workstation_url(self) -> str:
-        """
-        Returns
-        -------
-            The url that users will use to access the workstation instance.
-        """
+        """The URL that users will use to access the workstation instance."""
         return urljoin(
             self.get_absolute_url(), self.workstation_image.initial_path
         )

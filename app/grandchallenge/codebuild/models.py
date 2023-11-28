@@ -12,7 +12,11 @@ from grandchallenge.github.models import GitHubWebhookMessage
 
 
 class BuildStatusChoices(models.TextChoices):
-    """From https://docs.aws.amazon.com/codebuild/latest/APIReference/API_Build.html"""
+    """Build Status Choices.
+
+    From https://docs.aws.amazon.com/codebuild/latest/APIReference/API_Build.html
+
+    """
 
     SUCCEEDED = "SUCCEEDED", _("Succeeded")
     FAILED = "FAILED", _("Failed")

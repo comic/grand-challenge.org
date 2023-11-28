@@ -734,11 +734,7 @@ class Phase(UUIDModel, ViewContentMixin):
 
     @cached_property
     def active_image(self):
-        """
-        Returns
-        -------
-            The desired image version for this phase or None
-        """
+        """The desired image version for this phase or None."""
         try:
             return (
                 self.method_set.executable_images()

@@ -111,7 +111,7 @@ class Page(models.Model):
             )
 
     def can_be_viewed_by(self, user):
-        """Is user allowed to view this?"""
+        """Whether user is allowed to view this."""
         if self.permission_level == self.ALL:
             return True
         else:

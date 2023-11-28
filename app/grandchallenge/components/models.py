@@ -133,7 +133,7 @@ class InterfaceKind:
 
     @staticmethod
     def interface_type_json():
-        """Interface kinds that are json serializable:
+        """Interface kinds that are json serializable.
 
         * String
         * Integer
@@ -608,11 +608,12 @@ class InterfaceKind:
 
     @staticmethod
     def interface_type_image():
-        """Interface kinds that are images:
+        """Interface kinds that are images.
 
         * Image
         * Heat Map
         * Segmentation
+
         """
         return {
             InterfaceKind.InterfaceKindChoices.IMAGE,
@@ -622,7 +623,7 @@ class InterfaceKind:
 
     @staticmethod
     def interface_type_file():
-        """Interface kinds that are files:
+        """Interface kinds that are files.
 
         * CSV file
         * ZIP file
@@ -632,6 +633,7 @@ class InterfaceKind:
         * Thumbnail PNG
         * OBJ file
         * MP4 file
+
         """
         return {
             InterfaceKind.InterfaceKindChoices.CSV,
@@ -1090,7 +1092,7 @@ class ComponentInterfaceValue(models.Model):
 
     @property
     def decompress(self):
-        """Should the CIV be decompressed?
+        """Should the CIV be decompressed.
 
         This is only for legacy support of zip file submission for prediction evaluation. We should not support this
         anywhere else as it clobbers the input directory.
@@ -1114,7 +1116,7 @@ class ComponentInterfaceValue(models.Model):
 
     @property
     def relative_path(self):
-        """Where should the file be located?
+        """Where should the file be located.
 
         Images need special handling as their names are fixed.
 
