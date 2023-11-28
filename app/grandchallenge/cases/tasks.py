@@ -45,10 +45,7 @@ def _populate_tmp_dir(tmp_dir, upload_session):
 def populate_provisioning_directory(
     input_files: Sequence[UserUpload], provisioning_dir: Path
 ):
-    """
-    Provisions provisioning_dir with the files associated using the given
-    list of uploaded files.
-    """
+    """Provisions provisioning_dir with the files associated using the given list of uploaded files."""
     for input_file in input_files:
         dest = Path(safe_join(provisioning_dir, input_file.filename))
 
@@ -91,9 +88,7 @@ def extract_files(*, source_path: Path, checked_paths=None):
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def build_images(*, upload_session_pk):
-    """
-    Task which analyzes an upload session and attempts to extract and store
-    detected images assembled from files uploaded in the image session.
+    """Task which analyzes an upload session and attempts to extract and store detected images assembled from files uploaded in the image session.
 
     The task updates the state-filed of the associated
     :class:`RawImageUploadSession` to indicate if it is running or has finished
@@ -108,6 +103,7 @@ def build_images(*, upload_session_pk):
     ----------
     upload_session_uuid: UUID
         The uuid of the upload sessions that should be analyzed.
+
     """
 
     session_queryset = RawImageUploadSession.objects.filter(
@@ -180,8 +176,7 @@ def import_images(
     builders: Sequence[Callable] | None = None,
     recurse_subdirectories: bool = True,
 ) -> ImporterResult:
-    """
-    Creates Image objects from a set of files.
+    """Creates Image objects from a set of files.
 
     Parameters
     ----------
@@ -235,11 +230,11 @@ def import_images(
 
 
 def _check_all_ids(*, panimg_result: PanImgResult):
-    """
-    Check the integrity of the conversion job.
+    """Check the integrity of the conversion job.
 
-    All new_ids must be new, this will be found when saving the Django objects.
-    Every new image must have at least one file associated with it.
+    All new_ids must be new, this will be found when saving the Django objects. Every new image must have at least one
+    file associated with it.
+
     """
     new_ids = {im.pk for im in panimg_result.new_images}
     new_file_ids = {f.image_id for f in panimg_result.new_image_files}
@@ -373,10 +368,10 @@ def post_process_image(*, image_pk):
 
 
 def _download_image_files(*, image_files, dir):
-    """
-    Downloads a set of image files to a directory
+    """Downloads a set of image files to a directory.
 
     Returns a set of PanImgFiles that point to the local files
+
     """
     panimg_files = set()
 
@@ -401,7 +396,7 @@ def _download_image_files(*, image_files, dir):
 
 
 def _check_post_processor_result(*, post_processor_result, image_pk):
-    """Ensure all post processed results belong to the given image"""
+    """Ensure all post processed results belong to the given image."""
     created_ids = {
         str(f.image_id) for f in post_processor_result.new_image_files
     }
@@ -411,7 +406,7 @@ def _check_post_processor_result(*, post_processor_result, image_pk):
 
 
 def _store_post_processed_images(*, image_files, new_image_files):
-    """Save the post processed files"""
+    """Save the post processed files."""
     for im_file in image_files:
         im_file.post_processed = True
         im_file.save(update_fields=["post_processed"])

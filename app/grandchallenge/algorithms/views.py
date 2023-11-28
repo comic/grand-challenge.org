@@ -167,11 +167,10 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
         return response
 
     def check_permissions(self, request):
-        """
-        Checks if *request.user* has all permissions returned by
-        *get_required_permissions* method.
+        """Checks if *request.user* has all permissions returned by *get_required_permissions* method.
 
         :param request: Original request.
+
         """
         try:
             return super().check_permissions(request)

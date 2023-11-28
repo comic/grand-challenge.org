@@ -30,7 +30,7 @@ def clean(html: str):
 
 @register.filter
 def md2email_html(markdown: str | None):
-    """Converts markdown to clean html intended for emailing"""
+    """Converts markdown to clean html intended for emailing."""
     return md2html(
         markdown,
         link_blank_target=True,
@@ -45,7 +45,7 @@ def md2html(
     link_blank_target=False,
     create_permalink_for_headers=True,
 ):
-    """Convert markdown to clean html"""
+    """Convert markdown to clean html."""
 
     extensions = [*settings.MARKDOWNX_MARKDOWN_EXTENSIONS]
 

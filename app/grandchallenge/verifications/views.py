@@ -23,7 +23,7 @@ from grandchallenge.verifications.models import (
 
 
 class VerificationRequiredMixin(UserPassesTestMixin):
-    """Mixin for views that require verification"""
+    """Mixin for views that require verification."""
 
     def test_func(self):
         try:

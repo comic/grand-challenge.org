@@ -84,14 +84,12 @@ def update_archive_item_update_kwargs(
     user_upload=None,
     upload_session=None,
 ):
-    """
-    Given an interface and a value/image/user_upload/upload_session, this task
-    determines whether to create a new CIV for the specified archive item instance
-    with those values, and whether to delete any existing CIVs from the archive item.
-    It appends the respective CIV pk(s) to the set of to be added and removed
-    civs and returns those. If an upload_session is specified,
-    it also appends the session pk together with the new civ pk to the list of
-    to be processed images.
+    """Given an interface and a value/image/user_upload/upload_session, this task determines whether to create a new CIV for the specified archive item instance with those values, and whether to delete any existing CIVs from the archive item.
+
+    It appends the respective CIV pk(s) to the set of to be added and removed civs and returns those. If an
+    upload_session is specified, it also appends the session pk together with the new civ pk to the list of to be
+    processed images.
+
     """
     with transaction.atomic():
         if interface.is_image_kind:

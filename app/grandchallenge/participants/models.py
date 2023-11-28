@@ -8,10 +8,10 @@ from grandchallenge.core.utils.access_requests import process_access_request
 
 
 class RegistrationRequest(RequestBase):
-    """
-    When a user wants to join a project, admins have the option of reviewing
-    each user before allowing or denying them. This class records the needed
-    info for that.
+    """When a user wants to join a project, admins have the option of reviewing each user before allowing or denying them.
+
+    This class records the needed info for that.
+
     """
 
     challenge = models.ForeignKey(

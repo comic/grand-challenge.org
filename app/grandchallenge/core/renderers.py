@@ -15,9 +15,10 @@ class PaginatedCSVRenderer(CSVRenderer):
         return super().render(data, *args, **kwargs)
 
     def flatten_data(self, data):
-        """
-        Create a dictionary that is 1 level deep, with nested values serialized
-        as json. This means that the header rows are now consistent.
+        """Create a dictionary that is 1 level deep, with nested values serialized as json.
+
+        This means that the header rows are now consistent.
+
         """
         for row in data:
             flat_row = {k: self._flatten_value(v) for k, v in row.items()}

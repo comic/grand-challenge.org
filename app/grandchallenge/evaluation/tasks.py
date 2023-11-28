@@ -31,8 +31,7 @@ logger = logging.getLogger(__name__)
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 @transaction.atomic
 def create_evaluation(*, submission_pk, max_initial_jobs=1):
-    """
-    Creates an Evaluation for a Submission
+    """Creates an Evaluation for a Submission.
 
     Parameters
     ----------
@@ -40,6 +39,7 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):
         The primary key of the Submission
     max_initial_jobs
         The maximum number of algorithm jobs to schedule first
+
     """
     Submission = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Submission"
@@ -134,8 +134,7 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):
 def create_algorithm_jobs_for_evaluation(
     *, evaluation_pk, max_jobs=1, retries=0
 ):
-    """
-    Creates the algorithm jobs for the evaluation
+    """Creates the algorithm jobs for the evaluation.
 
     By default the number of jobs are limited to allow for failures.
     Once this task is called without limits the remaining jobs are
@@ -147,6 +146,7 @@ def create_algorithm_jobs_for_evaluation(
         The primary key of the evaluation
     max_jobs
         The maximum number of jobs to create
+
     """
 
     def retry_with_delay():
@@ -273,8 +273,7 @@ def handle_failed_jobs(*, evaluation_pk):
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def set_evaluation_inputs(*, evaluation_pk):
-    """
-    Sets the inputs to the Evaluation for an algorithm submission.
+    """Sets the inputs to the Evaluation for an algorithm submission.
 
     If all of the `Job`s for this algorithm `Submission` are
     successful this will set the inputs to the `Evaluation` job and schedule
@@ -287,6 +286,7 @@ def set_evaluation_inputs(*, evaluation_pk):
     ----------
     evaluation_pk
         The primary key of the evaluation.Evaluation object
+
     """
     Job = apps.get_model(  # noqa: N806
         app_label="algorithms", model_name="Job"

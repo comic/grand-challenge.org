@@ -4,13 +4,12 @@ from grandchallenge.retina_api.mixins import is_in_retina_admins_group
 
 
 class RetinaAnnotationFilter(filters.BaseFilterBackend):
-    """
-    Filter backend that only returns objects that belong to the current user, except
-    if the user is in the `retina_admins` group.
+    """Filter backend that only returns objects that belong to the current user, except if the user is in the `retina_admins` group.
 
     This filter is created for annotation models and requires that the model has a
     `grader` field that defines the user that is the owner of the object. As defined
     in `annotations.AbstractAnnotationModel`.
+
     """
 
     def filter_queryset(self, request, queryset, view):
@@ -20,13 +19,12 @@ class RetinaAnnotationFilter(filters.BaseFilterBackend):
 
 
 class RetinaChildAnnotationFilter(filters.BaseFilterBackend):
-    """
-    Filter backend that only returns objects of which the parent belongs to the current
-    user, except if the user is in the `retina_admins` group.
+    """Filter backend that only returns objects of which the parent belongs to the current user, except if the user is in the `retina_admins` group.
 
     This filter is created for annotation models and requires that the parent of the
     model has a `grader` field that defines the user that is the owner of the object.
     As defined in `annotations.AbstractSingleAnnotationModel`.
+
     """
 
     def filter_queryset(self, request, queryset, view):

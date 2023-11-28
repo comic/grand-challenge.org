@@ -52,16 +52,17 @@ class MimeTypeValidator:
 
 @deconstructible
 class ExtensionValidator:
-    """
-    Performs soft validation of the filename. Usage:
+    """Performs soft validation of the filename.
 
-        validators=[
-            ExtensionValidator(
-                allowed_extensions=(
-                    '.tar',
-                    )
-                ),
-            ],
+    Usage:
+
+       validators=[
+           ExtensionValidator(
+               allowed_extensions=(
+                   '.tar',
+                   )
+               ),
+           ],
 
     """
 
@@ -117,10 +118,10 @@ def get_file_mimetype(file):
 
 
 class JSONSchemaRetrieve:
-    """
-    A cached retrieve that can be used in referencing.Registry.
+    """A cached retrieve that can be used in referencing.Registry.
 
     The URIs retrieved are limited to those that match the allowed_regexes.
+
     """
 
     def __init__(self, *, allowed_regexes):

@@ -49,7 +49,7 @@ MAX_RETRIES = 60 * 24  # 1 day assuming 60 seconds delay
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def update_sagemaker_shim_version():
-    """Updates existing images to new versions of sagemaker shim"""
+    """Updates existing images to new versions of sagemaker shim."""
     with transaction.atomic():
         for app_label, model_name in (
             ("algorithms", "algorithmimage"),
@@ -73,7 +73,7 @@ def update_sagemaker_shim_version():
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def shim_image(*, pk: uuid.UUID, app_label: str, model_name: str):
-    """Shim an existing container image"""
+    """Shim an existing container image."""
     model = apps.get_model(app_label=app_label, model_name=model_name)
     instance = model.objects.get(pk=pk)
 
@@ -194,7 +194,7 @@ def upload_to_registry_and_sagemaker(
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def remove_inactive_container_images():
-    """Removes inactive container images from the registry"""
+    """Removes inactive container images from the registry."""
     for app_label, model_name, related_name in (
         ("algorithms", "algorithm", "algorithm_container_images"),
         ("evaluation", "phase", "method_set"),
@@ -226,7 +226,7 @@ def remove_inactive_container_images():
 def remove_container_image_from_registry(
     *, pk: uuid.UUID, app_label: str, model_name: str
 ):
-    """Remove a container image from the registry"""
+    """Remove a container image from the registry."""
     model = apps.get_model(app_label=app_label, model_name=model_name)
     instance = model.objects.get(pk=pk)
 
@@ -295,7 +295,7 @@ def remove_tag_from_registry(*, repo_tag):
 
 
 def _repo_login_and_run(*, command):
-    """Logs in to a repo and runs a crane command"""
+    """Logs in to a repo and runs a crane command."""
     if settings.COMPONENTS_REGISTRY_INSECURE:
         # Do not login to insecure registries
         command.append("--insecure")
@@ -322,7 +322,7 @@ def _repo_login_and_run(*, command):
 
 
 def shim_container_image(*, instance):
-    """Patches a container image with the SageMaker Shim executable"""
+    """Patches a container image with the SageMaker Shim executable."""
 
     if not instance.is_in_registry:
         raise RuntimeError(
@@ -350,12 +350,12 @@ def shim_container_image(*, instance):
 
 
 def encode_b64j(*, val):
-    """Base64 encode a JSON serialised value"""
+    """Base64 encode a JSON serialised value."""
     return b64encode(json.dumps(val).encode("utf-8")).decode("utf-8")
 
 
 def _get_container_image_config(*, original_repo_tag):
-    """Get the configuration of an existing container image"""
+    """Get the configuration of an existing container image."""
     output = _repo_login_and_run(
         command=["crane", "config", original_repo_tag]
     )
@@ -363,7 +363,7 @@ def _get_container_image_config(*, original_repo_tag):
 
 
 def _get_shim_env_vars(*, original_config):
-    """Get the environment variables for a shimmed container image"""
+    """Get the environment variables for a shimmed container image."""
     cmd = original_config["config"].get("Cmd")
     entrypoint = original_config["config"].get("Entrypoint")
 
@@ -380,7 +380,7 @@ def _get_shim_env_vars(*, original_config):
 def _mutate_container_image(
     *, original_repo_tag, new_repo_tag, version, env_vars
 ):
-    """Add the SageMaker Shim executable to a container image"""
+    """Add the SageMaker Shim executable to a container image."""
     with TemporaryDirectory() as tmp_dir:
         tmp_path = Path(tmp_dir)
         new_layer = tmp_path / "sagemaker-shim.tar"
@@ -434,7 +434,7 @@ def _mutate_container_image(
 
 
 def _decompress_tarball(*, in_fileobj, out_fileobj):
-    """Create an uncompress tarball from a (compressed) tarball"""
+    """Create an uncompress tarball from a (compressed) tarball."""
     with tarfile.open(fileobj=in_fileobj, mode="r") as it, tarfile.open(
         fileobj=out_fileobj, mode="w|"
     ) as ot:
@@ -538,11 +538,10 @@ def delete_sagemaker_model(*, repo_tag):
 
 
 def retry_if_dropped(func):
-    """
-    Retry a function that relies on an open database connection.
+    """Retry a function that relies on an open database connection.
 
-    Use this decorator when you have a long running task as sometimes the db
-    connection will drop.
+    Use this decorator when you have a long running task as sometimes the db connection will drop.
+
     """
 
     def wrapper(*args, **kwargs):
@@ -608,7 +607,7 @@ def provision_job(
 
 
 def _delay(*, task, signature_kwargs):
-    """Create a task signature for the delay queue"""
+    """Create a task signature for the delay queue."""
     step = task.signature(**signature_kwargs)
     queue = step.options.get("queue", task.queue)
     step.options["queue"] = f"{queue}-delay"
@@ -616,8 +615,7 @@ def _delay(*, task, signature_kwargs):
 
 
 def _retry(*, task, signature_kwargs, retries):
-    """
-    Retry a task using the delay queue
+    """Retry a task using the delay queue.
 
     We need to retry a task with a delay/countdown. There are several problems
     with doing this in Celery (with SQS/Redis).
@@ -632,6 +630,7 @@ def _retry(*, task, signature_kwargs, retries):
     This method is a workaround for these issues, that creates a new task
     and places this on a queue which has DelaySeconds set. The downside
     is that we need to track retries via the kwargs of the task.
+
     """
     if retries < MAX_RETRIES:
         step = _delay(task=task, signature_kwargs=signature_kwargs)
@@ -650,8 +649,7 @@ def execute_job(  # noqa: C901
     backend: str,
     retries: int = 0,
 ):
-    """
-    Executes the component job, can block with some backends.
+    """Executes the component job, can block with some backends.
 
     `execute_job` can raise `ComponentException` in which case
     the job will be marked as failed and the error returned to the user.
@@ -659,6 +657,7 @@ def execute_job(  # noqa: C901
     Job must be in the PROVISIONED state.
 
     Once the job has executed it will be in the EXECUTING or FAILURE states.
+
     """
     job = get_model_instance(
         pk=job_pk, app_label=job_app_label, model_name=job_model_name
@@ -748,16 +747,12 @@ def execute_job(  # noqa: C901
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
 def handle_event(*, event, backend, retries=0):  # noqa: C901
-    """
-    Receives events when tasks have stops and determines what to do next.
-    In the case of transient failure the job could be scheduled again
-    on the backend. If the job is complete then sets stdout and stderr.
-    `handle_event` is expected to raise `ComponentException` in which case
-    the job will be marked as failed and the error returned to the user.
+    """Receives events when tasks have stops and determines what to do next. In the case of transient failure the job could be scheduled again on the backend. If the job is complete then sets stdout and stderr. `handle_event` is expected to raise `ComponentException` in which case the job will be marked as failed and the error returned to the user.
 
     Job must be in the EXECUTING state.
 
     Once the job has executed it will be in the EXECUTED or FAILURE states.
+
     """
     Backend = import_string(backend)  # noqa: N806
 
@@ -881,7 +876,7 @@ def retry_task(
     backend: str,
     retries: int = 0,
 ):
-    """Retries an existing task that was previously provisioned"""
+    """Retries an existing task that was previously provisioned."""
     job = get_model_instance(
         pk=job_pk, app_label=job_app_label, model_name=job_model_name
     )

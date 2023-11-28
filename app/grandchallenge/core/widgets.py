@@ -21,8 +21,7 @@ class JSONEditorWidget(forms.Textarea):
 
 
 class ColorEditorWidget(forms.TextInput):
-    """
-    Widget that uses the vendored jscolor for editing a color.
+    """Widget that uses the vendored jscolor for editing a color.
 
     Parameters
     ----------
@@ -32,6 +31,7 @@ class ColorEditorWidget(forms.TextInput):
 
         Options include "auto", "any", "hex", "hexa", "rgb", "rgba".
         See the jscolor (https://jscolor.com/docs/) for details.
+
     """
 
     template_name = "coloreditor/coloreditor_widget.html"

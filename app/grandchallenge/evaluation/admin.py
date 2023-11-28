@@ -88,7 +88,7 @@ class PhaseAdmin(admin.ModelAdmin):
     permissions=("change",),
 )
 def reevaluate_submissions(modeladmin, request, queryset):
-    """Creates a new evaluation for an existing submission"""
+    """Creates a new evaluation for an existing submission."""
     for submission in queryset:
         create_evaluation.apply_async(
             kwargs={"submission_pk": str(submission.pk)}

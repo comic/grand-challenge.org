@@ -13,14 +13,14 @@ def check_if_field_in_serializer(fields, serializer_fields):
 
 
 def check_if_valid(model_or_factory, serializer):
-    """
-    Function that checks if a model is valid according to the passed serializer.
-    The function saves the model and then checks validness through the serializer
-    This means that if the model contains unique constraints it will be invalid.
-    Use the function below for models with uniqueness constraints
+    """Function that checks if a model is valid according to the passed serializer.
+
+    The function saves the model and then checks validness through the serializer This means that if the model contains
+    unique constraints it will be invalid. Use the function below for models with uniqueness constraints
     :param model_or_factory: model or factory to check
     :param serializer: corresponding serializer
     :return: True/False
+
     """
     if isinstance(model_or_factory, models.Model):
         # model
@@ -34,12 +34,13 @@ def check_if_valid(model_or_factory, serializer):
 
 
 def check_if_valid_unique(model_or_factory, serializer, request=None):
-    """
-    Function that checks if a model is valid according to the passed serializer.
+    """Function that checks if a model is valid according to the passed serializer.
+
     Ignores validation errors for uniqueness
     :param model_or_factory: model or factory to check
     :param serializer: corresponding serializer
     :return: True/False
+
     """
     if isinstance(model_or_factory, models.Model):
         # model
@@ -94,7 +95,7 @@ def do_test_serializer_fields(serializer_data, request=None):
 
 
 def exclude_unique_errors(errors_object):
-    """Helper function that recursively excludes all unique errors"""
+    """Helper function that recursively excludes all unique errors."""
     filtered_error_object = {}
     for field_key, errors_list in errors_object.items():
         filtered_errors_list = []

@@ -9,10 +9,7 @@ from django.contrib.contenttypes.models import ContentType
 
 
 def _queryset_foreign_keys(queryset):
-    """
-    Build mapping of name -> field for GenericForeignKey or
-    ForwardManyToOneDescript fields on the queryset.
-    """
+    """Build mapping of name -> field for GenericForeignKey or ForwardManyToOneDescript fields on the queryset."""
     fks = {}
     for name, field in queryset.model.__dict__.items():
         if not isinstance(field, GenericForeignKey):
@@ -22,10 +19,7 @@ def _queryset_foreign_keys(queryset):
 
 
 def _content_type_to_content_mapping_for_gfks(queryset, gfks):
-    """
-    Build mapping of content_type -> [content_pk] for the given queryset and
-    its generic foreign keys.
-    """
+    """Build mapping of content_type -> [content_pk] for the given queryset and its generic foreign keys."""
     data = collections.defaultdict(list)
     for (
         _model,
@@ -55,10 +49,7 @@ def _get_related_content_type_and_related_object_pk(model, fk):
 
 
 def _queryset_gfk_content_generator(queryset, gfks):
-    """
-    Generator function that yields information about all GenericForeignKey
-    fields for all models of a queryset.
-    """
+    """Generator function that yields information about all GenericForeignKey fields for all models of a queryset."""
     for model in queryset:
         data = namedtuple(
             "data", ["model", "field_name", "content_type", "object_pk"]

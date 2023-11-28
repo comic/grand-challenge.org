@@ -198,7 +198,7 @@ def refresh_user_token(*, pk):
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
 def refresh_expiring_user_tokens():
-    """Refresh user tokens expiring in the next 1 to 28 days"""
+    """Refresh user tokens expiring in the next 1 to 28 days."""
     GitHubUserToken = apps.get_model(  # noqa: N806
         app_label="github", model_name="GitHubUserToken"
     )

@@ -172,11 +172,10 @@ class WorkstationGroupObjectPermission(GroupObjectPermissionBase):
 
 @receiver(post_delete, sender=Workstation)
 def delete_workstation_groups_hook(*_, instance: Workstation, using, **__):
-    """
-    Deletes the related groups.
+    """Deletes the related groups.
 
-    We use a signal rather than overriding delete() to catch usages of
-    bulk_delete.
+    We use a signal rather than overriding delete() to catch usages of bulk_delete.
+
     """
     try:
         instance.editors_group.delete(using=using)
@@ -190,8 +189,7 @@ def delete_workstation_groups_hook(*_, instance: Workstation, using, **__):
 
 
 class WorkstationImage(UUIDModel, ComponentImage):
-    """
-    A ``WorkstationImage`` is a docker container image of a workstation.
+    """A ``WorkstationImage`` is a docker container image of a workstation.
 
     Parameters
     ----------
@@ -206,6 +204,7 @@ class WorkstationImage(UUIDModel, ComponentImage):
     initial_path
         The initial path that users will navigate to in order to load the
         workstation
+
     """
 
     SHIM_IMAGE = False
@@ -311,10 +310,7 @@ ENV_VARS_SCHEMA = {
 
 
 class Session(UUIDModel):
-    """
-    Tracks who has launched workstation images. The ``WorkstationImage`` will
-    be launched as a ``Service``. The ``Session`` is responsible for starting
-    and stopping the ``Service``.
+    """Tracks who has launched workstation images. The ``WorkstationImage`` will be launched as a ``Service``. The ``Session`` is responsible for starting and stopping the ``Service``.
 
     Parameters
     ----------
@@ -333,6 +329,7 @@ class Session(UUIDModel):
         Indicates if the user has chosen to end the session early
     history
         The history of this Session
+
     """
 
     QUEUED = 0
@@ -515,15 +512,13 @@ class Session(UUIDModel):
         )
 
     def start(self) -> None:
-        """
-        Starts the service for this session, ensuring that the
-        ``workstation_image`` is ready to be used and that
-        ``WORKSTATIONS_MAXIMUM_SESSIONS`` has not been reached in this region.
+        """Starts the service for this session, ensuring that the ``workstation_image`` is ready to be used and that ``WORKSTATIONS_MAXIMUM_SESSIONS`` has not been reached in this region.
 
         Raises
         ------
         ComponentException
             If the service cannot be started.
+
         """
         try:
             if not self.workstation_image.can_execute:
@@ -561,13 +556,13 @@ class Session(UUIDModel):
             self.auth_token.delete()
 
     def update_status(self, *, status: STATUS_CHOICES) -> None:
-        """
-        Updates the status of this session.
+        """Updates the status of this session.
 
         Parameters
         ----------
         status
             The new status for this session.
+
         """
         self.status = status
         self.save()

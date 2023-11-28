@@ -47,11 +47,7 @@ class SimpleImageSerializer(serializers.ModelSerializer):
 
 
 class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
-    """
-    Serializes images with hyperlinks for external usage
-    Expects interface_slug, to allow creating a ComponentInterfaceValue with an
-    existing ComponentInterface
-    """
+    """Serializes images with hyperlinks for external usage Expects interface_slug, to allow creating a ComponentInterfaceValue with an existing ComponentInterface."""
 
     image = serializers.HyperlinkedRelatedField(
         queryset=Image.objects.none(),

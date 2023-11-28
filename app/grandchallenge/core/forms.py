@@ -39,7 +39,7 @@ class UserFormKwargsMixin:
 
 
 class PermissionRequestUpdateForm(SaveFormInitMixin, ModelForm):
-    """Update form for inheritors of RequestBase"""
+    """Update form for inheritors of RequestBase."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

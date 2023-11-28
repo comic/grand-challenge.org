@@ -280,7 +280,7 @@ class UserUpload(UUIDModel):
         )
 
     def copy_object(self, *, to_field, save=True):
-        """Copies the object to a Django file field on a model"""
+        """Copies the object to a Django file field on a model."""
         copy_s3_object(
             to_field=to_field,
             dest_filename=self.filename,
@@ -304,11 +304,10 @@ class UserUpload(UUIDModel):
 
 @receiver(post_delete, sender=UserUpload)
 def delete_objects_hook(*_, instance: UserUpload, **__):
-    """
-    Deletes the objects from storage.
+    """Deletes the objects from storage.
 
-    We use a signal rather than overriding delete() to catch usages of
-    bulk_delete.
+    We use a signal rather than overriding delete() to catch usages of bulk_delete.
+
     """
     if instance.status == UserUpload.StatusChoices.COMPLETED:
         instance.delete_object()

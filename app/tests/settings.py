@@ -1,4 +1,4 @@
-"""Settings overrides for tests"""
+"""Settings overrides for tests."""
 
 import logging
 import os

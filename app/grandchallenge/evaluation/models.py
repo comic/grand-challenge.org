@@ -613,10 +613,7 @@ class Phase(UUIDModel, ViewContentMixin):
         return timedelta(days=self.submission_limit_period)
 
     def get_next_submission(self, *, user):
-        """
-        Determines the number of submissions left for the user,
-        and when they can next submit.
-        """
+        """Determines the number of submissions left for the user, and when they can next submit."""
         now = timezone.now()
 
         if not self.open_for_submissions:
@@ -753,7 +750,7 @@ class Phase(UUIDModel, ViewContentMixin):
 
     @cached_property
     def valid_archive_items(self):
-        """Returns the archive items that are valid for this phase"""
+        """Returns the archive items that are valid for this phase."""
         if self.archive and self.algorithm_inputs:
             return self.archive.items.annotate(
                 interface_match_count=Count(
@@ -1242,7 +1239,7 @@ class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
 
     @staticmethod
     def _rank_combined_rank_scores(combined_ranks):
-        """In-place addition of a rank based on the combined rank"""
+        """In-place addition of a rank based on the combined rank."""
         combined_ranks.sort(key=lambda x: x["combined_rank"])
         current_score = current_rank = None
 

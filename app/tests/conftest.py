@@ -112,10 +112,10 @@ def generate_challenge_set():
 
 @pytest.fixture(name="challenge_set")
 def challenge_set():
-    """
-    Create a challenge with creator, 2 participants, and non participant.
+    """Create a challenge with creator, 2 participants, and non participant.
 
     To use this you must mark the test with `@pytest.mark.django_db`.
+
     """
     return generate_challenge_set()
 
@@ -156,10 +156,10 @@ def two_challenge_sets():
 
 @pytest.fixture(name="eval_challenge_set")
 def challenge_set_with_evaluation(challenge_set):
-    """
-    Creates a challenge with two methods.
+    """Creates a challenge with two methods.
 
     To use this you must mark the test with `@pytest.mark.django_db`.
+
     """
     eval_challenge_set = namedtuple(
         "eval_challenge_set", ["challenge_set", "method"]
@@ -325,11 +325,7 @@ def generate_two_polygon_annotation_sets(retina_grader=False):
 
 @pytest.fixture(name="two_retina_polygon_annotation_sets")
 def two_retina_polygon_annotation_sets():
-    """
-    Create two PolygonAnnotationSets of each 10 SinglePolygonAnnotations
-    belonging to two different graders that both are in the retina_graders
-    group.
-    """
+    """Create two PolygonAnnotationSets of each 10 SinglePolygonAnnotations belonging to two different graders that both are in the retina_graders group."""
     return generate_two_polygon_annotation_sets(retina_grader=True)
 
 

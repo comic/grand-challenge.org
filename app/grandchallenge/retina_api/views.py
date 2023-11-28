@@ -64,15 +64,12 @@ class LandmarkAnnotationSetViewSet(viewsets.ModelViewSet):
     pagination_class = None
 
     def get_queryset(self):
-        """
-        If the query parameter `image_id` is defined, the queryset will be a list of
-        `LandmarkAnnotationSet`s that contain a `SingleLandmarkAnnotation` related to
-        the given image id. If the image does not exist, this will raise a Http404
-        Exception. Otherwise, it will return the full `LandmarkAnnotationSet` queryset
+        """If the query parameter `image_id` is defined, the queryset will be a list of `LandmarkAnnotationSet`s that contain a `SingleLandmarkAnnotation` related to the given image id. If the image does not exist, this will raise a Http404 Exception. Otherwise, it will return the full `LandmarkAnnotationSet` queryset.
 
         Returns
         -------
         QuerySet
+
         """
         queryset = LandmarkAnnotationSet.objects.prefetch_related(
             "singlelandmarkannotation_set"

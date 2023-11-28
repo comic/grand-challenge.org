@@ -18,7 +18,7 @@ from grandchallenge.publications.fields import IdentifierField
 
 
 class ConsortiumNameCiteProcJSON(CiteProcJSON):
-    """CiteProcJSON, but handles consortium names"""
+    """CiteProcJSON, but handles consortium names."""
 
     def parse_names(self, json_data):
         names = []

@@ -39,7 +39,7 @@ class TestHangingProtocolSerializer:
     def test_hanging_protocol_serializer_field(
         self, rf, factory, item_factory, relation, serializer
     ):
-        """Each item should get the hanging protocol and content from the parent"""
+        """Each item should get the hanging protocol and content from the parent."""
         hp = HangingProtocolFactory(json=[{"viewport_name": "main"}])
         object = factory(hanging_protocol=hp, view_content={"main": "test"})
 
@@ -62,7 +62,7 @@ class TestHangingProtocolSerializer:
     def test_optional_hanging_protocol_serializer_field(
         self, rf, factory, item_factory, relation, serializer
     ):
-        """Each item should get the optional hanging protocol from the parent"""
+        """Each item should get the optional hanging protocol from the parent."""
         hps = HangingProtocolFactory.create_batch(3)
         object = factory()
         object.optional_hanging_protocols.set(hps)
@@ -82,7 +82,7 @@ class TestHangingProtocolSerializer:
     def test_no_optional_hanging_protocol_serializer_field(
         self, rf, factory, item_factory, relation, serializer
     ):
-        """If no optional hanging protocols are present, none should be serialized"""
+        """If no optional hanging protocols are present, none should be serialized."""
         object = factory()
 
         item = item_factory(**{relation: object})

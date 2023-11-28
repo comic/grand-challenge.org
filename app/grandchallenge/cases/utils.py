@@ -7,8 +7,7 @@ from panimg.image_builders.metaio_utils import load_sitk_image
 
 
 def get_sitk_image(*, image):
-    """
-    Return the image that belongs to this model instance as an SimpleITK image.
+    """Return the image that belongs to this model instance as an SimpleITK image.
 
     Requires that exactly one MHD/RAW file pair is associated with the model.
     Otherwise it wil raise a MultipleObjectsReturned or ObjectDoesNotExist
@@ -17,6 +16,7 @@ def get_sitk_image(*, image):
     Returns
     -------
         A SimpleITK image
+
     """
     files = [i for i in image.get_metaimage_files() if i is not None]
 

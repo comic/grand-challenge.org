@@ -9,5 +9,5 @@ register = template.Library()
 @register.filter
 @stringfilter
 def random_encode(value):
-    """Randomly replace letters with their html encoded equivalents"""
+    """Randomly replace letters with their html encoded equivalents."""
     return "".join(random.choice([f"&#{ord(c)};", c]) for c in value)

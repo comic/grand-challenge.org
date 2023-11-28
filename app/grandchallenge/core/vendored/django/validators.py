@@ -5,12 +5,11 @@ from django.utils.translation import gettext_lazy as _
 
 
 class StepValueValidator(BaseValidator):
-    """
-    StepValueValidator was introduced in django41 but corrected in django50
-    to include the offset
+    """StepValueValidator was introduced in django41 but corrected in django50 to include the offset.
 
     https://github.com/django/django/blob/21757bbdcd6ef31f2a4092fa1bd55dff29214c7a/django/core/validators.py#L396
     https://github.com/django/django/pull/16745
+
     """
 
     message = _(

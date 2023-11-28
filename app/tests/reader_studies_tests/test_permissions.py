@@ -355,10 +355,7 @@ def test_api_rs_answer_detail_permissions(client):
 
 @pytest.mark.django_db
 def test_api_rs_answer_mine_list_permissions(client):
-    """
-    For the "mine" endpoint the list should be filtered by the users own
-    answers
-    """
+    """For the "mine" endpoint the list should be filtered by the users own answers."""
 
     rs_set = TwoReaderStudies()
 

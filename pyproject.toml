@@ -13,8 +13,9 @@ target-version = ['py310']
 
 [tool.docformatter]
 recursive = true
-wrap-summaries = 79
-wrap-descriptions = 80
+# to large just to be ignored as long lines are skipped anyway
+wrap-summaries = 999
+wrap-descriptions = 120
 blank = true
 
 [tool.curlylint.rules]

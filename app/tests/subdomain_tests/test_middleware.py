@@ -84,10 +84,7 @@ def test_challenge_attribute(settings, rf, subdomain):
 def test_rendering_challenge_settings(
     settings, rf, subdomain, response_type, expected_challenge
 ):
-    """
-    Requests on rendering subdomains should not have a challenge attached nor
-    redirect.
-    """
+    """Requests on rendering subdomains should not have a challenge attached nor redirect."""
     settings.ALLOWED_HOSTS = [f".{SITE_DOMAIN}"]
     c = ChallengeFactory(short_name="c")
 
@@ -126,7 +123,7 @@ def test_url_conf_set(
     expected_challenge,
     expected_url_conf,
 ):
-    """Subdomains should have the correct url_conf attached"""
+    """Subdomains should have the correct url_conf attached."""
     settings.ALLOWED_HOSTS = [f".{SITE_DOMAIN}"]
     c = ChallengeFactory(short_name="c")
 

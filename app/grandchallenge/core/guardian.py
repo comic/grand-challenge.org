@@ -36,21 +36,17 @@ class ObjectPermissionRequiredMixin(PermissionRequiredMixin):
 
 
 def filter_by_permission(*, queryset, user, codename):
-    """
-    Optimised version of get_objects_for_user
+    """Optimised version of get_objects_for_user.
 
-    This method considers both the group and user permissions, and ignores
-    global permissions.
+    This method considers both the group and user permissions, and ignores global permissions.
 
-    Django guardian keeps its permissions in two tables. If you are allowing
-    permissions from both users and groups then get_objects_for_user
-    creates uses a SQL OR operation which is slow. This optimises the queries
-    by using a SQL Union.
+    Django guardian keeps its permissions in two tables. If you are allowing permissions from both users and groups then
+    get_objects_for_user creates uses a SQL OR operation which is slow. This optimises the queries by using a SQL Union.
 
-    This requires using direct foreign key permissions on the objects so that
-    a reverse lookup can be used. Django does now allow filtering of
-    querysets created with a SQL Union, so this must be the last operation
-    in the queryset generation.
+    This requires using direct foreign key permissions on the objects so that a reverse lookup can be used. Django does
+    now allow filtering of querysets created with a SQL Union, so this must be the last operation in the queryset
+    generation.
+
     """
     if user.is_superuser is True:
         return queryset

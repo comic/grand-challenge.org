@@ -91,10 +91,11 @@ def generate_landmarks(img):
 
 
 def load_as_bytes_io(fp):
-    """
-    Load file in filepath (fp) to BytesIO object
+    """Load file in filepath (fp) to BytesIO object.
+
     :param fp: filepath
     :return: BytesIO object
+
     """
     fh = open(fp, "rb")
     bio = BytesIO()

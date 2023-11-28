@@ -272,7 +272,7 @@ def test_public_job_group_permissions():
 
 @pytest.mark.django_db
 class TestJobPermissions:
-    """The permissions for jobs will depend on their creation"""
+    """The permissions for jobs will depend on their creation."""
 
     @staticmethod
     def _validate_created_job_perms(*, algorithm_image, job, user):

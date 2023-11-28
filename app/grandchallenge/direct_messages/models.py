@@ -125,12 +125,11 @@ class MuteGroupObjectPermission(GroupObjectPermissionBase):
 
 class ConversationQuerySet(models.QuerySet):
     def with_most_recent_message(self, *, user):
-        """
-        Adds the most recent message to each conversation
+        """Adds the most recent message to each conversation.
 
-        Also includes a count of the number of unread messages in that conversation,
-        and whether the conversation has unread messages which can be used for
-        ordering.
+        Also includes a count of the number of unread messages in that conversation, and whether the conversation has
+        unread messages which can be used for ordering.
+
         """
         most_recent_message = DirectMessage.objects.order_by("-created")
 
@@ -158,7 +157,7 @@ class ConversationQuerySet(models.QuerySet):
         )
 
     def with_unread_by_user(self, *, user):
-        """Adds whether the user has read each direct message in the conversation"""
+        """Adds whether the user has read each direct message in the conversation."""
         return self.prefetch_related(
             Prefetch(
                 "direct_messages",
@@ -175,11 +174,10 @@ class ConversationQuerySet(models.QuerySet):
         )
 
     def for_participants(self, *, participants):
-        """
-        Find the conversations with the given set of participants
+        """Find the conversations with the given set of participants.
 
-        Looks for set equality. If there are additional or missing participants
-        those conversations are excluded.
+        Looks for set equality. If there are additional or missing participants those conversations are excluded.
+
         """
         return self.annotate(
             total_participants_count=Count("participants", distinct=True),

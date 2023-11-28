@@ -76,12 +76,10 @@ class CachedPhaseMixin:
 
 
 class UserCanSubmitAlgorithmToPhaseMixin(VerificationRequiredMixin):
-    """
-    Mixin that checks if a user is either an admin of a challenge
-    or a participant of the challenge and that the phase is configured for
-    algorithm submission and that the challenge has a logo.
-    If the user is a participant, it also checks that the phase
-    is open for submissions.
+    """Mixin that checks if a user is either an admin of a challenge or a participant of the challenge and that the phase is configured for algorithm submission and that the challenge has a logo.
+
+    If the user is a participant, it also checks that the phase is open for submissions.
+
     """
 
     def test_func(self):
@@ -283,10 +281,10 @@ class MethodUpdate(
 
 
 class SubmissionCreateBase(SuccessMessageMixin, CreateView):
-    """
-    Base class for the submission creation forms.
+    """Base class for the submission creation forms.
 
     It has no permissions, do not use it directly! See the subclasses.
+
     """
 
     model = Submission

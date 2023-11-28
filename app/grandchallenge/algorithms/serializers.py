@@ -50,7 +50,7 @@ class AlgorithmSerializer(serializers.ModelSerializer):
         ]
 
     def get_average_duration(self, obj: Algorithm) -> float | None:
-        """The average duration of successful jobs in seconds"""
+        """The average duration of successful jobs in seconds."""
         if obj.average_duration is None:
             return None
         else:
@@ -81,7 +81,7 @@ class AlgorithmImageSerializer(serializers.ModelSerializer):
 
 
 class JobSerializer(serializers.ModelSerializer):
-    """Serializer without hyperlinks for internal use"""
+    """Serializer without hyperlinks for internal use."""
 
     algorithm_image = StringRelatedField()
     inputs = ComponentInterfaceValueSerializer(many=True)
@@ -126,7 +126,7 @@ class JobSerializer(serializers.ModelSerializer):
 
 
 class HyperlinkedJobSerializer(JobSerializer):
-    """Serializer with hyperlinks for use in public API"""
+    """Serializer with hyperlinks for use in public API."""
 
     algorithm_image = HyperlinkedRelatedField(
         queryset=AlgorithmImage.objects.all(),

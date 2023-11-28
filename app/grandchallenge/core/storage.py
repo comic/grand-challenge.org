@@ -19,10 +19,10 @@ from storages.utils import clean_name
 
 
 class S3Storage(S3Boto3Storage):
-    """
-    Wraps the s3 storage class but allows for configurable kwargs per
-    backend. The upstream storage class is responsible for setting all
-    of the kwargs.
+    """Wraps the s3 storage class but allows for configurable kwargs per backend.
+
+    The upstream storage class is responsible for setting all of the kwargs.
+
     """
 
     def __init__(self, *args, config, **kwargs):
@@ -53,10 +53,7 @@ class PrivateS3Storage(S3Storage):
         )
 
     def url(self, *args, **kwargs):
-        """
-        Urls for private storage should never be used, as S3Storage will
-        generate a signed URL which will allow users to download the file.
-        """
+        """Urls for private storage should never be used, as S3Storage will generate a signed URL which will allow users to download the file."""
         raise NotImplementedError
 
 
@@ -73,13 +70,12 @@ class ProtectedS3Storage(S3Storage):
         super().__init__(*args, config=config, **kwargs)
 
     def cloudfront_signed_url(self, *, name, domain=None, expire=None):
-        """
-        Create a signed url that will be valid until the specific expiry date
-        provided using a canned policy.
+        """Create a signed url that will be valid until the specific expiry date provided using a canned policy.
 
         Note: This grants the user permission to read the file.
 
         https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cloudfront.html#id57
+
         """
         name = self._normalize_name(clean_name(name))
 
@@ -155,7 +151,7 @@ def get_mugshot_path(instance, filename):
 
 
 def copy_s3_object(*, to_field, dest_filename, src_bucket, src_key, save):
-    """Copies an S3 object to a Django file field on a model"""
+    """Copies an S3 object to a Django file field on a model."""
     if not isinstance(to_field, FieldFile):
         raise ValueError("to_field must be a FieldFile")
 

@@ -38,7 +38,7 @@ UUID4_REGEX = (
 
 
 class LogStreamNotFound(Exception):
-    """Raised when a log stream could not be found"""
+    """Raised when a log stream could not be found."""
 
 
 class GPUChoices(TextChoices):
@@ -373,7 +373,7 @@ class AmazonSageMakerBatchExecutor(Executor):
 
     @cached_property
     def _instance_type(self):
-        """Find the cheapest instance that can run this job"""
+        """Find the cheapest instance that can run this job."""
 
         if self._requires_gpu:
             # For now only use single gpu, T4 instances

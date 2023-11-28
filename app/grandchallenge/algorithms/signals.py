@@ -12,10 +12,10 @@ from grandchallenge.components.models import ComponentInterfaceValue
 def update_input_image_permissions(
     sender, instance, action, reverse, model, pk_set, **_
 ):
-    """
-    Assign or remove view_image permissions for the algorithms editors and
-    creators when inputs/outputs are added/removed to/from the algorithm jobs.
+    """Assign or remove view_image permissions for the algorithms editors and creators when inputs/outputs are added/removed to/from the algorithm jobs.
+
     Handles reverse relations and clearing.
+
     """
     if action not in ["post_add", "post_remove", "pre_clear"]:
         # nothing to do for the other actions

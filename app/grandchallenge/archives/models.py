@@ -31,7 +31,7 @@ from grandchallenge.subdomains.utils import reverse
 
 
 class Archive(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
-    """Model for archive. Contains a collection of images."""
+    """Model for archive, it contains a collection of images."""
 
     detail_page_markdown = models.TextField(blank=True)
     logo = JPEGField(
@@ -305,10 +305,10 @@ class ArchiveItemGroupObjectPermission(GroupObjectPermissionBase):
 
 
 class ArchivePermissionRequest(RequestBase):
-    """
-    When a user wants to view an archive, editors have the option of
-    reviewing each user before accepting or rejecting them. This class records
-    the needed info for that.
+    """When a user wants to view an archive, editors have the option of reviewing each user before accepting or rejecting them.
+
+    This class records the needed info for that.
+
     """
 
     archive = models.ForeignKey(

@@ -70,7 +70,7 @@ class Executor(ABC):
         ...
 
     def get_outputs(self, *, output_interfaces):
-        """Create ComponentInterfaceValues from the output interfaces"""
+        """Create ComponentInterfaceValues from the output interfaces."""
         outputs = []
 
         with transaction.atomic():
@@ -343,7 +343,7 @@ class Executor(ABC):
         return civ
 
     def _delete_objects(self, *, bucket, prefix):
-        """Deletes all objects with a given prefix"""
+        """Deletes all objects with a given prefix."""
         if not (
             prefix.startswith("/io/") or prefix.startswith("/invocations/")
         ) or bucket not in {

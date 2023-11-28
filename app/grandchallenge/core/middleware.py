@@ -10,11 +10,11 @@ class RequireStaffAndSuperuser2FAMiddleware(BaseRequire2FAMiddleware):
 
 
 class TwoFactorMiddleware(MiddlewareMixin):
-    """
-    Reset the login flow if another page is loaded halfway through the login.
-    (I.e. if the user has logged in with a username/password, but not yet
-    entered their two-factor credentials.) This makes sure a user does not stay
-    half logged in by mistake.
+    """Reset the login flow if another page is loaded halfway through the login.
+
+    (I.e. if the user has logged in with a username/password, but not yet entered their two-factor credentials.) This
+    makes sure a user does not stay half logged in by mistake.
+
     """
 
     def process_request(self, request):

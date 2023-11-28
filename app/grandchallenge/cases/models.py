@@ -45,11 +45,7 @@ SEGMENTS_SCHEMA = {
 
 
 class RawImageUploadSession(UUIDModel):
-    """
-    A session keeps track of uploaded files and forms the basis of a processing
-    task that tries to make sense of the uploaded files to form normalized
-    images that can be fed to processing tasks.
-    """
+    """A session keeps track of uploaded files and forms the basis of a processing task that tries to make sense of the uploaded files to form normalized images that can be fed to processing tasks."""
 
     PENDING = 0
     STARTED = 1
@@ -117,14 +113,14 @@ class RawImageUploadSession(UUIDModel):
                 )
 
     def process_images(self, linked_task=None):
-        """
-        Starts the Celery task to import this RawImageUploadSession.
+        """Starts the Celery task to import this RawImageUploadSession.
 
         Parameters
         ----------
         linked_task
             A celery task that will be executed on success of the build_images
             task, with 1 keyword argument: upload_session_pk=self.pk
+
         """
 
         # Local import to avoid circular dependency
@@ -169,11 +165,10 @@ class RawImageUploadSessionGroupObjectPermission(GroupObjectPermissionBase):
 
 @receiver(pre_delete, sender=RawImageUploadSession)
 def delete_session_follows(*_, instance: RawImageUploadSession, **__):
-    """
-    Deletes the related follows.
+    """Deletes the related follows.
 
-    We use a signal rather than overriding delete() to catch usages of
-    bulk_delete.
+    We use a signal rather than overriding delete() to catch usages of bulk_delete.
+
     """
     ct = ContentType.objects.filter(
         app_label=instance._meta.app_label, model=instance._meta.model_name
@@ -343,12 +338,12 @@ class Image(UUIDModel):
 
     @property
     def shape_without_color(self) -> list[int]:
-        """
-        Return the shape of the image without the color channel.
+        """Return the shape of the image without the color channel.
 
         Returns
         -------
             The shape of the image in NumPy ordering [(t), (z), y, x]
+
         """
         result = []
         if self.timepoints is not None:
@@ -361,12 +356,12 @@ class Image(UUIDModel):
 
     @property
     def shape(self) -> list[int]:
-        """
-        Return the shape of the image with the color channel.
+        """Return the shape of the image with the color channel.
 
         Returns
         -------
             The shape of the image in NumPy ordering [(t), (z), y, x, (c)]
+
         """
         result = self.shape_without_color
         color_components = self.COLOR_SPACE_COMPONENTS[self.color_space]
@@ -375,8 +370,7 @@ class Image(UUIDModel):
         return result
 
     def get_metaimage_files(self):
-        """
-        Return ImageFile object for the related MHA file or MHD and RAW files.
+        """Return ImageFile object for the related MHA file or MHD and RAW files.
 
         Returns
         -------
@@ -387,6 +381,7 @@ class Image(UUIDModel):
         FileNotFoundError
             Raised when Image has no related mhd/mha ImageFile or actual file
             cannot be found on storage
+
         """
         image_data_file = None
         try:
@@ -413,9 +408,7 @@ class Image(UUIDModel):
         return header_file, image_data_file
 
     def update_viewer_groups_permissions(self, *, exclude_jobs=None):
-        """
-        Update the permissions for the algorithm jobs viewers groups to
-        view this image.
+        """Update the permissions for the algorithm jobs viewers groups to view this image.
 
         Parameters
         ----------
@@ -424,6 +417,7 @@ class Image(UUIDModel):
             when a many to many relationship is being cleared to remove this
             image from the results image set, and is used when the pre_clear
             signal is sent.
+
         """
         from grandchallenge.algorithms.models import Job
         from grandchallenge.archives.models import Archive
@@ -612,11 +606,10 @@ class ImageFile(FieldChangeMixin, UUIDModel):
 
 @receiver(post_delete, sender=ImageFile)
 def delete_image_files(*_, instance: ImageFile, **__):
-    """
-    Deletes the related image files, note that DZI files are not handled!
+    """Deletes the related image files, note that DZI files are not handled!
 
-    We use a signal rather than overriding delete() to catch usages of
-    bulk_delete.
+    We use a signal rather than overriding delete() to catch usages of bulk_delete.
+
     """
     if instance.file:
         instance.file.storage.delete(name=instance.file.name)

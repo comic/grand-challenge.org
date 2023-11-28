@@ -980,7 +980,7 @@ class ComponentInterface(OverlaySegmentsMixin):
             )
 
     def validate_against_schema(self, *, value):
-        """Validates values against both default and custom schemas"""
+        """Validates values against both default and custom schemas."""
         JSONValidator(
             schema={
                 **INTERFACE_VALUE_SCHEMA,
@@ -1090,18 +1090,17 @@ class ComponentInterfaceValue(models.Model):
 
     @property
     def decompress(self):
-        """
-        Should the CIV be decompressed?
+        """Should the CIV be decompressed?
 
-        This is only for legacy support of zip file submission for
-        prediction evaluation. We should not support this anywhere
-        else as it clobbers the input directory.
+        This is only for legacy support of zip file submission for prediction evaluation. We should not support this
+        anywhere else as it clobbers the input directory.
+
         """
         return self.interface.kind == InterfaceKindChoices.ZIP
 
     @cached_property
     def image_file(self):
-        """The single image file for this interface"""
+        """The single image file for this interface."""
         return (
             self.image.files.filter(
                 image_type__in=[
@@ -1115,10 +1114,10 @@ class ComponentInterfaceValue(models.Model):
 
     @property
     def relative_path(self):
-        """
-        Where should the file be located?
+        """Where should the file be located?
 
         Images need special handling as their names are fixed.
+
         """
         path = Path(self.interface.relative_path)
 
@@ -1253,11 +1252,11 @@ class ComponentInterfaceValue(models.Model):
 
 class ComponentJobManager(models.QuerySet):
     def with_duration(self):
-        """Annotate the queryset with the duration of completed jobs"""
+        """Annotate the queryset with the duration of completed jobs."""
         return self.annotate(duration=F("completed_at") - F("started_at"))
 
     def average_duration(self):
-        """Calculate the average duration that completed jobs ran for"""
+        """Calculate the average duration that completed jobs ran for."""
         return (
             self.with_duration()
             .exclude(duration=None)
@@ -1437,16 +1436,12 @@ class ComponentJob(models.Model):
 
     @property
     def container(self) -> "ComponentImage":
-        """
-        Returns the container object associated with this instance, which
-        should be a foreign key to an object that is a subclass of
-        ComponentImage
-        """
+        """Returns the container object associated with this instance, which should be a foreign key to an object that is a subclass of ComponentImage."""
         raise NotImplementedError
 
     @property
     def output_interfaces(self) -> QuerySet:
-        """Returns an unevaluated QuerySet for the output interfaces"""
+        """Returns an unevaluated QuerySet for the output interfaces."""
         raise NotImplementedError
 
     @property
@@ -1769,7 +1764,7 @@ class ComponentImage(FieldChangeMixin, models.Model):
 
     @property
     def original_repo_tag(self):
-        """The tag of this image in the container repository"""
+        """The tag of this image in the container repository."""
         return (
             f"{settings.COMPONENTS_REGISTRY_URL}/"
             f"{settings.COMPONENTS_REGISTRY_PREFIX}/"

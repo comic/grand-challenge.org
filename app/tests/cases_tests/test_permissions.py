@@ -144,7 +144,7 @@ def test_change_job_image():
 def test_view_permission_when_reused(
     in_archive, in_rs, in_job, django_capture_on_commit_callbacks
 ):
-    """When an image is reused it should have view_image set correctly"""
+    """When an image is reused it should have view_image set correctly."""
     im = ImageFactory()
 
     job = AlgorithmJobFactory()

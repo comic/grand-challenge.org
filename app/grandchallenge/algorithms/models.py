@@ -386,10 +386,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
 
     @cached_property
     def default_workstation(self):
-        """
-        Returns the default workstation, creating it if it does not already
-        exist.
-        """
+        """Returns the default workstation, creating it if it does not already exist."""
         w, created = Workstation.objects.get_or_create(
             slug=settings.DEFAULT_WORKSTATION_SLUG
         )
@@ -401,7 +398,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         return w
 
     def update_average_duration(self):
-        """Store the duration of successful jobs for this algorithm"""
+        """Store the duration of successful jobs for this algorithm."""
         self.average_duration = Job.objects.filter(
             algorithm_image__algorithm=self, status=Job.SUCCESS
         ).average_duration()
@@ -426,7 +423,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         return user.groups.remove(self.users_group)
 
     def get_jobs_limit(self, user):
-        """Get the maximum number of jobs a user can schedule now"""
+        """Get the maximum number of jobs a user can schedule now."""
         if self.is_editor(user=user):
             # Not limited by credits
             return
@@ -455,12 +452,12 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
 
     @property
     def usage_chart_statuses(self):
-        """What statuses should be included on the chart"""
+        """What statuses should be included on the chart."""
         return [Job.SUCCESS, Job.CANCELLED, Job.FAILURE]
 
     @cached_property
     def usage_statistics(self):
-        """The number of jobs for this algorithm faceted by month and status"""
+        """The number of jobs for this algorithm faceted by month and status."""
         return (
             Job.objects.filter(
                 algorithm_image__algorithm=self,
@@ -473,7 +470,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
 
     @cached_property
     def usage_chart(self):
-        """Vega lite chart of the usage of this algorithm"""
+        """Vega lite chart of the usage of this algorithm."""
         choices = dict(Job.status.field.choices)
         domain = {
             choice: choices[choice] for choice in self.usage_chart_statuses
@@ -516,11 +513,10 @@ class AlgorithmGroupObjectPermission(GroupObjectPermissionBase):
 
 @receiver(post_delete, sender=Algorithm)
 def delete_algorithm_groups_hook(*_, instance: Algorithm, using, **__):
-    """
-    Deletes the related groups.
+    """Deletes the related groups.
 
-    We use a signal rather than overriding delete() to catch usages of
-    bulk_delete.
+    We use a signal rather than overriding delete() to catch usages of bulk_delete.
+
     """
     try:
         instance.editors_group.delete(using=using)
@@ -820,7 +816,7 @@ class Job(UUIDModel, ComponentJob):
         return outputs
 
     def get_or_create_display_set(self, *, reader_study):
-        """Get or create a display set from this job for a reader study"""
+        """Get or create a display set from this job for a reader study."""
         if self.status != self.SUCCESS:
             raise RuntimeError(
                 "Display sets can only be created from successful jobs"
@@ -857,11 +853,10 @@ class JobGroupObjectPermission(GroupObjectPermissionBase):
 
 @receiver(post_delete, sender=Job)
 def delete_job_groups_hook(*_, instance: Job, using, **__):
-    """
-    Deletes the related group.
+    """Deletes the related group.
 
-    We use a signal rather than overriding delete() to catch usages of
-    bulk_delete.
+    We use a signal rather than overriding delete() to catch usages of bulk_delete.
+
     """
     try:
         instance.viewers.delete(using=using)
@@ -870,10 +865,10 @@ def delete_job_groups_hook(*_, instance: Job, using, **__):
 
 
 class AlgorithmPermissionRequest(RequestBase):
-    """
-    When a user wants to view an algorithm, editors have the option of
-    reviewing each user before accepting or rejecting them. This class records
-    the needed info for that.
+    """When a user wants to view an algorithm, editors have the option of reviewing each user before accepting or rejecting them.
+
+    This class records the needed info for that.
+
     """
 
     algorithm = models.ForeignKey(

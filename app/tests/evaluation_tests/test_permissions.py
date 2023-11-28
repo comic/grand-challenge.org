@@ -19,21 +19,13 @@ from tests.factories import UserFactory
 
 
 def get_groups_with_set_perms(*args, **kwargs):
-    """
-    Executes get_groups_with_perms with attach_perms=True, and converts the
-    resulting list for each group to a set for easier comparison in tests as
-    the ordering of permissions is not always consistent.
-    """
+    """Executes get_groups_with_perms with attach_perms=True, and converts the resulting list for each group to a set for easier comparison in tests as the ordering of permissions is not always consistent."""
     kwargs.update({"attach_perms": True})
     return {k: {*v} for k, v in get_groups_with_perms(*args, **kwargs).items()}
 
 
 def get_users_with_set_perms(*args, **kwargs):
-    """
-    Executes get_users_with_perms with attach_perms=True, and converts the
-    resulting list for each group to a set for easier comparison in tests as
-    the ordering of permissions is not always consistent.
-    """
+    """Executes get_users_with_perms with attach_perms=True, and converts the resulting list for each group to a set for easier comparison in tests as the ordering of permissions is not always consistent."""
     kwargs.update({"attach_perms": True})
     return {k: {*v} for k, v in get_users_with_perms(*args, **kwargs).items()}
 
@@ -157,10 +149,7 @@ def test_method_permissions():
 
 @pytest.mark.django_db
 def test_submission_permissions():
-    """
-    Challenge admins and submission creators should be able to view
-    submissions.
-    """
+    """Challenge admins and submission creators should be able to view submissions."""
     s: Submission = SubmissionFactory()
 
     assert get_groups_with_set_perms(s) == {
@@ -174,11 +163,11 @@ def test_submission_permissions():
 @pytest.mark.parametrize("hidden_challenge", [True, False])
 @pytest.mark.django_db
 def test_published_evaluation_permissions(hidden_challenge):
-    """
-    Challenge admins can change and view published evaluations.
+    """Challenge admins can change and view published evaluations.
 
-    If the challenge is hidden, only the participants can view published
-    evaluations, otherwise anyone can view published evaluations.
+    If the challenge is hidden, only the participants can view published evaluations, otherwise anyone can view
+    published evaluations.
+
     """
     e: Evaluation = EvaluationFactory(
         submission__phase__auto_publish_new_results=True,
@@ -225,10 +214,7 @@ def test_unpublished_evaluation_permissions(hidden_challenge):
 @pytest.mark.parametrize("hidden_challenge", [True, False])
 @pytest.mark.django_db
 def test_unpublishing_results_removes_permissions(hidden_challenge):
-    """
-    If an evaluation is unpublished then the view permission should be
-    removed.
-    """
+    """If an evaluation is unpublished then the view permission should be removed."""
     e: Evaluation = EvaluationFactory(
         submission__phase__auto_publish_new_results=True,
         submission__phase__challenge__hidden=hidden_challenge,
@@ -265,7 +251,7 @@ def test_unpublishing_results_removes_permissions(hidden_challenge):
 def test_hiding_challenge_updates_perms(
     settings, django_capture_on_commit_callbacks
 ):
-    """If a challenge is hidden then the viewer group should be updated"""
+    """If a challenge is hidden then the viewer group should be updated."""
     e: Evaluation = EvaluationFactory(
         submission__phase__auto_publish_new_results=True,
         submission__phase__challenge__hidden=False,
@@ -305,7 +291,7 @@ def test_hiding_challenge_updates_perms(
 def test_unhiding_challenge_updates_perms(
     settings, django_capture_on_commit_callbacks
 ):
-    """If a challenge is unhidden then the viewer group should be updated"""
+    """If a challenge is unhidden then the viewer group should be updated."""
     e: Evaluation = EvaluationFactory(
         submission__phase__auto_publish_new_results=True,
         submission__phase__challenge__hidden=True,

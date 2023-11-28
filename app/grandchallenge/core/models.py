@@ -18,10 +18,7 @@ class TitleSlugDescriptionModel(BaseTitleSlugDescriptionModel):
 
 
 class UUIDModel(models.Model):
-    """
-    Abstract class that consists of a UUID primary key, created and modified
-    times
-    """
+    """Abstract class that consists of a UUID primary key, created and modified times."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created = models.DateTimeField(auto_now_add=True)
@@ -32,10 +29,10 @@ class UUIDModel(models.Model):
 
 
 class RequestBase(models.Model):
-    """
-    When a user wants to join a project, admins have the option of reviewing
-    each user before allowing or denying them. This class records the needed
-    info for that.
+    """When a user wants to join a project, admins have the option of reviewing each user before allowing or denying them.
+
+    This class records the needed info for that.
+
     """
 
     user = models.ForeignKey(

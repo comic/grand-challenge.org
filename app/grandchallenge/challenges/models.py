@@ -398,7 +398,7 @@ class Challenge(ChallengeBase):
 
     @property
     def public(self) -> bool:
-        """Helper property for consistency with other objects"""
+        """Helper property for consistency with other objects."""
         return not self.hidden
 
     @property
@@ -743,11 +743,10 @@ class ChallengeGroupObjectPermission(GroupObjectPermissionBase):
 
 @receiver(post_delete, sender=Challenge)
 def delete_challenge_groups_hook(*_, instance: Challenge, using, **__):
-    """
-    Deletes the related groups.
+    """Deletes the related groups.
 
-    We use a signal rather than overriding delete() to catch usages of
-    bulk_delete.
+    We use a signal rather than overriding delete() to catch usages of bulk_delete.
+
     """
     try:
         instance.admins_group.delete(using=using)

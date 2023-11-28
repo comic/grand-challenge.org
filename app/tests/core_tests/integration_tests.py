@@ -84,10 +84,7 @@ class GrandChallengeFrameworkTestCase(TestCase):
         ]
 
     def _register(self, user, challenge):
-        """
-        Register user for the given challenge, follow actual signup as closely
-        as possible.
-        """
+        """Register user for the given challenge, follow actual signup as closely as possible."""
         request = RegistrationRequestFactory(challenge=challenge, user=user)
         request.status = request.ACCEPTED
         request.save()
@@ -149,9 +146,10 @@ class GrandChallengeFrameworkTestCase(TestCase):
 
     def _signup_user(self, override):
         """Create a user in the same way as a new user is signed up on the project.
-        any key specified in data overwrites default key passed to form.
-        For example, signup_user({'username':'user1'}) to creates a user called
-        'user1' and fills the rest with default data.
+
+        any key specified in data overwrites default key passed to form. For example, signup_user({'username':'user1'})
+        to creates a user called 'user1' and fills the rest with default data.
+
         """
         data = {
             "first_name": "test",
@@ -186,11 +184,11 @@ class GrandChallengeFrameworkTestCase(TestCase):
         return self._create_user(data)
 
     def _create_user(self, data):
-        """
-        Sign up user in a way as close to production as possible.
+        """Sign up user in a way as close to production as possible.
 
-        Check a lot of stuff. Data is a dictionary form_field:for_value pairs.
-        Any unspecified values are given default values.
+        Check a lot of stuff. Data is a dictionary form_field:for_value pairs. Any unspecified values are given default
+        values.
+
         """
         username = data["username"]
 
@@ -278,10 +276,10 @@ class GrandChallengeFrameworkTestCase(TestCase):
         return challenge
 
     def _login(self, user, password="testpassword"):
-        """
-        Log in user an assert whether it worked.
+        """Log in user an assert whether it worked.
 
         Passing None as user will log out.
+
         """
         self.client.logout()
         if user is None:
@@ -339,10 +337,7 @@ class CreateChallengeRequestTest(GrandChallengeFrameworkTestCase):
 
 class ViewsTest(GrandChallengeFrameworkTestCase):
     def test_page_view_permission(self):
-        """
-        Check that a page with permissions set can only be viewed by the
-        correct users.
-        """
+        """Check that a page with permissions set can only be viewed by the correct users."""
         adminonlypage = create_page(
             self.testchallenge,
             "adminonlypage",
@@ -424,10 +419,7 @@ class ViewsTest(GrandChallengeFrameworkTestCase):
 
 
 class ProjectLoginTest(GrandChallengeFrameworkTestCase):
-    """
-    Tests the general login and logout views,
-    as well as the challenge specific sign-up view.
-    """
+    """Tests the general login and logout views, as well as the challenge specific sign-up view."""
 
     def test_project_login(self):
         login_url = reverse("account_login")

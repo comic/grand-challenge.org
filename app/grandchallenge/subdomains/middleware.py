@@ -33,10 +33,10 @@ def subdomain_middleware(get_response):
 
 def challenge_subdomain_middleware(get_response):
     def middleware(request):
-        """
-        Adds the challenge to the request based on the subdomain,
-        raising Http404 if challenge is not valid. Requires the
-        subdomain to be set on the request (eg, by using subdomain_middleware)
+        """Adds the challenge to the request based on the subdomain, raising Http404 if challenge is not valid.
+
+        Requires the subdomain to be set on the request (eg, by using subdomain_middleware)
+
         """
         subdomain = request.subdomain
 
@@ -59,11 +59,7 @@ def challenge_subdomain_middleware(get_response):
 
 def subdomain_urlconf_middleware(get_response):
     def middleware(request):
-        """
-        Adds the urlconf to the middleware based on the challenge associated
-        with this request, ensures that the correct urls are matched by the
-        request
-        """
+        """Adds the urlconf to the middleware based on the challenge associated with this request, ensures that the correct urls are matched by the request."""
         if request.challenge:
             request.urlconf = settings.CHALLENGE_SUBDOMAIN_URL_CONF
         elif request.subdomain in settings.WORKSTATIONS_RENDERING_SUBDOMAINS:

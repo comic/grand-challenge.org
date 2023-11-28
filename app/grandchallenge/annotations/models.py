@@ -12,10 +12,11 @@ from grandchallenge.core.models import UUIDModel
 
 
 class AbstractAnnotationModel(UUIDModel):
-    """
-    Abstract model for an annotation linking to a grader.
+    """Abstract model for an annotation linking to a grader.
+
     Overrides the created attribute from UUIDModel to allow the value to be set to a specific value on save.
     See: https://docs.djangoproject.com/en/2.1/ref/models/fields/#django.db.models.DateField.auto_now_add
+
     """
 
     grader = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
@@ -105,9 +106,10 @@ class AbstractImageAnnotationModel(AbstractAnnotationModel):
 
 
 class AbstractNamedImageAnnotationModel(AbstractImageAnnotationModel):
-    """
-    Abstract model for a unique named image annotation.
+    """Abstract model for a unique named image annotation.
+
     Expands upon AbstractImageAnnotationModel and adds a name for the type of annotation
+
     """
 
     name = models.CharField(max_length=255)
@@ -184,11 +186,11 @@ class CoordinateListAnnotation(AbstractNamedImageAnnotationModel):
 
 
 class PolygonAnnotationSet(AbstractNamedImageAnnotationModel):
-    """
-    General model containing a set of specific polygon annotations.
+    """General model containing a set of specific polygon annotations.
 
     Looks empty because it only contains the fields from
     `AbstractNamedImageAnnotationModel`.
+
     """
 
 
@@ -213,12 +215,11 @@ def y_axis_orientation_default():
 
 
 class SinglePolygonAnnotation(AbstractSingleAnnotationModel):
-    """
-    General model for a single 2D in-plane polygon annotation (list of coordinates).
-    Belongs as many-to-one to a PolygonAnnotationSet.
-    Plane orientation is defined by x_axis_orientation and y_axis_orientation in a
-    right-handed coordinate system. The location of the plane is defined by the value
-    of z.
+    """General model for a single 2D in-plane polygon annotation (list of coordinates).
+
+    Belongs as many-to-one to a PolygonAnnotationSet. Plane orientation is defined by x_axis_orientation and
+    y_axis_orientation in a right- handed coordinate system. The location of the plane is defined by the value of z.
+
     """
 
     annotation_set = models.ForeignKey(
@@ -244,9 +245,10 @@ class SinglePolygonAnnotationGroupObjectPermission(GroupObjectPermissionBase):
 
 
 class LandmarkAnnotationSet(AbstractAnnotationModel):
-    """
-    General model containing a set of specific landmark annotations.
+    """General model containing a set of specific landmark annotations.
+
     Contains only the fields from AbstractAnnotationModel
+
     """
 
     class Meta(AbstractAnnotationModel.Meta):
@@ -266,9 +268,10 @@ class LandmarkAnnotationSetGroupObjectPermission(GroupObjectPermissionBase):
 
 
 class SingleLandmarkAnnotation(AbstractSingleAnnotationModel):
-    """
-    Model containing a set of landmarks (coordinates on an image) that represent the same locations as all the other
-    LandmarkAnnotations in the LandmarkAnnotationSet it belongs to. This is used for image registration.
+    """Model containing a set of landmarks (coordinates on an image) that represent the same locations as all the other LandmarkAnnotations in the LandmarkAnnotationSet it belongs to.
+
+    This is used for image registration.
+
     """
 
     annotation_set = models.ForeignKey(
@@ -297,10 +300,7 @@ class SingleLandmarkAnnotationGroupObjectPermission(GroupObjectPermissionBase):
 
 
 class ETDRSGridAnnotation(AbstractImageAnnotationModel):
-    """
-    Retina specific annotation
-    Model for the placement of an ETDRS grid on an retina image
-    """
+    """Retina specific annotation Model for the placement of an ETDRS grid on an retina image."""
 
     # Fields for location of fovea and optic disk on the images: (x,y) coordinates
     fovea = ArrayField(models.FloatField(), size=2)

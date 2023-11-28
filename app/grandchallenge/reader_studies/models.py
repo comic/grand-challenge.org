@@ -169,11 +169,11 @@ CASE_TEXT_SCHEMA = {
 
 
 class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
-    """
-    Reader Study model.
+    """Reader Study model.
 
-    A reader study is a tool that allows users to have a set of readers answer
-    a set of questions on a set of images (cases).
+    A reader study is a tool that allows users to have a set of readers answer a set of questions on a set of images
+    (cases).
+
     """
 
     editors_group = models.OneToOneField(
@@ -484,7 +484,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
 
     @property
     def help_text(self) -> str:
-        """The cleaned help text from the markdown sources"""
+        """The cleaned help text from the markdown sources."""
         return md2html(self.help_text_markdown, link_blank_target=True)
 
     @cached_property
@@ -511,10 +511,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
 
     @cached_property
     def answerable_questions(self):
-        """
-        All questions for this ``ReaderStudy`` except those with answer type
-        `heading`.
-        """
+        """All questions for this ``ReaderStudy`` except those with answer type `heading`."""
         return self.questions.exclude(answer_type=Question.AnswerType.HEADING)
 
     @cached_property
@@ -804,11 +801,10 @@ class ReaderStudyGroupObjectPermission(GroupObjectPermissionBase):
 
 @receiver(post_delete, sender=ReaderStudy)
 def delete_reader_study_groups_hook(*_, instance: ReaderStudy, using, **__):
-    """
-    Deletes the related groups.
+    """Deletes the related groups.
 
-    We use a signal rather than overriding delete() to catch usages of
-    bulk_delete.
+    We use a signal rather than overriding delete() to catch usages of bulk_delete.
+
     """
     try:
         instance.editors_group.delete(using=using)
@@ -875,7 +871,7 @@ class DisplaySet(UUIDModel):
 
     @cached_property
     def workstation_url(self):
-        """The URL to answer this display set in a workstation"""
+        """The URL to answer this display set in a workstation."""
         url = reverse(
             "workstations:workstation-session-create",
             kwargs={"slug": self.reader_study.workstation.slug},
@@ -1379,10 +1375,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         return ComponentInterface.objects.filter(kind__in=allowed_interfaces)
 
     def calculate_score(self, answer, ground_truth):
-        """
-        Calculates the score for ``answer`` by applying ``scoring_function``
-        to ``answer`` and ``ground_truth``.
-        """
+        """Calculates the score for ``answer`` by applying ``scoring_function`` to ``answer`` and ``ground_truth``."""
         if self.answer_type in (
             Question.AnswerType.MULTIPLE_CHOICE,
             Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
@@ -1557,7 +1550,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
 
     @property
     def empty_answer_value(self):
-        """Returns the answer value which is considered to be empty"""
+        """Returns the answer value which is considered to be empty."""
         if self.answer_type not in EMPTY_ANSWER_VALUES:
             raise RuntimeError(
                 f"{self.answer_type} has no representation of an empty value."
@@ -1643,10 +1636,7 @@ class CategoricalOption(models.Model):
 
 
 class Answer(UUIDModel):
-    """
-    An ``Answer`` can be provided to a ``Question`` that is a part of a
-    ``ReaderStudy``.
-    """
+    """An ``Answer`` can be provided to a ``Question`` that is a part of a ``ReaderStudy``."""
 
     # TODO do this for all UUID models
     created = models.DateTimeField(db_index=True, auto_now_add=True)
@@ -1836,10 +1826,10 @@ class AnswerGroupObjectPermission(GroupObjectPermissionBase):
 
 
 class ReaderStudyPermissionRequest(RequestBase):
-    """
-    When a user wants to read a reader study, editors have the option of
-    reviewing each user before accepting or rejecting them. This class records
-    the needed info for that.
+    """When a user wants to read a reader study, editors have the option of reviewing each user before accepting or rejecting them.
+
+    This class records the needed info for that.
+
     """
 
     reader_study = models.ForeignKey(

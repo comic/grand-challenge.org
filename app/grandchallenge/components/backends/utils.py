@@ -22,12 +22,11 @@ LOGLINE_REGEX = r"^(?P<timestamp>([\d]+)-(0[1-9]|1[012])-(0[1-9]|[12][\d]|3[01])
 
 
 def user_error(obj: str):
-    """
-    Filter an error message to just return the last, none-empty line. Used
-    to return the last line of a traceback to a user.
+    """Filter an error message to just return the last, none-empty line. Used to return the last line of a traceback to a user.
 
     :param obj: A string with newlines
     :return: The last, none-empty line of obj
+
     """
     pattern = re.compile(LOGLINE_REGEX, re.MULTILINE)
 
@@ -52,7 +51,7 @@ class ParsedLog(NamedTuple):
 
 
 def parse_structured_log(*, log: str) -> ParsedLog | None:
-    """Parse the structured logs from SageMaker Shim"""
+    """Parse the structured logs from SageMaker Shim."""
     structured_log = json.loads(log.strip())
 
     message = structured_log["log"]
@@ -64,10 +63,10 @@ def parse_structured_log(*, log: str) -> ParsedLog | None:
 
 
 def safe_extract(*, src: File, dest: Path):
-    """
-    Safely extracts a zip file into a directory
+    """Safely extracts a zip file into a directory.
 
     Any common prefixes and system files are removed.
+
     """
 
     if not dest.exists():
@@ -96,7 +95,7 @@ def safe_extract(*, src: File, dest: Path):
 
 
 def _filter_members(members: list[zipfile.ZipInfo]):
-    """Filter common prefixes and uninteresting files from a zip archive"""
+    """Filter common prefixes and uninteresting files from a zip archive."""
     members = [
         m.filename
         for m in members
@@ -120,11 +119,11 @@ def _filter_members(members: list[zipfile.ZipInfo]):
 
 
 def get_sagemaker_model_name(*, repo_tag):
-    """
-    The SageMaker model name
+    """The SageMaker model name.
 
-    These are quite restrictive, so we cannot use the container image name.
-    They must be max 63 chars and match ^[a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?$
+    These are quite restrictive, so we cannot use the container image name. They must be max 63 chars and match
+    ^[a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?$
+
     """
     model_name = repo_tag
 
@@ -146,5 +145,5 @@ def get_sagemaker_model_name(*, repo_tag):
 
 
 def ms_timestamp_to_datetime(timestamp):
-    """Convert AWS timestamps (ms from epoch) to datetime"""
+    """Convert AWS timestamps (ms from epoch) to datetime."""
     return datetime.fromtimestamp(timestamp * 0.001, tz=timezone.utc)

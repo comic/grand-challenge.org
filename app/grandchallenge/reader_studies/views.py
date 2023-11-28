@@ -522,12 +522,10 @@ class QuestionUpdate(
 class BaseAddObjectToReaderStudyMixin(
     LoginRequiredMixin, ObjectPermissionRequiredMixin
 ):
-    """
-    Mixin that adds an object that has a foreign key to a reader study and a
-    creator. The url to this view must include a slug that points to the slug
-    of the reader study.
+    """Mixin that adds an object that has a foreign key to a reader study and a creator. The url to this view must include a slug that points to the slug of the reader study.
 
     Must be placed to the left of ObjectPermissionRequiredMixin.
+
     """
 
     permission_required = (
@@ -1245,10 +1243,7 @@ class AnswerViewSet(
 
     @action(detail=False)
     def mine(self, request):
-        """
-        An endpoint that returns the questions that have been answered by
-        the current user.
-        """
+        """An endpoint that returns the questions that have been answered by the current user."""
         queryset = self.filter_queryset(
             self.get_queryset().filter(
                 creator=request.user, is_ground_truth=False
@@ -1360,6 +1355,7 @@ class DisplaySetUpdate(
         do not use a ModelForm for display sets. This is because the form
         fields do not match the model fields: the model only has a `values`
         fields, whereas the form has a field for each value in those values.
+
         """
         instance = self.get_object()
         for ci_slug, new_value in form.cleaned_data.items():

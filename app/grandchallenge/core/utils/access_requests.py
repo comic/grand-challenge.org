@@ -7,10 +7,7 @@ from grandchallenge.notifications.models import Notification, NotificationType
 
 
 class AccessRequestHandlingOptions(models.TextChoices):
-    """
-    Options for handling access requests to archives, algorithms, challenges
-    and reader studies.
-    """
+    """Options for handling access requests to archives, algorithms, challenges and reader studies."""
 
     MANUAL_REVIEW = "MANUAL_REVIEW", _("Manually review all requests")
     ACCEPT_VERIFIED_USERS = (

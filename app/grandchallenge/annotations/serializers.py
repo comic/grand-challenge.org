@@ -28,10 +28,7 @@ class AbstractAnnotationSerializer(serializers.ModelSerializer):
     )
 
     def validate_grader(self, value):
-        """
-        Validate that the current grader is the user creating the object for
-        the retina_graders group.
-        """
+        """Validate that the current grader is the user creating the object for the retina_graders group."""
         validate_grader_is_current_retina_user(value, self.context)
         return value
 
@@ -41,10 +38,7 @@ class AbstractAnnotationSerializer(serializers.ModelSerializer):
 
 class AbstractSingleAnnotationSerializer(serializers.ModelSerializer):
     def validate(self, data):
-        """
-        Validate that the user that is creating this object equals the
-        annotation_set.grader for retina_graders.
-        """
+        """Validate that the user that is creating this object equals the annotation_set.grader for retina_graders."""
         if data.get("annotation_set") is None:
             return data
 

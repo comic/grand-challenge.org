@@ -197,12 +197,11 @@ class DockerExecutor(DockerConnectionMixin, Executor):
         return json.loads(response[-1].split()[1])
 
     def _curl_container(self, *, url, timeout, request="GET", extra_args=None):
-        """
-        Make a CURL request to a container on an internal network
+        """Make a CURL request to a container on an internal network.
 
-        We cannot make the request directly as the container is running on
-        another network, and potentially on another machine. So here we run a
-        container that can directly make a curl request to the other one.
+        We cannot make the request directly as the container is running on another network, and potentially on another
+        machine. So here we run a container that can directly make a curl request to the other one.
+
         """
         container_name = f"{self.container_name}-curl"
 

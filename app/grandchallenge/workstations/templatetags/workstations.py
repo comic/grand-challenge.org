@@ -24,10 +24,10 @@ def get_workstation_path_and_query_string(  # noqa: C901
     user=None,
     display_set=None,
 ):
-    """
-    Generate the workstation query string.
+    """Generate the workstation query string.
 
     Supports setting the image with overlay or a reader_study.
+
     """
     if image:
         path = f"{settings.WORKSTATIONS_BASE_IMAGE_PATH_PARAM}/{getattr(image, 'pk', image)}"

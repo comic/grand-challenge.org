@@ -10,7 +10,7 @@ from grandchallenge.core.storage import public_s3_storage
 
 
 def run():
-    """Sets up the permissions on the minio buckets"""
+    """Sets up the permissions on the minio buckets."""
     print("🔐 Setting up minio 🔐")
 
     if not settings.DEBUG:
@@ -25,10 +25,10 @@ def run():
 
 
 def _setup_public_storage():
-    """
-    Add anonymous read only to public S3 storage.
+    """Add anonymous read only to public S3 storage.
 
     Only used in development. In production, set a similar policy on the S3 bucket.
+
     """
     host_alias = "local"
     policy_name = "public_read"
@@ -76,10 +76,10 @@ def _setup_public_storage():
 
 
 def _setup_components_storage():
-    """
-    Add a user and IAM role for the components storage
+    """Add a user and IAM role for the components storage.
 
     Only used in development. In production, create similar policies and roles.
+
     """
     host_alias = "local"
     policy_name = "components"

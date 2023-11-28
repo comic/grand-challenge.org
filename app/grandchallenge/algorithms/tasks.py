@@ -230,8 +230,7 @@ def create_algorithm_jobs(
     task_on_failure=None,
     time_limit=None,
 ):
-    """
-    Creates algorithm jobs for sets of component interface values
+    """Creates algorithm jobs for sets of component interface values.
 
     Parameters
     ----------
@@ -254,6 +253,7 @@ def create_algorithm_jobs(
         Celery task that is run on job failure
     time_limit
         The time limit for the Job
+
     """
     civ_sets = filter_civs_for_algorithm(
         civ_sets=civ_sets, algorithm_image=algorithm_image
@@ -291,8 +291,7 @@ def create_algorithm_jobs(
 
 
 def filter_civs_for_algorithm(*, civ_sets, algorithm_image):
-    """
-    Removes sets of civs that are invalid for new jobs
+    """Removes sets of civs that are invalid for new jobs.
 
     Parameters
     ----------
@@ -305,6 +304,7 @@ def filter_civs_for_algorithm(*, civ_sets, algorithm_image):
     Returns
     -------
     Filtered set of ComponentInterfaceValues
+
     """
     input_interfaces = {*algorithm_image.algorithm.inputs.all()}
 

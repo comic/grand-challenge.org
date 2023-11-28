@@ -52,12 +52,11 @@ class PublicationIdentifier:
 
     @property
     def csl(self):
-        """
-        Fetches the csl for the given identifier.
+        """Fetches the csl for the given identifier.
 
-        arXiv pre-prints contain a DOI field in the CSL once they are published,
-        if this happens, the identifier is updated and the full DOI information
-        is fetched.
+        arXiv pre-prints contain a DOI field in the CSL once they are published, if this happens, the identifier is
+        updated and the full DOI information is fetched.
+
         """
         if self.kind == PublicationType.ARXIV:
             new_id = self._identifier

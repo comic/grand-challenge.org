@@ -3,9 +3,10 @@ from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 
 class IsAuthenticated(BasePermission):
-    """
-    Allows access only to authenticated users.
+    """Allows access only to authenticated users.
+
     The original DRF permission is incompatible with the django guardian model.
+
     """
 
     def has_permission(self, request, view):
@@ -17,9 +18,10 @@ class IsAuthenticated(BasePermission):
 
 
 class IsAuthenticatedOrReadOnly(BasePermission):
-    """
-    The request is authenticated as a user, or is a read-only request.
+    """The request is authenticated as a user, or is a read-only request.
+
     The original DRF permission is incompatible with the django guardian model.
+
     """
 
     def has_permission(self, request, view):

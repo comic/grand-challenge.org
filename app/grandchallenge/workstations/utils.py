@@ -9,9 +9,7 @@ def get_or_create_active_session(
     ping_times=None,
     extra_env_vars=None,
 ) -> Session:
-    """
-    Queries the database to see if there is an active session for this user and
-    workstation image, if not, it will create one.
+    """Queries the database to see if there is an active session for this user and workstation image, if not, it will create one.
 
     Parameters
     ----------

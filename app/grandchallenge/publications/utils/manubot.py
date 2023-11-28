@@ -66,10 +66,11 @@ def query_arxiv_api(*args, **kwargs):
 
 
 def date_to_date_parts(date):  # noqa: C901
-    """
-    Convert a date string or object to a date parts list.
+    """Convert a date string or object to a date parts list.
+
     date: date either as a string (in the form YYYY, YYYY-MM, or YYYY-MM-DD)
         or as a Python date object (datetime.date or datetime.datetime).
+
     """
     import datetime
 

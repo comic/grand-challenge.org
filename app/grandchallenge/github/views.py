@@ -50,9 +50,10 @@ def github_webhook(request):
 
 @login_required
 def post_install_redirect(request):
-    """
-    Github apps only allow a single post install callback url.
+    """Github apps only allow a single post install callback url.
+
     These cannot be dynamic, so we need a redirect to the correct alogrithm.
+
     """
     state = decode_github_state(state=request.GET.get("state"))
 
@@ -94,10 +95,10 @@ def post_install_redirect(request):
 
 
 class GitHubInstallationRequiredMixin:
-    """
-    Ensures that the GitHub application is installed for the current user
+    """Ensures that the GitHub application is installed for the current user.
 
     Requires the user to be logged in, use after LoginRequiredMixin.
+
     """
 
     @property
@@ -164,11 +165,11 @@ class RepositoriesList(
     raise_exception = True
 
     def get_repos(self, *, installation_id):
-        """
-        Get the repositories for this users installation
+        """Get the repositories for this users installation.
 
         Currently, there is no way to filter the repositories, see
         https://docs.github.com/en/rest/apps/installations?apiVersion=2022-11-28#list-repositories-accessible-to-the-user-access-token
+
         """
         per_page = 100
 

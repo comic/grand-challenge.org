@@ -20,12 +20,12 @@ celery_app.autodiscover_tasks()
 
 @celeryd_after_setup.connect()
 def check_configuration(*, instance, **__):
-    """
-    Check that the instance is configured correctly for a solo worker
+    """Check that the instance is configured correctly for a solo worker.
 
     Checks the workers configuration to ensure that solo workers are configured
     correctly for the relevant queues. Sets the boolean attribute
     `is_solo_worker` on the celery app
+
     """
     if any(q in instance.app.amqp.queues for q in settings.CELERY_SOLO_QUEUES):
         if instance.concurrency != 1:

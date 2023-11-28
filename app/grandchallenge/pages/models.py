@@ -149,8 +149,9 @@ class Page(models.Model):
 
     @staticmethod
     def normalize_page_order(pages):
-        """Make sure order in pages Queryset starts at 1 and increments 1 at
-        every page. Saves all pages
+        """Make sure order in pages Queryset starts at 1 and increments 1 at every page.
+
+        Saves all pages
 
         """
         for idx, page in enumerate(pages):

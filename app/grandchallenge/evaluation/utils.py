@@ -82,12 +82,11 @@ def _filter_valid_results(
 def _get_rank_per_metric(
     *, evaluations: Iterable, metrics: tuple[Metric, ...]
 ) -> dict[str, dict[str, float]]:
-    """
-    Takes results and calculates the rank for each of the individual metrics
+    """Takes results and calculates the rank for each of the individual metrics.
 
-    Returns a dictionary where the key is the pk of the result, and the
-    values is another dictionary where the key is the path of the metric and
-    the value is the rank of this result for this metric
+    Returns a dictionary where the key is the pk of the result, and the values is another dictionary where the key is
+    the path of the metric and the value is the rank of this result for this metric
+
     """
     metric_rank = {}
     for metric in metrics:
@@ -122,15 +121,12 @@ def _get_rank_per_metric(
 def _scores_to_ranks(
     *, scores: dict, reverse: bool = False
 ) -> dict[str, float]:
-    """
-    Go from a score (a scalar) to a rank (integer). If two scalars are the
-    same then they will have the same rank.
+    """Go from a score (a scalar) to a rank (integer). If two scalars are the same then they will have the same rank.
 
-    Takes a dictionary where the keys are the pk of the results and the values
-    are the scores.
+    Takes a dictionary where the keys are the pk of the results and the values are the scores.
 
-    Outputs a dictionary where they keys are the pk of the results and the
-    values are the ranks.
+    Outputs a dictionary where they keys are the pk of the results and the values are the ranks.
+
     """
     scores = OrderedDict(
         sorted(scores.items(), key=lambda t: t[1], reverse=reverse)

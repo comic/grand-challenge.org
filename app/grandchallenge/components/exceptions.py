@@ -1,2 +1,2 @@
 class PriorStepFailed(Exception):
-    """Raised when a dependent step has failed"""
+    """Raised when a dependent step has failed."""

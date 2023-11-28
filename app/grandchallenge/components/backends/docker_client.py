@@ -212,14 +212,14 @@ def run_container(  # noqa: C901
 
 
 def _get_cpuset_cpus():
-    """
-    The cpuset_cpus as a string.
+    """The cpuset_cpus as a string.
 
     Returns
     -------
         The setting COMPONENTS_CPUSET_CPUS if this is set to a
         none-empty string. Otherwise, works out the available cpu
         from the os.
+
     """
     if settings.COMPONENTS_CPUSET_CPUS:
         return settings.COMPONENTS_CPUSET_CPUS
