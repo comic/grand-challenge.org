@@ -22,6 +22,12 @@ repos:
       - id: pyupgrade
         language: python
         args: [--py310-plus]
+  - repo: https://github.com/PyCQA/docformatter
+    rev: v1.7.5
+    hooks:
+      - id: docformatter
+        additional_dependencies: [tomli]
+        args: ["--in-place"]
   - repo: https://github.com/ambv/black
     rev: 22.8.0
     hooks:

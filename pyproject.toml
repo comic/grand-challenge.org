@@ -11,6 +11,12 @@ line_length = 79
 line-length = 79
 target-version = ['py310']
 
+[tool.docformatter]
+recursive = true
+wrap-summaries = 79
+wrap-descriptions = 80
+blank = true
+
 [tool.curlylint.rules]
 html_has_lang = 'en'
 django_forms_rendering = true
