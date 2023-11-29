@@ -51,6 +51,9 @@ class UserProfile(models.Model):
     notification_email_last_sent_at = models.DateTimeField(
         default=None, null=True, editable=False
     )
+    unread_messages_email_last_sent_at = models.DateTimeField(
+        default=None, null=True, editable=False
+    )
     receive_newsletter = models.BooleanField(
         null=True,
         blank=True,
