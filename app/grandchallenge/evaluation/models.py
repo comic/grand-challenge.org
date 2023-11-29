@@ -436,6 +436,23 @@ class Phase(UUIDModel, ViewContentMixin):
             MaxValueValidator(limit_value=3600),
         ],
     )
+    give_algorithm_editors_job_view_permissions = models.BooleanField(
+        default=False,
+        help_text=(
+            "If set to True algorithm editors will automatically be given "
+            "view permissions to the algorithm jobs and their logs "
+            "associated with this phase. "
+            "This saves challenge administrators from having to "
+            "manually share the logs for each failed submission. "
+            "<b>Setting this to True will essentially make the data in "
+            "the linked archive accessible to the participants. "
+            "Only set this to True for debugging phases, where "
+            "participants can check that their algorithms are working.</b> "
+            "Algorithm editors will only be able to access their own "
+            "logs and predictions, not the logs and predictions from "
+            "other users. "
+        ),
+    )
     public = models.BooleanField(
         default=True,
         help_text=(
