@@ -46,7 +46,7 @@ class UserProfile(models.Model):
 
     receive_notification_emails = models.BooleanField(
         default=True,
-        help_text="Whether to receive email updates about notifications",
+        help_text="Whether to receive notification emails",
     )
     notification_email_last_sent_at = models.DateTimeField(
         default=None, null=True, editable=False

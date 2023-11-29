@@ -1,11 +1,15 @@
 from datetime import timedelta
 
 import pytest
+from django.core import mail
 from django.utils.timezone import now
 
 from grandchallenge.direct_messages.emails import (
     get_new_senders,
     get_users_to_send_new_unread_direct_messages_email,
+)
+from grandchallenge.direct_messages.tasks import (
+    send_new_unread_direct_messages_emails,
 )
 from tests.direct_messages_tests.factories import DirectMessageFactory
 from tests.factories import UserFactory
@@ -72,26 +76,49 @@ def test_get_users_to_send_new_unread_direct_messages_email(
         {
             "user": users[1],
             "new_unread_message_count": 1,
-            "new_senders": {dm1.sender},
+            "new_senders": [dm1.sender],
         },
         {
             "user": users[2],
             "new_unread_message_count": 2,
-            "new_senders": {dm2a.sender, dm2b.sender},
+            "new_senders": [dm2a.sender, dm2b.sender],
         },
         {
             "user": users[3],
             "new_unread_message_count": 2,
-            "new_senders": {sender},
+            "new_senders": [sender],
         },
         {
             "user": users[5],
             "new_unread_message_count": 1,
-            "new_senders": {dm5b.sender},
+            "new_senders": [dm5b.sender],
         },
         {
             "user": users[6],
             "new_unread_message_count": 1,
-            "new_senders": {dm6.sender},
+            "new_senders": [dm6.sender],
         },
+    ]
+
+    assert len(mail.outbox) == 0
+
+    with django_assert_max_num_queries(
+        10
+    ):  # Extra queries to update the users profile
+        send_new_unread_direct_messages_emails()
+
+    assert len(mail.outbox) == 5
+    assert {*get_users_to_send_new_unread_direct_messages_email()} == set()
+
+    with django_assert_max_num_queries(2):
+        send_new_unread_direct_messages_emails()
+
+    assert len(mail.outbox) == 5
+
+    assert [m.subject for m in mail.outbox] == [
+        f"[testserver] You have 1 new message from {dm1.sender.first_name}",
+        f"[testserver] You have 2 new messages from {dm2a.sender.first_name} and {dm2b.sender.first_name}",
+        f"[testserver] You have 2 new messages from {sender.first_name}",
+        f"[testserver] You have 1 new message from {dm5b.sender.first_name}",
+        f"[testserver] You have 1 new message from {dm6.sender.first_name}",
     ]
