@@ -3,23 +3,31 @@ from datetime import timedelta
 import pytest
 from django.utils.timezone import now
 
-from grandchallenge.direct_messages.emails import get_users_to_email
+from grandchallenge.direct_messages.emails import (
+    get_new_senders,
+    get_users_to_send_new_unread_direct_messages_email,
+)
 from tests.direct_messages_tests.factories import DirectMessageFactory
 from tests.factories import UserFactory
 
 
 @pytest.mark.django_db
-def test_users_to_be_email():
-    users = UserFactory.create_batch(6)
+def test_get_users_to_send_new_unread_direct_messages_email(
+    django_assert_max_num_queries,
+):
+    users = UserFactory.create_batch(7)
 
     # Users 0 shouldn't be notified, no unread messages
 
     # Users 1 should be notified, 1 unread message
-    DirectMessageFactory().unread_by.add(users[1])
+    dm1 = DirectMessageFactory()
+    dm1.unread_by.add(users[1])
 
     # Users 2 should be notified once, 2 unread messages from different users
-    DirectMessageFactory().unread_by.add(users[2])
-    DirectMessageFactory().unread_by.add(users[2])
+    dm2a = DirectMessageFactory()
+    dm2a.unread_by.add(users[2])
+    dm2b = DirectMessageFactory()
+    dm2b.unread_by.add(users[2])
 
     # Users 3 should be notified once, 2 unread messages from the same user
     sender = UserFactory()
@@ -29,25 +37,61 @@ def test_users_to_be_email():
     # Users 4 shouldn't be notified, no unread messages since last being emailed
     users[4].user_profile.unread_messages_email_last_sent_at = now()
     users[4].user_profile.save()
-    dm = DirectMessageFactory()
-    dm.created -= timedelta(hours=1)
-    dm.save()
-    dm.unread_by.add(users[4])
+    dm4 = DirectMessageFactory()
+    dm4.created -= timedelta(hours=1)
+    dm4.save()
+    dm4.unread_by.add(users[4])
 
     # Users 5 should be notified, 1 unread message since being emailed
     users[5].user_profile.unread_messages_email_last_sent_at = now()
     users[5].user_profile.save()
-    dm = DirectMessageFactory()
-    dm.created -= timedelta(hours=1)
-    dm.save()
-    dm.unread_by.add(users[5])
-    DirectMessageFactory().unread_by.add(users[5])
+    dm5a = DirectMessageFactory()
+    dm5a.created -= timedelta(hours=1)
+    dm5a.save()
+    dm5a.unread_by.add(users[5])
+    dm5b = DirectMessageFactory()
+    dm5b.unread_by.add(users[5])
 
-    users_to_email = get_users_to_email()
+    # Users 6 should be notified, 1 unread message, here to test the number of queries
+    dm6 = DirectMessageFactory()
+    dm6.unread_by.add(users[6])
 
-    assert [*users_to_email.order_by("pk")] == [
-        users[1],
-        users[2],
-        users[3],
-        users[5],
+    with django_assert_max_num_queries(4):
+        users_to_email = [
+            {
+                "user": user,
+                "new_unread_message_count": user.new_unread_message_count,
+                "new_senders": get_new_senders(user=user),
+            }
+            for user in get_users_to_send_new_unread_direct_messages_email().order_by(
+                "pk"
+            )
+        ]
+
+    assert users_to_email == [
+        {
+            "user": users[1],
+            "new_unread_message_count": 1,
+            "new_senders": {dm1.sender},
+        },
+        {
+            "user": users[2],
+            "new_unread_message_count": 2,
+            "new_senders": {dm2a.sender, dm2b.sender},
+        },
+        {
+            "user": users[3],
+            "new_unread_message_count": 2,
+            "new_senders": {sender},
+        },
+        {
+            "user": users[5],
+            "new_unread_message_count": 1,
+            "new_senders": {dm5b.sender},
+        },
+        {
+            "user": users[6],
+            "new_unread_message_count": 1,
+            "new_senders": {dm6.sender},
+        },
     ]
