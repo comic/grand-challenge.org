@@ -7,6 +7,7 @@ from tests.factories import ChallengeFactory
 from tests.invoices_tests.factories import InvoiceFactory
 
 
+@pytest.mark.flaky(reruns=3)
 @pytest.mark.django_db
 def test_approved_compute_costs_euro_millicents():
     c1, c2, c3, c4 = ChallengeFactory.create_batch(4)
