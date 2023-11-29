@@ -21,6 +21,7 @@ from tests.algorithms_tests.factories import (
 from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
+from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
@@ -250,15 +251,92 @@ def test_new_display_set_created_on_reader_study_change():
 
 @pytest.mark.django_db
 class TestJobLimits:
-    def test_unlimited_jobs(self):
-        algorithm = AlgorithmFactory(credits_per_job=100)
-        user = UserFactory()
+    def test_limited_jobs_for_editors(self, client):
+        alg1, alg2 = AlgorithmFactory.create_batch(2, credits_per_job=100)
+        user1, user2, user3 = UserFactory.create_batch(3)
+        alg1.add_editor(user=user1)
+        alg1.add_editor(user=user2)
+        alg2.add_editor(user=user1)
 
-        assert algorithm.get_jobs_limit(user=user) is not None
+        # no active image, hence no jobs can be scheduled
+        assert alg1.get_jobs_limit(user=user1) is None
+        assert alg1.get_jobs_limit(user=user2) is None
 
-        algorithm.add_editor(user=user)
+        ai = AlgorithmImageFactory(
+            algorithm=alg1,
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_on_sagemaker=True,
+            is_desired_version=True,
+        )
+        del alg1.active_image
 
-        assert algorithm.get_jobs_limit(user=user) is None
+        # no jobs run by any editor yet
+        assert alg1.get_jobs_limit(user=user1) == 15
+        assert alg1.get_jobs_limit(user=user2) == 15
+        # normal user gets standard credits
+        assert alg1.get_jobs_limit(user=user3) == 10
+
+        AlgorithmJobFactory.create_batch(
+            4, creator=user1, algorithm_image=ai, status=Job.SUCCESS
+        )
+        # limits apply to both editors
+        assert alg1.get_jobs_limit(user=user1) == 11
+        assert alg1.get_jobs_limit(user=user2) == 11
+
+        # job limit is per algorithm image sha
+        # uploading a new image resets editor credits
+        ai2 = AlgorithmImageFactory(
+            algorithm=alg1,
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_on_sagemaker=True,
+        )
+        get_view_for_user(
+            viewname="algorithms:image-activate",
+            client=client,
+            method=client.post,
+            reverse_kwargs={"slug": alg1.slug},
+            data={"algorithm_image": ai2.pk},
+            user=user1,
+            follow=True,
+        )
+        ai2.refresh_from_db()
+        del alg1.active_image
+
+        assert alg1.get_jobs_limit(user=user1) == 15
+        assert alg1.get_jobs_limit(user=user2) == 15
+
+        AlgorithmJobFactory(
+            creator=user1, algorithm_image=ai2, status=Job.SUCCESS
+        )
+        assert alg1.get_jobs_limit(user=user1) == 14
+        assert alg1.get_jobs_limit(user=user2) == 14
+
+        # attaching a used image to a new algorithm doesn't reset credits
+        assert alg2.get_jobs_limit(user=user1) is None
+        assert alg2.get_jobs_limit(user=user2) is None
+        ai3 = AlgorithmImageFactory(
+            algorithm=alg2,
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_on_sagemaker=True,
+            is_desired_version=True,
+            image_sha256=ai2.image_sha256,
+        )
+        del alg2.active_image
+        assert alg2.active_image == ai3
+        assert alg2.get_jobs_limit(user=user1) == 14
+        # user2 is not an editor of this algorithm, hence just default credits
+        assert alg2.get_jobs_limit(user=user2) == 10
+
+        # job limit is for successful jobs only
+        AlgorithmJobFactory(
+            creator=user1,
+            algorithm_image=ai2,
+        )
+        assert alg2.get_jobs_limit(user=user1) == 14
+        assert alg2.get_jobs_limit(user=user2) == 10
 
     @pytest.mark.parametrize(
         "credits_per_job,user_credits,expected_jobs",
@@ -272,6 +350,13 @@ class TestJobLimits:
     def test_limited_jobs(self, credits_per_job, user_credits, expected_jobs):
         algorithm = AlgorithmFactory(credits_per_job=credits_per_job)
         user = UserFactory()
+        AlgorithmImageFactory(
+            algorithm=algorithm,
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_on_sagemaker=True,
+            is_desired_version=True,
+        )
 
         user_credit = Credit.objects.get(user=user)
         user_credit.credits = user_credits
@@ -294,6 +379,13 @@ class TestJobLimits:
     ):
         algorithm = AlgorithmFactory(credits_per_job=credits_per_job)
         user = UserFactory()
+        AlgorithmImageFactory(
+            algorithm=algorithm,
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_on_sagemaker=True,
+            is_desired_version=True,
+        )
 
         algorithm2 = AlgorithmFactory(credits_per_job=credits_per_job)
 

@@ -427,12 +427,29 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
 
     def get_jobs_limit(self, user):
         """Get the maximum number of jobs a user can schedule now"""
-        if self.is_editor(user=user):
-            # Not limited by credits
-            return
+        if not self.active_image:
+            return None
+
+        editor_jobs = Job.objects.filter(
+            creator__in=self.editors_group.user_set.all(),
+            status=Job.SUCCESS,
+            algorithm_image__image_sha256=self.active_image.image_sha256,
+        ).values_list("pk", flat=True)
+        user_credit = Credit.objects.get(user=user)
+
+        if (
+            self.is_editor(user=user)
+            and len(editor_jobs) < settings.ALGORITHMS_JOB_LIMIT_FOR_EDITORS
+        ):
+            return (
+                (max(user_credit.credits, 0) // max(self.credits_per_job, 1))
+                + settings.ALGORITHMS_JOB_LIMIT_FOR_EDITORS
+                - len(editor_jobs)
+            )
         else:
-            user_credit = Credit.objects.get(user=user)
-            jobs = Job.objects.spent_credits(user=user)
+            jobs = Job.objects.exclude(
+                pk__in=editor_jobs[: settings.ALGORITHMS_JOB_LIMIT_FOR_EDITORS]
+            ).spent_credits(user=user)
             if jobs["total"]:
                 credits_left = user_credit.credits - jobs["total"]
             else:
@@ -623,14 +640,12 @@ class JobManager(ComponentJobManager):
     def spent_credits(self, user):
         now = timezone.now()
         period = timedelta(days=30)
-        user_groups = Group.objects.filter(user=user)
 
         return (
             self.filter(creator=user, created__range=[now - period, now])
             .distinct()
             .order_by("created")
             .select_related("algorithm_image__algorithm")
-            .exclude(algorithm_image__algorithm__editors_group__in=user_groups)
             .aggregate(
                 total=Sum("algorithm_image__algorithm__credits_per_job"),
                 oldest=Min("created"),
