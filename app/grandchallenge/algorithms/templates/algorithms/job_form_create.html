@@ -3,6 +3,7 @@
 {% load url %}
 {% load bleach %}
 {% load random_encode %}
+{% load guardian_tags %}
 
 {% block title %}
     Try-out Algorithm - {{ block.super }}
@@ -31,7 +32,7 @@
     <h2>Try-out Algorithm</h2>
 
     {{ algorithm.job_create_page_markdown|md2html }}
-
+    {% get_obj_perms request.user for algorithm as "algorithm_perms" %}
     {% if form.jobs_limit < 1 %}
         <p>
             You have run out of credits to try this algorithm.
@@ -44,12 +45,18 @@
             Select the data that you would like to run the algorithm on.
         </p>
         <p>
-            {% if form.jobs_limit > 0 %}
+            {% if 'change_algorithm' in algorithm_perms %}
+                <p>As an editor, you can test and debug your algorithm in total {{ editors_job_limit }} times per unique algorithm image.
+                    Failed runs do not count towards this limit.
+                    You share these credits with all other editors of this algorithm.
+                    Once you have reached the limit, any extra jobs will be deducted from your personal algorithm credits,
+                    of which you get {{ request.user.user_credit.credits }} per month.</p>
+            {% elif form.jobs_limit > 0 %}
                 You receive {{ request.user.user_credit.credits }} credits per month.
-                Using this algorithm requires {{ algorithm.credits_per_job }}
-                credit{{ algorithm.credits_per_job|pluralize }} per job.
-                You can create up to {{ form.jobs_limit }} job{{ form.jobs_limit|pluralize }} for this algorithm.
             {% endif %}
+            Using this algorithm requires {{ algorithm.credits_per_job }}
+            credit{{ algorithm.credits_per_job|pluralize }} per job.
+            You can currently create up to {{ form.jobs_limit }} job{{ form.jobs_limit|pluralize }} for this algorithm.
         </p>
 
         <form method="POST">
