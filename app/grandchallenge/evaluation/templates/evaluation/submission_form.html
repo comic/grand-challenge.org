@@ -31,7 +31,7 @@
     <h2>{{ phase.title }} Submission</h2>
 
     {% if "change_challenge" in challenge_perms %}
-        {% include "evaluation/partials/phase_closed_warning.html" with phase=phase %}
+        {% include "evaluation/partials/phase_admin_warnings.html" with phase=phase %}
     {% endif %}
 
     {{ phase.submission_page_html|clean }}

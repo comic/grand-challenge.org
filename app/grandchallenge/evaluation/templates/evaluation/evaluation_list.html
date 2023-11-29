@@ -23,7 +23,7 @@
     <h2>Submissions and Evaluations for {{ phase.title }}</h2>
 
     {% if "change_challenge" in challenge_perms %}
-        {% include "evaluation/partials/phase_closed_warning.html" with phase=phase %}
+        {% include "evaluation/partials/phase_admin_warnings.html" with phase=phase %}
     {% endif %}
 
     <div class="table-responsive">
