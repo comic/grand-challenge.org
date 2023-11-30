@@ -1,4 +1,5 @@
 from grandchallenge.components.backends.docker import DockerExecutor
+from grandchallenge.components.models import GPUTypeChoices
 
 
 def test_internal_logs_filtered():
@@ -10,6 +11,7 @@ def test_internal_logs_filtered():
         memory_limit=4,
         time_limit=100,
         requires_gpu=False,
+        desired_gpu_type=GPUTypeChoices.T4,
     )
     executor._parse_loglines(loglines=logs.splitlines())
 
