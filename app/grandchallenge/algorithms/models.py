@@ -436,13 +436,15 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             algorithm_image__image_sha256=self.active_image.image_sha256,
         ).values_list("pk", flat=True)
         user_credit = Credit.objects.get(user=user)
+        credits_left = max(user_credit.credits, 0)
+        credits_per_job = max(self.credits_per_job, 1)
 
         if (
             self.is_editor(user=user)
             and len(editor_jobs) < settings.ALGORITHMS_JOB_LIMIT_FOR_EDITORS
         ):
             return (
-                (max(user_credit.credits, 0) // max(self.credits_per_job, 1))
+                (credits_left // credits_per_job)
                 + settings.ALGORITHMS_JOB_LIMIT_FOR_EDITORS
                 - len(editor_jobs)
             )
@@ -451,10 +453,8 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
                 pk__in=editor_jobs[: settings.ALGORITHMS_JOB_LIMIT_FOR_EDITORS]
             ).spent_credits(user=user)
             if jobs["total"]:
-                credits_left = user_credit.credits - jobs["total"]
-            else:
-                credits_left = user_credit.credits
-            return max(credits_left, 0) // max(self.credits_per_job, 1)
+                credits_left = credits_left - jobs["total"]
+            return max(credits_left, 0) // credits_per_job
 
     @cached_property
     def user_statistics(self):
