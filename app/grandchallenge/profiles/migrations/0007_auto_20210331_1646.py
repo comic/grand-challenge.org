@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
             name="receive_notification_emails",
             field=models.BooleanField(
                 default=True,
-                help_text="Whether to receive email updates about notifications",
+                help_text="Whether to receive notification emails",
             ),
         ),
     ]

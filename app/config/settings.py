@@ -1217,6 +1217,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.algorithms.tasks.update_associated_challenges",
         "schedule": crontab(hour=3, minute=0),
     },
+    "send_new_unread_direct_messages_emails": {
+        "task": "grandchallenge.direct_messages.tasks.send_new_unread_direct_messages_emails",
+        "schedule": crontab(hour=3, minute=30),
+    },
     "send_unread_notification_emails": {
         "task": "grandchallenge.notifications.tasks.send_unread_notification_emails",
         "schedule": crontab(hour=4, minute=0),
