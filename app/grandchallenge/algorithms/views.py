@@ -83,6 +83,7 @@ from grandchallenge.core.guardian import (
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.datatables.views import Column, PaginatedTableListView
+from grandchallenge.evaluation.models import Evaluation
 from grandchallenge.github.views import GitHubInstallationRequiredMixin
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
@@ -184,6 +185,29 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
                 )
             )
 
+    @cached_property
+    def best_evaluation_per_phase(self):
+        output = {}
+
+        evaluations = filter_by_permission(
+            queryset=Evaluation.objects.select_related(
+                "submission__phase__challenge"
+            )
+            .filter(submission__algorithm_image__algorithm=self.object)
+            .order_by("created"),
+            codename="view_evaluation",
+            user=self.request.user,
+        )
+
+        for evaluation in evaluations:
+            if (
+                evaluation.submission.phase not in output
+                or output[evaluation.submission.phase].rank > evaluation.rank
+            ):
+                output[evaluation.submission.phase] = evaluation
+
+        return output
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
@@ -205,6 +229,7 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
                 "editor_remove_form": editor_remove_form,
                 "pending_permission_requests": pending_permission_requests,
                 "algorithm_perms": get_perms(self.request.user, self.object),
+                "best_evaluation_per_phase": self.best_evaluation_per_phase,
             }
         )
 
