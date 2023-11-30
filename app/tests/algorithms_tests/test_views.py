@@ -1167,6 +1167,12 @@ def test_evaluations_are_filtered(client):
         submission__algorithm_image=algorithm_image,
         rank=1,
     )
+    # Ignored as there is a better submission
+    EvaluationFactory(
+        submission__phase=public_phase_public_challenge,
+        submission__algorithm_image=algorithm_image,
+        rank=2,
+    )
     # Ignored as challenge is private
     EvaluationFactory.create_batch(
         2,
