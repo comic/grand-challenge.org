@@ -263,8 +263,24 @@ class TestJobCreateLimits:
             },
             context={"request": request},
         )
-
         assert serializer.is_valid()
+        assert algorithm_image.algorithm.get_jobs_limit(user=user) == 5
+
+        AlgorithmJobFactory.create_batch(
+            5,
+            algorithm_image=algorithm_image,
+            creator=user,
+            status=Job.SUCCESS,
+        )
+        serializer = JobPostSerializer(
+            data={
+                "algorithm": algorithm_image.algorithm.api_url,
+                "inputs": [],
+            },
+            context={"request": request},
+        )
+        assert not serializer.is_valid()
+        assert algorithm_image.algorithm.get_jobs_limit(user=user) == 0
 
     def test_form_valid_with_credits(self, rf):
         algorithm_image = AlgorithmImageFactory(
