@@ -1,4 +1,3 @@
-from django.contrib.postgres.fields import CICharField
 from django.db import models
 from django.utils.html import format_html
 
@@ -6,7 +5,7 @@ from django.utils.html import format_html
 class TaskType(models.Model):
     """Stores the task type options, eg, Segmentation, Regression, etc."""
 
-    type = CICharField(max_length=16, blank=False, unique=True)
+    type = models.CharField(max_length=16, blank=False, unique=True)
 
     class Meta:
         ordering = ("type",)

@@ -8,7 +8,6 @@ from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.postgres.fields import ArrayField, CICharField
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import (
     MaxValueValidator,
@@ -123,9 +122,12 @@ def validate_short_name(value):
     if value.lower() in settings.DISALLOWED_CHALLENGE_NAMES:
         raise ValidationError("That name is not allowed.")
 
+    if Challenge.objects.filter(short_name__iexact=value).exists():
+        raise ValidationError("Challenge with this slug already exists")
+
 
 class ChallengeSeries(models.Model):
-    name = CICharField(max_length=64, blank=False, unique=True)
+    name = models.CharField(max_length=64, blank=False, unique=True)
     url = models.URLField(blank=True)
 
     class Meta:
@@ -153,7 +155,7 @@ class ChallengeBase(models.Model):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
-    short_name = CICharField(
+    short_name = models.CharField(
         max_length=50,
         blank=False,
         help_text=(
@@ -271,9 +273,6 @@ class Challenge(ChallengeBase):
     )
     number_of_training_cases = models.IntegerField(blank=True, null=True)
     number_of_test_cases = models.IntegerField(blank=True, null=True)
-    filter_classes = ArrayField(
-        CICharField(max_length=32), default=list, editable=False
-    )
     highlight = models.BooleanField(
         default=False,
         help_text="Should this challenge be advertised on the home page?",

@@ -1,4 +1,3 @@
-from django.contrib.postgres.fields import CICharField
 from django.db import models
 from django.utils.html import format_html
 
@@ -6,7 +5,7 @@ from django.utils.html import format_html
 class ImagingModality(models.Model):
     """Store the modality options, eg, MR, CT, PET, XR."""
 
-    modality = CICharField(max_length=16, blank=False, unique=True)
+    modality = models.CharField(max_length=16, blank=False, unique=True)
 
     class Meta:
         ordering = ("modality",)
