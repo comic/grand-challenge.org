@@ -20,6 +20,7 @@ from panimg.image_builders import image_builder_mhd, image_builder_tiff
 
 from grandchallenge.cases.tasks import import_images
 from grandchallenge.components.backends.exceptions import ComponentException
+from grandchallenge.components.models import GPUTypeChoices
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,7 @@ class Executor(ABC):
         memory_limit: int,
         time_limit: int,
         requires_gpu: bool,
+        desired_gpu_type: GPUTypeChoices,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
@@ -52,6 +54,7 @@ class Executor(ABC):
         self._memory_limit = memory_limit
         self._time_limit = time_limit
         self._requires_gpu = requires_gpu
+        self._desired_gpu_type = desired_gpu_type
         self._stdout = []
         self._stderr = []
         self.__s3_client = None

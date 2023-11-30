@@ -18,38 +18,59 @@ from grandchallenge.components.backends.exceptions import (
     TaskCancelled,
 )
 from grandchallenge.components.backends.utils import LOGLINES
+from grandchallenge.components.models import GPUTypeChoices
 from grandchallenge.evaluation.models import Evaluation, Method
 
 
 @pytest.mark.parametrize(
-    "memory_limit,requires_gpu,expected_type",
+    "memory_limit,requires_gpu,desired_gpu_type,expected_type",
     (
-        (10, True, "ml.g4dn.xlarge"),
-        (30, True, "ml.g4dn.2xlarge"),
-        (6, False, "ml.m5.large"),
-        (10, False, "ml.m5.xlarge"),
-        (30, False, "ml.m5.2xlarge"),
+        (10, True, GPUTypeChoices.T4, "ml.g4dn.xlarge"),
+        (30, True, GPUTypeChoices.T4, "ml.g4dn.2xlarge"),
+        (6, False, GPUTypeChoices.T4, "ml.m5.large"),
+        (10, False, GPUTypeChoices.T4, "ml.m5.xlarge"),
+        (30, False, GPUTypeChoices.T4, "ml.m5.2xlarge"),
+        (10, True, GPUTypeChoices.V100, "ml.p3.2xlarge"),
+        (30, True, GPUTypeChoices.V100, "ml.p3.2xlarge"),
     ),
 )
-def test_instance_type(memory_limit, requires_gpu, expected_type):
+def test_instance_type(
+    memory_limit, requires_gpu, expected_type, desired_gpu_type
+):
     executor = AmazonSageMakerBatchExecutor(
         job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
         exec_image_repo_tag="",
         memory_limit=memory_limit,
         time_limit=60,
         requires_gpu=requires_gpu,
+        desired_gpu_type=desired_gpu_type,
     )
 
     assert executor._instance_type.name == expected_type
 
 
-def test_instance_type_incompatible():
+@pytest.mark.parametrize(
+    "memory_limit,requires_gpu,desired_gpu_type",
+    (
+        (1337, False, GPUTypeChoices.T4),  # Total memory unavailable
+        (10, True, GPUTypeChoices.A100),  # GPU type not supported
+        (
+            100,
+            True,
+            GPUTypeChoices.V100,
+        ),  # Amount of memory only available with multi GPU
+    ),
+)
+def test_instance_type_incompatible(
+    memory_limit, requires_gpu, desired_gpu_type
+):
     executor = AmazonSageMakerBatchExecutor(
         job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
         exec_image_repo_tag="",
-        memory_limit=1337,
+        memory_limit=memory_limit,
         time_limit=60,
-        requires_gpu=False,
+        requires_gpu=requires_gpu,
+        desired_gpu_type=desired_gpu_type,
     )
 
     with pytest.raises(ValueError):
@@ -83,6 +104,7 @@ def test_invocation_prefix():
         memory_limit=4,
         time_limit=60,
         requires_gpu=False,
+        desired_gpu_type=GPUTypeChoices.T4,
     )
 
     # The id of the job must be in the prefixes
@@ -132,6 +154,7 @@ def test_execute(settings):
         memory_limit=4,
         time_limit=60,
         requires_gpu=False,
+        desired_gpu_type=GPUTypeChoices.T4,
     )
 
     with Stubber(executor._sagemaker_client) as s:
@@ -192,6 +215,7 @@ def test_set_duration():
         memory_limit=4,
         time_limit=60,
         requires_gpu=False,
+        desired_gpu_type=GPUTypeChoices.T4,
     )
 
     assert executor.duration is None
@@ -218,6 +242,7 @@ def test_get_log_stream_name(settings, data_log):
         memory_limit=4,
         time_limit=60,
         requires_gpu=False,
+        desired_gpu_type=GPUTypeChoices.T4,
     )
 
     with Stubber(executor._logs_client) as s:
@@ -252,6 +277,7 @@ def test_set_task_logs(settings):
         memory_limit=4,
         time_limit=60,
         requires_gpu=False,
+        desired_gpu_type=GPUTypeChoices.T4,
     )
 
     assert executor.stdout == ""
@@ -358,6 +384,7 @@ def test_get_job_data_log(settings):
         memory_limit=4,
         time_limit=60,
         requires_gpu=False,
+        desired_gpu_type=GPUTypeChoices.T4,
     )
 
     with Stubber(executor._logs_client) as logs:
@@ -407,6 +434,7 @@ def test_set_runtime_metrics(settings):
         memory_limit=4,
         time_limit=60,
         requires_gpu=False,
+        desired_gpu_type=GPUTypeChoices.T4,
     )
 
     assert executor.runtime_metrics == {}
@@ -501,6 +529,7 @@ def test_handle_completed_job():
         memory_limit=4,
         time_limit=60,
         requires_gpu=False,
+        desired_gpu_type=GPUTypeChoices.T4,
     )
 
     return_code = 0
@@ -527,6 +556,7 @@ def test_handle_failed_job(settings):
         memory_limit=4,
         time_limit=60,
         requires_gpu=False,
+        desired_gpu_type=GPUTypeChoices.T4,
     )
 
     with Stubber(executor._logs_client) as logs:
@@ -579,6 +609,7 @@ def test_handle_stopped_event():
         memory_limit=4,
         time_limit=60,
         requires_gpu=False,
+        desired_gpu_type=GPUTypeChoices.T4,
     )
 
     with pytest.raises(TaskCancelled):
@@ -595,6 +626,7 @@ def test_deprovision(settings):
         memory_limit=4,
         time_limit=60,
         requires_gpu=False,
+        desired_gpu_type=GPUTypeChoices.T4,
     )
 
     created_files = (
