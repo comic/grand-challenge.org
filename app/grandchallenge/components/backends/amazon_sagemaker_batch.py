@@ -28,6 +28,7 @@ from grandchallenge.components.backends.utils import (
     parse_structured_log,
     user_error,
 )
+from grandchallenge.components.models import GPUTypeChoices
 from grandchallenge.evaluation.utils import get
 
 logger = logging.getLogger(__name__)
@@ -41,19 +42,13 @@ class LogStreamNotFound(Exception):
     """Raised when a log stream could not be found"""
 
 
-class GPUChoices(TextChoices):
-    V100 = "V100"
-    K80 = "K80"
-    T4 = "T4"
-
-
 class InstanceType(NamedTuple):
     name: str
     cpu: int
     memory: float
     usd_cents_per_hour: int
     gpus: int = 0
-    gpu_type: GPUChoices | None = None
+    gpu_type: GPUTypeChoices | None = None
 
 
 INSTANCE_OPTIONS = [
@@ -185,7 +180,7 @@ INSTANCE_OPTIONS = [
         memory=61,
         usd_cents_per_hour=413,
         gpus=1,
-        gpu_type=GPUChoices.V100,
+        gpu_type=GPUTypeChoices.V100,
     ),
     InstanceType(
         name="ml.p3.8xlarge",
@@ -193,7 +188,7 @@ INSTANCE_OPTIONS = [
         memory=244,
         usd_cents_per_hour=1586,
         gpus=4,
-        gpu_type=GPUChoices.V100,
+        gpu_type=GPUTypeChoices.V100,
     ),
     InstanceType(
         name="ml.p3.16xlarge",
@@ -201,7 +196,7 @@ INSTANCE_OPTIONS = [
         memory=488,
         usd_cents_per_hour=3041,
         gpus=8,
-        gpu_type=GPUChoices.V100,
+        gpu_type=GPUTypeChoices.V100,
     ),
     InstanceType(
         name="ml.p2.xlarge",
@@ -209,7 +204,7 @@ INSTANCE_OPTIONS = [
         memory=61,
         usd_cents_per_hour=122,
         gpus=1,
-        gpu_type=GPUChoices.K80,
+        gpu_type=GPUTypeChoices.K80,
     ),
     InstanceType(
         name="ml.p2.8xlarge",
@@ -217,7 +212,7 @@ INSTANCE_OPTIONS = [
         memory=488,
         usd_cents_per_hour=933,
         gpus=8,
-        gpu_type=GPUChoices.K80,
+        gpu_type=GPUTypeChoices.K80,
     ),
     InstanceType(
         name="ml.p2.16xlarge",
@@ -225,7 +220,7 @@ INSTANCE_OPTIONS = [
         memory=732,
         usd_cents_per_hour=1789,
         gpus=16,
-        gpu_type=GPUChoices.K80,
+        gpu_type=GPUTypeChoices.K80,
     ),
     InstanceType(
         name="ml.g4dn.xlarge",
@@ -233,7 +228,7 @@ INSTANCE_OPTIONS = [
         memory=16,
         usd_cents_per_hour=82,
         gpus=1,
-        gpu_type=GPUChoices.T4,
+        gpu_type=GPUTypeChoices.T4,
     ),
     InstanceType(
         name="ml.g4dn.2xlarge",
@@ -241,7 +236,7 @@ INSTANCE_OPTIONS = [
         memory=32,
         usd_cents_per_hour=105,
         gpus=1,
-        gpu_type=GPUChoices.T4,
+        gpu_type=GPUTypeChoices.T4,
     ),
     InstanceType(
         name="ml.g4dn.4xlarge",
@@ -249,7 +244,7 @@ INSTANCE_OPTIONS = [
         memory=64,
         usd_cents_per_hour=168,
         gpus=1,
-        gpu_type=GPUChoices.T4,
+        gpu_type=GPUTypeChoices.T4,
     ),
     InstanceType(
         name="ml.g4dn.12xlarge",
@@ -257,7 +252,7 @@ INSTANCE_OPTIONS = [
         memory=192,
         usd_cents_per_hour=545,
         gpus=4,
-        gpu_type=GPUChoices.T4,
+        gpu_type=GPUTypeChoices.T4,
     ),
     InstanceType(
         name="ml.g4dn.16xlarge",
@@ -265,7 +260,7 @@ INSTANCE_OPTIONS = [
         memory=256,
         usd_cents_per_hour=607,
         gpus=1,
-        gpu_type=GPUChoices.T4,
+        gpu_type=GPUTypeChoices.T4,
     ),
 ]
 
@@ -376,9 +371,9 @@ class AmazonSageMakerBatchExecutor(Executor):
         """Find the cheapest instance that can run this job"""
 
         if self._requires_gpu:
-            # For now only use single gpu, T4 instances
+            # For now only use a single gpu
             n_gpu = 1
-            gpu_type = GPUChoices.T4
+            gpu_type = self._desired_gpu_type
         else:
             n_gpu = 0
             gpu_type = None

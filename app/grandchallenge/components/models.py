@@ -18,7 +18,7 @@ from django.core.validators import (
     RegexValidator,
 )
 from django.db import models, transaction
-from django.db.models import Avg, F, IntegerChoices, QuerySet, Sum
+from django.db.models import Avg, F, IntegerChoices, QuerySet, Sum, TextChoices
 from django.db.transaction import on_commit
 from django.forms import ModelChoiceField
 from django.forms.models import model_to_dict
@@ -1429,6 +1429,7 @@ class ComponentJob(models.Model):
             "memory_limit": self.container.requires_memory_gb,
             "time_limit": self.time_limit,
             "requires_gpu": self.container.requires_gpu,
+            "desired_gpu_type": self.container.desired_gpu_type,
         }
 
     def get_executor(self, *, backend):
@@ -1590,10 +1591,19 @@ class ComponentImageManager(models.Manager):
         return self.executable_images().filter(is_desired_version=True)
 
 
+class GPUTypeChoices(TextChoices):
+    A100 = "A100"
+    A10G = "A10G"
+    V100 = "V100"
+    K80 = "K80"
+    T4 = "T4"
+
+
 class ComponentImage(FieldChangeMixin, models.Model):
     SHIM_IMAGE = True
 
     ImportStatusChoices = ImportStatusChoices
+    GPUTypeChoices = GPUTypeChoices
 
     objects = ComponentImageManager()
 
@@ -1668,6 +1678,12 @@ class ComponentImage(FieldChangeMixin, models.Model):
     )
 
     requires_gpu = models.BooleanField(default=False)
+    desired_gpu_type = models.CharField(
+        max_length=4,
+        choices=GPUTypeChoices.choices,
+        default=GPUTypeChoices.T4,
+        help_text="If this image requires a GPU, what GPU type would it like to use?",
+    )
     requires_memory_gb = models.PositiveIntegerField(default=4)
 
     comment = models.TextField(
