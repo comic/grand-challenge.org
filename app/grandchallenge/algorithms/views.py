@@ -193,7 +193,9 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
             queryset=Evaluation.objects.select_related(
                 "submission__phase__challenge"
             )
-            .filter(submission__algorithm_image__algorithm=self.object)
+            .filter(
+                submission__algorithm_image__algorithm=self.object, rank__gt=0
+            )
             .order_by("created"),
             codename="view_evaluation",
             user=self.request.user,

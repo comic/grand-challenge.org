@@ -1160,42 +1160,33 @@ def test_evaluations_are_filtered(client):
         public=False, challenge__hidden=False
     )
 
+    # 2nd Ignored as there is an older evaluation
+    e, _ = EvaluationFactory.create_batch(
+        2,
+        submission__phase=public_phase_public_challenge,
+        submission__algorithm_image=algorithm_image,
+        rank=1,
+    )
     # Ignored as challenge is private
-    EvaluationFactory(
+    EvaluationFactory.create_batch(
+        2,
         submission__phase=public_phase_private_challenge,
         submission__algorithm_image=algorithm_image,
+        rank=1,
     )
-    EvaluationFactory(
-        submission__phase=public_phase_private_challenge,
-        submission__algorithm_image=algorithm_image,
-    )
-
-    # 2nd ignored as there is an older evaluation
-    e = EvaluationFactory(
-        submission__phase=public_phase_public_challenge,
-        submission__algorithm_image=algorithm_image,
-    )
-    EvaluationFactory(
-        submission__phase=public_phase_public_challenge,
-        submission__algorithm_image=algorithm_image,
-    )
-
     # Ignored as phase is private
-    EvaluationFactory(
+    EvaluationFactory.create_batch(
+        2,
         submission__phase=private_phase_private_challenge,
         submission__algorithm_image=algorithm_image,
+        rank=1,
     )
-    EvaluationFactory(
-        submission__phase=private_phase_private_challenge,
-        submission__algorithm_image=algorithm_image,
-    )
-    EvaluationFactory(
+    # Ignored as phase is private
+    EvaluationFactory.create_batch(
+        2,
         submission__phase=private_phase_public_challenge,
         submission__algorithm_image=algorithm_image,
-    )
-    EvaluationFactory(
-        submission__phase=private_phase_public_challenge,
-        submission__algorithm_image=algorithm_image,
+        rank=1,
     )
 
     response = get_view_for_user(
