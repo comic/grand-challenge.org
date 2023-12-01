@@ -133,7 +133,9 @@ def update_archive_item_values(*, archive_item_pk, civ_pks_to_add):
             ).values_list("pk", flat=True):
                 civ_pks_to_remove.append(civ_pk)
         # for images, check if there are any CIVs with the provided image
-        if civ.interface.is_image_kind:
+        # this is necessary to enable updating the interface
+        # of a given image via the API
+        if civ.interface.is_image_kind and civ.image:
             if instance.values.filter(image=civ.image).exists():
                 for civ_pk in instance.values.filter(
                     image=civ.image
