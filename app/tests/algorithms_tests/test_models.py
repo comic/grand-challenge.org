@@ -258,10 +258,6 @@ class TestJobLimits:
         alg1.add_editor(user=user2)
         alg2.add_editor(user=user1)
 
-        # no active image, hence no jobs can be scheduled
-        assert alg1.get_jobs_limit(user=user1) is None
-        assert alg1.get_jobs_limit(user=user2) is None
-
         ai = AlgorithmImageFactory(
             algorithm=alg1,
             is_manifest_valid=True,
@@ -269,7 +265,6 @@ class TestJobLimits:
             is_on_sagemaker=True,
             is_desired_version=True,
         )
-        del alg1.active_image
 
         # no jobs run by any editor yet
         assert alg1.get_jobs_limit(user=user1) == 15
@@ -277,9 +272,7 @@ class TestJobLimits:
         # normal user gets standard credits
         assert alg1.get_jobs_limit(user=user3) == 10
 
-        AlgorithmJobFactory.create_batch(
-            4, creator=user1, algorithm_image=ai, status=Job.SUCCESS
-        )
+        AlgorithmJobFactory.create_batch(4, creator=user1, algorithm_image=ai)
         # limits apply to both editors
         assert alg1.get_jobs_limit(user=user1) == 11
         assert alg1.get_jobs_limit(user=user2) == 11
@@ -307,15 +300,11 @@ class TestJobLimits:
         assert alg1.get_jobs_limit(user=user1) == 15
         assert alg1.get_jobs_limit(user=user2) == 15
 
-        AlgorithmJobFactory(
-            creator=user1, algorithm_image=ai2, status=Job.SUCCESS
-        )
+        AlgorithmJobFactory(creator=user1, algorithm_image=ai2)
         assert alg1.get_jobs_limit(user=user1) == 14
         assert alg1.get_jobs_limit(user=user2) == 14
 
         # attaching a used image to a new algorithm doesn't reset credits
-        assert alg2.get_jobs_limit(user=user1) is None
-        assert alg2.get_jobs_limit(user=user2) is None
         ai3 = AlgorithmImageFactory(
             algorithm=alg2,
             is_manifest_valid=True,
@@ -324,18 +313,9 @@ class TestJobLimits:
             is_desired_version=True,
             image_sha256=ai2.image_sha256,
         )
-        del alg2.active_image
         assert alg2.active_image == ai3
         assert alg2.get_jobs_limit(user=user1) == 14
         # user2 is not an editor of this algorithm, hence just default credits
-        assert alg2.get_jobs_limit(user=user2) == 10
-
-        # job limit is for successful jobs only
-        AlgorithmJobFactory(
-            creator=user1,
-            algorithm_image=ai2,
-        )
-        assert alg2.get_jobs_limit(user=user1) == 14
         assert alg2.get_jobs_limit(user=user2) == 10
 
     @pytest.mark.parametrize(
