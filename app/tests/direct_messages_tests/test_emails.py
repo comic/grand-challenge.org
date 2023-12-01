@@ -60,6 +60,15 @@ def test_get_users_to_send_new_unread_direct_messages_email(
     dm6 = DirectMessageFactory()
     dm6.unread_by.add(users[6])
 
+    # Inactive user should not be notified
+    DirectMessageFactory().unread_by.add(UserFactory(is_active=False))
+
+    # Opt out user should not be notified
+    opt_out_user = UserFactory()
+    opt_out_user.user_profile.receive_notification_emails = False
+    opt_out_user.user_profile.save()
+    DirectMessageFactory().unread_by.add(opt_out_user)
+
     with django_assert_max_num_queries(4):
         users_to_email = [
             {
