@@ -445,9 +445,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
                 n_free_jobs = settings.ALGORITHMS_JOB_LIMIT_FOR_EDITORS
             user_credits += n_free_jobs * self.credits_per_job
 
-        credits_left = (
-            user_credits - spent_credits if spent_credits else user_credits
-        )
+        credits_left = user_credits - spent_credits
 
         return max(credits_left, 0) // max(self.credits_per_job, 1)
 
@@ -644,7 +642,9 @@ class JobManager(ComponentJobManager):
             .select_related("algorithm_image__algorithm")
             .exclude(algorithm_image__algorithm__editors_group__in=user_groups)
             .aggregate(
-                total=Sum("algorithm_image__algorithm__credits_per_job"),
+                total=Sum(
+                    "algorithm_image__algorithm__credits_per_job", default=0
+                ),
                 oldest=Min("created"),
             )
         )
