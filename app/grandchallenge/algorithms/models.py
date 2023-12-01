@@ -437,12 +437,12 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
                     creator__in=self.editors_group.user_set.all(),
                     algorithm_image__image_sha256=self.active_image.image_sha256,
                 ).count()
-                n_free_jobs = max(
-                    settings.ALGORITHMS_JOB_LIMIT_FOR_EDITORS - n_editor_jobs,
-                    0,
-                )
             else:
-                n_free_jobs = settings.ALGORITHMS_JOB_LIMIT_FOR_EDITORS
+                n_editor_jobs = 0
+            n_free_jobs = max(
+                settings.ALGORITHMS_JOB_LIMIT_FOR_EDITORS - n_editor_jobs,
+                0,
+            )
             user_credits += n_free_jobs * self.credits_per_job
 
         credits_left = user_credits - spent_credits
