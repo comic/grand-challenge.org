@@ -14,6 +14,10 @@ def get_users_to_send_new_unread_direct_messages_email():
         .objects.prefetch_related(
             "unread_direct_messages__sender", "user_profile"
         )
+        .filter(
+            user_profile__receive_notification_emails=True,
+            is_active=True,
+        )
         .annotate(
             new_unread_message_count=Count(
                 "unread_direct_messages",
