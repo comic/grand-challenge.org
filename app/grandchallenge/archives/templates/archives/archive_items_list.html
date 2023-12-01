@@ -30,5 +30,5 @@
 {% block script %}
     {{ block.super }}
     {% include 'workstations/partials/session-control.html' %}
-    <script src="{% static 'archives/js/archive_item_update.js' %}"></script>
+    <script type="module" src="{% static 'archives/js/archive_item_update.mjs' %}"></script>
 {% endblock %}
