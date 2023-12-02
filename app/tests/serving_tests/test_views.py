@@ -19,6 +19,7 @@ from tests.evaluation_tests.factories import (
 )
 from tests.factories import (
     ChallengeRequestFactory,
+    GroupFactory,
     ImageFileFactory,
     UserFactory,
 )
@@ -179,7 +180,11 @@ def test_civ_file_download(client):
     evaluation = EvaluationFactory()
     evaluation.output_interfaces.add(detection_interface)
     evaluation.outputs.add(output_civ)
-    assign_perm("view_evaluation", user1, evaluation)
+
+    group = GroupFactory()
+    group.user_set.add(user1)
+    assign_perm("view_evaluation", group, evaluation)
+
     # Evaluation inputs and outputs should always be denied
     assert (
         get_view_for_user(

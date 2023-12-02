@@ -339,25 +339,22 @@ def test_civ_updating(kind):
     civ = ComponentInterfaceValue.objects.last()
 
     # updating existing values does not work
+
+    if kind == InterfaceKindChoices.IMAGE:
+        image = ImageFactory()
+        civ.image = image
+    elif kind == InterfaceKindChoices.CSV:
+        file = ContentFile(b"Foo2", name="test2.csv")
+        civ.file = file
+    elif kind == InterfaceKindChoices.BOOL:
+        civ.value = False
+    elif kind == InterfaceKindChoices.STRING:
+        civ.value = "Foo"
+
+    civ.full_clean()
+
     with pytest.raises(ValidationError):
-        if kind == InterfaceKindChoices.IMAGE:
-            image = ImageFactory()
-            civ.image = image
-            civ.full_clean()
-            civ.save()
-        elif kind == InterfaceKindChoices.CSV:
-            file = ContentFile(b"Foo2", name="test2.csv")
-            civ.file = file
-            civ.full_clean()
-            civ.save()
-        elif kind == InterfaceKindChoices.BOOL:
-            civ.value = False
-            civ.full_clean()
-            civ.save()
-        elif kind == InterfaceKindChoices.STRING:
-            civ.value = "Foo"
-            civ.full_clean()
-            civ.save()
+        civ.save()
 
 
 @pytest.mark.django_db

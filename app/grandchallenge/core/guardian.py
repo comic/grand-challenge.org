@@ -35,7 +35,7 @@ class ObjectPermissionRequiredMixin(PermissionRequiredMixin):
     accept_global_perms = False
 
 
-def filter_by_permission(*, queryset, user, codename):
+def filter_by_permission(*, queryset, user, codename, accept_user_perms=True):
     """
     Optimised version of get_objects_for_user
 
@@ -59,18 +59,11 @@ def filter_by_permission(*, queryset, user, codename):
         # AnonymousUser does not work with filters
         user = get_anonymous_user()
 
-    dfk_user_model = get_user_obj_perms_model(queryset.model)
     dfk_group_model = get_group_obj_perms_model(queryset.model)
-
-    if dfk_user_model == UserObjectPermission:
-        raise RuntimeError("DFK user permissions not active for model")
 
     if dfk_group_model == GroupObjectPermission:
         raise RuntimeError("DFK group permissions not active for model")
 
-    user_related_query_name = (
-        dfk_user_model.content_object.field.related_query_name()
-    )
     group_related_query_name = (
         dfk_group_model.content_object.field.related_query_name()
     )
@@ -80,22 +73,32 @@ def filter_by_permission(*, queryset, user, codename):
         codename=codename,
     )
 
-    pks = (
-        queryset.filter(
-            **{
-                f"{user_related_query_name}__user": user,
-                f"{user_related_query_name}__permission": permission,
-            }
-        )
-        .union(
-            queryset.filter(
-                **{
-                    f"{group_related_query_name}__group__user": user,
-                    f"{group_related_query_name}__permission": permission,
-                }
-            )
-        )
-        .values_list("pk", flat=True)
-    )
+    group_filter_kwargs = {
+        f"{group_related_query_name}__group__user": user,
+        f"{group_related_query_name}__permission": permission,
+    }
 
-    return queryset.filter(pk__in=pks)
+    if accept_user_perms:
+        dfk_user_model = get_user_obj_perms_model(queryset.model)
+
+        if dfk_user_model == UserObjectPermission:
+            raise RuntimeError("DFK user permissions not active for model")
+
+        user_related_query_name = (
+            dfk_user_model.content_object.field.related_query_name()
+        )
+
+        user_filter_kwargs = {
+            f"{user_related_query_name}__user": user,
+            f"{user_related_query_name}__permission": permission,
+        }
+
+        pks = (
+            queryset.filter(**user_filter_kwargs)
+            .union(queryset.filter(**group_filter_kwargs))
+            .values_list("pk", flat=True)
+        )
+
+        return queryset.filter(pk__in=pks)
+    else:
+        return queryset.filter(**group_filter_kwargs)

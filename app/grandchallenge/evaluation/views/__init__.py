@@ -799,6 +799,7 @@ class LeaderboardDetail(TeamContextMixin, PaginatedTableListView):
             queryset=queryset,
             user=self.request.user,
             codename="view_evaluation",
+            accept_user_perms=False,
         )
 
     def filter_by_date(self, queryset):

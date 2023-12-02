@@ -438,16 +438,20 @@ def test_view_content_validation():
         (model,),
         {"__module__": model.__module__},
     )
-    with pytest.raises(ValidationError):
-        hp = model(view_content={"test": []})
-        hp.full_clean()
+
+    hp = model(view_content={"test": []})
 
     with pytest.raises(ValidationError):
-        hp = model(view_content={"main": []})
         hp.full_clean()
 
+    hp = model(view_content={"main": []})
+
     with pytest.raises(ValidationError):
-        hp = model(view_content={"main": "test"})
+        hp.full_clean()
+
+    hp = model(view_content={"main": "test"})
+
+    with pytest.raises(ValidationError):
         hp.full_clean()
 
     hp = model(view_content={"main": ["test"]})

@@ -416,10 +416,11 @@ def test_validate_answer():
 
     with pytest.raises(ValidationError) as e:
         Answer.validate(creator=u, question=q, answer=True, display_set=ds)
-        assert (
-            e.value.message
-            == f"User {u} has already answered this question for this display set."
-        )
+
+    assert (
+        e.value.message
+        == f"User {u} has already answered this question for this display set."
+    )
 
     ds = DisplaySetFactory(reader_study=rs)
     assert (
@@ -682,20 +683,24 @@ def test_question_interface():
     q.clean()
     q.save()
     q.refresh_from_db()
+
     assert q.interface == ci_str
+
     ci_img = ComponentInterface.objects.filter(
         kind=InterfaceKindChoices.IMAGE
     ).first()
     q.interface = ci_img
+
     with pytest.raises(ValidationError) as e:
         q.clean()
-        q.save()
 
     assert e.value.message == (
         f"The interface {ci_img} is not allowed for this "
         f"question type ({AnswerType.SINGLE_LINE_TEXT})"
     )
+
     q.refresh_from_db()
+
     assert q.interface == ci_str
 
 
