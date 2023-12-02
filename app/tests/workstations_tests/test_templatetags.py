@@ -233,9 +233,14 @@ def test_workstation_query_for_images(settings):
 def test_workstation_session_control_data():
     wk = WorkstationFactory()
     obj = ReaderStudyFactory()
+
     with pytest.raises(TypeError):
         workstation_session_control_data()
+
+    with pytest.raises(TypeError):
         workstation_session_control_data(workstation=wk)
+
+    with pytest.raises(TypeError):
         workstation_session_control_data(context_object=obj)
 
     data = workstation_session_control_data(

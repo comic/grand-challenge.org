@@ -28,6 +28,7 @@ from tests.evaluation_tests.factories import (
 )
 from tests.factories import (
     ChallengeFactory,
+    GroupFactory,
     UserFactory,
     WorkstationConfigFactory,
     WorkstationFactory,
@@ -160,8 +161,6 @@ class TestObjectPermissionRequiredViews:
                 "view_submission",
                 e.submission,
             ),
-            ("update", {"pk": e.pk}, "change_evaluation", e),
-            ("detail", {"pk": e.pk}, "view_evaluation", e),
         ]:
             response = get_view_for_user(
                 client=client,
@@ -191,6 +190,53 @@ class TestObjectPermissionRequiredViews:
 
             remove_perm(permission, u, obj)
 
+    def test_group_permission_required_views(self, client):
+        e = EvaluationFactory()
+        u = UserFactory()
+        g = GroupFactory()
+        g.user_set.add(u)
+        VerificationFactory(user=u, is_verified=True)
+
+        for view_name, kwargs, permission, obj in [
+            ("update", {"pk": e.pk}, "change_evaluation", e),
+            ("detail", {"pk": e.pk}, "view_evaluation", e),
+        ]:
+            response = get_view_for_user(
+                client=client,
+                viewname=f"evaluation:{view_name}",
+                reverse_kwargs={
+                    "challenge_short_name": e.submission.phase.challenge.short_name,
+                    **kwargs,
+                },
+                user=u,
+            )
+
+            assert response.status_code == 403
+
+            with pytest.raises(RuntimeError) as err:
+                assign_perm(permission, u, obj)
+
+            assert (
+                str(err.value)
+                == "User permissions should not be assigned for this model"
+            )
+
+            assign_perm(permission, g, obj)
+
+            response = get_view_for_user(
+                client=client,
+                viewname=f"evaluation:{view_name}",
+                reverse_kwargs={
+                    "challenge_short_name": e.submission.phase.challenge.short_name,
+                    **kwargs,
+                },
+                user=u,
+            )
+
+            assert response.status_code == 200
+
+            remove_perm(permission, g, obj)
+
     def test_permission_filtered_views(self, client):
         u = UserFactory()
         p = PhaseFactory()
@@ -208,13 +254,6 @@ class TestObjectPermissionRequiredViews:
                 m,
             ),
             ("submission-list", {}, "view_submission", s),
-            ("list", {"slug": e.submission.phase.slug}, "view_evaluation", e),
-            (
-                "leaderboard",
-                {"slug": e.submission.phase.slug},
-                "view_evaluation",
-                e,
-            ),
         ]:
 
             assign_perm(permission, u, obj)
@@ -233,6 +272,64 @@ class TestObjectPermissionRequiredViews:
             assert obj in response.context[-1]["object_list"]
 
             remove_perm(permission, u, obj)
+
+            response = get_view_for_user(
+                client=client,
+                viewname=f"evaluation:{view_name}",
+                reverse_kwargs={
+                    "challenge_short_name": e.submission.phase.challenge.short_name,
+                    **kwargs,
+                },
+                user=u,
+            )
+
+            assert response.status_code == 200
+            assert obj not in response.context[-1]["object_list"]
+
+    def test_group_only_permission_filtered_views(self, client):
+        u = UserFactory()
+        p = PhaseFactory()
+        m = MethodFactory(phase=p)
+        s = SubmissionFactory(phase=p, creator=u)
+        e = EvaluationFactory(
+            method=m, submission=s, rank=1, status=Evaluation.SUCCESS
+        )
+        g = GroupFactory()
+        g.user_set.add(u)
+
+        for view_name, kwargs, permission, obj in [
+            ("list", {"slug": e.submission.phase.slug}, "view_evaluation", e),
+            (
+                "leaderboard",
+                {"slug": e.submission.phase.slug},
+                "view_evaluation",
+                e,
+            ),
+        ]:
+            with pytest.raises(RuntimeError) as err:
+                assign_perm(permission, u, obj)
+
+            assert (
+                str(err.value)
+                == "User permissions should not be assigned for this model"
+            )
+
+            assign_perm(permission, g, obj)
+
+            response = get_view_for_user(
+                client=client,
+                viewname=f"evaluation:{view_name}",
+                reverse_kwargs={
+                    "challenge_short_name": e.submission.phase.challenge.short_name,
+                    **kwargs,
+                },
+                user=u,
+            )
+
+            assert response.status_code == 200
+            assert obj in response.context[-1]["object_list"]
+
+            remove_perm(permission, g, obj)
 
             response = get_view_for_user(
                 client=client,

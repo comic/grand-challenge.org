@@ -60,7 +60,8 @@ def test_anon_not_participant():
 
     with pytest.raises(RuntimeError) as e:
         conversation.participants.add(get_anonymous_user())
-        assert str(e) == "The Anonymous User cannot be added to this group"
+
+    assert str(e.value) == "The Anonymous User cannot be added to this group"
 
 
 @pytest.mark.django_db

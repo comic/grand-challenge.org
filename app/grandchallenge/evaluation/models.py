@@ -1085,6 +1085,11 @@ class Evaluation(UUIDModel, ComponentJob):
 class EvaluationUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(Evaluation, on_delete=models.CASCADE)
 
+    def save(self, *args, **kwargs):
+        raise RuntimeError(
+            "User permissions should not be assigned for this model"
+        )
+
 
 class EvaluationGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(Evaluation, on_delete=models.CASCADE)
