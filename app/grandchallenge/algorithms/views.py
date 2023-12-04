@@ -1,5 +1,6 @@
 import logging
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import (
     PermissionRequiredMixin,
@@ -464,7 +465,12 @@ class JobCreate(
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context.update({"algorithm": self.algorithm})
+        context.update(
+            {
+                "algorithm": self.algorithm,
+                "editors_job_limit": settings.ALGORITHMS_JOB_LIMIT_FOR_EDITORS,
+            }
+        )
         return context
 
     def form_valid(self, form):

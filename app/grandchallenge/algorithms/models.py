@@ -427,17 +427,27 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
 
     def get_jobs_limit(self, user):
         """Get the maximum number of jobs a user can schedule now"""
+        user_credits = Credit.objects.get(user=user).credits
+        spent_credits = Job.objects.spent_credits(user=user)["total"]
+
         if self.is_editor(user=user):
-            # Not limited by credits
-            return
-        else:
-            user_credit = Credit.objects.get(user=user)
-            jobs = Job.objects.spent_credits(user=user)
-            if jobs["total"]:
-                credits_left = user_credit.credits - jobs["total"]
+            if self.active_image:
+                # Including all jobs here as failed jobs still use compute
+                n_editor_jobs = Job.objects.filter(
+                    creator__in=self.editors_group.user_set.all(),
+                    algorithm_image__image_sha256=self.active_image.image_sha256,
+                ).count()
             else:
-                credits_left = user_credit.credits
-            return max(credits_left, 0) // max(self.credits_per_job, 1)
+                n_editor_jobs = 0
+            n_free_jobs = max(
+                settings.ALGORITHMS_JOB_LIMIT_FOR_EDITORS - n_editor_jobs,
+                0,
+            )
+            user_credits += n_free_jobs * self.credits_per_job
+
+        credits_left = user_credits - spent_credits
+
+        return max(credits_left, 0) // max(self.credits_per_job, 1)
 
     @cached_property
     def user_statistics(self):
@@ -632,7 +642,9 @@ class JobManager(ComponentJobManager):
             .select_related("algorithm_image__algorithm")
             .exclude(algorithm_image__algorithm__editors_group__in=user_groups)
             .aggregate(
-                total=Sum("algorithm_image__algorithm__credits_per_job"),
+                total=Sum(
+                    "algorithm_image__algorithm__credits_per_job", default=0
+                ),
                 oldest=Min("created"),
             )
         )

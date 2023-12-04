@@ -427,6 +427,12 @@ class TestJobCreateLimits:
         algorithm = AlgorithmFactory(credits_per_job=100)
         algorithm.inputs.clear()
         user = UserFactory()
+        AlgorithmImageFactory(
+            algorithm=algorithm,
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+        )
 
         user.user_credit.credits = 0
         user.user_credit.save()
@@ -436,7 +442,6 @@ class TestJobCreateLimits:
         assert not form.is_valid()
         assert form.errors == {
             "__all__": ["You have run out of algorithm credits"],
-            "algorithm_image": ["This field is required."],
         }
 
     def test_form_valid_for_editor(self):
