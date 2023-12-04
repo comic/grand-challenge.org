@@ -720,9 +720,14 @@ def test_archive_item_add_image(
     item = ArchiveItemFactory(archive=archive)
     editor = UserFactory()
     archive.add_editor(editor)
-    ci = ComponentInterfaceFactory(
+    ci_img = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.IMAGE
     )
+    ci_value = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.BOOL
+    )
+    civ_value = ComponentInterfaceValueFactory(interface=ci_value, value=True)
+    item.values.add(civ_value)
     upload = create_upload_from_file(
         file_path=RESOURCE_PATH / "image10x10x10.mha",
         creator=editor,
@@ -735,17 +740,18 @@ def test_archive_item_add_image(
                 method=client.post,
                 reverse_kwargs={
                     "pk": item.pk,
-                    "interface_slug": ci.slug,
+                    "interface_slug": ci_img.slug,
                     "archive_slug": archive.slug,
                 },
                 user=editor,
                 follow=True,
                 data={
-                    ci.slug: upload.pk,
-                    f"WidgetChoice-{ci.slug}": WidgetChoices.IMAGE_UPLOAD.name,
+                    ci_img.slug: upload.pk,
+                    f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_UPLOAD.name,
                 },
             )
     assert response.status_code == 200
+    assert item.values.count() == 2
     assert "image10x10x10.mha" == item.values.first().image.name
     old_civ = item.values.first()
 
@@ -757,14 +763,14 @@ def test_archive_item_add_image(
                 method=client.post,
                 reverse_kwargs={
                     "pk": item.pk,
-                    "interface_slug": ci.slug,
+                    "interface_slug": ci_img.slug,
                     "archive_slug": archive.slug,
                 },
                 user=editor,
                 follow=True,
                 data={
-                    ci.slug: old_civ.image.pk,
-                    f"WidgetChoice-{ci.slug}": WidgetChoices.IMAGE_SEARCH.name,
+                    ci_img.slug: old_civ.image.pk,
+                    f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
                 },
             )
     assert response.status_code == 200
@@ -781,14 +787,14 @@ def test_archive_item_add_image(
                 method=client.post,
                 reverse_kwargs={
                     "pk": item.pk,
-                    "interface_slug": ci.slug,
+                    "interface_slug": ci_img.slug,
                     "archive_slug": archive.slug,
                 },
                 user=editor,
                 follow=True,
                 data={
-                    ci.slug: image.pk,
-                    f"WidgetChoice-{ci.slug}": WidgetChoices.IMAGE_SEARCH.name,
+                    ci_img.slug: image.pk,
+                    f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
                 },
             )
     assert response.status_code == 200

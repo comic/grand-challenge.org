@@ -18,7 +18,7 @@
 </ul>
 <split></split>
 
-<select class="form-control" onchange="location = this.value;">
+<select class="form-control" id="interfaceSelect">
     {% for interface in interfaces %}
         {% if interface not in object_interfaces %}
             <option value="{% url 'archives:item-edit' archive_slug=object.archive.slug pk=object.pk interface_slug=interface.slug %}">Add {{ interface.title }}</option>
