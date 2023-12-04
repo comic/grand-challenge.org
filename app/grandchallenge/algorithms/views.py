@@ -442,6 +442,7 @@ class AlgorithmImageActivate(
 class JobCreate(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
+    VerificationRequiredMixin,
     UserFormKwargsMixin,
     FormView,
 ):

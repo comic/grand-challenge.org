@@ -35,15 +35,16 @@ from tests.verification_tests.factories import VerificationFactory
 
 
 @pytest.mark.django_db
-def test_editor_update_form(client):
+def test_editor_update_form(client, verified_user):
     alg, _ = AlgorithmFactory(), AlgorithmFactory()
 
-    editor = UserFactory()
+    editor = verified_user
     alg.editors_group.user_set.add(editor)
 
     assert alg.editors_group.user_set.count() == 1
 
     new_editor = UserFactory()
+    VerificationFactory(user=new_editor, is_verified=True)
     assert not alg.is_editor(user=new_editor)
     response = get_view_for_user(
         viewname="algorithms:editors-update",
@@ -129,7 +130,6 @@ def test_user_update_form(client):
 def test_algorithm_create(client, uploaded_image):
     # The algorithm creator should automatically get added to the editors group
     creator = get_algorithm_creator()
-    VerificationFactory(user=creator, is_verified=True)
 
     ws = WorkstationFactory()
     ci = ComponentInterface.objects.get(slug="generic-medical-image")
@@ -444,7 +444,7 @@ class TestJobCreateLimits:
             "__all__": ["You have run out of algorithm credits"],
         }
 
-    def test_form_valid_for_editor(self):
+    def test_form_valid_for_editor(self, verified_user):
         algorithm = AlgorithmFactory(credits_per_job=100)
         algorithm.inputs.clear()
         algorithm_image = AlgorithmImageFactory(
@@ -453,16 +453,15 @@ class TestJobCreateLimits:
             is_in_registry=True,
             is_desired_version=True,
         )
-        user = UserFactory()
 
-        user.user_credit.credits = 0
-        user.user_credit.save()
+        verified_user.user_credit.credits = 0
+        verified_user.user_credit.save()
 
-        algorithm.add_editor(user=user)
+        algorithm.add_editor(user=verified_user)
 
         form = JobCreateForm(
             algorithm=algorithm,
-            user=user,
+            user=verified_user,
             data={"algorithm_image": str(algorithm_image.pk)},
         )
 
@@ -489,9 +488,9 @@ class TestJobCreateLimits:
 
 
 @pytest.mark.django_db
-def test_image_activate_form():
+def test_image_activate_form(verified_user):
     alg = AlgorithmFactory()
-    editor = UserFactory()
+    editor = verified_user
     alg.add_editor(editor)
     i1 = AlgorithmImageFactory(
         algorithm=alg, is_manifest_valid=True, is_desired_version=False

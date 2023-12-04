@@ -29,13 +29,16 @@ class TestGroupManagementViews:
         ),
     )
     def test_group_management(
-        self, client, factory, namespace, view_name, group_attr
+        self, client, verified_user, factory, namespace, view_name, group_attr
     ):
         o = factory()
         group = getattr(o, group_attr)
 
-        admin = UserFactory()
+        admin = verified_user
         u = UserFactory()
+
+        if namespace == "algorithms" and view_name == "editors":
+            VerificationFactory(user=u, is_verified=True)
 
         assert not group.user_set.filter(pk=u.pk).exists()
 

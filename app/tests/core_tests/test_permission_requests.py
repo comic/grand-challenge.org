@@ -56,7 +56,13 @@ from tests.utils import get_view_for_user
     ),
 )
 def test_permission_request_workflow(
-    client, factory, namespace, request_model, request_attr, group_test
+    client,
+    verified_user,
+    factory,
+    namespace,
+    request_model,
+    request_attr,
+    group_test,
 ):
     base_object = factory(
         access_request_handling=AccessRequestHandlingOptions.MANUAL_REVIEW
@@ -150,7 +156,7 @@ def test_permission_request_workflow(
     assert pr.status == request_model.PENDING
 
     # New users should not be able to see the permission request status
-    editor = UserFactory()
+    editor = verified_user
     response = get_view_for_user(
         client=client, user=editor, url=permission_update_url
     )
@@ -223,7 +229,7 @@ def test_permission_request_workflow(
     ),
 )
 def test_permission_request_notifications_flow_for_manual_review(
-    client, factory, namespace, request_model, request_attr
+    client, verified_user, factory, namespace, request_model, request_attr
 ):
     base_object = factory(
         access_request_handling=AccessRequestHandlingOptions.MANUAL_REVIEW
@@ -238,7 +244,7 @@ def test_permission_request_notifications_flow_for_manual_review(
         # challenge creation results in a notification, delete this notification
         Notification.objects.all().delete()
     else:
-        editor = UserFactory()
+        editor = verified_user
         base_object.add_editor(editor)
         permission_create_url = reverse(
             f"{namespace}:permission-request-create",
@@ -347,7 +353,7 @@ def test_permission_request_notifications_flow_for_manual_review(
     ),
 )
 def test_permission_request_notifications_flow_for_accept_all(
-    client, factory, namespace, request_model, request_attr
+    client, verified_user, factory, namespace, request_model, request_attr
 ):
     # when access_request_handling is set to accept all,
     # no notifications are sent, no follows are created
@@ -365,7 +371,7 @@ def test_permission_request_notifications_flow_for_accept_all(
         # challenge creation results in a notification, delete this notification
         Notification.objects.all().delete()
     else:
-        editor = UserFactory()
+        editor = verified_user
         base_object.add_editor(editor)
         permission_create_url = reverse(
             f"{namespace}:permission-request-create",
@@ -409,7 +415,7 @@ def test_permission_request_notifications_flow_for_accept_all(
     ),
 )
 def test_permission_request_notifications_flow_for_accept_verified_users(
-    client, factory, namespace, request_model, request_attr
+    client, verified_user, factory, namespace, request_model, request_attr
 ):
     base_object = factory(
         access_request_handling=AccessRequestHandlingOptions.ACCEPT_VERIFIED_USERS
@@ -424,7 +430,7 @@ def test_permission_request_notifications_flow_for_accept_verified_users(
         # challenge creation results in a notification, delete this notification
         Notification.objects.all().delete()
     else:
-        editor = UserFactory()
+        editor = verified_user
         base_object.add_editor(editor)
         permission_create_url = reverse(
             f"{namespace}:permission-request-create",
@@ -467,9 +473,11 @@ def test_permission_request_notifications_flow_for_accept_verified_users(
 
 
 @pytest.mark.django_db
-def test_algorithm_permission_request_notification_for_admins_only(client):
+def test_algorithm_permission_request_notification_for_admins_only(
+    client, verified_user
+):
     base_object = AlgorithmFactory()
-    editor = UserFactory()
+    editor = verified_user
     user = UserFactory()
     participant = UserFactory()
     base_object.add_editor(editor)

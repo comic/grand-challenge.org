@@ -9,6 +9,7 @@ from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.emails_tests.factories import EmailFactory
 from tests.factories import ChallengeFactory, UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
+from tests.verification_tests.factories import VerificationFactory
 
 
 @pytest.mark.parametrize(
@@ -29,6 +30,7 @@ def test_get_receivers(factory, action):
     for user in [u1, u2]:
         user.user_profile.receive_newsletter = True
         user.user_profile.save()
+        VerificationFactory(user=user, is_verified=True)
         if action == SendActionChoices.STAFF:
             user.is_staff = True
             user.save()

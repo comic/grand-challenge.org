@@ -312,6 +312,7 @@ def test_algorithm_with_invalid_output(
 def test_algorithm_multiple_inputs(
     client,
     algorithm_io_image,
+    verified_user,
     settings,
     component_interfaces,
     django_capture_on_commit_callbacks,
@@ -320,7 +321,7 @@ def test_algorithm_multiple_inputs(
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    creator = UserFactory()
+    creator = verified_user
 
     assert Job.objects.count() == 0
 

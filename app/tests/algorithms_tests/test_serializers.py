@@ -148,17 +148,16 @@ def test_algorithm_job_post_serializer_validations(
 
 
 @pytest.mark.django_db
-def test_algorithm_job_post_serializer_create(rf):
+def test_algorithm_job_post_serializer_create(rf, verified_user):
     # setup
-    user = UserFactory()
     upload, upload_2 = (
-        RawImageUploadSessionFactory(creator=user),
-        RawImageUploadSessionFactory(creator=user),
+        RawImageUploadSessionFactory(creator=verified_user),
+        RawImageUploadSessionFactory(creator=verified_user),
     )
     image = ImageFactory()
     upload_2.image_set.set([image])
-    assign_perm("view_image", user, image)
-    assert user.has_perm("view_image", image)
+    assign_perm("view_image", verified_user, image)
+    assert verified_user.has_perm("view_image", image)
     algorithm_image = AlgorithmImageFactory(
         is_manifest_valid=True, is_in_registry=True, is_desired_version=True
     )
@@ -176,7 +175,7 @@ def test_algorithm_job_post_serializer_create(rf):
         ),
     }
     algorithm_image.algorithm.inputs.set(interfaces)
-    algorithm_image.algorithm.add_editor(user)
+    algorithm_image.algorithm.add_editor(verified_user)
 
     algorithm_image.algorithm.save()
 
@@ -190,7 +189,7 @@ def test_algorithm_job_post_serializer_create(rf):
 
     # test
     request = rf.get("/foo")
-    request.user = user
+    request.user = verified_user
     serializer = JobPostSerializer(data=job, context={"request": request})
 
     # verify
@@ -198,7 +197,7 @@ def test_algorithm_job_post_serializer_create(rf):
     serializer.create(serializer.validated_data)
     assert len(Job.objects.all()) == 1
     job = Job.objects.first()
-    assert job.creator == user
+    assert job.creator == verified_user
     assert len(job.inputs.all()) == 3
 
 
@@ -239,7 +238,7 @@ class TestJobCreateLimits:
             ]
         }
 
-    def test_form_valid_for_editor(self, rf):
+    def test_form_valid_for_editor(self, rf, verified_user):
         algorithm_image = AlgorithmImageFactory(
             is_manifest_valid=True,
             is_in_registry=True,
@@ -247,15 +246,14 @@ class TestJobCreateLimits:
             algorithm__credits_per_job=100,
         )
         algorithm_image.algorithm.inputs.clear()
-        user = UserFactory()
 
-        user.user_credit.credits = 0
-        user.user_credit.save()
+        verified_user.user_credit.credits = 0
+        verified_user.user_credit.save()
 
-        algorithm_image.algorithm.add_editor(user=user)
+        algorithm_image.algorithm.add_editor(user=verified_user)
 
         request = rf.get("/foo")
-        request.user = user
+        request.user = verified_user
         serializer = JobPostSerializer(
             data={
                 "algorithm": algorithm_image.algorithm.api_url,
@@ -264,12 +262,14 @@ class TestJobCreateLimits:
             context={"request": request},
         )
         assert serializer.is_valid()
-        assert algorithm_image.algorithm.get_jobs_limit(user=user) == 5
+        assert (
+            algorithm_image.algorithm.get_jobs_limit(user=verified_user) == 5
+        )
 
         AlgorithmJobFactory.create_batch(
             5,
             algorithm_image=algorithm_image,
-            creator=user,
+            creator=verified_user,
             status=Job.SUCCESS,
         )
         serializer = JobPostSerializer(
@@ -280,7 +280,9 @@ class TestJobCreateLimits:
             context={"request": request},
         )
         assert not serializer.is_valid()
-        assert algorithm_image.algorithm.get_jobs_limit(user=user) == 0
+        assert (
+            algorithm_image.algorithm.get_jobs_limit(user=verified_user) == 0
+        )
 
     def test_form_valid_with_credits(self, rf):
         algorithm_image = AlgorithmImageFactory(

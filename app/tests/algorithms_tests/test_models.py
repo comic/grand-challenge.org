@@ -22,6 +22,7 @@ from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.utils import get_view_for_user
+from tests.verification_tests.factories import VerificationFactory
 
 
 @pytest.mark.django_db
@@ -254,6 +255,8 @@ class TestJobLimits:
     def test_limited_jobs_for_editors(self, client):
         alg1, alg2 = AlgorithmFactory.create_batch(2, credits_per_job=100)
         user1, user2, user3 = UserFactory.create_batch(3)
+        for user in [user1, user2, user3]:
+            VerificationFactory(user=user, is_verified=True)
         alg1.add_editor(user=user1)
         alg1.add_editor(user=user2)
         alg2.add_editor(user=user1)
@@ -484,3 +487,17 @@ def test_usage_statistics():
             },
         },
     }
+
+
+@pytest.mark.django_db
+def test_new_algorithm_editors_need_to_be_verified():
+    user1, user2 = UserFactory.create_batch(2)
+    VerificationFactory(user=user1, is_verified=True)
+    alg = AlgorithmFactory()
+    resp1 = alg.add_editor(user1)
+    resp2 = alg.add_editor(user2)
+    assert resp1 is None
+    assert resp2.status_code == 403
+    editors = alg.editors_group.user_set.all()
+    assert user1 in editors
+    assert user2 not in editors

@@ -14,6 +14,7 @@ from django.db.models import Count, Min, Q, Sum
 from django.db.models.signals import post_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
+from django.http import HttpResponseForbidden
 from django.template.defaultfilters import truncatewords
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -411,7 +412,13 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         return user.groups.filter(pk=self.editors_group.pk).exists()
 
     def add_editor(self, user):
-        return user.groups.add(self.editors_group)
+        try:
+            if user.verification.is_verified:
+                return user.groups.add(self.editors_group)
+        except ObjectDoesNotExist:
+            return HttpResponseForbidden(
+                reason="Users need to be verified to be editors of algorithms. The user you tried to add is not verified."
+            )
 
     def remove_editor(self, user):
         return user.groups.remove(self.editors_group)
