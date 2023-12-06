@@ -40,7 +40,7 @@ python = ">=3.10,<3.12"
 # Disallow 5.3.0 due to https://github.com/celery/kombu/issues/1744
 celery = {version = "!=5.0.6,!=5.3.0", extras = ["redis", "sqs"]}
 kombu = {version ="!=5.3.0"}
-django = "<4.2"
+django = "<4.3"
 django-countries = "*"
 django-crispy-forms = "*"
 crispy-bootstrap4 = "*"
@@ -50,7 +50,6 @@ python-magic = "*"
 gunicorn = "*"
 uvicorn = {version = "*", extras = ["standard"]}
 django-celery-email = "*"
-"psycopg2" = "*"
 "django-select2" = "*"
 django-celery-results = "!=2.4.0"
 django-summernote = "*"
@@ -101,6 +100,7 @@ urllib3 = "<2"  # Pinned due to lack of support in botocore (https://github.com/
 django-compressor = "*"
 django-libsass = "*"
 django-csp = "*"
+psycopg = {version = ">3.1.8", extras = ["c"]}
 
 [tool.poetry.group.dev.dependencies]
 pytest-django = "*"

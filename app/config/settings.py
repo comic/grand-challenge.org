@@ -161,7 +161,14 @@ CHALLENGE_BASE_COST_IN_EURO = int(
 # Storage
 #
 ##############################################################################
-DEFAULT_FILE_STORAGE = "grandchallenge.core.storage.PublicS3Storage"
+STORAGES = {
+    "default": {
+        "BACKEND": "grandchallenge.core.storage.PublicS3Storage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 # Subdirectories on root for various files
 IMAGE_FILES_SUBDIRECTORY = "images"
@@ -379,8 +386,6 @@ STATICFILES_FINDERS = (
 
 # Vendored static files will be put here
 STATICFILES_DIRS = [MACHINA_MAIN_STATIC_DIR]
-
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # CSS Compression settings
 COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)

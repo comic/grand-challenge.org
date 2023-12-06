@@ -1,4 +1,3 @@
-from django.contrib.postgres.fields import CICharField
 from django.db import models
 from django.utils.html import format_html
 
@@ -6,7 +5,7 @@ from django.utils.html import format_html
 class BodyRegion(models.Model):
     """Store the anatomy options, eg, Head, Neck, Thorax, etc."""
 
-    region = CICharField(max_length=16, blank=False, unique=True)
+    region = models.CharField(max_length=16, blank=False, unique=True)
 
     class Meta:
         ordering = ("region",)
@@ -18,7 +17,7 @@ class BodyRegion(models.Model):
 class BodyStructure(models.Model):
     """Store the organ name and what region it belongs to."""
 
-    structure = CICharField(max_length=16, blank=False, unique=True)
+    structure = models.CharField(max_length=16, blank=False, unique=True)
     region = models.ForeignKey(
         to=BodyRegion, on_delete=models.CASCADE, blank=False
     )

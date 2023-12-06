@@ -27,7 +27,7 @@
             For instance, you could have a training and test phase, or have a phase for each task.
         </p>
     {% else %}
-        {% include "evaluation/partials/phase_closed_warning.html" with phase=object %}
+        {% include "evaluation/partials/phase_admin_warnings.html" with phase=object %}
     {% endif %}
 
     {% crispy form %}

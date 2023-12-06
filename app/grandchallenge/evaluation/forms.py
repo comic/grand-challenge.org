@@ -79,6 +79,7 @@ leaderboard_options = (
 result_detail_options = ("display_all_metrics",)
 
 algorithm_setting_options = (
+    "give_algorithm_editors_job_view_permissions",
     "workstation",
     "workstation_config",
     "hanging_protocol",

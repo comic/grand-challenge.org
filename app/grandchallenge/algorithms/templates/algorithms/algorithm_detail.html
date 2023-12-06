@@ -132,11 +132,15 @@
                     </span>
                 {% endif %}
             </div>
+
             <hr>
+
             {% if object.logo %}
                 <img class="w-50" loading="lazy" src="{{ object.logo.url }}" alt="Logo for {{ object.title }}">
             {% endif %}
+
             <h3 class="my-3">About</h3>
+
             {% if object.display_editors %}
                 <div class="row mb-2">
                     <div class="col-3 font-weight-bold">Creator{{ object.editors_group.user_set.all|pluralize }}:</div>
@@ -147,12 +151,14 @@
                     </div>
                 </div>
             {% endif %}
+
             {% if object.contact_email %}
                 <div class="row mb-2">
                     <div class="col-3 font-weight-bold">Contact email:</div>
                     <div class="col-9"><a href="mailto:{{ object.contact_email }}">{{ object.contact_email }}</a></div>
                 </div>
             {% endif %}
+
             {% if object.active_image %}
                 <div class="row mb-2">
                     <div class="col-3 font-weight-bold">Version:</div>
@@ -163,6 +169,7 @@
                     <div class="col-9">{{ object.active_image.created }}</div>
                 </div>
             {% endif %}
+
             {% if object.publications.all %}
                 <div class="row mb-2">
                     <div class="col-3 font-weight-bold">Associated publication{{ object.publications.all|pluralize }}:
@@ -180,6 +187,7 @@
                     </div>
                 </div>
             {% endif %}
+
             <div class="row mb-2">
                 <div class="col-3 font-weight-bold">Inputs:</div>
                 <div class="col-9">
@@ -191,6 +199,7 @@
                     </ul>
                 </div>
             </div>
+
             <div class="row mb-2">
                 <div class="col-3 font-weight-bold">Outputs:</div>
                 <div class="col-9">
@@ -202,6 +211,33 @@
                     </ul>
                 </div>
             </div>
+
+            {% if best_evaluation_per_phase %}
+                <h3>Challenge Performance</h3>
+
+                <table class="table table-borderless table-hover table-sm">
+                    <thead class="thead-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Challenge</th>
+                        <th>Phase</th>
+                        <th>Rank</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for evaluation in best_evaluation_per_phase %}
+                        <tr>
+                            <td>{{ evaluation.created|date }}</td>
+                            <td><a href="{{ evaluation.submission.phase.challenge.get_absolute_url }}">{{ evaluation.submission.phase.challenge }}</a></td>
+                            <td>
+                                <a href="{% url 'evaluation:leaderboard' challenge_short_name=evaluation.submission.phase.challenge.short_name slug=evaluation.submission.phase.slug %}">{{ evaluation.submission.phase.title }}</a>
+                            </td>
+                            <td><a href="{{ evaluation.get_absolute_url }}">{{ evaluation.rank }}</a></td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
 
             <h3>Model Facts</h3>
 

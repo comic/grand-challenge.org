@@ -33,6 +33,8 @@ RUN apt-get update \
         ruby-rugged \
         # git for CodeBuild integration
         git \
+        # for dbshell \
+        postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 # Fetch and install licensee for checking licenses
