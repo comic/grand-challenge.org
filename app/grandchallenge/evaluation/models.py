@@ -439,9 +439,9 @@ class Phase(UUIDModel, ViewContentMixin):
     give_algorithm_editors_job_view_permissions = models.BooleanField(
         default=False,
         help_text=(
-            "If set to True algorithm editors will automatically be given "
-            "view permissions to the algorithm jobs and their logs "
-            "associated with this phase. "
+            "If set to True algorithm editors (i.e. challenge participants) "
+            "will automatically be given view permissions to the algorithm "
+            "jobs and their logs associated with this phase. "
             "This saves challenge administrators from having to "
             "manually share the logs for each failed submission. "
             "<b>Setting this to True will essentially make the data in "
