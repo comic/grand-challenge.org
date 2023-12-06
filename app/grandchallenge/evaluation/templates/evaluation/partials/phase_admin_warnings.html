@@ -1,5 +1,26 @@
 {% load url %}
 
+{% if phase.give_algorithm_editors_job_view_permissions %}
+    <div class="alert alert-danger" role="alert">
+        <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+        <b><u>The data in the linked archive is accessible to the participants.</u></b>
+
+        This is a debugging phase where the editors of each algorithm submitted to this phase
+        (i.e. the challenge participants) will automatically be given view permissions to their
+        algorithm jobs and their logs.
+
+        This means that challenge admins do not need to manually share the logs with each user.
+
+        Algorithm editors will only be able to access their own logs and predictions,
+        not the logs and predictions from other users.
+
+        The algorithm editors will not have access to the logs of the evaluation container.
+
+        You can update this setting in the <a
+                        href="{% url 'evaluation:phase-update' challenge_short_name=challenge.short_name slug=phase.slug %}">Phase Settings</a>.
+    </div>
+{% endif %}
+
 {% if not phase.active_image %}
     <div class="alert alert-danger" role="alert">
         <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>

@@ -63,11 +63,13 @@ class PhaseAdmin(admin.ModelAdmin):
         "submissions_open_at",
         "submissions_close_at",
         "submissions_limit_per_user_per_period",
+        "give_algorithm_editors_job_view_permissions",
     )
     search_fields = ("pk", "title", "slug", "challenge__short_name")
     list_filter = (
         "submission_kind",
         "challenge__short_name",
+        "give_algorithm_editors_job_view_permissions",
     )
     autocomplete_fields = (
         "inputs",
@@ -76,6 +78,7 @@ class PhaseAdmin(admin.ModelAdmin):
         "algorithm_outputs",
         "archive",
     )
+    readonly_fields = ("give_algorithm_editors_job_view_permissions",)
     form = PhaseAdminForm
 
     @admin.display(boolean=True)

@@ -24,7 +24,7 @@
     <h2>{{ phase.title }} Leaderboard {{ request.GET.date }}</h2>
 
     {% if "change_challenge" in challenge_perms %}
-        {% include "evaluation/partials/phase_closed_warning.html" with phase=phase %}
+        {% include "evaluation/partials/phase_admin_warnings.html" with phase=phase %}
 
         <a href="{% url "evaluation:phase-update" challenge_short_name=challenge.short_name slug=phase.slug %}" class="btn btn-primary text-decoration-none">
             <i class="fa fa-edit"></i>&nbsp;&nbsp;Edit Phase Settings
