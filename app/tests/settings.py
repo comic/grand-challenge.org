@@ -23,7 +23,9 @@ REST_KNOX[  # noqa F405
 ] = "cryptography.hazmat.primitives.hashes.MD5"
 
 WHITENOISE_AUTOREFRESH = True
-STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+STORAGES["staticfiles"][  # noqa F405
+    "BACKEND"
+] = "django.contrib.staticfiles.storage.StaticFilesStorage"
 
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
