@@ -1,0 +1,9 @@
+{% load url %}
+Dear {{ recipient.username }},
+
+{{ message }}
+
+Regards,
+The {{ site.name }} Team
+
+This is an automated service email from {{ site.domain.lower }}. {% if unsubscribable %}If you no longer wish to receive notification emails, you can disable them in your profile settings: {% url 'profile-update' username=recipient.username %}{% endif %}

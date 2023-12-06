@@ -3,6 +3,7 @@ from datetime import timedelta
 from itertools import chain
 
 import pytest
+from django.core import mail
 from django.utils import timezone
 from django.utils.timezone import now
 
@@ -34,6 +35,7 @@ from tests.evaluation_tests.factories import (
 )
 from tests.factories import ChallengeFactory, ImageFactory, UserFactory
 from tests.invoices_tests.factories import InvoiceFactory
+from tests.verification_tests.factories import VerificationFactory
 
 
 @pytest.fixture
@@ -680,3 +682,39 @@ def test_count_valid_archive_items():
     ai7.values.set([cciv1, cciv2])
 
     assert {*phase.valid_archive_items} == {ai1, ai2, ai6, ai7}
+
+
+@pytest.mark.django_db
+def test_email_sent_to_editors_when_permissions_enabled():
+    editors = UserFactory.create_batch(2)
+
+    challenge = ChallengeFactory()
+
+    for editor in editors:
+        VerificationFactory(user=editor, is_verified=True)
+        challenge.add_admin(user=editor)
+
+    mail.outbox.clear()
+
+    phase = PhaseFactory(challenge=challenge)
+
+    phase.give_algorithm_editors_job_view_permissions = True
+    phase.save()
+
+    assert len(mail.outbox) == len(challenge.admins_group.user_set.all())
+    assert (
+        mail.outbox[0].subject
+        == "[testserver] Permissions granted to Challenge Participants"
+    )
+
+    mail.outbox.clear()
+
+    # Just saving shouldn't create an email
+    phase = Phase.objects.get(pk=phase.pk)
+    phase.save()
+
+    # Turning off shouldn't create an email
+    phase.give_algorithm_editors_job_view_permissions = False
+    phase.save()
+
+    assert len(mail.outbox) == 0
