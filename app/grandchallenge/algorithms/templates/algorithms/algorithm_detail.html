@@ -225,12 +225,12 @@
                     </tr>
                     </thead>
                     <tbody>
-                    {% for phase, evaluation in best_evaluation_per_phase.items %}
+                    {% for evaluation in best_evaluation_per_phase %}
                         <tr>
                             <td>{{ evaluation.created|date }}</td>
-                            <td><a href="{{ phase.challenge.get_absolute_url }}">{{ phase.challenge }}</a></td>
+                            <td><a href="{{ evaluation.submission.phase.challenge.get_absolute_url }}">{{ evaluation.submission.phase.challenge }}</a></td>
                             <td>
-                                <a href="{% url 'evaluation:leaderboard' challenge_short_name=phase.challenge.short_name slug=phase.slug %}">{{ phase.title }}</a>
+                                <a href="{% url 'evaluation:leaderboard' challenge_short_name=evaluation.submission.phase.challenge.short_name slug=evaluation.submission.phase.slug %}">{{ evaluation.submission.phase.title }}</a>
                             </td>
                             <td><a href="{{ evaluation.get_absolute_url }}">{{ evaluation.rank }}</a></td>
                         </tr>

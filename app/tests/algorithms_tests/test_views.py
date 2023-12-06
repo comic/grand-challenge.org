@@ -1153,6 +1153,9 @@ def test_evaluations_are_filtered(client):
     public_phase_public_challenge = PhaseFactory(
         public=True, challenge__hidden=False
     )
+    public_phase_public_challenge_2 = PhaseFactory(
+        public=True, challenge__hidden=False
+    )
     private_phase_private_challenge = PhaseFactory(
         public=False, challenge__hidden=True
     )
@@ -1165,13 +1168,13 @@ def test_evaluations_are_filtered(client):
         2,
         submission__phase=public_phase_public_challenge,
         submission__algorithm_image=algorithm_image,
-        rank=1,
+        rank=2,
     )
     # Ignored as there is a better submission
     EvaluationFactory(
         submission__phase=public_phase_public_challenge,
         submission__algorithm_image=algorithm_image,
-        rank=2,
+        rank=3,
     )
     # Ignored as challenge is private
     EvaluationFactory.create_batch(
@@ -1194,6 +1197,12 @@ def test_evaluations_are_filtered(client):
         submission__algorithm_image=algorithm_image,
         rank=1,
     )
+    e2, _ = EvaluationFactory.create_batch(
+        2,
+        submission__phase=public_phase_public_challenge_2,
+        submission__algorithm_image=algorithm_image,
+        rank=5,
+    )
 
     response = get_view_for_user(
         viewname="algorithms:detail",
@@ -1204,6 +1213,4 @@ def test_evaluations_are_filtered(client):
         user=user,
     )
 
-    assert response.context["best_evaluation_per_phase"] == {
-        public_phase_public_challenge: e
-    }
+    assert [*response.context["best_evaluation_per_phase"]] == [e, e2]

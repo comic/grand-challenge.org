@@ -9,7 +9,8 @@ from django.contrib.auth.mixins import (
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db.models import OuterRef, Subquery
+from django.db.models import OuterRef, Subquery, Window
+from django.db.models.functions import Rank
 from django.forms.utils import ErrorList
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -187,28 +188,26 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
 
     @cached_property
     def best_evaluation_per_phase(self):
-        output = {}
-
-        evaluations = filter_by_permission(
+        return filter_by_permission(
             queryset=Evaluation.objects.select_related(
                 "submission__phase__challenge"
             )
             .filter(
                 submission__algorithm_image__algorithm=self.object, rank__gt=0
             )
+            .annotate(
+                phase_rank=Window(
+                    expression=Rank(),
+                    partition_by="submission__phase",
+                    order_by=("rank", "created"),
+                )
+            )
+            .filter(phase_rank=1)
             .order_by("created"),
             codename="view_evaluation",
             user=self.request.user,
+            accept_user_perms=False,
         )
-
-        for evaluation in evaluations:
-            if (
-                evaluation.submission.phase not in output
-                or output[evaluation.submission.phase].rank > evaluation.rank
-            ):
-                output[evaluation.submission.phase] = evaluation
-
-        return output
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
