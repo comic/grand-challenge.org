@@ -705,7 +705,7 @@ def test_email_sent_to_editors_when_permissions_enabled():
     assert len(mail.outbox) == len(challenge.admins_group.user_set.all())
     assert (
         mail.outbox[0].subject
-        == "[testserver] Permissions granted to Challenge Participants"
+        == "[testserver] WARNING: Permissions granted to Challenge Participants"
     )
 
     mail.outbox.clear()
