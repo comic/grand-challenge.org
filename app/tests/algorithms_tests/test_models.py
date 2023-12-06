@@ -494,10 +494,9 @@ def test_new_algorithm_editors_need_to_be_verified():
     user1, user2 = UserFactory.create_batch(2)
     VerificationFactory(user=user1, is_verified=True)
     alg = AlgorithmFactory()
-    resp1 = alg.add_editor(user1)
-    resp2 = alg.add_editor(user2)
-    assert resp1 is None
-    assert resp2.status_code == 403
+    alg.add_editor(user1)
+    with pytest.raises(RuntimeError):
+        alg.add_editor(user2)
     editors = alg.editors_group.user_set.all()
     assert user1 in editors
     assert user2 not in editors

@@ -400,13 +400,17 @@ def test_algorithm_multiple_inputs(
 
 @pytest.mark.django_db
 def test_algorithm_input_image_multiple_files(
-    client, settings, component_interfaces, django_capture_on_commit_callbacks
+    client,
+    settings,
+    component_interfaces,
+    django_capture_on_commit_callbacks,
+    verified_user,
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    creator = UserFactory()
+    creator = verified_user
 
     assert Job.objects.count() == 0
 
@@ -442,13 +446,17 @@ def test_algorithm_input_image_multiple_files(
 
 @pytest.mark.django_db
 def test_algorithm_input_user_upload(
-    client, settings, component_interfaces, django_capture_on_commit_callbacks
+    client,
+    settings,
+    component_interfaces,
+    django_capture_on_commit_callbacks,
+    verified_user,
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    creator = UserFactory()
+    creator = verified_user
 
     assert Job.objects.count() == 0
 
@@ -540,12 +548,12 @@ def test_add_image_to_component_interface_value():
 
 
 @pytest.mark.django_db
-def test_execute_algorithm_job_for_inputs(client, settings):
+def test_execute_algorithm_job_for_inputs(client, settings, verified_user):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    creator = UserFactory()
+    creator = verified_user
 
     # Create the algorithm image
     alg = AlgorithmImageFactory()
@@ -652,14 +660,14 @@ class TestJobCreation:
 
 @pytest.mark.django_db
 def test_failed_job_notifications(
-    client, settings, django_capture_on_commit_callbacks
+    client, settings, django_capture_on_commit_callbacks, verified_user
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
     creator = UserFactory()
-    editor = UserFactory()
+    editor = verified_user
 
     # Create the algorithm image
     alg = AlgorithmImageFactory()

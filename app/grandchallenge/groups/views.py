@@ -36,7 +36,11 @@ class UserGroupUpdateMixin(
         return self.obj.get_absolute_url()
 
     def form_valid(self, form):
-        form.add_or_remove_user(obj=self.obj)
+        try:
+            form.add_or_remove_user(obj=self.obj)
+        except RuntimeError as e:
+            form.add_error(None, e)
+            return super().form_invalid(form)
         return super().form_valid(form)
 
 

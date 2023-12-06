@@ -60,14 +60,14 @@ def test_github_webhook(client, settings):
 @pytest.mark.django_db
 @patch("grandchallenge.github.views.requests.post")
 @patch("grandchallenge.github.views.requests.get")
-def test_redirect_view(get, post, client):
+def test_redirect_view(get, post, client, verified_user):
     resp = Response()
     resp.status_code = 200
     resp.headers["Content-Type"] = "application/json"
     resp._content = b'{"access_token": "tok", "expires_in": "3600", "refresh_token": "ref", "refresh_token_expires_in":"7200", "id": 1}'
     post.return_value = resp
     get.return_value = resp
-    user = UserFactory()
+    user = verified_user
 
     state = encode_github_state(redirect_url="http://testserver/this/")
 

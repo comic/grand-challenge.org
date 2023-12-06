@@ -329,9 +329,10 @@ class TestJobPermissions:
             algorithm_image=algorithm_image, job=job, user=user
         )
 
-    def test_job_permissions_from_api(self, rf):
+    def test_job_permissions_from_api(self, rf, verified_user):
         # setup
         user = UserFactory()
+        editor = verified_user
         algorithm_image = AlgorithmImageFactory(
             is_manifest_valid=True,
             is_in_registry=True,
@@ -346,7 +347,7 @@ class TestJobPermissions:
         }
         algorithm_image.algorithm.inputs.set(interfaces)
         algorithm_image.algorithm.add_user(user)
-        algorithm_image.algorithm.add_editor(UserFactory())
+        algorithm_image.algorithm.add_editor(editor)
 
         job = {"algorithm": algorithm_image.algorithm.api_url, "inputs": []}
 

@@ -501,11 +501,11 @@ def test_algorithm_permission_request_notification_for_admins_only(
 
 
 @pytest.mark.django_db
-def test_follows_deleted_when_request_deleted(client):
+def test_follows_deleted_when_request_deleted(client, verified_user):
     base_object = AlgorithmFactory(
         access_request_handling=AccessRequestHandlingOptions.MANUAL_REVIEW
     )
-    editor = UserFactory()
+    editor = verified_user
     base_object.add_editor(editor)
     permission_create_url = reverse(
         "algorithms:permission-request-create",
@@ -522,11 +522,11 @@ def test_follows_deleted_when_request_deleted(client):
 
 
 @pytest.mark.django_db
-def test_follows_deleted_when_base_obj_deleted(client):
+def test_follows_deleted_when_base_obj_deleted(client, verified_user):
     base_object = AlgorithmFactory(
         access_request_handling=AccessRequestHandlingOptions.MANUAL_REVIEW
     )
-    editor = UserFactory()
+    editor = verified_user
     base_object.add_editor(editor)
     permission_create_url = reverse(
         "algorithms:permission-request-create",

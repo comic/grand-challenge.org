@@ -1171,8 +1171,8 @@ def test_job_create_view_for_verified_users_only(client, verified_user):
 
 
 @pytest.mark.django_db
-def test_evaluations_are_filtered(client):
-    user = UserFactory()
+def test_evaluations_are_filtered(client, verified_user):
+    user = verified_user
 
     algorithm_image = AlgorithmImageFactory()
     algorithm_image.algorithm.add_editor(user=user)
