@@ -518,6 +518,23 @@
             <span class="n">MaxValueValidator</span><span class="p">(</span><span class="n">limit_value</span><span class="o">=</span><span class="mi">3600</span><span class="p">),</span>
         <span class="p">],</span>
     <span class="p">)</span>
+    <span class="n">give_algorithm_editors_job_view_permissions</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;If set to True algorithm editors (i.e. challenge participants) &quot;</span>
+            <span class="s2">&quot;will automatically be given view permissions to the algorithm &quot;</span>
+            <span class="s2">&quot;jobs and their logs associated with this phase. &quot;</span>
+            <span class="s2">&quot;This saves challenge administrators from having to &quot;</span>
+            <span class="s2">&quot;manually share the logs for each failed submission. &quot;</span>
+            <span class="s2">&quot;&lt;b&gt;Setting this to True will essentially make the data in &quot;</span>
+            <span class="s2">&quot;the linked archive accessible to the participants. &quot;</span>
+            <span class="s2">&quot;Only set this to True for debugging phases, where &quot;</span>
+            <span class="s2">&quot;participants can check that their algorithms are working.&lt;/b&gt; &quot;</span>
+            <span class="s2">&quot;Algorithm editors will only be able to access their own &quot;</span>
+            <span class="s2">&quot;logs and predictions, not the logs and predictions from &quot;</span>
+            <span class="s2">&quot;other users. &quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
     <span class="n">public</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
