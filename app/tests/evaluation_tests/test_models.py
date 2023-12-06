@@ -4,6 +4,7 @@ from itertools import chain
 
 import pytest
 from django.core import mail
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.timezone import now
 
@@ -718,3 +719,24 @@ def test_email_sent_to_editors_when_permissions_enabled():
     phase.save()
 
     assert len(mail.outbox) == 0
+
+
+@pytest.mark.django_db
+def test_give_algorithm_editors_job_view_permissions_only_for_algorithm_phase():
+    phase = PhaseFactory(
+        creator_must_be_verified=True,
+        submission_kind=Phase.SubmissionKindChoices.CSV,
+        give_algorithm_editors_job_view_permissions=False,
+    )
+
+    phase.give_algorithm_editors_job_view_permissions = True
+
+    with pytest.raises(ValidationError) as err:
+        phase.full_clean()
+
+    assert err.value.message_dict["__all__"] == [
+        "Give Algorithm Editors Job View Permissions can only be enabled for Algorithm type phases"
+    ]
+
+    phase.submission_kind = Phase.SubmissionKindChoices.ALGORITHM
+    phase.full_clean()

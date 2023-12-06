@@ -610,6 +610,15 @@ class Phase(FieldChangeMixin, ViewContentMixin, UUIDModel):
                 "submissions_limit_per_user_per_period to 0, or set appropriate phase start / end dates."
             )
 
+        if (
+            self.give_algorithm_editors_job_view_permissions
+            and not self.submission_kind
+            == self.SubmissionKindChoices.ALGORITHM
+        ):
+            raise ValidationError(
+                "Give Algorithm Editors Job View Permissions can only be enabled for Algorithm type phases"
+            )
+
     def set_default_interfaces(self):
         self.inputs.set(
             [ComponentInterface.objects.get(slug="predictions-csv-file")]
