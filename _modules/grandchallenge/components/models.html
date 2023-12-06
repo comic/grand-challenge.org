@@ -743,6 +743,8 @@
 
 
 
+<div class="viewcode-block" id="OverlaySegmentsMixin">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.OverlaySegmentsMixin">[docs]</a>
 <span class="k">class</span> <span class="nc">OverlaySegmentsMixin</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
     <span class="n">overlay_segments</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">JSONField</span><span class="p">(</span>
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -801,7 +803,8 @@
             <span class="p">)</span>
 
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
-        <span class="n">abstract</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">abstract</span> <span class="o">=</span> <span class="kc">True</span></div>
+
 
 
 <div class="viewcode-block" id="ComponentInterface">
@@ -1412,6 +1415,8 @@
 
 
 
+<div class="viewcode-block" id="ComponentJob">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentJob">[docs]</a>
 <span class="k">class</span> <span class="nc">ComponentJob</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
     <span class="c1"># The job statuses come directly from celery.result.AsyncResult.status:</span>
     <span class="c1"># http://docs.celeryproject.org/en/latest/reference/celery.result.html</span>
@@ -1680,7 +1685,8 @@
         <span class="p">)</span>
 
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
-        <span class="n">abstract</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">abstract</span> <span class="o">=</span> <span class="kc">True</span></div>
+
 
 
 <span class="k">def</span> <span class="nf">docker_image_path</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
@@ -1736,6 +1742,8 @@
 
 
 
+<div class="viewcode-block" id="ComponentImage">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentImage">[docs]</a>
 <span class="k">class</span> <span class="nc">ComponentImage</span><span class="p">(</span><span class="n">FieldChangeMixin</span><span class="p">,</span> <span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
     <span class="n">SHIM_IMAGE</span> <span class="o">=</span> <span class="kc">True</span>
 
@@ -1852,6 +1860,8 @@
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
             <span class="k">pass</span>
 
+<div class="viewcode-block" id="ComponentImage.save">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentImage.save">[docs]</a>
     <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">image_needs_validation</span> <span class="o">=</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="o">==</span> <span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">INITIALIZED</span>
@@ -1885,7 +1895,8 @@
                     <span class="p">},</span>
                     <span class="n">immutable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                 <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span>
-            <span class="p">)</span>
+            <span class="p">)</span></div>
+
 
     <span class="k">def</span> <span class="nf">assign_docker_image_from_upload</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">on_commit</span><span class="p">(</span>
@@ -1978,7 +1989,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">size_in_registry</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">size_in_storage</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">size</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">size_in_registry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_size_in_registry</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">size_in_registry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_size_in_registry</span><span class="p">()</span></div>
+
 </pre></div>
 
            </div>

@@ -51,6 +51,13 @@
 <li class="toctree-l1"><a class="reference internal" href="evaluation.html">Evaluation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="algorithms.html">Algorithms</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Components</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.components.models.ComponentImage"><code class="docutils literal notranslate"><span class="pre">ComponentImage</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.ComponentImage.GPUTypeChoices"><code class="docutils literal notranslate"><span class="pre">ComponentImage.GPUTypeChoices</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.ComponentImage.ImportStatusChoices"><code class="docutils literal notranslate"><span class="pre">ComponentImage.ImportStatusChoices</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.ComponentImage.original_repo_tag"><code class="docutils literal notranslate"><span class="pre">ComponentImage.original_repo_tag</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.ComponentImage.save"><code class="docutils literal notranslate"><span class="pre">ComponentImage.save()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#grandchallenge.components.models.ComponentInterface"><code class="docutils literal notranslate"><span class="pre">ComponentInterface</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.ComponentInterface.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">ComponentInterface.DoesNotExist</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.ComponentInterface.Kind"><code class="docutils literal notranslate"><span class="pre">ComponentInterface.Kind</span></code></a></li>
@@ -71,6 +78,11 @@
 <li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.ComponentInterfaceValue.save"><code class="docutils literal notranslate"><span class="pre">ComponentInterfaceValue.save()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.components.models.ComponentJob"><code class="docutils literal notranslate"><span class="pre">ComponentJob</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.ComponentJob.container"><code class="docutils literal notranslate"><span class="pre">ComponentJob.container</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.ComponentJob.output_interfaces"><code class="docutils literal notranslate"><span class="pre">ComponentJob.output_interfaces</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#grandchallenge.components.models.ComponentJobManager"><code class="docutils literal notranslate"><span class="pre">ComponentJobManager</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.ComponentJobManager.average_duration"><code class="docutils literal notranslate"><span class="pre">ComponentJobManager.average_duration()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.ComponentJobManager.with_duration"><code class="docutils literal notranslate"><span class="pre">ComponentJobManager.with_duration()</span></code></a></li>
@@ -87,6 +99,7 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#grandchallenge.components.models.InterfaceKindChoices"><code class="docutils literal notranslate"><span class="pre">InterfaceKindChoices</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#grandchallenge.components.models.InterfaceSuperKindChoices"><code class="docutils literal notranslate"><span class="pre">InterfaceSuperKindChoices</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.components.models.OverlaySegmentsMixin"><code class="docutils literal notranslate"><span class="pre">OverlaySegmentsMixin</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="workstations.html">Workstations</a></li>
@@ -121,6 +134,69 @@
   <section id="components">
 <span id="id1"></span><h1>Components<a class="headerlink" href="#components" title="Link to this heading"></a></h1>
 <dl class="py class" id="module-grandchallenge.components.models">
+<dt class="sig sig-object py" id="grandchallenge.components.models.ComponentImage">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.components.models.</span></span><span class="sig-name descname"><span class="pre">ComponentImage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#ComponentImage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.ComponentImage" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.FileField" title="(in Django v5.0)"><em>FileField</em></a>) – Image. .tar.xz archive of the container image produced from the command ‘docker save IMAGE | xz -T0 -c &gt; IMAGE.tar.xz’. See <a class="reference external" href="https://docs.docker.com/engine/reference/commandline/save/">https://docs.docker.com/engine/reference/commandline/save/</a></p></li>
+<li><p><strong>image_sha256</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.CharField" title="(in Django v5.0)"><em>CharField</em></a>) – Image sha256</p></li>
+<li><p><strong>latest_shimmed_version</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.CharField" title="(in Django v5.0)"><em>CharField</em></a>) – Latest shimmed version</p></li>
+<li><p><strong>import_status</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.PositiveSmallIntegerField" title="(in Django v5.0)"><em>PositiveSmallIntegerField</em></a>) – Import status</p></li>
+<li><p><strong>is_manifest_valid</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.BooleanField" title="(in Django v5.0)"><em>BooleanField</em></a>) – Is manifest valid. Is this image’s manifest valid?</p></li>
+<li><p><strong>is_in_registry</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.BooleanField" title="(in Django v5.0)"><em>BooleanField</em></a>) – Is in registry. Is this image in the container registry?</p></li>
+<li><p><strong>is_on_sagemaker</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.BooleanField" title="(in Django v5.0)"><em>BooleanField</em></a>) – Is on sagemaker. Does a SageMaker model for this image exist?</p></li>
+<li><p><strong>status</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.TextField" title="(in Django v5.0)"><em>TextField</em></a>) – Status</p></li>
+<li><p><strong>size_in_storage</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.PositiveBigIntegerField" title="(in Django v5.0)"><em>PositiveBigIntegerField</em></a>) – Size in storage. The number of bytes stored in the storage backend</p></li>
+<li><p><strong>size_in_registry</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.PositiveBigIntegerField" title="(in Django v5.0)"><em>PositiveBigIntegerField</em></a>) – Size in registry. The number of bytes stored in the registry</p></li>
+<li><p><strong>requires_gpu</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.BooleanField" title="(in Django v5.0)"><em>BooleanField</em></a>) – Requires gpu</p></li>
+<li><p><strong>desired_gpu_type</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.CharField" title="(in Django v5.0)"><em>CharField</em></a>) – Desired gpu type. If this image requires a GPU, what GPU type would it like to use?</p></li>
+<li><p><strong>requires_memory_gb</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.PositiveIntegerField" title="(in Django v5.0)"><em>PositiveIntegerField</em></a>) – Requires memory gb</p></li>
+<li><p><strong>comment</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.TextField" title="(in Django v5.0)"><em>TextField</em></a>) – Comment. Add any information (e.g. version ID) about this image here.</p></li>
+<li><p><strong>is_desired_version</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.BooleanField" title="(in Django v5.0)"><em>BooleanField</em></a>) – Is desired version</p></li>
+</ul>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>creator</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v5.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.User" title="(in Django v5.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code></a>) – Creator</p></li>
+<li><p><strong>user_upload</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v5.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <code class="xref py py-class docutils literal notranslate"><span class="pre">UserUpload</span></code>) – User upload</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="grandchallenge.components.models.ComponentImage.GPUTypeChoices">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">GPUTypeChoices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandchallenge.components.models.ComponentImage.GPUTypeChoices" title="Link to this definition"></a></dt>
+<dd><p>An enumeration.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grandchallenge.components.models.ComponentImage.ImportStatusChoices">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ImportStatusChoices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandchallenge.components.models.ComponentImage.ImportStatusChoices" title="Link to this definition"></a></dt>
+<dd><p>An enumeration.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="grandchallenge.components.models.ComponentImage.original_repo_tag">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">original_repo_tag</span></span><a class="headerlink" href="#grandchallenge.components.models.ComponentImage.original_repo_tag" title="Link to this definition"></a></dt>
+<dd><p>The tag of this image in the container repository</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandchallenge.components.models.ComponentImage.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#ComponentImage.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.ComponentImage.save" title="Link to this definition"></a></dt>
+<dd><p>Save the current instance. Override this in a subclass if you want to
+control the saving process.</p>
+<p>The ‘force_insert’ and ‘force_update’ parameters can be used to insist
+that the “save” must be an SQL insert or update (or equivalent for
+non-SQL backends), respectively. Normally, they should not be set.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.components.models.ComponentInterface">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.components.models.</span></span><span class="sig-name descname"><span class="pre">ComponentInterface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlay_segments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">look_up_table</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slug</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schema</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relative_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">store_in_database</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#ComponentInterface"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.ComponentInterface" title="Link to this definition"></a></dt>
 <dd><dl class="field-list simple">
@@ -286,6 +362,53 @@ control the saving process.</p>
 <p>The ‘force_insert’ and ‘force_update’ parameters can be used to insist
 that the “save” must be an SQL insert or update (or equivalent for
 non-SQL backends), respectively. Normally, they should not be set.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grandchallenge.components.models.ComponentJob">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.components.models.</span></span><span class="sig-name descname"><span class="pre">ComponentJob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#ComponentJob"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.ComponentJob" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>status</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.PositiveSmallIntegerField" title="(in Django v5.0)"><em>PositiveSmallIntegerField</em></a>) – Status</p></li>
+<li><p><strong>attempt</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.PositiveSmallIntegerField" title="(in Django v5.0)"><em>PositiveSmallIntegerField</em></a>) – Attempt</p></li>
+<li><p><strong>stdout</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.TextField" title="(in Django v5.0)"><em>TextField</em></a>) – Stdout</p></li>
+<li><p><strong>stderr</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.TextField" title="(in Django v5.0)"><em>TextField</em></a>) – Stderr</p></li>
+<li><p><strong>runtime_metrics</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.JSONField" title="(in Django v5.0)"><em>JSONField</em></a>) – Runtime metrics</p></li>
+<li><p><strong>error_message</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.CharField" title="(in Django v5.0)"><em>CharField</em></a>) – Error message</p></li>
+<li><p><strong>started_at</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v5.0)"><em>DateTimeField</em></a>) – Started at</p></li>
+<li><p><strong>completed_at</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v5.0)"><em>DateTimeField</em></a>) – Completed at</p></li>
+<li><p><strong>compute_cost_euro_millicents</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.PositiveIntegerField" title="(in Django v5.0)"><em>PositiveIntegerField</em></a>) – Compute cost euro millicents. The total compute cost for this job in Euro Cents, including Tax</p></li>
+<li><p><strong>input_prefixes</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.JSONField" title="(in Django v5.0)"><em>JSONField</em></a>) – Input prefixes. Map of the ComponentInterfaceValue id to the path prefix to use for this input, e.g. {‘1’: ‘foo/bar/’} will place CIV 1 at /input/foo/bar/&lt;relative_path&gt;</p></li>
+<li><p><strong>task_on_success</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.JSONField" title="(in Django v5.0)"><em>JSONField</em></a>) – Task on success. Serialized task that is run on job success</p></li>
+<li><p><strong>task_on_failure</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.JSONField" title="(in Django v5.0)"><em>JSONField</em></a>) – Task on failure. Serialized task that is run on job failure</p></li>
+<li><p><strong>time_limit</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.PositiveSmallIntegerField" title="(in Django v5.0)"><em>PositiveSmallIntegerField</em></a>) – Time limit. Time limit for the job in seconds</p></li>
+</ul>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inputs</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ManyToManyField" title="(in Django v5.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ManyToManyField</span></code></a> to <a class="reference internal" href="#grandchallenge.components.models.ComponentInterfaceValue" title="grandchallenge.components.models.ComponentInterfaceValue"><code class="xref py py-class docutils literal notranslate"><span class="pre">ComponentInterfaceValue</span></code></a>) – Inputs</p></li>
+<li><p><strong>outputs</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ManyToManyField" title="(in Django v5.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ManyToManyField</span></code></a> to <a class="reference internal" href="#grandchallenge.components.models.ComponentInterfaceValue" title="grandchallenge.components.models.ComponentInterfaceValue"><code class="xref py py-class docutils literal notranslate"><span class="pre">ComponentInterfaceValue</span></code></a>) – Outputs</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="grandchallenge.components.models.ComponentJob.container">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">container</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#grandchallenge.components.models.ComponentImage" title="grandchallenge.components.models.ComponentImage"><span class="pre">ComponentImage</span></a></em><a class="headerlink" href="#grandchallenge.components.models.ComponentJob.container" title="Link to this definition"></a></dt>
+<dd><p>Returns the container object associated with this instance, which
+should be a foreign key to an object that is a subclass of
+ComponentImage</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="grandchallenge.components.models.ComponentJob.output_interfaces">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">output_interfaces</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/querysets/#django.db.models.query.QuerySet" title="(in Django v5.0)"><span class="pre">QuerySet</span></a></em><a class="headerlink" href="#grandchallenge.components.models.ComponentJob.output_interfaces" title="Link to this definition"></a></dt>
+<dd><p>Returns an unevaluated QuerySet for the output interfaces</p>
 </dd></dl>
 
 </dd></dl>
@@ -790,6 +913,22 @@ optional: “name”, “probability”</p>
 <dt class="sig sig-object py" id="grandchallenge.components.models.InterfaceSuperKindChoices">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.components.models.</span></span><span class="sig-name descname"><span class="pre">InterfaceSuperKindChoices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#InterfaceSuperKindChoices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.InterfaceSuperKindChoices" title="Link to this definition"></a></dt>
 <dd><p>An enumeration.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grandchallenge.components.models.OverlaySegmentsMixin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.components.models.</span></span><span class="sig-name descname"><span class="pre">OverlaySegmentsMixin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#OverlaySegmentsMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.OverlaySegmentsMixin" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>overlay_segments</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.JSONField" title="(in Django v5.0)"><em>JSONField</em></a>) – Overlay segments. The schema that defines how categories of values in the overlay images are differentiated.</p>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>look_up_table</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v5.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <code class="xref py py-class docutils literal notranslate"><span class="pre">LookUpTable</span></code>) – Look up table. The look-up table that is applied when an overlay image is first shown</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
