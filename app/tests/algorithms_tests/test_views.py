@@ -29,6 +29,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
+from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.uploads_tests.factories import (
@@ -1137,3 +1138,79 @@ def test_job_time_limit(client):
 
     assert job.algorithm_image == algorithm_image
     assert job.time_limit == 600
+
+
+@pytest.mark.django_db
+def test_evaluations_are_filtered(client):
+    user = UserFactory()
+
+    algorithm_image = AlgorithmImageFactory()
+    algorithm_image.algorithm.add_editor(user=user)
+
+    public_phase_private_challenge = PhaseFactory(
+        public=True, challenge__hidden=True
+    )
+    public_phase_public_challenge = PhaseFactory(
+        public=True, challenge__hidden=False
+    )
+    public_phase_public_challenge_2 = PhaseFactory(
+        public=True, challenge__hidden=False
+    )
+    private_phase_private_challenge = PhaseFactory(
+        public=False, challenge__hidden=True
+    )
+    private_phase_public_challenge = PhaseFactory(
+        public=False, challenge__hidden=False
+    )
+
+    # 2nd Ignored as there is an older evaluation
+    e, _ = EvaluationFactory.create_batch(
+        2,
+        submission__phase=public_phase_public_challenge,
+        submission__algorithm_image=algorithm_image,
+        rank=2,
+    )
+    # Ignored as there is a better submission
+    EvaluationFactory(
+        submission__phase=public_phase_public_challenge,
+        submission__algorithm_image=algorithm_image,
+        rank=3,
+    )
+    # Ignored as challenge is private
+    EvaluationFactory.create_batch(
+        2,
+        submission__phase=public_phase_private_challenge,
+        submission__algorithm_image=algorithm_image,
+        rank=1,
+    )
+    # Ignored as phase is private
+    EvaluationFactory.create_batch(
+        2,
+        submission__phase=private_phase_private_challenge,
+        submission__algorithm_image=algorithm_image,
+        rank=1,
+    )
+    # Ignored as phase is private
+    EvaluationFactory.create_batch(
+        2,
+        submission__phase=private_phase_public_challenge,
+        submission__algorithm_image=algorithm_image,
+        rank=1,
+    )
+    e2, _ = EvaluationFactory.create_batch(
+        2,
+        submission__phase=public_phase_public_challenge_2,
+        submission__algorithm_image=algorithm_image,
+        rank=5,
+    )
+
+    response = get_view_for_user(
+        viewname="algorithms:detail",
+        client=client,
+        reverse_kwargs={
+            "slug": algorithm_image.algorithm.slug,
+        },
+        user=user,
+    )
+
+    assert [*response.context["best_evaluation_per_phase"]] == [e, e2]

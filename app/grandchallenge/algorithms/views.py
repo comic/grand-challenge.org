@@ -9,7 +9,8 @@ from django.contrib.auth.mixins import (
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db.models import OuterRef, Subquery
+from django.db.models import OuterRef, Subquery, Window
+from django.db.models.functions import Rank
 from django.forms.utils import ErrorList
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -83,6 +84,7 @@ from grandchallenge.core.guardian import (
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.datatables.views import Column, PaginatedTableListView
+from grandchallenge.evaluation.models import Evaluation
 from grandchallenge.github.views import GitHubInstallationRequiredMixin
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
@@ -184,6 +186,29 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
                 )
             )
 
+    @cached_property
+    def best_evaluation_per_phase(self):
+        return filter_by_permission(
+            queryset=Evaluation.objects.select_related(
+                "submission__phase__challenge"
+            )
+            .filter(
+                submission__algorithm_image__algorithm=self.object, rank__gt=0
+            )
+            .annotate(
+                phase_rank=Window(
+                    expression=Rank(),
+                    partition_by="submission__phase",
+                    order_by=("rank", "created"),
+                )
+            )
+            .filter(phase_rank=1)
+            .order_by("created"),
+            codename="view_evaluation",
+            user=self.request.user,
+            accept_user_perms=False,
+        )
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
@@ -205,6 +230,7 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
                 "editor_remove_form": editor_remove_form,
                 "pending_permission_requests": pending_permission_requests,
                 "algorithm_perms": get_perms(self.request.user, self.object),
+                "best_evaluation_per_phase": self.best_evaluation_per_phase,
             }
         )
 
