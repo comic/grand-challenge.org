@@ -856,6 +856,7 @@ def test_create_job_with_json_file(
     )
 
     editor = UserFactory()
+    VerificationFactory(user=editor, is_verified=True)
     ai.algorithm.add_editor(editor)
     ci = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=False
@@ -903,6 +904,7 @@ def test_algorithm_job_create_with_image_input(
     )
 
     editor = UserFactory()
+    VerificationFactory(user=editor, is_verified=True)
     ai.algorithm.add_editor(editor)
     ci = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.IMAGE, store_in_database=False
@@ -1112,6 +1114,7 @@ def test_job_time_limit(client):
         is_in_registry=True,
     )
     user = UserFactory()
+    VerificationFactory(user=user, is_verified=True)
     algorithm.add_editor(user=user)
 
     ci = ComponentInterfaceFactory(
@@ -1143,6 +1146,7 @@ def test_job_time_limit(client):
 def test_job_create_view_for_verified_users_only(client):
     user = UserFactory()
     editor = UserFactory()
+    VerificationFactory(user=editor, is_verified=True)
     alg = AlgorithmFactory()
     alg.add_user(user)
     alg.add_user(editor)
