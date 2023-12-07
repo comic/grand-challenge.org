@@ -4,6 +4,13 @@ function removeCase(event) {
     $('#removeCaseModal').modal('show');
 }
 
+$('#ajaxDataTable').on( 'init.dt', function() {
+   var removeButtons = document.querySelectorAll(".remove-display-set")
+    removeButtons.forEach(function(elem) {
+        elem.addEventListener("click", removeCase);
+   });
+});
+
 $(document).ready(() => {
     $('#removeCase').on('click', (e) => {
         $.ajax({

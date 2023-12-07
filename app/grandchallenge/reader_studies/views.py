@@ -392,11 +392,16 @@ class ReaderStudyDisplaySetList(
         f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
     )
     raise_exception = True
-    template_name = "reader_studies/readerstudy_images_list.html"
-    row_template = "reader_studies/readerstudy_display_sets_row.html"
+    template_name = "reader_studies/display_set_list.html"
+    row_template = "reader_studies/display_set_row.html"
     search_fields = ["pk", "values__image__name", "values__file"]
     columns = [
-        Column(title="[DisplaySet ID] Main image name", sort_field="order"),
+        Column(title="DisplaySet ID", sort_field="pk"),
+        Column(title="Order", sort_field="order"),
+        Column(title="Values"),
+        Column(title="View"),
+        Column(title="Edit"),
+        Column(title="Remove"),
     ]
     text_align = "left"
     default_sort_order = "asc"
@@ -421,15 +426,8 @@ class ReaderStudyDisplaySetList(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
-        media = Media()
-        for form_class in self.included_form_classes:
-            for widget in form_class._possible_widgets:
-                media = media + widget().media
-
         context.update(
             {
-                "form_media": media,
                 "reader_study": self.reader_study,
             }
         )
