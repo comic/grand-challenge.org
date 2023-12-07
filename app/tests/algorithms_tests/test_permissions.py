@@ -193,11 +193,11 @@ def test_api_job_list_permissions(client):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("group", ["user", "editor"])
-def test_workstation_changes(client, verified_user, group):
+def test_workstation_changes(client, group):
     # Ensure that read permissions are kept up to date if the workstation
     # changes
     ws1, ws2 = WorkstationFactory(), WorkstationFactory()
-    user = verified_user
+    user = UserFactory()
 
     alg = AlgorithmFactory(workstation=ws1)
 
@@ -291,7 +291,7 @@ class TestJobPermissions:
         # The only member of the viewers group should be the creator
         assert {*job.viewers.user_set.all()} == {user}
 
-    def test_job_permissions_from_template(self, client, verified_user):
+    def test_job_permissions_from_template(self, client):
         algorithm_image = AlgorithmImageFactory(
             is_manifest_valid=True,
             is_in_registry=True,
@@ -300,7 +300,7 @@ class TestJobPermissions:
 
         user = UserFactory()
         VerificationFactory(user=user, is_verified=True)
-        editor = verified_user
+        editor = UserFactory()
 
         algorithm_image.algorithm.add_user(user)
         algorithm_image.algorithm.add_editor(editor)
@@ -329,10 +329,10 @@ class TestJobPermissions:
             algorithm_image=algorithm_image, job=job, user=user
         )
 
-    def test_job_permissions_from_api(self, rf, verified_user):
+    def test_job_permissions_from_api(self, rf):
         # setup
         user = UserFactory()
-        editor = verified_user
+        editor = UserFactory()
         algorithm_image = AlgorithmImageFactory(
             is_manifest_valid=True,
             is_in_registry=True,

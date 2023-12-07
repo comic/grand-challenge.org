@@ -56,8 +56,8 @@ class TestSubmissionForm:
         assert "algorithm_image" in form.fields
         assert "user_upload" not in form.fields
 
-    def test_algorithm_image_queryset(self, verified_user):
-        editor = verified_user
+    def test_algorithm_image_queryset(self):
+        editor = UserFactory()
         alg1, alg2, alg3 = AlgorithmFactory.create_batch(3)
         alg1.add_editor(editor)
         alg2.add_editor(editor)
@@ -118,9 +118,10 @@ class TestSubmissionForm:
             "Select a valid choice. That choice is not one of the available choices."
         ]
 
-    def test_algorithm_with_permission(self, verified_user):
+    def test_algorithm_with_permission(self):
+        user = UserFactory()
         alg = AlgorithmFactory()
-        alg.add_editor(user=verified_user)
+        alg.add_editor(user=user)
         ci1 = ComponentInterfaceFactory()
         ci2 = ComponentInterfaceFactory()
         alg.inputs.set([ci1])
@@ -156,11 +157,11 @@ class TestSubmissionForm:
         AlgorithmJobFactory(algorithm_image=ai, status=4)
 
         form = SubmissionForm(
-            user=verified_user,
+            user=user,
             phase=p,
             data={
                 "algorithm_image": ai.pk,
-                "creator": verified_user,
+                "creator": user,
                 "phase": p,
             },
         )
@@ -211,13 +212,14 @@ class TestSubmissionForm:
         )
         assert bool("creator" in form.errors) is not is_verified
 
-    def test_no_valid_archive_items(self, verified_user):
+    def test_no_valid_archive_items(self):
+        user = UserFactory()
         p_pred = PhaseFactory(
             submission_kind=SubmissionKindChoices.CSV,
             submissions_limit_per_user_per_period=10,
         )
         alg = AlgorithmFactory()
-        alg.add_editor(user=verified_user)
+        alg.add_editor(user=user)
         ci1 = ComponentInterfaceFactory()
         ci2 = ComponentInterfaceFactory()
         alg.inputs.set([ci1])
@@ -250,14 +252,14 @@ class TestSubmissionForm:
         )
         AlgorithmJobFactory(algorithm_image=ai, status=4)
 
-        upload = UserUploadFactory(creator=verified_user)
+        upload = UserUploadFactory(creator=user)
         upload.status = UserUpload.StatusChoices.COMPLETED
         upload.save()
         form1 = SubmissionForm(
-            user=verified_user,
+            user=user,
             phase=p_pred,
             data={
-                "creator": verified_user,
+                "creator": user,
                 "phase": p_pred,
                 "user_upload": upload,
             },
@@ -265,11 +267,11 @@ class TestSubmissionForm:
         assert form1.is_valid()
 
         form2 = SubmissionForm(
-            user=verified_user,
+            user=user,
             phase=p_alg,
             data={
                 "algorithm_image": ai.pk,
-                "creator": verified_user,
+                "creator": user,
                 "phase": p_alg,
             },
         )
@@ -285,19 +287,20 @@ class TestSubmissionForm:
         i.values.add(civ)
 
         form3 = SubmissionForm(
-            user=verified_user,
+            user=user,
             phase=p_alg,
             data={
                 "algorithm_image": ai.pk,
-                "creator": verified_user,
+                "creator": user,
                 "phase": p_alg,
             },
         )
         assert form3.is_valid()
 
-    def test_submission_or_eval_exists_for_image(self, verified_user):
+    def test_submission_or_eval_exists_for_image(self):
+        user = UserFactory()
         alg = AlgorithmFactory()
-        alg.add_editor(user=verified_user)
+        alg.add_editor(user=user)
         ci1 = ComponentInterfaceFactory()
         ci2 = ComponentInterfaceFactory()
         alg.inputs.set([ci1])
@@ -337,11 +340,11 @@ class TestSubmissionForm:
         )
 
         form = SubmissionForm(
-            user=verified_user,
+            user=user,
             phase=p,
             data={
                 "algorithm_image": ai.pk,
-                "creator": verified_user,
+                "creator": user,
                 "phase": p,
             },
         )
@@ -357,11 +360,11 @@ class TestSubmissionForm:
         EvaluationFactory(submission__algorithm_image=ai)
 
         form = SubmissionForm(
-            user=verified_user,
+            user=user,
             phase=p,
             data={
                 "algorithm_image": ai.pk,
-                "creator": verified_user,
+                "creator": user,
                 "phase": p,
             },
         )
@@ -483,14 +486,15 @@ def test_algorithm_for_phase_form():
 
 
 @pytest.mark.django_db
-def test_algorithm_for_phase_form_validation(verified_user):
+def test_algorithm_for_phase_form_validation():
+    user = UserFactory()
     phase = PhaseFactory()
     alg1, alg2, alg3 = AlgorithmFactory.create_batch(3)
     ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
     phase.algorithm_inputs.set([ci1, ci2])
     phase.algorithm_outputs.set([ci3, ci4])
     for alg in [alg1, alg2]:
-        alg.add_editor(verified_user)
+        alg.add_editor(user)
         alg.inputs.set([ci1, ci2])
         alg.outputs.set([ci3, ci4])
 
@@ -508,7 +512,7 @@ def test_algorithm_for_phase_form_validation(verified_user):
         modalities=[],
         logo=ImageField(filename="test.jpeg"),
         phase=phase,
-        user=verified_user,
+        user=user,
         data={
             "title": "foo",
             "image_requires_memory_gb": 10,
@@ -520,7 +524,7 @@ def test_algorithm_for_phase_form_validation(verified_user):
         in str(form.errors)
     )
 
-    alg3.add_editor(verified_user)
+    alg3.add_editor(user)
     alg3.inputs.set([ci1, ci2])
     alg3.outputs.set([ci3, ci4])
 
@@ -538,7 +542,7 @@ def test_algorithm_for_phase_form_validation(verified_user):
         modalities=[],
         logo=ImageField(filename="test.jpeg"),
         phase=phase,
-        user=verified_user,
+        user=user,
         data={
             "title": "foo",
             "image_requires_memory_gb": 10,

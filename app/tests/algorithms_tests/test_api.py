@@ -40,7 +40,7 @@ def test_inputs_are_serialized(client):
 
 
 @pytest.mark.django_db
-def test_job_time_limit(client, verified_user):
+def test_job_time_limit(client):
     algorithm = AlgorithmFactory(time_limit=600)
     algorithm_image = AlgorithmImageFactory(
         algorithm=algorithm,
@@ -48,8 +48,8 @@ def test_job_time_limit(client, verified_user):
         is_manifest_valid=True,
         is_in_registry=True,
     )
-
-    algorithm.add_editor(user=verified_user)
+    user = UserFactory()
+    algorithm.add_editor(user=user)
 
     ci = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=True
@@ -60,7 +60,7 @@ def test_job_time_limit(client, verified_user):
         viewname="api:algorithms-job-list",
         client=client,
         method=client.post,
-        user=verified_user,
+        user=user,
         follow=True,
         content_type="application/json",
         data={

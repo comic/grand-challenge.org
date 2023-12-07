@@ -629,13 +629,6 @@ def challenge_reviewer():
     return user
 
 
-@pytest.fixture
-def verified_user():
-    user = UserFactory()
-    VerificationFactory(user=user, is_verified=True)
-    return user
-
-
 AUTH_URL = reverse_lazy("two-factor-authenticate")
 
 

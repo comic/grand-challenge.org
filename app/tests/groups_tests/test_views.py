@@ -29,12 +29,12 @@ class TestGroupManagementViews:
         ),
     )
     def test_group_management(
-        self, client, verified_user, factory, namespace, view_name, group_attr
+        self, client, factory, namespace, view_name, group_attr
     ):
         o = factory()
         group = getattr(o, group_attr)
 
-        admin = verified_user
+        admin = UserFactory()
         u = UserFactory()
 
         if namespace == "algorithms" and view_name == "editors":

@@ -312,7 +312,6 @@ def test_algorithm_with_invalid_output(
 def test_algorithm_multiple_inputs(
     client,
     algorithm_io_image,
-    verified_user,
     settings,
     component_interfaces,
     django_capture_on_commit_callbacks,
@@ -321,7 +320,7 @@ def test_algorithm_multiple_inputs(
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    creator = verified_user
+    creator = UserFactory()
 
     assert Job.objects.count() == 0
 
@@ -404,13 +403,12 @@ def test_algorithm_input_image_multiple_files(
     settings,
     component_interfaces,
     django_capture_on_commit_callbacks,
-    verified_user,
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    creator = verified_user
+    creator = UserFactory()
 
     assert Job.objects.count() == 0
 
@@ -450,13 +448,12 @@ def test_algorithm_input_user_upload(
     settings,
     component_interfaces,
     django_capture_on_commit_callbacks,
-    verified_user,
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    creator = verified_user
+    creator = UserFactory()
 
     assert Job.objects.count() == 0
 
@@ -548,12 +545,12 @@ def test_add_image_to_component_interface_value():
 
 
 @pytest.mark.django_db
-def test_execute_algorithm_job_for_inputs(client, settings, verified_user):
+def test_execute_algorithm_job_for_inputs(client, settings):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    creator = verified_user
+    creator = UserFactory()
 
     # Create the algorithm image
     alg = AlgorithmImageFactory()
@@ -660,14 +657,14 @@ class TestJobCreation:
 
 @pytest.mark.django_db
 def test_failed_job_notifications(
-    client, settings, django_capture_on_commit_callbacks, verified_user
+    client, settings, django_capture_on_commit_callbacks
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
     creator = UserFactory()
-    editor = verified_user
+    editor = UserFactory()
 
     # Create the algorithm image
     alg = AlgorithmImageFactory()

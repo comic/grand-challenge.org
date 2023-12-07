@@ -35,10 +35,10 @@ from tests.verification_tests.factories import VerificationFactory
 
 
 @pytest.mark.django_db
-def test_editor_update_form(client, verified_user):
+def test_editor_update_form(client):
     alg, _ = AlgorithmFactory(), AlgorithmFactory()
 
-    editor = verified_user
+    editor = UserFactory()
     alg.editors_group.user_set.add(editor)
 
     assert alg.editors_group.user_set.count() == 1
@@ -444,7 +444,7 @@ class TestJobCreateLimits:
             "__all__": ["You have run out of algorithm credits"],
         }
 
-    def test_form_valid_for_editor(self, verified_user):
+    def test_form_valid_for_editor(self):
         algorithm = AlgorithmFactory(credits_per_job=100)
         algorithm.inputs.clear()
         algorithm_image = AlgorithmImageFactory(
@@ -453,15 +453,15 @@ class TestJobCreateLimits:
             is_in_registry=True,
             is_desired_version=True,
         )
+        user = UserFactory()
+        user.user_credit.credits = 0
+        user.user_credit.save()
 
-        verified_user.user_credit.credits = 0
-        verified_user.user_credit.save()
-
-        algorithm.add_editor(user=verified_user)
+        algorithm.add_editor(user=user)
 
         form = JobCreateForm(
             algorithm=algorithm,
-            user=verified_user,
+            user=user,
             data={"algorithm_image": str(algorithm_image.pk)},
         )
 
@@ -488,9 +488,9 @@ class TestJobCreateLimits:
 
 
 @pytest.mark.django_db
-def test_image_activate_form(verified_user):
+def test_image_activate_form():
     alg = AlgorithmFactory()
-    editor = verified_user
+    editor = UserFactory()
     alg.add_editor(editor)
     i1 = AlgorithmImageFactory(
         algorithm=alg, is_manifest_valid=True, is_desired_version=False

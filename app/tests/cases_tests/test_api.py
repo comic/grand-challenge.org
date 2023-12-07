@@ -177,9 +177,9 @@ def test_upload_session_post_permissions(client, is_active, expected_response):
 
 
 @pytest.mark.django_db
-def test_filter_origin_images_api_view(client, verified_user):
+def test_filter_origin_images_api_view(client):
     alg = AlgorithmFactory()
-    user = verified_user
+    user = UserFactory()
     alg.add_editor(user=user)
 
     alg_job = AlgorithmJobFactory(algorithm_image__algorithm=alg, creator=user)

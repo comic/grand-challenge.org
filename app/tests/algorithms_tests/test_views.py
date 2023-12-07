@@ -104,29 +104,31 @@ def test_algorithm_list_view_filter(client):
 
 
 @pytest.mark.django_db
-def test_algorithm_image_create_link_view(client, verified_user):
+def test_algorithm_image_create_link_view(client):
     alg = AlgorithmFactory()
     expected_url = reverse(
         "algorithms:image-create", kwargs={"slug": alg.slug}
     )
-    alg.add_user(verified_user)
+    user = UserFactory()
+
+    alg.add_user(user)
 
     response = get_view_for_user(
         viewname="algorithms:detail",
         reverse_kwargs={"slug": alg.slug},
         client=client,
-        user=verified_user,
+        user=user,
     )
     assert response.status_code == 200
     assert expected_url not in response.rendered_content
 
-    alg.add_editor(verified_user)
+    alg.add_editor(user)
 
     response = get_view_for_user(
         viewname="algorithms:detail",
         reverse_kwargs={"slug": alg.slug},
         client=client,
-        user=verified_user,
+        user=user,
     )
     assert response.status_code == 200
     assert expected_url in response.rendered_content
@@ -180,9 +182,9 @@ def test_algorithm_image_create_detail(client):
 
 
 @pytest.mark.django_db
-def test_algorithm_permission_request_list(client, verified_user):
+def test_algorithm_permission_request_list(client):
     user = UserFactory()
-    editor = verified_user
+    editor = UserFactory()
 
     alg = AlgorithmFactory(public=True)
     alg.add_editor(editor)
@@ -214,8 +216,8 @@ def test_algorithm_permission_request_list(client, verified_user):
 
 
 @pytest.mark.django_db
-def test_algorithm_jobs_list_view(client, verified_user):
-    editor = verified_user
+def test_algorithm_jobs_list_view(client):
+    editor = UserFactory()
 
     alg = AlgorithmFactory(public=True)
     alg.add_editor(editor)
@@ -844,7 +846,6 @@ def test_create_job_with_json_file(
     client,
     settings,
     algorithm_io_image,
-    verified_user,
     django_capture_on_commit_callbacks,
 ):
     settings.task_eager_propagates = (True,)
@@ -857,7 +858,7 @@ def test_create_job_with_json_file(
         django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
     )
 
-    editor = verified_user
+    editor = UserFactory()
     ai.algorithm.add_editor(editor)
     ci = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=False
@@ -895,7 +896,6 @@ def test_algorithm_job_create_with_image_input(
     settings,
     client,
     algorithm_io_image,
-    verified_user,
     django_capture_on_commit_callbacks,
 ):
     settings.task_eager_propagates = (True,)
@@ -908,7 +908,7 @@ def test_algorithm_job_create_with_image_input(
         django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
     )
 
-    editor = verified_user
+    editor = UserFactory()
     ai.algorithm.add_editor(editor)
     ci = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.IMAGE, store_in_database=False
@@ -988,7 +988,7 @@ def test_algorithm_job_create_with_image_input(
 
 @pytest.mark.django_db
 def test_algorithm_image_activate(
-    settings, client, algorithm_io_image, verified_user, mocker
+    settings, client, algorithm_io_image, mocker
 ):
     mocker.patch.object(
         AlgorithmImage, "calculate_size_in_registry", lambda x: 100
@@ -1013,7 +1013,7 @@ def test_algorithm_image_activate(
     i2.save()
 
     user = UserFactory()
-    editor = verified_user
+    editor = UserFactory()
     alg.add_editor(editor)
 
     response = get_view_for_user(
@@ -1110,7 +1110,7 @@ def test_algorithm_interfaces_editable(client, interfaces_editable):
 
 
 @pytest.mark.django_db
-def test_job_time_limit(client, verified_user):
+def test_job_time_limit(client):
     algorithm = AlgorithmFactory(time_limit=600)
     algorithm_image = AlgorithmImageFactory(
         algorithm=algorithm,
@@ -1118,8 +1118,9 @@ def test_job_time_limit(client, verified_user):
         is_manifest_valid=True,
         is_in_registry=True,
     )
+    user = UserFactory()
 
-    algorithm.add_editor(user=verified_user)
+    algorithm.add_editor(user=user)
 
     ci = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=True
@@ -1133,7 +1134,7 @@ def test_job_time_limit(client, verified_user):
         reverse_kwargs={
             "slug": algorithm.slug,
         },
-        user=verified_user,
+        user=user,
         follow=True,
         data={ci.slug: '{"Foo": "bar"}'},
     )
@@ -1147,11 +1148,12 @@ def test_job_time_limit(client, verified_user):
 
 
 @pytest.mark.django_db
-def test_job_create_view_for_verified_users_only(client, verified_user):
+def test_job_create_view_for_verified_users_only(client):
     user = UserFactory()
+    editor = UserFactory()
     alg = AlgorithmFactory()
     alg.add_user(user)
-    alg.add_user(verified_user)
+    alg.add_user(editor)
 
     response = get_view_for_user(
         viewname="algorithms:job-create",
@@ -1165,14 +1167,14 @@ def test_job_create_view_for_verified_users_only(client, verified_user):
         viewname="algorithms:job-create",
         reverse_kwargs={"slug": alg.slug},
         client=client,
-        user=verified_user,
+        user=editor,
     )
     assert response2.status_code == 200
 
 
 @pytest.mark.django_db
-def test_evaluations_are_filtered(client, verified_user):
-    user = verified_user
+def test_evaluations_are_filtered(client):
+    user = UserFactory()
 
     algorithm_image = AlgorithmImageFactory()
     algorithm_image.algorithm.add_editor(user=user)

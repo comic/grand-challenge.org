@@ -411,13 +411,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         return user.groups.filter(pk=self.editors_group.pk).exists()
 
     def add_editor(self, user):
-        try:
-            if user.verification.is_verified:
-                return user.groups.add(self.editors_group)
-        except ObjectDoesNotExist as err:
-            raise RuntimeError(
-                "Users need to be verified to be editors of algorithms. The user you tried to add is not verified."
-            ) from err
+        return user.groups.add(self.editors_group)
 
     def remove_editor(self, user):
         return user.groups.remove(self.editors_group)
