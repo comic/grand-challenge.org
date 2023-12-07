@@ -1342,7 +1342,7 @@ class DisplaySetUpdate(
             {
                 "user": self.request.user,
                 "auto_id": f"id-{self.kwargs['pk']}-%s",
-                "reader_study": self.object.reader_study,
+                "base_obj": self.object.reader_study,
             }
         )
         return kwargs
@@ -1537,7 +1537,7 @@ class AddDisplaySetToReaderStudy(
         kwargs = super().get_form_kwargs()
         kwargs.update(
             {
-                "reader_study": self.reader_study,
+                "base_obj": self.reader_study,
                 "user": self.request.user,
                 "instance": None,
             }

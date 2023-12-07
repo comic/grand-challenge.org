@@ -1,8 +1,10 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.forms import HiddenInput, ModelChoiceField, ModelForm
+from django.forms import Form, HiddenInput, ModelChoiceField, ModelForm
 
 from grandchallenge.algorithms.models import AlgorithmImage
+from grandchallenge.components.form_fields import InterfaceFormField
+from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.evaluation.models import Method
@@ -79,3 +81,61 @@ class ContainerImageForm(SaveFormInitMixin, ModelForm):
 
     class Meta:
         fields = ("user_upload", "creator", "comment")
+
+
+class MultipleCIVCreateForm(Form):
+    _possible_widgets = {
+        *InterfaceFormField._possible_widgets,
+    }
+
+    def __init__(self, *args, instance, base_obj, user, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.instance = instance
+        self.user = user
+        self.base_obj = base_obj
+
+        for slug, values in base_obj.values_for_interfaces.items():
+            current_value = None
+
+            if instance:
+                current_value = instance.values.filter(
+                    interface__slug=slug
+                ).first()
+
+            interface = ComponentInterface.objects.get(slug=slug)
+
+            if interface.is_image_kind:
+                self.fields[slug] = self._get_image_field(
+                    interface=interface,
+                    values=values,
+                    current_value=current_value,
+                )
+            elif interface.requires_file:
+                self.fields[slug] = self._get_file_field(
+                    interface=interface,
+                    values=values,
+                    current_value=current_value,
+                )
+            else:
+                self.fields[slug] = self._get_default_field(
+                    interface=interface, current_value=current_value
+                )
+
+    def _get_image_field(self, *, interface, values, current_value):
+        return self._get_default_field(
+            interface=interface, current_value=current_value
+        )
+
+    def _get_file_field(self, *, interface, values, current_value):
+        return self._get_default_field(
+            interface=interface, current_value=current_value
+        )
+
+    def _get_default_field(self, *, interface, current_value):
+        return InterfaceFormField(
+            instance=interface,
+            initial=current_value.value if current_value else None,
+            required=False,
+            user=self.user,
+        ).field

@@ -40,6 +40,7 @@ from grandchallenge.cases.widgets import (
     FlexibleImageWidget,
 )
 from grandchallenge.components.form_fields import InterfaceFormField
+from grandchallenge.components.forms import MultipleCIVCreateForm
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -551,70 +552,18 @@ class GroundTruthForm(SaveFormInitMixin, Form):
         return values
 
 
-class DisplaySetCreateForm(Form):
-    _possible_widgets = {
-        *InterfaceFormField._possible_widgets,
-    }
-
-    def __init__(self, *args, instance, reader_study, user, **kwargs):
+class DisplaySetCreateForm(MultipleCIVCreateForm):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.instance = instance
-        self.reader_study = reader_study
-        self.user = user
-
-        for slug, values in reader_study.values_for_interfaces.items():
-            current_value = None
-
-            if instance:
-                current_value = instance.values.filter(
-                    interface__slug=slug
-                ).first()
-
-            interface = ComponentInterface.objects.get(slug=slug)
-
-            if interface.is_image_kind:
-                self.fields[slug] = self._get_image_field(
-                    interface=interface,
-                    values=values,
-                    current_value=current_value,
-                )
-            elif interface.requires_file:
-                self.fields[slug] = self._get_file_field(
-                    interface=interface,
-                    values=values,
-                    current_value=current_value,
-                )
-            else:
-                self.fields[slug] = self._get_default_field(
-                    interface=interface, current_value=current_value
-                )
-
+        self.reader_study = self.base_obj
         self.fields["order"] = IntegerField(
             initial=(
-                instance.order
-                if instance
-                else reader_study.next_display_set_order
+                self.instance.order
+                if self.instance
+                else self.base_obj.next_display_set_order
             )
         )
-
-    def _get_image_field(self, *, interface, values, current_value):
-        return self._get_default_field(
-            interface=interface, current_value=current_value
-        )
-
-    def _get_file_field(self, *, interface, values, current_value):
-        return self._get_default_field(
-            interface=interface, current_value=current_value
-        )
-
-    def _get_default_field(self, *, interface, current_value):
-        return InterfaceFormField(
-            instance=interface,
-            initial=current_value.value if current_value else None,
-            required=False,
-            user=self.user,
-        ).field
 
 
 class DisplaySetUpdateForm(DisplaySetCreateForm):
