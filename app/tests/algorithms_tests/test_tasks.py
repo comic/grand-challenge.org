@@ -399,10 +399,7 @@ def test_algorithm_multiple_inputs(
 
 @pytest.mark.django_db
 def test_algorithm_input_image_multiple_files(
-    client,
-    settings,
-    component_interfaces,
-    django_capture_on_commit_callbacks,
+    client, settings, component_interfaces, django_capture_on_commit_callbacks
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
@@ -444,10 +441,7 @@ def test_algorithm_input_image_multiple_files(
 
 @pytest.mark.django_db
 def test_algorithm_input_user_upload(
-    client,
-    settings,
-    component_interfaces,
-    django_capture_on_commit_callbacks,
+    client, settings, component_interfaces, django_capture_on_commit_callbacks
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)

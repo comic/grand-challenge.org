@@ -56,12 +56,7 @@ from tests.utils import get_view_for_user
     ),
 )
 def test_permission_request_workflow(
-    client,
-    factory,
-    namespace,
-    request_model,
-    request_attr,
-    group_test,
+    client, factory, namespace, request_model, request_attr, group_test
 ):
     base_object = factory(
         access_request_handling=AccessRequestHandlingOptions.MANUAL_REVIEW

@@ -159,11 +159,7 @@ class TestSubmissionForm:
         form = SubmissionForm(
             user=user,
             phase=p,
-            data={
-                "algorithm_image": ai.pk,
-                "creator": user,
-                "phase": p,
-            },
+            data={"algorithm_image": ai.pk, "creator": user, "phase": p},
         )
 
         assert form.errors == {}
@@ -258,22 +254,14 @@ class TestSubmissionForm:
         form1 = SubmissionForm(
             user=user,
             phase=p_pred,
-            data={
-                "creator": user,
-                "phase": p_pred,
-                "user_upload": upload,
-            },
+            data={"creator": user, "phase": p_pred, "user_upload": upload},
         )
         assert form1.is_valid()
 
         form2 = SubmissionForm(
             user=user,
             phase=p_alg,
-            data={
-                "algorithm_image": ai.pk,
-                "creator": user,
-                "phase": p_alg,
-            },
+            data={"algorithm_image": ai.pk, "creator": user, "phase": p_alg},
         )
 
         assert (
@@ -342,11 +330,7 @@ class TestSubmissionForm:
         form = SubmissionForm(
             user=user,
             phase=p,
-            data={
-                "algorithm_image": ai.pk,
-                "creator": user,
-                "phase": p,
-            },
+            data={"algorithm_image": ai.pk, "creator": user, "phase": p},
         )
 
         assert not form.is_valid()
@@ -362,11 +346,7 @@ class TestSubmissionForm:
         form = SubmissionForm(
             user=user,
             phase=p,
-            data={
-                "algorithm_image": ai.pk,
-                "creator": user,
-                "phase": p,
-            },
+            data={"algorithm_image": ai.pk, "creator": user, "phase": p},
         )
 
         assert not form.is_valid()

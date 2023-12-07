@@ -843,10 +843,7 @@ def test_import_view(
 
 @pytest.mark.django_db
 def test_create_job_with_json_file(
-    client,
-    settings,
-    algorithm_io_image,
-    django_capture_on_commit_callbacks,
+    client, settings, algorithm_io_image, django_capture_on_commit_callbacks
 ):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
@@ -893,10 +890,7 @@ def test_create_job_with_json_file(
 
 @pytest.mark.django_db
 def test_algorithm_job_create_with_image_input(
-    settings,
-    client,
-    algorithm_io_image,
-    django_capture_on_commit_callbacks,
+    settings, client, algorithm_io_image, django_capture_on_commit_callbacks
 ):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
