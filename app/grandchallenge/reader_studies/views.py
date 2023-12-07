@@ -88,7 +88,6 @@ from grandchallenge.reader_studies.filters import (
 from grandchallenge.reader_studies.forms import (
     CategoricalOptionFormSet,
     DisplaySetCreateForm,
-    DisplaySetInterfacesCreateForm,
     DisplaySetUpdateForm,
     FileForm,
     GroundTruthForm,
@@ -405,11 +404,6 @@ class ReaderStudyDisplaySetList(
     ]
     text_align = "left"
     default_sort_order = "asc"
-    included_form_classes = (
-        DisplaySetUpdateForm,
-        DisplaySetInterfacesCreateForm,
-        FileForm,
-    )
 
     @cached_property
     def reader_study(self):
@@ -1322,8 +1316,124 @@ class DisplaySetDetail(
     raise_exception = True
 
 
+class InterfaceProcessingMixin:
+    def _process_new_interfaces(self):
+        data = json.loads(self.request.body)
+        new_interfaces = data["new_interfaces"]
+        validated_data = {}
+        errors = {}
+        for entry in new_interfaces:
+            interface = ComponentInterface.objects.get(pk=entry["interface"])
+            form = ComponentInterfaceCreateForm(
+                data=entry,
+                pk=None,
+                interface=interface.pk,
+                user=self.request.user,
+                base_obj=self.reader_study,
+                auto_id="%s",
+                htmx_url=None,
+            )
+            if form.is_valid():
+                cleaned = form.cleaned_data
+                validated_data[cleaned["interface"].slug] = cleaned[
+                    interface.slug
+                ]
+            else:
+                errors.update(
+                    {entry["interface"]: form.errors[interface.slug]}
+                )
+        if errors:
+            raise ValidationError(errors)
+        return validated_data
+
+    def return_errors(self, errors):
+        return JsonResponse(errors, status=400)
+
+    def form_invalid(self, form):
+        errors = form.errors
+        try:
+            self._process_new_interfaces()
+        except ValidationError as e:
+            errors.update(e.message_dict)
+        return self.return_errors(errors)
+
+    def form_valid(self, form):
+        errors = {}
+        data = {}
+        try:
+            data = self._process_new_interfaces()
+        except ValidationError as e:
+            errors.update(e.message_dict)
+
+        try:
+            data.update(form.cleaned_data)
+            self.process_data_for_object(data)
+        except ValidationError as e:
+            errors.update(e.message_dict)
+
+        if errors:
+            return self.return_errors(errors)
+        else:
+            messages.success(
+                self.request,
+                "Display set created. Image and file import jobs have been queued.",
+            )
+            return JsonResponse({"redirect": self.get_success_url()})
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                "user": self.request.user,
+                "auto_id": f"id-{uuid.uuid4()}-%s",
+                "base_obj": self.reader_study,
+            }
+        )
+        if self.request.method in ("POST", "PUT"):
+            data = json.loads(self.request.body)
+            for key in data:
+                if (
+                    key
+                    in [
+                        "order",
+                        "csrfmiddlewaretoken",
+                        "new_interfaces",
+                        "help_text",
+                        "current_value",
+                        "interface_slug",
+                    ]
+                    or "WidgetChoice" in key
+                    or "query" in key
+                ):
+                    continue
+                interface = ComponentInterface.objects.get(slug=key)
+                if interface.is_image_kind:
+                    data[key] = data[key]
+            kwargs.update(
+                {
+                    "data": data,
+                }
+            )
+        return kwargs
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        media = Media()
+        for form_class in self.included_form_classes:
+            for widget in form_class._possible_widgets:
+                media = media + widget().media
+        context.update(
+            {
+                "reader_study": self.reader_study,
+                "form_media": media,
+            }
+        )
+        return context
+
+
 class DisplaySetUpdate(
     LoginRequiredMixin,
+    InterfaceProcessingMixin,
     ObjectPermissionRequiredMixin,
     UpdateView,
 ):
@@ -1334,47 +1444,34 @@ class DisplaySetUpdate(
         f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
     )
     raise_exception = True
+    included_form_classes = (
+        DisplaySetUpdateForm,
+        ComponentInterfaceCreateForm,
+        FileForm,
+    )
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update(
-            {
-                "user": self.request.user,
-                "auto_id": f"id-{self.kwargs['pk']}-%s",
-                "base_obj": self.object.reader_study,
-            }
-        )
-        return kwargs
+    @property
+    def reader_study(self):
+        return ReaderStudy.objects.get(slug=self.kwargs["slug"])
 
     def get_success_url(self):
         return reverse(
-            "reader-studies:display-set-detail",
-            kwargs={"pk": self.kwargs["pk"], "slug": self.kwargs["slug"]},
+            "reader-studies:display_sets",
+            kwargs={"slug": self.kwargs["slug"]},
         )
 
-    def form_valid(self, form):
-        """Handles the update action on the object.
-
-        The reason this is handled here and not in the form class is that we
-        do not use a ModelForm for display sets. This is because the form
-        fields do not match the model fields: the model only has a `values`
-        fields, whereas the form has a field for each value in those values.
-        """
+    def process_data_for_object(self, data):
+        """Updates the display set"""
         instance = self.get_object()
-        for ci_slug, new_value in form.cleaned_data.items():
+        for ci_slug, new_value in data.items():
             if ci_slug == "order":
                 continue
             instance.create_civ(
                 ci_slug=ci_slug, new_value=new_value, user=self.request.user
             )
-        if (
-            form.cleaned_data.get("order")
-            and form.cleaned_data["order"] != instance.order
-        ):
-            instance.order = form.cleaned_data["order"]
+        if data.get("order") and data["order"] != instance.order:
+            instance.order = data["order"]
             instance.save()
-
-        return HttpResponseRedirect(self.get_success_url())
 
 
 class DisplaySetFilesUpdate(ObjectPermissionRequiredMixin, FormView):
@@ -1416,7 +1513,7 @@ class DisplaySetFilesUpdate(ObjectPermissionRequiredMixin, FormView):
                 "user": self.request.user,
                 "display_set": self.display_set,
                 "interface": self.interface,
-                "auto_id": f"id-{self.kwargs['pk']}-%s",
+                "auto_id": f"id-{uuid.uuid4()}-%s",
             }
         )
         return kwargs
@@ -1455,6 +1552,7 @@ class DisplaySetInterfacesCreate(ObjectPermissionRequiredMixin, FormView):
         f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
     )
     raise_exception = True
+    template_name = "reader_studies/display_set_new_interface_create.html"
 
     def get_permission_object(self):
         return self.display_set
@@ -1470,12 +1568,6 @@ class DisplaySetInterfacesCreate(ObjectPermissionRequiredMixin, FormView):
             return self.display_set.reader_study
         else:
             return ReaderStudy.objects.get(slug=self.kwargs["slug"])
-
-    def get_template_names(self):
-        if self.kwargs.get("pk"):
-            return ["reader_studies/display_set_interface_create.html"]
-        else:
-            return ["reader_studies/display_set_new_interface_create.html"]
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -1525,13 +1617,16 @@ class DisplaySetInterfacesCreate(ObjectPermissionRequiredMixin, FormView):
 
     def get_success_url(self):
         return reverse(
-            "reader-studies:display-set-update",
-            kwargs={"pk": self.kwargs["pk"], "slug": self.kwargs["slug"]},
+            "reader-studies:display_sets",
+            kwargs={"slug": self.kwargs["slug"]},
         )
 
 
 class AddDisplaySetToReaderStudy(
-    AddObjectToReaderStudyMixin, ObjectPermissionRequiredMixin, CreateView
+    InterfaceProcessingMixin,
+    AddObjectToReaderStudyMixin,
+    ObjectPermissionRequiredMixin,
+    CreateView,
 ):
     model = DisplaySet
     form_class = DisplaySetCreateForm
@@ -1542,91 +1637,14 @@ class AddDisplaySetToReaderStudy(
     )
     included_form_classes = (
         DisplaySetCreateForm,
-        DisplaySetInterfacesCreateForm,
+        ComponentInterfaceCreateForm,
     )
 
     def get_permission_object(self):
         return self.reader_study
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update(
-            {
-                "base_obj": self.reader_study,
-                "user": self.request.user,
-                "instance": None,
-            }
-        )
-        if self.request.method in ("POST", "PUT"):
-            data = json.loads(self.request.body)
-            for key in data:
-                if (
-                    key
-                    in [
-                        "order",
-                        "csrfmiddlewaretoken",
-                        "new_interfaces",
-                        "help_text",
-                        "current_value",
-                        "interface_slug",
-                    ]
-                    or "WidgetChoice" in key
-                    or "query" in key
-                ):
-                    continue
-                interface = ComponentInterface.objects.get(slug=key)
-                if interface.is_image_kind:
-                    data[key] = data[key]
-            kwargs.update(
-                {
-                    "data": data,
-                }
-            )
-        return kwargs
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        media = Media()
-        for form_class in self.included_form_classes:
-            for widget in form_class._possible_widgets:
-                media = media + widget().media
-        context.update(
-            {
-                "reader_study": self.reader_study,
-                "form_media": media,
-            }
-        )
-        return context
-
-    def _process_new_interfaces(self):
-        data = json.loads(self.request.body)
-        new_interfaces = data["new_interfaces"]
-        validated_data = {}
-        errors = {}
-        for entry in new_interfaces:
-            interface = ComponentInterface.objects.get(pk=entry["interface"])
-            form = DisplaySetInterfacesCreateForm(
-                data=entry,
-                pk=None,
-                interface=interface.pk,
-                user=self.request.user,
-                reader_study=self.reader_study,
-                auto_id="%s",
-            )
-            if form.is_valid():
-                cleaned = form.cleaned_data
-                validated_data[cleaned["interface"].slug] = cleaned[
-                    interface.slug
-                ]
-            else:
-                errors.update(
-                    {entry["interface"]: form.errors[interface.slug]}
-                )
-        if errors:
-            raise ValidationError(errors)
-        return validated_data
-
-    def create_display_set(self, data):
+    def process_data_for_object(self, data):
+        """Creates a display set"""
         ds = DisplaySet.objects.create(reader_study=self.reader_study)
         ds.order = data.pop("order")
         ds.save()
@@ -1634,39 +1652,6 @@ class AddDisplaySetToReaderStudy(
             ds.create_civ(
                 ci_slug=slug, new_value=data[slug], user=self.request.user
             )
-
-    def return_errors(self, errors):
-        return JsonResponse(errors, status=400)
-
-    def form_invalid(self, form):
-        errors = form.errors
-        try:
-            self._process_new_interfaces()
-        except ValidationError as e:
-            errors.update(e.message_dict)
-        return self.return_errors(errors)
-
-    def form_valid(self, form):
-        errors = {}
-        try:
-            data = self._process_new_interfaces()
-        except ValidationError as e:
-            errors.update(e.message_dict)
-
-        try:
-            data.update(form.cleaned_data)
-            self.create_display_set(data)
-        except ValidationError as e:
-            errors.update(e.message_dict)
-
-        if errors:
-            return self.return_errors(errors)
-        else:
-            messages.success(
-                self.request,
-                "Display set created. Image and file import jobs have been queued.",
-            )
-            return JsonResponse({"redirect": self.get_success_url()})
 
     def get_success_url(self):
         return reverse(

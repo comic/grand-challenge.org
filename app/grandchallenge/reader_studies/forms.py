@@ -13,8 +13,6 @@ from crispy_forms.layout import (
     Layout,
     Submit,
 )
-from dal import autocomplete
-from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import BLANK_CHOICE_DASH
 from django.forms import (
@@ -39,7 +37,6 @@ from grandchallenge.cases.widgets import (
     FlexibleImageField,
     FlexibleImageWidget,
 )
-from grandchallenge.components.form_fields import InterfaceFormField
 from grandchallenge.components.forms import MultipleCIVCreateForm
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -556,7 +553,6 @@ class DisplaySetCreateForm(MultipleCIVCreateForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.reader_study = self.base_obj
         self.fields["order"] = IntegerField(
             initial=(
                 self.instance.order
@@ -598,7 +594,7 @@ class DisplaySetUpdateForm(DisplaySetCreateForm):
             required=False,
             widget=SelectUploadWidget(
                 attrs={
-                    "reader_study_slug": self.reader_study.slug,
+                    "reader_study_slug": self.base_obj.slug,
                     "display_set_pk": self.instance.pk,
                     "interface_slug": interface.slug,
                     "interface_type": interface.super_kind,
@@ -634,82 +630,3 @@ class FileForm(Form):
         ).filter(status=UserUpload.StatusChoices.COMPLETED)
         self.interface = interface
         self.display_set = display_set
-
-
-class DisplaySetInterfacesCreateForm(Form):
-    _possible_widgets = {
-        *InterfaceFormField._possible_widgets,
-        autocomplete.ModelSelect2,
-        Select,
-    }
-
-    def __init__(self, *args, pk, interface, reader_study, user, **kwargs):
-        super().__init__(*args, **kwargs)
-        selected_interface = None
-        if interface:
-            selected_interface = ComponentInterface.objects.get(pk=interface)
-        data = kwargs.get("data")
-        if data and data.get("interface"):
-            selected_interface = ComponentInterface.objects.get(
-                pk=data["interface"]
-            )
-        qs = ComponentInterface.objects.exclude(
-            slug__in=reader_study.values_for_interfaces.keys()
-        )
-        widget_kwargs = {}
-        attrs = {}
-        if pk is None and selected_interface is not None:
-            widget = Select
-        else:
-            widget = autocomplete.ModelSelect2
-            attrs.update(
-                {
-                    "data-placeholder": "Search for an interface ...",
-                    "data-minimum-input-length": 3,
-                    "data-theme": settings.CRISPY_TEMPLATE_PACK,
-                    "data-html": True,
-                }
-            )
-            widget_kwargs[
-                "url"
-            ] = "components:component-interface-autocomplete"
-            widget_kwargs["forward"] = ["interface"]
-
-        if pk is not None:
-            attrs.update(
-                {
-                    "hx-get": reverse_lazy(
-                        "reader-studies:display-set-interfaces-create",
-                        kwargs={"pk": pk, "slug": reader_study.slug},
-                    ),
-                    "hx-target": f"#ds-content-{pk}",
-                    "hx-trigger": "interfaceSelected",
-                }
-            )
-        else:
-            attrs.update(
-                {
-                    "hx-get": reverse_lazy(
-                        "reader-studies:display-set-new-interfaces-create",
-                        kwargs={"slug": reader_study.slug},
-                    ),
-                    "hx-target": f"#form-{kwargs['auto_id'][:-3]}",
-                    "hx-swap": "outerHTML",
-                    "hx-trigger": "interfaceSelected",
-                    "disabled": selected_interface is not None,
-                }
-            )
-        widget_kwargs["attrs"] = attrs
-
-        self.fields["interface"] = ModelChoiceField(
-            initial=selected_interface,
-            queryset=qs,
-            widget=widget(**widget_kwargs),
-        )
-
-        if selected_interface is not None:
-            self.fields[selected_interface.slug] = InterfaceFormField(
-                instance=selected_interface,
-                user=user,
-                required=True,
-            ).field

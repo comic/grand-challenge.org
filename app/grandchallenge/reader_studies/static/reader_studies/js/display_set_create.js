@@ -14,10 +14,10 @@ $(document).ready(() => {
   });
 
   htmx.onLoad((elem) => {
-    $('form').not($("#form-new-ds")).each((i, form) => {
+    $('form').not($("#ds-form")).each((i, form) => {
       const selected = $("option:selected", form);
       if (selected.val()) {
-        $('form').not($("#form-new-ds")).each((_, _form) => {
+        $('form').not($("#ds-form")).each((_, _form) => {
           if (_form != form) {
             $(_form).find(`option[value='${selected.val()}']`).remove();
           }
@@ -25,7 +25,7 @@ $(document).ready(() => {
       }
     });
   });
-  $('#form-new-ds').on('submit', (e) => {
+  $('#ds-form').on('submit', (e) => {
       e.preventDefault();
       const target = $(e.currentTarget);
       $(".is-invalid").removeClass("is-invalid");

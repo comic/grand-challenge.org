@@ -1,20 +1,45 @@
+{% extends "base.html" %}
+{% load url %}
 {% load crispy_forms_tags %}
+{% load static %}
 
-<div class="card-body py-1" id="ds-content-{{ object.id }}">
-  {% include "grandchallenge/partials/messages.html" %}
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'reader-studies:list' %}">Reader
+            Studies</a></li>
+        <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Update</li>
+    </ol>
+{% endblock %}
 
-  {% if object.is_editable %}
-    <form action="{% url 'reader-studies:display-set-update' pk=object.pk slug=object.reader_study.slug %}" method="post" class="ds-form" data-hx-target="#ds-content-{{ object.id }}" id="form-{{ object.pk }}">
-      {% csrf_token %}
-      {{ form|crispy }}
-      <button type="button" class="btn btn-outline-primary mb-2" hx-get="{% url 'reader-studies:display-set-interfaces-create' pk=object.pk slug=object.reader_study.slug %}" hx-target="#ds-content-{{ object.id }}" hx-swap="outerHTML">Add value for new interface</button>
-      <div class="d-flex justify-content-between pb-2">
+{% block title %}
+    Display Set Update - {{ block.super }}
+{% endblock %}
+
+{% block content %}
+    <h2>Update Display Set</h2>
+    <div id="readerStudySlug" class="d-none" data-slug="{{ reader_study.slug }}"></div>
+    {% include "grandchallenge/partials/messages.html" %}
+    <form action="{% url 'reader-studies:display-set-update' pk=object.pk slug=object.reader_study.slug %}" method="post" class="ds-form" id="ds-form">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <div id="new-interfaces"></div>
+        <button type="button" id="add-new" class="btn btn-outline-primary mb-2" hx-get="{% url 'reader-studies:display-set-interfaces-create' pk=object.pk slug=reader_study.slug %}" hx-target="#new-interfaces" hx-swap="beforeend">Add value for new interface</button>
+        <div class="d-flex justify-content-between pb-2">
         <div>
-          <button type="button" class="btn btn-outline-primary" hx-get="{% url 'reader-studies:display-set-detail' pk=object.pk slug=object.reader_study.slug %}" hx-target="#ds-content-{{ object.id }}" hx-swap="outerHTML">Back</button>
+          <a href="{% url 'reader-studies:display_sets' slug=reader_study.slug %}" class="btn btn-outline-primary">Back</a>
           <button type="submit" class="btn btn-primary">Save</button>
         </div>
-        <button type="button" class="btn btn-danger remove-display-set" data-display-set-url="{% url 'api:reader-studies-display-set-detail' object.id %}">Remove</button>
       </div>
     </form>
-  {% endif %}
-</div>
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    {{ form_media }}
+    <script src="{% static 'reader_studies/js/display_set_create.js' %}" type="text/javascript"></script>
+    <script src="{% static 'reader_studies/js/autocomplete_htmx.js' %}" type="text/javascript"></script>
+    <script type="text/javascript" src="{% static "cases/js/ignore_enter_button.js" %}"></script>
+    <link rel="stylesheet" href="{% static 'css/select2-bootstrap4-theme/select2-bootstrap4.css' %}">
+     {% include 'grandchallenge/partials/drf_csrf.html' %}
+{% endblock %}

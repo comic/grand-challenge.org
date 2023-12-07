@@ -9,6 +9,7 @@ from django.db.models import BLANK_CHOICE_DASH
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.cases.widgets import FlexibleImageWidget
+from grandchallenge.components.forms import ComponentInterfaceCreateForm
 from grandchallenge.components.models import (
     ComponentInterface,
     InterfaceKind,
@@ -20,7 +21,6 @@ from grandchallenge.core.utils.access_requests import (
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.reader_studies.forms import (
     DisplaySetCreateForm,
-    DisplaySetInterfacesCreateForm,
     DisplaySetUpdateForm,
     QuestionForm,
     SelectUploadWidget,
@@ -1177,25 +1177,25 @@ def test_display_set_add_interface_form():
     ci_value = ComponentInterfaceFactory(kind="JSON", store_in_database=True)
     ci_image = ComponentInterfaceFactory(kind="IMG", store_in_database=False)
 
-    form = DisplaySetInterfacesCreateForm(
-        pk=ds.pk, reader_study=rs, interface=None, user=user
+    form = ComponentInterfaceCreateForm(
+        pk=ds.pk, base_obj=rs, interface=None, user=user
     )
     assert sorted(form.fields.keys()) == ["interface"]
 
-    form = DisplaySetInterfacesCreateForm(
-        pk=ds.pk, reader_study=rs, interface=ci_file.pk, user=user
+    form = ComponentInterfaceCreateForm(
+        pk=ds.pk, base_obj=rs, interface=ci_file.pk, user=user
     )
     assert sorted(form.fields.keys()) == [ci_file.slug, "interface"]
     assert isinstance(form.fields[ci_file.slug].widget, UserUploadSingleWidget)
 
-    form = DisplaySetInterfacesCreateForm(
-        pk=ds.pk, reader_study=rs, interface=ci_value.pk, user=user
+    form = ComponentInterfaceCreateForm(
+        pk=ds.pk, base_obj=rs, interface=ci_value.pk, user=user
     )
     assert sorted(form.fields.keys()) == [ci_value.slug, "interface"]
     assert isinstance(form.fields[ci_value.slug].widget, JSONEditorWidget)
 
-    form = DisplaySetInterfacesCreateForm(
-        pk=ds.pk, reader_study=rs, interface=ci_image.pk, user=user
+    form = ComponentInterfaceCreateForm(
+        pk=ds.pk, base_obj=rs, interface=ci_image.pk, user=user
     )
     assert sorted(form.fields.keys()) == [ci_image.slug, "interface"]
     assert isinstance(form.fields[ci_image.slug].widget, FlexibleImageWidget)
