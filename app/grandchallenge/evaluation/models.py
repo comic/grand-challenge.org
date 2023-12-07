@@ -5,6 +5,7 @@ from statistics import mean, median
 from actstream.actions import follow, is_following
 from django.conf import settings
 from django.contrib.auth.models import Group
+from django.contrib.sites.models import Site
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -13,6 +14,7 @@ from django.db.models import Count, Q
 from django.db.transaction import on_commit
 from django.utils import timezone
 from django.utils.functional import cached_property
+from django.utils.html import format_html
 from django.utils.text import get_valid_filename
 from django.utils.timezone import localtime
 from django_extensions.db.fields import AutoSlugField
@@ -27,13 +29,18 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentJob,
 )
-from grandchallenge.core.models import TitleSlugDescriptionModel, UUIDModel
+from grandchallenge.core.models import (
+    FieldChangeMixin,
+    TitleSlugDescriptionModel,
+    UUIDModel,
+)
 from grandchallenge.core.storage import protected_s3_storage, public_s3_storage
 from grandchallenge.core.validators import (
     ExtensionValidator,
     JSONValidator,
     MimeTypeValidator,
 )
+from grandchallenge.emails.emails import send_standard_email
 from grandchallenge.evaluation.tasks import (
     assign_evaluation_permissions,
     assign_submission_permissions,
@@ -119,7 +126,7 @@ class PhaseManager(models.Manager):
         )
 
 
-class Phase(UUIDModel, ViewContentMixin):
+class Phase(FieldChangeMixin, ViewContentMixin, UUIDModel):
     # This must match the syntax used in jquery datatables
     # https://datatables.net/reference/option/order
     ASCENDING = "asc"
@@ -515,10 +522,6 @@ class Phase(UUIDModel, ViewContentMixin):
             ("create_phase_workspace", "Create Phase Workspace"),
         )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._orig_public = self.public
-
     def __str__(self):
         return f"{self.title} Evaluation for {self.challenge.short_name}"
 
@@ -539,7 +542,7 @@ class Phase(UUIDModel, ViewContentMixin):
                         send_action=False,
                     )
 
-        if self.public != self._orig_public:
+        if self.has_changed("public"):
             on_commit(
                 assign_evaluation_permissions.signature(
                     kwargs={"phase_pks": [self.pk]}
@@ -550,6 +553,12 @@ class Phase(UUIDModel, ViewContentMixin):
                     kwargs={"phase_pk": self.pk}
                 ).apply_async
             )
+
+        if (
+            self.give_algorithm_editors_job_view_permissions
+            and self.has_changed("give_algorithm_editors_job_view_permissions")
+        ):
+            self.send_give_algorithm_editors_job_view_permissions_changed_email()
 
         on_commit(
             lambda: calculate_ranks.apply_async(kwargs={"phase_pk": self.pk})
@@ -599,6 +608,15 @@ class Phase(UUIDModel, ViewContentMixin):
                 "A phase can only be hidden if it is closed for submissions. "
                 "To close submissions for this phase, either set "
                 "submissions_limit_per_user_per_period to 0, or set appropriate phase start / end dates."
+            )
+
+        if (
+            self.give_algorithm_editors_job_view_permissions
+            and not self.submission_kind
+            == self.SubmissionKindChoices.ALGORITHM
+        ):
+            raise ValidationError(
+                "Give Algorithm Editors Job View Permissions can only be enabled for Algorithm type phases"
             )
 
     def set_default_interfaces(self):
@@ -786,6 +804,45 @@ class Phase(UUIDModel, ViewContentMixin):
     @cached_property
     def count_valid_archive_items(self):
         return self.valid_archive_items.count()
+
+    def send_give_algorithm_editors_job_view_permissions_changed_email(self):
+        site = Site.objects.get_current()
+
+        message = format_html(
+            (
+                "You are being emailed as you are an admin of '{challenge}' "
+                "and an important setting has been changed.\n\n"
+                "The 'Give Algorithm Editors Job View Permissions' setting has "
+                "been enabled for {phase} ({phase_settings_url}). "
+                "This means that editors of each algorithm submitted to this "
+                "phase (i.e. the challenge participants) will automatically be "
+                "given view permissions to their algorithm jobs and their logs.\n\n"
+                "WARNING: This means that data in the linked archive is now "
+                "accessible to the participants!\n\n"
+                "You can update this setting in the Phase Settings "
+                "({phase_settings_url})."
+            ),
+            challenge=self.challenge,
+            phase=self.title,
+            phase_settings_url=reverse(
+                "evaluation:phase-update",
+                kwargs={
+                    "challenge_short_name": self.challenge.short_name,
+                    "slug": self.slug,
+                },
+            ),
+        )
+
+        for admin in self.challenge.admins_group.user_set.select_related(
+            "user_profile"
+        ).all():
+            send_standard_email(
+                site=site,
+                subject="WARNING: Permissions granted to Challenge Participants",
+                message=message,
+                recipient=admin,
+                unsubscribable=False,
+            )
 
 
 class PhaseUserObjectPermission(UserObjectPermissionBase):
