@@ -38,6 +38,7 @@ from tests.factories import (
     WorkstationFactory,
 )
 from tests.utils import get_view_for_user
+from tests.verification_tests.factories import VerificationFactory
 
 
 @pytest.mark.django_db
@@ -299,6 +300,7 @@ class TestJobPermissions:
 
         user = UserFactory()
         editor = UserFactory()
+        VerificationFactory(user=user, is_verified=True)
 
         algorithm_image.algorithm.add_user(user)
         algorithm_image.algorithm.add_editor(editor)
