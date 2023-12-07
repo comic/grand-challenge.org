@@ -62,6 +62,7 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 from grandchallenge.archives.forms import AddCasesForm
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
+from grandchallenge.components.forms import ComponentInterfaceCreateForm
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
@@ -118,7 +119,7 @@ from grandchallenge.reader_studies.tasks import (
     copy_reader_study_display_sets,
     create_display_sets_for_upload_session,
 )
-from grandchallenge.subdomains.utils import reverse
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
 class HttpResponseSeeOther(HttpResponseRedirect):
@@ -1451,7 +1452,7 @@ class DisplaySetFilesUpdate(ObjectPermissionRequiredMixin, FormView):
 
 
 class DisplaySetInterfacesCreate(ObjectPermissionRequiredMixin, FormView):
-    form_class = DisplaySetInterfacesCreateForm
+    form_class = ComponentInterfaceCreateForm
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
     )
@@ -1483,13 +1484,29 @@ class DisplaySetInterfacesCreate(ObjectPermissionRequiredMixin, FormView):
         kwargs.update(
             {
                 "pk": self.kwargs.get("pk"),
-                "reader_study": self.reader_study,
+                "base_obj": self.reader_study,
                 "interface": self.request.GET.get("interface"),
                 "user": self.request.user,
                 "auto_id": f"id-{uuid.uuid4()}-%s",
+                "htmx_url": self.get_htmx_url(),
             }
         )
         return kwargs
+
+    def get_htmx_url(self):
+        if self.kwargs.get("pk") is not None:
+            return reverse_lazy(
+                "reader-studies:display-set-interfaces-create",
+                kwargs={
+                    "pk": self.kwargs.get("pk"),
+                    "slug": self.reader_study.slug,
+                },
+            )
+        else:
+            return reverse_lazy(
+                "reader-studies:display-set-new-interfaces-create",
+                kwargs={"slug": self.reader_study.slug},
+            )
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)

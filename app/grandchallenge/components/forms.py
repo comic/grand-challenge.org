@@ -1,3 +1,5 @@
+from dal import autocomplete
+from dal.widgets import Select
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.forms import Form, HiddenInput, ModelChoiceField, ModelForm
@@ -139,3 +141,81 @@ class MultipleCIVCreateForm(Form):
             required=False,
             user=self.user,
         ).field
+
+
+class ComponentInterfaceCreateForm(Form):
+    _possible_widgets = {
+        *InterfaceFormField._possible_widgets,
+        autocomplete.ModelSelect2,
+        Select,
+    }
+
+    def __init__(
+        self, *args, pk, interface, base_obj, user, htmx_url, **kwargs
+    ):
+        super().__init__(*args, **kwargs)
+        data = kwargs.get("data")
+        qs = ComponentInterface.objects.exclude(
+            slug__in=base_obj.values_for_interfaces.keys()
+        )
+
+        if interface:
+            selected_interface = ComponentInterface.objects.get(pk=interface)
+        elif data and data.get("interface"):
+            selected_interface = ComponentInterface.objects.get(
+                pk=data["interface"]
+            )
+        else:
+            selected_interface = None
+
+        widget_kwargs = {}
+        attrs = {
+            "hx-get": htmx_url,
+            "hx-trigger": "interfaceSelected",
+            "disabled": selected_interface is not None,
+        }
+
+        if selected_interface:
+            widget = Select
+        else:
+            widget = autocomplete.ModelSelect2
+            attrs.update(
+                {
+                    "data-placeholder": "Search for an interface ...",
+                    "data-minimum-input-length": 3,
+                    "data-theme": settings.CRISPY_TEMPLATE_PACK,
+                    "data-html": True,
+                }
+            )
+            widget_kwargs[
+                "url"
+            ] = "components:component-interface-autocomplete"
+            widget_kwargs["forward"] = ["interface"]
+
+        if pk is not None:
+            attrs.update(
+                {
+                    "hx-target": f"#ds-content-{pk}",
+                }
+            )
+        else:
+            attrs.update(
+                {
+                    "hx-target": f"#form-{kwargs['auto_id'][:-3]}",
+                    # "hx-swap": "outerHTML",
+                }
+            )
+        widget_kwargs["attrs"] = attrs
+
+        self.fields["interface"] = ModelChoiceField(
+            initial=selected_interface,
+            queryset=qs,
+            widget=widget(**widget_kwargs),
+        )
+
+        if selected_interface is not None:
+            self.fields[selected_interface.slug] = InterfaceFormField(
+                instance=selected_interface,
+                user=user,
+                required=True,
+            ).field
