@@ -1012,8 +1012,7 @@ def test_algorithm_image_activate(
     i2.is_desired_version = True
     i2.save()
 
-    user = UserFactory()
-    editor = UserFactory()
+    editor, user = UserFactory.create_batch(2)
     alg.add_editor(editor)
 
     response = get_view_for_user(
@@ -1119,7 +1118,6 @@ def test_job_time_limit(client):
         is_in_registry=True,
     )
     user = UserFactory()
-
     algorithm.add_editor(user=user)
 
     ci = ComponentInterfaceFactory(

@@ -38,7 +38,6 @@ from tests.factories import (
     WorkstationFactory,
 )
 from tests.utils import get_view_for_user
-from tests.verification_tests.factories import VerificationFactory
 
 
 @pytest.mark.django_db
@@ -299,7 +298,6 @@ class TestJobPermissions:
         )
 
         user = UserFactory()
-        VerificationFactory(user=user, is_verified=True)
         editor = UserFactory()
 
         algorithm_image.algorithm.add_user(user)
@@ -332,7 +330,6 @@ class TestJobPermissions:
     def test_job_permissions_from_api(self, rf):
         # setup
         user = UserFactory()
-        editor = UserFactory()
         algorithm_image = AlgorithmImageFactory(
             is_manifest_valid=True,
             is_in_registry=True,
@@ -347,7 +344,7 @@ class TestJobPermissions:
         }
         algorithm_image.algorithm.inputs.set(interfaces)
         algorithm_image.algorithm.add_user(user)
-        algorithm_image.algorithm.add_editor(editor)
+        algorithm_image.algorithm.add_editor(UserFactory())
 
         job = {"algorithm": algorithm_image.algorithm.api_url, "inputs": []}
 

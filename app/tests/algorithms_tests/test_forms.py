@@ -44,7 +44,6 @@ def test_editor_update_form(client):
     assert alg.editors_group.user_set.count() == 1
 
     new_editor = UserFactory()
-    VerificationFactory(user=new_editor, is_verified=True)
     assert not alg.is_editor(user=new_editor)
     response = get_view_for_user(
         viewname="algorithms:editors-update",
@@ -130,6 +129,7 @@ def test_user_update_form(client):
 def test_algorithm_create(client, uploaded_image):
     # The algorithm creator should automatically get added to the editors group
     creator = get_algorithm_creator()
+    VerificationFactory(user=creator, is_verified=True)
 
     ws = WorkstationFactory()
     ci = ComponentInterface.objects.get(slug="generic-medical-image")
@@ -454,6 +454,7 @@ class TestJobCreateLimits:
             is_desired_version=True,
         )
         user = UserFactory()
+
         user.user_credit.credits = 0
         user.user_credit.save()
 

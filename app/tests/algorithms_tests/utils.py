@@ -3,12 +3,10 @@ from django.contrib.auth.models import Group
 
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.factories import UserFactory
-from tests.verification_tests.factories import VerificationFactory
 
 
 def get_algorithm_creator():
     creator = UserFactory()
-    VerificationFactory(user=creator, is_verified=True)
     g = Group.objects.get(name=settings.ALGORITHMS_CREATORS_GROUP_NAME)
     g.user_set.add(creator)
     return creator
@@ -24,8 +22,6 @@ class TwoAlgorithms:
             UserFactory(),
             UserFactory(),
         )
-        VerificationFactory(user=self.editor1, is_verified=True)
-        VerificationFactory(user=self.editor2, is_verified=True)
         self.alg1.add_editor(user=self.editor1)
         self.alg2.add_editor(user=self.editor2)
         self.alg1.add_user(user=self.user1)

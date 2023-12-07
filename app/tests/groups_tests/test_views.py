@@ -37,9 +37,6 @@ class TestGroupManagementViews:
         admin = UserFactory()
         u = UserFactory()
 
-        if namespace == "algorithms" and view_name == "editors":
-            VerificationFactory(user=u, is_verified=True)
-
         assert not group.user_set.filter(pk=u.pk).exists()
 
         def get_user_autocomplete():

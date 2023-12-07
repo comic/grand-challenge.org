@@ -48,7 +48,6 @@ from tests.reader_studies_tests.factories import (
     QuestionFactory,
     ReaderStudyFactory,
 )
-from tests.verification_tests.factories import VerificationFactory
 from tests.workstations_tests.fixtures import (
     TwoWorkstationSets,
     workstation_set,
@@ -654,7 +653,6 @@ def do_totp_authentication(
 @pytest.fixture
 def authenticated_staff_user(client):
     user = UserFactory(username="john", is_staff=True)
-    VerificationFactory(user=user, is_verified=True)
     totp_device = user.totpdevice_set.create()
     user = authenticate(
         username=user.username, password=SUPER_SECURE_TEST_PASSWORD

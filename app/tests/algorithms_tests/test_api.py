@@ -48,6 +48,7 @@ def test_job_time_limit(client):
         is_manifest_valid=True,
         is_in_registry=True,
     )
+
     user = UserFactory()
     algorithm.add_editor(user=user)
 
