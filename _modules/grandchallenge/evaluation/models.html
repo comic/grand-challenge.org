@@ -85,6 +85,7 @@
 <span class="kn">from</span> <span class="nn">actstream.actions</span> <span class="kn">import</span> <span class="n">follow</span><span class="p">,</span> <span class="n">is_following</span>
 <span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span> <span class="nn">django.contrib.auth.models</span> <span class="kn">import</span> <span class="n">Group</span>
+<span class="kn">from</span> <span class="nn">django.contrib.sites.models</span> <span class="kn">import</span> <span class="n">Site</span>
 <span class="kn">from</span> <span class="nn">django.core.cache</span> <span class="kn">import</span> <span class="n">cache</span>
 <span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ObjectDoesNotExist</span><span class="p">,</span> <span class="n">ValidationError</span>
 <span class="kn">from</span> <span class="nn">django.core.validators</span> <span class="kn">import</span> <span class="n">MaxValueValidator</span><span class="p">,</span> <span class="n">MinValueValidator</span>
@@ -93,6 +94,7 @@
 <span class="kn">from</span> <span class="nn">django.db.transaction</span> <span class="kn">import</span> <span class="n">on_commit</span>
 <span class="kn">from</span> <span class="nn">django.utils</span> <span class="kn">import</span> <span class="n">timezone</span>
 <span class="kn">from</span> <span class="nn">django.utils.functional</span> <span class="kn">import</span> <span class="n">cached_property</span>
+<span class="kn">from</span> <span class="nn">django.utils.html</span> <span class="kn">import</span> <span class="n">format_html</span>
 <span class="kn">from</span> <span class="nn">django.utils.text</span> <span class="kn">import</span> <span class="n">get_valid_filename</span>
 <span class="kn">from</span> <span class="nn">django.utils.timezone</span> <span class="kn">import</span> <span class="n">localtime</span>
 <span class="kn">from</span> <span class="nn">django_extensions.db.fields</span> <span class="kn">import</span> <span class="n">AutoSlugField</span>
@@ -107,13 +109,18 @@
     <span class="n">ComponentInterface</span><span class="p">,</span>
     <span class="n">ComponentJob</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.core.models</span> <span class="kn">import</span> <span class="n">TitleSlugDescriptionModel</span><span class="p">,</span> <span class="n">UUIDModel</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.core.models</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FieldChangeMixin</span><span class="p">,</span>
+    <span class="n">TitleSlugDescriptionModel</span><span class="p">,</span>
+    <span class="n">UUIDModel</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.core.storage</span> <span class="kn">import</span> <span class="n">protected_s3_storage</span><span class="p">,</span> <span class="n">public_s3_storage</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.core.validators</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">ExtensionValidator</span><span class="p">,</span>
     <span class="n">JSONValidator</span><span class="p">,</span>
     <span class="n">MimeTypeValidator</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.emails.emails</span> <span class="kn">import</span> <span class="n">send_standard_email</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.evaluation.tasks</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">assign_evaluation_permissions</span><span class="p">,</span>
     <span class="n">assign_submission_permissions</span><span class="p">,</span>
@@ -201,7 +208,7 @@
 
 <div class="viewcode-block" id="Phase">
 <a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase">[docs]</a>
-<span class="k">class</span> <span class="nc">Phase</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">ViewContentMixin</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">Phase</span><span class="p">(</span><span class="n">FieldChangeMixin</span><span class="p">,</span> <span class="n">ViewContentMixin</span><span class="p">,</span> <span class="n">UUIDModel</span><span class="p">):</span>
     <span class="c1"># This must match the syntax used in jquery datatables</span>
     <span class="c1"># https://datatables.net/reference/option/order</span>
     <span class="n">ASCENDING</span> <span class="o">=</span> <span class="s2">&quot;asc&quot;</span>
@@ -597,13 +604,6 @@
             <span class="p">(</span><span class="s2">&quot;create_phase_workspace&quot;</span><span class="p">,</span> <span class="s2">&quot;Create Phase Workspace&quot;</span><span class="p">),</span>
         <span class="p">)</span>
 
-<div class="viewcode-block" id="Phase.__init__">
-<a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase.__init__">[docs]</a>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_orig_public</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">public</span></div>
-
-
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="s2"> Evaluation for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">short_name</span><span class="si">}</span><span class="s2">&quot;</span>
 
@@ -626,7 +626,7 @@
                         <span class="n">send_action</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                     <span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">public</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_orig_public</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_changed</span><span class="p">(</span><span class="s2">&quot;public&quot;</span><span class="p">):</span>
             <span class="n">on_commit</span><span class="p">(</span>
                 <span class="n">assign_evaluation_permissions</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
                     <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;phase_pks&quot;</span><span class="p">:</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">]}</span>
@@ -637,6 +637,12 @@
                     <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;phase_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">}</span>
                 <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span>
             <span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">give_algorithm_editors_job_view_permissions</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_changed</span><span class="p">(</span><span class="s2">&quot;give_algorithm_editors_job_view_permissions&quot;</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">send_give_algorithm_editors_job_view_permissions_changed_email</span><span class="p">()</span>
 
         <span class="n">on_commit</span><span class="p">(</span>
             <span class="k">lambda</span><span class="p">:</span> <span class="n">calculate_ranks</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;phase_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">})</span>
@@ -689,6 +695,15 @@
                 <span class="s2">&quot;A phase can only be hidden if it is closed for submissions. &quot;</span>
                 <span class="s2">&quot;To close submissions for this phase, either set &quot;</span>
                 <span class="s2">&quot;submissions_limit_per_user_per_period to 0, or set appropriate phase start / end dates.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">give_algorithm_editors_job_view_permissions</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_kind</span>
+            <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">SubmissionKindChoices</span><span class="o">.</span><span class="n">ALGORITHM</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;Give Algorithm Editors Job View Permissions can only be enabled for Algorithm type phases&quot;</span>
             <span class="p">)</span></div>
 
 
@@ -879,7 +894,46 @@
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span> <span class="nf">count_valid_archive_items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_archive_items</span><span class="o">.</span><span class="n">count</span><span class="p">()</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_archive_items</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">send_give_algorithm_editors_job_view_permissions_changed_email</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">site</span> <span class="o">=</span> <span class="n">Site</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_current</span><span class="p">()</span>
+
+        <span class="n">message</span> <span class="o">=</span> <span class="n">format_html</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="s2">&quot;You are being emailed as you are an admin of &#39;</span><span class="si">{challenge}</span><span class="s2">&#39; &quot;</span>
+                <span class="s2">&quot;and an important setting has been changed.</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;The &#39;Give Algorithm Editors Job View Permissions&#39; setting has &quot;</span>
+                <span class="s2">&quot;been enabled for </span><span class="si">{phase}</span><span class="s2"> (</span><span class="si">{phase_settings_url}</span><span class="s2">). &quot;</span>
+                <span class="s2">&quot;This means that editors of each algorithm submitted to this &quot;</span>
+                <span class="s2">&quot;phase (i.e. the challenge participants) will automatically be &quot;</span>
+                <span class="s2">&quot;given view permissions to their algorithm jobs and their logs.</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;WARNING: This means that data in the linked archive is now &quot;</span>
+                <span class="s2">&quot;accessible to the participants!</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;You can update this setting in the Phase Settings &quot;</span>
+                <span class="s2">&quot;(</span><span class="si">{phase_settings_url}</span><span class="s2">).&quot;</span>
+            <span class="p">),</span>
+            <span class="n">challenge</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="p">,</span>
+            <span class="n">phase</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="p">,</span>
+            <span class="n">phase_settings_url</span><span class="o">=</span><span class="n">reverse</span><span class="p">(</span>
+                <span class="s2">&quot;evaluation:phase-update&quot;</span><span class="p">,</span>
+                <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;challenge_short_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">short_name</span><span class="p">,</span>
+                    <span class="s2">&quot;slug&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">slug</span><span class="p">,</span>
+                <span class="p">},</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">admin</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span><span class="o">.</span><span class="n">user_set</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span>
+            <span class="s2">&quot;user_profile&quot;</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="n">send_standard_email</span><span class="p">(</span>
+                <span class="n">site</span><span class="o">=</span><span class="n">site</span><span class="p">,</span>
+                <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;WARNING: Permissions granted to Challenge Participants&quot;</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="n">message</span><span class="p">,</span>
+                <span class="n">recipient</span><span class="o">=</span><span class="n">admin</span><span class="p">,</span>
+                <span class="n">unsubscribable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span></div>
 
 
 
