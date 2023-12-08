@@ -2,9 +2,5 @@
 <form class="extra-interface-form border rounded p-2 my-2" id="form-{{ form.auto_id|slice:':-3' }}">
   {% csrf_token %}
   {{ form|crispy }}
-    {% if object %}
-        <button type="button" class="btn btn-danger remove-form" hx-get="{% url 'reader-studies:display-set-update' pk=object.pk slug=object.reader_study.slug %}" hx-target="body" hx-swap="outerHTML">Remove</button>
-    {% else %}
-        <button type="button" class="btn btn-danger remove-form">Remove</button>
-    {% endif %}
+    <button type="button" class="btn btn-danger remove-form">Remove</button>
 </form>

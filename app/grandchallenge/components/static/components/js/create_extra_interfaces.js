@@ -13,21 +13,9 @@ $(document).ready(() => {
     $(e.currentTarget).parents("form.extra-interface-form").remove();
   });
 
-  htmx.onLoad((elem) => {
-    $('form').not($("#obj-form")).each((i, form) => {
-      const selected = $("option:selected", form);
-      if (selected.val()) {
-        $('form').not($("#obj-form")).each((_, _form) => {
-          if (_form != form) {
-            $(_form).find(`option[value='${selected.val()}']`).remove();
-          }
-        });
-      }
-    });
-  });
   $('#obj-form').on('submit', (e) => {
-      e.preventDefault();
-      const target = $(e.currentTarget);
+    e.preventDefault();
+    const target = $(e.currentTarget);
       $(".is-invalid").removeClass("is-invalid");
       $(".invalid-feedback").remove();
       $("#form-error-message").remove();
@@ -46,16 +34,16 @@ $(document).ready(() => {
           }
       )
       formData.new_interfaces = interfaces;
-      $.ajax({
-          type: 'POST',
-          url:  target.attr("action"),
-          data: JSON.stringify(formData),
-          dataType: 'json',
-          contentType: 'application/json',
-          headers: {
-              'X-CSRFToken': window.drf.csrfToken,
-              'Content-Type': 'application/json'
-          },
+   $.ajax({
+        type: 'POST',
+        url: target.attr("action"),
+        data: JSON.stringify(formData),
+        dataType: 'json',
+        contentType: 'application/json',
+        headers: {
+            'X-CSRFToken': window.drf.csrfToken,
+            'Content-Type': 'application/json'
+        },
           success: (response) => {
               window.location.href = response.redirect;
           },
@@ -90,5 +78,5 @@ $(document).ready(() => {
               $("#messages")[0].scrollIntoView();
           }
       })
-  });
+    });
 });
