@@ -1,13 +1,10 @@
 {% load crispy_forms_tags %}
 
-
-<div class="card-body py-1" id="ds-content-{{ display_set }}">
-    <form action="{% url 'reader-studies:display-set-files-update' pk=display_set interface_slug=interface slug=slug %}" method="post" class="obj-form" data-hx-target="#ds-content-{{ display_set}}" id="form-{{ display_set }}">
-      {% csrf_token %}
-      {{ form|crispy }}
-      <div>
-        <button type="button" class="btn btn-outline-primary" hx-get="{% url 'reader-studies:display-set-update' pk=display_set slug=slug %}" hx-target="#ds-content-{{ display_set }}" hx-swap="outerHTML">Back</button>
+<form action="{% url 'reader-studies:display-set-files-update' pk=display_set interface_slug=interface slug=slug %}" method="post" class="obj-form" data-hx-target="body" data-hx-swap="outerHTML" id="form-{{ display_set }}">
+    {% csrf_token %}
+    {{ form|crispy }}
+    <div>
+        <button type="button" class="btn btn-outline-primary" hx-get="{% url 'reader-studies:display-set-update' pk=display_set slug=slug %}" hx-target="body" hx-swap="outerHTML">Back</button>
         <button type="submit" class="btn btn-primary">Save</button>
     </div>
-    </form>
-</div>
+</form>

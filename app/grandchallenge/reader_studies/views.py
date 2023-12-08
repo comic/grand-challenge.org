@@ -1512,9 +1512,7 @@ class DisplaySetFilesUpdate(ObjectPermissionRequiredMixin, FormView):
         kwargs.update(
             {
                 "user": self.request.user,
-                "display_set": self.display_set,
                 "interface": self.interface,
-                "auto_id": f"id-{uuid.uuid4()}-%s",
             }
         )
         return kwargs
@@ -1542,8 +1540,8 @@ class DisplaySetFilesUpdate(ObjectPermissionRequiredMixin, FormView):
 
     def get_success_url(self):
         return reverse(
-            "reader-studies:display-set-detail",
-            kwargs={"pk": self.kwargs["pk"], "slug": self.kwargs["slug"]},
+            "reader-studies:display_sets",
+            kwargs={"slug": self.kwargs["slug"]},
         )
 
 

@@ -619,14 +619,12 @@ class FileForm(Form):
     }
 
     user_upload = ModelChoiceField(
-        label="File",
         queryset=None,
     )
 
-    def __init__(
-        self, *args, user, display_set, interface, instance=None, **kwargs
-    ):
+    def __init__(self, *args, user, interface, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["user_upload"].label = interface.title
         self.fields["user_upload"].widget = UserUploadSingleWidget(
             allowed_file_types=interface.file_mimetypes
         )
@@ -635,4 +633,3 @@ class FileForm(Form):
             "uploads.change_userupload",
         ).filter(status=UserUpload.StatusChoices.COMPLETED)
         self.interface = interface
-        self.display_set = display_set
