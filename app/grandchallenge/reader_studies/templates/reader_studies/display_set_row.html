@@ -19,28 +19,27 @@
 </ul>
 <split></split>
 
-<button class="btn btn-primary btn-sm"
+<a class="btn btn-primary btn-sm"
    title="View in viewer"
    {% workstation_session_control_data workstation=object.reader_study.workstation context_object=object display_set=object config=object.reader_study.workstation_config %}>
     <i class="fa fa-eye"></i>
-</button>
+</a>
 <split></split>
 
-<button class="btn btn-primary btn-sm"
+<a class="btn btn-primary btn-sm {% if not object.is_editable %}disabled{% endif %}"
    {% if object.is_editable %}
         title = "Edit display set"
         href="{% url 'reader-studies:display-set-update' pk=object.pk slug=object.reader_study.slug %}"
    {% else %}
         title="Cannot edit: answers for display set exist"
-        disabled
    {% endif %}>
    <i class="fa fa-edit"></i>
-</button>
+</a>
 <split></split>
 
-<button class="btn btn-danger btn-sm remove-display-set"
+<a class="btn btn-danger btn-sm remove-display-set {% if not object.is_editable %}disabled{% endif %}"
    title="Delete display set"
    data-display-set-url="{% url 'api:reader-studies-display-set-detail' object.id %}">
    <i class="fa fa-trash"></i>
-</button>
+</a>
 <split></split>

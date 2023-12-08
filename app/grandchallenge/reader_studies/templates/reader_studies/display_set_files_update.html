@@ -2,7 +2,7 @@
 
 
 <div class="card-body py-1" id="ds-content-{{ display_set }}">
-    <form action="{% url 'reader-studies:display-set-files-update' pk=display_set interface_slug=interface slug=slug %}" method="post" class="ds-form" data-hx-target="#ds-content-{{ display_set}}" id="form-{{ display_set }}">
+    <form action="{% url 'reader-studies:display-set-files-update' pk=display_set interface_slug=interface slug=slug %}" method="post" class="obj-form" data-hx-target="#ds-content-{{ display_set}}" id="form-{{ display_set }}">
       {% csrf_token %}
       {{ form|crispy }}
       <div>

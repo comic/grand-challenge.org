@@ -63,10 +63,10 @@ class ComponentInterfaceAutocomplete(
 ):
     def get_queryset(self):
         if self.forwarded:
-            reader_study_slug = self.forwarded.pop("reader-study")
-            reader_study = ReaderStudy.objects.get(slug=reader_study_slug)
+            object_slug = self.forwarded.pop("object")
+            object = ReaderStudy.objects.get(slug=object_slug)
             qs = ComponentInterface.objects.exclude(
-                slug__in=reader_study.values_for_interfaces.keys()
+                slug__in=object.values_for_interfaces.keys()
             ).exclude(pk__in=self.forwarded.values())
         else:
             qs = ComponentInterface.objects.filter(
