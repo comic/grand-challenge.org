@@ -62,4 +62,5 @@
     {{ block.super }}
     <script type="module" src="{% static 'reader_studies/js/images_list.mjs' %}"></script>
     {% include 'workstations/partials/session-control.html' %}
+    {% include 'grandchallenge/partials/drf_csrf.html' %}
 {% endblock %}

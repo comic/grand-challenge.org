@@ -52,6 +52,7 @@ from guardian.mixins import LoginRequiredMixin
 from guardian.shortcuts import get_perms
 from rest_framework import mixins
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied as DRFPermissionDenied
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
@@ -1084,7 +1085,7 @@ class DisplaySetViewSet(
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         if not instance.is_editable:
-            raise PermissionDenied(
+            raise DRFPermissionDenied(
                 "This display set cannot be removed, as answers for it "
                 "already exist."
             )
