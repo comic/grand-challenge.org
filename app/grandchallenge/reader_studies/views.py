@@ -1318,33 +1318,35 @@ class DisplaySetDetail(
 
 
 class InterfaceProcessingMixin:
-    def _process_new_interfaces(self):
-        data = json.loads(self.request.body)
-        new_interfaces = data["new_interfaces"]
+    def _process_new_interfaces(self, form):
+        new_interfaces = form.data.get("new_interfaces")
         validated_data = {}
-        errors = {}
-        for entry in new_interfaces:
-            interface = ComponentInterface.objects.get(pk=entry["interface"])
-            form = ComponentInterfaceCreateForm(
-                data=entry,
-                pk=None,
-                interface=interface.pk,
-                user=self.request.user,
-                base_obj=self.reader_study,
-                auto_id="%s",
-                htmx_url=None,
-            )
-            if form.is_valid():
-                cleaned = form.cleaned_data
-                validated_data[cleaned["interface"].slug] = cleaned[
-                    interface.slug
-                ]
-            else:
-                errors.update(
-                    {entry["interface"]: form.errors[interface.slug]}
+        if new_interfaces:
+            errors = {}
+            for entry in new_interfaces:
+                interface = ComponentInterface.objects.get(
+                    pk=entry["interface"]
                 )
-        if errors:
-            raise ValidationError(errors)
+                form = ComponentInterfaceCreateForm(
+                    data=entry,
+                    pk=None,
+                    interface=interface.pk,
+                    user=self.request.user,
+                    base_obj=self.reader_study,
+                    auto_id="%s",
+                    htmx_url=None,
+                )
+                if form.is_valid():
+                    cleaned = form.cleaned_data
+                    validated_data[cleaned["interface"].slug] = cleaned[
+                        interface.slug
+                    ]
+                else:
+                    errors.update(
+                        {entry["interface"]: form.errors[interface.slug]}
+                    )
+            if errors:
+                raise ValidationError(errors)
         return validated_data
 
     def return_errors(self, errors):
@@ -1353,7 +1355,7 @@ class InterfaceProcessingMixin:
     def form_invalid(self, form):
         errors = form.errors
         try:
-            self._process_new_interfaces()
+            self._process_new_interfaces(form)
         except ValidationError as e:
             errors.update(e.message_dict)
         return self.return_errors(errors)
@@ -1362,7 +1364,7 @@ class InterfaceProcessingMixin:
         errors = {}
         data = {}
         try:
-            data = self._process_new_interfaces()
+            data = self._process_new_interfaces(form)
         except ValidationError as e:
             errors.update(e.message_dict)
 
@@ -1390,9 +1392,9 @@ class InterfaceProcessingMixin:
                 "base_obj": self.reader_study,
             }
         )
-        if self.request.method in ("POST", "PUT"):
-            data = json.loads(self.request.body)
-            for key in data:
+        if self.request.method == "POST":
+            data = json.load(self.request)
+            for key, value in data.items():
                 if (
                     key
                     in [
@@ -1409,7 +1411,7 @@ class InterfaceProcessingMixin:
                     continue
                 interface = ComponentInterface.objects.get(slug=key)
                 if interface.is_image_kind:
-                    data[key] = data[key]
+                    data[key] = value
             kwargs.update(
                 {
                     "data": data,

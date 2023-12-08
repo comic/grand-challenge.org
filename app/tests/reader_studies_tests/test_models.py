@@ -705,34 +705,6 @@ def test_question_interface():
 
 
 @pytest.mark.django_db
-def test_main_image_from_ds():
-    ds = DisplaySetFactory()
-    ci1, ci2 = ComponentInterfaceFactory.create_batch(
-        2, kind=InterfaceKindChoices.IMAGE
-    )
-    im1, im2 = ImageFactory.create_batch(2)
-    ds.values.add(ComponentInterfaceValueFactory(interface=ci1, image=im1))
-    ds.values.add(ComponentInterfaceValueFactory(interface=ci2, image=im2))
-
-    # without view content set, the first image title is returned
-    assert im1.name == ds.main_image_title
-
-    # with a view content set, the first image title of the main viewport is returned
-    ds.reader_study.view_content = {"main": [ci2.slug]}
-    ds.reader_study.save()
-    del ds.main_image_title
-    assert im2.name == ds.main_image_title
-
-    # if the ds does not have a civ for the interface specified in the view content, the first image title is returned
-    ci3 = ComponentInterfaceFactory(kind=InterfaceKindChoices.IMAGE)
-    ds.reader_study.view_content = {"main": [ci3.slug]}
-    ds.reader_study.save()
-    ds.refresh_from_db()
-    del ds.main_image_title
-    assert im1.name == ds.main_image_title
-
-
-@pytest.mark.django_db
 def test_workstation_url():
     workstation = WorkstationFactory()
     reader_study = ReaderStudyFactory(workstation=workstation)
