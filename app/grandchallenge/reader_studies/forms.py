@@ -568,6 +568,12 @@ class DisplaySetUpdateForm(DisplaySetCreateForm):
         *DisplaySetCreateForm._possible_widgets,
     }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.instance.is_editable:
+            for _, field in self.fields.items():
+                field.disabled = True
+
     def _get_image_field(self, *, interface, values, current_value):
         return FlexibleImageField(
             image_queryset=get_objects_for_user(self.user, "cases.view_image"),
