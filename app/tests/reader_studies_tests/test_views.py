@@ -360,35 +360,6 @@ def test_reader_study_display_set_list(client):
 
 
 @pytest.mark.django_db
-def test_display_set_detail(client):
-    u1, u2 = UserFactory.create_batch(2)
-    rs = ReaderStudyFactory()
-    ds = DisplaySetFactory(reader_study=rs)
-    rs.add_editor(u1)
-    civ = ComponentInterfaceValueFactory(value="civ-title")
-    ds.values.add(civ)
-
-    response = get_view_for_user(
-        viewname="reader-studies:display-set-detail",
-        client=client,
-        reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
-        user=u2,
-    )
-
-    assert response.status_code == 403
-
-    response = get_view_for_user(
-        viewname="reader-studies:display-set-detail",
-        client=client,
-        reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
-        user=u1,
-    )
-
-    assert response.status_code == 200
-    assert "civ-title" in response.rendered_content
-
-
-@pytest.mark.django_db
 def test_display_set_update_permissions(client):
     u1, u2 = UserFactory.create_batch(2)
     rs = ReaderStudyFactory()

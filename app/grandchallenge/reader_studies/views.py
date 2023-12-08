@@ -1306,17 +1306,6 @@ class QuestionWidgetsView(View):
         return HttpResponse(form["widget"])
 
 
-class DisplaySetDetail(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
-):
-    template_name = "reader_studies/display_set_detail.html"
-    model = DisplaySet
-    permission_required = (
-        f"{ReaderStudy._meta.app_label}.view_{DisplaySet._meta.model_name}"
-    )
-    raise_exception = True
-
-
 class InterfaceProcessingMixin:
     def _process_new_interfaces(self, form):
         new_interfaces = form.data.get("new_interfaces")
