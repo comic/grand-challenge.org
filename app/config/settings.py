@@ -1341,6 +1341,18 @@ DISALLOWED_EMAIL_DOMAINS = {
     "snu.ac.kr",
     "cau.ac.kr",
     "deepnoid.com",
+    "knou.ac.kr",
+    "gm.gist.ac.kr",
+    "knu.ac.kr",
+    "korea.ac.kr",
+    "g.postech.edu",
+    "hanyang.ac.kr",
+    "dankook.ac.kr",
+    "postech.ac.kr",
+    "a.ut.ac.kr",
+    "office.bufs.ac.kr",
+    "ut.ac.kr",
+    "tesser.co.kr",
     *blocklist,
 }
 
