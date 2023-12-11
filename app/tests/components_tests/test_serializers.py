@@ -196,6 +196,7 @@ TEST_DATA = {
         ],
     },
     "3ANG": {
+        "version": {"major": 1, "minor": 0},
         "name": "Some annotation",
         "type": "Three-point angle",
         "angle": [
@@ -204,9 +205,9 @@ TEST_DATA = {
             [77.10, -18.97, 115.48],
         ],
         "probability": 0.92,
-        "version": {"major": 1, "minor": 0},
     },
     "M3AN": {
+        "version": {"major": 1, "minor": 0},
         "name": "Some annotations",
         "type": "Multiple three-point angles",
         "angles": [
@@ -231,8 +232,6 @@ TEST_DATA = {
                 "probability": 0.92,
             },
         ],
-        "probability": 0.92,
-        "version": {"major": 1, "minor": 0},
     },
 }
 
@@ -280,6 +279,8 @@ def test_civ_post_objects_do_not_exist(civ, error_message):
         InterfaceKind.InterfaceKindChoices.MULTIPLE_ANGLES,
         InterfaceKind.InterfaceKindChoices.ELLIPSE,
         InterfaceKind.InterfaceKindChoices.MULTIPLE_ELLIPSES,
+        InterfaceKind.InterfaceKindChoices.THREE_POINT_ANGLE,
+        InterfaceKind.InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
     ),
 )
 def test_civ_post_value_validation(kind):
@@ -329,6 +330,8 @@ def test_civ_post_value_validation(kind):
         InterfaceKind.InterfaceKindChoices.MULTIPLE_ANGLES,
         InterfaceKind.InterfaceKindChoices.ELLIPSE,
         InterfaceKind.InterfaceKindChoices.MULTIPLE_ELLIPSES,
+        InterfaceKind.InterfaceKindChoices.THREE_POINT_ANGLE,
+        InterfaceKind.InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
         # Do not test ANY type here as that is always valid
     ),
 )

@@ -531,7 +531,7 @@ ANSWER_TYPE_SCHEMA = {
                 "version": {"$ref": "#/definitions/version-object"},
                 "probability": {"type": "number", "minimum": 0, "maximum": 1},
             },
-            "required": ["angle"],
+            "required": ["version", "type", "angle"],
             "additionalProperties": False,
         },
         "M3AN": {
@@ -539,7 +539,7 @@ ANSWER_TYPE_SCHEMA = {
             "properties": {
                 "name": {"type": "string"},
                 "type": {"enum": ["Multiple three-point angles"]},
-                "boxes": {
+                "angles": {
                     "type": "array",
                     "items": {
                         "allOf": [
@@ -549,7 +549,7 @@ ANSWER_TYPE_SCHEMA = {
                 },
                 "version": {"$ref": "#/definitions/version-object"},
             },
-            "required": ["version", "type", "boxes"],
+            "required": ["version", "type", "angles"],
             "additionalProperties": False,
         },
         "version-object": {
