@@ -491,6 +491,67 @@ ANSWER_TYPE_SCHEMA = {
             "required": ["version", "type", "ellipses"],
             "additionalProperties": False,
         },
+        "3-point-angle-object": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "type": {"const": "Three-point angle"},
+                "angle": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "minItems": 3,
+                        "maxItems": 3,
+                    },
+                    "minItems": 3,
+                    "maxItems": 3,
+                },
+                "probability": {"type": "number", "minimum": 0, "maximum": 1},
+            },
+            "required": ["angle"],
+            "additionalProperties": False,
+        },
+        "3ANG": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "type": {"const": "Three-point angle"},
+                "angle": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "minItems": 3,
+                        "maxItems": 3,
+                    },
+                    "minItems": 3,
+                    "maxItems": 3,
+                },
+                "version": {"$ref": "#/definitions/version-object"},
+                "probability": {"type": "number", "minimum": 0, "maximum": 1},
+            },
+            "required": ["version", "type", "angle"],
+            "additionalProperties": False,
+        },
+        "M3AN": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "type": {"enum": ["Multiple three-point angles"]},
+                "angles": {
+                    "type": "array",
+                    "items": {
+                        "allOf": [
+                            {"$ref": "#/definitions/3-point-angle-object"}
+                        ]
+                    },
+                },
+                "version": {"$ref": "#/definitions/version-object"},
+            },
+            "required": ["version", "type", "angles"],
+            "additionalProperties": False,
+        },
         "version-object": {
             "type": "object",
             "properties": {
@@ -527,6 +588,8 @@ ANSWER_TYPE_SCHEMA = {
         {"$ref": "#/definitions/MANG"},
         {"$ref": "#/definitions/ELLI"},
         {"$ref": "#/definitions/MELL"},
+        {"$ref": "#/definitions/3ANG"},
+        {"$ref": "#/definitions/M3AN"},
     ],
 }
 
@@ -557,6 +620,8 @@ INTERFACE_VALUE_SCHEMA = {
         "MANG": ANSWER_TYPE_SCHEMA["definitions"]["MANG"],
         "ELLI": ANSWER_TYPE_SCHEMA["definitions"]["ELLI"],
         "MELL": ANSWER_TYPE_SCHEMA["definitions"]["MELL"],
+        "3ANG": ANSWER_TYPE_SCHEMA["definitions"]["3ANG"],
+        "M3AN": ANSWER_TYPE_SCHEMA["definitions"]["M3AN"],
         "CHOI": {"type": "string"},
         "MCHO": {"type": "array", "items": {"type": "string"}},
         "CHART": VEGA_LITE_SCHEMA,
@@ -571,6 +636,9 @@ INTERFACE_VALUE_SCHEMA = {
         "spline-object": ANSWER_TYPE_SCHEMA["definitions"]["spline-object"],
         "angle-object": ANSWER_TYPE_SCHEMA["definitions"]["angle-object"],
         "ellipse-object": ANSWER_TYPE_SCHEMA["definitions"]["ellipse-object"],
+        "3-point-angle-object": ANSWER_TYPE_SCHEMA["definitions"][
+            "3-point-angle-object"
+        ],
     },
     "anyOf": [
         {"$ref": "#/definitions/STR"},
@@ -595,5 +663,7 @@ INTERFACE_VALUE_SCHEMA = {
         {"$ref": "#/definitions/MANG"},
         {"$ref": "#/definitions/ELLI"},
         {"$ref": "#/definitions/MELL"},
+        {"$ref": "#/definitions/3ANG"},
+        {"$ref": "#/definitions/M3AN"},
     ],
 }

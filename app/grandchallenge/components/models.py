@@ -97,6 +97,8 @@ class InterfaceKindChoices(models.TextChoices):
     MULTIPLE_ANGLES = "MANG", _("Multiple angles")
     ELLIPSE = "ELLI", _("Ellipse")
     MULTIPLE_ELLIPSES = "MELL", _("Multiple ellipses")
+    THREE_POINT_ANGLE = "3ANG", _("Three-point angle")
+    MULTIPLE_THREE_POINT_ANGLES = "M3AN", _("Multiple three-point angles")
 
     # Choice Types
     CHOICE = "CHOI", _("Choice")
@@ -604,6 +606,8 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.MULTIPLE_ANGLES,
             InterfaceKind.InterfaceKindChoices.ELLIPSE,
             InterfaceKind.InterfaceKindChoices.MULTIPLE_ELLIPSES,
+            InterfaceKind.InterfaceKindChoices.THREE_POINT_ANGLE,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
         }
 
     @staticmethod
@@ -972,6 +976,7 @@ class ComponentInterface(OverlaySegmentsMixin):
             InterfaceKind.InterfaceKindChoices.MULTIPLE_LINES,
             InterfaceKind.InterfaceKindChoices.MULTIPLE_ANGLES,
             InterfaceKind.InterfaceKindChoices.MULTIPLE_ELLIPSES,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
         }
 
         if object_store_required and self.store_in_database:

@@ -1033,6 +1033,8 @@ class AnswerType(models.TextChoices):
     MULTIPLE_ANGLES = "MANG", "Multiple angles"
     ELLIPSE = "ELLI", "Ellipse"
     MULTIPLE_ELLIPSES = "MELL", "Multiple ellipses"
+    THREE_POINT_ANGLE = "3ANG", "Three-point angle"
+    MULTIPLE_THREE_POINT_ANGLES = "M3AN", "Multiple three-point angles"
 
     @staticmethod
     def get_choice_types():
@@ -1060,6 +1062,8 @@ class AnswerType(models.TextChoices):
             AnswerType.MULTIPLE_ANGLES,
             AnswerType.ELLIPSE,
             AnswerType.MULTIPLE_ELLIPSES,
+            AnswerType.THREE_POINT_ANGLE,
+            AnswerType.MULTIPLE_THREE_POINT_ANGLES,
         ]
 
     @staticmethod
@@ -1114,6 +1118,10 @@ ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
     AnswerType.MULTIPLE_ANGLES: [InterfaceKindChoices.MULTIPLE_ANGLES],
     AnswerType.ELLIPSE: [InterfaceKindChoices.ELLIPSE],
     AnswerType.MULTIPLE_ELLIPSES: [InterfaceKindChoices.MULTIPLE_ELLIPSES],
+    AnswerType.THREE_POINT_ANGLE: [InterfaceKindChoices.THREE_POINT_ANGLE],
+    AnswerType.MULTIPLE_THREE_POINT_ANGLES: [
+        InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES
+    ],
 }
 
 
@@ -1173,6 +1181,10 @@ ANSWER_TYPE_TO_QUESTION_WIDGET = {
     AnswerType.MULTIPLE_ANGLES: [QuestionWidgetKindChoices.ACCEPT_REJECT],
     AnswerType.ELLIPSE: [],
     AnswerType.MULTIPLE_ELLIPSES: [QuestionWidgetKindChoices.ACCEPT_REJECT],
+    AnswerType.THREE_POINT_ANGLE: [],
+    AnswerType.MULTIPLE_THREE_POINT_ANGLES: [
+        QuestionWidgetKindChoices.ACCEPT_REJECT
+    ],
 }
 
 ANSWER_TYPE_TO_QUESTION_WIDGET_CHOICES = {
@@ -1204,6 +1216,8 @@ EMPTY_ANSWER_VALUES = {
     AnswerType.MULTIPLE_ELLIPSES: None,
     AnswerType.MULTIPLE_CHOICE: [],
     AnswerType.MULTIPLE_CHOICE_DROPDOWN: [],
+    AnswerType.THREE_POINT_ANGLE: None,
+    AnswerType.MULTIPLE_THREE_POINT_ANGLES: None,
 }
 
 
