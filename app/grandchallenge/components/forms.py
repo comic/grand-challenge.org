@@ -176,7 +176,6 @@ class ComponentInterfaceCreateForm(Form):
             "hx-target": f"#form-{kwargs['auto_id'][:-3]}",
             "hx-swap": "outerHTML",
         }
-        widget_kwargs["attrs"] = attrs
 
         if selected_interface:
             widget = Select
@@ -194,6 +193,7 @@ class ComponentInterfaceCreateForm(Form):
                 "url"
             ] = "components:component-interface-autocomplete"
             widget_kwargs["forward"] = ["interface"]
+        widget_kwargs["attrs"] = attrs
 
         self.fields["interface"] = ModelChoiceField(
             initial=selected_interface,

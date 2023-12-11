@@ -1368,7 +1368,7 @@ class InterfaceProcessingMixin:
         else:
             messages.success(
                 self.request,
-                "Display set created. Image and file import jobs have been queued.",
+                "Display set created/updated. Image and file import jobs have been queued.",
             )
             return JsonResponse({"redirect": self.get_success_url()})
 
