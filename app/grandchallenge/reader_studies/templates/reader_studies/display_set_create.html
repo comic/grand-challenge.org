@@ -11,7 +11,7 @@
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'reader-studies:list' %}">Reader
             Studies</a></li>
-        <li class="breadcrumb-item"><a href="{{ reader_study.get_absolute_url }}">{{ reader_study }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ base_object.get_absolute_url }}">{{ base_object }}</a></li>
         <li class="breadcrumb-item active" aria-current="page">Add {{ type_to_add }}
         </li>
     </ol>
@@ -22,14 +22,14 @@
 
     <div id="objectSlug" class="d-none" data-slug="{{ object.slug }}"></div>
 
-    <form action="{% url 'reader-studies:display-set-create' slug=reader_study.slug %}" method="post" id="obj-form">
+    <form action="{% url 'reader-studies:display-set-create' slug=base_object.slug %}" method="post" id="obj-form">
       {% csrf_token %}
       {{ form|crispy }}
       <div id="new-interfaces"></div>
-      <button type="button" id="add-new" class="btn btn-outline-primary mb-2" hx-get="{% url 'reader-studies:display-set-new-interfaces-create' slug=reader_study.slug %}" hx-target="#new-interfaces" hx-swap="beforeend">Add value for new interface</button>
+      <button type="button" id="add-new" class="btn btn-outline-primary mb-2" hx-get="{% url 'reader-studies:display-set-new-interfaces-create' slug=base_object.slug %}" hx-target="#new-interfaces" hx-swap="beforeend">Add value for new interface</button>
       <div class="d-flex justify-content-between pb-2">
         <div>
-          <a href="{% url 'reader-studies:display_sets' slug=reader_study.slug %}" class="btn btn-outline-primary">Back</a>
+          <a href="{% url 'reader-studies:display_sets' slug=base_object.slug %}" class="btn btn-outline-primary">Back</a>
           <button type="submit" class="btn btn-primary">Save</button>
         </div>
       </div>

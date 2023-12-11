@@ -7,7 +7,7 @@
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'reader-studies:list' %}">Reader
             Studies</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'reader-studies:display_sets' slug=reader_study.slug %}">Display Sets</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'reader-studies:display_sets' slug=base_object.slug %}">Display Sets</a></li>
         <li class="breadcrumb-item active" aria-current="page">Update {{ object }}</li>
     </ol>
 {% endblock %}
@@ -18,16 +18,16 @@
 
 {% block content %}
     <h2>Update Display Set</h2>
-    <div id="objectSlug" class="d-none" data-slug="{{ reader_study.slug }}"></div>
+    <div id="objectSlug" class="d-none" data-slug="{{ base_object.slug }}"></div>
     {% include "grandchallenge/partials/messages.html" %}
     <form action="{% url 'reader-studies:display-set-update' pk=object.pk slug=object.reader_study.slug %}" method="post" class="obj-form" id="obj-form">
         {% csrf_token %}
         {{ form|crispy }}
         <div id="new-interfaces"></div>
-        <button type="button" id="add-new" class="btn btn-outline-primary mb-2" hx-get="{% url 'reader-studies:display-set-interfaces-create' pk=object.pk slug=reader_study.slug %}" hx-target="#new-interfaces" hx-swap="beforeend">Add value for new interface</button>
+        <button type="button" id="add-new" class="btn btn-outline-primary mb-2" hx-get="{% url 'reader-studies:display-set-interfaces-create' pk=object.pk slug=base_object.slug %}" hx-target="#new-interfaces" hx-swap="beforeend">Add value for new interface</button>
         <div class="d-flex justify-content-between pb-2">
         <div>
-          <a href="{% url 'reader-studies:display_sets' slug=reader_study.slug %}" class="btn btn-outline-primary">Back</a>
+          <a href="{% url 'reader-studies:display_sets' slug=base_object.slug %}" class="btn btn-outline-primary">Back</a>
           <button type="submit" class="btn btn-primary">Save</button>
         </div>
       </div>

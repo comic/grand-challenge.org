@@ -2,6 +2,7 @@ from dal import autocomplete
 from dal.widgets import Select
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.forms import Form, HiddenInput, ModelChoiceField, ModelForm
 
 from grandchallenge.algorithms.models import AlgorithmImage
@@ -141,6 +142,45 @@ class MultipleCIVCreateForm(Form):
             required=False,
             user=self.user,
         ).field
+
+    def clean(self):
+        cleaned_data = super().clean()
+        try:
+            cleaned_data.update(self._process_new_interfaces())
+        except ValidationError as e:
+            self.errors.update(e.message_dict)
+        return cleaned_data
+
+    def _process_new_interfaces(self):
+        new_interfaces = self.data.get("new_interfaces")
+        validated_data = {}
+        if new_interfaces:
+            errors = {}
+            for entry in new_interfaces:
+                interface = ComponentInterface.objects.get(
+                    pk=entry["interface"]
+                )
+                form = ComponentInterfaceCreateForm(
+                    data=entry,
+                    pk=None,
+                    interface=interface.pk,
+                    user=self.user,
+                    base_obj=self.base_obj,
+                    auto_id="%s",
+                    htmx_url=None,
+                )
+                if form.is_valid():
+                    cleaned = form.cleaned_data
+                    validated_data[cleaned["interface"].slug] = cleaned[
+                        interface.slug
+                    ]
+                else:
+                    errors.update(
+                        {entry["interface"]: form.errors[interface.slug]}
+                    )
+            if errors:
+                raise ValidationError(errors)
+        return validated_data
 
 
 class ComponentInterfaceCreateForm(Form):

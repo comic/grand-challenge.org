@@ -1,5 +1,10 @@
+import json
+import uuid
+
 from dal import autocomplete
 from django.db.models import Q, TextChoices
+from django.forms import Media
+from django.http import JsonResponse
 from django.views.generic import ListView, TemplateView
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
@@ -84,3 +89,65 @@ class ComponentInterfaceAutocomplete(
 
     def get_result_label(self, result):
         return result.title
+
+
+class InterfaceProcessingMixin:
+    def process_data_for_object(self, data):
+        raise NotImplementedError
+
+    def form_invalid(self, form):
+        return JsonResponse(form.errors, status=400)
+
+    def form_valid(self, form):
+        self.process_data_for_object(form.cleaned_data)
+        return JsonResponse({"redirect": self.get_success_url()})
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                "user": self.request.user,
+                "auto_id": f"id-{uuid.uuid4()}-%s",
+                "base_obj": self.base_object,
+            }
+        )
+        if self.request.method == "POST":
+            data = json.load(self.request)
+            for key, value in data.items():
+                if (
+                    key
+                    in [
+                        "order",
+                        "csrfmiddlewaretoken",
+                        "new_interfaces",
+                        "help_text",
+                        "current_value",
+                        "interface_slug",
+                    ]
+                    or "WidgetChoice" in key
+                    or "query" in key
+                ):
+                    continue
+                interface = ComponentInterface.objects.get(slug=key)
+                if interface.is_image_kind:
+                    data[key] = value
+            kwargs.update(
+                {
+                    "data": data,
+                }
+            )
+        return kwargs
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        media = Media()
+        for form_class in self.included_form_classes:
+            for widget in form_class._possible_widgets:
+                media = media + widget().media
+        context.update(
+            {
+                "base_object": self.base_object,
+                "form_media": media,
+            }
+        )
+        return context

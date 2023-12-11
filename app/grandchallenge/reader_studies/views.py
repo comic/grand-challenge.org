@@ -1,5 +1,4 @@
 import csv
-import json
 import uuid
 
 from django.contrib import messages
@@ -15,7 +14,7 @@ from django.core.exceptions import (
 from django.db import transaction
 from django.db.models import Count, Q
 from django.db.transaction import on_commit
-from django.forms import Form, Media
+from django.forms import Form
 from django.forms.utils import ErrorList
 from django.http import (
     Http404,
@@ -68,6 +67,7 @@ from grandchallenge.components.models import ComponentInterface
 from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
 )
+from grandchallenge.components.views import InterfaceProcessingMixin
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
@@ -1306,123 +1306,6 @@ class QuestionWidgetsView(View):
         return HttpResponse(form["widget"])
 
 
-class InterfaceProcessingMixin:
-    def _process_new_interfaces(self, form):
-        new_interfaces = form.data.get("new_interfaces")
-        validated_data = {}
-        if new_interfaces:
-            errors = {}
-            for entry in new_interfaces:
-                interface = ComponentInterface.objects.get(
-                    pk=entry["interface"]
-                )
-                form = ComponentInterfaceCreateForm(
-                    data=entry,
-                    pk=None,
-                    interface=interface.pk,
-                    user=self.request.user,
-                    base_obj=self.reader_study,
-                    auto_id="%s",
-                    htmx_url=None,
-                )
-                if form.is_valid():
-                    cleaned = form.cleaned_data
-                    validated_data[cleaned["interface"].slug] = cleaned[
-                        interface.slug
-                    ]
-                else:
-                    errors.update(
-                        {entry["interface"]: form.errors[interface.slug]}
-                    )
-            if errors:
-                raise ValidationError(errors)
-        return validated_data
-
-    def return_errors(self, errors):
-        return JsonResponse(errors, status=400)
-
-    def form_invalid(self, form):
-        errors = form.errors
-        try:
-            self._process_new_interfaces(form)
-        except ValidationError as e:
-            errors.update(e.message_dict)
-        return self.return_errors(errors)
-
-    def form_valid(self, form):
-        errors = {}
-        data = {}
-        try:
-            data = self._process_new_interfaces(form)
-        except ValidationError as e:
-            errors.update(e.message_dict)
-
-        try:
-            data.update(form.cleaned_data)
-            self.process_data_for_object(data)
-        except ValidationError as e:
-            errors.update(e.message_dict)
-
-        if errors:
-            return self.return_errors(errors)
-        else:
-            messages.success(
-                self.request,
-                "Display set created/updated. Image and file import jobs have been queued.",
-            )
-            return JsonResponse({"redirect": self.get_success_url()})
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update(
-            {
-                "user": self.request.user,
-                "auto_id": f"id-{uuid.uuid4()}-%s",
-                "base_obj": self.reader_study,
-            }
-        )
-        if self.request.method == "POST":
-            data = json.load(self.request)
-            for key, value in data.items():
-                if (
-                    key
-                    in [
-                        "order",
-                        "csrfmiddlewaretoken",
-                        "new_interfaces",
-                        "help_text",
-                        "current_value",
-                        "interface_slug",
-                    ]
-                    or "WidgetChoice" in key
-                    or "query" in key
-                ):
-                    continue
-                interface = ComponentInterface.objects.get(slug=key)
-                if interface.is_image_kind:
-                    data[key] = value
-            kwargs.update(
-                {
-                    "data": data,
-                }
-            )
-        return kwargs
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        media = Media()
-        for form_class in self.included_form_classes:
-            for widget in form_class._possible_widgets:
-                media = media + widget().media
-        context.update(
-            {
-                "reader_study": self.reader_study,
-                "form_media": media,
-            }
-        )
-        return context
-
-
 class DisplaySetUpdate(
     LoginRequiredMixin,
     InterfaceProcessingMixin,
@@ -1441,9 +1324,12 @@ class DisplaySetUpdate(
         ComponentInterfaceCreateForm,
         FileForm,
     )
+    success_message = (
+        "Display set updated. Image and file import jobs have been queued."
+    )
 
     @property
-    def reader_study(self):
+    def base_object(self):
         return ReaderStudy.objects.get(slug=self.kwargs["slug"])
 
     def get_success_url(self):
@@ -1629,9 +1515,16 @@ class AddDisplaySetToReaderStudy(
         DisplaySetCreateForm,
         ComponentInterfaceCreateForm,
     )
+    success_message = (
+        "Display set created. Image and file import jobs have been queued."
+    )
+
+    @property
+    def base_object(self):
+        return self.reader_study
 
     def get_permission_object(self):
-        return self.reader_study
+        return self.base_object
 
     def process_data_for_object(self, data):
         """Creates a display set"""
