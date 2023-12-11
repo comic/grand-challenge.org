@@ -112,28 +112,9 @@ class InterfaceProcessingMixin:
             }
         )
         if self.request.method == "POST":
-            data = json.load(self.request)
-            for key, value in data.items():
-                if (
-                    key
-                    in [
-                        "order",
-                        "csrfmiddlewaretoken",
-                        "new_interfaces",
-                        "help_text",
-                        "current_value",
-                        "interface_slug",
-                    ]
-                    or "WidgetChoice" in key
-                    or "query" in key
-                ):
-                    continue
-                interface = ComponentInterface.objects.get(slug=key)
-                if interface.is_image_kind:
-                    data[key] = value
             kwargs.update(
                 {
-                    "data": data,
+                    "data": json.load(self.request),
                 }
             )
         return kwargs
