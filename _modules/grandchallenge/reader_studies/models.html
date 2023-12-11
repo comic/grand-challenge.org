@@ -1172,6 +1172,8 @@
     <span class="n">MULTIPLE_ANGLES</span> <span class="o">=</span> <span class="s2">&quot;MANG&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple angles&quot;</span>
     <span class="n">ELLIPSE</span> <span class="o">=</span> <span class="s2">&quot;ELLI&quot;</span><span class="p">,</span> <span class="s2">&quot;Ellipse&quot;</span>
     <span class="n">MULTIPLE_ELLIPSES</span> <span class="o">=</span> <span class="s2">&quot;MELL&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple ellipses&quot;</span>
+    <span class="n">THREE_POINT_ANGLE</span> <span class="o">=</span> <span class="s2">&quot;3ANG&quot;</span><span class="p">,</span> <span class="s2">&quot;Three-point angle&quot;</span>
+    <span class="n">MULTIPLE_THREE_POINT_ANGLES</span> <span class="o">=</span> <span class="s2">&quot;M3AN&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple three-point angles&quot;</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">get_choice_types</span><span class="p">():</span>
@@ -1199,6 +1201,8 @@
             <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_ANGLES</span><span class="p">,</span>
             <span class="n">AnswerType</span><span class="o">.</span><span class="n">ELLIPSE</span><span class="p">,</span>
             <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_ELLIPSES</span><span class="p">,</span>
+            <span class="n">AnswerType</span><span class="o">.</span><span class="n">THREE_POINT_ANGLE</span><span class="p">,</span>
+            <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_THREE_POINT_ANGLES</span><span class="p">,</span>
         <span class="p">]</span>
 
     <span class="nd">@staticmethod</span>
@@ -1254,6 +1258,10 @@
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_ANGLES</span><span class="p">:</span> <span class="p">[</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_ANGLES</span><span class="p">],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">ELLIPSE</span><span class="p">:</span> <span class="p">[</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">ELLIPSE</span><span class="p">],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_ELLIPSES</span><span class="p">:</span> <span class="p">[</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_ELLIPSES</span><span class="p">],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">THREE_POINT_ANGLE</span><span class="p">:</span> <span class="p">[</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">THREE_POINT_ANGLE</span><span class="p">],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_THREE_POINT_ANGLES</span><span class="p">:</span> <span class="p">[</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_THREE_POINT_ANGLES</span>
+    <span class="p">],</span>
 <span class="p">}</span>
 
 
@@ -1316,6 +1324,10 @@
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_ANGLES</span><span class="p">:</span> <span class="p">[</span><span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">ACCEPT_REJECT</span><span class="p">],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">ELLIPSE</span><span class="p">:</span> <span class="p">[],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_ELLIPSES</span><span class="p">:</span> <span class="p">[</span><span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">ACCEPT_REJECT</span><span class="p">],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">THREE_POINT_ANGLE</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_THREE_POINT_ANGLES</span><span class="p">:</span> <span class="p">[</span>
+        <span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">ACCEPT_REJECT</span>
+    <span class="p">],</span>
 <span class="p">}</span>
 
 <span class="n">ANSWER_TYPE_TO_QUESTION_WIDGET_CHOICES</span> <span class="o">=</span> <span class="p">{</span>
@@ -1347,6 +1359,8 @@
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_ELLIPSES</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">:</span> <span class="p">[],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE_DROPDOWN</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">THREE_POINT_ANGLE</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_THREE_POINT_ANGLES</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">}</span>
 
 
