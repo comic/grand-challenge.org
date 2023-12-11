@@ -195,6 +195,45 @@ TEST_DATA = {
             },
         ],
     },
+    "3ANG": {
+        "name": "Some annotation",
+        "type": "Three-point angle",
+        "angle": [
+            [78.29, -17.14, 76.82],
+            [76.801, -57.62, 84.43],
+            [77.10, -18.97, 115.48],
+        ],
+        "probability": 0.92,
+        "version": {"major": 1, "minor": 0},
+    },
+    "M3AN": {
+        "name": "Some annotations",
+        "type": "Multiple three-point angles",
+        "angles": [
+            {
+                "name": "Annotation 1",
+                "type": "Three-point angle",
+                "angle": [
+                    [78.29, -17.14, 76.82],
+                    [76.801, -57.62, 84.43],
+                    [77.10, -18.97, 115.48],
+                ],
+                "probability": 0.92,
+            },
+            {
+                "name": "Annotation 2",
+                "type": "Three-point angle",
+                "angle": [
+                    [78.29, -17.14, 76.82],
+                    [76.801, -57.62, 84.43],
+                    [77.10, -18.97, 115.48],
+                ],
+                "probability": 0.92,
+            },
+        ],
+        "probability": 0.92,
+        "version": {"major": 1, "minor": 0},
+    },
 }
 
 
