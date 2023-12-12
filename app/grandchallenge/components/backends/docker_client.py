@@ -43,7 +43,14 @@ def pull_image(*, repo_tag, authenticate=False):
 
 
 def build_image(*, repo_tag, path):
-    return _run_docker_command("build", "--tag", repo_tag, path)
+    return _run_docker_command(
+        "build",
+        "--platform",
+        settings.COMPONENTS_CONTAINER_PLATFORM,
+        "--tag",
+        repo_tag,
+        path,
+    )
 
 
 def save_image(*, repo_tag, output):
@@ -170,6 +177,8 @@ def run_container(  # noqa: C901
         "json-file",
         "--log-opt",
         "max-size=1g",
+        "--platform",
+        settings.COMPONENTS_CONTAINER_PLATFORM,
         "--init",
     ]
 
