@@ -1,7 +1,10 @@
 from django.contrib import admin
+from django.contrib.auth import get_user_model
+from django.db.transaction import on_commit
 from django.utils.timezone import now
 from pyswot import is_academic
 
+from grandchallenge.profiles.tasks import deactivate_user
 from grandchallenge.verifications.models import (
     Verification,
     VerificationUserSet,
@@ -99,18 +102,35 @@ class VerificationAdmin(admin.ModelAdmin):
             return self.readonly_fields
 
 
+@admin.action(
+    description="Deactivate users",
+    permissions=("change",),
+)
+def deactivate_vus_users(modeladmin, request, queryset):
+    users = (
+        get_user_model()
+        .objects.filter(verificationuserset__in=queryset)
+        .distinct()
+    )
+
+    for user in users:
+        on_commit(
+            deactivate_user.signature(kwargs={"user_pk": user.pk}).apply_async
+        )
+
+
 @admin.register(VerificationUserSet)
 class VerificationUserSetAdmin(admin.ModelAdmin):
     readonly_fields = ("users",)
     list_display = (
         "pk",
         "created",
-        "modified",
         "active_usernames",
         "inactive_usernames",
     )
     list_prefetch_related = ("users",)
     search_fields = ("users__username",)
+    actions = (deactivate_vus_users,)
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)

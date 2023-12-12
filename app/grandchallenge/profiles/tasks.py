@@ -10,10 +10,16 @@ from django.utils.timezone import now
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
 def deactivate_user(*, user_pk):
-    user = get_user_model().objects.get(pk=user_pk)
+    user = (
+        get_user_model().objects.select_related("verification").get(pk=user_pk)
+    )
 
     user.is_active = False
     user.save()
+
+    if user.verification:
+        user.verification.is_verified = False
+        user.verification.save()
 
     queryset = Session.objects.order_by("expire_date")
     paginator = Paginator(object_list=queryset, per_page=1000)
