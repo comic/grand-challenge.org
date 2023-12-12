@@ -447,7 +447,7 @@ class SubmissionForm(
             >= 1
         )
         has_pending_evaluations = self._phase.has_pending_evaluations(
-            user=creator
+            user_pks=[creator.pk]
         )
 
         can_submit = (
@@ -462,6 +462,9 @@ class SubmissionForm(
             )
             self.add_error(None, error_message)
             raise ValidationError(error_message)
+        else:
+            if has_available_compute and not is_challenge_admin:
+                self._phase.check_submission_limit_avoidance(user=creator)
 
         return creator
 
