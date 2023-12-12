@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.base_user import BaseUserManager
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.mail import mail_managers
 from django.forms import CheckboxInput
 from django.utils.html import format_html
 from pyswot.pyswot import _domain_parts, _is_stoplisted
@@ -131,18 +132,24 @@ class ConfirmEmailForm(SaveFormInitMixin, forms.Form):
             deactivate_user.signature(
                 kwargs={"user_pk": self.user.pk}
             ).apply_async()
-            logger.error(
-                f"{self.user} was deactivated for using verification {token}"
-                "which does not belong to them."
+
+            mail_managers(
+                subject="User automatically deactivated",
+                message=format_html(
+                    (
+                        "{username} was deactivated for using verification {token}"
+                        "which does not belong to them."
+                    ),
+                    username=self.user.username,
+                    token=token,
+                ),
             )
+
             raise ValidationError("Token is invalid")
 
         if not email_verification_token_generator.check_token(
             self.user, token
         ):
-            logger.error(
-                f"{self.user} used invalid verification token {token}."
-            )
             raise ValidationError("Token is invalid")
 
         return token
