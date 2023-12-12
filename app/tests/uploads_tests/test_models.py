@@ -206,7 +206,7 @@ def test_size_of_creators_completed_uploads():
     upload.LIST_MAX_ITEMS = 1
     initial_upload_size = upload.size_of_creators_completed_uploads
 
-    assert type(initial_upload_size) == int
+    assert type(initial_upload_size) is int
 
     upload_files_for_user(user=u, n=upload.LIST_MAX_ITEMS + 1)
     # another users files should not be considered

@@ -1278,8 +1278,9 @@ def test_can_change_from_empty(django_capture_on_commit_callbacks):
 def test_cannot_change_image(algorithm_image):
     ai = AlgorithmImageFactory(image__from_path=algorithm_image)
 
+    ai.image = "blah"
+
     with pytest.raises(RuntimeError):
-        ai.image = "blah"
         ai.save()
 
 
