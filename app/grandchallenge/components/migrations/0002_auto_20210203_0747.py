@@ -9,7 +9,6 @@ import grandchallenge.core.validators
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("cases", "0001_initial"), ("components", "0001_initial")]
 
     operations = [

@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("forum_conversation", "0010_auto_20170120_0224")]
 
     operations = [migrations.RemoveField(model_name="post", name="poster_ip")]

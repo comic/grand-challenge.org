@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("algorithms", "0010_algorithm_repo_name")]
 
     operations = [

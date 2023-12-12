@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("workstations", "0002_session_auth_token")]
 
     operations = [

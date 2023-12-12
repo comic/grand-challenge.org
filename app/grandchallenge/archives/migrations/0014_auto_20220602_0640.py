@@ -7,7 +7,6 @@ import grandchallenge.core.storage
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("archives", "0013_alter_archive_view_content"),
     ]

@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("challenges", "0015_auto_20220412_1038"),
         ("pages", "0003_historicalpage"),

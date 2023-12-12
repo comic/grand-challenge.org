@@ -6,7 +6,6 @@ import grandchallenge.core.validators
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("reader_studies", "0040_auto_20230328_1106"),
     ]

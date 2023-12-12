@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("algorithms", "0005_algorithm_average_duration")]
 
     operations = [

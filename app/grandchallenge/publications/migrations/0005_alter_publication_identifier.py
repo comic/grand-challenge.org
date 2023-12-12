@@ -6,7 +6,6 @@ import grandchallenge.publications.fields
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("publications", "0004_publication_citation"),
     ]

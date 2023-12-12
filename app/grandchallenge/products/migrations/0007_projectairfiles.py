@@ -6,7 +6,6 @@ import grandchallenge.core.storage
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("products", "0006_product_ce_under")]
 
     operations = [

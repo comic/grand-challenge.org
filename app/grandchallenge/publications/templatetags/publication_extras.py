@@ -5,7 +5,6 @@ register = template.Library()
 
 @register.simple_tag
 def get_associated_objects(*, publication, checker):
-
     archives = publication.archive_set.all()
     algorithms = publication.algorithm_set.all()
     reader_studies = publication.readerstudy_set.all()

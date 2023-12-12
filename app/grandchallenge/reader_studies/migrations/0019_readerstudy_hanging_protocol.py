@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("hanging_protocols", "0001_initial"),
         ("reader_studies", "0018_auto_20220218_1221"),

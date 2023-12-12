@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("github", "0005_githubusertoken_github_user_id")]
 
     operations = [

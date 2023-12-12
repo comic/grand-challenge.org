@@ -6,7 +6,6 @@ import grandchallenge.publications.fields
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("challenges", "0018_remove_challenge_require_participant_review"),
     ]

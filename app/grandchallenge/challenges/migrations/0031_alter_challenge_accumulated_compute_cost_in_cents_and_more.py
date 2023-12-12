@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("challenges", "0030_challenge_compute_cost_euro_millicents_and_more"),
     ]

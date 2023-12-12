@@ -6,7 +6,6 @@ import grandchallenge.core.validators
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("cases", "0008_delete_rawimagefile"),
         ("reader_studies", "0025_auto_20220503_1226"),

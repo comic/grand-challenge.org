@@ -79,7 +79,6 @@ def do_test_serializer_valid(serializer_data, request=None):
 
 def do_test_serializer_fields(serializer_data, request=None):
     if not serializer_data.get("no_contains_check"):
-
         if request is not None:
             context = {"request": request}
         else:

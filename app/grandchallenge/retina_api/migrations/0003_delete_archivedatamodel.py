@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("retina_api", "0002_auto_20201001_0758")]
 
     operations = [migrations.DeleteModel(name="ArchiveDataModel")]

@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("algorithms", "0029_algorithmimage_latest_shimmed_version"),
     ]

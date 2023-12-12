@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("evaluation", "0002_delete_algorithmevaluation")]
 
     operations = [

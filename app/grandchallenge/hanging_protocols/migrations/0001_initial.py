@@ -11,7 +11,6 @@ import grandchallenge.core.validators
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [

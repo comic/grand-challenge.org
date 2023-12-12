@@ -6,7 +6,6 @@ import grandchallenge.core.validators
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("components", "0014_alter_componentinterface_kind"),
     ]

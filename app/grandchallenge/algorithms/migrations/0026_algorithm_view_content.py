@@ -6,7 +6,6 @@ import grandchallenge.core.validators
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("algorithms", "0025_algorithm_hanging_protocol"),
     ]

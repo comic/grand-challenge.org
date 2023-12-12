@@ -268,7 +268,6 @@ def create_algorithm_jobs(
     jobs = []
 
     for civ_set in civ_sets:
-
         if len(jobs) >= settings.ALGORITHMS_JOB_BATCH_LIMIT:
             raise TooManyJobsScheduled
 

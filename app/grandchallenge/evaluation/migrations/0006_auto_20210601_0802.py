@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("challenges", "0006_auto_20210601_0802"),
         ("evaluation", "0005_auto_20210423_1305"),

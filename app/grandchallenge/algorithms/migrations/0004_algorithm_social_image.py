@@ -6,7 +6,6 @@ import grandchallenge.core.storage
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("algorithms", "0003_algorithm_organizations")]
 
     operations = [

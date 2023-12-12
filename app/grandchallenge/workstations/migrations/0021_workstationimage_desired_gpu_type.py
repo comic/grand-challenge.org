@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("workstations", "0020_workstationimage_size_in_registry_and_more"),
     ]

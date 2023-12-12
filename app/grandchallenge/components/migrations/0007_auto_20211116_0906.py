@@ -8,7 +8,6 @@ import grandchallenge.core.validators
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("components", "0006_auto_20211027_0537")]
 
     operations = [

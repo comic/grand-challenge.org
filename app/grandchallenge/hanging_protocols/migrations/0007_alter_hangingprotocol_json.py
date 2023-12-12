@@ -6,7 +6,6 @@ import grandchallenge.core.validators
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("hanging_protocols", "0006_alter_hangingprotocol_json"),
     ]

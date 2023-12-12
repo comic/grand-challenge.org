@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("hanging_protocols", "0010_alter_hangingprotocol_json"),
         ("evaluation", "0043_method_size_in_registry_method_size_in_storage"),

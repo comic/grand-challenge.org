@@ -476,7 +476,9 @@ class AmazonSageMakerBatchExecutor(Executor):
                     "InvocationsMaxRetries": 0,
                 },
             )
-        except self._sagemaker_client.exceptions.ResourceLimitExceeded as error:
+        except (
+            self._sagemaker_client.exceptions.ResourceLimitExceeded
+        ) as error:
             raise RetryStep("Capacity Limit Exceeded") from error
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] == "ThrottlingException":

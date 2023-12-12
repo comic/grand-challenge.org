@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("components", "0014_alter_componentinterface_kind"),
         ("evaluation", "0033_auto_20230404_1208"),

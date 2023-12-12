@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("cases", "0007_remove_image_study"),
         ("studies", "0002_auto_20211012_0942"),

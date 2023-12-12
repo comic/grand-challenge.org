@@ -11,7 +11,6 @@ from grandchallenge.uploads.models import UserUpload
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def import_product_data(*, product_data_pk, company_data_pk, images_zip_pk):
-
     product_data = UserUpload.objects.get(pk=product_data_pk)
     company_data = UserUpload.objects.get(pk=company_data_pk)
     images_zip = UserUpload.objects.get(pk=images_zip_pk)

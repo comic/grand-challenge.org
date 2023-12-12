@@ -7,7 +7,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("challenges", "0006_auto_20210601_0802"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),

@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("hanging_protocols", "0010_alter_hangingprotocol_json"),
         ("reader_studies", "0046_alter_question_overlay_segments"),

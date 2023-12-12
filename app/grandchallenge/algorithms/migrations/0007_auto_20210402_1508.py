@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("algorithms", "0006_algorithm_use_flexible_inputs")]
 
     operations = [

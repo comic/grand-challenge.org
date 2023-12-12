@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("evaluation", "0003_phase_creator_must_be_verified")]
 
     operations = [

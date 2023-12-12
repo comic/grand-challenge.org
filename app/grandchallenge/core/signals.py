@@ -118,7 +118,6 @@ def remove_permission_request_notifications(sender, *, instance, created, **_):
 def update_editor_follows(  # noqa: C901
     instance, action, reverse, model, pk_set, **_
 ):
-
     if action not in ["post_add", "pre_remove", "pre_clear"]:
         # nothing to do for the other actions
         return

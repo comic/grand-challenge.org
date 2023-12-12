@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("algorithms", "0030_algorithm_editor_notes"),
     ]

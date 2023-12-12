@@ -11,7 +11,6 @@ import grandchallenge.core.storage
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [

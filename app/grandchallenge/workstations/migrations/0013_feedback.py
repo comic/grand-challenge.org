@@ -10,7 +10,6 @@ import grandchallenge.workstations.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("workstations", "0012_auto_20220713_2004"),
     ]

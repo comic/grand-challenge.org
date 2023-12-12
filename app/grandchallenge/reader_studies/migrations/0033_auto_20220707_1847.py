@@ -7,7 +7,6 @@ import grandchallenge.core.validators
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         (
             "workstation_configs",

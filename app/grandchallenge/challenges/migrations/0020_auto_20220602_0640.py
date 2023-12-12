@@ -7,7 +7,6 @@ import grandchallenge.core.storage
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         (
             "challenges",

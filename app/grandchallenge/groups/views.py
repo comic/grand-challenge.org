@@ -68,7 +68,6 @@ class UserAutocomplete(LoginRequiredMixin, autocomplete.Select2QuerySetView):
         return qs
 
     def get_result_label(self, result):
-
         try:
             is_verified = result.verification.is_verified
         except Verification.DoesNotExist:

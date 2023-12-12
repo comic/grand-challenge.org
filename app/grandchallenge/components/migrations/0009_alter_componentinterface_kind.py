@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("components", "0008_alter_componentinterfacevalue_file")]
 
     operations = [

@@ -7,7 +7,6 @@ import grandchallenge.core.fields
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("workstation_configs", "0019_workstationconfig_show_swivel_tool"),
     ]

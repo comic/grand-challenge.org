@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("algorithms", "0037_alter_algorithm_credits_per_job"),
     ]

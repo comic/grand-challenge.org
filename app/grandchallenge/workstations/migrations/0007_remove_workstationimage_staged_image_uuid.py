@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("workstations", "0006_workstationimage_user_upload")]
 
     operations = [

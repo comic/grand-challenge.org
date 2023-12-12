@@ -255,7 +255,6 @@ class TestObjectPermissionRequiredViews:
             ),
             ("submission-list", {}, "view_submission", s),
         ]:
-
             assign_perm(permission, u, obj)
 
             response = get_view_for_user(

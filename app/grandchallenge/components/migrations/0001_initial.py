@@ -12,7 +12,6 @@ import grandchallenge.core.storage
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [("cases", "0001_initial")]

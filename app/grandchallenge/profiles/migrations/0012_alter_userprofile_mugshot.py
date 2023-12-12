@@ -7,7 +7,6 @@ import grandchallenge.core.storage
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("profiles", "0011_userprofile_receive_newsletter"),
     ]

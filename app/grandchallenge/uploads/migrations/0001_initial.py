@@ -10,7 +10,6 @@ import grandchallenge.uploads.models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [("challenges", "0001_initial")]

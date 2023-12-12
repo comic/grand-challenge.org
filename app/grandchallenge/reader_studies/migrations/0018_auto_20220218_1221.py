@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("components", "0008_alter_componentinterfacevalue_file"),
         ("reader_studies", "0017_auto_20220228_1443"),

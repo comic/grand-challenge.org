@@ -5,7 +5,6 @@ from django_add_default_value import AddDefaultValue
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("contenttypes", "0002_remove_content_type_name"),
         ("actstream", "0003_add_follow_flag"),

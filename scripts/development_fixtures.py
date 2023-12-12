@@ -239,7 +239,6 @@ def _create_demo_challenge(users, algorithm):
     combined.phases.set(demo.phase_set.all())
 
     for phase_num, phase in enumerate(demo.phase_set.all()):
-
         assign_perm("create_phase_workspace", users["demop"], phase)
 
         phase.score_title = "Accuracy ± std"

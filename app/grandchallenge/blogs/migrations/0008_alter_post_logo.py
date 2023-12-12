@@ -7,7 +7,6 @@ import grandchallenge.core.storage
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("blogs", "0007_auto_20220517_0740"),
     ]

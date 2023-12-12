@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("components", "0010_auto_20220602_0902"),
         ("reader_studies", "0030_question_interface"),

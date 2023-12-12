@@ -9,7 +9,6 @@ import grandchallenge.challenges.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("challenges", "0033_challengerequestuserobjectpermission_and_more"),
     ]

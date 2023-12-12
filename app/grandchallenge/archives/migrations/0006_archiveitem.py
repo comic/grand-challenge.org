@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("components", "0003_auto_20210323_1452"),
         ("archives", "0005_archive_social_image"),

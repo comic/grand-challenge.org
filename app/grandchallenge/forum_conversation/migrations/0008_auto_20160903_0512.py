@@ -19,7 +19,6 @@ def reverse_topic_first_post_last_post(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("forum_conversation", "0007_auto_20160903_0450")]
 
     operations = [

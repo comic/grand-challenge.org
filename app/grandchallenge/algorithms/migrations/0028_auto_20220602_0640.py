@@ -7,7 +7,6 @@ import grandchallenge.core.storage
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("algorithms", "0027_auto_20220503_1334"),
     ]

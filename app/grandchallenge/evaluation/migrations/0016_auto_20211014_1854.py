@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("evaluation", "0015_submission_user_upload")]
 
     operations = [

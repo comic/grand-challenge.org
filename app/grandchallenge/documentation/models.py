@@ -11,7 +11,6 @@ from grandchallenge.subdomains.utils import reverse
 
 
 class DocPage(models.Model):
-
     UP = "UP"
     DOWN = "DOWN"
     FIRST = "FIRST"

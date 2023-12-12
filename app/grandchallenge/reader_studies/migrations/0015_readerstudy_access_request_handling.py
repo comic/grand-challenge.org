@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("reader_studies", "0014_readerstudy_roll_over_answers_for_n_cases")
     ]

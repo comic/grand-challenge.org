@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("hanging_protocols", "0001_initial"),
         ("archives", "0010_archive_access_request_handling"),

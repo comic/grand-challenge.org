@@ -8,7 +8,6 @@ import grandchallenge.evaluation.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("evaluation", "0035_alter_phase_submissions_close_at_and_more"),
     ]
