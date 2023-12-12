@@ -26,7 +26,7 @@ class UserProfileInline(admin.StackedInline):
     permissions=("change",),
 )
 def deactivate_users(modeladmin, request, queryset):
-    for user in queryset:
+    for user in queryset.filter(is_active=True):
         deactivate_user.signature(kwargs={"user_pk": user.pk}).apply_async()
 
 

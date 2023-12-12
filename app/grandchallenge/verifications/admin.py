@@ -109,7 +109,7 @@ class VerificationAdmin(admin.ModelAdmin):
 def deactivate_vus_users(modeladmin, request, queryset):
     users = (
         get_user_model()
-        .objects.filter(verificationuserset__in=queryset)
+        .objects.filter(verificationuserset__in=queryset, is_active=True)
         .distinct()
     )
 
