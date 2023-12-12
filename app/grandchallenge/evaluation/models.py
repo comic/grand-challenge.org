@@ -4,10 +4,12 @@ from statistics import mean, median
 
 from actstream.actions import follow, is_following
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.sites.models import Site
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.mail import mail_managers
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Count, Q
@@ -56,6 +58,7 @@ from grandchallenge.hanging_protocols.models import ViewContentMixin
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
+from grandchallenge.verifications.models import VerificationUserSet
 
 logger = logging.getLogger(__name__)
 
@@ -703,10 +706,10 @@ class Phase(FieldChangeMixin, ViewContentMixin, UUIDModel):
             "next_submission_at": next_sub_at,
         }
 
-    def has_pending_evaluations(self, *, user):
+    def has_pending_evaluations(self, *, user_pks):
         return (
             Evaluation.objects.filter(
-                submission__phase=self, submission__creator=user
+                submission__phase=self, submission__creator__pk__in=user_pks
             )
             .exclude(
                 status__in=(
@@ -716,6 +719,47 @@ class Phase(FieldChangeMixin, ViewContentMixin, UUIDModel):
                 )
             )
             .exists()
+        )
+
+    def check_submission_limit_avoidance(self, *, user):
+        related_users = (
+            get_user_model()
+            .objects.exclude(pk=user.pk)
+            .exclude(groups__admins_of_challenge__phase=self)
+            .filter(
+                verificationuserset__users=user,
+                is_active=True,
+                groups__participants_of_challenge__phase=self,
+            )
+            .distinct()
+        )
+
+        if related_users and (
+            self.has_pending_evaluations(
+                user_pks=[related_user.pk for related_user in related_users]
+            )
+            or any(
+                self.get_next_submission(user=related_user)[
+                    "remaining_submissions"
+                ]
+                < 1
+                for related_user in related_users
+            )
+        ):
+            self.send_submission_limit_avoidance_email(user=user)
+
+    def send_submission_limit_avoidance_email(self, *, user):
+        mail_managers(
+            subject="Suspected submission limit avoidance",
+            message=format_html(
+                "User '{username}' suspected of avoiding submission limits for '{phase}'.\n\nSee:\n{vus_links}",
+                username=user.username,
+                phase=self,
+                vus_links="\n".join(
+                    vus.get_absolute_url()
+                    for vus in VerificationUserSet.objects.filter(users=user)
+                ),
+            ),
         )
 
     @property

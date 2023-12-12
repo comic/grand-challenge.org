@@ -312,7 +312,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
             {
                 **self.phase.get_next_submission(user=self.request.user),
                 "has_pending_evaluations": self.phase.has_pending_evaluations(
-                    user=self.request.user
+                    user_pks=[self.request.user.pk]
                 ),
                 "phase": self.phase,
             }

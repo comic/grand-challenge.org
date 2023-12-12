@@ -1,11 +1,15 @@
 {% extends "base.html" %}
 {% load profiles %}
 {% load static %}
+{% load url %}
 
 {% block title %}Verification User Set - {{ block.super }}{% endblock %}
 
 {% block content %}
     <h2>Verification User Set</h2>
+
+    <a class="btn btn-primary" href="{% url 'verifications:verification-user-set-detail' pk=object.pk|add:'-1' %}">Previous</a>
+    <a class="btn btn-primary" href="{% url 'verifications:verification-user-set-detail' pk=object.pk|add:'1' %}">Next</a>
 
     <h3>Users</h3>
 
@@ -33,6 +37,12 @@
             </tbody>
         </table>
     </div>
+
+    <h3>Verification Domains</h3>
+
+    <pre>
+    {% for domain in domains %}"{{ domain }}",{% endfor %}
+    </pre>
 
     <h3>Submissions</h3>
 
