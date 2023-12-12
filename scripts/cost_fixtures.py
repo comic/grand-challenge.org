@@ -2,6 +2,7 @@ import os
 import random
 from contextlib import contextmanager
 from datetime import timedelta
+from pathlib import Path
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -197,13 +198,13 @@ def _create_submission(algorithm, challenge, archive_items):
 
 @contextmanager
 def _uploaded_container_image():
-    path = "scripts/algorithm_io.tar"
+    path = Path(__file__).parent / "algorithm_io.tar"
     yield from _uploaded_file(path=path)
 
 
 @contextmanager
 def _uploaded_image_file():
-    path = "scripts/image10x10x10.mha"
+    path = Path(__file__).parent / "image10x10x10.mha"
     yield from _uploaded_file(path=path)
 
 
