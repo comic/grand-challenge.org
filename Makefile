@@ -114,7 +114,7 @@ retina_archive_structures:
 
 
 scripts/algorithm_io.tar:
-	docker buildx build -t algorithm_io app/tests/resources/gc_demo_algorithm/
+	docker buildx build --platform linux/amd64 -t algorithm_io app/tests/resources/gc_demo_algorithm/
 	docker save algorithm_io -o scripts/algorithm_io.tar
 	chmod a+r scripts/algorithm_io.tar
 
