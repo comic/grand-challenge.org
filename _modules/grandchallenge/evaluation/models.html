@@ -84,10 +84,12 @@
 
 <span class="kn">from</span> <span class="nn">actstream.actions</span> <span class="kn">import</span> <span class="n">follow</span><span class="p">,</span> <span class="n">is_following</span>
 <span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">django.contrib.auth</span> <span class="kn">import</span> <span class="n">get_user_model</span>
 <span class="kn">from</span> <span class="nn">django.contrib.auth.models</span> <span class="kn">import</span> <span class="n">Group</span>
 <span class="kn">from</span> <span class="nn">django.contrib.sites.models</span> <span class="kn">import</span> <span class="n">Site</span>
 <span class="kn">from</span> <span class="nn">django.core.cache</span> <span class="kn">import</span> <span class="n">cache</span>
 <span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ObjectDoesNotExist</span><span class="p">,</span> <span class="n">ValidationError</span>
+<span class="kn">from</span> <span class="nn">django.core.mail</span> <span class="kn">import</span> <span class="n">mail_managers</span>
 <span class="kn">from</span> <span class="nn">django.core.validators</span> <span class="kn">import</span> <span class="n">MaxValueValidator</span><span class="p">,</span> <span class="n">MinValueValidator</span>
 <span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
 <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Count</span><span class="p">,</span> <span class="n">Q</span>
@@ -136,6 +138,7 @@
 <span class="kn">from</span> <span class="nn">grandchallenge.notifications.models</span> <span class="kn">import</span> <span class="n">Notification</span><span class="p">,</span> <span class="n">NotificationType</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.subdomains.utils</span> <span class="kn">import</span> <span class="n">reverse</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.uploads.models</span> <span class="kn">import</span> <span class="n">UserUpload</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.verifications.models</span> <span class="kn">import</span> <span class="n">VerificationUserSet</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -794,10 +797,10 @@
         <span class="p">}</span></div>
 
 
-    <span class="k">def</span> <span class="nf">has_pending_evaluations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">has_pending_evaluations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">user_pks</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="n">Evaluation</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                <span class="n">submission__phase</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">submission__creator</span><span class="o">=</span><span class="n">user</span>
+                <span class="n">submission__phase</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">submission__creator__pk__in</span><span class="o">=</span><span class="n">user_pks</span>
             <span class="p">)</span>
             <span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
                 <span class="n">status__in</span><span class="o">=</span><span class="p">(</span>
@@ -807,6 +810,47 @@
                 <span class="p">)</span>
             <span class="p">)</span>
             <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">check_submission_limit_avoidance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+        <span class="n">related_users</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">get_user_model</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">user</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">groups__admins_of_challenge__phase</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">verificationuserset__users</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
+                <span class="n">is_active</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">groups__participants_of_challenge__phase</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">distinct</span><span class="p">()</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">related_users</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">has_pending_evaluations</span><span class="p">(</span>
+                <span class="n">user_pks</span><span class="o">=</span><span class="p">[</span><span class="n">related_user</span><span class="o">.</span><span class="n">pk</span> <span class="k">for</span> <span class="n">related_user</span> <span class="ow">in</span> <span class="n">related_users</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">get_next_submission</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="n">related_user</span><span class="p">)[</span>
+                    <span class="s2">&quot;remaining_submissions&quot;</span>
+                <span class="p">]</span>
+                <span class="o">&lt;</span> <span class="mi">1</span>
+                <span class="k">for</span> <span class="n">related_user</span> <span class="ow">in</span> <span class="n">related_users</span>
+            <span class="p">)</span>
+        <span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">send_submission_limit_avoidance_email</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">send_submission_limit_avoidance_email</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+        <span class="n">mail_managers</span><span class="p">(</span>
+            <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;Suspected submission limit avoidance&quot;</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="n">format_html</span><span class="p">(</span>
+                <span class="s2">&quot;User &#39;</span><span class="si">{username}</span><span class="s2">&#39; suspected of avoiding submission limits for &#39;</span><span class="si">{phase}</span><span class="s2">&#39;.</span><span class="se">\n\n</span><span class="s2">See:</span><span class="se">\n</span><span class="si">{vus_links}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">username</span><span class="o">=</span><span class="n">user</span><span class="o">.</span><span class="n">username</span><span class="p">,</span>
+                <span class="n">phase</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+                <span class="n">vus_links</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="n">vus</span><span class="o">.</span><span class="n">get_absolute_url</span><span class="p">()</span>
+                    <span class="k">for</span> <span class="n">vus</span> <span class="ow">in</span> <span class="n">VerificationUserSet</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">users</span><span class="o">=</span><span class="n">user</span><span class="p">)</span>
+                <span class="p">),</span>
+            <span class="p">),</span>
         <span class="p">)</span>
 
     <span class="nd">@property</span>
