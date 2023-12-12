@@ -109,8 +109,9 @@ class VerificationUserSetDetail(
 
         domains = {
             user.verification.email.split("@")[1]
-            for user in self.object.users.all()
-            if user.verification and user.verification.email_is_verified
+            for user in self.object.users.filter(
+                verification__email_is_verified=True
+            )
         }
 
         context.update(

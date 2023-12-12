@@ -4,6 +4,7 @@ from celery import shared_task
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sessions.models import Session
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from django.utils.timezone import now
 
@@ -17,9 +18,12 @@ def deactivate_user(*, user_pk):
     user.is_active = False
     user.save()
 
-    if user.verification:
+    try:
         user.verification.is_verified = False
         user.verification.save()
+    except ObjectDoesNotExist:
+        # No verification, no problem
+        pass
 
     queryset = Session.objects.order_by("expire_date")
     paginator = Paginator(object_list=queryset, per_page=1000)
