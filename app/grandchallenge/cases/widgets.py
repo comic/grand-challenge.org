@@ -106,7 +106,7 @@ class FlexibleImageField(MultiValueField):
             ModelChoiceField(queryset=image_queryset),
             ModelMultipleChoiceField(queryset=upload_queryset),
         ]
-        super().__init__(fields=list_fields, *args, **kwargs)
+        super().__init__(*args, fields=list_fields, **kwargs)
         self.require_all_fields = require_all_fields
 
     def compress(self, values):

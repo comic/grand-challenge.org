@@ -121,7 +121,7 @@ class FollowFilter(FilterSet):
 
     def get_content_type(self, queryset, name, value):
         ct = ContentType.objects.filter(
-            model=re.split(r"_", value, 1)[0],
-            app_label=re.split(r"_", value, 1)[1],
+            model=re.split(r"_", value, maxsplit=1)[0],
+            app_label=re.split(r"_", value, maxsplit=1)[1],
         ).get()
         return queryset.filter(content_type__exact=ct)

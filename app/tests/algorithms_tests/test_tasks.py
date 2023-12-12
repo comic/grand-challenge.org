@@ -416,7 +416,8 @@ def test_algorithm_input_image_multiple_files(
     alg.algorithm.inputs.set(ComponentInterface.objects.all())
     us = RawImageUploadSessionFactory()
 
-    ImageFactory(origin=us), ImageFactory(origin=us)
+    ImageFactory(origin=us)
+    ImageFactory(origin=us)
     ci = ComponentInterface.objects.get(slug=DEFAULT_INPUT_INTERFACE_SLUG)
 
     civ = ComponentInterfaceValue.objects.create(interface=ci)
@@ -515,7 +516,8 @@ def test_algorithm_input_user_upload(
 def test_add_image_to_component_interface_value():
     # Override the celery settings
     us = RawImageUploadSessionFactory()
-    ImageFactory(origin=us), ImageFactory(origin=us)
+    ImageFactory(origin=us)
+    ImageFactory(origin=us)
     ci = ComponentInterface.objects.get(slug=DEFAULT_INPUT_INTERFACE_SLUG)
 
     civ = ComponentInterfaceValueFactory(interface=ci, image=None, file=None)
