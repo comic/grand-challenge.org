@@ -728,7 +728,6 @@ class Phase(FieldChangeMixin, ViewContentMixin, UUIDModel):
             .exclude(groups__admins_of_challenge__phase=self)
             .filter(
                 verificationuserset__users=user,
-                is_active=True,
                 groups__participants_of_challenge__phase=self,
             )
             .distinct()
