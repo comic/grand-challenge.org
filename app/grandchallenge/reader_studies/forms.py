@@ -334,7 +334,12 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
         )
 
     def widget_choices(self):
-        answer_type = self["answer_type"].value()
+        if not self.instance.is_fully_editable:
+            # disabled form elements are not sent along with the form,
+            # so retrieve the answer type from the instance
+            answer_type = self.instance.answer_type
+        else:
+            answer_type = self["answer_type"].value()
         choices = [*BLANK_CHOICE_DASH]
 
         if not answer_type:
