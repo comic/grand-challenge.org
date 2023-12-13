@@ -12,7 +12,6 @@ from grandchallenge.evaluation.views import (
     EvaluationUpdate,
     LeaderboardDetail,
     LeaderboardRedirect,
-    LegacySubmissionCreate,
     MethodCreate,
     MethodDetail,
     MethodList,
@@ -85,11 +84,6 @@ urlpatterns = [
         "<slug>/submissions/create/",
         SubmissionCreate.as_view(),
         name="submission-create",
-    ),
-    path(
-        "<slug>/submissions/create-legacy/",
-        LegacySubmissionCreate.as_view(),
-        name="submission-create-legacy",
     ),
     path(
         "<slug>/submissions/<uuid:pk>/",

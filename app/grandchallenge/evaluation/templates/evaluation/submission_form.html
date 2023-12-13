@@ -40,49 +40,38 @@
 
     {% if "change_challenge" in challenge_perms %}
 
-        {% if request.resolver_match.view_name != "evaluation:submission-create-legacy" %}
-
-            <div class="alert alert-info" role="alert">
-                <p>
-                    Challenge participants will be allowed to create
-                    {{ phase.submissions_limit_per_user_per_period }} submission{{ phase.submissions_limit_per_user_per_period|pluralize }}
-                    {% if phase.submission_limit_period %}
-                        per {% if phase.submission_limit_period > 1 %}{{ phase.submission_limit_period }}{% endif %}
-                        day{{ phase.submission_limit_period|pluralize }}
-                    {% else %}
-                        in total
-                    {% endif %}
-                    {% if phase.submissions_open_at and phase.submissions_close_at %}between {{ phase.submissions_open_at }} ({{ TIME_ZONE }}) and {{ phase.submissions_close_at }} ({{ TIME_ZONE }})
-                    {% elif phase.submissions_open_at and not phase.submissions_close_at %} from {{ phase.submissions_open_at }} ({{ TIME_ZONE }}) onwards
-                    {% elif not phase.submissions_open_at and  phase.submissions_close_at %} until {{ phase.submissions_close_at }} ({{ TIME_ZONE }})
-                    {% endif %}
-                    to this phase.</p>
-                    <p>You can change the submission limit and period and the submission start and end dates in
-                    <a href="{% url 'evaluation:phase-update' challenge_short_name=challenge.short_name slug=phase.slug %}">
-                        Phase Settings</a>.
-                </p>
-                {% if phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM %}
-                    <p>
-                        For each submission, {{ phase.count_valid_archive_items }}
-                        algorithm job{{ phase.count_valid_archive_items|pluralize }} will be created
-                        from the {{ phase.count_valid_archive_items }} valid item{{ phase.count_valid_archive_items|pluralize }}
-                        in <a href="{{ phase.archive.get_absolute_url }}">{{ phase.archive }}</a>.
-                        Each individual algorithm job will have a time limit of {{ phase.algorithm_time_limit|naturaldelta }}.
-                    </p>
+        <div class="alert alert-info" role="alert">
+            <p>
+                Challenge participants will be allowed to create
+                {{ phase.submissions_limit_per_user_per_period }} submission{{ phase.submissions_limit_per_user_per_period|pluralize }}
+                {% if phase.submission_limit_period %}
+                    per {% if phase.submission_limit_period > 1 %}{{ phase.submission_limit_period }}{% endif %}
+                    day{{ phase.submission_limit_period|pluralize }}
+                {% else %}
+                    in total
                 {% endif %}
+                {% if phase.submissions_open_at and phase.submissions_close_at %}between {{ phase.submissions_open_at }} ({{ TIME_ZONE }}) and {{ phase.submissions_close_at }} ({{ TIME_ZONE }})
+                {% elif phase.submissions_open_at and not phase.submissions_close_at %} from {{ phase.submissions_open_at }} ({{ TIME_ZONE }}) onwards
+                {% elif not phase.submissions_open_at and  phase.submissions_close_at %} until {{ phase.submissions_close_at }} ({{ TIME_ZONE }})
+                {% endif %}
+                to this phase.</p>
+            <p>You can change the submission limit and period and the submission start and end dates in
+                <a href="{% url 'evaluation:phase-update' challenge_short_name=challenge.short_name slug=phase.slug %}">
+                    Phase Settings</a>.
+            </p>
+            {% if phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM %}
                 <p>
-                    As an admin for this challenge you can create as many submissions as you like as long as there is budget available.
+                    For each submission, {{ phase.count_valid_archive_items }}
+                    algorithm job{{ phase.count_valid_archive_items|pluralize }} will be created
+                    from the {{ phase.count_valid_archive_items }} valid item{{ phase.count_valid_archive_items|pluralize }}
+                    in <a href="{{ phase.archive.get_absolute_url }}">{{ phase.archive }}</a>.
+                    Each individual algorithm job will have a time limit of {{ phase.algorithm_time_limit|naturaldelta }}.
                 </p>
-                <hr>
-                <p class="mb-0">
-                    Please use
-                    <a href="{% url 'evaluation:submission-create-legacy' challenge_short_name=challenge.short_name slug=phase.slug %}">
-                        this form</a>
-                    if you would like to create a submission on the behalf of one of the participants of this challenge.
-                </p>
-            </div>
-
-        {% endif %}
+            {% endif %}
+            <p>
+                As an admin for this challenge you can create as many submissions as you like as long as there is budget available.
+            </p>
+        </div>
 
         {% crispy form %}
 
