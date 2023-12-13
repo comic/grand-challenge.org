@@ -457,16 +457,45 @@ class SubmissionForm(
         )
 
         if not can_submit:
-            error_message = (
-                "A new submission cannot be created for this user at this time"
-            )
-            self.add_error(None, error_message)
-            raise ValidationError(error_message)
-        else:
-            if has_available_compute and not is_challenge_admin:
-                self._phase.check_submission_limit_avoidance(user=creator)
+            self.raise_submission_limit_error()
+        elif has_available_compute and not is_challenge_admin:
+            self.check_submission_limit_avoidance(creator=creator)
 
         return creator
+
+    def raise_submission_limit_error(self):
+        error_message = (
+            "A new submission cannot be created for this user at this time"
+        )
+        self.add_error(None, error_message)
+        raise ValidationError(error_message)
+
+    def check_submission_limit_avoidance(self, *, creator):
+        related_users = (
+            get_user_model()
+            .objects.exclude(pk=creator.pk)
+            .exclude(groups__admins_of_challenge__phase=self._phase)
+            .filter(
+                verificationuserset__users=creator,
+                groups__participants_of_challenge__phase=self._phase,
+            )
+            .distinct()
+        )
+
+        if related_users and (
+            self._phase.has_pending_evaluations(
+                user_pks=[related_user.pk for related_user in related_users]
+            )
+            or any(
+                self._phase.get_next_submission(user=related_user)[
+                    "remaining_submissions"
+                ]
+                < 1
+                for related_user in related_users
+            )
+        ):
+            self._phase.handle_submission_limit_avoidance(user=creator)
+            self.raise_submission_limit_error()
 
     class Meta:
         model = Submission

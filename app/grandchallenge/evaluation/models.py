@@ -4,7 +4,6 @@ from statistics import mean, median
 
 from actstream.actions import follow, is_following
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.sites.models import Site
 from django.core.cache import cache
@@ -56,6 +55,7 @@ from grandchallenge.evaluation.utils import (
 )
 from grandchallenge.hanging_protocols.models import ViewContentMixin
 from grandchallenge.notifications.models import Notification, NotificationType
+from grandchallenge.profiles.tasks import deactivate_user
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.verifications.models import VerificationUserSet
@@ -721,37 +721,17 @@ class Phase(FieldChangeMixin, ViewContentMixin, UUIDModel):
             .exists()
         )
 
-    def check_submission_limit_avoidance(self, *, user):
-        related_users = (
-            get_user_model()
-            .objects.exclude(pk=user.pk)
-            .exclude(groups__admins_of_challenge__phase=self)
-            .filter(
-                verificationuserset__users=user,
-                groups__participants_of_challenge__phase=self,
-            )
-            .distinct()
+    def handle_submission_limit_avoidance(self, *, user):
+        on_commit(
+            deactivate_user.signature(kwargs={"user_pk": user.pk}).apply_async
         )
-
-        if related_users and (
-            self.has_pending_evaluations(
-                user_pks=[related_user.pk for related_user in related_users]
-            )
-            or any(
-                self.get_next_submission(user=related_user)[
-                    "remaining_submissions"
-                ]
-                < 1
-                for related_user in related_users
-            )
-        ):
-            self.send_submission_limit_avoidance_email(user=user)
-
-    def send_submission_limit_avoidance_email(self, *, user):
         mail_managers(
             subject="Suspected submission limit avoidance",
             message=format_html(
-                "User '{username}' suspected of avoiding submission limits for '{phase}'.\n\nSee:\n{vus_links}",
+                (
+                    "User '{username}' suspected of avoiding submission limits "
+                    "for '{phase}' and was deactivated.\n\nSee:\n{vus_links}"
+                ),
                 username=user.username,
                 phase=self,
                 vus_links="\n".join(
