@@ -1309,3 +1309,20 @@ def test_question_form_initial_widget():
     qu.widget = QuestionWidgetKindChoices.ACCEPT_REJECT
     form2 = QuestionForm(instance=qu)
     assert form2.initial_widget() == QuestionWidgetKindChoices.ACCEPT_REJECT
+
+
+@pytest.mark.django_db
+def test_question_widget_choices_for_non_editable_instance():
+    # no matter whether the question is editable, widget choices should be the same
+    qu = QuestionFactory(answer_type=AnswerType.TEXT)
+    form = QuestionForm(instance=qu)
+    assert form.widget_choices() == [
+        ("TEXT_INPUT", "Text Input"),
+        ("TEXT_AREA", "Text Area"),
+    ]
+    AnswerFactory(question=qu, answer="Foo")
+    form = QuestionForm(instance=qu)
+    assert form.widget_choices() == [
+        ("TEXT_INPUT", "Text Input"),
+        ("TEXT_AREA", "Text Area"),
+    ]
