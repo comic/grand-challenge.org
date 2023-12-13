@@ -464,9 +464,7 @@ class SubmissionForm(
         return creator
 
     def raise_submission_limit_error(self):
-        error_message = (
-            "A new submission cannot be created for this user at this time"
-        )
+        error_message = "You cannot create a new submission at this time"
         self.add_error(None, error_message)
         raise ValidationError(error_message)
 
