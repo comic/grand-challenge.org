@@ -554,7 +554,14 @@ def test_reader_study_copy(
         overlay_segments={"foo": "bar"},
         look_up_table=lut,
         widget=QuestionWidgetKindChoices.NUMBER_INPUT,
+        answer_max_value=20,
+        answer_min_value=1,
+        answer_step_size=0.5,
+        answer_min_length=1,
+        answer_max_length=3,
+        answer_match_pattern=r"^hello world$",
     )
+    CategoricalOptionFactory(question=question, title="option1")
     QuestionFactory(
         reader_study=rs,
         answer_type=Question.AnswerType.BOOL,
@@ -660,18 +667,27 @@ def test_reader_study_copy(
 
     assert question.reader_study == rs
     assert copied_question.pk != question.pk
-    assert copied_question.question_text == question.question_text
-    assert copied_question.help_text == question.help_text
-    assert copied_question.answer_type == question.answer_type
-    assert copied_question.image_port == question.image_port
-    assert copied_question.required == question.required
-    assert copied_question.direction == question.direction
-    assert copied_question.scoring_function == question.scoring_function
-    assert copied_question.order == question.order
-    assert copied_question.interface == question.interface
-    assert copied_question.look_up_table == question.look_up_table
-    assert copied_question.overlay_segments == question.overlay_segments
-    assert copied_question.widget == question.widget
+    assert copied_question.reader_study != question.reader_study
+
+    # check that all but the specified fields have been copied over
+    non_copied_fields = [
+        "questionuserobjectpermission",
+        "questiongroupobjectpermission",
+        "answer",
+        "reader_study",
+        "id",
+        "created",
+        "modified",
+        "options",
+    ]
+    for field in copied_question._meta.get_fields():
+        if field.name not in non_copied_fields:
+            assert getattr(copied_question, field.name) == getattr(
+                question, field.name
+            )
+
+    assert copied_question.options.get().title == question.options.get().title
+    assert copied_question.options.get().pk != question.options.get().pk
 
     with django_capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
