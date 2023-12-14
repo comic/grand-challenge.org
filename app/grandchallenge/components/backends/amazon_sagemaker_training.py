@@ -1,3 +1,5 @@
+from django.conf import settings
+
 from grandchallenge.components.backends.amazon_sagemaker_base import (
     AmazonSageMakerBaseExecutor,
 )
@@ -11,25 +13,63 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
 
     @staticmethod
     def get_job_name(*, event):
-        raise NotImplementedError
+        return event["TrainingJobName"]
 
     def _get_job_status(self, *, event):
-        raise NotImplementedError
+        return event["TrainingJobStatus"]
 
     def _get_start_time(self, *, event):
-        raise NotImplementedError
+        return event.get("TrainingStartTime")
 
     def _get_end_time(self, *, event):
-        raise NotImplementedError
+        return event.get("TrainingEndTime")
 
     def _get_instance_name(self, *, event):
-        raise NotImplementedError
+        return event["ResourceConfig"]["InstanceType"]
 
     def _create_job_boto(self):
-        raise NotImplementedError
+        self._sagemaker_client.create_training_job(
+            TrainingJobName=self._sagemaker_job_name,
+            AlgorithmSpecification={
+                # https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_AlgorithmSpecification.html
+                "TrainingInputMode": "File",  # Pipe | File | FastFile
+                "TrainingImage": self._exec_image_repo_tag,
+                "ContainerArguments": [
+                    "invoke",
+                    "--file",
+                    f"s3://{settings.COMPONENTS_INPUT_BUCKET_NAME}/{self._invocation_key}",
+                ],
+            },
+            RoleArn=settings.COMPONENTS_AMAZON_SAGEMAKER_EXECUTION_ROLE_ARN,
+            OutputDataConfig={
+                # https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_OutputDataConfig.html
+                # TODO maybe don't put this in the io
+                "S3OutputPath": f"s3://{settings.COMPONENTS_OUTPUT_BUCKET_NAME}/{self._io_prefix}/.sagemaker-outputs",
+            },
+            ResourceConfig={
+                # https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_ResourceConfig.html
+                "VolumeSizeInGB": 30,  # Matches SageMaker Batch Inference
+                "InstanceType": self._instance_type.name,
+                "InstanceCount": 1,
+            },
+            StoppingCondition={
+                # https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_StoppingCondition.html
+                "MaxRuntimeInSeconds": self._time_limit,
+            },
+            # TODO Retry strategy?
+            Environment=self.invocation_environment,
+            VpcConfig={
+                "SecurityGroupIds": [
+                    settings.COMPONENTS_AMAZON_SAGEMAKER_SECURITY_GROUP_ID
+                ],
+                "Subnets": settings.COMPONENTS_AMAZON_SAGEMAKER_SUBNETS,
+            },
+        )
 
     def _stop_job_boto(self):
-        raise NotImplementedError
+        self._sagemaker_client.stop_training_job(
+            TrainingJobName=self._sagemaker_job_name
+        )
 
     def _get_invocation_json(self, *args, **kwargs):
         # SageMaker Training Jobs expect a list

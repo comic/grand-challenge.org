@@ -135,6 +135,14 @@ class Executor(ABC):
         ...
 
     @property
+    def invocation_environment(self):
+        return {  # Up to 16 pairs
+            "LOG_LEVEL": "INFO",
+            "PYTHONUNBUFFERED": "1",
+            "no_proxy": "amazonaws.com",
+        }
+
+    @property
     def compute_cost_euro_millicents(self):
         duration = self.duration
         if duration is None:

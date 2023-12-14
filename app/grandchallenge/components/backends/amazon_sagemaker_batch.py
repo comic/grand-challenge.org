@@ -58,10 +58,7 @@ class AmazonSageMakerBatchExecutor(AmazonSageMakerBaseExecutor):
                 "InstanceType": self._instance_type.name,
                 "InstanceCount": 1,
             },
-            Environment={  # Up to 16 pairs
-                "LOG_LEVEL": "INFO",
-                "no_proxy": "amazonaws.com",
-            },
+            Environment=self.invocation_environment,
             ModelClientConfig={
                 "InvocationsTimeoutInSeconds": self._time_limit,
                 "InvocationsMaxRetries": 0,

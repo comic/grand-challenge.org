@@ -104,7 +104,8 @@ class DockerExecutor(DockerConnectionMixin, Executor):
 
     def _execute_container(self, *, input_civs, input_prefixes) -> None:
         environment = {
-            "NVIDIA_VISIBLE_DEVICES": settings.COMPONENTS_NVIDIA_VISIBLE_DEVICES
+            **self.invocation_environment,
+            "NVIDIA_VISIBLE_DEVICES": settings.COMPONENTS_NVIDIA_VISIBLE_DEVICES,
         }
 
         if settings.COMPONENTS_DOCKER_TASK_SET_AWS_ENV:

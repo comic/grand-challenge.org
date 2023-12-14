@@ -372,8 +372,7 @@ def _get_shim_env_vars(*, original_config):
         "GRAND_CHALLENGE_COMPONENT_ENTRYPOINT_B64J": encode_b64j(
             val=entrypoint
         ),
-        "no_proxy": "amazonaws.com",
-        "PYTHONUNBUFFERED": "1",
+        "TMPDIR": "/sagemaker-shim-unpacked",
     }
 
 
@@ -404,8 +403,9 @@ def _mutate_container_image(
                 filter=_set_root_555_perms,
             )
 
-            for dir in ["/input", "/output", "/tmp"]:
-                # /tmp is required by staticx
+            for dir in ["/input", "/output", "/sagemaker-shim-unpacked"]:
+                # staticx will unpack into ${TMPDIR}
+                # In sagemaker-shim we then set this back to /tmp
                 tarinfo = tarfile.TarInfo(dir)
                 tarinfo.type = tarfile.DIRTYPE
                 tarinfo.uid = 0
