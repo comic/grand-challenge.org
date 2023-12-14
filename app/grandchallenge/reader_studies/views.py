@@ -642,20 +642,12 @@ class ReaderStudyCopy(
                 rs.add_editor(editor)
         if form.cleaned_data["copy_questions"]:
             for question in reader_study.questions.all():
-                q = Question.objects.create(
-                    reader_study=rs,
-                    question_text=question.question_text,
-                    help_text=question.help_text,
-                    answer_type=question.answer_type,
-                    image_port=question.image_port,
-                    required=question.required,
-                    direction=question.direction,
-                    scoring_function=question.scoring_function,
-                    order=question.order,
-                    interface=question.interface,
-                    look_up_table=question.look_up_table,
-                    overlay_segments=question.overlay_segments,
-                )
+                # duplicate the instance, Django will do an SQL INSERT when the
+                # pk is set to None and you save an instance
+                question.pk = None
+                question.reader_study = rs
+                question.save()
+                q = Question.objects.order_by("created").last()
                 for option in question.options.all():
                     CategoricalOption.objects.create(
                         question=q, title=option.title, default=option.default

@@ -544,7 +544,7 @@ def test_reader_study_copy(
         reader_study=rs,
         question_text="question 1",
         help_text="Some help text",
-        answer_type=Question.AnswerType.BOOL,
+        answer_type=Question.AnswerType.NUMBER,
         image_port=Question.ImagePort.MAIN,
         required=False,
         direction=Question.Direction.VERTICAL,
@@ -553,6 +553,7 @@ def test_reader_study_copy(
         interface=ComponentInterfaceFactory(),
         overlay_segments={"foo": "bar"},
         look_up_table=lut,
+        widget=QuestionWidgetKindChoices.NUMBER_INPUT,
     )
     QuestionFactory(
         reader_study=rs,
@@ -670,6 +671,7 @@ def test_reader_study_copy(
     assert copied_question.interface == question.interface
     assert copied_question.look_up_table == question.look_up_table
     assert copied_question.overlay_segments == question.overlay_segments
+    assert copied_question.widget == question.widget
 
     with django_capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
