@@ -103,7 +103,12 @@ class Executor(ABC):
 
     @staticmethod
     @abstractmethod
-    def get_job_params(*, event):
+    def get_job_name(*, event):
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def get_job_params(*, job_name):
         ...
 
     @property

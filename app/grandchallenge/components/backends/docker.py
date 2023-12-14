@@ -73,7 +73,11 @@ class DockerExecutor(DockerConnectionMixin, Executor):
         docker_client.remove_container(name=self.container_name)
 
     @staticmethod
-    def get_job_params(*, event):
+    def get_job_name(*, event):
+        raise NotImplementedError
+
+    @staticmethod
+    def get_job_params(*, job_name):
         raise NotImplementedError
 
     @property

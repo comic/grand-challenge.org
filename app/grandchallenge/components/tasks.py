@@ -762,7 +762,8 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
     """
     Backend = import_string(backend)  # noqa: N806
 
-    job_params = Backend.get_job_params(event=event)
+    job_name = Backend.get_job_name(event=event)
+    job_params = Backend.get_job_params(job_name=job_name)
 
     job = get_model_instance(
         pk=job_params.pk,
