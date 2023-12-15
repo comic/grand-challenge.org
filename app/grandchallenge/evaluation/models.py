@@ -523,6 +523,7 @@ class Phase(FieldChangeMixin, ViewContentMixin, UUIDModel):
         permissions = (
             ("create_phase_submission", "Create Phase Submission"),
             ("create_phase_workspace", "Create Phase Workspace"),
+            ("configure_algorithm_phase", "Configure Algorithm Phase"),
         )
 
     def __str__(self):
