@@ -372,7 +372,6 @@ def _get_shim_env_vars(*, original_config):
         "GRAND_CHALLENGE_COMPONENT_ENTRYPOINT_B64J": encode_b64j(
             val=entrypoint
         ),
-        "TMPDIR": "/sagemaker-shim-unpacked",
     }
 
 
@@ -403,9 +402,8 @@ def _mutate_container_image(
                 filter=_set_root_555_perms,
             )
 
-            for dir in ["/input", "/output", "/sagemaker-shim-unpacked"]:
-                # staticx will unpack into ${TMPDIR}
-                # In sagemaker-shim we then set this back to /tmp
+            for dir in ["/input", "/output", "/tmp"]:
+                # staticx will unpack into /tmp
                 tarinfo = tarfile.TarInfo(dir)
                 tarinfo.type = tarfile.DIRTYPE
                 tarinfo.uid = 0
@@ -418,6 +416,11 @@ def _mutate_container_image(
                 "crane",
                 "mutate",
                 original_repo_tag,
+                # Running as root is required on SageMaker Training
+                # due to the permissions of most of the filesystem
+                # including /tmp which we need to use
+                "--user",
+                "0:0",
                 "--cmd",
                 "",
                 "--entrypoint",

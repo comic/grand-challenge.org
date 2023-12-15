@@ -680,6 +680,7 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
             okay_error_messages = {
                 # Unstoppable job:
                 "The request was rejected because the transform job is in status",
+                "The request was rejected because the training job is in status",
                 # Job was never created:
                 "Could not find job to update with name",
             }
