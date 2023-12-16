@@ -1,12 +1,8 @@
-import os
 import random
-from contextlib import contextmanager
 from datetime import timedelta
-from pathlib import Path
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.files.base import ContentFile
 from django.utils.timezone import now
 
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
@@ -18,9 +14,18 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
 )
 from grandchallenge.core.fixtures import create_uploaded_image
-from grandchallenge.evaluation.models import Evaluation, Method, Submission
+from grandchallenge.evaluation.models import (
+    Evaluation,
+    Method,
+    Phase,
+    Submission,
+)
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.workstations.models import Workstation
+from scripts.algorithm_evaluation_fixtures import (
+    _gc_demo_algorithm,
+    _uploaded_image_file,
+)
 
 
 def run():
@@ -130,7 +135,7 @@ def _create_challenge(
     for participant in participants:
         c.add_participant(participant)
 
-    p = c.phase_set.first()
+    p = Phase.objects.create(challenge=c, title="Phase 1")
 
     p.algorithm_inputs.set(inputs)
     p.algorithm_outputs.set(outputs)
@@ -144,7 +149,7 @@ def _create_challenge(
 
     m = Method(creator=creator, phase=p)
 
-    with _uploaded_container_image() as container:
+    with _gc_demo_algorithm() as container:
         m.image.save("algorithm_io.tar", container)
 
     return c
@@ -161,7 +166,7 @@ def _create_algorithm(*, creator, inputs, outputs, suffix):
 
     algorithm_image = AlgorithmImage(creator=creator, algorithm=algorithm)
 
-    with _uploaded_container_image() as container:
+    with _gc_demo_algorithm() as container:
         algorithm_image.image.save("algorithm_io.tar", container)
 
     return algorithm
@@ -194,21 +199,3 @@ def _create_submission(algorithm, challenge, archive_items):
         submission=sub, method=phase.method_set.last()
     )
     e1.inputs.add(*eval_inputs)
-
-
-@contextmanager
-def _uploaded_container_image():
-    path = Path(__file__).parent / "algorithm_io.tar"
-    yield from _uploaded_file(path=path)
-
-
-@contextmanager
-def _uploaded_image_file():
-    path = Path(__file__).parent / "image10x10x10.mha"
-    yield from _uploaded_file(path=path)
-
-
-def _uploaded_file(*, path):
-    with open(os.path.join(settings.SITE_ROOT, path), "rb") as f:
-        with ContentFile(f.read()) as content:
-            yield content

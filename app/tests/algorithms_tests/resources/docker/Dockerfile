@@ -1,12 +1,15 @@
-FROM python:3.10-alpine
+FROM python:3.10-slim
 
 ENV PYTHONUNBUFFERED 1
 
-WORKDIR /tmp
+RUN useradd -ms /bin/bash myuser
+RUN groupadd -r mygroup
+RUN usermod -a -G mygroup myuser
 
-RUN addgroup -S app && adduser -S -G app app
-USER app
+WORKDIR /home/myuser
 
-ADD run_algorithm.py /tmp
+USER myuser
+
+COPY run_algorithm.py .
 
 ENTRYPOINT ["python", "run_algorithm.py"]

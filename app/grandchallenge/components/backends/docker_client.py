@@ -167,8 +167,6 @@ def run_container(  # noqa: C901
         str(settings.COMPONENTS_CPU_SHARES),
         "--cpuset-cpus",
         _get_cpuset_cpus(),
-        "--cap-drop",
-        "all",
         "--security-opt",
         "no-new-privileges",
         "--pids-limit",
@@ -187,6 +185,9 @@ def run_container(  # noqa: C901
 
     if remove:
         docker_args.append("--rm")
+
+    if not settings.COMPONENTS_DOCKER_KEEP_CAPS_UNSAFE:
+        docker_args.extend(["--cap-drop", "all"])
 
     if settings.COMPONENTS_DOCKER_RUNTIME is not None:
         docker_args.extend(["--runtime", settings.COMPONENTS_DOCKER_RUNTIME])
