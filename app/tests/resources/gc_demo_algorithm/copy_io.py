@@ -6,6 +6,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 from shutil import copy
+from tempfile import TemporaryDirectory
 from warnings import warn
 
 # noinspection PyUnresolvedReferences
@@ -68,6 +69,27 @@ def check_cuda():
         print(f"CUDA - Pynvml error: {error}")
 
 
+def check_temporary_file():
+    with TemporaryDirectory() as tmp_dir:
+        file = Path(tmp_dir) / "test"
+        file.touch()
+        print(file)
+
+        directory = Path(tmp_dir) / "1" / "2"
+        directory.mkdir(parents=True)
+        print(directory)
+
+    file = Path("/tmp") / "test"
+    file.touch()
+    print(file)
+
+    tmp_directory = Path("/tmp") / "1" / "2"
+    tmp_directory.mkdir(parents=True)
+    print(directory)
+
+    print("TEMPORARY FILE - successfully created")
+
+
 def create_output():
     res = {"score": 1}  # dummy metric for ranking on leaderboard
     files = {x for x in Path("/input").rglob("*") if x.is_file()}
@@ -108,6 +130,9 @@ if __name__ == "__main__":
     print("")
 
     check_cuda()
+    print("")
+
+    check_temporary_file()
     print("")
 
     create_output()

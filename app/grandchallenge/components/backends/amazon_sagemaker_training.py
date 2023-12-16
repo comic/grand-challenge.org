@@ -57,7 +57,11 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
                 "MaxRuntimeInSeconds": self._time_limit,
             },
             # TODO Retry strategy?
-            Environment=self.invocation_environment,
+            Environment={
+                **self.invocation_environment,
+                # https://docs.aws.amazon.com/sagemaker/latest/dg/model-train-storage.html#model-train-storage-env-var-summary
+                "GRAND_CHALLENGE_COMPONENT_WRITABLE_DIRECTORIES": "/opt/ml/output/data:/opt/ml/model:/opt/ml/checkpoints:/tmp",
+            },
             VpcConfig={
                 "SecurityGroupIds": [
                     settings.COMPONENTS_AMAZON_SAGEMAKER_SECURITY_GROUP_ID

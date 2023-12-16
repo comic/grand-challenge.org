@@ -410,7 +410,7 @@ def _mutate_container_image(
                 tarinfo.type = tarfile.DIRTYPE
                 tarinfo.uid = 0
                 tarinfo.gid = 0
-                tarinfo.mode = 0o777
+                tarinfo.mode = 0o755 if dir == "/input" else 0o777
                 f.addfile(tarinfo=tarinfo)
 
         _repo_login_and_run(
