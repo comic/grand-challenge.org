@@ -1,5 +1,7 @@
+import grp
 import json
 import os
+import pwd
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -91,6 +93,14 @@ def create_output():
 
 
 if __name__ == "__main__":
+    print(f"Current user: {pwd.getpwuid(os.getuid())}")
+    print(f"Current group: {grp.getgrgid(os.getgid())}")
+    print("")
+
+    for k, v in os.environ.items():
+        print(f"{k}={v}")
+    print("")
+
     check_connectivity()
     print("")
 

@@ -366,12 +366,14 @@ def _get_shim_env_vars(*, original_config):
     """Get the environment variables for a shimmed container image"""
     cmd = original_config["config"].get("Cmd")
     entrypoint = original_config["config"].get("Entrypoint")
+    user = original_config["config"]["User"]
 
     return {
         "GRAND_CHALLENGE_COMPONENT_CMD_B64J": encode_b64j(val=cmd),
         "GRAND_CHALLENGE_COMPONENT_ENTRYPOINT_B64J": encode_b64j(
             val=entrypoint
         ),
+        "GRAND_CHALLENGE_COMPONENT_USER": user,
     }
 
 
@@ -420,7 +422,7 @@ def _mutate_container_image(
                 # due to the permissions of most of the filesystem
                 # including /tmp which we need to use
                 "--user",
-                "0:0",
+                "0",
                 "--cmd",
                 "",
                 "--entrypoint",
