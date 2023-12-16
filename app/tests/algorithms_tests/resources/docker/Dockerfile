@@ -1,9 +1,14 @@
-FROM python:3.10-alpine
+FROM python:3.10-slim
 
 ENV PYTHONUNBUFFERED 1
 
-RUN addgroup -S app && adduser -S -G app app
-USER app
+RUN useradd -ms /bin/bash myuser
+RUN groupadd -r mygroup
+RUN usermod -a -G mygroup myuser
+
+WORKDIR /home/myuser
+
+USER myuser
 
 COPY run_algorithm.py .
 
