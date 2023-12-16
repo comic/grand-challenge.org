@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.utils._os import safe_join
 
 from grandchallenge.components.backends.amazon_sagemaker_base import (
     AmazonSageMakerBaseExecutor,
@@ -10,6 +11,10 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
     def _log_group_name(self):
         # Hardcoded by AWS
         return "/aws/sagemaker/TrainingJobs"
+
+    @property
+    def _training_output_prefix(self):
+        return safe_join("/training-outputs", *self.job_path_parts)
 
     @staticmethod
     def get_job_name(*, event):
@@ -43,8 +48,7 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
             RoleArn=settings.COMPONENTS_AMAZON_SAGEMAKER_EXECUTION_ROLE_ARN,
             OutputDataConfig={
                 # https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_OutputDataConfig.html
-                # TODO maybe don't put this in the io
-                "S3OutputPath": f"s3://{settings.COMPONENTS_OUTPUT_BUCKET_NAME}/{self._io_prefix}/.sagemaker-outputs",
+                "S3OutputPath": f"s3://{settings.COMPONENTS_OUTPUT_BUCKET_NAME}/{self._training_output_prefix}",
             },
             ResourceConfig={
                 # https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_ResourceConfig.html
@@ -56,7 +60,6 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
                 # https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_StoppingCondition.html
                 "MaxRuntimeInSeconds": self._time_limit,
             },
-            # TODO Retry strategy?
             Environment={
                 **self.invocation_environment,
                 # https://docs.aws.amazon.com/sagemaker/latest/dg/model-train-storage.html#model-train-storage-env-var-summary
@@ -73,6 +76,14 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
     def _stop_job_boto(self):
         self._sagemaker_client.stop_training_job(
             TrainingJobName=self._sagemaker_job_name
+        )
+
+    def deprovision(self):
+        super().deprovision()
+
+        self._delete_objects(
+            bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+            prefix=self._training_output_prefix,
         )
 
     def _get_invocation_json(self, *args, **kwargs):
