@@ -387,12 +387,12 @@ def _mutate_container_image(
 
         with tarfile.open(new_layer, "w") as f:
 
-            def _set_root_555_perms(
+            def _set_root_500_perms(
                 tarinfo,
             ):
                 tarinfo.uid = 0
                 tarinfo.gid = 0
-                tarinfo.mode = 0o555
+                tarinfo.mode = 0o500
                 return tarinfo
 
             f.add(
@@ -401,7 +401,7 @@ def _mutate_container_image(
                     f"sagemaker-shim-{version}-Linux-x86_64"
                 ),
                 arcname="/sagemaker-shim",
-                filter=_set_root_555_perms,
+                filter=_set_root_500_perms,
             )
 
             for dir in ["/input", "/output", "/tmp"]:

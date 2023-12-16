@@ -90,6 +90,14 @@ def check_temporary_file():
     print("TEMPORARY FILE - successfully created")
 
 
+def check_permissions():
+    try:
+        Path("/tmp").chmod(0o777)
+        warn("COULD CHANGE DIRECTORY PERMS!")
+    except PermissionError as e:
+        print(f"CHMOD PERMISSIONS - Could not change permissions {e}")
+
+
 def create_output():
     res = {"score": 1}  # dummy metric for ranking on leaderboard
     files = {x for x in Path("/input").rglob("*") if x.is_file()}
@@ -133,6 +141,9 @@ if __name__ == "__main__":
     print("")
 
     check_temporary_file()
+    print("")
+
+    check_permissions()
     print("")
 
     create_output()
