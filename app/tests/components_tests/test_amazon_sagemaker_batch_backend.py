@@ -167,6 +167,7 @@ def test_execute(settings):
                 "TransformJobName": executor._sagemaker_job_name,
                 "Environment": {
                     "LOG_LEVEL": "INFO",
+                    "PYTHONUNBUFFERED": "1",
                     "no_proxy": "amazonaws.com",
                 },
                 "ModelClientConfig": {
@@ -537,7 +538,11 @@ def test_handle_completed_job():
     return_code = 0
 
     with io.BytesIO() as f:
-        f.write(json.dumps({"return_code": return_code}).encode("utf-8"))
+        f.write(
+            json.dumps(
+                {"return_code": return_code, "pk": f"algorithms-job-{pk}"}
+            ).encode("utf-8")
+        )
         f.seek(0)
         executor._s3_client.upload_fileobj(
             Fileobj=f,
