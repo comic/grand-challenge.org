@@ -188,6 +188,16 @@ def run_container(  # noqa: C901
     if remove:
         docker_args.append("--rm")
 
+    if settings.COMPONENTS_DOCKER_ADD_CAP_SET_UID_GID_UNSAFE:
+        docker_args.extend(
+            [
+                "--cap-add",
+                "CAP_SETGID",
+                "--cap-add",
+                "CAP_SETUID",
+            ]
+        )
+
     if settings.COMPONENTS_DOCKER_RUNTIME is not None:
         docker_args.extend(["--runtime", settings.COMPONENTS_DOCKER_RUNTIME])
 
