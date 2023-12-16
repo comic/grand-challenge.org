@@ -193,6 +193,45 @@ def upload_to_registry_and_sagemaker(
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def update_container_image_shim(
+    *,
+    pk: uuid.UUID,
+    app_label: str,
+    model_name: str,
+):
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+    instance = model.objects.get(pk=pk)
+
+    if (
+        instance.is_in_registry
+        and instance.SHIM_IMAGE
+        and (
+            instance.latest_shimmed_version
+            != settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
+        )
+    ):
+        existing_shimmed_repo_tag = instance.shimmed_repo_tag
+
+        if instance.is_on_sagemaker:
+            delete_sagemaker_model(repo_tag=existing_shimmed_repo_tag)
+            instance.is_on_sagemaker = False
+            instance.save()
+
+        remove_tag_from_registry(repo_tag=existing_shimmed_repo_tag)
+        instance.latest_shimmed_version = ""
+        instance.save()
+
+        shim_container_image(instance=instance)
+        instance.is_on_sagemaker = False
+        instance.save()
+
+        if settings.COMPONENTS_CREATE_SAGEMAKER_MODEL:
+            create_sagemaker_model(repo_tag=instance.shimmed_repo_tag)
+            instance.is_on_sagemaker = True
+            instance.save()
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def remove_inactive_container_images():
     """Removes inactive container images from the registry"""
     for app_label, model_name, related_name in (
