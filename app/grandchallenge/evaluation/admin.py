@@ -1,6 +1,9 @@
+import json
+
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.forms import ModelForm
+from django.utils.safestring import mark_safe
 
 from grandchallenge.components.admin import (
     ComponentImageAdmin,
@@ -13,6 +16,9 @@ from grandchallenge.core.admin import (
     UserObjectPermissionAdmin,
 )
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
+from grandchallenge.core.utils.grand_challenge_forge import (
+    get_forge_json_description,
+)
 from grandchallenge.evaluation.models import (
     CombinedLeaderboard,
     Evaluation,
@@ -78,12 +84,23 @@ class PhaseAdmin(admin.ModelAdmin):
         "algorithm_outputs",
         "archive",
     )
-    readonly_fields = ("give_algorithm_editors_job_view_permissions",)
+    readonly_fields = (
+        "give_algorithm_editors_job_view_permissions",
+        "challenge_forge_json",
+    )
     form = PhaseAdminForm
 
     @admin.display(boolean=True)
     def open_for_submissions(self, instance):
         return instance.open_for_submissions
+
+    @staticmethod
+    def challenge_forge_json(obj):
+        json_desc = get_forge_json_description(
+            challenge=obj.challenge,
+            phases_queryset=Phase.objects.filter(id=obj.id),
+        )
+        return mark_safe(f"<pre>{json.dumps(json_desc, indent=2)}</pre>")
 
 
 @admin.action(
