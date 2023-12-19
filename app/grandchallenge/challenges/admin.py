@@ -3,7 +3,7 @@ import json
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
 from django.core.exceptions import ValidationError
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 
 from grandchallenge.challenges.emails import send_challenge_status_update_email
 from grandchallenge.challenges.models import (
@@ -52,7 +52,9 @@ class ChallengeAdmin(ModelAdmin):
     @staticmethod
     def challenge_forge_json(obj):
         json_desc = get_forge_json_description(challenge=obj)
-        return mark_safe(f"<pre>{json.dumps(json_desc, indent=2)}</pre>")
+        return format_html(
+            "<pre>{json_desc}</pre>", json_desc=json.dumps(json_desc, indent=2)
+        )
 
 
 @admin.register(ChallengeRequest)

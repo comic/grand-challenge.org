@@ -3,7 +3,7 @@ import json
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.forms import ModelForm
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 
 from grandchallenge.components.admin import (
     ComponentImageAdmin,
@@ -100,7 +100,9 @@ class PhaseAdmin(admin.ModelAdmin):
             challenge=obj.challenge,
             phases_queryset=Phase.objects.filter(id=obj.id),
         )
-        return mark_safe(f"<pre>{json.dumps(json_desc, indent=2)}</pre>")
+        return format_html(
+            "<pre>{json_desc}</pre>", json_desc=json.dumps(json_desc, indent=2)
+        )
 
 
 @admin.action(
