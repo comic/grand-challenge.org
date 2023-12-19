@@ -16,7 +16,7 @@ def get_forge_json_description(challenge, phase_pks=None):
     if phase_pks is not None:
         phases = phases.filter(pk__in=phase_pks)
 
-    archives = {p.archive.id: p.archive for p in phases}.values()
+    archives = {p.archive for p in phases}
 
     def process_archive(archive):
         return {
