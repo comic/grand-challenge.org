@@ -3,16 +3,11 @@ import pytest
 from grandchallenge.core.utils.grand_challenge_forge import (
     get_forge_json_description,
 )
-from grandchallenge.evaluation.models import Phase
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from tests.archives_tests.factories import ArchiveFactory
 from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.evaluation_tests.factories import PhaseFactory
 from tests.factories import ChallengeFactory
-
-
-class Phases:
-    pass
 
 
 @pytest.mark.django_db
@@ -70,12 +65,8 @@ def test_get_forge_json_description():
                 ]:
                     assert ci_key in component_interface
 
-    description = get_forge_json_description(
-        challenge, phases_queryset=Phase.objects.filter(id=phase_1.id)
-    )
+    description = get_forge_json_description(challenge, phase_pks=[phase_1.pk])
     assert len(description["challenge"]["phases"]) == 1
 
-    description = get_forge_json_description(
-        challenge, phases_queryset=Phase.objects.filter(id=phase_3.id)
-    )
+    description = get_forge_json_description(challenge, phase_pks=[phase_3.pk])
     assert len(description["challenge"]["phases"]) == 0

@@ -98,7 +98,7 @@ class PhaseAdmin(admin.ModelAdmin):
     def challenge_forge_json(obj):
         json_desc = get_forge_json_description(
             challenge=obj.challenge,
-            phases_queryset=Phase.objects.filter(id=obj.id),
+            phase_pks=[obj.pk],
         )
         return format_html(
             "<pre>{json_desc}</pre>", json_desc=json.dumps(json_desc, indent=2)
