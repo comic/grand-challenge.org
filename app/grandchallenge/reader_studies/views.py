@@ -655,6 +655,13 @@ class ReaderStudyCopy(
                     interface=question.interface,
                     look_up_table=question.look_up_table,
                     overlay_segments=question.overlay_segments,
+                    widget=question.widget,
+                    answer_max_value=question.answer_max_value,
+                    answer_min_value=question.answer_min_value,
+                    answer_step_size=question.answer_step_size,
+                    answer_min_length=question.answer_min_length,
+                    answer_max_length=question.answer_max_length,
+                    answer_match_pattern=question.answer_match_pattern,
                 )
                 for option in question.options.all():
                     CategoricalOption.objects.create(
