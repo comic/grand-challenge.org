@@ -474,14 +474,15 @@ class InterfaceKind:
                 "ellipses": [
                     {
                         "major_axis": [[-44, 535, 0.5], [-112, 494, 0.5]],
-                        "minor_axis": [[-88, 532, 0.5], [-68, 497, 0.5]]
+                        "minor_axis": [[-88, 532, 0.5], [-68, 497, 0.5]],
+                        "probability": 0.69
                     },
                     {
                         "major_axis": [[-17, 459, 0.5], [-94, 436, 0.5]],
-                        "minor_axis": [[-61, 467, 0.5], [-50, 428, 0.5]]
+                        "minor_axis": [[-61, 467, 0.5], [-50, 428, 0.5]],
+                        "probability": 0.92
                     }
                 ],
-                "probability": 0.92,
                 "version": {"major": 1, "minor": 0}
             }
 
@@ -512,14 +513,15 @@ class InterfaceKind:
                 "angles": [
                     {
                         "name": "first",
-                        "angle": [[300, 237, 0.5], [263, 282, 0.5], [334, 281, 0.5]]
+                        "angle": [[300, 237, 0.5], [263, 282, 0.5], [334, 281, 0.5]],
+                        "probability": 0.92
                     },
                     {
                         "name": "second",
-                        "angle": [[413, 237, 0.5], [35, 160, 0.5], [367, 293, 0.5]]
+                        "angle": [[413, 237, 0.5], [35, 160, 0.5], [367, 293, 0.5]],
+                        "probability": 0.69
                     }
                 ],
-                "probability": 0.003,
                 "version": {"major": 1, "minor": 0}
             }
 
