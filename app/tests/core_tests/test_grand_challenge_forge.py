@@ -65,6 +65,17 @@ def test_get_forge_json_description():
                 ]:
                     assert ci_key in component_interface
 
+    # Quick check on CI input and outputs
+    for index, ci in enumerate(
+        description["challenge"]["phases"][0]["inputs"]
+    ):
+        assert inputs[index].slug == ci["slug"]
+
+    for index, ci in enumerate(
+        description["challenge"]["phases"][0]["outputs"]
+    ):
+        assert outputs[index].slug == ci["slug"]
+
     description = get_forge_json_description(challenge, phase_pks=[phase_1.pk])
     assert len(description["challenge"]["phases"]) == 1
 
