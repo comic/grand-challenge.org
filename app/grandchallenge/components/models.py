@@ -409,7 +409,9 @@ class InterfaceKind:
         Example json for Angle annotation
             required: "type", "lines", "version"
             optional: "name", "probability"
+
         .. code-block:: json
+
             {
                 "name": "Some angle",
                 "type": "Angle",
@@ -421,7 +423,9 @@ class InterfaceKind:
         Example json for Multiple angles annotation
             required: "type", "angles", "version"
             optional: "name", "probability"
+
         .. code-block:: json
+
             {
                 "name": "Some angles",
                 "type": "Multiple angles",
@@ -440,6 +444,84 @@ class InterfaceKind:
                         "name": "Third angle",
                         "lines": [[[20, 30, 0.5], [20, 100, 0.5]], [[180, 200, 0.5], [210, 200, 0.5]]],
                         "probability": 0.98
+                    }
+                ],
+                "version": {"major": 1, "minor": 0}
+            }
+
+        Example json for Ellipse annotation
+            required: "type", "major_axis", "minor_axis", "version"
+            optional: "name", "probability"
+
+        .. code-block:: json
+
+            {
+                "name": "Some ellipse",
+                "type": "Ellipse",
+                "major_axis": [[-10, 606, 0.5], [39, 559, 0.5]],
+                "minor_axis": [[2, 570, 0.5], [26, 595, 0.5]],
+                "probability": 0.92,
+                "version": {"major": 1, "minor": 0}
+            }
+
+        Example json for Multiple ellipse annotation
+            required: "type", "ellipses", "version"
+            optional: "name", "probability"
+
+        .. code-block:: json
+
+            {
+                "name": "Some ellipse",
+                "type": "Multiple ellipses",
+                "ellipses": [
+                    {
+                        "major_axis": [[-44, 535, 0.5], [-112, 494, 0.5]],
+                        "minor_axis": [[-88, 532, 0.5], [-68, 497, 0.5]],
+                        "probability": 0.69
+                    },
+                    {
+                        "major_axis": [[-17, 459, 0.5], [-94, 436, 0.5]],
+                        "minor_axis": [[-61, 467, 0.5], [-50, 428, 0.5]],
+                        "probability": 0.92
+                    }
+                ],
+                "version": {"major": 1, "minor": 0}
+            }
+
+        Example json for Three-point angle annotation
+            required: "type", "angle", "version"
+            optional: "name", "probability"
+
+        .. code-block:: json
+
+            {
+                "name": "Some 3-point angle",
+                "type": "Three-point angle",
+                "angle": [[177, 493, 0.5], [22, 489, 0.5], [112, 353, 0.5]],
+                "probability": 0.003,
+                "version": {"major": 1, "minor": 0}
+            }
+
+        Example json for Three-point angle annotation
+            required: "type", "angles", "version"
+            optional: "name", "probability"
+
+        .. code-block:: json
+
+
+            {
+                "name": "Multiple 3-point angles",
+                "type": "Multiple three-point angles",
+                "angles": [
+                    {
+                        "name": "first",
+                        "angle": [[300, 237, 0.5], [263, 282, 0.5], [334, 281, 0.5]],
+                        "probability": 0.92
+                    },
+                    {
+                        "name": "second",
+                        "angle": [[413, 237, 0.5], [35, 160, 0.5], [367, 293, 0.5]],
+                        "probability": 0.69
                     }
                 ],
                 "version": {"major": 1, "minor": 0}
