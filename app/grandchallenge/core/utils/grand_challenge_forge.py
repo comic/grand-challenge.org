@@ -36,11 +36,11 @@ def get_forge_json_description(challenge, phase_pks=None):
         return {
             "slug": phase.slug,
             "archive": process_archive(phase.archive),
-            "inputs": [
+            "algorithm_inputs": [
                 process_component_interface(ci)
                 for ci in phase.algorithm_inputs.all()
             ],
-            "outputs": [
+            "algorithm_outputs": [
                 process_component_interface(ci)
                 for ci in phase.algorithm_outputs.all()
             ],
