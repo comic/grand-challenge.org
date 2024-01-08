@@ -758,11 +758,121 @@ optional: “name”, “probability”</p>
 optional: “name”, “probability”</p>
 </dd>
 </dl>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Some angle&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Angle&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;lines&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[[</span><span class="mi">180</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">190</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">]],[[</span><span class="mi">180</span><span class="p">,</span><span class="w"> </span><span class="mi">25</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">190</span><span class="p">,</span><span class="w"> </span><span class="mi">15</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">]]],</span>
+<span class="w">    </span><span class="nt">&quot;probability&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.92</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;major&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;minor&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
 <dl class="simple">
 <dt>Example json for Multiple angles annotation</dt><dd><p>required: “type”, “angles”, “version”
 optional: “name”, “probability”</p>
 </dd>
 </dl>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Some angles&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Multiple angles&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;angles&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;First angle&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;lines&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[[</span><span class="mi">110</span><span class="p">,</span><span class="w"> </span><span class="mi">135</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">60</span><span class="p">,</span><span class="w"> </span><span class="mi">165</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">]],[[</span><span class="mi">70</span><span class="p">,</span><span class="w"> </span><span class="mi">25</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">85</span><span class="p">,</span><span class="w"> </span><span class="mi">65</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">]]],</span>
+<span class="w">            </span><span class="nt">&quot;probability&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.82</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Second angle&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;lines&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[[</span><span class="mi">130</span><span class="p">,</span><span class="w"> </span><span class="mi">210</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">160</span><span class="p">,</span><span class="w"> </span><span class="mi">130</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">]],</span><span class="w"> </span><span class="p">[[</span><span class="mi">140</span><span class="p">,</span><span class="w"> </span><span class="mi">40</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">180</span><span class="p">,</span><span class="w"> </span><span class="mi">75</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">]]],</span>
+<span class="w">            </span><span class="nt">&quot;probability&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.52</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Third angle&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;lines&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[[</span><span class="mi">20</span><span class="p">,</span><span class="w"> </span><span class="mi">30</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">20</span><span class="p">,</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">]],</span><span class="w"> </span><span class="p">[[</span><span class="mi">180</span><span class="p">,</span><span class="w"> </span><span class="mi">200</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">210</span><span class="p">,</span><span class="w"> </span><span class="mi">200</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">]]],</span>
+<span class="w">            </span><span class="nt">&quot;probability&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.98</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">],</span>
+<span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;major&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;minor&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<dl class="simple">
+<dt>Example json for Ellipse annotation</dt><dd><p>required: “type”, “major_axis”, “minor_axis”, “version”
+optional: “name”, “probability”</p>
+</dd>
+</dl>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Some ellipse&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Ellipse&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;major_axis&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[</span><span class="mi">-10</span><span class="p">,</span><span class="w"> </span><span class="mi">606</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">39</span><span class="p">,</span><span class="w"> </span><span class="mi">559</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">]],</span>
+<span class="w">    </span><span class="nt">&quot;minor_axis&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">570</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">26</span><span class="p">,</span><span class="w"> </span><span class="mi">595</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">]],</span>
+<span class="w">    </span><span class="nt">&quot;probability&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.92</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;major&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;minor&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<dl class="simple">
+<dt>Example json for Multiple ellipse annotation</dt><dd><p>required: “type”, “ellipses”, “version”
+optional: “name”, “probability”</p>
+</dd>
+</dl>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Some ellipse&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Multiple ellipses&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;ellipses&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="nt">&quot;major_axis&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[</span><span class="mi">-44</span><span class="p">,</span><span class="w"> </span><span class="mi">535</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">-112</span><span class="p">,</span><span class="w"> </span><span class="mi">494</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">]],</span>
+<span class="w">            </span><span class="nt">&quot;minor_axis&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[</span><span class="mi">-88</span><span class="p">,</span><span class="w"> </span><span class="mi">532</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">-68</span><span class="p">,</span><span class="w"> </span><span class="mi">497</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">]],</span>
+<span class="w">            </span><span class="nt">&quot;probability&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.69</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="nt">&quot;major_axis&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[</span><span class="mi">-17</span><span class="p">,</span><span class="w"> </span><span class="mi">459</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">-94</span><span class="p">,</span><span class="w"> </span><span class="mi">436</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">]],</span>
+<span class="w">            </span><span class="nt">&quot;minor_axis&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[</span><span class="mi">-61</span><span class="p">,</span><span class="w"> </span><span class="mi">467</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">-50</span><span class="p">,</span><span class="w"> </span><span class="mi">428</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">]],</span>
+<span class="w">            </span><span class="nt">&quot;probability&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.92</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">],</span>
+<span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;major&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;minor&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<dl class="simple">
+<dt>Example json for Three-point angle annotation</dt><dd><p>required: “type”, “angle”, “version”
+optional: “name”, “probability”</p>
+</dd>
+</dl>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Some 3-point angle&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Three-point angle&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;angle&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[</span><span class="mi">177</span><span class="p">,</span><span class="w"> </span><span class="mi">493</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">22</span><span class="p">,</span><span class="w"> </span><span class="mi">489</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">112</span><span class="p">,</span><span class="w"> </span><span class="mi">353</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">]],</span>
+<span class="w">    </span><span class="nt">&quot;probability&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.003</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;major&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;minor&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<dl class="simple">
+<dt>Example json for Three-point angle annotation</dt><dd><p>required: “type”, “angles”, “version”
+optional: “name”, “probability”</p>
+</dd>
+</dl>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Multiple 3-point angles&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Multiple three-point angles&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;angles&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;first&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;angle&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[</span><span class="mi">300</span><span class="p">,</span><span class="w"> </span><span class="mi">237</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">263</span><span class="p">,</span><span class="w"> </span><span class="mi">282</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">334</span><span class="p">,</span><span class="w"> </span><span class="mi">281</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">]],</span>
+<span class="w">            </span><span class="nt">&quot;probability&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.92</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;second&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;angle&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[</span><span class="mi">413</span><span class="p">,</span><span class="w"> </span><span class="mi">237</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">35</span><span class="p">,</span><span class="w"> </span><span class="mi">160</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">367</span><span class="p">,</span><span class="w"> </span><span class="mi">293</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">]],</span>
+<span class="w">            </span><span class="nt">&quot;probability&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.69</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">],</span>
+<span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;major&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;minor&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
 <p>Example json for Chart (for more examples, see <cite>here&lt;https://vega.github.io/vega-lite/examples/&gt;</cite> and <cite>here&lt;https://grand-challenge.org/blogs/visualisations-for-challenges/&gt;</cite>)</p>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
 <span class="w">   </span><span class="nt">&quot;$schema&quot;</span><span class="p">:</span><span class="s2">&quot;https://vega.github.io/schema/vega-lite/v5.json&quot;</span><span class="p">,</span>

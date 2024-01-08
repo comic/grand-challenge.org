@@ -499,7 +499,9 @@
 <span class="sd">        Example json for Angle annotation</span>
 <span class="sd">            required: &quot;type&quot;, &quot;lines&quot;, &quot;version&quot;</span>
 <span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
+
 <span class="sd">        .. code-block:: json</span>
+
 <span class="sd">            {</span>
 <span class="sd">                &quot;name&quot;: &quot;Some angle&quot;,</span>
 <span class="sd">                &quot;type&quot;: &quot;Angle&quot;,</span>
@@ -511,7 +513,9 @@
 <span class="sd">        Example json for Multiple angles annotation</span>
 <span class="sd">            required: &quot;type&quot;, &quot;angles&quot;, &quot;version&quot;</span>
 <span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
+
 <span class="sd">        .. code-block:: json</span>
+
 <span class="sd">            {</span>
 <span class="sd">                &quot;name&quot;: &quot;Some angles&quot;,</span>
 <span class="sd">                &quot;type&quot;: &quot;Multiple angles&quot;,</span>
@@ -530,6 +534,84 @@
 <span class="sd">                        &quot;name&quot;: &quot;Third angle&quot;,</span>
 <span class="sd">                        &quot;lines&quot;: [[[20, 30, 0.5], [20, 100, 0.5]], [[180, 200, 0.5], [210, 200, 0.5]]],</span>
 <span class="sd">                        &quot;probability&quot;: 0.98</span>
+<span class="sd">                    }</span>
+<span class="sd">                ],</span>
+<span class="sd">                &quot;version&quot;: {&quot;major&quot;: 1, &quot;minor&quot;: 0}</span>
+<span class="sd">            }</span>
+
+<span class="sd">        Example json for Ellipse annotation</span>
+<span class="sd">            required: &quot;type&quot;, &quot;major_axis&quot;, &quot;minor_axis&quot;, &quot;version&quot;</span>
+<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
+
+<span class="sd">        .. code-block:: json</span>
+
+<span class="sd">            {</span>
+<span class="sd">                &quot;name&quot;: &quot;Some ellipse&quot;,</span>
+<span class="sd">                &quot;type&quot;: &quot;Ellipse&quot;,</span>
+<span class="sd">                &quot;major_axis&quot;: [[-10, 606, 0.5], [39, 559, 0.5]],</span>
+<span class="sd">                &quot;minor_axis&quot;: [[2, 570, 0.5], [26, 595, 0.5]],</span>
+<span class="sd">                &quot;probability&quot;: 0.92,</span>
+<span class="sd">                &quot;version&quot;: {&quot;major&quot;: 1, &quot;minor&quot;: 0}</span>
+<span class="sd">            }</span>
+
+<span class="sd">        Example json for Multiple ellipse annotation</span>
+<span class="sd">            required: &quot;type&quot;, &quot;ellipses&quot;, &quot;version&quot;</span>
+<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
+
+<span class="sd">        .. code-block:: json</span>
+
+<span class="sd">            {</span>
+<span class="sd">                &quot;name&quot;: &quot;Some ellipse&quot;,</span>
+<span class="sd">                &quot;type&quot;: &quot;Multiple ellipses&quot;,</span>
+<span class="sd">                &quot;ellipses&quot;: [</span>
+<span class="sd">                    {</span>
+<span class="sd">                        &quot;major_axis&quot;: [[-44, 535, 0.5], [-112, 494, 0.5]],</span>
+<span class="sd">                        &quot;minor_axis&quot;: [[-88, 532, 0.5], [-68, 497, 0.5]],</span>
+<span class="sd">                        &quot;probability&quot;: 0.69</span>
+<span class="sd">                    },</span>
+<span class="sd">                    {</span>
+<span class="sd">                        &quot;major_axis&quot;: [[-17, 459, 0.5], [-94, 436, 0.5]],</span>
+<span class="sd">                        &quot;minor_axis&quot;: [[-61, 467, 0.5], [-50, 428, 0.5]],</span>
+<span class="sd">                        &quot;probability&quot;: 0.92</span>
+<span class="sd">                    }</span>
+<span class="sd">                ],</span>
+<span class="sd">                &quot;version&quot;: {&quot;major&quot;: 1, &quot;minor&quot;: 0}</span>
+<span class="sd">            }</span>
+
+<span class="sd">        Example json for Three-point angle annotation</span>
+<span class="sd">            required: &quot;type&quot;, &quot;angle&quot;, &quot;version&quot;</span>
+<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
+
+<span class="sd">        .. code-block:: json</span>
+
+<span class="sd">            {</span>
+<span class="sd">                &quot;name&quot;: &quot;Some 3-point angle&quot;,</span>
+<span class="sd">                &quot;type&quot;: &quot;Three-point angle&quot;,</span>
+<span class="sd">                &quot;angle&quot;: [[177, 493, 0.5], [22, 489, 0.5], [112, 353, 0.5]],</span>
+<span class="sd">                &quot;probability&quot;: 0.003,</span>
+<span class="sd">                &quot;version&quot;: {&quot;major&quot;: 1, &quot;minor&quot;: 0}</span>
+<span class="sd">            }</span>
+
+<span class="sd">        Example json for Three-point angle annotation</span>
+<span class="sd">            required: &quot;type&quot;, &quot;angles&quot;, &quot;version&quot;</span>
+<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
+
+<span class="sd">        .. code-block:: json</span>
+
+
+<span class="sd">            {</span>
+<span class="sd">                &quot;name&quot;: &quot;Multiple 3-point angles&quot;,</span>
+<span class="sd">                &quot;type&quot;: &quot;Multiple three-point angles&quot;,</span>
+<span class="sd">                &quot;angles&quot;: [</span>
+<span class="sd">                    {</span>
+<span class="sd">                        &quot;name&quot;: &quot;first&quot;,</span>
+<span class="sd">                        &quot;angle&quot;: [[300, 237, 0.5], [263, 282, 0.5], [334, 281, 0.5]],</span>
+<span class="sd">                        &quot;probability&quot;: 0.92</span>
+<span class="sd">                    },</span>
+<span class="sd">                    {</span>
+<span class="sd">                        &quot;name&quot;: &quot;second&quot;,</span>
+<span class="sd">                        &quot;angle&quot;: [[413, 237, 0.5], [35, 160, 0.5], [367, 293, 0.5]],</span>
+<span class="sd">                        &quot;probability&quot;: 0.69</span>
 <span class="sd">                    }</span>
 <span class="sd">                ],</span>
 <span class="sd">                &quot;version&quot;: {&quot;major&quot;: 1, &quot;minor&quot;: 0}</span>
