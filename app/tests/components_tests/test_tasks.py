@@ -3,11 +3,16 @@ import subprocess
 
 import pytest
 from celery.exceptions import MaxRetriesExceededError
+from requests import put
 
 from grandchallenge.algorithms.models import AlgorithmImage
+from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.components.tasks import (
     _repo_login_and_run,
     _retry,
+    add_file_to_object,
+    add_image_to_object,
     civ_value_to_file,
     encode_b64j,
     execute_job,
@@ -16,13 +21,20 @@ from grandchallenge.components.tasks import (
     upload_to_registry_and_sagemaker,
     validate_docker_image,
 )
+from grandchallenge.notifications.models import Notification
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
 )
-from tests.components_tests.factories import ComponentInterfaceValueFactory
+from tests.cases_tests.factories import RawImageUploadSessionFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.evaluation_tests.factories import MethodFactory
-from tests.factories import WorkstationImageFactory
+from tests.factories import ImageFactory, UserFactory, WorkstationImageFactory
+from tests.reader_studies_tests.factories import DisplaySetFactory
+from tests.uploads_tests.factories import UserUploadFactory
 
 
 @pytest.mark.django_db
@@ -295,3 +307,111 @@ def test_update_sagemaker_shim(
         _repo_login_and_run(command=["crane", "manifest", old_repo_tag])
 
     assert "MANIFEST_UNKNOWN" in error.value.stderr.decode()
+
+
+@pytest.mark.django_db
+def test_add_image_to_object(settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    ds = DisplaySetFactory()
+    us = RawImageUploadSessionFactory()
+    ci = ComponentInterfaceFactory(kind="IMG")
+
+    error_message = "Image imports should result in a single image"
+
+    add_image_to_object(
+        app_label=ds._meta.app_label,
+        model_name=ds._meta.model_name,
+        upload_session_pk=us.pk,
+        object_pk=ds.pk,
+        interface_pk=ci.pk,
+    )
+
+    assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 0
+    us.refresh_from_db()
+    assert us.status == RawImageUploadSession.FAILURE
+    assert us.error_message == error_message
+
+    im1, im2 = ImageFactory.create_batch(2, origin=us)
+
+    add_image_to_object(
+        app_label=ds._meta.app_label,
+        model_name=ds._meta.model_name,
+        upload_session_pk=us.pk,
+        object_pk=ds.pk,
+        interface_pk=ci.pk,
+    )
+    assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 0
+    us.refresh_from_db()
+    assert us.status == RawImageUploadSession.FAILURE
+    assert us.error_message == error_message
+
+    im2.delete()
+
+    add_image_to_object(
+        app_label=ds._meta.app_label,
+        model_name=ds._meta.model_name,
+        upload_session_pk=us.pk,
+        object_pk=ds.pk,
+        interface_pk=ci.pk,
+    )
+    assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 1
+
+
+@pytest.mark.django_db
+def test_add_file_to_object(settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    creator = UserFactory()
+    ds = DisplaySetFactory()
+
+    us = UserUploadFactory(filename="file.json", creator=creator)
+    presigned_urls = us.generate_presigned_urls(part_numbers=[1])
+    response = put(presigned_urls["1"], data=b'{"foo": "bar"}')
+    us.complete_multipart_upload(
+        parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
+    )
+    us.save()
+    ci = ComponentInterfaceFactory(
+        kind="JSON",
+        store_in_database=False,
+        schema={
+            "$schema": "http://json-schema.org/draft-07/schema",
+            "type": "array",
+        },
+    )
+
+    add_file_to_object(
+        app_label=ds._meta.app_label,
+        model_name=ds._meta.model_name,
+        object_pk=ds.pk,
+        user_upload_pk=us.pk,
+        interface_pk=ci.pk,
+    )
+
+    assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 0
+    us.refresh_from_db()
+    assert Notification.objects.count() == 1
+    assert (
+        Notification.objects.first().message
+        == f"File for interface {ci.title} failed validation."
+    )
+
+    us2 = UserUploadFactory(filename="file.json", creator=creator)
+    presigned_urls = us2.generate_presigned_urls(part_numbers=[1])
+    response = put(presigned_urls["1"], data=b'["foo", "bar"]')
+    us2.complete_multipart_upload(
+        parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
+    )
+    us2.save()
+
+    add_file_to_object(
+        app_label=ds._meta.app_label,
+        model_name=ds._meta.model_name,
+        user_upload_pk=us2.pk,
+        object_pk=ds.pk,
+        interface_pk=ci.pk,
+    )
+    assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 1
