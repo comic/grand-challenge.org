@@ -11,7 +11,7 @@ def get_forge_json_description(challenge, phase_pks=None):
     phases = challenge.phase_set.filter(
         archive__isnull=False,
         submission_kind=SubmissionKindChoices.ALGORITHM,
-    ).prefetch_related("archive", "inputs", "outputs")
+    ).prefetch_related("archive", "algorithm_inputs", "algorithm_outputs")
 
     if phase_pks is not None:
         phases = phases.filter(pk__in=phase_pks)
@@ -36,11 +36,13 @@ def get_forge_json_description(challenge, phase_pks=None):
         return {
             "slug": phase.slug,
             "archive": process_archive(phase.archive),
-            "inputs": [
-                process_component_interface(ci) for ci in phase.inputs.all()
+            "algorithm_inputs": [
+                process_component_interface(ci)
+                for ci in phase.algorithm_inputs.all()
             ],
-            "outputs": [
-                process_component_interface(ci) for ci in phase.outputs.all()
+            "algorithm_outputs": [
+                process_component_interface(ci)
+                for ci in phase.algorithm_outputs.all()
             ],
         }
 

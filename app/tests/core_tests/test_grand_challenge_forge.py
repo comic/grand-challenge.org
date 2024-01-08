@@ -56,14 +56,30 @@ def test_get_forge_json_description():
 
     assert len(description["challenge"]["phases"]) == 2
     for phase in description["challenge"]["phases"]:
-        for phase_key in ["slug", "archive", "inputs", "outputs"]:
+        for phase_key in [
+            "slug",
+            "archive",
+            "algorithm_inputs",
+            "algorithm_outputs",
+        ]:
             assert phase_key in phase
             for ci_key in ["slug", "kind", "super_kind", "relative_path"]:
                 for component_interface in [
-                    *phase["inputs"],
-                    *phase["outputs"],
+                    *phase["algorithm_inputs"],
+                    *phase["algorithm_outputs"],
                 ]:
                     assert ci_key in component_interface
+
+    # Quick check on CI input and outputs
+    for index, ci in enumerate(
+        description["challenge"]["phases"][0]["algorithm_inputs"]
+    ):
+        assert inputs[index].slug == ci["slug"]
+
+    for index, ci in enumerate(
+        description["challenge"]["phases"][0]["algorithm_outputs"]
+    ):
+        assert outputs[index].slug == ci["slug"]
 
     description = get_forge_json_description(challenge, phase_pks=[phase_1.pk])
     assert len(description["challenge"]["phases"]) == 1
