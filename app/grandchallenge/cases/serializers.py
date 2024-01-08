@@ -14,13 +14,11 @@ from grandchallenge.archives.tasks import (
 )
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.tasks import add_image_to_object
 from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.modalities.serializers import ImagingModalitySerializer
 from grandchallenge.reader_studies.models import Answer, DisplaySet
-from grandchallenge.reader_studies.tasks import (
-    add_image_to_answer,
-    add_image_to_display_set,
-)
+from grandchallenge.reader_studies.tasks import add_image_to_answer
 from grandchallenge.uploads.models import UserUpload
 
 
@@ -278,9 +276,11 @@ def _get_linked_task(*, targets, interface):
             immutable=True,
         )
     elif "display_set" in targets:
-        return add_image_to_display_set.signature(
+        return add_image_to_object.signature(
             kwargs={
-                "display_set_pk": targets["display_set"].pk,
+                "app_label": targets["display_set"]._meta.app_label,
+                "model_name": targets["display_set"]._meta.model_name,
+                "object_pk": targets["display_set"].pk,
                 "interface_pk": interface.pk,
             },
             immutable=True,

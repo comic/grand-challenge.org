@@ -12,7 +12,10 @@ from stdimage import JPEGField
 
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.anatomy.models import BodyStructure
-from grandchallenge.components.models import ComponentInterfaceValue
+from grandchallenge.components.models import (
+    CIVForObjectMixin,
+    ComponentInterfaceValue,
+)
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
     get_logo_path,
@@ -249,7 +252,7 @@ class ArchiveGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(Archive, on_delete=models.CASCADE)
 
 
-class ArchiveItem(UUIDModel):
+class ArchiveItem(CIVForObjectMixin, UUIDModel):
     archive = models.ForeignKey(
         Archive, related_name="items", on_delete=models.PROTECT
     )
@@ -294,6 +297,10 @@ class ArchiveItem(UUIDModel):
             self.archive.uploaders_group,
             self,
         )
+
+    @property
+    def base_object(self):
+        return self.archive
 
 
 class ArchiveItemUserObjectPermission(UserObjectPermissionBase):

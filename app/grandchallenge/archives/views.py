@@ -2,7 +2,6 @@ from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db.transaction import on_commit
 from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -48,13 +47,8 @@ from grandchallenge.archives.serializers import (
     ArchiveItemSerializer,
     ArchiveSerializer,
 )
-from grandchallenge.archives.tasks import (
-    add_images_to_archive,
-    start_archive_item_update_tasks,
-    update_archive_item_update_kwargs,
-)
+from grandchallenge.archives.tasks import add_images_to_archive
 from grandchallenge.cases.models import Image, RawImageUploadSession
-from grandchallenge.cases.widgets import WidgetChoices
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
@@ -394,6 +388,11 @@ class ArchiveEditArchiveItem(
             ComponentInterface, slug=self.kwargs["interface_slug"]
         )
 
+    def get_success_url(self):
+        return reverse(
+            "archives:items-list", kwargs={"slug": self.archive.slug}
+        )
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs.update(
@@ -407,71 +406,19 @@ class ArchiveEditArchiveItem(
         return context
 
     def form_valid(self, form):
-        def create_upload(image_files):
-            if not image_files:
-                return
-            upload_session = RawImageUploadSession.objects.create(
-                creator=self.request.user
-            )
-            upload_session.user_uploads.set(image_files)
-            return upload_session
-
-        upload_pks = {}
-        civ_pks_to_add = set()
-
-        for slug, value in form.cleaned_data.items():
+        for ci_slug, value in form.cleaned_data.items():
             if value is None:
                 continue
-
-            ci = ComponentInterface.objects.get(slug=slug)
-
-            if ci.is_image_kind:
-                widget = form.data[f"WidgetChoice-{ci.slug}"]
-                if widget == WidgetChoices.IMAGE_SEARCH.name:
-                    image = value
-                    upload_session = None
-                elif widget == WidgetChoices.IMAGE_UPLOAD.name:
-                    upload_session = create_upload(value)
-                    image = None
-                else:
-                    raise RuntimeError(
-                        f"{widget} is not a valid widget choice."
-                    )
-            else:
-                upload_session = None
-                image = None
-
-            update_archive_item_update_kwargs(
-                instance=self.archive_item,
-                interface=ci,
-                value=value
-                if ci.is_json_kind and not ci.requires_file
-                else None,
-                user_upload=value if ci.requires_file else None,
-                upload_session=upload_session,
-                civ_pks_to_add=civ_pks_to_add,
-                upload_pks=upload_pks,
-                image=image,
+            self.archive_item.create_civ(
+                ci_slug=ci_slug, new_value=value, user=self.request.user
             )
-
-        on_commit(
-            start_archive_item_update_tasks.signature(
-                kwargs={
-                    "archive_item_pk": self.archive_item.pk,
-                    "civ_pks_to_add": list(civ_pks_to_add),
-                    "upload_pks": upload_pks,
-                }
-            ).apply_async
-        )
         messages.add_message(
             self.request,
             messages.SUCCESS,
             "Archive item will be updated. It may take some time for your "
             "changes to become visible.",
         )
-        return HttpResponseRedirect(
-            reverse("archives:items-list", kwargs={"slug": self.archive.slug})
-        )
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class ArchiveItemsList(
