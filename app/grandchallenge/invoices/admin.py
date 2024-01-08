@@ -4,7 +4,7 @@ from grandchallenge.invoices.models import Invoice
 
 
 @admin.register(Invoice)
-class ChallengeAdmin(admin.ModelAdmin):
+class InvoiceAdmin(admin.ModelAdmin):
     list_display = (
         "challenge",
         "issued_on",
@@ -18,6 +18,7 @@ class ChallengeAdmin(admin.ModelAdmin):
         "internal_comments",
     )
     list_filter = ("payment_status",)
+    autocomplete_fields = ("challenge",)
 
     def total_amount_euros(self, obj):
         return (
