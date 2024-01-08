@@ -73,7 +73,11 @@ class DockerExecutor(DockerConnectionMixin, Executor):
         docker_client.remove_container(name=self.container_name)
 
     @staticmethod
-    def get_job_params(*, event):
+    def get_job_name(*, event):
+        raise NotImplementedError
+
+    @staticmethod
+    def get_job_params(*, job_name):
         raise NotImplementedError
 
     @property
@@ -100,7 +104,8 @@ class DockerExecutor(DockerConnectionMixin, Executor):
 
     def _execute_container(self, *, input_civs, input_prefixes) -> None:
         environment = {
-            "NVIDIA_VISIBLE_DEVICES": settings.COMPONENTS_NVIDIA_VISIBLE_DEVICES
+            **self.invocation_environment,
+            "NVIDIA_VISIBLE_DEVICES": settings.COMPONENTS_NVIDIA_VISIBLE_DEVICES,
         }
 
         if settings.COMPONENTS_DOCKER_TASK_SET_AWS_ENV:

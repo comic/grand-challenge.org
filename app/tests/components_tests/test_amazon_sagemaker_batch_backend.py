@@ -89,7 +89,8 @@ def test_get_job_params_match(key, model_name, app_label):
     event = {
         "TransformJobName": f"{settings.COMPONENTS_REGISTRY_PREFIX}-{key}-{pk}-00"
     }
-    job_params = AmazonSageMakerBatchExecutor.get_job_params(event=event)
+    job_name = AmazonSageMakerBatchExecutor.get_job_name(event=event)
+    job_params = AmazonSageMakerBatchExecutor.get_job_params(job_name=job_name)
 
     assert job_params.pk == str(pk)
     assert job_params.model_name == model_name
@@ -131,12 +132,13 @@ def test_transform_job_name(model, container, container_model, key):
     executor = AmazonSageMakerBatchExecutor(**j.executor_kwargs)
 
     assert (
-        executor._transform_job_name
+        executor._sagemaker_job_name
         == f"{settings.COMPONENTS_REGISTRY_PREFIX}-{key}-{j.pk}-00"
     )
 
-    event = {"TransformJobName": executor._transform_job_name}
-    job_params = AmazonSageMakerBatchExecutor.get_job_params(event=event)
+    event = {"TransformJobName": executor._sagemaker_job_name}
+    job_name = AmazonSageMakerBatchExecutor.get_job_name(event=event)
+    job_params = AmazonSageMakerBatchExecutor.get_job_params(job_name=job_name)
 
     assert job_params.pk == str(j.pk)
     assert job_params.model_name == j._meta.model_name
@@ -162,9 +164,10 @@ def test_execute(settings):
             method="create_transform_job",
             service_response={"TransformJobArn": "string"},
             expected_params={
-                "TransformJobName": executor._transform_job_name,
+                "TransformJobName": executor._sagemaker_job_name,
                 "Environment": {
                     "LOG_LEVEL": "INFO",
+                    "PYTHONUNBUFFERED": "1",
                     "no_proxy": "amazonaws.com",
                 },
                 "ModelClientConfig": {
@@ -535,12 +538,16 @@ def test_handle_completed_job():
     return_code = 0
 
     with io.BytesIO() as f:
-        f.write(json.dumps({"return_code": return_code}).encode("utf-8"))
+        f.write(
+            json.dumps(
+                {"return_code": return_code, "pk": f"algorithms-job-{pk}"}
+            ).encode("utf-8")
+        )
         f.seek(0)
         executor._s3_client.upload_fileobj(
             Fileobj=f,
             Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-            Key=f"{executor._invocation_key}.out",
+            Key=executor._result_key,
         )
 
     assert executor._handle_completed_job() is None

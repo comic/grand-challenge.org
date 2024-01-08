@@ -193,6 +193,45 @@ def upload_to_registry_and_sagemaker(
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def update_container_image_shim(
+    *,
+    pk: uuid.UUID,
+    app_label: str,
+    model_name: str,
+):
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+    instance = model.objects.get(pk=pk)
+
+    if (
+        instance.is_in_registry
+        and instance.SHIM_IMAGE
+        and (
+            instance.latest_shimmed_version
+            != settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
+        )
+    ):
+        existing_shimmed_repo_tag = instance.shimmed_repo_tag
+
+        if instance.is_on_sagemaker:
+            delete_sagemaker_model(repo_tag=existing_shimmed_repo_tag)
+            instance.is_on_sagemaker = False
+            instance.save()
+
+        remove_tag_from_registry(repo_tag=existing_shimmed_repo_tag)
+        instance.latest_shimmed_version = ""
+        instance.save()
+
+        shim_container_image(instance=instance)
+        instance.is_on_sagemaker = False
+        instance.save()
+
+        if settings.COMPONENTS_CREATE_SAGEMAKER_MODEL:
+            create_sagemaker_model(repo_tag=instance.shimmed_repo_tag)
+            instance.is_on_sagemaker = True
+            instance.save()
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def remove_inactive_container_images():
     """Removes inactive container images from the registry"""
     for app_label, model_name, related_name in (
@@ -366,14 +405,14 @@ def _get_shim_env_vars(*, original_config):
     """Get the environment variables for a shimmed container image"""
     cmd = original_config["config"].get("Cmd")
     entrypoint = original_config["config"].get("Entrypoint")
+    user = original_config["config"]["User"]
 
     return {
         "GRAND_CHALLENGE_COMPONENT_CMD_B64J": encode_b64j(val=cmd),
         "GRAND_CHALLENGE_COMPONENT_ENTRYPOINT_B64J": encode_b64j(
             val=entrypoint
         ),
-        "no_proxy": "amazonaws.com",
-        "PYTHONUNBUFFERED": "1",
+        "GRAND_CHALLENGE_COMPONENT_USER": user,
     }
 
 
@@ -387,12 +426,12 @@ def _mutate_container_image(
 
         with tarfile.open(new_layer, "w") as f:
 
-            def _set_root_555_perms(
+            def _set_root_500_perms(
                 tarinfo,
             ):
                 tarinfo.uid = 0
                 tarinfo.gid = 0
-                tarinfo.mode = 0o555
+                tarinfo.mode = 0o500
                 return tarinfo
 
             f.add(
@@ -401,16 +440,16 @@ def _mutate_container_image(
                     f"sagemaker-shim-{version}-Linux-x86_64"
                 ),
                 arcname="/sagemaker-shim",
-                filter=_set_root_555_perms,
+                filter=_set_root_500_perms,
             )
 
             for dir in ["/input", "/output", "/tmp"]:
-                # /tmp is required by staticx
+                # staticx will unpack into /tmp
                 tarinfo = tarfile.TarInfo(dir)
                 tarinfo.type = tarfile.DIRTYPE
                 tarinfo.uid = 0
                 tarinfo.gid = 0
-                tarinfo.mode = 0o777
+                tarinfo.mode = 0o755 if dir == "/input" else 0o777
                 f.addfile(tarinfo=tarinfo)
 
         _repo_login_and_run(
@@ -418,6 +457,11 @@ def _mutate_container_image(
                 "crane",
                 "mutate",
                 original_repo_tag,
+                # Running as root is required on SageMaker Training
+                # due to the permissions of most of the filesystem
+                # including /tmp which we need to use
+                "--user",
+                "0",
                 "--cmd",
                 "",
                 "--entrypoint",
@@ -762,7 +806,8 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
     """
     Backend = import_string(backend)  # noqa: N806
 
-    job_params = Backend.get_job_params(event=event)
+    job_name = Backend.get_job_name(event=event)
+    job_params = Backend.get_job_params(job_name=job_name)
 
     job = get_model_instance(
         pk=job_params.pk,
