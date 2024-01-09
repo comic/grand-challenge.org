@@ -283,7 +283,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             "The number of cases for which answers should roll over. "
             "It can be used for repeated readings with slightly different hangings. "
             "For instance, if set to 1. Case 2 will start with the answers from case 1; "
-            "whereas case 3 starts anew but its answers will roll over to case 4."
+            "whereas case 3 starts anew but its answers will roll over to case 4. "
             "Setting it to 0 (default) means answers will not roll over."
         ),
     )
