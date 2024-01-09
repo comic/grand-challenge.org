@@ -13,6 +13,10 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
         return "/aws/sagemaker/TrainingJobs"
 
     @property
+    def _metric_instance_prefix(self):
+        return "algo-1"
+
+    @property
     def _training_output_prefix(self):
         return safe_join("/training-outputs", *self.job_path_parts)
 

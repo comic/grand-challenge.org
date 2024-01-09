@@ -21,6 +21,10 @@ class AmazonSageMakerBatchExecutor(AmazonSageMakerBaseExecutor):
         # Hardcoded by AWS
         return "/aws/sagemaker/TransformJobs"
 
+    @property
+    def _metric_instance_prefix(self):
+        return "i-"
+
     @staticmethod
     def get_job_name(*, event):
         return event["TransformJobName"]

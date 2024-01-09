@@ -280,6 +280,11 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
     def _log_group_name(self):
         pass
 
+    @property
+    @abstractmethod
+    def _metric_instance_prefix(self):
+        pass
+
     @abstractmethod
     def _get_job_status(self, *, event):
         pass
@@ -560,7 +565,7 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
             return
 
         query_id = "q"
-        query = f"SEARCH('{{{self._log_group_name},Host}} Host={self._sagemaker_job_name}/i-', 'Average', 60)"
+        query = f"SEARCH('{{{self._log_group_name},Host}} Host={self._sagemaker_job_name}/{self._metric_instance_prefix}', 'Average', 60)"
 
         instance_type = get(
             [
