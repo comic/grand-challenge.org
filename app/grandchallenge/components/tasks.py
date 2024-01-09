@@ -809,24 +809,16 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
     job_name = Backend.get_job_name(event=event)
     job_params = Backend.get_job_params(job_name=job_name)
 
-    job = get_model_instance(
-        pk=job_params.pk,
-        app_label=job_params.app_label,
-        model_name=job_params.model_name,
-        attempt=job_params.attempt,
+    model = apps.get_model(
+        app_label=job_params.app_label, model_name=job_params.model_name
     )
-    executor = job.get_executor(backend=backend)
 
-    if job.status != job.EXECUTING:
-        deprovision_job.signature(**job.signature_kwargs).apply_async()
-        raise PriorStepFailed("Job is not executing")
+    queryset = model.objects.filter(
+        pk=job_params.pk,
+        attempt=job_params.attempt,
+    ).select_for_update(nowait=True)
 
-    try:
-        executor.handle_event(event=event)
-    except TaskCancelled:
-        job.update_status(status=job.CANCELLED)
-        return
-    except RetryStep:
+    def retry_handle_event():
         try:
             _retry(
                 task=handle_event,
@@ -835,8 +827,43 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
                 },
                 retries=retries,
             )
-            return
         except MaxRetriesExceededError:
+            job.update_status(
+                status=job.FAILURE,
+                error_message="An unexpected error occurred",
+            )
+            raise
+
+    with transaction.atomic():
+        try:
+            # Acquire the lock
+            job = queryset.get()
+        except OperationalError:
+            # Could not acquire locks
+            retry_handle_event()
+            return
+
+        executor = job.get_executor(backend=backend)
+
+        if job.status != job.EXECUTING:
+            # Nothing to do
+            return
+
+        try:
+            executor.handle_event(event=event)
+        except TaskCancelled:
+            job.update_status(status=job.CANCELLED)
+            return
+        except RetryStep:
+            retry_handle_event()
+            return
+        except RetryTask:
+            job.update_status(status=job.PROVISIONED)
+            step = _delay(
+                task=retry_task, signature_kwargs=job.signature_kwargs
+            )
+            on_commit(step.apply_async)
+        except ComponentException as e:
             job.update_status(
                 status=job.FAILURE,
                 stdout=executor.stdout,
@@ -844,46 +871,31 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
                 duration=executor.duration,
                 compute_cost_euro_millicents=executor.compute_cost_euro_millicents,
                 runtime_metrics=executor.runtime_metrics,
-                error_message="Time limit exceeded",
+                error_message=str(e),
+            )
+        except Exception:
+            job.update_status(
+                status=job.FAILURE,
+                stdout=executor.stdout,
+                stderr=executor.stderr,
+                duration=executor.duration,
+                compute_cost_euro_millicents=executor.compute_cost_euro_millicents,
+                runtime_metrics=executor.runtime_metrics,
+                error_message="An unexpected error occurred",
             )
             raise
-    except RetryTask:
-        job.update_status(status=job.PROVISIONED)
-        step = _delay(task=retry_task, signature_kwargs=job.signature_kwargs)
-        on_commit(step.apply_async)
-    except ComponentException as e:
-        job.update_status(
-            status=job.FAILURE,
-            stdout=executor.stdout,
-            stderr=executor.stderr,
-            duration=executor.duration,
-            compute_cost_euro_millicents=executor.compute_cost_euro_millicents,
-            runtime_metrics=executor.runtime_metrics,
-            error_message=str(e),
-        )
-    except Exception:
-        job.update_status(
-            status=job.FAILURE,
-            stdout=executor.stdout,
-            stderr=executor.stderr,
-            duration=executor.duration,
-            compute_cost_euro_millicents=executor.compute_cost_euro_millicents,
-            runtime_metrics=executor.runtime_metrics,
-            error_message="An unexpected error occurred",
-        )
-        raise
-    else:
-        job.update_status(
-            status=job.EXECUTED,
-            stdout=executor.stdout,
-            stderr=executor.stderr,
-            duration=executor.duration,
-            compute_cost_euro_millicents=executor.compute_cost_euro_millicents,
-            runtime_metrics=executor.runtime_metrics,
-        )
-        on_commit(
-            parse_job_outputs.signature(**job.signature_kwargs).apply_async
-        )
+        else:
+            job.update_status(
+                status=job.EXECUTED,
+                stdout=executor.stdout,
+                stderr=executor.stderr,
+                duration=executor.duration,
+                compute_cost_euro_millicents=executor.compute_cost_euro_millicents,
+                runtime_metrics=executor.runtime_metrics,
+            )
+            on_commit(
+                parse_job_outputs.signature(**job.signature_kwargs).apply_async
+            )
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
