@@ -103,17 +103,25 @@ class JobCreateForm(SaveFormInitMixin, Form):
             self.fields["algorithm_image"].initial = active_image
 
         for inp in self._algorithm.inputs.all():
+            if inp is not None:
+                if (
+                    inp.kind == InterfaceKindChoices.ANY
+                    and not inp.requires_file
+                ):
+                    try:
+                        inp.validate_against_schema(value=None)
+                        value_required = False
+                    except ValidationError:
+                        value_required = True
+                elif inp.kind == InterfaceKindChoices.BOOL:
+                    value_required = False
+                else:
+                    value_required = True
             self.fields[inp.slug] = InterfaceFormField(
                 instance=inp,
                 initial=inp.default_value,
                 user=self._user,
-                required=(
-                    inp.kind
-                    not in [
-                        InterfaceKindChoices.BOOL,
-                        InterfaceKindChoices.ANY,
-                    ]
-                ),
+                required=value_required,
                 help_text=clean(inp.description) if inp.description else "",
             ).field
 

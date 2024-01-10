@@ -765,14 +765,22 @@ class DisplaySetInterfacesCreateForm(Form):
         )
 
         if selected_interface is not None:
+            if (
+                selected_interface.kind == InterfaceKindChoices.ANY
+                and not selected_interface.requires_file
+            ):
+                try:
+                    selected_interface.validate_against_schema(value=None)
+                    value_required = False
+                except ValidationError:
+                    value_required = True
+            elif selected_interface.kind == InterfaceKindChoices.BOOL:
+                value_required = False
+            else:
+                value_required = True
+
             self.fields[selected_interface.slug] = InterfaceFormField(
                 instance=selected_interface,
                 user=user,
-                required=(
-                    selected_interface.kind
-                    not in [
-                        InterfaceKindChoices.BOOL,
-                        InterfaceKindChoices.ANY,
-                    ]
-                ),
+                required=value_required,
             ).field
