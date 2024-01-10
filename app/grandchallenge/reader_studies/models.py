@@ -1261,7 +1261,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         AnswerType.SINGLE_LINE_TEXT: "'\"answer\"'",
         AnswerType.MULTI_LINE_TEXT: "'\"answer\\nanswer\\nanswer\"'",
         AnswerType.TEXT: "'\"answer\"'",
-        AnswerType.NUMBER: "2",
+        AnswerType.NUMBER: "'1'",
         AnswerType.BOOL: "'true'",
         AnswerType.CHOICE: "'\"option\"'",
         AnswerType.MULTIPLE_CHOICE: '\'["option1", "option2"]\'',
