@@ -132,6 +132,9 @@ def generate_cpu_load(*, duration):
 if __name__ == "__main__":
     print(f"Current user: {pwd.getpwuid(os.getuid())}")
     print(f"Current group: {grp.getgrgid(os.getgid())}")
+    print(
+        f"Current groups: {[(gid, grp.getgrgid(gid).gr_name) for gid in os.getgroups()]}"
+    )
     print("")
 
     for k, v in os.environ.items():
@@ -154,7 +157,7 @@ if __name__ == "__main__":
     print("")
 
     print("Generating CPU Load")
-    generate_cpu_load(duration=60)
+    generate_cpu_load(duration=1200)
     print("CPU Load Complete")
 
     create_output()

@@ -119,7 +119,9 @@ def _create_challenge(
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
 
-    p = Phase.objects.create(challenge=c, title="Phase 1")
+    p = Phase.objects.create(
+        challenge=c, title="Phase 1", algorithm_time_limit=300
+    )
 
     p.algorithm_inputs.set(inputs)
     p.algorithm_outputs.set(outputs)

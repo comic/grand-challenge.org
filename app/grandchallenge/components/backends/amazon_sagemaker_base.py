@@ -19,7 +19,6 @@ from grandchallenge.components.backends.exceptions import (
     ComponentException,
     RetryStep,
     RetryTask,
-    TaskCancelled,
 )
 from grandchallenge.components.backends.utils import (
     LOGLINES,
@@ -439,16 +438,16 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
     def handle_event(self, *, event):
         job_status = self._get_job_status(event=event)
 
-        if job_status == "Stopped":
-            raise TaskCancelled
-        elif job_status in {"Completed", "Failed"}:
-            self._set_duration(event=event)
-            self._set_task_logs()
-            self._set_runtime_metrics(event=event)
-            if job_status == "Completed":
-                self._handle_completed_job()
-            else:
-                self._handle_failed_job(event=event)
+        self._set_duration(event=event)
+        self._set_task_logs()
+        self._set_runtime_metrics(event=event)
+
+        if job_status == "Completed":
+            self._handle_completed_job()
+        elif job_status == "Stopped":
+            self._handle_stopped_job(event=event)
+        elif job_status == "Failed":
+            self._handle_failed_job(event=event)
         else:
             raise ValueError("Invalid job status")
 
@@ -649,6 +648,10 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
             raise ComponentException("The container ran out of memory.")
         else:
             raise ComponentException(user_error(self.stderr))
+
+    @abstractmethod
+    def _handle_stopped_job(self, *, event):
+        pass
 
     def _handle_failed_job(self, *, event):
         failure_reason = event.get("FailureReason")

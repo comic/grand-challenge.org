@@ -4,6 +4,10 @@ from django.utils._os import safe_join
 from grandchallenge.components.backends.amazon_sagemaker_base import (
     AmazonSageMakerBaseExecutor,
 )
+from grandchallenge.components.backends.exceptions import (
+    ComponentException,
+    TaskCancelled,
+)
 
 
 class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
@@ -89,6 +93,20 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
             bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
             prefix=self._training_output_prefix,
         )
+
+    def _handle_stopped_job(self, *, event):
+        if event["TrainingJobStatus"] != "Stopped":
+            raise RuntimeError("TrainingJobStatus should be 'Stopped'")
+
+        secondary_status = event["SecondaryStatus"]
+
+        # See https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_DescribeTrainingJob.html#sagemaker-DescribeTrainingJob-response-SecondaryStatus
+        if secondary_status == "MaxRuntimeExceeded":
+            raise ComponentException("Time limit exceeded")
+        elif secondary_status == "Stopped":
+            raise TaskCancelled
+        else:
+            raise RuntimeError(f"Unknown status {secondary_status!r}")
 
     def _get_invocation_json(self, *args, **kwargs):
         # SageMaker Training Jobs expect a list

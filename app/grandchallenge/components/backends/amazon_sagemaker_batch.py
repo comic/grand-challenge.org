@@ -6,7 +6,10 @@ from grandchallenge.components.backends.amazon_sagemaker_base import (
     AmazonSageMakerBaseExecutor,
     LogStreamNotFound,
 )
-from grandchallenge.components.backends.exceptions import ComponentException
+from grandchallenge.components.backends.exceptions import (
+    ComponentException,
+    TaskCancelled,
+)
 from grandchallenge.components.backends.utils import (
     LOGLINES,
     get_sagemaker_model_name,
@@ -81,6 +84,9 @@ class AmazonSageMakerBatchExecutor(AmazonSageMakerBaseExecutor):
             bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
             prefix=self._invocation_prefix,
         )
+
+    def _handle_stopped_job(self, *, event):
+        raise TaskCancelled
 
     def _handle_failed_job(self, *args, **kwargs):
         try:
