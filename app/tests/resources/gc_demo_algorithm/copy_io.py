@@ -157,7 +157,7 @@ if __name__ == "__main__":
     print("")
 
     print("Generating CPU Load")
-    generate_cpu_load(duration=1200)
+    generate_cpu_load(duration=0.001)
     print("CPU Load Complete")
 
     create_output()
