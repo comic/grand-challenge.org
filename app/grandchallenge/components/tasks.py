@@ -791,7 +791,21 @@ def execute_job(  # noqa: C901
             )
 
 
+def get_update_status_kwargs(*, executor=None):
+    if executor is not None:
+        return {
+            "stdout": executor.stdout,
+            "stderr": executor.stderr,
+            "duration": executor.duration,
+            "compute_cost_euro_millicents": executor.compute_cost_euro_millicents,
+            "runtime_metrics": executor.runtime_metrics,
+        }
+    else:
+        return {}
+
+
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@transaction.atomic
 def handle_event(*, event, backend, retries=0):  # noqa: C901
     """
     Receives events when tasks have stops and determines what to do next.
@@ -818,7 +832,7 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
         attempt=job_params.attempt,
     ).select_for_update(nowait=True)
 
-    def retry_handle_event():
+    def retry_handle_event(*, _executor=None):
         try:
             _retry(
                 task=handle_event,
@@ -831,71 +845,57 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
             job.update_status(
                 status=job.FAILURE,
                 error_message="An unexpected error occurred",
+                **get_update_status_kwargs(executor=_executor),
             )
             raise
 
-    with transaction.atomic():
-        try:
-            # Acquire the lock
-            job = queryset.get()
-        except OperationalError:
-            # Could not acquire locks
-            retry_handle_event()
-            return
+    try:
+        # Acquire the lock
+        job = queryset.get()
+    except OperationalError:
+        # Could not acquire locks
+        retry_handle_event()
+        return
 
-        executor = job.get_executor(backend=backend)
+    executor = job.get_executor(backend=backend)
 
-        if job.status != job.EXECUTING:
-            # Nothing to do
-            return
+    if job.status != job.EXECUTING:
+        # Nothing to do
+        return
 
-        try:
-            executor.handle_event(event=event)
-        except TaskCancelled:
-            job.update_status(status=job.CANCELLED)
-            return
-        except RetryStep:
-            retry_handle_event()
-            return
-        except RetryTask:
-            job.update_status(status=job.PROVISIONED)
-            step = _delay(
-                task=retry_task, signature_kwargs=job.signature_kwargs
-            )
-            on_commit(step.apply_async)
-        except ComponentException as e:
-            job.update_status(
-                status=job.FAILURE,
-                stdout=executor.stdout,
-                stderr=executor.stderr,
-                duration=executor.duration,
-                compute_cost_euro_millicents=executor.compute_cost_euro_millicents,
-                runtime_metrics=executor.runtime_metrics,
-                error_message=str(e),
-            )
-        except Exception:
-            job.update_status(
-                status=job.FAILURE,
-                stdout=executor.stdout,
-                stderr=executor.stderr,
-                duration=executor.duration,
-                compute_cost_euro_millicents=executor.compute_cost_euro_millicents,
-                runtime_metrics=executor.runtime_metrics,
-                error_message="An unexpected error occurred",
-            )
-            raise
-        else:
-            job.update_status(
-                status=job.EXECUTED,
-                stdout=executor.stdout,
-                stderr=executor.stderr,
-                duration=executor.duration,
-                compute_cost_euro_millicents=executor.compute_cost_euro_millicents,
-                runtime_metrics=executor.runtime_metrics,
-            )
-            on_commit(
-                parse_job_outputs.signature(**job.signature_kwargs).apply_async
-            )
+    try:
+        executor.handle_event(event=event)
+    except TaskCancelled:
+        job.update_status(status=job.CANCELLED)
+        return
+    except RetryStep:
+        retry_handle_event(_executor=executor)
+        return
+    except RetryTask:
+        job.update_status(status=job.PROVISIONED)
+        step = _delay(task=retry_task, signature_kwargs=job.signature_kwargs)
+        on_commit(step.apply_async)
+    except ComponentException as e:
+        job.update_status(
+            status=job.FAILURE,
+            error_message=str(e),
+            **get_update_status_kwargs(executor=executor),
+        )
+    except Exception:
+        job.update_status(
+            status=job.FAILURE,
+            error_message="An unexpected error occurred",
+            **get_update_status_kwargs(executor=executor),
+        )
+        raise
+    else:
+        job.update_status(
+            status=job.EXECUTED,
+            **get_update_status_kwargs(executor=executor),
+        )
+        on_commit(
+            parse_job_outputs.signature(**job.signature_kwargs).apply_async
+        )
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
