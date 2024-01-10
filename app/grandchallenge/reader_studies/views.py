@@ -192,7 +192,7 @@ class ReaderStudyExampleGroundTruth(
         response = HttpResponse(content_type="text/csv")
         response[
             "Content-Disposition"
-        ] = f'attachment; filename="ground-truth-{reader_study.slug}"'
+        ] = f'attachment; filename="ground-truth-{reader_study.slug}.csv"'
         writer = csv.DictWriter(
             response,
             fieldnames=reader_study.ground_truth_file_headers,
