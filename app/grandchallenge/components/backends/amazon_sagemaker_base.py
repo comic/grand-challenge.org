@@ -691,6 +691,7 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
                 "The request was rejected because the training job is in status",
                 # Job was never created:
                 "Could not find job to update with name",
+                "Requested resource not found",
             }
 
             if error.response["Error"]["Code"] == "ThrottlingException":
