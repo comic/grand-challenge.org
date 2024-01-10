@@ -107,7 +107,13 @@ class JobCreateForm(SaveFormInitMixin, Form):
                 instance=inp,
                 initial=inp.default_value,
                 user=self._user,
-                required=(inp.kind != InterfaceKindChoices.BOOL),
+                required=(
+                    inp.kind
+                    not in [
+                        InterfaceKindChoices.BOOL,
+                        InterfaceKindChoices.ANY,
+                    ]
+                ),
                 help_text=clean(inp.description) if inp.description else "",
             ).field
 

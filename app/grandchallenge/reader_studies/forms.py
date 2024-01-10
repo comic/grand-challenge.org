@@ -43,6 +43,7 @@ from grandchallenge.components.form_fields import InterfaceFormField
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
+    InterfaceKindChoices,
     InterfaceSuperKindChoices,
 )
 from grandchallenge.core.forms import (
@@ -767,5 +768,11 @@ class DisplaySetInterfacesCreateForm(Form):
             self.fields[selected_interface.slug] = InterfaceFormField(
                 instance=selected_interface,
                 user=user,
-                required=True,
+                required=(
+                    selected_interface.kind
+                    not in [
+                        InterfaceKindChoices.BOOL,
+                        InterfaceKindChoices.ANY,
+                    ]
+                ),
             ).field

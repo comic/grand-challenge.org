@@ -9,7 +9,11 @@ from celery import signature
 from django import forms
 from django.apps import apps
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.core.exceptions import (
+    MultipleObjectsReturned,
+    ObjectDoesNotExist,
+    ValidationError,
+)
 from django.core.files import File
 from django.core.files.base import ContentFile
 from django.core.validators import (
@@ -1932,32 +1936,48 @@ class ComponentImage(FieldChangeMixin, models.Model):
 
 
 class CIVForObjectMixin:
-    def create_civ(self, ci_slug, new_value, user=None):
+    def create_civ(self, *, ci_slug, new_value, user=None):
         ci = ComponentInterface.objects.get(slug=ci_slug)
-        current_civ = self.values.filter(interface=ci).first()
+        try:
+            current_civ = self.values.filter(interface=ci).get()
+        except ObjectDoesNotExist:
+            current_civ = None
+        except MultipleObjectsReturned as e:
+            raise e
+
         if ci.is_json_kind and not ci.requires_file:
-            return self.create_civ_for_value(ci, current_civ, new_value)
+            return self.create_civ_for_value(
+                ci=ci, current_civ=current_civ, new_value=new_value
+            )
         elif ci.is_image_kind:
-            return self.create_civ_for_image(ci, current_civ, new_value, user)
+            return self.create_civ_for_image(
+                ci=ci, current_civ=current_civ, new_value=new_value, user=user
+            )
         elif ci.requires_file:
-            return self.create_civ_for_file(ci, current_civ, new_value)
+            return self.create_civ_for_file(
+                ci=ci, current_civ=current_civ, new_value=new_value
+            )
         else:
             NotImplementedError(f"CIV creation for {ci} not handled.")
 
-    def create_civ_for_value(self, ci, current_civ, new_value):
+    def create_civ_for_value(self, *, ci, current_civ, new_value):
         current_value = current_civ.value if current_civ else None
-        if new_value is not None and current_value != new_value:
-            self.values.remove(current_civ)
-            civ = ComponentInterfaceValue.objects.create(
-                interface=ci, value=new_value
-            )
-            civ.full_clean()
-            self.values.add(civ)
-        elif not new_value:
-            # if the new value is None, remove the old CIV from the display set
-            self.values.remove(current_civ)
+        civ = ComponentInterfaceValue(interface=ci, value=new_value)
+        if current_value != new_value or (
+            current_civ is None and new_value is None
+        ):
+            try:
+                civ.full_clean()
+                civ.save()
+                self.values.remove(current_civ)
+                self.values.add(civ)
+            except ValidationError as e:
+                if new_value:
+                    raise e
+                else:
+                    self.values.remove(current_civ)
 
-    def create_civ_for_image(self, ci, current_civ, new_value, user):
+    def create_civ_for_image(self, *, ci, current_civ, new_value, user):
         current_image = current_civ.image if current_civ else None
         if isinstance(new_value, Image) and current_image != new_value:
             self.values.remove(current_civ)
@@ -1987,7 +2007,7 @@ class CIVForObjectMixin:
                 )
             )
 
-    def create_civ_for_file(self, ci, current_civ, new_value):
+    def create_civ_for_file(self, *, ci, current_civ, new_value):
         if (
             isinstance(new_value, ComponentInterfaceValue)
             and current_civ != new_value

@@ -407,8 +407,6 @@ class ArchiveEditArchiveItem(
 
     def form_valid(self, form):
         for ci_slug, value in form.cleaned_data.items():
-            if value is None:
-                continue
             self.archive_item.create_civ(
                 ci_slug=ci_slug, new_value=value, user=self.request.user
             )

@@ -1088,7 +1088,8 @@ class DisplaySetViewSet(
                     image = value.get("image", None)
                     value = value.get("value", None)
                     instance.create_civ(
-                        interface.slug, user_upload or image or value
+                        ci_slug=interface.slug,
+                        new_value=user_upload or image or value,
                     )
             else:
                 raise DRFValidationError(serialized_data.errors)
@@ -1510,7 +1511,9 @@ class DisplaySetInterfacesCreate(ObjectPermissionRequiredMixin, FormView):
         interface = form.cleaned_data["interface"]
         value = form.cleaned_data[interface.slug]
         if self.display_set:
-            self.display_set.create_civ(interface.slug, value)
+            self.display_set.create_civ(
+                ci_slug=interface.slug, new_value=value
+            )
             messages.add_message(
                 self.request,
                 messages.SUCCESS,

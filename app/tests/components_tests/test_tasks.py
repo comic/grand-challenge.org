@@ -26,6 +26,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
 )
+from tests.archives_tests.factories import ArchiveItemFactory
 from tests.cases_tests.factories import RawImageUploadSessionFactory
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
@@ -309,22 +310,25 @@ def test_update_sagemaker_shim(
     assert "MANIFEST_UNKNOWN" in error.value.stderr.decode()
 
 
+@pytest.mark.parametrize(
+    "object_type", [DisplaySetFactory, ArchiveItemFactory]
+)
 @pytest.mark.django_db
-def test_add_image_to_object(settings):
+def test_add_image_to_object(settings, object_type):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    ds = DisplaySetFactory()
+    obj = object_type()
     us = RawImageUploadSessionFactory()
     ci = ComponentInterfaceFactory(kind="IMG")
 
     error_message = "Image imports should result in a single image"
 
     add_image_to_object(
-        app_label=ds._meta.app_label,
-        model_name=ds._meta.model_name,
+        app_label=obj._meta.app_label,
+        model_name=obj._meta.model_name,
         upload_session_pk=us.pk,
-        object_pk=ds.pk,
+        object_pk=obj.pk,
         interface_pk=ci.pk,
     )
 
@@ -336,10 +340,10 @@ def test_add_image_to_object(settings):
     im1, im2 = ImageFactory.create_batch(2, origin=us)
 
     add_image_to_object(
-        app_label=ds._meta.app_label,
-        model_name=ds._meta.model_name,
+        app_label=obj._meta.app_label,
+        model_name=obj._meta.model_name,
         upload_session_pk=us.pk,
-        object_pk=ds.pk,
+        object_pk=obj.pk,
         interface_pk=ci.pk,
     )
     assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 0
@@ -350,22 +354,25 @@ def test_add_image_to_object(settings):
     im2.delete()
 
     add_image_to_object(
-        app_label=ds._meta.app_label,
-        model_name=ds._meta.model_name,
+        app_label=obj._meta.app_label,
+        model_name=obj._meta.model_name,
         upload_session_pk=us.pk,
-        object_pk=ds.pk,
+        object_pk=obj.pk,
         interface_pk=ci.pk,
     )
     assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 1
 
 
+@pytest.mark.parametrize(
+    "object_type", [DisplaySetFactory, ArchiveItemFactory]
+)
 @pytest.mark.django_db
-def test_add_file_to_object(settings):
+def test_add_file_to_object(settings, object_type):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
     creator = UserFactory()
-    ds = DisplaySetFactory()
+    obj = object_type()
 
     us = UserUploadFactory(filename="file.json", creator=creator)
     presigned_urls = us.generate_presigned_urls(part_numbers=[1])
@@ -384,9 +391,9 @@ def test_add_file_to_object(settings):
     )
 
     add_file_to_object(
-        app_label=ds._meta.app_label,
-        model_name=ds._meta.model_name,
-        object_pk=ds.pk,
+        app_label=obj._meta.app_label,
+        model_name=obj._meta.model_name,
+        object_pk=obj.pk,
         user_upload_pk=us.pk,
         interface_pk=ci.pk,
     )
@@ -408,10 +415,10 @@ def test_add_file_to_object(settings):
     us2.save()
 
     add_file_to_object(
-        app_label=ds._meta.app_label,
-        model_name=ds._meta.model_name,
+        app_label=obj._meta.app_label,
+        model_name=obj._meta.model_name,
         user_upload_pk=us2.pk,
-        object_pk=ds.pk,
+        object_pk=obj.pk,
         interface_pk=ci.pk,
     )
     assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 1

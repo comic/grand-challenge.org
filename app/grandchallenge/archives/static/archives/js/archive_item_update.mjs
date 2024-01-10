@@ -1,5 +1,5 @@
 $('#ajaxDataTable').on( 'init.dt', function() {
-   var allSelectElements = document.querySelectorAll('[id^="interfaceSelect"]');
+   let allSelectElements = document.querySelectorAll('[id^="interfaceSelect"]');
    allSelectElements.forEach(function(elem) {
         elem.addEventListener("change", loadUpdateView);
    });
