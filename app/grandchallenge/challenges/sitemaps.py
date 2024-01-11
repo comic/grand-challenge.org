@@ -8,6 +8,3 @@ class ChallengesSitemap(SubdomainSitemap):
 
     def items(self):
         return Challenge.objects.filter(hidden=False)
-
-    def lastmod(self, item: Challenge):
-        return item.modified

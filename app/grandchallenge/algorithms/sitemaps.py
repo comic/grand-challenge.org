@@ -8,6 +8,3 @@ class AlgorithmsSitemap(SubdomainSitemap):
 
     def items(self):
         return Algorithm.objects.filter(public=True)
-
-    def lastmod(self, item: Algorithm):
-        return item.modified
