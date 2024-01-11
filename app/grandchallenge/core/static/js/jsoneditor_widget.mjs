@@ -33,7 +33,7 @@ function search_for_jsoneditor_widgets() {
     }
 }
 
-$(document).ready(function () {
+document.addEventListener("DOMContentLoaded", function(event) {
     search_for_jsoneditor_widgets()
 });
 
