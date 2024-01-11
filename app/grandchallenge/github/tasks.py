@@ -20,6 +20,7 @@ from django.utils.timezone import now
 
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.codebuild.tasks import create_codebuild_build
+from grandchallenge.github.exceptions import GitHubBadRefreshTokenException
 from grandchallenge.github.utils import CloneStatusChoices
 
 logger = logging.getLogger(__name__)
@@ -191,8 +192,15 @@ def refresh_user_token(*, pk):
     GitHubUserToken = apps.get_model(  # noqa: N806
         app_label="github", model_name="GitHubUserToken"
     )
+
     token = GitHubUserToken.objects.get(pk=pk)
-    token.refresh_access_token()
+
+    try:
+        token.refresh_access_token()
+    except GitHubBadRefreshTokenException:
+        token.delete()
+        return
+
     token.save()
 
 
