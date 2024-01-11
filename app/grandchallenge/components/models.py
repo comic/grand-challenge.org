@@ -1082,6 +1082,19 @@ class ComponentInterface(OverlaySegmentsMixin):
         if self.schema:
             JSONValidator(schema=self.schema)(value=value)
 
+    @cached_property
+    def value_required(self):
+        value_required = True
+        if self.kind == InterfaceKindChoices.ANY and not self.requires_file:
+            try:
+                self.validate_against_schema(value=None)
+                value_required = False
+            except ValidationError:
+                pass
+        elif self.kind == InterfaceKindChoices.BOOL:
+            value_required = False
+        return value_required
+
     class Meta:
         ordering = ("pk",)
 
