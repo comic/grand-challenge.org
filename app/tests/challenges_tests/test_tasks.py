@@ -1,7 +1,4 @@
-import math
-
 import pytest
-from django.conf import settings
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.challenges.tasks import update_challenge_results_cache
@@ -48,76 +45,33 @@ def test_challenge_creation_from_request():
 
 @pytest.mark.django_db
 def test_challenge_request_budget_calculation():
-    challenge_request = ChallengeRequestFactory()
-    assert (
-        challenge_request.budget["Data storage cost for phase 1"]
-        == math.ceil(
-            challenge_request.phase_1_number_of_test_images
-            * challenge_request.average_size_of_test_image_in_mb
-            * settings.CHALLENGES_S3_STORAGE_COST_CENTS_PER_TB_PER_YEAR
-            / 1000000
-            / 100
-            / 10
-        )
-        * 10
+    challenge_request = ChallengeRequestFactory(
+        expected_number_of_teams=10,
+        inference_time_limit_in_minutes=10,
+        average_size_of_test_image_in_mb=100,
+        phase_1_number_of_submissions_per_team=10,
+        phase_2_number_of_submissions_per_team=100,
+        phase_1_number_of_test_images=100,
+        phase_2_number_of_test_images=500,
+        number_of_tasks=1,
     )
-    assert (
-        challenge_request.budget["Compute costs for phase 1"]
-        == math.ceil(
-            challenge_request.phase_1_number_of_submissions_per_team
-            * challenge_request.expected_number_of_teams
-            * challenge_request.phase_1_number_of_test_images
-            * challenge_request.inference_time_limit_in_minutes
-            * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
-            / 60
-            / 100
-            / 10
-        )
-        * 10
-    )
-    assert (
-        challenge_request.budget["Compute costs for phase 2"]
-        == math.ceil(
-            challenge_request.phase_2_number_of_submissions_per_team
-            * challenge_request.expected_number_of_teams
-            * challenge_request.phase_2_number_of_test_images
-            * challenge_request.inference_time_limit_in_minutes
-            * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
-            / 60
-            / 100
-            / 10
-        )
-        * 10
-    )
-    assert (
-        challenge_request.budget["Data storage cost for phase 2"]
-        == math.ceil(
-            challenge_request.phase_2_number_of_test_images
-            * challenge_request.average_size_of_test_image_in_mb
-            * settings.CHALLENGES_S3_STORAGE_COST_CENTS_PER_TB_PER_YEAR
-            / 1000000
-            / 100
-            / 10
-        )
-        * 10
-    )
+
+    assert challenge_request.budget == {
+        "Base cost": 5000,
+        "Compute costs for phase 1": 1670,
+        "Compute costs for phase 2": 83340,
+        "Data storage cost for phase 1": 10,
+        "Data storage cost for phase 2": 20,
+        "Docker storage cost": 100,
+        "Total": 90140,
+        "Total phase 1": 1680,
+        "Total phase 2": 83360,
+    }
+
     assert (
         challenge_request.budget["Total phase 2"]
         == challenge_request.budget["Data storage cost for phase 2"]
         + challenge_request.budget["Compute costs for phase 2"]
-    )
-    assert (
-        challenge_request.budget["Docker storage cost"]
-        == math.ceil(
-            challenge_request.average_algorithm_container_size_in_gb
-            * challenge_request.average_number_of_containers_per_team
-            * challenge_request.expected_number_of_teams
-            * settings.CHALLENGES_ECR_STORAGE_COST_CENTS_PER_TB_PER_YEAR
-            / 1000
-            / 100
-            / 10
-        )
-        * 10
     )
     assert (
         challenge_request.budget["Total phase 1"]
@@ -131,3 +85,19 @@ def test_challenge_request_budget_calculation():
         + challenge_request.budget["Docker storage cost"]
         + challenge_request.budget["Base cost"]
     )
+
+    challenge_request.number_of_tasks = 2
+
+    del challenge_request.budget
+
+    assert challenge_request.budget == {
+        "Base cost": 5000,
+        "Compute costs for phase 1": 3340,
+        "Compute costs for phase 2": 166670,
+        "Data storage cost for phase 1": 10,
+        "Data storage cost for phase 2": 30,
+        "Docker storage cost": 200,
+        "Total": 175250,
+        "Total phase 1": 3350,
+        "Total phase 2": 166700,
+    }
