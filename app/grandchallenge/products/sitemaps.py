@@ -9,9 +9,6 @@ class CompaniesSitemap(SubdomainSitemap):
     def items(self):
         return Company.objects.all()
 
-    def lastmod(self, item: Company):
-        return item.modified
-
 
 class ProductsSitemap(SubdomainSitemap):
     changefreq = "weekly"
@@ -19,6 +16,3 @@ class ProductsSitemap(SubdomainSitemap):
 
     def items(self):
         return Product.objects.all()
-
-    def lastmod(self, item: Product):
-        return item.modified

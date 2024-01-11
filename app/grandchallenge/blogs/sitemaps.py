@@ -8,6 +8,3 @@ class PostsSitemap(SubdomainSitemap):
 
     def items(self):
         return Post.objects.filter(published=True)
-
-    def lastmod(self, item: Post):
-        return item.modified
