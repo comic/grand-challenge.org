@@ -1464,7 +1464,7 @@ class DisplaySetInterfacesCreate(ObjectPermissionRequiredMixin, FormView):
                 "base_obj": self.reader_study,
                 "interface": self.request.GET.get("interface"),
                 "user": self.request.user,
-                "auto_id": f"id-{uuid.uuid4()}-%s",
+                "auto_id": f"id-{uuid.uuid4()}",
                 "htmx_url": self.get_htmx_url(),
             }
         )

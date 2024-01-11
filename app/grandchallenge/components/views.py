@@ -107,7 +107,7 @@ class InterfaceProcessingMixin:
         kwargs.update(
             {
                 "user": self.request.user,
-                "auto_id": f"id-{uuid.uuid4()}-%s",
+                "auto_id": f"id-{uuid.uuid4()}",
                 "base_obj": self.base_object,
             }
         )

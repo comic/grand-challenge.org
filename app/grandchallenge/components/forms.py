@@ -166,7 +166,7 @@ class MultipleCIVCreateForm(Form):
                     interface=interface.pk,
                     user=self.user,
                     base_obj=self.base_obj,
-                    auto_id="%s",
+                    auto_id="1",
                     htmx_url=None,
                 )
                 if form.is_valid():
@@ -213,7 +213,7 @@ class ComponentInterfaceCreateForm(Form):
             "hx-get": htmx_url,
             "hx-trigger": "interfaceSelected",
             "disabled": selected_interface is not None,
-            "hx-target": f"#form-{kwargs['auto_id'][:-3]}",
+            "hx-target": f"#form-{kwargs['auto_id']}",
             "hx-swap": "outerHTML",
         }
 
