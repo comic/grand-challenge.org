@@ -29,6 +29,8 @@ class Page(models.Model):
         (ADMIN_ONLY, "Administrators only"),
     )
 
+    created = models.DateTimeField(auto_now_add=True, null=True)
+    modified = models.DateTimeField(auto_now=True, null=True)
     display_title = models.CharField(
         max_length=255,
         blank=False,
