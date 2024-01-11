@@ -89,7 +89,11 @@
 <span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">forms</span>
 <span class="kn">from</span> <span class="nn">django.apps</span> <span class="kn">import</span> <span class="n">apps</span>
 <span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
-<span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ValidationError</span>
+<span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MultipleObjectsReturned</span><span class="p">,</span>
+    <span class="n">ObjectDoesNotExist</span><span class="p">,</span>
+    <span class="n">ValidationError</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">django.core.files</span> <span class="kn">import</span> <span class="n">File</span>
 <span class="kn">from</span> <span class="nn">django.core.files.base</span> <span class="kn">import</span> <span class="n">ContentFile</span>
 <span class="kn">from</span> <span class="nn">django.core.validators</span> <span class="kn">import</span> <span class="p">(</span>
@@ -112,7 +116,7 @@
 <span class="kn">from</span> <span class="nn">django_extensions.db.fields</span> <span class="kn">import</span> <span class="n">AutoSlugField</span>
 <span class="kn">from</span> <span class="nn">panimg.models</span> <span class="kn">import</span> <span class="n">MAXIMUM_SEGMENTS_LENGTH</span>
 
-<span class="kn">from</span> <span class="nn">grandchallenge.cases.models</span> <span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">ImageFile</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.cases.models</span> <span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">ImageFile</span><span class="p">,</span> <span class="n">RawImageUploadSession</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.cases.widgets</span> <span class="kn">import</span> <span class="n">FlexibleImageField</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.charts.specs</span> <span class="kn">import</span> <span class="n">components_line</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.schemas</span> <span class="kn">import</span> <span class="n">INTERFACE_VALUE_SCHEMA</span>
@@ -1190,6 +1194,19 @@
             <span class="n">JSONValidator</span><span class="p">(</span><span class="n">schema</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="p">)(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">)</span></div>
 
 
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span> <span class="nf">value_required</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">value_required</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_image_kind</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">requires_file</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">validate_against_schema</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+                <span class="n">value_required</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">except</span> <span class="n">ValidationError</span><span class="p">:</span>
+                <span class="k">pass</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">BOOL</span><span class="p">:</span>
+            <span class="n">value_required</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="n">value_required</span>
+
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
         <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">,)</span></div>
 
@@ -2078,6 +2095,106 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">size_in_storage</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">size</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">size_in_registry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_size_in_registry</span><span class="p">()</span></div>
 
+
+
+<span class="k">class</span> <span class="nc">CIVForObjectMixin</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">create_civ</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">ci_slug</span><span class="p">,</span> <span class="n">new_value</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">ci</span> <span class="o">=</span> <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">slug</span><span class="o">=</span><span class="n">ci_slug</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">current_civ</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">ci</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+        <span class="k">except</span> <span class="n">ObjectDoesNotExist</span><span class="p">:</span>
+            <span class="n">current_civ</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">except</span> <span class="n">MultipleObjectsReturned</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">e</span>
+
+        <span class="k">if</span> <span class="n">ci</span><span class="o">.</span><span class="n">is_json_kind</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ci</span><span class="o">.</span><span class="n">requires_file</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_civ_for_value</span><span class="p">(</span>
+                <span class="n">ci</span><span class="o">=</span><span class="n">ci</span><span class="p">,</span> <span class="n">current_civ</span><span class="o">=</span><span class="n">current_civ</span><span class="p">,</span> <span class="n">new_value</span><span class="o">=</span><span class="n">new_value</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">ci</span><span class="o">.</span><span class="n">is_image_kind</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_civ_for_image</span><span class="p">(</span>
+                <span class="n">ci</span><span class="o">=</span><span class="n">ci</span><span class="p">,</span> <span class="n">current_civ</span><span class="o">=</span><span class="n">current_civ</span><span class="p">,</span> <span class="n">new_value</span><span class="o">=</span><span class="n">new_value</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="n">user</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">ci</span><span class="o">.</span><span class="n">requires_file</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_civ_for_file</span><span class="p">(</span>
+                <span class="n">ci</span><span class="o">=</span><span class="n">ci</span><span class="p">,</span> <span class="n">current_civ</span><span class="o">=</span><span class="n">current_civ</span><span class="p">,</span> <span class="n">new_value</span><span class="o">=</span><span class="n">new_value</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CIV creation for </span><span class="si">{</span><span class="n">ci</span><span class="si">}</span><span class="s2"> not handled.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">create_civ_for_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">ci</span><span class="p">,</span> <span class="n">current_civ</span><span class="p">,</span> <span class="n">new_value</span><span class="p">):</span>
+        <span class="n">current_value</span> <span class="o">=</span> <span class="n">current_civ</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="n">current_civ</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">civ</span> <span class="o">=</span> <span class="n">ComponentInterfaceValue</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">ci</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">new_value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">current_value</span> <span class="o">!=</span> <span class="n">new_value</span> <span class="ow">or</span> <span class="p">(</span>
+            <span class="n">current_civ</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">new_value</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">civ</span><span class="o">.</span><span class="n">full_clean</span><span class="p">()</span>
+                <span class="n">civ</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">current_civ</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">civ</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">new_value</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">e</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">current_civ</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">create_civ_for_image</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">ci</span><span class="p">,</span> <span class="n">current_civ</span><span class="p">,</span> <span class="n">new_value</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+        <span class="n">current_image</span> <span class="o">=</span> <span class="n">current_civ</span><span class="o">.</span><span class="n">image</span> <span class="k">if</span> <span class="n">current_civ</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_value</span><span class="p">,</span> <span class="n">Image</span><span class="p">)</span> <span class="ow">and</span> <span class="n">current_image</span> <span class="o">!=</span> <span class="n">new_value</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">current_civ</span><span class="p">)</span>
+            <span class="n">civ</span><span class="p">,</span> <span class="n">created</span> <span class="o">=</span> <span class="n">ComponentInterfaceValue</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_or_create</span><span class="p">(</span>
+                <span class="n">interface</span><span class="o">=</span><span class="n">ci</span><span class="p">,</span> <span class="n">image</span><span class="o">=</span><span class="n">new_value</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">created</span><span class="p">:</span>
+                <span class="n">civ</span><span class="o">.</span><span class="n">full_clean</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">civ</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_value</span><span class="p">,</span> <span class="n">QuerySet</span><span class="p">):</span>
+            <span class="c1"># Local import to avoid circular dependency</span>
+            <span class="kn">from</span> <span class="nn">grandchallenge.components.tasks</span> <span class="kn">import</span> <span class="n">add_image_to_object</span>
+
+            <span class="n">us</span> <span class="o">=</span> <span class="n">RawImageUploadSession</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                <span class="n">creator</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">us</span><span class="o">.</span><span class="n">user_uploads</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">new_value</span><span class="p">)</span>
+            <span class="n">us</span><span class="o">.</span><span class="n">process_images</span><span class="p">(</span>
+                <span class="n">linked_task</span><span class="o">=</span><span class="n">add_image_to_object</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
+                    <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
+                        <span class="s2">&quot;app_label&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="p">,</span>
+                        <span class="s2">&quot;model_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="p">,</span>
+                        <span class="s2">&quot;object_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+                        <span class="s2">&quot;interface_pk&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">ci</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span>
+                    <span class="p">},</span>
+                    <span class="n">immutable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">create_civ_for_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">ci</span><span class="p">,</span> <span class="n">current_civ</span><span class="p">,</span> <span class="n">new_value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_value</span><span class="p">,</span> <span class="n">ComponentInterfaceValue</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">current_civ</span> <span class="o">!=</span> <span class="n">new_value</span>
+        <span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">current_civ</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">new_value</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_value</span><span class="p">,</span> <span class="n">UserUpload</span><span class="p">):</span>
+            <span class="kn">from</span> <span class="nn">grandchallenge.components.tasks</span> <span class="kn">import</span> <span class="n">add_file_to_object</span>
+
+            <span class="n">transaction</span><span class="o">.</span><span class="n">on_commit</span><span class="p">(</span>
+                <span class="n">add_file_to_object</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
+                    <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
+                        <span class="s2">&quot;app_label&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="p">,</span>
+                        <span class="s2">&quot;model_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="p">,</span>
+                        <span class="s2">&quot;user_upload_pk&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">new_value</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span>
+                        <span class="s2">&quot;interface_pk&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">ci</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span>
+                        <span class="s2">&quot;object_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+                        <span class="s2">&quot;civ_pk&quot;</span><span class="p">:</span> <span class="n">current_civ</span><span class="o">.</span><span class="n">pk</span> <span class="k">if</span> <span class="n">current_civ</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="p">}</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">new_value</span><span class="p">:</span>
+            <span class="c1"># if no new value is provided (user selects &#39;---&#39; in dropdown)</span>
+            <span class="c1"># delete old CIV</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">current_civ</span><span class="p">)</span>
 </pre></div>
 
            </div>
