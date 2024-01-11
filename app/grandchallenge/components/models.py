@@ -9,7 +9,11 @@ from celery import signature
 from django import forms
 from django.apps import apps
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.core.exceptions import (
+    MultipleObjectsReturned,
+    ObjectDoesNotExist,
+    ValidationError,
+)
 from django.core.files import File
 from django.core.files.base import ContentFile
 from django.core.validators import (
@@ -32,7 +36,7 @@ from django_deprecate_fields import deprecate_field
 from django_extensions.db.fields import AutoSlugField
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
-from grandchallenge.cases.models import Image, ImageFile
+from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.cases.widgets import FlexibleImageField
 from grandchallenge.charts.specs import components_line
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
@@ -1078,6 +1082,19 @@ class ComponentInterface(OverlaySegmentsMixin):
         if self.schema:
             JSONValidator(schema=self.schema)(value=value)
 
+    @cached_property
+    def value_required(self):
+        value_required = True
+        if not self.is_image_kind and not self.requires_file:
+            try:
+                self.validate_against_schema(value=None)
+                value_required = False
+            except ValidationError:
+                pass
+        elif self.kind == InterfaceKindChoices.BOOL:
+            value_required = False
+        return value_required
+
     class Meta:
         ordering = ("pk",)
 
@@ -1929,3 +1946,103 @@ class ComponentImage(FieldChangeMixin, models.Model):
         else:
             self.size_in_storage = self.image.size
             self.size_in_registry = self.calculate_size_in_registry()
+
+
+class CIVForObjectMixin:
+    def create_civ(self, *, ci_slug, new_value, user=None):
+        ci = ComponentInterface.objects.get(slug=ci_slug)
+        try:
+            current_civ = self.values.filter(interface=ci).get()
+        except ObjectDoesNotExist:
+            current_civ = None
+        except MultipleObjectsReturned as e:
+            raise e
+
+        if ci.is_json_kind and not ci.requires_file:
+            return self.create_civ_for_value(
+                ci=ci, current_civ=current_civ, new_value=new_value
+            )
+        elif ci.is_image_kind:
+            return self.create_civ_for_image(
+                ci=ci, current_civ=current_civ, new_value=new_value, user=user
+            )
+        elif ci.requires_file:
+            return self.create_civ_for_file(
+                ci=ci, current_civ=current_civ, new_value=new_value
+            )
+        else:
+            NotImplementedError(f"CIV creation for {ci} not handled.")
+
+    def create_civ_for_value(self, *, ci, current_civ, new_value):
+        current_value = current_civ.value if current_civ else None
+        civ = ComponentInterfaceValue(interface=ci, value=new_value)
+        if current_value != new_value or (
+            current_civ is None and new_value is None
+        ):
+            try:
+                civ.full_clean()
+                civ.save()
+                self.values.remove(current_civ)
+                self.values.add(civ)
+            except ValidationError as e:
+                if new_value:
+                    raise e
+                else:
+                    self.values.remove(current_civ)
+
+    def create_civ_for_image(self, *, ci, current_civ, new_value, user):
+        current_image = current_civ.image if current_civ else None
+        if isinstance(new_value, Image) and current_image != new_value:
+            self.values.remove(current_civ)
+            civ, created = ComponentInterfaceValue.objects.get_or_create(
+                interface=ci, image=new_value
+            )
+            if created:
+                civ.full_clean()
+            self.values.add(civ)
+        elif isinstance(new_value, QuerySet):
+            # Local import to avoid circular dependency
+            from grandchallenge.components.tasks import add_image_to_object
+
+            us = RawImageUploadSession.objects.create(
+                creator=user,
+            )
+            us.user_uploads.set(new_value)
+            us.process_images(
+                linked_task=add_image_to_object.signature(
+                    kwargs={
+                        "app_label": self._meta.app_label,
+                        "model_name": self._meta.model_name,
+                        "object_pk": self.pk,
+                        "interface_pk": str(ci.pk),
+                    },
+                    immutable=True,
+                )
+            )
+
+    def create_civ_for_file(self, *, ci, current_civ, new_value):
+        if (
+            isinstance(new_value, ComponentInterfaceValue)
+            and current_civ != new_value
+        ):
+            self.values.remove(current_civ)
+            self.values.add(new_value)
+        elif isinstance(new_value, UserUpload):
+            from grandchallenge.components.tasks import add_file_to_object
+
+            transaction.on_commit(
+                add_file_to_object.signature(
+                    kwargs={
+                        "app_label": self._meta.app_label,
+                        "model_name": self._meta.model_name,
+                        "user_upload_pk": str(new_value.pk),
+                        "interface_pk": str(ci.pk),
+                        "object_pk": self.pk,
+                        "civ_pk": current_civ.pk if current_civ else None,
+                    }
+                ).apply_async
+            )
+        elif not new_value:
+            # if no new value is provided (user selects '---' in dropdown)
+            # delete old CIV
+            self.values.remove(current_civ)

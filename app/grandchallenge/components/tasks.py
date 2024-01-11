@@ -26,7 +26,7 @@ from django.utils.module_loading import import_string
 from django.utils.timezone import now
 from panimg.models import SimpleITKImage
 
-from grandchallenge.cases.models import ImageFile, RawImageUploadSession
+from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.cases.utils import get_sitk_image
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
@@ -1139,3 +1139,104 @@ def validate_voxel_values(*, civ_pk):
             civ.image.save()
 
     civ.interface._validate_voxel_values(civ.image)
+
+
+@shared_task(
+    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"],
+)
+@transaction.atomic
+def add_image_to_object(
+    *,
+    app_label,
+    model_name,
+    object_pk,
+    interface_pk,
+    upload_session_pk,
+):
+    from grandchallenge.components.models import (
+        ComponentInterface,
+        ComponentInterfaceValue,
+    )
+
+    object = get_model_instance(
+        pk=object_pk,
+        app_label=app_label,
+        model_name=model_name,
+    )
+    interface = ComponentInterface.objects.get(pk=interface_pk)
+    upload_session = RawImageUploadSession.objects.get(pk=upload_session_pk)
+    try:
+        image = Image.objects.get(origin_id=upload_session_pk)
+    except (Image.DoesNotExist, Image.MultipleObjectsReturned):
+        error_message = "Image imports should result in a single image"
+        upload_session.status = RawImageUploadSession.FAILURE
+        upload_session.error_message = error_message
+        upload_session.save()
+        return
+
+    object.values.remove(*object.values.filter(interface=interface))
+    civ, created = ComponentInterfaceValue.objects.get_or_create(
+        interface=interface, image=image
+    )
+
+    if created:
+        try:
+            civ.full_clean()
+        except ValidationError as e:
+            # this should only happen for new uploads
+            upload_session.status = RawImageUploadSession.FAILURE
+            upload_session.error_message = e.message
+            upload_session.save()
+            return
+    object.values.add(civ)
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@transaction.atomic
+def add_file_to_object(
+    *,
+    app_label,
+    model_name,
+    user_upload_pk,
+    object_pk,
+    interface_pk,
+    civ_pk=None,
+):
+    from grandchallenge.components.models import (
+        ComponentInterface,
+        ComponentInterfaceValue,
+    )
+
+    user_upload = UserUpload.objects.get(pk=user_upload_pk)
+    object = get_model_instance(
+        pk=object_pk,
+        app_label=app_label,
+        model_name=model_name,
+    )
+    interface = ComponentInterface.objects.get(pk=interface_pk)
+    error = None
+    civ = ComponentInterfaceValue(interface=interface)
+    try:
+        civ.validate_user_upload(user_upload)
+        civ.full_clean()
+        civ.save()
+        user_upload.copy_object(to_field=civ.file)
+        object.values.add(civ)
+        if civ_pk is not None:
+            # Remove the previously assigned civ from the display set
+            civ = ComponentInterfaceValue.objects.get(pk=civ_pk)
+            object.values.remove(civ)
+    except ValidationError as e:
+        error = str(e)
+
+    if error is not None:
+        Notification.send(
+            kind=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
+            actor=user_upload.creator,
+            message=f"File for interface {interface.title} failed validation.",
+            target=object.base_object,
+            description=(
+                f"File for interface {interface.title} added to {object_pk} "
+                f"in {object.base_object.title} failed validation:\n{error}."
+            ),
+        )

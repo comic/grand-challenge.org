@@ -767,5 +767,5 @@ class DisplaySetInterfacesCreateForm(Form):
             self.fields[selected_interface.slug] = InterfaceFormField(
                 instance=selected_interface,
                 user=user,
-                required=True,
+                required=selected_interface.value_required,
             ).field

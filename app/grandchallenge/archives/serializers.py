@@ -1,14 +1,9 @@
-from django.db.transaction import on_commit
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.fields import JSONField, ReadOnlyField, URLField
 from rest_framework.relations import HyperlinkedRelatedField
 
 from grandchallenge.archives.models import Archive, ArchiveItem
-from grandchallenge.archives.tasks import (
-    start_archive_item_update_tasks,
-    update_archive_item_update_kwargs,
-)
 from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
     HyperlinkedComponentInterfaceValueSerializer,
@@ -94,41 +89,17 @@ class ArchiveItemPostSerializer(ArchiveItemSerializer):
 
     def create(self, validated_data):
         if validated_data.pop("values") != []:
-            raise ValidationError("Values can only be added via update")
+            raise DRFValidationError("Values can only be added via update")
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
-        civs = validated_data.pop("values")
-
-        civ_pks_to_add = set()
-        upload_pks = {}
-
-        for civ in civs:
-            interface = civ.pop("interface", None)
-            upload_session = civ.pop("upload_session", None)
-            value = civ.pop("value", None)
-            image = civ.pop("image", None)
-            user_upload = civ.pop("user_upload", None)
-
-            update_archive_item_update_kwargs(
-                instance=instance,
-                interface=interface,
-                value=value,
-                image=image,
-                user_upload=user_upload,
-                upload_session=upload_session,
-                civ_pks_to_add=civ_pks_to_add,
-                upload_pks=upload_pks,
+        values = validated_data.pop("values")
+        for value in values:
+            interface = value.get("interface", None)
+            user_upload = value.get("user_upload", None)
+            image = value.get("image", None)
+            value = value.get("value", None)
+            instance.create_civ(
+                ci_slug=interface.slug, new_value=user_upload or image or value
             )
-
-        on_commit(
-            start_archive_item_update_tasks.signature(
-                kwargs={
-                    "archive_item_pk": instance.pk,
-                    "civ_pks_to_add": list(civ_pks_to_add),
-                    "upload_pks": upload_pks,
-                }
-            ).apply_async
-        )
-
         return instance

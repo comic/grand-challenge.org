@@ -15,9 +15,6 @@ from tests.archives_tests.factories import (
     ArchivePermissionRequestFactory,
 )
 from tests.cases_tests import RESOURCE_PATH
-from tests.cases_tests.test_background_tasks import (
-    create_raw_upload_image_session,
-)
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -294,68 +291,6 @@ def test_api_archive_item_retrieve_permissions(client):
 
 
 @pytest.mark.django_db
-def test_api_archive_item_interface_type_update(
-    client, settings, django_capture_on_commit_callbacks
-):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
-    archive = ArchiveFactory()
-    editor = UserFactory()
-    archive.add_editor(editor)
-    item = ArchiveItemFactory(archive=archive)
-
-    session, _ = create_raw_upload_image_session(
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-        images=["image10x10x10.mha"],
-        user=editor,
-    )
-    session.refresh_from_db()
-    im = session.image_set.get()
-    ci = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.IMAGE
-    )
-    civ = ComponentInterfaceValueFactory(interface=ci, image=im)
-    item.values.add(civ)
-    civ.image.update_viewer_groups_permissions()
-    assert item.values.count() == 1
-
-    # change interface type from generic medical image to generic overlay
-    # for the already uploaded image
-    with django_capture_on_commit_callbacks() as callbacks:
-        response = get_view_for_user(
-            viewname="api:archives-item-detail",
-            reverse_kwargs={"pk": item.pk},
-            data={
-                "values": [
-                    {"interface": "generic-overlay", "image": im.api_url}
-                ]
-            },
-            user=editor,
-            client=client,
-            method=client.patch,
-            content_type="application/json",
-            HTTP_X_FORWARDED_PROTO="https",
-        )
-    recurse_callbacks(
-        callbacks=callbacks,
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-    )
-
-    assert response.status_code == 200
-    assert response.json()["pk"] == str(item.pk)
-    item.refresh_from_db()
-    # check that the old item was removed and a new one was added with the same
-    # image but the new interface type
-    assert item.values.count() == 1
-    new_civ = item.values.get()
-    assert new_civ.interface.slug == "generic-overlay"
-    assert new_civ.image == im
-    assert new_civ != civ
-
-
-@pytest.mark.django_db
 def test_api_archive_item_add_and_update_value(
     client, settings, django_capture_on_commit_callbacks
 ):
@@ -596,6 +531,7 @@ def test_api_archive_item_create(client, settings):
     editor, user = UserFactory.create_batch(2)
     archive.add_editor(editor)
     archive.add_user(user)
+    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.STRING)
 
     response = get_view_for_user(
         viewname="api:archives-item-list",
@@ -618,12 +554,16 @@ def test_api_archive_item_create(client, settings):
         viewname="api:archives-item-list",
         client=client,
         method=client.post,
-        data={"archive": archive.api_url, "values": [{}]},
+        data={
+            "archive": archive.api_url,
+            "values": [{"interface": ci.slug, "value": "bar"}],
+        },
         user=editor,
         content_type="application/json",
         follow=True,
     )
     assert response.status_code == 400
+    assert "Values can only be added via update" in response.json()
     assert archive.items.count() == 0
 
     response = get_view_for_user(

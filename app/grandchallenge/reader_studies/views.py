@@ -114,7 +114,6 @@ from grandchallenge.reader_studies.serializers import (
     ReaderStudySerializer,
 )
 from grandchallenge.reader_studies.tasks import (
-    add_file_to_display_set,
     copy_reader_study_display_sets,
     create_display_sets_for_upload_session,
 )
@@ -1089,7 +1088,8 @@ class DisplaySetViewSet(
                     image = value.get("image", None)
                     value = value.get("value", None)
                     instance.create_civ(
-                        interface.slug, user_upload or image or value
+                        ci_slug=interface.slug,
+                        new_value=user_upload or image or value,
                     )
             else:
                 raise DRFValidationError(serialized_data.errors)
@@ -1430,17 +1430,21 @@ class DisplaySetFilesUpdate(ObjectPermissionRequiredMixin, FormView):
         return kwargs
 
     def form_valid(self, form):
+        from grandchallenge.components.tasks import add_file_to_object
+
         try:
             civ = self.display_set.values.get(interface=self.interface)
         except ObjectDoesNotExist:
             civ = None
         user_upload = form.cleaned_data["user_upload"]
         on_commit(
-            lambda: add_file_to_display_set.apply_async(
+            lambda: add_file_to_object.apply_async(
                 kwargs={
+                    "app_label": self.display_set._meta.app_label,
+                    "model_name": self.display_set._meta.model_name,
                     "user_upload_pk": str(user_upload.pk),
                     "interface_pk": str(self.interface.pk),
-                    "display_set_pk": str(self.display_set.pk),
+                    "object_pk": str(self.display_set.pk),
                     "civ_pk": str(civ.pk) if civ else None,
                 }
             )
@@ -1507,7 +1511,9 @@ class DisplaySetInterfacesCreate(ObjectPermissionRequiredMixin, FormView):
         interface = form.cleaned_data["interface"]
         value = form.cleaned_data[interface.slug]
         if self.display_set:
-            self.display_set.create_civ(interface.slug, value)
+            self.display_set.create_civ(
+                ci_slug=interface.slug, new_value=value
+            )
             messages.add_message(
                 self.request,
                 messages.SUCCESS,
