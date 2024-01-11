@@ -1085,7 +1085,7 @@ class ComponentInterface(OverlaySegmentsMixin):
     @cached_property
     def value_required(self):
         value_required = True
-        if self.kind == InterfaceKindChoices.ANY and not self.requires_file:
+        if not self.is_image_kind and not self.requires_file:
             try:
                 self.validate_against_schema(value=None)
                 value_required = False
