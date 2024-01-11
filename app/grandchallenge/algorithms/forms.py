@@ -103,16 +103,13 @@ class JobCreateForm(SaveFormInitMixin, Form):
             self.fields["algorithm_image"].initial = active_image
 
         for inp in self._algorithm.inputs.all():
-            if inp is not None:
-                self.fields[inp.slug] = InterfaceFormField(
-                    instance=inp,
-                    initial=inp.default_value,
-                    user=self._user,
-                    required=inp.value_required,
-                    help_text=clean(inp.description)
-                    if inp.description
-                    else "",
-                ).field
+            self.fields[inp.slug] = InterfaceFormField(
+                instance=inp,
+                initial=inp.default_value,
+                user=self._user,
+                required=inp.value_required,
+                help_text=clean(inp.description) if inp.description else "",
+            ).field
 
     @cached_property
     def jobs_limit(self):
