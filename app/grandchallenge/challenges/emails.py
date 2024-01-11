@@ -58,7 +58,7 @@ def send_challenge_requested_email_to_requester(challengerequest):
         subject=f"[{site.domain.lower()}] [{challengerequest.short_name}] Challenge Request Submitted Successfully",
         message=message,
         from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[challengerequest.creator.email],
+        recipient_list=[challengerequest.contact_email],
     )
 
 

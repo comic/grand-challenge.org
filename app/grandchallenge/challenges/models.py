@@ -856,7 +856,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         null=True,
         help_text="Average run time per algorithm job in minutes.",
         validators=[
-            MinValueValidator(limit_value=1),
+            MinValueValidator(limit_value=5),
             MaxValueValidator(limit_value=60),
         ],
     )
