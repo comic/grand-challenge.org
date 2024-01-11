@@ -2,6 +2,7 @@ import grp
 import json
 import os
 import pwd
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -122,9 +123,18 @@ def create_output():
             f.write(json.dumps(res))
 
 
+def generate_cpu_load(*, duration):
+    start_time = time.time()
+    while time.time() - start_time < duration:
+        pass
+
+
 if __name__ == "__main__":
     print(f"Current user: {pwd.getpwuid(os.getuid())}")
     print(f"Current group: {grp.getgrgid(os.getgid())}")
+    print(
+        f"Current groups: {[(gid, grp.getgrgid(gid).gr_name) for gid in os.getgroups()]}"
+    )
     print("")
 
     for k, v in os.environ.items():
@@ -145,5 +155,9 @@ if __name__ == "__main__":
 
     check_permissions()
     print("")
+
+    print("Generating CPU Load")
+    generate_cpu_load(duration=0.001)
+    print("CPU Load Complete")
 
     create_output()

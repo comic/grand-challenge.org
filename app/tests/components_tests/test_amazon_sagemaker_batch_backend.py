@@ -608,7 +608,9 @@ def test_handle_failed_job(settings):
     assert "Time limit exceeded" in str(error)
 
 
-def test_handle_stopped_event():
+def test_handle_stopped_event(settings):
+    settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
+
     pk = uuid4()
     executor = AmazonSageMakerBatchExecutor(
         job_id=f"algorithms-job-{pk}",
@@ -619,8 +621,33 @@ def test_handle_stopped_event():
         desired_gpu_type=GPUTypeChoices.T4,
     )
 
-    with pytest.raises(TaskCancelled):
-        executor.handle_event(event={"TransformJobStatus": "Stopped"})
+    with Stubber(executor._logs_client) as logs:
+        logs.add_response(
+            method="describe_log_streams",
+            service_response={
+                "logStreams": [
+                    {"logStreamName": f"localhost-A-{pk}/i-whatever"},
+                    {"logStreamName": f"localhost-A-{pk}/i-whatever/data-log"},
+                ]
+            },
+            expected_params={
+                "logGroupName": "/aws/sagemaker/TransformJobs",
+                "logStreamNamePrefix": f"localhost-A-{pk}",
+            },
+        )
+        logs.add_response(
+            method="get_log_events",
+            service_response={"events": []},
+            expected_params={
+                "logGroupName": "/aws/sagemaker/TransformJobs",
+                "logStreamName": f"localhost-A-{pk}/i-whatever",
+                "limit": LOGLINES,
+                "startFromHead": False,
+            },
+        )
+
+        with pytest.raises(TaskCancelled):
+            executor.handle_event(event={"TransformJobStatus": "Stopped"})
 
 
 def test_deprovision(settings):
