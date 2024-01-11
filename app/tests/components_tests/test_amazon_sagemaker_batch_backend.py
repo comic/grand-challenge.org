@@ -608,7 +608,9 @@ def test_handle_failed_job(settings):
     assert "Time limit exceeded" in str(error)
 
 
-def test_handle_stopped_event():
+def test_handle_stopped_event(settings):
+    settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
+
     pk = uuid4()
     executor = AmazonSageMakerBatchExecutor(
         job_id=f"algorithms-job-{pk}",
@@ -638,7 +640,7 @@ def test_handle_stopped_event():
             service_response={"events": []},
             expected_params={
                 "logGroupName": "/aws/sagemaker/TransformJobs",
-                "logStreamName": f"localhost-A-{pk}/i-whatever/data-log",
+                "logStreamName": f"localhost-A-{pk}/i-whatever",
                 "limit": LOGLINES,
                 "startFromHead": False,
             },
