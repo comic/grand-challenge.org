@@ -54,7 +54,6 @@ class TestLoginViews:
                 {"pk": e.method.pk, "slug": e.submission.phase.slug},
             ),
             ("submission-create", {"slug": e.submission.phase.slug}),
-            ("submission-create-legacy", {"slug": e.submission.phase.slug}),
             ("submission-list", {}),
             (
                 "submission-detail",
@@ -142,12 +141,6 @@ class TestObjectPermissionRequiredViews:
                 {"slug": e.submission.phase.slug},
                 "create_phase_submission",
                 e.submission.phase,
-            ),
-            (
-                "submission-create-legacy",
-                {"slug": e.submission.phase.slug},
-                "change_challenge",
-                e.submission.phase.challenge,
             ),
             (
                 "evaluation-create",

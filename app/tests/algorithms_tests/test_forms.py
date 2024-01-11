@@ -349,6 +349,7 @@ def test_create_job_simple_input_field_validation(
 
 def create_algorithm_with_input(slug):
     creator = get_algorithm_creator()
+    VerificationFactory(user=creator, is_verified=True)
     alg = AlgorithmFactory()
     alg.add_editor(user=creator)
     if slug:

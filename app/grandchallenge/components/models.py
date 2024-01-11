@@ -9,7 +9,11 @@ from celery import signature
 from django import forms
 from django.apps import apps
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.core.exceptions import (
+    MultipleObjectsReturned,
+    ObjectDoesNotExist,
+    ValidationError,
+)
 from django.core.files import File
 from django.core.files.base import ContentFile
 from django.core.validators import (
@@ -32,7 +36,7 @@ from django_deprecate_fields import deprecate_field
 from django_extensions.db.fields import AutoSlugField
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
-from grandchallenge.cases.models import Image, ImageFile
+from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.cases.widgets import FlexibleImageField
 from grandchallenge.charts.specs import components_line
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
@@ -97,6 +101,8 @@ class InterfaceKindChoices(models.TextChoices):
     MULTIPLE_ANGLES = "MANG", _("Multiple angles")
     ELLIPSE = "ELLI", _("Ellipse")
     MULTIPLE_ELLIPSES = "MELL", _("Multiple ellipses")
+    THREE_POINT_ANGLE = "3ANG", _("Three-point angle")
+    MULTIPLE_THREE_POINT_ANGLES = "M3AN", _("Multiple three-point angles")
 
     # Choice Types
     CHOICE = "CHOI", _("Choice")
@@ -407,7 +413,9 @@ class InterfaceKind:
         Example json for Angle annotation
             required: "type", "lines", "version"
             optional: "name", "probability"
+
         .. code-block:: json
+
             {
                 "name": "Some angle",
                 "type": "Angle",
@@ -419,7 +427,9 @@ class InterfaceKind:
         Example json for Multiple angles annotation
             required: "type", "angles", "version"
             optional: "name", "probability"
+
         .. code-block:: json
+
             {
                 "name": "Some angles",
                 "type": "Multiple angles",
@@ -438,6 +448,84 @@ class InterfaceKind:
                         "name": "Third angle",
                         "lines": [[[20, 30, 0.5], [20, 100, 0.5]], [[180, 200, 0.5], [210, 200, 0.5]]],
                         "probability": 0.98
+                    }
+                ],
+                "version": {"major": 1, "minor": 0}
+            }
+
+        Example json for Ellipse annotation
+            required: "type", "major_axis", "minor_axis", "version"
+            optional: "name", "probability"
+
+        .. code-block:: json
+
+            {
+                "name": "Some ellipse",
+                "type": "Ellipse",
+                "major_axis": [[-10, 606, 0.5], [39, 559, 0.5]],
+                "minor_axis": [[2, 570, 0.5], [26, 595, 0.5]],
+                "probability": 0.92,
+                "version": {"major": 1, "minor": 0}
+            }
+
+        Example json for Multiple ellipse annotation
+            required: "type", "ellipses", "version"
+            optional: "name", "probability"
+
+        .. code-block:: json
+
+            {
+                "name": "Some ellipse",
+                "type": "Multiple ellipses",
+                "ellipses": [
+                    {
+                        "major_axis": [[-44, 535, 0.5], [-112, 494, 0.5]],
+                        "minor_axis": [[-88, 532, 0.5], [-68, 497, 0.5]],
+                        "probability": 0.69
+                    },
+                    {
+                        "major_axis": [[-17, 459, 0.5], [-94, 436, 0.5]],
+                        "minor_axis": [[-61, 467, 0.5], [-50, 428, 0.5]],
+                        "probability": 0.92
+                    }
+                ],
+                "version": {"major": 1, "minor": 0}
+            }
+
+        Example json for Three-point angle annotation
+            required: "type", "angle", "version"
+            optional: "name", "probability"
+
+        .. code-block:: json
+
+            {
+                "name": "Some 3-point angle",
+                "type": "Three-point angle",
+                "angle": [[177, 493, 0.5], [22, 489, 0.5], [112, 353, 0.5]],
+                "probability": 0.003,
+                "version": {"major": 1, "minor": 0}
+            }
+
+        Example json for Three-point angle annotation
+            required: "type", "angles", "version"
+            optional: "name", "probability"
+
+        .. code-block:: json
+
+
+            {
+                "name": "Multiple 3-point angles",
+                "type": "Multiple three-point angles",
+                "angles": [
+                    {
+                        "name": "first",
+                        "angle": [[300, 237, 0.5], [263, 282, 0.5], [334, 281, 0.5]],
+                        "probability": 0.92
+                    },
+                    {
+                        "name": "second",
+                        "angle": [[413, 237, 0.5], [35, 160, 0.5], [367, 293, 0.5]],
+                        "probability": 0.69
                     }
                 ],
                 "version": {"major": 1, "minor": 0}
@@ -604,6 +692,8 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.MULTIPLE_ANGLES,
             InterfaceKind.InterfaceKindChoices.ELLIPSE,
             InterfaceKind.InterfaceKindChoices.MULTIPLE_ELLIPSES,
+            InterfaceKind.InterfaceKindChoices.THREE_POINT_ANGLE,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
         }
 
     @staticmethod
@@ -972,6 +1062,7 @@ class ComponentInterface(OverlaySegmentsMixin):
             InterfaceKind.InterfaceKindChoices.MULTIPLE_LINES,
             InterfaceKind.InterfaceKindChoices.MULTIPLE_ANGLES,
             InterfaceKind.InterfaceKindChoices.MULTIPLE_ELLIPSES,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
         }
 
         if object_store_required and self.store_in_database:
@@ -990,6 +1081,19 @@ class ComponentInterface(OverlaySegmentsMixin):
 
         if self.schema:
             JSONValidator(schema=self.schema)(value=value)
+
+    @cached_property
+    def value_required(self):
+        value_required = True
+        if not self.is_image_kind and not self.requires_file:
+            try:
+                self.validate_against_schema(value=None)
+                value_required = False
+            except ValidationError:
+                pass
+        elif self.kind == InterfaceKindChoices.BOOL:
+            value_required = False
+        return value_required
 
     class Meta:
         ordering = ("pk",)
@@ -1842,3 +1946,103 @@ class ComponentImage(FieldChangeMixin, models.Model):
         else:
             self.size_in_storage = self.image.size
             self.size_in_registry = self.calculate_size_in_registry()
+
+
+class CIVForObjectMixin:
+    def create_civ(self, *, ci_slug, new_value, user=None):
+        ci = ComponentInterface.objects.get(slug=ci_slug)
+        try:
+            current_civ = self.values.filter(interface=ci).get()
+        except ObjectDoesNotExist:
+            current_civ = None
+        except MultipleObjectsReturned as e:
+            raise e
+
+        if ci.is_json_kind and not ci.requires_file:
+            return self.create_civ_for_value(
+                ci=ci, current_civ=current_civ, new_value=new_value
+            )
+        elif ci.is_image_kind:
+            return self.create_civ_for_image(
+                ci=ci, current_civ=current_civ, new_value=new_value, user=user
+            )
+        elif ci.requires_file:
+            return self.create_civ_for_file(
+                ci=ci, current_civ=current_civ, new_value=new_value
+            )
+        else:
+            NotImplementedError(f"CIV creation for {ci} not handled.")
+
+    def create_civ_for_value(self, *, ci, current_civ, new_value):
+        current_value = current_civ.value if current_civ else None
+        civ = ComponentInterfaceValue(interface=ci, value=new_value)
+        if current_value != new_value or (
+            current_civ is None and new_value is None
+        ):
+            try:
+                civ.full_clean()
+                civ.save()
+                self.values.remove(current_civ)
+                self.values.add(civ)
+            except ValidationError as e:
+                if new_value:
+                    raise e
+                else:
+                    self.values.remove(current_civ)
+
+    def create_civ_for_image(self, *, ci, current_civ, new_value, user):
+        current_image = current_civ.image if current_civ else None
+        if isinstance(new_value, Image) and current_image != new_value:
+            self.values.remove(current_civ)
+            civ, created = ComponentInterfaceValue.objects.get_or_create(
+                interface=ci, image=new_value
+            )
+            if created:
+                civ.full_clean()
+            self.values.add(civ)
+        elif isinstance(new_value, QuerySet):
+            # Local import to avoid circular dependency
+            from grandchallenge.components.tasks import add_image_to_object
+
+            us = RawImageUploadSession.objects.create(
+                creator=user,
+            )
+            us.user_uploads.set(new_value)
+            us.process_images(
+                linked_task=add_image_to_object.signature(
+                    kwargs={
+                        "app_label": self._meta.app_label,
+                        "model_name": self._meta.model_name,
+                        "object_pk": self.pk,
+                        "interface_pk": str(ci.pk),
+                    },
+                    immutable=True,
+                )
+            )
+
+    def create_civ_for_file(self, *, ci, current_civ, new_value):
+        if (
+            isinstance(new_value, ComponentInterfaceValue)
+            and current_civ != new_value
+        ):
+            self.values.remove(current_civ)
+            self.values.add(new_value)
+        elif isinstance(new_value, UserUpload):
+            from grandchallenge.components.tasks import add_file_to_object
+
+            transaction.on_commit(
+                add_file_to_object.signature(
+                    kwargs={
+                        "app_label": self._meta.app_label,
+                        "model_name": self._meta.model_name,
+                        "user_upload_pk": str(new_value.pk),
+                        "interface_pk": str(ci.pk),
+                        "object_pk": self.pk,
+                        "civ_pk": current_civ.pk if current_civ else None,
+                    }
+                ).apply_async
+            )
+        elif not new_value:
+            # if no new value is provided (user selects '---' in dropdown)
+            # delete old CIV
+            self.values.remove(current_civ)

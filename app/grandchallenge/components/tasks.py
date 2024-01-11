@@ -26,7 +26,7 @@ from django.utils.module_loading import import_string
 from django.utils.timezone import now
 from panimg.models import SimpleITKImage
 
-from grandchallenge.cases.models import ImageFile, RawImageUploadSession
+from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.cases.utils import get_sitk_image
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
@@ -190,6 +190,45 @@ def upload_to_registry_and_sagemaker(
 
     if mark_as_desired:
         instance.mark_desired_version()
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def update_container_image_shim(
+    *,
+    pk: uuid.UUID,
+    app_label: str,
+    model_name: str,
+):
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+    instance = model.objects.get(pk=pk)
+
+    if (
+        instance.is_in_registry
+        and instance.SHIM_IMAGE
+        and (
+            instance.latest_shimmed_version
+            != settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
+        )
+    ):
+        existing_shimmed_repo_tag = instance.shimmed_repo_tag
+
+        if instance.is_on_sagemaker:
+            delete_sagemaker_model(repo_tag=existing_shimmed_repo_tag)
+            instance.is_on_sagemaker = False
+            instance.save()
+
+        remove_tag_from_registry(repo_tag=existing_shimmed_repo_tag)
+        instance.latest_shimmed_version = ""
+        instance.save()
+
+        shim_container_image(instance=instance)
+        instance.is_on_sagemaker = False
+        instance.save()
+
+        if settings.COMPONENTS_CREATE_SAGEMAKER_MODEL:
+            create_sagemaker_model(repo_tag=instance.shimmed_repo_tag)
+            instance.is_on_sagemaker = True
+            instance.save()
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
@@ -366,14 +405,14 @@ def _get_shim_env_vars(*, original_config):
     """Get the environment variables for a shimmed container image"""
     cmd = original_config["config"].get("Cmd")
     entrypoint = original_config["config"].get("Entrypoint")
+    user = original_config["config"]["User"]
 
     return {
         "GRAND_CHALLENGE_COMPONENT_CMD_B64J": encode_b64j(val=cmd),
         "GRAND_CHALLENGE_COMPONENT_ENTRYPOINT_B64J": encode_b64j(
             val=entrypoint
         ),
-        "no_proxy": "amazonaws.com",
-        "PYTHONUNBUFFERED": "1",
+        "GRAND_CHALLENGE_COMPONENT_USER": user,
     }
 
 
@@ -387,30 +426,30 @@ def _mutate_container_image(
 
         with tarfile.open(new_layer, "w") as f:
 
-            def _set_root_555_perms(
+            def _set_root_500_perms(
                 tarinfo,
             ):
                 tarinfo.uid = 0
                 tarinfo.gid = 0
-                tarinfo.mode = 0o555
+                tarinfo.mode = 0o500
                 return tarinfo
 
             f.add(
                 name=(
                     f"{settings.COMPONENTS_SAGEMAKER_SHIM_LOCATION}/"
-                    f"sagemaker-shim-{version}-Linux-{settings.COMPONENTS_SAGEMAKER_SHIM_ARCH}"
+                    f"sagemaker-shim-{version}-Linux-x86_64"
                 ),
                 arcname="/sagemaker-shim",
-                filter=_set_root_555_perms,
+                filter=_set_root_500_perms,
             )
 
             for dir in ["/input", "/output", "/tmp"]:
-                # /tmp is required by staticx
+                # staticx will unpack into /tmp
                 tarinfo = tarfile.TarInfo(dir)
                 tarinfo.type = tarfile.DIRTYPE
                 tarinfo.uid = 0
                 tarinfo.gid = 0
-                tarinfo.mode = 0o777
+                tarinfo.mode = 0o755 if dir == "/input" else 0o777
                 f.addfile(tarinfo=tarinfo)
 
         _repo_login_and_run(
@@ -418,6 +457,11 @@ def _mutate_container_image(
                 "crane",
                 "mutate",
                 original_repo_tag,
+                # Running as root is required on SageMaker Training
+                # due to the permissions of most of the filesystem
+                # including /tmp which we need to use
+                "--user",
+                "0",
                 "--cmd",
                 "",
                 "--entrypoint",
@@ -476,11 +520,12 @@ def _validate_docker_image_manifest(*, instance) -> str:
         )
 
     architecture = config.get("architecture")
-    if architecture != settings.COMPONENTS_CONTAINER_ARCH:
+    _, desired_arch = settings.COMPONENTS_CONTAINER_PLATFORM.split("/")
+    if architecture != desired_arch:
         raise ValidationError(
             f"Architecture type {architecture!r} is not supported. "
             "Please provide a container image built for "
-            f"{settings.COMPONENTS_CONTAINER_ARCH!r}."
+            f"{desired_arch!r}."
         )
 
     return f"sha256:{image_sha256}"
@@ -761,7 +806,8 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
     """
     Backend = import_string(backend)  # noqa: N806
 
-    job_params = Backend.get_job_params(event=event)
+    job_name = Backend.get_job_name(event=event)
+    job_params = Backend.get_job_params(job_name=job_name)
 
     job = get_model_instance(
         pk=job_params.pk,
@@ -1093,3 +1139,104 @@ def validate_voxel_values(*, civ_pk):
             civ.image.save()
 
     civ.interface._validate_voxel_values(civ.image)
+
+
+@shared_task(
+    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"],
+)
+@transaction.atomic
+def add_image_to_object(
+    *,
+    app_label,
+    model_name,
+    object_pk,
+    interface_pk,
+    upload_session_pk,
+):
+    from grandchallenge.components.models import (
+        ComponentInterface,
+        ComponentInterfaceValue,
+    )
+
+    object = get_model_instance(
+        pk=object_pk,
+        app_label=app_label,
+        model_name=model_name,
+    )
+    interface = ComponentInterface.objects.get(pk=interface_pk)
+    upload_session = RawImageUploadSession.objects.get(pk=upload_session_pk)
+    try:
+        image = Image.objects.get(origin_id=upload_session_pk)
+    except (Image.DoesNotExist, Image.MultipleObjectsReturned):
+        error_message = "Image imports should result in a single image"
+        upload_session.status = RawImageUploadSession.FAILURE
+        upload_session.error_message = error_message
+        upload_session.save()
+        return
+
+    object.values.remove(*object.values.filter(interface=interface))
+    civ, created = ComponentInterfaceValue.objects.get_or_create(
+        interface=interface, image=image
+    )
+
+    if created:
+        try:
+            civ.full_clean()
+        except ValidationError as e:
+            # this should only happen for new uploads
+            upload_session.status = RawImageUploadSession.FAILURE
+            upload_session.error_message = e.message
+            upload_session.save()
+            return
+    object.values.add(civ)
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@transaction.atomic
+def add_file_to_object(
+    *,
+    app_label,
+    model_name,
+    user_upload_pk,
+    object_pk,
+    interface_pk,
+    civ_pk=None,
+):
+    from grandchallenge.components.models import (
+        ComponentInterface,
+        ComponentInterfaceValue,
+    )
+
+    user_upload = UserUpload.objects.get(pk=user_upload_pk)
+    object = get_model_instance(
+        pk=object_pk,
+        app_label=app_label,
+        model_name=model_name,
+    )
+    interface = ComponentInterface.objects.get(pk=interface_pk)
+    error = None
+    civ = ComponentInterfaceValue(interface=interface)
+    try:
+        civ.validate_user_upload(user_upload)
+        civ.full_clean()
+        civ.save()
+        user_upload.copy_object(to_field=civ.file)
+        object.values.add(civ)
+        if civ_pk is not None:
+            # Remove the previously assigned civ from the display set
+            civ = ComponentInterfaceValue.objects.get(pk=civ_pk)
+            object.values.remove(civ)
+    except ValidationError as e:
+        error = str(e)
+
+    if error is not None:
+        Notification.send(
+            kind=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
+            actor=user_upload.creator,
+            message=f"File for interface {interface.title} failed validation.",
+            target=object.base_object,
+            description=(
+                f"File for interface {interface.title} added to {object_pk} "
+                f"in {object.base_object.title} failed validation:\n{error}."
+            ),
+        )

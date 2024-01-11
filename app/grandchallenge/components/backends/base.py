@@ -103,7 +103,12 @@ class Executor(ABC):
 
     @staticmethod
     @abstractmethod
-    def get_job_params(*, event):
+    def get_job_name(*, event):
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def get_job_params(*, job_name):
         ...
 
     @property
@@ -128,6 +133,14 @@ class Executor(ABC):
     @abstractmethod
     def runtime_metrics(self):
         ...
+
+    @property
+    def invocation_environment(self):
+        return {  # Up to 16 pairs
+            "LOG_LEVEL": "INFO",
+            "PYTHONUNBUFFERED": "1",
+            "no_proxy": "amazonaws.com",
+        }
 
     @property
     def compute_cost_euro_millicents(self):

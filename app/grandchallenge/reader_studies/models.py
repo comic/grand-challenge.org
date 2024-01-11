@@ -13,8 +13,8 @@ from django.core.validators import (
     MinValueValidator,
     RegexValidator,
 )
-from django.db import models, transaction
-from django.db.models import Avg, Count, Q, QuerySet, Sum
+from django.db import models
+from django.db.models import Avg, Count, Q, Sum
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.functional import cached_property
@@ -26,8 +26,8 @@ from simple_history.models import HistoricalRecords
 from stdimage import JPEGField
 
 from grandchallenge.anatomy.models import BodyStructure
-from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.components.models import (
+    CIVForObjectMixin,
     ComponentInterface,
     ComponentInterfaceValue,
     InterfaceKindChoices,
@@ -56,7 +56,6 @@ from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
 from grandchallenge.reader_studies.metrics import accuracy_score
 from grandchallenge.subdomains.utils import reverse
-from grandchallenge.uploads.models import UserUpload
 from grandchallenge.workstations.templatetags.workstations import (
     get_workstation_path_and_query_string,
 )
@@ -278,12 +277,13 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         ),
     )
     roll_over_answers_for_n_cases = models.PositiveSmallIntegerField(
-        default=False,
+        default=0,
         help_text=(
             "The number of cases for which answers should roll over. "
             "It can be used for repeated readings with slightly different hangings. "
             "For instance, if set to 1. Case 2 will start with the answers from case 1; "
-            "whereas case 3 starts anew but its answers will rollover to case 4."
+            "whereas case 3 starts anew but its answers will roll over to case 4. "
+            "Setting it to 0 (default) means answers will not roll over."
         ),
     )
     publications = models.ManyToManyField(
@@ -821,7 +821,7 @@ def delete_reader_study_groups_hook(*_, instance: ReaderStudy, using, **__):
         pass
 
 
-class DisplaySet(UUIDModel):
+class DisplaySet(CIVForObjectMixin, UUIDModel):
     reader_study = models.ForeignKey(
         ReaderStudy, related_name="display_sets", on_delete=models.PROTECT
     )
@@ -867,6 +867,10 @@ class DisplaySet(UUIDModel):
         return not self.answers.exists()
 
     @property
+    def base_object(self):
+        return self.reader_study
+
+    @property
     def api_url(self) -> str:
         """API url for this ``DisplaySet``."""
         return reverse(
@@ -907,87 +911,6 @@ class DisplaySet(UUIDModel):
             ]
         )
 
-    def create_civ(self, ci_slug, new_value, user=None):
-        ci = ComponentInterface.objects.get(slug=ci_slug)
-        current_civ = self.values.filter(interface=ci).first()
-        if ci.is_json_kind and not ci.requires_file:
-            return self.create_civ_for_value(ci, current_civ, new_value)
-        elif ci.is_image_kind:
-            return self.create_civ_for_image(ci, current_civ, new_value, user)
-        elif ci.requires_file:
-            return self.create_civ_for_file(ci, current_civ, new_value)
-        else:
-            NotImplementedError(f"CIV creation for {ci} not handled.")
-
-    def create_civ_for_value(self, ci, current_civ, new_value):
-        current_value = current_civ.value if current_civ else None
-        if new_value and current_value != new_value:
-            self.values.remove(current_civ)
-            civ = ComponentInterfaceValue.objects.create(
-                interface=ci, value=new_value
-            )
-            civ.full_clean()
-            self.values.add(civ)
-        elif not new_value:
-            # if the new value is None, remove the old CIV from the display set
-            self.values.remove(current_civ)
-
-    def create_civ_for_image(self, ci, current_civ, new_value, user):
-        current_image = current_civ.image if current_civ else None
-        if isinstance(new_value, Image) and current_image != new_value:
-            self.values.remove(current_civ)
-            civ, created = ComponentInterfaceValue.objects.get_or_create(
-                interface=ci, image=new_value
-            )
-            if created:
-                civ.full_clean()
-            self.values.add(civ)
-        elif isinstance(new_value, QuerySet):
-            # Local import to avoid circular dependency
-            from grandchallenge.reader_studies.tasks import (
-                add_image_to_display_set,
-            )
-
-            us = RawImageUploadSession.objects.create(
-                creator=user,
-            )
-            us.user_uploads.set(new_value)
-            us.process_images(
-                linked_task=add_image_to_display_set.signature(
-                    kwargs={
-                        "display_set_pk": self.pk,
-                        "interface_pk": str(ci.pk),
-                    },
-                    immutable=True,
-                )
-            )
-
-    def create_civ_for_file(self, ci, current_civ, new_value):
-        if (
-            isinstance(new_value, ComponentInterfaceValue)
-            and current_civ != new_value
-        ):
-            self.values.remove(current_civ)
-            self.values.add(new_value)
-        elif isinstance(new_value, UserUpload):
-            from grandchallenge.reader_studies.tasks import (
-                add_file_to_display_set,
-            )
-
-            transaction.on_commit(
-                add_file_to_display_set.signature(
-                    kwargs={
-                        "user_upload_pk": str(new_value.pk),
-                        "interface_pk": str(ci.pk),
-                        "display_set_pk": self.pk,
-                    }
-                ).apply_async
-            )
-        elif not new_value:
-            # if no new value is provided (user selects '---' in dropdown)
-            # delete old CIV
-            self.values.remove(current_civ)
-
 
 class DisplaySetUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(DisplaySet, on_delete=models.CASCADE)
@@ -1023,6 +946,8 @@ class AnswerType(models.TextChoices):
     MULTIPLE_ANGLES = "MANG", "Multiple angles"
     ELLIPSE = "ELLI", "Ellipse"
     MULTIPLE_ELLIPSES = "MELL", "Multiple ellipses"
+    THREE_POINT_ANGLE = "3ANG", "Three-point angle"
+    MULTIPLE_THREE_POINT_ANGLES = "M3AN", "Multiple three-point angles"
 
     @staticmethod
     def get_choice_types():
@@ -1050,6 +975,8 @@ class AnswerType(models.TextChoices):
             AnswerType.MULTIPLE_ANGLES,
             AnswerType.ELLIPSE,
             AnswerType.MULTIPLE_ELLIPSES,
+            AnswerType.THREE_POINT_ANGLE,
+            AnswerType.MULTIPLE_THREE_POINT_ANGLES,
         ]
 
     @staticmethod
@@ -1104,6 +1031,10 @@ ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
     AnswerType.MULTIPLE_ANGLES: [InterfaceKindChoices.MULTIPLE_ANGLES],
     AnswerType.ELLIPSE: [InterfaceKindChoices.ELLIPSE],
     AnswerType.MULTIPLE_ELLIPSES: [InterfaceKindChoices.MULTIPLE_ELLIPSES],
+    AnswerType.THREE_POINT_ANGLE: [InterfaceKindChoices.THREE_POINT_ANGLE],
+    AnswerType.MULTIPLE_THREE_POINT_ANGLES: [
+        InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES
+    ],
 }
 
 
@@ -1163,6 +1094,10 @@ ANSWER_TYPE_TO_QUESTION_WIDGET = {
     AnswerType.MULTIPLE_ANGLES: [QuestionWidgetKindChoices.ACCEPT_REJECT],
     AnswerType.ELLIPSE: [],
     AnswerType.MULTIPLE_ELLIPSES: [QuestionWidgetKindChoices.ACCEPT_REJECT],
+    AnswerType.THREE_POINT_ANGLE: [],
+    AnswerType.MULTIPLE_THREE_POINT_ANGLES: [
+        QuestionWidgetKindChoices.ACCEPT_REJECT
+    ],
 }
 
 ANSWER_TYPE_TO_QUESTION_WIDGET_CHOICES = {
@@ -1194,6 +1129,8 @@ EMPTY_ANSWER_VALUES = {
     AnswerType.MULTIPLE_ELLIPSES: None,
     AnswerType.MULTIPLE_CHOICE: [],
     AnswerType.MULTIPLE_CHOICE_DROPDOWN: [],
+    AnswerType.THREE_POINT_ANGLE: None,
+    AnswerType.MULTIPLE_THREE_POINT_ANGLES: None,
 }
 
 
@@ -1236,6 +1173,8 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     EXAMPLE_FOR_ANSWER_TYPE = {
         AnswerType.SINGLE_LINE_TEXT: "'\"answer\"'",
         AnswerType.MULTI_LINE_TEXT: "'\"answer\\nanswer\\nanswer\"'",
+        AnswerType.TEXT: "'\"answer\"'",
+        AnswerType.NUMBER: "'1'",
         AnswerType.BOOL: "'true'",
         AnswerType.CHOICE: "'\"option\"'",
         AnswerType.MULTIPLE_CHOICE: '\'["option1", "option2"]\'',

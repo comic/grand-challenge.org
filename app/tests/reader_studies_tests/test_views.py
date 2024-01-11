@@ -389,7 +389,13 @@ def test_display_set_update(client):
     ds1, ds2 = DisplaySetFactory.create_batch(2, reader_study=rs)
     rs.add_editor(user)
     # 3 interfaces of different types
-    ci_json = ComponentInterfaceFactory(kind="JSON")
+    ci_json = ComponentInterfaceFactory(
+        kind="JSON",
+        schema={
+            "$schema": "http://json-schema.org/draft-07/schema",
+            "type": "object",
+        },
+    )
     ci_json_file = ComponentInterfaceFactory(
         kind="JSON", store_in_database=False
     )
@@ -791,7 +797,6 @@ def test_display_set_interfaces_create(
         user=u1,
         method=client.post,
     )
-    assert "This field is required" in str(response.content)
     assert ComponentInterfaceValue.objects.count() == old_civ_count
 
     response = get_view_for_user(

@@ -36,7 +36,6 @@ from grandchallenge.direct_messages.forms import ConversationForm
 from grandchallenge.evaluation.forms import (
     CombinedLeaderboardForm,
     EvaluationForm,
-    LegacySubmissionForm,
     MethodForm,
     MethodUpdateForm,
     PhaseCreateForm,
@@ -282,18 +281,24 @@ class MethodUpdate(
         return context
 
 
-class SubmissionCreateBase(SuccessMessageMixin, CreateView):
-    """
-    Base class for the submission creation forms.
-
-    It has no permissions, do not use it directly! See the subclasses.
-    """
-
+class SubmissionCreate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    CreateView,
+):
     model = Submission
     success_message = (
         "Your submission was successful. "
         "Your result will appear on the leaderboard when it is ready."
     )
+    form_class = SubmissionForm
+    permission_required = "create_phase_submission"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_permission_object(self):
+        return self.phase
 
     @cached_property
     def phase(self):
@@ -312,7 +317,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
             {
                 **self.phase.get_next_submission(user=self.request.user),
                 "has_pending_evaluations": self.phase.has_pending_evaluations(
-                    user=self.request.user
+                    user_pks=[self.request.user.pk]
                 ),
                 "phase": self.phase,
             }
@@ -326,30 +331,6 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
                 "challenge_short_name": self.object.phase.challenge.short_name
             },
         )
-
-
-class SubmissionCreate(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, SubmissionCreateBase
-):
-    form_class = SubmissionForm
-    permission_required = "create_phase_submission"
-    raise_exception = True
-    login_url = reverse_lazy("account_login")
-
-    def get_permission_object(self):
-        return self.phase
-
-
-class LegacySubmissionCreate(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, SubmissionCreateBase
-):
-    form_class = LegacySubmissionForm
-    permission_required = "change_challenge"
-    raise_exception = True
-    login_url = reverse_lazy("account_login")
-
-    def get_permission_object(self):
-        return self.request.challenge
 
 
 class SubmissionList(LoginRequiredMixin, PermissionListMixin, ListView):

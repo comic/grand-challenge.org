@@ -1042,9 +1042,6 @@ COMPONENTS_SAGEMAKER_SHIM_VERSION = os.environ.get(
 COMPONENTS_SAGEMAKER_SHIM_LOCATION = os.environ.get(
     "COMPONENTS_SAGEMAKER_SHIM_LOCATION", "/opt/sagemaker-shim"
 )
-COMPONENTS_SAGEMAKER_SHIM_ARCH = os.environ.get(
-    "COMPONENTS_SAGEMAKER_SHIM_ARCH", "x86_64"
-)
 COMPONENTS_CREATE_SAGEMAKER_MODEL = strtobool(
     os.environ.get("COMPONENTS_CREATE_SAGEMAKER_MODEL", "False")
 )
@@ -1080,6 +1077,9 @@ COMPONENTS_DOCKER_TASK_AWS_ACCESS_KEY_ID = os.environ.get(
 COMPONENTS_DOCKER_TASK_AWS_SECRET_ACCESS_KEY = os.environ.get(
     "COMPONENTS_DOCKER_TASK_AWS_SECRET_ACCESS_KEY", "componentstask123"
 )
+COMPONENTS_DOCKER_KEEP_CAPS_UNSAFE = strtobool(
+    os.environ.get("COMPONENTS_DOCKER_KEEP_CAPS_UNSAFE", "False")
+)
 COMPONENTS_PUBLISH_PORTS = strtobool(
     os.environ.get("COMPONENTS_PUBLISH_PORTS", "False")
 )
@@ -1097,9 +1097,7 @@ COMPONENTS_DOCKER_RUNTIME = os.environ.get("COMPONENTS_DOCKER_RUNTIME", None)
 COMPONENTS_NVIDIA_VISIBLE_DEVICES = os.environ.get(
     "COMPONENTS_NVIDIA_VISIBLE_DEVICES", "void"
 )
-COMPONENTS_CONTAINER_ARCH = os.environ.get(
-    "COMPONENTS_CONTAINER_ARCH", "amd64"
-)
+COMPONENTS_CONTAINER_PLATFORM = "linux/amd64"
 
 # Set which template pack to use for forms
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
@@ -1341,6 +1339,18 @@ DISALLOWED_EMAIL_DOMAINS = {
     "snu.ac.kr",
     "cau.ac.kr",
     "deepnoid.com",
+    "knou.ac.kr",
+    "gm.gist.ac.kr",
+    "knu.ac.kr",
+    "korea.ac.kr",
+    "g.postech.edu",
+    "hanyang.ac.kr",
+    "dankook.ac.kr",
+    "postech.ac.kr",
+    "a.ut.ac.kr",
+    "office.bufs.ac.kr",
+    "ut.ac.kr",
+    "tesser.co.kr",
     *blocklist,
 }
 

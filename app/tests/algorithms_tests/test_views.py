@@ -856,6 +856,7 @@ def test_create_job_with_json_file(
     )
 
     editor = UserFactory()
+    VerificationFactory(user=editor, is_verified=True)
     ai.algorithm.add_editor(editor)
     ci = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=False
@@ -903,6 +904,7 @@ def test_algorithm_job_create_with_image_input(
     )
 
     editor = UserFactory()
+    VerificationFactory(user=editor, is_verified=True)
     ai.algorithm.add_editor(editor)
     ci = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.IMAGE, store_in_database=False
@@ -1111,8 +1113,8 @@ def test_job_time_limit(client):
         is_manifest_valid=True,
         is_in_registry=True,
     )
-
     user = UserFactory()
+    VerificationFactory(user=user, is_verified=True)
     algorithm.add_editor(user=user)
 
     ci = ComponentInterfaceFactory(
@@ -1138,6 +1140,32 @@ def test_job_time_limit(client):
 
     assert job.algorithm_image == algorithm_image
     assert job.time_limit == 600
+
+
+@pytest.mark.django_db
+def test_job_create_view_for_verified_users_only(client):
+    user = UserFactory()
+    editor = UserFactory()
+    VerificationFactory(user=editor, is_verified=True)
+    alg = AlgorithmFactory()
+    alg.add_user(user)
+    alg.add_user(editor)
+
+    response = get_view_for_user(
+        viewname="algorithms:job-create",
+        reverse_kwargs={"slug": alg.slug},
+        client=client,
+        user=user,
+    )
+    assert response.status_code == 403
+
+    response2 = get_view_for_user(
+        viewname="algorithms:job-create",
+        reverse_kwargs={"slug": alg.slug},
+        client=client,
+        user=editor,
+    )
+    assert response2.status_code == 200
 
 
 @pytest.mark.django_db

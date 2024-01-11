@@ -106,6 +106,14 @@ class VerificationUserSetDetail(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
+        domains = {
+            user.verification.email.split("@")[1]
+            for user in self.object.users.filter(
+                verification__email_is_verified=True
+            )
+        }
+
         context.update(
             {
                 "submissions": Submission.objects.filter(
@@ -114,7 +122,8 @@ class VerificationUserSetDetail(
                     "creator__verification",
                     "creator__user_profile",
                     "phase__challenge",
-                )
+                ),
+                "domains": domains,
             }
         )
         return context

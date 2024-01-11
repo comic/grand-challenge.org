@@ -188,6 +188,44 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
             },
         ],
     },
+    "3ANG": {
+        "version": {"major": 1, "minor": 0},
+        "name": "Some annotation",
+        "type": "Three-point angle",
+        "angle": [
+            [78.29, -17.14, 76.82],
+            [76.801, -57.62, 84.43],
+            [77.10, -18.97, 115.48],
+        ],
+        "probability": 0.92,
+    },
+    "M3AN": {
+        "version": {"major": 1, "minor": 0},
+        "name": "Some annotations",
+        "type": "Multiple three-point angles",
+        "angles": [
+            {
+                "name": "Annotation 1",
+                "type": "Three-point angle",
+                "angle": [
+                    [78.29, -17.14, 76.82],
+                    [76.801, -57.62, 84.43],
+                    [77.10, -18.97, 115.48],
+                ],
+                "probability": 0.92,
+            },
+            {
+                "name": "Annotation 2",
+                "type": "Three-point angle",
+                "angle": [
+                    [78.29, -17.14, 76.82],
+                    [76.801, -57.62, 84.43],
+                    [77.10, -18.97, 115.48],
+                ],
+                "probability": 0.92,
+            },
+        ],
+    },
 }
 
 
@@ -252,6 +290,8 @@ def test_new_answer_type_listed():
         ["MANG", True],
         ["ELLI", True],
         ["MELL", True],
+        ["3ANG", True],
+        ["M3AN", True],
     ],
 )
 def test_answer_type_allows_null(answer_type, allow_null):

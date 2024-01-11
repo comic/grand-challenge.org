@@ -138,7 +138,7 @@ def world_map(*, values):
         "padding": 0,
         "view": {"stroke": "transparent", "fill": "#c9eeff"},
         "data": {
-            "url": static("vendored/world-atlas/countries-110m.json"),
+            "url": static("js/world-atlas/countries-110m.json"),
             "format": {"type": "topojson", "feature": "countries"},
         },
         "transform": [

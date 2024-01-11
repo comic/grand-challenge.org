@@ -115,7 +115,6 @@ from grandchallenge.reader_studies.serializers import (
     ReaderStudySerializer,
 )
 from grandchallenge.reader_studies.tasks import (
-    add_file_to_display_set,
     copy_reader_study_display_sets,
     create_display_sets_for_upload_session,
 )
@@ -193,7 +192,7 @@ class ReaderStudyExampleGroundTruth(
         response = HttpResponse(content_type="text/csv")
         response[
             "Content-Disposition"
-        ] = f'attachment; filename="ground-truth-{reader_study.slug}"'
+        ] = f'attachment; filename="ground-truth-{reader_study.slug}.csv"'
         writer = csv.DictWriter(
             response,
             fieldnames=reader_study.ground_truth_file_headers,
@@ -649,6 +648,13 @@ class ReaderStudyCopy(
                     interface=question.interface,
                     look_up_table=question.look_up_table,
                     overlay_segments=question.overlay_segments,
+                    widget=question.widget,
+                    answer_max_value=question.answer_max_value,
+                    answer_min_value=question.answer_min_value,
+                    answer_step_size=question.answer_step_size,
+                    answer_min_length=question.answer_min_length,
+                    answer_max_length=question.answer_max_length,
+                    answer_match_pattern=question.answer_match_pattern,
                 )
                 for option in question.options.all():
                     CategoricalOption.objects.create(
@@ -1076,7 +1082,8 @@ class DisplaySetViewSet(
                     image = value.get("image", None)
                     value = value.get("value", None)
                     instance.create_civ(
-                        interface.slug, user_upload or image or value
+                        ci_slug=interface.slug,
+                        new_value=user_upload or image or value,
                     )
             else:
                 raise DRFValidationError(serialized_data.errors)
@@ -1395,17 +1402,21 @@ class DisplaySetFilesUpdate(ObjectPermissionRequiredMixin, FormView):
         return kwargs
 
     def form_valid(self, form):
+        from grandchallenge.components.tasks import add_file_to_object
+
         try:
             civ = self.display_set.values.get(interface=self.interface)
         except ObjectDoesNotExist:
             civ = None
         user_upload = form.cleaned_data["user_upload"]
         on_commit(
-            lambda: add_file_to_display_set.apply_async(
+            lambda: add_file_to_object.apply_async(
                 kwargs={
+                    "app_label": self.display_set._meta.app_label,
+                    "model_name": self.display_set._meta.model_name,
                     "user_upload_pk": str(user_upload.pk),
                     "interface_pk": str(self.interface.pk),
-                    "display_set_pk": str(self.display_set.pk),
+                    "object_pk": str(self.display_set.pk),
                     "civ_pk": str(civ.pk) if civ else None,
                 }
             )
@@ -1483,7 +1494,9 @@ class DisplaySetInterfacesCreate(ObjectPermissionRequiredMixin, FormView):
         interface = form.cleaned_data["interface"]
         value = form.cleaned_data[interface.slug]
         if self.display_set:
-            self.display_set.create_civ(interface.slug, value)
+            self.display_set.create_civ(
+                ci_slug=interface.slug, new_value=value
+            )
             messages.add_message(
                 self.request,
                 messages.SUCCESS,

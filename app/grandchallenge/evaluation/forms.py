@@ -6,11 +6,9 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.db.models.functions import Lower
 from django.forms import CheckboxInput, HiddenInput, ModelChoiceField
 from django.utils.html import format_html
 from django.utils.text import format_lazy
-from django_select2.forms import Select2Widget
 from django_summernote.widgets import SummernoteInplaceWidget
 
 from grandchallenge.algorithms.forms import UserAlgorithmsForPhaseMixin
@@ -447,7 +445,7 @@ class SubmissionForm(
             >= 1
         )
         has_pending_evaluations = self._phase.has_pending_evaluations(
-            user=creator
+            user_pks=[creator.pk]
         )
 
         can_submit = (
@@ -457,44 +455,48 @@ class SubmissionForm(
         )
 
         if not can_submit:
-            error_message = (
-                "A new submission cannot be created for this user at this time"
-            )
-            self.add_error(None, error_message)
-            raise ValidationError(error_message)
+            self.raise_submission_limit_error()
+        elif has_available_compute and not is_challenge_admin:
+            self.check_submission_limit_avoidance(creator=creator)
 
         return creator
+
+    def raise_submission_limit_error(self):
+        error_message = "You cannot create a new submission at this time"
+        self.add_error(None, error_message)
+        raise ValidationError(error_message)
+
+    def check_submission_limit_avoidance(self, *, creator):
+        related_users = (
+            get_user_model()
+            .objects.exclude(pk=creator.pk)
+            .exclude(groups__admins_of_challenge__phase=self._phase)
+            .filter(
+                verificationuserset__users=creator,
+                groups__participants_of_challenge__phase=self._phase,
+            )
+            .distinct()
+        )
+
+        if related_users and (
+            self._phase.has_pending_evaluations(
+                user_pks=[related_user.pk for related_user in related_users]
+            )
+            or any(
+                self._phase.get_next_submission(user=related_user)[
+                    "remaining_submissions"
+                ]
+                < 1
+                for related_user in related_users
+            )
+        ):
+            self._phase.handle_submission_limit_avoidance(user=creator)
+            self.raise_submission_limit_error()
 
     class Meta:
         model = Submission
         fields = submission_fields
         widgets = {"creator": forms.HiddenInput, "phase": forms.HiddenInput}
-
-
-class LegacySubmissionForm(SubmissionForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.fields[
-            "creator"
-        ].queryset = self._phase.challenge.participants_group.user_set.all().order_by(
-            Lower("username")
-        )
-
-    def clean(self):
-        if Evaluation.objects.filter(
-            submission__phase__challenge=self._phase.challenge,
-            status=Evaluation.EXECUTING_PREREQUISITES,
-        ).exists():
-            raise ValidationError(
-                "An evaluation for this challenge is still running, please "
-                "wait for it to finish."
-            )
-
-        return super().clean()
-
-    class Meta(SubmissionForm.Meta):
-        widgets = {"creator": Select2Widget, "phase": forms.HiddenInput}
 
 
 class CombinedLeaderboardForm(SaveFormInitMixin, forms.ModelForm):

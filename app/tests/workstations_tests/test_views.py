@@ -550,9 +550,9 @@ def test_workstation_image(rf):
     assert view.workstation_image == wsi
 
     # No images for workstation
+    view.setup(request, slug=WorkstationFactory().slug)
+    del view.workstation_image
     with pytest.raises(Http404):
-        view.setup(request, slug=WorkstationFactory().slug)
-        del view.workstation_image
         _ = view.workstation_image
 
 
