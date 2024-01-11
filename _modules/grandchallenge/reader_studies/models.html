@@ -360,12 +360,13 @@
         <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">roll_over_answers_for_n_cases</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
             <span class="s2">&quot;The number of cases for which answers should roll over. &quot;</span>
             <span class="s2">&quot;It can be used for repeated readings with slightly different hangings. &quot;</span>
             <span class="s2">&quot;For instance, if set to 1. Case 2 will start with the answers from case 1; &quot;</span>
-            <span class="s2">&quot;whereas case 3 starts anew but its answers will rollover to case 4.&quot;</span>
+            <span class="s2">&quot;whereas case 3 starts anew but its answers will roll over to case 4. &quot;</span>
+            <span class="s2">&quot;Setting it to 0 (default) means answers will not roll over.&quot;</span>
         <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">publications</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>
