@@ -55,7 +55,18 @@ class GitHubUserToken(models.Model):
             headers={"Accept": "application/vnd.github+json"},
         )
         resp.raise_for_status()
-        self.update_from_payload(payload=resp.json())
+
+        payload = resp.json()
+
+        if "error" in payload:
+            if payload["error"] == "bad_refresh_token":
+                # User has deleted their installation, they need
+                # to start the auth process again
+                self.delete()
+            else:
+                raise RuntimeError(payload["error"])
+        else:
+            self.update_from_payload(payload=payload)
 
     def update_from_payload(self, *, payload):
         # Small grace time for when the tokens were issued
