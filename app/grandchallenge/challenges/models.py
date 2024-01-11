@@ -1009,6 +1009,123 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             if field.name in budget_fields
         }
 
+    @property
+    def phase_1_num_submissions(self):
+        return (
+            self.phase_1_number_of_submissions_per_team
+            * self.expected_number_of_teams
+            * self.number_of_tasks
+        )
+
+    @property
+    def phase_2_num_submissions(self):
+        return (
+            self.phase_2_number_of_submissions_per_team
+            * self.expected_number_of_teams
+            * self.number_of_tasks
+        )
+
+    @property
+    def total_num_submissions(self):
+        return self.phase_1_num_submissions + self.phase_2_num_submissions
+
+    @property
+    def phase_1_num_algorithm_jobs(self):
+        return (
+            self.phase_1_num_submissions * self.phase_1_number_of_test_images
+        )
+
+    @property
+    def phase_2_num_algorithm_jobs(self):
+        return (
+            self.phase_2_num_submissions * self.phase_2_number_of_test_images
+        )
+
+    @property
+    def total_num_algorithm_jobs(self):
+        return (
+            self.phase_1_num_algorithm_jobs + self.phase_2_num_algorithm_jobs
+        )
+
+    @property
+    def phase_1_compute_time(self):
+        return self.phase_1_num_algorithm_jobs * datetime.timedelta(
+            minutes=self.inference_time_limit_in_minutes
+        )
+
+    @property
+    def phase_2_compute_time(self):
+        return self.phase_2_num_algorithm_jobs * datetime.timedelta(
+            minutes=self.inference_time_limit_in_minutes
+        )
+
+    @property
+    def total_compute_time(self):
+        return self.phase_1_compute_time + self.phase_2_compute_time
+
+    @property
+    def phase_1_storage_size_bytes(self):
+        return (
+            self.phase_1_number_of_test_images
+            * (self.average_size_of_test_image_in_mb * settings.MEGABYTE)
+            * self.number_of_tasks
+        )
+
+    @property
+    def phase_2_storage_size_bytes(self):
+        return (
+            self.phase_2_number_of_test_images
+            * (self.average_size_of_test_image_in_mb * settings.MEGABYTE)
+            * self.number_of_tasks
+        )
+
+    @property
+    def docker_storage_size_bytes(self):
+        return (
+            (self.average_algorithm_container_size_in_gb * settings.GIGABYTE)
+            * self.average_number_of_containers_per_team
+            * self.expected_number_of_teams
+            * self.number_of_tasks
+        )
+
+    @property
+    def total_data_and_docker_storage_bytes(self):
+        return (
+            self.docker_storage_size_bytes
+            + self.phase_1_storage_size_bytes
+            + self.phase_2_storage_size_bytes
+        )
+
+    @staticmethod
+    def get_compute_costs_cents(duration):
+        return (
+            duration.total_seconds()
+            * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
+            / 3600
+        )
+
+    @staticmethod
+    def get_data_storage_costs_cents(size_bytes):
+        return (
+            size_bytes
+            * settings.CHALLENGE_NUM_SUPPORT_YEARS
+            * settings.CHALLENGES_S3_STORAGE_COST_CENTS_PER_TB_PER_YEAR
+            / settings.TERABYTE
+        )
+
+    @staticmethod
+    def get_docker_storage_costs_cents(size_bytes):
+        return (
+            size_bytes
+            * settings.CHALLENGE_NUM_SUPPORT_YEARS
+            * settings.CHALLENGES_ECR_STORAGE_COST_CENTS_PER_TB_PER_YEAR
+            / settings.TERABYTE
+        )
+
+    @staticmethod
+    def round_to_10_euros(cents):
+        return 10 * math.ceil(cents / 100 / 10)
+
     @cached_property
     def budget(self):
         if (
@@ -1019,111 +1136,40 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             and self.phase_2_number_of_test_images is not None
             and self.phase_2_number_of_submissions_per_team is not None
         ):
-            compute_costs = settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
-            s3_storage_costs = (
-                settings.CHALLENGES_S3_STORAGE_COST_CENTS_PER_TB_PER_YEAR
-            )
-            ecr_storage_costs = (
-                settings.CHALLENGES_ECR_STORAGE_COST_CENTS_PER_TB_PER_YEAR
-            )
             budget = {
                 "Base cost": settings.CHALLENGE_BASE_COST_IN_EURO,
-                "Data storage cost for phase 1": None,
-                "Compute costs for phase 1": None,
-                "Total phase 1": None,
-                "Data storage cost for phase 2": None,
-                "Compute costs for phase 2": None,
-                "Total phase 2": None,
-                "Docker storage cost": None,
-                "Total": None,
             }
 
             # calculate budget for phase 1
-            budget["Data storage cost for phase 1"] = (
-                math.ceil(
-                    self.phase_1_number_of_test_images
-                    * self.average_size_of_test_image_in_mb
-                    * s3_storage_costs
-                    * self.number_of_tasks
-                    / 1000000
-                    / 100
-                    / 10,
-                )
-                * 10
+            budget["Data storage cost for phase 1"] = self.round_to_10_euros(
+                self.get_data_storage_costs_cents(
+                    self.phase_1_storage_size_bytes
+                ),
             )
-            budget["Compute costs for phase 1"] = (
-                math.ceil(
-                    self.phase_1_number_of_test_images
-                    * self.phase_1_number_of_submissions_per_team
-                    * self.expected_number_of_teams
-                    * self.inference_time_limit_in_minutes
-                    * compute_costs
-                    * self.number_of_tasks
-                    / 60
-                    / 100
-                    / 10,
-                )
-                * 10
+            budget["Compute costs for phase 1"] = self.round_to_10_euros(
+                self.get_compute_costs_cents(self.phase_1_compute_time)
             )
             budget["Total phase 1"] = (
-                math.ceil(
-                    (
-                        budget["Data storage cost for phase 1"]
-                        + budget["Compute costs for phase 1"]
-                    )
-                    / 10,
-                )
-                * 10
+                budget["Data storage cost for phase 1"]
+                + budget["Compute costs for phase 1"]
             )
             # calculate budget for phase 2
-            budget["Data storage cost for phase 2"] = (
-                math.ceil(
-                    self.phase_2_number_of_test_images
-                    * self.average_size_of_test_image_in_mb
-                    * s3_storage_costs
-                    * self.number_of_tasks
-                    / 1000000
-                    / 100
-                    / 10,
-                )
-                * 10
+            budget["Data storage cost for phase 2"] = self.round_to_10_euros(
+                self.get_data_storage_costs_cents(
+                    self.phase_2_storage_size_bytes
+                ),
             )
-            budget["Compute costs for phase 2"] = (
-                math.ceil(
-                    self.phase_2_number_of_test_images
-                    * self.phase_2_number_of_submissions_per_team
-                    * self.expected_number_of_teams
-                    * self.inference_time_limit_in_minutes
-                    * compute_costs
-                    * self.number_of_tasks
-                    / 60
-                    / 100
-                    / 10,
-                )
-                * 10
+            budget["Compute costs for phase 2"] = self.round_to_10_euros(
+                self.get_compute_costs_cents(self.phase_2_compute_time)
             )
             budget["Total phase 2"] = (
-                math.ceil(
-                    (
-                        budget["Data storage cost for phase 2"]
-                        + budget["Compute costs for phase 2"]
-                    )
-                    / 10,
-                )
-                * 10
+                budget["Data storage cost for phase 2"]
+                + budget["Compute costs for phase 2"]
             )
-            budget["Docker storage cost"] = (
-                math.ceil(
-                    self.average_algorithm_container_size_in_gb
-                    * self.average_number_of_containers_per_team
-                    * self.expected_number_of_teams
-                    * self.number_of_tasks
-                    * ecr_storage_costs
-                    / 1000
-                    / 100
-                    / 10,
+            budget["Docker storage cost"] = self.round_to_10_euros(
+                self.get_docker_storage_costs_cents(
+                    self.docker_storage_size_bytes
                 )
-                * 10
             )
             budget["Total"] = sum(
                 filter(

@@ -1,18 +1,34 @@
-{% if budget %}
+{% load naturaldelta %}
+
+{% if object.budget %}
     <div id="cost-estimate" class="m-1 p-1">
         <h4 class="text-center">Cost estimate</h4>
         <div class="row justify-content-center">
             <div class="table-responsive pt-2 w-50">
                 <table class="table table-hover table-sm">
-                    {% for field, value in budget.items %}
-                        <tr class="{% if field == "Total" %} table-dark {% elif "Total" in field or "Base" in field %}table-light{% endif %}"><td class="col-5 font-weight-bold">{{ field }}</td> <td class="col-7 text-right {% if field == "Total" %}font-weight-bold{% endif %}">{{ value }} €</td></tr>
+                    {% for field, value in object.budget.items %}
+                        <tr>
+                            <td class="col-5 font-weight-bold {% if field == "Total" %}table-dark{% elif "Total" in field or "Base" in field %}table-light{% endif %}">{{ field }}</td>
+                            <td class="col-7 text-right {% if field == "Total" %}font-weight-bold table-dark{% elif "Total" in field or "Base" in field %}table-light{% endif %}">{{ value }} €</td>
+                        </tr>
                     {% endfor %}
                     <tr>
-                        <td class="col-5 font-weight-bold">Total number of submissions to challenge</td>
-                        <td class="col-7 text-right">{{ total_submissions }}
-                            {% if total_submissions > 500 %}
+                        <td class="col-5 font-weight-bold">Total number of submissions to the challenge</td>
+                        <td class="col-7 text-right">{{ object.total_num_submissions }}
+                            {% if object.total_num_submissions > 500 %}
                                 <br><small class="text-danger">This is an unusually high number of submissions. You may want to reconsider the number of submissions for each phase. </small>
                             {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="col-5 font-weight-bold">Total data stored for the duration of the challenge</td>
+                        <td class="col-7 text-right">{{ object.total_data_and_docker_storage_bytes|naturalsize }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="col-5 font-weight-bold">Total estimated on-demand GPU time</td>
+                        <td class="col-7 text-right">{{ object.total_compute_time|naturaldelta }}
+                            <br><small>Our platform elastically scales to hundreds of GPU instances to evaluate submissions in parallel</small>
                         </td>
                     </tr>
                 </table>

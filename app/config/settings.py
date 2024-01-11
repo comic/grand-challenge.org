@@ -155,6 +155,9 @@ CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR = int(
 CHALLENGE_BASE_COST_IN_EURO = int(
     os.environ.get("CHALLENGE_BASE_COST_IN_EURO", 5000)
 )
+CHALLENGE_NUM_SUPPORT_YEARS = int(
+    os.environ.get("CHALLENGE_NUM_SUPPORT_YEARS", 5)
+)
 
 ##############################################################################
 #
