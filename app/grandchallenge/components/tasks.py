@@ -866,7 +866,9 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
     try:
         executor.handle_event(event=event)
     except TaskCancelled:
-        job.update_status(status=job.CANCELLED)
+        job.update_status(
+            status=job.CANCELLED, **get_update_status_kwargs(executor=executor)
+        )
         return
     except RetryStep:
         retry_handle_event(_executor=executor)

@@ -68,7 +68,7 @@ def _get_outputs():
     )
 
 
-def _create_archive(*, creator, interfaces, suffix, items=1):
+def _create_archive(*, creator, interfaces, suffix, items=5):
     a = Archive.objects.create(
         title=f"Algorithm Evaluation {suffix} Test Set",
         logo=create_uploaded_image(),
