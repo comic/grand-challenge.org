@@ -26,10 +26,17 @@ function initialize_jsoneditor_widget(jsoneditorWidgetID) {
     }
 }
 
-$(document).ready(function () {
+function search_for_jsoneditor_widgets() {
     const jsoneditorWidgets = document.getElementsByClassName("jsoneditorWidget");
-
     for (let jsoneditorWidget of jsoneditorWidgets) {
         initialize_jsoneditor_widget(jsoneditorWidget.dataset.widgetId);
     }
-})
+}
+
+$(document).ready(function () {
+    search_for_jsoneditor_widgets()
+});
+
+htmx.onLoad(function () {
+    search_for_jsoneditor_widgets()
+});
