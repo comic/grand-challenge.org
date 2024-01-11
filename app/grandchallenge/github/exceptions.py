@@ -1,0 +1,2 @@
+class GitHubBadRefreshTokenException(Exception):
+    pass
