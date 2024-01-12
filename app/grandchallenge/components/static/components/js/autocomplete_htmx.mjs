@@ -1,25 +1,3 @@
-$(document).ready(() => {
-  $(".dal-forward-conf script").text("");
-
-  $(document).on('change', 'select', (e) => {
-    e.currentTarget.addEventListener("htmx:configRequest", updateRequestConfig);
-    htmx.trigger(e.currentTarget, 'interfaceSelected');
-  });
-
-  htmx.onLoad((elem) => {
-    let vals = [];
-    $("select:disabled[name^='interface'] option:selected").each((i, option) => {
-      vals.push($(option).val());
-    });
-    if (vals.length) {
-      vals = vals.map(val => `{"type": "const", "dst": "interface-${val}", "val": "${val}"}`);
-    }
-    vals.push(`{"type": "const", "dst": "object", "val": "${$('#objectSlug').data('slug')}"}`);
-    $(".dal-forward-conf script").text(`[${vals.join(',')}]`);
-  });
-
-});
-
 function updateRequestConfig (event) {
     for (const [key, val] of Object.entries(event.detail.parameters)) {
         if (key.startsWith('interface')) {
@@ -28,3 +6,40 @@ function updateRequestConfig (event) {
         }
     }
 }
+
+function processSelectElements () {
+    const selectElements = document.querySelectorAll('select[name^="interface"]')
+    selectElements.forEach(elem => {
+        const observer = new MutationObserver(function(mutationsList, observer) {
+        for(let mutation of mutationsList) {
+           if (mutation.target === elem) {
+              elem.addEventListener('htmx:configRequest', updateRequestConfig);
+              htmx.trigger(elem, 'interfaceSelected');
+           }
+        }
+        });
+        observer.observe(elem, {childList: true});
+      });
+}
+
+htmx.onLoad((elem) => {
+    processSelectElements();
+    const dalForwardConfScripts = document.querySelectorAll('.dal-forward-conf script');
+    dalForwardConfScripts.forEach(script => script.textContent = '');
+    let vals = [];
+    const selectOptions = document.querySelectorAll('select:disabled[name^="interface"] option:checked');
+    selectOptions.forEach(option => {
+      vals.push(option.value);
+    });
+
+    if (vals.length) {
+      vals = vals.map(val => `{"type": "const", "dst": "interface-${val}", "val": "${val}"}`);
+    }
+
+    const objectSlugVal = document.getElementById('objectSlug').dataset.slug;
+    vals.push(`{"type": "const", "dst": "object", "val": "${objectSlugVal}"}`);
+
+    dalForwardConfScripts.forEach(script => script.textContent = `[${vals.join(',')}]`);
+});
+
+processSelectElements();
