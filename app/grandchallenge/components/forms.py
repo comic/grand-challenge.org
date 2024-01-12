@@ -193,17 +193,14 @@ class MultipleCIVCreateForm(Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        try:
-            cleaned_data.update(self._process_new_interfaces())
-        except ValidationError as e:
-            self.errors.update(e.message_dict)
+        cleaned_data.update(self._process_new_interfaces())
         return cleaned_data
 
     def _process_new_interfaces(self):
         new_interfaces = self.data.get("new_interfaces")
         validated_data = {}
+        errors = {}
         if new_interfaces:
-            errors = {}
             for entry in new_interfaces:
                 interface = ComponentInterface.objects.get(
                     pk=entry["interface"]
@@ -223,7 +220,7 @@ class MultipleCIVCreateForm(Form):
                         interface.slug
                     ]
                 else:
-                    self.errors.update(
+                    errors.update(
                         {interface.slug: int_form.errors[interface.slug]}
                     )
             if errors:
