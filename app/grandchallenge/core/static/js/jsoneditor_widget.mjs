@@ -26,8 +26,14 @@ function initialize_jsoneditor_widget(jsoneditorWidgetID) {
     }
 }
 
-function search_for_jsoneditor_widgets() {
-    const jsoneditorWidgets = document.getElementsByClassName("jsoneditorWidget");
+function search_for_jsoneditor_widgets(elem) {
+    let jsoneditorWidgets;
+    if (elem === undefined) {
+        jsoneditorWidgets = document.getElementsByClassName("jsoneditorWidget");
+    } else {
+        jsoneditorWidgets = elem.getElementsByClassName("jsoneditorWidget");
+    }
+
     for (let jsoneditorWidget of jsoneditorWidgets) {
         initialize_jsoneditor_widget(jsoneditorWidget.dataset.widgetId);
     }
@@ -37,6 +43,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
     search_for_jsoneditor_widgets()
 });
 
-htmx.onLoad(function () {
-    search_for_jsoneditor_widgets()
+htmx.onLoad((elem) => {
+    search_for_jsoneditor_widgets(elem)
 });
+
+search_for_jsoneditor_widgets();
