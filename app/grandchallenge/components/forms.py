@@ -4,7 +4,6 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.forms import Form, HiddenInput, ModelChoiceField, ModelForm
-from kombu import uuid
 
 from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.components.form_fields import InterfaceFormField
@@ -278,7 +277,7 @@ class ComponentInterfaceCreateForm(Form):
             widget_kwargs[
                 "url"
             ] = "components:component-interface-autocomplete"
-            interface_field_name = f"interface-{uuid()}"
+            interface_field_name = f"interface-{kwargs['auto_id']}"
             widget_kwargs["forward"] = [interface_field_name]
         widget_kwargs["attrs"] = attrs
 

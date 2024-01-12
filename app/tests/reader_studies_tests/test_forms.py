@@ -1203,7 +1203,7 @@ def test_display_set_add_interface_form():
         htmx_url="foo",
         auto_id="1",
     )
-    assert sorted(form.fields.keys()) == ["interface"]
+    assert sorted(form.fields.keys()) == ["interface-1"]
 
     form = ComponentInterfaceCreateForm(
         pk=ds.pk,
