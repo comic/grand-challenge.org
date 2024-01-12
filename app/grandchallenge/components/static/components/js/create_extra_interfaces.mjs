@@ -32,7 +32,11 @@ function getInterfacesData() {
   return Array.from(document.querySelectorAll(".extra-interface-form")).map(interfaceForm => {
     const data = {};
     serializeAll(interfaceForm).forEach(entry => {
-      data[entry.name] = entry.value;
+      if (entry.name.startsWith('interface')) {
+        data['interface'] = entry.value;
+      } else {
+        data[entry.name] = entry.value;
+      }
     });
     return data;
   });

@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.forms import Form, HiddenInput, ModelChoiceField, ModelForm
+from kombu import uuid
 
 from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.components.form_fields import InterfaceFormField
@@ -93,7 +94,6 @@ class MultipleCIVCreateForm(Form):
 
     def __init__(self, *args, instance, base_obj, user, **kwargs):
         super().__init__(*args, **kwargs)
-
         self.instance = instance
         self.user = user
         self.base_obj = base_obj
@@ -219,6 +219,7 @@ class ComponentInterfaceCreateForm(Form):
 
         if selected_interface:
             widget = Select
+            interface_field_name = "interface"
         else:
             widget = autocomplete.ModelSelect2
             attrs.update(
@@ -232,18 +233,20 @@ class ComponentInterfaceCreateForm(Form):
             widget_kwargs[
                 "url"
             ] = "components:component-interface-autocomplete"
-            widget_kwargs["forward"] = ["interface"]
+            interface_field_name = f"interface-{uuid()}"
+            widget_kwargs["forward"] = [interface_field_name]
         widget_kwargs["attrs"] = attrs
 
-        self.fields["interface"] = ModelChoiceField(
+        self.fields[interface_field_name] = ModelChoiceField(
             initial=selected_interface,
             queryset=qs,
             widget=widget(**widget_kwargs),
+            label="Interface",
         )
 
         if selected_interface is not None:
             self.fields[selected_interface.slug] = InterfaceFormField(
                 instance=selected_interface,
                 user=user,
-                required=True,
+                required=selected_interface.value_required,
             ).field

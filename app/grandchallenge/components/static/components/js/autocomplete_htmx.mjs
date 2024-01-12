@@ -2,12 +2,13 @@ $(document).ready(() => {
   $(".dal-forward-conf script").text("");
 
   $(document).on('change', 'select', (e) => {
+    e.currentTarget.addEventListener("htmx:configRequest", updateRequestConfig);
     htmx.trigger(e.currentTarget, 'interfaceSelected');
   });
 
   htmx.onLoad((elem) => {
     let vals = [];
-    $("select:disabled[name='interface'] option:selected").each((i, option) => {
+    $("select:disabled[name^='interface'] option:selected").each((i, option) => {
       vals.push($(option).val());
     });
     if (vals.length) {
@@ -18,3 +19,12 @@ $(document).ready(() => {
   });
 
 });
+
+function updateRequestConfig (event) {
+    for (const [key, val] of Object.entries(event.detail.parameters)) {
+        if (key.startsWith('interface')) {
+            event.detail.parameters['interface'] = val
+            delete event.detail.parameters[key]
+        }
+    }
+}
