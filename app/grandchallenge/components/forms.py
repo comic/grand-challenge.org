@@ -8,7 +8,10 @@ from kombu import uuid
 
 from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.components.form_fields import InterfaceFormField
-from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+)
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.evaluation.models import Method
@@ -97,7 +100,10 @@ class MultipleCIVCreateForm(Form):
         self.instance = instance
         self.user = user
         self.base_obj = base_obj
+        self.new_interfaces = self.data.get("new_interfaces") or []
 
+        # add fields for all interfaces that already exist on
+        # other display sets / archive items
         for slug, values in base_obj.values_for_interfaces.items():
             current_value = None
 
@@ -106,24 +112,64 @@ class MultipleCIVCreateForm(Form):
                     interface__slug=slug
                 ).first()
 
-            interface = ComponentInterface.objects.get(slug=slug)
+            self.init_interface_field(
+                interface_slug=slug, current_value=current_value, values=values
+            )
 
-            if interface.is_image_kind:
-                self.fields[slug] = self._get_image_field(
-                    interface=interface,
-                    values=values,
-                    current_value=current_value,
+        # Add fields for dynamically added new interfaces:
+        # These are either sent along with the form data under the keyword
+        # 'new_interfaces' or as normal fields. The latter happens when a user
+        # resubmits a form that previously contained errors.
+        for slug, value in self.data.items():
+            if (
+                ComponentInterface.objects.filter(slug=slug).exists()
+                and slug not in self.fields.keys()
+            ):
+                self.new_interfaces.append(
+                    {
+                        slug: value,
+                        "interface": ComponentInterface.objects.filter(
+                            slug=slug
+                        )
+                        .get()
+                        .pk,
+                    }
                 )
-            elif interface.requires_file:
-                self.fields[slug] = self._get_file_field(
-                    interface=interface,
-                    values=values,
-                    current_value=current_value,
+
+        if self.new_interfaces:
+            for entry in self.new_interfaces:
+                interface = ComponentInterface.objects.get(
+                    pk=entry["interface"]
                 )
-            else:
-                self.fields[slug] = self._get_default_field(
-                    interface=interface, current_value=current_value
+                self.init_interface_field(
+                    interface_slug=interface.slug,
+                    current_value=entry[interface.slug],
+                    values=[],
                 )
+
+    def save(self):
+        # we need a dummy save method for form_valid() when called from a
+        # generic CreateView/UpdateView
+        pass
+
+    def init_interface_field(self, interface_slug, current_value, values):
+        interface = ComponentInterface.objects.get(slug=interface_slug)
+        if interface.is_image_kind:
+            self.fields[interface_slug] = self._get_image_field(
+                interface=interface,
+                values=values,
+                current_value=current_value,
+            )
+        elif interface.requires_file:
+            self.fields[interface_slug] = self._get_file_field(
+                interface=interface,
+                values=values,
+                current_value=current_value,
+            )
+        else:
+            self.fields[interface_slug] = self._get_default_field(
+                interface=interface, current_value=current_value
+            )
 
     def _get_image_field(self, *, interface, values, current_value):
         return self._get_default_field(
@@ -136,9 +182,11 @@ class MultipleCIVCreateForm(Form):
         )
 
     def _get_default_field(self, *, interface, current_value):
+        if isinstance(current_value, ComponentInterfaceValue):
+            current_value = current_value.value
         return InterfaceFormField(
             instance=interface,
-            initial=current_value.value if current_value else None,
+            initial=current_value,
             required=False,
             user=self.user,
         ).field
@@ -160,7 +208,7 @@ class MultipleCIVCreateForm(Form):
                 interface = ComponentInterface.objects.get(
                     pk=entry["interface"]
                 )
-                form = ComponentInterfaceCreateForm(
+                int_form = ComponentInterfaceCreateForm(
                     data=entry,
                     pk=None,
                     interface=interface.pk,
@@ -169,14 +217,14 @@ class MultipleCIVCreateForm(Form):
                     auto_id="1",
                     htmx_url=None,
                 )
-                if form.is_valid():
-                    cleaned = form.cleaned_data
+                if int_form.is_valid():
+                    cleaned = int_form.cleaned_data
                     validated_data[cleaned["interface"].slug] = cleaned[
                         interface.slug
                     ]
                 else:
-                    errors.update(
-                        {entry["interface"]: form.errors[interface.slug]}
+                    self.errors.update(
+                        {interface.slug: int_form.errors[interface.slug]}
                     )
             if errors:
                 raise ValidationError(errors)

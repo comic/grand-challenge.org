@@ -4,7 +4,6 @@ import uuid
 from dal import autocomplete
 from django.db.models import Q, TextChoices
 from django.forms import Media
-from django.http import JsonResponse
 from django.views.generic import ListView, TemplateView
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
@@ -95,12 +94,9 @@ class InterfaceProcessingMixin:
     def process_data_for_object(self, data):
         raise NotImplementedError
 
-    def form_invalid(self, form):
-        return JsonResponse(form.errors, status=400)
-
     def form_valid(self, form):
-        self.process_data_for_object(form.cleaned_data)
-        return JsonResponse({"redirect": self.get_success_url()})
+        form.instance = self.process_data_for_object(form.cleaned_data)
+        return super().form_valid(form)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -111,7 +107,10 @@ class InterfaceProcessingMixin:
                 "base_obj": self.base_object,
             }
         )
-        if self.request.method == "POST":
+        if (
+            self.request.method == "POST"
+            and self.request.headers["Content-Type"] == "application/json"
+        ):
             kwargs.update(
                 {
                     "data": json.load(self.request),

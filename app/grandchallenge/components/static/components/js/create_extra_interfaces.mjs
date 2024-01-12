@@ -7,19 +7,6 @@ function serializeAll(form) {
   return data;
 }
 
-function clearErrorMessages() {
-  document.querySelectorAll(".is-invalid").forEach(element => {
-    element.classList.remove("is-invalid");
-  });
-  document.querySelectorAll(".invalid-feedback").forEach(element => {
-    element.remove();
-  });
-  const formErrorMessage = document.getElementById("form-error-message");
-  if (formErrorMessage) {
-    formErrorMessage.remove();
-  }
-}
-
 function getFormData(form) {
   const formData = {};
   new FormData(form).forEach((value, name) => {
@@ -49,48 +36,32 @@ function submitFormData(target, formData) {
       headers: {
         'Content-Type': 'application/json',
         'X-CSRFToken': window.drf.csrfToken,
+        'Accept': 'text/html'
       },
     })
     .then(response => {
-      if (!response.ok) {
+      if (!response.redirected) {
         throw response;
       }
-      return response.json();
+      return response;
     });
   }
 
 function handleSuccess(response) {
-  window.location.href = response.redirect;
+    window.location.href = response.url;
 }
 
 function handleErrors(response) {
-    if (response.status === 400) {
-      response.json().then(errors => {
-          const keys = Object.keys(errors);
-          for (let i = 0; i < keys.length; i++) {
-            const key = keys[i];
-            var input;
-            var formGroup;
-            if (isNaN(parseInt(key))) {
-              input = document.querySelector(`[name='${key}']`);
-              formGroup = input.closest(".form-group");
-            } else {
-              formGroup = document.querySelector(`[name='interface'] option[value='${key}']:checked`).closest("form.extra-interface-form");
-              const div_id = 'div_' + formGroup.querySelector('[name^="interface"]').id.replace('interface', '');
-              const interfaceName = formGroup.children[2].id.replace(div_id, '');
-              input = document.querySelector(`[name='${interfaceName}']`);
-              formGroup.classList.add("border-danger");
-            }
-            input.classList.add("is-invalid");
-            formGroup.insertAdjacentHTML('beforeend', `<div class="invalid-feedback">${errors[key].join('; ')}</div>`);
-          }
-          var message = 'Please correct the errors below.';
-          displayErrorMessage(message);
-    });
-  } else {
-    var message = 'Unexpected error.';
-    displayErrorMessage(message);
-  }
+    response.text()
+      .then(text => {
+        let parser = new DOMParser();
+	    let doc = parser.parseFromString(text, 'text/html');
+	    let oldForm = document.getElementById('obj-form');
+	    let formWithErrors = doc.getElementById('obj-form');
+	    oldForm.innerHTML = formWithErrors.innerHTML;
+	    htmx.process(oldForm);
+        displayErrorMessage('Please correct the errors below.');
+      })
 }
 
 function displayErrorMessage(message) {
@@ -125,7 +96,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('obj-form').addEventListener('submit', (event) => {
       event.preventDefault();
-      clearErrorMessages();
 
       const form = event.currentTarget;
       const formData = getFormData(form);

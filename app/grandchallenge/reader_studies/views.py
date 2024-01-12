@@ -1357,6 +1357,7 @@ class DisplaySetUpdate(
         if data.get("order") and data["order"] != instance.order:
             instance.order = data["order"]
             instance.save()
+        return instance
 
 
 class DisplaySetFilesUpdate(ObjectPermissionRequiredMixin, FormView):
@@ -1541,13 +1542,14 @@ class AddDisplaySetToReaderStudy(
 
     def process_data_for_object(self, data):
         """Creates a display set"""
-        ds = DisplaySet.objects.create(reader_study=self.reader_study)
-        ds.order = data.pop("order")
-        ds.save()
+        instance = DisplaySet.objects.create(reader_study=self.reader_study)
+        instance.order = data.pop("order")
+        instance.save()
         for slug in data:
-            ds.create_civ(
+            instance.create_civ(
                 ci_slug=slug, new_value=data[slug], user=self.request.user
             )
+        return instance
 
     def get_success_url(self):
         return reverse(
