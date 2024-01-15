@@ -26,17 +26,25 @@ function initialize_jsoneditor_widget(jsoneditorWidgetID) {
     }
 }
 
-function search_for_jsoneditor_widgets() {
-    const jsoneditorWidgets = document.getElementsByClassName("jsoneditorWidget");
+function search_for_jsoneditor_widgets(elem) {
+    let jsoneditorWidgets;
+    if (elem === undefined) {
+        jsoneditorWidgets = document.getElementsByClassName("jsoneditorWidget");
+    } else {
+        jsoneditorWidgets = elem.getElementsByClassName("jsoneditorWidget");
+    }
     for (let jsoneditorWidget of jsoneditorWidgets) {
-        initialize_jsoneditor_widget(jsoneditorWidget.dataset.widgetId);
+        if (jsoneditorWidget.querySelector('.jsoneditor-mode-tree') === null) {
+            // only initialize the widget if it hasn't been initialized yet
+            initialize_jsoneditor_widget(jsoneditorWidget.dataset.widgetId);
+        }
     }
 }
 
 document.addEventListener("DOMContentLoaded", function(event) {
-    search_for_jsoneditor_widgets()
+    htmx.onLoad((elem) => {
+        search_for_jsoneditor_widgets(elem)
+    });
 });
 
-htmx.onLoad(function () {
-    search_for_jsoneditor_widgets()
-});
+search_for_jsoneditor_widgets();
