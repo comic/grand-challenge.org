@@ -41,8 +41,6 @@ http {
                  'upstream_header_time=$upstream_header_time';
   access_log /var/log/nginx/access.log apm;
 
-  keepalive_timeout 20s;
-
   sendfile ${SENDFILE_STATUS};
   sendfile_max_chunk 512k;
 
