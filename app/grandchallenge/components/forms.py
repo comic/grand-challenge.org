@@ -140,6 +140,7 @@ class MultipleCIVCreateForm(Form):
                 interface = ComponentInterface.objects.get(
                     pk=entry["interface"]
                 )
+                self.data[interface.slug] = entry[interface.slug]
                 self.init_interface_field(
                     interface_slug=interface.slug,
                     current_value=entry[interface.slug],
