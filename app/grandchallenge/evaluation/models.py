@@ -442,7 +442,7 @@ class Phase(FieldChangeMixin, ViewContentMixin, UUIDModel):
         default=20 * 60,
         help_text="Time limit for inference jobs in seconds",
         validators=[
-            MinValueValidator(limit_value=60),
+            MinValueValidator(limit_value=300),
             MaxValueValidator(limit_value=3600),
         ],
     )

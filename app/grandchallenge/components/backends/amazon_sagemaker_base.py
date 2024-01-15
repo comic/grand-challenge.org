@@ -19,7 +19,6 @@ from grandchallenge.components.backends.exceptions import (
     ComponentException,
     RetryStep,
     RetryTask,
-    TaskCancelled,
 )
 from grandchallenge.components.backends.utils import (
     LOGLINES,
@@ -280,6 +279,11 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
     def _log_group_name(self):
         pass
 
+    @property
+    @abstractmethod
+    def _metric_instance_prefix(self):
+        pass
+
     @abstractmethod
     def _get_job_status(self, *, event):
         pass
@@ -434,16 +438,16 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
     def handle_event(self, *, event):
         job_status = self._get_job_status(event=event)
 
-        if job_status == "Stopped":
-            raise TaskCancelled
-        elif job_status in {"Completed", "Failed"}:
-            self._set_duration(event=event)
-            self._set_task_logs()
-            self._set_runtime_metrics(event=event)
-            if job_status == "Completed":
-                self._handle_completed_job()
-            else:
-                self._handle_failed_job(event=event)
+        self._set_duration(event=event)
+        self._set_task_logs()
+        self._set_runtime_metrics(event=event)
+
+        if job_status == "Completed":
+            self._handle_completed_job()
+        elif job_status == "Stopped":
+            self._handle_stopped_job(event=event)
+        elif job_status == "Failed":
+            self._handle_failed_job(event=event)
         else:
             raise ValueError("Invalid job status")
 
@@ -560,7 +564,7 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
             return
 
         query_id = "q"
-        query = f"SEARCH('{{{self._log_group_name},Host}} Host={self._sagemaker_job_name}/i-', 'Average', 60)"
+        query = f"SEARCH('{{{self._log_group_name},Host}} Host={self._sagemaker_job_name}/{self._metric_instance_prefix}', 'Average', 60)"
 
         instance_type = get(
             [
@@ -645,6 +649,10 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
         else:
             raise ComponentException(user_error(self.stderr))
 
+    @abstractmethod
+    def _handle_stopped_job(self, *, event):
+        pass
+
     def _handle_failed_job(self, *, event):
         failure_reason = event.get("FailureReason")
 
@@ -683,6 +691,7 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
                 "The request was rejected because the training job is in status",
                 # Job was never created:
                 "Could not find job to update with name",
+                "Requested resource not found",
             }
 
             if error.response["Error"]["Code"] == "ThrottlingException":

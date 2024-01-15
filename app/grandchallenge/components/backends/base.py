@@ -361,7 +361,9 @@ class Executor(ABC):
     def _delete_objects(self, *, bucket, prefix):
         """Deletes all objects with a given prefix"""
         if not (
-            prefix.startswith("/io/") or prefix.startswith("/invocations/")
+            prefix.startswith("/io/")
+            or prefix.startswith("/invocations/")
+            or prefix.startswith("/training-outputs/")
         ) or bucket not in {
             settings.COMPONENTS_OUTPUT_BUCKET_NAME,
             settings.COMPONENTS_INPUT_BUCKET_NAME,

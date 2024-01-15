@@ -8,6 +8,3 @@ class ArchivesSitemap(SubdomainSitemap):
 
     def items(self):
         return Archive.objects.filter(public=True)
-
-    def lastmod(self, item: Archive):
-        return item.modified

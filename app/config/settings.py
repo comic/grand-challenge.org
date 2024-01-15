@@ -1196,10 +1196,6 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.github.tasks.cleanup_expired_tokens",
         "schedule": crontab(hour=0, minute=30),
     },
-    "ping_google": {
-        "task": "grandchallenge.core.tasks.ping_google",
-        "schedule": crontab(hour=0, minute=45),
-    },
     "clear_sessions": {
         "task": "grandchallenge.core.tasks.clear_sessions",
         "schedule": crontab(hour=1, minute=0),
