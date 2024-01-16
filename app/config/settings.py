@@ -1,5 +1,6 @@
 import os
 import re
+import socket
 from datetime import datetime, timedelta
 from itertools import product
 from pathlib import Path
@@ -321,8 +322,15 @@ SECURE_SSL_REDIRECT = strtobool(os.environ.get("SECURE_SSL_REDIRECT", "True"))
 SECURE_CROSS_ORIGIN_OPENER_POLICY = os.environ.get(
     "SECURE_CROSS_ORIGIN_OPENER_POLICY", "same-origin"
 )
+
+
+def get_private_ip():
+    return socket.gethostbyname(socket.gethostname())
+
+
 # Set the allowed hosts to the cookie domain
-ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, "web"]
+# Adding the private ip allows the health check to work
+ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, get_private_ip()]
 
 # Security options
 SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "0"))
