@@ -41,3 +41,12 @@ def test_paginated_table_list_view():
         "data": [],
         "showColumns": [],
     }
+
+
+@pytest.mark.django_db
+def test_ping(client, django_assert_num_queries):
+    with django_assert_num_queries(7):
+        response = client.get("/ping/")
+
+    assert response.content == b""
+    assert response.status_code == 200

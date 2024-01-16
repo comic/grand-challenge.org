@@ -4,6 +4,7 @@ from django.template.response import TemplateResponse
 from django.urls import path
 from django.views.generic import TemplateView
 
+from grandchallenge.core.views import ping
 from grandchallenge.serving.views import serve_images
 from grandchallenge.workstations.views import SessionDetail, session_proxy
 
@@ -27,6 +28,10 @@ urlpatterns = [
         TemplateView.as_view(
             template_name="robots.txt", content_type="text/plain"
         ),
+    ),
+    path(
+        "ping/",
+        ping,
     ),
     path(
         "workstations/<slug>/sessions/<uuid:pk>/",
