@@ -17,6 +17,7 @@ from django.views.decorators.http import require_POST
 from guardian.mixins import LoginRequiredMixin
 from requests import HTTPError
 
+from grandchallenge.github.exceptions import GitHubBadRefreshTokenException
 from grandchallenge.github.models import GitHubUserToken, GitHubWebhookMessage
 from grandchallenge.github.utils import (
     decode_github_state,
@@ -144,10 +145,11 @@ class GitHubInstallationRequiredMixin:
         if self.github_user_token.access_token_is_expired:
             try:
                 self.github_user_token.refresh_access_token()
-                self.github_user_token.save()
-            except HTTPError:
+            except (HTTPError, GitHubBadRefreshTokenException):
                 self.github_user_token.delete()
                 return redirect(self.github_auth_url)
+
+            self.github_user_token.save()
 
         if not self.installations:
             return redirect(self.github_app_install_url)

@@ -1,5 +1,6 @@
 import os
 import re
+import socket
 from datetime import datetime, timedelta
 from itertools import product
 from pathlib import Path
@@ -324,8 +325,15 @@ SECURE_SSL_REDIRECT = strtobool(os.environ.get("SECURE_SSL_REDIRECT", "True"))
 SECURE_CROSS_ORIGIN_OPENER_POLICY = os.environ.get(
     "SECURE_CROSS_ORIGIN_OPENER_POLICY", "same-origin"
 )
+
+
+def get_private_ip():
+    return socket.gethostbyname(socket.gethostname())
+
+
 # Set the allowed hosts to the cookie domain
-ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, "web"]
+# Adding the private ip allows the health check to work
+ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, get_private_ip()]
 
 # Security options
 SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "0"))
@@ -1028,7 +1036,7 @@ CELERY_EMAIL_TASK_CONFIG = {"ignore_result": False}
 
 COMPONENTS_DEFAULT_BACKEND = os.environ.get(
     "COMPONENTS_DEFAULT_BACKEND",
-    "grandchallenge.components.backends.amazon_sagemaker_batch.AmazonSageMakerBatchExecutor",
+    "grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor",
 )
 COMPONENTS_REGISTRY_URL = os.environ.get(
     "COMPONENTS_REGISTRY_URL", "registry:5000"
@@ -1198,10 +1206,6 @@ CELERY_BEAT_SCHEDULE = {
     "cleanup_expired_tokens": {
         "task": "grandchallenge.github.tasks.cleanup_expired_tokens",
         "schedule": crontab(hour=0, minute=30),
-    },
-    "ping_google": {
-        "task": "grandchallenge.core.tasks.ping_google",
-        "schedule": crontab(hour=0, minute=45),
     },
     "clear_sessions": {
         "task": "grandchallenge.core.tasks.clear_sessions",

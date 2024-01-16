@@ -8,6 +8,3 @@ class ReaderStudiesSiteMap(SubdomainSitemap):
 
     def items(self):
         return ReaderStudy.objects.filter(public=True)
-
-    def lastmod(self, item: ReaderStudy):
-        return item.modified
