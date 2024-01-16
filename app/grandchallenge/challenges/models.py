@@ -1121,7 +1121,10 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         return self.round_to_10_euros(
             self.docker_storage_size_bytes
             * settings.CHALLENGE_NUM_SUPPORT_YEARS
-            * settings.CHALLENGES_ECR_STORAGE_COST_CENTS_PER_TB_PER_YEAR
+            * (1 + settings.COMPONENTS_TAX_RATE_PERCENT)
+            * settings.COMPONENTS_USD_TO_EUR
+            * settings.COMPONENTS_ECR_USD_MILLICENTS_PER_YEAR_PER_TB
+            / 1000
             / settings.TERABYTE
         )
 
