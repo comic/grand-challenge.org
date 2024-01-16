@@ -21,7 +21,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td class="col-5 font-weight-bold">Total data stored for the duration of the challenge</td>
+                        <td class="col-5 font-weight-bold">Total data stored for {{ num_support_years }} year{{ num_support_years|pluralize }}</td>
                         <td class="col-7 text-right">{{ object.total_data_and_docker_storage_bytes|naturalsize }}
                         </td>
                     </tr>

@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import F, Prefetch, Q
@@ -306,7 +307,12 @@ class ChallengeCostCalculation(
                 phase_2_number_of_submissions_per_team=phase_2_number_of_submissions_per_team,
             )
 
-            context["object"] = challenge_request
+            context.update(
+                {
+                    "object": challenge_request,
+                    "num_support_years": settings.CHALLENGE_NUM_SUPPORT_YEARS,
+                }
+            )
 
             if (
                 phase_1_number_of_test_images > 1000
