@@ -7,9 +7,9 @@
             <div class="table-responsive pt-2 w-50">
                 <table class="table table-hover table-sm">
                     {% for field, value in object.budget.items %}
-                        <tr>
-                            <td class="col-5 font-weight-bold {% if field == "Total" %}table-dark{% elif "Total" in field or "Base" in field %}table-light{% endif %}">{{ field }}</td>
-                            <td class="col-7 text-right {% if field == "Total" %}font-weight-bold table-dark{% elif "Total" in field or "Base" in field %}table-light{% endif %}">{{ value }} €</td>
+                        <tr class="{% if field == "Total" %}table-info{% elif "Total" in field or "Base" in field %}table-light{% endif %}">
+                            <td class="col-5 font-weight-bold">{{ field }}</td>
+                            <td class="col-7 text-right {% if field == "Total" %}font-weight-bold{% endif %}">{{ value }} €</td>
                         </tr>
                     {% endfor %}
                     <tr>
