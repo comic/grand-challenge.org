@@ -1096,94 +1096,92 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             + self.phase_2_storage_size_bytes
         )
 
-    @staticmethod
-    def get_compute_costs_cents(duration):
-        return (
+    @classmethod
+    def get_compute_costs_euros(cls, duration):
+        return cls.round_to_10_euros(
             duration.total_seconds()
             * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
             / 3600
         )
 
-    @staticmethod
-    def get_data_storage_costs_cents(size_bytes):
-        return (
+    @classmethod
+    def get_data_storage_costs_euros(cls, size_bytes):
+        return cls.round_to_10_euros(
             size_bytes
             * settings.CHALLENGE_NUM_SUPPORT_YEARS
             * settings.CHALLENGES_S3_STORAGE_COST_CENTS_PER_TB_PER_YEAR
             / settings.TERABYTE
         )
 
-    @staticmethod
-    def get_docker_storage_costs_cents(size_bytes):
-        return (
-            size_bytes
+    @property
+    def docker_storage_costs_euros(self):
+        return self.round_to_10_euros(
+            self.docker_storage_size_bytes
             * settings.CHALLENGE_NUM_SUPPORT_YEARS
             * settings.CHALLENGES_ECR_STORAGE_COST_CENTS_PER_TB_PER_YEAR
             / settings.TERABYTE
         )
 
-    @staticmethod
-    def round_to_10_euros(cents):
+    @classmethod
+    def round_to_10_euros(cls, cents):
         return 10 * math.ceil(cents / 100 / 10)
+
+    @property
+    def phase_1_data_storage_euros(self):
+        return self.get_data_storage_costs_euros(
+            self.phase_1_storage_size_bytes
+        )
+
+    @property
+    def phase_2_data_storage_euros(self):
+        return self.get_data_storage_costs_euros(
+            self.phase_2_storage_size_bytes
+        )
+
+    @property
+    def phase_1_compute_costs_euros(self):
+        return self.get_compute_costs_euros(self.phase_1_compute_time)
+
+    @property
+    def phase_2_compute_costs_euros(self):
+        return self.get_compute_costs_euros(self.phase_2_compute_time)
+
+    @property
+    def phase_1_total_euros(self):
+        return (
+            self.phase_1_data_storage_euros + self.phase_1_compute_costs_euros
+        )
+
+    @property
+    def phase_2_total_euros(self):
+        return (
+            self.phase_2_data_storage_euros + self.phase_2_compute_costs_euros
+        )
+
+    @property
+    def total_euros(self):
+        return (
+            self.phase_1_total_euros
+            + self.phase_2_total_euros
+            + self.docker_storage_costs_euros
+            + settings.CHALLENGE_BASE_COST_IN_EURO
+        )
 
     @cached_property
     def budget(self):
-        if (
-            self.inference_time_limit_in_minutes is not None
-            and self.phase_1_number_of_test_images is not None
-            and self.phase_1_number_of_submissions_per_team is not None
-            and self.average_size_of_test_image_in_mb is not None
-            and self.phase_2_number_of_test_images is not None
-            and self.phase_2_number_of_submissions_per_team is not None
-        ):
-            budget = {
+        try:
+            return {
                 "Base cost": settings.CHALLENGE_BASE_COST_IN_EURO,
+                "Data storage cost for phase 1": self.phase_1_data_storage_euros,
+                "Compute costs for phase 1": self.phase_1_compute_costs_euros,
+                "Total phase 1": self.phase_1_total_euros,
+                "Data storage cost for phase 2": self.phase_2_data_storage_euros,
+                "Compute costs for phase 2": self.phase_2_compute_costs_euros,
+                "Total phase 2": self.phase_2_total_euros,
+                "Docker storage cost": self.docker_storage_costs_euros,
+                "Total": self.total_euros,
             }
-
-            # calculate budget for phase 1
-            budget["Data storage cost for phase 1"] = self.round_to_10_euros(
-                self.get_data_storage_costs_cents(
-                    self.phase_1_storage_size_bytes
-                ),
-            )
-            budget["Compute costs for phase 1"] = self.round_to_10_euros(
-                self.get_compute_costs_cents(self.phase_1_compute_time)
-            )
-            budget["Total phase 1"] = (
-                budget["Data storage cost for phase 1"]
-                + budget["Compute costs for phase 1"]
-            )
-            # calculate budget for phase 2
-            budget["Data storage cost for phase 2"] = self.round_to_10_euros(
-                self.get_data_storage_costs_cents(
-                    self.phase_2_storage_size_bytes
-                ),
-            )
-            budget["Compute costs for phase 2"] = self.round_to_10_euros(
-                self.get_compute_costs_cents(self.phase_2_compute_time)
-            )
-            budget["Total phase 2"] = (
-                budget["Data storage cost for phase 2"]
-                + budget["Compute costs for phase 2"]
-            )
-            budget["Docker storage cost"] = self.round_to_10_euros(
-                self.get_docker_storage_costs_cents(
-                    self.docker_storage_size_bytes
-                )
-            )
-            budget["Total"] = sum(
-                filter(
-                    None,
-                    [
-                        budget["Total phase 1"],
-                        budget["Total phase 2"],
-                        budget["Docker storage cost"],
-                        budget["Base cost"],
-                    ],
-                )
-            )
-            return budget
-        else:
+        except TypeError:
             return None
 
 

@@ -1,6 +1,6 @@
 import pytest
 
-from grandchallenge.challenges.models import Challenge
+from grandchallenge.challenges.models import Challenge, ChallengeRequest
 from grandchallenge.challenges.tasks import update_challenge_results_cache
 from tests.evaluation_tests.factories import EvaluationFactory
 from tests.factories import ChallengeFactory, ChallengeRequestFactory
@@ -43,9 +43,8 @@ def test_challenge_creation_from_request():
     assert challenge_request.creator in challenge.admins_group.user_set.all()
 
 
-@pytest.mark.django_db
 def test_challenge_request_budget_calculation():
-    challenge_request = ChallengeRequestFactory(
+    challenge_request = ChallengeRequest(
         expected_number_of_teams=10,
         inference_time_limit_in_minutes=10,
         average_size_of_test_image_in_mb=100,
