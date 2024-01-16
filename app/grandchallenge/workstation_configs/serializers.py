@@ -98,6 +98,7 @@ class WorkstationConfigSerializer(ModelSerializer):
             "default_zoom_scale",
             "default_brush_size",
             "default_annotation_color",
+            "default_annotation_line_width",
             "show_image_info_plugin",
             "show_display_plugin",
             "show_image_switcher_plugin",
