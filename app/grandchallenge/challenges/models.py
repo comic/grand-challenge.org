@@ -1118,7 +1118,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
     @property
     def docker_storage_costs_euros(self):
-        return self.round_to_10_euros(
+        ecr_costs_euros = self.round_to_10_euros(
             self.docker_storage_size_bytes
             * settings.CHALLENGE_NUM_SUPPORT_YEARS
             * (1 + settings.COMPONENTS_TAX_RATE_PERCENT)
@@ -1127,6 +1127,10 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             / 1000
             / settings.TERABYTE
         )
+        s3_costs_euros = self.get_data_storage_costs_euros(
+            self.docker_storage_size_bytes
+        )
+        return ecr_costs_euros + s3_costs_euros
 
     @classmethod
     def round_to_10_euros(cls, cents):
