@@ -1082,18 +1082,17 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         )
 
     @property
-    def docker_storage_size_bytes(self):
+    def docker_s3_storage_size_bytes(self):
         return (
+            # 1 unique container image per submission
             (self.average_algorithm_container_size_in_gb * settings.GIGABYTE)
-            * self.average_number_of_containers_per_team
-            * self.expected_number_of_teams
-            * self.number_of_tasks
+            * self.total_num_submissions
         )
 
     @property
     def total_data_and_docker_storage_bytes(self):
         return (
-            self.docker_storage_size_bytes
+            self.docker_s3_storage_size_bytes
             + self.phase_1_storage_size_bytes
             + self.phase_2_storage_size_bytes
         )
@@ -1131,22 +1130,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             / settings.TERABYTE
         )
 
-    @property
-    def docker_storage_costs_euros(self):
-        ecr_costs_euros = self.round_to_10_euros(
-            self.docker_storage_size_bytes
-            * settings.CHALLENGE_NUM_SUPPORT_YEARS
-            * (1 + settings.COMPONENTS_TAX_RATE_PERCENT)
-            * settings.COMPONENTS_USD_TO_EUR
-            * settings.COMPONENTS_ECR_USD_MILLICENTS_PER_YEAR_PER_TB
-            / 1000
-            / settings.TERABYTE
-        )
-        s3_costs_euros = self.get_data_storage_costs_euros(
-            self.docker_storage_size_bytes
-        )
-        return ecr_costs_euros + s3_costs_euros
-
     @classmethod
     def round_to_10_euros(cls, cents):
         return 10 * math.ceil(cents / 100 / 10)
@@ -1181,6 +1164,12 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     def phase_2_total_euros(self):
         return (
             self.phase_2_data_storage_euros + self.phase_2_compute_costs_euros
+        )
+
+    @property
+    def docker_storage_costs_euros(self):
+        return self.get_data_storage_costs_euros(
+            self.docker_s3_storage_size_bytes
         )
 
     @property

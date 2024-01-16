@@ -62,8 +62,8 @@ def test_challenge_request_budget_calculation(settings):
         "Compute costs for phase 2": 97910,
         "Data storage cost for phase 1": 10,
         "Data storage cost for phase 2": 40,
-        "Docker storage cost": 860,
-        "Total": 105780,
+        "Docker storage cost": 4440,
+        "Total": 109360,
         "Total phase 1": 1970,
         "Total phase 2": 97950,
     }
@@ -96,8 +96,8 @@ def test_challenge_request_budget_calculation(settings):
         "Compute costs for phase 2": 195820,
         "Data storage cost for phase 1": 20,
         "Data storage cost for phase 2": 70,
-        "Docker storage cost": 1710,
-        "Total": 206540,
+        "Docker storage cost": 8880,
+        "Total": 213710,
         "Total phase 1": 3940,
         "Total phase 2": 195890,
     }
