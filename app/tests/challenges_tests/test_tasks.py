@@ -59,12 +59,12 @@ def test_challenge_request_budget_calculation():
         "Base cost": 5000,
         "Compute costs for phase 1": 1670,
         "Compute costs for phase 2": 83340,
-        "Data storage cost for phase 1": 20,
-        "Data storage cost for phase 2": 70,
+        "Data storage cost for phase 1": 10,
+        "Data storage cost for phase 2": 40,
         "Docker storage cost": 470,
-        "Total": 90570,
-        "Total phase 1": 1690,
-        "Total phase 2": 83410,
+        "Total": 90530,
+        "Total phase 1": 1680,
+        "Total phase 2": 83380,
     }
 
     assert (
@@ -93,10 +93,27 @@ def test_challenge_request_budget_calculation():
         "Base cost": 5000,
         "Compute costs for phase 1": 3340,
         "Compute costs for phase 2": 166670,
-        "Data storage cost for phase 1": 30,
-        "Data storage cost for phase 2": 140,
+        "Data storage cost for phase 1": 20,
+        "Data storage cost for phase 2": 70,
         "Docker storage cost": 940,
-        "Total": 176120,
-        "Total phase 1": 3370,
-        "Total phase 2": 166810,
+        "Total": 176040,
+        "Total phase 1": 3360,
+        "Total phase 2": 166740,
     }
+    assert (
+        challenge_request.budget["Total phase 2"]
+        == challenge_request.budget["Data storage cost for phase 2"]
+        + challenge_request.budget["Compute costs for phase 2"]
+    )
+    assert (
+        challenge_request.budget["Total phase 1"]
+        == challenge_request.budget["Data storage cost for phase 1"]
+        + challenge_request.budget["Compute costs for phase 1"]
+    )
+    assert (
+        challenge_request.budget["Total"]
+        == challenge_request.budget["Total phase 1"]
+        + challenge_request.budget["Total phase 2"]
+        + challenge_request.budget["Docker storage cost"]
+        + challenge_request.budget["Base cost"]
+    )
