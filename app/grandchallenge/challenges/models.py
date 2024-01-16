@@ -22,6 +22,7 @@ from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.utils.functional import cached_property
 from django.utils.html import format_html
+from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
 from django.utils.translation import gettext_lazy as _
 from django_deprecate_fields import deprecate_field
@@ -42,6 +43,7 @@ from grandchallenge.challenges.emails import (
     send_challenge_requested_email_to_reviewers,
 )
 from grandchallenge.challenges.utils import ChallengeTypeChoices
+from grandchallenge.components.models import GPUTypeChoices
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import (
     get_banner_path,
@@ -1096,11 +1098,24 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             + self.phase_2_storage_size_bytes
         )
 
-    @classmethod
-    def get_compute_costs_euros(cls, duration):
-        return cls.round_to_10_euros(
+    @property
+    def compute_euro_cents_per_hour(self):
+        executor = import_string(settings.COMPONENTS_DEFAULT_BACKEND)(
+            job_id="",
+            exec_image_repo_tag="",
+            # Assume these options picked by the participant
+            memory_limit=32,
+            time_limit=self.inference_time_limit_in_minutes,
+            requires_gpu=True,
+            desired_gpu_type=GPUTypeChoices.T4,
+        )
+        return executor.usd_cents_per_hour * settings.COMPONENTS_USD_TO_EUR
+
+    def get_compute_costs_euros(self, duration):
+        return self.round_to_10_euros(
             duration.total_seconds()
-            * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
+            * (1 + settings.COMPONENTS_TAX_RATE_PERCENT)
+            * self.compute_euro_cents_per_hour
             / 3600
         )
 

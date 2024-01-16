@@ -43,7 +43,8 @@ def test_challenge_creation_from_request():
     assert challenge_request.creator in challenge.admins_group.user_set.all()
 
 
-def test_challenge_request_budget_calculation():
+def test_challenge_request_budget_calculation(settings):
+    settings.COMPONENTS_DEFAULT_BACKEND = "grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor"
     challenge_request = ChallengeRequest(
         expected_number_of_teams=10,
         inference_time_limit_in_minutes=10,
@@ -57,14 +58,14 @@ def test_challenge_request_budget_calculation():
 
     assert challenge_request.budget == {
         "Base cost": 5000,
-        "Compute costs for phase 1": 1670,
-        "Compute costs for phase 2": 83340,
+        "Compute costs for phase 1": 1960,
+        "Compute costs for phase 2": 97910,
         "Data storage cost for phase 1": 10,
         "Data storage cost for phase 2": 40,
         "Docker storage cost": 860,
-        "Total": 90920,
-        "Total phase 1": 1680,
-        "Total phase 2": 83380,
+        "Total": 105780,
+        "Total phase 1": 1970,
+        "Total phase 2": 97950,
     }
 
     assert (
@@ -91,14 +92,14 @@ def test_challenge_request_budget_calculation():
 
     assert challenge_request.budget == {
         "Base cost": 5000,
-        "Compute costs for phase 1": 3340,
-        "Compute costs for phase 2": 166670,
+        "Compute costs for phase 1": 3920,
+        "Compute costs for phase 2": 195820,
         "Data storage cost for phase 1": 20,
         "Data storage cost for phase 2": 70,
         "Docker storage cost": 1710,
-        "Total": 176810,
-        "Total phase 1": 3360,
-        "Total phase 2": 166740,
+        "Total": 206540,
+        "Total phase 1": 3940,
+        "Total phase 2": 195890,
     }
     assert (
         challenge_request.budget["Total phase 2"]
