@@ -238,5 +238,5 @@ class PermissionRequestUpdate(
         )
 
 
-def ping(request):
+def healthcheck(request):
     return HttpResponse("")

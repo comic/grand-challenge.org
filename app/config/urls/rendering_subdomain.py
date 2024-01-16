@@ -4,7 +4,7 @@ from django.template.response import TemplateResponse
 from django.urls import path
 from django.views.generic import TemplateView
 
-from grandchallenge.core.views import ping
+from grandchallenge.core.views import healthcheck
 from grandchallenge.serving.views import serve_images
 from grandchallenge.workstations.views import SessionDetail, session_proxy
 
@@ -30,8 +30,8 @@ urlpatterns = [
         ),
     ),
     path(
-        "ping/",
-        ping,
+        "healthcheck/",
+        healthcheck,
     ),
     path(
         "workstations/<slug>/sessions/<uuid:pk>/",

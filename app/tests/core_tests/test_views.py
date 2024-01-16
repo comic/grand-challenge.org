@@ -44,9 +44,9 @@ def test_paginated_table_list_view():
 
 
 @pytest.mark.django_db
-def test_ping(client, django_assert_num_queries):
+def test_healthcheck(client, django_assert_num_queries):
     with django_assert_num_queries(7):
-        response = client.get("/ping/")
+        response = client.get("/healthcheck/")
 
     assert response.content == b""
     assert response.status_code == 200
