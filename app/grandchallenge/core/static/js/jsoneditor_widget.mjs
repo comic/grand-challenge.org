@@ -47,15 +47,12 @@ document.addEventListener("DOMContentLoaded", function(event) {
     });
 });
 
-search_for_jsoneditor_widgets();
-const form = document.getElementById('obj-form');
-if (form !== undefined) {
-   const observer = new MutationObserver(function(mutationsList, observer) {
-        for(let mutation of mutationsList) {
-           if (mutation.target === form) {
-              search_for_jsoneditor_widgets();
-           }
+// this is necessary for when an invalid form is returned through htmx (e.g. in display set views)
+if (typeof htmx !== 'undefined') {
+    htmx.onLoad((elem) => {
+        if (elem.tagName.toLowerCase() === "body") {
+           search_for_jsoneditor_widgets(elem)
         }
-   });
-   observer.observe(form, {childList: true, subtree: true, attributes: true, attributeFilter: ['is-invalid']});
-}
+    });
+};
+search_for_jsoneditor_widgets();
