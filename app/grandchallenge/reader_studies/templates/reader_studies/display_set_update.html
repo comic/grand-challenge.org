@@ -20,10 +20,10 @@
     <h2>Update Display Set</h2>
     <div id="objectSlug" class="d-none" data-slug="{{ base_object.slug }}"></div>
     {% include "grandchallenge/partials/messages.html" %}
-    <form action="{% url 'reader-studies:display-set-update' pk=object.pk slug=object.reader_study.slug %}" method="post" class="obj-form" id="obj-form">
+    <form hx-post="{% url 'reader-studies:display-set-update' pk=object.pk slug=object.reader_study.slug %}" method="post" hx-target="body" hx-include="[id='new-interfaces']" class="obj-form" id="obj-form">
         {% csrf_token %}
         {{ form|crispy }}
-        <div id="new-interfaces"></div>
+        <div id="new-interfaces"><input type="hidden"></div>
         <button type="button" id="add-new" class="btn btn-outline-primary mb-2" hx-get="{% url 'reader-studies:display-set-interfaces-create' pk=object.pk slug=base_object.slug %}" hx-target="#new-interfaces" hx-swap="beforeend">Add value for new interface</button>
         <div class="d-flex justify-content-between pb-2">
         <div>

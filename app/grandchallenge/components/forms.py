@@ -2,7 +2,6 @@ from dal import autocomplete
 from dal.widgets import Select
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
 from django.forms import Form, HiddenInput, ModelChoiceField, ModelForm
 
 from grandchallenge.algorithms.models import AlgorithmImage
@@ -99,7 +98,6 @@ class MultipleCIVCreateForm(Form):
         self.instance = instance
         self.user = user
         self.base_obj = base_obj
-        self.new_interfaces = self.data.get("new_interfaces") or []
 
         # add fields for all interfaces that already exist on
         # other display sets / archive items
@@ -114,36 +112,18 @@ class MultipleCIVCreateForm(Form):
             self.init_interface_field(
                 interface_slug=slug, current_value=current_value, values=values
             )
-
         # Add fields for dynamically added new interfaces:
-        # These are either sent along with the form data under the keyword
-        # 'new_interfaces' or as normal fields. The latter happens when a user
-        # resubmits a form that previously contained errors.
-        for slug, value in self.data.items():
+        # These are sent along as form data like all other fields, so we can't
+        # tell them apart from the form fields initialized above. Hence
+        # the check if they already have a corresponding field on the form or not.
+        for slug in self.data.keys():
             if (
                 ComponentInterface.objects.filter(slug=slug).exists()
                 and slug not in self.fields.keys()
             ):
-                self.new_interfaces.append(
-                    {
-                        slug: value,
-                        "interface": ComponentInterface.objects.filter(
-                            slug=slug
-                        )
-                        .get()
-                        .pk,
-                    }
-                )
-
-        if self.new_interfaces:
-            for entry in self.new_interfaces:
-                interface = ComponentInterface.objects.get(
-                    pk=entry["interface"]
-                )
-                self.data[interface.slug] = entry[interface.slug]
                 self.init_interface_field(
-                    interface_slug=interface.slug,
-                    current_value=entry[interface.slug],
+                    interface_slug=slug,
+                    current_value=None,
                     values=[],
                 )
 
@@ -157,7 +137,6 @@ class MultipleCIVCreateForm(Form):
         if interface.is_image_kind:
             self.fields[interface_slug] = self._get_image_field(
                 interface=interface,
-                values=values,
                 current_value=current_value,
             )
         elif interface.requires_file:
@@ -171,7 +150,7 @@ class MultipleCIVCreateForm(Form):
                 interface=interface, current_value=current_value
             )
 
-    def _get_image_field(self, *, interface, values, current_value):
+    def _get_image_field(self, *, interface, current_value):
         return self._get_default_field(
             interface=interface, current_value=current_value
         )
@@ -190,42 +169,6 @@ class MultipleCIVCreateForm(Form):
             required=False,
             user=self.user,
         ).field
-
-    def clean(self):
-        cleaned_data = super().clean()
-        cleaned_data.update(self._process_new_interfaces())
-        return cleaned_data
-
-    def _process_new_interfaces(self):
-        new_interfaces = self.data.get("new_interfaces")
-        validated_data = {}
-        errors = {}
-        if new_interfaces:
-            for entry in new_interfaces:
-                interface = ComponentInterface.objects.get(
-                    pk=entry["interface"]
-                )
-                int_form = ComponentInterfaceCreateForm(
-                    data=entry,
-                    pk=None,
-                    interface=interface.pk,
-                    user=self.user,
-                    base_obj=self.base_obj,
-                    auto_id="1",
-                    htmx_url=None,
-                )
-                if int_form.is_valid():
-                    cleaned = int_form.cleaned_data
-                    validated_data[cleaned["interface"].slug] = cleaned[
-                        interface.slug
-                    ]
-                else:
-                    errors.update(
-                        {interface.slug: int_form.errors[interface.slug]}
-                    )
-            if errors:
-                raise ValidationError(errors)
-        return validated_data
 
 
 class ComponentInterfaceCreateForm(Form):
@@ -260,6 +203,7 @@ class ComponentInterfaceCreateForm(Form):
             "disabled": selected_interface is not None,
             "hx-target": f"#form-{kwargs['auto_id']}",
             "hx-swap": "outerHTML",
+            "hx-include": "this",
         }
 
         if selected_interface:

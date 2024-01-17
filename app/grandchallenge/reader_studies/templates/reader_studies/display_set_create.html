@@ -22,10 +22,10 @@
 
     <div id="objectSlug" class="d-none" data-slug="{{ object.slug }}"></div>
 
-    <form action="{% url 'reader-studies:display-set-create' slug=base_object.slug %}" method="post" id="obj-form">
+    <form hx-post="{% url 'reader-studies:display-set-create' slug=base_object.slug %}" hx-include="[id='new-interfaces']" hx-target="body" method="post" id="obj-form">
       {% csrf_token %}
       {{ form|crispy }}
-      <div id="new-interfaces"></div>
+      <div id="new-interfaces"><input type="hidden"></div>
       <button type="button" id="add-new" class="btn btn-outline-primary mb-2" hx-get="{% url 'reader-studies:display-set-new-interfaces-create' slug=base_object.slug %}" hx-target="#new-interfaces" hx-swap="beforeend">Add value for new interface</button>
       <div class="d-flex justify-content-between pb-2">
         <div>

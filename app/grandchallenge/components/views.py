@@ -1,9 +1,9 @@
-import json
 import uuid
 
 from dal import autocomplete
 from django.db.models import Q, TextChoices
 from django.forms import Media
+from django.http import HttpResponse
 from django.views.generic import ListView, TemplateView
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
@@ -96,7 +96,17 @@ class InterfaceProcessingMixin:
 
     def form_valid(self, form):
         form.instance = self.process_data_for_object(form.cleaned_data)
-        return super().form_valid(form)
+        super().form_valid(form)
+        # since this is an HTMX view, we need to trigger
+        # the redirect through inclusion of the HX headers
+        # HttpResponseRedirect does not support the inclusion of these custom headers
+        return HttpResponse(
+            self.get_success_url(),
+            headers={
+                "HX-Redirect": self.get_success_url(),
+                "HX-Refresh": True,
+            },
+        )
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -107,15 +117,6 @@ class InterfaceProcessingMixin:
                 "base_obj": self.base_object,
             }
         )
-        if (
-            self.request.method == "POST"
-            and self.request.headers["Content-Type"] == "application/json"
-        ):
-            kwargs.update(
-                {
-                    "data": json.load(self.request),
-                }
-            )
         return kwargs
 
     def get_context_data(self, *args, **kwargs):

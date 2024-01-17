@@ -431,9 +431,8 @@ def test_display_set_update(client):
         },
         user=user,
         method=client.post,
-        content_type="application/json",
     )
-    assert response.status_code == 302
+    assert response.status_code == 200
     assert ds1.values.count() == 3
     assert not ds1.values.filter(pk=civ_img.pk).exists()
     assert ds1.values.filter(pk=civ_img_new.pk).exists()
@@ -454,11 +453,10 @@ def test_display_set_update(client):
             ci_json_file.slug: str(civ_json_file_new.pk),
             "order": 11,
         },
-        content_type="application/json",
         user=user,
         method=client.post,
     )
-    assert response.status_code == 302
+    assert response.status_code == 200
     # no new CIVs have been created
     assert n_civs_old == ComponentInterfaceValue.objects.count()
     assert ds1.values.count() == 3
@@ -476,11 +474,10 @@ def test_display_set_update(client):
             f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
             "order": 11,
         },
-        content_type="application/json",
         user=user,
         method=client.post,
     )
-    assert response.status_code == 302
+    assert response.status_code == 200
     assert ds1.values.count() == 1
     assert n_civs_old == ComponentInterfaceValue.objects.count()
     assert ds1.values.filter(pk=civ_img_new.pk).exists()
@@ -554,33 +551,24 @@ def test_add_display_set_to_reader_study(
             viewname="reader-studies:display-set-create",
             client=client,
             reverse_kwargs={"slug": rs.slug},
-            content_type="application/json",
             data={
                 ci_str.slug: "new-title",
                 ci_img.slug: str(im_upload.pk),
                 "order": 11,
                 f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_UPLOAD.name,
-                "new_interfaces": [
-                    {
-                        "interface": ci_img_new.pk,
-                        str(ci_img_new.slug): str(image.pk),
-                        f"WidgetChoice-{ci_img_new.slug}": WidgetChoices.IMAGE_SEARCH.name,
-                    },
-                    {"interface": ci_str_new.pk, str(ci_str_new.slug): "new"},
-                    {
-                        "interface": ci_json.pk,
-                        str(ci_json.slug): str(upload.pk),
-                    },
-                ],
+                ci_img_new.slug: str(image.pk),
+                f"WidgetChoice-{ci_img_new.slug}": WidgetChoices.IMAGE_SEARCH.name,
+                ci_str_new.slug: "new",
+                ci_json.slug: str(upload.pk),
             },
             user=u1,
             method=client.post,
         )
 
-    assert response.status_code == 302
+    assert response.status_code == 200
     assert DisplaySet.objects.count() == 2
     ds = DisplaySet.objects.last()
-    # assert ds.values.count() == 5
+    assert ds.values.count() == 5
     assert ds.values.get(interface=ci_str).value == "new-title"
     assert ds.values.get(interface=ci_img).image.name == "test_grayscale.jpg"
     assert ds.values.get(interface=ci_img_new).image == image

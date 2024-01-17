@@ -33,10 +33,6 @@ from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 from dynamic_forms import DynamicField, DynamicFormMixin
 
-from grandchallenge.cases.widgets import (
-    FlexibleImageField,
-    FlexibleImageWidget,
-)
 from grandchallenge.components.forms import MultipleCIVCreateForm
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -579,22 +575,15 @@ class DisplaySetUpdateForm(DisplaySetCreateForm):
             for _, field in self.fields.items():
                 field.disabled = True
 
-    def _get_image_field(self, *, interface, values, current_value):
-        return FlexibleImageField(
-            image_queryset=get_objects_for_user(self.user, "cases.view_image"),
-            upload_queryset=get_objects_for_user(
-                self.user, "uploads.change_userupload"
-            ).filter(status=UserUpload.StatusChoices.COMPLETED),
-            widget=FlexibleImageWidget(
-                user=self.user, current_value=current_value
-            ),
-            required=False,
-        )
-
     def _get_file_field(self, *, interface, values, current_value):
-        return self._get_select_upload_widget_field(
-            interface=interface, values=values, current_value=current_value
-        )
+        if current_value:
+            return self._get_select_upload_widget_field(
+                interface=interface, values=values, current_value=current_value
+            )
+        else:
+            return super()._get_file_field(
+                interface=interface, values=values, current_value=current_value
+            )
 
     def _get_select_upload_widget_field(
         self, *, interface, values, current_value
