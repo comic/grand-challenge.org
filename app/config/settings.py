@@ -141,20 +141,11 @@ COMPONENTS_ECR_USD_MILLICENTS_PER_YEAR_PER_TB = (
     39_600_000  # Last calculated 23/08/2023
 )
 
-# Costs (in US dollar cents)
-# based on 0.023 / GB / month S3 standard pricing
-CHALLENGES_S3_STORAGE_COST_CENTS_PER_TB_PER_YEAR = int(
-    os.environ.get("CHALLENGES_S3_STORAGE_COST_CENTS_PER_TB_PER_YEAR", 27600)
-)
-# based on cost calculation by James on 21.12.2022
-CHALLENGES_ECR_STORAGE_COST_CENTS_PER_TB_PER_YEAR = int(
-    os.environ.get("CHALLENGES_ECR_STORAGE_COST_CENTS_PER_TB_PER_YEAR", 32000)
-)
-CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR = int(
-    os.environ.get("CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR", 100)
-)
 CHALLENGE_BASE_COST_IN_EURO = int(
     os.environ.get("CHALLENGE_BASE_COST_IN_EURO", 5000)
+)
+CHALLENGE_NUM_SUPPORT_YEARS = int(
+    os.environ.get("CHALLENGE_NUM_SUPPORT_YEARS", 5)
 )
 
 ##############################################################################
