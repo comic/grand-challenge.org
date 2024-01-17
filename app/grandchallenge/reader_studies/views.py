@@ -1331,8 +1331,11 @@ class DisplaySetUpdate(
         ComponentInterfaceCreateForm,
         FileForm,
     )
-    success_message = (
+    success_message = format_html(
         "Display set updated. Image and file import jobs have been queued."
+        "You will be notified about errors related to image and file imports "
+        "via a <a href={}>notification</a>.",
+        "https://grand-challenge.org/notifications/",
     )
 
     @property
@@ -1529,8 +1532,11 @@ class AddDisplaySetToReaderStudy(
         DisplaySetCreateForm,
         ComponentInterfaceCreateForm,
     )
-    success_message = (
-        "Display set created. Image and file import jobs have been queued."
+    success_message = format_html(
+        "Display set created. Image and file import jobs have been queued. "
+        "You will be notified about errors related to image and file imports "
+        "via a <a href={}>notification</a>.",
+        "https://grand-challenge.org/notifications/",
     )
 
     @property

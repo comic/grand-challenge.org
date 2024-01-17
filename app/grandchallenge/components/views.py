@@ -1,6 +1,7 @@
 import uuid
 
 from dal import autocomplete
+from django.contrib import messages
 from django.db.models import Q, TextChoices
 from django.forms import Media
 from django.http import HttpResponse
@@ -100,6 +101,9 @@ class InterfaceProcessingMixin:
         # since this is an HTMX view, we need to trigger
         # the redirect through inclusion of the HX headers
         # HttpResponseRedirect does not support the inclusion of these custom headers
+        messages.add_message(
+            self.request, messages.SUCCESS, self.success_message
+        )
         return HttpResponse(
             self.get_success_url(),
             headers={
