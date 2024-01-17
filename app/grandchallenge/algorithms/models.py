@@ -183,7 +183,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         ),
     )
     time_limit = models.PositiveSmallIntegerField(
-        default=60 * 60,
+        default=3600,
         help_text="Time limit for inference jobs in seconds",
         validators=[
             MinValueValidator(limit_value=300),
