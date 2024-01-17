@@ -79,6 +79,7 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
                 ],
                 "Subnets": settings.COMPONENTS_AMAZON_SAGEMAKER_SUBNETS,
             },
+            RemoteDebugConfig={"EnableRemoteDebug": False},
         )
 
     def _stop_job_boto(self):
