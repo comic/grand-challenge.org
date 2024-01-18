@@ -32,6 +32,7 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
             "default_zoom_scale",
             "default_brush_size",
             "default_annotation_color",
+            "default_annotation_line_width",
             "auto_jump_center_of_gravity",
             "show_image_info_plugin",
             "show_display_plugin",

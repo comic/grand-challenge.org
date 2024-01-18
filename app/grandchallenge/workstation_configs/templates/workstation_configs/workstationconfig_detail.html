@@ -112,6 +112,10 @@
                 {% endif %}
             </td>
         </tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'default_annotation_line_width' %}">
+            <td class="font-weight-bold">Default annotation line width</td>
+            <td>{{ object.default_annotation_line_width }}</td>
+        </tr>
          <tr data-toggle="tooltip" title="{% get_help_text object 'auto_jump_center_of_gravity' %}">
             <td class="font-weight-bold">Jump to first center of gravity</td>
             <td>

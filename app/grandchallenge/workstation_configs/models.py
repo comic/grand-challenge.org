@@ -6,6 +6,7 @@ from django.core.validators import (
     RegexValidator,
 )
 from django.db import models
+from django.db.models import PositiveSmallIntegerField
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
@@ -289,6 +290,12 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         blank=True,
         null=True,
         help_text="Default color for displaying and creating annotations",
+    )
+
+    default_annotation_line_width = PositiveSmallIntegerField(
+        blank=True,
+        null=True,
+        help_text="Default line width in pixels for displaying and creating annotations",
     )
 
     show_image_info_plugin = models.BooleanField(
