@@ -295,7 +295,7 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
     default_annotation_line_width = PositiveSmallIntegerField(
         blank=True,
         null=True,
-        help_text="Default line width for displaying and creating annotations",
+        help_text="Default line width in pixels for displaying and creating annotations",
     )
 
     show_image_info_plugin = models.BooleanField(
