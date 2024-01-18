@@ -525,7 +525,7 @@
         <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Time limit for inference jobs in seconds&quot;</span><span class="p">,</span>
         <span class="n">validators</span><span class="o">=</span><span class="p">[</span>
             <span class="n">MinValueValidator</span><span class="p">(</span><span class="n">limit_value</span><span class="o">=</span><span class="mi">300</span><span class="p">),</span>
-            <span class="n">MaxValueValidator</span><span class="p">(</span><span class="n">limit_value</span><span class="o">=</span><span class="mi">3600</span><span class="p">),</span>
+            <span class="n">MaxValueValidator</span><span class="p">(</span><span class="n">limit_value</span><span class="o">=</span><span class="mi">7200</span><span class="p">),</span>
         <span class="p">],</span>
     <span class="p">)</span>
     <span class="n">give_algorithm_editors_job_view_permissions</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
