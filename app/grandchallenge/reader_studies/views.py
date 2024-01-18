@@ -63,7 +63,7 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 from grandchallenge.archives.forms import AddCasesForm
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
-from grandchallenge.components.forms import ComponentInterfaceCreateForm
+from grandchallenge.components.forms import SingleCIVForm
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
@@ -1329,7 +1329,7 @@ class DisplaySetUpdate(
     raise_exception = True
     included_form_classes = (
         DisplaySetUpdateForm,
-        ComponentInterfaceCreateForm,
+        SingleCIVForm,
         FileForm,
     )
     success_message = format_html(
@@ -1439,7 +1439,7 @@ class DisplaySetFilesUpdate(ObjectPermissionRequiredMixin, FormView):
 
 
 class DisplaySetInterfacesCreate(ObjectPermissionRequiredMixin, TemplateView):
-    form_class = ComponentInterfaceCreateForm
+    form_class = SingleCIVForm
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
     )
@@ -1512,7 +1512,7 @@ class AddDisplaySetToReaderStudy(
     )
     included_form_classes = (
         DisplaySetCreateForm,
-        ComponentInterfaceCreateForm,
+        SingleCIVForm,
     )
     success_message = format_html(
         "Display set created. Image and file import jobs have been queued. "

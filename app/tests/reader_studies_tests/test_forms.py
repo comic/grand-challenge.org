@@ -9,7 +9,7 @@ from django.db.models import BLANK_CHOICE_DASH
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.cases.widgets import FlexibleImageWidget
-from grandchallenge.components.forms import ComponentInterfaceCreateForm
+from grandchallenge.components.forms import SingleCIVForm
 from grandchallenge.components.models import (
     ComponentInterface,
     InterfaceKind,
@@ -1195,7 +1195,7 @@ def test_display_set_add_interface_form():
     ci_value = ComponentInterfaceFactory(kind="JSON", store_in_database=True)
     ci_image = ComponentInterfaceFactory(kind="IMG", store_in_database=False)
 
-    form = ComponentInterfaceCreateForm(
+    form = SingleCIVForm(
         pk=ds.pk,
         base_obj=rs,
         interface=None,
@@ -1205,7 +1205,7 @@ def test_display_set_add_interface_form():
     )
     assert sorted(form.fields.keys()) == ["interface-1"]
 
-    form = ComponentInterfaceCreateForm(
+    form = SingleCIVForm(
         pk=ds.pk,
         base_obj=rs,
         interface=ci_file.pk,
@@ -1216,7 +1216,7 @@ def test_display_set_add_interface_form():
     assert sorted(form.fields.keys()) == [ci_file.slug, "interface"]
     assert isinstance(form.fields[ci_file.slug].widget, UserUploadSingleWidget)
 
-    form = ComponentInterfaceCreateForm(
+    form = SingleCIVForm(
         pk=ds.pk,
         base_obj=rs,
         interface=ci_value.pk,
@@ -1227,7 +1227,7 @@ def test_display_set_add_interface_form():
     assert sorted(form.fields.keys()) == [ci_value.slug, "interface"]
     assert isinstance(form.fields[ci_value.slug].widget, JSONEditorWidget)
 
-    form = ComponentInterfaceCreateForm(
+    form = SingleCIVForm(
         pk=ds.pk,
         base_obj=rs,
         interface=ci_image.pk,

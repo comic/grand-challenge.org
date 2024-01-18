@@ -33,7 +33,7 @@ from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 from dynamic_forms import DynamicField, DynamicFormMixin
 
-from grandchallenge.components.forms import MultipleCIVCreateForm
+from grandchallenge.components.forms import MultipleCIVForm
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -550,7 +550,7 @@ class GroundTruthForm(SaveFormInitMixin, Form):
         return values
 
 
-class DisplaySetCreateForm(MultipleCIVCreateForm):
+class DisplaySetCreateForm(MultipleCIVForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

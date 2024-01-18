@@ -88,7 +88,7 @@ class ContainerImageForm(SaveFormInitMixin, ModelForm):
         fields = ("user_upload", "creator", "comment")
 
 
-class MultipleCIVCreateForm(Form):
+class MultipleCIVForm(Form):
     _possible_widgets = {
         *InterfaceFormField._possible_widgets,
     }
@@ -171,7 +171,7 @@ class MultipleCIVCreateForm(Form):
         ).field
 
 
-class ComponentInterfaceCreateForm(Form):
+class SingleCIVForm(Form):
     _possible_widgets = {
         *InterfaceFormField._possible_widgets,
         autocomplete.ModelSelect2,

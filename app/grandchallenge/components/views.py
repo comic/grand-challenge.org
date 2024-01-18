@@ -97,15 +97,13 @@ class InterfaceProcessingMixin:
 
     def form_valid(self, form):
         form.instance = self.process_data_for_object(form.cleaned_data)
-        super().form_valid(form)
-        # since this is an HTMX view, we need to trigger
-        # the redirect through inclusion of the HX headers
-        # HttpResponseRedirect does not support the inclusion of these custom headers
+        response = super().form_valid(form)
         messages.add_message(
             self.request, messages.SUCCESS, self.success_message
         )
         return HttpResponse(
-            self.get_success_url(),
+            response.url,
+            status=302,
             headers={
                 "HX-Redirect": self.get_success_url(),
                 "HX-Refresh": True,
