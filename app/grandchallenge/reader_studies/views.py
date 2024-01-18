@@ -1318,10 +1318,9 @@ class DisplaySetUpdate(
     LoginRequiredMixin,
     InterfaceProcessingMixin,
     ObjectPermissionRequiredMixin,
-    UpdateView,
+    FormView,
 ):
     template_name = "reader_studies/display_set_update.html"
-    model = DisplaySet
     form_class = DisplaySetUpdateForm
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
@@ -1332,12 +1331,11 @@ class DisplaySetUpdate(
         SingleCIVForm,
         FileForm,
     )
-    success_message = format_html(
-        "Display set updated. Image and file import jobs have been queued. "
-        "You will be notified about errors related to image and file imports "
-        "via a <a href={}>notification</a>.",
-        "https://grand-challenge.org/notifications/",
-    )
+    success_message = "Display set has been updated."
+
+    @property
+    def object(self):
+        return DisplaySet.objects.get(pk=self.kwargs["pk"])
 
     @property
     def base_object(self):
@@ -1351,7 +1349,7 @@ class DisplaySetUpdate(
 
     def process_data_for_object(self, data):
         """Updates the display set"""
-        instance = self.get_object()
+        instance = self.object
         for ci_slug, new_value in data.items():
             if ci_slug == "order":
                 continue
@@ -1497,16 +1495,14 @@ class DisplaySetInterfacesCreate(ObjectPermissionRequiredMixin, TemplateView):
         return context
 
 
-class AddDisplaySetToReaderStudy(
+class DisplaySetCreateView(
+    BaseAddObjectToReaderStudyMixin,
     InterfaceProcessingMixin,
-    AddObjectToReaderStudyMixin,
-    ObjectPermissionRequiredMixin,
-    CreateView,
+    FormView,
 ):
-    model = DisplaySet
     form_class = DisplaySetCreateForm
     template_name = "reader_studies/display_set_create.html"
-    type_to_add = "case"
+    type_to_add = "Display Set"
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
     )
@@ -1514,19 +1510,11 @@ class AddDisplaySetToReaderStudy(
         DisplaySetCreateForm,
         SingleCIVForm,
     )
-    success_message = format_html(
-        "Display set created. Image and file import jobs have been queued. "
-        "You will be notified about errors related to image and file imports "
-        "via a <a href={}>notification</a>.",
-        "https://grand-challenge.org/notifications/",
-    )
+    success_message = "Display set has been created."
 
     @property
     def base_object(self):
         return self.reader_study
-
-    def get_permission_object(self):
-        return self.base_object
 
     def process_data_for_object(self, data):
         """Creates a display set"""

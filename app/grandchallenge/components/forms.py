@@ -127,11 +127,6 @@ class MultipleCIVForm(Form):
                     values=[],
                 )
 
-    def save(self):
-        # we need a dummy save method for form_valid() when called from a
-        # generic CreateView/UpdateView
-        pass
-
     def init_interface_field(self, interface_slug, current_value, values):
         interface = ComponentInterface.objects.get(slug=interface_slug)
         if interface.is_image_kind:

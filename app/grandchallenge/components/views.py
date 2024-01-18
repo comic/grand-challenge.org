@@ -1,10 +1,11 @@
 import uuid
 
 from dal import autocomplete
-from django.contrib import messages
+from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q, TextChoices
 from django.forms import Media
 from django.http import HttpResponse
+from django.utils.html import format_html
 from django.views.generic import ListView, TemplateView
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
@@ -91,32 +92,34 @@ class ComponentInterfaceAutocomplete(
         return result.title
 
 
-class InterfaceProcessingMixin:
+class InterfaceProcessingMixin(SuccessMessageMixin):
     def process_data_for_object(self, data):
         raise NotImplementedError
 
     def form_valid(self, form):
         form.instance = self.process_data_for_object(form.cleaned_data)
         response = super().form_valid(form)
-        messages.add_message(
-            self.request, messages.SUCCESS, self.success_message
-        )
         return HttpResponse(
             response.url,
             status=302,
             headers={
-                "HX-Redirect": self.get_success_url(),
+                "HX-Redirect": response.url,
                 "HX-Refresh": True,
             },
         )
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
+        if hasattr(self, "object"):
+            instance = self.object
+        else:
+            instance = None
         kwargs.update(
             {
                 "user": self.request.user,
                 "auto_id": f"id-{uuid.uuid4()}",
                 "base_obj": self.base_object,
+                "instance": instance,
             }
         )
         return kwargs
@@ -127,10 +130,25 @@ class InterfaceProcessingMixin:
         for form_class in self.included_form_classes:
             for widget in form_class._possible_widgets:
                 media = media + widget().media
+        if hasattr(self, "object"):
+            object = self.object
+        else:
+            object = None
         context.update(
             {
                 "base_object": self.base_object,
                 "form_media": media,
+                "object": object,
             }
         )
         return context
+
+    def get_success_message(self, cleaned_data):
+        return format_html(
+            "{success_message} "
+            "Image and file import jobs have been queued. "
+            "You will be notified about errors related to image and file imports "
+            "via a <a href={url}>notification</a>.",
+            success_message=self.success_message,
+            url="https://grand-challenge.org/notifications/",
+        )

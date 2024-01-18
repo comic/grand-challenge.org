@@ -2,12 +2,12 @@ from django.urls import path
 
 from grandchallenge.reader_studies.views import (
     AddDisplaySetsToReaderStudy,
-    AddDisplaySetToReaderStudy,
     AddGroundTruthToReaderStudy,
     AddImagesToReaderStudy,
     AddQuestionToReaderStudy,
     AnswersRemoveForUser,
     AnswersRemoveGroundTruth,
+    DisplaySetCreateView,
     DisplaySetFilesUpdate,
     DisplaySetInterfacesCreate,
     DisplaySetUpdate,
@@ -94,7 +94,7 @@ urlpatterns = [
     ),
     path(
         "<slug>/display-sets/create-single/",
-        AddDisplaySetToReaderStudy.as_view(),
+        DisplaySetCreateView.as_view(),
         name="display-set-create",
     ),
     path(
