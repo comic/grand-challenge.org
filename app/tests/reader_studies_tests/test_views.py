@@ -433,7 +433,7 @@ def test_display_set_update(client):
         user=user,
         method=client.post,
     )
-    assert response.status_code == 200
+    assert response.status_code == 302
     assert ds1.values.count() == 3
     assert not ds1.values.filter(pk=civ_img.pk).exists()
     assert ds1.values.filter(pk=civ_img_new.pk).exists()
@@ -457,7 +457,7 @@ def test_display_set_update(client):
         user=user,
         method=client.post,
     )
-    assert response.status_code == 200
+    assert response.status_code == 302
     # no new CIVs have been created
     assert n_civs_old == ComponentInterfaceValue.objects.count()
     assert ds1.values.count() == 3
@@ -478,7 +478,7 @@ def test_display_set_update(client):
         user=user,
         method=client.post,
     )
-    assert response.status_code == 200
+    assert response.status_code == 302
     assert ds1.values.count() == 1
     assert n_civs_old == ComponentInterfaceValue.objects.count()
     assert ds1.values.filter(pk=civ_img_new.pk).exists()
@@ -566,7 +566,7 @@ def test_add_display_set_to_reader_study(
             method=client.post,
         )
 
-    assert response.status_code == 200
+    assert response.status_code == 302
     assert DisplaySet.objects.count() == 2
     ds = DisplaySet.objects.last()
     assert ds.values.count() == 5
