@@ -1432,3 +1432,20 @@ def test_question_default_annotation_color():
         }
     )
     assert form.is_valid()
+
+    form = QuestionForm(
+        data={
+            "answer_type": AnswerType.MASK,
+            "image_port": Question.ImagePort.MAIN,
+            "direction": Question.Direction.HORIZONTAL,
+            "order": 100,
+            "question_text": "gfda",
+            "default_annotation_color": "#000",
+        }
+    )
+    assert form.is_valid() is False
+    assert form.errors == {
+        "default_annotation_color": [
+            "This is an invalid color code. It must be an HTML hexadecimal color code e.g. #000000"
+        ]
+    }
