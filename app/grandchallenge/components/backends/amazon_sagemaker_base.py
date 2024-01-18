@@ -757,13 +757,15 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
                 )
 
     def _handle_completed_job(self):
-        return_code = self._get_task_return_code()
+        users_process_exit_code = self._get_task_return_code()
 
-        if return_code == 0:
+        if users_process_exit_code == 0:
             # Job's a good un
             return
-        elif return_code == 137:
-            raise ComponentException("The container ran out of memory.")
+        elif users_process_exit_code == 137:
+            raise ComponentException(
+                "The container was killed as it exceeded its memory limit"
+            )
         else:
             raise ComponentException(user_error(self.stderr))
 
@@ -794,6 +796,21 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
             else:
                 raise ComponentException(
                     "Algorithm container image would not start"
+                )
+        elif failure_reason == (
+            "ClientError: Please use an instance type with more memory, "
+            "or reduce the size of job data processed on an instance."
+        ):
+            users_process_exit_code = self._get_task_return_code()
+
+            if users_process_exit_code == 137:
+                raise ComponentException(
+                    "The container was killed as it exceeded its memory limit"
+                )
+            else:
+                raise RuntimeError(
+                    "The instance ran out of memory, "
+                    "but this was not caused by the users process"
                 )
 
         # Anything else needs investigation by a site administrator

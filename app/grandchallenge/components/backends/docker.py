@@ -140,7 +140,7 @@ class DockerExecutor(DockerConnectionMixin, Executor):
         if exit_code == 137:
             raise ComponentException(
                 "The container was killed as it exceeded the memory limit "
-                f"of {self._memory_limit}g."
+                f"of {self._memory_limit}g"
             )
         elif exit_code != 0:
             raise ComponentException(user_error(self.stderr))
