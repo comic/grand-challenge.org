@@ -36,6 +36,7 @@ from django.views.generic import (
     DetailView,
     FormView,
     ListView,
+    TemplateView,
     UpdateView,
     View,
 )
@@ -1332,7 +1333,7 @@ class DisplaySetUpdate(
         FileForm,
     )
     success_message = format_html(
-        "Display set updated. Image and file import jobs have been queued."
+        "Display set updated. Image and file import jobs have been queued. "
         "You will be notified about errors related to image and file imports "
         "via a <a href={}>notification</a>.",
         "https://grand-challenge.org/notifications/",
@@ -1437,7 +1438,7 @@ class DisplaySetFilesUpdate(ObjectPermissionRequiredMixin, FormView):
         )
 
 
-class DisplaySetInterfacesCreate(ObjectPermissionRequiredMixin, FormView):
+class DisplaySetInterfacesCreate(ObjectPermissionRequiredMixin, TemplateView):
     form_class = ComponentInterfaceCreateForm
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
@@ -1461,18 +1462,14 @@ class DisplaySetInterfacesCreate(ObjectPermissionRequiredMixin, FormView):
             return ReaderStudy.objects.get(slug=self.kwargs["slug"])
 
     def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update(
-            {
-                "pk": self.kwargs.get("pk"),
-                "base_obj": self.reader_study,
-                "interface": self.request.GET.get("interface"),
-                "user": self.request.user,
-                "auto_id": f"id-{uuid.uuid4()}",
-                "htmx_url": self.get_htmx_url(),
-            }
-        )
-        return kwargs
+        return {
+            "pk": self.kwargs.get("pk"),
+            "base_obj": self.reader_study,
+            "interface": self.request.GET.get("interface"),
+            "user": self.request.user,
+            "auto_id": f"id-{uuid.uuid4()}",
+            "htmx_url": self.get_htmx_url(),
+        }
 
     def get_htmx_url(self):
         if self.kwargs.get("pk") is not None:
@@ -1491,28 +1488,13 @@ class DisplaySetInterfacesCreate(ObjectPermissionRequiredMixin, FormView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context.update({"object": self.display_set})
-        return context
-
-    def form_valid(self, form):
-        interface = form.cleaned_data["interface"]
-        value = form.cleaned_data[interface.slug]
-        if self.display_set:
-            self.display_set.create_civ(
-                ci_slug=interface.slug, new_value=value
-            )
-            messages.add_message(
-                self.request,
-                messages.SUCCESS,
-                "Display set updated. Any image and file imports have been queued.",
-            )
-        return super().form_valid(form)
-
-    def get_success_url(self):
-        return reverse(
-            "reader-studies:display_sets",
-            kwargs={"slug": self.kwargs["slug"]},
+        context.update(
+            {
+                "object": self.display_set,
+                "form": self.form_class(**self.get_form_kwargs()),
+            }
         )
+        return context
 
 
 class AddDisplaySetToReaderStudy(

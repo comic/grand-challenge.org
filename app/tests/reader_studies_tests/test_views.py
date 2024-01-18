@@ -1,10 +1,11 @@
 import io
 
 import pytest
+from django.forms import JSONField, ModelChoiceField
 from guardian.shortcuts import assign_perm
 from requests import put
 
-from grandchallenge.cases.widgets import WidgetChoices
+from grandchallenge.cases.widgets import FlexibleImageField, WidgetChoices
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.notifications.models import Notification
 from grandchallenge.reader_studies.models import Answer, DisplaySet, Question
@@ -739,23 +740,11 @@ def test_add_files_to_display_set(
 
 
 @pytest.mark.django_db
-def test_display_set_interfaces_create(
-    client, settings, django_capture_on_commit_callbacks
-):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
+def test_display_set_interfaces_create_permissions(client):
     u1, u2 = UserFactory.create_batch(2)
     rs = ReaderStudyFactory()
     ds = DisplaySetFactory(reader_study=rs)
     rs.add_editor(u1)
-
-    ci_file = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
-    ci_value = ComponentInterfaceFactory(
-        kind="JSON", store_in_database=True, schema={"type": "array"}
-    )
-    ci_image = ComponentInterfaceFactory(kind="IMG", store_in_database=False)
-    ci_image_2 = ComponentInterfaceFactory(kind="IMG", store_in_database=False)
 
     response = get_view_for_user(
         viewname="reader-studies:display-set-interfaces-create",
@@ -763,7 +752,6 @@ def test_display_set_interfaces_create(
         reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
         user=u2,
     )
-
     assert response.status_code == 403
 
     response = get_view_for_user(
@@ -772,97 +760,38 @@ def test_display_set_interfaces_create(
         reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
         user=u1,
     )
-
     assert response.status_code == 200
 
-    assert not ds.values.filter(interface=ci_value).exists()
-    old_civ_count = ComponentInterfaceValue.objects.count()
+
+@pytest.mark.parametrize(
+    "interface_kind, store_in_database, field_type",
+    (
+        ("JSON", False, ModelChoiceField),
+        ("JSON", True, JSONField),
+        ("IMG", False, FlexibleImageField),
+    ),
+)
+@pytest.mark.django_db
+def test_display_set_interfaces_create(
+    client, interface_kind, store_in_database, field_type
+):
+    u1, u2 = UserFactory.create_batch(2)
+    rs = ReaderStudyFactory()
+    ds = DisplaySetFactory(reader_study=rs)
+    rs.add_editor(u1)
+
+    ci = ComponentInterfaceFactory(
+        kind=interface_kind, store_in_database=store_in_database
+    )
+
     response = get_view_for_user(
         viewname="reader-studies:display-set-interfaces-create",
         client=client,
         reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
-        data={"interface": str(ci_value.pk), ci_value.slug: ""},
+        data={"interface": str(ci.pk)},
         user=u1,
-        method=client.post,
     )
-    assert ComponentInterfaceValue.objects.count() == old_civ_count
-
-    response = get_view_for_user(
-        viewname="reader-studies:display-set-interfaces-create",
-        client=client,
-        reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
-        data={"interface": str(ci_value.pk), ci_value.slug: '["foo", "bar"]'},
-        user=u1,
-        method=client.post,
+    assert not response.context["form"].is_bound
+    assert isinstance(
+        response.context["form"].fields[str(ci.slug)], field_type
     )
-    assert response.status_code == 302
-    civ = ds.values.get(interface=ci_value)
-    assert civ.value == ["foo", "bar"]
-
-    assert not ds.values.filter(interface=ci_file).exists()
-    upload = UserUploadFactory(filename="file.json", creator=u1)
-    presigned_urls = upload.generate_presigned_urls(part_numbers=[1])
-    response = put(presigned_urls["1"], data=b'{"foo": "bar"}')
-    upload.complete_multipart_upload(
-        parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
-    )
-    upload.save()
-    with django_capture_on_commit_callbacks(execute=True):
-        response = get_view_for_user(
-            viewname="reader-studies:display-set-interfaces-create",
-            client=client,
-            reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
-            data={"interface": str(ci_file.pk), ci_file.slug: str(upload.pk)},
-            user=u1,
-            method=client.post,
-        )
-
-    assert response.status_code == 302
-    civ = ds.values.get(interface=ci_file)
-    assert civ.file.read() == b'{"foo": "bar"}'
-
-    assert not ds.values.filter(interface=ci_image).exists()
-    upload = create_upload_from_file(
-        file_path=RESOURCE_PATH / "test_grayscale.jpg",
-        creator=u1,
-    )
-    with django_capture_on_commit_callbacks(execute=True):
-        response = get_view_for_user(
-            viewname="reader-studies:display-set-interfaces-create",
-            client=client,
-            reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
-            data={
-                "interface": str(ci_image.pk),
-                ci_image.slug: str(upload.pk),
-                f"WidgetChoice-{ci_image.slug}": WidgetChoices.IMAGE_UPLOAD.name,
-            },
-            user=u1,
-            method=client.post,
-        )
-
-    assert response.status_code == 302
-    civ = ds.values.get(interface=ci_image)
-    assert civ.image.name == "test_grayscale.jpg"
-
-    image = ImageFactory()
-    assign_perm("cases.view_image", u1, image)
-    civ2 = ComponentInterfaceValueFactory(image=image, interface=ci_image_2)
-
-    with django_capture_on_commit_callbacks(execute=True):
-        response = get_view_for_user(
-            viewname="reader-studies:display-set-interfaces-create",
-            client=client,
-            reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
-            data={
-                "interface": str(ci_image_2.pk),
-                ci_image_2.slug: str(image.pk),
-                f"WidgetChoice-{ci_image_2.slug}": WidgetChoices.IMAGE_SEARCH.name,
-            },
-            user=u1,
-            method=client.post,
-        )
-
-    assert response.status_code == 302
-    new_civ = ds.values.get(interface=ci_image_2)
-    assert new_civ != civ
-    assert new_civ == civ2
