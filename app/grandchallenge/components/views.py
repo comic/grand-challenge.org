@@ -16,6 +16,7 @@ from grandchallenge.api.permissions import IsAuthenticated
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.components.serializers import ComponentInterfaceSerializer
 from grandchallenge.reader_studies.models import ReaderStudy
+from grandchallenge.subdomains.utils import reverse
 
 
 class ComponentInterfaceViewSet(ReadOnlyModelViewSet):
@@ -150,5 +151,5 @@ class InterfaceProcessingMixin(SuccessMessageMixin):
             "You will be notified about errors related to image and file imports "
             "via a <a href={url}>notification</a>.",
             success_message=self.success_message,
-            url="https://grand-challenge.org/notifications/",
+            url=reverse("notifications:list"),
         )
