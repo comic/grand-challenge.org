@@ -34,7 +34,7 @@ from grandchallenge.components.models import (
     OverlaySegmentsMixin,
 )
 from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
-from grandchallenge.core.fields import RegexField
+from grandchallenge.core.fields import HexColorField, RegexField
 from grandchallenge.core.guardian import get_objects_for_group
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
@@ -1195,6 +1195,11 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     image_port = models.CharField(
         max_length=14, choices=ImagePort.choices, blank=True, default=""
     )
+    default_annotation_color = HexColorField(
+        blank=True,
+        default="",
+        help_text="Default color for displaying and creating annotations for this question",
+    )
     required = models.BooleanField(default=True)
     direction = models.CharField(
         max_length=1, choices=Direction.choices, default=Direction.HORIZONTAL
@@ -1365,7 +1370,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
             self.answer_type in self.AnswerType.get_annotation_types()
         ) != bool(self.image_port):
             raise ValidationError(
-                "The image port must (only) be set for annotation questions."
+                "The image port must (only) be set for annotation questions"
             )
 
         if (
@@ -1375,6 +1380,14 @@ class Question(UUIDModel, OverlaySegmentsMixin):
             raise ValidationError(
                 "Bool or Heading answer types cannot not be Required "
                 "(otherwise the user will need to tick a box for each image!)"
+            )
+
+        if (
+            self.default_annotation_color
+            and self.answer_type not in self.AnswerType.get_annotation_types()
+        ):
+            raise ValidationError(
+                "Default annotation color should only be set for annotation questions"
             )
 
     def _clean_interface(self):

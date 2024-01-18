@@ -46,7 +46,11 @@ from grandchallenge.core.forms import (
 )
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.layout import Formset
-from grandchallenge.core.widgets import JSONEditorWidget, MarkdownEditorWidget
+from grandchallenge.core.widgets import (
+    ColorEditorWidget,
+    JSONEditorWidget,
+    MarkdownEditorWidget,
+)
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.hanging_protocols.forms import ViewContentMixin
 from grandchallenge.reader_studies.models import (
@@ -309,6 +313,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                 ),
                 Field("required"),
                 Field("image_port"),
+                Field("default_annotation_color"),
                 Field("direction"),
                 Field("order"),
                 Field("interface"),
@@ -384,6 +389,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
             "answer_type",
             "required",
             "image_port",
+            "default_annotation_color",
             "direction",
             "order",
             "interface",
@@ -444,6 +450,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                     "hx-target": "#id_interface",
                 }
             ),
+            "default_annotation_color": ColorEditorWidget(format="hex"),
         }
 
     interface = DynamicField(
