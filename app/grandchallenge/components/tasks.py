@@ -48,51 +48,27 @@ MAX_RETRIES = 60 * 24  # 1 day assuming 60 seconds delay
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
-def update_sagemaker_shim_version():
+@transaction.atomic
+def update_all_container_image_shims():
     """Updates existing images to new versions of sagemaker shim"""
-    with transaction.atomic():
-        for app_label, model_name in (
-            ("algorithms", "algorithmimage"),
-            ("evaluation", "method"),
-        ):
-            model = apps.get_model(app_label=app_label, model_name=model_name)
-
-            for instance in model.objects.executable_images().exclude(
-                latest_shimmed_version=settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
-            ):
-                on_commit(
-                    shim_image.signature(
-                        kwargs={
-                            "pk": str(instance.pk),
-                            "app_label": instance._meta.app_label,
-                            "model_name": instance._meta.model_name,
-                        }
-                    ).apply_async
-                )
-
-
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
-def shim_image(*, pk: uuid.UUID, app_label: str, model_name: str):
-    """Shim an existing container image"""
-    model = apps.get_model(app_label=app_label, model_name=model_name)
-    instance = model.objects.get(pk=pk)
-
-    if (
-        instance.is_manifest_valid
-        and instance.is_in_registry
-        and instance.SHIM_IMAGE
-        and instance.latest_shimmed_version
-        != settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
+    for app_label, model_name in (
+        ("algorithms", "algorithmimage"),
+        ("evaluation", "method"),
     ):
-        shim_container_image(instance=instance)
-        instance.is_on_sagemaker = False
-        instance.save()
+        model = apps.get_model(app_label=app_label, model_name=model_name)
 
-        if settings.COMPONENTS_CREATE_SAGEMAKER_MODEL:
-            # Only create SageMaker models for shimmed images for now
-            create_sagemaker_model(repo_tag=instance.shimmed_repo_tag)
-            instance.is_on_sagemaker = True
-            instance.save()
+        for instance in model.objects.executable_images().exclude(
+            latest_shimmed_version=settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
+        ):
+            on_commit(
+                update_container_image_shim.signature(
+                    kwargs={
+                        "pk": str(instance.pk),
+                        "app_label": instance._meta.app_label,
+                        "model_name": instance._meta.model_name,
+                    }
+                ).apply_async
+            )
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
