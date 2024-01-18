@@ -40,9 +40,10 @@ class InterfaceFormField:
         initial=None,
         user=None,
         required=None,
+        disabled=False,
         help_text="",
     ):
-        kwargs = {"required": required}
+        kwargs = {"required": required, "disabled": disabled}
 
         if initial is not None:
             kwargs["initial"] = initial

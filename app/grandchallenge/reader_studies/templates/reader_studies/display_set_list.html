@@ -11,22 +11,22 @@
 {% endblock %}
 
 {% block content %}
-    <h1>{{ reader_study.title }} Cases</h1>
+    <h1>{{ reader_study.title }} Display Sets</h1>
     <p>
         <a class="btn btn-primary"
-           href="{% url 'reader-studies:display-sets-create' slug=reader_study.slug %}"
-        ><i class="fas fa-plus"></i> Add Cases (batch)
+           href="{% url 'reader-studies:display-set-create' slug=reader_study.slug %}"
+        ><i class="fas fa-plus"></i> Add Display Set (single)
         </a>
         <a class="btn btn-outline-primary"
-           href="{% url 'reader-studies:display-set-create' slug=reader_study.slug %}"
-        ><i class="fas fa-plus"></i> Add Case (single)
+           href="{% url 'reader-studies:display-sets-create' slug=reader_study.slug %}"
+        ><i class="fas fa-plus"></i> Add Image-Only Display Sets (batch)
         </a>
     </p>
 
     {{ block.super }}
 
 
-    <div id="readerStudySlug" class="d-none" data-slug="{{ reader_study.slug }}"></div>
+    <div id="objectSlug" class="d-none" data-slug="{{ reader_study.slug }}"></div>
 
     <div class="modal fade" id="removeCaseModal" tabindex="-1" role="dialog"
          aria-labelledby="removeCaseModalLabel" aria-hidden="true">
@@ -60,16 +60,7 @@
 
 {% block script %}
     {{ block.super }}
-
-    {% include 'grandchallenge/partials/drf_csrf.html' %}
-
     <script type="module" src="{% static 'reader_studies/js/images_list.mjs' %}"></script>
-
-    <script src="{% static 'reader_studies/js/autocomplete_htmx.js' %}" type="text/javascript"></script>
-
     {% include 'workstations/partials/session-control.html' %}
-
-    {{ form_media }}
-
-    <link rel="stylesheet" href="{% static 'css/select2-bootstrap4-theme/select2-bootstrap4.css' %}">
+    {% include 'grandchallenge/partials/drf_csrf.html' %}
 {% endblock %}

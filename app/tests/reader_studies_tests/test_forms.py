@@ -9,6 +9,7 @@ from django.db.models import BLANK_CHOICE_DASH
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.cases.widgets import FlexibleImageWidget
+from grandchallenge.components.forms import SingleCIVForm
 from grandchallenge.components.models import (
     ComponentInterface,
     InterfaceKind,
@@ -20,7 +21,6 @@ from grandchallenge.core.utils.access_requests import (
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.reader_studies.forms import (
     DisplaySetCreateForm,
-    DisplaySetInterfacesCreateForm,
     DisplaySetUpdateForm,
     QuestionForm,
     SelectUploadWidget,
@@ -1107,16 +1107,16 @@ def test_display_set_update_form(form_class, file_widget):
     rs = ReaderStudyFactory()
     user = UserFactory()
     rs.add_editor(user)
+    ds = DisplaySetFactory(reader_study=rs)
     for slug, store_in_db in [("slug-1", False), ("slug-2", True)]:
         ci = ComponentInterfaceFactory(
             title=slug, kind="JSON", store_in_database=store_in_db
         )
         civ = ComponentInterfaceValueFactory(interface=ci)
-        ds = DisplaySetFactory(reader_study=rs)
         ds.values.add(civ)
 
     instance = None if form_class == DisplaySetCreateForm else ds
-    form = form_class(user=user, instance=instance, reader_study=rs)
+    form = form_class(user=user, instance=instance, base_obj=rs)
     assert sorted(form.fields.keys()) == ["order", "slug-1", "slug-2"]
     assert isinstance(form.fields["slug-1"].widget, file_widget)
     assert isinstance(form.fields["slug-2"].widget, JSONEditorWidget)
@@ -1124,7 +1124,7 @@ def test_display_set_update_form(form_class, file_widget):
     ci = ComponentInterfaceFactory(kind="STR", title="slug-3")
     QuestionFactory(reader_study=rs, answer_type="STXT", interface=ci)
     del rs.values_for_interfaces
-    form = form_class(user=user, instance=instance, reader_study=rs)
+    form = form_class(user=user, instance=instance, base_obj=rs)
     assert sorted(form.fields.keys()) == [
         "order",
         "slug-1",
@@ -1154,7 +1154,7 @@ def test_display_set_form_interface_fields_not_required(form_class):
         ds.values.add(civ)
 
     instance = None if form_class == DisplaySetCreateForm else ds
-    form = form_class(user=user, instance=instance, reader_study=rs)
+    form = form_class(user=user, instance=instance, base_obj=rs)
     for name, field in form.fields.items():
         if not name == "order":
             assert not field.required
@@ -1177,7 +1177,7 @@ def test_display_set_update_form_image_field_queryset_filters():
     civ_img = ComponentInterfaceValueFactory(interface=ci_img)
     ds = DisplaySetFactory(reader_study=rs)
     ds.values.add(civ_img)
-    form = DisplaySetUpdateForm(user=user, instance=ds, reader_study=rs)
+    form = DisplaySetUpdateForm(user=user, instance=ds, base_obj=rs)
     assert im1 in form.fields["image"].fields[0].queryset.all()
     assert im2 not in form.fields["image"].fields[0].queryset.all()
     assert upload1 in form.fields["image"].fields[1].queryset.all()
@@ -1195,25 +1195,45 @@ def test_display_set_add_interface_form():
     ci_value = ComponentInterfaceFactory(kind="JSON", store_in_database=True)
     ci_image = ComponentInterfaceFactory(kind="IMG", store_in_database=False)
 
-    form = DisplaySetInterfacesCreateForm(
-        pk=ds.pk, reader_study=rs, interface=None, user=user
+    form = SingleCIVForm(
+        pk=ds.pk,
+        base_obj=rs,
+        interface=None,
+        user=user,
+        htmx_url="foo",
+        auto_id="1",
     )
-    assert sorted(form.fields.keys()) == ["interface"]
+    assert sorted(form.fields.keys()) == ["interface-1"]
 
-    form = DisplaySetInterfacesCreateForm(
-        pk=ds.pk, reader_study=rs, interface=ci_file.pk, user=user
+    form = SingleCIVForm(
+        pk=ds.pk,
+        base_obj=rs,
+        interface=ci_file.pk,
+        user=user,
+        htmx_url="foo",
+        auto_id="1",
     )
     assert sorted(form.fields.keys()) == [ci_file.slug, "interface"]
     assert isinstance(form.fields[ci_file.slug].widget, UserUploadSingleWidget)
 
-    form = DisplaySetInterfacesCreateForm(
-        pk=ds.pk, reader_study=rs, interface=ci_value.pk, user=user
+    form = SingleCIVForm(
+        pk=ds.pk,
+        base_obj=rs,
+        interface=ci_value.pk,
+        user=user,
+        htmx_url="foo",
+        auto_id="1",
     )
     assert sorted(form.fields.keys()) == [ci_value.slug, "interface"]
     assert isinstance(form.fields[ci_value.slug].widget, JSONEditorWidget)
 
-    form = DisplaySetInterfacesCreateForm(
-        pk=ds.pk, reader_study=rs, interface=ci_image.pk, user=user
+    form = SingleCIVForm(
+        pk=ds.pk,
+        base_obj=rs,
+        interface=ci_image.pk,
+        user=user,
+        htmx_url="foo",
+        auto_id="1",
     )
     assert sorted(form.fields.keys()) == [ci_image.slug, "interface"]
     assert isinstance(form.fields[ci_image.slug].widget, FlexibleImageWidget)

@@ -1,5 +1,11 @@
+import uuid
+
 from dal import autocomplete
+from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q, TextChoices
+from django.forms import Media
+from django.http import HttpResponse
+from django.utils.html import format_html
 from django.views.generic import ListView, TemplateView
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
@@ -10,6 +16,7 @@ from grandchallenge.api.permissions import IsAuthenticated
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.components.serializers import ComponentInterfaceSerializer
 from grandchallenge.reader_studies.models import ReaderStudy
+from grandchallenge.subdomains.utils import reverse
 
 
 class ComponentInterfaceViewSet(ReadOnlyModelViewSet):
@@ -63,10 +70,10 @@ class ComponentInterfaceAutocomplete(
 ):
     def get_queryset(self):
         if self.forwarded:
-            reader_study_slug = self.forwarded.pop("reader-study")
-            reader_study = ReaderStudy.objects.get(slug=reader_study_slug)
+            object_slug = self.forwarded.pop("object")
+            object = ReaderStudy.objects.get(slug=object_slug)
             qs = ComponentInterface.objects.exclude(
-                slug__in=reader_study.values_for_interfaces.keys()
+                slug__in=object.values_for_interfaces.keys()
             ).exclude(pk__in=self.forwarded.values())
         else:
             qs = ComponentInterface.objects.filter(
@@ -84,3 +91,65 @@ class ComponentInterfaceAutocomplete(
 
     def get_result_label(self, result):
         return result.title
+
+
+class InterfaceProcessingMixin(SuccessMessageMixin):
+    def process_data_for_object(self, data):
+        raise NotImplementedError
+
+    def form_valid(self, form):
+        form.instance = self.process_data_for_object(form.cleaned_data)
+        response = super().form_valid(form)
+        return HttpResponse(
+            response.url,
+            status=302,
+            headers={
+                "HX-Redirect": response.url,
+                "HX-Refresh": True,
+            },
+        )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        if hasattr(self, "object"):
+            instance = self.object
+        else:
+            instance = None
+        kwargs.update(
+            {
+                "user": self.request.user,
+                "auto_id": f"id-{uuid.uuid4()}",
+                "base_obj": self.base_object,
+                "instance": instance,
+            }
+        )
+        return kwargs
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        media = Media()
+        for form_class in self.included_form_classes:
+            for widget in form_class._possible_widgets:
+                media = media + widget().media
+        if hasattr(self, "object"):
+            object = self.object
+        else:
+            object = None
+        context.update(
+            {
+                "base_object": self.base_object,
+                "form_media": media,
+                "object": object,
+            }
+        )
+        return context
+
+    def get_success_message(self, cleaned_data):
+        return format_html(
+            "{success_message} "
+            "Image and file import jobs have been queued. "
+            "You will be notified about errors related to image and file imports "
+            "via a <a href={url}>notification</a>.",
+            success_message=self.success_message,
+            url=reverse("notifications:list"),
+        )

@@ -47,4 +47,12 @@ document.addEventListener("DOMContentLoaded", function(event) {
     });
 });
 
+// this is necessary for when an invalid form is returned through htmx (e.g. in display set views)
+if (typeof htmx !== 'undefined') {
+    htmx.onLoad((elem) => {
+        if (elem.tagName.toLowerCase() === "body") {
+           search_for_jsoneditor_widgets(elem)
+        }
+    });
+};
 search_for_jsoneditor_widgets();

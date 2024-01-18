@@ -911,16 +911,6 @@ class DisplaySet(CIVForObjectMixin, UUIDModel):
             ]
         )
 
-    @cached_property
-    def main_image_title(self):
-        try:
-            interface_slug = self.reader_study.view_content["main"][0]
-            return self.values.filter(
-                interface__slug=interface_slug
-            ).values_list("image__name", flat=True)[0]
-        except (KeyError, IndexError):
-            return self.values.values_list("image__name", flat=True).first()
-
 
 class DisplaySetUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(DisplaySet, on_delete=models.CASCADE)

@@ -13,8 +13,6 @@ from crispy_forms.layout import (
     Layout,
     Submit,
 )
-from dal import autocomplete
-from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import BLANK_CHOICE_DASH
 from django.forms import (
@@ -35,11 +33,7 @@ from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 from dynamic_forms import DynamicField, DynamicFormMixin
 
-from grandchallenge.cases.widgets import (
-    FlexibleImageField,
-    FlexibleImageWidget,
-)
-from grandchallenge.components.form_fields import InterfaceFormField
+from grandchallenge.components.forms import MultipleCIVForm
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -556,70 +550,17 @@ class GroundTruthForm(SaveFormInitMixin, Form):
         return values
 
 
-class DisplaySetCreateForm(Form):
-    _possible_widgets = {
-        *InterfaceFormField._possible_widgets,
-    }
-
-    def __init__(self, *args, instance, reader_study, user, **kwargs):
+class DisplaySetCreateForm(MultipleCIVForm):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        self.instance = instance
-        self.reader_study = reader_study
-        self.user = user
-
-        for slug, values in reader_study.values_for_interfaces.items():
-            current_value = None
-
-            if instance:
-                current_value = instance.values.filter(
-                    interface__slug=slug
-                ).first()
-
-            interface = ComponentInterface.objects.get(slug=slug)
-
-            if interface.is_image_kind:
-                self.fields[slug] = self._get_image_field(
-                    interface=interface,
-                    values=values,
-                    current_value=current_value,
-                )
-            elif interface.requires_file:
-                self.fields[slug] = self._get_file_field(
-                    interface=interface,
-                    values=values,
-                    current_value=current_value,
-                )
-            else:
-                self.fields[slug] = self._get_default_field(
-                    interface=interface, current_value=current_value
-                )
 
         self.fields["order"] = IntegerField(
             initial=(
-                instance.order
-                if instance
-                else reader_study.next_display_set_order
+                self.instance.order
+                if self.instance
+                else self.base_obj.next_display_set_order
             )
         )
-
-    def _get_image_field(self, *, interface, values, current_value):
-        return self._get_default_field(
-            interface=interface, current_value=current_value
-        )
-
-    def _get_file_field(self, *, interface, values, current_value):
-        return self._get_default_field(
-            interface=interface, current_value=current_value
-        )
-
-    def _get_default_field(self, *, interface, current_value):
-        return InterfaceFormField(
-            instance=interface,
-            initial=current_value.value if current_value else None,
-            required=False,
-            user=self.user,
-        ).field
 
 
 class DisplaySetUpdateForm(DisplaySetCreateForm):
@@ -628,22 +569,21 @@ class DisplaySetUpdateForm(DisplaySetCreateForm):
         *DisplaySetCreateForm._possible_widgets,
     }
 
-    def _get_image_field(self, *, interface, values, current_value):
-        return FlexibleImageField(
-            image_queryset=get_objects_for_user(self.user, "cases.view_image"),
-            upload_queryset=get_objects_for_user(
-                self.user, "uploads.change_userupload"
-            ).filter(status=UserUpload.StatusChoices.COMPLETED),
-            widget=FlexibleImageWidget(
-                user=self.user, current_value=current_value
-            ),
-            required=False,
-        )
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.instance.is_editable:
+            for _, field in self.fields.items():
+                field.disabled = True
 
     def _get_file_field(self, *, interface, values, current_value):
-        return self._get_select_upload_widget_field(
-            interface=interface, values=values, current_value=current_value
-        )
+        if current_value:
+            return self._get_select_upload_widget_field(
+                interface=interface, values=values, current_value=current_value
+            )
+        else:
+            return super()._get_file_field(
+                interface=interface, values=values, current_value=current_value
+            )
 
     def _get_select_upload_widget_field(
         self, *, interface, values, current_value
@@ -654,7 +594,7 @@ class DisplaySetUpdateForm(DisplaySetCreateForm):
             required=False,
             widget=SelectUploadWidget(
                 attrs={
-                    "reader_study_slug": self.reader_study.slug,
+                    "reader_study_slug": self.base_obj.slug,
                     "display_set_pk": self.instance.pk,
                     "interface_slug": interface.slug,
                     "interface_type": interface.super_kind,
@@ -673,14 +613,12 @@ class FileForm(Form):
     }
 
     user_upload = ModelChoiceField(
-        label="File",
         queryset=None,
     )
 
-    def __init__(
-        self, *args, user, display_set, interface, instance=None, **kwargs
-    ):
+    def __init__(self, *args, user, interface, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["user_upload"].label = interface.title
         self.fields["user_upload"].widget = UserUploadSingleWidget(
             allowed_file_types=interface.file_mimetypes
         )
@@ -689,83 +627,3 @@ class FileForm(Form):
             "uploads.change_userupload",
         ).filter(status=UserUpload.StatusChoices.COMPLETED)
         self.interface = interface
-        self.display_set = display_set
-
-
-class DisplaySetInterfacesCreateForm(Form):
-    _possible_widgets = {
-        *InterfaceFormField._possible_widgets,
-        autocomplete.ModelSelect2,
-        Select,
-    }
-
-    def __init__(self, *args, pk, interface, reader_study, user, **kwargs):
-        super().__init__(*args, **kwargs)
-        selected_interface = None
-        if interface:
-            selected_interface = ComponentInterface.objects.get(pk=interface)
-        data = kwargs.get("data")
-        if data and data.get("interface"):
-            selected_interface = ComponentInterface.objects.get(
-                pk=data["interface"]
-            )
-        qs = ComponentInterface.objects.exclude(
-            slug__in=reader_study.values_for_interfaces.keys()
-        )
-        widget_kwargs = {}
-        attrs = {}
-        if pk is None and selected_interface is not None:
-            widget = Select
-        else:
-            widget = autocomplete.ModelSelect2
-            attrs.update(
-                {
-                    "data-placeholder": "Search for an interface ...",
-                    "data-minimum-input-length": 3,
-                    "data-theme": settings.CRISPY_TEMPLATE_PACK,
-                    "data-html": True,
-                }
-            )
-            widget_kwargs[
-                "url"
-            ] = "components:component-interface-autocomplete"
-            widget_kwargs["forward"] = ["interface"]
-
-        if pk is not None:
-            attrs.update(
-                {
-                    "hx-get": reverse_lazy(
-                        "reader-studies:display-set-interfaces-create",
-                        kwargs={"pk": pk, "slug": reader_study.slug},
-                    ),
-                    "hx-target": f"#ds-content-{pk}",
-                    "hx-trigger": "interfaceSelected",
-                }
-            )
-        else:
-            attrs.update(
-                {
-                    "hx-get": reverse_lazy(
-                        "reader-studies:display-set-new-interfaces-create",
-                        kwargs={"slug": reader_study.slug},
-                    ),
-                    "hx-target": f"#form-{kwargs['auto_id'][:-3]}",
-                    "hx-swap": "outerHTML",
-                    "hx-trigger": "interfaceSelected",
-                    "disabled": selected_interface is not None,
-                }
-            )
-        widget_kwargs["attrs"] = attrs
-
-        self.fields["interface"] = ModelChoiceField(
-            initial=selected_interface,
-            queryset=qs,
-            widget=widget(**widget_kwargs),
-        )
-
-        if selected_interface is not None:
-            self.fields[selected_interface.slug] = InterfaceFormField(
-                instance=selected_interface,
-                user=user,
-                required=selected_interface.value_required,
-            ).field

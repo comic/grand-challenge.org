@@ -91,7 +91,7 @@ def test_component_interface_autocomplete(client):
         client=client,
         viewname="components:component-interface-autocomplete",
         user=user,
-        data={"forward": json.dumps({"reader-study": rs.slug})},
+        data={"forward": json.dumps({"object": rs.slug})},
     )
     assert response.status_code == 200
     ids = [x["id"] for x in response.json()["results"]]
@@ -105,7 +105,7 @@ def test_component_interface_autocomplete(client):
         user=user,
         data={
             "forward": json.dumps(
-                {"reader-study": rs.slug, "interface-0": ci_img_2.pk}
+                {"object": rs.slug, "interface-0": ci_img_2.pk}
             )
         },
     )
