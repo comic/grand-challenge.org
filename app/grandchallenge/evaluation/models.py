@@ -443,7 +443,7 @@ class Phase(FieldChangeMixin, ViewContentMixin, UUIDModel):
         help_text="Time limit for inference jobs in seconds",
         validators=[
             MinValueValidator(limit_value=300),
-            MaxValueValidator(limit_value=3600),
+            MaxValueValidator(limit_value=7200),
         ],
     )
     give_algorithm_editors_job_view_permissions = models.BooleanField(

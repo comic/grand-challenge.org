@@ -1272,9 +1272,9 @@ ALGORITHMS_MAX_ACTIVE_JOBS = int(
 # Maximum and minimum values the user can set for algorithm requirements
 ALGORITHMS_MIN_MEMORY_GB = 4
 ALGORITHMS_MAX_MEMORY_GB = 32
-# The SageMaker backend currently has a maximum limit of 3600s
-ALGORITHMS_JOB_TIME_LIMIT_SECONDS = os.environ.get(
-    "ALGORITHMS_JOB_TIME_LIMIT_SECONDS", "3600"
+# The SageMaker Training backend has a maximum limit of 28 Days
+ALGORITHMS_JOB_DEFAULT_TIME_LIMIT_SECONDS = os.environ.get(
+    "ALGORITHMS_JOB_DEFAULT_TIME_LIMIT_SECONDS", "3600"
 )
 # How many cents per month each user receives by default
 ALGORITHMS_USER_CENTS_PER_MONTH = int(
