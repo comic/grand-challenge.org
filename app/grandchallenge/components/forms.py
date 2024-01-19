@@ -2,6 +2,7 @@ from dal import autocomplete
 from dal.widgets import Select
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.exceptions import PermissionDenied
 from django.forms import Form, HiddenInput, ModelChoiceField, ModelForm
 
 from grandchallenge.algorithms.models import AlgorithmImage
@@ -182,17 +183,23 @@ class MultipleCIVForm(Form):
                         interface=interface, current_value=value
                     )
                 elif type == "civ":
-                    # value can be None (when user selects '---' in the select widget)
-                    if (value and int(value) in values) or not value:
-                        return self._get_select_upload_widget_field(
-                            interface=interface,
-                            values=values,
-                            current_value=ComponentInterfaceValue.objects.get(
-                                pk=value
+                    try:
+                        if int(value) in values:
+                            # User has permission to use this CIV as values have been checked for permissions
+                            current_value = (
+                                ComponentInterfaceValue.objects.get(pk=value)
                             )
-                            if value
-                            else None,
-                        )
+                        else:
+                            # The selected CIV does not belong to the set of values
+                            raise PermissionDenied
+                    except ValueError:
+                        # value can be None (when user selects '---' in the select widget)
+                        current_value = None
+                    return self._get_select_upload_widget_field(
+                        interface=interface,
+                        values=values,
+                        current_value=current_value,
+                    )
                 else:
                     raise RuntimeError(
                         f"Type {type} of {current_value} not supported."
