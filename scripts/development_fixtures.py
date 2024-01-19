@@ -50,6 +50,7 @@ from grandchallenge.reader_studies.models import (
     Answer,
     DisplaySet,
     Question,
+    QuestionWidgetKindChoices,
     ReaderStudy,
 )
 from grandchallenge.task_categories.models import TaskType
@@ -556,6 +557,7 @@ def _create_reader_studies(users):
         reader_study=reader_study,
         question_text="foo",
         answer_type=Question.AnswerType.TEXT,
+        widget=QuestionWidgetKindChoices.TEXT_INPUT,
     )
 
     display_set = DisplaySet.objects.create(reader_study=reader_study)

@@ -1364,3 +1364,88 @@ def test_question_widget_choices_for_non_editable_instance():
         ("TEXT_INPUT", "Text Input"),
         ("TEXT_AREA", "Text Area"),
     ]
+
+
+@pytest.mark.django_db
+def test_question_default_annotation_color():
+    form = QuestionForm(
+        data={
+            "answer_type": AnswerType.TEXT,
+            "widget": QuestionWidgetKindChoices.TEXT_AREA,
+            "direction": Question.Direction.HORIZONTAL,
+            "order": 100,
+            "question_text": "gfda",
+            "default_annotation_color": "#000000",
+        }
+    )
+
+    assert form.is_valid() is False
+    assert form.errors == {
+        "__all__": [
+            "Default annotation color should only be set for annotation questions"
+        ]
+    }
+
+    form = QuestionForm(
+        data={
+            "answer_type": AnswerType.MASK,
+            "image_port": Question.ImagePort.MAIN,
+            "direction": Question.Direction.HORIZONTAL,
+            "order": 100,
+            "question_text": "gfda",
+            "default_annotation_color": "#000000",
+        }
+    )
+    assert form.is_valid()
+
+    form = QuestionForm(
+        data={
+            "answer_type": AnswerType.TEXT,
+            "widget": QuestionWidgetKindChoices.TEXT_AREA,
+            "direction": Question.Direction.HORIZONTAL,
+            "order": 100,
+            "question_text": "gfda",
+            "default_annotation_color": "",
+        }
+    )
+    assert form.is_valid()
+
+    form = QuestionForm(
+        data={
+            "answer_type": AnswerType.TEXT,
+            "widget": QuestionWidgetKindChoices.TEXT_AREA,
+            "direction": Question.Direction.HORIZONTAL,
+            "order": 100,
+            "question_text": "gfda",
+            "default_annotation_color": None,
+        }
+    )
+    assert form.is_valid()
+
+    form = QuestionForm(
+        data={
+            "answer_type": AnswerType.TEXT,
+            "widget": QuestionWidgetKindChoices.TEXT_AREA,
+            "direction": Question.Direction.HORIZONTAL,
+            "order": 100,
+            "question_text": "gfda",
+        }
+    )
+    assert form.is_valid()
+
+    form = QuestionForm(
+        data={
+            "answer_type": AnswerType.MASK,
+            "image_port": Question.ImagePort.MAIN,
+            "direction": Question.Direction.HORIZONTAL,
+            "order": 100,
+            "question_text": "gfda",
+            "default_annotation_color": "#000",
+        }
+    )
+    assert form.is_valid() is False
+    assert form.errors == {
+        "default_annotation_color": [
+            "This is an invalid color code. It must be an HTML hexadecimal color code e.g. #000000"
+        ]
+    }

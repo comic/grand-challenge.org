@@ -65,6 +65,7 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "form_direction",
             "help_text",
             "image_port",
+            "default_annotation_color",
             "pk",
             "question_text",
             "reader_study",

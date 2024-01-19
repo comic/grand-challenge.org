@@ -21,12 +21,6 @@ class Migration(migrations.Migration):
                 help_text="Default color for displaying and creating annotations",
                 max_length=7,
                 null=True,
-                validators=[
-                    django.core.validators.RegexValidator(
-                        message="This is an invalid color code. It must be an HTML hexadecimal color code e.g. #000000",
-                        regex="^#[a-fA-F0-9]{6}$",
-                    ),
-                ],
             ),
         ),
         migrations.AddField(
