@@ -4,7 +4,7 @@ function removeCase(event) {
     $('#removeCaseModal').modal('show');
 }
 
-$('#ajaxDataTable').on('init.dt', function() {
+$('#ajaxDataTable').on('init.dt, draw.dt', function() {
    var removeButtons = document.querySelectorAll(".remove-display-set")
     removeButtons.forEach(function(elem) {
         elem.addEventListener("click", removeCase);
