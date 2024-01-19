@@ -5,6 +5,16 @@
 {% if attrs.id %}id="{{ attrs.id }}"{% endif %}
 {% if attrs.name %}name="{{ attrs.name }}"{% endif %}
 {% if attrs.type %}type="{{ attrs.type }}"{% endif %}
+class="btn
+    {% if "link" in attrs.tags %}btn-link
+    {% else %}
+      {% if "minor" in attrs.tags %}btn-sm{% endif %}
+      {% if "danger" in attrs.tags %}btn-danger
+      {% elif "secondary" in attrs.tags %}btn-secondary
+      {% elif "warning" in attrs.tags %}btn-warning
+      {% else %}btn-primary
+      {% endif %}
+    {% endif %}"
 >
 {% slot %}
 {% endslot %}
