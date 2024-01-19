@@ -1118,7 +1118,7 @@ def test_display_set_update_form(form_class, file_widget):
     assert isinstance(form.fields["slug-2"].widget, JSONEditorWidget)
 
     ci = ComponentInterfaceFactory(kind="STR", title="slug-3")
-    QuestionFactory(reader_study=rs, answer_type="STXT", interface=ci)
+    QuestionFactory(reader_study=rs, answer_type=AnswerType.TEXT, interface=ci)
     del rs.values_for_interfaces
     form = form_class(user=user, instance=instance, base_obj=rs)
     assert sorted(form.fields.keys()) == [

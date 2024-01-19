@@ -1,20 +1,19 @@
 import pytest
 
-from grandchallenge.reader_studies.models import Question
+from grandchallenge.reader_studies.models import AnswerType, Question
 
 ANSWER_TYPE_NAMES_AND_ANSWERS = {
-    "STXT": "string test",
-    "MTXT": "multiline string\ntest",
-    "NUMB": 12,
-    "BOOL": True,
-    "2DBB": {
+    AnswerType.TEXT: "multiline string\ntest",
+    AnswerType.NUMBER: 12,
+    AnswerType.BOOL: True,
+    AnswerType.BOUNDING_BOX_2D: {
         "version": {"major": 1, "minor": 0},
         "type": "2D bounding box",
         "name": "test_name",
         "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 10, 0]],
         "probability": 0.2,
     },
-    "M2DB": {
+    AnswerType.MULTIPLE_2D_BOUNDING_BOXES: {
         "type": "Multiple 2D bounding boxes",
         "boxes": [
             {
@@ -28,7 +27,7 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
         ],
         "version": {"major": 1, "minor": 0},
     },
-    "DIST": {
+    AnswerType.DISTANCE_MEASUREMENT: {
         "version": {"major": 1, "minor": 0},
         "type": "Distance measurement",
         "name": "test_name",
@@ -36,7 +35,7 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
         "end": [10, 0, 0],
         "probability": 1.0,
     },
-    "MDIS": {
+    AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS: {
         "version": {"major": 1, "minor": 0},
         "type": "Multiple distance measurements",
         "name": "test_name",
@@ -45,14 +44,14 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
             {"start": [0, 0, 0], "end": [10, 0, 0], "probability": 0.5},
         ],
     },
-    "POIN": {
+    AnswerType.POINT: {
         "version": {"major": 1, "minor": 0},
         "type": "Point",
         "name": "test_name",
         "point": [0, 0, 0],
         "probability": 0.41,
     },
-    "MPOI": {
+    AnswerType.MULTIPLE_POINTS: {
         "version": {"major": 1, "minor": 0},
         "type": "Multiple points",
         "name": "test_name",
@@ -61,7 +60,7 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
             {"point": [0, 0, 0], "probability": 0.2},
         ],
     },
-    "POLY": {
+    AnswerType.POLYGON: {
         "version": {"major": 1, "minor": 0},
         "type": "Polygon",
         "name": "test_name",
@@ -71,7 +70,7 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
         "groups": ["a", "b"],
         "probability": 0.3,
     },
-    "MPOL": {
+    AnswerType.MULTIPLE_POLYGONS: {
         "version": {"major": 1, "minor": 0},
         "type": "Multiple polygons",
         "name": "test_name",
@@ -93,7 +92,7 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
             },
         ],
     },
-    "LINE": {
+    AnswerType.LINE: {
         "version": {"major": 1, "minor": 0},
         "type": "Line",
         "name": "test_name",
@@ -104,7 +103,7 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
         ],
         "probability": 0.3,
     },
-    "MLIN": {
+    AnswerType.MULTIPLE_LINES: {
         "version": {"major": 1, "minor": 0},
         "type": "Multiple lines",
         "name": "test_name",
@@ -129,7 +128,7 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
             },
         ],
     },
-    "ANGL": {
+    AnswerType.ANGLE: {
         "version": {"major": 1, "minor": 0},
         "type": "Angle",
         "name": "test_name",
@@ -139,7 +138,7 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
         ],
         "probability": 0.3,
     },
-    "MANG": {
+    AnswerType.MULTIPLE_ANGLES: {
         "version": {"major": 1, "minor": 0},
         "type": "Multiple angles",
         "name": "test_name",
@@ -162,7 +161,7 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
             },
         ],
     },
-    "ELLI": {
+    AnswerType.ELLIPSE: {
         "version": {"major": 1, "minor": 0},
         "type": "Ellipse",
         "name": "test_name",
@@ -170,7 +169,7 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
         "minor_axis": [[1, 1, 1], [1, 1, 1]],
         "probability": 0.3,
     },
-    "MELL": {
+    AnswerType.MULTIPLE_ELLIPSES: {
         "version": {"major": 1, "minor": 0},
         "type": "Multiple ellipses",
         "name": "test_name",
@@ -188,7 +187,7 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
             },
         ],
     },
-    "3ANG": {
+    AnswerType.THREE_POINT_ANGLE: {
         "version": {"major": 1, "minor": 0},
         "name": "Some annotation",
         "type": "Three-point angle",
@@ -199,7 +198,7 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
         ],
         "probability": 0.92,
     },
-    "M3AN": {
+    AnswerType.MULTIPLE_THREE_POINT_ANGLES: {
         "version": {"major": 1, "minor": 0},
         "name": "Some annotations",
         "type": "Multiple three-point angles",
@@ -246,14 +245,9 @@ def test_answer_type_annotation_header_schema_fails(
 
 
 def test_answer_type_annotation_schema_mismatch():
-    # Answers to STXT are valid for MTXT as well, that's why STXT is excluded
-    # Other than that, each answer is only valid for a single answer type
-    unique_answer_types = [
-        key for key in ANSWER_TYPE_NAMES_AND_ANSWERS.keys() if key != "STXT"
-    ]
-    for answer_type in unique_answer_types:
+    for answer_type in ANSWER_TYPE_NAMES_AND_ANSWERS.keys():
         answer = ANSWER_TYPE_NAMES_AND_ANSWERS[answer_type]
-        for answer_type_check in unique_answer_types:
+        for answer_type_check in ANSWER_TYPE_NAMES_AND_ANSWERS.keys():
             assert Question(answer_type=answer_type_check).is_answer_valid(
                 answer=answer
             ) == (answer_type == answer_type_check)
@@ -268,30 +262,29 @@ def test_new_answer_type_listed():
 @pytest.mark.parametrize(
     "answer_type,allow_null",
     [
-        ["STXT", False],
-        ["MTXT", False],
-        ["BOOL", True],
-        ["NUMB", True],
-        ["2DBB", True],
-        ["M2DB", True],
-        ["DIST", True],
-        ["MDIS", True],
-        ["POIN", True],
-        ["MPOI", True],
-        ["POLY", True],
-        ["MPOL", True],
-        ["CHOI", True],
-        ["MCHO", False],
-        ["MCHD", False],
-        ["MASK", True],
-        ["LINE", True],
-        ["MLIN", True],
-        ["ANGL", True],
-        ["MANG", True],
-        ["ELLI", True],
-        ["MELL", True],
-        ["3ANG", True],
-        ["M3AN", True],
+        [AnswerType.TEXT, False],
+        [AnswerType.BOOL, True],
+        [AnswerType.NUMBER, True],
+        [AnswerType.BOUNDING_BOX_2D, True],
+        [AnswerType.MULTIPLE_2D_BOUNDING_BOXES, True],
+        [AnswerType.DISTANCE_MEASUREMENT, True],
+        [AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS, True],
+        [AnswerType.POINT, True],
+        [AnswerType.MULTIPLE_POINTS, True],
+        [AnswerType.POLYGON, True],
+        [AnswerType.MULTIPLE_POLYGONS, True],
+        [AnswerType.CHOICE, True],
+        [AnswerType.MULTIPLE_CHOICE, False],
+        [AnswerType.MULTIPLE_CHOICE_DROPDOWN, False],
+        [AnswerType.MASK, True],
+        [AnswerType.LINE, True],
+        [AnswerType.MULTIPLE_LINES, True],
+        [AnswerType.ANGLE, True],
+        [AnswerType.MULTIPLE_ANGLES, True],
+        [AnswerType.ELLIPSE, True],
+        [AnswerType.MULTIPLE_ELLIPSES, True],
+        [AnswerType.THREE_POINT_ANGLE, True],
+        [AnswerType.MULTIPLE_THREE_POINT_ANGLES, True],
     ],
 )
 def test_answer_type_allows_null(answer_type, allow_null):

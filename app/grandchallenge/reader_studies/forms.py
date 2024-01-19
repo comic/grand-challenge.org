@@ -381,21 +381,6 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
             )
         return super().clean()
 
-    def clean_answer_type(self):
-        answer_type = self.cleaned_data["answer_type"]
-
-        if answer_type in [
-            AnswerType.SINGLE_LINE_TEXT,
-            AnswerType.MULTI_LINE_TEXT,
-        ]:
-            raise ValidationError(
-                "Single line and multi line text answers are deprecated. "
-                "Instead, please use the text type answer with the "
-                "text input (single line) or text area (multi line) widget."
-            )
-
-        return answer_type
-
     class Meta:
         model = Question
         fields = (

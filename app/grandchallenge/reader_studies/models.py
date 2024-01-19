@@ -923,8 +923,6 @@ class DisplaySetGroupObjectPermission(GroupObjectPermissionBase):
 class AnswerType(models.TextChoices):
     # WARNING: Do not change the display text, these are used in the front end
     TEXT = "TEXT", "Text"
-    SINGLE_LINE_TEXT = "STXT", "Single line text"
-    MULTI_LINE_TEXT = "MTXT", "Multi line text"
     BOOL = "BOOL", "Bool"
     NUMBER = "NUMB", "Number"
     HEADING = "HEAD", "Heading"
@@ -995,8 +993,6 @@ class AnswerType(models.TextChoices):
 
 ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
     AnswerType.TEXT: [InterfaceKindChoices.STRING],
-    AnswerType.SINGLE_LINE_TEXT: [InterfaceKindChoices.STRING],
-    AnswerType.MULTI_LINE_TEXT: [InterfaceKindChoices.STRING],
     AnswerType.BOOL: [InterfaceKindChoices.BOOL],
     AnswerType.NUMBER: [
         InterfaceKindChoices.FLOAT,
@@ -1058,8 +1054,6 @@ ANSWER_TYPE_TO_QUESTION_WIDGET = {
         QuestionWidgetKindChoices.TEXT_INPUT,
         QuestionWidgetKindChoices.TEXT_AREA,
     ],
-    AnswerType.SINGLE_LINE_TEXT: [],
-    AnswerType.MULTI_LINE_TEXT: [],
     AnswerType.BOOL: [],
     AnswerType.NUMBER: [
         QuestionWidgetKindChoices.NUMBER_INPUT,
@@ -1106,8 +1100,6 @@ ANSWER_TYPE_TO_QUESTION_WIDGET_CHOICES = {
 }
 
 EMPTY_ANSWER_VALUES = {
-    AnswerType.SINGLE_LINE_TEXT: "",
-    AnswerType.MULTI_LINE_TEXT: "",
     AnswerType.TEXT: "",
     AnswerType.NUMBER: None,
     AnswerType.CHOICE: None,
@@ -1171,8 +1163,6 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     SCORING_FUNCTIONS = {ScoringFunction.ACCURACY: accuracy_score}
 
     EXAMPLE_FOR_ANSWER_TYPE = {
-        AnswerType.SINGLE_LINE_TEXT: "'\"answer\"'",
-        AnswerType.MULTI_LINE_TEXT: "'\"answer\\nanswer\\nanswer\"'",
         AnswerType.TEXT: "'\"answer\"'",
         AnswerType.NUMBER: "'1'",
         AnswerType.BOOL: "'true'",
