@@ -7,8 +7,9 @@ from requests import put
 
 from grandchallenge.cases.widgets import FlexibleImageField, WidgetChoices
 from grandchallenge.components.models import ComponentInterfaceValue
-from grandchallenge.notifications.models import Notification
+from grandchallenge.components.widgets import SelectUploadWidget
 from grandchallenge.reader_studies.models import Answer, DisplaySet, Question
+from grandchallenge.uploads.widgets import UserUploadSingleWidget
 from tests.cases_tests import RESOURCE_PATH
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
@@ -384,7 +385,12 @@ def test_display_set_update_permissions(client):
 
 
 @pytest.mark.django_db
-def test_display_set_update(client):
+def test_display_set_update(
+    client, settings, django_capture_on_commit_callbacks
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
     user = UserFactory()
     rs = ReaderStudyFactory()
     ds1, ds2 = DisplaySetFactory.create_batch(2, reader_study=rs)
@@ -464,6 +470,40 @@ def test_display_set_update(client):
     assert ds1.values.filter(pk=civ_img_new.pk).exists()
     assert ds1.values.filter(pk=civ_json_file_new.pk).exists()
     assert ds1.values.get(interface=ci_json).value == {"foo": "new"}
+
+    # test new json file upload
+    upload = UserUploadFactory(filename="file.json", creator=user)
+    presigned_urls = upload.generate_presigned_urls(part_numbers=[1])
+    response = put(presigned_urls["1"], data=b'{"new": "content"}')
+    upload.complete_multipart_upload(
+        parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
+    )
+    upload.save()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="reader-studies:display-set-update",
+            client=client,
+            reverse_kwargs={"pk": ds1.pk, "slug": rs.slug},
+            data={
+                ci_json.slug: '{"foo": "new"}',
+                ci_img.slug: str(im2.pk),
+                f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
+                ci_json_file.slug: str(upload.pk),
+                "order": 11,
+            },
+            user=user,
+            method=client.post,
+        )
+    assert response.status_code == 302
+    assert ds1.values.count() == 3
+    assert ds1.values.filter(interface=ci_json_file).exists()
+    assert (
+        ds1.values.filter(interface=ci_json_file).get().file.read()
+        == b'{"new": "content"}'
+    )
+
+    n_civs_old = ComponentInterfaceValue.objects.count()
 
     # test removing json file and json value interface values
     response = get_view_for_user(
@@ -579,30 +619,12 @@ def test_add_display_set_to_reader_study(
 
 
 @pytest.mark.django_db
-def test_add_files_to_display_set(
-    client, settings, django_capture_on_commit_callbacks
-):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
+def test_add_files_to_display_set(client):
     u1, u2 = UserFactory.create_batch(2)
     rs = ReaderStudyFactory()
     ds = DisplaySetFactory(reader_study=rs)
     rs.add_editor(u1)
     ci_json = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
-    ci_json.schema = {
-        "$schema": "http://json-schema.org/draft-07/schema",
-        "type": "array",
-    }
-    ci_json.save()
-
-    upload = UserUploadFactory(filename="file.json", creator=u1)
-    presigned_urls = upload.generate_presigned_urls(part_numbers=[1])
-    response = put(presigned_urls["1"], data=b'{"foo": "bar",}')
-    upload.complete_multipart_upload(
-        parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
-    )
-    upload.save()
 
     response = get_view_for_user(
         viewname="reader-studies:display-set-files-update",
@@ -614,7 +636,6 @@ def test_add_files_to_display_set(
         },
         user=u2,
     )
-
     assert response.status_code == 403
 
     response = get_view_for_user(
@@ -627,116 +648,34 @@ def test_add_files_to_display_set(
         },
         user=u1,
     )
-
     assert response.status_code == 200
-
-    with django_capture_on_commit_callbacks(execute=True):
-        response = get_view_for_user(
-            viewname="reader-studies:display-set-files-update",
-            client=client,
-            reverse_kwargs={
-                "pk": ds.pk,
-                "interface_slug": ci_json.slug,
-                "slug": rs.slug,
-            },
-            data={"user_upload": str(upload.pk)},
-            user=u1,
-            method=client.post,
-        )
-
-    assert response.status_code == 302
-    assert ds.values.count() == 0
-    assert Notification.objects.count() == 1
-    notification = Notification.objects.get()
-    msg = notification.print_notification(user=notification.user)
-    assert ci_json.title in msg
-    assert str(ds.pk) in msg
-    assert rs.title in msg
-    assert "Expecting property name enclosed in double quotes" in msg
-
-    upload2 = UserUploadFactory(filename="file.json", creator=u1)
-    presigned_urls2 = upload2.generate_presigned_urls(part_numbers=[1])
-    response2 = put(presigned_urls2["1"], data=b'{"foo": "bar"}')
-    upload2.complete_multipart_upload(
-        parts=[{"ETag": response2.headers["ETag"], "PartNumber": 1}]
+    assert isinstance(
+        response.context["form"].fields[str(ci_json.slug)], ModelChoiceField
     )
-    upload2.save()
-
-    with django_capture_on_commit_callbacks(execute=True):
-        response = get_view_for_user(
-            viewname="reader-studies:display-set-files-update",
-            client=client,
-            reverse_kwargs={
-                "pk": ds.pk,
-                "interface_slug": ci_json.slug,
-                "slug": rs.slug,
-            },
-            data={"user_upload": str(upload2.pk)},
-            user=u1,
-            method=client.post,
-        )
-
-    assert response.status_code == 302
-    assert ds.values.count() == 0
-    assert Notification.objects.count() == 2
-    notification = Notification.objects.exclude(pk=notification.pk).get()
-    msg = notification.print_notification(user=notification.user)
-    assert ci_json.title in msg
-    assert str(ds.pk) in msg
-    assert rs.title in msg
-    assert "JSON does not fulfill schema" in msg
-
-    upload3 = UserUploadFactory(filename="file.json", creator=u1)
-    presigned_urls3 = upload3.generate_presigned_urls(part_numbers=[1])
-    response3 = put(presigned_urls3["1"], data=b'["foo", "bar"]')
-    upload3.complete_multipart_upload(
-        parts=[{"ETag": response3.headers["ETag"], "PartNumber": 1}]
+    assert isinstance(
+        response.context["form"].fields[str(ci_json.slug)].widget,
+        UserUploadSingleWidget,
     )
-    upload3.save()
-    with django_capture_on_commit_callbacks(execute=True):
-        response = get_view_for_user(
-            viewname="reader-studies:display-set-files-update",
-            client=client,
-            reverse_kwargs={
-                "pk": ds.pk,
-                "interface_slug": ci_json.slug,
-                "slug": rs.slug,
-            },
-            data={"user_upload": str(upload3.pk)},
-            user=u1,
-            method=client.post,
-        )
 
-    assert response.status_code == 302
-    assert ds.values.count() == 1
-    civ_json = ds.values.get(interface=ci_json)
-    assert civ_json.file.read() == b'["foo", "bar"]'
-
-    upload4 = UserUploadFactory(filename="file.json", creator=u1)
-    presigned_urls4 = upload4.generate_presigned_urls(part_numbers=[1])
-    response4 = put(presigned_urls4["1"], data=b'["foo", "bar", "extra"]')
-    upload4.complete_multipart_upload(
-        parts=[{"ETag": response4.headers["ETag"], "PartNumber": 1}]
+    ComponentInterfaceValueFactory(interface=ci_json)
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-files-update",
+        client=client,
+        reverse_kwargs={
+            "pk": ds.pk,
+            "interface_slug": ci_json.slug,
+            "slug": rs.slug,
+        },
+        user=u1,
     )
-    upload4.save()
-    with django_capture_on_commit_callbacks(execute=True):
-        response = get_view_for_user(
-            viewname="reader-studies:display-set-files-update",
-            client=client,
-            reverse_kwargs={
-                "pk": ds.pk,
-                "interface_slug": ci_json.slug,
-                "slug": rs.slug,
-            },
-            data={"user_upload": str(upload4.pk)},
-            user=u1,
-            method=client.post,
-        )
-    assert response.status_code == 302
-    assert ds.values.count() == 1
-    civ_json_new = ds.values.get(interface=ci_json)
-    assert civ_json_new != civ_json
-    assert civ_json_new.file.read() == b'["foo", "bar", "extra"]'
+    assert response.status_code == 200
+    assert isinstance(
+        response.context["form"].fields[str(ci_json.slug)], ModelChoiceField
+    )
+    assert isinstance(
+        response.context["form"].fields[str(ci_json.slug)].widget,
+        SelectUploadWidget,
+    )
 
 
 @pytest.mark.django_db

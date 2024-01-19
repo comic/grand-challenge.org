@@ -15,6 +15,7 @@ from grandchallenge.components.models import (
     InterfaceKind,
     InterfaceKindChoices,
 )
+from grandchallenge.components.widgets import SelectUploadWidget
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
@@ -23,7 +24,6 @@ from grandchallenge.reader_studies.forms import (
     DisplaySetCreateForm,
     DisplaySetUpdateForm,
     QuestionForm,
-    SelectUploadWidget,
 )
 from grandchallenge.reader_studies.models import (
     Answer,
