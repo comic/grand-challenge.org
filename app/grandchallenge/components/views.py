@@ -158,7 +158,7 @@ class InterfaceProcessingMixin(SuccessMessageMixin):
         )
 
 
-class FileUpdateMixin(ObjectPermissionRequiredMixin, TemplateView):
+class FileUpdateBaseView(ObjectPermissionRequiredMixin, TemplateView):
     form_class = NewFileUploadForm
     template_name = "components/object_files_update.html"
     raise_exception = True
@@ -176,13 +176,9 @@ class FileUpdateMixin(ObjectPermissionRequiredMixin, TemplateView):
         context = super().get_context_data(*args, **kwargs)
         context.update(
             {
-                "form": self.form_class(**self.get_form_kwargs()),
+                "form": self.form_class(
+                    {"user": self.request.user, "interface": self.interface}
+                ),
             }
         )
         return context
-
-    def get_form_kwargs(self):
-        return {
-            "user": self.request.user,
-            "interface": self.interface,
-        }

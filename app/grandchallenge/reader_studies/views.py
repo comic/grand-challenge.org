@@ -63,7 +63,7 @@ from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
 )
 from grandchallenge.components.views import (
-    FileUpdateMixin,
+    FileUpdateBaseView,
     InterfaceProcessingMixin,
 )
 from grandchallenge.core.filters import FilterMixin
@@ -1358,7 +1358,7 @@ class DisplaySetUpdate(
         return instance
 
 
-class DisplaySetFilesUpdate(FileUpdateMixin):
+class DisplaySetFilesUpdate(FileUpdateBaseView):
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
     )

@@ -8,6 +8,7 @@ from requests import put
 from grandchallenge.cases.widgets import FlexibleImageField, WidgetChoices
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.reader_studies.models import Answer, DisplaySet, Question
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.widgets import UserUploadSingleWidget
 from tests.cases_tests import RESOURCE_PATH
 from tests.components_tests.factories import (
@@ -439,6 +440,9 @@ def test_display_set_update(
         method=client.post,
     )
     assert response.status_code == 302
+    assert response.headers["HX-Redirect"] == reverse(
+        "reader-studies:display_sets", kwargs={"slug": rs.slug}
+    )
     assert ds1.values.count() == 3
     assert not ds1.values.filter(pk=civ_img.pk).exists()
     assert ds1.values.filter(pk=civ_img_new.pk).exists()
@@ -463,6 +467,9 @@ def test_display_set_update(
         method=client.post,
     )
     assert response.status_code == 302
+    assert response.headers["HX-Redirect"] == reverse(
+        "reader-studies:display_sets", kwargs={"slug": rs.slug}
+    )
     # no new CIVs have been created
     assert n_civs_old == ComponentInterfaceValue.objects.count()
     assert ds1.values.count() == 3
@@ -495,6 +502,9 @@ def test_display_set_update(
             method=client.post,
         )
     assert response.status_code == 302
+    assert response.headers["HX-Redirect"] == reverse(
+        "reader-studies:display_sets", kwargs={"slug": rs.slug}
+    )
     assert ds1.values.count() == 3
     assert ds1.values.filter(interface=ci_json_file).exists()
     assert (
@@ -518,6 +528,9 @@ def test_display_set_update(
         method=client.post,
     )
     assert response.status_code == 302
+    assert response.headers["HX-Redirect"] == reverse(
+        "reader-studies:display_sets", kwargs={"slug": rs.slug}
+    )
     assert ds1.values.count() == 1
     assert n_civs_old == ComponentInterfaceValue.objects.count()
     assert ds1.values.filter(pk=civ_img_new.pk).exists()
