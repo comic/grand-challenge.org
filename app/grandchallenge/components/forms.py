@@ -302,7 +302,7 @@ class SingleCIVForm(Form):
             ).field
 
 
-class FileForm(Form):
+class NewFileUploadForm(Form):
     _possible_widgets = {
         UserUploadSingleWidget,
     }

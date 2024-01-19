@@ -7,7 +7,6 @@ from requests import put
 
 from grandchallenge.cases.widgets import FlexibleImageField, WidgetChoices
 from grandchallenge.components.models import ComponentInterfaceValue
-from grandchallenge.components.widgets import SelectUploadWidget
 from grandchallenge.reader_studies.models import Answer, DisplaySet, Question
 from grandchallenge.uploads.widgets import UserUploadSingleWidget
 from tests.cases_tests import RESOURCE_PATH
@@ -655,26 +654,6 @@ def test_add_files_to_display_set(client):
     assert isinstance(
         response.context["form"].fields[str(ci_json.slug)].widget,
         UserUploadSingleWidget,
-    )
-
-    ComponentInterfaceValueFactory(interface=ci_json)
-    response = get_view_for_user(
-        viewname="reader-studies:display-set-files-update",
-        client=client,
-        reverse_kwargs={
-            "pk": ds.pk,
-            "interface_slug": ci_json.slug,
-            "slug": rs.slug,
-        },
-        user=u1,
-    )
-    assert response.status_code == 200
-    assert isinstance(
-        response.context["form"].fields[str(ci_json.slug)], ModelChoiceField
-    )
-    assert isinstance(
-        response.context["form"].fields[str(ci_json.slug)].widget,
-        SelectUploadWidget,
     )
 
 

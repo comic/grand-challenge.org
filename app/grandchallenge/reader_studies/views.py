@@ -58,7 +58,7 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 from grandchallenge.archives.forms import AddCasesForm
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
-from grandchallenge.components.forms import FileForm, SingleCIVForm
+from grandchallenge.components.forms import NewFileUploadForm, SingleCIVForm
 from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
 )
@@ -1325,7 +1325,7 @@ class DisplaySetUpdate(
     included_form_classes = (
         DisplaySetUpdateForm,
         SingleCIVForm,
-        FileForm,
+        NewFileUploadForm,
     )
     success_message = "Display set has been updated."
 

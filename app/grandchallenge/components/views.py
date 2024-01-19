@@ -14,7 +14,7 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from grandchallenge.algorithms.forms import NON_ALGORITHM_INTERFACES
 from grandchallenge.api.permissions import IsAuthenticated
-from grandchallenge.components.forms import FileForm
+from grandchallenge.components.forms import NewFileUploadForm
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.components.serializers import ComponentInterfaceSerializer
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
@@ -159,7 +159,7 @@ class InterfaceProcessingMixin(SuccessMessageMixin):
 
 
 class FileUpdateMixin(ObjectPermissionRequiredMixin, TemplateView):
-    form_class = FileForm
+    form_class = NewFileUploadForm
     template_name = "components/object_files_update.html"
     raise_exception = True
 
