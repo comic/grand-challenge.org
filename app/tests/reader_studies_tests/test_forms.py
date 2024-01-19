@@ -235,7 +235,8 @@ def test_question_create(client):
             method=client.post,
             data={
                 "question_text": "What?",
-                "answer_type": "STXT",
+                "answer_type": AnswerType.TEXT,
+                "widget": QuestionWidgetKindChoices.TEXT_INPUT,
                 "order": 1,
                 "image_port": "",
                 "direction": "H",
@@ -469,9 +470,6 @@ def test_question_form_interface_field_no_answer_type():
 @pytest.mark.parametrize(
     "answer_type,port,questions_created",
     (
-        ("STXT", "", 1),
-        ("STXT", "M", 0),
-        ("STXT", "S", 0),
         ("HEAD", "", 1),
         ("HEAD", "M", 0),
         ("HEAD", "S", 0),
@@ -1254,7 +1252,7 @@ def test_display_set_add_interface_form():
             AnswerType.NUMBER,
             [
                 BLANK_CHOICE_DASH[0],
-                ("NUMBER_INPUT", "Number input"),
+                ("NUMBER_INPUT", "Number Input"),
                 ("NUMBER_RANGE", "Number Range"),
             ],
         ),
@@ -1317,16 +1315,16 @@ def test_display_set_add_interface_form():
         (
             AnswerType.CHOICE,
             [
-                ("SELECT", "Select"),
                 ("RADIO_SELECT", "Radio Select"),
+                ("SELECT", "Select"),
             ],
         ),
         (
             AnswerType.MULTIPLE_CHOICE,
             [
                 BLANK_CHOICE_DASH[0],
-                ("SELECT_MULTIPLE", "Select Multiple"),
                 ("CHECKBOX_SELECT_MULTIPLE", "Checkbox Select Multiple"),
+                ("SELECT_MULTIPLE", "Select Multiple"),
             ],
         ),
         (AnswerType.MULTIPLE_CHOICE_DROPDOWN, BLANK_CHOICE_DASH),

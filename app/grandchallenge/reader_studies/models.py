@@ -1040,7 +1040,7 @@ ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
 
 class QuestionWidgetKindChoices(models.TextChoices):
     ACCEPT_REJECT = "ACCEPT_REJECT", "Accept/Reject Findings"
-    NUMBER_INPUT = "NUMBER_INPUT", "Number input"
+    NUMBER_INPUT = "NUMBER_INPUT", "Number Input"
     NUMBER_RANGE = "NUMBER_RANGE", "Number Range"
     TEXT_INPUT = "TEXT_INPUT", "Text Input"
     TEXT_AREA = "TEXT_AREA", "Text Area"
@@ -1079,12 +1079,12 @@ ANSWER_TYPE_TO_QUESTION_WIDGET = {
     AnswerType.POLYGON: [],
     AnswerType.MULTIPLE_POLYGONS: [QuestionWidgetKindChoices.ACCEPT_REJECT],
     AnswerType.CHOICE: [
-        QuestionWidgetKindChoices.SELECT,
         QuestionWidgetKindChoices.RADIO_SELECT,
+        QuestionWidgetKindChoices.SELECT,
     ],
     AnswerType.MULTIPLE_CHOICE: [
-        QuestionWidgetKindChoices.SELECT_MULTIPLE,
         QuestionWidgetKindChoices.CHECKBOX_SELECT_MULTIPLE,
+        QuestionWidgetKindChoices.SELECT_MULTIPLE,
     ],
     AnswerType.MULTIPLE_CHOICE_DROPDOWN: [],
     AnswerType.MASK: [],
