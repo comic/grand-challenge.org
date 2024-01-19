@@ -177,7 +177,7 @@ class FileUpdateBaseView(ObjectPermissionRequiredMixin, TemplateView):
         context.update(
             {
                 "form": self.form_class(
-                    {"user": self.request.user, "interface": self.interface}
+                    user=self.request.user, interface=self.interface
                 ),
             }
         )

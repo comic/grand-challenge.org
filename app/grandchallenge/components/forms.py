@@ -1,5 +1,3 @@
-import uuid
-
 from dal import autocomplete
 from dal.widgets import Select
 from django.conf import settings
@@ -120,7 +118,8 @@ class MultipleCIVForm(Form):
                 # a select to an upload widget, so if there is data, we need to pass
                 # the value from the data dict to the init function rather than
                 # the existing CIV
-                current_value = self.data[slug]
+                type = f"value_type_{interface.slug}"
+                current_value = f"{self.data[type]}_{self.data[slug]}"
 
             self.init_interface_field(
                 interface_slug=slug, current_value=current_value, values=values
@@ -177,24 +176,26 @@ class MultipleCIVForm(Form):
             else:
                 # on form submit, current_value either is the pk of an existing CIV
                 # or the UUID of a new UserUpload object
-                try:
-                    uuid.UUID(current_value)
+                type, value = current_value.split("_")
+                if type == "uuid":
                     return self._get_default_field(
-                        interface=interface, current_value=current_value
+                        interface=interface, current_value=value
                     )
-                except ValueError as e:
+                elif type == "civ":
                     if ComponentInterfaceValue.objects.filter(
-                        pk=current_value
+                        pk=value
                     ).exists():
                         return self._get_select_upload_widget_field(
                             interface=interface,
                             values=values,
                             current_value=ComponentInterfaceValue.objects.get(
-                                pk=current_value
+                                pk=value
                             ),
                         )
-                    else:
-                        raise RuntimeError(e)
+                else:
+                    raise RuntimeError(
+                        f"Type {type} of {current_value} not supported."
+                    )
         else:
             return self._get_default_field(
                 interface=interface, current_value=current_value
