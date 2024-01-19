@@ -622,6 +622,11 @@ GOOGLE_ANALYTICS_ID = os.environ.get("GOOGLE_ANALYTICS_ID", "GA_TRACKING_ID")
 ##############################################################################
 #
 # django-allauth
+# https://docs.allauth.org/en/latest/account/configuration.html
+# https://docs.allauth.org/en/latest/socialaccount/configuration.html
+# https://docs.allauth.org/en/latest/mfa/configuration.html
+# https://docs.allauth.org/en/latest/usersessions/configuration.html
+# https://docs.allauth.org/en/latest/common/configuration.html
 #
 ##############################################################################
 
@@ -632,6 +637,8 @@ ACCOUNT_EMAIL_CONFIRMATION_COOLDOWN = 30
 ACCOUNT_AUTHENTICATION_METHOD = "username_email"
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+ACCOUNT_CHANGE_EMAIL = True
+ACCOUNT_CONFIRM_EMAIL_ON_GET = False
 ACCOUNT_USERNAME_MIN_LENGTH = 4
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
@@ -639,6 +646,7 @@ ACCOUNT_USERNAME_BLACKLIST = USERNAME_DENYLIST
 ACCOUNT_USERNAME_VALIDATORS = (
     "grandchallenge.profiles.validators.username_validators"
 )
+
 SOCIALACCOUNT_ADAPTER = "grandchallenge.profiles.adapters.SocialAccountAdapter"
 SOCIALACCOUNT_AUTO_SIGNUP = False
 SOCIALACCOUNT_STORE_TOKENS = False

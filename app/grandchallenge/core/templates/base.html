@@ -15,6 +15,9 @@
 
         <title>
             {% block title %}{{ request.site.name }}{% endblock %}
+            {% block head_title %}
+                {# Block used by django-allauth #}
+            {% endblock head_title %}
         </title>
     {% endblock %}
 
@@ -30,6 +33,10 @@
         {# Block used by django-machina #}
     {% endblock %}
 
+    {% block extra_head %}
+        {# Block used by django-allauth #}
+    {% endblock extra_head %}
+
     {% block style %}
         {% include "grandchallenge/partials/style.html" %}
     {% endblock %}
@@ -42,7 +49,7 @@
 {% endblock %}
 
 {% block body %}
-    {# Block used by django-machina #}
+    {# Block used by django-machina and django-allauth #}
 
     {% include "grandchallenge/partials/newsletter_signup_modal.html" %}
 
@@ -83,7 +90,9 @@
                 <div class="row">
                     {% block sidebar %}{% endblock %}
                     <div class="col overflow-auto">
-                        {% block content %}{% endblock %}
+                        {% block content %}
+                            {# Block used by us and django-allauth #}
+                        {% endblock %}
                     </div>
                 </div>
             {% endblock %}
