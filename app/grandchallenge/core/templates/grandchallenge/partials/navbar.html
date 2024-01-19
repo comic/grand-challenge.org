@@ -51,9 +51,7 @@
                 </li>
             </ul>
             <ul class="navbar-nav">
-                {% if not hide_userlinks %}
-                    {% include "grandchallenge/partials/userlinks.html" %}
-                {% endif %}
+                {% include "grandchallenge/partials/userlinks.html" with hide_userlinks=hide_userlinks %}
             </ul>
         </div>
     </div>
