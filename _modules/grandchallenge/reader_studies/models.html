@@ -114,7 +114,7 @@
     <span class="n">OverlaySegmentsMixin</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.schemas</span> <span class="kn">import</span> <span class="n">ANSWER_TYPE_SCHEMA</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.core.fields</span> <span class="kn">import</span> <span class="n">RegexField</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.core.fields</span> <span class="kn">import</span> <span class="n">HexColorField</span><span class="p">,</span> <span class="n">RegexField</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.core.guardian</span> <span class="kn">import</span> <span class="n">get_objects_for_group</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.core.models</span> <span class="kn">import</span> <span class="n">RequestBase</span><span class="p">,</span> <span class="n">UUIDModel</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.core.storage</span> <span class="kn">import</span> <span class="p">(</span>
@@ -1349,6 +1349,11 @@
     <span class="n">image_port</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
         <span class="n">max_length</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">ImagePort</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span>
     <span class="p">)</span>
+    <span class="n">default_annotation_color</span> <span class="o">=</span> <span class="n">HexColorField</span><span class="p">(</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Default color for displaying and creating annotations for this question&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">required</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">direction</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
         <span class="n">max_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">Direction</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">Direction</span><span class="o">.</span><span class="n">HORIZONTAL</span>
@@ -1528,7 +1533,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">get_annotation_types</span><span class="p">()</span>
         <span class="p">)</span> <span class="o">!=</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">image_port</span><span class="p">):</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
-                <span class="s2">&quot;The image port must (only) be set for annotation questions.&quot;</span>
+                <span class="s2">&quot;The image port must (only) be set for annotation questions&quot;</span>
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="p">(</span>
@@ -1538,6 +1543,14 @@
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="s2">&quot;Bool or Heading answer types cannot not be Required &quot;</span>
                 <span class="s2">&quot;(otherwise the user will need to tick a box for each image!)&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">default_annotation_color</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">get_annotation_types</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;Default annotation color should only be set for annotation questions&quot;</span>
             <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_clean_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
