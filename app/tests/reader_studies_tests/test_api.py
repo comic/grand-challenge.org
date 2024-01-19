@@ -280,14 +280,10 @@ def test_answer_creator_is_reader(client):
         (Question.AnswerType.NUMBER, 12, 201),
         (Question.AnswerType.NUMBER, "12", 400),
         (Question.AnswerType.NUMBER, True, 400),
-        (Question.AnswerType.SINGLE_LINE_TEXT, "dgfsgfds", 201),
-        (Question.AnswerType.SINGLE_LINE_TEXT, None, 400),
-        (Question.AnswerType.SINGLE_LINE_TEXT, True, 400),
-        (Question.AnswerType.SINGLE_LINE_TEXT, 12, 400),
-        (Question.AnswerType.MULTI_LINE_TEXT, "dgfsgfds", 201),
-        (Question.AnswerType.MULTI_LINE_TEXT, None, 400),
-        (Question.AnswerType.MULTI_LINE_TEXT, True, 400),
-        (Question.AnswerType.MULTI_LINE_TEXT, 12, 400),
+        (Question.AnswerType.TEXT, "dgfsgfds", 201),
+        (Question.AnswerType.TEXT, None, 400),
+        (Question.AnswerType.TEXT, True, 400),
+        (Question.AnswerType.TEXT, 12, 400),
         (Question.AnswerType.MULTIPLE_CHOICE, None, 400),
         (Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN, None, 400),
         # Headings are always incorrect when answering
@@ -925,8 +921,6 @@ def test_answer_is_correct_type(client, answer_type, answer, expected):
     "answer_type,answer",
     (
         # Blank answers
-        (Question.AnswerType.SINGLE_LINE_TEXT, ""),
-        (Question.AnswerType.MULTI_LINE_TEXT, ""),
         (Question.AnswerType.TEXT, ""),
         # Null answers
         (Question.AnswerType.NUMBER, None),
@@ -1090,8 +1084,7 @@ def test_ground_truth_is_excluded(client):
     (
         (Question.AnswerType.BOOL, True),
         (Question.AnswerType.NUMBER, 12),
-        (Question.AnswerType.SINGLE_LINE_TEXT, "dgfsgfds"),
-        (Question.AnswerType.MULTI_LINE_TEXT, "dgfsgfds\ndgfsgfds"),
+        (Question.AnswerType.TEXT, "dgfsgfds"),
         (
             Question.AnswerType.BOUNDING_BOX_2D,
             {
@@ -2107,9 +2100,7 @@ def test_display_set_delete(client):
 def test_total_edit_duration(client):
     rs = ReaderStudyFactory(allow_answer_modification=True)
     ds = DisplaySetFactory(reader_study=rs)
-    q = QuestionFactory(
-        reader_study=rs, answer_type=AnswerType.SINGLE_LINE_TEXT
-    )
+    q = QuestionFactory(reader_study=rs, answer_type=AnswerType.TEXT)
     u = UserFactory()
 
     rs.add_reader(u)

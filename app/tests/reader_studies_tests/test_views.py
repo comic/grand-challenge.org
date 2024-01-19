@@ -47,7 +47,7 @@ def test_example_ground_truth(client, tmpdir):
         QuestionFactory(
             reader_study=rs,
             question_text="q3",
-            answer_type=Question.AnswerType.SINGLE_LINE_TEXT,
+            answer_type=Question.AnswerType.TEXT,
         ),
     )
     CategoricalOptionFactory(question=q2, title="option")
