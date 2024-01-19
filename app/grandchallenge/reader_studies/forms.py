@@ -34,17 +34,12 @@ from django_select2.forms import Select2MultipleWidget
 from dynamic_forms import DynamicField, DynamicFormMixin
 
 from grandchallenge.components.forms import MultipleCIVForm
-from grandchallenge.components.models import (
-    ComponentInterface,
-    ComponentInterfaceValue,
-    InterfaceSuperKindChoices,
-)
+from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
     WorkstationUserFilterMixin,
 )
-from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.layout import Formset
 from grandchallenge.core.widgets import (
     ColorEditorWidget,
@@ -63,10 +58,7 @@ from grandchallenge.reader_studies.models import (
     ReaderStudy,
     ReaderStudyPermissionRequest,
 )
-from grandchallenge.reader_studies.widgets import SelectUploadWidget
 from grandchallenge.subdomains.utils import reverse_lazy
-from grandchallenge.uploads.models import UserUpload
-from grandchallenge.uploads.widgets import UserUploadSingleWidget
 from grandchallenge.workstation_configs.models import OVERLAY_SEGMENTS_SCHEMA
 
 logger = logging.getLogger(__name__)
@@ -571,66 +563,8 @@ class DisplaySetCreateForm(MultipleCIVForm):
 
 
 class DisplaySetUpdateForm(DisplaySetCreateForm):
-    _possible_widgets = {
-        SelectUploadWidget,
-        *DisplaySetCreateForm._possible_widgets,
-    }
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.instance.is_editable:
             for _, field in self.fields.items():
                 field.disabled = True
-
-    def _get_file_field(self, *, interface, values, current_value):
-        if current_value:
-            return self._get_select_upload_widget_field(
-                interface=interface, values=values, current_value=current_value
-            )
-        else:
-            return super()._get_file_field(
-                interface=interface, values=values, current_value=current_value
-            )
-
-    def _get_select_upload_widget_field(
-        self, *, interface, values, current_value
-    ):
-        return ModelChoiceField(
-            queryset=ComponentInterfaceValue.objects.filter(id__in=values),
-            initial=current_value,
-            required=False,
-            widget=SelectUploadWidget(
-                attrs={
-                    "reader_study_slug": self.base_obj.slug,
-                    "display_set_pk": self.instance.pk,
-                    "interface_slug": interface.slug,
-                    "interface_type": interface.super_kind,
-                    "interface_super_kinds": {
-                        kind.name: kind.value
-                        for kind in InterfaceSuperKindChoices
-                    },
-                }
-            ),
-        )
-
-
-class FileForm(Form):
-    _possible_widgets = {
-        UserUploadSingleWidget,
-    }
-
-    user_upload = ModelChoiceField(
-        queryset=None,
-    )
-
-    def __init__(self, *args, user, interface, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["user_upload"].label = interface.title
-        self.fields["user_upload"].widget = UserUploadSingleWidget(
-            allowed_file_types=interface.file_mimetypes
-        )
-        self.fields["user_upload"].queryset = get_objects_for_user(
-            user,
-            "uploads.change_userupload",
-        ).filter(status=UserUpload.StatusChoices.COMPLETED)
-        self.interface = interface

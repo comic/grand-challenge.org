@@ -6,14 +6,9 @@ from django.contrib.admin.utils import NestedObjects
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core.exceptions import (
-    ObjectDoesNotExist,
-    PermissionDenied,
-    ValidationError,
-)
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Count, Q
-from django.db.transaction import on_commit
 from django.forms import Form
 from django.forms.utils import ErrorList
 from django.http import (
@@ -63,12 +58,14 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 from grandchallenge.archives.forms import AddCasesForm
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
-from grandchallenge.components.forms import SingleCIVForm
-from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.forms import NewFileUploadForm, SingleCIVForm
 from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
 )
-from grandchallenge.components.views import InterfaceProcessingMixin
+from grandchallenge.components.views import (
+    FileUpdateBaseView,
+    InterfaceProcessingMixin,
+)
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
@@ -91,7 +88,6 @@ from grandchallenge.reader_studies.forms import (
     CategoricalOptionFormSet,
     DisplaySetCreateForm,
     DisplaySetUpdateForm,
-    FileForm,
     GroundTruthForm,
     QuestionForm,
     ReadersForm,
@@ -1329,7 +1325,7 @@ class DisplaySetUpdate(
     included_form_classes = (
         DisplaySetUpdateForm,
         SingleCIVForm,
-        FileForm,
+        NewFileUploadForm,
     )
     success_message = "Display set has been updated."
 
@@ -1362,72 +1358,14 @@ class DisplaySetUpdate(
         return instance
 
 
-class DisplaySetFilesUpdate(ObjectPermissionRequiredMixin, FormView):
-    form_class = FileForm
-    template_name = "reader_studies/display_set_files_update.html"
+class DisplaySetFilesUpdate(FileUpdateBaseView):
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
     )
-    raise_exception = True
-
-    def get_permission_object(self):
-        return self.display_set
 
     @cached_property
-    def interface(self):
-        return ComponentInterface.objects.get(
-            slug=self.kwargs["interface_slug"]
-        )
-
-    @cached_property
-    def display_set(self):
+    def base_object(self):
         return DisplaySet.objects.get(pk=self.kwargs["pk"])
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context.update(
-            {
-                "display_set": self.kwargs["pk"],
-                "interface": self.kwargs["interface_slug"],
-                "slug": self.kwargs["slug"],
-            }
-        )
-        return context
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update(
-            {
-                "user": self.request.user,
-                "interface": self.interface,
-            }
-        )
-        return kwargs
-
-    def form_valid(self, form):
-        from grandchallenge.components.tasks import add_file_to_object
-
-        try:
-            civ = self.display_set.values.get(interface=self.interface)
-        except ObjectDoesNotExist:
-            civ = None
-        user_upload = form.cleaned_data["user_upload"]
-        on_commit(
-            lambda: add_file_to_object.apply_async(
-                kwargs={
-                    "app_label": self.display_set._meta.app_label,
-                    "model_name": self.display_set._meta.model_name,
-                    "user_upload_pk": str(user_upload.pk),
-                    "interface_pk": str(self.interface.pk),
-                    "object_pk": str(self.display_set.pk),
-                    "civ_pk": str(civ.pk) if civ else None,
-                }
-            )
-        )
-        messages.add_message(
-            self.request, messages.SUCCESS, "File import started."
-        )
-        return super().form_valid(form)
 
     def get_success_url(self):
         return reverse(

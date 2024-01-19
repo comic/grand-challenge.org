@@ -5,6 +5,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q, TextChoices
 from django.forms import Media
 from django.http import HttpResponse
+from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.views.generic import ListView, TemplateView
 from django_filters.rest_framework import DjangoFilterBackend
@@ -13,8 +14,10 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from grandchallenge.algorithms.forms import NON_ALGORITHM_INTERFACES
 from grandchallenge.api.permissions import IsAuthenticated
+from grandchallenge.components.forms import NewFileUploadForm
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.components.serializers import ComponentInterfaceSerializer
+from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 
@@ -153,3 +156,29 @@ class InterfaceProcessingMixin(SuccessMessageMixin):
             success_message=self.success_message,
             url=reverse("notifications:list"),
         )
+
+
+class FileUpdateBaseView(ObjectPermissionRequiredMixin, TemplateView):
+    form_class = NewFileUploadForm
+    template_name = "components/object_files_update.html"
+    raise_exception = True
+
+    def get_permission_object(self):
+        return self.base_object
+
+    @cached_property
+    def interface(self):
+        return ComponentInterface.objects.get(
+            slug=self.kwargs["interface_slug"]
+        )
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update(
+            {
+                "form": self.form_class(
+                    user=self.request.user, interface=self.interface
+                ),
+            }
+        )
+        return context

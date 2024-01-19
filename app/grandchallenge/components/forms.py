@@ -2,6 +2,7 @@ from dal import autocomplete
 from dal.widgets import Select
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.exceptions import PermissionDenied
 from django.forms import Form, HiddenInput, ModelChoiceField, ModelForm
 
 from grandchallenge.algorithms.models import AlgorithmImage
@@ -9,7 +10,9 @@ from grandchallenge.components.form_fields import InterfaceFormField
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
+    InterfaceSuperKindChoices,
 )
+from grandchallenge.components.widgets import SelectUploadWidget
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.evaluation.models import Method
@@ -91,6 +94,7 @@ class ContainerImageForm(SaveFormInitMixin, ModelForm):
 class MultipleCIVForm(Form):
     _possible_widgets = {
         *InterfaceFormField._possible_widgets,
+        SelectUploadWidget,
     }
 
     def __init__(self, *args, instance, base_obj, user, **kwargs):
@@ -109,9 +113,19 @@ class MultipleCIVForm(Form):
                     interface__slug=slug
                 ).first()
 
+            interface = ComponentInterface.objects.filter(slug=slug).get()
+            if interface.requires_file and slug in self.data.keys():
+                # file interfaces are special because their widget can change from
+                # a select to an upload widget, so if there is data, we need to pass
+                # the value from the data dict to the init function rather than
+                # the existing CIV
+                type = f"value_type_{interface.slug}"
+                current_value = f"{self.data[type]}_{self.data[slug]}"
+
             self.init_interface_field(
                 interface_slug=slug, current_value=current_value, values=values
             )
+
         # Add fields for dynamically added new interfaces:
         # These are sent along as form data like all other fields, so we can't
         # tell them apart from the form fields initialized above. Hence
@@ -151,8 +165,71 @@ class MultipleCIVForm(Form):
         )
 
     def _get_file_field(self, *, interface, values, current_value):
-        return self._get_default_field(
-            interface=interface, current_value=current_value
+        if current_value:
+            if isinstance(current_value, ComponentInterfaceValue):
+                # this happens on initial form load when there already is a CIV for
+                # the interface
+                return self._get_select_upload_widget_field(
+                    interface=interface,
+                    values=values,
+                    current_value=current_value,
+                )
+            else:
+                # on form submit, current_value either is the pk of an existing CIV
+                # or the UUID of a new UserUpload object
+                type, value = current_value.split("_")
+                if type == "uuid":
+                    return self._get_default_field(
+                        interface=interface, current_value=value
+                    )
+                elif type == "civ":
+                    try:
+                        civ_pk = int(value)
+                    except ValueError:
+                        # value can be '' when user selects '---' in select widget
+                        current_value = None
+                    else:
+                        if civ_pk in values:
+                            # User has permission to use this CIV
+                            current_value = (
+                                ComponentInterfaceValue.objects.get(pk=value)
+                            )
+                        else:
+                            # User does not have permission to use this CIV
+                            raise PermissionDenied
+                    return self._get_select_upload_widget_field(
+                        interface=interface,
+                        values=values,
+                        current_value=current_value,
+                    )
+                else:
+                    raise RuntimeError(
+                        f"Type {type} of {current_value} not supported."
+                    )
+        else:
+            return self._get_default_field(
+                interface=interface, current_value=current_value
+            )
+
+    def _get_select_upload_widget_field(
+        self, *, interface, values, current_value
+    ):
+        return ModelChoiceField(
+            queryset=ComponentInterfaceValue.objects.filter(id__in=values),
+            initial=current_value,
+            required=False,
+            widget=SelectUploadWidget(
+                attrs={
+                    "base_object_slug": self.base_obj.slug,
+                    "object_pk": self.instance.pk,
+                    "interface_slug": interface.slug,
+                    "interface_type": interface.super_kind,
+                    "interface_super_kinds": {
+                        kind.name: kind.value
+                        for kind in InterfaceSuperKindChoices
+                    },
+                }
+            ),
         )
 
     def _get_default_field(self, *, interface, current_value):
@@ -234,3 +311,21 @@ class SingleCIVForm(Form):
                 user=user,
                 required=selected_interface.value_required,
             ).field
+
+
+class NewFileUploadForm(Form):
+    _possible_widgets = {
+        UserUploadSingleWidget,
+    }
+
+    def __init__(self, *args, user, interface, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields[interface.slug] = ModelChoiceField(
+            queryset=get_objects_for_user(
+                user, "uploads.change_userupload"
+            ).filter(status=UserUpload.StatusChoices.COMPLETED)
+        )
+        self.fields[interface.slug].label = interface.title
+        self.fields[interface.slug].widget = UserUploadSingleWidget(
+            allowed_file_types=interface.file_mimetypes
+        )
