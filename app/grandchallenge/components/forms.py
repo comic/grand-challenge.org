@@ -182,15 +182,16 @@ class MultipleCIVForm(Form):
                         interface=interface, current_value=value
                     )
                 elif type == "civ":
-                    if ComponentInterfaceValue.objects.filter(
-                        pk=value
-                    ).exists():
+                    # value can be None (when user selects '---' in the select widget)
+                    if (value and int(value) in values) or not value:
                         return self._get_select_upload_widget_field(
                             interface=interface,
                             values=values,
                             current_value=ComponentInterfaceValue.objects.get(
                                 pk=value
-                            ),
+                            )
+                            if value
+                            else None,
                         )
                 else:
                     raise RuntimeError(
