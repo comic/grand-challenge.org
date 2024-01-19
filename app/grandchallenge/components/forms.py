@@ -184,17 +184,19 @@ class MultipleCIVForm(Form):
                     )
                 elif type == "civ":
                     try:
-                        if int(value) in values:
-                            # User has permission to use this CIV as values have been checked for permissions
+                        civ_pk = int(value)
+                    except ValueError:
+                        # value can be '' when user selects '---' in select widget
+                        current_value = None
+                    else:
+                        if civ_pk in values:
+                            # User has permission to use this CIV
                             current_value = (
                                 ComponentInterfaceValue.objects.get(pk=value)
                             )
                         else:
-                            # The selected CIV does not belong to the set of values
+                            # User does not have permission to use this CIV
                             raise PermissionDenied
-                    except ValueError:
-                        # value can be None (when user selects '---' in the select widget)
-                        current_value = None
                     return self._get_select_upload_widget_field(
                         interface=interface,
                         values=values,
