@@ -97,9 +97,18 @@
             <td class="text-muted">Key-features</td>
             <td>{{product.key_features}}</td>
           </tr>
+          <thead class="thead-light">
+            <tr>
+              <th colspan="2">Intended use statement</th>
+            </tr>
+          </thead>
           <tr>
-            <td class="text-muted">Suggested use</td>
-            <td>{{product.software_usage|linebreaksbr}}</td>
+            <td class="text-muted">Intended use (according to CE)</td>
+            <td>{{product.intended_use_ce|linebreaksbr}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Intended use (according to FDA)</td>
+            <td>{{product.intended_use_fda|linebreaksbr}}</td>
           </tr>
           <thead class="thead-light">
             <tr>
