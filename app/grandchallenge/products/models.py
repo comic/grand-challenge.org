@@ -105,8 +105,8 @@ class Product(models.Model):
     file_format_output = models.TextField()
     key_features = models.TextField()
     key_features_short = models.CharField(max_length=120)
-    intended_use_ce = models.TextField()
-    intended_use_fda = models.TextField()
+    intended_use_ce = models.TextField(null=True, blank=True)
+    intended_use_fda = models.TextField(null=True, blank=True)
 
     verified = models.CharField(
         choices=Verified.choices, max_length=3, default=Verified.NO
