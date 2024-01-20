@@ -154,6 +154,7 @@ def _create_product(*, row, company):
     product.intended_use_ce = row[
         "If CE-certified, provide intended use according to the certification"
     ]
+    product.intended_use_ce_public = row["Intended purpose public"]
     product.intended_use_fda = row[
         "If FDA approval/clearance, provide the intended use according to the approval"
     ]

@@ -250,7 +250,9 @@
 
             <tr>
               <td class="text-muted">Intended use (according to CE)</td>
-              <td>{{product.intended_use_ce|linebreaksbr}}</td>
+              {% if product.intended_use_ce_public == 'Yes' %}
+                <td>{{product.intended_use_ce|linebreaksbr}}</td>
+              {% endif %}
             </tr>
             <tr>
               <td class="text-muted">Intended use (according to FDA)</td>
