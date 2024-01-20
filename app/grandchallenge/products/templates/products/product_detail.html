@@ -65,8 +65,8 @@
               <span>{{ product.modified }}</span>
             </small></td>
           </tr>
-
         </table>
+
         <table class="table">
           <thead class="thead-light">
             <tr>
@@ -96,19 +96,6 @@
           <tr>
             <td class="text-muted">Key-features</td>
             <td>{{product.key_features}}</td>
-          </tr>
-          <thead class="thead-light">
-            <tr>
-              <th colspan="2">Intended use statement</th>
-            </tr>
-          </thead>
-          <tr>
-            <td class="text-muted">Intended use (according to CE)</td>
-            <td>{{product.intended_use_ce|linebreaksbr}}</td>
-          </tr>
-          <tr>
-            <td class="text-muted">Intended use (according to FDA)</td>
-            <td>{{product.intended_use_fda|linebreaksbr}}</td>
           </tr>
           <thead class="thead-light">
             <tr>
@@ -249,6 +236,29 @@
             <td>{{ product.all_other_papers|clean|linebreaksbr }}</td>
           </tr>
         </table>
+        
+        <a class="btn btn-primary" data-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
+          <i class="fas fa-angle-down"></i>
+        </a>
+        <div class="collapse" id="collapseExample">
+          <table class="table">
+            <thead class="thead-light">
+              <tr>
+                <th colspan="2"> Intended use statements</th>
+              </tr>
+            </thead>
+
+            <tr>
+              <td class="text-muted">Intended use (according to CE)</td>
+              <td>{{product.intended_use_ce|linebreaksbr}}</td>
+            </tr>
+            <tr>
+              <td class="text-muted">Intended use (according to FDA)</td>
+              <td>{{product.intended_use_fda|linebreaksbr}}</td>
+            </tr>
+          </table>
+        </div>
+
       </div>
     </div>
   </div>
