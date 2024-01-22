@@ -49,6 +49,7 @@ from grandchallenge.archives.serializers import (
 )
 from grandchallenge.archives.tasks import add_images_to_archive
 from grandchallenge.cases.models import Image, RawImageUploadSession
+from grandchallenge.components.forms import MultipleCIVForm
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.components.views import (
     InterfacesCreateBaseView,
@@ -707,12 +708,12 @@ class ArchiveItemCreateView(
     ObjectCreateMixin,
     MultipleCIVProcessingBaseView,
 ):
-    form_class = ArchiveItemForm
+    form_class = MultipleCIVForm
     permission_required = (
         f"{Archive._meta.app_label}.change_{Archive._meta.model_name}"
     )
     included_form_classes = (
-        ArchiveItemForm,
+        MultipleCIVForm,
         *MultipleCIVProcessingBaseView.included_form_classes,
     )
     success_message = "Archive item has been created."

@@ -1198,7 +1198,7 @@ def test_display_set_add_interface_form():
     form = SingleCIVForm(
         pk=ds.pk,
         base_obj=rs,
-        interface=None,
+        interface_pk=None,
         user=user,
         htmx_url="foo",
         auto_id="1",
@@ -1208,7 +1208,7 @@ def test_display_set_add_interface_form():
     form = SingleCIVForm(
         pk=ds.pk,
         base_obj=rs,
-        interface=ci_file.pk,
+        interface_pk=ci_file.pk,
         user=user,
         htmx_url="foo",
         auto_id="1",
@@ -1219,7 +1219,7 @@ def test_display_set_add_interface_form():
     form = SingleCIVForm(
         pk=ds.pk,
         base_obj=rs,
-        interface=ci_value.pk,
+        interface_pk=ci_value.pk,
         user=user,
         htmx_url="foo",
         auto_id="1",
@@ -1230,7 +1230,7 @@ def test_display_set_add_interface_form():
     form = SingleCIVForm(
         pk=ds.pk,
         base_obj=rs,
-        interface=ci_image.pk,
+        interface_pk=ci_image.pk,
         user=user,
         htmx_url="foo",
         auto_id="1",

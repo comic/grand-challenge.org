@@ -1,3 +1,4 @@
+from crispy_forms.helper import FormHelper
 from dal import autocomplete
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
@@ -17,14 +18,19 @@ from grandchallenge.archives.models import (
     ArchivePermissionRequest,
 )
 from grandchallenge.cases.forms import UploadRawImagesForm
-from grandchallenge.components.forms import MultipleCIVForm
-from grandchallenge.components.models import ComponentInterface, InterfaceKind
+from grandchallenge.components.form_fields import InterfaceFormField
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+    InterfaceKind,
+)
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
     WorkstationUserFilterMixin,
 )
 from grandchallenge.core.guardian import get_objects_for_user
+from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.widgets import MarkdownEditorWidget
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.hanging_protocols.forms import ViewContentMixin
@@ -230,5 +236,30 @@ class AddCasesForm(UploadRawImagesForm):
         return super().save(*args, **kwargs)
 
 
-class ArchiveItemForm(MultipleCIVForm):
-    pass
+class ArchiveItemForm(SaveFormInitMixin, Form):
+    def __init__(
+        self, *args, user=None, archive_item=None, interface=None, **kwargs
+    ):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+
+        if archive_item:
+            values = archive_item.values.all()
+        else:
+            values = ComponentInterfaceValue.objects.none()
+
+        initial = values.filter(interface=interface).first()
+
+        if initial:
+            initial = initial.value
+
+        self.fields[interface.slug] = InterfaceFormField(
+            instance=interface,
+            initial=initial or interface.default_value,
+            required=False,
+            user=user,
+            help_text=clean(interface.description)
+            if interface.description
+            else "",
+        ).field
