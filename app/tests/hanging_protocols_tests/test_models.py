@@ -574,7 +574,6 @@ def test_interfaces_that_must_be_isolated(interface_kind):
     [
         InterfaceKindChoices.CSV,
         InterfaceKindChoices.ZIP,
-        InterfaceKindChoices.SQREG,
         InterfaceKindChoices.OBJ,
     ],
 )

@@ -751,7 +751,6 @@ class InterfaceKind:
         return {
             InterfaceKind.InterfaceKindChoices.CSV,
             InterfaceKind.InterfaceKindChoices.ZIP,
-            InterfaceKind.InterfaceKindChoices.SQREG,
             InterfaceKind.InterfaceKindChoices.OBJ,
         }
 
