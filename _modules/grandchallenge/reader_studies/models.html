@@ -1062,8 +1062,6 @@
 <span class="k">class</span> <span class="nc">AnswerType</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
     <span class="c1"># WARNING: Do not change the display text, these are used in the front end</span>
     <span class="n">TEXT</span> <span class="o">=</span> <span class="s2">&quot;TEXT&quot;</span><span class="p">,</span> <span class="s2">&quot;Text&quot;</span>
-    <span class="n">SINGLE_LINE_TEXT</span> <span class="o">=</span> <span class="s2">&quot;STXT&quot;</span><span class="p">,</span> <span class="s2">&quot;Single line text&quot;</span>
-    <span class="n">MULTI_LINE_TEXT</span> <span class="o">=</span> <span class="s2">&quot;MTXT&quot;</span><span class="p">,</span> <span class="s2">&quot;Multi line text&quot;</span>
     <span class="n">BOOL</span> <span class="o">=</span> <span class="s2">&quot;BOOL&quot;</span><span class="p">,</span> <span class="s2">&quot;Bool&quot;</span>
     <span class="n">NUMBER</span> <span class="o">=</span> <span class="s2">&quot;NUMB&quot;</span><span class="p">,</span> <span class="s2">&quot;Number&quot;</span>
     <span class="n">HEADING</span> <span class="o">=</span> <span class="s2">&quot;HEAD&quot;</span><span class="p">,</span> <span class="s2">&quot;Heading&quot;</span>
@@ -1135,8 +1133,6 @@
 
 <span class="n">ANSWER_TYPE_TO_INTERFACE_KIND_MAP</span> <span class="o">=</span> <span class="p">{</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">:</span> <span class="p">[</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">STRING</span><span class="p">],</span>
-    <span class="n">AnswerType</span><span class="o">.</span><span class="n">SINGLE_LINE_TEXT</span><span class="p">:</span> <span class="p">[</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">STRING</span><span class="p">],</span>
-    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTI_LINE_TEXT</span><span class="p">:</span> <span class="p">[</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">STRING</span><span class="p">],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">BOOL</span><span class="p">:</span> <span class="p">[</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">BOOL</span><span class="p">],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">NUMBER</span><span class="p">:</span> <span class="p">[</span>
         <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">FLOAT</span><span class="p">,</span>
@@ -1182,7 +1178,7 @@
 <a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.QuestionWidgetKindChoices">[docs]</a>
 <span class="k">class</span> <span class="nc">QuestionWidgetKindChoices</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
     <span class="n">ACCEPT_REJECT</span> <span class="o">=</span> <span class="s2">&quot;ACCEPT_REJECT&quot;</span><span class="p">,</span> <span class="s2">&quot;Accept/Reject Findings&quot;</span>
-    <span class="n">NUMBER_INPUT</span> <span class="o">=</span> <span class="s2">&quot;NUMBER_INPUT&quot;</span><span class="p">,</span> <span class="s2">&quot;Number input&quot;</span>
+    <span class="n">NUMBER_INPUT</span> <span class="o">=</span> <span class="s2">&quot;NUMBER_INPUT&quot;</span><span class="p">,</span> <span class="s2">&quot;Number Input&quot;</span>
     <span class="n">NUMBER_RANGE</span> <span class="o">=</span> <span class="s2">&quot;NUMBER_RANGE&quot;</span><span class="p">,</span> <span class="s2">&quot;Number Range&quot;</span>
     <span class="n">TEXT_INPUT</span> <span class="o">=</span> <span class="s2">&quot;TEXT_INPUT&quot;</span><span class="p">,</span> <span class="s2">&quot;Text Input&quot;</span>
     <span class="n">TEXT_AREA</span> <span class="o">=</span> <span class="s2">&quot;TEXT_AREA&quot;</span><span class="p">,</span> <span class="s2">&quot;Text Area&quot;</span>
@@ -1201,8 +1197,6 @@
         <span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">TEXT_INPUT</span><span class="p">,</span>
         <span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">TEXT_AREA</span><span class="p">,</span>
     <span class="p">],</span>
-    <span class="n">AnswerType</span><span class="o">.</span><span class="n">SINGLE_LINE_TEXT</span><span class="p">:</span> <span class="p">[],</span>
-    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTI_LINE_TEXT</span><span class="p">:</span> <span class="p">[],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">BOOL</span><span class="p">:</span> <span class="p">[],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">NUMBER</span><span class="p">:</span> <span class="p">[</span>
         <span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">NUMBER_INPUT</span><span class="p">,</span>
@@ -1222,12 +1216,12 @@
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">POLYGON</span><span class="p">:</span> <span class="p">[],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_POLYGONS</span><span class="p">:</span> <span class="p">[</span><span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">ACCEPT_REJECT</span><span class="p">],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">:</span> <span class="p">[</span>
-        <span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">SELECT</span><span class="p">,</span>
         <span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">RADIO_SELECT</span><span class="p">,</span>
+        <span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">SELECT</span><span class="p">,</span>
     <span class="p">],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">:</span> <span class="p">[</span>
-        <span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">SELECT_MULTIPLE</span><span class="p">,</span>
         <span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">CHECKBOX_SELECT_MULTIPLE</span><span class="p">,</span>
+        <span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">SELECT_MULTIPLE</span><span class="p">,</span>
     <span class="p">],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE_DROPDOWN</span><span class="p">:</span> <span class="p">[],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MASK</span><span class="p">:</span> <span class="p">[],</span>
@@ -1249,8 +1243,6 @@
 <span class="p">}</span>
 
 <span class="n">EMPTY_ANSWER_VALUES</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="n">AnswerType</span><span class="o">.</span><span class="n">SINGLE_LINE_TEXT</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTI_LINE_TEXT</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">NUMBER</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
@@ -1325,8 +1317,6 @@
     <span class="n">SCORING_FUNCTIONS</span> <span class="o">=</span> <span class="p">{</span><span class="n">ScoringFunction</span><span class="o">.</span><span class="n">ACCURACY</span><span class="p">:</span> <span class="n">accuracy_score</span><span class="p">}</span>
 
     <span class="n">EXAMPLE_FOR_ANSWER_TYPE</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="n">AnswerType</span><span class="o">.</span><span class="n">SINGLE_LINE_TEXT</span><span class="p">:</span> <span class="s2">&quot;&#39;</span><span class="se">\&quot;</span><span class="s2">answer</span><span class="se">\&quot;</span><span class="s2">&#39;&quot;</span><span class="p">,</span>
-        <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTI_LINE_TEXT</span><span class="p">:</span> <span class="s2">&quot;&#39;</span><span class="se">\&quot;</span><span class="s2">answer</span><span class="se">\\</span><span class="s2">nanswer</span><span class="se">\\</span><span class="s2">nanswer</span><span class="se">\&quot;</span><span class="s2">&#39;&quot;</span><span class="p">,</span>
         <span class="n">AnswerType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">:</span> <span class="s2">&quot;&#39;</span><span class="se">\&quot;</span><span class="s2">answer</span><span class="se">\&quot;</span><span class="s2">&#39;&quot;</span><span class="p">,</span>
         <span class="n">AnswerType</span><span class="o">.</span><span class="n">NUMBER</span><span class="p">:</span> <span class="s2">&quot;&#39;1&#39;&quot;</span><span class="p">,</span>
         <span class="n">AnswerType</span><span class="o">.</span><span class="n">BOOL</span><span class="p">:</span> <span class="s2">&quot;&#39;true&#39;&quot;</span><span class="p">,</span>
@@ -1343,7 +1333,6 @@
     <span class="n">answer_type</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
         <span class="n">max_length</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
         <span class="n">choices</span><span class="o">=</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">SINGLE_LINE_TEXT</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="c1"># Set blank because the requirement is dependent on answer_type and handled in the front end</span>
     <span class="n">image_port</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
