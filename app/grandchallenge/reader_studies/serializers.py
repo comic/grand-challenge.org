@@ -170,6 +170,7 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
             "questions",
             "title",
             "is_educational",
+            "instant_verification",
             "has_ground_truth",
             "allow_answer_modification",
             "allow_case_navigation",

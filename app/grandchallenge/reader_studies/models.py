@@ -249,6 +249,16 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             "the readers."
         ),
     )
+    instant_verification = models.BooleanField(
+        default=False,
+        help_text=(
+            "In an educational reader study, enabling this setting will allow the "
+            "user to go through the reader study faster. The 'Save and continue' "
+            "button will be replaced by a 'Verify and continue' button which will "
+            "show the answer verification pop up and allow the user to save and go "
+            "to the next case upon dismissal."
+        ),
+    )
     case_text = models.JSONField(
         default=dict,
         blank=True,
@@ -321,6 +331,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         "help_text_markdown",
         "shuffle_hanging_list",
         "is_educational",
+        "instant_verification",
         "roll_over_answers_for_n_cases",
         "allow_answer_modification",
         "allow_case_navigation",
