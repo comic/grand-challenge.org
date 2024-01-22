@@ -357,7 +357,37 @@ class HangingProtocolMixin(models.Model):
             if len(image_interfaces) > 2:
                 raise ValidationError(
                     "Maximum of two image interfaces are allowed per viewport, "
-                    f"got {len(image_interfaces)} for viewport {viewport}: {', '.join(slugs)}"
+                    f"got {len(image_interfaces)} for viewport {viewport}: "
+                    f"{', '.join(i.slug for i in image_interfaces)}"
+                )
+
+            mandatory_isolation_interfaces = [
+                i
+                for i in viewport_interfaces
+                if i.kind in InterfaceKind.interface_type_mandatory_isolation()
+            ]
+
+            if len(mandatory_isolation_interfaces) > 1 or (
+                len(mandatory_isolation_interfaces) == 1
+                and len(viewport_interfaces) > 1
+            ):
+                raise ValidationError(
+                    "Some of the selected interfaces can only be displayed in isolation, "
+                    f"found {len(mandatory_isolation_interfaces)} for viewport {viewport}: "
+                    f"{', '.join(i.slug for i in mandatory_isolation_interfaces)}"
+                )
+
+            undisplayable_interfaces = [
+                i
+                for i in viewport_interfaces
+                if i.kind in InterfaceKind.interface_type_undisplayable()
+            ]
+
+            if len(undisplayable_interfaces) > 0:
+                raise ValidationError(
+                    "Some of the selected interfaces cannot be displayed, "
+                    f"found {len(undisplayable_interfaces)} for viewport {viewport}: "
+                    f"{', '.join(i.slug for i in undisplayable_interfaces)}"
                 )
 
     class Meta:

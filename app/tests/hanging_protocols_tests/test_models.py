@@ -466,9 +466,8 @@ def test_view_content_validation():
     with pytest.raises(ValidationError) as err:
         hp.full_clean()
 
-    assert (
-        "Unknown interfaces in view content for viewport 'main': test"
-        in str(err.value)
+    assert "Unknown interfaces in view content for viewport main: test" in str(
+        err.value
     )
 
     ComponentInterfaceFactory(title="Test")
@@ -515,7 +514,80 @@ def test_at_most_two_images():
         hp.full_clean()
 
     assert (
-        "Maximum of two image interfaces are allowed per viewport, got 3 for viewport 'main':"
+        "Maximum of two image interfaces are allowed per viewport, got 3 for viewport main:"
+        in str(err.value)
+    )
+
+
+@pytest.mark.parametrize(
+    "interface_kind",
+    [
+        InterfaceKindChoices.CHART,
+        InterfaceKindChoices.PDF,
+        InterfaceKindChoices.MP4,
+        InterfaceKindChoices.THUMBNAIL_JPG,
+        InterfaceKindChoices.THUMBNAIL_PNG,
+    ],
+)
+@pytest.mark.django_db
+def test_interfaces_that_must_be_isolated(interface_kind):
+    interface, second = ComponentInterfaceFactory.create_batch(
+        2, kind=interface_kind
+    )
+    text = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+
+    hp = HangingProtocolTestModel(view_content={"main": [interface.slug]})
+    hp.full_clean()
+
+    hp = HangingProtocolTestModel(
+        view_content={"main": [interface.slug], "secondary": [second.slug]}
+    )
+    hp.full_clean()
+
+    hp = HangingProtocolTestModel(
+        view_content={"main": [interface.slug, second.slug]}
+    )
+
+    with pytest.raises(ValidationError) as err:
+        hp.full_clean()
+
+    assert (
+        "Some of the selected interfaces can only be displayed in isolation, found 2 for viewport main"
+        in str(err.value)
+    )
+
+    hp = HangingProtocolTestModel(
+        view_content={"main": [interface.slug, text.slug]}
+    )
+
+    with pytest.raises(ValidationError) as err:
+        hp.full_clean()
+
+    assert (
+        "Some of the selected interfaces can only be displayed in isolation, found 1 for viewport main"
+        in str(err.value)
+    )
+
+
+@pytest.mark.parametrize(
+    "interface_kind",
+    [
+        InterfaceKindChoices.CSV,
+        InterfaceKindChoices.ZIP,
+        InterfaceKindChoices.SQREG,
+        InterfaceKindChoices.OBJ,
+    ],
+)
+@pytest.mark.django_db
+def test_interfaces_that_cannot_be_displayed(interface_kind):
+    interface = ComponentInterfaceFactory(kind=interface_kind)
+    hp = HangingProtocolTestModel(view_content={"main": [interface.slug]})
+
+    with pytest.raises(ValidationError) as err:
+        hp.full_clean()
+
+    assert (
+        "Some of the selected interfaces cannot be displayed, found 1 for viewport main:"
         in str(err.value)
     )
 
