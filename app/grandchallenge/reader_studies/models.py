@@ -923,8 +923,6 @@ class DisplaySetGroupObjectPermission(GroupObjectPermissionBase):
 class AnswerType(models.TextChoices):
     # WARNING: Do not change the display text, these are used in the front end
     TEXT = "TEXT", "Text"
-    SINGLE_LINE_TEXT = "STXT", "Single line text"
-    MULTI_LINE_TEXT = "MTXT", "Multi line text"
     BOOL = "BOOL", "Bool"
     NUMBER = "NUMB", "Number"
     HEADING = "HEAD", "Heading"
@@ -995,8 +993,6 @@ class AnswerType(models.TextChoices):
 
 ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
     AnswerType.TEXT: [InterfaceKindChoices.STRING],
-    AnswerType.SINGLE_LINE_TEXT: [InterfaceKindChoices.STRING],
-    AnswerType.MULTI_LINE_TEXT: [InterfaceKindChoices.STRING],
     AnswerType.BOOL: [InterfaceKindChoices.BOOL],
     AnswerType.NUMBER: [
         InterfaceKindChoices.FLOAT,
@@ -1040,7 +1036,7 @@ ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
 
 class QuestionWidgetKindChoices(models.TextChoices):
     ACCEPT_REJECT = "ACCEPT_REJECT", "Accept/Reject Findings"
-    NUMBER_INPUT = "NUMBER_INPUT", "Number input"
+    NUMBER_INPUT = "NUMBER_INPUT", "Number Input"
     NUMBER_RANGE = "NUMBER_RANGE", "Number Range"
     TEXT_INPUT = "TEXT_INPUT", "Text Input"
     TEXT_AREA = "TEXT_AREA", "Text Area"
@@ -1058,8 +1054,6 @@ ANSWER_TYPE_TO_QUESTION_WIDGET = {
         QuestionWidgetKindChoices.TEXT_INPUT,
         QuestionWidgetKindChoices.TEXT_AREA,
     ],
-    AnswerType.SINGLE_LINE_TEXT: [],
-    AnswerType.MULTI_LINE_TEXT: [],
     AnswerType.BOOL: [],
     AnswerType.NUMBER: [
         QuestionWidgetKindChoices.NUMBER_INPUT,
@@ -1079,12 +1073,12 @@ ANSWER_TYPE_TO_QUESTION_WIDGET = {
     AnswerType.POLYGON: [],
     AnswerType.MULTIPLE_POLYGONS: [QuestionWidgetKindChoices.ACCEPT_REJECT],
     AnswerType.CHOICE: [
-        QuestionWidgetKindChoices.SELECT,
         QuestionWidgetKindChoices.RADIO_SELECT,
+        QuestionWidgetKindChoices.SELECT,
     ],
     AnswerType.MULTIPLE_CHOICE: [
-        QuestionWidgetKindChoices.SELECT_MULTIPLE,
         QuestionWidgetKindChoices.CHECKBOX_SELECT_MULTIPLE,
+        QuestionWidgetKindChoices.SELECT_MULTIPLE,
     ],
     AnswerType.MULTIPLE_CHOICE_DROPDOWN: [],
     AnswerType.MASK: [],
@@ -1106,8 +1100,6 @@ ANSWER_TYPE_TO_QUESTION_WIDGET_CHOICES = {
 }
 
 EMPTY_ANSWER_VALUES = {
-    AnswerType.SINGLE_LINE_TEXT: "",
-    AnswerType.MULTI_LINE_TEXT: "",
     AnswerType.TEXT: "",
     AnswerType.NUMBER: None,
     AnswerType.CHOICE: None,
@@ -1171,8 +1163,6 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     SCORING_FUNCTIONS = {ScoringFunction.ACCURACY: accuracy_score}
 
     EXAMPLE_FOR_ANSWER_TYPE = {
-        AnswerType.SINGLE_LINE_TEXT: "'\"answer\"'",
-        AnswerType.MULTI_LINE_TEXT: "'\"answer\\nanswer\\nanswer\"'",
         AnswerType.TEXT: "'\"answer\"'",
         AnswerType.NUMBER: "'1'",
         AnswerType.BOOL: "'true'",
@@ -1189,7 +1179,6 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     answer_type = models.CharField(
         max_length=4,
         choices=AnswerType.choices,
-        default=AnswerType.SINGLE_LINE_TEXT,
     )
     # Set blank because the requirement is dependent on answer_type and handled in the front end
     image_port = models.CharField(

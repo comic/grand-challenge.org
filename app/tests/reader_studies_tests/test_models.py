@@ -677,7 +677,10 @@ def test_display_set_description():
 
 @pytest.mark.django_db
 def test_question_interface():
-    q = QuestionFactory(answer_type=AnswerType.SINGLE_LINE_TEXT)
+    q = QuestionFactory(
+        answer_type=AnswerType.TEXT,
+        widget=QuestionWidgetKindChoices.TEXT_INPUT,
+    )
     ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
     q.interface = ci_str
     q.clean()
@@ -696,7 +699,7 @@ def test_question_interface():
 
     assert e.value.message == (
         f"The interface {ci_img} is not allowed for this "
-        f"question type ({AnswerType.SINGLE_LINE_TEXT})"
+        f"question type ({AnswerType.TEXT})"
     )
 
     q.refresh_from_db()

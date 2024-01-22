@@ -235,7 +235,8 @@ def test_question_create(client):
             method=client.post,
             data={
                 "question_text": "What?",
-                "answer_type": "STXT",
+                "answer_type": AnswerType.TEXT,
+                "widget": QuestionWidgetKindChoices.TEXT_INPUT,
                 "order": 1,
                 "image_port": "",
                 "direction": "H",
@@ -270,7 +271,7 @@ def test_question_update(client):
     question = QuestionFactory(
         question_text="foo",
         reader_study=rs,
-        answer_type=Question.AnswerType.SINGLE_LINE_TEXT,
+        answer_type=Question.AnswerType.TEXT,
         direction=Question.Direction.HORIZONTAL,
         order=100,
     )
@@ -298,7 +299,7 @@ def test_question_update(client):
     assert response.status_code == 200
 
     assert question.question_text == "foo"
-    assert question.answer_type == Question.AnswerType.SINGLE_LINE_TEXT
+    assert question.answer_type == Question.AnswerType.TEXT
     assert question.direction == Question.Direction.HORIZONTAL
     assert question.order == 100
     assert question.interface is None
@@ -379,7 +380,7 @@ def test_question_update(client):
         instance=question,
         data={
             "question_text": "foo",
-            "answer_type": Question.AnswerType.SINGLE_LINE_TEXT,
+            "answer_type": Question.AnswerType.TEXT,
             "direction": Question.Direction.HORIZONTAL,
             "overlay_segments": '[{"name": "s1", "visible": true, "voxel_value": 0}]',
             "order": 100,
@@ -407,8 +408,6 @@ def test_question_update(client):
     "answer_type,interface_kind",
     (
         (AnswerType.TEXT, InterfaceKindChoices.STRING),
-        (AnswerType.SINGLE_LINE_TEXT, InterfaceKindChoices.STRING),
-        (AnswerType.MULTI_LINE_TEXT, InterfaceKindChoices.STRING),
         (AnswerType.BOOL, InterfaceKindChoices.BOOL),
         (AnswerType.NUMBER, InterfaceKindChoices.FLOAT),
         (AnswerType.NUMBER, InterfaceKindChoices.INTEGER),
@@ -469,9 +468,6 @@ def test_question_form_interface_field_no_answer_type():
 @pytest.mark.parametrize(
     "answer_type,port,questions_created",
     (
-        ("STXT", "", 1),
-        ("STXT", "M", 0),
-        ("STXT", "S", 0),
         ("HEAD", "", 1),
         ("HEAD", "M", 0),
         ("HEAD", "S", 0),
@@ -875,7 +871,7 @@ def test_reader_study_add_ground_truth(client, settings):
     q = QuestionFactory(
         reader_study=rs,
         question_text="bar",
-        answer_type=Question.AnswerType.SINGLE_LINE_TEXT,
+        answer_type=Question.AnswerType.TEXT,
     )
     q0 = QuestionFactory(
         reader_study=rs,
@@ -1067,7 +1063,7 @@ def test_reader_study_add_ground_truth_ds(client, settings):
     QuestionFactory(
         reader_study=rs,
         question_text="bar",
-        answer_type=Question.AnswerType.SINGLE_LINE_TEXT,
+        answer_type=Question.AnswerType.TEXT,
     )
 
     civ = ComponentInterfaceValueFactory(image=ImageFactory())
@@ -1122,7 +1118,7 @@ def test_display_set_update_form(form_class, file_widget):
     assert isinstance(form.fields["slug-2"].widget, JSONEditorWidget)
 
     ci = ComponentInterfaceFactory(kind="STR", title="slug-3")
-    QuestionFactory(reader_study=rs, answer_type="STXT", interface=ci)
+    QuestionFactory(reader_study=rs, answer_type=AnswerType.TEXT, interface=ci)
     del rs.values_for_interfaces
     form = form_class(user=user, instance=instance, base_obj=rs)
     assert sorted(form.fields.keys()) == [
@@ -1243,18 +1239,16 @@ def test_display_set_add_interface_form():
 @pytest.mark.parametrize(
     "answer_type, choices",
     (
-        (AnswerType.SINGLE_LINE_TEXT, BLANK_CHOICE_DASH),
         (
             AnswerType.TEXT,
             [("TEXT_INPUT", "Text Input"), ("TEXT_AREA", "Text Area")],
         ),
-        (AnswerType.MULTI_LINE_TEXT, BLANK_CHOICE_DASH),
         (AnswerType.BOOL, BLANK_CHOICE_DASH),
         (
             AnswerType.NUMBER,
             [
                 BLANK_CHOICE_DASH[0],
-                ("NUMBER_INPUT", "Number input"),
+                ("NUMBER_INPUT", "Number Input"),
                 ("NUMBER_RANGE", "Number Range"),
             ],
         ),
@@ -1317,16 +1311,16 @@ def test_display_set_add_interface_form():
         (
             AnswerType.CHOICE,
             [
-                ("SELECT", "Select"),
                 ("RADIO_SELECT", "Radio Select"),
+                ("SELECT", "Select"),
             ],
         ),
         (
             AnswerType.MULTIPLE_CHOICE,
             [
                 BLANK_CHOICE_DASH[0],
-                ("SELECT_MULTIPLE", "Select Multiple"),
                 ("CHECKBOX_SELECT_MULTIPLE", "Checkbox Select Multiple"),
+                ("SELECT_MULTIPLE", "Select Multiple"),
             ],
         ),
         (AnswerType.MULTIPLE_CHOICE_DROPDOWN, BLANK_CHOICE_DASH),
@@ -1340,7 +1334,7 @@ def test_question_form_answer_widget_choices(answer_type, choices):
 
 @pytest.mark.django_db
 def test_question_form_initial_widget():
-    qu = QuestionFactory()
+    qu = QuestionFactory(answer_type=AnswerType.TEXT)
     form = QuestionForm(instance=qu)
     assert not form.initial_widget()
 
