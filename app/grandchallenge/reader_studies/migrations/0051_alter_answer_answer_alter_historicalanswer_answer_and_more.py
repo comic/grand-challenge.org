@@ -36,7 +36,6 @@ class Migration(migrations.Migration):
                                 {"$ref": "#/definitions/MPOL"},
                                 {"$ref": "#/definitions/CHOI"},
                                 {"$ref": "#/definitions/MCHO"},
-                                {"$ref": "#/definitions/MCHD"},
                                 {"$ref": "#/definitions/M2DB"},
                                 {"$ref": "#/definitions/MASK"},
                                 {"$ref": "#/definitions/LINE"},
@@ -398,10 +397,6 @@ class Migration(migrations.Migration):
                                     },
                                     "required": ["upload_session_pk"],
                                     "type": "object",
-                                },
-                                "MCHD": {
-                                    "items": {"type": "number"},
-                                    "type": "array",
                                 },
                                 "MCHO": {
                                     "items": {"type": "number"},
@@ -837,7 +832,6 @@ class Migration(migrations.Migration):
                                 {"$ref": "#/definitions/MPOL"},
                                 {"$ref": "#/definitions/CHOI"},
                                 {"$ref": "#/definitions/MCHO"},
-                                {"$ref": "#/definitions/MCHD"},
                                 {"$ref": "#/definitions/M2DB"},
                                 {"$ref": "#/definitions/MASK"},
                                 {"$ref": "#/definitions/LINE"},
@@ -1199,10 +1193,6 @@ class Migration(migrations.Migration):
                                     },
                                     "required": ["upload_session_pk"],
                                     "type": "object",
-                                },
-                                "MCHD": {
-                                    "items": {"type": "number"},
-                                    "type": "array",
                                 },
                                 "MCHO": {
                                     "items": {"type": "number"},
@@ -1633,7 +1623,6 @@ class Migration(migrations.Migration):
                     ("MPOL", "Multiple polygons"),
                     ("CHOI", "Choice"),
                     ("MCHO", "Multiple choice"),
-                    ("MCHD", "Multiple choice dropdown"),
                     ("MASK", "Mask"),
                     ("LINE", "Line"),
                     ("MLIN", "Multiple lines"),

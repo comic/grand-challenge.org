@@ -12,6 +12,7 @@ from grandchallenge.reader_studies.models import (
     AnswerType,
     DisplaySet,
     Question,
+    QuestionWidgetKindChoices,
 )
 from grandchallenge.reader_studies.views import DisplaySetViewSet
 from tests.components_tests.factories import (
@@ -285,7 +286,6 @@ def test_answer_creator_is_reader(client):
         (Question.AnswerType.TEXT, True, 400),
         (Question.AnswerType.TEXT, 12, 400),
         (Question.AnswerType.MULTIPLE_CHOICE, None, 400),
-        (Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN, None, 400),
         # Headings are always incorrect when answering
         (Question.AnswerType.HEADING, True, 400),
         (Question.AnswerType.HEADING, "null", 400),
@@ -941,7 +941,6 @@ def test_answer_is_correct_type(client, answer_type, answer, expected):
         (Question.AnswerType.MULTIPLE_ELLIPSES, None),
         # Empty-collection answers
         (Question.AnswerType.MULTIPLE_CHOICE, []),
-        (Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN, []),
     ),
 )
 @pytest.mark.parametrize(
@@ -1208,7 +1207,8 @@ def test_ground_truth(client):
         answer_type=Question.AnswerType.MULTIPLE_CHOICE, reader_study=rs
     )
     q3 = QuestionFactory(
-        answer_type=Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
+        answer_type=Question.AnswerType.MULTIPLE_CHOICE,
+        widget=QuestionWidgetKindChoices.SELECT_MULTIPLE,
         reader_study=rs,
     )
 

@@ -530,10 +530,13 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             for key in gt.keys():
                 if key == "case" or key.endswith("__explanation"):
                     continue
+
                 question = self.questions.get(question_text=key)
                 _answer = json.loads(gt[key])
+
                 if _answer is None and question.required is False:
                     continue
+
                 if question.answer_type == Question.AnswerType.CHOICE:
                     try:
                         option = question.options.get(title=_answer)
@@ -542,15 +545,14 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
                         raise ValidationError(
                             f"Option {_answer!r} is not valid for question {question.question_text}"
                         )
-                if question.answer_type in (
-                    Question.AnswerType.MULTIPLE_CHOICE,
-                    Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
-                ):
+
+                if question.answer_type == Question.AnswerType.MULTIPLE_CHOICE:
                     _answer = list(
                         question.options.filter(title__in=_answer).values_list(
                             "pk", flat=True
                         )
                     )
+
                 kwargs = {
                     "creator": user,
                     "question": question,
@@ -725,10 +727,10 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             field = gt["display_set_id"]
             ground_truths[field] = ground_truths.get(field, {})
 
-            if gt["question__answer_type"] in [
-                Question.AnswerType.MULTIPLE_CHOICE,
-                Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
-            ]:
+            if (
+                gt["question__answer_type"]
+                == Question.AnswerType.MULTIPLE_CHOICE
+            ):
                 human_readable_answers = [
                     options[gt["question"]].get(a, a) for a in gt["answer"]
                 ]
@@ -936,7 +938,6 @@ class AnswerType(models.TextChoices):
     MULTIPLE_POLYGONS = "MPOL", "Multiple polygons"
     CHOICE = "CHOI", "Choice"
     MULTIPLE_CHOICE = "MCHO", "Multiple choice"
-    MULTIPLE_CHOICE_DROPDOWN = "MCHD", "Multiple choice dropdown"
     MASK = "MASK", "Mask"
     LINE = "LINE", "Line"
     MULTIPLE_LINES = "MLIN", "Multiple lines"
@@ -952,7 +953,6 @@ class AnswerType(models.TextChoices):
         return [
             AnswerType.CHOICE,
             AnswerType.MULTIPLE_CHOICE,
-            AnswerType.MULTIPLE_CHOICE_DROPDOWN,
         ]
 
     @staticmethod
@@ -1017,9 +1017,6 @@ ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
     AnswerType.MULTIPLE_LINES: [InterfaceKindChoices.MULTIPLE_LINES],
     AnswerType.CHOICE: [InterfaceKindChoices.CHOICE],
     AnswerType.MULTIPLE_CHOICE: [InterfaceKindChoices.MULTIPLE_CHOICE],
-    AnswerType.MULTIPLE_CHOICE_DROPDOWN: [
-        InterfaceKindChoices.MULTIPLE_CHOICE
-    ],
     AnswerType.MASK: [
         InterfaceKindChoices.SEGMENTATION,
     ],
@@ -1080,7 +1077,6 @@ ANSWER_TYPE_TO_QUESTION_WIDGET = {
         QuestionWidgetKindChoices.CHECKBOX_SELECT_MULTIPLE,
         QuestionWidgetKindChoices.SELECT_MULTIPLE,
     ],
-    AnswerType.MULTIPLE_CHOICE_DROPDOWN: [],
     AnswerType.MASK: [],
     AnswerType.LINE: [],
     AnswerType.MULTIPLE_LINES: [QuestionWidgetKindChoices.ACCEPT_REJECT],
@@ -1120,7 +1116,6 @@ EMPTY_ANSWER_VALUES = {
     AnswerType.ELLIPSE: None,
     AnswerType.MULTIPLE_ELLIPSES: None,
     AnswerType.MULTIPLE_CHOICE: [],
-    AnswerType.MULTIPLE_CHOICE_DROPDOWN: [],
     AnswerType.THREE_POINT_ANGLE: None,
     AnswerType.MULTIPLE_THREE_POINT_ANGLES: None,
 }
@@ -1168,7 +1163,6 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         AnswerType.BOOL: "'true'",
         AnswerType.CHOICE: "'\"option\"'",
         AnswerType.MULTIPLE_CHOICE: '\'["option1", "option2"]\'',
-        AnswerType.MULTIPLE_CHOICE_DROPDOWN: '\'["option1", "option2"]\'',
     }
 
     reader_study = models.ForeignKey(
@@ -1306,10 +1300,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         Calculates the score for ``answer`` by applying ``scoring_function``
         to ``answer`` and ``ground_truth``.
         """
-        if self.answer_type in (
-            Question.AnswerType.MULTIPLE_CHOICE,
-            Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
-        ):
+        if self.answer_type == Question.AnswerType.MULTIPLE_CHOICE:
             if len(answer) == 0 and len(ground_truth) == 0:
                 return 1.0
 
@@ -1686,10 +1677,7 @@ class Answer(UUIDModel):
                     "Provided option is not valid for this question"
                 )
 
-        if question.answer_type in (
-            Question.AnswerType.MULTIPLE_CHOICE,
-            Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
-        ):
+        if question.answer_type == Question.AnswerType.MULTIPLE_CHOICE:
             if not all(x in valid_options for x in answer):
                 raise ValidationError(
                     "Provided options are not valid for this question"
@@ -1719,15 +1707,14 @@ class Answer(UUIDModel):
                 .first()
                 or ""
             )
-        if self.question.answer_type in (
-            Question.AnswerType.MULTIPLE_CHOICE,
-            Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
-        ):
+
+        if self.question.answer_type == Question.AnswerType.MULTIPLE_CHOICE:
             return ", ".join(
                 self.question.options.filter(pk__in=self.answer)
                 .order_by("title")
                 .values_list("title", flat=True)
             )
+
         return self.answer
 
     def calculate_score(self, ground_truth):

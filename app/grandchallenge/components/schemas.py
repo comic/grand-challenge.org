@@ -8,7 +8,6 @@ ANSWER_TYPE_SCHEMA = {
         "HEAD": {"type": "null"},
         "CHOI": {"type": "number"},
         "MCHO": {"type": "array", "items": {"type": "number"}},
-        "MCHD": {"type": "array", "items": {"type": "number"}},
         "2DBB": {
             "type": "object",
             "properties": {
@@ -576,7 +575,6 @@ ANSWER_TYPE_SCHEMA = {
         {"$ref": "#/definitions/MPOL"},
         {"$ref": "#/definitions/CHOI"},
         {"$ref": "#/definitions/MCHO"},
-        {"$ref": "#/definitions/MCHD"},
         {"$ref": "#/definitions/M2DB"},
         {"$ref": "#/definitions/MASK"},
         {"$ref": "#/definitions/LINE"},
