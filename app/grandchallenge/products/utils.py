@@ -151,8 +151,12 @@ def _create_product(*, row, company):
     product.distribution = str(
         row["Distribution platforms/marketplaces availability"]
     )
-    product.software_usage = row[
-        "Suggested use of software (before, during or after study assessment)"
+    product.intended_use_ce = row[
+        "If CE-certified, provide intended use according to the certification"
+    ]
+    product.intended_use_ce_public = row["Intended purpose public"]
+    product.intended_use_fda = row[
+        "If FDA approval/clearance, provide the intended use according to the approval"
     ]
     product.institutes_research = str(
         row["Number of institutes using the product for research"]
