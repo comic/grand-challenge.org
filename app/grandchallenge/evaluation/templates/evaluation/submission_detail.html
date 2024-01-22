@@ -2,6 +2,7 @@
 {% load url %}
 {% load humanize %}
 {% load static %}
+{% load user_profile_link from profiles %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -44,7 +45,7 @@
 
         <dt>Creator</dt>
         <dd>
-            <a href="{% url 'profile-detail' object.creator.username %}">{{ object.creator }}</a>
+            {{ object.creator|user_profile_link }}
         </dd>
 
         {% if object.algorithm_image %}
