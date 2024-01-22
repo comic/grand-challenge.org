@@ -1,10 +1,9 @@
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django.conf import settings
-from django.forms import JSONField, ModelForm
+from django.forms import ModelForm
 
 from grandchallenge.core.guardian import get_objects_for_user
-from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.workstation_configs.models import WorkstationConfig
 from grandchallenge.workstations.models import Workstation
 
@@ -52,11 +51,3 @@ class PermissionRequestUpdateForm(SaveFormInitMixin, ModelForm):
 
     class Meta:
         fields = ("status", "rejection_text")
-
-
-class JSONEditorField(JSONField):
-    widget = None
-
-    def __init__(self, *args, schema, **kwargs):
-        kwargs["widget"] = JSONEditorWidget(schema=schema)
-        super().__init__(*args, **kwargs)
