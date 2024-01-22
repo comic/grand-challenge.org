@@ -7,24 +7,24 @@ from grandchallenge.hanging_protocols.models import HangingProtocol
 from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.factories import UserFactory
 from tests.hanging_protocols_tests.factories import HangingProtocolFactory
-from tests.hanging_protocols_tests.test_models import TestViewContentMixin
+from tests.hanging_protocols_tests.test_models import HangingProtocolTestModel
 from tests.utils import get_view_for_user
 
 
-class TestViewContentForm(ModelForm):
+class ViewContentTestForm(ModelForm):
     class Meta:
-        model = TestViewContentMixin
+        model = HangingProtocolTestModel
         fields = ("view_content", "hanging_protocol")
 
 
 @pytest.mark.django_db
 def test_view_content_mixin():
-    form = TestViewContentForm(data={"view_content": [{}]})
+    form = ViewContentTestForm(data={"view_content": [{}]})
 
     assert not form.is_valid()
     assert "JSON does not fulfill schema" in form.errors["view_content"][0]
 
-    form = TestViewContentForm(data={"view_content": {"main": ["test"]}})
+    form = ViewContentTestForm(data={"view_content": {"main": ["test"]}})
 
     assert not form.is_valid()
     assert form.errors == {
@@ -34,7 +34,7 @@ def test_view_content_mixin():
     i = ComponentInterfaceFactory(title="Test")
     hp = HangingProtocolFactory(json=[{"viewport_name": "main"}])
 
-    form = TestViewContentForm(
+    form = ViewContentTestForm(
         data={
             "view_content": {"secondary": [i.slug]},
             "hanging_protocol": hp.pk,
@@ -48,7 +48,7 @@ def test_view_content_mixin():
         ]
     }
 
-    form = TestViewContentForm(
+    form = ViewContentTestForm(
         data={"view_content": {"main": ["test"]}, "hanging_protocol": hp.pk}
     )
     assert form.is_valid()

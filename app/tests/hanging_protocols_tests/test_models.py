@@ -432,35 +432,35 @@ def test_hanging_protocol_schema_validation(client, json, expectation):
         hp.full_clean()
 
 
-class TestViewContentMixin(HangingProtocolMixin, Model):
+class HangingProtocolTestModel(HangingProtocolMixin, Model):
     class Meta:
-        app_label = "test_view_content_mixin"
+        app_label = "hanging_protocols_tests"
 
 
 @pytest.mark.django_db
 def test_view_content_validation():
-    hp = TestViewContentMixin(view_content={"test": []})
+    hp = HangingProtocolTestModel(view_content={"test": []})
 
     with pytest.raises(ValidationError) as err:
         hp.full_clean()
 
     assert "JSON does not fulfill schema" in str(err.value)
 
-    hp = TestViewContentMixin(view_content={"main": []})
+    hp = HangingProtocolTestModel(view_content={"main": []})
 
     with pytest.raises(ValidationError) as err:
         hp.full_clean()
 
     assert "JSON does not fulfill schema" in str(err.value)
 
-    hp = TestViewContentMixin(view_content={"main": "test"})
+    hp = HangingProtocolTestModel(view_content={"main": "test"})
 
     with pytest.raises(ValidationError) as err:
         hp.full_clean()
 
     assert "JSON does not fulfill schema" in str(err.value)
 
-    hp = TestViewContentMixin(view_content={"main": ["test"]})
+    hp = HangingProtocolTestModel(view_content={"main": ["test"]})
 
     with pytest.raises(ValidationError) as err:
         hp.full_clean()
@@ -469,7 +469,7 @@ def test_view_content_validation():
 
     ComponentInterfaceFactory(title="Test")
 
-    hp = TestViewContentMixin(view_content={"main": ["test"]})
+    hp = HangingProtocolTestModel(view_content={"main": ["test"]})
     hp.full_clean()
 
 
