@@ -2,12 +2,13 @@ from contextlib import nullcontext
 
 import pytest
 from django.core.exceptions import ValidationError
-from django.db.models.base import ModelBase
+from django.db.models.base import Model
 
 from grandchallenge.hanging_protocols.models import (
     HangingProtocol,
-    ViewContentMixin,
+    HangingProtocolMixin,
 )
+from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.factories import UserFactory
 from tests.hanging_protocols_tests.factories import HangingProtocolFactory
 
@@ -431,30 +432,44 @@ def test_hanging_protocol_schema_validation(client, json, expectation):
         hp.full_clean()
 
 
+class TestViewContentMixin(HangingProtocolMixin, Model):
+    class Meta:
+        app_label = "test_view_content_mixin"
+
+
+@pytest.mark.django_db
 def test_view_content_validation():
-    model = ViewContentMixin
-    model = ModelBase(
-        "__TestModel__" + model.__name__,
-        (model,),
-        {"__module__": model.__module__},
-    )
+    hp = TestViewContentMixin(view_content={"test": []})
 
-    hp = model(view_content={"test": []})
-
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError) as err:
         hp.full_clean()
 
-    hp = model(view_content={"main": []})
+    assert "JSON does not fulfill schema" in str(err.value)
 
-    with pytest.raises(ValidationError):
+    hp = TestViewContentMixin(view_content={"main": []})
+
+    with pytest.raises(ValidationError) as err:
         hp.full_clean()
 
-    hp = model(view_content={"main": "test"})
+    assert "JSON does not fulfill schema" in str(err.value)
 
-    with pytest.raises(ValidationError):
+    hp = TestViewContentMixin(view_content={"main": "test"})
+
+    with pytest.raises(ValidationError) as err:
         hp.full_clean()
 
-    hp = model(view_content={"main": ["test"]})
+    assert "JSON does not fulfill schema" in str(err.value)
+
+    hp = TestViewContentMixin(view_content={"main": ["test"]})
+
+    with pytest.raises(ValidationError) as err:
+        hp.full_clean()
+
+    assert "Unknown interface slugs in view content: test" in str(err.value)
+
+    ComponentInterfaceFactory(title="Test")
+
+    hp = TestViewContentMixin(view_content={"main": ["test"]})
     hp.full_clean()
 
 

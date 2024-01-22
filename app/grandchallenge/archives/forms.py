@@ -31,9 +31,9 @@ from grandchallenge.core.forms import (
 )
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.templatetags.bleach import clean
-from grandchallenge.core.widgets import MarkdownEditorWidget
+from grandchallenge.core.widgets import JSONEditorWidget, MarkdownEditorWidget
 from grandchallenge.groups.forms import UserGroupForm
-from grandchallenge.hanging_protocols.forms import ViewContentMixin
+from grandchallenge.hanging_protocols.models import VIEW_CONTENT_SCHEMA
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse_lazy
 
@@ -42,7 +42,6 @@ class ArchiveForm(
     WorkstationUserFilterMixin,
     SaveFormInitMixin,
     ModelForm,
-    ViewContentMixin,
 ):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -97,8 +96,8 @@ class ArchiveForm(
             "structures": Select2MultipleWidget,
             "organizations": Select2MultipleWidget,
             "optional_hanging_protocols": Select2MultipleWidget,
+            "view_content": JSONEditorWidget(schema=VIEW_CONTENT_SCHEMA),
         }
-        widgets.update(ViewContentMixin.Meta.widgets)
         help_texts = {
             "workstation_config": format_lazy(
                 (
@@ -139,7 +138,6 @@ class ArchiveForm(
                 reverse_lazy("hanging-protocols:list"),
             ),
         }
-        help_texts.update(ViewContentMixin.Meta.help_texts)
         labels = {
             "workstation": "Viewer",
             "workstation_config": "Viewer Configuration",

@@ -66,10 +66,10 @@ from grandchallenge.core.forms import (
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
-from grandchallenge.core.widgets import MarkdownEditorWidget
+from grandchallenge.core.widgets import JSONEditorWidget, MarkdownEditorWidget
 from grandchallenge.evaluation.utils import get
 from grandchallenge.groups.forms import UserGroupForm
-from grandchallenge.hanging_protocols.forms import ViewContentMixin
+from grandchallenge.hanging_protocols.models import VIEW_CONTENT_SCHEMA
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.workstations.models import Workstation
@@ -157,7 +157,6 @@ class AlgorithmForm(
     AlgorithmIOValidationMixin,
     WorkstationUserFilterMixin,
     ModelForm,
-    ViewContentMixin,
 ):
     inputs = ModelMultipleChoiceField(
         queryset=ComponentInterface.objects.exclude(
@@ -228,8 +227,8 @@ class AlgorithmForm(
             "display_editors": Select(
                 choices=(("", "-----"), (True, "Yes"), (False, "No"))
             ),
+            "view_content": JSONEditorWidget(schema=VIEW_CONTENT_SCHEMA),
         }
-        widgets.update(ViewContentMixin.Meta.widgets)
         help_texts = {
             "workstation_config": format_lazy(
                 (
@@ -271,7 +270,6 @@ class AlgorithmForm(
                 reverse_lazy("hanging-protocols:list"),
             ),
         }
-        help_texts.update(ViewContentMixin.Meta.help_texts)
         labels = {
             "workstation": "Viewer",
             "workstation_config": "Viewer Configuration",

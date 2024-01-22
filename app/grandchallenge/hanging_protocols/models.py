@@ -1,9 +1,11 @@
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.html import format_html
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
+from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.models import TitleSlugDescriptionModel, UUIDModel
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.subdomains.utils import reverse
@@ -295,12 +297,65 @@ class HangingProtocolGroupObjectPermission(GroupObjectPermissionBase):
     )
 
 
-class ViewContentMixin(models.Model):
+class HangingProtocolMixin(models.Model):
     view_content = models.JSONField(
         blank=True,
         default=dict,
         validators=[JSONValidator(schema=VIEW_CONTENT_SCHEMA)],
     )
+    hanging_protocol = models.ForeignKey(
+        "hanging_protocols.HangingProtocol",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        help_text=(
+            "Indicate which Component Interfaces need to be displayed in "
+            'which image port. E.g. {"main": ["interface1"]}. The first '
+            "item in the list of interfaces will be the main image in "
+            "the image port. The first overlay type interface thereafter "
+            "will be rendered as an overlay. For now, any other items "
+            "will be ignored by the viewer."
+        ),
+    )
+
+    def clean(self):
+        super().clean()
+
+        self.check_consistent_viewports()
+        self.check_all_interfaces_in_view_content_exist()
+
+    def check_consistent_viewports(self):
+        if self.view_content and self.hanging_protocol:
+            if set(self.view_content.keys()) != {
+                x["viewport_name"] for x in self.hanging_protocol.json
+            }:
+                raise ValidationError(
+                    "Image ports in view_content do not match "
+                    "those in the selected hanging protocol."
+                )
+
+    def check_all_interfaces_in_view_content_exist(self):
+        try:
+            requested_slugs = {
+                slug
+                for viewport in self.view_content.values()
+                for slug in viewport
+            }
+        except AttributeError:
+            raise ValidationError("View content is not valid")
+
+        requested_interfaces = ComponentInterface.objects.filter(
+            slug__in=requested_slugs
+        )
+
+        unknown_slugs = requested_slugs - {
+            i.slug for i in requested_interfaces
+        }
+
+        if unknown_slugs:
+            raise ValidationError(
+                f"Unknown interface slugs in view content: {', '.join(unknown_slugs)}"
+            )
 
     class Meta:
         abstract = True
