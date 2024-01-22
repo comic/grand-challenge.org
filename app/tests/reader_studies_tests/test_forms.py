@@ -434,10 +434,6 @@ def test_question_update(client):
         (AnswerType.MULTIPLE_ANGLES, InterfaceKindChoices.MULTIPLE_ANGLES),
         (AnswerType.CHOICE, InterfaceKindChoices.CHOICE),
         (AnswerType.MULTIPLE_CHOICE, InterfaceKindChoices.MULTIPLE_CHOICE),
-        (
-            AnswerType.MULTIPLE_CHOICE_DROPDOWN,
-            InterfaceKindChoices.MULTIPLE_CHOICE,
-        ),
         (AnswerType.MASK, InterfaceKindChoices.SEGMENTATION),
         (AnswerType.ELLIPSE, InterfaceKindChoices.ELLIPSE),
         (AnswerType.MULTIPLE_ELLIPSES, InterfaceKindChoices.MULTIPLE_ELLIPSES),
@@ -1323,7 +1319,6 @@ def test_display_set_add_interface_form():
                 ("SELECT_MULTIPLE", "Select Multiple"),
             ],
         ),
-        (AnswerType.MULTIPLE_CHOICE_DROPDOWN, BLANK_CHOICE_DASH),
         (AnswerType.MASK, BLANK_CHOICE_DASH),
     ),
 )

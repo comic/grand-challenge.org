@@ -443,25 +443,29 @@ class QuestionOptionMixin:
     def validate_options(self, form, _super):
         context = self.get_context_data()
         options = context["options"]
+
         if form.cleaned_data["answer_type"] not in [
             Question.AnswerType.CHOICE,
             Question.AnswerType.MULTIPLE_CHOICE,
-            Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
         ]:
             if getattr(self, "object", None):
                 self.object.options.all().delete()
             return _super.form_valid(form)
+
         data = options.cleaned_data
+
         if len(list(filter(lambda x: x.get("default"), data))) > 1:
             error = ["Only one option can be the default option"]
             form.add_error("answer_type", error)
             return self.form_invalid(form)
+
         if not any(option.get("title") for option in data):
             error = [
                 "At least one option should be supplied for (multiple) choice questions"
             ]
             form.add_error("answer_type", error)
             return self.form_invalid(form)
+
         with transaction.atomic():
             try:
                 self.object = form.save()
@@ -470,6 +474,7 @@ class QuestionOptionMixin:
             if options.is_valid():
                 options.instance = self.object
                 options.save()
+
         return _super.form_valid(form)
 
 
