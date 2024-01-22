@@ -6,7 +6,6 @@ from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.hanging_protocols.models import (
     HANGING_PROTOCOL_SCHEMA,
-    VIEW_CONTENT_SCHEMA,
     HangingProtocol,
 )
 
@@ -117,10 +116,3 @@ class HangingProtocolForm(SaveFormInitMixin, forms.ModelForm):
                 error=f"Viewport {viewport['viewport_name']} has a slice_plane_indicator that is the same as the viewport_name.",
                 field="json",
             )
-
-
-class ViewContentMixin:
-    class Meta:
-        widgets = {
-            "view_content": JSONEditorWidget(schema=VIEW_CONTENT_SCHEMA),
-        }
