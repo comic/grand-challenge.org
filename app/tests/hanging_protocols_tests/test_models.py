@@ -4,6 +4,7 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.db.models.base import Model
 
+from grandchallenge.components.models import InterfaceKindChoices
 from grandchallenge.hanging_protocols.models import (
     HangingProtocol,
     HangingProtocolMixin,
@@ -465,12 +466,58 @@ def test_view_content_validation():
     with pytest.raises(ValidationError) as err:
         hp.full_clean()
 
-    assert "Unknown interface slugs in view content: test" in str(err.value)
+    assert (
+        "Unknown interfaces in view content for viewport 'main': test"
+        in str(err.value)
+    )
 
     ComponentInterfaceFactory(title="Test")
 
     hp = HangingProtocolTestModel(view_content={"main": ["test"]})
     hp.full_clean()
+
+
+@pytest.mark.django_db
+def test_at_most_two_images():
+    image = ComponentInterfaceFactory(kind=InterfaceKindChoices.IMAGE)
+    heatmap = ComponentInterfaceFactory(kind=InterfaceKindChoices.HEAT_MAP)
+    segmentation = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.SEGMENTATION
+    )
+    text = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+
+    hp = HangingProtocolTestModel(view_content={"main": [image.slug]})
+    hp.full_clean()
+
+    hp = HangingProtocolTestModel(view_content={"main": [heatmap.slug]})
+    hp.full_clean()
+
+    hp = HangingProtocolTestModel(
+        view_content={"main": [image.slug, heatmap.slug]}
+    )
+    hp.full_clean()
+
+    hp = HangingProtocolTestModel(
+        view_content={"main": [image.slug, heatmap.slug, text.slug]}
+    )
+    hp.full_clean()
+
+    hp = HangingProtocolTestModel(
+        view_content={"main": [image.slug, segmentation.slug]}
+    )
+    hp.full_clean()
+
+    hp = HangingProtocolTestModel(
+        view_content={"main": [image.slug, heatmap.slug, segmentation.slug]}
+    )
+
+    with pytest.raises(ValidationError) as err:
+        hp.full_clean()
+
+    assert (
+        "Maximum of two image interfaces are allowed per viewport, got 3 for viewport 'main':"
+        in str(err.value)
+    )
 
 
 @pytest.mark.parametrize(

@@ -5,7 +5,7 @@ from django.utils.html import format_html
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.core.models import TitleSlugDescriptionModel, UUIDModel
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.subdomains.utils import reverse
@@ -335,27 +335,30 @@ class HangingProtocolMixin(models.Model):
                 )
 
     def check_all_interfaces_in_view_content_exist(self):
-        try:
-            requested_slugs = {
-                slug
-                for viewport in self.view_content.values()
-                for slug in viewport
-            }
-        except AttributeError:
-            raise ValidationError("View content is not valid")
+        if not hasattr(self.view_content, "items"):
+            raise ValidationError("View content is invalid")
 
-        requested_interfaces = ComponentInterface.objects.filter(
-            slug__in=requested_slugs
-        )
-
-        unknown_slugs = requested_slugs - {
-            i.slug for i in requested_interfaces
-        }
-
-        if unknown_slugs:
-            raise ValidationError(
-                f"Unknown interface slugs in view content: {', '.join(unknown_slugs)}"
+        for viewport, slugs in self.view_content.items():
+            viewport_interfaces = ComponentInterface.objects.filter(
+                slug__in=slugs
             )
+
+            if set(slugs) != {i.slug for i in viewport_interfaces}:
+                raise ValidationError(
+                    f"Unknown interfaces in view content for viewport {viewport}: {', '.join(slugs)}"
+                )
+
+            image_interfaces = [
+                i
+                for i in viewport_interfaces
+                if i.kind in InterfaceKind.interface_type_image()
+            ]
+
+            if len(image_interfaces) > 2:
+                raise ValidationError(
+                    "Maximum of two image interfaces are allowed per viewport, "
+                    f"got {len(image_interfaces)} for viewport {viewport}: {', '.join(slugs)}"
+                )
 
     class Meta:
         abstract = True

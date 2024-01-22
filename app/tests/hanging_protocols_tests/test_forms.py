@@ -28,7 +28,9 @@ def test_view_content_mixin():
 
     assert not form.is_valid()
     assert form.errors == {
-        "__all__": ["Unknown interface slugs in view content: test"]
+        "__all__": [
+            "Unknown interfaces in view content for viewport 'main': test"
+        ]
     }
 
     i = ComponentInterfaceFactory(title="Test")
