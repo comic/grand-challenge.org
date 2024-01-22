@@ -276,6 +276,7 @@ class UnsupportedBrowserWarningMixin:
             "firefox",
             "chrome",
             "edge",
+            "safari",
         ]
 
         unsupported_chrome_version = (
@@ -286,7 +287,8 @@ class UnsupportedBrowserWarningMixin:
         if unsupported_browser:
             unsupported_browser_message = (
                 "Unfortunately your browser is not supported. "
-                "Please try again with the latest version of Firefox or Chrome."
+                "Please try again with the latest version of "
+                "Firefox, Chrome, Edge or Safari."
             )
         elif unsupported_chrome_version:
             unsupported_browser_message = (
