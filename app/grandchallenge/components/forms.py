@@ -251,7 +251,7 @@ class SingleCIVForm(Form):
     }
 
     def __init__(
-        self, *args, pk, interface_pk, base_obj, user, htmx_url, **kwargs
+        self, *args, pk, interface, base_obj, user, htmx_url, **kwargs
     ):
         super().__init__(*args, **kwargs)
         data = kwargs.get("data")
@@ -259,10 +259,8 @@ class SingleCIVForm(Form):
             slug__in=base_obj.values_for_interfaces.keys()
         )
 
-        if interface_pk:
-            selected_interface = ComponentInterface.objects.get(
-                pk=interface_pk
-            )
+        if interface:
+            selected_interface = ComponentInterface.objects.get(pk=interface)
         elif data and data.get("interface"):
             selected_interface = ComponentInterface.objects.get(
                 pk=data["interface"]

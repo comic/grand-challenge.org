@@ -253,7 +253,7 @@ class InterfacesCreateBaseView(ObjectPermissionRequiredMixin, TemplateView):
         return {
             "pk": self.kwargs.get("pk"),
             "base_obj": self.base_object,
-            "interface_pk": self.request.GET.get("interface"),
+            "interface": self.request.GET.get("interface"),
             "user": self.request.user,
             "auto_id": f"id-{uuid.uuid4()}",
             "htmx_url": self.get_htmx_url(),
