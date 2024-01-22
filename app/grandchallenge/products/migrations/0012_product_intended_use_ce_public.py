@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('products', '0011_remove_product_software_usage_and_more'),
+        ("products", "0011_remove_product_software_usage_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='product',
-            name='intended_use_ce_public',
+            model_name="product",
+            name="intended_use_ce_public",
             field=models.TextField(blank=True, null=True),
         ),
     ]
