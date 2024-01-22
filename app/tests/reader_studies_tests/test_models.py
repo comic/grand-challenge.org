@@ -944,3 +944,71 @@ def test_clean_widget_options(
 
     if error_message:
         assert e.value.message == error_message
+
+
+@pytest.mark.django_db
+def test_annotation_view_port_contains_image():
+    image_interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.IMAGE
+    )
+    mp4_interface = ComponentInterfaceFactory(kind=InterfaceKindChoices.MP4)
+
+    reader_study = ReaderStudyFactory(
+        view_content={
+            "main": [image_interface.slug],
+            "secondary": [mp4_interface.slug],
+        }
+    )
+    reader_study.full_clean()
+
+    question = Question(
+        reader_study=reader_study,
+        question_text="foo",
+        answer_type=AnswerType.MASK,
+        image_port=Question.ImagePort.MAIN,
+    )
+    question.full_clean()
+    question.save()
+
+    question = Question(
+        reader_study=reader_study,
+        question_text="foo",
+        answer_type=AnswerType.MASK,
+        image_port=Question.ImagePort.SECONDARY,
+    )
+
+    with pytest.raises(ValidationError) as err:
+        question.full_clean()
+
+    assert (
+        "The Secondary view port does not contain an image. "
+        "Please update the view content of this reader study or select a different view port for question foo"
+        in str(err.value)
+    )
+
+    question = Question(
+        reader_study=reader_study,
+        question_text="foo",
+        answer_type=AnswerType.MASK,
+        image_port=Question.ImagePort.TERTIARY,
+    )
+
+    with pytest.raises(ValidationError) as err:
+        question.full_clean()
+
+    assert (
+        "The Tertiary view port has not been defined. "
+        "Please update the view content of this reader study or select a different view port for question foo"
+        in str(err.value)
+    )
+
+    reader_study.view_content = {"secondary": [mp4_interface.slug]}
+
+    with pytest.raises(ValidationError) as err:
+        reader_study.full_clean()
+
+    assert (
+        "The Main view port has not been defined. "
+        "Please update the view content of this reader study or select a different view port for question foo"
+        in str(err.value)
+    )

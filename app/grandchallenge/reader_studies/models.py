@@ -30,6 +30,7 @@ from grandchallenge.components.models import (
     CIVForObjectMixin,
     ComponentInterface,
     ComponentInterfaceValue,
+    InterfaceKind,
     InterfaceKindChoices,
     OverlaySegmentsMixin,
 )
@@ -50,7 +51,10 @@ from grandchallenge.core.utils.access_requests import (
 )
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.core.vendored.django.validators import StepValueValidator
-from grandchallenge.hanging_protocols.models import HangingProtocolMixin
+from grandchallenge.hanging_protocols.models import (
+    HangingProtocolMixin,
+    ViewportNames,
+)
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
@@ -433,6 +437,12 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
             self.case_text = {}
         if self.view_content is None:
             self.view_content = {}
+
+        self._clean_questions()
+
+    def _clean_questions(self):
+        for question in self.questions.all():
+            question.clean()
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -1120,30 +1130,57 @@ EMPTY_ANSWER_VALUES = {
 }
 
 
+class ImagePort(models.TextChoices):
+    MAIN = "M", "Main"
+    SECONDARY = "S", "Secondary"
+    TERTIARY = "TERTIARY", "Tertiary"
+    QUATERNARY = "QUATERNARY", "Quaternary"
+    QUINARY = "QUINARY", "Quinary"
+    SENARY = "SENARY", "Senary"
+    SEPTENARY = "SEPTENARY", "Septenary"
+    OCTONARY = "OCTONARY", "Octonary"
+    NONARY = "NONARY", "Nonary"
+    DENARY = "DENARY", "Denary"
+    UNDENARY = "UNDENARY", "Undenary"
+    DUODENARY = "DUODENARY", "Duodenary"
+    TREDENARY = "TREDENARY", "Tredenary"
+    QUATTUORDENARY = "QUATTUORDENARY", "Quattuordenary"
+    QUINDENARY = "QUINDENARY", "Quindenary"
+    SEXDENARY = "SEXDENARY", "Sexdenary"
+    SEPTENDENARY = "SEPTENDENARY", "Septendenary"
+    OCTODENARY = "OCTODENARY", "Octodenary"
+    NOVEMDENARY = "NOVEMDENARY", "Novemdenary"
+    VIGINTENARY = "VIGINTENARY", "Vigintenary"
+
+
+# This was redefined in the hanging protocol app and not unified
+IMAGE_PORT_TO_VIEWPORT_NAME = {
+    ImagePort.MAIN: ViewportNames.main,
+    ImagePort.SECONDARY: ViewportNames.secondary,
+    ImagePort.TERTIARY: ViewportNames.tertiary,
+    ImagePort.QUATERNARY: ViewportNames.quaternary,
+    ImagePort.QUINARY: ViewportNames.quinary,
+    ImagePort.SENARY: ViewportNames.senary,
+    ImagePort.SEPTENARY: ViewportNames.septenary,
+    ImagePort.OCTONARY: ViewportNames.octonary,
+    ImagePort.NONARY: ViewportNames.nonary,
+    ImagePort.DENARY: ViewportNames.denary,
+    ImagePort.UNDENARY: ViewportNames.undenary,
+    ImagePort.DUODENARY: ViewportNames.duodenary,
+    ImagePort.TREDENARY: ViewportNames.tredenary,
+    ImagePort.QUATTUORDENARY: ViewportNames.quattuordenary,
+    ImagePort.QUINDENARY: ViewportNames.quindenary,
+    ImagePort.SEXDENARY: ViewportNames.sexdenary,
+    ImagePort.SEPTENDENARY: ViewportNames.septendenary,
+    ImagePort.OCTODENARY: ViewportNames.octodenary,
+    ImagePort.NOVEMDENARY: ViewportNames.novemdenary,
+    ImagePort.VIGINTENARY: ViewportNames.vigintenary,
+}
+
+
 class Question(UUIDModel, OverlaySegmentsMixin):
     AnswerType = AnswerType
-
-    class ImagePort(models.TextChoices):
-        MAIN = "M", "Main"
-        SECONDARY = "S", "Secondary"
-        TERTIARY = "TERTIARY", "Tertiary"
-        QUATERNARY = "QUATERNARY", "Quaternary"
-        QUINARY = "QUINARY", "Quinary"
-        SENARY = "SENARY", "Senary"
-        SEPTENARY = "SEPTENARY", "Septenary"
-        OCTONARY = "OCTONARY", "Octonary"
-        NONARY = "NONARY", "Nonary"
-        DENARY = "DENARY", "Denary"
-        UNDENARY = "UNDENARY", "Undenary"
-        DUODENARY = "DUODENARY", "Duodenary"
-        TREDENARY = "TREDENARY", "Tredenary"
-        QUATTUORDENARY = "QUATTUORDENARY", "Quattuordenary"
-        QUINDENARY = "QUINDENARY", "Quindenary"
-        SEXDENARY = "SEXDENARY", "Sexdenary"
-        SEPTENDENARY = "SEPTENDENARY", "Septendenary"
-        OCTODENARY = "OCTODENARY", "Octodenary"
-        NOVEMDENARY = "NOVEMDENARY", "Novemdenary"
-        VIGINTENARY = "VIGINTENARY", "Vigintenary"
+    ImagePort = ImagePort
 
     # What is the orientation of the question form when presented on the
     # front end?
@@ -1343,6 +1380,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         super().clean()
         self._clean_answer_type()
         self._clean_interface()
+        self._clean_image_port()
         self._clean_widget()
         self._clean_widget_options()
 
@@ -1382,6 +1420,30 @@ class Question(UUIDModel, OverlaySegmentsMixin):
                 f"The interface {self.interface} is not allowed for this "
                 f"question type ({self.answer_type})"
             )
+
+    def _clean_image_port(self):
+        if self.image_port and self.reader_study.view_content:
+            try:
+                viewport_content = self.reader_study.view_content[
+                    IMAGE_PORT_TO_VIEWPORT_NAME[self.image_port]
+                ]
+            except KeyError:
+                raise ValidationError(
+                    f"The {self.get_image_port_display()} view port has not been defined. "
+                    f"Please update the view content of this reader study or select a different view port for question {self}."
+                )
+
+            if (
+                ComponentInterface.objects.filter(
+                    slug__in=viewport_content,
+                    kind__in=InterfaceKind.interface_type_image(),
+                ).count()
+                < 1
+            ):
+                raise ValidationError(
+                    f"The {self.get_image_port_display()} view port does not contain an image. "
+                    f"Please update the view content of this reader study or select a different view port for question {self}."
+                )
 
     def _clean_widget(self):
         if self.widget:
