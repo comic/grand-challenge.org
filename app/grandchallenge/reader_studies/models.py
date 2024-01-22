@@ -32,6 +32,7 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
     InterfaceKindChoices,
     OverlaySegmentsMixin,
+    ValuesForInterfacesMixin,
 )
 from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
 from grandchallenge.core.fields import HexColorField, RegexField
@@ -167,7 +168,12 @@ CASE_TEXT_SCHEMA = {
 }
 
 
-class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
+class ReaderStudy(
+    UUIDModel,
+    TitleSlugDescriptionModel,
+    ViewContentMixin,
+    ValuesForInterfacesMixin,
+):
     """
     Reader Study model.
 
@@ -755,37 +761,6 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             "ground_truths": ground_truths,
             "questions": questions,
         }
-
-    @cached_property
-    def values_for_interfaces(self):
-        vals = list(
-            self.display_sets.select_related(
-                "values", "values__interface", "values__image"
-            )
-            .values(
-                "values__interface__slug",
-                "values__id",
-            )
-            .order_by("values__id")
-            .distinct()
-        )
-        interfaces = [x["values__interface__slug"] for x in vals]
-        interfaces += self.questions.filter(
-            interface__isnull=False
-        ).values_list("interface__slug", flat=True)
-        interfaces = set(interfaces)
-        # Filter out any emtpy display sets, which can exist because we create
-        # the ds before assinging images. None values cause the sorting to error
-        values_for_interfaces = {
-            interface: [
-                x["values__id"]
-                for x in vals
-                if x["values__interface__slug"] == interface
-            ]
-            for interface in sorted(x for x in interfaces if x)
-        }
-
-        return values_for_interfaces
 
     @property
     def next_display_set_order(self):

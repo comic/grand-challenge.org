@@ -2046,3 +2046,43 @@ class CIVForObjectMixin:
             # if no new value is provided (user selects '---' in dropdown)
             # delete old CIV
             self.values.remove(current_civ)
+
+
+class ValuesForInterfacesMixin:
+    @cached_property
+    def values_for_interfaces(self):
+        from grandchallenge.archives.models import Archive
+        from grandchallenge.reader_studies.models import ReaderStudy
+
+        if self.__class__ == ReaderStudy:
+            qs = self.display_sets.select_related(
+                "values", "values__interface", "values__image"
+            )
+        elif self.__class__ == Archive:
+            qs = self.items.select_related(
+                "values", "values__interface", "values__image"
+            )
+        vals = list(
+            qs.filter(values__interface__slug__isnull=False)
+            .values(
+                "values__interface__slug",
+                "values__id",
+            )
+            .order_by("values__id")
+            .distinct()
+        )
+        interfaces = [x["values__interface__slug"] for x in vals]
+        if self.__class__ == ReaderStudy:
+            interfaces += self.questions.filter(
+                interface__isnull=False
+            ).values_list("interface__slug", flat=True)
+        interfaces = set(interfaces)
+        values_for_interfaces = {
+            interface: [
+                x["values__id"]
+                for x in vals
+                if x["values__interface__slug"] == interface
+            ]
+            for interface in interfaces
+        }
+        return values_for_interfaces

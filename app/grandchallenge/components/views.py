@@ -7,14 +7,15 @@ from django.forms import Media
 from django.http import HttpResponse
 from django.utils.functional import cached_property
 from django.utils.html import format_html
-from django.views.generic import ListView, TemplateView
+from django.views.generic import FormView, ListView, TemplateView
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from grandchallenge.algorithms.forms import NON_ALGORITHM_INTERFACES
 from grandchallenge.api.permissions import IsAuthenticated
-from grandchallenge.components.forms import NewFileUploadForm
+from grandchallenge.archives.models import Archive
+from grandchallenge.components.forms import NewFileUploadForm, SingleCIVForm
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.components.serializers import ComponentInterfaceSerializer
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
@@ -74,7 +75,15 @@ class ComponentInterfaceAutocomplete(
     def get_queryset(self):
         if self.forwarded:
             object_slug = self.forwarded.pop("object")
-            object = ReaderStudy.objects.get(slug=object_slug)
+            model_name = self.forwarded.pop("model")
+            if model_name == ReaderStudy._meta.model_name:
+                object = ReaderStudy.objects.get(slug=object_slug)
+            elif model_name == Archive._meta.model_name:
+                object = Archive.objects.get(slug=object_slug)
+            else:
+                raise RuntimeError(
+                    f"Autocomplete for objects of type {model_name} not defined."
+                )
             qs = ComponentInterface.objects.exclude(
                 slug__in=object.values_for_interfaces.keys()
             ).exclude(pk__in=self.forwarded.values())
@@ -96,8 +105,23 @@ class ComponentInterfaceAutocomplete(
         return result.title
 
 
-class InterfaceProcessingMixin(SuccessMessageMixin):
+class MultipleCIVProcessingBaseView(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    FormView,
+):
+    included_form_classes = (SingleCIVForm,)
+    form_class = None
+    permission_required = None
+    raise_exception = True
+    success_message = None
+
     def process_data_for_object(self, data):
+        raise NotImplementedError
+
+    @property
+    def base_object(self):
         raise NotImplementedError
 
     def form_valid(self, form):
@@ -179,6 +203,68 @@ class FileUpdateBaseView(ObjectPermissionRequiredMixin, TemplateView):
                 "form": self.form_class(
                     user=self.request.user, interface=self.interface
                 ),
+            }
+        )
+        return context
+
+
+class ObjectCreateMixin:
+    template_name = "components/object_create.html"
+    type_to_add = None
+    base_object_type = None
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update(
+            {
+                "type_to_add": self.type_to_add,
+                "base_object_type": self.base_object_type,
+                "list_url": self.list_url,
+                "form_url": self.form_url,
+                "new_interface_url": self.new_interface_url,
+                "return_url": self.return_url,
+            }
+        )
+        return context
+
+    @property
+    def list_url(self):
+        raise NotImplementedError
+
+    @property
+    def form_url(self):
+        raise NotImplementedError
+
+    @property
+    def return_url(self):
+        raise NotImplementedError
+
+    @property
+    def new_interface_url(self):
+        raise NotImplementedError
+
+
+class InterfacesCreateBaseView(ObjectPermissionRequiredMixin, TemplateView):
+    form_class = SingleCIVForm
+    raise_exception = True
+    template_name = "components/new_interface_create.html"
+
+    def get_form_kwargs(self):
+        return {
+            "pk": self.kwargs.get("pk"),
+            "base_obj": self.base_object,
+            "interface_pk": self.request.GET.get("interface"),
+            "user": self.request.user,
+            "auto_id": f"id-{uuid.uuid4()}",
+            "htmx_url": self.get_htmx_url(),
+        }
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update(
+            {
+                "object": self.object,
+                "form": self.form_class(**self.get_form_kwargs()),
             }
         )
         return context

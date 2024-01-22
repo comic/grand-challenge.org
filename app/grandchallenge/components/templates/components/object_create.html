@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load url %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}
+    Add {{ type_to_add }} to {{ base_object }} - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ list_url }}">{{ base_object_type }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ base_object.get_absolute_url }}">{{ base_object }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Add {{ type_to_add }}
+        </li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Add {{ type_to_add }} to {{ base_object }}</h2>
+
+    <div id="objectSlug" class="d-none" data-slug="{{ base_object.slug }}"></div>
+    <div id="modelName" class="d-none" data-model-name="{{ base_object_type }}"></div>
+
+    <form hx-post="{{ form_url }}"
+          hx-include="[id='new-interfaces']"
+          hx-target="body"
+          id="obj-form"
+    >
+      {% csrf_token %}
+      {{ form|crispy }}
+      <div id="new-interfaces"><input type="hidden"></div>
+      <button type="button"
+              id="add-new"
+              class="btn btn-outline-primary mb-2"
+              hx-get="{{ new_interface_url }}"
+              hx-target="#new-interfaces"
+              hx-swap="beforeend"
+      >Add value for new interface</button>
+      <div class="d-flex justify-content-between pb-2">
+        <div>
+          <a href="{{ return_url }}" class="btn btn-outline-primary">Back</a>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </div>
+    </form>
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    {{ form_media }}
+    <script type="module" src="{% static 'components/js/create_extra_interfaces.mjs' %}" type="text/javascript"></script>
+    <script type="module" src="{% static 'components/js/autocomplete_htmx.mjs' %}" type="text/javascript"></script>
+    <script type="text/javascript" src="{% static "cases/js/ignore_enter_button.js" %}"></script>
+    <link rel="stylesheet" href="{% static 'css/select2-bootstrap4-theme/select2-bootstrap4.css' %}">
+{% endblock %}
