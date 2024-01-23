@@ -331,6 +331,16 @@
             <span class="s2">&quot;the readers.&quot;</span>
         <span class="p">),</span>
     <span class="p">)</span>
+    <span class="n">instant_verification</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;In an educational reader study, enabling this setting will allow the &quot;</span>
+            <span class="s2">&quot;user to go through the reader study faster. The &#39;Save and continue&#39; &quot;</span>
+            <span class="s2">&quot;button will be replaced by a &#39;Verify and continue&#39; button which will &quot;</span>
+            <span class="s2">&quot;show the answer verification pop up and allow the user to save and go &quot;</span>
+            <span class="s2">&quot;to the next case upon dismissal.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
     <span class="n">case_text</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">JSONField</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span>
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -403,6 +413,7 @@
         <span class="s2">&quot;help_text_markdown&quot;</span><span class="p">,</span>
         <span class="s2">&quot;shuffle_hanging_list&quot;</span><span class="p">,</span>
         <span class="s2">&quot;is_educational&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;instant_verification&quot;</span><span class="p">,</span>
         <span class="s2">&quot;roll_over_answers_for_n_cases&quot;</span><span class="p">,</span>
         <span class="s2">&quot;allow_answer_modification&quot;</span><span class="p">,</span>
         <span class="s2">&quot;allow_case_navigation&quot;</span><span class="p">,</span>
