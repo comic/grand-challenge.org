@@ -16,6 +16,7 @@
                     <button type="button"
                             id="conversation-select-button-{{ object.pk }}"
                             hx-get="{{ object.get_absolute_url }}"
+                            data-conversation-id="{{ object.pk }}"
                             data-conversation-select-detail-url="{% url 'direct-messages:conversation-select-detail' pk=object.pk %}"
                             class="list-group-item list-group-item-action conversation-detail-select">
                         {% include "direct_messages/partials/conversation_select_detail.html" %}

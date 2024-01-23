@@ -275,7 +275,6 @@ def test_new_answer_type_listed():
         [AnswerType.MULTIPLE_POLYGONS, True],
         [AnswerType.CHOICE, True],
         [AnswerType.MULTIPLE_CHOICE, False],
-        [AnswerType.MULTIPLE_CHOICE_DROPDOWN, False],
         [AnswerType.MASK, True],
         [AnswerType.LINE, True],
         [AnswerType.MULTIPLE_LINES, True],
