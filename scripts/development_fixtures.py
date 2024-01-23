@@ -64,7 +64,6 @@ DEFAULT_USERS = [
     "demop",
     "user",
     "admin",
-    "retina",
     "readerstudy",
     "workstation",
     "algorithm",
@@ -176,9 +175,6 @@ def _create_direct_messages(users):
 def _set_user_permissions(users):
     users["admin"].is_staff = True
     users["admin"].save()
-
-    retina_group = Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME)
-    users["retina"].groups.add(retina_group)
 
     rs_group = Group.objects.get(
         name=settings.READER_STUDY_CREATORS_GROUP_NAME
@@ -622,7 +618,6 @@ def _create_user_tokens(users):
     # Hard code tokens used in gcapi integration tests
     user_tokens = {
         "admin": "1b9436200001f2eaf57cd77db075cbb60a49a00a",
-        "retina": "f1f98a1733c05b12118785ffd995c250fe4d90da",
         "readerstudy": "01614a77b1c0b4ecd402be50a8ff96188d5b011d",
         "demop": "00aa710f4dc5621a0cb64b0795fbba02e39d7700",
         "archive": "0d284528953157759d26c469297afcf6fd367f71",

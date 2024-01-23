@@ -27,20 +27,6 @@ from grandchallenge.reader_studies.views import (
     QuestionViewSet,
     ReaderStudyViewSet,
 )
-from grandchallenge.retina_api.views import (
-    BooleanClassificationAnnotationViewSet,
-    ETDRSGridAnnotationViewSet,
-    ImageLevelAnnotationsForImageViewSet,
-    LandmarkAnnotationSetViewSet,
-    OctRetinaPathologyAnnotationViewSet,
-    PathologyAnnotationViewSet,
-    PolygonAnnotationSetViewSet,
-    QualityAnnotationViewSet,
-    RetinaImageViewSet,
-    RetinaPathologyAnnotationViewSet,
-    SinglePolygonViewSet,
-    TextAnnotationViewSet,
-)
 from grandchallenge.timezones.views import TimezoneAPIView
 from grandchallenge.uploads.views import UserUploadViewSet
 from grandchallenge.workstation_configs.views import WorkstationConfigViewSet
@@ -110,64 +96,6 @@ router.register(
     basename="reader-studies-display-set",
 )
 router.register(r"reader-studies", ReaderStudyViewSet, basename="reader-study")
-
-# Retina
-router.register(
-    r"retina/landmark-annotation",
-    LandmarkAnnotationSetViewSet,
-    basename="retina-landmark-annotation",
-)
-router.register(
-    r"retina/image-level-annotation-for-image",
-    ImageLevelAnnotationsForImageViewSet,
-    basename="retina-image-level-annotation-for-image",
-)
-router.register(
-    r"retina/quality-annotation",
-    QualityAnnotationViewSet,
-    basename="retina-quality-annotation",
-)
-router.register(
-    r"retina/pathology-annotation",
-    PathologyAnnotationViewSet,
-    basename="retina-pathology-annotation",
-)
-router.register(
-    r"retina/retina-pathology-annotation",
-    RetinaPathologyAnnotationViewSet,
-    basename="retina-retina-pathology-annotation",
-)
-router.register(
-    r"retina/oct-retina-pathology-annotation",
-    OctRetinaPathologyAnnotationViewSet,
-    basename="oct-retina-retina-pathology-annotation",
-)
-router.register(
-    r"retina/text-annotation",
-    TextAnnotationViewSet,
-    basename="retina-text-annotation",
-)
-router.register(
-    r"retina/polygon-annotation-set",
-    PolygonAnnotationSetViewSet,
-    basename="retina-polygon-annotation-set",
-)
-router.register(
-    r"retina/single-polygon-annotation",
-    SinglePolygonViewSet,
-    basename="retina-single-polygon-annotation",
-)
-router.register(
-    r"retina/boolean-classification-annotation",
-    BooleanClassificationAnnotationViewSet,
-    basename="retina-boolean-classification-annotation",
-)
-router.register(
-    r"retina/etdrs-grid-annotation",
-    ETDRSGridAnnotationViewSet,
-    basename="retina-etdrs-grid-annotation",
-)
-router.register(r"retina/images", RetinaImageViewSet, basename="retina-images")
 
 # Follows (Subscriptions)
 router.register(r"subscriptions", FollowViewSet, basename="follow")

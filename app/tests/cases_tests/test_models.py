@@ -19,7 +19,7 @@ from tests.factories import ImageFileFactory
 
 
 @pytest.mark.django_db
-def test_retina_image_str():
+def test_image_str():
     model = ImageFactory()
     assert str(model) == f"Image {model.name} {model.shape_without_color}"
 
