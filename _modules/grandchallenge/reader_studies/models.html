@@ -638,10 +638,13 @@
             <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">gt</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
                 <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">&quot;case&quot;</span> <span class="ow">or</span> <span class="n">key</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;__explanation&quot;</span><span class="p">):</span>
                     <span class="k">continue</span>
+
                 <span class="n">question</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">questions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">question_text</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
                 <span class="n">_answer</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">gt</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+
                 <span class="k">if</span> <span class="n">_answer</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">question</span><span class="o">.</span><span class="n">required</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
                     <span class="k">continue</span>
+
                 <span class="k">if</span> <span class="n">question</span><span class="o">.</span><span class="n">answer_type</span> <span class="o">==</span> <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">:</span>
                     <span class="k">try</span><span class="p">:</span>
                         <span class="n">option</span> <span class="o">=</span> <span class="n">question</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="n">_answer</span><span class="p">)</span>
@@ -650,15 +653,14 @@
                         <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                             <span class="sa">f</span><span class="s2">&quot;Option </span><span class="si">{</span><span class="n">_answer</span><span class="si">!r}</span><span class="s2"> is not valid for question </span><span class="si">{</span><span class="n">question</span><span class="o">.</span><span class="n">question_text</span><span class="si">}</span><span class="s2">&quot;</span>
                         <span class="p">)</span>
-                <span class="k">if</span> <span class="n">question</span><span class="o">.</span><span class="n">answer_type</span> <span class="ow">in</span> <span class="p">(</span>
-                    <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">,</span>
-                    <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE_DROPDOWN</span><span class="p">,</span>
-                <span class="p">):</span>
+
+                <span class="k">if</span> <span class="n">question</span><span class="o">.</span><span class="n">answer_type</span> <span class="o">==</span> <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">:</span>
                     <span class="n">_answer</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
                         <span class="n">question</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">title__in</span><span class="o">=</span><span class="n">_answer</span><span class="p">)</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span>
                             <span class="s2">&quot;pk&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span>
                         <span class="p">)</span>
                     <span class="p">)</span>
+
                 <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span>
                     <span class="s2">&quot;creator&quot;</span><span class="p">:</span> <span class="n">user</span><span class="p">,</span>
                     <span class="s2">&quot;question&quot;</span><span class="p">:</span> <span class="n">question</span><span class="p">,</span>
@@ -840,10 +842,10 @@
             <span class="n">field</span> <span class="o">=</span> <span class="n">gt</span><span class="p">[</span><span class="s2">&quot;display_set_id&quot;</span><span class="p">]</span>
             <span class="n">ground_truths</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="n">ground_truths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="p">{})</span>
 
-            <span class="k">if</span> <span class="n">gt</span><span class="p">[</span><span class="s2">&quot;question__answer_type&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span>
-                <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">,</span>
-                <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE_DROPDOWN</span><span class="p">,</span>
-            <span class="p">]:</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">gt</span><span class="p">[</span><span class="s2">&quot;question__answer_type&quot;</span><span class="p">]</span>
+                <span class="o">==</span> <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span>
+            <span class="p">):</span>
                 <span class="n">human_readable_answers</span> <span class="o">=</span> <span class="p">[</span>
                     <span class="n">options</span><span class="p">[</span><span class="n">gt</span><span class="p">[</span><span class="s2">&quot;question&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">gt</span><span class="p">[</span><span class="s2">&quot;answer&quot;</span><span class="p">]</span>
                 <span class="p">]</span>
@@ -1075,7 +1077,6 @@
     <span class="n">MULTIPLE_POLYGONS</span> <span class="o">=</span> <span class="s2">&quot;MPOL&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple polygons&quot;</span>
     <span class="n">CHOICE</span> <span class="o">=</span> <span class="s2">&quot;CHOI&quot;</span><span class="p">,</span> <span class="s2">&quot;Choice&quot;</span>
     <span class="n">MULTIPLE_CHOICE</span> <span class="o">=</span> <span class="s2">&quot;MCHO&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple choice&quot;</span>
-    <span class="n">MULTIPLE_CHOICE_DROPDOWN</span> <span class="o">=</span> <span class="s2">&quot;MCHD&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple choice dropdown&quot;</span>
     <span class="n">MASK</span> <span class="o">=</span> <span class="s2">&quot;MASK&quot;</span><span class="p">,</span> <span class="s2">&quot;Mask&quot;</span>
     <span class="n">LINE</span> <span class="o">=</span> <span class="s2">&quot;LINE&quot;</span><span class="p">,</span> <span class="s2">&quot;Line&quot;</span>
     <span class="n">MULTIPLE_LINES</span> <span class="o">=</span> <span class="s2">&quot;MLIN&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple lines&quot;</span>
@@ -1091,7 +1092,6 @@
         <span class="k">return</span> <span class="p">[</span>
             <span class="n">AnswerType</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">,</span>
             <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">,</span>
-            <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE_DROPDOWN</span><span class="p">,</span>
         <span class="p">]</span>
 
     <span class="nd">@staticmethod</span>
@@ -1157,9 +1157,6 @@
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_LINES</span><span class="p">:</span> <span class="p">[</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_LINES</span><span class="p">],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">:</span> <span class="p">[</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">:</span> <span class="p">[</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">],</span>
-    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE_DROPDOWN</span><span class="p">:</span> <span class="p">[</span>
-        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span>
-    <span class="p">],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MASK</span><span class="p">:</span> <span class="p">[</span>
         <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">SEGMENTATION</span><span class="p">,</span>
     <span class="p">],</span>
@@ -1223,7 +1220,6 @@
         <span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">CHECKBOX_SELECT_MULTIPLE</span><span class="p">,</span>
         <span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">SELECT_MULTIPLE</span><span class="p">,</span>
     <span class="p">],</span>
-    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE_DROPDOWN</span><span class="p">:</span> <span class="p">[],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MASK</span><span class="p">:</span> <span class="p">[],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">LINE</span><span class="p">:</span> <span class="p">[],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_LINES</span><span class="p">:</span> <span class="p">[</span><span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">ACCEPT_REJECT</span><span class="p">],</span>
@@ -1263,7 +1259,6 @@
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">ELLIPSE</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_ELLIPSES</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">:</span> <span class="p">[],</span>
-    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE_DROPDOWN</span><span class="p">:</span> <span class="p">[],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">THREE_POINT_ANGLE</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_THREE_POINT_ANGLES</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">}</span>
@@ -1322,7 +1317,6 @@
         <span class="n">AnswerType</span><span class="o">.</span><span class="n">BOOL</span><span class="p">:</span> <span class="s2">&quot;&#39;true&#39;&quot;</span><span class="p">,</span>
         <span class="n">AnswerType</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">:</span> <span class="s2">&quot;&#39;</span><span class="se">\&quot;</span><span class="s2">option</span><span class="se">\&quot;</span><span class="s2">&#39;&quot;</span><span class="p">,</span>
         <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\&#39;</span><span class="s1">[&quot;option1&quot;, &quot;option2&quot;]</span><span class="se">\&#39;</span><span class="s1">&#39;</span><span class="p">,</span>
-        <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE_DROPDOWN</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\&#39;</span><span class="s1">[&quot;option1&quot;, &quot;option2&quot;]</span><span class="se">\&#39;</span><span class="s1">&#39;</span><span class="p">,</span>
     <span class="p">}</span>
 
     <span class="n">reader_study</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
@@ -1462,10 +1456,7 @@
 <span class="sd">        Calculates the score for ``answer`` by applying ``scoring_function``</span>
 <span class="sd">        to ``answer`` and ``ground_truth``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span> <span class="ow">in</span> <span class="p">(</span>
-            <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">,</span>
-            <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE_DROPDOWN</span><span class="p">,</span>
-        <span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span> <span class="o">==</span> <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">answer</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">ground_truth</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="k">return</span> <span class="mf">1.0</span>
 
@@ -1866,10 +1857,7 @@
                     <span class="s2">&quot;Provided option is not valid for this question&quot;</span>
                 <span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">question</span><span class="o">.</span><span class="n">answer_type</span> <span class="ow">in</span> <span class="p">(</span>
-            <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">,</span>
-            <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE_DROPDOWN</span><span class="p">,</span>
-        <span class="p">):</span>
+        <span class="k">if</span> <span class="n">question</span><span class="o">.</span><span class="n">answer_type</span> <span class="o">==</span> <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">x</span> <span class="ow">in</span> <span class="n">valid_options</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">answer</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                     <span class="s2">&quot;Provided options are not valid for this question&quot;</span>
@@ -1900,15 +1888,14 @@
                 <span class="o">.</span><span class="n">first</span><span class="p">()</span>
                 <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
             <span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">question</span><span class="o">.</span><span class="n">answer_type</span> <span class="ow">in</span> <span class="p">(</span>
-            <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">,</span>
-            <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE_DROPDOWN</span><span class="p">,</span>
-        <span class="p">):</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">question</span><span class="o">.</span><span class="n">answer_type</span> <span class="o">==</span> <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">question</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pk__in</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">answer</span><span class="p">)</span>
                 <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">)</span>
                 <span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="p">)</span>
+
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">answer</span>
 
 <div class="viewcode-block" id="Answer.calculate_score">
