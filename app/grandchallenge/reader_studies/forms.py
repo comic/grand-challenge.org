@@ -610,9 +610,7 @@ class GroundTruthForm(SaveFormInitMixin, Form):
                 }
 
                 try:
-                    answer_obj = Answer.objects.filter(
-                        **common_answer_kwargs
-                    ).get()
+                    answer_obj = Answer.objects.get(**common_answer_kwargs)
                 except ObjectDoesNotExist:
                     answer_obj = Answer(**common_answer_kwargs)
 
