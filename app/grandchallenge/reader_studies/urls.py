@@ -37,16 +37,6 @@ app_name = "reader-studies"
 urlpatterns = [
     path("", ReaderStudyList.as_view(), name="list"),
     path("create/", ReaderStudyCreate.as_view(), name="create"),
-    path(
-        "questions/interfaces/",
-        QuestionInterfacesView.as_view(),
-        name="question-interfaces",
-    ),
-    path(
-        "questions/widgets/",
-        QuestionWidgetsView.as_view(),
-        name="question-widgets",
-    ),
     path("<slug>/", ReaderStudyDetail.as_view(), name="detail"),
     path("<slug>/update/", ReaderStudyUpdate.as_view(), name="update"),
     path("<slug>/delete/", ReaderStudyDelete.as_view(), name="delete"),
@@ -130,6 +120,16 @@ urlpatterns = [
         "<slug>/questions/<pk>/delete/",
         QuestionDelete.as_view(),
         name="question-delete",
+    ),
+    path(
+        "<slug>/questions/interfaces/",
+        QuestionInterfacesView.as_view(),
+        name="question-interfaces",
+    ),
+    path(
+        "<slug>/questions/widgets/",
+        QuestionWidgetsView.as_view(),
+        name="question-widgets",
     ),
     path(
         "<slug>/editors/update/",

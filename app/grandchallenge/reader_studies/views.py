@@ -493,11 +493,16 @@ class QuestionUpdate(
     raise_exception = True
 
     def get_permission_object(self):
-        return self.reader_study
+        return self.get_object().reader_study
 
     @property
     def reader_study(self):
         return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"reader_study": self.reader_study})
+        return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -705,6 +710,11 @@ class AddQuestionToReaderStudy(
     template_name = "reader_studies/readerstudy_add_object.html"
     type_to_add = "question"
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"reader_study": self.reader_study})
+        return kwargs
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         if self.request.POST:
@@ -712,11 +722,6 @@ class AddQuestionToReaderStudy(
         else:
             context["options"] = CategoricalOptionFormSet()
         return context
-
-    def form_valid(self, form):
-        # TODO these should be set in the form
-        form.instance.reader_study = self.reader_study
-        return super().form_valid(form)
 
 
 class ReaderStudyUserGroupUpdateMixin(UserGroupUpdateMixin):
@@ -1256,7 +1261,7 @@ class QuestionDelete(
     success_message = "Question was successfully deleted"
 
     def get_permission_object(self):
-        return self.reader_study
+        return self.get_object().reader_study
 
     @property
     def reader_study(self):
@@ -1278,15 +1283,15 @@ class QuestionDelete(
             )
 
 
-class QuestionInterfacesView(View):
-    def get(self, request):
-        form = QuestionForm(request.GET)
+class QuestionInterfacesView(BaseAddObjectToReaderStudyMixin, View):
+    def get(self, request, slug):
+        form = QuestionForm(request.GET, reader_study=self.reader_study)
         return HttpResponse(form["interface"])
 
 
-class QuestionWidgetsView(View):
-    def get(self, request):
-        form = QuestionForm(request.GET)
+class QuestionWidgetsView(BaseAddObjectToReaderStudyMixin, View):
+    def get(self, request, slug):
+        form = QuestionForm(request.GET, reader_study=self.reader_study)
         return HttpResponse(form["widget"])
 
 

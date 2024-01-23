@@ -266,12 +266,30 @@ class ReaderStudyCopyForm(Form):
 
 
 class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, reader_study, **kwargs):
         super().__init__(*args, **kwargs)
 
         for field_name in self.instance.read_only_fields:
             self.fields[field_name].required = False
             self.fields[field_name].disabled = True
+
+        self.fields["reader_study"].queryset = ReaderStudy.objects.filter(
+            pk=reader_study.pk
+        )
+        self.fields["reader_study"].initial = reader_study
+        self.fields["reader_study"].disabled = True
+        self.fields["reader_study"].hidden = True
+
+        self.fields["answer_type"].widget = Select(
+            attrs={
+                "hx-get": reverse_lazy(
+                    "reader-studies:question-interfaces",
+                    kwargs={"slug": reader_study.slug},
+                ),
+                "hx-target": "#id_interface",
+            }
+        )
+        self.fields["answer_type"].choices = AnswerType.choices
 
         self.helper = FormHelper()
         self.helper.form_tag = True
@@ -283,7 +301,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                 Field("widget"),
                 HTML(
                     f"<div "
-                    f"hx-get={reverse_lazy('reader-studies:question-widgets')!r} "
+                    f"hx-get={reverse_lazy('reader-studies:question-widgets', kwargs={'slug': reader_study.slug})!r} "
                     f"hx-trigger='change from:#id_answer_type' "
                     f"hx-target='#id_widget' "
                     f"hx-include='[id=id_answer_type]'>"
@@ -395,6 +413,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
             "answer_min_length",
             "answer_max_length",
             "answer_match_pattern",
+            "reader_study",
         )
         help_texts = {
             "question_text": (
@@ -434,14 +453,6 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
             "answer_match_pattern": TextInput,
             "overlay_segments": JSONEditorWidget(
                 schema=OVERLAY_SEGMENTS_SCHEMA
-            ),
-            "answer_type": Select(
-                attrs={
-                    "hx-get": reverse_lazy(
-                        "reader-studies:question-interfaces"
-                    ),
-                    "hx-target": "#id_interface",
-                }
             ),
             "default_annotation_color": ColorEditorWidget(format="hex"),
         }
