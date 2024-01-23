@@ -120,7 +120,6 @@ def test_rs_detail_view_permissions(client):
     "view_name",
     [
         "update",
-        "add-images",
         "add-question",
         "editors-update",
         "readers-update",

@@ -3,7 +3,6 @@ from django.urls import path
 from grandchallenge.reader_studies.views import (
     AddDisplaySetsToReaderStudy,
     AddGroundTruthToReaderStudy,
-    AddImagesToReaderStudy,
     AddQuestionToReaderStudy,
     AnswersRemoveForUser,
     AnswersRemoveGroundTruth,
@@ -116,11 +115,6 @@ urlpatterns = [
         "<slug>/display-sets/<uuid:pk>/interfaces/<slug:interface_slug>/files/update/",
         DisplaySetFilesUpdate.as_view(),
         name="display-set-files-update",
-    ),
-    path(
-        "<slug>/images/add/",
-        AddImagesToReaderStudy.as_view(),
-        name="add-images",
     ),
     path(
         "<slug>/questions/add/",

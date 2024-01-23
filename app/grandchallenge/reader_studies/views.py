@@ -56,7 +56,6 @@ from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.archives.forms import AddCasesForm
-from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.components.forms import NewFileUploadForm, SingleCIVForm
 from grandchallenge.components.serializers import (
@@ -401,6 +400,7 @@ class ReaderStudyDisplaySetList(
     ]
     text_align = "left"
     default_sort_order = "asc"
+    default_sort_column = 1
 
     @cached_property
     def reader_study(self):
@@ -521,8 +521,6 @@ class BaseAddObjectToReaderStudyMixin(
     Mixin that adds an object that has a foreign key to a reader study and a
     creator. The url to this view must include a slug that points to the slug
     of the reader study.
-
-    Must be placed to the left of ObjectPermissionRequiredMixin.
     """
 
     permission_required = (
@@ -545,13 +543,6 @@ class BaseAddObjectToReaderStudyMixin(
         return context
 
 
-class AddObjectToReaderStudyMixin(BaseAddObjectToReaderStudyMixin, CreateView):
-    def form_valid(self, form):
-        form.instance.creator = self.request.user
-        form.instance.reader_study = self.reader_study
-        return super().form_valid(form)
-
-
 class AddGroundTruthToReaderStudy(BaseAddObjectToReaderStudyMixin, FormView):
     form_class = GroundTruthForm
     template_name = "reader_studies/readerstudy_add_object.html"
@@ -559,18 +550,14 @@ class AddGroundTruthToReaderStudy(BaseAddObjectToReaderStudyMixin, FormView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({"reader_study": self.reader_study})
+        kwargs.update(
+            {"user": self.request.user, "reader_study": self.reader_study}
+        )
         return kwargs
 
     def form_valid(self, form):
-        try:
-            self.reader_study.add_ground_truth(
-                data=form.cleaned_data["ground_truth"], user=self.request.user
-            )
-            return super().form_valid(form)
-        except ValidationError as e:
-            form.add_error("ground_truth", e)
-            return self.form_invalid(form)
+        form.save_answers()
+        return super().form_valid(form)
 
     def get_success_url(self):
         return self.reader_study.get_absolute_url()
@@ -684,7 +671,7 @@ class ReaderStudyCopy(
         return self.reader_study.get_absolute_url()
 
 
-class AddDisplaySetsToReaderStudy(AddObjectToReaderStudyMixin):
+class AddDisplaySetsToReaderStudy(BaseAddObjectToReaderStudyMixin, CreateView):
     model = RawImageUploadSession
     form_class = AddCasesForm
     template_name = "reader_studies/readerstudy_add_object.html"
@@ -704,25 +691,14 @@ class AddDisplaySetsToReaderStudy(AddObjectToReaderStudyMixin):
         )
         return kwargs
 
-
-class AddImagesToReaderStudy(AddObjectToReaderStudyMixin):
-    model = RawImageUploadSession
-    form_class = UploadRawImagesForm
-    template_name = "reader_studies/readerstudy_add_object.html"
-    type_to_add = "images"
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update(
-            {
-                "user": self.request.user,
-            }
-        )
-        return kwargs
+    def form_valid(self, form):
+        # TODO this should be set in the form
+        form.instance.creator = self.request.user
+        return super().form_valid(form)
 
 
 class AddQuestionToReaderStudy(
-    QuestionOptionMixin, AddObjectToReaderStudyMixin
+    QuestionOptionMixin, BaseAddObjectToReaderStudyMixin, CreateView
 ):
     model = Question
     form_class = QuestionForm
@@ -735,13 +711,12 @@ class AddQuestionToReaderStudy(
             context["options"] = CategoricalOptionFormSet(self.request.POST)
         else:
             context["options"] = CategoricalOptionFormSet()
-        context.update({"reader_study": self.reader_study})
         return context
 
     def form_valid(self, form):
-        form.instance.creator = self.request.user
+        # TODO these should be set in the form
         form.instance.reader_study = self.reader_study
-        return self.validate_options(form, super())
+        return super().form_valid(form)
 
 
 class ReaderStudyUserGroupUpdateMixin(UserGroupUpdateMixin):

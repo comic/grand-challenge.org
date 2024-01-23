@@ -1036,6 +1036,7 @@ def test_reader_study_add_ground_truth(client, settings):
         Answer.objects.get(display_set=ds1, question=q).explanation
         == "new explanation"
     )
+    assert Answer.objects.get(display_set=ds1, question=q).creator == editor
     assert (
         Answer.objects.get(display_set=ds2, question=q).explanation
         == "explanation"
