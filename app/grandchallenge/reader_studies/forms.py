@@ -173,7 +173,6 @@ class ReaderStudyCreateForm(
             self.add_error(
                 error=ValidationError(
                     "Reader study must be educational when instant verification is enabled.",
-                    code="required",
                 ),
                 field="is_educational",
             )
