@@ -155,6 +155,8 @@ def test_reader_study_create(client, uploaded_image):
         roll_over_answers_for_n_cases=0,
         public=True,
         description="",
+        is_educational=False,
+        instant_verification=False,
     ):
         return get_view_for_user(
             viewname="reader-studies:create",
@@ -171,6 +173,8 @@ def test_reader_study_create(client, uploaded_image):
                 "roll_over_answers_for_n_cases": roll_over_answers_for_n_cases,
                 "public": public,
                 "description": description,
+                "is_educational": is_educational,
+                "instant_verification": instant_verification,
             },
             follow=True,
             user=creator,
@@ -199,8 +203,15 @@ def test_reader_study_create(client, uploaded_image):
     assert roll_over_error not in response.rendered_content
     assert public_error in response.rendered_content
 
+    educational_error = "Reader study must be educational when instant verification is enabled."
+    response = try_create_rs(is_educational=False, instant_verification=True)
+    assert educational_error in response.rendered_content
+
     response = try_create_rs(
-        roll_over_answers_for_n_cases=1, description="Some description"
+        roll_over_answers_for_n_cases=1,
+        description="Some description",
+        is_educational=True,
+        instant_verification=True,
     )
     assert "error_1_id_workstation" not in response.rendered_content
     assert roll_over_error not in response.rendered_content

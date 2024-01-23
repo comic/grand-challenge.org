@@ -117,6 +117,7 @@ class ReaderStudyCreateForm(
             "workstation",
             "workstation_config",
             "is_educational",
+            "instant_verification",
             "public",
             "access_request_handling",
             "allow_answer_modification",
@@ -165,6 +166,17 @@ class ReaderStudyCreateForm(
                 field=None,
             )
 
+        if (
+            self.cleaned_data["instant_verification"]
+            and not self.cleaned_data["is_educational"]
+        ):
+            self.add_error(
+                error=ValidationError(
+                    "Reader study must be educational when instant verification is enabled."
+                ),
+                field="is_educational",
+            )
+
 
 class ReaderStudyUpdateForm(
     ReaderStudyCreateForm, ModelForm, ViewContentMixin
@@ -187,6 +199,7 @@ class ReaderStudyUpdateForm(
             "help_text_markdown",
             "shuffle_hanging_list",
             "is_educational",
+            "instant_verification",
             "public",
             "access_request_handling",
             "allow_answer_modification",
