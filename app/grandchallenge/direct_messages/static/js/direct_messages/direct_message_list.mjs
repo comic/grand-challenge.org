@@ -24,6 +24,10 @@ document.body.addEventListener("htmx:afterOnLoad", function(evt) {
         }
         evt.target.classList.add("active");
 
+        const url = new URL(location);
+        url.searchParams.set("conversation", evt.target.dataset.conversationId);
+        history.pushState({}, "", url);
+
         let markReadForm = evt.target.querySelector('.conversation-mark-read-form');
         if (markReadForm !== null) {
             // Mark the form as read

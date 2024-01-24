@@ -1,5 +1,3 @@
-import json
-
 from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -247,6 +245,16 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
             "the readers."
         ),
     )
+    instant_verification = models.BooleanField(
+        default=False,
+        help_text=(
+            "In an educational reader study, enabling this setting will allow the "
+            "user to go through the reader study faster. The 'Save and continue' "
+            "button will be replaced by a 'Verify and continue' button which will "
+            "show the answer verification pop up and allow the user to save and go "
+            "to the next case upon dismissal."
+        ),
+    )
     case_text = models.JSONField(
         default=dict,
         blank=True,
@@ -319,6 +327,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         "help_text_markdown",
         "shuffle_hanging_list",
         "is_educational",
+        "instant_verification",
         "roll_over_answers_for_n_cases",
         "allow_answer_modification",
         "allow_case_navigation",
@@ -526,77 +535,6 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         """The number of answerable questions for this ``ReaderStudy``."""
         return self.answerable_questions.count()
 
-    def add_ground_truth(self, *, data, user):  # noqa: C901
-        """Add ground truth answers provided by ``data`` for this ``ReaderStudy``."""
-        answers = []
-        for gt in data:
-            display_set = self.display_sets.get(pk=gt["case"])
-            for key in gt.keys():
-                if key == "case" or key.endswith("__explanation"):
-                    continue
-                question = self.questions.get(question_text=key)
-                _answer = json.loads(gt[key])
-                if _answer is None and question.required is False:
-                    continue
-                if question.answer_type == Question.AnswerType.CHOICE:
-                    try:
-                        option = question.options.get(title=_answer)
-                        _answer = option.pk
-                    except CategoricalOption.DoesNotExist:
-                        raise ValidationError(
-                            f"Option {_answer!r} is not valid for question {question.question_text}"
-                        )
-                if question.answer_type in (
-                    Question.AnswerType.MULTIPLE_CHOICE,
-                    Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
-                ):
-                    _answer = list(
-                        question.options.filter(title__in=_answer).values_list(
-                            "pk", flat=True
-                        )
-                    )
-                kwargs = {
-                    "creator": user,
-                    "question": question,
-                    "answer": _answer,
-                    "is_ground_truth": True,
-                }
-                kwargs["display_set"] = display_set
-
-                Answer.validate(**kwargs)
-                try:
-                    explanation = json.loads(gt.get(key + "__explanation", ""))
-                except (json.JSONDecodeError, TypeError):
-                    explanation = ""
-
-                answer_obj = Answer.objects.filter(
-                    display_set=display_set,
-                    question=question,
-                    is_ground_truth=True,
-                ).first()
-
-                answers.append(
-                    {
-                        "answer_obj": answer_obj
-                        or Answer(
-                            creator=user,
-                            question=question,
-                            is_ground_truth=True,
-                            explanation="",
-                        ),
-                        "answer": _answer,
-                        "explanation": explanation,
-                        "display_set": display_set,
-                    }
-                )
-
-        for answer in answers:
-            answer["answer_obj"].answer = answer["answer"]
-            answer["answer_obj"].explanation = answer["explanation"]
-            answer["answer_obj"].save()
-            answer["answer_obj"].display_set = answer["display_set"]
-            answer["answer_obj"].save()
-
     def get_progress_for_user(self, user):
         """Returns the percentage of completed hangings and questions for ``user``."""
         if self.display_sets.count() == 0:
@@ -729,10 +667,10 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
             field = gt["display_set_id"]
             ground_truths[field] = ground_truths.get(field, {})
 
-            if gt["question__answer_type"] in [
-                Question.AnswerType.MULTIPLE_CHOICE,
-                Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
-            ]:
+            if (
+                gt["question__answer_type"]
+                == Question.AnswerType.MULTIPLE_CHOICE
+            ):
                 human_readable_answers = [
                     options[gt["question"]].get(a, a) for a in gt["answer"]
                 ]
@@ -940,7 +878,6 @@ class AnswerType(models.TextChoices):
     MULTIPLE_POLYGONS = "MPOL", "Multiple polygons"
     CHOICE = "CHOI", "Choice"
     MULTIPLE_CHOICE = "MCHO", "Multiple choice"
-    MULTIPLE_CHOICE_DROPDOWN = "MCHD", "Multiple choice dropdown"
     MASK = "MASK", "Mask"
     LINE = "LINE", "Line"
     MULTIPLE_LINES = "MLIN", "Multiple lines"
@@ -956,7 +893,6 @@ class AnswerType(models.TextChoices):
         return [
             AnswerType.CHOICE,
             AnswerType.MULTIPLE_CHOICE,
-            AnswerType.MULTIPLE_CHOICE_DROPDOWN,
         ]
 
     @staticmethod
@@ -1021,9 +957,6 @@ ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
     AnswerType.MULTIPLE_LINES: [InterfaceKindChoices.MULTIPLE_LINES],
     AnswerType.CHOICE: [InterfaceKindChoices.CHOICE],
     AnswerType.MULTIPLE_CHOICE: [InterfaceKindChoices.MULTIPLE_CHOICE],
-    AnswerType.MULTIPLE_CHOICE_DROPDOWN: [
-        InterfaceKindChoices.MULTIPLE_CHOICE
-    ],
     AnswerType.MASK: [
         InterfaceKindChoices.SEGMENTATION,
     ],
@@ -1084,7 +1017,6 @@ ANSWER_TYPE_TO_QUESTION_WIDGET = {
         QuestionWidgetKindChoices.CHECKBOX_SELECT_MULTIPLE,
         QuestionWidgetKindChoices.SELECT_MULTIPLE,
     ],
-    AnswerType.MULTIPLE_CHOICE_DROPDOWN: [],
     AnswerType.MASK: [],
     AnswerType.LINE: [],
     AnswerType.MULTIPLE_LINES: [QuestionWidgetKindChoices.ACCEPT_REJECT],
@@ -1124,7 +1056,6 @@ EMPTY_ANSWER_VALUES = {
     AnswerType.ELLIPSE: None,
     AnswerType.MULTIPLE_ELLIPSES: None,
     AnswerType.MULTIPLE_CHOICE: [],
-    AnswerType.MULTIPLE_CHOICE_DROPDOWN: [],
     AnswerType.THREE_POINT_ANGLE: None,
     AnswerType.MULTIPLE_THREE_POINT_ANGLES: None,
 }
@@ -1199,7 +1130,6 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         AnswerType.BOOL: "'true'",
         AnswerType.CHOICE: "'\"option\"'",
         AnswerType.MULTIPLE_CHOICE: '\'["option1", "option2"]\'',
-        AnswerType.MULTIPLE_CHOICE_DROPDOWN: '\'["option1", "option2"]\'',
     }
 
     reader_study = models.ForeignKey(
@@ -1337,10 +1267,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         Calculates the score for ``answer`` by applying ``scoring_function``
         to ``answer`` and ``ground_truth``.
         """
-        if self.answer_type in (
-            Question.AnswerType.MULTIPLE_CHOICE,
-            Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
-        ):
+        if self.answer_type == Question.AnswerType.MULTIPLE_CHOICE:
             if len(answer) == 0 and len(ground_truth) == 0:
                 return 1.0
 
@@ -1687,6 +1614,7 @@ class Answer(UUIDModel):
     def history_values(self):
         return self.history.values_list("answer", "history_date")
 
+    # TODO this should be a model clean method
     @staticmethod
     def validate(  # noqa: C901
         *,
@@ -1742,10 +1670,7 @@ class Answer(UUIDModel):
                     "Provided option is not valid for this question"
                 )
 
-        if question.answer_type in (
-            Question.AnswerType.MULTIPLE_CHOICE,
-            Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
-        ):
+        if question.answer_type == Question.AnswerType.MULTIPLE_CHOICE:
             if not all(x in valid_options for x in answer):
                 raise ValidationError(
                     "Provided options are not valid for this question"
@@ -1775,15 +1700,14 @@ class Answer(UUIDModel):
                 .first()
                 or ""
             )
-        if self.question.answer_type in (
-            Question.AnswerType.MULTIPLE_CHOICE,
-            Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
-        ):
+
+        if self.question.answer_type == Question.AnswerType.MULTIPLE_CHOICE:
             return ", ".join(
                 self.question.options.filter(pk__in=self.answer)
                 .order_by("title")
                 .values_list("title", flat=True)
             )
+
         return self.answer
 
     def calculate_score(self, ground_truth):
