@@ -105,14 +105,6 @@ development_fixtures:
 		bash -c "python manage.py migrate && python manage.py runscript minio development_fixtures"
 
 
-retina_archive_structures:
-	docker compose run \
-		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
-		--rm \
-		web \
-		bash -c "python manage.py runscript create_retina_archive_structures"
-
-
 algorithm_evaluation_fixtures:
 	docker compose run \
 		-v $(shell readlink -f ./scripts/):/app/scripts:ro \

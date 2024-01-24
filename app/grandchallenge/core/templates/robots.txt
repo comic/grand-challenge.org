@@ -7,7 +7,6 @@ Disallow: /markdownx/
 Disallow: /media/
 Disallow: /participants/
 Disallow: /registrations/
-Disallow: /retina/
 Disallow: /settings/
 Disallow: /socialauth/
 Disallow: /static/
