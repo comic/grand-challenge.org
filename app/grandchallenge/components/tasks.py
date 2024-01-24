@@ -510,11 +510,7 @@ def _get_root_docker_image_files(*, instance):
                 and "/" not in tarinfo.name
             }
         return files
-    except tarfile.ReadError:
-        raise ValidationError(
-            "Could not read the files in the container image file."
-        )
-    except (EOFError, zlib.error, LZMAError, MemoryError):
+    except (EOFError, zlib.error, LZMAError, tarfile.ReadError, MemoryError):
         raise ValidationError("Could not decompress the container image file.")
 
 
