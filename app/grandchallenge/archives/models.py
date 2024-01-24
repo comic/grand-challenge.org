@@ -282,12 +282,22 @@ class ArchiveItem(CIVForObjectMixin, UUIDModel):
         assign_perm(
             f"view_{self._meta.model_name}", self.archive.users_group, self
         )
-        # Archive editors and uploaders can change this archive item
+        # Archive editors and uploaders can change and delete this archive item
         assign_perm(
             f"change_{self._meta.model_name}", self.archive.editors_group, self
         )
         assign_perm(
             f"change_{self._meta.model_name}",
+            self.archive.uploaders_group,
+            self,
+        )
+        assign_perm(
+            f"delete_{self._meta.model_name}",
+            self.archive.editors_group,
+            self,
+        )
+        assign_perm(
+            f"delete_{self._meta.model_name}",
             self.archive.uploaders_group,
             self,
         )

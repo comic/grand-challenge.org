@@ -849,3 +849,25 @@ def test_archive_item_add_value(
             )
     assert response.status_code == 200
     assert ArchiveItem.objects.get().values.first().value
+
+
+@pytest.mark.django_db
+def test_api_archive_item_deletion(client):
+    archive = ArchiveFactory()
+    editor = UserFactory()
+    archive.add_editor(editor)
+    i1, i2 = ArchiveItemFactory.create_batch(2, archive=archive)
+
+    assert ArchiveItem.objects.count() == 2
+
+    response = get_view_for_user(
+        viewname="api:archives-item-detail",
+        reverse_kwargs={"pk": i1.pk},
+        user=editor,
+        client=client,
+        method=client.delete,
+    )
+    assert response.status_code == 204
+    assert ArchiveItem.objects.count() == 1
+    assert i1 not in ArchiveItem.objects.all()
+    assert i2 in ArchiveItem.objects.all()

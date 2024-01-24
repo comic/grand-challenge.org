@@ -20,7 +20,11 @@ from django.views.generic import (
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
 from rest_framework.decorators import action
-from rest_framework.mixins import CreateModelMixin, UpdateModelMixin
+from rest_framework.mixins import (
+    CreateModelMixin,
+    DestroyModelMixin,
+    UpdateModelMixin,
+)
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
@@ -680,7 +684,7 @@ class ArchiveViewSet(ReadOnlyModelViewSet):
 
 
 class ArchiveItemViewSet(
-    CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet
+    CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet, DestroyModelMixin
 ):
     queryset = ArchiveItem.objects.all().prefetch_related(
         "archive__hanging_protocol",
