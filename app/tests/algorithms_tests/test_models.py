@@ -262,7 +262,6 @@ class TestJobLimits:
             algorithm=alg1,
             is_manifest_valid=True,
             is_in_registry=True,
-            is_on_sagemaker=True,
             is_desired_version=True,
         )
 
@@ -283,7 +282,6 @@ class TestJobLimits:
             algorithm=alg1,
             is_manifest_valid=True,
             is_in_registry=True,
-            is_on_sagemaker=True,
         )
         get_view_for_user(
             viewname="algorithms:image-activate",
@@ -309,7 +307,6 @@ class TestJobLimits:
             algorithm=alg2,
             is_manifest_valid=True,
             is_in_registry=True,
-            is_on_sagemaker=True,
             is_desired_version=True,
             image_sha256=ai2.image_sha256,
         )
@@ -334,7 +331,6 @@ class TestJobLimits:
             algorithm=algorithm,
             is_manifest_valid=True,
             is_in_registry=True,
-            is_on_sagemaker=True,
             is_desired_version=True,
         )
 
@@ -363,7 +359,6 @@ class TestJobLimits:
             algorithm=algorithm,
             is_manifest_valid=True,
             is_in_registry=True,
-            is_on_sagemaker=True,
             is_desired_version=True,
         )
 

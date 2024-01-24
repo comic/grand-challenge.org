@@ -399,7 +399,6 @@ def test_publish_algorithm():
         algorithm=algorithm,
         is_manifest_valid=True,
         is_in_registry=True,
-        is_on_sagemaker=True,
         is_desired_version=True,
     )
     _ = AlgorithmJobFactory(
