@@ -437,7 +437,7 @@ def _decompress_tarball(*, in_fileobj, out_fileobj):
 def _validate_docker_image_manifest(*, instance) -> str:
     config_and_sha256 = _get_image_config_and_sha256(instance=instance)
 
-    config = config_and_sha256["config_file"]
+    config = config_and_sha256["config"]
     image_sha256 = config_and_sha256["image_sha256"]
 
     user = str(config["config"].get("User", "")).lower()
@@ -492,7 +492,6 @@ def _get_image_config_and_sha256(*, instance):
 
 
 def _get_image_manifest(*, container_image_files, open_tarfile):
-    """Get the name of the config file of the container image"""
     try:
         manifest = json.loads(
             open_tarfile.extractfile(
@@ -517,7 +516,6 @@ def _get_image_manifest(*, container_image_files, open_tarfile):
 def _get_image_config_file(
     *, image_manifest, container_image_files, open_tarfile
 ):
-    """Get the config of the container image"""
     config_filename = image_manifest["Config"]
 
     try:
@@ -544,7 +542,7 @@ def _get_image_config_file(
             "The container image file does not have a valid sha256 hash."
         )
 
-    return {"image_sha256": image_sha256, "config_file": config}
+    return {"image_sha256": image_sha256, "config": config}
 
 
 def retry_if_dropped(func):
