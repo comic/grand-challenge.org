@@ -60,10 +60,10 @@ from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
 )
 from grandchallenge.components.views import (
+    CIVSetCreateMixin,
     FileUpdateBaseView,
     InterfacesCreateBaseView,
     MultipleCIVProcessingBaseView,
-    ObjectCreateMixin,
 )
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
@@ -1392,7 +1392,7 @@ class DisplaySetInterfacesCreate(InterfacesCreateBaseView):
 
 
 class DisplaySetCreateView(
-    ObjectCreateMixin,
+    CIVSetCreateMixin,
     MultipleCIVProcessingBaseView,
 ):
     form_class = DisplaySetCreateForm

@@ -52,9 +52,9 @@ from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.components.forms import MultipleCIVForm
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.components.views import (
+    CIVSetCreateMixin,
     InterfacesCreateBaseView,
     MultipleCIVProcessingBaseView,
-    ObjectCreateMixin,
 )
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
@@ -705,7 +705,7 @@ class ArchiveItemViewSet(
 
 
 class ArchiveItemCreateView(
-    ObjectCreateMixin,
+    CIVSetCreateMixin,
     MultipleCIVProcessingBaseView,
 ):
     form_class = MultipleCIVForm
