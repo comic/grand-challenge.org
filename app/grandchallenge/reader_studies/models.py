@@ -1,5 +1,3 @@
-import json
-
 from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -532,79 +530,6 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     def answerable_question_count(self):
         """The number of answerable questions for this ``ReaderStudy``."""
         return self.answerable_questions.count()
-
-    def add_ground_truth(self, *, data, user):  # noqa: C901
-        """Add ground truth answers provided by ``data`` for this ``ReaderStudy``."""
-        answers = []
-        for gt in data:
-            display_set = self.display_sets.get(pk=gt["case"])
-            for key in gt.keys():
-                if key == "case" or key.endswith("__explanation"):
-                    continue
-
-                question = self.questions.get(question_text=key)
-                _answer = json.loads(gt[key])
-
-                if _answer is None and question.required is False:
-                    continue
-
-                if question.answer_type == Question.AnswerType.CHOICE:
-                    try:
-                        option = question.options.get(title=_answer)
-                        _answer = option.pk
-                    except CategoricalOption.DoesNotExist:
-                        raise ValidationError(
-                            f"Option {_answer!r} is not valid for question {question.question_text}"
-                        )
-
-                if question.answer_type == Question.AnswerType.MULTIPLE_CHOICE:
-                    _answer = list(
-                        question.options.filter(title__in=_answer).values_list(
-                            "pk", flat=True
-                        )
-                    )
-
-                kwargs = {
-                    "creator": user,
-                    "question": question,
-                    "answer": _answer,
-                    "is_ground_truth": True,
-                }
-                kwargs["display_set"] = display_set
-
-                Answer.validate(**kwargs)
-                try:
-                    explanation = json.loads(gt.get(key + "__explanation", ""))
-                except (json.JSONDecodeError, TypeError):
-                    explanation = ""
-
-                answer_obj = Answer.objects.filter(
-                    display_set=display_set,
-                    question=question,
-                    is_ground_truth=True,
-                ).first()
-
-                answers.append(
-                    {
-                        "answer_obj": answer_obj
-                        or Answer(
-                            creator=user,
-                            question=question,
-                            is_ground_truth=True,
-                            explanation="",
-                        ),
-                        "answer": _answer,
-                        "explanation": explanation,
-                        "display_set": display_set,
-                    }
-                )
-
-        for answer in answers:
-            answer["answer_obj"].answer = answer["answer"]
-            answer["answer_obj"].explanation = answer["explanation"]
-            answer["answer_obj"].save()
-            answer["answer_obj"].display_set = answer["display_set"]
-            answer["answer_obj"].save()
 
     def get_progress_for_user(self, user):
         """Returns the percentage of completed hangings and questions for ``user``."""
@@ -1633,6 +1558,7 @@ class Answer(UUIDModel):
     def history_values(self):
         return self.history.values_list("answer", "history_date")
 
+    # TODO this should be a model clean method
     @staticmethod
     def validate(  # noqa: C901
         *,

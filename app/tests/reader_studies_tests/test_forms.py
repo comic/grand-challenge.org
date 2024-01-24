@@ -323,6 +323,7 @@ def test_question_update(client):
         ],
     )
     form = QuestionForm(
+        reader_study=question.reader_study,
         instance=question,
         data={
             "question_text": "bar",
@@ -338,6 +339,7 @@ def test_question_update(client):
             "options-INITIAL_FORMS": 1,
             "options-MIN_NUM_FORMS": 0,
             "options-MAX_NUM_FORMS": 1000,
+            "reader_study": question.reader_study.pk,
         },
     )
     with pytest.raises(ValueError):
@@ -352,6 +354,7 @@ def test_question_update(client):
     }
 
     form = QuestionForm(
+        reader_study=question.reader_study,
         instance=question,
         data={
             "question_text": "bar",
@@ -368,6 +371,7 @@ def test_question_update(client):
             "options-INITIAL_FORMS": 1,
             "options-MIN_NUM_FORMS": 0,
             "options-MAX_NUM_FORMS": 1000,
+            "reader_study": question.reader_study.pk,
         },
     )
     form.save()
@@ -388,6 +392,7 @@ def test_question_update(client):
     # An answer is added, so changing the question text or overlay segments
     # should no longer be possible
     form = QuestionForm(
+        reader_study=question.reader_study,
         instance=question,
         data={
             "question_text": "foo",
@@ -399,6 +404,7 @@ def test_question_update(client):
             "options-INITIAL_FORMS": 1,
             "options-MIN_NUM_FORMS": 0,
             "options-MAX_NUM_FORMS": 1000,
+            "reader_study": question.reader_study.pk,
         },
     )
     form.save()
@@ -456,7 +462,9 @@ def test_question_form_interface_field(answer_type, interface_kind):
         kind=InterfaceKindChoices.IMAGE
     ).first()
     assert ci_img is not None
-    form = QuestionForm(initial={"answer_type": answer_type})
+    form = QuestionForm(
+        reader_study=ReaderStudyFactory(), initial={"answer_type": answer_type}
+    )
     assert form.interface_choices().filter(pk=ci.pk).exists()
     assert not form.interface_choices().filter(pk=ci_img.pk).exists()
 
@@ -464,7 +472,9 @@ def test_question_form_interface_field(answer_type, interface_kind):
 @pytest.mark.django_db
 def test_question_form_interface_field_no_answer_type():
     assert ComponentInterface.objects.count() > 0
-    form = QuestionForm(initial={"answer_type": None})
+    form = QuestionForm(
+        reader_study=ReaderStudyFactory(), initial={"answer_type": None}
+    )
     # No answer_type provided, this happens for answers that already have
     # answers. The form shouldn't error and the interface_choices should
     # be empty.
@@ -1047,6 +1057,7 @@ def test_reader_study_add_ground_truth(client, settings):
         Answer.objects.get(display_set=ds1, question=q).explanation
         == "new explanation"
     )
+    assert Answer.objects.get(display_set=ds1, question=q).creator == editor
     assert (
         Answer.objects.get(display_set=ds2, question=q).explanation
         == "explanation"
@@ -1334,18 +1345,20 @@ def test_display_set_add_interface_form():
     ),
 )
 def test_question_form_answer_widget_choices(answer_type, choices):
-    form = QuestionForm(initial={"answer_type": answer_type})
+    form = QuestionForm(
+        reader_study=ReaderStudyFactory(), initial={"answer_type": answer_type}
+    )
     assert form.widget_choices() == choices
 
 
 @pytest.mark.django_db
 def test_question_form_initial_widget():
     qu = QuestionFactory(answer_type=AnswerType.TEXT)
-    form = QuestionForm(instance=qu)
+    form = QuestionForm(reader_study=ReaderStudyFactory(), instance=qu)
     assert not form.initial_widget()
 
     qu.widget = QuestionWidgetKindChoices.ACCEPT_REJECT
-    form2 = QuestionForm(instance=qu)
+    form2 = QuestionForm(reader_study=ReaderStudyFactory(), instance=qu)
     assert form2.initial_widget() == QuestionWidgetKindChoices.ACCEPT_REJECT
 
 
@@ -1353,13 +1366,13 @@ def test_question_form_initial_widget():
 def test_question_widget_choices_for_non_editable_instance():
     # no matter whether the question is editable, widget choices should be the same
     qu = QuestionFactory(answer_type=AnswerType.TEXT)
-    form = QuestionForm(instance=qu)
+    form = QuestionForm(reader_study=ReaderStudyFactory(), instance=qu)
     assert form.widget_choices() == [
         ("TEXT_INPUT", "Text Input"),
         ("TEXT_AREA", "Text Area"),
     ]
     AnswerFactory(question=qu, answer="Foo")
-    form = QuestionForm(instance=qu)
+    form = QuestionForm(reader_study=ReaderStudyFactory(), instance=qu)
     assert form.widget_choices() == [
         ("TEXT_INPUT", "Text Input"),
         ("TEXT_AREA", "Text Area"),
@@ -1369,6 +1382,7 @@ def test_question_widget_choices_for_non_editable_instance():
 @pytest.mark.django_db
 def test_question_default_annotation_color():
     form = QuestionForm(
+        reader_study=ReaderStudyFactory(),
         data={
             "answer_type": AnswerType.TEXT,
             "widget": QuestionWidgetKindChoices.TEXT_AREA,
@@ -1376,7 +1390,7 @@ def test_question_default_annotation_color():
             "order": 100,
             "question_text": "gfda",
             "default_annotation_color": "#000000",
-        }
+        },
     )
 
     assert form.is_valid() is False
@@ -1387,6 +1401,7 @@ def test_question_default_annotation_color():
     }
 
     form = QuestionForm(
+        reader_study=ReaderStudyFactory(),
         data={
             "answer_type": AnswerType.MASK,
             "image_port": Question.ImagePort.MAIN,
@@ -1394,11 +1409,12 @@ def test_question_default_annotation_color():
             "order": 100,
             "question_text": "gfda",
             "default_annotation_color": "#000000",
-        }
+        },
     )
     assert form.is_valid()
 
     form = QuestionForm(
+        reader_study=ReaderStudyFactory(),
         data={
             "answer_type": AnswerType.TEXT,
             "widget": QuestionWidgetKindChoices.TEXT_AREA,
@@ -1406,11 +1422,12 @@ def test_question_default_annotation_color():
             "order": 100,
             "question_text": "gfda",
             "default_annotation_color": "",
-        }
+        },
     )
     assert form.is_valid()
 
     form = QuestionForm(
+        reader_study=ReaderStudyFactory(),
         data={
             "answer_type": AnswerType.TEXT,
             "widget": QuestionWidgetKindChoices.TEXT_AREA,
@@ -1418,22 +1435,24 @@ def test_question_default_annotation_color():
             "order": 100,
             "question_text": "gfda",
             "default_annotation_color": None,
-        }
+        },
     )
     assert form.is_valid()
 
     form = QuestionForm(
+        reader_study=ReaderStudyFactory(),
         data={
             "answer_type": AnswerType.TEXT,
             "widget": QuestionWidgetKindChoices.TEXT_AREA,
             "direction": Question.Direction.HORIZONTAL,
             "order": 100,
             "question_text": "gfda",
-        }
+        },
     )
     assert form.is_valid()
 
     form = QuestionForm(
+        reader_study=ReaderStudyFactory(),
         data={
             "answer_type": AnswerType.MASK,
             "image_port": Question.ImagePort.MAIN,
@@ -1441,7 +1460,7 @@ def test_question_default_annotation_color():
             "order": 100,
             "question_text": "gfda",
             "default_annotation_color": "#000",
-        }
+        },
     )
     assert form.is_valid() is False
     assert form.errors == {
