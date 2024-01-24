@@ -435,41 +435,10 @@ def _decompress_tarball(*, in_fileobj, out_fileobj):
 
 
 def _validate_docker_image_manifest(*, instance) -> str:
-    container_image_files = _get_root_docker_image_files(instance=instance)
+    config_and_sha256 = _get_image_config_and_sha256(instance=instance)
 
-    try:
-        manifest = container_image_files["manifest.json"]
-    except KeyError:
-        raise ValidationError(
-            "Could not find manifest.json in the container image file. "
-            "Was this created with docker save?"
-        )
-
-    manifest = json.loads(manifest)
-
-    if len(manifest) != 1:
-        raise ValidationError(
-            f"The container image file should only have 1 image. "
-            f"This file contains {len(manifest)}."
-        )
-
-    image_sha256 = manifest[0]["Config"][:64]
-
-    for filename in [image_sha256, f"{image_sha256}.json"]:
-        # The ".json" extension was dropped in Docker 25,
-        # but we still need to be able to read old versions
-        try:
-            config = container_image_files[filename]
-            break
-        except KeyError:
-            continue
-    else:
-        raise ValidationError(
-            "Could not find the config file in the container image file. "
-            "Was this created with docker save?"
-        )
-
-    config = json.loads(config)
+    config = config_and_sha256["config_file"]
+    image_sha256 = config_and_sha256["image_sha256"]
 
     user = str(config["config"].get("User", "")).lower()
     if (
@@ -496,22 +465,86 @@ def _validate_docker_image_manifest(*, instance) -> str:
     return f"sha256:{image_sha256}"
 
 
-def _get_root_docker_image_files(*, instance):
-    """Extract the files from the root of a tarball."""
+def _get_image_config_and_sha256(*, instance):
     try:
         with instance.image.open(mode="rb") as im, tarfile.open(
             fileobj=im, mode="r"
-        ) as t:
-            files = {
-                tarinfo.name: t.extractfile(tarinfo).read()
-                for tarinfo in t.getmembers()
+        ) as open_tarfile:
+            container_image_files = {
+                tarinfo.name: tarinfo
+                for tarinfo in open_tarfile.getmembers()
                 if tarinfo.isfile()
-                and tarinfo.size < settings.MEGABYTE
-                and "/" not in tarinfo.name
             }
-        return files
+
+            image_manifest = _get_image_manifest(
+                container_image_files=container_image_files,
+                open_tarfile=open_tarfile,
+            )
+
+            return _get_image_config_file(
+                image_manifest=image_manifest,
+                container_image_files=container_image_files,
+                open_tarfile=open_tarfile,
+            )
+
     except (EOFError, zlib.error, LZMAError, tarfile.ReadError, MemoryError):
         raise ValidationError("Could not decompress the container image file.")
+
+
+def _get_image_manifest(*, container_image_files, open_tarfile):
+    """Get the name of the config file of the container image"""
+    try:
+        manifest = json.loads(
+            open_tarfile.extractfile(
+                container_image_files["manifest.json"]
+            ).read()
+        )
+    except KeyError:
+        raise ValidationError(
+            "Could not find manifest.json in the container image file. "
+            "Was this created with docker save?"
+        )
+
+    if len(manifest) != 1:
+        raise ValidationError(
+            f"The container image file should only have 1 image. "
+            f"This file contains {len(manifest)}."
+        )
+
+    return manifest[0]
+
+
+def _get_image_config_file(
+    *, image_manifest, container_image_files, open_tarfile
+):
+    """Get the config of the container image"""
+    config_filename = image_manifest["Config"]
+
+    try:
+        config = json.loads(
+            open_tarfile.extractfile(
+                container_image_files[config_filename]
+            ).read()
+        )
+    except KeyError:
+        raise ValidationError(
+            "Could not find the config file in the container image file. "
+            "Was this created with docker save?"
+        )
+
+    if config_filename.endswith(".json"):
+        # Docker v2 container image
+        image_sha256 = config_filename.split(".")[0]
+    else:
+        # OCI container image
+        image_sha256 = image_manifest["Config"].split("/")[-1]
+
+    if len(image_sha256) != 64:
+        raise ValidationError(
+            "The container image file does not have a valid sha256 hash."
+        )
+
+    return {"image_sha256": image_sha256, "config_file": config}
 
 
 def retry_if_dropped(func):
