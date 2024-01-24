@@ -47,7 +47,7 @@ from grandchallenge.core.widgets import (
     MarkdownEditorWidget,
 )
 from grandchallenge.groups.forms import UserGroupForm
-from grandchallenge.hanging_protocols.forms import ViewContentMixin
+from grandchallenge.hanging_protocols.models import VIEW_CONTENT_SCHEMA
 from grandchallenge.reader_studies.models import (
     ANSWER_TYPE_TO_INTERFACE_KIND_MAP,
     ANSWER_TYPE_TO_QUESTION_WIDGET_CHOICES,
@@ -179,9 +179,7 @@ class ReaderStudyCreateForm(
             )
 
 
-class ReaderStudyUpdateForm(
-    ReaderStudyCreateForm, ModelForm, ViewContentMixin
-):
+class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
     class Meta(ReaderStudyCreateForm.Meta):
         fields = (
             "title",
@@ -218,8 +216,8 @@ class ReaderStudyUpdateForm(
             "structures": Select2MultipleWidget,
             "organizations": Select2MultipleWidget,
             "optional_hanging_protocols": Select2MultipleWidget,
+            "view_content": JSONEditorWidget(schema=VIEW_CONTENT_SCHEMA),
         }
-        widgets.update(ViewContentMixin.Meta.widgets)
         help_texts = {
             **READER_STUDY_HELP_TEXTS,
             "shuffle_hanging_list": (
@@ -245,7 +243,6 @@ class ReaderStudyUpdateForm(
                 reverse_lazy("hanging-protocols:list"),
             ),
         }
-        help_texts.update(ViewContentMixin.Meta.help_texts)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

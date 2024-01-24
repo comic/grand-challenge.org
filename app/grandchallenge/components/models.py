@@ -734,6 +734,26 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.MP4,
         }
 
+    @staticmethod
+    def interface_type_mandatory_isolation():
+        """Interfaces that can only be displayed in isolation."""
+        return {
+            InterfaceKind.InterfaceKindChoices.CHART,
+            InterfaceKind.InterfaceKindChoices.PDF,
+            InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG,
+            InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
+            InterfaceKind.InterfaceKindChoices.MP4,
+        }
+
+    @staticmethod
+    def interface_type_undisplayable():
+        """Interfaces that cannot be displayed."""
+        return {
+            InterfaceKind.InterfaceKindChoices.CSV,
+            InterfaceKind.InterfaceKindChoices.ZIP,
+            InterfaceKind.InterfaceKindChoices.OBJ,
+        }
+
 
 class OverlaySegmentsMixin(models.Model):
     overlay_segments = models.JSONField(

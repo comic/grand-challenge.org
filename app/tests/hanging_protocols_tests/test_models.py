@@ -2,12 +2,14 @@ from contextlib import nullcontext
 
 import pytest
 from django.core.exceptions import ValidationError
-from django.db.models.base import ModelBase
+from django.db.models.base import Model
 
+from grandchallenge.components.models import InterfaceKindChoices
 from grandchallenge.hanging_protocols.models import (
     HangingProtocol,
-    ViewContentMixin,
+    HangingProtocolMixin,
 )
+from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.factories import UserFactory
 from tests.hanging_protocols_tests.factories import HangingProtocolFactory
 
@@ -431,31 +433,162 @@ def test_hanging_protocol_schema_validation(client, json, expectation):
         hp.full_clean()
 
 
+class HangingProtocolTestModel(HangingProtocolMixin, Model):
+    class Meta:
+        app_label = "hanging_protocols_tests"
+
+
+@pytest.mark.django_db
 def test_view_content_validation():
-    model = ViewContentMixin
-    model = ModelBase(
-        "__TestModel__" + model.__name__,
-        (model,),
-        {"__module__": model.__module__},
+    hp = HangingProtocolTestModel(view_content={"test": []})
+
+    with pytest.raises(ValidationError) as err:
+        hp.full_clean()
+
+    assert "JSON does not fulfill schema" in str(err.value)
+
+    hp = HangingProtocolTestModel(view_content={"main": []})
+
+    with pytest.raises(ValidationError) as err:
+        hp.full_clean()
+
+    assert "JSON does not fulfill schema" in str(err.value)
+
+    hp = HangingProtocolTestModel(view_content={"main": "test"})
+
+    with pytest.raises(ValidationError) as err:
+        hp.full_clean()
+
+    assert "JSON does not fulfill schema" in str(err.value)
+
+    hp = HangingProtocolTestModel(view_content={"main": ["test"]})
+
+    with pytest.raises(ValidationError) as err:
+        hp.full_clean()
+
+    assert "Unknown interfaces in view content for viewport main: test" in str(
+        err.value
     )
 
-    hp = model(view_content={"test": []})
+    ComponentInterfaceFactory(title="Test")
 
-    with pytest.raises(ValidationError):
-        hp.full_clean()
-
-    hp = model(view_content={"main": []})
-
-    with pytest.raises(ValidationError):
-        hp.full_clean()
-
-    hp = model(view_content={"main": "test"})
-
-    with pytest.raises(ValidationError):
-        hp.full_clean()
-
-    hp = model(view_content={"main": ["test"]})
+    hp = HangingProtocolTestModel(view_content={"main": ["test"]})
     hp.full_clean()
+
+
+@pytest.mark.django_db
+def test_at_most_two_images():
+    image = ComponentInterfaceFactory(kind=InterfaceKindChoices.IMAGE)
+    heatmap = ComponentInterfaceFactory(kind=InterfaceKindChoices.HEAT_MAP)
+    segmentation = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.SEGMENTATION
+    )
+    text = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+
+    hp = HangingProtocolTestModel(view_content={"main": [image.slug]})
+    hp.full_clean()
+
+    hp = HangingProtocolTestModel(view_content={"main": [heatmap.slug]})
+    hp.full_clean()
+
+    hp = HangingProtocolTestModel(
+        view_content={"main": [image.slug, heatmap.slug]}
+    )
+    hp.full_clean()
+
+    hp = HangingProtocolTestModel(
+        view_content={"main": [image.slug, heatmap.slug, text.slug]}
+    )
+    hp.full_clean()
+
+    hp = HangingProtocolTestModel(
+        view_content={"main": [image.slug, segmentation.slug]}
+    )
+    hp.full_clean()
+
+    hp = HangingProtocolTestModel(
+        view_content={"main": [image.slug, heatmap.slug, segmentation.slug]}
+    )
+
+    with pytest.raises(ValidationError) as err:
+        hp.full_clean()
+
+    assert (
+        "Maximum of two image interfaces are allowed per viewport, got 3 for viewport main:"
+        in str(err.value)
+    )
+
+
+@pytest.mark.parametrize(
+    "interface_kind",
+    [
+        InterfaceKindChoices.CHART,
+        InterfaceKindChoices.PDF,
+        InterfaceKindChoices.MP4,
+        InterfaceKindChoices.THUMBNAIL_JPG,
+        InterfaceKindChoices.THUMBNAIL_PNG,
+    ],
+)
+@pytest.mark.django_db
+def test_interfaces_that_must_be_isolated(interface_kind):
+    interface, second = ComponentInterfaceFactory.create_batch(
+        2, kind=interface_kind
+    )
+    text = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+
+    hp = HangingProtocolTestModel(view_content={"main": [interface.slug]})
+    hp.full_clean()
+
+    hp = HangingProtocolTestModel(
+        view_content={"main": [interface.slug], "secondary": [second.slug]}
+    )
+    hp.full_clean()
+
+    hp = HangingProtocolTestModel(
+        view_content={"main": [interface.slug, second.slug]}
+    )
+
+    with pytest.raises(ValidationError) as err:
+        hp.full_clean()
+
+    assert (
+        "Some of the selected interfaces can only be displayed in isolation, found 2 for viewport main"
+        in str(err.value)
+    )
+
+    hp = HangingProtocolTestModel(
+        view_content={"main": [interface.slug, text.slug]}
+    )
+
+    with pytest.raises(ValidationError) as err:
+        hp.full_clean()
+
+    assert (
+        "Some of the selected interfaces can only be displayed in isolation, found 1 for viewport main"
+        in str(err.value)
+    )
+
+
+@pytest.mark.parametrize(
+    "interface_kind",
+    [
+        InterfaceKindChoices.CSV,
+        InterfaceKindChoices.ZIP,
+        InterfaceKindChoices.OBJ,
+    ],
+)
+@pytest.mark.django_db
+def test_interfaces_that_cannot_be_displayed(interface_kind):
+    interface = ComponentInterfaceFactory(kind=interface_kind)
+    hp = HangingProtocolTestModel(view_content={"main": [interface.slug]})
+
+    with pytest.raises(ValidationError) as err:
+        hp.full_clean()
+
+    assert (
+        "Some of the selected interfaces cannot be displayed, found 1 for viewport main:"
+        in str(err.value)
+    )
 
 
 @pytest.mark.parametrize(

@@ -53,7 +53,7 @@ from grandchallenge.evaluation.utils import (
     StatusChoices,
     SubmissionKindChoices,
 )
-from grandchallenge.hanging_protocols.models import ViewContentMixin
+from grandchallenge.hanging_protocols.models import HangingProtocolMixin
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.profiles.tasks import deactivate_user
 from grandchallenge.subdomains.utils import reverse
@@ -129,7 +129,7 @@ class PhaseManager(models.Manager):
         )
 
 
-class Phase(FieldChangeMixin, ViewContentMixin, UUIDModel):
+class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
     # This must match the syntax used in jquery datatables
     # https://datatables.net/reference/option/order
     ASCENDING = "asc"
@@ -484,12 +484,6 @@ class Phase(FieldChangeMixin, ViewContentMixin, UUIDModel):
     )
     workstation_config = models.ForeignKey(
         "workstation_configs.WorkstationConfig",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-    )
-    hanging_protocol = models.ForeignKey(
-        "hanging_protocols.HangingProtocol",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,

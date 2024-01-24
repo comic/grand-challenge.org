@@ -1,56 +1,59 @@
 import pytest
-from django.core.exceptions import ValidationError
+from django.forms import ModelForm
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.hanging_protocols.forms import (
-    HangingProtocolForm,
-    ViewContentMixin,
-)
+from grandchallenge.hanging_protocols.forms import HangingProtocolForm
 from grandchallenge.hanging_protocols.models import HangingProtocol
 from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.factories import UserFactory
 from tests.hanging_protocols_tests.factories import HangingProtocolFactory
+from tests.hanging_protocols_tests.test_models import HangingProtocolTestModel
 from tests.utils import get_view_for_user
 
 
-class DummyForm(ViewContentMixin):
-    cleaned_data = {"hanging_protocol": None}
+class ViewContentTestForm(ModelForm):
+    class Meta:
+        model = HangingProtocolTestModel
+        fields = ("view_content", "hanging_protocol")
 
 
 @pytest.mark.django_db
 def test_view_content_mixin():
-    form = DummyForm()
-    form.cleaned_data["view_content"] = [{}]
-    with pytest.raises(ValidationError) as e:
-        form.clean_view_content()
+    form = ViewContentTestForm(data={"view_content": [{}]})
 
-    assert "JSON does not fulfill schema" in e.value.message
+    assert not form.is_valid()
+    assert "JSON does not fulfill schema" in form.errors["view_content"][0]
 
-    form.errors = {"view_content": []}
-    form.cleaned_data["view_content"] = {"main": ["test"]}
-    with pytest.raises(ValidationError) as e:
-        form.clean_view_content()
-    assert e.value.message == "Unkown slugs in view_content: test"
+    form = ViewContentTestForm(data={"view_content": {"main": ["test"]}})
 
-    form.errors = {"view_content": []}
-    form.cleaned_data["hanging_protocol"] = HangingProtocolFactory(
-        json=[{"viewport_name": "main"}]
+    assert not form.is_valid()
+    assert form.errors == {
+        "__all__": [
+            "Unknown interfaces in view content for viewport main: test"
+        ]
+    }
+
+    i = ComponentInterfaceFactory(title="Test")
+    hp = HangingProtocolFactory(json=[{"viewport_name": "main"}])
+
+    form = ViewContentTestForm(
+        data={
+            "view_content": {"secondary": [i.slug]},
+            "hanging_protocol": hp.pk,
+        }
     )
-    form.cleaned_data["view_content"] = {"secondary": ["test"]}
-    with pytest.raises(ValidationError) as e:
-        form.clean_view_content()
 
-    assert e.value.message == (
-        "Image ports in view_content do not match those in the selected hanging protocol."
-    )
+    assert not form.is_valid()
+    assert form.errors == {
+        "__all__": [
+            "Image ports in view_content do not match those in the selected hanging protocol."
+        ]
+    }
 
-    ComponentInterfaceFactory(title="Test")
-    form.errors = {"view_content": []}
-    form.cleaned_data["hanging_protocol"] = HangingProtocolFactory(
-        json=[{"viewport_name": "main"}]
+    form = ViewContentTestForm(
+        data={"view_content": {"main": ["test"]}, "hanging_protocol": hp.pk}
     )
-    form.cleaned_data["view_content"] = {"main": ["test"]}
-    form.clean_view_content()
+    assert form.is_valid()
 
 
 @pytest.mark.django_db
