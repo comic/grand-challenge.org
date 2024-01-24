@@ -470,7 +470,7 @@ def test_view_content_validation():
         err.value
     )
 
-    ComponentInterfaceFactory(title="Test")
+    ComponentInterfaceFactory(title="Test", kind=InterfaceKindChoices.STRING)
 
     hp = HangingProtocolTestModel(view_content={"main": ["test"]})
     hp.full_clean()
