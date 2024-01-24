@@ -132,7 +132,7 @@
     <span class="n">StatusChoices</span><span class="p">,</span>
     <span class="n">SubmissionKindChoices</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.hanging_protocols.models</span> <span class="kn">import</span> <span class="n">ViewContentMixin</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.hanging_protocols.models</span> <span class="kn">import</span> <span class="n">HangingProtocolMixin</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.notifications.models</span> <span class="kn">import</span> <span class="n">Notification</span><span class="p">,</span> <span class="n">NotificationType</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.profiles.tasks</span> <span class="kn">import</span> <span class="n">deactivate_user</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.subdomains.utils</span> <span class="kn">import</span> <span class="n">reverse</span>
@@ -210,7 +210,7 @@
 
 <div class="viewcode-block" id="Phase">
 <a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase">[docs]</a>
-<span class="k">class</span> <span class="nc">Phase</span><span class="p">(</span><span class="n">FieldChangeMixin</span><span class="p">,</span> <span class="n">ViewContentMixin</span><span class="p">,</span> <span class="n">UUIDModel</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">Phase</span><span class="p">(</span><span class="n">FieldChangeMixin</span><span class="p">,</span> <span class="n">HangingProtocolMixin</span><span class="p">,</span> <span class="n">UUIDModel</span><span class="p">):</span>
     <span class="c1"># This must match the syntax used in jquery datatables</span>
     <span class="c1"># https://datatables.net/reference/option/order</span>
     <span class="n">ASCENDING</span> <span class="o">=</span> <span class="s2">&quot;asc&quot;</span>
@@ -565,12 +565,6 @@
     <span class="p">)</span>
     <span class="n">workstation_config</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="s2">&quot;workstation_configs.WorkstationConfig&quot;</span><span class="p">,</span>
-        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">hanging_protocol</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
-        <span class="s2">&quot;hanging_protocols.HangingProtocol&quot;</span><span class="p">,</span>
         <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span><span class="p">,</span>

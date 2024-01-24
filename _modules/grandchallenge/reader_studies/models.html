@@ -107,6 +107,7 @@
     <span class="n">CIVForObjectMixin</span><span class="p">,</span>
     <span class="n">ComponentInterface</span><span class="p">,</span>
     <span class="n">ComponentInterfaceValue</span><span class="p">,</span>
+    <span class="n">InterfaceKind</span><span class="p">,</span>
     <span class="n">InterfaceKindChoices</span><span class="p">,</span>
     <span class="n">OverlaySegmentsMixin</span><span class="p">,</span>
 <span class="p">)</span>
@@ -127,7 +128,10 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.core.validators</span> <span class="kn">import</span> <span class="n">JSONValidator</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.core.vendored.django.validators</span> <span class="kn">import</span> <span class="n">StepValueValidator</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.hanging_protocols.models</span> <span class="kn">import</span> <span class="n">ViewContentMixin</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.hanging_protocols.models</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">HangingProtocolMixin</span><span class="p">,</span>
+    <span class="n">ViewportNames</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.modalities.models</span> <span class="kn">import</span> <span class="n">ImagingModality</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.organizations.models</span> <span class="kn">import</span> <span class="n">Organization</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.publications.models</span> <span class="kn">import</span> <span class="n">Publication</span>
@@ -246,7 +250,7 @@
 
 <div class="viewcode-block" id="ReaderStudy">
 <a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy">[docs]</a>
-<span class="k">class</span> <span class="nc">ReaderStudy</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">TitleSlugDescriptionModel</span><span class="p">,</span> <span class="n">ViewContentMixin</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">ReaderStudy</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">TitleSlugDescriptionModel</span><span class="p">,</span> <span class="n">HangingProtocolMixin</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Reader Study model.</span>
 
@@ -272,12 +276,6 @@
     <span class="p">)</span>
     <span class="n">workstation_config</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="s2">&quot;workstation_configs.WorkstationConfig&quot;</span><span class="p">,</span>
-        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">hanging_protocol</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
-        <span class="s2">&quot;hanging_protocols.HangingProtocol&quot;</span><span class="p">,</span>
         <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span><span class="p">,</span>
@@ -530,8 +528,14 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">case_text</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">case_text</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">view_content</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">view_content</span> <span class="o">=</span> <span class="p">{}</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">view_content</span> <span class="o">=</span> <span class="p">{}</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clean_questions</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_clean_questions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">question</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">questions</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="n">question</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
 
 <div class="viewcode-block" id="ReaderStudy.save">
 <a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.save">[docs]</a>
@@ -1196,35 +1200,62 @@
 <span class="p">}</span>
 
 
+<div class="viewcode-block" id="ImagePort">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ImagePort">[docs]</a>
+<span class="k">class</span> <span class="nc">ImagePort</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
+    <span class="n">MAIN</span> <span class="o">=</span> <span class="s2">&quot;M&quot;</span><span class="p">,</span> <span class="s2">&quot;Main&quot;</span>
+    <span class="n">SECONDARY</span> <span class="o">=</span> <span class="s2">&quot;S&quot;</span><span class="p">,</span> <span class="s2">&quot;Secondary&quot;</span>
+    <span class="n">TERTIARY</span> <span class="o">=</span> <span class="s2">&quot;TERTIARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Tertiary&quot;</span>
+    <span class="n">QUATERNARY</span> <span class="o">=</span> <span class="s2">&quot;QUATERNARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Quaternary&quot;</span>
+    <span class="n">QUINARY</span> <span class="o">=</span> <span class="s2">&quot;QUINARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Quinary&quot;</span>
+    <span class="n">SENARY</span> <span class="o">=</span> <span class="s2">&quot;SENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Senary&quot;</span>
+    <span class="n">SEPTENARY</span> <span class="o">=</span> <span class="s2">&quot;SEPTENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Septenary&quot;</span>
+    <span class="n">OCTONARY</span> <span class="o">=</span> <span class="s2">&quot;OCTONARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Octonary&quot;</span>
+    <span class="n">NONARY</span> <span class="o">=</span> <span class="s2">&quot;NONARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Nonary&quot;</span>
+    <span class="n">DENARY</span> <span class="o">=</span> <span class="s2">&quot;DENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Denary&quot;</span>
+    <span class="n">UNDENARY</span> <span class="o">=</span> <span class="s2">&quot;UNDENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Undenary&quot;</span>
+    <span class="n">DUODENARY</span> <span class="o">=</span> <span class="s2">&quot;DUODENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Duodenary&quot;</span>
+    <span class="n">TREDENARY</span> <span class="o">=</span> <span class="s2">&quot;TREDENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Tredenary&quot;</span>
+    <span class="n">QUATTUORDENARY</span> <span class="o">=</span> <span class="s2">&quot;QUATTUORDENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Quattuordenary&quot;</span>
+    <span class="n">QUINDENARY</span> <span class="o">=</span> <span class="s2">&quot;QUINDENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Quindenary&quot;</span>
+    <span class="n">SEXDENARY</span> <span class="o">=</span> <span class="s2">&quot;SEXDENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Sexdenary&quot;</span>
+    <span class="n">SEPTENDENARY</span> <span class="o">=</span> <span class="s2">&quot;SEPTENDENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Septendenary&quot;</span>
+    <span class="n">OCTODENARY</span> <span class="o">=</span> <span class="s2">&quot;OCTODENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Octodenary&quot;</span>
+    <span class="n">NOVEMDENARY</span> <span class="o">=</span> <span class="s2">&quot;NOVEMDENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Novemdenary&quot;</span>
+    <span class="n">VIGINTENARY</span> <span class="o">=</span> <span class="s2">&quot;VIGINTENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Vigintenary&quot;</span></div>
+
+
+
+<span class="c1"># This was redefined in the hanging protocol app and not unified</span>
+<span class="n">IMAGE_PORT_TO_VIEWPORT_NAME</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">ImagePort</span><span class="o">.</span><span class="n">MAIN</span><span class="p">:</span> <span class="n">ViewportNames</span><span class="o">.</span><span class="n">main</span><span class="p">,</span>
+    <span class="n">ImagePort</span><span class="o">.</span><span class="n">SECONDARY</span><span class="p">:</span> <span class="n">ViewportNames</span><span class="o">.</span><span class="n">secondary</span><span class="p">,</span>
+    <span class="n">ImagePort</span><span class="o">.</span><span class="n">TERTIARY</span><span class="p">:</span> <span class="n">ViewportNames</span><span class="o">.</span><span class="n">tertiary</span><span class="p">,</span>
+    <span class="n">ImagePort</span><span class="o">.</span><span class="n">QUATERNARY</span><span class="p">:</span> <span class="n">ViewportNames</span><span class="o">.</span><span class="n">quaternary</span><span class="p">,</span>
+    <span class="n">ImagePort</span><span class="o">.</span><span class="n">QUINARY</span><span class="p">:</span> <span class="n">ViewportNames</span><span class="o">.</span><span class="n">quinary</span><span class="p">,</span>
+    <span class="n">ImagePort</span><span class="o">.</span><span class="n">SENARY</span><span class="p">:</span> <span class="n">ViewportNames</span><span class="o">.</span><span class="n">senary</span><span class="p">,</span>
+    <span class="n">ImagePort</span><span class="o">.</span><span class="n">SEPTENARY</span><span class="p">:</span> <span class="n">ViewportNames</span><span class="o">.</span><span class="n">septenary</span><span class="p">,</span>
+    <span class="n">ImagePort</span><span class="o">.</span><span class="n">OCTONARY</span><span class="p">:</span> <span class="n">ViewportNames</span><span class="o">.</span><span class="n">octonary</span><span class="p">,</span>
+    <span class="n">ImagePort</span><span class="o">.</span><span class="n">NONARY</span><span class="p">:</span> <span class="n">ViewportNames</span><span class="o">.</span><span class="n">nonary</span><span class="p">,</span>
+    <span class="n">ImagePort</span><span class="o">.</span><span class="n">DENARY</span><span class="p">:</span> <span class="n">ViewportNames</span><span class="o">.</span><span class="n">denary</span><span class="p">,</span>
+    <span class="n">ImagePort</span><span class="o">.</span><span class="n">UNDENARY</span><span class="p">:</span> <span class="n">ViewportNames</span><span class="o">.</span><span class="n">undenary</span><span class="p">,</span>
+    <span class="n">ImagePort</span><span class="o">.</span><span class="n">DUODENARY</span><span class="p">:</span> <span class="n">ViewportNames</span><span class="o">.</span><span class="n">duodenary</span><span class="p">,</span>
+    <span class="n">ImagePort</span><span class="o">.</span><span class="n">TREDENARY</span><span class="p">:</span> <span class="n">ViewportNames</span><span class="o">.</span><span class="n">tredenary</span><span class="p">,</span>
+    <span class="n">ImagePort</span><span class="o">.</span><span class="n">QUATTUORDENARY</span><span class="p">:</span> <span class="n">ViewportNames</span><span class="o">.</span><span class="n">quattuordenary</span><span class="p">,</span>
+    <span class="n">ImagePort</span><span class="o">.</span><span class="n">QUINDENARY</span><span class="p">:</span> <span class="n">ViewportNames</span><span class="o">.</span><span class="n">quindenary</span><span class="p">,</span>
+    <span class="n">ImagePort</span><span class="o">.</span><span class="n">SEXDENARY</span><span class="p">:</span> <span class="n">ViewportNames</span><span class="o">.</span><span class="n">sexdenary</span><span class="p">,</span>
+    <span class="n">ImagePort</span><span class="o">.</span><span class="n">SEPTENDENARY</span><span class="p">:</span> <span class="n">ViewportNames</span><span class="o">.</span><span class="n">septendenary</span><span class="p">,</span>
+    <span class="n">ImagePort</span><span class="o">.</span><span class="n">OCTODENARY</span><span class="p">:</span> <span class="n">ViewportNames</span><span class="o">.</span><span class="n">octodenary</span><span class="p">,</span>
+    <span class="n">ImagePort</span><span class="o">.</span><span class="n">NOVEMDENARY</span><span class="p">:</span> <span class="n">ViewportNames</span><span class="o">.</span><span class="n">novemdenary</span><span class="p">,</span>
+    <span class="n">ImagePort</span><span class="o">.</span><span class="n">VIGINTENARY</span><span class="p">:</span> <span class="n">ViewportNames</span><span class="o">.</span><span class="n">vigintenary</span><span class="p">,</span>
+<span class="p">}</span>
+
+
 <div class="viewcode-block" id="Question">
 <a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question">[docs]</a>
 <span class="k">class</span> <span class="nc">Question</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">OverlaySegmentsMixin</span><span class="p">):</span>
     <span class="n">AnswerType</span> <span class="o">=</span> <span class="n">AnswerType</span>
-
-<div class="viewcode-block" id="Question.ImagePort">
-<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question.ImagePort">[docs]</a>
-    <span class="k">class</span> <span class="nc">ImagePort</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
-        <span class="n">MAIN</span> <span class="o">=</span> <span class="s2">&quot;M&quot;</span><span class="p">,</span> <span class="s2">&quot;Main&quot;</span>
-        <span class="n">SECONDARY</span> <span class="o">=</span> <span class="s2">&quot;S&quot;</span><span class="p">,</span> <span class="s2">&quot;Secondary&quot;</span>
-        <span class="n">TERTIARY</span> <span class="o">=</span> <span class="s2">&quot;TERTIARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Tertiary&quot;</span>
-        <span class="n">QUATERNARY</span> <span class="o">=</span> <span class="s2">&quot;QUATERNARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Quaternary&quot;</span>
-        <span class="n">QUINARY</span> <span class="o">=</span> <span class="s2">&quot;QUINARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Quinary&quot;</span>
-        <span class="n">SENARY</span> <span class="o">=</span> <span class="s2">&quot;SENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Senary&quot;</span>
-        <span class="n">SEPTENARY</span> <span class="o">=</span> <span class="s2">&quot;SEPTENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Septenary&quot;</span>
-        <span class="n">OCTONARY</span> <span class="o">=</span> <span class="s2">&quot;OCTONARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Octonary&quot;</span>
-        <span class="n">NONARY</span> <span class="o">=</span> <span class="s2">&quot;NONARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Nonary&quot;</span>
-        <span class="n">DENARY</span> <span class="o">=</span> <span class="s2">&quot;DENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Denary&quot;</span>
-        <span class="n">UNDENARY</span> <span class="o">=</span> <span class="s2">&quot;UNDENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Undenary&quot;</span>
-        <span class="n">DUODENARY</span> <span class="o">=</span> <span class="s2">&quot;DUODENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Duodenary&quot;</span>
-        <span class="n">TREDENARY</span> <span class="o">=</span> <span class="s2">&quot;TREDENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Tredenary&quot;</span>
-        <span class="n">QUATTUORDENARY</span> <span class="o">=</span> <span class="s2">&quot;QUATTUORDENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Quattuordenary&quot;</span>
-        <span class="n">QUINDENARY</span> <span class="o">=</span> <span class="s2">&quot;QUINDENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Quindenary&quot;</span>
-        <span class="n">SEXDENARY</span> <span class="o">=</span> <span class="s2">&quot;SEXDENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Sexdenary&quot;</span>
-        <span class="n">SEPTENDENARY</span> <span class="o">=</span> <span class="s2">&quot;SEPTENDENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Septendenary&quot;</span>
-        <span class="n">OCTODENARY</span> <span class="o">=</span> <span class="s2">&quot;OCTODENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Octodenary&quot;</span>
-        <span class="n">NOVEMDENARY</span> <span class="o">=</span> <span class="s2">&quot;NOVEMDENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Novemdenary&quot;</span>
-        <span class="n">VIGINTENARY</span> <span class="o">=</span> <span class="s2">&quot;VIGINTENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Vigintenary&quot;</span></div>
-
+    <span class="n">ImagePort</span> <span class="o">=</span> <span class="n">ImagePort</span>
 
     <span class="c1"># What is the orientation of the question form when presented on the</span>
     <span class="c1"># front end?</span>
@@ -1434,6 +1465,7 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_answer_type</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_interface</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clean_image_port</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_widget</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_widget_options</span><span class="p">()</span></div>
 
@@ -1474,6 +1506,30 @@
                 <span class="sa">f</span><span class="s2">&quot;The interface </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="si">}</span><span class="s2"> is not allowed for this &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;question type (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span><span class="si">}</span><span class="s2">)&quot;</span>
             <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_clean_image_port</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_port</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">reader_study</span><span class="o">.</span><span class="n">view_content</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">viewport_content</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reader_study</span><span class="o">.</span><span class="n">view_content</span><span class="p">[</span>
+                    <span class="n">IMAGE_PORT_TO_VIEWPORT_NAME</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">image_port</span><span class="p">]</span>
+                <span class="p">]</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;The </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_image_port_display</span><span class="p">()</span><span class="si">}</span><span class="s2"> view port has not been defined. &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;Please update the view content of this reader study or select a different view port for question </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2">.&quot;</span>
+                <span class="p">)</span>
+
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                    <span class="n">slug__in</span><span class="o">=</span><span class="n">viewport_content</span><span class="p">,</span>
+                    <span class="n">kind__in</span><span class="o">=</span><span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_image</span><span class="p">(),</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+                <span class="o">&lt;</span> <span class="mi">1</span>
+            <span class="p">):</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;The </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_image_port_display</span><span class="p">()</span><span class="si">}</span><span class="s2"> view port does not contain an image. &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;Please update the view content of this reader study or select a different view port for question </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2">.&quot;</span>
+                <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_clean_widget</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">widget</span><span class="p">:</span>
