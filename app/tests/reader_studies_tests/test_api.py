@@ -12,6 +12,7 @@ from grandchallenge.reader_studies.models import (
     AnswerType,
     DisplaySet,
     Question,
+    QuestionWidgetKindChoices,
 )
 from grandchallenge.reader_studies.views import DisplaySetViewSet
 from tests.components_tests.factories import (
@@ -280,16 +281,11 @@ def test_answer_creator_is_reader(client):
         (Question.AnswerType.NUMBER, 12, 201),
         (Question.AnswerType.NUMBER, "12", 400),
         (Question.AnswerType.NUMBER, True, 400),
-        (Question.AnswerType.SINGLE_LINE_TEXT, "dgfsgfds", 201),
-        (Question.AnswerType.SINGLE_LINE_TEXT, None, 400),
-        (Question.AnswerType.SINGLE_LINE_TEXT, True, 400),
-        (Question.AnswerType.SINGLE_LINE_TEXT, 12, 400),
-        (Question.AnswerType.MULTI_LINE_TEXT, "dgfsgfds", 201),
-        (Question.AnswerType.MULTI_LINE_TEXT, None, 400),
-        (Question.AnswerType.MULTI_LINE_TEXT, True, 400),
-        (Question.AnswerType.MULTI_LINE_TEXT, 12, 400),
+        (Question.AnswerType.TEXT, "dgfsgfds", 201),
+        (Question.AnswerType.TEXT, None, 400),
+        (Question.AnswerType.TEXT, True, 400),
+        (Question.AnswerType.TEXT, 12, 400),
         (Question.AnswerType.MULTIPLE_CHOICE, None, 400),
-        (Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN, None, 400),
         # Headings are always incorrect when answering
         (Question.AnswerType.HEADING, True, 400),
         (Question.AnswerType.HEADING, "null", 400),
@@ -925,8 +921,6 @@ def test_answer_is_correct_type(client, answer_type, answer, expected):
     "answer_type,answer",
     (
         # Blank answers
-        (Question.AnswerType.SINGLE_LINE_TEXT, ""),
-        (Question.AnswerType.MULTI_LINE_TEXT, ""),
         (Question.AnswerType.TEXT, ""),
         # Null answers
         (Question.AnswerType.NUMBER, None),
@@ -947,7 +941,6 @@ def test_answer_is_correct_type(client, answer_type, answer, expected):
         (Question.AnswerType.MULTIPLE_ELLIPSES, None),
         # Empty-collection answers
         (Question.AnswerType.MULTIPLE_CHOICE, []),
-        (Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN, []),
     ),
 )
 @pytest.mark.parametrize(
@@ -1090,8 +1083,7 @@ def test_ground_truth_is_excluded(client):
     (
         (Question.AnswerType.BOOL, True),
         (Question.AnswerType.NUMBER, 12),
-        (Question.AnswerType.SINGLE_LINE_TEXT, "dgfsgfds"),
-        (Question.AnswerType.MULTI_LINE_TEXT, "dgfsgfds\ndgfsgfds"),
+        (Question.AnswerType.TEXT, "dgfsgfds"),
         (
             Question.AnswerType.BOUNDING_BOX_2D,
             {
@@ -1215,7 +1207,8 @@ def test_ground_truth(client):
         answer_type=Question.AnswerType.MULTIPLE_CHOICE, reader_study=rs
     )
     q3 = QuestionFactory(
-        answer_type=Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
+        answer_type=Question.AnswerType.MULTIPLE_CHOICE,
+        widget=QuestionWidgetKindChoices.SELECT_MULTIPLE,
         reader_study=rs,
     )
 
@@ -2107,9 +2100,7 @@ def test_display_set_delete(client):
 def test_total_edit_duration(client):
     rs = ReaderStudyFactory(allow_answer_modification=True)
     ds = DisplaySetFactory(reader_study=rs)
-    q = QuestionFactory(
-        reader_study=rs, answer_type=AnswerType.SINGLE_LINE_TEXT
-    )
+    q = QuestionFactory(reader_study=rs, answer_type=AnswerType.TEXT)
     u = UserFactory()
 
     rs.add_reader(u)

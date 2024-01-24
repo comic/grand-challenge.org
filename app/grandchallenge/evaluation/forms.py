@@ -33,7 +33,7 @@ from grandchallenge.evaluation.models import (
     Submission,
 )
 from grandchallenge.evaluation.utils import SubmissionKindChoices
-from grandchallenge.hanging_protocols.forms import ViewContentMixin
+from grandchallenge.hanging_protocols.models import VIEW_CONTENT_SCHEMA
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadSingleWidget
@@ -124,7 +124,6 @@ class PhaseCreateForm(PhaseTitleMixin, SaveFormInitMixin, forms.ModelForm):
 class PhaseUpdateForm(
     PhaseTitleMixin,
     WorkstationUserFilterMixin,
-    ViewContentMixin,
     forms.ModelForm,
 ):
     def __init__(self, *args, **kwargs):
@@ -181,8 +180,8 @@ class PhaseUpdateForm(
             "submissions_close_at": forms.DateTimeInput(
                 format=("%Y-%m-%dT%H:%M"), attrs={"type": "datetime-local"}
             ),
+            "view_content": JSONEditorWidget(schema=VIEW_CONTENT_SCHEMA),
         }
-        widgets.update(ViewContentMixin.Meta.widgets)
         help_texts = {
             "workstation_config": format_lazy(
                 (
@@ -215,7 +214,6 @@ class PhaseUpdateForm(
                 reverse_lazy("hanging-protocols:list"),
             ),
         }
-        help_texts.update(ViewContentMixin.Meta.help_texts)
         labels = {
             "workstation": "Viewer",
             "workstation_config": "Viewer Configuration",

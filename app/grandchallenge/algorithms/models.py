@@ -47,7 +47,7 @@ from grandchallenge.core.utils.access_requests import (
 )
 from grandchallenge.credits.models import Credit
 from grandchallenge.evaluation.utils import get
-from grandchallenge.hanging_protocols.models import ViewContentMixin
+from grandchallenge.hanging_protocols.models import HangingProtocolMixin
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
@@ -63,7 +63,7 @@ DEFAULT_OUTPUT_INTERFACE_SLUG = "generic-overlay"
 JINJA_ENGINE = sandbox.ImmutableSandboxedEnvironment()
 
 
-class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
+class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
     editors_group = models.OneToOneField(
         Group,
         on_delete=models.PROTECT,
@@ -93,12 +93,6 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     )
     workstation_config = models.ForeignKey(
         "workstation_configs.WorkstationConfig",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-    )
-    hanging_protocol = models.ForeignKey(
-        "hanging_protocols.HangingProtocol",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,

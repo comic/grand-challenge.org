@@ -47,11 +47,12 @@ from grandchallenge.core.widgets import (
     MarkdownEditorWidget,
 )
 from grandchallenge.groups.forms import UserGroupForm
-from grandchallenge.hanging_protocols.forms import ViewContentMixin
+from grandchallenge.hanging_protocols.models import VIEW_CONTENT_SCHEMA
 from grandchallenge.reader_studies.models import (
     ANSWER_TYPE_TO_INTERFACE_KIND_MAP,
     ANSWER_TYPE_TO_QUESTION_WIDGET_CHOICES,
     CASE_TEXT_SCHEMA,
+    Answer,
     AnswerType,
     CategoricalOption,
     Question,
@@ -117,6 +118,7 @@ class ReaderStudyCreateForm(
             "workstation",
             "workstation_config",
             "is_educational",
+            "instant_verification",
             "public",
             "access_request_handling",
             "allow_answer_modification",
@@ -165,10 +167,19 @@ class ReaderStudyCreateForm(
                 field=None,
             )
 
+        if (
+            self.cleaned_data["instant_verification"]
+            and not self.cleaned_data["is_educational"]
+        ):
+            self.add_error(
+                error=ValidationError(
+                    "Reader study must be educational when instant verification is enabled."
+                ),
+                field="is_educational",
+            )
 
-class ReaderStudyUpdateForm(
-    ReaderStudyCreateForm, ModelForm, ViewContentMixin
-):
+
+class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
     class Meta(ReaderStudyCreateForm.Meta):
         fields = (
             "title",
@@ -187,6 +198,7 @@ class ReaderStudyUpdateForm(
             "help_text_markdown",
             "shuffle_hanging_list",
             "is_educational",
+            "instant_verification",
             "public",
             "access_request_handling",
             "allow_answer_modification",
@@ -204,8 +216,8 @@ class ReaderStudyUpdateForm(
             "structures": Select2MultipleWidget,
             "organizations": Select2MultipleWidget,
             "optional_hanging_protocols": Select2MultipleWidget,
+            "view_content": JSONEditorWidget(schema=VIEW_CONTENT_SCHEMA),
         }
-        widgets.update(ViewContentMixin.Meta.widgets)
         help_texts = {
             **READER_STUDY_HELP_TEXTS,
             "shuffle_hanging_list": (
@@ -231,7 +243,6 @@ class ReaderStudyUpdateForm(
                 reverse_lazy("hanging-protocols:list"),
             ),
         }
-        help_texts.update(ViewContentMixin.Meta.help_texts)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -265,12 +276,30 @@ class ReaderStudyCopyForm(Form):
 
 
 class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, reader_study, **kwargs):
         super().__init__(*args, **kwargs)
 
         for field_name in self.instance.read_only_fields:
             self.fields[field_name].required = False
             self.fields[field_name].disabled = True
+
+        self.fields["reader_study"].queryset = ReaderStudy.objects.filter(
+            pk=reader_study.pk
+        )
+        self.fields["reader_study"].initial = reader_study
+        self.fields["reader_study"].disabled = True
+        self.fields["reader_study"].hidden = True
+
+        self.fields["answer_type"].widget = Select(
+            attrs={
+                "hx-get": reverse_lazy(
+                    "reader-studies:question-interfaces",
+                    kwargs={"slug": reader_study.slug},
+                ),
+                "hx-target": "#id_interface",
+            }
+        )
+        self.fields["answer_type"].choices = AnswerType.choices
 
         self.helper = FormHelper()
         self.helper.form_tag = True
@@ -282,7 +311,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                 Field("widget"),
                 HTML(
                     f"<div "
-                    f"hx-get={reverse_lazy('reader-studies:question-widgets')!r} "
+                    f"hx-get={reverse_lazy('reader-studies:question-widgets', kwargs={'slug': reader_study.slug})!r} "
                     f"hx-trigger='change from:#id_answer_type' "
                     f"hx-target='#id_widget' "
                     f"hx-include='[id=id_answer_type]'>"
@@ -394,6 +423,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
             "answer_min_length",
             "answer_max_length",
             "answer_match_pattern",
+            "reader_study",
         )
         help_texts = {
             "question_text": (
@@ -433,14 +463,6 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
             "answer_match_pattern": TextInput,
             "overlay_segments": JSONEditorWidget(
                 schema=OVERLAY_SEGMENTS_SCHEMA
-            ),
-            "answer_type": Select(
-                attrs={
-                    "hx-get": reverse_lazy(
-                        "reader-studies:question-interfaces"
-                    ),
-                    "hx-target": "#id_interface",
-                }
             ),
             "default_annotation_color": ColorEditorWidget(format="hex"),
         }
@@ -522,13 +544,16 @@ class GroundTruthForm(SaveFormInitMixin, Form):
         " the question text provided in the header.",
     )
 
-    def __init__(self, *args, reader_study, **kwargs):
+    def __init__(self, *args, user, reader_study, **kwargs):
         super().__init__(*args, **kwargs)
-        self.reader_study = reader_study
+        self._reader_study = reader_study
+        self._user = user
+        self._answers = []
 
     def clean_ground_truth(self):
         csv_file = self.cleaned_data.get("ground_truth")
         csv_file.seek(0)
+
         rdr = csv.DictReader(
             io.StringIO(csv_file.read().decode("utf-8")),
             quoting=csv.QUOTE_ALL,
@@ -536,17 +561,87 @@ class GroundTruthForm(SaveFormInitMixin, Form):
             quotechar="'",
         )
         headers = rdr.fieldnames
+
         if sorted(
             filter(lambda x: not x.endswith("__explanation"), headers)
-        ) != sorted(self.reader_study.ground_truth_file_headers):
+        ) != sorted(self._reader_study.ground_truth_file_headers):
             raise ValidationError(
                 f"Fields provided do not match with reader study. Fields should "
-                f"be: {','.join(self.reader_study.ground_truth_file_headers)}"
+                f"be: {','.join(self._reader_study.ground_truth_file_headers)}"
             )
 
-        values = [x for x in rdr]
+        ground_truth = [x for x in rdr]
 
-        return values
+        self.create_answers(ground_truth=ground_truth)
+
+        return ground_truth
+
+    def create_answers(self, *, ground_truth):  # noqa: C901
+        self._answers = []
+
+        for gt in ground_truth:
+            display_set = self._reader_study.display_sets.get(pk=gt["case"])
+
+            for key in gt.keys():
+                if key == "case" or key.endswith("__explanation"):
+                    continue
+
+                question = self._reader_study.questions.get(question_text=key)
+                answer = json.loads(gt[key])
+
+                if answer is None and question.required is False:
+                    continue
+
+                if question.answer_type == Question.AnswerType.CHOICE:
+                    try:
+                        option = question.options.get(title=answer)
+                        answer = option.pk
+                    except CategoricalOption.DoesNotExist:
+                        raise ValidationError(
+                            f"Option {answer!r} is not valid for question {question.question_text}"
+                        )
+
+                if question.answer_type == Question.AnswerType.MULTIPLE_CHOICE:
+                    answer = list(
+                        question.options.filter(title__in=answer).values_list(
+                            "pk", flat=True
+                        )
+                    )
+
+                try:
+                    explanation = json.loads(gt.get(key + "__explanation", ""))
+                except (json.JSONDecodeError, TypeError):
+                    explanation = ""
+
+                common_answer_kwargs = {
+                    "display_set": display_set,
+                    "question": question,
+                    "is_ground_truth": True,
+                }
+
+                try:
+                    answer_obj = Answer.objects.get(**common_answer_kwargs)
+                except ObjectDoesNotExist:
+                    answer_obj = Answer(**common_answer_kwargs)
+
+                # Update the answer object
+                answer_obj.creator = self._user
+                answer_obj.answer = answer
+                answer_obj.explanation = explanation
+
+                answer_obj.validate(
+                    creator=answer_obj.creator,
+                    question=answer_obj.question,
+                    answer=answer_obj.answer,
+                    is_ground_truth=answer_obj.is_ground_truth,
+                    display_set=answer_obj.display_set,
+                )
+
+                self._answers.append(answer_obj)
+
+    def save_answers(self):
+        for answer in self._answers:
+            answer.save()
 
 
 class DisplaySetCreateForm(MultipleCIVForm):

@@ -3,14 +3,11 @@ ANSWER_TYPE_SCHEMA = {
     "definitions": {
         "null": {"type": "null"},
         "TEXT": {"type": "string"},
-        "STXT": {"type": "string"},
-        "MTXT": {"type": "string"},
         "BOOL": {"type": "boolean"},
         "NUMB": {"type": "number"},
         "HEAD": {"type": "null"},
         "CHOI": {"type": "number"},
         "MCHO": {"type": "array", "items": {"type": "number"}},
-        "MCHD": {"type": "array", "items": {"type": "number"}},
         "2DBB": {
             "type": "object",
             "properties": {
@@ -565,8 +562,7 @@ ANSWER_TYPE_SCHEMA = {
     # anyOf should exist, check Question.is_answer_valid
     "anyOf": [
         {"$ref": "#/definitions/null"},
-        {"$ref": "#/definitions/STXT"},
-        {"$ref": "#/definitions/MTXT"},
+        {"$ref": "#/definitions/TEXT"},
         {"$ref": "#/definitions/BOOL"},
         {"$ref": "#/definitions/NUMB"},
         {"$ref": "#/definitions/HEAD"},
@@ -579,7 +575,6 @@ ANSWER_TYPE_SCHEMA = {
         {"$ref": "#/definitions/MPOL"},
         {"$ref": "#/definitions/CHOI"},
         {"$ref": "#/definitions/MCHO"},
-        {"$ref": "#/definitions/MCHD"},
         {"$ref": "#/definitions/M2DB"},
         {"$ref": "#/definitions/MASK"},
         {"$ref": "#/definitions/LINE"},

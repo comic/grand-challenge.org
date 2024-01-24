@@ -576,7 +576,6 @@ LOCAL_APPS = [
     "grandchallenge.studies",
     "grandchallenge.registrations",
     "grandchallenge.annotations",
-    "grandchallenge.retina_api",
     "grandchallenge.workstations",
     "grandchallenge.workspaces",
     "grandchallenge.reader_studies",
@@ -1049,9 +1048,6 @@ COMPONENTS_SAGEMAKER_SHIM_VERSION = os.environ.get(
 COMPONENTS_SAGEMAKER_SHIM_LOCATION = os.environ.get(
     "COMPONENTS_SAGEMAKER_SHIM_LOCATION", "/opt/sagemaker-shim"
 )
-COMPONENTS_CREATE_SAGEMAKER_MODEL = strtobool(
-    os.environ.get("COMPONENTS_CREATE_SAGEMAKER_MODEL", "False")
-)
 COMPONENTS_INPUT_BUCKET_NAME = os.environ.get(
     "COMPONENTS_INPUT_BUCKET_NAME", "grand-challenge-components-inputs"
 )
@@ -1408,10 +1404,6 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 16 * MEGABYTE
 DATA_UPLOAD_MAX_NUMBER_FIELDS = int(
     os.environ.get("DATA_UPLOAD_MAX_NUMBER_FIELDS", "2048")
 )
-
-# Retina specific settings
-RETINA_GRADERS_GROUP_NAME = "retina_graders"
-RETINA_ADMINS_GROUP_NAME = "retina_admins"
 
 
 ##########################

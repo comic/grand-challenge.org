@@ -1,11 +1,8 @@
-from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils import timezone
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
-from guardian.shortcuts import assign_perm
 
 from grandchallenge.cases.models import Image
 from grandchallenge.core.models import UUIDModel
@@ -27,60 +24,8 @@ class AbstractAnnotationModel(UUIDModel):
         get_latest_by = "created"
         ordering = ["-created"]
 
-    def save(self, *args, **kwargs):
-        """Override save method to enable setting of permissions for retina users."""
-        created = self._state.adding
-
-        super().save(*args, **kwargs)
-
-        if not created:
-            return
-
-        if (
-            self.grader.groups.filter(
-                name=settings.RETINA_GRADERS_GROUP_NAME
-            ).exists()
-            or self.grader.groups.filter(
-                name=settings.RETINA_ADMINS_GROUP_NAME
-            ).exists()
-        ):
-            model_name = self._meta.model_name
-            admins_group = Group.objects.get(
-                name=settings.RETINA_ADMINS_GROUP_NAME
-            )
-            for permission_type in self._meta.default_permissions:
-                permission_name = f"{permission_type}_{model_name}"
-                assign_perm(permission_name, self.grader, self)
-                assign_perm(permission_name, admins_group, self)
-
 
 class AbstractSingleAnnotationModel(UUIDModel):
-    def save(self, *args, **kwargs):
-        """Override save method to enable setting of permissions for retina users."""
-        created = self._state.adding
-
-        super().save(*args, **kwargs)
-
-        if not created:
-            return
-
-        if (
-            self.annotation_set.grader.groups.filter(
-                name=settings.RETINA_GRADERS_GROUP_NAME
-            ).exists()
-            or self.annotation_set.grader.groups.filter(
-                name=settings.RETINA_ADMINS_GROUP_NAME
-            ).exists()
-        ):
-            model_name = self._meta.model_name
-            admins_group = Group.objects.get(
-                name=settings.RETINA_ADMINS_GROUP_NAME
-            )
-            for permission_type in self._meta.default_permissions:
-                permission_name = f"{permission_type}_{model_name}"
-                assign_perm(permission_name, self.annotation_set.grader, self)
-                assign_perm(permission_name, admins_group, self)
-
     class Meta(UUIDModel.Meta):
         abstract = True
         get_latest_by = "created"

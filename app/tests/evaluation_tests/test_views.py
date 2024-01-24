@@ -745,7 +745,9 @@ def test_create_algorithm_for_phase_presets(client):
     optional_protocol = HangingProtocolFactory()
     phase.algorithm_inputs.set([ci1])
     phase.algorithm_outputs.set([ci2])
-    phase.hanging_protocol = HangingProtocolFactory()
+    phase.hanging_protocol = HangingProtocolFactory(
+        json=[{"viewport_name": "main"}]
+    )
     phase.optional_hanging_protocols.set([optional_protocol])
     phase.workstation_config = WorkstationConfigFactory()
     phase.view_content = {"main": [ci1.slug]}

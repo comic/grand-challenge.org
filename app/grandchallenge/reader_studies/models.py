@@ -1,5 +1,3 @@
-import json
-
 from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -30,6 +28,7 @@ from grandchallenge.components.models import (
     CIVForObjectMixin,
     ComponentInterface,
     ComponentInterfaceValue,
+    InterfaceKind,
     InterfaceKindChoices,
     OverlaySegmentsMixin,
     ValuesForInterfacesMixin,
@@ -51,7 +50,10 @@ from grandchallenge.core.utils.access_requests import (
 )
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.core.vendored.django.validators import StepValueValidator
-from grandchallenge.hanging_protocols.models import ViewContentMixin
+from grandchallenge.hanging_protocols.models import (
+    HangingProtocolMixin,
+    ViewportNames,
+)
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
@@ -171,7 +173,7 @@ CASE_TEXT_SCHEMA = {
 class ReaderStudy(
     UUIDModel,
     TitleSlugDescriptionModel,
-    ViewContentMixin,
+    HangingProtocolMixin,
     ValuesForInterfacesMixin,
 ):
     """
@@ -199,12 +201,6 @@ class ReaderStudy(
     )
     workstation_config = models.ForeignKey(
         "workstation_configs.WorkstationConfig",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-    )
-    hanging_protocol = models.ForeignKey(
-        "hanging_protocols.HangingProtocol",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
@@ -253,6 +249,16 @@ class ReaderStudy(
             "against the uploaded ground truth. This also means that "
             "the uploaded ground truth will be readily available to "
             "the readers."
+        ),
+    )
+    instant_verification = models.BooleanField(
+        default=False,
+        help_text=(
+            "In an educational reader study, enabling this setting will allow the "
+            "user to go through the reader study faster. The 'Save and continue' "
+            "button will be replaced by a 'Verify and continue' button which will "
+            "show the answer verification pop up and allow the user to save and go "
+            "to the next case upon dismissal."
         ),
     )
     case_text = models.JSONField(
@@ -327,6 +333,7 @@ class ReaderStudy(
         "help_text_markdown",
         "shuffle_hanging_list",
         "is_educational",
+        "instant_verification",
         "roll_over_answers_for_n_cases",
         "allow_answer_modification",
         "allow_case_navigation",
@@ -446,6 +453,12 @@ class ReaderStudy(
         if self.view_content is None:
             self.view_content = {}
 
+        self._clean_questions()
+
+    def _clean_questions(self):
+        for question in self.questions.all():
+            question.clean()
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
@@ -527,77 +540,6 @@ class ReaderStudy(
     def answerable_question_count(self):
         """The number of answerable questions for this ``ReaderStudy``."""
         return self.answerable_questions.count()
-
-    def add_ground_truth(self, *, data, user):  # noqa: C901
-        """Add ground truth answers provided by ``data`` for this ``ReaderStudy``."""
-        answers = []
-        for gt in data:
-            display_set = self.display_sets.get(pk=gt["case"])
-            for key in gt.keys():
-                if key == "case" or key.endswith("__explanation"):
-                    continue
-                question = self.questions.get(question_text=key)
-                _answer = json.loads(gt[key])
-                if _answer is None and question.required is False:
-                    continue
-                if question.answer_type == Question.AnswerType.CHOICE:
-                    try:
-                        option = question.options.get(title=_answer)
-                        _answer = option.pk
-                    except CategoricalOption.DoesNotExist:
-                        raise ValidationError(
-                            f"Option {_answer!r} is not valid for question {question.question_text}"
-                        )
-                if question.answer_type in (
-                    Question.AnswerType.MULTIPLE_CHOICE,
-                    Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
-                ):
-                    _answer = list(
-                        question.options.filter(title__in=_answer).values_list(
-                            "pk", flat=True
-                        )
-                    )
-                kwargs = {
-                    "creator": user,
-                    "question": question,
-                    "answer": _answer,
-                    "is_ground_truth": True,
-                }
-                kwargs["display_set"] = display_set
-
-                Answer.validate(**kwargs)
-                try:
-                    explanation = json.loads(gt.get(key + "__explanation", ""))
-                except (json.JSONDecodeError, TypeError):
-                    explanation = ""
-
-                answer_obj = Answer.objects.filter(
-                    display_set=display_set,
-                    question=question,
-                    is_ground_truth=True,
-                ).first()
-
-                answers.append(
-                    {
-                        "answer_obj": answer_obj
-                        or Answer(
-                            creator=user,
-                            question=question,
-                            is_ground_truth=True,
-                            explanation="",
-                        ),
-                        "answer": _answer,
-                        "explanation": explanation,
-                        "display_set": display_set,
-                    }
-                )
-
-        for answer in answers:
-            answer["answer_obj"].answer = answer["answer"]
-            answer["answer_obj"].explanation = answer["explanation"]
-            answer["answer_obj"].save()
-            answer["answer_obj"].display_set = answer["display_set"]
-            answer["answer_obj"].save()
 
     def get_progress_for_user(self, user):
         """Returns the percentage of completed hangings and questions for ``user``."""
@@ -731,10 +673,10 @@ class ReaderStudy(
             field = gt["display_set_id"]
             ground_truths[field] = ground_truths.get(field, {})
 
-            if gt["question__answer_type"] in [
-                Question.AnswerType.MULTIPLE_CHOICE,
-                Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
-            ]:
+            if (
+                gt["question__answer_type"]
+                == Question.AnswerType.MULTIPLE_CHOICE
+            ):
                 human_readable_answers = [
                     options[gt["question"]].get(a, a) for a in gt["answer"]
                 ]
@@ -914,8 +856,6 @@ class DisplaySetGroupObjectPermission(GroupObjectPermissionBase):
 class AnswerType(models.TextChoices):
     # WARNING: Do not change the display text, these are used in the front end
     TEXT = "TEXT", "Text"
-    SINGLE_LINE_TEXT = "STXT", "Single line text"
-    MULTI_LINE_TEXT = "MTXT", "Multi line text"
     BOOL = "BOOL", "Bool"
     NUMBER = "NUMB", "Number"
     HEADING = "HEAD", "Heading"
@@ -929,7 +869,6 @@ class AnswerType(models.TextChoices):
     MULTIPLE_POLYGONS = "MPOL", "Multiple polygons"
     CHOICE = "CHOI", "Choice"
     MULTIPLE_CHOICE = "MCHO", "Multiple choice"
-    MULTIPLE_CHOICE_DROPDOWN = "MCHD", "Multiple choice dropdown"
     MASK = "MASK", "Mask"
     LINE = "LINE", "Line"
     MULTIPLE_LINES = "MLIN", "Multiple lines"
@@ -945,7 +884,6 @@ class AnswerType(models.TextChoices):
         return [
             AnswerType.CHOICE,
             AnswerType.MULTIPLE_CHOICE,
-            AnswerType.MULTIPLE_CHOICE_DROPDOWN,
         ]
 
     @staticmethod
@@ -986,8 +924,6 @@ class AnswerType(models.TextChoices):
 
 ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
     AnswerType.TEXT: [InterfaceKindChoices.STRING],
-    AnswerType.SINGLE_LINE_TEXT: [InterfaceKindChoices.STRING],
-    AnswerType.MULTI_LINE_TEXT: [InterfaceKindChoices.STRING],
     AnswerType.BOOL: [InterfaceKindChoices.BOOL],
     AnswerType.NUMBER: [
         InterfaceKindChoices.FLOAT,
@@ -1012,9 +948,6 @@ ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
     AnswerType.MULTIPLE_LINES: [InterfaceKindChoices.MULTIPLE_LINES],
     AnswerType.CHOICE: [InterfaceKindChoices.CHOICE],
     AnswerType.MULTIPLE_CHOICE: [InterfaceKindChoices.MULTIPLE_CHOICE],
-    AnswerType.MULTIPLE_CHOICE_DROPDOWN: [
-        InterfaceKindChoices.MULTIPLE_CHOICE
-    ],
     AnswerType.MASK: [
         InterfaceKindChoices.SEGMENTATION,
     ],
@@ -1031,7 +964,7 @@ ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
 
 class QuestionWidgetKindChoices(models.TextChoices):
     ACCEPT_REJECT = "ACCEPT_REJECT", "Accept/Reject Findings"
-    NUMBER_INPUT = "NUMBER_INPUT", "Number input"
+    NUMBER_INPUT = "NUMBER_INPUT", "Number Input"
     NUMBER_RANGE = "NUMBER_RANGE", "Number Range"
     TEXT_INPUT = "TEXT_INPUT", "Text Input"
     TEXT_AREA = "TEXT_AREA", "Text Area"
@@ -1049,8 +982,6 @@ ANSWER_TYPE_TO_QUESTION_WIDGET = {
         QuestionWidgetKindChoices.TEXT_INPUT,
         QuestionWidgetKindChoices.TEXT_AREA,
     ],
-    AnswerType.SINGLE_LINE_TEXT: [],
-    AnswerType.MULTI_LINE_TEXT: [],
     AnswerType.BOOL: [],
     AnswerType.NUMBER: [
         QuestionWidgetKindChoices.NUMBER_INPUT,
@@ -1070,14 +1001,13 @@ ANSWER_TYPE_TO_QUESTION_WIDGET = {
     AnswerType.POLYGON: [],
     AnswerType.MULTIPLE_POLYGONS: [QuestionWidgetKindChoices.ACCEPT_REJECT],
     AnswerType.CHOICE: [
-        QuestionWidgetKindChoices.SELECT,
         QuestionWidgetKindChoices.RADIO_SELECT,
+        QuestionWidgetKindChoices.SELECT,
     ],
     AnswerType.MULTIPLE_CHOICE: [
-        QuestionWidgetKindChoices.SELECT_MULTIPLE,
         QuestionWidgetKindChoices.CHECKBOX_SELECT_MULTIPLE,
+        QuestionWidgetKindChoices.SELECT_MULTIPLE,
     ],
-    AnswerType.MULTIPLE_CHOICE_DROPDOWN: [],
     AnswerType.MASK: [],
     AnswerType.LINE: [],
     AnswerType.MULTIPLE_LINES: [QuestionWidgetKindChoices.ACCEPT_REJECT],
@@ -1097,8 +1027,6 @@ ANSWER_TYPE_TO_QUESTION_WIDGET_CHOICES = {
 }
 
 EMPTY_ANSWER_VALUES = {
-    AnswerType.SINGLE_LINE_TEXT: "",
-    AnswerType.MULTI_LINE_TEXT: "",
     AnswerType.TEXT: "",
     AnswerType.NUMBER: None,
     AnswerType.CHOICE: None,
@@ -1119,36 +1047,62 @@ EMPTY_ANSWER_VALUES = {
     AnswerType.ELLIPSE: None,
     AnswerType.MULTIPLE_ELLIPSES: None,
     AnswerType.MULTIPLE_CHOICE: [],
-    AnswerType.MULTIPLE_CHOICE_DROPDOWN: [],
     AnswerType.THREE_POINT_ANGLE: None,
     AnswerType.MULTIPLE_THREE_POINT_ANGLES: None,
 }
 
 
+class ImagePort(models.TextChoices):
+    MAIN = "M", "Main"
+    SECONDARY = "S", "Secondary"
+    TERTIARY = "TERTIARY", "Tertiary"
+    QUATERNARY = "QUATERNARY", "Quaternary"
+    QUINARY = "QUINARY", "Quinary"
+    SENARY = "SENARY", "Senary"
+    SEPTENARY = "SEPTENARY", "Septenary"
+    OCTONARY = "OCTONARY", "Octonary"
+    NONARY = "NONARY", "Nonary"
+    DENARY = "DENARY", "Denary"
+    UNDENARY = "UNDENARY", "Undenary"
+    DUODENARY = "DUODENARY", "Duodenary"
+    TREDENARY = "TREDENARY", "Tredenary"
+    QUATTUORDENARY = "QUATTUORDENARY", "Quattuordenary"
+    QUINDENARY = "QUINDENARY", "Quindenary"
+    SEXDENARY = "SEXDENARY", "Sexdenary"
+    SEPTENDENARY = "SEPTENDENARY", "Septendenary"
+    OCTODENARY = "OCTODENARY", "Octodenary"
+    NOVEMDENARY = "NOVEMDENARY", "Novemdenary"
+    VIGINTENARY = "VIGINTENARY", "Vigintenary"
+
+
+# This was redefined in the hanging protocol app and not unified
+IMAGE_PORT_TO_VIEWPORT_NAME = {
+    ImagePort.MAIN: ViewportNames.main,
+    ImagePort.SECONDARY: ViewportNames.secondary,
+    ImagePort.TERTIARY: ViewportNames.tertiary,
+    ImagePort.QUATERNARY: ViewportNames.quaternary,
+    ImagePort.QUINARY: ViewportNames.quinary,
+    ImagePort.SENARY: ViewportNames.senary,
+    ImagePort.SEPTENARY: ViewportNames.septenary,
+    ImagePort.OCTONARY: ViewportNames.octonary,
+    ImagePort.NONARY: ViewportNames.nonary,
+    ImagePort.DENARY: ViewportNames.denary,
+    ImagePort.UNDENARY: ViewportNames.undenary,
+    ImagePort.DUODENARY: ViewportNames.duodenary,
+    ImagePort.TREDENARY: ViewportNames.tredenary,
+    ImagePort.QUATTUORDENARY: ViewportNames.quattuordenary,
+    ImagePort.QUINDENARY: ViewportNames.quindenary,
+    ImagePort.SEXDENARY: ViewportNames.sexdenary,
+    ImagePort.SEPTENDENARY: ViewportNames.septendenary,
+    ImagePort.OCTODENARY: ViewportNames.octodenary,
+    ImagePort.NOVEMDENARY: ViewportNames.novemdenary,
+    ImagePort.VIGINTENARY: ViewportNames.vigintenary,
+}
+
+
 class Question(UUIDModel, OverlaySegmentsMixin):
     AnswerType = AnswerType
-
-    class ImagePort(models.TextChoices):
-        MAIN = "M", "Main"
-        SECONDARY = "S", "Secondary"
-        TERTIARY = "TERTIARY", "Tertiary"
-        QUATERNARY = "QUATERNARY", "Quaternary"
-        QUINARY = "QUINARY", "Quinary"
-        SENARY = "SENARY", "Senary"
-        SEPTENARY = "SEPTENARY", "Septenary"
-        OCTONARY = "OCTONARY", "Octonary"
-        NONARY = "NONARY", "Nonary"
-        DENARY = "DENARY", "Denary"
-        UNDENARY = "UNDENARY", "Undenary"
-        DUODENARY = "DUODENARY", "Duodenary"
-        TREDENARY = "TREDENARY", "Tredenary"
-        QUATTUORDENARY = "QUATTUORDENARY", "Quattuordenary"
-        QUINDENARY = "QUINDENARY", "Quindenary"
-        SEXDENARY = "SEXDENARY", "Sexdenary"
-        SEPTENDENARY = "SEPTENDENARY", "Septendenary"
-        OCTODENARY = "OCTODENARY", "Octodenary"
-        NOVEMDENARY = "NOVEMDENARY", "Novemdenary"
-        VIGINTENARY = "VIGINTENARY", "Vigintenary"
+    ImagePort = ImagePort
 
     # What is the orientation of the question form when presented on the
     # front end?
@@ -1162,14 +1116,11 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     SCORING_FUNCTIONS = {ScoringFunction.ACCURACY: accuracy_score}
 
     EXAMPLE_FOR_ANSWER_TYPE = {
-        AnswerType.SINGLE_LINE_TEXT: "'\"answer\"'",
-        AnswerType.MULTI_LINE_TEXT: "'\"answer\\nanswer\\nanswer\"'",
         AnswerType.TEXT: "'\"answer\"'",
         AnswerType.NUMBER: "'1'",
         AnswerType.BOOL: "'true'",
         AnswerType.CHOICE: "'\"option\"'",
         AnswerType.MULTIPLE_CHOICE: '\'["option1", "option2"]\'',
-        AnswerType.MULTIPLE_CHOICE_DROPDOWN: '\'["option1", "option2"]\'',
     }
 
     reader_study = models.ForeignKey(
@@ -1180,7 +1131,6 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     answer_type = models.CharField(
         max_length=4,
         choices=AnswerType.choices,
-        default=AnswerType.SINGLE_LINE_TEXT,
     )
     # Set blank because the requirement is dependent on answer_type and handled in the front end
     image_port = models.CharField(
@@ -1308,10 +1258,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         Calculates the score for ``answer`` by applying ``scoring_function``
         to ``answer`` and ``ground_truth``.
         """
-        if self.answer_type in (
-            Question.AnswerType.MULTIPLE_CHOICE,
-            Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
-        ):
+        if self.answer_type == Question.AnswerType.MULTIPLE_CHOICE:
             if len(answer) == 0 and len(ground_truth) == 0:
                 return 1.0
 
@@ -1351,6 +1298,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         super().clean()
         self._clean_answer_type()
         self._clean_interface()
+        self._clean_image_port()
         self._clean_widget()
         self._clean_widget_options()
 
@@ -1390,6 +1338,30 @@ class Question(UUIDModel, OverlaySegmentsMixin):
                 f"The interface {self.interface} is not allowed for this "
                 f"question type ({self.answer_type})"
             )
+
+    def _clean_image_port(self):
+        if self.image_port and self.reader_study.view_content:
+            try:
+                viewport_content = self.reader_study.view_content[
+                    IMAGE_PORT_TO_VIEWPORT_NAME[self.image_port]
+                ]
+            except KeyError:
+                raise ValidationError(
+                    f"The {self.get_image_port_display()} view port has not been defined. "
+                    f"Please update the view content of this reader study or select a different view port for question {self}."
+                )
+
+            if (
+                ComponentInterface.objects.filter(
+                    slug__in=viewport_content,
+                    kind__in=InterfaceKind.interface_type_image(),
+                ).count()
+                < 1
+            ):
+                raise ValidationError(
+                    f"The {self.get_image_port_display()} view port does not contain an image. "
+                    f"Please update the view content of this reader study or select a different view port for question {self}."
+                )
 
     def _clean_widget(self):
         if self.widget:
@@ -1633,6 +1605,7 @@ class Answer(UUIDModel):
     def history_values(self):
         return self.history.values_list("answer", "history_date")
 
+    # TODO this should be a model clean method
     @staticmethod
     def validate(  # noqa: C901
         *,
@@ -1688,10 +1661,7 @@ class Answer(UUIDModel):
                     "Provided option is not valid for this question"
                 )
 
-        if question.answer_type in (
-            Question.AnswerType.MULTIPLE_CHOICE,
-            Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
-        ):
+        if question.answer_type == Question.AnswerType.MULTIPLE_CHOICE:
             if not all(x in valid_options for x in answer):
                 raise ValidationError(
                     "Provided options are not valid for this question"
@@ -1721,15 +1691,14 @@ class Answer(UUIDModel):
                 .first()
                 or ""
             )
-        if self.question.answer_type in (
-            Question.AnswerType.MULTIPLE_CHOICE,
-            Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
-        ):
+
+        if self.question.answer_type == Question.AnswerType.MULTIPLE_CHOICE:
             return ", ".join(
                 self.question.options.filter(pk__in=self.answer)
                 .order_by("title")
                 .values_list("title", flat=True)
             )
+
         return self.answer
 
     def calculate_score(self, ground_truth):

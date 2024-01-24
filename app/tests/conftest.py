@@ -13,23 +13,11 @@ from django.contrib.sites.models import Site
 from django_otp.oath import TOTP
 from django_otp.plugins.otp_totp.models import TOTPDevice
 
-from grandchallenge.cases.models import Image
 from grandchallenge.components.backends import docker_client
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.reader_studies.models import Question
 from grandchallenge.subdomains.utils import reverse_lazy
-from tests.annotations_tests.factories import (
-    ImagePathologyAnnotationFactory,
-    ImageQualityAnnotationFactory,
-    ImageTextAnnotationFactory,
-    LandmarkAnnotationSetFactory,
-    OctRetinaImagePathologyAnnotationFactory,
-    PolygonAnnotationSetFactory,
-    RetinaImagePathologyAnnotationFactory,
-    SingleLandmarkAnnotationFactory,
-    SinglePolygonAnnotationFactory,
-)
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -281,153 +269,6 @@ def submission_file(tmpdir_factory):
     return testfile
 
 
-def add_to_graders_group(users):
-    # Add to retina_graders group
-    for grader in users:
-        grader.groups.add(
-            Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME)
-        )
-
-
-class TwoPolygonAnnotationSets(NamedTuple):
-    grader1: UserFactory
-    grader2: UserFactory
-    polygonset1: PolygonAnnotationSetFactory
-    polygonset2: PolygonAnnotationSetFactory
-
-
-def generate_two_polygon_annotation_sets(retina_grader=False):
-    graders = (UserFactory(), UserFactory())
-
-    if retina_grader:
-        add_to_graders_group(graders)
-
-    polygonsets = (
-        PolygonAnnotationSetFactory(grader=graders[0]),
-        PolygonAnnotationSetFactory(grader=graders[1]),
-    )
-
-    # Create child models for polygon annotation set
-    SinglePolygonAnnotationFactory.create_batch(
-        10, annotation_set=polygonsets[0]
-    )
-    SinglePolygonAnnotationFactory.create_batch(
-        10, annotation_set=polygonsets[1]
-    )
-
-    return TwoPolygonAnnotationSets(
-        grader1=graders[0],
-        grader2=graders[1],
-        polygonset1=polygonsets[0],
-        polygonset2=polygonsets[1],
-    )
-
-
-@pytest.fixture(name="two_retina_polygon_annotation_sets")
-def two_retina_polygon_annotation_sets():
-    """
-    Create two PolygonAnnotationSets of each 10 SinglePolygonAnnotations
-    belonging to two different graders that both are in the retina_graders
-    group.
-    """
-    return generate_two_polygon_annotation_sets(retina_grader=True)
-
-
-class MultipleLandmarkAnnotationSets(NamedTuple):
-    grader1: UserFactory
-    grader2: UserFactory
-    grader3: UserFactory
-    landmarkset1: LandmarkAnnotationSetFactory
-    landmarkset1images: list
-    landmarkset2: LandmarkAnnotationSetFactory
-    landmarkset2images: list
-    landmarkset3: LandmarkAnnotationSetFactory
-    landmarkset3images: list
-    landmarkset4: LandmarkAnnotationSetFactory
-    landmarkset4images: list
-
-
-def generate_multiple_landmark_annotation_sets(retina_grader=False):
-    graders = (UserFactory(), UserFactory(), UserFactory())
-
-    if retina_grader:
-        add_to_graders_group(graders)
-
-    landmarksets = (
-        LandmarkAnnotationSetFactory(grader=graders[0]),
-        LandmarkAnnotationSetFactory(grader=graders[1]),
-        LandmarkAnnotationSetFactory(grader=graders[0]),
-        LandmarkAnnotationSetFactory(grader=graders[2]),
-    )
-
-    # Create child models for landmark annotation set
-    singlelandmarkbatches = (
-        SingleLandmarkAnnotationFactory.create_batch(
-            2, annotation_set=landmarksets[0]
-        ),
-        SingleLandmarkAnnotationFactory.create_batch(
-            5, annotation_set=landmarksets[1]
-        ),
-        [],
-        [],
-    )
-
-    images = [
-        Image.objects.filter(
-            singlelandmarkannotation__annotation_set=landmarksets[0].id
-        ),
-        Image.objects.filter(
-            singlelandmarkannotation__annotation_set=landmarksets[1].id
-        ),
-        [],
-        [],
-    ]
-
-    # Create singlelandmarkannotations with the images of landmarkset1
-    for image in images[0]:
-        singlelandmarkbatches[2].append(
-            SingleLandmarkAnnotationFactory.create(
-                annotation_set=landmarksets[2], image=image
-            )
-        )
-        images[2].append(image)
-
-        singlelandmarkbatches[3].append(
-            SingleLandmarkAnnotationFactory.create(
-                annotation_set=landmarksets[3], image=image
-            )
-        )
-        images[3].append(image)
-    singlelandmarkbatches[2].append(
-        SingleLandmarkAnnotationFactory.create(annotation_set=landmarksets[2])
-    )
-    images[2].append(singlelandmarkbatches[2][-1].image)
-
-    return MultipleLandmarkAnnotationSets(
-        grader1=graders[0],
-        grader2=graders[1],
-        grader3=graders[2],
-        landmarkset1=landmarksets[0],
-        landmarkset1images=images[0],
-        landmarkset2=landmarksets[1],
-        landmarkset2images=images[1],
-        landmarkset3=landmarksets[2],
-        landmarkset3images=images[2],
-        landmarkset4=landmarksets[3],
-        landmarkset4images=images[3],
-    )
-
-
-@pytest.fixture(name="multiple_landmark_retina_annotation_sets")
-def multiple_landmark_retina_annotation_sets():
-    return generate_multiple_landmark_annotation_sets(retina_grader=True)
-
-
-@pytest.fixture(name="multiple_landmark_annotation_sets")
-def multiple_landmark_annotation_sets():
-    return generate_multiple_landmark_annotation_sets(retina_grader=False)
-
-
 @pytest.fixture
 def reader_study_with_gt():
     rs = ReaderStudyFactory()
@@ -517,26 +358,6 @@ def reader_study_with_mc_gt(reader_study_with_gt):
             )
 
     return rs
-
-
-@pytest.fixture
-def image_with_image_level_annotations():
-    grader = UserFactory()
-    add_to_graders_group([grader])
-    image = ImageFactory()
-    factory_kwargs = {"image": image, "grader": grader}
-    annotations = {
-        "quality": ImageQualityAnnotationFactory(**factory_kwargs),
-        "pathology": ImagePathologyAnnotationFactory(**factory_kwargs),
-        "retina_pathology": RetinaImagePathologyAnnotationFactory(
-            **factory_kwargs
-        ),
-        "oct_retina_pathology": OctRetinaImagePathologyAnnotationFactory(
-            **factory_kwargs
-        ),
-        "text": ImageTextAnnotationFactory(**factory_kwargs),
-    }
-    return image, grader, annotations
 
 
 @pytest.fixture

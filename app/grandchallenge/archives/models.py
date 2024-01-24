@@ -27,7 +27,7 @@ from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
     process_access_request,
 )
-from grandchallenge.hanging_protocols.models import ViewContentMixin
+from grandchallenge.hanging_protocols.models import HangingProtocolMixin
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
@@ -37,7 +37,7 @@ from grandchallenge.subdomains.utils import reverse
 class Archive(
     UUIDModel,
     TitleSlugDescriptionModel,
-    ViewContentMixin,
+    HangingProtocolMixin,
     ValuesForInterfacesMixin,
 ):
     """Model for archive. Contains a collection of images."""
@@ -88,12 +88,6 @@ class Archive(
     )
     workstation_config = models.ForeignKey(
         "workstation_configs.WorkstationConfig",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-    )
-    hanging_protocol = models.ForeignKey(
-        "hanging_protocols.HangingProtocol",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,

@@ -735,6 +735,26 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.MP4,
         }
 
+    @staticmethod
+    def interface_type_mandatory_isolation():
+        """Interfaces that can only be displayed in isolation."""
+        return {
+            InterfaceKind.InterfaceKindChoices.CHART,
+            InterfaceKind.InterfaceKindChoices.PDF,
+            InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG,
+            InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
+            InterfaceKind.InterfaceKindChoices.MP4,
+        }
+
+    @staticmethod
+    def interface_type_undisplayable():
+        """Interfaces that cannot be displayed."""
+        return {
+            InterfaceKind.InterfaceKindChoices.CSV,
+            InterfaceKind.InterfaceKindChoices.ZIP,
+            InterfaceKind.InterfaceKindChoices.OBJ,
+        }
+
 
 class OverlaySegmentsMixin(models.Model):
     overlay_segments = models.JSONField(
@@ -1680,17 +1700,7 @@ class ImportStatusChoices(IntegerChoices):
 
 class ComponentImageManager(models.Manager):
     def executable_images(self):
-        queryset = self.filter(is_manifest_valid=True, is_in_registry=True)
-
-        if (
-            self.model.SHIM_IMAGE
-            and settings.COMPONENTS_CREATE_SAGEMAKER_MODEL
-        ):
-            # SageMaker models are only created for shimmed images
-            # See validate_docker_image
-            return queryset.filter(is_on_sagemaker=True)
-        else:
-            return queryset
+        return self.filter(is_manifest_valid=True, is_in_registry=True)
 
     def active_images(self):
         return self.executable_images().filter(is_desired_version=True)
@@ -1753,11 +1763,6 @@ class ComponentImage(FieldChangeMixin, models.Model):
         default=False,
         editable=False,
         help_text="Is this image in the container registry?",
-    )
-    is_on_sagemaker = models.BooleanField(
-        default=False,
-        editable=False,
-        help_text="Does a SageMaker model for this image exist?",
     )
     status = models.TextField(editable=False)
 

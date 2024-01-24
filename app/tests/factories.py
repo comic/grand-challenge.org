@@ -182,36 +182,6 @@ class SessionFactory(factory.django.DjangoModelFactory):
     workstation_image = factory.SubFactory(WorkstationImageFactory)
 
 
-class FuzzyFloatCoordinatesList(factory.fuzzy.BaseFuzzyAttribute):
-    def __init__(self, size=None, **kwargs):
-        super().__init__(**kwargs)
-        self.size = size
-
-    def fuzz(self):
-        if self.size is None:
-            size = factory.fuzzy.random.randgen.randint(2, 30)
-        else:
-            size = self.size
-
-        fuzzy_list = []
-        for _ in range(size):
-            fuzzy_list.append(
-                [
-                    round(
-                        factory.fuzzy.random.randgen.uniform(0.0, 1000.0), 12
-                    ),
-                    round(
-                        factory.fuzzy.random.randgen.uniform(0.0, 1000.0), 12
-                    ),
-                ]
-            )
-
-        if size == 1:
-            return fuzzy_list[0]
-
-        return fuzzy_list
-
-
 class PolicyFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Policy

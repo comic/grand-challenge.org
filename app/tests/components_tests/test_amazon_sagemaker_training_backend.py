@@ -10,8 +10,8 @@ from dateutil.tz import tzlocal
 from django.conf import settings
 
 from grandchallenge.algorithms.models import AlgorithmImage, Job
-from grandchallenge.components.backends.amazon_sagemaker_batch import (
-    AmazonSageMakerBatchExecutor,
+from grandchallenge.components.backends.amazon_sagemaker_training import (
+    AmazonSageMakerTrainingExecutor,
 )
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
@@ -37,7 +37,7 @@ from grandchallenge.evaluation.models import Evaluation, Method
 def test_instance_type(
     memory_limit, requires_gpu, expected_type, desired_gpu_type
 ):
-    executor = AmazonSageMakerBatchExecutor(
+    executor = AmazonSageMakerTrainingExecutor(
         job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
         exec_image_repo_tag="",
         memory_limit=memory_limit,
@@ -64,7 +64,7 @@ def test_instance_type(
 def test_instance_type_incompatible(
     memory_limit, requires_gpu, desired_gpu_type
 ):
-    executor = AmazonSageMakerBatchExecutor(
+    executor = AmazonSageMakerTrainingExecutor(
         job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
         exec_image_repo_tag="",
         memory_limit=memory_limit,
@@ -87,10 +87,12 @@ def test_instance_type_incompatible(
 def test_get_job_params_match(key, model_name, app_label):
     pk = uuid4()
     event = {
-        "TransformJobName": f"{settings.COMPONENTS_REGISTRY_PREFIX}-{key}-{pk}-00"
+        "TrainingJobName": f"{settings.COMPONENTS_REGISTRY_PREFIX}-{key}-{pk}-00"
     }
-    job_name = AmazonSageMakerBatchExecutor.get_job_name(event=event)
-    job_params = AmazonSageMakerBatchExecutor.get_job_params(job_name=job_name)
+    job_name = AmazonSageMakerTrainingExecutor.get_job_name(event=event)
+    job_params = AmazonSageMakerTrainingExecutor.get_job_params(
+        job_name=job_name
+    )
 
     assert job_params.pk == str(pk)
     assert job_params.model_name == model_name
@@ -99,7 +101,7 @@ def test_get_job_params_match(key, model_name, app_label):
 
 
 def test_invocation_prefix():
-    executor = AmazonSageMakerBatchExecutor(
+    executor = AmazonSageMakerTrainingExecutor(
         job_id="algorithms-job-0",
         exec_image_repo_tag="",
         memory_limit=4,
@@ -129,16 +131,18 @@ def test_invocation_prefix():
 def test_transform_job_name(model, container, container_model, key):
     j = model(pk=uuid4())
     setattr(j, container, container_model(pk=uuid4()))
-    executor = AmazonSageMakerBatchExecutor(**j.executor_kwargs)
+    executor = AmazonSageMakerTrainingExecutor(**j.executor_kwargs)
 
     assert (
         executor._sagemaker_job_name
         == f"{settings.COMPONENTS_REGISTRY_PREFIX}-{key}-{j.pk}-00"
     )
 
-    event = {"TransformJobName": executor._sagemaker_job_name}
-    job_name = AmazonSageMakerBatchExecutor.get_job_name(event=event)
-    job_params = AmazonSageMakerBatchExecutor.get_job_params(job_name=job_name)
+    event = {"TrainingJobName": executor._sagemaker_job_name}
+    job_name = AmazonSageMakerTrainingExecutor.get_job_name(event=event)
+    job_params = AmazonSageMakerTrainingExecutor.get_job_params(
+        job_name=job_name
+    )
 
     assert job_params.pk == str(j.pk)
     assert job_params.model_name == j._meta.model_name
@@ -148,9 +152,12 @@ def test_transform_job_name(model, container, container_model, key):
 
 def test_execute(settings):
     settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
+    settings.COMPONENTS_AMAZON_SAGEMAKER_EXECUTION_ROLE_ARN = (
+        "arn:aws:iam::123456789012:role/service-role/ExecutionRole"
+    )
 
     pk = uuid4()
-    executor = AmazonSageMakerBatchExecutor(
+    executor = AmazonSageMakerTrainingExecutor(
         job_id=f"algorithms-job-{pk}",
         exec_image_repo_tag="",
         memory_limit=4,
@@ -161,35 +168,42 @@ def test_execute(settings):
 
     with Stubber(executor._sagemaker_client) as s:
         s.add_response(
-            method="create_transform_job",
-            service_response={"TransformJobArn": "string"},
+            method="create_training_job",
+            service_response={"TrainingJobArn": "string"},
             expected_params={
-                "TransformJobName": executor._sagemaker_job_name,
+                "TrainingJobName": executor._sagemaker_job_name,
+                "AlgorithmSpecification": {
+                    "TrainingInputMode": "File",
+                    "TrainingImage": "",
+                    "ContainerArguments": [
+                        "invoke",
+                        "--file",
+                        f"s3://grand-challenge-components-inputs//invocations/algorithms/job/{pk}/invocation.json",
+                    ],
+                },
+                "RoleArn": settings.COMPONENTS_AMAZON_SAGEMAKER_EXECUTION_ROLE_ARN,
+                "OutputDataConfig": {
+                    "S3OutputPath": f"s3://grand-challenge-components-outputs//training-outputs/algorithms/job/{pk}"
+                },
+                "ResourceConfig": {
+                    "VolumeSizeInGB": 30,
+                    "InstanceType": "ml.m5.large",
+                    "InstanceCount": 1,
+                },
+                "StoppingCondition": {"MaxRuntimeInSeconds": 60},
                 "Environment": {
                     "LOG_LEVEL": "INFO",
                     "PYTHONUNBUFFERED": "1",
                     "no_proxy": "amazonaws.com",
+                    "GRAND_CHALLENGE_COMPONENT_WRITABLE_DIRECTORIES": "/opt/ml/output/data:/opt/ml/model:/opt/ml/checkpoints:/tmp",
                 },
-                "ModelClientConfig": {
-                    "InvocationsMaxRetries": 0,
-                    "InvocationsTimeoutInSeconds": 60,
+                "VpcConfig": {
+                    "SecurityGroupIds": [
+                        settings.COMPONENTS_AMAZON_SAGEMAKER_SECURITY_GROUP_ID
+                    ],
+                    "Subnets": settings.COMPONENTS_AMAZON_SAGEMAKER_SUBNETS,
                 },
-                "ModelName": "",
-                "TransformInput": {
-                    "DataSource": {
-                        "S3DataSource": {
-                            "S3DataType": "S3Prefix",
-                            "S3Uri": f"s3://grand-challenge-components-inputs//invocations/algorithms/job/{pk}/invocation.json",
-                        }
-                    }
-                },
-                "TransformOutput": {
-                    "S3OutputPath": f"s3://grand-challenge-components-outputs//invocations/algorithms/job/{pk}"
-                },
-                "TransformResources": {
-                    "InstanceCount": 1,
-                    "InstanceType": "ml.m5.large",
-                },
+                "RemoteDebugConfig": {"EnableRemoteDebug": False},
             },
         )
         executor.execute(input_civs=[], input_prefixes={})
@@ -203,16 +217,18 @@ def test_execute(settings):
         fileobj.seek(0)
         result = json.loads(fileobj.read().decode("utf-8"))
 
-    assert result == {
-        "inputs": [],
-        "output_bucket_name": "grand-challenge-components-outputs",
-        "output_prefix": f"/io/algorithms/job/{pk}",
-        "pk": f"algorithms-job-{pk}",
-    }
+    assert result == [
+        {
+            "inputs": [],
+            "output_bucket_name": "grand-challenge-components-outputs",
+            "output_prefix": f"/io/algorithms/job/{pk}",
+            "pk": f"algorithms-job-{pk}",
+        }
+    ]
 
 
 def test_set_duration():
-    executor = AmazonSageMakerBatchExecutor(
+    executor = AmazonSageMakerTrainingExecutor(
         job_id="algorithms-job-0",
         exec_image_repo_tag="",
         memory_limit=4,
@@ -226,20 +242,19 @@ def test_set_duration():
     executor._set_duration(
         event={
             "CreationTime": 1654683838000,
-            "TransformStartTime": 1654684027000,
-            "TransformEndTime": 1654684048000,
+            "TrainingStartTime": 1654684027000,
+            "TrainingEndTime": 1654684048000,
         }
     )
 
     assert executor.duration == timedelta(seconds=21)
 
 
-@pytest.mark.parametrize("data_log", (True, False))
-def test_get_log_stream_name(settings, data_log):
+def test_get_log_stream_name(settings):
     settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
 
     pk = uuid4()
-    executor = AmazonSageMakerBatchExecutor(
+    executor = AmazonSageMakerTrainingExecutor(
         job_id=f"algorithms-job-{pk}",
         exec_image_repo_tag="",
         memory_limit=4,
@@ -254,27 +269,23 @@ def test_get_log_stream_name(settings, data_log):
             service_response={
                 "logStreams": [
                     {"logStreamName": f"localhost-A-{pk}/i-whatever"},
-                    {"logStreamName": f"localhost-A-{pk}/i-whatever/data-log"},
                 ]
             },
             expected_params={
-                "logGroupName": "/aws/sagemaker/TransformJobs",
+                "logGroupName": "/aws/sagemaker/TrainingJobs",
                 "logStreamNamePrefix": f"localhost-A-{pk}",
             },
         )
-        log_stream_name = executor._get_log_stream_name(data_log=data_log)
+        log_stream_name = executor._get_log_stream_name()
 
-    if data_log:
-        assert log_stream_name == f"localhost-A-{pk}/i-whatever/data-log"
-    else:
-        assert log_stream_name == f"localhost-A-{pk}/i-whatever"
+    assert log_stream_name == f"localhost-A-{pk}/i-whatever"
 
 
 def test_set_task_logs(settings):
     settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
 
     pk = uuid4()
-    executor = AmazonSageMakerBatchExecutor(
+    executor = AmazonSageMakerTrainingExecutor(
         job_id=f"algorithms-job-{pk}",
         exec_image_repo_tag="",
         memory_limit=4,
@@ -292,11 +303,10 @@ def test_set_task_logs(settings):
             service_response={
                 "logStreams": [
                     {"logStreamName": f"localhost-A-{pk}/i-whatever"},
-                    {"logStreamName": f"localhost-A-{pk}/i-whatever/data-log"},
                 ]
             },
             expected_params={
-                "logGroupName": "/aws/sagemaker/TransformJobs",
+                "logGroupName": "/aws/sagemaker/TrainingJobs",
                 "logStreamNamePrefix": f"localhost-A-{pk}",
             },
         )
@@ -365,7 +375,7 @@ def test_set_task_logs(settings):
                 ]
             },
             expected_params={
-                "logGroupName": "/aws/sagemaker/TransformJobs",
+                "logGroupName": "/aws/sagemaker/TrainingJobs",
                 "logStreamName": f"localhost-A-{pk}/i-whatever",
                 "limit": LOGLINES,
                 "startFromHead": False,
@@ -377,61 +387,11 @@ def test_set_task_logs(settings):
     assert executor.stderr == "2022-06-08T10:23:58+00:00 hello from stderr"
 
 
-def test_get_job_data_log(settings):
-    settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
-
-    pk = uuid4()
-    executor = AmazonSageMakerBatchExecutor(
-        job_id=f"algorithms-job-{pk}",
-        exec_image_repo_tag="",
-        memory_limit=4,
-        time_limit=60,
-        requires_gpu=False,
-        desired_gpu_type=GPUTypeChoices.T4,
-    )
-
-    with Stubber(executor._logs_client) as logs:
-        logs.add_response(
-            method="describe_log_streams",
-            service_response={
-                "logStreams": [
-                    {"logStreamName": f"localhost-A-{pk}/i-whatever"},
-                    {"logStreamName": f"localhost-A-{pk}/i-whatever/data-log"},
-                ]
-            },
-            expected_params={
-                "logGroupName": "/aws/sagemaker/TransformJobs",
-                "logStreamNamePrefix": f"localhost-A-{pk}",
-            },
-        )
-        logs.add_response(
-            method="get_log_events",
-            service_response={
-                "events": [
-                    {
-                        "message": "data message",
-                        "timestamp": 1654683838000,
-                    },
-                ]
-            },
-            expected_params={
-                "logGroupName": "/aws/sagemaker/TransformJobs",
-                "logStreamName": f"localhost-A-{pk}/i-whatever/data-log",
-                "limit": LOGLINES,
-                "startFromHead": False,
-            },
-        )
-
-        data_logs = executor._get_job_data_log()
-
-    assert data_logs == ["data message"]
-
-
 def test_set_runtime_metrics(settings):
     settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
 
     pk = uuid4()
-    executor = AmazonSageMakerBatchExecutor(
+    executor = AmazonSageMakerTrainingExecutor(
         job_id=f"algorithms-job-{pk}",
         exec_image_repo_tag="",
         memory_limit=4,
@@ -473,7 +433,7 @@ def test_set_runtime_metrics(settings):
                 "EndTime": datetime(2022, 6, 9, 9, 43, 1, tzinfo=timezone.utc),
                 "MetricDataQueries": [
                     {
-                        "Expression": f"SEARCH('{{/aws/sagemaker/TransformJobs,Host}} Host=localhost-A-{pk}/i-', 'Average', 60)",
+                        "Expression": f"SEARCH('{{/aws/sagemaker/TrainingJobs,Host}} Host=localhost-A-{pk}/algo-1', 'Average', 60)",
                         "Id": "q",
                     }
                 ],
@@ -484,9 +444,9 @@ def test_set_runtime_metrics(settings):
         )
         executor._set_runtime_metrics(
             event={
-                "TransformStartTime": 1654767467000,
-                "TransformEndTime": 1654767481000,
-                "TransformResources": {
+                "TrainingStartTime": 1654767467000,
+                "TrainingEndTime": 1654767481000,
+                "ResourceConfig": {
                     "InstanceType": "ml.m5.large",
                     "InstanceCount": 1,
                 },
@@ -526,7 +486,7 @@ def test_set_runtime_metrics(settings):
 
 def test_handle_completed_job():
     pk = uuid4()
-    executor = AmazonSageMakerBatchExecutor(
+    executor = AmazonSageMakerTrainingExecutor(
         job_id=f"algorithms-job-{pk}",
         exec_image_repo_tag="",
         memory_limit=4,
@@ -553,11 +513,11 @@ def test_handle_completed_job():
     assert executor._handle_completed_job() is None
 
 
-def test_handle_failed_job(settings):
+def test_handle_time_limit_exceded(settings):
     settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
 
     pk = uuid4()
-    executor = AmazonSageMakerBatchExecutor(
+    executor = AmazonSageMakerTrainingExecutor(
         job_id=f"algorithms-job-{pk}",
         exec_image_repo_tag="",
         memory_limit=4,
@@ -566,44 +526,13 @@ def test_handle_failed_job(settings):
         desired_gpu_type=GPUTypeChoices.T4,
     )
 
-    with Stubber(executor._logs_client) as logs:
-        logs.add_response(
-            method="describe_log_streams",
-            service_response={
-                "logStreams": [
-                    {"logStreamName": f"localhost-A-{pk}/i-whatever"},
-                    {"logStreamName": f"localhost-A-{pk}/i-whatever/data-log"},
-                ]
-            },
-            expected_params={
-                "logGroupName": "/aws/sagemaker/TransformJobs",
-                "logStreamNamePrefix": f"localhost-A-{pk}",
-            },
+    with pytest.raises(ComponentException) as error:
+        executor._handle_stopped_job(
+            event={
+                "TrainingJobStatus": "Stopped",
+                "SecondaryStatus": "MaxRuntimeExceeded",
+            }
         )
-        logs.add_response(
-            method="get_log_events",
-            service_response={
-                "events": [
-                    {
-                        "message": "Something happened",
-                        "timestamp": 1654683838000,
-                    },
-                    {
-                        "message": "Model server did not respond to /invocations request within 1200 seconds",
-                        "timestamp": 1654683838000,
-                    },
-                ]
-            },
-            expected_params={
-                "logGroupName": "/aws/sagemaker/TransformJobs",
-                "logStreamName": f"localhost-A-{pk}/i-whatever/data-log",
-                "limit": LOGLINES,
-                "startFromHead": False,
-            },
-        )
-
-        with pytest.raises(ComponentException) as error:
-            executor._handle_failed_job(event={})
 
     assert "Time limit exceeded" in str(error)
 
@@ -612,7 +541,7 @@ def test_handle_stopped_event(settings):
     settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
 
     pk = uuid4()
-    executor = AmazonSageMakerBatchExecutor(
+    executor = AmazonSageMakerTrainingExecutor(
         job_id=f"algorithms-job-{pk}",
         exec_image_repo_tag="",
         memory_limit=4,
@@ -627,11 +556,10 @@ def test_handle_stopped_event(settings):
             service_response={
                 "logStreams": [
                     {"logStreamName": f"localhost-A-{pk}/i-whatever"},
-                    {"logStreamName": f"localhost-A-{pk}/i-whatever/data-log"},
                 ]
             },
             expected_params={
-                "logGroupName": "/aws/sagemaker/TransformJobs",
+                "logGroupName": "/aws/sagemaker/TrainingJobs",
                 "logStreamNamePrefix": f"localhost-A-{pk}",
             },
         )
@@ -639,7 +567,7 @@ def test_handle_stopped_event(settings):
             method="get_log_events",
             service_response={"events": []},
             expected_params={
-                "logGroupName": "/aws/sagemaker/TransformJobs",
+                "logGroupName": "/aws/sagemaker/TrainingJobs",
                 "logStreamName": f"localhost-A-{pk}/i-whatever",
                 "limit": LOGLINES,
                 "startFromHead": False,
@@ -647,14 +575,19 @@ def test_handle_stopped_event(settings):
         )
 
         with pytest.raises(TaskCancelled):
-            executor.handle_event(event={"TransformJobStatus": "Stopped"})
+            executor.handle_event(
+                event={
+                    "TrainingJobStatus": "Stopped",
+                    "SecondaryStatus": "Stopped",
+                }
+            )
 
 
 def test_deprovision(settings):
     settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
 
     pk = uuid4()
-    executor = AmazonSageMakerBatchExecutor(
+    executor = AmazonSageMakerTrainingExecutor(
         job_id=f"algorithms-job-{pk}",
         exec_image_repo_tag="",
         memory_limit=4,
@@ -675,7 +608,7 @@ def test_deprovision(settings):
         (settings.COMPONENTS_INPUT_BUCKET_NAME, executor._invocation_key),
         (
             settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-            f"{executor._invocation_key}.out",
+            f"{executor._training_output_prefix}/my-output.out",
         ),
     )
 
@@ -690,9 +623,9 @@ def test_deprovision(settings):
 
     with Stubber(executor._sagemaker_client) as s:
         s.add_response(
-            method="stop_transform_job",
+            method="stop_training_job",
             service_response={},
-            expected_params={"TransformJobName": f"localhost-A-{pk}"},
+            expected_params={"TrainingJobName": f"localhost-A-{pk}"},
         )
         executor.deprovision()
 

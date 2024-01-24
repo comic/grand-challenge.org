@@ -1214,34 +1214,6 @@ def test_can_execute():
 
 
 @pytest.mark.django_db
-def test_can_execute_with_sagemaker(settings):
-    settings.COMPONENTS_CREATE_SAGEMAKER_MODEL = False
-
-    ai = AlgorithmImageFactory(
-        is_manifest_valid=True,
-        is_in_registry=True,
-        is_on_sagemaker=False,
-        image=None,
-    )
-
-    assert ai.can_execute is True
-    assert ai in AlgorithmImage.objects.executable_images()
-
-    settings.COMPONENTS_CREATE_SAGEMAKER_MODEL = True
-
-    del ai.can_execute
-    assert ai.can_execute is False
-    assert ai not in AlgorithmImage.objects.executable_images()
-
-    ai.is_on_sagemaker = True
-    ai.save()
-
-    del ai.can_execute
-    assert ai.can_execute is True
-    assert ai in AlgorithmImage.objects.executable_images()
-
-
-@pytest.mark.django_db
 def test_no_job_without_image(django_capture_on_commit_callbacks):
     with django_capture_on_commit_callbacks() as callbacks:
         ai = AlgorithmImageFactory(image=None)
@@ -1325,7 +1297,6 @@ def test_remove_container_image_from_registry(
     assert ai.is_manifest_valid is True
     assert ai.latest_shimmed_version == ""
     assert ai.is_in_registry is False
-    assert ai.is_on_sagemaker is False
 
 
 @pytest.mark.django_db
