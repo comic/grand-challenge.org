@@ -9,7 +9,7 @@
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{{ list_url }}">{{ base_object_type }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ list_url }}">{{ base_model_name }}</a></li>
         <li class="breadcrumb-item"><a href="{{ base_object.get_absolute_url }}">{{ base_object }}</a></li>
         <li class="breadcrumb-item active" aria-current="page">Add {{ type_to_add }}
         </li>
@@ -20,7 +20,7 @@
     <h2>Add {{ type_to_add }} to {{ base_object }}</h2>
 
     <div id="objectSlug" class="d-none" data-slug="{{ base_object.slug }}"></div>
-    <div id="modelName" class="d-none" data-model-name="{{ base_object_type }}"></div>
+    <div id="modelName" class="d-none" data-model-name="{{ base_model_name }}"></div>
 
     <form hx-post="{{ form_url }}"
           hx-include="[id='new-interfaces']"

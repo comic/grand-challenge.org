@@ -244,7 +244,7 @@ class Archive(
         return reverse("api:archive-detail", kwargs={"pk": self.pk})
 
     @property
-    def related_item_model(self):
+    def civ_sets_related_manager(self):
         return self.items
 
 

@@ -711,7 +711,7 @@ class ReaderStudy(
         return (highest + 10) // 10 * 10
 
     @property
-    def related_item_model(self):
+    def civ_sets_related_manager(self):
         return self.display_sets
 
     @cached_property

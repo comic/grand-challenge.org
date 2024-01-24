@@ -2061,13 +2061,13 @@ class InterfacesAndValues(NamedTuple):
 
 class ValuesForInterfacesMixin:
     @property
-    def related_item_model(self):
+    def civ_sets_related_manager(self):
         raise NotImplementedError
 
     @cached_property
     def interfaces_and_values(self):
         vals = list(
-            self.related_item_model.select_related(
+            self.civ_sets_related_manager.select_related(
                 "values", "values__interface", "values__image"
             )
             .filter(values__interface__slug__isnull=False)

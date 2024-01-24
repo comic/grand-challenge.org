@@ -1317,7 +1317,7 @@ class DisplaySetUpdate(MultipleCIVProcessingBaseView):
 
     @property
     def base_object(self):
-        return ReaderStudy.objects.get(slug=self.kwargs["slug"])
+        return self.object.reader_study
 
     def get_success_url(self):
         return reverse(
@@ -1404,8 +1404,8 @@ class DisplaySetCreateView(
         *MultipleCIVProcessingBaseView.included_form_classes,
     )
     success_message = "Display set has been created."
-    type_to_add = DisplaySet._meta.verbose_name
-    base_object_type = ReaderStudy._meta.model_name
+    type_to_add = DisplaySet._meta.model_name
+    base_model_name = ReaderStudy._meta.model_name
 
     def get_permission_object(self):
         return self.base_object
