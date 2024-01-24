@@ -7,7 +7,6 @@ from os.path import commonpath
 from pathlib import Path
 from typing import NamedTuple
 
-from django.conf import settings
 from django.core.files import File
 from django.db.models import TextChoices
 from django.utils._os import safe_join
@@ -117,32 +116,6 @@ def _filter_members(members: list[zipfile.ZipInfo]):
         sliced_path = slice(None, None, None)
 
     return [{"src": m, "dest": m[sliced_path]} for m in members]
-
-
-def get_sagemaker_model_name(*, repo_tag):
-    """
-    The SageMaker model name
-
-    These are quite restrictive, so we cannot use the container image name.
-    They must be max 63 chars and match ^[a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?$
-    """
-    model_name = repo_tag
-
-    # Assuming the registry prefix follows the recommendation of
-    # organisation-project-env
-    model_name_replacements = {
-        f"{settings.COMPONENTS_REGISTRY_URL}/": "",
-        "algorithms/algorithmimage": "A",
-        "evaluation/method": "M",
-        ":": "-",
-        "/": "-",
-        ".": "-",
-    }
-
-    for k, v in model_name_replacements.items():
-        model_name = model_name.replace(k, v)
-
-    return model_name
 
 
 def ms_timestamp_to_datetime(timestamp):

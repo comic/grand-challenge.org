@@ -19,7 +19,6 @@ class ComponentImageAdmin(GuardedModelAdmin):
         "creator",
         "is_manifest_valid",
         "is_in_registry",
-        "is_on_sagemaker",
         "import_status",
         "image_sha256",
         "requires_gpu",
@@ -32,7 +31,6 @@ class ComponentImageAdmin(GuardedModelAdmin):
         "requires_gpu",
         "is_manifest_valid",
         "is_in_registry",
-        "is_on_sagemaker",
         "import_status",
         "is_desired_version",
     )

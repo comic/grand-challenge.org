@@ -34,7 +34,6 @@ from grandchallenge.components.backends.exceptions import (
     RetryTask,
     TaskCancelled,
 )
-from grandchallenge.components.backends.utils import get_sagemaker_model_name
 from grandchallenge.components.emails import send_invalid_dockerfile_email
 from grandchallenge.components.exceptions import PriorStepFailed
 from grandchallenge.components.registry import _get_registry_auth_config
@@ -147,18 +146,6 @@ def upload_to_registry_and_sagemaker(
         != settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
     ):
         shim_container_image(instance=instance)
-        instance.is_on_sagemaker = False
-        instance.save()
-
-    if (
-        instance.SHIM_IMAGE
-        and settings.COMPONENTS_CREATE_SAGEMAKER_MODEL
-        and not instance.is_on_sagemaker
-    ):
-        # Only create SageMaker models for shimmed images for now
-        # See ComponentImageManager
-        create_sagemaker_model(repo_tag=instance.shimmed_repo_tag)
-        instance.is_on_sagemaker = True
         instance.save()
 
     instance.import_status = instance.ImportStatusChoices.COMPLETED
@@ -188,23 +175,12 @@ def update_container_image_shim(
     ):
         existing_shimmed_repo_tag = instance.shimmed_repo_tag
 
-        if instance.is_on_sagemaker:
-            delete_sagemaker_model(repo_tag=existing_shimmed_repo_tag)
-            instance.is_on_sagemaker = False
-            instance.save()
-
         remove_tag_from_registry(repo_tag=existing_shimmed_repo_tag)
         instance.latest_shimmed_version = ""
         instance.save()
 
         shim_container_image(instance=instance)
-        instance.is_on_sagemaker = False
         instance.save()
-
-        if settings.COMPONENTS_CREATE_SAGEMAKER_MODEL:
-            create_sagemaker_model(repo_tag=instance.shimmed_repo_tag)
-            instance.is_on_sagemaker = True
-            instance.save()
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
@@ -244,11 +220,6 @@ def remove_container_image_from_registry(
     """Remove a container image from the registry"""
     model = apps.get_model(app_label=app_label, model_name=model_name)
     instance = model.objects.get(pk=pk)
-
-    if instance.is_on_sagemaker:
-        delete_sagemaker_model(repo_tag=instance.shimmed_repo_tag)
-        instance.is_on_sagemaker = False
-        instance.save()
 
     if instance.latest_shimmed_version:
         remove_tag_from_registry(repo_tag=instance.shimmed_repo_tag)
@@ -525,37 +496,6 @@ def _extract_docker_image_file(*, instance, filename: str):
         )
     except (EOFError, zlib.error, LZMAError):
         raise ValidationError("Could not decompress the container image file.")
-
-
-def create_sagemaker_model(*, repo_tag):
-    sagemaker_client = boto3.client(
-        "sagemaker",
-        region_name=settings.COMPONENTS_AMAZON_ECR_REGION,
-    )
-
-    sagemaker_client.create_model(
-        ModelName=get_sagemaker_model_name(repo_tag=repo_tag),
-        PrimaryContainer={"Image": repo_tag},
-        ExecutionRoleArn=settings.COMPONENTS_AMAZON_SAGEMAKER_EXECUTION_ROLE_ARN,
-        EnableNetworkIsolation=False,  # Restricted by VPC
-        VpcConfig={
-            "SecurityGroupIds": [
-                settings.COMPONENTS_AMAZON_SAGEMAKER_SECURITY_GROUP_ID,
-            ],
-            "Subnets": settings.COMPONENTS_AMAZON_SAGEMAKER_SUBNETS,
-        },
-    )
-
-
-def delete_sagemaker_model(*, repo_tag):
-    sagemaker_client = boto3.client(
-        "sagemaker",
-        region_name=settings.COMPONENTS_AMAZON_ECR_REGION,
-    )
-
-    sagemaker_client.delete_model(
-        ModelName=get_sagemaker_model_name(repo_tag=repo_tag)
-    )
 
 
 def retry_if_dropped(func):

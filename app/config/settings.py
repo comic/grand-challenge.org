@@ -1049,9 +1049,6 @@ COMPONENTS_SAGEMAKER_SHIM_VERSION = os.environ.get(
 COMPONENTS_SAGEMAKER_SHIM_LOCATION = os.environ.get(
     "COMPONENTS_SAGEMAKER_SHIM_LOCATION", "/opt/sagemaker-shim"
 )
-COMPONENTS_CREATE_SAGEMAKER_MODEL = strtobool(
-    os.environ.get("COMPONENTS_CREATE_SAGEMAKER_MODEL", "False")
-)
 COMPONENTS_INPUT_BUCKET_NAME = os.environ.get(
     "COMPONENTS_INPUT_BUCKET_NAME", "grand-challenge-components-inputs"
 )
