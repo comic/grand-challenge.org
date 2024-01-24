@@ -1123,6 +1123,7 @@ def test_display_set_update_form(form_class, file_widget):
 
     ci = ComponentInterfaceFactory(kind="STR", title="slug-3")
     QuestionFactory(reader_study=rs, answer_type="STXT", interface=ci)
+    del rs.interfaces_and_values
     del rs.values_for_interfaces
     form = form_class(user=user, instance=instance, base_obj=rs)
     assert sorted(form.fields.keys()) == [

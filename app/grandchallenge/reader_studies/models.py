@@ -774,13 +774,15 @@ class ReaderStudy(
 
     @cached_property
     def interfaces_and_values(self):
-        interfaces, vals = super().interfaces_and_values
-        interfaces.update(
-            self.questions.filter(interface__isnull=False).values_list(
-                "interface__slug", flat=True
+        interfaces_and_values = super().interfaces_and_values
+        interfaces_and_values.interfaces.update(
+            set(
+                self.questions.filter(interface__isnull=False).values_list(
+                    "interface__slug", flat=True
+                )
             )
         )
-        return interfaces, vals
+        return interfaces_and_values
 
 
 class ReaderStudyUserObjectPermission(UserObjectPermissionBase):

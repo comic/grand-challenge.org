@@ -696,6 +696,22 @@ def test_display_set_interfaces_create_permissions(client):
     )
     assert response.status_code == 200
 
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-new-interfaces-create",
+        client=client,
+        reverse_kwargs={"slug": rs.slug},
+        user=u1,
+    )
+    assert response.status_code == 200
+
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-new-interfaces-create",
+        client=client,
+        reverse_kwargs={"slug": rs.slug},
+        user=u2,
+    )
+    assert response.status_code == 200
+
 
 @pytest.mark.parametrize(
     "interface_kind, store_in_database, field_type",

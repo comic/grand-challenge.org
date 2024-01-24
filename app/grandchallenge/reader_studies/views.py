@@ -1372,6 +1372,13 @@ class DisplaySetFilesUpdate(FileUpdateBaseView):
 
 
 class DisplaySetInterfacesCreate(InterfacesCreateBaseView):
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
+    )
+
+    def get_permission_object(self):
+        return self.object
+
     @property
     def object(self):
         if self.kwargs.get("pk"):

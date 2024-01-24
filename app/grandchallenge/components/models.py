@@ -4,6 +4,7 @@ import re
 from datetime import timedelta
 from json import JSONDecodeError
 from pathlib import Path
+from typing import NamedTuple
 
 from celery import signature
 from django import forms
@@ -2048,6 +2049,11 @@ class CIVForObjectMixin:
             self.values.remove(current_civ)
 
 
+class InterfacesAndValues(NamedTuple):
+    interfaces: set
+    values: dict
+
+
 class ValuesForInterfacesMixin:
     @property
     def related_item_model(self):
@@ -2068,17 +2074,17 @@ class ValuesForInterfacesMixin:
             .distinct()
         )
         interfaces = [x["values__interface__slug"] for x in vals]
-        return set(interfaces), vals
+        return InterfacesAndValues(interfaces=set(interfaces), values=vals)
 
     @cached_property
     def values_for_interfaces(self):
-        interfaces, vals = self.interfaces_and_values
+        interfaces_and_values = self.interfaces_and_values
         values_for_interfaces = {
             interface: [
                 x["values__id"]
-                for x in vals
+                for x in interfaces_and_values.values
                 if x["values__interface__slug"] == interface
             ]
-            for interface in interfaces
+            for interface in interfaces_and_values.interfaces
         }
         return values_for_interfaces
