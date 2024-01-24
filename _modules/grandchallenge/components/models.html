@@ -46,7 +46,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../architecture.html">Architecture</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../development.html">Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../evaluation.html">Evaluation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../algorithms.html">Algorithms</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../components.html">Components</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../workstations.html">Workstations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../reader-studies.html">Reader Studies</a></li>
@@ -1819,17 +1818,7 @@
 
 <span class="k">class</span> <span class="nc">ComponentImageManager</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Manager</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">executable_images</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">queryset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_manifest_valid</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_in_registry</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">SHIM_IMAGE</span>
-            <span class="ow">and</span> <span class="n">settings</span><span class="o">.</span><span class="n">COMPONENTS_CREATE_SAGEMAKER_MODEL</span>
-        <span class="p">):</span>
-            <span class="c1"># SageMaker models are only created for shimmed images</span>
-            <span class="c1"># See validate_docker_image</span>
-            <span class="k">return</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_on_sagemaker</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">queryset</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_manifest_valid</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_in_registry</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">active_images</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">executable_images</span><span class="p">()</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_desired_version</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -1897,11 +1886,6 @@
         <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Is this image in the container registry?&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">is_on_sagemaker</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Does a SageMaker model for this image exist?&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">status</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span><span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
