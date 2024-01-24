@@ -2049,21 +2049,17 @@ class CIVForObjectMixin:
 
 
 class ValuesForInterfacesMixin:
-    @cached_property
-    def values_for_interfaces(self):
-        from grandchallenge.archives.models import Archive
-        from grandchallenge.reader_studies.models import ReaderStudy
+    @property
+    def related_item_model(self):
+        raise NotImplementedError
 
-        if self.__class__ == ReaderStudy:
-            qs = self.display_sets.select_related(
-                "values", "values__interface", "values__image"
-            )
-        elif self.__class__ == Archive:
-            qs = self.items.select_related(
-                "values", "values__interface", "values__image"
-            )
+    @cached_property
+    def interfaces_and_values(self):
         vals = list(
-            qs.filter(values__interface__slug__isnull=False)
+            self.related_item_model.select_related(
+                "values", "values__interface", "values__image"
+            )
+            .filter(values__interface__slug__isnull=False)
             .values(
                 "values__interface__slug",
                 "values__id",
@@ -2072,11 +2068,11 @@ class ValuesForInterfacesMixin:
             .distinct()
         )
         interfaces = [x["values__interface__slug"] for x in vals]
-        if self.__class__ == ReaderStudy:
-            interfaces += self.questions.filter(
-                interface__isnull=False
-            ).values_list("interface__slug", flat=True)
-        interfaces = set(interfaces)
+        return set(interfaces), vals
+
+    @cached_property
+    def values_for_interfaces(self):
+        interfaces, vals = self.interfaces_and_values
         values_for_interfaces = {
             interface: [
                 x["values__id"]

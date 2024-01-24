@@ -249,6 +249,10 @@ class Archive(
     def api_url(self) -> str:
         return reverse("api:archive-detail", kwargs={"pk": self.pk})
 
+    @property
+    def related_item_model(self):
+        return self.items
+
 
 class ArchiveUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(Archive, on_delete=models.CASCADE)

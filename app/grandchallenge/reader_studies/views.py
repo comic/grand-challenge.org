@@ -1372,13 +1372,6 @@ class DisplaySetFilesUpdate(FileUpdateBaseView):
 
 
 class DisplaySetInterfacesCreate(InterfacesCreateBaseView):
-    permission_required = (
-        f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
-    )
-
-    def get_permission_object(self):
-        return self.object
-
     @property
     def object(self):
         if self.kwargs.get("pk"):
@@ -1427,7 +1420,7 @@ class DisplaySetCreateView(
 
     @property
     def base_object(self):
-        return ReaderStudy.objects.filter(slug=self.kwargs["slug"]).get()
+        return ReaderStudy.objects.get(slug=self.kwargs["slug"])
 
     @property
     def list_url(self):

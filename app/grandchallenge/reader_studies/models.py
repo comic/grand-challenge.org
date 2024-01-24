@@ -768,6 +768,20 @@ class ReaderStudy(
         highest = getattr(last, "order", 0)
         return (highest + 10) // 10 * 10
 
+    @property
+    def related_item_model(self):
+        return self.display_sets
+
+    @cached_property
+    def interfaces_and_values(self):
+        interfaces, vals = super().interfaces_and_values
+        interfaces.update(
+            self.questions.filter(interface__isnull=False).values_list(
+                "interface__slug", flat=True
+            )
+        )
+        return interfaces, vals
+
 
 class ReaderStudyUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(ReaderStudy, on_delete=models.CASCADE)

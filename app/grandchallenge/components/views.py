@@ -244,9 +244,8 @@ class ObjectCreateMixin:
         raise NotImplementedError
 
 
-class InterfacesCreateBaseView(ObjectPermissionRequiredMixin, TemplateView):
+class InterfacesCreateBaseView(TemplateView):
     form_class = SingleCIVForm
-    raise_exception = True
     template_name = "components/new_interface_create.html"
 
     def get_form_kwargs(self):

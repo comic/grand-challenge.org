@@ -899,11 +899,21 @@ def test_archive_item_create_view(
     editor = UserFactory()
     archive.add_editor(editor)
     ai1 = ArchiveItemFactory(archive=archive)
-    ci_str = ComponentInterfaceFactory(kind="STR")
-    ci_img = ComponentInterfaceFactory(kind="IMG")
-    ci_img2 = ComponentInterfaceFactory(kind="IMG")
-    ci_json = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
-    ci_json2 = ComponentInterfaceFactory(kind="JSON", store_in_database=True)
+    ci_str = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.STRING
+    )
+    ci_img = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.IMAGE
+    )
+    ci_img2 = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.IMAGE
+    )
+    ci_json = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=False
+    )
+    ci_json2 = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=True
+    )
 
     im1, im2 = ImageFactory.create_batch(2)
     civ_str = ComponentInterfaceValueFactory(
