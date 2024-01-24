@@ -36,7 +36,6 @@ or spin up your own instance.
     architecture
     development
     evaluation
-    algorithms
     components
     workstations
     reader-studies
