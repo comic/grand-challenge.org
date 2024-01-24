@@ -435,9 +435,16 @@ def _decompress_tarball(*, in_fileobj, out_fileobj):
 
 
 def _validate_docker_image_manifest(*, instance) -> str:
-    manifest = _extract_docker_image_file(
-        instance=instance, filename="manifest.json"
-    )
+    container_image_files = _get_root_docker_image_files(instance=instance)
+
+    try:
+        manifest = container_image_files["manifest.json"]
+    except KeyError:
+        raise ValidationError(
+            "Could not find manifest.json in the container image file. "
+            "Was this created with docker save?"
+        )
+
     manifest = json.loads(manifest)
 
     if len(manifest) != 1:
@@ -448,9 +455,20 @@ def _validate_docker_image_manifest(*, instance) -> str:
 
     image_sha256 = manifest[0]["Config"][:64]
 
-    config = _extract_docker_image_file(
-        instance=instance, filename=f"{image_sha256}.json"
-    )
+    for filename in [image_sha256, f"{image_sha256}.json"]:
+        # The ".json" extension was dropped in Docker 25,
+        # but we still need to be able to read old versions
+        try:
+            config = container_image_files[filename]
+            break
+        except KeyError:
+            continue
+    else:
+        raise ValidationError(
+            "Could not find the config file in the container image file. "
+            "Was this created with docker save?"
+        )
+
     config = json.loads(config)
 
     user = str(config["config"].get("User", "")).lower()
@@ -478,23 +496,25 @@ def _validate_docker_image_manifest(*, instance) -> str:
     return f"sha256:{image_sha256}"
 
 
-def _extract_docker_image_file(*, instance, filename: str):
-    """Extract a file from the root of a tarball."""
+def _get_root_docker_image_files(*, instance):
+    """Extract the files from the root of a tarball."""
     try:
         with instance.image.open(mode="rb") as im, tarfile.open(
             fileobj=im, mode="r"
         ) as t:
-            member = dict(zip(t.getnames(), t.getmembers(), strict=True))[
-                filename
-            ]
-            file = t.extractfile(member).read()
-        return file
-    except (KeyError, tarfile.ReadError):
+            files = {
+                tarinfo.name: t.extractfile(tarinfo).read()
+                for tarinfo in t.getmembers()
+                if tarinfo.isfile()
+                and tarinfo.size < settings.MEGABYTE
+                and "/" not in tarinfo.name
+            }
+        return files
+    except tarfile.ReadError:
         raise ValidationError(
-            f"{filename} not found at the root of the container image "
-            f"file. Was this created with docker save?"
+            "Could not read the files in the container image file."
         )
-    except (EOFError, zlib.error, LZMAError):
+    except (EOFError, zlib.error, LZMAError, MemoryError):
         raise ValidationError("Could not decompress the container image file.")
 
 
