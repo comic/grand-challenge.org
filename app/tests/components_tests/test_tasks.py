@@ -427,21 +427,18 @@ def test_add_file_to_object(settings, object_type):
     assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 1
 
 
+@pytest.mark.parametrize(
+    "container_image_file",
+    ("hello-scratch-oci.tar.gz", "hello-scratch-docker-v2.tar.gz"),
+)
 @pytest.mark.django_db
-def test_get_image_config_and_sha256():
+def test_get_image_config_and_sha256(container_image_file):
     resource_dir = Path(__file__).parent / "resources"
 
     ai = AlgorithmImageFactory(image=None)
 
-    # with open(resource_dir / "hello-scratch-oci.tar.gz", "rb") as f:
-    #    ai.image.save("image.tar.gz", ContentFile(f.read()))
-
-    # assert _get_image_config_and_sha256(instance=ai)["image_sha256"] == "8ad87c47e129dbf1b58ac9ec126a85fc2b4e11a2e822d6c4d4c66f4da7fa8b53"
-
-    ai = AlgorithmImageFactory(image=None)
-
-    with open(resource_dir / "hello-scratch-docker-v2.tar.gz", "rb") as f:
-        ai.image.save("image.tar.gz", ContentFile(f.read()))
+    with open(resource_dir / container_image_file, "rb") as f:
+        ai.image.save(container_image_file, ContentFile(f.read()))
 
     assert (
         _get_image_config_and_sha256(instance=ai)["image_sha256"]
