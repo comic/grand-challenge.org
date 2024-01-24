@@ -2,6 +2,7 @@ import pytest
 from django.forms import ModelForm
 from guardian.shortcuts import assign_perm
 
+from grandchallenge.components.models import InterfaceKindChoices
 from grandchallenge.hanging_protocols.forms import HangingProtocolForm
 from grandchallenge.hanging_protocols.models import HangingProtocol
 from tests.components_tests.factories import ComponentInterfaceFactory
@@ -33,7 +34,9 @@ def test_view_content_mixin():
         ]
     }
 
-    i = ComponentInterfaceFactory(title="Test")
+    i = ComponentInterfaceFactory(
+        title="Test", kind=InterfaceKindChoices.STRING
+    )
     hp = HangingProtocolFactory(json=[{"viewport_name": "main"}])
 
     form = ViewContentTestForm(
