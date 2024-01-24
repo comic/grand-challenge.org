@@ -78,9 +78,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for grandchallenge.reader_studies.models</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">json</span>
-
-<span class="kn">from</span> <span class="nn">actstream.models</span> <span class="kn">import</span> <span class="n">Follow</span>
+<span></span><span class="kn">from</span> <span class="nn">actstream.models</span> <span class="kn">import</span> <span class="n">Follow</span>
 <span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span> <span class="nn">django.contrib.auth</span> <span class="kn">import</span> <span class="n">get_user_model</span>
 <span class="kn">from</span> <span class="nn">django.contrib.auth.models</span> <span class="kn">import</span> <span class="n">Group</span>
@@ -638,82 +636,6 @@
     <span class="k">def</span> <span class="nf">answerable_question_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The number of answerable questions for this ``ReaderStudy``.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">answerable_questions</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
-
-<div class="viewcode-block" id="ReaderStudy.add_ground_truth">
-<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.add_ground_truth">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_ground_truth</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>  <span class="c1"># noqa: C901</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add ground truth answers provided by ``data`` for this ``ReaderStudy``.&quot;&quot;&quot;</span>
-        <span class="n">answers</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">gt</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
-            <span class="n">display_set</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">gt</span><span class="p">[</span><span class="s2">&quot;case&quot;</span><span class="p">])</span>
-            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">gt</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-                <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">&quot;case&quot;</span> <span class="ow">or</span> <span class="n">key</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;__explanation&quot;</span><span class="p">):</span>
-                    <span class="k">continue</span>
-
-                <span class="n">question</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">questions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">question_text</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
-                <span class="n">_answer</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">gt</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
-
-                <span class="k">if</span> <span class="n">_answer</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">question</span><span class="o">.</span><span class="n">required</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
-                    <span class="k">continue</span>
-
-                <span class="k">if</span> <span class="n">question</span><span class="o">.</span><span class="n">answer_type</span> <span class="o">==</span> <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">:</span>
-                    <span class="k">try</span><span class="p">:</span>
-                        <span class="n">option</span> <span class="o">=</span> <span class="n">question</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="n">_answer</span><span class="p">)</span>
-                        <span class="n">_answer</span> <span class="o">=</span> <span class="n">option</span><span class="o">.</span><span class="n">pk</span>
-                    <span class="k">except</span> <span class="n">CategoricalOption</span><span class="o">.</span><span class="n">DoesNotExist</span><span class="p">:</span>
-                        <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
-                            <span class="sa">f</span><span class="s2">&quot;Option </span><span class="si">{</span><span class="n">_answer</span><span class="si">!r}</span><span class="s2"> is not valid for question </span><span class="si">{</span><span class="n">question</span><span class="o">.</span><span class="n">question_text</span><span class="si">}</span><span class="s2">&quot;</span>
-                        <span class="p">)</span>
-
-                <span class="k">if</span> <span class="n">question</span><span class="o">.</span><span class="n">answer_type</span> <span class="o">==</span> <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">:</span>
-                    <span class="n">_answer</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
-                        <span class="n">question</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">title__in</span><span class="o">=</span><span class="n">_answer</span><span class="p">)</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span>
-                            <span class="s2">&quot;pk&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span>
-                        <span class="p">)</span>
-                    <span class="p">)</span>
-
-                <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span>
-                    <span class="s2">&quot;creator&quot;</span><span class="p">:</span> <span class="n">user</span><span class="p">,</span>
-                    <span class="s2">&quot;question&quot;</span><span class="p">:</span> <span class="n">question</span><span class="p">,</span>
-                    <span class="s2">&quot;answer&quot;</span><span class="p">:</span> <span class="n">_answer</span><span class="p">,</span>
-                    <span class="s2">&quot;is_ground_truth&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-                <span class="p">}</span>
-                <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;display_set&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">display_set</span>
-
-                <span class="n">Answer</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="n">explanation</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">gt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span> <span class="o">+</span> <span class="s2">&quot;__explanation&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
-                <span class="k">except</span> <span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
-                    <span class="n">explanation</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-
-                <span class="n">answer_obj</span> <span class="o">=</span> <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                    <span class="n">display_set</span><span class="o">=</span><span class="n">display_set</span><span class="p">,</span>
-                    <span class="n">question</span><span class="o">=</span><span class="n">question</span><span class="p">,</span>
-                    <span class="n">is_ground_truth</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                <span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
-
-                <span class="n">answers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="p">{</span>
-                        <span class="s2">&quot;answer_obj&quot;</span><span class="p">:</span> <span class="n">answer_obj</span>
-                        <span class="ow">or</span> <span class="n">Answer</span><span class="p">(</span>
-                            <span class="n">creator</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
-                            <span class="n">question</span><span class="o">=</span><span class="n">question</span><span class="p">,</span>
-                            <span class="n">is_ground_truth</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                            <span class="n">explanation</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
-                        <span class="p">),</span>
-                        <span class="s2">&quot;answer&quot;</span><span class="p">:</span> <span class="n">_answer</span><span class="p">,</span>
-                        <span class="s2">&quot;explanation&quot;</span><span class="p">:</span> <span class="n">explanation</span><span class="p">,</span>
-                        <span class="s2">&quot;display_set&quot;</span><span class="p">:</span> <span class="n">display_set</span><span class="p">,</span>
-                    <span class="p">}</span>
-                <span class="p">)</span>
-
-        <span class="k">for</span> <span class="n">answer</span> <span class="ow">in</span> <span class="n">answers</span><span class="p">:</span>
-            <span class="n">answer</span><span class="p">[</span><span class="s2">&quot;answer_obj&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">answer</span> <span class="o">=</span> <span class="n">answer</span><span class="p">[</span><span class="s2">&quot;answer&quot;</span><span class="p">]</span>
-            <span class="n">answer</span><span class="p">[</span><span class="s2">&quot;answer_obj&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">explanation</span> <span class="o">=</span> <span class="n">answer</span><span class="p">[</span><span class="s2">&quot;explanation&quot;</span><span class="p">]</span>
-            <span class="n">answer</span><span class="p">[</span><span class="s2">&quot;answer_obj&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
-            <span class="n">answer</span><span class="p">[</span><span class="s2">&quot;answer_obj&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">display_set</span> <span class="o">=</span> <span class="n">answer</span><span class="p">[</span><span class="s2">&quot;display_set&quot;</span><span class="p">]</span>
-            <span class="n">answer</span><span class="p">[</span><span class="s2">&quot;answer_obj&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></div>
-
 
 <div class="viewcode-block" id="ReaderStudy.get_progress_for_user">
 <a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.get_progress_for_user">[docs]</a>
@@ -1811,6 +1733,7 @@
     <span class="k">def</span> <span class="nf">history_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;answer&quot;</span><span class="p">,</span> <span class="s2">&quot;history_date&quot;</span><span class="p">)</span>
 
+    <span class="c1"># TODO this should be a model clean method</span>
 <div class="viewcode-block" id="Answer.validate">
 <a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Answer.validate">[docs]</a>
     <span class="nd">@staticmethod</span>
