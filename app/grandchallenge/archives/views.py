@@ -717,8 +717,7 @@ class ArchiveItemCreateView(
         *MultipleCIVProcessingBaseView.included_form_classes,
     )
     success_message = "Archive item has been created."
-    type_to_add = ArchiveItem._meta.model_name
-    base_model_name = Archive._meta.model_name
+    model_to_add = ArchiveItem
 
     def get_permission_object(self):
         return self.base_object

@@ -209,16 +209,14 @@ class FileUpdateBaseView(ObjectPermissionRequiredMixin, TemplateView):
 
 
 class CIVSetCreateMixin:
-    template_name = "components/object_create.html"
-    type_to_add = None
-    base_model_name = None
+    template_name = "components/civ_set_create.html"
+    model_to_add = None
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context.update(
             {
-                "type_to_add": self.type_to_add,
-                "base_model_name": self.base_model_name,
+                "model_to_add": self.model_to_add,
                 "list_url": self.list_url,
                 "form_url": self.form_url,
                 "new_interface_url": self.new_interface_url,

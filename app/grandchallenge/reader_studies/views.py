@@ -1404,8 +1404,7 @@ class DisplaySetCreateView(
         *MultipleCIVProcessingBaseView.included_form_classes,
     )
     success_message = "Display set has been created."
-    type_to_add = DisplaySet._meta.model_name
-    base_model_name = ReaderStudy._meta.model_name
+    model_to_add = DisplaySet
 
     def get_permission_object(self):
         return self.base_object
