@@ -50,6 +50,7 @@ from grandchallenge.archives.serializers import (
 from grandchallenge.archives.tasks import add_images_to_archive
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.views import CIVSetDeleteView
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
@@ -696,3 +697,10 @@ class ArchiveItemViewSet(
             return ArchiveItemPostSerializer
         else:
             return ArchiveItemSerializer
+
+
+class ArchiveItemDeleteView(CIVSetDeleteView):
+    model = ArchiveItem
+    permission_required = (
+        f"{Archive._meta.app_label}.change_{ArchiveItem._meta.model_name}"
+    )

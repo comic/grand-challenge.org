@@ -237,6 +237,14 @@ class Archive(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
     def api_url(self) -> str:
         return reverse("api:archive-detail", kwargs={"pk": self.pk})
 
+    @property
+    def civ_sets_list_url(self):
+        return reverse("archives:items-list", kwargs={"slug": self.slug})
+
+    @property
+    def list_url(self):
+        return reverse("archives:list")
+
 
 class ArchiveUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(Archive, on_delete=models.CASCADE)

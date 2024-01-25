@@ -6,6 +6,7 @@ from grandchallenge.archives.views import (
     ArchiveDetail,
     ArchiveEditArchiveItem,
     ArchiveEditorsUpdate,
+    ArchiveItemDeleteView,
     ArchiveItemsList,
     ArchiveItemsToReaderStudyUpdate,
     ArchiveList,
@@ -57,6 +58,11 @@ urlpatterns = [
     ),
     path("<slug>/cases/", ArchiveCasesList.as_view(), name="cases-list"),
     path("<slug>/items/", ArchiveItemsList.as_view(), name="items-list"),
+    path(
+        "<slug>/items/<uuid:pk>/delete/",
+        ArchiveItemDeleteView.as_view(),
+        name="item-delete",
+    ),
     path(
         "<slug>/cases/add/",
         ArchiveUploadSessionCreate.as_view(),

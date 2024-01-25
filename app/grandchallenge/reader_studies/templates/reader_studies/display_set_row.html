@@ -37,9 +37,9 @@
 </a>
 <split></split>
 
-<a class="btn btn-danger btn-sm remove-display-set {% if not object.is_editable %}disabled{% endif %}"
+<a class="btn btn-danger btn-sm {% if not object.is_editable %}disabled{% endif %}"
    title="Delete display set"
-   data-display-set-url="{% url 'api:reader-studies-display-set-detail' object.id %}">
+   href="{% url 'reader-studies:display-set-delete' pk=object.pk slug=object.reader_study.slug %}">
    <i class="fas fa-fw fa-trash"></i>
 </a>
 <split></split>

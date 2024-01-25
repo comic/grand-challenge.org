@@ -735,6 +735,16 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         highest = getattr(last, "order", 0)
         return (highest + 10) // 10 * 10
 
+    @property
+    def civ_sets_list_url(self):
+        return reverse(
+            "reader-studies:display_sets", kwargs={"slug": self.slug}
+        )
+
+    @property
+    def list_url(self):
+        return reverse("reader-studies:list")
+
 
 class ReaderStudyUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(ReaderStudy, on_delete=models.CASCADE)
