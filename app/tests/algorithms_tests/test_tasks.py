@@ -144,7 +144,7 @@ def test_jobs_workflow(django_capture_on_commit_callbacks):
 
 @pytest.mark.django_db
 def test_algorithm(
-    client, algorithm_image, settings, django_capture_on_commit_callbacks
+    algorithm_image, settings, django_capture_on_commit_callbacks
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
