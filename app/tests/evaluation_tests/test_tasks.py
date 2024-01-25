@@ -209,7 +209,7 @@ def test_method_validation_not_a_docker_tar(submission_file):
 
     method = Method.objects.get(pk=method.pk)
     assert method.is_manifest_valid is False
-    assert "manifest.json not found" in method.status
+    assert method.status == "Could not decompress the container image file."
 
 
 class TestSetEvaluationInputs(TestCase):
