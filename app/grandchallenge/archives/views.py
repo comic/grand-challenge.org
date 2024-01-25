@@ -763,12 +763,15 @@ class ArchiveItemCreateView(
 
 
 class ArchiveItemInterfaceCreate(InterfacesCreateBaseView):
-    permission_required = (
-        f"{Archive._meta.app_label}.change_{ArchiveItem._meta.model_name}"
-    )
-
-    def get_permission_object(self):
-        return self.object
+    def get_required_permissions(self, request):
+        if self.object:
+            return [
+                f"{Archive._meta.app_label}.change_{ArchiveItem._meta.model_name}"
+            ]
+        else:
+            return [
+                f"{Archive._meta.app_label}.change_{Archive._meta.model_name}"
+            ]
 
     @property
     def object(self):

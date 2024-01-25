@@ -1357,12 +1357,15 @@ class DisplaySetFilesUpdate(FileUpdateBaseView):
 
 
 class DisplaySetInterfacesCreate(InterfacesCreateBaseView):
-    permission_required = (
-        f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
-    )
-
-    def get_permission_object(self):
-        return self.object
+    def get_required_permissions(self, request):
+        if self.object:
+            return [
+                f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
+            ]
+        else:
+            return [
+                f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+            ]
 
     @property
     def object(self):

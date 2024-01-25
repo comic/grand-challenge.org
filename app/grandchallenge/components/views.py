@@ -247,6 +247,9 @@ class InterfacesCreateBaseView(ObjectPermissionRequiredMixin, TemplateView):
     raise_exception = True
     template_name = "components/new_interface_create.html"
 
+    def get_permission_object(self):
+        return self.object if self.object else self.base_object
+
     def get_form_kwargs(self):
         return {
             "pk": self.kwargs.get("pk"),
