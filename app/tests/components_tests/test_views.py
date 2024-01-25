@@ -3,6 +3,9 @@ import json
 import pytest
 from django.conf import settings
 
+from grandchallenge.archives.models import ArchiveItem
+from grandchallenge.reader_studies.models import DisplaySet
+from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -114,3 +117,75 @@ def test_component_interface_autocomplete(client):
     assert str(ci_img.id) not in ids
     assert str(ci_img_2.id) not in ids
     assert str(ci_json.id) in ids
+
+
+@pytest.mark.parametrize(
+    "base_object_factory,base_obj_lookup,object_factory,viewname",
+    (
+        (
+            ReaderStudyFactory,
+            "reader_study",
+            DisplaySetFactory,
+            "reader-studies:display-set-delete",
+        ),
+        (
+            ArchiveFactory,
+            "archive",
+            ArchiveItemFactory,
+            "archives:item-delete",
+        ),
+    ),
+)
+@pytest.mark.django_db
+def test_civset_delete_view(
+    client, base_object_factory, base_obj_lookup, object_factory, viewname
+):
+    user, editor, collaborator = UserFactory.create_batch(3)
+    base_obj = base_object_factory()
+    obj = object_factory(**{base_obj_lookup: base_obj})
+    base_obj.add_editor(editor)
+    if base_object_factory == ReaderStudyFactory:
+        base_obj.add_reader(collaborator)
+    elif base_object_factory == ArchiveFactory:
+        base_obj.add_uploader(collaborator)
+
+    response = get_view_for_user(
+        viewname=viewname,
+        client=client,
+        user=user,
+        reverse_kwargs={"slug": base_obj.slug, "pk": obj.pk},
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname=viewname,
+        client=client,
+        user=collaborator,
+        reverse_kwargs={"slug": base_obj.slug, "pk": obj.pk},
+    )
+    if base_object_factory == ReaderStudyFactory:
+        assert response.status_code == 403
+    elif base_object_factory == ArchiveFactory:
+        assert response.status_code == 200
+
+    response = get_view_for_user(
+        viewname=viewname,
+        client=client,
+        user=editor,
+        reverse_kwargs={"slug": base_obj.slug, "pk": obj.pk},
+    )
+    assert response.status_code == 200
+
+    response = get_view_for_user(
+        viewname=viewname,
+        client=client,
+        method=client.post,
+        user=editor,
+        reverse_kwargs={"slug": base_obj.slug, "pk": obj.pk},
+    )
+    assert response.status_code == 302
+    if base_object_factory == ReaderStudyFactory:
+        object_count = DisplaySet.objects.count()
+    elif base_object_factory == ArchiveFactory:
+        object_count = ArchiveItem.objects.count()
+    assert object_count == 0
