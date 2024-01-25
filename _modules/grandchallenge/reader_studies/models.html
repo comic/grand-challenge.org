@@ -110,6 +110,7 @@
     <span class="n">InterfaceKind</span><span class="p">,</span>
     <span class="n">InterfaceKindChoices</span><span class="p">,</span>
     <span class="n">OverlaySegmentsMixin</span><span class="p">,</span>
+    <span class="n">ValuesForInterfacesMixin</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.schemas</span> <span class="kn">import</span> <span class="n">ANSWER_TYPE_SCHEMA</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.core.fields</span> <span class="kn">import</span> <span class="n">HexColorField</span><span class="p">,</span> <span class="n">RegexField</span>
@@ -250,7 +251,12 @@
 
 <div class="viewcode-block" id="ReaderStudy">
 <a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy">[docs]</a>
-<span class="k">class</span> <span class="nc">ReaderStudy</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">TitleSlugDescriptionModel</span><span class="p">,</span> <span class="n">HangingProtocolMixin</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">ReaderStudy</span><span class="p">(</span>
+    <span class="n">UUIDModel</span><span class="p">,</span>
+    <span class="n">TitleSlugDescriptionModel</span><span class="p">,</span>
+    <span class="n">HangingProtocolMixin</span><span class="p">,</span>
+    <span class="n">ValuesForInterfacesMixin</span><span class="p">,</span>
+<span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Reader Study model.</span>
 
@@ -809,42 +815,27 @@
             <span class="s2">&quot;questions&quot;</span><span class="p">:</span> <span class="n">questions</span><span class="p">,</span>
         <span class="p">}</span>
 
-    <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">values_for_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">vals</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span>
-                <span class="s2">&quot;values&quot;</span><span class="p">,</span> <span class="s2">&quot;values__interface&quot;</span><span class="p">,</span> <span class="s2">&quot;values__image&quot;</span>
-            <span class="p">)</span>
-            <span class="o">.</span><span class="n">values</span><span class="p">(</span>
-                <span class="s2">&quot;values__interface__slug&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;values__id&quot;</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;values__id&quot;</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">distinct</span><span class="p">()</span>
-        <span class="p">)</span>
-        <span class="n">interfaces</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;values__interface__slug&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">vals</span><span class="p">]</span>
-        <span class="n">interfaces</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">questions</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-            <span class="n">interface__isnull</span><span class="o">=</span><span class="kc">False</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;interface__slug&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">interfaces</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">interfaces</span><span class="p">)</span>
-        <span class="c1"># Filter out any emtpy display sets, which can exist because we create</span>
-        <span class="c1"># the ds before assinging images. None values cause the sorting to error</span>
-        <span class="n">values_for_interfaces</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">interface</span><span class="p">:</span> <span class="p">[</span>
-                <span class="n">x</span><span class="p">[</span><span class="s2">&quot;values__id&quot;</span><span class="p">]</span>
-                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">vals</span>
-                <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;values__interface__slug&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">interface</span>
-            <span class="p">]</span>
-            <span class="k">for</span> <span class="n">interface</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">interfaces</span> <span class="k">if</span> <span class="n">x</span><span class="p">)</span>
-        <span class="p">}</span>
-
-        <span class="k">return</span> <span class="n">values_for_interfaces</span>
-
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">next_display_set_order</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">last</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">last</span><span class="p">()</span>
         <span class="n">highest</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">last</span><span class="p">,</span> <span class="s2">&quot;order&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">highest</span> <span class="o">+</span> <span class="mi">10</span><span class="p">)</span> <span class="o">//</span> <span class="mi">10</span> <span class="o">*</span> <span class="mi">10</span></div>
+        <span class="k">return</span> <span class="p">(</span><span class="n">highest</span> <span class="o">+</span> <span class="mi">10</span><span class="p">)</span> <span class="o">//</span> <span class="mi">10</span> <span class="o">*</span> <span class="mi">10</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">civ_sets_related_manager</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span> <span class="nf">interfaces_and_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">interfaces_and_values</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">interfaces_and_values</span>
+        <span class="n">interfaces_and_values</span><span class="o">.</span><span class="n">interfaces</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="nb">set</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">questions</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">interface__isnull</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span>
+                    <span class="s2">&quot;interface__slug&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">interfaces_and_values</span></div>
 
 
 
