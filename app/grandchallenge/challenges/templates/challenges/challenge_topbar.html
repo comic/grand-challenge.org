@@ -38,13 +38,6 @@
                         {% endif %}
 
                         {% if "change_challenge" in challenge_perms %}
-                            {% if challenge.use_workspaces %}
-                                <li class="nav-item">
-                                    <a class="nav-link {% if request.resolver_match.app_name == "workspaces" %}active{% endif %}"
-                                       href="{% url 'workspaces:create' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">
-                                        <i class="fas fa-tools fa-fw"></i>&nbsp;Workspaces</a>
-                                </li>
-                            {% endif %}
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:submission-create' or request.resolver_match.view_name == 'evaluation:submission-list' or request.resolver_match.view_name == 'evaluation:submission-detail' or request.resolver_match.view_name == 'evaluation:phase-algorithm-create' %}active{% endif %}"
                                    href="{% url 'evaluation:submission-create' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">
@@ -56,13 +49,6 @@
                                     <i class="fas fa-trophy fa-fw"></i>&nbsp;&nbsp;Leaderboard{{ challenge.phase_set.all|pluralize }}</a>
                             </li>
                         {% elif user_is_participant and challenge.first_visible_phase %}
-                            {% if challenge.use_workspaces %}
-                                <li class="nav-item">
-                                    <a class="nav-link {% if request.resolver_match.app_name == "workspaces" %}active{% endif %}"
-                                       href="{% url 'workspaces:create' challenge_short_name=challenge.short_name slug=challenge.first_visible_phase.slug %}">
-                                        <i class="fas fa-tools fa-fw"></i>&nbsp;Workspaces</a>
-                                </li>
-                            {% endif %}
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:submission-create' or request.resolver_match.view_name == 'evaluation:submission-list' or request.resolver_match.view_name == 'evaluation:submission-detail' %}active{% endif %}"
                                    href="{% url 'evaluation:submission-create' challenge_short_name=challenge.short_name slug=challenge.first_visible_phase.slug %}">

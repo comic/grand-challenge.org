@@ -27,9 +27,6 @@
                     {% elif submission_nav %}
                         <a class="nav-link mr-1 px-4 py-1 {% if request.resolver_match.view_name == 'evaluation:submission-create' and request.resolver_match.kwargs.slug == phase.slug or request.resolver_match.view_name == 'evaluation:submission-detail' and request.resolver_match.kwargs.slug == phase.slug %}active{% endif %}"
                                href="{% url 'evaluation:submission-create' challenge_short_name=challenge.short_name slug=phase.slug %}"><i class="fa fa-upload fa-fw"></i>&nbsp;&nbsp;{{ phase.title }}</a>
-                    {% elif workspaces_nav %}
-                        <a class="nav-link mr-1 px-4 py-1 {% if request.resolver_match.kwargs.slug == phase.slug%}active{% endif %}"
-                               href="{% url 'workspaces:create' challenge_short_name=challenge.short_name slug=phase.slug %}"><i class="fa fa-tools fa-fw"></i>&nbsp;&nbsp;{{ phase.title }}</a>
                     {% else %}
                         <a class="nav-link mr-1 px-4 py-1 {% if object.submission.phase.slug == phase.slug %}active{% endif %}"
                        href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=phase.slug %}"><i class="fa fa-trophy fa-fw"></i>&nbsp;&nbsp;{{ phase.title }}</a>
