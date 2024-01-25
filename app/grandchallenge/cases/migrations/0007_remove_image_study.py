@@ -7,4 +7,4 @@ class Migration(migrations.Migration):
 
     dependencies = [("cases", "0006_rawimageuploadsession_user_uploads")]
 
-    operations = [migrations.RemoveField(model_name="image", name="study")]
+    operations = []

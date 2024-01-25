@@ -84,16 +84,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterField(
             model_name="image",
-            name="study",
-            field=models.ForeignKey(
-                blank=True,
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                to="studies.study",
-            ),
-        ),
-        migrations.AlterField(
-            model_name="image",
             name="timepoints",
             field=models.IntegerField(blank=True, null=True),
         ),
