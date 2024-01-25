@@ -1,5 +1,6 @@
 import json
 import subprocess
+from unittest import mock
 
 import pytest
 from celery.exceptions import MaxRetriesExceededError
@@ -422,3 +423,49 @@ def test_add_file_to_object(settings, object_type):
         interface_pk=ci.pk,
     )
     assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 1
+
+
+class RandomException(Exception):
+    pass
+
+
+@pytest.mark.django_db
+@mock.patch(
+    "grandchallenge.uploads.models.UserUpload.copy_object",
+    side_effect=RandomException,
+)
+@pytest.mark.parametrize(
+    "object_type", [DisplaySetFactory, ArchiveItemFactory]
+)
+def test_add_file_to_object_exception_handling(settings, object_type):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    creator = UserFactory()
+    obj = object_type()
+
+    us = UserUploadFactory(filename="file.json", creator=creator)
+    presigned_urls = us.generate_presigned_urls(part_numbers=[1])
+    response = put(presigned_urls["1"], data=b'{"foo": "bar"}')
+    us.complete_multipart_upload(
+        parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
+    )
+    us.save()
+
+    ci = ComponentInterfaceFactory(
+        kind="JSON",
+        store_in_database=False,
+    )
+
+    with pytest.raises(RandomException):
+        add_file_to_object(
+            app_label=obj._meta.app_label,
+            model_name=obj._meta.model_name,
+            object_pk=obj.pk,
+            user_upload_pk=us.pk,
+            interface_pk=ci.pk,
+        )
+
+    notification = Notification.objects.last()
+    assert notification.message == f"Unknown error for {ci.title}"
+    assert notification.user == creator

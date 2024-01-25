@@ -1144,7 +1144,8 @@ def add_file_to_object(
         model_name=model_name,
     )
     interface = ComponentInterface.objects.get(pk=interface_pk)
-    error = None
+    error_message = None
+    error_description = None
     civ = ComponentInterfaceValue(interface=interface)
     try:
         civ.validate_user_upload(user_upload)
@@ -1157,16 +1158,20 @@ def add_file_to_object(
             civ = ComponentInterfaceValue.objects.get(pk=civ_pk)
             object.values.remove(civ)
     except ValidationError as e:
-        error = str(e)
-
-    if error is not None:
-        Notification.send(
-            kind=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
-            actor=user_upload.creator,
-            message=f"File for interface {interface.title} failed validation.",
-            target=object.base_object,
-            description=(
-                f"File for interface {interface.title} added to {object_pk} "
-                f"in {object.base_object.title} failed validation:\n{error}."
-            ),
+        error_message = (
+            f"File for interface {interface.title} failed validation."
         )
+        error_description = f"File for interface {interface.title} added to {object_pk} in {object.base_object.title} failed validation:\n{str(e)}."
+    except Exception as e:
+        error_message = f"Unknown error for {interface.title}"
+        error_description = f"While uploading file for interface {interface.title} an unknown error occurred."
+        raise e
+    finally:
+        if error_message is not None:
+            Notification.send(
+                kind=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
+                actor=user_upload.creator,
+                message=error_message,
+                target=object.base_object,
+                description=error_description,
+            )
