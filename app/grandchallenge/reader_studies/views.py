@@ -1,5 +1,4 @@
 import csv
-import uuid
 
 from django.contrib import messages
 from django.contrib.admin.utils import NestedObjects
@@ -31,7 +30,6 @@ from django.views.generic import (
     DetailView,
     FormView,
     ListView,
-    TemplateView,
     UpdateView,
     View,
 )
@@ -57,13 +55,15 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.archives.forms import AddCasesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
-from grandchallenge.components.forms import NewFileUploadForm, SingleCIVForm
+from grandchallenge.components.forms import NewFileUploadForm
 from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
 )
 from grandchallenge.components.views import (
+    CIVSetCreateMixin,
     FileUpdateBaseView,
-    InterfaceProcessingMixin,
+    InterfacesCreateBaseView,
+    MultipleCIVProcessingBaseView,
 )
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
@@ -1295,24 +1295,21 @@ class QuestionWidgetsView(BaseAddObjectToReaderStudyMixin, View):
         return HttpResponse(form["widget"])
 
 
-class DisplaySetUpdate(
-    LoginRequiredMixin,
-    InterfaceProcessingMixin,
-    ObjectPermissionRequiredMixin,
-    FormView,
-):
+class DisplaySetUpdate(MultipleCIVProcessingBaseView):
     template_name = "reader_studies/display_set_update.html"
     form_class = DisplaySetUpdateForm
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
     )
-    raise_exception = True
     included_form_classes = (
         DisplaySetUpdateForm,
-        SingleCIVForm,
         NewFileUploadForm,
+        *MultipleCIVProcessingBaseView.included_form_classes,
     )
     success_message = "Display set has been updated."
+
+    def get_permission_object(self):
+        return self.object
 
     @property
     def object(self):
@@ -1320,7 +1317,7 @@ class DisplaySetUpdate(
 
     @property
     def base_object(self):
-        return ReaderStudy.objects.get(slug=self.kwargs["slug"])
+        return self.object.reader_study
 
     def get_success_url(self):
         return reverse(
@@ -1359,38 +1356,27 @@ class DisplaySetFilesUpdate(FileUpdateBaseView):
         )
 
 
-class DisplaySetInterfacesCreate(ObjectPermissionRequiredMixin, TemplateView):
-    form_class = SingleCIVForm
-    permission_required = (
-        f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
-    )
-    raise_exception = True
-    template_name = "reader_studies/display_set_new_interface_create.html"
-
-    def get_permission_object(self):
-        return self.display_set
+class DisplaySetInterfacesCreate(InterfacesCreateBaseView):
+    def get_required_permissions(self, request):
+        if self.object:
+            return [
+                f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
+            ]
+        else:
+            return [
+                f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+            ]
 
     @property
-    def display_set(self):
+    def object(self):
         if self.kwargs.get("pk"):
             return DisplaySet.objects.get(pk=self.kwargs["pk"])
+        else:
+            return None
 
     @property
-    def reader_study(self):
-        if self.display_set:
-            return self.display_set.reader_study
-        else:
-            return ReaderStudy.objects.get(slug=self.kwargs["slug"])
-
-    def get_form_kwargs(self):
-        return {
-            "pk": self.kwargs.get("pk"),
-            "base_obj": self.reader_study,
-            "interface": self.request.GET.get("interface"),
-            "user": self.request.user,
-            "auto_id": f"id-{uuid.uuid4()}",
-            "htmx_url": self.get_htmx_url(),
-        }
+    def base_object(self):
+        return ReaderStudy.objects.get(slug=self.kwargs["slug"])
 
     def get_htmx_url(self):
         if self.kwargs.get("pk") is not None:
@@ -1398,50 +1384,66 @@ class DisplaySetInterfacesCreate(ObjectPermissionRequiredMixin, TemplateView):
                 "reader-studies:display-set-interfaces-create",
                 kwargs={
                     "pk": self.kwargs.get("pk"),
-                    "slug": self.reader_study.slug,
+                    "slug": self.base_object.slug,
                 },
             )
         else:
             return reverse_lazy(
                 "reader-studies:display-set-new-interfaces-create",
-                kwargs={"slug": self.reader_study.slug},
+                kwargs={"slug": self.base_object.slug},
             )
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context.update(
-            {
-                "object": self.display_set,
-                "form": self.form_class(**self.get_form_kwargs()),
-            }
-        )
-        return context
 
 
 class DisplaySetCreateView(
-    BaseAddObjectToReaderStudyMixin,
-    InterfaceProcessingMixin,
-    FormView,
+    CIVSetCreateMixin,
+    MultipleCIVProcessingBaseView,
 ):
     form_class = DisplaySetCreateForm
-    template_name = "reader_studies/display_set_create.html"
-    type_to_add = "Display Set"
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
     )
     included_form_classes = (
         DisplaySetCreateForm,
-        SingleCIVForm,
+        *MultipleCIVProcessingBaseView.included_form_classes,
     )
     success_message = "Display set has been created."
+    model_to_add = DisplaySet
+
+    def get_permission_object(self):
+        return self.base_object
 
     @property
     def base_object(self):
-        return self.reader_study
+        return ReaderStudy.objects.get(slug=self.kwargs["slug"])
+
+    @property
+    def list_url(self):
+        return reverse("reader-studies:list")
+
+    @property
+    def form_url(self):
+        return reverse(
+            "reader-studies:display-set-create",
+            kwargs={"slug": self.base_object.slug},
+        )
+
+    @property
+    def return_url(self):
+        return reverse(
+            "reader-studies:display_sets",
+            kwargs={"slug": self.base_object.slug},
+        )
+
+    @property
+    def new_interface_url(self):
+        return reverse(
+            "reader-studies:display-set-new-interfaces-create",
+            kwargs={"slug": self.base_object.slug},
+        )
 
     def process_data_for_object(self, data):
         """Creates a display set"""
-        instance = DisplaySet.objects.create(reader_study=self.reader_study)
+        instance = DisplaySet.objects.create(reader_study=self.base_object)
         instance.order = data.pop("order")
         instance.save()
         for slug in data:
@@ -1451,6 +1453,4 @@ class DisplaySetCreateView(
         return instance
 
     def get_success_url(self):
-        return reverse(
-            "reader-studies:display_sets", kwargs={"slug": self.kwargs["slug"]}
-        )
+        return self.return_url

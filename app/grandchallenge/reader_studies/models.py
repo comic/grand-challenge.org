@@ -31,6 +31,7 @@ from grandchallenge.components.models import (
     InterfaceKind,
     InterfaceKindChoices,
     OverlaySegmentsMixin,
+    ValuesForInterfacesMixin,
 )
 from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
 from grandchallenge.core.fields import HexColorField, RegexField
@@ -169,7 +170,12 @@ CASE_TEXT_SCHEMA = {
 }
 
 
-class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
+class ReaderStudy(
+    UUIDModel,
+    TitleSlugDescriptionModel,
+    HangingProtocolMixin,
+    ValuesForInterfacesMixin,
+):
     """
     Reader Study model.
 
@@ -698,42 +704,27 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
             "questions": questions,
         }
 
-    @cached_property
-    def values_for_interfaces(self):
-        vals = list(
-            self.display_sets.select_related(
-                "values", "values__interface", "values__image"
-            )
-            .values(
-                "values__interface__slug",
-                "values__id",
-            )
-            .order_by("values__id")
-            .distinct()
-        )
-        interfaces = [x["values__interface__slug"] for x in vals]
-        interfaces += self.questions.filter(
-            interface__isnull=False
-        ).values_list("interface__slug", flat=True)
-        interfaces = set(interfaces)
-        # Filter out any emtpy display sets, which can exist because we create
-        # the ds before assinging images. None values cause the sorting to error
-        values_for_interfaces = {
-            interface: [
-                x["values__id"]
-                for x in vals
-                if x["values__interface__slug"] == interface
-            ]
-            for interface in sorted(x for x in interfaces if x)
-        }
-
-        return values_for_interfaces
-
     @property
     def next_display_set_order(self):
         last = self.display_sets.last()
         highest = getattr(last, "order", 0)
         return (highest + 10) // 10 * 10
+
+    @property
+    def civ_sets_related_manager(self):
+        return self.display_sets
+
+    @cached_property
+    def interfaces_and_values(self):
+        interfaces_and_values = super().interfaces_and_values
+        interfaces_and_values.interfaces.update(
+            set(
+                self.questions.filter(interface__isnull=False).values_list(
+                    "interface__slug", flat=True
+                )
+            )
+        )
+        return interfaces_and_values
 
 
 class ReaderStudyUserObjectPermission(UserObjectPermissionBase):

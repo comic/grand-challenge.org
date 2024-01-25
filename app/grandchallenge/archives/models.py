@@ -15,6 +15,7 @@ from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.components.models import (
     CIVForObjectMixin,
     ComponentInterfaceValue,
+    ValuesForInterfacesMixin,
 )
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
@@ -33,7 +34,12 @@ from grandchallenge.publications.models import Publication
 from grandchallenge.subdomains.utils import reverse
 
 
-class Archive(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
+class Archive(
+    UUIDModel,
+    TitleSlugDescriptionModel,
+    HangingProtocolMixin,
+    ValuesForInterfacesMixin,
+):
     """Model for archive. Contains a collection of images."""
 
     detail_page_markdown = models.TextField(blank=True)
@@ -236,6 +242,10 @@ class Archive(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
     @property
     def api_url(self) -> str:
         return reverse("api:archive-detail", kwargs={"pk": self.pk})
+
+    @property
+    def civ_sets_related_manager(self):
+        return self.items
 
 
 class ArchiveUserObjectPermission(UserObjectPermissionBase):
