@@ -18,7 +18,6 @@ from django.core.files.base import ContentFile
 from django.db import IntegrityError
 from django.utils import timezone
 from faker import Faker
-from guardian.shortcuts import assign_perm
 from knox import crypto
 from knox.models import AuthToken
 from knox.settings import CONSTANTS
@@ -211,7 +210,6 @@ def _create_demo_challenge(users, algorithm):
         short_name="demo",
         description="Demo Challenge",
         creator=users["demo"],
-        use_workspaces=True,
         hidden=False,
         display_forum_link=True,
     )
@@ -236,9 +234,6 @@ def _create_demo_challenge(users, algorithm):
     combined.phases.set(demo.phase_set.all())
 
     for phase_num, phase in enumerate(demo.phase_set.all()):
-
-        assign_perm("create_phase_workspace", users["demop"], phase)
-
         phase.score_title = "Accuracy ± std"
         phase.score_jsonpath = "acc.mean"
         phase.score_error_jsonpath = "acc.std"

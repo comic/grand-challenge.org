@@ -317,7 +317,6 @@ class Challenge(ChallengeBase):
             "a data usage agreement here. You can use HTML markup here."
         ),
     )
-    use_workspaces = models.BooleanField(default=False)
     use_teams = models.BooleanField(
         default=False,
         help_text=(

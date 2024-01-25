@@ -360,12 +360,6 @@ PERMISSIONS_POLICY = {
     "usb": [],
 }
 
-IPWARE_META_PRECEDENCE_ORDER = (
-    # Set by nginx
-    "HTTP_X_FORWARDED_FOR",
-    "HTTP_X_REAL_IP",
-)
-
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
@@ -1111,16 +1105,6 @@ MESSAGE_TAGS = {messages.ERROR: "danger"}
 
 # The name of the group whose members will be able to create reader studies
 READER_STUDY_CREATORS_GROUP_NAME = "reader_study_creators"
-
-###############################################################################
-#
-# workspaces
-#
-###############################################################################
-
-WORKBENCH_SECRET_KEY = os.environ.get("WORKBENCH_SECRET_KEY")
-WORKBENCH_API_URL = os.environ.get("WORKBENCH_API_URL")
-WORKBENCH_ADMIN_USERNAME = os.environ.get("WORKBENCH_ADMIN_USERNAME", "demo")
 
 ###############################################################################
 #

@@ -110,8 +110,6 @@ services:
       COMPONENTS_DEFAULT_BACKEND: 'grandchallenge.components.backends.docker.DockerExecutor'
       DEBUG: 'true'
       PYTHONDONTWRITEBYTECODE: 1
-      WORKBENCH_SECRET_KEY: "${WORKBENCH_SECRET_KEY-}"
-      WORKBENCH_API_URL: "${WORKBENCH_API_URL-}"
     restart: always
     command: watchfiles --filter python "celery -A config worker -l info -c 1 -Q celery" /app
     scale: 1
