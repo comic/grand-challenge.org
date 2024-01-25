@@ -1,14 +1,17 @@
 import json
 import subprocess
+from pathlib import Path
 
 import pytest
 from celery.exceptions import MaxRetriesExceededError
+from django.core.files.base import ContentFile
 from requests import put
 
 from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.components.tasks import (
+    _get_image_config_and_sha256,
     _repo_login_and_run,
     _retry,
     add_file_to_object,
@@ -422,3 +425,22 @@ def test_add_file_to_object(settings, object_type):
         interface_pk=ci.pk,
     )
     assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 1
+
+
+@pytest.mark.parametrize(
+    "container_image_file",
+    ("hello-scratch-oci.tar.gz", "hello-scratch-docker-v2.tar.gz"),
+)
+@pytest.mark.django_db
+def test_get_image_config_and_sha256(container_image_file):
+    resource_dir = Path(__file__).parent / "resources"
+
+    ai = AlgorithmImageFactory(image=None)
+
+    with open(resource_dir / container_image_file, "rb") as f:
+        ai.image.save(container_image_file, ContentFile(f.read()))
+
+    assert (
+        _get_image_config_and_sha256(instance=ai)["image_sha256"]
+        == "1bf4ef3c617a6f34a728ec2a5cff1b1dcb926d2d0b93c5bccd830a7918d833da"
+    )

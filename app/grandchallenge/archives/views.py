@@ -49,8 +49,14 @@ from grandchallenge.archives.serializers import (
 )
 from grandchallenge.archives.tasks import add_images_to_archive
 from grandchallenge.cases.models import Image, RawImageUploadSession
+from grandchallenge.components.forms import MultipleCIVForm
 from grandchallenge.components.models import ComponentInterface
-from grandchallenge.components.views import CIVSetDeleteView
+from grandchallenge.components.views import (
+    CIVSetCreateMixin,
+    CIVSetDeleteView,
+    InterfacesCreateBaseView,
+    MultipleCIVProcessingBaseView,
+)
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
@@ -64,7 +70,7 @@ from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
 from grandchallenge.reader_studies.models import DisplaySet, ReaderStudy
-from grandchallenge.subdomains.utils import reverse
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
 class ArchiveList(FilterMixin, PermissionListMixin, ListView):
@@ -697,6 +703,102 @@ class ArchiveItemViewSet(
             return ArchiveItemPostSerializer
         else:
             return ArchiveItemSerializer
+
+
+class ArchiveItemCreateView(
+    CIVSetCreateMixin,
+    MultipleCIVProcessingBaseView,
+):
+    form_class = MultipleCIVForm
+    permission_required = (
+        f"{Archive._meta.app_label}.change_{Archive._meta.model_name}"
+    )
+    included_form_classes = (
+        MultipleCIVForm,
+        *MultipleCIVProcessingBaseView.included_form_classes,
+    )
+    success_message = "Archive item has been created."
+    model_to_add = ArchiveItem
+
+    def get_permission_object(self):
+        return self.base_object
+
+    @property
+    def base_object(self):
+        return Archive.objects.get(slug=self.kwargs["slug"])
+
+    @property
+    def list_url(self):
+        return reverse("archives:list")
+
+    @property
+    def form_url(self):
+        return reverse(
+            "archives:item-create", kwargs={"slug": self.base_object.slug}
+        )
+
+    @property
+    def return_url(self):
+        return reverse(
+            "archives:items-list", kwargs={"slug": self.base_object.slug}
+        )
+
+    @property
+    def new_interface_url(self):
+        return reverse(
+            "archives:item-new-interface-create",
+            kwargs={"slug": self.base_object.slug},
+        )
+
+    def process_data_for_object(self, data):
+        """Creates an archive item"""
+        instance = ArchiveItem.objects.create(archive=self.base_object)
+        for slug in data:
+            instance.create_civ(
+                ci_slug=slug, new_value=data[slug], user=self.request.user
+            )
+        return instance
+
+    def get_success_url(self):
+        return self.return_url
+
+
+class ArchiveItemInterfaceCreate(InterfacesCreateBaseView):
+    def get_required_permissions(self, request):
+        if self.object:
+            return [
+                f"{Archive._meta.app_label}.change_{ArchiveItem._meta.model_name}"
+            ]
+        else:
+            return [
+                f"{Archive._meta.app_label}.change_{Archive._meta.model_name}"
+            ]
+
+    @property
+    def object(self):
+        if self.kwargs.get("pk"):
+            return ArchiveItem.objects.get(pk=self.kwargs["pk"])
+        else:
+            return None
+
+    @property
+    def base_object(self):
+        return Archive.objects.get(slug=self.kwargs["slug"])
+
+    def get_htmx_url(self):
+        if self.kwargs.get("pk") is not None:
+            return reverse_lazy(
+                "archives:item-interface-create",
+                kwargs={
+                    "pk": self.kwargs.get("pk"),
+                    "slug": self.base_object.slug,
+                },
+            )
+        else:
+            return reverse_lazy(
+                "archives:item-new-interface-create",
+                kwargs={"slug": self.base_object.slug},
+            )
 
 
 class ArchiveItemDeleteView(CIVSetDeleteView):

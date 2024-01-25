@@ -37,7 +37,8 @@ htmx.onLoad((elem) => {
     }
 
     const objectSlugVal = document.getElementById('objectSlug').dataset.slug;
-    vals.push(`{"type": "const", "dst": "object", "val": "${objectSlugVal}"}`);
+    const objectModel = document.getElementById('modelName').dataset.modelName;
+    vals.push(`{"type": "const", "dst": "object", "val": "${objectSlugVal}"}`, `{"type": "const", "dst": "model", "val": "${objectModel}"}`);
 
     dalForwardConfScripts.forEach(script => script.textContent = `[${vals.join(',')}]`);
 });

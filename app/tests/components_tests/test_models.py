@@ -28,6 +28,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
 )
+from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.cases_tests.factories import ImageFactoryWithImageFileTiff
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
@@ -35,7 +36,11 @@ from tests.components_tests.factories import (
 )
 from tests.evaluation_tests.factories import EvaluationFactory
 from tests.factories import ImageFactory
-from tests.reader_studies_tests.factories import QuestionFactory
+from tests.reader_studies_tests.factories import (
+    DisplaySetFactory,
+    QuestionFactory,
+    ReaderStudyFactory,
+)
 
 
 @pytest.mark.django_db
@@ -1313,3 +1318,35 @@ def test_mark_desired_version():
         image.refresh_from_db()
     assert i2.is_desired_version
     assert not any([i1.is_desired_version, i3.is_desired_version])
+
+
+@pytest.mark.parametrize(
+    "base_object_factory, related_item_factory, base_object_lookup",
+    (
+        (ReaderStudyFactory, DisplaySetFactory, "reader_study"),
+        (ArchiveFactory, ArchiveItemFactory, "archive"),
+    ),
+)
+@pytest.mark.django_db
+def test_values_for_interfaces(
+    base_object_factory, related_item_factory, base_object_lookup
+):
+    base_obj = base_object_factory()
+    ob1, ob2 = related_item_factory.create_batch(
+        2, **{base_object_lookup: base_obj}
+    )
+    ci1, ci2, ci3 = ComponentInterfaceFactory.create_batch(3)
+    civ1a, _ = ComponentInterfaceValueFactory.create_batch(2, interface=ci1)
+    civ2a, civ2b = ComponentInterfaceValueFactory.create_batch(
+        2, interface=ci2
+    )
+    civ3 = ComponentInterfaceValueFactory(interface=ci3)
+
+    ob1.values.add(civ1a, civ2a)
+    ob2.values.add(civ1a, civ2b, civ3)
+
+    assert base_obj.values_for_interfaces == {
+        ci1.slug: [civ1a.pk],
+        ci2.slug: [civ2a.pk, civ2b.pk],
+        ci3.slug: [civ3.pk],
+    }

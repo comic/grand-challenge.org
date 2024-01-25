@@ -19,6 +19,7 @@
 {% block content %}
     <h2>Update Display Set</h2>
     <div id="objectSlug" class="d-none" data-slug="{{ base_object.slug }}"></div>
+    <div id="modelName" class="d-none" data-model-name="readerstudy"></div>
     {% include "grandchallenge/partials/messages.html" %}
     <form hx-post="{% url 'reader-studies:display-set-update' pk=object.pk slug=object.reader_study.slug %}" method="post" hx-target="body" hx-include="[id='new-interfaces']" class="obj-form" id="obj-form">
         {% csrf_token %}

@@ -4,7 +4,7 @@ import pytest
 from django.conf import settings
 
 from grandchallenge.archives.models import ArchiveItem
-from grandchallenge.reader_studies.models import DisplaySet
+from grandchallenge.reader_studies.models import DisplaySet, ReaderStudy
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
@@ -94,7 +94,11 @@ def test_component_interface_autocomplete(client):
         client=client,
         viewname="components:component-interface-autocomplete",
         user=user,
-        data={"forward": json.dumps({"object": rs.slug})},
+        data={
+            "forward": json.dumps(
+                {"object": rs.slug, "model": ReaderStudy._meta.model_name}
+            )
+        },
     )
     assert response.status_code == 200
     ids = [x["id"] for x in response.json()["results"]]
@@ -108,7 +112,11 @@ def test_component_interface_autocomplete(client):
         user=user,
         data={
             "forward": json.dumps(
-                {"object": rs.slug, "interface-0": ci_img_2.pk}
+                {
+                    "object": rs.slug,
+                    "model": ReaderStudy._meta.model_name,
+                    "interface-0": ci_img_2.pk,
+                }
             )
         },
     )
@@ -117,6 +125,72 @@ def test_component_interface_autocomplete(client):
     assert str(ci_img.id) not in ids
     assert str(ci_img_2.id) not in ids
     assert str(ci_json.id) in ids
+
+
+@pytest.mark.parametrize(
+    "base_object_factory,base_obj_lookup,object_factory,view_with_object,view_without_object",
+    (
+        (
+            ReaderStudyFactory,
+            "reader_study",
+            DisplaySetFactory,
+            "reader-studies:display-set-interfaces-create",
+            "reader-studies:display-set-new-interfaces-create",
+        ),
+        (
+            ArchiveFactory,
+            "archive",
+            ArchiveItemFactory,
+            "archives:item-interface-create",
+            "archives:item-new-interface-create",
+        ),
+    ),
+)
+@pytest.mark.django_db
+def test_interfaces_create_permissions(
+    client,
+    base_object_factory,
+    base_obj_lookup,
+    object_factory,
+    view_with_object,
+    view_without_object,
+):
+    editor, user = UserFactory.create_batch(2)
+    base_obj = base_object_factory()
+    obj = object_factory(**{base_obj_lookup: base_obj})
+    base_obj.add_editor(editor)
+
+    response = get_view_for_user(
+        viewname=view_with_object,
+        client=client,
+        reverse_kwargs={"pk": obj.pk, "slug": base_obj.slug},
+        user=user,
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname=view_with_object,
+        client=client,
+        reverse_kwargs={"pk": obj.pk, "slug": base_obj.slug},
+        user=editor,
+    )
+    assert response.status_code == 200
+
+    response = get_view_for_user(
+        viewname=view_without_object,
+        client=client,
+        reverse_kwargs={"slug": base_obj.slug},
+        user=user,
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname=view_without_object,
+        client=client,
+        reverse_kwargs={"slug": base_obj.slug},
+        user=editor,
+    )
+    assert response.status_code == 200
 
 
 @pytest.mark.parametrize(
