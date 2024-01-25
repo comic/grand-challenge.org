@@ -8,7 +8,6 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("modalities", "0001_initial"),
-        ("studies", "0001_initial"),
         ("cases", "0001_initial"),
     ]
 
