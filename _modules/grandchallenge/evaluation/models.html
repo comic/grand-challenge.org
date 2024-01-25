@@ -595,10 +595,7 @@
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
         <span class="n">unique_together</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;challenge&quot;</span><span class="p">,</span> <span class="s2">&quot;title&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;challenge&quot;</span><span class="p">,</span> <span class="s2">&quot;slug&quot;</span><span class="p">))</span>
         <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;challenge&quot;</span><span class="p">,</span> <span class="s2">&quot;submissions_open_at&quot;</span><span class="p">,</span> <span class="s2">&quot;created&quot;</span><span class="p">)</span>
-        <span class="n">permissions</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="p">(</span><span class="s2">&quot;create_phase_submission&quot;</span><span class="p">,</span> <span class="s2">&quot;Create Phase Submission&quot;</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">&quot;create_phase_workspace&quot;</span><span class="p">,</span> <span class="s2">&quot;Create Phase Workspace&quot;</span><span class="p">),</span>
-        <span class="p">)</span>
+        <span class="n">permissions</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;create_phase_submission&quot;</span><span class="p">,</span> <span class="s2">&quot;Create Phase Submission&quot;</span><span class="p">),)</span>
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="s2"> Evaluation for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">short_name</span><span class="si">}</span><span class="s2">&quot;</span>
