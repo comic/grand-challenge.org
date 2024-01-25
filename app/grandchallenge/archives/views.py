@@ -804,5 +804,5 @@ class ArchiveItemInterfaceCreate(InterfacesCreateBaseView):
 class ArchiveItemDeleteView(CIVSetDeleteView):
     model = ArchiveItem
     permission_required = (
-        f"{Archive._meta.app_label}.change_{ArchiveItem._meta.model_name}"
+        f"{Archive._meta.app_label}.delete_{ArchiveItem._meta.model_name}"
     )

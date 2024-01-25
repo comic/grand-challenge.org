@@ -1,5 +1,3 @@
-import os
-
 from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -272,15 +270,6 @@ class ArchiveItem(CIVForObjectMixin, UUIDModel):
         ComponentInterfaceValue, blank=True, related_name="archive_items"
     )
 
-    def __str__(self):
-        values = []
-        for value in self.values.all():
-            if value.image:
-                values.append(value.image.name)
-            if value.file:
-                values.append(os.path.basename(value.file.file.name))
-        return ", ".join(values)
-
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
@@ -307,6 +296,12 @@ class ArchiveItem(CIVForObjectMixin, UUIDModel):
         assign_perm(
             f"change_{self._meta.model_name}",
             self.archive.uploaders_group,
+            self,
+        )
+        # Archive editors can delete this archive item
+        assign_perm(
+            f"delete_{self._meta.model_name}",
+            self.archive.editors_group,
             self,
         )
 

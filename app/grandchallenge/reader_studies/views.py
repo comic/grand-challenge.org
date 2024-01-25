@@ -1460,5 +1460,5 @@ class DisplaySetCreateView(
 class DisplaySetDeleteView(CIVSetDeleteView):
     model = DisplaySet
     permission_required = (
-        f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
+        f"{ReaderStudy._meta.app_label}.delete_{DisplaySet._meta.model_name}"
     )
