@@ -683,20 +683,21 @@ def test_archive_item_add_image(
                 method=client.post,
                 reverse_kwargs={
                     "pk": item.pk,
-                    "interface_slug": ci_img.slug,
-                    "archive_slug": archive.slug,
+                    "slug": archive.slug,
                 },
                 user=editor,
-                follow=True,
                 data={
                     ci_img.slug: upload.pk,
                     f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_UPLOAD.name,
                 },
             )
-    assert response.status_code == 200
+    assert response.status_code == 302
     assert item.values.count() == 2
-    assert "image10x10x10.mha" == item.values.first().image.name
-    old_civ = item.values.first()
+    assert (
+        "image10x10x10.mha"
+        == item.values.filter(interface=ci_img).get().image.name
+    )
+    old_civ_img = item.values.filter(interface=ci_img).get()
 
     with django_capture_on_commit_callbacks(execute=True):
         with django_capture_on_commit_callbacks(execute=True):
@@ -706,19 +707,20 @@ def test_archive_item_add_image(
                 method=client.post,
                 reverse_kwargs={
                     "pk": item.pk,
-                    "interface_slug": ci_img.slug,
-                    "archive_slug": archive.slug,
+                    "slug": archive.slug,
                 },
                 user=editor,
-                follow=True,
                 data={
-                    ci_img.slug: old_civ.image.pk,
+                    ci_img.slug: old_civ_img.image.pk,
                     f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
                 },
             )
-    assert response.status_code == 200
-    assert item.values.first().image.pk == old_civ.image.pk
-    assert item.values.first() == old_civ
+    assert response.status_code == 302
+    assert (
+        item.values.filter(interface=ci_img).get().image.pk
+        == old_civ_img.image.pk
+    )
+    assert item.values.filter(interface=ci_img).get() == old_civ_img
 
     image = ImageFactory()
     assign_perm("cases.view_image", editor, image)
@@ -730,19 +732,17 @@ def test_archive_item_add_image(
                 method=client.post,
                 reverse_kwargs={
                     "pk": item.pk,
-                    "interface_slug": ci_img.slug,
-                    "archive_slug": archive.slug,
+                    "slug": archive.slug,
                 },
                 user=editor,
-                follow=True,
                 data={
                     ci_img.slug: image.pk,
                     f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
                 },
             )
-    assert response.status_code == 200
-    assert item.values.first().image.pk == image.pk
-    assert item.values.first() != old_civ
+    assert response.status_code == 302
+    assert item.values.filter(interface=ci_img).get().image.pk == image.pk
+    assert item.values.filter(interface=ci_img).get() != old_civ_img
 
 
 @pytest.mark.django_db
@@ -768,14 +768,12 @@ def test_archive_item_add_file(
                 method=client.post,
                 reverse_kwargs={
                     "pk": item.pk,
-                    "interface_slug": ci.slug,
-                    "archive_slug": archive.slug,
+                    "slug": archive.slug,
                 },
                 user=editor,
-                follow=True,
                 data={ci.slug: upload.pk},
             )
-    assert response.status_code == 200
+    assert response.status_code == 302
     assert "test" in ArchiveItem.objects.get().values.first().file.name
 
 
@@ -807,14 +805,12 @@ def test_archive_item_add_json_file(
                     method=client.post,
                     reverse_kwargs={
                         "pk": item.pk,
-                        "interface_slug": ci.slug,
-                        "archive_slug": archive.slug,
+                        "slug": archive.slug,
                     },
                     user=editor,
-                    follow=True,
                     data={ci.slug: upload.pk},
                 )
-        assert response.status_code == 200
+        assert response.status_code == 302
         assert (
             file.name.split("/")[-1]
             in ArchiveItem.objects.get().values.first().file.name
@@ -843,14 +839,12 @@ def test_archive_item_add_value(
                 method=client.post,
                 reverse_kwargs={
                     "pk": item.pk,
-                    "interface_slug": ci.slug,
-                    "archive_slug": archive.slug,
+                    "slug": archive.slug,
                 },
                 user=editor,
-                follow=True,
                 data={ci.slug: True},
             )
-    assert response.status_code == 200
+    assert response.status_code == 302
     assert ArchiveItem.objects.get().values.first().value
 
 

@@ -225,7 +225,9 @@ def test_civset_delete_view(
     base_obj = base_object_factory()
     obj = object_factory(**{base_obj_lookup: base_obj})
     base_obj.add_editor(editor)
-    setattr(base_obj, add_collaborator_attr, collaborator)
+    method = getattr(base_obj, add_collaborator_attr)
+    setattr(base_obj, add_collaborator_attr, method)
+    getattr(base_obj, add_collaborator_attr)(collaborator)
 
     response = get_view_for_user(
         viewname=viewname,
@@ -261,3 +263,63 @@ def test_civset_delete_view(
     assert response.status_code == 302
     assert ArchiveItem.objects.count() == 0
     assert DisplaySet.objects.count() == 0
+
+
+@pytest.mark.parametrize(
+    "base_object_factory,base_obj_lookup,viewname,add_collaborator_attr,collaborator_view_status",
+    (
+        (
+            ReaderStudyFactory,
+            "reader_study",
+            "reader-studies:display_sets",
+            "add_reader",
+            403,
+        ),
+        (
+            ArchiveFactory,
+            "archive",
+            "archives:items-list",
+            "add_uploader",
+            200,
+        ),
+    ),
+)
+@pytest.mark.django_db
+def test_civset_list_view_permmissions(
+    client,
+    base_object_factory,
+    base_obj_lookup,
+    viewname,
+    add_collaborator_attr,
+    collaborator_view_status,
+):
+    user, editor, collaborator = UserFactory.create_batch(3)
+    base_obj = base_object_factory()
+    base_obj.add_editor(editor)
+    method = getattr(base_obj, add_collaborator_attr)
+    setattr(base_obj, add_collaborator_attr, method)
+    getattr(base_obj, add_collaborator_attr)(collaborator)
+
+    response = get_view_for_user(
+        viewname=viewname,
+        client=client,
+        user=user,
+        reverse_kwargs={"slug": base_obj.slug},
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname=viewname,
+        client=client,
+        user=collaborator,
+        reverse_kwargs={"slug": base_obj.slug},
+    )
+    assert response.status_code == collaborator_view_status
+
+    response = get_view_for_user(
+        viewname=viewname,
+        client=client,
+        user=editor,
+        reverse_kwargs={"slug": base_obj.slug},
+    )
+    assert response.status_code == 200
