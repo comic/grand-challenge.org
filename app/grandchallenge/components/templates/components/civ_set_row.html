@@ -18,7 +18,7 @@
 <ul class="list-unstyled mb-0">
     {% for civ in object.values.all %}
         <li>
-            {{ civ.interface.title }}: {{ civ.title }}
+            {{ civ.interface.title }}: {{ civ.title|truncatechars:30 }}
         </li>
     {% endfor %}
 </ul>
