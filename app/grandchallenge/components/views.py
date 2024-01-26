@@ -339,6 +339,9 @@ class CivSetListView(
             {
                 "base_object": self.base_object,
                 "base_model_options": BaseModelOptions,
+                "request": self.request,
+                "delete_perm": f"delete_{self.base_object.civ_set_model._meta.model_name}",
+                "update_perm": f"change_{self.base_object.civ_set_model._meta.model_name}",
             }
         )
         return context
