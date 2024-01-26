@@ -241,6 +241,11 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         help_text="The method used to interpolate multiple voxels of the image and project them to screen pixels",
     )
 
+    default_limit_view_area_to_image_volume = models.BooleanField(
+        default=False,
+        help_text="When enabled, the view area is limited to the image volume, ensuring that changes in orientation and panning do not obscure parts of the image",
+    )
+
     # 3 digits, 2 decimal places, 0.00 min, 1.00 max
     default_overlay_alpha = models.DecimalField(
         blank=True,
