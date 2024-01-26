@@ -7,6 +7,7 @@ from grandchallenge.archives.views import (
     ArchiveEditArchiveItem,
     ArchiveEditorsUpdate,
     ArchiveItemCreateView,
+    ArchiveItemDeleteView,
     ArchiveItemInterfaceCreate,
     ArchiveItemsList,
     ArchiveItemsToReaderStudyUpdate,
@@ -68,6 +69,11 @@ urlpatterns = [
         "<slug>/items/new/interface/create/",
         ArchiveItemInterfaceCreate.as_view(),
         name="item-new-interface-create",
+    ),
+    path(
+        "<slug>/items/<uuid:pk>/delete/",
+        ArchiveItemDeleteView.as_view(),
+        name="item-delete",
     ),
     path(
         "<slug>/items/<uuid:pk>/interface/create/",

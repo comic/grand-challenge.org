@@ -244,6 +244,14 @@ class Archive(
         return reverse("api:archive-detail", kwargs={"pk": self.pk})
 
     @property
+    def civ_sets_list_url(self):
+        return reverse("archives:items-list", kwargs={"slug": self.slug})
+
+    @property
+    def list_url(self):
+        return reverse("archives:list")
+
+    @property
     def civ_sets_related_manager(self):
         return self.items
 
@@ -299,6 +307,12 @@ class ArchiveItem(CIVForObjectMixin, UUIDModel):
         assign_perm(
             f"change_{self._meta.model_name}",
             self.archive.uploaders_group,
+            self,
+        )
+        # Archive editors can delete this archive item
+        assign_perm(
+            f"delete_{self._meta.model_name}",
+            self.archive.editors_group,
             self,
         )
 

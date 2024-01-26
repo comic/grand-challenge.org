@@ -2051,52 +2051,6 @@ def test_display_set_index(client):
 
 
 @pytest.mark.django_db
-def test_display_set_delete(client):
-    rs = ReaderStudyFactory()
-    reader, editor = UserFactory(), UserFactory()
-    rs.add_reader(reader)
-    rs.add_editor(editor)
-
-    ds = DisplaySetFactory(reader_study=rs)
-    response = get_view_for_user(
-        viewname="api:reader-studies-display-set-detail",
-        reverse_kwargs={"pk": ds.pk},
-        user=reader,
-        client=client,
-        method=client.delete,
-        content_type="application/json",
-    )
-
-    assert response.status_code == 403
-
-    response = get_view_for_user(
-        viewname="api:reader-studies-display-set-detail",
-        reverse_kwargs={"pk": ds.pk},
-        user=editor,
-        client=client,
-        method=client.delete,
-        content_type="application/json",
-    )
-
-    assert response.status_code == 204
-
-    ds = DisplaySetFactory(reader_study=rs)
-    q = QuestionFactory(reader_study=rs)
-    AnswerFactory(question=q, creator=reader, display_set=ds)
-
-    response = get_view_for_user(
-        viewname="api:reader-studies-display-set-detail",
-        reverse_kwargs={"pk": ds.pk},
-        user=editor,
-        client=client,
-        method=client.delete,
-        content_type="application/json",
-    )
-
-    assert response.status_code == 403
-
-
-@pytest.mark.django_db
 def test_total_edit_duration(client):
     rs = ReaderStudyFactory(allow_answer_modification=True)
     ds = DisplaySetFactory(reader_study=rs)

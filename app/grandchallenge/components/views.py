@@ -7,7 +7,7 @@ from django.forms import Media
 from django.http import HttpResponse
 from django.utils.functional import cached_property
 from django.utils.html import format_html
-from django.views.generic import FormView, ListView, TemplateView
+from django.views.generic import DeleteView, FormView, ListView, TemplateView
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
 from rest_framework.viewsets import ReadOnlyModelViewSet
@@ -20,7 +20,7 @@ from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.components.serializers import ComponentInterfaceSerializer
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
 from grandchallenge.reader_studies.models import ReaderStudy
-from grandchallenge.subdomains.utils import reverse
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
 class ComponentInterfaceViewSet(ReadOnlyModelViewSet):
@@ -269,3 +269,22 @@ class InterfacesCreateBaseView(ObjectPermissionRequiredMixin, TemplateView):
             }
         )
         return context
+
+
+class CIVSetDeleteView(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    DeleteView,
+):
+    model = None
+    permission_required = None
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+    template_name = "components/civset_confirm_delete.html"
+
+    def get_success_url(self):
+        return self.object.base_object.civ_sets_list_url
+
+    def get_success_message(self, cleaned_data):
+        return f"{self.object._meta.verbose_name.title()} was successfully deleted"

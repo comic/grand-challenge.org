@@ -711,6 +711,16 @@ class ReaderStudy(
         return (highest + 10) // 10 * 10
 
     @property
+    def civ_sets_list_url(self):
+        return reverse(
+            "reader-studies:display_sets", kwargs={"slug": self.slug}
+        )
+
+    @property
+    def list_url(self):
+        return reverse("reader-studies:list")
+
+    @property
     def civ_sets_related_manager(self):
         return self.display_sets
 

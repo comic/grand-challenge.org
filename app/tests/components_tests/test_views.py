@@ -3,7 +3,8 @@ import json
 import pytest
 from django.conf import settings
 
-from grandchallenge.reader_studies.models import ReaderStudy
+from grandchallenge.archives.models import ArchiveItem
+from grandchallenge.reader_studies.models import DisplaySet, ReaderStudy
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
@@ -190,3 +191,73 @@ def test_interfaces_create_permissions(
         user=editor,
     )
     assert response.status_code == 200
+
+
+@pytest.mark.parametrize(
+    "base_object_factory,base_obj_lookup,object_factory,viewname,add_collaborator_attr",
+    (
+        (
+            ReaderStudyFactory,
+            "reader_study",
+            DisplaySetFactory,
+            "reader-studies:display-set-delete",
+            "add_reader",
+        ),
+        (
+            ArchiveFactory,
+            "archive",
+            ArchiveItemFactory,
+            "archives:item-delete",
+            "add_uploader",
+        ),
+    ),
+)
+@pytest.mark.django_db
+def test_civset_delete_view(
+    client,
+    base_object_factory,
+    base_obj_lookup,
+    object_factory,
+    viewname,
+    add_collaborator_attr,
+):
+    user, editor, collaborator = UserFactory.create_batch(3)
+    base_obj = base_object_factory()
+    obj = object_factory(**{base_obj_lookup: base_obj})
+    base_obj.add_editor(editor)
+    setattr(base_obj, add_collaborator_attr, collaborator)
+
+    response = get_view_for_user(
+        viewname=viewname,
+        client=client,
+        user=user,
+        reverse_kwargs={"slug": base_obj.slug, "pk": obj.pk},
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname=viewname,
+        client=client,
+        user=collaborator,
+        reverse_kwargs={"slug": base_obj.slug, "pk": obj.pk},
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname=viewname,
+        client=client,
+        user=editor,
+        reverse_kwargs={"slug": base_obj.slug, "pk": obj.pk},
+    )
+    assert response.status_code == 200
+
+    response = get_view_for_user(
+        viewname=viewname,
+        client=client,
+        method=client.post,
+        user=editor,
+        reverse_kwargs={"slug": base_obj.slug, "pk": obj.pk},
+    )
+    assert response.status_code == 302
+    assert ArchiveItem.objects.count() == 0
+    assert DisplaySet.objects.count() == 0

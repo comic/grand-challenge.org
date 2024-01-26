@@ -53,6 +53,7 @@ from grandchallenge.components.forms import MultipleCIVForm
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.components.views import (
     CIVSetCreateMixin,
+    CIVSetDeleteView,
     InterfacesCreateBaseView,
     MultipleCIVProcessingBaseView,
 )
@@ -798,3 +799,10 @@ class ArchiveItemInterfaceCreate(InterfacesCreateBaseView):
                 "archives:item-new-interface-create",
                 kwargs={"slug": self.base_object.slug},
             )
+
+
+class ArchiveItemDeleteView(CIVSetDeleteView):
+    model = ArchiveItem
+    permission_required = (
+        f"{Archive._meta.app_label}.delete_{ArchiveItem._meta.model_name}"
+    )

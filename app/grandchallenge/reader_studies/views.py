@@ -45,7 +45,6 @@ from guardian.mixins import LoginRequiredMixin
 from guardian.shortcuts import get_perms
 from rest_framework import mixins
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied as DRFPermissionDenied
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
@@ -61,6 +60,7 @@ from grandchallenge.components.serializers import (
 )
 from grandchallenge.components.views import (
     CIVSetCreateMixin,
+    CIVSetDeleteView,
     FileUpdateBaseView,
     InterfacesCreateBaseView,
     MultipleCIVProcessingBaseView,
@@ -1013,7 +1013,6 @@ class DisplaySetViewSet(
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
     mixins.UpdateModelMixin,
-    mixins.DestroyModelMixin,
     mixins.ListModelMixin,
     GenericViewSet,
 ):
@@ -1070,15 +1069,6 @@ class DisplaySetViewSet(
             else:
                 raise DRFValidationError(serialized_data.errors)
         return super().partial_update(request, pk)
-
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        if not instance.is_editable:
-            raise DRFPermissionDenied(
-                "This display set cannot be removed, as answers for it "
-                "already exist."
-            )
-        return super().destroy(request, *args, **kwargs)
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
@@ -1454,3 +1444,10 @@ class DisplaySetCreateView(
 
     def get_success_url(self):
         return self.return_url
+
+
+class DisplaySetDeleteView(CIVSetDeleteView):
+    model = DisplaySet
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.delete_{DisplaySet._meta.model_name}"
+    )
