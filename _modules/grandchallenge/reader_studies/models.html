@@ -822,6 +822,16 @@
         <span class="k">return</span> <span class="p">(</span><span class="n">highest</span> <span class="o">+</span> <span class="mi">10</span><span class="p">)</span> <span class="o">//</span> <span class="mi">10</span> <span class="o">*</span> <span class="mi">10</span>
 
     <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">civ_sets_list_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
+            <span class="s2">&quot;reader-studies:display_sets&quot;</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;slug&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">slug</span><span class="p">}</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">list_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span><span class="s2">&quot;reader-studies:list&quot;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">civ_sets_related_manager</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span>
 
