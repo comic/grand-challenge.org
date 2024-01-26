@@ -1171,20 +1171,32 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             self.docker_s3_storage_size_bytes
         )
 
+    @cached_property
+    def base_cost_euros(self):
+        if (
+            self.creator
+            and Organization.objects.filter(
+                exempt_from_base_costs=True, members_group__user=self.creator
+            ).exists()
+        ):
+            return 0
+        else:
+            return settings.CHALLENGE_BASE_COST_IN_EURO
+
     @property
     def total_euros(self):
         return (
             self.phase_1_total_euros
             + self.phase_2_total_euros
             + self.docker_storage_costs_euros
-            + settings.CHALLENGE_BASE_COST_IN_EURO
+            + self.base_cost_euros
         )
 
     @cached_property
     def budget(self):
         try:
             return {
-                "Base cost": settings.CHALLENGE_BASE_COST_IN_EURO,
+                "Base cost": self.base_cost_euros,
                 "Data storage cost for phase 1": self.phase_1_data_storage_euros,
                 "Compute costs for phase 1": self.phase_1_compute_costs_euros,
                 "Total phase 1": self.phase_1_total_euros,
