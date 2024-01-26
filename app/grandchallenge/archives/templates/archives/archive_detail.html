@@ -53,21 +53,10 @@
                 </a>
             {% endif %}
 
-            {% if "upload_archive" in object_perms %}
-                <a class="nav-link"
-                   href="{% url 'archives:cases-create' slug=object.slug %}"
-                ><i class="fas fa-file-import fa-fw"></i>&nbsp;Add Items
-                </a>
-            {% endif %}
-
             {% if "use_archive" in object_perms %}
                 <a class="nav-link"
-                   href="{% url 'archives:cases-list' slug=object.slug %}"
-                ><i class="fas fa-eye fa-fw"></i>&nbsp;View Images
-                </a>
-                <a class="nav-link"
                    href="{% url 'archives:items-list' slug=object.slug %}"
-                ><i class="fas fa-eye fa-fw"></i>&nbsp;View Items
+                ><i class="fas fa-image fa-fw"></i>&nbsp;Items
                 </a>
                 <a class="nav-link"
                    href="{% url 'archives:items-reader-study-update' slug=object.slug %}"

@@ -64,7 +64,7 @@ from grandchallenge.core.guardian import (
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
-from grandchallenge.datatables.views import Column, PaginatedTableListView
+from grandchallenge.datatables.views import Column
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
 from grandchallenge.reader_studies.models import DisplaySet, ReaderStudy
@@ -432,125 +432,6 @@ class ArchiveItemsList(CivSetListView):
     @cached_property
     def base_object(self):
         return get_object_or_404(Archive, slug=self.kwargs["slug"])
-
-
-class ArchiveCasesList(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, PaginatedTableListView
-):
-    model = Image
-    permission_required = (
-        f"{Archive._meta.app_label}.use_{Archive._meta.model_name}"
-    )
-    raise_exception = True
-    template_name = "archives/archive_cases_list.html"
-    row_template = "archives/archive_cases_row.html"
-    search_fields = [
-        "pk",
-        "name",
-        "patient_id",
-        "patient_name",
-        "patient_birth_date",
-        "patient_age",
-        "patient_sex",
-        "study_date",
-        "study_instance_uid",
-        "series_instance_uid",
-        "study_description",
-        "series_description",
-    ]
-    columns = [
-        Column(title="Name", sort_field="name"),
-        Column(title="Created", sort_field="created"),
-        Column(title="Creator", sort_field="origin__creator__username"),
-        Column(
-            title="Patient ID",
-            sort_field="patient_id",
-            optional_condition=lambda o: o.patient_id,
-        ),
-        Column(
-            title="Patient name",
-            sort_field="patient_name",
-            optional_condition=lambda o: o.patient_name,
-        ),
-        Column(
-            title="Patient birth date",
-            sort_field="patient_birth_date",
-            optional_condition=lambda o: o.patient_birth_date,
-        ),
-        Column(
-            title="Patient age",
-            sort_field="patient_age",
-            optional_condition=lambda o: o.patient_age,
-        ),
-        Column(
-            title="Patient sex",
-            sort_field="patient_sex",
-            optional_condition=lambda o: o.patient_sex,
-        ),
-        Column(
-            title="Study Instance UID",
-            sort_field="study_instance_uid",
-            optional_condition=lambda o: o.study_instance_uid,
-        ),
-        Column(
-            title="Study description",
-            sort_field="study_description",
-            optional_condition=lambda o: o.study_description,
-        ),
-        Column(
-            title="Study date",
-            sort_field="study_date",
-            optional_condition=lambda o: o.study_date,
-        ),
-        Column(
-            title="Series Instance UID",
-            sort_field="series_instance_uid",
-            optional_condition=lambda o: o.series_instance_uid,
-        ),
-        Column(
-            title="Series description",
-            sort_field="series_description",
-            optional_condition=lambda o: o.series_description,
-        ),
-        Column(title="View"),
-        Column(
-            title="Algorithm Results",
-            sort_field="pk",
-            optional_condition=lambda o: any(
-                civ.algorithms_jobs_as_input.exists()
-                for civ in o.componentinterfacevalue_set.all()
-            ),
-        ),
-        Column(title="Download"),
-    ]
-
-    @cached_property
-    def archive(self):
-        return get_object_or_404(Archive, slug=self.kwargs["slug"])
-
-    def get_permission_object(self):
-        return self.archive
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update({"archive": self.archive})
-        return context
-
-    def get_queryset(self):
-        qs = super().get_queryset()
-        return (
-            qs.filter(
-                componentinterfacevalue__archive_items__archive=self.archive
-            )
-            .prefetch_related(
-                "files",
-                "componentinterfacevalue_set__algorithms_jobs_as_input__algorithm_image__algorithm",
-            )
-            .select_related(
-                "origin__creator__user_profile",
-                "origin__creator__verification",
-            )
-        )
 
 
 class ArchiveItemsToReaderStudyUpdate(
