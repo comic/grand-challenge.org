@@ -429,7 +429,16 @@ def test_add_file_to_object(settings, object_type):
 
 @pytest.mark.parametrize(
     "container_image_file",
-    ("hello-scratch-oci.tar.gz", "hello-scratch-docker-v2.tar.gz"),
+    (
+        "hello-scratch-docker-v2.tar.gz",
+        pytest.param(
+            "hello-scratch-oci.tar.gz",
+            marks=pytest.mark.xfail(
+                reason="crane cannot push docker 25 images https://github.com/google/go-containerregistry/issues/1870",
+                strict=True,
+            ),
+        ),
+    ),
 )
 @pytest.mark.django_db
 def test_get_image_config_and_sha256(container_image_file):
