@@ -5,6 +5,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q, TextChoices
 from django.forms import Media
 from django.http import HttpResponse
+from django.template.loader import render_to_string
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.views.generic import DeleteView, FormView, ListView, TemplateView
@@ -19,6 +20,7 @@ from grandchallenge.components.forms import NewFileUploadForm, SingleCIVForm
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.components.serializers import ComponentInterfaceSerializer
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
+from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
@@ -208,26 +210,19 @@ class FileUpdateBaseView(ObjectPermissionRequiredMixin, TemplateView):
         return context
 
 
-class CIVSetCreateMixin:
-    template_name = "components/civ_set_create.html"
-    model_to_add = None
+class CIVSetFormMixin:
+    template_name = "components/civ_set_form.html"
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context.update(
             {
-                "model_to_add": self.model_to_add,
-                "list_url": self.list_url,
                 "form_url": self.form_url,
                 "new_interface_url": self.new_interface_url,
                 "return_url": self.return_url,
             }
         )
         return context
-
-    @property
-    def list_url(self):
-        raise NotImplementedError
 
     @property
     def form_url(self):
@@ -288,3 +283,77 @@ class CIVSetDeleteView(
 
     def get_success_message(self, cleaned_data):
         return f"{self.object._meta.verbose_name.title()} was successfully deleted"
+
+
+class BaseModelOptions(TextChoices):
+    ARCHIVE = Archive._meta.model_name
+    READER_STUDY = ReaderStudy._meta.model_name
+
+
+class CivSetListView(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, PaginatedTableListView
+):
+    model = None
+    permission_required = None
+    raise_exception = True
+    template_name = "components/civ_set_list.html"
+    row_template = "components/civ_set_row.html"
+    search_fields = [
+        "pk",
+        "values__interface__title",
+        "values__image__name",
+        "values__file",
+    ]
+    extra_columns = []
+    text_align = "left"
+    default_sort_order = "asc"
+    base_object_lookup = None
+    extra_prefetch_fields = []
+    columns = [
+        Column(title="Values"),
+        Column(title="View"),
+        Column(title="Edit"),
+        Column(title="Remove"),
+    ]
+
+    def __init__(self):
+        if self.extra_columns:
+            self.columns = [*self.extra_columns, *self.columns]
+
+    @cached_property
+    def base_object(self):
+        return NotImplementedError
+
+    def render_row(self, *, object_, page_context):
+        return render_to_string(
+            self.row_template,
+            context={**page_context, "object": object_},
+        ).split("<split></split>")
+
+    def get_permission_object(self):
+        return self.base_object
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "base_object": self.base_object,
+                "base_model_options": BaseModelOptions,
+            }
+        )
+        return context
+
+    def get_queryset(self):
+        prefetch_fields = ["values", "values__image", "values__interface"]
+        if self.extra_prefetch_fields != []:
+            prefetch_fields.append(*self.extra_prefetch_fields)
+        qs = (
+            super()
+            .get_queryset()
+            .filter(**{self.base_object_lookup: self.base_object})
+            .select_related(self.base_object_lookup)
+            .prefetch_related(*prefetch_fields)
+            .order_by()
+            .distinct()
+        )
+        return qs

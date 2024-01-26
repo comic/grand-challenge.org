@@ -1,0 +1,53 @@
+{% load humanize %}
+{% load profiles %}
+{% load workstations %}
+{% load pathlib %}
+{% load meta_attr %}
+
+{{ object.pk }}
+<split></split>
+
+{% if base_object|model_name == base_model_options.READER_STUDY %}
+    {{ object.order }}
+    <split></split>
+{% endif %}
+
+<ul class="list-unstyled mb-0">
+    {% for civ in object.values.all %}
+        <li>
+            {{ civ.interface.title }}: {{ civ.title }}
+        </li>
+    {% endfor %}
+</ul>
+<split></split>
+
+<a class="btn btn-primary btn-sm"
+   title="View in viewer"
+   {% if base_object|model_name == base_model_options.READER_STUDY %}
+       {% workstation_session_control_data workstation=base_object.workstation context_object=object display_set=object config=base_object.workstation_config %}
+   {% elif base_object|model_name == base_model_options.ARCHIVE %}
+       {% workstation_session_control_data workstation=base_object.workstation context_object=object archive_item=object config=base_object.workstation_config %}
+   {% endif %}
+>
+<i class="fas fa-fw fa-eye"></i>
+</a>
+<split></split>
+
+<a class="btn btn-primary btn-sm {% if not object.is_editable %}disabled{% endif %}"
+   {% if object.is_editable %}
+        title = "Edit {{ object|verbose_name }}"
+        href="{{ object.update_url }}"
+   {% else %}
+        title="Cannot edit: answers for display set exist"
+   {% endif %}
+>
+   <i class="fas fa-fw fa-edit"></i>
+</a>
+<split></split>
+
+<a class="btn btn-danger btn-sm {% if not object.is_editable %}disabled{% endif %}"
+   title="Delete {{ object|verbose_name }}"
+   href="{{ object.delete_url }}">
+   <i class="fas fa-fw fa-trash"></i>
+</a>
+<split></split>

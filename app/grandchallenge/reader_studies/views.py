@@ -19,7 +19,6 @@ from django.http import (
     JsonResponse,
 )
 from django.shortcuts import get_object_or_404
-from django.template.loader import render_to_string
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -59,8 +58,9 @@ from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
 )
 from grandchallenge.components.views import (
-    CIVSetCreateMixin,
     CIVSetDeleteView,
+    CIVSetFormMixin,
+    CivSetListView,
     FileUpdateBaseView,
     InterfacesCreateBaseView,
     MultipleCIVProcessingBaseView,
@@ -76,7 +76,7 @@ from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.utils import strtobool
 from grandchallenge.core.utils.query import set_seed
 from grandchallenge.core.views import PermissionRequestUpdate
-from grandchallenge.datatables.views import Column, PaginatedTableListView
+from grandchallenge.datatables.views import Column
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
 from grandchallenge.reader_studies.filters import (
@@ -379,64 +379,22 @@ class ReaderStudyStatistics(
     # If the permission is changed to 'read', we need to filter these values out.
 
 
-class ReaderStudyDisplaySetList(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, PaginatedTableListView
-):
+class ReaderStudyDisplaySetList(CivSetListView):
     model = DisplaySet
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
     )
-    raise_exception = True
-    template_name = "reader_studies/display_set_list.html"
-    row_template = "reader_studies/display_set_row.html"
-    search_fields = ["pk", "values__image__name", "values__file"]
-    columns = [
+    extra_columns = [
         Column(title="DisplaySet ID", sort_field="pk"),
         Column(title="Order", sort_field="order"),
-        Column(title="Values"),
-        Column(title="View"),
-        Column(title="Edit"),
-        Column(title="Remove"),
     ]
-    text_align = "left"
-    default_sort_order = "asc"
     default_sort_column = 1
+    base_object_lookup = "reader_study"
+    extra_prefetch_fields = ["answers"]
 
     @cached_property
-    def reader_study(self):
+    def base_object(self):
         return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
-
-    def render_row(self, *, object_, page_context):
-        return render_to_string(
-            self.row_template,
-            context={**page_context, "object": object_},
-        ).split("<split></split>")
-
-    def get_permission_object(self):
-        return self.reader_study
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(
-            {
-                "reader_study": self.reader_study,
-            }
-        )
-        return context
-
-    def get_queryset(self):
-        qs = (
-            super()
-            .get_queryset()
-            .filter(reader_study=self.reader_study)
-            .select_related("reader_study")
-            .prefetch_related(
-                "values", "answers", "values__image", "values__interface"
-            )
-            .order_by()
-            .distinct()
-        )
-        return qs
 
 
 class QuestionOptionMixin:
@@ -1285,8 +1243,7 @@ class QuestionWidgetsView(BaseAddObjectToReaderStudyMixin, View):
         return HttpResponse(form["widget"])
 
 
-class DisplaySetUpdate(MultipleCIVProcessingBaseView):
-    template_name = "reader_studies/display_set_update.html"
+class DisplaySetUpdate(CIVSetFormMixin, MultipleCIVProcessingBaseView):
     form_class = DisplaySetUpdateForm
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
@@ -1307,12 +1264,30 @@ class DisplaySetUpdate(MultipleCIVProcessingBaseView):
 
     @property
     def base_object(self):
-        return self.object.reader_study
+        return self.object.base_object
 
     def get_success_url(self):
+        return self.return_url
+
+    @property
+    def form_url(self):
+        return reverse(
+            "reader-studies:display-set-update",
+            kwargs={"slug": self.base_object.slug, "pk": self.object.pk},
+        )
+
+    @property
+    def return_url(self):
         return reverse(
             "reader-studies:display_sets",
-            kwargs={"slug": self.kwargs["slug"]},
+            kwargs={"slug": self.base_object.slug},
+        )
+
+    @property
+    def new_interface_url(self):
+        return reverse(
+            "reader-studies:display-set-interfaces-create",
+            kwargs={"slug": self.base_object.slug, "pk": self.object.pk},
         )
 
     def process_data_for_object(self, data):
@@ -1385,7 +1360,7 @@ class DisplaySetInterfacesCreate(InterfacesCreateBaseView):
 
 
 class DisplaySetCreateView(
-    CIVSetCreateMixin,
+    CIVSetFormMixin,
     MultipleCIVProcessingBaseView,
 ):
     form_class = DisplaySetCreateForm
@@ -1397,7 +1372,6 @@ class DisplaySetCreateView(
         *MultipleCIVProcessingBaseView.included_form_classes,
     )
     success_message = "Display set has been created."
-    model_to_add = DisplaySet
 
     def get_permission_object(self):
         return self.base_object
@@ -1405,10 +1379,6 @@ class DisplaySetCreateView(
     @property
     def base_object(self):
         return ReaderStudy.objects.get(slug=self.kwargs["slug"])
-
-    @property
-    def list_url(self):
-        return reverse("reader-studies:list")
 
     @property
     def form_url(self):

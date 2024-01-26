@@ -1,0 +1,34 @@
+{% extends "datatables/list_base.html" %}
+{% load static %}
+{% load url %}
+{% load meta_attr %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ base_object.list_url }}">{{ base_object|verbose_name_plural|title }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ base_object.get_absolute_url }}">{{ base_object }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page"><a href="{{ base_object.civ_sets_list_url }}">{{ base_object.civ_set_model|verbose_name_plural|title }}</a></li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h1>{{ base_object.title }} {{ base_object.civ_set_model|verbose_name_plural|title }}</h1>
+    <p>
+        <a class="btn btn-primary"
+           href="{{ base_object.create_civ_set_url }}"
+        ><i class="fas fa-fw fa-plus"></i> Add {{ base_object.civ_set_model|verbose_name|title }} (single)
+        </a>
+        <a class="btn btn-outline-primary"
+           href="{{ base_object.create_civ_set_batch_url }}"
+        ><i class="fas fa-fw fa-plus"></i> Add Image-Only {{ base_object.civ_set_model|verbose_name_plural|title }} (batch)
+        </a>
+    </p>
+
+    {{ block.super }}
+
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    {% include 'workstations/partials/session-control.html' %}
+{% endblock %}

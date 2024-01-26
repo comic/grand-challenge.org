@@ -1,4 +1,3 @@
-from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -31,7 +30,6 @@ from grandchallenge.archives.filters import ArchiveFilter
 from grandchallenge.archives.forms import (
     AddCasesForm,
     ArchiveForm,
-    ArchiveItemForm,
     ArchiveItemsToReaderStudyForm,
     ArchivePermissionRequestUpdateForm,
     UploadersForm,
@@ -49,11 +47,11 @@ from grandchallenge.archives.serializers import (
 )
 from grandchallenge.archives.tasks import add_images_to_archive
 from grandchallenge.cases.models import Image, RawImageUploadSession
-from grandchallenge.components.forms import MultipleCIVForm
-from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.forms import MultipleCIVForm, NewFileUploadForm
 from grandchallenge.components.views import (
-    CIVSetCreateMixin,
     CIVSetDeleteView,
+    CIVSetFormMixin,
+    CivSetListView,
     InterfacesCreateBaseView,
     MultipleCIVProcessingBaseView,
 )
@@ -365,118 +363,75 @@ class ArchiveUploadSessionCreate(
         return context
 
 
-class ArchiveEditArchiveItem(
-    LoginRequiredMixin,
-    UserFormKwargsMixin,
-    ObjectPermissionRequiredMixin,
-    FormView,
-):
-    form_class = ArchiveItemForm
-    template_name = "archives/archive_item_form.html"
+class ArchiveItemUpdate(CIVSetFormMixin, MultipleCIVProcessingBaseView):
+    form_class = MultipleCIVForm
     permission_required = (
         f"{ArchiveItem._meta.app_label}.change_{ArchiveItem._meta.model_name}"
     )
-    raise_exception = True
+    included_form_classes = (
+        MultipleCIVForm,
+        NewFileUploadForm,
+        *MultipleCIVProcessingBaseView.included_form_classes,
+    )
+    success_message = "Archive item has been updated."
 
     def get_permission_object(self):
-        return self.archive_item
+        return self.object
 
     @cached_property
-    def archive(self):
-        return get_object_or_404(Archive, slug=self.kwargs["archive_slug"])
-
-    @cached_property
-    def archive_item(self):
+    def object(self):
         return get_object_or_404(ArchiveItem, pk=self.kwargs["pk"])
 
     @cached_property
-    def interface(self):
-        return get_object_or_404(
-            ComponentInterface, slug=self.kwargs["interface_slug"]
-        )
+    def base_object(self):
+        return self.object.base_object
 
     def get_success_url(self):
+        return self.return_url
+
+    @property
+    def form_url(self):
         return reverse(
-            "archives:items-list", kwargs={"slug": self.archive.slug}
+            "archives:item-edit",
+            kwargs={"slug": self.base_object.slug, "pk": self.object.pk},
         )
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update(
-            {"archive_item": self.archive_item, "interface": self.interface}
+    @property
+    def return_url(self):
+        return reverse(
+            "archives:items-list", kwargs={"slug": self.base_object.slug}
         )
-        return kwargs
 
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context.update({"archive": self.archive})
-        return context
+    @property
+    def new_interface_url(self):
+        return reverse(
+            "archives:item-interface-create",
+            kwargs={"slug": self.base_object.slug, "pk": self.object.pk},
+        )
 
-    def form_valid(self, form):
-        for ci_slug, value in form.cleaned_data.items():
-            self.archive_item.create_civ(
-                ci_slug=ci_slug, new_value=value, user=self.request.user
+    def process_data_for_object(self, data):
+        """Updates the archive item"""
+        instance = self.object
+        for ci_slug, new_value in data.items():
+            instance.create_civ(
+                ci_slug=ci_slug, new_value=new_value, user=self.request.user
             )
-        messages.add_message(
-            self.request,
-            messages.SUCCESS,
-            "Archive item will be updated. It may take some time for your "
-            "changes to become visible.",
-        )
-        return HttpResponseRedirect(self.get_success_url())
+        return instance
 
 
-class ArchiveItemsList(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, PaginatedTableListView
-):
+class ArchiveItemsList(CivSetListView):
     model = ArchiveItem
     permission_required = (
         f"{Archive._meta.app_label}.use_{Archive._meta.model_name}"
     )
-    raise_exception = True
-    template_name = "archives/archive_items_list.html"
-    row_template = "archives/archive_items_row.html"
-    search_fields = [
-        "pk",
-        "values__interface__title",
-        "values__value",
-        "values__image__name",
-        "values__file",
+    extra_columns = [
+        Column(title="ArchiveItem ID", sort_field="pk"),
     ]
-    columns = [
-        Column(title="Values", sort_field="created"),
-        Column(title="Add"),
-        Column(title="View"),
-    ]
+    base_object_lookup = "archive"
 
     @cached_property
-    def archive(self):
+    def base_object(self):
         return get_object_or_404(Archive, slug=self.kwargs["slug"])
-
-    def get_permission_object(self):
-        return self.archive
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(
-            {
-                "archive": self.archive,
-                "interfaces": ComponentInterface.objects.all().order_by(
-                    "title"
-                ),
-            }
-        )
-        return context
-
-    def render_row(self, *, object_, page_context):
-        page_context["object_interfaces"] = [
-            v.interface for v in object_.values.all()
-        ]
-        return super().render_row(object_=object_, page_context=page_context)
-
-    def get_queryset(self):
-        qs = super().get_queryset()
-        return qs.filter(archive=self.archive).prefetch_related("values")
 
 
 class ArchiveCasesList(
@@ -706,7 +661,7 @@ class ArchiveItemViewSet(
 
 
 class ArchiveItemCreateView(
-    CIVSetCreateMixin,
+    CIVSetFormMixin,
     MultipleCIVProcessingBaseView,
 ):
     form_class = MultipleCIVForm
@@ -718,7 +673,6 @@ class ArchiveItemCreateView(
         *MultipleCIVProcessingBaseView.included_form_classes,
     )
     success_message = "Archive item has been created."
-    model_to_add = ArchiveItem
 
     def get_permission_object(self):
         return self.base_object
@@ -726,10 +680,6 @@ class ArchiveItemCreateView(
     @property
     def base_object(self):
         return Archive.objects.get(slug=self.kwargs["slug"])
-
-    @property
-    def list_url(self):
-        return reverse("archives:list")
 
     @property
     def form_url(self):

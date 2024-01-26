@@ -255,6 +255,18 @@ class Archive(
     def civ_sets_related_manager(self):
         return self.items
 
+    @property
+    def civ_set_model(self):
+        return ArchiveItem
+
+    @property
+    def create_civ_set_url(self):
+        return reverse("archives:item-create", kwargs={"slug": self.slug})
+
+    @property
+    def create_civ_set_batch_url(self):
+        return reverse("archives:cases-create", kwargs={"slug": self.slug})
+
 
 class ArchiveUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(Archive, on_delete=models.CASCADE)
@@ -319,6 +331,25 @@ class ArchiveItem(CIVForObjectMixin, UUIDModel):
     @property
     def base_object(self):
         return self.archive
+
+    @property
+    def is_editable(self):
+        # always editable
+        return True
+
+    @property
+    def update_url(self):
+        return reverse(
+            "archives:item-edit",
+            kwargs={"slug": self.base_object.slug, "pk": self.pk},
+        )
+
+    @property
+    def delete_url(self):
+        return reverse(
+            "archives:item-delete",
+            kwargs={"slug": self.base_object.slug, "pk": self.pk},
+        )
 
 
 class ArchiveItemUserObjectPermission(UserObjectPermissionBase):
