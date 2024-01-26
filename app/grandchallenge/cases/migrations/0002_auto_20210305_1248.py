@@ -8,7 +8,6 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("modalities", "0001_initial"),
-        ("studies", "0001_initial"),
         ("cases", "0001_initial"),
     ]
 
@@ -80,16 +79,6 @@ class Migration(migrations.Migration):
                 help_text="Is this the left or right image of a stereoscopic pair?",
                 max_length=1,
                 null=True,
-            ),
-        ),
-        migrations.AlterField(
-            model_name="image",
-            name="study",
-            field=models.ForeignKey(
-                blank=True,
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                to="studies.study",
             ),
         ),
         migrations.AlterField(
