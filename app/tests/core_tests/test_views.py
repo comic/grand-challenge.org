@@ -4,6 +4,7 @@ import pytest
 from django.http import HttpRequest
 
 from grandchallenge.algorithms.models import Algorithm
+from grandchallenge.core.views import RedirectPath
 from grandchallenge.datatables.views import PaginatedTableListView
 from grandchallenge.subdomains.utils import reverse
 
@@ -50,3 +51,29 @@ def test_healthcheck(client, django_assert_num_queries):
 
     assert response.content == b""
     assert response.status_code == 200
+
+
+@pytest.mark.parametrize(
+    "path,expected",
+    [
+        ("", "https://www.new-netloc.com/"),
+        ("blogs", "https://www.new-netloc.com/blogs"),
+        ("foo/bar/", "https://www.new-netloc.com/foo/bar/"),
+    ],
+)
+def test_redirect_path(rf, path, expected):
+    request = rf.get("/parent/")
+
+    response = RedirectPath.as_view(netloc="www.new-netloc.com")(
+        request, path=path
+    )
+
+    assert response.status_code == 302
+    assert response.url == expected
+
+    response = RedirectPath.as_view(
+        netloc="www.new-netloc.com", permanent=True
+    )(request, path=path)
+
+    assert response.status_code == 301
+    assert response.url == expected
