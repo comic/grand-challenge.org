@@ -59,7 +59,6 @@ class TestObjectPermissionRequiredViews:
                 a,
                 None,
             ),
-            ("items-list", {"slug": a.slug}, "use_archive", a, None),
             ("cases-create", {"slug": a.slug}, "upload_archive", a, None),
             (
                 "items-reader-study-update",
