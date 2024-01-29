@@ -35,6 +35,14 @@ class Organization(TitleSlugDescriptionModel, UUIDModel):
         related_name="members_of_organization",
     )
 
+    exempt_from_base_costs = models.BooleanField(
+        default=False,
+        help_text=(
+            "If true, members of this organization will not be charged for "
+            "base costs."
+        ),
+    )
+
     class Meta(TitleSlugDescriptionModel.Meta, UUIDModel.Meta):
         ordering = ("created",)
 
