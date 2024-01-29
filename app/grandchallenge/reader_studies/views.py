@@ -382,7 +382,7 @@ class ReaderStudyStatistics(
 class ReaderStudyDisplaySetList(CivSetListView):
     model = DisplaySet
     permission_required = (
-        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+        f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
     )
     extra_columns = [
         Column(title="DisplaySet ID", sort_field="pk"),

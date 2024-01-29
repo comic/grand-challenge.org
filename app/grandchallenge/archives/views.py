@@ -422,7 +422,7 @@ class ArchiveItemUpdate(CIVSetFormMixin, MultipleCIVProcessingBaseView):
 class ArchiveItemsList(CivSetListView):
     model = ArchiveItem
     permission_required = (
-        f"{Archive._meta.app_label}.use_{Archive._meta.model_name}"
+        f"{Archive._meta.app_label}.view_{ArchiveItem._meta.model_name}"
     )
     extra_columns = [
         Column(title="ArchiveItem ID", sort_field="pk"),

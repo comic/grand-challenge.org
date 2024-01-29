@@ -266,32 +266,43 @@ def test_civset_delete_view(
 
 
 @pytest.mark.parametrize(
-    "base_object_factory,base_obj_lookup,viewname,add_collaborator_attr,collaborator_view_status",
+    "base_object_factory,base_obj_lookup,object_factory,viewname,add_collaborator_attr,collaborator_visible_obj_count",
     (
         (
             ReaderStudyFactory,
             "reader_study",
+            DisplaySetFactory,
             "reader-studies:display_sets",
             "add_reader",
-            403,
+            0,
         ),
         (
             ArchiveFactory,
             "archive",
+            ArchiveItemFactory,
             "archives:items-list",
             "add_uploader",
-            200,
+            3,
+        ),
+        (
+            ArchiveFactory,
+            "archive",
+            ArchiveItemFactory,
+            "archives:items-list",
+            "add_user",
+            3,
         ),
     ),
 )
 @pytest.mark.django_db
-def test_civset_list_view_permmissions(
+def test_civset_list_view_permissions(
     client,
     base_object_factory,
     base_obj_lookup,
+    object_factory,
     viewname,
     add_collaborator_attr,
-    collaborator_view_status,
+    collaborator_visible_obj_count,
 ):
     user, editor, collaborator = UserFactory.create_batch(3)
     base_obj = base_object_factory()
@@ -299,6 +310,9 @@ def test_civset_list_view_permmissions(
     method = getattr(base_obj, add_collaborator_attr)
     setattr(base_obj, add_collaborator_attr, method)
     getattr(base_obj, add_collaborator_attr)(collaborator)
+    ob1, ob2, ob3 = object_factory.create_batch(
+        3, **{base_obj_lookup: base_obj}
+    )
 
     response = get_view_for_user(
         viewname=viewname,
@@ -306,7 +320,8 @@ def test_civset_list_view_permmissions(
         user=user,
         reverse_kwargs={"slug": base_obj.slug},
     )
-    assert response.status_code == 403
+    assert response.status_code == 200
+    assert len(response.context["object_list"]) == 0
 
     response = get_view_for_user(
         viewname=viewname,
@@ -314,7 +329,10 @@ def test_civset_list_view_permmissions(
         user=collaborator,
         reverse_kwargs={"slug": base_obj.slug},
     )
-    assert response.status_code == collaborator_view_status
+    assert response.status_code == 200
+    assert (
+        len(response.context["object_list"]) == collaborator_visible_obj_count
+    )
 
     response = get_view_for_user(
         viewname=viewname,
@@ -323,3 +341,6 @@ def test_civset_list_view_permmissions(
         reverse_kwargs={"slug": base_obj.slug},
     )
     assert response.status_code == 200
+    assert len(response.context["object_list"]) == 3
+    for obj in [ob1, ob2, ob3]:
+        assert obj in response.context["object_list"]

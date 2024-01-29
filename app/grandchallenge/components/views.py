@@ -19,7 +19,10 @@ from grandchallenge.archives.models import Archive
 from grandchallenge.components.forms import NewFileUploadForm, SingleCIVForm
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.components.serializers import ComponentInterfaceSerializer
-from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
+from grandchallenge.core.guardian import (
+    ObjectPermissionRequiredMixin,
+    PermissionListMixin,
+)
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
@@ -291,7 +294,7 @@ class BaseModelOptions(TextChoices):
 
 
 class CivSetListView(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, PaginatedTableListView
+    LoginRequiredMixin, PermissionListMixin, PaginatedTableListView
 ):
     model = None
     permission_required = None
@@ -329,9 +332,6 @@ class CivSetListView(
             self.row_template,
             context={**page_context, "object": object_},
         ).split("<split></split>")
-
-    def get_permission_object(self):
-        return self.base_object
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
