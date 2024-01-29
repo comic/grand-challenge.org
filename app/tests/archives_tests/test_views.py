@@ -693,11 +693,8 @@ def test_archive_item_add_image(
             )
     assert response.status_code == 302
     assert item.values.count() == 2
-    assert (
-        "image10x10x10.mha"
-        == item.values.filter(interface=ci_img).get().image.name
-    )
-    old_civ_img = item.values.filter(interface=ci_img).get()
+    assert "image10x10x10.mha" == item.values.get(interface=ci_img).image.name
+    old_civ_img = item.values.get(interface=ci_img)
 
     with django_capture_on_commit_callbacks(execute=True):
         with django_capture_on_commit_callbacks(execute=True):
@@ -716,11 +713,8 @@ def test_archive_item_add_image(
                 },
             )
     assert response.status_code == 302
-    assert (
-        item.values.filter(interface=ci_img).get().image.pk
-        == old_civ_img.image.pk
-    )
-    assert item.values.filter(interface=ci_img).get() == old_civ_img
+    assert item.values.get(interface=ci_img).image.pk == old_civ_img.image.pk
+    assert item.values.get(interface=ci_img) == old_civ_img
 
     image = ImageFactory()
     assign_perm("cases.view_image", editor, image)
@@ -741,8 +735,8 @@ def test_archive_item_add_image(
                 },
             )
     assert response.status_code == 302
-    assert item.values.filter(interface=ci_img).get().image.pk == image.pk
-    assert item.values.filter(interface=ci_img).get() != old_civ_img
+    assert item.values.get(interface=ci_img).image.pk == image.pk
+    assert item.values.get(interface=ci_img) != old_civ_img
 
 
 @pytest.mark.django_db
