@@ -22,7 +22,7 @@ def test_user_upload_flow():
     assert upload.s3_upload_id != ""
 
     # Get the presigned url
-    presigned_url = upload.generate_presigned_url(part_number=0)
+    presigned_url = upload.generate_presigned_url(part_number=1)
     assert presigned_url != ""
 
     # PUT the file
@@ -32,7 +32,7 @@ def test_user_upload_flow():
 
     # Finish the upload
     upload.complete_multipart_upload(
-        parts=[{"ETag": response.headers["ETag"], "PartNumber": 0}]
+        parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
     )
     assert upload.status == UserUpload.StatusChoices.COMPLETED
 
