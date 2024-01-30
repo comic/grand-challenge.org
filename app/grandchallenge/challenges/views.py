@@ -319,23 +319,30 @@ class ChallengeCostCalculation(
                 or phase_2_number_of_test_images > 1000
             ):
                 context["image_warning"] = format_html(
-                    "You specified more than 1000 test images in one or both of your phases. Be reminded that Grand Challenge starts a seperate algorithm job per image. When the images are small, it is better to <a href='{}'>bundle them into sets of images</a>. This drastically reduces the compute costs for a submission.",
+                    (
+                        "You specified more than 1000 test images in one or both of your phases. "
+                        "Be reminded that Grand Challenge starts a separate algorithm job per image. "
+                        "When the images are small, it is better to <a href='{}'>bundle them into sets of images</a>."
+                    ),
                     "https://grand-challenge.org/documentation/create-your-own-challenge/#budget-batched-images",
                 )
 
             if inference_time_limit_in_minutes < 5:
-                context[
-                    "runtime_warning"
-                ] = "You specified an average algorithm job run time of less than 5 minutes. This is unrealistic since this time includes i/o operations, model loading and preprocessing next to the actual algorithm run time. In our experience, a reasonable lower limit is 5 minutes."
+                context["runtime_warning"] = (
+                    "You specified an average algorithm job run time of less than 5 minutes. "
+                    "This is unrealistic since this time includes i/o operations, "
+                    "model loading and preprocessing next to the actual algorithm run time. "
+                    "In our experience, a reasonable lower limit is 5 minutes."
+                )
 
             if average_size_of_test_image_in_mb > 10000:
-                context[
-                    "image_size_warning"
-                ] = "The maximum image size is 10GB."
+                context["image_size_warning"] = (
+                    "The maximum image size is 10GB."
+                )
         except (ValueError, TypeError):
-            context[
-                "error"
-            ] = "You need to fill in all the fields in the cost estimate box to calculate the costs."
+            context["error"] = (
+                "You need to fill in all the fields in the cost estimate box to calculate the costs."
+            )
 
         return TemplateResponse(
             request=request,

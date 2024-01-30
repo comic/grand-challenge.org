@@ -97,9 +97,9 @@ class JobCreateForm(SaveFormInitMixin, Form):
         active_image = self._algorithm.active_image
 
         if active_image:
-            self.fields[
-                "algorithm_image"
-            ].queryset = AlgorithmImage.objects.filter(pk=active_image.pk)
+            self.fields["algorithm_image"].queryset = (
+                AlgorithmImage.objects.filter(pk=active_image.pk)
+            )
             self.fields["algorithm_image"].initial = active_image
 
         for inp in self._algorithm.inputs.all():
@@ -462,9 +462,9 @@ class AlgorithmForPhaseForm(UserAlgorithmsForPhaseMixin, ModelForm):
         self.fields["workstation_config"].disabled = True
         self.fields["hanging_protocol"].initial = hanging_protocol
         self.fields["hanging_protocol"].disabled = True
-        self.fields[
-            "optional_hanging_protocols"
-        ].initial = optional_hanging_protocols
+        self.fields["optional_hanging_protocols"].initial = (
+            optional_hanging_protocols
+        )
         self.fields["optional_hanging_protocols"].disabled = True
         self.fields["view_content"].initial = view_content
         self.fields["view_content"].disabled = True
@@ -599,9 +599,9 @@ class AlgorithmImageForm(ContainerImageForm):
         self.fields["algorithm"].initial = algorithm
 
         self.fields["requires_gpu"].initial = algorithm.image_requires_gpu
-        self.fields[
-            "requires_memory_gb"
-        ].initial = algorithm.image_requires_memory_gb
+        self.fields["requires_memory_gb"].initial = (
+            algorithm.image_requires_memory_gb
+        )
 
     class Meta(ContainerImageForm.Meta):
         model = AlgorithmImage

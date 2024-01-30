@@ -426,9 +426,10 @@ def _mutate_container_image(
 
 def _decompress_tarball(*, in_fileobj, out_fileobj):
     """Create an uncompress tarball from a (compressed) tarball"""
-    with tarfile.open(fileobj=in_fileobj, mode="r") as it, tarfile.open(
-        fileobj=out_fileobj, mode="w|"
-    ) as ot:
+    with (
+        tarfile.open(fileobj=in_fileobj, mode="r") as it,
+        tarfile.open(fileobj=out_fileobj, mode="w|") as ot,
+    ):
         for member in it.getmembers():
             extracted = it.extractfile(member)
             ot.addfile(member, extracted)
@@ -467,9 +468,10 @@ def _validate_docker_image_manifest(*, instance) -> str:
 
 def _get_image_config_and_sha256(*, instance):
     try:
-        with instance.image.open(mode="rb") as im, tarfile.open(
-            fileobj=im, mode="r"
-        ) as open_tarfile:
+        with (
+            instance.image.open(mode="rb") as im,
+            tarfile.open(fileobj=im, mode="r") as open_tarfile,
+        ):
             container_image_files = {
                 tarinfo.name: tarinfo
                 for tarinfo in open_tarfile.getmembers()

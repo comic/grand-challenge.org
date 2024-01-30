@@ -299,9 +299,9 @@ class SubmissionForm(
             del self.fields["comment"]
 
         if self._phase.supplementary_file_label:
-            self.fields[
-                "supplementary_file"
-            ].label = self._phase.supplementary_file_label
+            self.fields["supplementary_file"].label = (
+                self._phase.supplementary_file_label
+            )
 
         if self._phase.supplementary_file_help_text:
             self.fields["supplementary_file"].help_text = clean(
@@ -314,9 +314,9 @@ class SubmissionForm(
             del self.fields["supplementary_file"]
 
         if self._phase.supplementary_url_label:
-            self.fields[
-                "supplementary_url"
-            ].label = self._phase.supplementary_url_label
+            self.fields["supplementary_url"].label = (
+                self._phase.supplementary_url_label
+            )
 
         if self._phase.supplementary_url_help_text:
             self.fields["supplementary_url"].help_text = clean(
@@ -331,10 +331,8 @@ class SubmissionForm(
         if self._phase.submission_kind == SubmissionKindChoices.ALGORITHM:
             del self.fields["user_upload"]
 
-            self.fields[
-                "algorithm_image"
-            ].queryset = self.user_active_images_for_phase.order_by(
-                "algorithm__title"
+            self.fields["algorithm_image"].queryset = (
+                self.user_active_images_for_phase.order_by("algorithm__title")
             )
 
             self._algorithm_inputs = self._phase.algorithm_inputs.all()

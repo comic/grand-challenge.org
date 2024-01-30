@@ -666,9 +666,11 @@ class LeaderboardDetail(TeamContextMixin, PaginatedTableListView):
                     sort_field="rank",
                 ),
                 Column(
-                    title="User (Team)"
-                    if self.request.challenge.use_teams
-                    else "User",
+                    title=(
+                        "User (Team)"
+                        if self.request.challenge.use_teams
+                        else "User"
+                    ),
                     sort_field="submission__creator__username",
                 ),
             ]
@@ -707,9 +709,12 @@ class LeaderboardDetail(TeamContextMixin, PaginatedTableListView):
         for c in self.phase.extra_results_columns:
             columns.append(
                 Column(
-                    title=c["title"]
-                    if self.phase.scoring_method_choice == self.phase.ABSOLUTE
-                    else f"{c['title']} (Position)",
+                    title=(
+                        c["title"]
+                        if self.phase.scoring_method_choice
+                        == self.phase.ABSOLUTE
+                        else f"{c['title']} (Position)"
+                    ),
                     sort_field="rank",
                     classes=("toggleable",),
                 )

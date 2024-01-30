@@ -48,9 +48,7 @@ class VerificationForm(SaveFormInitMixin, forms.ModelForm):
 
         self.fields["email"].initial = self.user.email
         self.fields["email"].required = True
-        self.fields[
-            "email"
-        ].help_text = (
+        self.fields["email"].help_text = (
             "Please provide your work, corporate or institutional email."
         )
 
