@@ -6,20 +6,20 @@
 
 {% cache 600 homepage %}
     {% block content %}
-        {% if news_caroussel_items %}
+        {% if news_carousel_items %}
             <div class="container mb-5 p-0">
                 <div class="carousel slide" id="carouselIndicators" data-ride="carousel" data-interval="10000">
                     <div class="carousel-inner m-0 px-0">
-                        {% for item in news_caroussel_items %}
+                        {% for item in news_carousel_items %}
                             <div class="carousel-item {% if forloop.counter == 1 %}active{% endif %}">
                                 <div class="d-md-flex justify-content-center align-items-center">
-                                    <div class="col-12 col-md-3 p-0 my-3 d-md-flex w-100 justify-content-center align-items-center text-center">
+                                    <div class="col-12 col-md-3 p-0 m-0 d-md-flex w-100 justify-content-center align-items-center text-center embed-responsive embed-responsive-1by1">
                                         <a href="{{ item.get_absolute_url }}"><img class="rounded carousel-img m-auto mh-100 mw-100 border-0"
                                              src="{{ item.logo.x20.url }}"
                                              srcset="{{ item.logo.x10.url }} 1x,
                                                      {{ item.logo.x15.url }} 1.5x,
                                                       {{ item.logo.x20.url }} 2x"
-                                             alt="{{ item.title }}" loading="lazy"></a>
+                                             alt="{{ item.title }}" loading="eager"></a>
                                     </div>
                                     <div class="col-12 col-md-7 text-primary text-truncate-container">
                                         <a class="stretched-link text-decoration-none text-primary"
@@ -33,7 +33,7 @@
                         {% endfor %}
                     </div>
                     <ol class="carousel-indicators position-relative">
-                        {% for item in news_caroussel_items %}
+                        {% for item in news_carousel_items %}
                             <li class="mx-1 mb-sm-0 mt-sm-3 bg-primary position-relative {% if forloop.counter == 1 %}active{% endif %}" data-target="#carouselIndicators"
                                 data-slide-to="{{ forloop.counter0 }}">
                             </li>

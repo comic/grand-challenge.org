@@ -127,7 +127,7 @@ class HomeTemplate(TemplateView):
             .exclude(highlight=True)
             .first()
         )
-        news_caroussel_items = [
+        news_carousel_items = [
             item
             for item in [
                 latest_news_item,
@@ -161,7 +161,7 @@ class HomeTemplate(TemplateView):
                 .prefetch_related("publications")
                 .order_by("-created")
                 .all()[:4],
-                "news_caroussel_items": news_caroussel_items,
+                "news_carousel_items": news_carousel_items,
                 "latest_news_item": latest_news_item,
             }
         )
