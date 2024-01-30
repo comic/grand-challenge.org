@@ -13,7 +13,7 @@ repos:
       - id: mixed-line-ending
       - id: trailing-whitespace
   - repo: https://github.com/pycqa/isort
-    rev: 5.13.1
+    rev: 5.13.2
     hooks:
       - id: isort
   - repo: https://github.com/asottile/pyupgrade
@@ -23,12 +23,12 @@ repos:
         language: python
         args: [--py311-plus]
   - repo: https://github.com/ambv/black
-    rev: 22.12.0
+    rev: 24.1.1
     hooks:
       - id: black
         language: python
   - repo: https://github.com/PyCQA/flake8
-    rev: 6.1.0
+    rev: 7.0.0
     hooks:
       - id: flake8
         language: python

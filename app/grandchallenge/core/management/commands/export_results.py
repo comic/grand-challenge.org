@@ -29,12 +29,16 @@ class Command(BaseCommand):
                 "created": j.created.isoformat(),
                 "submission": str(j.submission.pk),
                 "submission_comment": j.submission.comment,
-                "submission_file": j.submission.predictions_file.url
-                if j.submission.predictions_file
-                else None,
-                "supplementary_file": j.submission.supplementary_file.url
-                if j.submission.supplementary_file
-                else None,
+                "submission_file": (
+                    j.submission.predictions_file.url
+                    if j.submission.predictions_file
+                    else None
+                ),
+                "supplementary_file": (
+                    j.submission.supplementary_file.url
+                    if j.submission.supplementary_file
+                    else None
+                ),
                 "supplementary_url": j.submission.supplementary_url,
                 "method": str(j.method.pk),
                 "creator": str(j.submission.creator),

@@ -65,12 +65,10 @@ class Executor(ABC):
         )
 
     @abstractmethod
-    def execute(self, *, input_civs, input_prefixes):
-        ...
+    def execute(self, *, input_civs, input_prefixes): ...
 
     @abstractmethod
-    def handle_event(self, *, event):
-        ...
+    def handle_event(self, *, event): ...
 
     def get_outputs(self, *, output_interfaces):
         """Create ComponentInterfaceValues from the output interfaces"""
@@ -108,8 +106,7 @@ class Executor(ABC):
 
     @staticmethod
     @abstractmethod
-    def get_job_params(*, job_name):
-        ...
+    def get_job_params(*, job_name): ...
 
     @property
     def stdout(self):
@@ -121,18 +118,15 @@ class Executor(ABC):
 
     @property
     @abstractmethod
-    def duration(self):
-        ...
+    def duration(self): ...
 
     @property
     @abstractmethod
-    def usd_cents_per_hour(self):
-        ...
+    def usd_cents_per_hour(self): ...
 
     @property
     @abstractmethod
-    def runtime_metrics(self):
-        ...
+    def runtime_metrics(self): ...
 
     @property
     def invocation_environment(self):
@@ -244,9 +238,11 @@ class Executor(ABC):
 
         response = self._s3_client.list_objects_v2(
             Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-            Prefix=prefix.lstrip("/")
-            if settings.COMPONENTS_STRIP_LEADING_PREFIX_SLASH
-            else prefix,
+            Prefix=(
+                prefix.lstrip("/")
+                if settings.COMPONENTS_STRIP_LEADING_PREFIX_SLASH
+                else prefix
+            ),
         )
 
         if response.get("IsTruncated", False):
@@ -380,9 +376,11 @@ class Executor(ABC):
 
         objects_list = self._s3_client.list_objects_v2(
             Bucket=bucket,
-            Prefix=prefix.lstrip("/")
-            if settings.COMPONENTS_STRIP_LEADING_PREFIX_SLASH
-            else prefix,
+            Prefix=(
+                prefix.lstrip("/")
+                if settings.COMPONENTS_STRIP_LEADING_PREFIX_SLASH
+                else prefix
+            ),
         )
 
         if contents := objects_list.get("Contents"):

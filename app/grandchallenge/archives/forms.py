@@ -257,7 +257,7 @@ class ArchiveItemForm(SaveFormInitMixin, Form):
             initial=initial or interface.default_value,
             required=False,
             user=user,
-            help_text=clean(interface.description)
-            if interface.description
-            else "",
+            help_text=(
+                clean(interface.description) if interface.description else ""
+            ),
         ).field

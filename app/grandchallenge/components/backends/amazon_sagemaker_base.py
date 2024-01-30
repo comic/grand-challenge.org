@@ -594,7 +594,9 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
     def _create_sagemaker_job(self):
         try:
             self._create_job_boto()
-        except self._sagemaker_client.exceptions.ResourceLimitExceeded as error:
+        except (
+            self._sagemaker_client.exceptions.ResourceLimitExceeded
+        ) as error:
             raise RetryStep("Capacity Limit Exceeded") from error
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] == "ThrottlingException":
@@ -719,9 +721,11 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
                 "cpu": instance_type.cpu,
                 "memory": instance_type.memory,
                 "gpus": instance_type.gpus,
-                "gpu_type": None
-                if instance_type.gpu_type is None
-                else instance_type.gpu_type.value,
+                "gpu_type": (
+                    None
+                    if instance_type.gpu_type is None
+                    else instance_type.gpu_type.value
+                ),
             },
             "metrics": runtime_metrics,
         }

@@ -291,9 +291,9 @@ class SingleCIVForm(Form):
                     "data-html": True,
                 }
             )
-            widget_kwargs[
-                "url"
-            ] = "components:component-interface-autocomplete"
+            widget_kwargs["url"] = (
+                "components:component-interface-autocomplete"
+            )
             interface_field_name = f"interface-{kwargs['auto_id']}"
             widget_kwargs["forward"] = [interface_field_name]
         widget_kwargs["attrs"] = attrs
