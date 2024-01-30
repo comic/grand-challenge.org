@@ -47,6 +47,7 @@ services:
       <<: [*postgres-env, *minio-env]
       COMPONENTS_REGISTRY_INSECURE: 'true'
       COMPONENTS_DEFAULT_BACKEND: 'grandchallenge.components.backends.docker.DockerExecutor'
+      COMPONENTS_STRIP_LEADING_PREFIX_SLASH: 'true'
       DEBUG: 'true'
       COMPRESS_OFFLINE: 'false'
       PYTHONDONTWRITEBYTECODE: 1
@@ -108,6 +109,7 @@ services:
       <<: [*postgres-env, *minio-env]
       COMPONENTS_REGISTRY_INSECURE: 'true'
       COMPONENTS_DEFAULT_BACKEND: 'grandchallenge.components.backends.docker.DockerExecutor'
+      COMPONENTS_STRIP_LEADING_PREFIX_SLASH: 'true'
       DEBUG: 'true'
       PYTHONDONTWRITEBYTECODE: 1
     restart: always
@@ -136,6 +138,7 @@ services:
       REMAP_SIGTERM: 'SIGQUIT'
       COMPONENTS_REGISTRY_INSECURE: 'true'
       COMPONENTS_DEFAULT_BACKEND: 'grandchallenge.components.backends.docker.DockerExecutor'
+      COMPONENTS_STRIP_LEADING_PREFIX_SLASH: 'true'
       DEBUG: 'true'
       PYTHONDONTWRITEBYTECODE: 1
     restart: always

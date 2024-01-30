@@ -239,11 +239,17 @@ class Executor(ABC):
             Key=dest_key,
         )
 
-    def _create_images_result(self, *, interface):
+    def _create_images_result(self, *, interface):  # noqa: C901
         prefix = safe_join(self._io_prefix, interface.relative_path)
+
+        if settings.COMPONENTS_STRIP_LEADING_PREFIX_SLASH:
+            query_prefix = prefix.lstrip("/")
+        else:
+            query_prefix = prefix
+
         response = self._s3_client.list_objects_v2(
             Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-            Prefix=prefix,
+            Prefix=query_prefix,
         )
 
         if response.get("IsTruncated", False):
@@ -260,14 +266,16 @@ class Executor(ABC):
         with TemporaryDirectory() as tmpdir:
             for file in output_files:
                 try:
-                    key = safe_join("/", file["Key"])
-                    dest = safe_join(tmpdir, Path(key).relative_to(prefix))
+                    root_key = safe_join("/", file["Key"])
+                    dest = safe_join(
+                        tmpdir, Path(root_key).relative_to(prefix)
+                    )
                 except (SuspiciousFileOperation, ValueError):
                     logger.warning(f"Skipping {file=} for {interface=}")
                     continue
 
                 logger.info(
-                    f"Downloading {key} to {dest} from "
+                    f"Downloading {file['Key']} to {dest} from "
                     f"{settings.COMPONENTS_OUTPUT_BUCKET_NAME}"
                 )
 
@@ -275,7 +283,7 @@ class Executor(ABC):
                 self._s3_client.download_file(
                     Filename=dest,
                     Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-                    Key=key,
+                    Key=file["Key"],
                 )
 
             importer_result = import_images(
@@ -373,9 +381,14 @@ class Executor(ABC):
                 "Deleting from this prefix or bucket is not allowed"
             )
 
+        if settings.COMPONENTS_STRIP_LEADING_PREFIX_SLASH:
+            query_prefix = prefix.lstrip("/")
+        else:
+            query_prefix = prefix
+
         objects_list = self._s3_client.list_objects_v2(
             Bucket=bucket,
-            Prefix=prefix,
+            Prefix=query_prefix,
         )
 
         if contents := objects_list.get("Contents"):
@@ -390,7 +403,7 @@ class Executor(ABC):
             logger.debug(f"Deleted {response.get('Deleted')} from {bucket}")
             errors = response.get("Errors")
         else:
-            logger.debug(f"No objects found in {bucket}/{prefix}")
+            logger.debug(f"No objects found in {bucket}/{query_prefix}")
             errors = None
 
         if objects_list["IsTruncated"] or errors:
