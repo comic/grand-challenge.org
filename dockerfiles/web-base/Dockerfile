@@ -55,7 +55,7 @@ RUN mkdir -p /opt/git-lfs \
     && wget https://github.com/git-lfs/git-lfs/releases/download/v3.4.1/git-lfs-linux-amd64-v3.4.1.tar.gz -O /opt/git-lfs/src.tar.gz \
     && echo "1772dc260961db27958088740b7e9ecebf945abad8c2d504d412448f53faf147  /opt/git-lfs/src.tar.gz" | shasum --algorithm 256 -c - || exit 1 \
     && tar -C /opt/git-lfs/ -xzvf /opt/git-lfs/src.tar.gz \
-    && bash /opt/git-lfs/install.sh \
+    && bash /opt/git-lfs/git-lfs-3.4.1/install.sh \
     && rm -r /opt/git-lfs
 
 # Get the minio client for development

@@ -3,7 +3,7 @@ name: CI
 on: [push, pull_request]
 
 env:
-  PYTHON_VERSION: '3.10'
+  PYTHON_VERSION: '3.11'
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
