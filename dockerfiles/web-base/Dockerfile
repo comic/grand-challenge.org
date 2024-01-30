@@ -38,12 +38,12 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Fetch and install licensee for checking licenses
-RUN gem install licensee -v 9.15.1
+RUN gem install licensee -v 9.16.1
 
 # Fetch and install crane for pushing containers
 RUN mkdir -p /opt/crane \
-    && wget https://github.com/google/go-containerregistry/releases/download/v0.9.0/go-containerregistry_Linux_x86_64.tar.gz -O /opt/crane/src.tar.gz \
-    && echo "1d2cf3fac0830dd8e5fb6e2829fdfc304a3d4a0f48f7e1df9ebb7e2921f28803  /opt/crane/src.tar.gz" | shasum -c - || exit 1 \
+    && wget https://github.com/google/go-containerregistry/releases/download/v0.19.0/go-containerregistry_Linux_x86_64.tar.gz -O /opt/crane/src.tar.gz \
+    && echo "daa629648e1d1d10fc8bde5e6ce4176cbc0cd48a32211b28c3fd806e0fa5f29b  /opt/crane/src.tar.gz" | shasum -c - || exit 1 \
     && tar -C /opt/crane/ -xzvf /opt/crane/src.tar.gz crane \
     && chmod a+x /opt/crane/crane \
     && mv /opt/crane/crane /usr/local/bin/ \
@@ -51,24 +51,24 @@ RUN mkdir -p /opt/crane \
 
 # Fetch and install git lfs for github integration
 RUN mkdir -p /opt/git-lfs \
-    && wget https://github.com/git-lfs/git-lfs/releases/download/v3.0.1/git-lfs-linux-amd64-v3.0.1.tar.gz -O /opt/git-lfs/src.tar.gz \
-    && echo "29706bf26d26a4e3ddd0cad02a1d05ff4f332a2fab4ecab3bbffbb000d6a5797  /opt/git-lfs/src.tar.gz" | shasum --algorithm 256 -c - || exit 1 \
+    && wget https://github.com/git-lfs/git-lfs/releases/download/v3.4.1/git-lfs-linux-amd64-v3.4.1.tar.gz -O /opt/git-lfs/src.tar.gz \
+    && echo "1772dc260961db27958088740b7e9ecebf945abad8c2d504d412448f53faf147  /opt/git-lfs/src.tar.gz" | shasum --algorithm 256 -c - || exit 1 \
     && tar -C /opt/git-lfs/ -xzvf /opt/git-lfs/src.tar.gz \
     && bash /opt/git-lfs/install.sh \
     && rm -r /opt/git-lfs
 
 # Get the minio client for development
 RUN mkdir -p /opt/mc \
-    && wget https://dl.min.io/client/mc/release/linux-amd64/archive/mc.RELEASE.2023-05-18T16-59-00Z -O /opt/mc/mc \
-    && echo "82ccc575197c9369b21e99d9551418866c1e6606  /opt/mc/mc" | shasum -c - || exit 1 \
+    && wget https://dl.min.io/client/mc/release/linux-amd64/archive/mc.RELEASE.2024-01-28T16-23-14Z -O /opt/mc/mc \
+    && echo "fc195c3ad5c19b91d96bbb42d79af94173aa491ebcda9ca372c4f382546135ec  /opt/mc/mc" | shasum -c - || exit 1 \
     && chmod a+x /opt/mc/mc \
     && mv /opt/mc/mc /usr/local/bin/ \
     && rm -r /opt/mc
 
 # Get the docker cli
 RUN mkdir -p /opt/docker \
-    && wget https://download.docker.com/linux/static/stable/x86_64/docker-20.10.17.tgz -O /opt/docker/docker.tgz \
-    && echo "969210917b5548621a2b541caf00f86cc6963c6cf0fb13265b9731c3b98974d9  /opt/docker/docker.tgz" | shasum -c - || exit 1 \
+    && wget https://download.docker.com/linux/static/stable/x86_64/docker-25.0.1.tgz -O /opt/docker/docker.tgz \
+    && echo "efccce4502785a2a372f86afd5c62dd74aaae2534c03fa94d356cb94c9392f91  /opt/docker/docker.tgz" | shasum -c - || exit 1 \
     && tar -C /opt/docker/ -xzvf /opt/docker/docker.tgz \
     && chmod a+x /opt/docker/docker/docker \
     && mv /opt/docker/docker/docker /usr/local/bin/ \

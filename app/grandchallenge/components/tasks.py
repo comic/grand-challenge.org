@@ -535,12 +535,7 @@ def _get_image_config_file(
         image_sha256 = config_filename.split(".")[0]
     else:
         # Docker >=25 container image
-        # image_sha256 = image_manifest["Config"].split("/")[-1]
-        raise ValidationError(
-            "Images saved with Docker version 25 or greater are not "
-            "currently supported. Please use Docker version 24 or less "
-            "to save your container image."
-        )
+        image_sha256 = image_manifest["Config"].split("/")[-1]
 
     if len(image_sha256) != 64:
         raise ValidationError(
