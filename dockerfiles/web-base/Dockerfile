@@ -3,7 +3,7 @@
 ###################
 ARG PYTHON_VERSION
 
-FROM python:${PYTHON_VERSION}-slim-bullseye as base
+FROM python:${PYTHON_VERSION}-slim-bookworm as base
 
 # Install system dependencies
 RUN apt-get update \
@@ -28,8 +28,8 @@ RUN apt-get update \
         libopenslide-dev \
         libvips-dev \
         gcc \
-        # ruby2.7 and rugged for licensee
-        ruby2.7 \
+        # ruby3.1 and rugged for licensee
+        ruby3.1 \
         ruby-rugged \
         # git for CodeBuild integration
         git \
@@ -38,6 +38,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Fetch and install licensee for checking licenses
+# Separate install required as the bundled version does not include the --json flag
 RUN gem install licensee -v 9.16.1
 
 # Fetch and install crane for pushing containers

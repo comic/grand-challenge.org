@@ -145,6 +145,7 @@ def _setup_components_storage():
             settings.COMPONENTS_DOCKER_TASK_AWS_SECRET_ACCESS_KEY,
         ]
     )
+
     subprocess.check_call(
         [
             "mc",
