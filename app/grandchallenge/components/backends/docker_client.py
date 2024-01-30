@@ -95,7 +95,7 @@ def remove_container(*, name):
         try:
             _run_docker_command("rm", container_id)
         except CalledProcessError as error:
-            if "Error: No such container" in error.stderr:
+            if "Error response from daemon: No such container" in error.stderr:
                 raise ObjectDoesNotExist from error
             elif (
                 f"Error response from daemon: removal of container {container_id} is already in progress"
