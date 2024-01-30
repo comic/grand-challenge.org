@@ -11,7 +11,6 @@ from lzma import LZMAError
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
-import boto3
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import shared_task
 from celery.exceptions import MaxRetriesExceededError
@@ -253,30 +252,13 @@ def push_container_image(*, instance):
 
 
 def remove_tag_from_registry(*, repo_tag):
-    if settings.COMPONENTS_REGISTRY_INSECURE:
-        digest_cmd = _repo_login_and_run(command=["crane", "digest", repo_tag])
+    digest_cmd = _repo_login_and_run(command=["crane", "digest", repo_tag])
 
-        digests = digest_cmd.stdout.decode("utf-8").splitlines()
+    digests = digest_cmd.stdout.decode("utf-8").splitlines()
 
-        for digest in digests:
-            _repo_login_and_run(
-                command=["crane", "delete", f"{repo_tag}@{digest}"]
-            )
-    else:
-        client = boto3.client(
-            "ecr", region_name=settings.COMPONENTS_AMAZON_ECR_REGION
-        )
-
-        repo_name, image_tag = repo_tag.rsplit(":", 1)
-        repo_name = repo_name.replace(
-            f"{settings.COMPONENTS_REGISTRY_URL}/", "", 1
-        )
-
-        client.batch_delete_image(
-            repositoryName=repo_name,
-            imageIds=[
-                {"imageTag": image_tag},
-            ],
+    for digest in digests:
+        _repo_login_and_run(
+            command=["crane", "delete", f"{repo_tag}@{digest}"]
         )
 
 
