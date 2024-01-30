@@ -239,17 +239,14 @@ class Executor(ABC):
             Key=dest_key,
         )
 
-    def _create_images_result(self, *, interface):  # noqa: C901
+    def _create_images_result(self, *, interface):
         prefix = safe_join(self._io_prefix, interface.relative_path)
-
-        if settings.COMPONENTS_STRIP_LEADING_PREFIX_SLASH:
-            query_prefix = prefix.lstrip("/")
-        else:
-            query_prefix = prefix
 
         response = self._s3_client.list_objects_v2(
             Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-            Prefix=query_prefix,
+            Prefix=prefix.lstrip("/")
+            if settings.COMPONENTS_STRIP_LEADING_PREFIX_SLASH
+            else prefix,
         )
 
         if response.get("IsTruncated", False):
@@ -381,14 +378,11 @@ class Executor(ABC):
                 "Deleting from this prefix or bucket is not allowed"
             )
 
-        if settings.COMPONENTS_STRIP_LEADING_PREFIX_SLASH:
-            query_prefix = prefix.lstrip("/")
-        else:
-            query_prefix = prefix
-
         objects_list = self._s3_client.list_objects_v2(
             Bucket=bucket,
-            Prefix=query_prefix,
+            Prefix=prefix.lstrip("/")
+            if settings.COMPONENTS_STRIP_LEADING_PREFIX_SLASH
+            else prefix,
         )
 
         if contents := objects_list.get("Contents"):
@@ -403,7 +397,7 @@ class Executor(ABC):
             logger.debug(f"Deleted {response.get('Deleted')} from {bucket}")
             errors = response.get("Errors")
         else:
-            logger.debug(f"No objects found in {bucket}/{query_prefix}")
+            logger.debug(f"No objects found in {bucket}/{prefix}")
             errors = None
 
         if objects_list["IsTruncated"] or errors:

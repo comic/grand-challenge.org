@@ -66,12 +66,16 @@ class ImageFactoryWithoutImageFile(ImageFactory):
     color_space = factory.Iterator([x[0] for x in Image.COLOR_SPACES])
     patient_id = factory.Sequence(lambda n: f"Patient {n}")
     patient_name = fuzzy.FuzzyText(prefix="Patient")
-    patient_birth_date = fuzzy.FuzzyDate(datetime.date(1970, 1, 1))
+    patient_birth_date = fuzzy.FuzzyDate(
+        datetime.date(1970, 1, 1), end_date=datetime.date.today()
+    )
     patient_age = fuzzy.FuzzyText(length=4)
     patient_sex = factory.Iterator(
         [x[0] for x in Image.PATIENT_SEX_CHOICES] + [""]
     )
-    study_date = fuzzy.FuzzyDate(datetime.date(1970, 1, 1))
+    study_date = fuzzy.FuzzyDate(
+        datetime.date(1970, 1, 1), end_date=datetime.date.today()
+    )
     study_instance_uid = fuzzy.FuzzyText(length=64)
     series_instance_uid = fuzzy.FuzzyText(length=64)
     study_description = factory.Sequence(lambda n: f"Study {n}")
