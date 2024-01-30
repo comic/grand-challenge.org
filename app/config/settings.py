@@ -1090,6 +1090,11 @@ COMPONENTS_NVIDIA_VISIBLE_DEVICES = os.environ.get(
     "COMPONENTS_NVIDIA_VISIBLE_DEVICES", "void"
 )
 COMPONENTS_CONTAINER_PLATFORM = "linux/amd64"
+COMPONENTS_STRIP_LEADING_PREFIX_SLASH = os.environ.get(
+    # Fix for MINIO which doesn't respect leading slashes in list_objects_v2
+    "COMPONENTS_STRIP_LEADING_PREFIX_SLASH",
+    "False",
+)
 
 # Set which template pack to use for forms
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
