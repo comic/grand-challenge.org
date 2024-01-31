@@ -3,10 +3,14 @@ from django.core.exceptions import ValidationError
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.cases.widgets import FlexibleImageField, WidgetChoices
+from grandchallenge.components.form_fields import InterfaceFormField
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.uploads.models import UserUpload
-from tests.components_tests.factories import ComponentInterfaceFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.factories import ImageFactory, UserFactory
 from tests.uploads_tests.factories import UserUploadFactory
 from tests.utils import get_view_for_user
@@ -143,3 +147,14 @@ def test_flexible_image_widget(client):
         },
     )
     assert response3.content == b""
+
+
+@pytest.mark.django_db
+def test_flexible_image_widget_prepopulated_value():
+    user = UserFactory()
+    im = ImageFactory(name="test_image")
+    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
+    civ = ComponentInterfaceValueFactory(interface=ci, image=im)
+    field = InterfaceFormField(instance=ci, user=user, initial=civ)
+    assert field.field.widget.attrs["current_value"] == civ
+    assert field.field.initial == civ.image.pk

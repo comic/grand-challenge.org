@@ -46,7 +46,12 @@ class InterfaceFormField:
         kwargs = {"required": required, "disabled": disabled}
 
         if initial is not None:
-            kwargs["initial"] = initial
+            if instance.is_image_kind:
+                kwargs["initial"] = initial.image.pk
+            elif instance.requires_file:
+                kwargs["initial"] = initial.file.pk
+            else:
+                kwargs["initial"] = initial.value
 
         field_type = instance.default_field
 
@@ -54,6 +59,9 @@ class InterfaceFormField:
             kwargs["widget"] = FlexibleImageWidget(
                 help_text=help_text,
                 user=user,
+                current_value=initial,
+                # also passing the CIV as current value here so that we can
+                # show the image name to the user rather than its pk
             )
             upload_queryset = get_objects_for_user(
                 user,
