@@ -26,9 +26,9 @@ class WorkstationUserFilterMixin:
             slug=settings.DEFAULT_WORKSTATION_SLUG
         )
 
-        self.fields[
-            "workstation_config"
-        ].queryset = WorkstationConfig.objects.order_by("title")
+        self.fields["workstation_config"].queryset = (
+            WorkstationConfig.objects.order_by("title")
+        )
 
 
 class UserFormKwargsMixin:

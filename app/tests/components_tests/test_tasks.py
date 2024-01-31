@@ -429,7 +429,10 @@ def test_add_file_to_object(settings, object_type):
 
 @pytest.mark.parametrize(
     "container_image_file",
-    ("hello-scratch-oci.tar.gz", "hello-scratch-docker-v2.tar.gz"),
+    (
+        "hello-scratch-docker-v2.tar.gz",
+        "hello-scratch-oci.tar.gz",
+    ),
 )
 @pytest.mark.django_db
 def test_get_image_config_and_sha256(container_image_file):

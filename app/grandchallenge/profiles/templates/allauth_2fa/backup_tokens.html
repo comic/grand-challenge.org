@@ -47,10 +47,13 @@
         </button>
     </form>
 
+    {% comment %}
+    {# TODO migrate to internal 2FA https://github.com/comic/grand-challenge.org/issues/3215 #}
     <h3 class="mt-4">
         {% trans "Disable Two-Factor Authentication" %}
     </h3>
     <p>{% trans 'You can disable two-factor authentication for your account at any time.' %}</p>
     <a class="btn btn-primary" href="{% url 'two-factor-remove' %}">Disable Two Factor Authentication</a>
+    {% endcomment %}
 
 {% endblock %}

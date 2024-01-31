@@ -59,6 +59,12 @@
             <td class="font-weight-bold">Default image interpolation</td>
             <td>{{ object.get_default_image_interpolation_display }}</td>
         </tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'default_limit_view_area_to_image_volume' %}">
+            <td class="font-weight-bold">Default limiting the view-area to an image volume</td>
+            <td>
+                <i class="fas {% if object.default_limit_view_area_to_image_volume %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            </td>
+        </tr>
         <tr data-toggle="tooltip" title="{% get_help_text object 'default_overlay_alpha' %}">
             <td class="font-weight-bold">Default overlay alpha</td>
             <td>{{ object.default_overlay_alpha }}</td>

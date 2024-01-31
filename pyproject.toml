@@ -9,7 +9,7 @@ line_length = 79
 
 [tool.black]
 line-length = 79
-target-version = ['py310']
+target-version = ['py311']
 
 [tool.curlylint.rules]
 html_has_lang = 'en'
@@ -36,7 +36,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.12"
+python = ">=3.11,<3.13"
 # Disallow 5.3.0 due to https://github.com/celery/kombu/issues/1744
 celery = {version = "!=5.0.6,!=5.3.0", extras = ["redis", "sqs"]}
 kombu = {version ="!=5.3.0"}
@@ -56,7 +56,7 @@ django-summernote = "*"
 bleach = {version = "*", extras = ["css"]}
 jsonschema = "*"
 django-autocomplete-light = "*"
-django-storages = ">=1.13.1,<1.14"
+django-storages = {version = ">=1.14.2", extras = ["s3"]}
 boto3 = ">1.18.8"
 whitenoise = "*"
 brotli = "*"

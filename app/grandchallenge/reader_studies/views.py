@@ -186,9 +186,9 @@ class ReaderStudyExampleGroundTruth(
     def get(self, request, *args, **kwargs):
         reader_study = self.get_object()
         response = HttpResponse(content_type="text/csv")
-        response[
-            "Content-Disposition"
-        ] = f'attachment; filename="ground-truth-{reader_study.slug}.csv"'
+        response["Content-Disposition"] = (
+            f'attachment; filename="ground-truth-{reader_study.slug}.csv"'
+        )
         writer = csv.DictWriter(
             response,
             fieldnames=reader_study.ground_truth_file_headers,

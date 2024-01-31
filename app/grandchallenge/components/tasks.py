@@ -11,7 +11,6 @@ from lzma import LZMAError
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
-import boto3
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import shared_task
 from celery.exceptions import MaxRetriesExceededError
@@ -253,30 +252,13 @@ def push_container_image(*, instance):
 
 
 def remove_tag_from_registry(*, repo_tag):
-    if settings.COMPONENTS_REGISTRY_INSECURE:
-        digest_cmd = _repo_login_and_run(command=["crane", "digest", repo_tag])
+    digest_cmd = _repo_login_and_run(command=["crane", "digest", repo_tag])
 
-        digests = digest_cmd.stdout.decode("utf-8").splitlines()
+    digests = digest_cmd.stdout.decode("utf-8").splitlines()
 
-        for digest in digests:
-            _repo_login_and_run(
-                command=["crane", "delete", f"{repo_tag}@{digest}"]
-            )
-    else:
-        client = boto3.client(
-            "ecr", region_name=settings.COMPONENTS_AMAZON_ECR_REGION
-        )
-
-        repo_name, image_tag = repo_tag.rsplit(":", 1)
-        repo_name = repo_name.replace(
-            f"{settings.COMPONENTS_REGISTRY_URL}/", "", 1
-        )
-
-        client.batch_delete_image(
-            repositoryName=repo_name,
-            imageIds=[
-                {"imageTag": image_tag},
-            ],
+    for digest in digests:
+        _repo_login_and_run(
+            command=["crane", "delete", f"{repo_tag}@{digest}"]
         )
 
 
@@ -426,9 +408,10 @@ def _mutate_container_image(
 
 def _decompress_tarball(*, in_fileobj, out_fileobj):
     """Create an uncompress tarball from a (compressed) tarball"""
-    with tarfile.open(fileobj=in_fileobj, mode="r") as it, tarfile.open(
-        fileobj=out_fileobj, mode="w|"
-    ) as ot:
+    with (
+        tarfile.open(fileobj=in_fileobj, mode="r") as it,
+        tarfile.open(fileobj=out_fileobj, mode="w|") as ot,
+    ):
         for member in it.getmembers():
             extracted = it.extractfile(member)
             ot.addfile(member, extracted)
@@ -467,9 +450,10 @@ def _validate_docker_image_manifest(*, instance) -> str:
 
 def _get_image_config_and_sha256(*, instance):
     try:
-        with instance.image.open(mode="rb") as im, tarfile.open(
-            fileobj=im, mode="r"
-        ) as open_tarfile:
+        with (
+            instance.image.open(mode="rb") as im,
+            tarfile.open(fileobj=im, mode="r") as open_tarfile,
+        ):
             container_image_files = {
                 tarinfo.name: tarinfo
                 for tarinfo in open_tarfile.getmembers()
@@ -531,10 +515,10 @@ def _get_image_config_file(
         )
 
     if config_filename.endswith(".json"):
-        # Docker v2 container image
+        # Docker <25 container image
         image_sha256 = config_filename.split(".")[0]
     else:
-        # OCI container image
+        # Docker >=25 container image
         image_sha256 = image_manifest["Config"].split("/")[-1]
 
     if len(image_sha256) != 64:

@@ -159,12 +159,12 @@ class StatisticsDetail(TemplateView):
                                 datum["created__month"],
                                 1,
                             ).isoformat(),
-                            "Inference Hours": datum[
-                                "duration_sum"
-                            ].total_seconds()
-                            // (60 * 60)
-                            if datum["duration_sum"]
-                            else 0,
+                            "Inference Hours": (
+                                datum["duration_sum"].total_seconds()
+                                // (60 * 60)
+                                if datum["duration_sum"]
+                                else 0
+                            ),
                         }
                         for datum in stats["jobs"]
                     ],

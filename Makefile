@@ -1,5 +1,5 @@
 USER_ID=$(shell id -u)
-PYTHON_VERSION="3.10"
+PYTHON_VERSION="3.11"
 POETRY_HASH=$(shell shasum -a 512 poetry.lock | cut -c 1-8)
 GIT_COMMIT_ID=$(shell git describe --always --dirty)
 GIT_BRANCH_NAME=$(shell git rev-parse --abbrev-ref HEAD | sed "s/[^[:alnum:]]//g")

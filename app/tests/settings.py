@@ -15,13 +15,14 @@ SECURE_SSL_REDIRECT = False
 DEFAULT_SCHEME = "https"
 COMPONENTS_REGISTRY_PREFIX = "localhost"
 COMPONENTS_DOCKER_KEEP_CAPS_UNSAFE = True
+COMPONENTS_STRIP_LEADING_PREFIX_SLASH = True
 
 TEMPLATES[0]["DIRS"].append(SITE_ROOT / "tests" / "templates")  # noqa 405
 
 # Speed up token generation in tests
-REST_KNOX[  # noqa F405
-    "SECURE_HASH_ALGORITHM"
-] = "cryptography.hazmat.primitives.hashes.MD5"
+REST_KNOX["SECURE_HASH_ALGORITHM"] = (  # noqa F405
+    "cryptography.hazmat.primitives.hashes.MD5"
+)
 
 WHITENOISE_AUTOREFRESH = True
 STORAGES["staticfiles"][  # noqa F405

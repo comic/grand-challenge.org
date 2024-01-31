@@ -83,9 +83,10 @@ def safe_extract(*, src: File, dest: Path):
                 # created, so ok to create the parents here
                 file_dest.parent.mkdir(exist_ok=True, parents=True)
 
-                with zf.open(member["src"], "r") as fs, open(
-                    file_dest, "wb"
-                ) as fd:
+                with (
+                    zf.open(member["src"], "r") as fs,
+                    open(file_dest, "wb") as fd,
+                ):
                     while True:
                         chunk = fs.read(1024)
                         if not chunk:

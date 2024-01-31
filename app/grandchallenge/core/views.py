@@ -6,8 +6,9 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.forms.utils import ErrorList
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.templatetags.static import static
+from django.views import View
 from django.views.generic import TemplateView, UpdateView
 from guardian.mixins import LoginRequiredMixin
 
@@ -240,3 +241,18 @@ class PermissionRequestUpdate(
 
 def healthcheck(request):
     return HttpResponse("")
+
+
+class RedirectPath(View):
+    """Redirects all sub-paths to a different domain."""
+
+    netloc = None
+    permanent = False
+
+    def get(self, request, *args, path="", **kwargs):
+        if self.netloc is None:
+            raise ImproperlyConfigured("`netloc` must be set.")
+
+        return redirect(
+            f"https://{self.netloc}/{path}", permanent=self.permanent
+        )
