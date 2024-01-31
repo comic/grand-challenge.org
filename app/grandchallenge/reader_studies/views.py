@@ -381,20 +381,28 @@ class ReaderStudyStatistics(
 
 class ReaderStudyDisplaySetList(CivSetListView):
     model = DisplaySet
-    permission_required = (
-        f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
-    )
-    extra_columns = [
+    permission_required = f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"  # change instead of view permission so that readers don't get access
+    columns = [
         Column(title="DisplaySet ID", sort_field="pk"),
         Column(title="Order", sort_field="order"),
+        *CivSetListView.columns,
     ]
     default_sort_column = 1
-    base_object_lookup = "reader_study"
-    extra_prefetch_fields = ["answers"]
 
     @cached_property
     def base_object(self):
         return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        fields_to_prefetch = CivSetListView.prefetch_fields + "answers"
+        return (
+            qs.filter(reader_study=self.base_object)
+            .select_related("reader_study")
+            .prefetch_related(*fields_to_prefetch)
+            .order_by()
+            .distinct()
+        )
 
 
 class QuestionOptionMixin:

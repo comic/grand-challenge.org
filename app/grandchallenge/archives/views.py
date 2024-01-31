@@ -424,14 +424,24 @@ class ArchiveItemsList(CivSetListView):
     permission_required = (
         f"{Archive._meta.app_label}.view_{ArchiveItem._meta.model_name}"
     )
-    extra_columns = [
+    columns = [
         Column(title="ArchiveItem ID", sort_field="pk"),
+        *CivSetListView.columns,
     ]
-    base_object_lookup = "archive"
 
     @cached_property
     def base_object(self):
         return get_object_or_404(Archive, slug=self.kwargs["slug"])
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return (
+            qs.filter(archive=self.base_object)
+            .select_related("archive")
+            .prefetch_related(*CivSetListView.prefetch_fields)
+            .order_by()
+            .distinct()
+        )
 
 
 class ArchiveItemsToReaderStudyUpdate(

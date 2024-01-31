@@ -5,7 +5,6 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q, TextChoices
 from django.forms import Media
 from django.http import HttpResponse
-from django.template.loader import render_to_string
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.views.generic import DeleteView, FormView, ListView, TemplateView
@@ -307,11 +306,9 @@ class CivSetListView(
         "values__image__name",
         "values__file",
     ]
-    extra_columns = []
     text_align = "left"
     default_sort_order = "asc"
-    base_object_lookup = None
-    extra_prefetch_fields = []
+    prefetch_fields = ["values", "values__image", "values__interface"]
     columns = [
         Column(title="Values"),
         Column(title="View"),
@@ -319,19 +316,9 @@ class CivSetListView(
         Column(title="Remove"),
     ]
 
-    def __init__(self):
-        if self.extra_columns:
-            self.columns = [*self.extra_columns, *self.columns]
-
     @cached_property
     def base_object(self):
         return NotImplementedError
-
-    def render_row(self, *, object_, page_context):
-        return render_to_string(
-            self.row_template,
-            context={**page_context, "object": object_},
-        ).split("<split></split>")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -345,18 +332,3 @@ class CivSetListView(
             }
         )
         return context
-
-    def get_queryset(self):
-        prefetch_fields = ["values", "values__image", "values__interface"]
-        if self.extra_prefetch_fields != []:
-            prefetch_fields.append(*self.extra_prefetch_fields)
-        qs = (
-            super()
-            .get_queryset()
-            .filter(**{self.base_object_lookup: self.base_object})
-            .select_related(self.base_object_lookup)
-            .prefetch_related(*prefetch_fields)
-            .order_by()
-            .distinct()
-        )
-        return qs

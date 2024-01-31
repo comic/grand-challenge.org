@@ -313,6 +313,7 @@ def test_civset_list_view_permissions(
     ob1, ob2, ob3 = object_factory.create_batch(
         3, **{base_obj_lookup: base_obj}
     )
+    ob4, ob5 = object_factory.create_batch(2)
 
     response = get_view_for_user(
         viewname=viewname,
@@ -344,3 +345,5 @@ def test_civset_list_view_permissions(
     assert len(response.context["object_list"]) == 3
     for obj in [ob1, ob2, ob3]:
         assert obj in response.context["object_list"]
+    for obj in [ob4, ob5]:
+        assert obj not in response.context["object_list"]
