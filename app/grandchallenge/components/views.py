@@ -308,7 +308,6 @@ class CivSetListView(
     ]
     text_align = "left"
     default_sort_order = "asc"
-    prefetch_fields = ["values", "values__image", "values__interface"]
     columns = [
         Column(title="Values"),
         Column(title="View"),
@@ -332,3 +331,9 @@ class CivSetListView(
             }
         )
         return context
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.prefetch_related(
+            "values", "values__image", "values__interface"
+        )

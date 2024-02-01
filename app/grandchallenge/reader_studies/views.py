@@ -394,13 +394,11 @@ class ReaderStudyDisplaySetList(CivSetListView):
         return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
 
     def get_queryset(self):
-        qs = super().get_queryset()
-        fields_to_prefetch = self.prefetch_fields + ["answers"]
+        queryset = super().get_queryset()
         return (
-            qs.filter(reader_study=self.base_object)
+            queryset.filter(reader_study=self.base_object)
             .select_related("reader_study")
-            .prefetch_related(*fields_to_prefetch)
-            .order_by()
+            .prefetch_related("answers")
             .distinct()
         )
 

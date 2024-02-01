@@ -434,12 +434,10 @@ class ArchiveItemsList(CivSetListView):
         return get_object_or_404(Archive, slug=self.kwargs["slug"])
 
     def get_queryset(self):
-        qs = super().get_queryset()
+        queryset = super().get_queryset()
         return (
-            qs.filter(archive=self.base_object)
+            queryset.filter(archive=self.base_object)
             .select_related("archive")
-            .prefetch_related(*self.prefetch_fields)
-            .order_by()
             .distinct()
         )
 
