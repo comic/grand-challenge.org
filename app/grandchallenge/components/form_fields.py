@@ -1,6 +1,7 @@
 from django import forms
 
 from grandchallenge.cases.widgets import FlexibleImageWidget
+from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.validators import JSONValidator
@@ -45,13 +46,17 @@ class InterfaceFormField:
     ):
         kwargs = {"required": required, "disabled": disabled}
 
-        if initial is not None:
+        if isinstance(initial, ComponentInterfaceValue) and initial.has_value:
             if instance.is_image_kind:
                 kwargs["initial"] = initial.image.pk
-            elif instance.requires_file:
-                kwargs["initial"] = initial.file.pk
-            else:
+            elif instance.is_json_kind and not instance.requires_file:
                 kwargs["initial"] = initial.value
+            else:
+                kwargs["initial"] = initial
+                # TODO: move SelectUploadWidget to _possible_widgets and move logic
+                # from MultiCIVForm here
+        elif initial is not None:
+            kwargs["initial"] = initial
 
         field_type = instance.default_field
 
