@@ -399,7 +399,6 @@ class ReaderStudyDisplaySetList(CivSetListView):
             queryset.filter(reader_study=self.base_object)
             .select_related("reader_study")
             .prefetch_related("answers")
-            .distinct()
         )
 
 

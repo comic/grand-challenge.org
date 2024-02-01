@@ -435,10 +435,8 @@ class ArchiveItemsList(CivSetListView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        return (
-            queryset.filter(archive=self.base_object)
-            .select_related("archive")
-            .distinct()
+        return queryset.filter(archive=self.base_object).select_related(
+            "archive"
         )
 
 
