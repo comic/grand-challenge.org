@@ -26,6 +26,7 @@ from grandchallenge.core.utils.grand_challenge_forge import (
 @admin.register(Challenge)
 class ChallengeAdmin(ModelAdmin):
     readonly_fields = (
+        "short_name",
         "creator",
         "challenge_forge_json",
     )
