@@ -185,7 +185,7 @@ def copy_s3_object(*, to_field, dest_filename, src_bucket, src_key, save):
         CopySource={"Bucket": src_bucket, "Key": src_key},
         Bucket=target_bucket,
         Key=target_key,
-        extra_args=extra_args,
+        ExtraArgs=extra_args,
     )
 
     to_field.name = target_key
