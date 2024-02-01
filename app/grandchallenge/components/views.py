@@ -18,7 +18,11 @@ from grandchallenge.archives.models import Archive
 from grandchallenge.components.forms import NewFileUploadForm, SingleCIVForm
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.components.serializers import ComponentInterfaceSerializer
-from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
+from grandchallenge.core.guardian import (
+    ObjectPermissionRequiredMixin,
+    PermissionListMixin,
+)
+from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
@@ -208,26 +212,19 @@ class FileUpdateBaseView(ObjectPermissionRequiredMixin, TemplateView):
         return context
 
 
-class CIVSetCreateMixin:
-    template_name = "components/civ_set_create.html"
-    model_to_add = None
+class CIVSetFormMixin:
+    template_name = "components/civ_set_form.html"
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context.update(
             {
-                "model_to_add": self.model_to_add,
-                "list_url": self.list_url,
                 "form_url": self.form_url,
                 "new_interface_url": self.new_interface_url,
                 "return_url": self.return_url,
             }
         )
         return context
-
-    @property
-    def list_url(self):
-        raise NotImplementedError
 
     @property
     def form_url(self):
@@ -288,3 +285,55 @@ class CIVSetDeleteView(
 
     def get_success_message(self, cleaned_data):
         return f"{self.object._meta.verbose_name.title()} was successfully deleted"
+
+
+class BaseModelOptions(TextChoices):
+    ARCHIVE = Archive._meta.model_name
+    READER_STUDY = ReaderStudy._meta.model_name
+
+
+class CivSetListView(
+    LoginRequiredMixin, PermissionListMixin, PaginatedTableListView
+):
+    model = None
+    permission_required = None
+    raise_exception = True
+    template_name = "components/civ_set_list.html"
+    row_template = "components/civ_set_row.html"
+    search_fields = [
+        "pk",
+        "values__interface__title",
+        "values__image__name",
+        "values__file",
+    ]
+    text_align = "left"
+    default_sort_order = "asc"
+    columns = [
+        Column(title="Values"),
+        Column(title="View"),
+        Column(title="Edit"),
+        Column(title="Remove"),
+    ]
+
+    @cached_property
+    def base_object(self):
+        return NotImplementedError
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "base_object": self.base_object,
+                "base_model_options": BaseModelOptions,
+                "request": self.request,
+                "delete_perm": f"delete_{self.base_object.civ_set_model._meta.model_name}",
+                "update_perm": f"change_{self.base_object.civ_set_model._meta.model_name}",
+            }
+        )
+        return context
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.prefetch_related(
+            "values", "values__image", "values__interface"
+        )
