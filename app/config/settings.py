@@ -4,6 +4,7 @@ import socket
 from datetime import datetime, timedelta
 from itertools import product
 from pathlib import Path
+from subprocess import CalledProcessError
 
 import sentry_sdk
 from celery.schedules import crontab
@@ -872,6 +873,18 @@ SENTRY_ENABLE_JS_REPORTING = strtobool(
 WORKSTATION_SENTRY_DSN = os.environ.get("WORKSTATION_SENTRY_DSN", "")
 
 if SENTRY_DSN:
+
+    def sentry_before_send(event, hint):
+        """Add stderr to the event if the exception is a CalledProcessError"""
+        if "exc_info" in hint:
+            exc_type, exc_value, tb = hint["exc_info"]
+            if isinstance(exc_value, CalledProcessError) and hasattr(
+                exc_value, "stderr"
+            ):
+                event["extra"] = event.get("extra", {})
+                event["extra"]["stderr"] = exc_value.stderr
+        return event
+
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         integrations=[DjangoIntegration(), CeleryIntegration()],
@@ -880,6 +893,7 @@ if SENTRY_DSN:
             os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.0")
         ),
         ignore_errors=[PriorStepFailed],
+        before_send=sentry_before_send,
     )
     ignore_logger("django.security.DisallowedHost")
     ignore_logger("aws_xray_sdk")
