@@ -724,6 +724,22 @@ class ReaderStudy(
     def civ_sets_related_manager(self):
         return self.display_sets
 
+    @property
+    def civ_set_model(self):
+        return DisplaySet
+
+    @property
+    def create_civ_set_url(self):
+        return reverse(
+            "reader-studies:display-set-create", kwargs={"slug": self.slug}
+        )
+
+    @property
+    def create_civ_set_batch_url(self):
+        return reverse(
+            "reader-studies:display-sets-create", kwargs={"slug": self.slug}
+        )
+
     @cached_property
     def interfaces_and_values(self):
         interfaces_and_values = super().interfaces_and_values
@@ -852,6 +868,20 @@ class DisplaySet(CIVForObjectMixin, UUIDModel):
                 for x in self.reader_study.display_sets.all()
                 if x.order < self.order
             ]
+        )
+
+    @property
+    def update_url(self):
+        return reverse(
+            "reader-studies:display-set-update",
+            kwargs={"slug": self.base_object.slug, "pk": self.pk},
+        )
+
+    @property
+    def delete_url(self):
+        return reverse(
+            "reader-studies:display-set-delete",
+            kwargs={"slug": self.base_object.slug, "pk": self.pk},
         )
 
 
