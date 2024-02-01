@@ -438,7 +438,7 @@ class ArchiveItemsList(CivSetListView):
         return (
             qs.filter(archive=self.base_object)
             .select_related("archive")
-            .prefetch_related(*CivSetListView.prefetch_fields)
+            .prefetch_related(*self.prefetch_fields)
             .order_by()
             .distinct()
         )

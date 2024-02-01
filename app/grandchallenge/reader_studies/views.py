@@ -395,7 +395,7 @@ class ReaderStudyDisplaySetList(CivSetListView):
 
     def get_queryset(self):
         qs = super().get_queryset()
-        fields_to_prefetch = CivSetListView.prefetch_fields + ["answers"]
+        fields_to_prefetch = self.prefetch_fields + ["answers"]
         return (
             qs.filter(reader_study=self.base_object)
             .select_related("reader_study")
