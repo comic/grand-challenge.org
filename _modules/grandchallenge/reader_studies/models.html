@@ -835,6 +835,22 @@
     <span class="k">def</span> <span class="nf">civ_sets_related_manager</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">civ_set_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">DisplaySet</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">create_civ_set_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
+            <span class="s2">&quot;reader-studies:display-set-create&quot;</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;slug&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">slug</span><span class="p">}</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">create_civ_set_batch_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
+            <span class="s2">&quot;reader-studies:display-sets-create&quot;</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;slug&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">slug</span><span class="p">}</span>
+        <span class="p">)</span>
+
     <span class="nd">@cached_property</span>
     <span class="k">def</span> <span class="nf">interfaces_and_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">interfaces_and_values</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">interfaces_and_values</span>
@@ -978,6 +994,20 @@
                 <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">reader_study</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
                 <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">order</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span>
             <span class="p">]</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">update_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
+            <span class="s2">&quot;reader-studies:display-set-update&quot;</span><span class="p">,</span>
+            <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;slug&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_object</span><span class="o">.</span><span class="n">slug</span><span class="p">,</span> <span class="s2">&quot;pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">},</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">delete_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
+            <span class="s2">&quot;reader-studies:display-set-delete&quot;</span><span class="p">,</span>
+            <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;slug&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_object</span><span class="o">.</span><span class="n">slug</span><span class="p">,</span> <span class="s2">&quot;pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">},</span>
         <span class="p">)</span></div>
 
 
