@@ -1,3 +1,5 @@
+import logging
+
 import boto3
 from django.conf import settings
 from django.db import models
@@ -6,8 +8,10 @@ from django.utils.translation import gettext_lazy as _
 from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.components.backends.utils import LOGLINES
 from grandchallenge.core.models import UUIDModel
-from grandchallenge.core.storage import copy_s3_object, private_s3_storage
+from grandchallenge.core.storage import copy_s3_object
 from grandchallenge.github.models import GitHubWebhookMessage
+
+logger = logging.getLogger(__name__)
 
 
 class BuildStatusChoices(models.TextChoices):
@@ -41,6 +45,7 @@ class Build(UUIDModel):
 
     __codebuild_client = None
     __logs_client = None
+    __s3_client = None
 
     @property
     def codebuild_client(self):
@@ -57,6 +62,15 @@ class Build(UUIDModel):
                 "logs", region_name=settings.AWS_CODEBUILD_REGION_NAME
             )
         return self.__logs_client
+
+    @property
+    def _s3_client(self):
+        if self.__s3_client is None:
+            self.__s3_client = boto3.client(
+                "s3",
+                endpoint_url=settings.AWS_S3_ENDPOINT_URL,
+            )
+        return self.__s3_client
 
     @property
     def build_number(self):
@@ -82,10 +96,36 @@ class Build(UUIDModel):
         copy_s3_object(
             to_field=self.algorithm_image.image,
             dest_filename=f"{self.pk}.tar.gz",
-            src_bucket=private_s3_storage.bucket.name,
+            src_bucket=settings.CODEBUILD_ARTIFACTS_BUCKET_NAME,
             src_key=f"codebuild/artifacts/{self.build_number}/{self.build_config['projectName']}/container-image.tar.gz",
             save=True,
         )
+
+    def delete_artifacts(self):
+        bucket = settings.CODEBUILD_ARTIFACTS_BUCKET_NAME
+        prefix = f"codebuild/artifacts/{self.build_number}"
+
+        objects_list = self._s3_client.list_objects_v2(
+            Bucket=bucket, Prefix=prefix
+        )
+
+        if contents := objects_list.get("Contents"):
+            response = self._s3_client.delete_objects(
+                Bucket=settings.CODEBUILD_ARTIFACTS_BUCKET_NAME,
+                Delete={
+                    "Objects": [
+                        {"Key": content["Key"]} for content in contents
+                    ],
+                },
+            )
+            logger.debug(f"Deleted {response.get('Deleted')} from {bucket}")
+            errors = response.get("Errors")
+        else:
+            logger.debug(f"No objects found in {bucket}/{prefix}")
+            errors = None
+
+        if objects_list["IsTruncated"] or errors:
+            logger.error("Not all files were deleted")
 
     def _create_build(self):
         self.build_config = {

@@ -78,3 +78,5 @@ def add_image_to_algorithm(*, build_pk):
 
     if not build.algorithm_image.image:
         build.add_image_to_algorithm()
+
+    build.delete_artifacts()
