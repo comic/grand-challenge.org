@@ -42,6 +42,7 @@ class Migration(migrations.Migration):
                             ("IN_PROGRESS", "In Progress"),
                             ("STOPPED", "Stopped"),
                         ],
+                        default="IN_PROGRESS",
                         max_length=11,
                     ),
                 ),

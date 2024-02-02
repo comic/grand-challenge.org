@@ -32,7 +32,9 @@ class Build(UUIDModel):
     build_config = models.JSONField()
     build_id = models.CharField(max_length=1024)
     status = models.CharField(
-        choices=BuildStatusChoices.choices, max_length=11
+        choices=BuildStatusChoices.choices,
+        max_length=11,
+        default=BuildStatusChoices.IN_PROGRESS,
     )
     build_log = models.TextField(blank=True)
 
@@ -58,10 +60,6 @@ class Build(UUIDModel):
             for line in self.build_log.splitlines()
             if not line.startswith("[Container]")
         )
-
-    def refresh_status(self):
-        build_statuses = self.client.batch_get_builds(ids=[self.build_id])
-        self.status = build_statuses["builds"][0]["buildStatus"]
 
     def refresh_logs(self):
         try:
