@@ -14,7 +14,6 @@ def add_archive_item_delete_permissions(apps, schema_editor):
     )
 
     delete_permission = Permission.objects.get(
-        app=ArchiveItem._meta.app_name,
         codename=f"delete_{ArchiveItem._meta.model_name}",
     )
 
