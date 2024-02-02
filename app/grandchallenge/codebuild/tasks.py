@@ -42,6 +42,8 @@ def create_codebuild_build(*, pk):
             webhook_message=ghwm, algorithm_image=algorithm_image
         )
 
+        # TODO rather than waiting for completion use CloudWatch events
+
         on_commit(
             lambda: wait_for_build_completion.apply_async(
                 kwargs={"build_pk": str(build.pk)}
