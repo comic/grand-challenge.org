@@ -1,3 +1,4 @@
+from django.contrib.auth.management import create_permissions
 from django.db import migrations
 
 
@@ -12,21 +13,24 @@ def add_archive_item_delete_permissions(apps, schema_editor):
     queryset = Archive.objects.order_by("-created").prefetch_related(
         "editors_group", "items"
     )
-
+    for app_config in apps.get_app_configs():
+        app_config.models_module = True
+        create_permissions(app_config, verbosity=0)
     delete_permission = Permission.objects.get(
         codename=f"delete_{ArchiveItem._meta.model_name}",
     )
 
     for archive in queryset.iterator():
         ArchiveItemGroupObjectPermission.objects.bulk_create(
-            [
+            objs=[
                 ArchiveItemGroupObjectPermission(
                     content_object=item,
                     group=archive.editors_group,
                     permission=delete_permission,
                 )
                 for item in archive.items.all()
-            ]
+            ],
+            ignore_conflicts=True,
         )
 
 
