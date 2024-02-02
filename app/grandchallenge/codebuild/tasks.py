@@ -6,10 +6,10 @@ from django.db import transaction
 from django.db.transaction import on_commit
 
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage
-from grandchallenge.components.tasks import _retry
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@transaction.atomic
 def create_codebuild_build(*, pk):
     GitHubWebhookMessage = apps.get_model(  # noqa: N806
         app_label="github", model_name="GitHubWebhookMessage"
@@ -32,50 +32,40 @@ def create_codebuild_build(*, pk):
         # Repository is not linked to algorithm
         return
 
-    with transaction.atomic():
-        algorithm_image = AlgorithmImage.objects.create(
-            algorithm=algorithm,
-            requires_gpu=algorithm.image_requires_gpu,
-            requires_memory_gb=algorithm.image_requires_memory_gb,
-        )
-        build = Build.objects.create(
-            webhook_message=ghwm, algorithm_image=algorithm_image
-        )
-
-        on_commit(
-            lambda: wait_for_build_completion.apply_async(
-                kwargs={"build_pk": str(build.pk)}
-            )
-        )
+    algorithm_image = AlgorithmImage.objects.create(
+        algorithm=algorithm,
+        requires_gpu=algorithm.image_requires_gpu,
+        requires_memory_gb=algorithm.image_requires_memory_gb,
+    )
+    Build.objects.create(webhook_message=ghwm, algorithm_image=algorithm_image)
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
-def wait_for_build_completion(*, build_pk, retries=0):
+@transaction.atomic
+def handle_completed_build_event(*, build_arn, build_status):
+    build_id = build_arn.split("/")[-1]
+
     Build = apps.get_model(  # noqa: N806
         app_label="codebuild", model_name="Build"
     )
 
-    build = Build.objects.get(pk=build_pk)
+    build = Build.objects.get(build_id=build_id)
 
-    with transaction.atomic():
-        build.refresh_status()
+    if build.status != build.BuildStatusChoices.IN_PROGRESS:
+        return
 
-        if build.status == build.BuildStatusChoices.IN_PROGRESS:
-            _retry(
-                task=wait_for_build_completion,
-                signature_kwargs={"kwargs": {"build_pk": build_pk}},
-                retries=retries,
+    build.status = build_status
+    build.refresh_logs()
+
+    build.full_clean()
+    build.save()
+
+    if build.status == build.BuildStatusChoices.SUCCEEDED:
+        on_commit(
+            lambda: add_image_to_algorithm.apply_async(
+                kwargs={"build_pk": str(build.pk)}
             )
-            return
-        else:
-            build.refresh_logs()
-            build.save()
-            if build.status == build.BuildStatusChoices.SUCCEEDED:
-                on_commit(
-                    lambda: add_image_to_algorithm.apply_async(
-                        kwargs={"build_pk": str(build_pk)}
-                    )
-                )
+        )
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
@@ -88,3 +78,5 @@ def add_image_to_algorithm(*, build_pk):
 
     if not build.algorithm_image.image:
         build.add_image_to_algorithm()
+
+    build.delete_artifacts()

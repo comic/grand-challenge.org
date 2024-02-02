@@ -4,7 +4,6 @@ import json
 import logging
 import os
 import random
-from datetime import timedelta
 
 from allauth.account.models import EmailAddress
 from django.conf import settings
@@ -16,7 +15,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.core.files.base import ContentFile
 from django.db import IntegrityError
-from django.utils import timezone
 from faker import Faker
 from knox import crypto
 from knox.models import AuthToken
@@ -42,7 +40,6 @@ from grandchallenge.evaluation.models import (
     Submission,
 )
 from grandchallenge.evaluation.utils import SubmissionKindChoices
-from grandchallenge.github.models import GitHubUserToken, GitHubWebhookMessage
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.pages.models import Page
 from grandchallenge.reader_studies.models import (
@@ -95,8 +92,6 @@ def run():
     _create_reader_studies(users)
     _create_archive(users)
     _create_user_tokens(users)
-    _create_github_user_token(users["algorithm"])
-    _create_github_webhook_message()
     _create_help_forum()
     _create_flatpages()
 
@@ -333,94 +328,6 @@ def _create_task_types_regions_modalities(users):
     ChallengeSeries.objects.create(name="MICCAI")
 
 
-def _create_github_user_token(user):
-    now = timezone.now()
-    GitHubUserToken.objects.create(
-        user=user,
-        access_token="ghu_tOkEn",
-        access_token_expires=now + timedelta(hours=8),
-        refresh_token="ghr_r3fR3sh",
-        refresh_token_expires=now + timedelta(days=7),
-    )
-
-
-def _create_github_webhook_message():
-    payload = {
-        "action": "created",
-        "sender": {
-            "id": 1,
-            "url": "https://api.github.com/users/repo-name",
-            "type": "User",
-            "login": "repo-name",
-            "node_id": "MDQ6VXNlcjU3MjU3MTMw",
-            "html_url": "https://github.com/repo-name",
-            "gists_url": "https://api.github.com/users/repo-name/gists{/gist_id}",
-            "repos_url": "https://api.github.com/users/repo-name/repos",
-            "avatar_url": "https://avatars.githubusercontent.com/u/1?v=4",
-            "events_url": "https://api.github.com/users/repo-name/events{/privacy}",
-            "site_admin": False,
-            "gravatar_id": "",
-            "starred_url": "https://api.github.com/users/repo-name/starred{/owner}{/repo}",
-            "followers_url": "https://api.github.com/users/repo-name/followers",
-            "following_url": "https://api.github.com/users/repo-name/following{/other_user}",
-            "organizations_url": "https://api.github.com/users/repo-name/orgs",
-            "subscriptions_url": "https://api.github.com/users/repo-name/subscriptions",
-            "received_events_url": "https://api.github.com/users/repo-name/received_events",
-        },
-        "requester": None,
-        "installation": {
-            "id": 2,
-            "app_id": 3,
-            "events": ["create"],
-            "account": {
-                "id": 1,
-                "url": "https://api.github.com/users/repo-name",
-                "type": "User",
-                "login": "repo-name",
-                "node_id": "MDQ6VXNlcjU3MjU3MTMw",
-                "html_url": "https://github.com/repo-name",
-                "gists_url": "https://api.github.com/users/repo-name/gists{/gist_id}",
-                "repos_url": "https://api.github.com/users/repo-name/repos",
-                "avatar_url": "https://avatars.githubusercontent.com/u/1?v=4",
-                "events_url": "https://api.github.com/users/repo-name/events{/privacy}",
-                "site_admin": False,
-                "gravatar_id": "",
-                "starred_url": "https://api.github.com/users/repo-name/starred{/owner}{/repo}",
-                "followers_url": "https://api.github.com/users/repo-name/followers",
-                "following_url": "https://api.github.com/users/repo-name/following{/other_user}",
-                "organizations_url": "https://api.github.com/users/repo-name/orgs",
-                "subscriptions_url": "https://api.github.com/users/repo-name/subscriptions",
-                "received_events_url": "https://api.github.com/users/repo-name/received_events",
-            },
-            "app_slug": "app-name",
-            "html_url": "https://github.com/settings/installations/2",
-            "target_id": 1,
-            "created_at": "2021-09-07T13:14:24.000+02:00",
-            "updated_at": "2021-09-07T13:14:24.000+02:00",
-            "permissions": {"contents": "read", "metadata": "read"},
-            "target_type": "User",
-            "suspended_at": None,
-            "suspended_by": None,
-            "repositories_url": "https://api.github.com/installation/repositories",
-            "single_file_name": None,
-            "access_tokens_url": "https://api.github.com/app/installations/2/access_tokens",
-            "single_file_paths": [],
-            "repository_selection": "selected",
-            "has_multiple_single_files": False,
-        },
-        "repositories": [
-            {
-                "id": 377787003,
-                "name": "private-3",
-                "node_id": "MDEwOlJlcG9zaXRvcnkzNzc3ODcwMDM=",
-                "private": True,
-                "full_name": "repo-name/private-3",
-            }
-        ],
-    }
-    GitHubWebhookMessage.objects.create(payload=payload)
-
-
 def _create_algorithm_demo(users):
     cases_image = Image(
         name="test_image.mha",
@@ -432,7 +339,9 @@ def _create_algorithm_demo(users):
     cases_image.save()
 
     algorithm = Algorithm.objects.create(
-        title="Test Algorithm", logo=create_uploaded_image()
+        title="Test Algorithm",
+        logo=create_uploaded_image(),
+        repo_name="github-username/repo-name",
     )
     algorithm.editors_group.user_set.add(users["algorithm"], users["demo"])
     algorithm.users_group.user_set.add(users["algorithmuser"])
