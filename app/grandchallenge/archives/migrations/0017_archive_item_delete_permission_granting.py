@@ -19,7 +19,7 @@ def add_archive_item_delete_permissions(apps, schema_editor):
     )
 
     for archive in queryset.iterator():
-        ArchiveItemGroupObjectPermission.bulk_create(
+        ArchiveItemGroupObjectPermission.objects.bulk_create(
             [
                 ArchiveItemGroupObjectPermission(
                     content_object=item,
