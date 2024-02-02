@@ -1,11 +1,10 @@
-import gzip
-
 import boto3
 from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from grandchallenge.algorithms.models import AlgorithmImage
+from grandchallenge.components.backends.utils import LOGLINES
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import copy_s3_object, private_s3_storage
 from grandchallenge.github.models import GitHubWebhookMessage
@@ -39,43 +38,52 @@ class Build(UUIDModel):
     build_log = models.TextField(blank=True)
 
     BuildStatusChoices = BuildStatusChoices
-    __client = None
+
+    __codebuild_client = None
+    __logs_client = None
 
     @property
-    def client(self):
-        if self.__client is None:
-            self.__client = boto3.client(
+    def codebuild_client(self):
+        if self.__codebuild_client is None:
+            self.__codebuild_client = boto3.client(
                 "codebuild", region_name=settings.AWS_CODEBUILD_REGION_NAME
             )
-        return self.__client
+        return self.__codebuild_client
+
+    @property
+    def _logs_client(self):
+        if self.__logs_client is None:
+            self.__logs_client = boto3.client(
+                "logs", region_name=settings.AWS_CODEBUILD_REGION_NAME
+            )
+        return self.__logs_client
 
     @property
     def build_number(self):
         return self.build_id.split(":")[-1]
 
-    @property
-    def redacted_build_log(self):
-        return "\n".join(
-            line
-            for line in self.build_log.splitlines()
-            if not line.startswith("[Container]")
+    def refresh_logs(self):
+        boto3.client("logs", region_name=settings.COMPONENTS_AMAZON_ECR_REGION)
+
+        response = self._logs_client.get_log_events(
+            logGroupName=settings.CODEBUILD_BUILD_LOGS_GROUP_NAME,
+            logStreamName=self.build_number,
+            limit=LOGLINES,
+            startFromHead=False,
         )
 
-    def refresh_logs(self):
-        try:
-            with private_s3_storage.open(
-                f"codebuild/logs/{self.build_number}.gz"
-            ) as file:
-                self.build_log = gzip.open(file).read().decode("utf-8")
-        except FileNotFoundError:
-            self.build_log = "Log file not available."
+        self.build_log = "".join(
+            event["message"]
+            for event in response["events"]
+            if not event["message"].startswith("[Container]")
+        )
 
     def add_image_to_algorithm(self):
         copy_s3_object(
             to_field=self.algorithm_image.image,
-            dest_filename=f"{self.pk}.tar.xz",
+            dest_filename=f"{self.pk}.tar.gz",
             src_bucket=private_s3_storage.bucket.name,
-            src_key=f"codebuild/artifacts/{self.build_number}/{self.build_config['projectName']}/container-image.tar.xz",
+            src_key=f"codebuild/artifacts/{self.build_number}/{self.build_config['projectName']}/container-image.tar.gz",
             save=True,
         )
 
@@ -93,7 +101,7 @@ class Build(UUIDModel):
             ],
         }
 
-        build_data = self.client.start_build(**self.build_config)
+        build_data = self.codebuild_client.start_build(**self.build_config)
 
         self.build_id = build_data["build"]["id"]
         self.status = build_data["build"]["buildStatus"]
