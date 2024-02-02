@@ -49,13 +49,17 @@ class InterfaceFormField:
         if isinstance(initial, ComponentInterfaceValue) and initial.has_value:
             if instance.is_image_kind:
                 kwargs["initial"] = initial.image.pk
-            elif instance.is_json_kind and not instance.requires_file:
-                kwargs["initial"] = initial.value
-            else:
+            elif instance.requires_file:
+                # for file interfaces, initial will either be None or
+                # the UUID of an upload, not an existing CIV, for the latter
+                # we use a different widget that is defined in MultipleCIVForm
                 kwargs["initial"] = initial
-                # TODO: move SelectUploadWidget to _possible_widgets and move logic
-                # from MultiCIVForm here
+            else:
+                kwargs["initial"] = initial.value
         elif initial is not None:
+            # in the AlgorithmJobCreateForm,
+            # the initial value is the default_value for the interface,
+            # not an existing CIV
             kwargs["initial"] = initial
 
         field_type = instance.default_field
