@@ -1,6 +1,7 @@
 from django import forms
 
 from grandchallenge.cases.widgets import FlexibleImageWidget
+from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.validators import JSONValidator
@@ -45,7 +46,20 @@ class InterfaceFormField:
     ):
         kwargs = {"required": required, "disabled": disabled}
 
-        if initial is not None:
+        if isinstance(initial, ComponentInterfaceValue) and initial.has_value:
+            if instance.is_image_kind:
+                kwargs["initial"] = initial.image.pk
+            elif instance.requires_file:
+                # for file interfaces, initial will either be None or
+                # the UUID of an upload, not an existing CIV, for the latter
+                # we use a different widget that is defined in MultipleCIVForm
+                kwargs["initial"] = initial
+            else:
+                kwargs["initial"] = initial.value
+        elif initial is not None:
+            # in the AlgorithmJobCreateForm,
+            # the initial value is the default_value for the interface,
+            # not an existing CIV
             kwargs["initial"] = initial
 
         field_type = instance.default_field
@@ -54,6 +68,9 @@ class InterfaceFormField:
             kwargs["widget"] = FlexibleImageWidget(
                 help_text=help_text,
                 user=user,
+                current_value=initial,
+                # also passing the CIV as current value here so that we can
+                # show the image name to the user rather than its pk
             )
             upload_queryset = get_objects_for_user(
                 user,

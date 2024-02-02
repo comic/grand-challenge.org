@@ -233,8 +233,6 @@ class MultipleCIVForm(Form):
         )
 
     def _get_default_field(self, *, interface, current_value):
-        if isinstance(current_value, ComponentInterfaceValue):
-            current_value = current_value.value
         return InterfaceFormField(
             instance=interface,
             initial=current_value,
