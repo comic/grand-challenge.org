@@ -182,6 +182,17 @@
           </tr>
           <thead class="thead-light">
             <tr>
+              <th colspan="2">Intended use statements</th>
+            </tr>
+          </thead>
+          <tr>
+            <td class="text-muted">Intended use (according to CE)</td>
+            {% if product.intended_use_ce_public == 'Yes' %}
+              <td>{{product.intended_use_ce|linebreaksbr}}</td>
+            {% endif %}
+          </tr>
+          <thead class="thead-light">
+            <tr>
               <th colspan="2">Market presence</th>
             </tr>
           </thead>
@@ -236,27 +247,6 @@
             <td>{{ product.all_other_papers|clean|linebreaksbr }}</td>
           </tr>
         </table>
-
-        <a class="btn btn-primary" data-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
-          <i class="fas fa-angle-down"></i>
-        </a>
-        <div class="collapse" id="collapseExample">
-          <table class="table">
-            <thead class="thead-light">
-              <tr>
-                <th colspan="2"> Intended use statements</th>
-              </tr>
-            </thead>
-
-            <tr>
-              <td class="text-muted">Intended use (according to CE)</td>
-              {% if product.intended_use_ce_public == 'Yes' %}
-                <td>{{product.intended_use_ce|linebreaksbr}}</td>
-              {% endif %}
-            </tr>
-          </table>
-        </div>
-
       </div>
     </div>
   </div>
