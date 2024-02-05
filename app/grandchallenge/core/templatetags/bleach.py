@@ -3,7 +3,7 @@ from bleach.css_sanitizer import CSSSanitizer
 from django import template
 from django.conf import settings
 from django.template.loader import render_to_string
-from django.utils.safestring import mark_safe
+from django.utils.safestring import SafeString, mark_safe
 from markdown import markdown as render_markdown
 from markdown.extensions.toc import TocExtension
 
@@ -83,12 +83,15 @@ def md2html(
 
     cleaned_html = clean(html)
 
-    post_processors = []
+    post_processors = [*settings.MARKDOWN_POST_PROCESSORS]
 
     if process_youtube_tags:
         post_processors.append(YOUTUBE_TAG_SUBSTITUTION)
 
     for processor in post_processors:
         cleaned_html = processor(cleaned_html)
+
+    if not isinstance(cleaned_html, SafeString):
+        raise RuntimeError("Markdown rendering failed to produce a SafeString")
 
     return cleaned_html

@@ -48,6 +48,9 @@ class TagSubstitution:
         if not re.search(r"\A[a-zA-Z_\-]+\Z", self.tag_name):
             raise ValueError(f"{self.tag_name} is not a valid tag name.")
 
+    def __repr__(self):
+        return f"TagSubstitution(tag_name={self.tag_name}, replacement={self.replacement})"
+
     @property
     def pattern(self) -> str:
         var_match = r"\s+([a-zA-Z0-9_\-]+)"
@@ -80,7 +83,7 @@ class TagSubstitution:
                 result = self.replacement
 
             nonlocal input_and_replacement_safe
-            input_and_replacement_safe |= isinstance(result, SafeString)
+            input_and_replacement_safe &= isinstance(result, SafeString)
 
             return result
 

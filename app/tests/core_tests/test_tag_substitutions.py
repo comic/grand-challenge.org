@@ -65,7 +65,7 @@ def test_substitution_with_arguments(inp, output, repl):
 )
 def test_safe_substitutions(inp, content, typ):
     result = TagSubstitution(tag_name="foo", replacement=content)(inp)
-    assert isinstance(result, typ)
+    assert type(result) is typ
 
 
 @pytest.mark.parametrize(
@@ -102,7 +102,7 @@ def test_safe_substitutions_with_arguments(inpt, typ, expected):
     ]:
         output = processor(output)
 
-    assert isinstance(output, typ)
+    assert type(output) is typ
     assert output == expected
 
 
@@ -159,3 +159,20 @@ EXPECTED_YOUTUBE_EMBED = """<p><div class="embed-responsive embed-responsive-16b
 def test_youtube_tag(input_html, expected_html):
     output_html = md2html(input_html)
     assert output_html == expected_html
+
+
+def test_md2html_raises_error_with_unclean_tags(settings):
+    # There may be an assumption by consumers that md2html is safe to use
+    settings.MARKDOWN_POST_PROCESSORS = [
+        TagSubstitution(tag_name="unsafe", replacement="notsafe")
+    ]
+
+    # Not using the unsafe tag, we're good
+    assert md2html("[safe]")
+
+    with pytest.raises(RuntimeError) as error:
+        md2html("[unsafe]")
+
+    assert (
+        str(error.value) == "Markdown rendering failed to produce a SafeString"
+    )
