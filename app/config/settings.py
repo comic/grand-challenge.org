@@ -878,11 +878,22 @@ if SENTRY_DSN:
         """Add stderr to the event if the exception is a CalledProcessError"""
         if "exc_info" in hint:
             exc_type, exc_value, tb = hint["exc_info"]
+
             if isinstance(exc_value, CalledProcessError) and hasattr(
                 exc_value, "stderr"
             ):
                 event["extra"] = event.get("extra", {})
-                event["extra"]["stderr"] = exc_value.stderr
+
+                if isinstance(exc_value.stderr, str):
+                    event["extra"]["stderr"] = exc_value.stderr
+                elif isinstance(exc_value.stderr, bytes):
+                    event["extra"]["stderr"] = exc_value.stderr.decode(
+                        "utf-8", "replace"
+                    )
+                else:
+                    # Do not include stderr
+                    pass
+
         return event
 
     sentry_sdk.init(
