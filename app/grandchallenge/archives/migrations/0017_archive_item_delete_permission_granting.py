@@ -12,7 +12,7 @@ def add_archive_item_delete_permissions(apps, schema_editor):
     queryset = Archive.objects.order_by("-created").prefetch_related(
         "editors_group", "items"
     )
-    if queryset:
+    if queryset.exists():
         delete_permission = Permission.objects.get(
             codename=f"delete_{ArchiveItem._meta.model_name}",
             content_type__app_label="archives",
