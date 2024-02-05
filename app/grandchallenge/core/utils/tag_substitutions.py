@@ -56,7 +56,7 @@ class TagSubstitution:
     @property
     def pattern(self) -> str:
         pattern = rf"{self.markers[0]}\s*{self.tag_name}"
-        for _ in range(0, self.num_args):
+        for _ in range(self.num_args):
             pattern += r"\s+[\'\"]?([a-zA-Z0-9_\-]+)[\'\"]?"
         pattern += rf"\s*{self.markers[1]}"
         return pattern
