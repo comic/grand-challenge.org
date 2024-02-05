@@ -1738,7 +1738,7 @@ class ComponentImage(FieldChangeMixin, models.Model):
         ],
         help_text=(
             ".tar.xz archive of the container image produced from the command "
-            "'docker save IMAGE | xz -T0 -c > IMAGE.tar.xz'. See "
+            "'docker save IMAGE | gzip -c > IMAGE.tar.gz'. See "
             "https://docs.docker.com/engine/reference/commandline/save/"
         ),
         storage=private_s3_storage,
