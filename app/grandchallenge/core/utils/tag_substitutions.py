@@ -71,23 +71,22 @@ class TagSubstitution:
         return count
 
     def __call__(self, s: str | SafeString) -> str | SafeString:
-        safe_replacements = True
+        input_and_replacement_safe = isinstance(s, SafeString)
 
         def subrepl(match: Match):
-            result = SafeString()
             if isinstance(self.replacement, Callable):
                 result = self.replacement(*match.groups())
-            elif isinstance(self.replacement, str):
+            else:
                 result = self.replacement
-            nonlocal safe_replacements
-            safe_replacements = safe_replacements and isinstance(
-                result, SafeString
-            )
+
+            nonlocal input_and_replacement_safe
+            input_and_replacement_safe |= isinstance(result, SafeString)
+
             return result
 
         out = re.sub(self.pattern, subrepl, s)
 
-        if isinstance(s, SafeString) and safe_replacements:
+        if input_and_replacement_safe:
             out = mark_safe(out)
 
         return out
