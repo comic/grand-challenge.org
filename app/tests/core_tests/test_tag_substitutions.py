@@ -69,34 +69,39 @@ def test_safe_substitutions(inp, content, typ):
     assert isinstance(result, typ)
 
 
-def _arg_dependent_replacement(arg):
-    if arg == "unsafe":
-        return "unsafe"
-    else:
-        return mark_safe("safe")
-
-
 @pytest.mark.parametrize(
-    "inp,content,typ",
+    "inpt,typ,expected",
     [
-        ("[ foo unsafe ]", _arg_dependent_replacement, str),
-        (mark_safe("[ foo unsafe ]"), _arg_dependent_replacement, str),
-        ("[ foo safe ]", _arg_dependent_replacement, str),
-        (mark_safe("[ foo safe ]"), _arg_dependent_replacement, SafeString),
-        (mark_safe("[ foo unsafe ]"), _arg_dependent_replacement, str),
+        ("[ unsafe var-1 ]", str, "unsafe-var-1"),
+        (mark_safe("[ unsafe var-1 ]"), str, "unsafe-var-1"),
+        ("[ safe var-1 ]", str, "safe-var-1"),
+        (mark_safe("[ safe var-1 ]"), SafeString, "safe-var-1"),
+        (mark_safe("[ unsafe var-1 ]"), str, "unsafe-var-1"),
         # multiple substitutions of mixed safety
         (
-            mark_safe("[ foo unsafe ] [ foo safe ]"),
-            _arg_dependent_replacement,
+            mark_safe("[ unsafe var-1 ] [ safe var-2 ]"),
             str,
+            "unsafe-var-1 safe-var-2",
         ),
         (
-            mark_safe("[ foo safe ] [ foo safe ]"),
-            _arg_dependent_replacement,
+            mark_safe("[ safe var-1 ] [ safe var-2 ]"),
             SafeString,
+            "safe-var-1 safe-var-2",
         ),
     ],
 )
-def test_safe_substitutions_with_arguments(inp, content, typ):
-    result = TagSubstitution(tag_name="foo", replacement=content)(inp)
-    assert isinstance(result, typ)
+def test_safe_substitutions_with_arguments(inpt, typ, expected):
+    output = inpt
+
+    for processor in [
+        TagSubstitution(
+            tag_name="safe", replacement=lambda x: mark_safe(f"safe-{x}")
+        ),
+        TagSubstitution(
+            tag_name="unsafe", replacement=lambda x: f"unsafe-{x}"
+        ),
+    ]:
+        output = processor(output)
+
+    assert isinstance(output, typ)
+    assert output == expected
