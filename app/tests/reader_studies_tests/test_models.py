@@ -85,6 +85,7 @@ def test_read_only_fields():
         "answer_min_length",
         "answer_max_length",
         "answer_match_pattern",
+        "interface",
     ]
 
 

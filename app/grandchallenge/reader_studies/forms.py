@@ -345,8 +345,16 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
             )
         )
 
+    def __get_answer_type(self):
+        if not self.instance.is_fully_editable:
+            # disabled form elements are not sent along with the form,
+            # so retrieve the answer type from the instance
+            return self.instance.answer_type
+        else:
+            return self["answer_type"].value()
+
     def interface_choices(self):
-        answer_type = self["answer_type"].value()
+        answer_type = self.__get_answer_type()
         if answer_type is None:
             return ComponentInterface.objects.none()
         return ComponentInterface.objects.filter(
@@ -354,12 +362,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
         )
 
     def widget_choices(self):
-        if not self.instance.is_fully_editable:
-            # disabled form elements are not sent along with the form,
-            # so retrieve the answer type from the instance
-            answer_type = self.instance.answer_type
-        else:
-            answer_type = self["answer_type"].value()
+        answer_type = self.__get_answer_type()
         choices = [*BLANK_CHOICE_DASH]
 
         if not answer_type:
