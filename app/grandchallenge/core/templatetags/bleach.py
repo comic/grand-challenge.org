@@ -2,12 +2,13 @@ import bleach
 from bleach.css_sanitizer import CSSSanitizer
 from django import template
 from django.conf import settings
+from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from markdown import markdown as render_markdown
 from markdown.extensions.toc import TocExtension
 
-from grandchallenge.core.templatetags.process_tags import process_tags
 from grandchallenge.core.utils.markdown import LinkBlankTargetExtension
+from grandchallenge.core.utils.tag_substitutions import TagSubstitution
 
 register = template.Library()
 
@@ -36,12 +37,19 @@ def md2email_html(markdown: str | None):
         markdown,
         link_blank_target=True,
         create_permalink_for_headers=False,
+        process_youtube_tags=False,
     )
 
 
-def md2html_with_tag_processing(*args, **kwargs):
-    """Converts markdown to clean html and passes it through custom tag processing"""
-    return process_tags(md2html(*args, **kwargs))
+YOUTUBE_TAG_SUBSTITUTION = TagSubstitution(
+    tag_name="youtube",
+    replacement=lambda youtube_id: render_to_string(
+        "grandchallenge/partials/youtube_embed.html",
+        context={
+            "youtube_id": youtube_id,
+        },
+    ),
+)
 
 
 @register.filter
@@ -50,6 +58,7 @@ def md2html(
     *,
     link_blank_target=False,
     create_permalink_for_headers=True,
+    process_youtube_tags=True,
 ):
     """Convert markdown to clean html"""
 
@@ -72,4 +81,14 @@ def md2html(
         extension_configs=settings.MARKDOWNX_MARKDOWN_EXTENSION_CONFIGS,
     )
 
-    return clean(html)
+    cleaned_html = clean(html)
+
+    post_processors = []
+
+    if process_youtube_tags:
+        post_processors.append(YOUTUBE_TAG_SUBSTITUTION)
+
+    for processor in post_processors:
+        cleaned_html = processor(cleaned_html)
+
+    return cleaned_html

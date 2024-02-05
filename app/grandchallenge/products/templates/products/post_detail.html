@@ -2,7 +2,6 @@
 {% load url %}
 {% load profiles %}
 {% load bleach %}
-{% load process_tags %}
 {% load guardian_tags %}
 {% load static %}
 
@@ -37,7 +36,7 @@
                     <iframe class="embed-responsive-item" src="{{ object.content }}" title="Newsletter" allowfullscreen sandbox></iframe>
                 </div>
             {% else %}
-                {{ object.content|md2html|process_tags }}
+                {{ object.content|md2html }}
             {% endif %}
 
         </div>

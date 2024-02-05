@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 {% load docpage_extras %}
 {% load bleach %}
-{% load process_tags %}
 
 {% block title %}
     {{ currentdocpage.title }} - {{ block.super }}
@@ -144,7 +143,7 @@
             {% endif %}
         </div>
     {% else %}
-        <div class="mt-4" id=pageContainer>{{ currentdocpage.content|md2html|process_tags }}</div>
+        <div class="mt-4" id=pageContainer>{{ currentdocpage.content|md2html }}</div>
         <div class="row">
             <div class="d-inline-block col-6 text-left">
                 {% if currentdocpage.previous %}

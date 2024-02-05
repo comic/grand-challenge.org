@@ -2,7 +2,6 @@
 {% load url %}
 {% load static %}
 {% load bleach %}
-{% load process_tags %}
 
 {% block title %}
     {{ flatpage.title }} - {{ block.super }}
@@ -29,5 +28,5 @@
         </div>
     </div>
 
-    {{ flatpage.content|md2html|process_tags }}
+    {{ flatpage.content|md2html }}
 {% endblock %}

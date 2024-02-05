@@ -1,6 +1,7 @@
 import pytest
 from django.utils.safestring import SafeString, mark_safe
 
+from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.core.utils.tag_substitutions import TagSubstitution
 
 
@@ -37,8 +38,6 @@ def test_no_spaces(tag_name):
     [
         ("[ foo 23aZ-_ ]", "bar23aZ-_", lambda a: f"bar{a}"),
         ("[ foo 23 ]", "bar23", lambda a: f"bar{a}"),
-        ("[ foo '23' ]", "bar23", lambda a: f"bar{a}"),
-        ('[ foo "23" ]', "bar23", lambda a: f"bar{a}"),
         ("[ foo 2 3 ]", "bar23", lambda a, b: f"bar{a}{b}"),
         ("[ foo 2 3 4 ]", "bar234", lambda a, b, c: f"bar{a}{b}{c}"),
     ],
@@ -105,3 +104,58 @@ def test_safe_substitutions_with_arguments(inpt, typ, expected):
 
     assert isinstance(output, typ)
     assert output == expected
+
+
+@pytest.mark.parametrize(
+    "func,expected_args",
+    (
+        (lambda: "bar", 0),
+        (lambda a: f"bar{a}", 1),
+        (lambda a, b: f"bar{a}{b}", 2),
+        (lambda a, b, c: f"bar{a}{b}{c}", 3),
+    ),
+)
+def test_num_args(func, expected_args):
+    assert (
+        TagSubstitution(tag_name="f", replacement=func).num_args
+        == expected_args
+    )
+
+
+@pytest.mark.parametrize(
+    "content",
+    ("[ foo ]", "[ foo 'a' ]", "[ foo 'a ]", "[ foo 'a\" ]", '[ foo "a" ]'),
+)
+def test_no_change_with_no_tag_or_arg_match(content):
+    s = TagSubstitution(tag_name="foo", replacement=lambda x: x)(content)
+    assert s == content
+
+
+EXPECTED_YOUTUBE_EMBED = """<p><div class="embed-responsive embed-responsive-16by9 rounded border-0">
+    <iframe
+            src="https://www.youtube-nocookie.com/embed/QCYYhkTlnhQ?disablekb=1&amp;rel=0"
+            allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+            class="embed-responsive-item"
+            loading="lazy"
+            sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+    ></iframe>
+</div>
+</p>"""
+
+
+@pytest.mark.parametrize(
+    "input_html, expected_html",
+    [
+        (
+            "[youtube QCYYhkTlnhQ]",
+            EXPECTED_YOUTUBE_EMBED,
+        ),
+        (  # Random white-spaces and newlines
+            "[  youtube\n\t QCYYhkTlnhQ ]",
+            EXPECTED_YOUTUBE_EMBED,
+        ),
+    ],
+)
+def test_youtube_tag(input_html, expected_html):
+    output_html = md2html(input_html)
+    assert output_html == expected_html

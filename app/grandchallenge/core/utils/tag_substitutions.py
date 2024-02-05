@@ -34,35 +34,30 @@ class TagSubstitution:
     >>> "Hello Fred, greetings!"
     """
 
-    num_args = 0
-
     def __init__(
         self,
         *,
         tag_name: str,
         replacement: str | Callable,
-        markers: tuple[str, str] = ("[", "]"),
     ):
         self.tag_name = tag_name.strip()
         self.replacement = replacement
-        self.markers = [re.escape(m) for m in markers]
 
-        if isinstance(self.replacement, Callable):
-            self.num_args = self._get_num_positional_args(self.replacement)
+        self.num_args = self._get_num_positional_args(self.replacement)
 
         if not re.search(r"\A[a-zA-Z_\-]+\Z", self.tag_name):
             raise ValueError(f"{self.tag_name} is not a valid tag name.")
 
     @property
     def pattern(self) -> str:
-        pattern = rf"{self.markers[0]}\s*{self.tag_name}"
-        for _ in range(self.num_args):
-            pattern += r"\s+[\'\"]?([a-zA-Z0-9_\-]+)[\'\"]?"
-        pattern += rf"\s*{self.markers[1]}"
-        return pattern
+        var_match = r"\s+([a-zA-Z0-9_\-]+)"
+        return rf"\[\s*{self.tag_name}{var_match*self.num_args}\s*\]"
 
     @staticmethod
     def _get_num_positional_args(func) -> int:
+        if not isinstance(func, Callable):
+            return 0
+
         argspec = inspect.getfullargspec(func)
         if argspec.defaults or argspec.varargs or argspec.kwonlyargs:
             raise NotImplementedError(

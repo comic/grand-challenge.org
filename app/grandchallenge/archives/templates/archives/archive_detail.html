@@ -2,7 +2,6 @@
 {% load url %}
 {% load guardian_tags %}
 {% load bleach %}
-{% load process_tags %}
 {% load profiles %}
 {% load meta_attr %}
 {% load crispy_forms_tags %}
@@ -92,7 +91,7 @@
 
             <h2>{{ object.title }}</h2>
 
-            {{ object.detail_page_markdown|md2html|process_tags }}
+            {{ object.detail_page_markdown|md2html }}
 
             {% if "change_archive" in object_perms %}
                 <hr>
