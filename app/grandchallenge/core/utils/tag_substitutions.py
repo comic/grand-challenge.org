@@ -3,6 +3,7 @@ import re
 from collections.abc import Callable
 from re import Match
 
+from django.core.exceptions import ImproperlyConfigured
 from django.utils.safestring import SafeString, mark_safe
 
 
@@ -79,8 +80,12 @@ class TagSubstitution:
         def subrepl(match: Match):
             if isinstance(self.replacement, Callable):
                 result = self.replacement(*match.groups())
-            else:
+            elif isinstance(self.replacement, str):
                 result = self.replacement
+            else:
+                raise ImproperlyConfigured(
+                    "Replacement must be a callable or a string"
+                )
 
             nonlocal input_and_replacement_safe
             input_and_replacement_safe &= isinstance(result, SafeString)
