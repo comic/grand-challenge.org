@@ -7,6 +7,7 @@ from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.core.views import RedirectPath
 from grandchallenge.datatables.views import PaginatedTableListView
 from grandchallenge.subdomains.utils import reverse
+from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
@@ -77,3 +78,20 @@ def test_redirect_path(rf, path, expected):
 
     assert response.status_code == 301
     assert response.url == expected
+
+
+@pytest.mark.django_db
+def test_product_redirect(client):
+    response = get_view_for_user(url="/aiforradiology/", client=client)
+
+    assert response.status_code == 302
+    assert response.url == "https://www.example.com/"
+
+    response = get_view_for_user(
+        url="/aiforradiology/product/airs-medical-swiftmr", client=client
+    )
+
+    assert response.status_code == 302
+    assert (
+        response.url == "https://www.example.com/product/airs-medical-swiftmr"
+    )
