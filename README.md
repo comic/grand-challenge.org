@@ -11,6 +11,5 @@ In the era of Deep Learning, developing robust machine learning solutions to pro
 * Reader Studies: Train experts and have them annotate medical imaging data.
 * Challenges: Gather and objectively assess machine learning solutions.
 * Algorithms: Deploy machine learning solutions for clinical validation.
-* Products: Find commercialised machine learning solutions in medical imaging.
 
 If you would like to start your own website, or contribute to the development of the framework, please see [the docs](https://comic.github.io/grand-challenge.org/).

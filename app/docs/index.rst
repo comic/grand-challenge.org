@@ -21,8 +21,6 @@ Challenges
    Gather and objectively assess machine learning solutions.
 Algorithms
    Deploy machine learning solutions for clinical validation.
-Products
-   Find commercialised machine learning solutions in medical imaging.
 
 Here, you find the documentation for the Django application that powers `Grand Challenge`_.
 You are able to use the instance there,
