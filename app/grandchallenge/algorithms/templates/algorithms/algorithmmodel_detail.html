@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load url %}
+{% load user_profile_link from profiles %}
+{% load naturaldelta %}
+
+{% block title %}
+    Algorithm Model - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'algorithms:list' %}">Algorithms</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ object.algorithm.get_absolute_url }}">{{ object.algorithm.title }}
+        </a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">{{ object }}
+        </li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Algorithm Model</h2>
+
+    <dl class="inline">
+        <dt>ID</dt>
+        <dd>{{ object.pk }}</dd>
+
+        <dt>Algorithm</dt>
+        <dd>
+            <a href="{{ object.algorithm.get_absolute_url }}">{{ object.algorithm.title }}</a>
+        </dd>
+
+        <dt>Creator</dt>
+        <dd>
+            {{ object.creator|user_profile_link }}
+        </dd>
+
+        <dt>Created</dt>
+        <dd>{{ object.created }}</dd>
+
+        {% if object.model %}
+            <dt>Model</dt>
+            <dd>{{ object.model.name }}</dd>
+
+            <dt>Model Size</dt>
+            <dd>{{ object.model.size|naturalsize }}</dd>
+        {% endif %}
+
+        <dt>Comment</dt>
+        <dd>{{ object.comment }}</dd>
+    </dl>
+
+{% endblock %}

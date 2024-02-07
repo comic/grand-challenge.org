@@ -14,6 +14,7 @@ from crispy_forms.layout import (
 )
 from dal import autocomplete
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
 from django.core.validators import RegexValidator
@@ -41,6 +42,7 @@ from django_select2.forms import Select2MultipleWidget
 from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmImage,
+    AlgorithmModel,
     AlgorithmPermissionRequest,
     Job,
 )
@@ -48,7 +50,10 @@ from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
     AlgorithmSerializer,
 )
-from grandchallenge.algorithms.tasks import import_remote_algorithm_image
+from grandchallenge.algorithms.tasks import (
+    import_model_from_upload,
+    import_remote_algorithm_image,
+)
 from grandchallenge.components.form_fields import InterfaceFormField
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.components.models import (
@@ -72,6 +77,8 @@ from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.hanging_protocols.models import VIEW_CONTENT_SCHEMA
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
+from grandchallenge.uploads.models import UserUpload
+from grandchallenge.uploads.widgets import UserUploadSingleWidget
 from grandchallenge.workstations.models import Workstation
 
 
@@ -615,6 +622,59 @@ class AlgorithmImageForm(ContainerImageForm):
         help_texts = {
             "requires_gpu": "If true, inference jobs for this algorithm image will be assigned a GPU"
         }
+
+
+class AlgorithmModelForm(SaveFormInitMixin, ModelForm):
+    algorithm = ModelChoiceField(widget=HiddenInput(), queryset=None)
+    creator = ModelChoiceField(
+        widget=HiddenInput(),
+        queryset=(
+            get_user_model()
+            .objects.exclude(username=settings.ANONYMOUS_USER_NAME)
+            .filter(verification__is_verified=True)
+        ),
+    )
+    user_upload = ModelChoiceField(
+        widget=UserUploadSingleWidget(
+            allowed_file_types=[
+                "application/x-gzip",
+                "application/gzip",
+            ]
+        ),
+        label="Model",
+        queryset=None,
+        help_text="a .tar.gz file that is extracted to /opt/ml/model/ during inference",
+    )
+
+    def __init__(self, *args, algorithm, user, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["algorithm"].queryset = Algorithm.objects.filter(
+            pk=algorithm.pk
+        )
+        self.fields["algorithm"].initial = algorithm
+
+        self.fields["user_upload"].queryset = get_objects_for_user(
+            user,
+            "uploads.change_userupload",
+        ).filter(status=UserUpload.StatusChoices.COMPLETED)
+
+        self.fields["creator"].initial = user
+
+    # TODO check no other imports exist
+
+    def save(self, *args, **kwargs):
+        instance = super().save(*args, **kwargs)
+        on_commit(
+            import_model_from_upload.signature(
+                kwargs={"algorithm_model_pk": instance.pk}
+            ).apply_async
+        )
+        return instance
+
+    class Meta:
+        model = AlgorithmModel
+        fields = ("algorithm", "user_upload", "creator", "comment")
 
 
 class AlgorithmImageUpdateForm(SaveFormInitMixin, ModelForm):

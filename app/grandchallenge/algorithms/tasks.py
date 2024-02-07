@@ -33,6 +33,31 @@ logger = logging.getLogger(__name__)
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@transaction.atomic
+def import_model_from_upload(*, algorithm_model_pk):
+    from grandchallenge.algorithms.models import AlgorithmModel
+
+    algorithm_model = AlgorithmModel.objects.get(pk=algorithm_model_pk)
+
+    # TODO: set the sha256
+    # TODO: make sure the sha256 is unique
+    # TODO: check that it is a real gz
+    # TODO: return error messages
+
+    algorithm_model.user_upload.copy_object(to_field=algorithm_model.model)
+
+    # TODO: set the one model as active
+    # TODO: set size in storage
+    algorithm_model.is_active = True
+    algorithm_model.save()
+
+    # TODO: check the user upload is deleted
+    algorithm_model.user_upload.delete()
+
+    # TODO: add model activation and deactivation
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
 def run_algorithm_job_for_inputs(
     *, job_pk, upload_session_pks, user_upload_pks
 ):
