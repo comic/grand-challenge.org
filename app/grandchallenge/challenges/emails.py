@@ -1,10 +1,9 @@
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
-from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import format_html
 
+from grandchallenge.emails.emails import send_standard_email
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -14,16 +13,11 @@ def send_challenge_requested_email_to_reviewers(challengerequest):
         "challenges:requests-list",
     )
     message = format_html(
-        "Dear reviewers,\n\n"
         "User {user} has just requested the challenge "
-        "{request_title}. To review the challenge, go here: {update_url}\n\n"
-        "Regards,\n{site_name}\n\n"
-        "This is an automated service email from {site_domain}.",
+        "{request_title}. To review the challenge, go here: {update_url}\n\n",
         user=challengerequest.creator,
         request_title=challengerequest.title,
         update_url=update_url,
-        site_name=site.name,
-        site_domain=site.domain,
     )
     reviewers = (
         get_user_model()
@@ -32,12 +26,14 @@ def send_challenge_requested_email_to_reviewers(challengerequest):
         )
         .distinct()
     )
-    send_mail(
-        subject=f"[{site.domain.lower()}] New Challenge Requested",
-        message=message,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email for user in reviewers],
-    )
+    for user in reviewers:
+        send_standard_email(
+            site=site,
+            subject="New Challenge Requested",
+            message=message,
+            recipient=user,
+            unsubscribable=False,
+        )
 
 
 def send_challenge_requested_email_to_requester(challengerequest):
@@ -47,31 +43,28 @@ def send_challenge_requested_email_to_requester(challengerequest):
     for key, value in challengerequest.budget.items():
         budget += f"{key}: {value} €\n"
     context = {
-        "username": challengerequest.creator.username,
-        "site_name": site.name,
-        "domain": site.domain,
         "budget": budget,
         "link": link,
     }
     message = render_to_string(
         "challenges/partials/challenge_request_confirmation_email.txt", context
     )
-    send_mail(
-        subject=f"[{site.domain.lower()}] [{challengerequest.short_name}] Challenge Request Submitted Successfully",
+    send_standard_email(
+        site=site,
+        subject=format_html(
+            "[{request_title}] Challenge Request Submitted Successfully",
+            request_title=challengerequest.short_name,
+        ),
         message=message,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[challengerequest.creator.email],
+        recipient=challengerequest.creator,
+        unsubscribable=False,
     )
 
 
 def send_challenge_status_update_email(challengerequest, challenge=None):
     site = Site.objects.get_current()
     message = ""
-    context = {
-        "username": challengerequest.creator.username,
-        "site_name": site.name,
-        "domain": site.domain,
-    }
+    context = {}
     if (
         challengerequest.status
         == challengerequest.ChallengeRequestStatusChoices.ACCEPTED
@@ -90,9 +83,13 @@ def send_challenge_status_update_email(challengerequest, challenge=None):
             context,
         )
 
-    send_mail(
-        subject=f"[{site.domain.lower()}] [{challengerequest.short_name}] Challenge Request Update",
+    send_standard_email(
+        site=site,
+        subject=format_html(
+            "[{request_title}] Challenge Request Update",
+            request_title=challengerequest.short_name,
+        ),
         message=message,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[challengerequest.creator.email],
+        recipient=challengerequest.creator,
+        unsubscribable=False,
     )

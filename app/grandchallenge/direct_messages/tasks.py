@@ -26,8 +26,7 @@ def send_new_unread_direct_messages_emails():
 
         send_new_unread_direct_messages_email(
             site=site,
-            username=user.username,
-            email=user.email,
+            user=user,
             new_senders=new_senders,
             new_unread_message_count=user.new_unread_message_count,
         )
