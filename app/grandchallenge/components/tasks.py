@@ -254,12 +254,21 @@ def push_container_image(*, instance):
 def remove_tag_from_registry(*, repo_tag):
     digest_cmd = _repo_login_and_run(command=["crane", "digest", repo_tag])
 
-    digests = digest_cmd.stdout.decode("utf-8").splitlines()
+    digests = digest_cmd.stdout.splitlines()
 
     for digest in digests:
-        _repo_login_and_run(
-            command=["crane", "delete", f"{repo_tag}@{digest}"]
-        )
+        try:
+            _repo_login_and_run(
+                command=["crane", "delete", f"{repo_tag}@{digest}"]
+            )
+        except subprocess.CalledProcessError as error:
+            if "MANIFEST_UNKNOWN: Requested image not found" in getattr(
+                error, "stderr", ""
+            ):
+                # The image has already been deleted
+                pass
+            else:
+                raise error
 
 
 def _repo_login_and_run(*, command):
@@ -285,7 +294,10 @@ def _repo_login_and_run(*, command):
         clean_command = f"{login_command} && {shlex.join(command)}"
 
     return subprocess.run(
-        ["/bin/sh", "-c", clean_command], check=True, capture_output=True
+        ["/bin/sh", "-c", clean_command],
+        check=True,
+        capture_output=True,
+        text=True,
     )
 
 
@@ -327,7 +339,7 @@ def _get_container_image_config(*, original_repo_tag):
     output = _repo_login_and_run(
         command=["crane", "config", original_repo_tag]
     )
-    return json.loads(output.stdout.decode("utf-8"))
+    return json.loads(output.stdout)
 
 
 def _get_shim_env_vars(*, original_config):
