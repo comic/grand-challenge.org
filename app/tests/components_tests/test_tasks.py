@@ -310,7 +310,7 @@ def test_update_sagemaker_shim(
     with pytest.raises(subprocess.CalledProcessError) as error:
         _repo_login_and_run(command=["crane", "manifest", old_repo_tag])
 
-    assert "MANIFEST_UNKNOWN" in error.value.stderr.decode()
+    assert "MANIFEST_UNKNOWN" in error.value.stderr
 
 
 @pytest.mark.parametrize(
