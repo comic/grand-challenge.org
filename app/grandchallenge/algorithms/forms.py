@@ -92,6 +92,9 @@ class JobCreateForm(SaveFormInitMixin, Form):
     algorithm_image = ModelChoiceField(
         queryset=None, disabled=True, required=True, widget=HiddenInput
     )
+    algorithm_model = ModelChoiceField(
+        queryset=None, disabled=True, required=False, widget=HiddenInput
+    )
 
     def __init__(self, *args, algorithm, user, **kwargs):
         super().__init__(*args, **kwargs)
@@ -108,6 +111,19 @@ class JobCreateForm(SaveFormInitMixin, Form):
                 AlgorithmImage.objects.filter(pk=active_image.pk)
             )
             self.fields["algorithm_image"].initial = active_image
+
+        try:
+            algorithm_model = AlgorithmModel.objects.get(
+                algorithm=self._algorithm, is_active=True
+            )
+            self.fields["algorithm_model"].queryset = (
+                AlgorithmModel.objects.filter(pk=algorithm_model.pk)
+            )
+            self.fields["algorithm_model"].initial = algorithm_model
+        except AlgorithmModel.DoesNotExist:
+            self.fields["algorithm_model"].queryset = (
+                AlgorithmModel.objects.none()
+            )
 
         for inp in self._algorithm.inputs.all():
             self.fields[inp.slug] = InterfaceFormField(

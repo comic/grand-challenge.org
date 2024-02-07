@@ -592,6 +592,18 @@ class AlgorithmModel(UUIDModel):
         )
 
 
+class AlgorithmModelUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(
+        AlgorithmModel, on_delete=models.CASCADE
+    )
+
+
+class AlgorithmModelGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(
+        AlgorithmModel, on_delete=models.CASCADE
+    )
+
+
 class AlgorithmImage(UUIDModel, ComponentImage):
     algorithm = models.ForeignKey(
         Algorithm,
@@ -704,6 +716,9 @@ class Job(UUIDModel, ComponentJob):
 
     algorithm_image = models.ForeignKey(
         AlgorithmImage, on_delete=models.PROTECT
+    )
+    algorithm_model = models.ForeignKey(
+        AlgorithmModel, null=True, on_delete=models.PROTECT
     )
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL

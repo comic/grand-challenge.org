@@ -543,6 +543,7 @@ class JobCreate(
         return context
 
     def form_valid(self, form):
+        # TODO this should all be in the forms save method, not in the view
         def create_upload_session(image_files):
             upload_session = RawImageUploadSession.objects.create(
                 creator=self.request.user
@@ -556,7 +557,8 @@ class JobCreate(
         interfaces = {ci.slug: ci for ci in self.algorithm.inputs.all()}
 
         for slug, value in form.cleaned_data.items():
-            if slug == "algorithm_image":
+            if slug in {"algorithm_image", "algorithm_model"}:
+                # TODO is there a better wat to identify interface fields?
                 continue
 
             ci = interfaces[slug]
@@ -602,6 +604,11 @@ class JobCreate(
         job = Job.objects.create(
             creator=self.request.user,
             algorithm_image=form.cleaned_data["algorithm_image"],
+            # TODO add the model to the job create API
+            # TODO add the model to the evaluation form and jobs created from there
+            # TODO add the model to the archive job create methods
+            # TODO check the job has not been run already with this set of inputs, algorithm image and model
+            algorithm_model=form.cleaned_data["algorithm_model"],
             extra_logs_viewer_groups=[self.algorithm.editors_group],
             input_civ_set=component_interface_values,
             time_limit=self.algorithm.time_limit,

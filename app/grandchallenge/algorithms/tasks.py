@@ -46,8 +46,11 @@ def import_model_from_upload(*, algorithm_model_pk):
 
     algorithm_model.user_upload.copy_object(to_field=algorithm_model.model)
 
-    # TODO: set the one model as active
     # TODO: set size in storage
+
+    AlgorithmModel.objects.filter(algorithm=algorithm_model.algorithm).exclude(
+        pk=algorithm_model.pk
+    ).update(is_active=False)
     algorithm_model.is_active = True
     algorithm_model.save()
 

@@ -10,6 +10,9 @@ from grandchallenge.algorithms.models import (
     AlgorithmImage,
     AlgorithmImageGroupObjectPermission,
     AlgorithmImageUserObjectPermission,
+    AlgorithmModel,
+    AlgorithmModelGroupObjectPermission,
+    AlgorithmModelUserObjectPermission,
     AlgorithmPermissionRequest,
     AlgorithmUserObjectPermission,
     Job,
@@ -59,6 +62,15 @@ class AlgorithmAdmin(GuardedModelAdmin):
             container_count=Count("algorithm_container_images")
         )
         return queryset
+
+
+@admin.register(AlgorithmModel)
+class AlgorithmModelAdmin(GuardedModelAdmin):
+    exclude = ("model",)
+    list_display = ("algorithm", "created", "is_active", "comment")
+    list_filter = ("is_active",)
+    search_fields = ("algorithm__title", "comment")
+    readonly_fields = ("creator", "algorithm", "sha256", "size_in_storage")
 
 
 @admin.register(Job)
@@ -117,6 +129,12 @@ admin.site.register(
 )
 admin.site.register(
     AlgorithmImageGroupObjectPermission, GroupObjectPermissionAdmin
+)
+admin.site.register(
+    AlgorithmModelUserObjectPermission, UserObjectPermissionAdmin
+)
+admin.site.register(
+    AlgorithmModelGroupObjectPermission, GroupObjectPermissionAdmin
 )
 admin.site.register(JobUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(JobGroupObjectPermission, GroupObjectPermissionAdmin)
