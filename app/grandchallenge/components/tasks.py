@@ -252,23 +252,23 @@ def push_container_image(*, instance):
 
 
 def remove_tag_from_registry(*, repo_tag):
-    digest_cmd = _repo_login_and_run(command=["crane", "digest", repo_tag])
+    try:
+        digest_cmd = _repo_login_and_run(command=["crane", "digest", repo_tag])
+    except subprocess.CalledProcessError as error:
+        if "MANIFEST_UNKNOWN: Requested image not found" in getattr(
+            error, "stderr", ""
+        ):
+            # The image has already been deleted
+            return
+        else:
+            raise error
 
     digests = digest_cmd.stdout.splitlines()
 
     for digest in digests:
-        try:
-            _repo_login_and_run(
-                command=["crane", "delete", f"{repo_tag}@{digest}"]
-            )
-        except subprocess.CalledProcessError as error:
-            if "MANIFEST_UNKNOWN: Requested image not found" in getattr(
-                error, "stderr", ""
-            ):
-                # The image has already been deleted
-                pass
-            else:
-                raise error
+        _repo_login_and_run(
+            command=["crane", "delete", f"{repo_tag}@{digest}"]
+        )
 
 
 def _repo_login_and_run(*, command):
