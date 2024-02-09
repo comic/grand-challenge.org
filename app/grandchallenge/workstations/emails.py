@@ -1,8 +1,8 @@
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
-from django.core.mail import send_mail
+from django.utils.html import format_html
 
+from grandchallenge.emails.emails import send_standard_email
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -11,20 +11,22 @@ def send_new_feedback_email_to_staff(feedback):
     url = reverse(
         "admin:workstations_feedback_change", kwargs={"object_id": feedback.pk}
     )
-    message = (
-        f"Dear staff,\n\n"
-        f"A user just submitted new session feedback. \n\n"
-        f"User comment:\n {feedback.user_comment} \n\n"
-        f"For more details, see here: {url}.\n\n"
-        f"Regards,\n"
-        f"{site.name}\n\n"
-        f"This is an automated service email from {site.domain}."
+    message = format_html(
+        (
+            "A user just submitted new session feedback. \n\n"
+            "User comment:\n {comment} \n\n"
+            "For more details, see here: {url}.\n\n"
+        ),
+        comment=feedback.user_comment,
+        url=url,
     )
 
     staff = get_user_model().objects.filter(is_staff=True)
-    send_mail(
-        subject=f"[{site.domain.lower()}] New Session Feedback",
-        message=message,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email for user in staff],
-    )
+    for user in staff:
+        send_standard_email(
+            site=site,
+            subject="New Session Feedback",
+            message=message,
+            recipient=user,
+            unsubscribable=False,
+        )

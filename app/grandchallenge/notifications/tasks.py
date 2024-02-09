@@ -43,7 +43,6 @@ def send_unread_notification_emails():
 
         send_unread_notifications_email(
             site=site,
-            username=profile.user.username,
-            email=profile.user.email,
+            user=profile.user,
             n_notifications=profile.unread_notification_count,
         )
