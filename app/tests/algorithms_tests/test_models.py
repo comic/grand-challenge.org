@@ -10,7 +10,6 @@ from grandchallenge.algorithms.models import Algorithm, Job
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
-    InterfaceKind,
 )
 from grandchallenge.credits.models import Credit
 from tests.algorithms_tests.factories import (
@@ -57,16 +56,11 @@ def test_group_deletion_reverse(group):
 
 
 @pytest.mark.django_db
-def test_default_interfaces_created():
+def test_no_default_interfaces_created():
     a = AlgorithmFactory()
 
-    assert {i.kind for i in a.inputs.all()} == {
-        InterfaceKind.InterfaceKindChoices.IMAGE
-    }
-    assert {o.kind for o in a.outputs.all()} == {
-        InterfaceKind.InterfaceKindChoices.ANY,
-        InterfaceKind.InterfaceKindChoices.HEAT_MAP,
-    }
+    assert {i.kind for i in a.inputs.all()} == set()
+    assert {o.kind for o in a.outputs.all()} == set()
 
 
 @pytest.mark.django_db

@@ -57,9 +57,6 @@ from grandchallenge.workstations.models import Workstation
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_INPUT_INTERFACE_SLUG = "generic-medical-image"
-DEFAULT_OUTPUT_INTERFACE_SLUG = "generic-overlay"
-
 JINJA_ENGINE = sandbox.ImmutableSandboxedEnvironment()
 
 

@@ -382,9 +382,13 @@ class TestJobPermissions:
         im = ImageFactory()
         s.image_set.set([im])
 
-        civ = ComponentInterfaceValueFactory(
-            image=im, interface=ai.algorithm.inputs.get()
+        input_interface = ComponentInterface.objects.get(
+            slug="generic-medical-image"
         )
+        civ = ComponentInterfaceValueFactory(
+            image=im, interface=input_interface
+        )
+
         archive_item = ArchiveItemFactory(archive=archive)
         with django_capture_on_commit_callbacks(execute=True):
             archive_item.values.add(civ)
@@ -436,9 +440,13 @@ class TestJobPermissions:
         im = ImageFactory()
         s.image_set.set([im])
 
-        civ = ComponentInterfaceValueFactory(
-            image=im, interface=ai.algorithm.inputs.get()
+        input_interface = ComponentInterface.objects.get(
+            slug="generic-medical-image"
         )
+        civ = ComponentInterfaceValueFactory(
+            image=im, interface=input_interface
+        )
+
         archive_item = ArchiveItemFactory(archive=archive)
         with django_capture_on_commit_callbacks(execute=True):
             archive_item.values.add(civ)
@@ -488,8 +496,11 @@ class TestJobPermissions:
         im = ImageFactory()
         s.image_set.set([im])
 
+        input_interface = ComponentInterface.objects.get(
+            slug="generic-medical-image"
+        )
         civ = ComponentInterfaceValueFactory(
-            image=im, interface=ai.algorithm.inputs.get()
+            image=im, interface=input_interface
         )
         archive_item = ArchiveItemFactory(archive=archive)
         with django_capture_on_commit_callbacks(execute=True):
