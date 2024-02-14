@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load url %}
+
+{% block content %}
+    <h2>Subscriptions</h2>
+    <p>Your current subscription preferences are as follows:</p>
+    <ul>
+        <li>Newsletter:&nbsp;
+            {% if current_user.user_profile.receive_newsletter == True %}
+                <i class="fas fa-fw fa-check-circle text-success mr-1"></i> Subscribed
+                [<a type="button"  href="{% url 'newsletter-unsubscribe' token=current_user.user_profile.unsubscribe_token %}">Unsubscribe</a>]
+            {% else %}
+                <i class="fas fa-times-circle text-danger mr-1"></i> Not subscribed
+            {% endif %}
+        </li>
+        <li>Notifications:&nbsp;
+            {% if current_user.user_profile.receive_notification_emails == True %}
+                <i class="fas fa-fw fa-check-circle text-success mr-1"></i> Subscribed
+                [<a type="button"  href="{% url 'notification-unsubscribe' token=current_user.user_profile.unsubscribe_token %}">Unsubscribe</a>]
+            {% else %}
+                <i class="fas fa-times-circle text-danger mr-1"></i> Not subscribed
+            {% endif %}
+        </li>
+    </ul>
+    <p>To manage your subscriptions, go to <a href="{% url 'profile-update' current_user.username %}">your profile settings</a>.</p>
+{% endblock %}

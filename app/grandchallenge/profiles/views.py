@@ -1,11 +1,14 @@
 from allauth_2fa.views import TwoFactorSetup
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import get_user_model
+from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
-from django.http import Http404
+from django.http import Http404, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect
-from django.views.generic import DetailView, UpdateView
+from django.utils.functional import cached_property
+from django.views.generic import DetailView, FormView, TemplateView, UpdateView
 from guardian.core import ObjectPermissionChecker
 from guardian.mixins import LoginRequiredMixin
 from rest_framework.decorators import action
@@ -22,8 +25,12 @@ from grandchallenge.core.guardian import (
 )
 from grandchallenge.evaluation.models import Submission
 from grandchallenge.organizations.models import Organization
-from grandchallenge.profiles.forms import NewsletterSignupForm, UserProfileForm
-from grandchallenge.profiles.models import UserProfile
+from grandchallenge.profiles.forms import (
+    NewsletterSignupForm,
+    UnsubscribeForm,
+    UserProfileForm,
+)
+from grandchallenge.profiles.models import SubscriptionTypes, UserProfile
 from grandchallenge.profiles.serializers import UserProfileSerializer
 from grandchallenge.subdomains.utils import reverse
 
@@ -197,3 +204,66 @@ class TwoFactorSetup(TwoFactorSetup):
         # and display an error message
         messages.add_message(self.request, messages.ERROR, "Incorrect token.")
         return response
+
+
+class OneClickUnsubscribeBaseView(SuccessMessageMixin, FormView):
+    template_name = "profiles/unsubscribe.html"
+    form_class = UnsubscribeForm
+    subscription_type = None
+    user_to_unsubscribe = None
+
+    def get_success_message(self, cleaned_data):
+        return (
+            f"You successfully unsubscribed from "
+            f"{self.subscription_type.value} emails."
+        )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                "token": self.kwargs.get("token"),
+                "user": self.request.user,
+            }
+        )
+        return kwargs
+
+    def form_valid(self, form):
+        self.user_to_unsubscribe = form.cleaned_data["user"]
+        self.user_to_unsubscribe.user_profile.unsubscribe(
+            subscription_type=self.subscription_type
+        )
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        super().form_invalid(form)
+        return HttpResponseForbidden()
+
+    def get_success_url(self):
+        return reverse(
+            "subscriptions",
+            kwargs={"username": self.user_to_unsubscribe.username},
+        )
+
+
+class NewsletterUnsubscribeView(OneClickUnsubscribeBaseView):
+    subscription_type = SubscriptionTypes.NEWSLETTER
+
+
+class NotificationUnsubscribeView(OneClickUnsubscribeBaseView):
+    subscription_type = SubscriptionTypes.NOTIFICATION
+
+
+class SubscriptionView(TemplateView):
+    template_name = "profiles/subscription_overview.html"
+
+    @cached_property
+    def user(self):
+        return get_object_or_404(
+            get_user_model(), username=self.kwargs["username"]
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context.update({"current_user": self.user})
+        return context

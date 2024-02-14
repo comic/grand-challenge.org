@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load static %}
+{% load url %}
+
+
+{% block content %}
+    <form method="post" id="unsubscribeForm">
+        {% csrf_token %}
+        {{ form }}
+    </form>
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="module" src="{% static 'profiles/js/form_submit.mjs' %}" type="text/javascript"></script>
+{% endblock %}

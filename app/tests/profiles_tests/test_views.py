@@ -5,6 +5,7 @@ from rest_framework.test import force_authenticate
 
 from grandchallenge.profiles.views import UserProfileViewSet
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.verifications.models import VerificationUserSet
 from tests.factories import PolicyFactory, UserFactory
 from tests.organizations_tests.factories import OrganizationFactory
 from tests.utils import get_view_for_user
@@ -179,3 +180,74 @@ class TestProfileViewSets:
         )
 
         assert org1.title not in response.content.decode()
+
+
+@pytest.mark.parametrize(
+    "viewname,subscription_attr",
+    (
+        ("newsletter-unsubscribe", "receive_newsletter"),
+        ("notification-unsubscribe", "receive_notification_emails"),
+    ),
+)
+@pytest.mark.django_db
+def test_one_click_unsubscribe(client, settings, viewname, subscription_attr):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    user = UserFactory()
+    user.user_profile.receive_newsletter = True
+    user.user_profile.receive_notification_emails = True
+    user.user_profile.save()
+
+    token = user.user_profile.unsubscribe_token
+
+    # User does not need to be logged in to unsubscribe
+    response = get_view_for_user(
+        client=client,
+        viewname=viewname,
+        reverse_kwargs={"token": token},
+        method=client.post,
+    )
+    assert response.status_code == 302
+    user.user_profile.refresh_from_db()
+    assert not getattr(user.user_profile, subscription_attr)
+
+    # reset preferences
+    setattr(user.user_profile, subscription_attr, True)
+    user.user_profile.save()
+
+    # if a different, logged-in user submits the request,
+    # the requesting user and the token owner are added to a
+    # verification user set
+    other_user = UserFactory()
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname=viewname,
+        reverse_kwargs={"token": token},
+        user=other_user,
+    )
+    assert response.status_code == 302
+    user.user_profile.refresh_from_db()
+    assert not getattr(user.user_profile, subscription_attr)
+    user_set = VerificationUserSet.objects.get()
+    assert user in user_set.users.all()
+    assert other_user in user_set.users.all()
+
+    # if the token owner is logged in, no verification user set gets created
+    setattr(user.user_profile, subscription_attr, True)
+    user.user_profile.save()
+    user_set.delete()
+
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname=viewname,
+        reverse_kwargs={"token": token},
+        user=user,
+    )
+    assert response.status_code == 302
+    user.user_profile.refresh_from_db()
+    assert not getattr(user.user_profile, subscription_attr)
+    assert VerificationUserSet.objects.count() == 0
