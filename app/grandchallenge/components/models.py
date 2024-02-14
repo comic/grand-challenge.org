@@ -71,8 +71,6 @@ from grandchallenge.workstation_configs.models import (
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_OUTPUT_INTERFACE_SLUG = "generic-overlay"
-
 
 class InterfaceKindChoices(models.TextChoices):
     """Interface kind choices."""

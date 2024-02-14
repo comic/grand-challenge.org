@@ -57,9 +57,6 @@ from grandchallenge.workstations.models import Workstation
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_INPUT_INTERFACE_SLUG = "generic-medical-image"
-DEFAULT_OUTPUT_INTERFACE_SLUG = "generic-overlay"
-
 JINJA_ENGINE = sandbox.ImmutableSandboxedEnvironment()
 
 
@@ -272,9 +269,6 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
 
         super().save(*args, **kwargs)
 
-        if adding:
-            self.set_default_interfaces()
-
         self.assign_permissions()
         self.assign_workstation_permissions()
 
@@ -292,25 +286,6 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         self.users_group = Group.objects.create(
             name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_users"
         )
-
-    def set_default_interfaces(self):
-        if not self.inputs.exists():
-            self.inputs.set(
-                [
-                    ComponentInterface.objects.get(
-                        slug=DEFAULT_INPUT_INTERFACE_SLUG
-                    )
-                ]
-            )
-        if not self.outputs.exists():
-            self.outputs.set(
-                [
-                    ComponentInterface.objects.get(slug="results-json-file"),
-                    ComponentInterface.objects.get(
-                        slug=DEFAULT_OUTPUT_INTERFACE_SLUG
-                    ),
-                ]
-            )
 
     def assign_permissions(self):
         # Editors and users can view this algorithm
