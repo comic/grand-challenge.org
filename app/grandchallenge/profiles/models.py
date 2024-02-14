@@ -144,7 +144,9 @@ class UserProfile(models.Model):
         ):
             self.receive_newsletter = False
         else:
-            pass
+            raise NotImplementedError(
+                f"Unsubscribing for {subscription_type} not implemented."
+            )
         self.save()
 
 
