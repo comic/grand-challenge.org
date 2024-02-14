@@ -2,7 +2,6 @@ import base64
 import itertools
 import json
 import logging
-import os
 import random
 
 from allauth.account.models import EmailAddress
@@ -12,7 +11,6 @@ from django.contrib.auth.models import Group, Permission
 from django.contrib.flatpages.models import FlatPage
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.files import File
 from django.core.files.base import ContentFile
 from django.db import IntegrityError
 from faker import Faker
@@ -52,6 +50,7 @@ from grandchallenge.reader_studies.models import (
 from grandchallenge.task_categories.models import TaskType
 from grandchallenge.verifications.models import Verification
 from grandchallenge.workstations.models import Workstation
+from scripts.algorithm_evaluation_fixtures import _gc_demo_algorithm
 
 logger = logging.getLogger(__name__)
 
@@ -245,9 +244,9 @@ def _create_demo_challenge(users, algorithm):
         phase.save()
 
         method = Method(phase=phase, creator=users["demo"])
-        container = ContentFile(base64.b64decode(b""))
-        method.image.save("test.tar", container)
-        method.save()
+
+        with _gc_demo_algorithm() as container:
+            method.image.save("algorithm_io.tar", container)
 
         if phase_num == 1:
             submission = Submission(phase=phase, creator=users["demop"])
@@ -359,20 +358,13 @@ def _create_algorithm_demo(users):
     )
     detection_interface.save()
     algorithm.outputs.add(detection_interface)
+
     algorithm_image = AlgorithmImage(
         creator=users["algorithm"], algorithm=algorithm
     )
 
-    try:
-        with open(
-            os.path.join(settings.SITE_ROOT, "algorithm.tar.gz"), "rb"
-        ) as f:
-            container = File(f)
-            algorithm_image.image.save("test_algorithm.tar", container)
-    except FileNotFoundError:
-        pass
-
-    algorithm_image.save()
+    with _gc_demo_algorithm() as container:
+        algorithm_image.image.save("algorithm_io.tar", container)
 
     results = [
         {"cancer_score": 0.5},
