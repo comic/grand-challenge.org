@@ -25,6 +25,16 @@ def check_connectivity():
         print(f"CONNECTIVITY - Could not google: {e.reason}")
 
 
+def ls_dir(directory: Path):
+    for file in directory.rglob("**/*"):
+        file_stat = os.stat(file)
+        print(
+            f"{file.absolute()}\t"
+            f"{file_stat.st_uid}:{file_stat.st_gid}\t"
+            f"{oct(file_stat.st_mode)}"
+        )
+
+
 def check_partitions():
     disk_partitions = psutil.disk_partitions(all=True)
 
@@ -142,6 +152,9 @@ if __name__ == "__main__":
     print("")
 
     check_connectivity()
+    print("")
+
+    ls_dir(Path("/opt/ml"))
     print("")
 
     check_partitions()

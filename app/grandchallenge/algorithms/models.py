@@ -764,6 +764,13 @@ class Job(UUIDModel, ComponentJob):
     def output_interfaces(self):
         return self.algorithm_image.algorithm.outputs
 
+    @property
+    def executor_kwargs(self):
+        executor_kwargs = super().executor_kwargs
+        if self.algorithm_model:
+            executor_kwargs["algorithm_model"] = self.algorithm_model.model
+        return executor_kwargs
+
     @cached_property
     def rendered_result_text(self) -> str:
         try:
