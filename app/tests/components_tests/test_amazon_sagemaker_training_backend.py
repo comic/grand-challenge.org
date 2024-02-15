@@ -196,6 +196,7 @@ def test_execute(settings):
                     "PYTHONUNBUFFERED": "1",
                     "no_proxy": "amazonaws.com",
                     "GRAND_CHALLENGE_COMPONENT_WRITABLE_DIRECTORIES": "/opt/ml/output/data:/opt/ml/model:/opt/ml/checkpoints:/tmp",
+                    "GRAND_CHALLENGE_COMPONENT_POST_CLEAN_DIRECTORIES": "/opt/ml/output/data:/opt/ml/model",
                 },
                 "VpcConfig": {
                     "SecurityGroupIds": [
