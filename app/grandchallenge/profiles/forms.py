@@ -1,18 +1,15 @@
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django import forms
-from django.contrib.auth import get_user_model
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.core.signing import BadSignature, Signer
-from django.forms import CharField, CheckboxInput, Form, Select
+from django.core.exceptions import ValidationError
+from django.forms import CheckboxInput, Select
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.policies.models import Policy
-from grandchallenge.profiles.models import UNSUBSCRIBE_SALT, UserProfile
-from grandchallenge.verifications.tasks import update_verification_user_set
+from grandchallenge.profiles.models import UserProfile
 
 
 class UserProfileForm(forms.ModelForm):
@@ -127,47 +124,6 @@ class NewsletterSignupForm(SaveFormInitMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["receive_newsletter"].help_text = None
         self.helper.form_show_labels = False
-
-
-class UnsubscribeForm(Form):
-    def __init__(self, *args, user, token, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._user = user
-        self.fields["token"] = CharField(
-            initial=token,
-            label="token",
-            widget=forms.HiddenInput(),
-            disabled=True,
-        )
-
-    def clean(self):
-        cleaned_data = super().clean()
-
-        try:
-            user = get_user_model().objects.get(
-                username=cleaned_data["token"], is_active=True
-            )
-        except (ObjectDoesNotExist, KeyError) as e:
-            raise ValidationError(e)
-
-        if self._user.is_authenticated and user != self._user:
-            update_verification_user_set.signature(
-                kwargs={"usernames": [user.username, self._user.username]}
-            ).apply_async()
-
-        cleaned_data["user"] = user
-
-        return cleaned_data
-
-    def clean_token(self):
-        token = self.cleaned_data["token"]
-        return self.check_token(token)
-
-    def check_token(self, token):
-        try:
-            return Signer(salt=UNSUBSCRIBE_SALT).unsign(token)
-        except BadSignature as e:
-            raise ValidationError(e)
 
 
 class SubscriptionPreferenceForm(forms.ModelForm):
