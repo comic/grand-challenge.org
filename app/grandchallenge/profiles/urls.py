@@ -5,7 +5,7 @@ from grandchallenge.profiles.views import (
     NewsletterSignUp,
     NewsletterUnsubscribeView,
     NotificationUnsubscribeView,
-    SubscriptionView,
+    SubscriptionOverview,
     UserProfileDetail,
     UserProfileUpdate,
     profile,
@@ -27,6 +27,11 @@ urlpatterns = [
         NotificationUnsubscribeView.as_view(),
         name="notification-unsubscribe",
     ),
+    re_path(
+        r"subscription-overview/(?P<token>[\w:\-_=]+)/$",
+        SubscriptionOverview.as_view(),
+        name="subscriptions",
+    ),
     path("profile/", profile, name="profile-detail-redirect"),
     re_path(
         r"^(?P<username>[\@\.\+\w-]+)/$",
@@ -42,10 +47,5 @@ urlpatterns = [
         r"^(?P<username>[\@\.\+\w-]+)/newsletter-sign-up/$",
         NewsletterSignUp.as_view(),
         name="newsletter-sign-up",
-    ),
-    re_path(
-        r"^(?P<username>[\@\.\+\w-]+)/subscriptions/$",
-        SubscriptionView.as_view(),
-        name="subscriptions",
     ),
 ]

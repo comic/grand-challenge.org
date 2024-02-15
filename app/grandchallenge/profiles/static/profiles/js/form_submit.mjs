@@ -1,3 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById("unsubscribeForm").submit();
+    const form = document.getElementById("unsubscribeForm");
+    if (form.classList.contains('auto-submit')){
+        form.submit();
+    }
 });

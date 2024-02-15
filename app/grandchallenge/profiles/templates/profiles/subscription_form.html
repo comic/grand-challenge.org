@@ -1,13 +1,14 @@
 {% extends "base.html" %}
 {% load static %}
 {% load url %}
+{% load crispy_forms_tags %}
 
 
 {% block content %}
-    <form method="post" id="unsubscribeForm">
-        {% csrf_token %}
-        {{ form }}
-    </form>
+    <h2>Subscriptions</h2>
+    <p>Your current subscription preferences are as follows:</p>
+    {% csrf_token %}
+    {% crispy form %}
 {% endblock %}
 
 {% block script %}

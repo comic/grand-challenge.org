@@ -1,3 +1,5 @@
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit
 from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -166,3 +168,41 @@ class UnsubscribeForm(Form):
             return Signer(salt=UNSUBSCRIBE_SALT).unsign(token)
         except BadSignature as e:
             raise ValidationError(e)
+
+
+class SubscriptionPreferenceForm(forms.ModelForm):
+    class Meta:
+        model = UserProfile
+        fields = (
+            "receive_notification_emails",
+            "receive_newsletter",
+        )
+        widgets = {
+            "receive_notification_emails": CheckboxInput,
+            "receive_newsletter": CheckboxInput,
+        }
+
+    def __init__(
+        self,
+        *args,
+        receive_notification_emails,
+        receive_newsletter,
+        autosubmit,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+
+        self.initial["receive_notification_emails"] = (
+            receive_notification_emails
+        )
+        self.initial["receive_newsletter"] = receive_newsletter
+
+        self.helper = FormHelper(self)
+        self.helper.form_id = "unsubscribeForm"
+
+        if autosubmit:
+            self.helper.form_class = "auto-submit"
+            self.fields["receive_notification_emails"].disabled = True
+            self.fields["receive_newsletter"].disabled = True
+        else:
+            self.helper.add_input(Submit("save", "save"))
