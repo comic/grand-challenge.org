@@ -4,7 +4,7 @@ from django.template.defaultfilters import pluralize
 from django.utils.html import format_html
 
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
-from grandchallenge.emails.emails import send_standard_email
+from grandchallenge.emails.emails import send_standard_email_batch
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -49,7 +49,7 @@ def get_new_senders(*, user):
 
 
 def send_new_unread_direct_messages_email(
-    *, site, user, new_senders, new_unread_message_count
+    *, user, new_senders, new_unread_message_count
 ):
     subject = format_html(
         (
@@ -63,9 +63,8 @@ def send_new_unread_direct_messages_email(
 
     msg = format_html(
         (
-            "You have {new_unread_message_count} new message{suffix} "
-            "from {new_senders}.\n"
-            "To read and manage your messages, visit: {url}.\n\n"
+            "<p>You have {new_unread_message_count} new message{suffix} from {new_senders}.</p>"
+            '<p>To read and manage your messages, visit: <a href="{url}">{url}</a>.</p>'
         ),
         new_unread_message_count=new_unread_message_count,
         suffix=pluralize(new_unread_message_count),
@@ -73,10 +72,8 @@ def send_new_unread_direct_messages_email(
         url=reverse("direct-messages:conversation-list"),
     )
 
-    send_standard_email(
-        site=site,
+    send_standard_email_batch(
         subject=subject,
         message=msg,
-        recipient=user,
-        unsubscribable=True,
+        recipients=[user],
     )

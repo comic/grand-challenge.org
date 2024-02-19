@@ -10,13 +10,12 @@ from allauth.socialaccount.models import SocialLogin
 from allauth_2fa.utils import user_has_valid_totp_device
 from django import forms
 from django.conf import settings
-from django.contrib.sites.models import Site
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseRedirect
 from django.utils.http import url_has_allowed_host_and_scheme, urlencode
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.emails.emails import send_standard_email
+from grandchallenge.emails.emails import send_standard_email_batch
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -113,14 +112,11 @@ class AccountAdapter(DefaultAccountAdapter):
 
     def post_login(self, request, user, **kwargs):
         response = super().post_login(request, user, **kwargs)
-        site = Site.objects.get_current()
         if user.is_staff or user.is_superuser:
-            send_standard_email(
-                site=site,
+            send_standard_email_batch(
                 subject="Security Alert",
-                message="We noticed a new login to your account. If this was you, you don't need to do anything. If not, please change your password and update your 2FA device.",
-                recipient=user,
-                unsubscribable=False,
+                message="<p>We noticed a new login to your account. If this was you, you don't need to do anything. If not, please change your password and update your 2FA device.</p>",
+                recipients=[user],
             )
         return response
 

@@ -4,6 +4,7 @@ from urllib.parse import urlencode
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.db.models import TextChoices
 from django.db.models.signals import post_save
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
@@ -16,6 +17,11 @@ from stdimage import JPEGField
 from grandchallenge.core.storage import get_mugshot_path
 from grandchallenge.core.utils import disable_for_loaddata
 from grandchallenge.subdomains.utils import reverse
+
+
+class SubscriptionTypes(TextChoices):
+    NEWSLETTER = "NEWSLETTER", _("newsletter")
+    NOTIFICATIONS = "NOTIFICATIONS", _("notifications")
 
 
 class UserProfile(models.Model):

@@ -2,7 +2,7 @@ import pytest
 from django.contrib.sites.models import Site
 from django.core import mail
 
-from grandchallenge.emails.tasks import get_receivers, send_bulk_email
+from grandchallenge.emails.tasks import get_receivers, send_standard_bulk_email
 from grandchallenge.emails.utils import SendActionChoices
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import AlgorithmFactory
@@ -65,7 +65,9 @@ def test_email_content(settings):
 
     assert len(mail.outbox) == 0
 
-    send_bulk_email(action=SendActionChoices.MAILING_LIST, email_pk=email.pk)
+    send_standard_bulk_email(
+        action=SendActionChoices.MAILING_LIST, email_pk=email.pk
+    )
 
     assert len(mail.outbox) == 2
     email.refresh_from_db()
@@ -88,5 +90,7 @@ def test_email_content(settings):
 
     # check that email sending task is idempotent
     mail.outbox.clear()
-    send_bulk_email(action=SendActionChoices.MAILING_LIST, email_pk=email.pk)
+    send_standard_bulk_email(
+        action=SendActionChoices.MAILING_LIST, email_pk=email.pk
+    )
     assert len(mail.outbox) == 0

@@ -5,7 +5,7 @@ from markdownx.admin import MarkdownxModelAdmin
 
 from grandchallenge.core.widgets import MarkdownEditorAdminWidget
 from grandchallenge.emails.models import Email
-from grandchallenge.emails.tasks import send_bulk_email
+from grandchallenge.emails.tasks import send_standard_bulk_email
 from grandchallenge.emails.utils import SendActionChoices
 
 
@@ -13,7 +13,7 @@ def schedule_emails(modeladmin, queryset, request, action):
     emails = queryset.filter(sent=False)
     if emails:
         for email in emails:
-            send_admin_emails = send_bulk_email.signature(
+            send_admin_emails = send_standard_bulk_email.signature(
                 kwargs={"action": action, "email_pk": email.pk}, immutable=True
             )
             on_commit(send_admin_emails.apply_async)

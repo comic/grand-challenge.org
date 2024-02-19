@@ -5,7 +5,6 @@ from statistics import mean, median
 from actstream.actions import follow, is_following
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.contrib.sites.models import Site
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.mail import mail_managers
@@ -41,7 +40,7 @@ from grandchallenge.core.validators import (
     JSONValidator,
     MimeTypeValidator,
 )
-from grandchallenge.emails.emails import send_standard_email
+from grandchallenge.emails.emails import send_standard_email_batch
 from grandchallenge.evaluation.tasks import (
     assign_evaluation_permissions,
     assign_submission_permissions,
@@ -820,21 +819,18 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         return self.valid_archive_items.count()
 
     def send_give_algorithm_editors_job_view_permissions_changed_email(self):
-        site = Site.objects.get_current()
-
         message = format_html(
             (
-                "You are being emailed as you are an admin of '{challenge}' "
-                "and an important setting has been changed.\n\n"
-                "The 'Give Algorithm Editors Job View Permissions' setting has "
-                "been enabled for {phase} ({phase_settings_url}). "
+                "<p>You are being emailed as you are an admin of '{challenge}' "
+                "and an important setting has been changed.</p>"
+                "<p>The 'Give Algorithm Editors Job View Permissions' setting has "
+                "been enabled for <a href='{phase_settings_url}'>{phase}</a>. "
                 "This means that editors of each algorithm submitted to this "
                 "phase (i.e. the challenge participants) will automatically be "
-                "given view permissions to their algorithm jobs and their logs.\n\n"
-                "WARNING: This means that data in the linked archive is now "
-                "accessible to the participants!\n\n"
-                "You can update this setting in the Phase Settings "
-                "({phase_settings_url})."
+                "given view permissions to their algorithm jobs and their logs.</p>"
+                "<p>WARNING: This means that data in the linked archive is now "
+                "accessible to the participants!</p>"
+                "<p>You can update this setting in the <a href='{phase_settings_url}'>Phase Settings</a>.</p>"
             ),
             challenge=self.challenge,
             phase=self.title,
@@ -847,16 +843,13 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             ),
         )
 
-        for admin in self.challenge.admins_group.user_set.select_related(
-            "user_profile"
-        ).all():
-            send_standard_email(
-                site=site,
-                subject="WARNING: Permissions granted to Challenge Participants",
-                message=message,
-                recipient=admin,
-                unsubscribable=False,
-            )
+        send_standard_email_batch(
+            subject="WARNING: Permissions granted to Challenge Participants",
+            message=message,
+            recipients=self.challenge.admins_group.user_set.select_related(
+                "user_profile"
+            ).all(),
+        )
 
 
 class PhaseUserObjectPermission(UserObjectPermissionBase):
