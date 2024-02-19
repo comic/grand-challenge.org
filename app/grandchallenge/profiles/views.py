@@ -227,13 +227,12 @@ class EmailPreferencesUpdate(
         except BadSignature:
             return False
 
-        if not get_user_model().objects.filter(username=username).exists():
+        try:
+            user = get_user_model().objects.get(username=username)
+        except ObjectDoesNotExist:
             return False
 
-        if (
-            self.request.user.is_authenticated
-            and self.object.user != self.request.user
-        ):
+        if self.request.user.is_authenticated and user != self.request.user:
             update_verification_user_set.signature(
                 kwargs={
                     "usernames": [
