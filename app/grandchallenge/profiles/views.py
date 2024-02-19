@@ -230,20 +230,6 @@ class EmailPreferencesUpdate(
         if not get_user_model().objects.filter(username=username).exists():
             return False
 
-        return True
-
-    @property
-    def username_from_token(self):
-        return Signer(salt=UNSUBSCRIBE_SALT).unsign_object(
-            self.kwargs.get("token")
-        )["username"]
-
-    def get_object(self):
-        return get_object_or_404(
-            UserProfile, user__username=self.username_from_token
-        )
-
-    def form_valid(self, form):
         if (
             self.request.user.is_authenticated
             and self.object.user != self.request.user
@@ -256,7 +242,19 @@ class EmailPreferencesUpdate(
                     ]
                 }
             ).apply_async()
-        return super().form_valid(form)
+
+        return True
+
+    @property
+    def username_from_token(self):
+        return Signer(salt=UNSUBSCRIBE_SALT).unsign_object(
+            self.kwargs.get("token")
+        )["username"]
+
+    def get_object(self):
+        return get_object_or_404(
+            UserProfile, user__username=self.username_from_token
+        )
 
     def get_success_url(self):
         return reverse(
