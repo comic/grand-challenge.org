@@ -31,7 +31,11 @@ from grandchallenge.profiles.forms import (
     SubscriptionPreferenceForm,
     UserProfileForm,
 )
-from grandchallenge.profiles.models import UNSUBSCRIBE_SALT, UserProfile
+from grandchallenge.profiles.models import (
+    UNSUBSCRIBE_SALT,
+    EmailSubscriptionTypes,
+    UserProfile,
+)
 from grandchallenge.profiles.serializers import UserProfileSerializer
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.tasks import update_verification_user_set
@@ -208,34 +212,35 @@ class TwoFactorSetup(TwoFactorSetup):
         return response
 
 
-class SubscriptionUpdate(SuccessMessageMixin, UserPassesTestMixin, UpdateView):
+class EmailPreferencesUpdate(
+    SuccessMessageMixin, UserPassesTestMixin, UpdateView
+):
     model = UserProfile
     form_class = SubscriptionPreferenceForm
     template_name = "profiles/subscription_form.html"
-    success_message = "You successfully updated your subscription preferences."
     raise_exception = True
+    subscription_type = None
 
     def test_func(self):
         try:
-            token = self.validate_token()
+            username = self.username_from_token
         except BadSignature:
             return False
 
-        if (
-            not get_user_model()
-            .objects.filter(username__iexact=token, is_active=True)
-            .exists()
-        ):
+        if not get_user_model().objects.filter(username=username).exists():
             return False
 
         return True
 
-    def validate_token(self):
-        return Signer(salt=UNSUBSCRIBE_SALT).unsign(self.kwargs.get("token"))
+    @property
+    def username_from_token(self):
+        return Signer(salt=UNSUBSCRIBE_SALT).unsign_object(
+            self.kwargs.get("token")
+        )["username"]
 
     def get_object(self):
         return get_object_or_404(
-            UserProfile, user__username=self.validate_token()
+            UserProfile, user__username=self.username_from_token
         )
 
     def form_valid(self, form):
@@ -255,12 +260,20 @@ class SubscriptionUpdate(SuccessMessageMixin, UserPassesTestMixin, UpdateView):
 
     def get_success_url(self):
         return reverse(
-            "subscriptions",
+            "email-preferences",
             kwargs={"token": self.kwargs.get("token")},
         )
 
+    def get_success_message(self, cleaned_data):
+        message = "You successfully updated your email preferences. "
+        if self.subscription_type:
+            message += f"You will no longer receive {self.subscription_type.lower()} emails."
+        return message
 
-class NewsletterUnsubscribeView(SubscriptionUpdate):
+
+class NewsletterUnsubscribeView(EmailPreferencesUpdate):
+    subscription_type = EmailSubscriptionTypes.NEWSLETTER
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs.update(
@@ -273,7 +286,9 @@ class NewsletterUnsubscribeView(SubscriptionUpdate):
         return kwargs
 
 
-class NotificationUnsubscribeView(SubscriptionUpdate):
+class NotificationUnsubscribeView(EmailPreferencesUpdate):
+    subscription_type = EmailSubscriptionTypes.NOTIFICATIONS
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs.update(
@@ -286,7 +301,7 @@ class NotificationUnsubscribeView(SubscriptionUpdate):
         return kwargs
 
 
-class SubscriptionOverview(SubscriptionUpdate):
+class EmailPreferencesManagementView(EmailPreferencesUpdate):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs.update(

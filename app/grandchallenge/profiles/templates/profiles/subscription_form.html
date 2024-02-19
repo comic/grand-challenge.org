@@ -4,9 +4,8 @@
 
 
 {% block content %}
-    <h2>Subscriptions</h2>
-    <p>Your current subscription preferences are as follows:</p>
-    {% csrf_token %}
+    <h2>Email Preferences</h2>
+    <p>Your current email preferences are as follows:</p>
     {% crispy form %}
 {% endblock %}
 

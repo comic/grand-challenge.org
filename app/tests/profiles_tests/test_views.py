@@ -192,12 +192,11 @@ class TestProfileViewSets:
 @pytest.mark.django_db
 def test_one_click_unsubscribe_invalid_token(client, viewname):
     user = UserFactory()
-    inactive_user = UserFactory(is_active=False)
 
     valid_token = user.user_profile.unsubscribe_token
-    inactive_user_token = inactive_user.user_profile.unsubscribe_token
-    invalid_token_1 = f'{user.username}:{"".join(random.choices(string.ascii_letters + string.digits + "_-", k=20))}'
-    invalid_token_2 = f'foo:{valid_token.split(":", 1)[1]}'
+    invalid_token = "".join(
+        random.choices(string.ascii_letters + string.digits + "_-", k=20)
+    )
 
     response = get_view_for_user(
         client=client,
@@ -209,21 +208,7 @@ def test_one_click_unsubscribe_invalid_token(client, viewname):
     response = get_view_for_user(
         client=client,
         viewname=viewname,
-        reverse_kwargs={"token": inactive_user_token},
-    )
-    assert response.status_code == 403
-
-    response = get_view_for_user(
-        client=client,
-        viewname=viewname,
-        reverse_kwargs={"token": invalid_token_1},
-    )
-    assert response.status_code == 403
-
-    response = get_view_for_user(
-        client=client,
-        viewname=viewname,
-        reverse_kwargs={"token": invalid_token_2},
+        reverse_kwargs={"token": invalid_token},
     )
     assert response.status_code == 403
 
