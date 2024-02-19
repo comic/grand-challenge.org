@@ -237,7 +237,7 @@ class EmailPreferencesUpdate(
                 kwargs={
                     "usernames": [
                         self.request.user.username,
-                        self.object.user.username,
+                        user.username,
                     ]
                 }
             ).apply_async()
