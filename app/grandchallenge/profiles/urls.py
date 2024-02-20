@@ -2,7 +2,10 @@ from django.urls import path, re_path
 
 from grandchallenge.groups.views import UserAutocomplete
 from grandchallenge.profiles.views import (
+    EmailPreferencesManagementView,
     NewsletterSignUp,
+    NewsletterUnsubscribeView,
+    NotificationUnsubscribeView,
     UserProfileDetail,
     UserProfileUpdate,
     profile,
@@ -13,6 +16,21 @@ urlpatterns = [
         "user-autocomplete/",
         UserAutocomplete.as_view(),
         name="users-autocomplete",
+    ),
+    re_path(
+        r"email-preferences/newsletter/unsubscribe/(?P<token>[\w:\-_=]+)/$",
+        NewsletterUnsubscribeView.as_view(),
+        name="newsletter-unsubscribe",
+    ),
+    re_path(
+        r"email-preferences/notifications/unsubscribe/(?P<token>[\w:\-_=]+)/$",
+        NotificationUnsubscribeView.as_view(),
+        name="notification-unsubscribe",
+    ),
+    re_path(
+        r"email-preferences/(?P<token>[\w:\-_=]+)/$",
+        EmailPreferencesManagementView.as_view(),
+        name="email-preferences",
     ),
     path("profile/", profile, name="profile-detail-redirect"),
     re_path(

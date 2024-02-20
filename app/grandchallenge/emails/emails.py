@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.core.mail import send_mail
+from django.core.mail import send_mail  # noqa: I251
 from django.template.loader import render_to_string
 from django.utils.html import format_html
 

@@ -1,10 +1,10 @@
-from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.mail import send_mail
 from django.db.models import Count, F, Q
 from django.template.defaultfilters import pluralize
+from django.utils.html import format_html
 
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
+from grandchallenge.emails.emails import send_standard_email
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -49,23 +49,34 @@ def get_new_senders(*, user):
 
 
 def send_new_unread_direct_messages_email(
-    *, site, username, email, new_senders, new_unread_message_count
+    *, site, user, new_senders, new_unread_message_count
 ):
-    subject = f"[{site.domain.lower()}] You have {new_unread_message_count} new message{pluralize(new_unread_message_count)} from {oxford_comma(new_senders)}"
-
-    msg = (
-        f"Dear {username},\n\n"
-        f"You have {new_unread_message_count} new message{pluralize(new_unread_message_count)} from {oxford_comma(new_senders)}.\n"
-        f"To read and manage your messages, visit: {reverse('direct-messages:conversation-list')}.\n\n"
-        f"If you no longer wish to receive notification emails, you can disable them in your profile settings: {reverse('profile-update', kwargs={'username': username})}.\n\n"
-        f"Regards,\n"
-        f"{site.name}\n\n"
-        f"This is an automated service email from {site.domain.lower()}."
+    subject = format_html(
+        (
+            "You have {new_unread_message_count} new message{suffix} "
+            "from {new_senders}"
+        ),
+        new_unread_message_count=new_unread_message_count,
+        suffix=pluralize(new_unread_message_count),
+        new_senders=oxford_comma(new_senders),
     )
 
-    send_mail(
+    msg = format_html(
+        (
+            "You have {new_unread_message_count} new message{suffix} "
+            "from {new_senders}.\n"
+            "To read and manage your messages, visit: {url}.\n\n"
+        ),
+        new_unread_message_count=new_unread_message_count,
+        suffix=pluralize(new_unread_message_count),
+        new_senders=oxford_comma(new_senders),
+        url=reverse("direct-messages:conversation-list"),
+    )
+
+    send_standard_email(
+        site=site,
         subject=subject,
         message=msg,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[email],
+        recipient=user,
+        unsubscribable=True,
     )

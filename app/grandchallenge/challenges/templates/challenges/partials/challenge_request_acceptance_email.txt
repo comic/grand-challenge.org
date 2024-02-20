@@ -1,5 +1,3 @@
-Dear {{ username }},
-
 We are happy to inform you that your challenge request has been accepted.
 The invoice for your challenge will be sent to the address you indicated shortly, unless agreed otherwise.
 
@@ -17,9 +15,3 @@ Next steps:
 Feel free to contact support@grand-challenge.org if you have any questions or require assistance in setting up your challenge.
 
 Thank you for choosing Grand Challenge. We are looking forward to hosting your challenge.
-
-Regards,
-{{ site_name }} team
-
-
-This is an automated service email from {{ domain }}.

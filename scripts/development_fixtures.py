@@ -1,8 +1,6 @@
 import base64
 import itertools
-import json
 import logging
-import os
 import random
 
 from allauth.account.models import EmailAddress
@@ -12,7 +10,6 @@ from django.contrib.auth.models import Group, Permission
 from django.contrib.flatpages.models import FlatPage
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.files import File
 from django.core.files.base import ContentFile
 from django.db import IntegrityError
 from faker import Faker
@@ -24,7 +21,7 @@ from machina.apps.forum.models import Forum
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
 from grandchallenge.anatomy.models import BodyRegion, BodyStructure
 from grandchallenge.archives.models import Archive, ArchiveItem
-from grandchallenge.cases.models import Image
+from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.challenges.models import Challenge, ChallengeSeries
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -52,6 +49,10 @@ from grandchallenge.reader_studies.models import (
 from grandchallenge.task_categories.models import TaskType
 from grandchallenge.verifications.models import Verification
 from grandchallenge.workstations.models import Workstation
+from scripts.algorithm_evaluation_fixtures import (
+    _gc_demo_algorithm,
+    _uploaded_image_file,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -245,9 +246,9 @@ def _create_demo_challenge(users, algorithm):
         phase.save()
 
         method = Method(phase=phase, creator=users["demo"])
-        container = ContentFile(base64.b64decode(b""))
-        method.image.save("test.tar", container)
-        method.save()
+
+        with _gc_demo_algorithm() as container:
+            method.image.save("algorithm_io.tar", container)
 
         if phase_num == 1:
             submission = Submission(phase=phase, creator=users["demop"])
@@ -329,112 +330,72 @@ def _create_task_types_regions_modalities(users):
 
 
 def _create_algorithm_demo(users):
-    cases_image = Image(
+    cases_image = Image.objects.create(
         name="test_image.mha",
-        modality=ImagingModality.objects.get(modality="MR"),
-        width=128,
-        height=128,
-        color_space="RGB",
+        width=10,
+        height=10,
     )
-    cases_image.save()
+
+    im_file = ImageFile.objects.create(image=cases_image)
+
+    with _uploaded_image_file() as f:
+        im_file.file.save("test_image.mha", f)
+        im_file.save()
+
+    (input_civ, _) = ComponentInterfaceValue.objects.get_or_create(
+        interface=ComponentInterface.objects.get(slug="generic-medical-image"),
+        image=cases_image,
+    )
 
     algorithm = Algorithm.objects.create(
         title="Test Algorithm",
         logo=create_uploaded_image(),
         repo_name="github-username/repo-name",
+        contact_email="example@example.org",
+        display_editors=True,
+        result_template="{% for key, value in results.items() %}\n{{ key }}:  {{ value }}\n{% endfor %}",
     )
     algorithm.editors_group.user_set.add(users["algorithm"], users["demo"])
     algorithm.users_group.user_set.add(users["algorithmuser"])
-    algorithm.result_template = (
-        "{% for key, value in results.metrics.items() -%}"
-        "{{ key }}  {{ value }}"
-        "{% endfor %}"
+    algorithm.inputs.set(
+        [ComponentInterface.objects.get(slug="generic-medical-image")]
     )
-    detection_interface = ComponentInterface(
-        store_in_database=False,
-        relative_path="detection_results.json",
-        slug="detection-results",
-        title="Detection Results",
-        kind=ComponentInterface.Kind.ANY,
+    algorithm.outputs.set(
+        [ComponentInterface.objects.get(slug="results-json-file")]
     )
-    detection_interface.save()
-    algorithm.outputs.add(detection_interface)
+
     algorithm_image = AlgorithmImage(
         creator=users["algorithm"], algorithm=algorithm
     )
 
-    try:
-        with open(
-            os.path.join(settings.SITE_ROOT, "algorithm.tar.gz"), "rb"
-        ) as f:
-            container = File(f)
-            algorithm_image.image.save("test_algorithm.tar", container)
-    except FileNotFoundError:
-        pass
-
-    algorithm_image.save()
+    with _gc_demo_algorithm() as container:
+        algorithm_image.image.save("algorithm_io.tar", container)
 
     results = [
-        {"cancer_score": 0.5},
-        {"cancer_score": 0.6},
-        {"cancer_score": 0.7},
+        {"score": 0.5},
+        {"score": 0.6},
+        {"score": 0.7},
     ]
 
-    detections = [
-        {
-            "detected points": [
-                {"type": "Point", "start": [0, 1, 2], "end": [3, 4, 5]}
-            ]
-        },
-        {
-            "detected points": [
-                {"type": "Point", "start": [6, 7, 8], "end": [9, 10, 11]}
-            ]
-        },
-        {
-            "detected points": [
-                {"type": "Point", "start": [12, 13, 14], "end": [15, 16, 17]}
-            ]
-        },
-    ]
-    for res, det in zip(results, detections, strict=True):
-        _create_job_result(users, algorithm_image, cases_image, res, det)
+    for result in results:
+        algorithms_job = Job.objects.create(
+            creator=users["algorithm"],
+            algorithm_image=algorithm_image,
+            status=Evaluation.SUCCESS,
+        )
+
+        algorithms_job.inputs.add(input_civ)
+
+        algorithms_job.outputs.add(
+            ComponentInterfaceValue.objects.create(
+                interface=ComponentInterface.objects.get(
+                    slug="results-json-file"
+                ),
+                value=result,
+            )
+        )
 
     return algorithm
-
-
-def _create_job_result(users, algorithm_image, cases_image, result, detection):
-    algorithms_job = Job(
-        creator=users["algorithm"],
-        algorithm_image=algorithm_image,
-        status=Evaluation.SUCCESS,
-    )
-    algorithms_job.save()
-    algorithms_job.inputs.add(
-        ComponentInterfaceValue.objects.create(
-            interface=ComponentInterface.objects.get(
-                slug="generic-medical-image"
-            ),
-            image=cases_image,
-        )
-    )
-    algorithms_job.outputs.add(
-        ComponentInterfaceValue.objects.create(
-            interface=ComponentInterface.objects.get(slug="results-json-file"),
-            value=result,
-        )
-    )
-    civ = ComponentInterfaceValue.objects.create(
-        interface=ComponentInterface.objects.get(slug="detection-results")
-    )
-    civ.file.save(
-        "detection_results.json",
-        ContentFile(
-            bytes(json.dumps(detection, ensure_ascii=True, indent=2), "utf-8")
-        ),
-    )
-
-    algorithms_job.outputs.add(civ)
 
 
 def _create_workstation(users):

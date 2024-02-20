@@ -179,13 +179,6 @@ def test_algorithm_create(client, uploaded_image):
     "slug, content_parts",
     (
         (
-            None,
-            [
-                '<select class="custom-select"',
-                'name="WidgetChoice-generic-medical-image"',
-            ],
-        ),
-        (
             "generic-overlay",
             [
                 '<select class="custom-select"',
@@ -318,7 +311,6 @@ def test_create_job_json_input_field_validation(
 @pytest.mark.parametrize(
     "slug, content_parts",
     (
-        (None, ['class="invalid-feedback"', "This field is required."]),
         (
             "generic-overlay",
             ['class="invalid-feedback"', "This field is required."],
@@ -352,8 +344,7 @@ def create_algorithm_with_input(slug):
     VerificationFactory(user=creator, is_verified=True)
     alg = AlgorithmFactory()
     alg.add_editor(user=creator)
-    if slug:
-        alg.inputs.set([ComponentInterface.objects.get(slug=slug)])
+    alg.inputs.set([ComponentInterface.objects.get(slug=slug)])
     return alg, creator
 
 

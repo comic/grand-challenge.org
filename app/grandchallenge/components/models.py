@@ -71,8 +71,6 @@ from grandchallenge.workstation_configs.models import (
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_OUTPUT_INTERFACE_SLUG = "generic-overlay"
-
 
 class InterfaceKindChoices(models.TextChoices):
     """Interface kind choices."""
@@ -1937,7 +1935,7 @@ class ComponentImage(FieldChangeMixin, models.Model):
             command = _repo_login_and_run(
                 command=["crane", "manifest", self.original_repo_tag]
             )
-            manifest = json.loads(command.stdout.decode("utf-8"))
+            manifest = json.loads(command.stdout)
             return (
                 sum(layer["size"] for layer in manifest["layers"])
                 + manifest["config"]["size"]

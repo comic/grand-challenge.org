@@ -4,10 +4,23 @@
 <ul class="list-group list-group-flush mb-3">
     {% for user in users %}
         <li class="list-group-item">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>{{ user|user_profile_link }}</div>
-                <div>
-                    {% if user != request.user %}
+            <div class="d-flex align-items-center">
+                <div class="mr-auto">
+                    {{ user|user_profile_link }}
+                </div>
+                {% if user != request.user %}
+                    {% if display_direct_message_link %}
+                        <div>
+                            <form method="post"
+                                  action="{% url 'direct_messages:conversation-create' username=user.username %}">
+                                {% csrf_token %}
+                                <button class="btn btn btn-primary" type="submit">
+                                    <i class="far fa-comment"></i>&nbsp;Message User
+                                </button>
+                            </form>
+                        </div>
+                    {% endif %}
+                    <div>
                         <form action="{{ edit_url }}" method="POST">
                             {% csrf_token %}
                             {% for field in form %}
@@ -21,8 +34,8 @@
                                 Remove
                             </button>
                         </form>
-                    {% endif %}
-                </div>
+                    </div>
+                {% endif %}
             </div>
         </li>
     {% empty %}
