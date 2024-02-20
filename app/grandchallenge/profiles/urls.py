@@ -18,12 +18,12 @@ urlpatterns = [
         name="users-autocomplete",
     ),
     re_path(
-        r"newsletter/unsubscribe/(?P<token>[\w:\-_=]+)/$",
+        r"email-preferences/newsletter/unsubscribe/(?P<token>[\w:\-_=]+)/$",
         NewsletterUnsubscribeView.as_view(),
         name="newsletter-unsubscribe",
     ),
     re_path(
-        r"notifications/unsubscribe/(?P<token>[\w:\-_=]+)/$",
+        r"email-preferences/notifications/unsubscribe/(?P<token>[\w:\-_=]+)/$",
         NotificationUnsubscribeView.as_view(),
         name="notification-unsubscribe",
     ),
