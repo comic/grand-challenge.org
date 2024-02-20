@@ -6,6 +6,7 @@
 {% load humanize %}
 {% load user_profile_link from profiles %}
 {% load naturaldelta %}
+{% load pathlib %}
 
 {% block title %}
     Algorithm Image - {{ block.super }}
@@ -44,7 +45,13 @@
         <div class="mb-2">{% crispy image_activate_form %}</div>
     {% endif %}
 
-    <span class="badge p-2 my-2 {% if object.can_execute and object.is_desired_version %} badge-success {% else %} badge-danger {% endif %}">{% if object.can_execute and object.is_desired_version %}<i class="fa fa-check-circle mr-1"></i> Active image for this algorithm{% else %} <i class="fa fa-times-circle mr-1"></i> Inactive {% endif %}</span>
+    <span class="badge p-2 my-2 {% if object.can_execute and object.is_desired_version %}badge-success{% else %}badge-danger{% endif %}">
+        {% if object.can_execute and object.is_desired_version %}
+            <i class="fa fa-check-circle mr-1"></i> Active image for this algorithm
+        {% else %}
+            <i class="fa fa-times-circle mr-1"></i> Inactive
+        {% endif %}
+    </span>
 
     <dl class="inline">
         <dt>ID</dt>
@@ -65,16 +72,14 @@
 
         {% if object.image %}
             <dt>Image</dt>
-            <dd>{{ object.image.name }}</dd>
-
-            <dt>Image Size</dt>
-            <dd>{{ object.image.size|naturalsize }}</dd>
+            <dd>{{ object.image.name|name }}</dd>
         {% endif %}
 
-        {% if object.image_sha256 %}
-            <dt>Image SHA256</dt>
-            <dd>{{ object.image_sha256 }}</dd>
-        {% endif %}
+        <dt>Image Size</dt>
+        <dd>{{ object.size_in_storage|naturalsize }}</dd>
+
+        <dt>Image SHA256</dt>
+        <dd>{{ object.image_sha256 }}</dd>
 
         <dt>Import Status</dt>
         <dd>

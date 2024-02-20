@@ -2,6 +2,7 @@
 {% load url %}
 {% load user_profile_link from profiles %}
 {% load naturaldelta %}
+{% load pathlib %}
 
 {% block title %}
     Algorithm Model - {{ block.super }}
@@ -25,6 +26,14 @@
 {% block content %}
     <h2>Algorithm Model</h2>
 
+    <span class="badge p-2 my-2 {% if object.is_active %}badge-success{% else %}badge-danger{% endif %}">
+        {% if object.is_active %}
+            <i class="fa fa-check-circle mr-1"></i> Active model for this algorithm
+        {% else %}
+            <i class="fa fa-times-circle mr-1"></i> Inactive
+        {% endif %}
+    </span>
+
     <dl class="inline">
         <dt>ID</dt>
         <dd>{{ object.pk }}</dd>
@@ -44,11 +53,14 @@
 
         {% if object.model %}
             <dt>Model</dt>
-            <dd>{{ object.model.name }}</dd>
-
-            <dt>Model Size</dt>
-            <dd>{{ object.model.size|naturalsize }}</dd>
+            <dd>{{ object.model.name|name }}</dd>
         {% endif %}
+
+        <dt>Model Size</dt>
+        <dd>{{ object.size_in_storage|naturalsize }}</dd>
+
+        <dt>Model SHA256</dt>
+        <dd>{{ object.sha256 }}</dd>
 
         <dt>Comment</dt>
         <dd>{{ object.comment }}</dd>

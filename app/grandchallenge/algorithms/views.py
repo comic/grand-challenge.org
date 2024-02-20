@@ -502,6 +502,7 @@ class AlgorithmModelCreate(
 class AlgorithmModelDetail(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
 ):
+    # TODO Add model activation and deactivation views
     model = AlgorithmModel
     permission_required = "algorithms.view_algorithmmodel"
     raise_exception = True

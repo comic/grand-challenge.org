@@ -24,6 +24,7 @@ from grandchallenge.components.tasks import (
     add_image_to_component_interface_value,
 )
 from grandchallenge.core.cache import _cache_key_from_method
+from grandchallenge.core.storage import get_object_sha256
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.credits.models import Credit
 from grandchallenge.notifications.models import Notification, NotificationType
@@ -39,14 +40,12 @@ def import_model_from_upload(*, algorithm_model_pk):
 
     algorithm_model = AlgorithmModel.objects.get(pk=algorithm_model_pk)
 
-    # TODO: set the sha256
-    # TODO: make sure the sha256 is unique
-    # TODO: check that it is a real gz
-    # TODO: return error messages
+    # TODO: make sure the sha256 is unique, return error messages if not
 
     algorithm_model.user_upload.copy_object(to_field=algorithm_model.model)
 
-    # TODO: set size in storage
+    algorithm_model.sha256 = get_object_sha256(algorithm_model.model)
+    algorithm_model.size_in_storage = algorithm_model.model.size
 
     AlgorithmModel.objects.filter(algorithm=algorithm_model.algorithm).exclude(
         pk=algorithm_model.pk
@@ -54,10 +53,7 @@ def import_model_from_upload(*, algorithm_model_pk):
     algorithm_model.is_active = True
     algorithm_model.save()
 
-    # TODO: check the user upload is deleted
     algorithm_model.user_upload.delete()
-
-    # TODO: add model activation and deactivation
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])

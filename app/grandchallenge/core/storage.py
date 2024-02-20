@@ -1,6 +1,7 @@
 import copy
 import datetime
 from base64 import b64decode
+from binascii import hexlify
 from uuid import uuid4
 
 from botocore.signers import CloudFrontSigner
@@ -170,7 +171,7 @@ def copy_s3_object(
         name=target_key, max_length=to_field.field.max_length
     )
 
-    extra_args = {"ContentType": mimetype}
+    extra_args = {"ContentType": mimetype, "ChecksumAlgorithm": "sha256"}
 
     if settings.AWS_S3_OBJECT_PARAMETERS[
         "StorageClass"
@@ -195,3 +196,17 @@ def copy_s3_object(
     # Save the object because it has changed, unless save is False
     if save:
         to_field.instance.save()
+
+
+def get_object_sha256(file_field):
+    response = file_field.storage.connection.meta.client.head_object(
+        Bucket=file_field.storage.bucket.name,
+        Key=file_field.name,
+        ChecksumMode="ENABLED",
+    )
+
+    # The checksums are not calculated on minio
+    if sha256 := response.get("ChecksumSHA256"):
+        return f"sha256:{hexlify(b64decode(sha256)).decode('utf-8')}"
+    else:
+        return ""
