@@ -98,6 +98,7 @@ class Build(UUIDModel):
             dest_filename=f"{self.pk}.tar.gz",
             src_bucket=settings.CODEBUILD_ARTIFACTS_BUCKET_NAME,
             src_key=f"codebuild/artifacts/{self.build_number}/{self.build_config['projectName']}/container-image.tar.gz",
+            mimetype="application/gzip",
             save=True,
         )
 

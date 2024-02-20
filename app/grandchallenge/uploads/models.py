@@ -306,6 +306,7 @@ class UserUpload(UUIDModel):
             dest_filename=self.filename,
             src_key=self.key,
             src_bucket=self.bucket,
+            mimetype=self.mimetype,
             save=save,
         )
 

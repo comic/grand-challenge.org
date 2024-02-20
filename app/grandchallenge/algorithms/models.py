@@ -47,7 +47,6 @@ from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
     process_access_request,
 )
-from grandchallenge.core.validators import ExtensionValidator
 from grandchallenge.credits.models import Credit
 from grandchallenge.evaluation.utils import get
 from grandchallenge.hanging_protocols.models import HangingProtocolMixin
@@ -57,6 +56,7 @@ from grandchallenge.publications.models import Publication
 from grandchallenge.reader_studies.models import DisplaySet
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
+from grandchallenge.uploads.validators import validate_tar_gz
 from grandchallenge.workstations.models import Workstation
 
 logger = logging.getLogger(__name__)
@@ -538,16 +538,20 @@ class AlgorithmModel(UUIDModel):
     )
 
     user_upload = models.ForeignKey(
-        UserUpload, blank=True, null=True, on_delete=models.SET_NULL
+        UserUpload,
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        validators=[validate_tar_gz],
     )
-
     model = models.FileField(
         blank=True,
         upload_to=models_path,
-        validators=[ExtensionValidator(allowed_extensions=(".tar.gz",))],
         help_text="a .tar.gz file that is extracted to /opt/ml/model/ during inference",
         storage=private_s3_storage,
+        editable=False,
     )
+
     sha256 = models.CharField(editable=False, max_length=71)
     size_in_storage = models.PositiveBigIntegerField(
         editable=False,
