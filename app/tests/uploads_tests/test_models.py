@@ -250,6 +250,32 @@ def test_size_complete():
     assert upload.size == 3
 
 
+@pytest.mark.parametrize(
+    "content,expected_mimetype",
+    (
+        (b"hello", "text/plain"),
+        (
+            b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x00\x00\x00\x00:~\x9bU\x00\x00\x00\nIDATx\x9cc`\x00\x00\x00\x02\x00\x01H\xaf\xa4q\x00\x00\x00\x00IEND\xaeB`\x82",
+            "image/png",
+        ),
+    ),
+)
+def test_mimetype_set(content, expected_mimetype):
+    u = UserFactory.build(pk=42)
+    upload = UserUpload(creator=u)
+    upload.create_multipart_upload()
+
+    assert upload.mimetype == "application/octet-stream"
+
+    presigned_urls = upload.generate_presigned_urls(part_numbers=[1])
+    response = put(presigned_urls["1"], data=content)
+    upload.complete_multipart_upload(
+        parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
+    )
+
+    assert upload.mimetype == expected_mimetype
+
+
 @pytest.mark.django_db
 def test_can_upload_more_unverified(settings):
     upload = UserUpload.objects.create(creator=UserFactory())
