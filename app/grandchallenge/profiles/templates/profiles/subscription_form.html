@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+
+{% block content %}
+    <h2>Email Preferences</h2>
+    <p>Your current email preferences are as follows:</p>
+    {% crispy form %}
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="module" src="{% static 'profiles/js/form_submit.mjs' %}" type="text/javascript"></script>
+{% endblock %}
