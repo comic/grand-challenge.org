@@ -567,7 +567,6 @@ class AlgorithmModel(UUIDModel):
     is_active = models.BooleanField(editable=False, default=False)
 
     # TODO check that model does not change
-    # TODO make sure the costs aggregate the model size
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
