@@ -8,7 +8,7 @@ from celery import chain, group, shared_task
 from django.conf import settings
 from django.core.cache import cache
 from django.core.files.base import File
-from django.db import transaction
+from django.db import OperationalError, transaction
 from django.db.models import Count, Q
 from django.db.transaction import on_commit
 from django.utils._os import safe_join
@@ -35,10 +35,29 @@ logger = logging.getLogger(__name__)
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
 @transaction.atomic
-def import_model_from_upload(*, algorithm_model_pk):
+def import_model_from_upload(*, algorithm_model_pk, retries=0):
     from grandchallenge.algorithms.models import AlgorithmModel
 
-    algorithm_model = AlgorithmModel.objects.get(pk=algorithm_model_pk)
+    try:
+        # Acquire locks
+        algorithm_model = (
+            AlgorithmModel.objects.filter(pk=algorithm_model_pk)
+            .select_for_update(nowait=True)
+            .get()
+        )
+        other_models_for_algorithm = list(
+            AlgorithmModel.objects.filter(algorithm=algorithm_model.algorithm)
+            .exclude(pk=algorithm_model.pk)
+            .select_for_update(nowait=True)
+        )
+    except OperationalError:
+        # Could not acquire locks
+        _retry(
+            task=import_model_from_upload,
+            signature_kwargs={"algorithm_model_pk": algorithm_model_pk},
+            retries=retries,
+        )
+        return
 
     # TODO: make sure the sha256 is unique, return error messages if not
 
@@ -46,12 +65,12 @@ def import_model_from_upload(*, algorithm_model_pk):
 
     algorithm_model.sha256 = get_object_sha256(algorithm_model.model)
     algorithm_model.size_in_storage = algorithm_model.model.size
-
-    AlgorithmModel.objects.filter(algorithm=algorithm_model.algorithm).exclude(
-        pk=algorithm_model.pk
-    ).update(is_active=False)
     algorithm_model.is_active = True
     algorithm_model.save()
+
+    for other in other_models_for_algorithm:
+        other.is_active = False
+        other.save()
 
     algorithm_model.user_upload.delete()
 
