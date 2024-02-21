@@ -9,7 +9,7 @@ from grandchallenge.core.templatetags.bleach import md2email_html
 from grandchallenge.emails.emails import send_standard_email_batch
 from grandchallenge.emails.models import Email
 from grandchallenge.emails.utils import SendActionChoices
-from grandchallenge.profiles.models import SubscriptionTypes
+from grandchallenge.profiles.models import EmailSubscriptionTypes
 
 
 def get_receivers(action):
@@ -86,7 +86,7 @@ def send_bulk_email(action, email_pk):
                 subscription_type=(
                     None
                     if action == SendActionChoices.STAFF
-                    else SubscriptionTypes.NEWSLETTER
+                    else EmailSubscriptionTypes.NEWSLETTER
                 ),
             )
         email.status_report = {"last_processed_batch": page_nr}

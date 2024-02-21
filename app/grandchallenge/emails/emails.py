@@ -4,7 +4,7 @@ from django.core.mail import EmailMultiAlternatives, get_connection
 from django.template.loader import render_to_string
 from django.utils.html import format_html, strip_tags
 
-from grandchallenge.profiles.models import SubscriptionTypes
+from grandchallenge.profiles.models import EmailSubscriptionTypes
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -16,10 +16,10 @@ def filter_recipients(recipients, subscription_type=None):
             continue
 
         if (
-            subscription_type == SubscriptionTypes.NOTIFICATIONS
+            subscription_type == EmailSubscriptionTypes.NOTIFICATIONS
             and not recipient.user_profile.receive_notification_emails
         ) or (
-            subscription_type == SubscriptionTypes.NEWSLETTER
+            subscription_type == EmailSubscriptionTypes.NEWSLETTER
             and not recipient.user_profile.receive_newsletter
         ):
             # Do not send emails to users who have opted out
@@ -52,12 +52,12 @@ def send_standard_email_batch(
 
 
 def get_unsubscribe_link(recipient, subscription_type):
-    if subscription_type == SubscriptionTypes.NEWSLETTER:
+    if subscription_type == EmailSubscriptionTypes.NEWSLETTER:
         return reverse(
             "newsletter-unsubscribe",
             kwargs={"token": recipient.user_profile.unsubscribe_token},
         )
-    elif subscription_type == SubscriptionTypes.NOTIFICATIONS:
+    elif subscription_type == EmailSubscriptionTypes.NOTIFICATIONS:
         return reverse(
             "notification-unsubscribe",
             kwargs={"token": recipient.user_profile.unsubscribe_token},

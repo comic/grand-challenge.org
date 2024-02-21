@@ -8,7 +8,7 @@ from grandchallenge.emails.emails import (
 )
 from grandchallenge.emails.tasks import get_receivers, send_bulk_email
 from grandchallenge.emails.utils import SendActionChoices
-from grandchallenge.profiles.models import SubscriptionTypes
+from grandchallenge.profiles.models import EmailSubscriptionTypes
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.emails_tests.factories import EmailFactory
@@ -102,8 +102,8 @@ def test_email_content(settings):
 @pytest.mark.parametrize(
     "subscription_type, unsubscribe_viewname",
     [
-        (SubscriptionTypes.NEWSLETTER, "newsletter-unsubscribe"),
-        (SubscriptionTypes.NOTIFICATIONS, "notification-unsubscribe"),
+        (EmailSubscriptionTypes.NEWSLETTER, "newsletter-unsubscribe"),
+        (EmailSubscriptionTypes.NOTIFICATIONS, "notification-unsubscribe"),
         (None, None),
     ],
 )
@@ -144,8 +144,8 @@ def test_unsubscribe_headers(subscription_type, unsubscribe_viewname):
 @pytest.mark.parametrize(
     "subscription_type,expected_recipients",
     [
-        (SubscriptionTypes.NEWSLETTER, [True, False, True]),
-        (SubscriptionTypes.NOTIFICATIONS, [True, False, False]),
+        (EmailSubscriptionTypes.NEWSLETTER, [True, False, True]),
+        (EmailSubscriptionTypes.NOTIFICATIONS, [True, False, False]),
         (None, [True, True, True]),
     ],
 )

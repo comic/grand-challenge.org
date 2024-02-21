@@ -24,11 +24,6 @@ UNSUBSCRIBE_SALT = "email-subscription-preferences"
 
 
 class EmailSubscriptionTypes(TextChoices):
-    NEWSLETTER = "NEWSLETTER"
-    NOTIFICATIONS = "NOTIFICATIONS"
-
-
-class SubscriptionTypes(TextChoices):
     NEWSLETTER = "NEWSLETTER", _("newsletter")
     NOTIFICATIONS = "NOTIFICATIONS", _("notifications")
 
