@@ -21,7 +21,8 @@ def update_site_statistics_cache():
     stats = {
         "users": (
             get_user_model()
-            .objects.values(
+            .objects.filter(is_active=True, last_login__isnull=False)
+            .values(
                 "date_joined__year",
                 "date_joined__month",
             )
