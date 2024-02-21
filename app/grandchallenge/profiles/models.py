@@ -24,8 +24,8 @@ UNSUBSCRIBE_SALT = "email-subscription-preferences"
 
 
 class EmailSubscriptionTypes(TextChoices):
-    NEWSLETTER = "NEWSLETTER", _("newsletter")
-    NOTIFICATIONS = "NOTIFICATIONS", _("notifications")
+    NEWSLETTER = "NEWSLETTER"
+    NOTIFICATION = "NOTIFICATION"
 
 
 class UserProfile(models.Model):

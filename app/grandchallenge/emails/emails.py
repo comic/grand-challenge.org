@@ -16,7 +16,7 @@ def filter_recipients(recipients, subscription_type=None):
             continue
 
         if (
-            subscription_type == EmailSubscriptionTypes.NOTIFICATIONS
+            subscription_type == EmailSubscriptionTypes.NOTIFICATION
             and not recipient.user_profile.receive_notification_emails
         ) or (
             subscription_type == EmailSubscriptionTypes.NEWSLETTER
@@ -57,7 +57,7 @@ def get_unsubscribe_link(recipient, subscription_type):
             "newsletter-unsubscribe",
             kwargs={"token": recipient.user_profile.unsubscribe_token},
         )
-    elif subscription_type == EmailSubscriptionTypes.NOTIFICATIONS:
+    elif subscription_type == EmailSubscriptionTypes.NOTIFICATION:
         return reverse(
             "notification-unsubscribe",
             kwargs={"token": recipient.user_profile.unsubscribe_token},

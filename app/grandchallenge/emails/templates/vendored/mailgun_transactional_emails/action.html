@@ -37,7 +37,7 @@
                             <td class="aligncenter content-block" style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 12px; vertical-align: top; color: #999; text-align: center; margin: 0; padding: 0 0 20px;" align="center" valign="top">
                                 This is an automated email from {{ site.domain.lower }}.<br>
                                 {% if unsubscribe_link %}
-                                    If you no longer wish to receive {{ subscription_type }} emails from us,
+                                    If you no longer wish to receive {{ subscription_type|lower }} emails from us,
                                     <a href="{{ unsubscribe_link }}" style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 12px; color: #999; text-decoration: underline; margin: 0;">unsubscribe here</a>.
                                 {% endif %}
                             </td>

@@ -27,5 +27,5 @@ def send_unread_notifications_email(*, site, user, n_notifications):
         subject=subject,
         message=msg,
         recipients=[user],
-        subscription_type=EmailSubscriptionTypes.NOTIFICATIONS,
+        subscription_type=EmailSubscriptionTypes.NOTIFICATION,
     )

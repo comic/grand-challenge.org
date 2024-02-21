@@ -103,7 +103,7 @@ def test_email_content(settings):
     "subscription_type, unsubscribe_viewname",
     [
         (EmailSubscriptionTypes.NEWSLETTER, "newsletter-unsubscribe"),
-        (EmailSubscriptionTypes.NOTIFICATIONS, "notification-unsubscribe"),
+        (EmailSubscriptionTypes.NOTIFICATION, "notification-unsubscribe"),
         (None, None),
     ],
 )
@@ -145,7 +145,7 @@ def test_unsubscribe_headers(subscription_type, unsubscribe_viewname):
     "subscription_type,expected_recipients",
     [
         (EmailSubscriptionTypes.NEWSLETTER, [True, False, True]),
-        (EmailSubscriptionTypes.NOTIFICATIONS, [True, False, False]),
+        (EmailSubscriptionTypes.NOTIFICATION, [True, False, False]),
         (None, [True, True, True]),
     ],
 )
