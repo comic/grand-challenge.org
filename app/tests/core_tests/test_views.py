@@ -85,7 +85,7 @@ def test_product_redirect(client):
     response = get_view_for_user(url="/aiforradiology/", client=client)
 
     assert response.status_code == 302
-    assert response.url == "https://www.example.com/"
+    assert response.url == "https://radiology.healthairegister.com/"
 
     response = get_view_for_user(
         url="/aiforradiology/product/airs-medical-swiftmr", client=client
@@ -93,5 +93,6 @@ def test_product_redirect(client):
 
     assert response.status_code == 302
     assert (
-        response.url == "https://www.example.com/product/airs-medical-swiftmr"
+        response.url
+        == "https://radiology.healthairegister.com/product/airs-medical-swiftmr"
     )

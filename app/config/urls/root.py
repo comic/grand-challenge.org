@@ -130,10 +130,13 @@ urlpatterns = [
         ),
     ),
     path("summernote/", include("django_summernote.urls")),
-    path("aiforradiology/", RedirectPath.as_view(netloc="www.example.com")),
+    path(
+        "aiforradiology/",
+        RedirectPath.as_view(netloc="radiology.healthairegister.com"),
+    ),
     path(
         "aiforradiology/<path:path>",
-        RedirectPath.as_view(netloc="www.example.com"),
+        RedirectPath.as_view(netloc="radiology.healthairegister.com"),
     ),
     path(
         "policies/",
