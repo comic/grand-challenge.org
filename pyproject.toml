@@ -100,6 +100,7 @@ django-compressor = "*"
 django-libsass = "*"
 django-csp = "*"
 psycopg = {version = ">3.1.8", extras = ["c"]}
+pycurl = "7.45.2" # Pinned due to import issue with 7.45.3, see related sentry issue: https://grand-challenge.sentry.io/issues/4998348342/
 
 [tool.poetry.group.dev.dependencies]
 pytest-django = "*"
