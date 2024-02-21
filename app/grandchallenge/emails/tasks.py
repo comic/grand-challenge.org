@@ -65,7 +65,7 @@ def get_receivers(action):
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
-def send_standard_bulk_email(action, email_pk):
+def send_bulk_email(action, email_pk):
     try:
         email = Email.objects.filter(sent=False).get(pk=email_pk)
     except ObjectDoesNotExist:

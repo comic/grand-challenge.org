@@ -5,6 +5,7 @@ from django.template.loader import render_to_string
 from django.utils.html import format_html, strip_tags
 
 from grandchallenge.profiles.models import SubscriptionTypes
+from grandchallenge.subdomains.utils import reverse
 
 
 def filter_recipients(recipients, subscription_type=None):
@@ -12,19 +13,17 @@ def filter_recipients(recipients, subscription_type=None):
     for recipient in recipients:
         if not recipient.is_active:
             # Do not send emails to inactive users
-            return
+            continue
 
         if (
-            subscription_type
-            and subscription_type == SubscriptionTypes.NOTIFICATIONS
+            subscription_type == SubscriptionTypes.NOTIFICATIONS
             and not recipient.user_profile.receive_notification_emails
         ) or (
-            subscription_type
-            and subscription_type == SubscriptionTypes.NEWSLETTER
+            subscription_type == SubscriptionTypes.NEWSLETTER
             and not recipient.user_profile.receive_newsletter
         ):
             # Do not send emails to users who have opted out
-            return
+            continue
 
         filtered_recipients.append(recipient)
 
@@ -54,9 +53,15 @@ def send_standard_email_batch(
 
 def get_unsubscribe_link(recipient, subscription_type):
     if subscription_type == SubscriptionTypes.NEWSLETTER:
-        return ""
+        return reverse(
+            "newsletter-unsubscribe",
+            kwargs={"token": recipient.user_profile.unsubscribe_token},
+        )
     elif subscription_type == SubscriptionTypes.NOTIFICATIONS:
-        return ""
+        return reverse(
+            "notification-unsubscribe",
+            kwargs={"token": recipient.user_profile.unsubscribe_token},
+        )
     else:
         return None
 
@@ -86,8 +91,7 @@ def create_email_object(
             "content": message,
             "unsubscribe_link": unsubscribe_link,
             "subscription_type": subscription_type,
-            "domain": site.domain.lower,
-            "site_name": site.name,
+            "site": site,
         },
     )
     html_content_without_linebreaks = html_content.replace("\n", "")
