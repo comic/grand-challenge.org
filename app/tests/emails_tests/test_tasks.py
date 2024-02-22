@@ -1,9 +1,10 @@
 import pytest
 from django.contrib.sites.models import Site
 from django.core import mail
+from django.core.mail import get_connection
 
 from grandchallenge.emails.emails import (
-    filter_recipients,
+    create_email_object,
     send_standard_email_batch,
 )
 from grandchallenge.emails.tasks import get_receivers, send_bulk_email
@@ -152,7 +153,7 @@ def test_unsubscribe_headers(subscription_type, unsubscribe_viewname):
     ],
 )
 @pytest.mark.django_db
-def test_filter_recipients(subscription_type, expected_recipients):
+def test_send_email_is_filtered(subscription_type, expected_recipients):
     inactive_user = UserFactory(is_active=False)
     u1, u2, u3 = UserFactory.create_batch(3)
 
@@ -168,16 +169,136 @@ def test_filter_recipients(subscription_type, expected_recipients):
     u3.user_profile.receive_notification_emails = False
     u3.user_profile.save()
 
-    filtered_userset = filter_recipients(
+    send_standard_email_batch(
         recipients=[inactive_user, u1, u2, u3],
         subscription_type=subscription_type,
+        markdown_message="foo",
+        site=Site.objects.get_current(),
+        subject="bar",
     )
-    assert inactive_user not in filtered_userset
+
+    sent_emails = [email.to[0] for email in mail.outbox]
+
     expected_users = [
-        value
-        for boolean, value in zip(
+        user.email
+        for boolean, user in zip(
             expected_recipients, [u1, u2, u3], strict=True
         )
         if boolean
     ]
-    assert expected_users == filtered_userset
+    assert expected_users == sent_emails
+
+
+@pytest.mark.parametrize(
+    "subscription_type",
+    [
+        EmailSubscriptionTypes.NEWSLETTER,
+        EmailSubscriptionTypes.NOTIFICATION,
+        EmailSubscriptionTypes.SYSTEM,
+    ],
+)
+@pytest.mark.django_db
+def test_cannot_email_inactive_users(subscription_type):
+    inactive_user = UserFactory(is_active=False)
+
+    with pytest.raises(ValueError) as error:
+        create_email_object(
+            recipient=inactive_user,
+            connection=get_connection(),
+            site=Site.objects.get_current(),
+            markdown_message="foo",
+            subject="bar",
+            subscription_type=subscription_type,
+        )
+
+    assert str(error.value) == "Inactive users cannot be emailed"
+
+
+@pytest.mark.django_db
+def test_can_always_email_system_messages():
+    user = UserFactory(is_active=True)
+
+    user.user_profile.receive_newsletter = True
+    user.user_profile.receive_notification_emails = True
+    user.user_profile.save()
+
+    email = create_email_object(
+        recipient=user,
+        connection=get_connection(),
+        site=Site.objects.get_current(),
+        markdown_message="foo",
+        subject="bar",
+        subscription_type=EmailSubscriptionTypes.SYSTEM,
+    )
+
+    assert email
+
+
+@pytest.mark.django_db
+def test_can_email_newsletter_if_opted_in():
+    user = UserFactory(is_active=True)
+
+    user.user_profile.receive_newsletter = True
+    user.user_profile.receive_notification_emails = False
+    user.user_profile.save()
+
+    email = create_email_object(
+        recipient=user,
+        connection=get_connection(),
+        site=Site.objects.get_current(),
+        markdown_message="foo",
+        subject="bar",
+        subscription_type=EmailSubscriptionTypes.NEWSLETTER,
+    )
+
+    assert email
+
+    user.user_profile.receive_newsletter = False
+    user.user_profile.save()
+
+    with pytest.raises(ValueError) as error:
+        create_email_object(
+            recipient=user,
+            connection=get_connection(),
+            site=Site.objects.get_current(),
+            markdown_message="foo",
+            subject="bar",
+            subscription_type=EmailSubscriptionTypes.NEWSLETTER,
+        )
+
+    assert str(error.value) == "User has opted out of newsletter emails"
+
+
+@pytest.mark.django_db
+def test_can_email_notification_if_opted_in():
+    user = UserFactory(is_active=True)
+
+    user.user_profile.receive_newsletter = False
+    user.user_profile.receive_notification_emails = True
+    user.user_profile.save()
+
+    email = create_email_object(
+        recipient=user,
+        connection=get_connection(),
+        site=Site.objects.get_current(),
+        markdown_message="foo",
+        subject="bar",
+        subscription_type=EmailSubscriptionTypes.NOTIFICATION,
+    )
+
+    assert email
+
+    user.user_profile.receive_notification_emails = False
+    user.user_profile.save()
+
+    with pytest.raises(ValueError) as error:
+        create_email_object(
+            recipient=user,
+            connection=get_connection(),
+            site=Site.objects.get_current(),
+            markdown_message="foo",
+            subject="bar",
+            subscription_type=EmailSubscriptionTypes.NOTIFICATION,
+        )
+
+    assert str(error.value) == "User has opted out of notification emails"

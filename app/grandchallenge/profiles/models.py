@@ -134,6 +134,32 @@ class UserProfile(models.Model):
             {"username": self.user.username}
         )
 
+    def get_unsubscribe_link(self, *, subscription_type):
+        if not self.user.is_active:
+            raise ValueError("Inactive users cannot be emailed")
+        elif subscription_type == EmailSubscriptionTypes.NEWSLETTER:
+            if self.receive_newsletter:
+                return reverse(
+                    "newsletter-unsubscribe",
+                    kwargs={"token": self.unsubscribe_token},
+                )
+            else:
+                raise ValueError("User has opted out of newsletter emails")
+        elif subscription_type == EmailSubscriptionTypes.NOTIFICATION:
+            if self.receive_notification_emails:
+                return reverse(
+                    "notification-unsubscribe",
+                    kwargs={"token": self.unsubscribe_token},
+                )
+            else:
+                raise ValueError("User has opted out of notification emails")
+        elif subscription_type == EmailSubscriptionTypes.SYSTEM:
+            return None
+        else:
+            return NotImplementedError(
+                f"Unknown subscription type: {subscription_type}"
+            )
+
 
 class UserProfileUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
