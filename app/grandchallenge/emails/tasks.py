@@ -1,11 +1,11 @@
 from celery import shared_task
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from django.utils.timezone import now
 
-from grandchallenge.core.templatetags.bleach import md2email_html
 from grandchallenge.emails.emails import send_standard_email_batch
 from grandchallenge.emails.models import Email
 from grandchallenge.emails.utils import SendActionChoices
@@ -72,6 +72,7 @@ def send_bulk_email(action, email_pk):
         return
     receivers = get_receivers(action=action)
     paginator = Paginator(receivers, 100)
+    site = Site.objects.get_current()
     if email.status_report:
         start_page = email.status_report["last_processed_batch"]
     else:
@@ -80,11 +81,12 @@ def send_bulk_email(action, email_pk):
         for batch_num in range(paginator.num_pages):
             batch = paginator.get_page(batch_num).object_list
             send_standard_email_batch(
+                site=site,
                 recipients=batch,
                 subject=email.subject,
-                message=md2email_html(email.body),
+                markdown_message=email.body,
                 subscription_type=(
-                    None
+                    EmailSubscriptionTypes.SYSTEM
                     if action == SendActionChoices.STAFF
                     else EmailSubscriptionTypes.NEWSLETTER
                 ),

@@ -1,14 +1,13 @@
 from django.conf import settings
-from django.contrib.sites.models import Site
 from django.core.mail import EmailMultiAlternatives, get_connection
 from django.template.loader import render_to_string
-from django.utils.html import format_html, strip_tags
+from django.utils.html import format_html
 
 from grandchallenge.profiles.models import EmailSubscriptionTypes
 from grandchallenge.subdomains.utils import reverse
 
 
-def filter_recipients(recipients, subscription_type=None):
+def filter_recipients(*, recipients, subscription_type):
     filtered_recipients = []
     for recipient in recipients:
         if not recipient.is_active:
@@ -31,7 +30,7 @@ def filter_recipients(recipients, subscription_type=None):
 
 
 def send_standard_email_batch(
-    *, subject, message, recipients, subscription_type=None
+    *, site, subject, markdown_message, recipients, subscription_type
 ):
     connection = get_connection()
     messages = []
@@ -42,8 +41,9 @@ def send_standard_email_batch(
         messages.append(
             create_email_object(
                 recipient=recipient,
+                site=site,
                 subject=subject,
-                message=message,
+                markdown_message=markdown_message,
                 subscription_type=subscription_type,
                 connection=connection,
             )
@@ -51,7 +51,7 @@ def send_standard_email_batch(
     return connection.send_messages(messages)
 
 
-def get_unsubscribe_link(recipient, subscription_type):
+def get_unsubscribe_link(*, recipient, subscription_type):
     if subscription_type == EmailSubscriptionTypes.NEWSLETTER:
         return reverse(
             "newsletter-unsubscribe",
@@ -62,11 +62,15 @@ def get_unsubscribe_link(recipient, subscription_type):
             "notification-unsubscribe",
             kwargs={"token": recipient.user_profile.unsubscribe_token},
         )
-    else:
+    elif subscription_type == EmailSubscriptionTypes.SYSTEM:
         return None
+    else:
+        return NotImplementedError(
+            f"Unknown subscription type: {subscription_type}"
+        )
 
 
-def get_headers(unsubscribe_link):
+def get_headers(*, unsubscribe_link):
     if unsubscribe_link:
         return {
             "List-Unsubscribe": unsubscribe_link,
@@ -77,25 +81,40 @@ def get_headers(unsubscribe_link):
 
 
 def create_email_object(
-    recipient, subject, message, connection, subscription_type=None
+    *,
+    recipient,
+    site,
+    subject,
+    markdown_message,
+    connection,
+    subscription_type,
 ):
-    site = Site.objects.get_current()
-    unsubscribe_link = get_unsubscribe_link(recipient, subscription_type)
-    headers = get_headers(unsubscribe_link)
+    unsubscribe_link = get_unsubscribe_link(
+        recipient=recipient, subscription_type=subscription_type
+    )
+    headers = get_headers(unsubscribe_link=unsubscribe_link)
 
     html_content = render_to_string(
         "vendored/mailgun_transactional_emails/action.html",
         {
             "title": subject,
             "username": recipient.username,
-            "content": message,
+            "content": markdown_message,
             "unsubscribe_link": unsubscribe_link,
             "subscription_type": subscription_type,
             "site": site,
         },
     )
-    html_content_without_linebreaks = html_content.replace("\n", "")
-    text_content = strip_tags(html_content_without_linebreaks)
+    text_content = render_to_string(
+        "emails/standard_plaintext_email.txt",
+        {
+            "username": recipient.username,
+            "content": markdown_message,
+            "unsubscribe_link": unsubscribe_link,
+            "subscription_type": subscription_type,
+            "site": site,
+        },
+    )
 
     email = EmailMultiAlternatives(
         subject=format_html(
@@ -107,5 +126,5 @@ def create_email_object(
         connection=connection,
         headers=headers,
     )
-    email.attach_alternative(html_content_without_linebreaks, "text/html")
+    email.attach_alternative(html_content, "text/html")
     return email

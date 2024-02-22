@@ -4,12 +4,14 @@ from allauth.account.models import EmailAddress
 from allauth.account.signals import email_confirmed
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.sites.models import Site
 from django.db import models
 from django.db.models import Q
 from django.utils.html import format_html
 from pyswot import is_academic
 
 from grandchallenge.emails.emails import send_standard_email_batch
+from grandchallenge.profiles.models import EmailSubscriptionTypes
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.tokens import (
     email_verification_token_generator,
@@ -84,16 +86,19 @@ class Verification(models.Model):
 
         message = format_html(
             (
-                "<p>Please confirm this email address for account validation by "
-                "visiting the following link: <a href='{url}'>{url}</a></p>"
-                "<p>Please disregard this email if you did not make this validation request.</p>"
+                "Please confirm this email address for account validation by "
+                "visiting the following link: [{url}]({url}) \n\n"
+                "Please disregard this email if you did not make this validation request."
             ),
             url=self.verification_url,
         )
+        site = Site.objects.get_current()
         send_standard_email_batch(
+            site=site,
             subject="Please confirm your email address for account validation",
-            message=message,
+            markdown_message=message,
             recipients=[self.user],
+            subscription_type=EmailSubscriptionTypes.SYSTEM,
         )
 
 

@@ -104,7 +104,7 @@ def test_email_content(settings):
     [
         (EmailSubscriptionTypes.NEWSLETTER, "newsletter-unsubscribe"),
         (EmailSubscriptionTypes.NOTIFICATION, "notification-unsubscribe"),
-        (None, None),
+        (EmailSubscriptionTypes.SYSTEM, None),
     ],
 )
 @pytest.mark.django_db
@@ -113,6 +113,7 @@ def test_unsubscribe_headers(subscription_type, unsubscribe_viewname):
     user.user_profile.receive_newsletter = True
     user.user_profile.receive_notification_emails = True
     user.user_profile.save()
+    site = Site.objects.get_current()
 
     if unsubscribe_viewname:
         unsubscribe_link = reverse(
@@ -124,8 +125,9 @@ def test_unsubscribe_headers(subscription_type, unsubscribe_viewname):
 
     assert len(mail.outbox) == 0
     send_standard_email_batch(
+        site=site,
         subject="Test",
-        message="Some content",
+        markdown_message="Some content",
         recipients=[user],
         subscription_type=subscription_type,
     )
@@ -146,7 +148,7 @@ def test_unsubscribe_headers(subscription_type, unsubscribe_viewname):
     [
         (EmailSubscriptionTypes.NEWSLETTER, [True, False, True]),
         (EmailSubscriptionTypes.NOTIFICATION, [True, False, False]),
-        (None, [True, True, True]),
+        (EmailSubscriptionTypes.SYSTEM, [True, True, True]),
     ],
 )
 @pytest.mark.django_db

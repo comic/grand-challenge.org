@@ -1,8 +1,10 @@
 from django.contrib.auth import get_user_model
+from django.contrib.sites.models import Site
 from django.template.loader import render_to_string
 from django.utils.html import format_html
 
 from grandchallenge.emails.emails import send_standard_email_batch
+from grandchallenge.profiles.models import EmailSubscriptionTypes
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -11,9 +13,9 @@ def send_challenge_requested_email_to_reviewers(challengerequest):
         "challenges:requests-list",
     )
     message = format_html(
-        "<p>User {user} has just requested the challenge "
+        "User {user} has just requested the challenge "
         "{request_title}. To review the challenge, "
-        "go here: <a href='{update_url}'>{update_url}</a></p>",
+        "go [here]({update_url}).",
         user=challengerequest.creator,
         request_title=challengerequest.title,
         update_url=update_url,
@@ -25,10 +27,13 @@ def send_challenge_requested_email_to_reviewers(challengerequest):
         )
         .distinct()
     )
+    site = Site.objects.get_current()
     send_standard_email_batch(
+        site=site,
         subject="New Challenge Requested",
-        message=message,
+        markdown_message=message,
         recipients=reviewers,
+        subscription_type=EmailSubscriptionTypes.SYSTEM,
     )
 
 
@@ -45,13 +50,16 @@ def send_challenge_requested_email_to_requester(challengerequest):
         "challenges/partials/challenge_request_confirmation_email.html",
         context,
     )
+    site = Site.objects.get_current()
     send_standard_email_batch(
+        site=site,
         subject=format_html(
             "[{request_title}] Challenge Request Submitted Successfully",
             request_title=challengerequest.short_name,
         ),
-        message=message,
+        markdown_message=message,
         recipients=[challengerequest.creator],
+        subscription_type=EmailSubscriptionTypes.SYSTEM,
     )
 
 
@@ -75,12 +83,14 @@ def send_challenge_status_update_email(challengerequest, challenge=None):
             "challenges/partials/challenge_request_rejection_email.html",
             context,
         )
-
+    site = Site.objects.get_current()
     send_standard_email_batch(
+        site=site,
         subject=format_html(
             "[{request_title}] Challenge Request Update",
             request_title=challengerequest.short_name,
         ),
-        message=message,
+        markdown_message=message,
         recipients=[challengerequest.creator],
+        subscription_type=EmailSubscriptionTypes.SYSTEM,
     )

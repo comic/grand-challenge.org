@@ -1,3 +1,4 @@
+from django.contrib.sites.models import Site
 from django.template.defaultfilters import pluralize
 from django.utils.html import format_html
 
@@ -15,17 +16,18 @@ def send_unread_notifications_email(*, site, user, n_notifications):
 
     msg = format_html(
         (
-            "<p>You have {unread_notification_count} new notification{suffix}.</p>"
-            "<p>Read and manage your notifications <a href='{url}'>here</a>.</p>"
+            "You have {unread_notification_count} new notification{suffix}.\n\n"
+            "Read and manage your notifications [here]({url})."
         ),
         unread_notification_count=n_notifications,
         suffix=pluralize(n_notifications),
         url=reverse("notifications:list"),
     )
-
+    site = Site.objects.get_currrent()
     send_standard_email_batch(
+        site=site,
         subject=subject,
-        message=msg,
+        markdown_message=msg,
         recipients=[user],
         subscription_type=EmailSubscriptionTypes.NOTIFICATION,
     )
