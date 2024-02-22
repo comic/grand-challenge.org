@@ -23,7 +23,7 @@ def send_unread_notifications_email(*, site, user, n_notifications):
         suffix=pluralize(n_notifications),
         url=reverse("notifications:list"),
     )
-    site = Site.objects.get_currrent()
+    site = Site.objects.get_current()
     send_standard_email_batch(
         site=site,
         subject=subject,

@@ -169,7 +169,8 @@ def test_filter_recipients(subscription_type, expected_recipients):
     u3.user_profile.save()
 
     filtered_userset = filter_recipients(
-        [inactive_user, u1, u2, u3], subscription_type=subscription_type
+        recipients=[inactive_user, u1, u2, u3],
+        subscription_type=subscription_type,
     )
     assert inactive_user not in filtered_userset
     expected_users = [
