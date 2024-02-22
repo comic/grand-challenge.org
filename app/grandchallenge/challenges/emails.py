@@ -47,7 +47,7 @@ def send_challenge_requested_email_to_requester(challengerequest):
         "link": link,
     }
     message = render_to_string(
-        "challenges/partials/challenge_request_confirmation_email.html",
+        "challenges/partials/challenge_request_confirmation_email.md",
         context,
     )
     site = Site.objects.get_current()
@@ -72,7 +72,7 @@ def send_challenge_status_update_email(challengerequest, challenge=None):
     ):
         context.update({"challenge_link": challenge.get_absolute_url()})
         message = render_to_string(
-            "challenges/partials/challenge_request_acceptance_email.html",
+            "challenges/partials/challenge_request_acceptance_email.md",
             context,
         )
     elif (
@@ -80,7 +80,7 @@ def send_challenge_status_update_email(challengerequest, challenge=None):
         == challengerequest.ChallengeRequestStatusChoices.REJECTED
     ):
         message = render_to_string(
-            "challenges/partials/challenge_request_rejection_email.html",
+            "challenges/partials/challenge_request_rejection_email.md",
             context,
         )
     site = Site.objects.get_current()
