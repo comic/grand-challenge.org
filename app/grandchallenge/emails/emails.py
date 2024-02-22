@@ -115,6 +115,7 @@ def create_email_object(
             "site": site,
         },
     )
+    html_content_without_linebreaks = html_content.replace("\n", "")
 
     email = EmailMultiAlternatives(
         subject=format_html(
@@ -126,5 +127,5 @@ def create_email_object(
         connection=connection,
         headers=headers,
     )
-    email.attach_alternative(html_content, "text/html")
+    email.attach_alternative(html_content_without_linebreaks, "text/html")
     return email
