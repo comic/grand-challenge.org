@@ -218,8 +218,8 @@ def test_cannot_email_inactive_users(subscription_type):
 def test_can_always_email_system_messages():
     user = UserFactory(is_active=True)
 
-    user.user_profile.receive_newsletter = True
-    user.user_profile.receive_notification_emails = True
+    user.user_profile.receive_newsletter = False
+    user.user_profile.receive_notification_emails = False
     user.user_profile.save()
 
     email = create_email_object(
