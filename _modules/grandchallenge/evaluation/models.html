@@ -120,7 +120,7 @@
     <span class="n">JSONValidator</span><span class="p">,</span>
     <span class="n">MimeTypeValidator</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.emails.emails</span> <span class="kn">import</span> <span class="n">send_standard_email</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.emails.emails</span> <span class="kn">import</span> <span class="n">send_standard_email_batch</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.evaluation.tasks</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">assign_evaluation_permissions</span><span class="p">,</span>
     <span class="n">assign_submission_permissions</span><span class="p">,</span>
@@ -134,6 +134,7 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.hanging_protocols.models</span> <span class="kn">import</span> <span class="n">HangingProtocolMixin</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.notifications.models</span> <span class="kn">import</span> <span class="n">Notification</span><span class="p">,</span> <span class="n">NotificationType</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.profiles.models</span> <span class="kn">import</span> <span class="n">EmailSubscriptionTypes</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.profiles.tasks</span> <span class="kn">import</span> <span class="n">deactivate_user</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.subdomains.utils</span> <span class="kn">import</span> <span class="n">reverse</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.uploads.models</span> <span class="kn">import</span> <span class="n">UserUpload</span>
@@ -910,21 +911,18 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_archive_items</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">send_give_algorithm_editors_job_view_permissions_changed_email</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">site</span> <span class="o">=</span> <span class="n">Site</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_current</span><span class="p">()</span>
-
         <span class="n">message</span> <span class="o">=</span> <span class="n">format_html</span><span class="p">(</span>
             <span class="p">(</span>
                 <span class="s2">&quot;You are being emailed as you are an admin of &#39;</span><span class="si">{challenge}</span><span class="s2">&#39; &quot;</span>
                 <span class="s2">&quot;and an important setting has been changed.</span><span class="se">\n\n</span><span class="s2">&quot;</span>
                 <span class="s2">&quot;The &#39;Give Algorithm Editors Job View Permissions&#39; setting has &quot;</span>
-                <span class="s2">&quot;been enabled for </span><span class="si">{phase}</span><span class="s2"> (</span><span class="si">{phase_settings_url}</span><span class="s2">). &quot;</span>
+                <span class="s2">&quot;been enabled for [</span><span class="si">{phase}</span><span class="s2">](</span><span class="si">{phase_settings_url}</span><span class="s2">).</span><span class="se">\n\n</span><span class="s2">&quot;</span>
                 <span class="s2">&quot;This means that editors of each algorithm submitted to this &quot;</span>
                 <span class="s2">&quot;phase (i.e. the challenge participants) will automatically be &quot;</span>
                 <span class="s2">&quot;given view permissions to their algorithm jobs and their logs.</span><span class="se">\n\n</span><span class="s2">&quot;</span>
                 <span class="s2">&quot;WARNING: This means that data in the linked archive is now &quot;</span>
                 <span class="s2">&quot;accessible to the participants!</span><span class="se">\n\n</span><span class="s2">&quot;</span>
-                <span class="s2">&quot;You can update this setting in the Phase Settings &quot;</span>
-                <span class="s2">&quot;(</span><span class="si">{phase_settings_url}</span><span class="s2">).&quot;</span>
+                <span class="s2">&quot;You can update this setting in the [Phase Settings](</span><span class="si">{phase_settings_url}</span><span class="s2">).&quot;</span>
             <span class="p">),</span>
             <span class="n">challenge</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="p">,</span>
             <span class="n">phase</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="p">,</span>
@@ -936,17 +934,16 @@
                 <span class="p">},</span>
             <span class="p">),</span>
         <span class="p">)</span>
-
-        <span class="k">for</span> <span class="n">admin</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span><span class="o">.</span><span class="n">user_set</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span>
-            <span class="s2">&quot;user_profile&quot;</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
-            <span class="n">send_standard_email</span><span class="p">(</span>
-                <span class="n">site</span><span class="o">=</span><span class="n">site</span><span class="p">,</span>
-                <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;WARNING: Permissions granted to Challenge Participants&quot;</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="n">message</span><span class="p">,</span>
-                <span class="n">recipient</span><span class="o">=</span><span class="n">admin</span><span class="p">,</span>
-                <span class="n">unsubscribable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="p">)</span></div>
+        <span class="n">site</span> <span class="o">=</span> <span class="n">Site</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_current</span><span class="p">()</span>
+        <span class="n">send_standard_email_batch</span><span class="p">(</span>
+            <span class="n">site</span><span class="o">=</span><span class="n">site</span><span class="p">,</span>
+            <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;WARNING: Permissions granted to Challenge Participants&quot;</span><span class="p">,</span>
+            <span class="n">markdown_message</span><span class="o">=</span><span class="n">message</span><span class="p">,</span>
+            <span class="n">recipients</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span><span class="o">.</span><span class="n">user_set</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span>
+                <span class="s2">&quot;user_profile&quot;</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span>
+            <span class="n">subscription_type</span><span class="o">=</span><span class="n">EmailSubscriptionTypes</span><span class="o">.</span><span class="n">SYSTEM</span><span class="p">,</span>
+        <span class="p">)</span></div>
 
 
 
