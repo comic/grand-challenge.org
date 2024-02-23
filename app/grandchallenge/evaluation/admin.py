@@ -3,6 +3,7 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ValidationError
 from django.forms import Form, ModelForm, ModelMultipleChoiceField
 from django.urls import path, reverse
+from django.utils.html import format_html
 from django.views.generic import FormView
 
 from grandchallenge.archives.models import Archive
@@ -58,7 +59,9 @@ class PhaseAdminForm(ModelForm):
 
 
 class ConfigureAlgorithmPhasesForm(Form):
-    phases = ModelMultipleChoiceField(queryset=Phase.objects.all())
+    phases = ModelMultipleChoiceField(
+        queryset=Phase.objects.select_related("challenge").all()
+    )
     algorithm_inputs = ModelMultipleChoiceField(
         queryset=ComponentInterface.objects.all()
     )
@@ -80,7 +83,7 @@ class ConfigureAlgorithmPhasesView(PermissionRequiredMixin, FormView):
                 inputs=form.cleaned_data["algorithm_inputs"],
                 outputs=form.cleaned_data["algorithm_outputs"],
             )
-        messages.success(self.request, "Congrats, form submitted!")
+        messages.success(self.request, "Phases were successfully updated")
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
@@ -92,14 +95,20 @@ class ConfigureAlgorithmPhasesView(PermissionRequiredMixin, FormView):
         return reverse("admin:evaluation_phase_changelist")
 
     def turn_phase_into_algorithm_phase(self, phase, inputs, outputs):
-        archive = Archive.objects.create(title=phase.title)
+        archive = Archive.objects.create(
+            title=format_html(
+                "{challenge_name} {phase_title} data set",
+                challenge_name=phase.challenge.short_name,
+                phase_title=phase.title,
+            )
+        )
         for user in phase.challenge.admins_group.user_set.all():
             archive.add_editor(user)
         phase.archive = archive
         phase.submission_kind = phase.SubmissionKindChoices.ALGORITHM
         phase.creator_must_be_verified = True
         phase.save()
-        phase.algorithm_outputs.add(*[out.pk for out in outputs])
+        phase.algorithm_outputs.add(*[output.pk for output in outputs])
         phase.algorithm_inputs.add(*[input.pk for input in inputs])
 
 
