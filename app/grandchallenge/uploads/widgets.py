@@ -1,3 +1,5 @@
+import re
+
 from django.forms.widgets import HiddenInput, MultipleHiddenInput
 
 
@@ -11,8 +13,11 @@ class UserUploadWidgetMixin:
 
     def get_context(self, *args, **kwargs):
         context = super().get_context(*args, **kwargs)
+        widget_id = context["widget"]["attrs"]["id"]
+        if re.match(r"^\d", widget_id):
+            context["widget"]["attrs"]["id"] = f"X_{widget_id}"
         context["widget"]["allowed_file_types"] = {
-            "id": f"{context['widget']['attrs']['id']}AllowedFileTypes",
+            "id": f"{widget_id}AllowedFileTypes",
             "value": self.allowed_file_types,
         }
         return context
