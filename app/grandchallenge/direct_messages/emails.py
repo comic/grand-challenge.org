@@ -1,10 +1,12 @@
 from django.contrib.auth import get_user_model
+from django.contrib.sites.models import Site
 from django.db.models import Count, F, Q
 from django.template.defaultfilters import pluralize
 from django.utils.html import format_html
 
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
-from grandchallenge.emails.emails import send_standard_email
+from grandchallenge.emails.emails import send_standard_email_batch
+from grandchallenge.profiles.models import EmailSubscriptionTypes
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -49,7 +51,7 @@ def get_new_senders(*, user):
 
 
 def send_new_unread_direct_messages_email(
-    *, site, user, new_senders, new_unread_message_count
+    *, user, new_senders, new_unread_message_count
 ):
     subject = format_html(
         (
@@ -63,20 +65,19 @@ def send_new_unread_direct_messages_email(
 
     msg = format_html(
         (
-            "You have {new_unread_message_count} new message{suffix} "
-            "from {new_senders}.\n"
-            "To read and manage your messages, visit: {url}.\n\n"
+            "You have {new_unread_message_count} new message{suffix} from {new_senders}.\n\n"
+            "To read and manage your messages, click [here]({url})."
         ),
         new_unread_message_count=new_unread_message_count,
         suffix=pluralize(new_unread_message_count),
         new_senders=oxford_comma(new_senders),
         url=reverse("direct-messages:conversation-list"),
     )
-
-    send_standard_email(
+    site = Site.objects.get_current()
+    send_standard_email_batch(
         site=site,
         subject=subject,
-        message=msg,
-        recipient=user,
-        unsubscribable=True,
+        markdown_message=msg,
+        recipients=[user],
+        subscription_type=EmailSubscriptionTypes.SYSTEM,
     )

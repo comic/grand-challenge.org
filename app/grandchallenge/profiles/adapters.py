@@ -16,7 +16,8 @@ from django.http import HttpResponseRedirect
 from django.utils.http import url_has_allowed_host_and_scheme, urlencode
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.emails.emails import send_standard_email
+from grandchallenge.emails.emails import send_standard_email_batch
+from grandchallenge.profiles.models import EmailSubscriptionTypes
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -115,12 +116,12 @@ class AccountAdapter(DefaultAccountAdapter):
         response = super().post_login(request, user, **kwargs)
         site = Site.objects.get_current()
         if user.is_staff or user.is_superuser:
-            send_standard_email(
+            send_standard_email_batch(
                 site=site,
                 subject="Security Alert",
-                message="We noticed a new login to your account. If this was you, you don't need to do anything. If not, please change your password and update your 2FA device.",
-                recipient=user,
-                unsubscribable=False,
+                markdown_message="We noticed a new login to your account. If this was you, you don't need to do anything. If not, please change your password and update your 2FA device.",
+                recipients=[user],
+                subscription_type=EmailSubscriptionTypes.SYSTEM,
             )
         return response
 

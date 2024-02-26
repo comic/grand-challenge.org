@@ -1,0 +1,13 @@
+{% load bleach %}
+Dear {{ username }},
+
+{{ content }}
+
+Regards,
+The {{ site.name }} Team
+
+{% if unsubscribe_link %}
+If you no longer wish to receive {{ subscription_type|lower }} emails from us, unsubscribe here: {{ unsubscribe_link }}.
+{% else %}
+This is an automated service email from {{ site.domain.lower }}.
+{% endif %}
