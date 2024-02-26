@@ -35,6 +35,7 @@ from grandchallenge.evaluation.models import (
     SubmissionUserObjectPermission,
 )
 from grandchallenge.evaluation.tasks import create_evaluation
+from grandchallenge.evaluation.utils import SubmissionKindChoices
 
 
 class PhaseAdminForm(ModelForm):
@@ -69,10 +70,25 @@ class ConfigureAlgorithmPhasesForm(Form):
         queryset=ComponentInterface.objects.all()
     )
 
+    def clean(self):
+        cleaned_data = super().clean()
+        for phase in self.cleaned_data["phases"]:
+            if phase.submission_kind == SubmissionKindChoices.ALGORITHM:
+                raise ValidationError(
+                    f"{phase.title} is already configured as an algorithm phase."
+                )
+            if Archive.objects.filter(
+                title=f"{phase.challenge.short_name} {phase.title} data set"
+            ).exists():
+                raise ValidationError(
+                    f"Archive for {phase.title} already exists."
+                )
+        return cleaned_data
+
 
 class ConfigureAlgorithmPhasesView(PermissionRequiredMixin, FormView):
     form_class = ConfigureAlgorithmPhasesForm
-    permission_required = "phases.configure_algorithm_phase"
+    permission_required = "evaluation.configure_algorithm_phase"
     template_name = "admin/evaluation/phase/algorithm_phase_form.html"
     raise_exception = True
 
@@ -87,14 +103,20 @@ class ConfigureAlgorithmPhasesView(PermissionRequiredMixin, FormView):
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data()
-        context.update({"title": "Turn phase(s) into algorithm phase(s)"})
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                **admin.site.each_context(self.request),
+                "opts": Phase._meta,
+                "title": "Turn phase(s) into algorithm phase(s)",
+            }
+        )
         return context
 
     def get_success_url(self):
         return reverse("admin:evaluation_phase_changelist")
 
-    def turn_phase_into_algorithm_phase(self, phase, inputs, outputs):
+    def turn_phase_into_algorithm_phase(self, *, phase, inputs, outputs):
         archive = Archive.objects.create(
             title=format_html(
                 "{challenge_name} {phase_title} data set",
@@ -102,14 +124,16 @@ class ConfigureAlgorithmPhasesView(PermissionRequiredMixin, FormView):
                 phase_title=phase.title,
             )
         )
+
         for user in phase.challenge.admins_group.user_set.all():
             archive.add_editor(user)
+
         phase.archive = archive
         phase.submission_kind = phase.SubmissionKindChoices.ALGORITHM
         phase.creator_must_be_verified = True
         phase.save()
-        phase.algorithm_outputs.add(*[output.pk for output in outputs])
-        phase.algorithm_inputs.add(*[input.pk for input in inputs])
+        phase.algorithm_outputs.add(*outputs)
+        phase.algorithm_inputs.add(*inputs)
 
 
 @admin.register(Phase)
