@@ -136,10 +136,6 @@ def get_logo_path(instance, filename):
     return f"logos/{instance.__class__.__name__.lower()}/{instance.pk}/{get_valid_filename(filename)}"
 
 
-def get_pdf_path(instance, filename):
-    return f"pdfs/{instance.__class__.__name__.lower()}/{instance.pk}/{get_valid_filename(filename)}"
-
-
 def get_social_image_path(instance, filename):
     return f"social-images/{instance.__class__.__name__.lower()}/{instance.pk}/{get_valid_filename(filename)}"
 

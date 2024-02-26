@@ -12,10 +12,9 @@ from grandchallenge.archives.sitemaps import ArchivesSitemap
 from grandchallenge.blogs.sitemaps import PostsSitemap
 from grandchallenge.challenges.sitemaps import ChallengesSitemap
 from grandchallenge.core.sitemaps import CoreSitemap, FlatPagesSitemap
-from grandchallenge.core.views import HomeTemplate, healthcheck
+from grandchallenge.core.views import HomeTemplate, RedirectPath, healthcheck
 from grandchallenge.pages.sitemaps import PagesSitemap
 from grandchallenge.policies.sitemaps import PoliciesSitemap
-from grandchallenge.products.sitemaps import CompaniesSitemap, ProductsSitemap
 from grandchallenge.profiles.views import TwoFactorSetup
 from grandchallenge.reader_studies.sitemaps import ReaderStudiesSiteMap
 
@@ -34,12 +33,10 @@ sitemaps = {
     "archives": ArchivesSitemap,
     "blogs": PostsSitemap,
     "challenges": ChallengesSitemap,
-    "companies": CompaniesSitemap,
     "core": CoreSitemap,
     "flatpages": FlatPagesSitemap,
     "pages": PagesSitemap,
     "policies": PoliciesSitemap,
-    "products": ProductsSitemap,
     "reader-studies": ReaderStudiesSiteMap,
 }
 
@@ -135,7 +132,11 @@ urlpatterns = [
     path("summernote/", include("django_summernote.urls")),
     path(
         "aiforradiology/",
-        include("grandchallenge.products.urls", namespace="products"),
+        RedirectPath.as_view(netloc="radiology.healthairegister.com"),
+    ),
+    path(
+        "aiforradiology/<path:path>",
+        RedirectPath.as_view(netloc="radiology.healthairegister.com"),
     ),
     path(
         "policies/",

@@ -37,7 +37,6 @@ class CoreSitemap(SubdomainSitemap):
             "reader-studies:list",
             "challenges:list",
             "algorithms:list",
-            "products:product-list",
         ]
 
     def location(self, item):

@@ -102,40 +102,11 @@ class HomeTemplate(TemplateView):
                 url_title="Algorithms",
                 image="images/algorithms.png",
             ),
-            Highlight(
-                title="Find Certified Solutions",
-                bullet_points=[
-                    "Filter to easily find solutions to your clinical questions",
-                    "Compare product specifications",
-                    "Verify CE and FDA certification",
-                ],
-                url=reverse("products:product-list"),
-                url_title="Products",
-                image="images/products.png",
-            ),
         ]
 
-        latest_news_item = Post.objects.filter(
+        news_carousel_items = Post.objects.filter(
             published=True, highlight=True
-        ).first()
-        latest_ai_for_radiology_post = Post.objects.filter(
-            published=True, tags__slug="products"
-        ).first()
-        latest_gc_blog_post = (
-            Post.objects.filter(published=True)
-            .exclude(tags__slug="products")
-            .exclude(highlight=True)
-            .first()
-        )
-        news_carousel_items = [
-            item
-            for item in [
-                latest_news_item,
-                latest_ai_for_radiology_post,
-                latest_gc_blog_post,
-            ]
-            if item
-        ]
+        ).order_by("-created")[:3]
 
         context.update(
             {
@@ -162,7 +133,6 @@ class HomeTemplate(TemplateView):
                 .order_by("-created")
                 .all()[:4],
                 "news_carousel_items": news_carousel_items,
-                "latest_news_item": latest_news_item,
             }
         )
         return context
