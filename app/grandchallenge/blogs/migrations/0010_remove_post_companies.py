@@ -9,9 +9,4 @@ class Migration(migrations.Migration):
         ("blogs", "0009_postgroupobjectpermission_postuserobjectpermission"),
     ]
 
-    operations = [
-        migrations.RemoveField(
-            model_name="post",
-            name="companies",
-        ),
-    ]
+    operations = []
