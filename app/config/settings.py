@@ -571,7 +571,6 @@ LOCAL_APPS = [
     "grandchallenge.reader_studies",
     "grandchallenge.workstation_configs",
     "grandchallenge.policies",
-    "grandchallenge.products",
     "grandchallenge.serving",
     "grandchallenge.blogs",
     "grandchallenge.publications",
