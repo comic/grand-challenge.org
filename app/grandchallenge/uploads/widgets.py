@@ -15,6 +15,7 @@ class UserUploadWidgetMixin:
         context = super().get_context(*args, **kwargs)
         widget_id = context["widget"]["attrs"]["id"]
         if re.match(r"^\d", widget_id):
+            # id names cannot start with a number in CSS
             context["widget"]["attrs"]["id"] = f"X_{widget_id}"
         context["widget"]["allowed_file_types"] = {
             "id": f"{widget_id}AllowedFileTypes",
