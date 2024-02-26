@@ -101,7 +101,7 @@ development_fixtures:
 	docker compose run \
 		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
 		--rm \
-		web \
+		celery_worker_evaluation \
 		bash -c "python manage.py migrate && python manage.py runscript minio development_fixtures"
 
 
@@ -109,7 +109,7 @@ algorithm_evaluation_fixtures:
 	docker compose run \
 		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
 		--rm \
-		web \
+		celery_worker_evaluation \
 		python manage.py runscript algorithm_evaluation_fixtures
 
 
