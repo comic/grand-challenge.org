@@ -333,6 +333,8 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                     css_class="options-formset",
                 ),
                 Field("required"),
+                Field("empty_answer_confirmation"),
+                Field("empty_answer_confirmation_label"),
                 Field("image_port"),
                 Field("default_annotation_color"),
                 Field("direction"),
@@ -412,6 +414,8 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
             "help_text",
             "answer_type",
             "required",
+            "empty_answer_confirmation",
+            "empty_answer_confirmation_label",
             "image_port",
             "default_annotation_color",
             "direction",
@@ -464,6 +468,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
         widgets = {
             "question_text": TextInput,
             "answer_match_pattern": TextInput,
+            "empty_answer_confirmation_label": TextInput,
             "overlay_segments": JSONEditorWidget(
                 schema=OVERLAY_SEGMENTS_SCHEMA
             ),
