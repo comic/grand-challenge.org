@@ -70,11 +70,6 @@ services:
       - type: bind
         source: ./app
         target: /app/
-      - type: bind
-        source: /var/run/docker.sock
-        target: /var/run/docker.sock
-    group_add:
-      - ${DOCKER_GID:?err}
 
   http:
     image: public.ecr.aws/diag-nijmegen/grand-challenge/http:latest

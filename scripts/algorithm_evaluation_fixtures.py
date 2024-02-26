@@ -160,21 +160,9 @@ def _gc_demo_algorithm():
         tmp_path = Path(tmp_dir)
 
         repo_tag = "fixtures-algorithm-io:latest"
-        parent_dir = Path(__file__).parent.parent
-        if parent_dir.name == "app":
-            demo_algorithm_path = (
-                parent_dir / "tests" / "resources" / "gc_demo_algorithm"
-            )
-        elif parent_dir.name == "grand-challenge.org":
-            demo_algorithm_path = (
-                parent_dir
-                / "app"
-                / "tests"
-                / "resources"
-                / "gc_demo_algorithm"
-            )
-        else:
-            raise RuntimeError("Unexpected path")
+        demo_algorithm_path = (
+            settings.SITE_ROOT / "tests" / "resources" / "gc_demo_algorithm"
+        )
 
         docker_client.build_image(
             path=str(demo_algorithm_path.absolute()), repo_tag=repo_tag
