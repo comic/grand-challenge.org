@@ -65,7 +65,6 @@ DEFAULT_USERS = [
     "workstation",
     "algorithm",
     "algorithmuser",
-    "air",
     "archive",
 ]
 
@@ -188,9 +187,6 @@ def _set_user_permissions(users):
         name=settings.ALGORITHMS_CREATORS_GROUP_NAME
     )
     users["algorithm"].groups.add(algorithm_group)
-
-    add_product_perm = Permission.objects.get(codename="add_product")
-    users["air"].user_permissions.add(add_product_perm)
 
     add_archive_perm = Permission.objects.get(codename="add_archive")
     users["archive"].user_permissions.add(add_archive_perm)

@@ -84,14 +84,14 @@ def test_redirect_path(rf, path, expected):
 def test_product_redirect(client):
     response = get_view_for_user(url="/aiforradiology/", client=client)
 
-    assert response.status_code == 302
+    assert response.status_code == 301
     assert response.url == "https://radiology.healthairegister.com/"
 
     response = get_view_for_user(
         url="/aiforradiology/product/airs-medical-swiftmr", client=client
     )
 
-    assert response.status_code == 302
+    assert response.status_code == 301
     assert (
         response.url
         == "https://radiology.healthairegister.com/product/airs-medical-swiftmr"
