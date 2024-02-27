@@ -161,11 +161,7 @@ def _gc_demo_algorithm():
 
         repo_tag = "fixtures-algorithm-io:latest"
         demo_algorithm_path = (
-            Path(__file__).parent.parent
-            / "app"
-            / "tests"
-            / "resources"
-            / "gc_demo_algorithm"
+            settings.SITE_ROOT / "tests" / "resources" / "gc_demo_algorithm"
         )
 
         docker_client.build_image(

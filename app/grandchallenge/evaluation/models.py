@@ -41,7 +41,7 @@ from grandchallenge.core.validators import (
     JSONValidator,
     MimeTypeValidator,
 )
-from grandchallenge.emails.emails import send_standard_email
+from grandchallenge.emails.emails import send_standard_email_batch
 from grandchallenge.evaluation.tasks import (
     assign_evaluation_permissions,
     assign_submission_permissions,
@@ -55,6 +55,7 @@ from grandchallenge.evaluation.utils import (
 )
 from grandchallenge.hanging_protocols.models import HangingProtocolMixin
 from grandchallenge.notifications.models import Notification, NotificationType
+from grandchallenge.profiles.models import EmailSubscriptionTypes
 from grandchallenge.profiles.tasks import deactivate_user
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
@@ -820,21 +821,18 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         return self.valid_archive_items.count()
 
     def send_give_algorithm_editors_job_view_permissions_changed_email(self):
-        site = Site.objects.get_current()
-
         message = format_html(
             (
                 "You are being emailed as you are an admin of '{challenge}' "
                 "and an important setting has been changed.\n\n"
                 "The 'Give Algorithm Editors Job View Permissions' setting has "
-                "been enabled for {phase} ({phase_settings_url}). "
+                "been enabled for [{phase}]({phase_settings_url}).\n\n"
                 "This means that editors of each algorithm submitted to this "
                 "phase (i.e. the challenge participants) will automatically be "
                 "given view permissions to their algorithm jobs and their logs.\n\n"
                 "WARNING: This means that data in the linked archive is now "
                 "accessible to the participants!\n\n"
-                "You can update this setting in the Phase Settings "
-                "({phase_settings_url})."
+                "You can update this setting in the [Phase Settings]({phase_settings_url})."
             ),
             challenge=self.challenge,
             phase=self.title,
@@ -846,17 +844,16 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                 },
             ),
         )
-
-        for admin in self.challenge.admins_group.user_set.select_related(
-            "user_profile"
-        ).all():
-            send_standard_email(
-                site=site,
-                subject="WARNING: Permissions granted to Challenge Participants",
-                message=message,
-                recipient=admin,
-                unsubscribable=False,
-            )
+        site = Site.objects.get_current()
+        send_standard_email_batch(
+            site=site,
+            subject="WARNING: Permissions granted to Challenge Participants",
+            markdown_message=message,
+            recipients=self.challenge.admins_group.user_set.select_related(
+                "user_profile"
+            ).all(),
+            subscription_type=EmailSubscriptionTypes.SYSTEM,
+        )
 
 
 class PhaseUserObjectPermission(UserObjectPermissionBase):

@@ -284,7 +284,7 @@ class NewsletterUnsubscribeView(EmailPreferencesUpdate):
 
 
 class NotificationUnsubscribeView(EmailPreferencesUpdate):
-    subscription_type = EmailSubscriptionTypes.NOTIFICATIONS
+    subscription_type = EmailSubscriptionTypes.NOTIFICATION
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

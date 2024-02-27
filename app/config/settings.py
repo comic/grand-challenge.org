@@ -571,7 +571,6 @@ LOCAL_APPS = [
     "grandchallenge.reader_studies",
     "grandchallenge.workstation_configs",
     "grandchallenge.policies",
-    "grandchallenge.products",
     "grandchallenge.serving",
     "grandchallenge.blogs",
     "grandchallenge.publications",
@@ -1480,7 +1479,6 @@ CSP_IMG_SRC = (
     "https:",  # Arbitrary files used on blog posts and challenge pages
 )
 CSP_FRAME_SRC = (
-    "https://mailchi.mp",  # For products blog posts
     "https://www.youtube-nocookie.com",  # Embedding YouTube videos
 )
 CSP_MEDIA_SRC = (

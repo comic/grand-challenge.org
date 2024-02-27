@@ -25,7 +25,8 @@ UNSUBSCRIBE_SALT = "email-subscription-preferences"
 
 class EmailSubscriptionTypes(TextChoices):
     NEWSLETTER = "NEWSLETTER"
-    NOTIFICATIONS = "NOTIFICATIONS"
+    NOTIFICATION = "NOTIFICATION"
+    SYSTEM = "SYSTEM"
 
 
 class UserProfile(models.Model):
@@ -132,6 +133,32 @@ class UserProfile(models.Model):
         return Signer(salt=UNSUBSCRIBE_SALT).sign_object(
             {"username": self.user.username}
         )
+
+    def get_unsubscribe_link(self, *, subscription_type):
+        if not self.user.is_active:
+            raise ValueError("Inactive users cannot be emailed")
+        elif subscription_type == EmailSubscriptionTypes.NEWSLETTER:
+            if self.receive_newsletter:
+                return reverse(
+                    "newsletter-unsubscribe",
+                    kwargs={"token": self.unsubscribe_token},
+                )
+            else:
+                raise ValueError("User has opted out of newsletter emails")
+        elif subscription_type == EmailSubscriptionTypes.NOTIFICATION:
+            if self.receive_notification_emails:
+                return reverse(
+                    "notification-unsubscribe",
+                    kwargs={"token": self.unsubscribe_token},
+                )
+            else:
+                raise ValueError("User has opted out of notification emails")
+        elif subscription_type == EmailSubscriptionTypes.SYSTEM:
+            return None
+        else:
+            return NotImplementedError(
+                f"Unknown subscription type: {subscription_type}"
+            )
 
 
 class UserProfileUserObjectPermission(UserObjectPermissionBase):

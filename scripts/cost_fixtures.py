@@ -43,7 +43,7 @@ def run():
         )
         challenge = _create_challenge(
             creator=users["demo"],
-            participants=[users["demop"], users["air"]],
+            participants=[users["demop"]],
             archive=archive,
             suffix=i,
             inputs=inputs,
@@ -51,7 +51,7 @@ def run():
         )
         for k in range(random.randint(2, 5)):
             algorithm = _create_algorithm(
-                creator=users["demop"] if (k % 2) == 0 else users["air"],
+                creator=users["demop"],
                 inputs=inputs,
                 outputs=outputs,
                 suffix=f"Image {k}",
@@ -64,9 +64,7 @@ def run():
 
 
 def _get_users():
-    users = get_user_model().objects.filter(
-        username__in=["demo", "demop", "air"]
-    )
+    users = get_user_model().objects.filter(username__in=["demo", "demop"])
     return {u.username: u for u in users}
 
 
