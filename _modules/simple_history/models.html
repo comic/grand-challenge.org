@@ -749,7 +749,8 @@
 
             <span class="n">insert_rows</span> <span class="o">=</span> <span class="p">[]</span>
 
-            <span class="n">through_field_name</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">original_instance</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="c1"># `m2m_field_name()` is part of Django&#39;s internal API</span>
+            <span class="n">through_field_name</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">m2m_field_name</span><span class="p">()</span>
 
             <span class="n">rows</span> <span class="o">=</span> <span class="n">through_model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="n">through_field_name</span><span class="p">:</span> <span class="n">instance</span><span class="p">})</span>
 
@@ -846,7 +847,10 @@
             <span class="n">m2m_fields</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">m2m_fields_model_field_name</span><span class="p">))</span>
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
             <span class="k">pass</span>
-        <span class="k">return</span> <span class="p">[</span><span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">field</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">m2m_fields</span><span class="p">]</span>
+        <span class="n">field_names</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">field</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">m2m_fields</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">field_name</span><span class="p">)</span><span class="o">.</span><span class="n">field</span> <span class="k">for</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="n">field_names</span><span class="p">]</span>
 
 
 <span class="k">def</span> <span class="nf">transform_field</span><span class="p">(</span><span class="n">field</span><span class="p">):</span>
