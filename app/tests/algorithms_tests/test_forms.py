@@ -250,7 +250,7 @@ def test_algorithm_create(client, uploaded_image):
             "anything",
             [
                 'class="user-upload"',
-                '<div id="id_anything-drag-drop"',
+                '<div id="X_id_anything-drag-drop"',
             ],
         ),
     ),
