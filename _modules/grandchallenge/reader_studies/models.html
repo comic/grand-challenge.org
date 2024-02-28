@@ -1384,6 +1384,14 @@
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Regular expression to match a pattern for answers of type Text. Can only be set in combination with the &#39;Text Input&#39; or &#39;Text Area&#39; widgets.&quot;</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="n">empty_answer_confirmation</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Require an explicit confirmation when saving an empty answer to this question.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">empty_answer_confirmation_label</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Label to show when confirming an empty answer.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
         <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;order&quot;</span><span class="p">,</span> <span class="s2">&quot;created&quot;</span><span class="p">)</span>
@@ -1496,6 +1504,7 @@
     <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_answer_type</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clean_empty_answer_confirmation</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_interface</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_image_port</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_widget</span><span class="p">()</span>
@@ -1527,6 +1536,28 @@
         <span class="p">):</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="s2">&quot;Default annotation color should only be set for annotation questions&quot;</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_clean_empty_answer_confirmation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">empty_answer_confirmation</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">required</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;Cannot have answer confirmation and have a question be &quot;</span>
+                <span class="s2">&quot;required at the same time&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="o">*</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">get_annotation_types</span><span class="p">(),</span>
+            <span class="n">AnswerType</span><span class="o">.</span><span class="n">NUMBER</span><span class="p">,</span>
+            <span class="n">AnswerType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;Empty answer confirmation is not supported for &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_answer_type_display</span><span class="p">()</span><span class="si">}</span><span class="s2"> type questions. &quot;</span>
+                <span class="s2">&quot;For (Multiple) Choice types, you can add an empty option &quot;</span>
+                <span class="s2">&quot;and make the question required&quot;</span>
             <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_clean_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
