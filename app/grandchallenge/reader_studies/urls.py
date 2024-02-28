@@ -2,13 +2,12 @@ from django.urls import path
 
 from grandchallenge.reader_studies.views import (
     AddDisplaySetsToReaderStudy,
-    AddDisplaySetToReaderStudy,
     AddGroundTruthToReaderStudy,
-    AddImagesToReaderStudy,
     AddQuestionToReaderStudy,
     AnswersRemoveForUser,
     AnswersRemoveGroundTruth,
-    DisplaySetDetail,
+    DisplaySetCreateView,
+    DisplaySetDeleteView,
     DisplaySetFilesUpdate,
     DisplaySetInterfacesCreate,
     DisplaySetUpdate,
@@ -39,16 +38,6 @@ app_name = "reader-studies"
 urlpatterns = [
     path("", ReaderStudyList.as_view(), name="list"),
     path("create/", ReaderStudyCreate.as_view(), name="create"),
-    path(
-        "questions/interfaces/",
-        QuestionInterfacesView.as_view(),
-        name="question-interfaces",
-    ),
-    path(
-        "questions/widgets/",
-        QuestionWidgetsView.as_view(),
-        name="question-widgets",
-    ),
     path("<slug>/", ReaderStudyDetail.as_view(), name="detail"),
     path("<slug>/update/", ReaderStudyUpdate.as_view(), name="update"),
     path("<slug>/delete/", ReaderStudyDelete.as_view(), name="delete"),
@@ -95,18 +84,18 @@ urlpatterns = [
     ),
     path(
         "<slug>/display-sets/create-single/",
-        AddDisplaySetToReaderStudy.as_view(),
+        DisplaySetCreateView.as_view(),
         name="display-set-create",
-    ),
-    path(
-        "<slug>/display-sets/<uuid:pk>/",
-        DisplaySetDetail.as_view(),
-        name="display-set-detail",
     ),
     path(
         "<slug>/display-sets/<uuid:pk>/update/",
         DisplaySetUpdate.as_view(),
         name="display-set-update",
+    ),
+    path(
+        "<slug>/display-sets/<uuid:pk>/delete/",
+        DisplaySetDeleteView.as_view(),
+        name="display-set-delete",
     ),
     path(
         "<slug>/display-sets/new/interfaces/create/",
@@ -124,11 +113,6 @@ urlpatterns = [
         name="display-set-files-update",
     ),
     path(
-        "<slug>/images/add/",
-        AddImagesToReaderStudy.as_view(),
-        name="add-images",
-    ),
-    path(
         "<slug>/questions/add/",
         AddQuestionToReaderStudy.as_view(),
         name="add-question",
@@ -142,6 +126,16 @@ urlpatterns = [
         "<slug>/questions/<pk>/delete/",
         QuestionDelete.as_view(),
         name="question-delete",
+    ),
+    path(
+        "<slug>/questions/interfaces/",
+        QuestionInterfacesView.as_view(),
+        name="question-interfaces",
+    ),
+    path(
+        "<slug>/questions/widgets/",
+        QuestionWidgetsView.as_view(),
+        name="question-widgets",
     ),
     path(
         "<slug>/editors/update/",

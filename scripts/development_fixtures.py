@@ -1,10 +1,7 @@
 import base64
 import itertools
-import json
 import logging
-import os
 import random
-from datetime import timedelta
 
 from allauth.account.models import EmailAddress
 from django.conf import settings
@@ -13,12 +10,9 @@ from django.contrib.auth.models import Group, Permission
 from django.contrib.flatpages.models import FlatPage
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.files import File
 from django.core.files.base import ContentFile
 from django.db import IntegrityError
-from django.utils import timezone
 from faker import Faker
-from guardian.shortcuts import assign_perm
 from knox import crypto
 from knox.models import AuthToken
 from knox.settings import CONSTANTS
@@ -27,7 +21,7 @@ from machina.apps.forum.models import Forum
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
 from grandchallenge.anatomy.models import BodyRegion, BodyStructure
 from grandchallenge.archives.models import Archive, ArchiveItem
-from grandchallenge.cases.models import Image
+from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.challenges.models import Challenge, ChallengeSeries
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -43,18 +37,22 @@ from grandchallenge.evaluation.models import (
     Submission,
 )
 from grandchallenge.evaluation.utils import SubmissionKindChoices
-from grandchallenge.github.models import GitHubUserToken, GitHubWebhookMessage
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.pages.models import Page
 from grandchallenge.reader_studies.models import (
     Answer,
     DisplaySet,
     Question,
+    QuestionWidgetKindChoices,
     ReaderStudy,
 )
 from grandchallenge.task_categories.models import TaskType
 from grandchallenge.verifications.models import Verification
 from grandchallenge.workstations.models import Workstation
+from scripts.algorithm_evaluation_fixtures import (
+    _gc_demo_algorithm,
+    _uploaded_image_file,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -63,12 +61,10 @@ DEFAULT_USERS = [
     "demop",
     "user",
     "admin",
-    "retina",
     "readerstudy",
     "workstation",
     "algorithm",
     "algorithmuser",
-    "air",
     "archive",
 ]
 
@@ -96,8 +92,6 @@ def run():
     _create_reader_studies(users)
     _create_archive(users)
     _create_user_tokens(users)
-    _create_github_user_token(users["algorithm"])
-    _create_github_webhook_message()
     _create_help_forum()
     _create_flatpages()
 
@@ -176,9 +170,6 @@ def _set_user_permissions(users):
     users["admin"].is_staff = True
     users["admin"].save()
 
-    retina_group = Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME)
-    users["retina"].groups.add(retina_group)
-
     rs_group = Group.objects.get(
         name=settings.READER_STUDY_CREATORS_GROUP_NAME
     )
@@ -197,9 +188,6 @@ def _set_user_permissions(users):
     )
     users["algorithm"].groups.add(algorithm_group)
 
-    add_product_perm = Permission.objects.get(codename="add_product")
-    users["air"].user_permissions.add(add_product_perm)
-
     add_archive_perm = Permission.objects.get(codename="add_archive")
     users["archive"].user_permissions.add(add_archive_perm)
     users["demo"].user_permissions.add(add_archive_perm)
@@ -214,7 +202,6 @@ def _create_demo_challenge(users, algorithm):
         short_name="demo",
         description="Demo Challenge",
         creator=users["demo"],
-        use_workspaces=True,
         hidden=False,
         display_forum_link=True,
     )
@@ -239,9 +226,6 @@ def _create_demo_challenge(users, algorithm):
     combined.phases.set(demo.phase_set.all())
 
     for phase_num, phase in enumerate(demo.phase_set.all()):
-
-        assign_perm("create_phase_workspace", users["demop"], phase)
-
         phase.score_title = "Accuracy ± std"
         phase.score_jsonpath = "acc.mean"
         phase.score_error_jsonpath = "acc.std"
@@ -258,9 +242,9 @@ def _create_demo_challenge(users, algorithm):
         phase.save()
 
         method = Method(phase=phase, creator=users["demo"])
-        container = ContentFile(base64.b64decode(b""))
-        method.image.save("test.tar", container)
-        method.save()
+
+        with _gc_demo_algorithm() as container:
+            method.image.save("algorithm_io.tar", container)
 
         if phase_num == 1:
             submission = Submission(phase=phase, creator=users["demop"])
@@ -341,199 +325,73 @@ def _create_task_types_regions_modalities(users):
     ChallengeSeries.objects.create(name="MICCAI")
 
 
-def _create_github_user_token(user):
-    now = timezone.now()
-    GitHubUserToken.objects.create(
-        user=user,
-        access_token="ghu_tOkEn",
-        access_token_expires=now + timedelta(hours=8),
-        refresh_token="ghr_r3fR3sh",
-        refresh_token_expires=now + timedelta(days=7),
-    )
-
-
-def _create_github_webhook_message():
-    payload = {
-        "action": "created",
-        "sender": {
-            "id": 1,
-            "url": "https://api.github.com/users/repo-name",
-            "type": "User",
-            "login": "repo-name",
-            "node_id": "MDQ6VXNlcjU3MjU3MTMw",
-            "html_url": "https://github.com/repo-name",
-            "gists_url": "https://api.github.com/users/repo-name/gists{/gist_id}",
-            "repos_url": "https://api.github.com/users/repo-name/repos",
-            "avatar_url": "https://avatars.githubusercontent.com/u/1?v=4",
-            "events_url": "https://api.github.com/users/repo-name/events{/privacy}",
-            "site_admin": False,
-            "gravatar_id": "",
-            "starred_url": "https://api.github.com/users/repo-name/starred{/owner}{/repo}",
-            "followers_url": "https://api.github.com/users/repo-name/followers",
-            "following_url": "https://api.github.com/users/repo-name/following{/other_user}",
-            "organizations_url": "https://api.github.com/users/repo-name/orgs",
-            "subscriptions_url": "https://api.github.com/users/repo-name/subscriptions",
-            "received_events_url": "https://api.github.com/users/repo-name/received_events",
-        },
-        "requester": None,
-        "installation": {
-            "id": 2,
-            "app_id": 3,
-            "events": ["create"],
-            "account": {
-                "id": 1,
-                "url": "https://api.github.com/users/repo-name",
-                "type": "User",
-                "login": "repo-name",
-                "node_id": "MDQ6VXNlcjU3MjU3MTMw",
-                "html_url": "https://github.com/repo-name",
-                "gists_url": "https://api.github.com/users/repo-name/gists{/gist_id}",
-                "repos_url": "https://api.github.com/users/repo-name/repos",
-                "avatar_url": "https://avatars.githubusercontent.com/u/1?v=4",
-                "events_url": "https://api.github.com/users/repo-name/events{/privacy}",
-                "site_admin": False,
-                "gravatar_id": "",
-                "starred_url": "https://api.github.com/users/repo-name/starred{/owner}{/repo}",
-                "followers_url": "https://api.github.com/users/repo-name/followers",
-                "following_url": "https://api.github.com/users/repo-name/following{/other_user}",
-                "organizations_url": "https://api.github.com/users/repo-name/orgs",
-                "subscriptions_url": "https://api.github.com/users/repo-name/subscriptions",
-                "received_events_url": "https://api.github.com/users/repo-name/received_events",
-            },
-            "app_slug": "app-name",
-            "html_url": "https://github.com/settings/installations/2",
-            "target_id": 1,
-            "created_at": "2021-09-07T13:14:24.000+02:00",
-            "updated_at": "2021-09-07T13:14:24.000+02:00",
-            "permissions": {"contents": "read", "metadata": "read"},
-            "target_type": "User",
-            "suspended_at": None,
-            "suspended_by": None,
-            "repositories_url": "https://api.github.com/installation/repositories",
-            "single_file_name": None,
-            "access_tokens_url": "https://api.github.com/app/installations/2/access_tokens",
-            "single_file_paths": [],
-            "repository_selection": "selected",
-            "has_multiple_single_files": False,
-        },
-        "repositories": [
-            {
-                "id": 377787003,
-                "name": "private-3",
-                "node_id": "MDEwOlJlcG9zaXRvcnkzNzc3ODcwMDM=",
-                "private": True,
-                "full_name": "repo-name/private-3",
-            }
-        ],
-    }
-    GitHubWebhookMessage.objects.create(payload=payload)
-
-
 def _create_algorithm_demo(users):
-    cases_image = Image(
+    cases_image = Image.objects.create(
         name="test_image.mha",
-        modality=ImagingModality.objects.get(modality="MR"),
-        width=128,
-        height=128,
-        color_space="RGB",
+        width=10,
+        height=10,
     )
-    cases_image.save()
+
+    im_file = ImageFile.objects.create(image=cases_image)
+
+    with _uploaded_image_file() as f:
+        im_file.file.save("test_image.mha", f)
+        im_file.save()
+
+    (input_civ, _) = ComponentInterfaceValue.objects.get_or_create(
+        interface=ComponentInterface.objects.get(slug="generic-medical-image"),
+        image=cases_image,
+    )
 
     algorithm = Algorithm.objects.create(
-        title="Test Algorithm", logo=create_uploaded_image()
+        title="Test Algorithm",
+        logo=create_uploaded_image(),
+        repo_name="github-username/repo-name",
+        contact_email="example@example.org",
+        display_editors=True,
+        result_template="{% for key, value in results.items() %}\n{{ key }}:  {{ value }}\n{% endfor %}",
     )
     algorithm.editors_group.user_set.add(users["algorithm"], users["demo"])
     algorithm.users_group.user_set.add(users["algorithmuser"])
-    algorithm.result_template = (
-        "{% for key, value in results.metrics.items() -%}"
-        "{{ key }}  {{ value }}"
-        "{% endfor %}"
+    algorithm.inputs.set(
+        [ComponentInterface.objects.get(slug="generic-medical-image")]
     )
-    detection_interface = ComponentInterface(
-        store_in_database=False,
-        relative_path="detection_results.json",
-        slug="detection-results",
-        title="Detection Results",
-        kind=ComponentInterface.Kind.ANY,
+    algorithm.outputs.set(
+        [ComponentInterface.objects.get(slug="results-json-file")]
     )
-    detection_interface.save()
-    algorithm.outputs.add(detection_interface)
+
     algorithm_image = AlgorithmImage(
         creator=users["algorithm"], algorithm=algorithm
     )
 
-    try:
-        with open(
-            os.path.join(settings.SITE_ROOT, "algorithm.tar.gz"), "rb"
-        ) as f:
-            container = File(f)
-            algorithm_image.image.save("test_algorithm.tar", container)
-    except FileNotFoundError:
-        pass
-
-    algorithm_image.save()
+    with _gc_demo_algorithm() as container:
+        algorithm_image.image.save("algorithm_io.tar", container)
 
     results = [
-        {"cancer_score": 0.5},
-        {"cancer_score": 0.6},
-        {"cancer_score": 0.7},
+        {"score": 0.5},
+        {"score": 0.6},
+        {"score": 0.7},
     ]
 
-    detections = [
-        {
-            "detected points": [
-                {"type": "Point", "start": [0, 1, 2], "end": [3, 4, 5]}
-            ]
-        },
-        {
-            "detected points": [
-                {"type": "Point", "start": [6, 7, 8], "end": [9, 10, 11]}
-            ]
-        },
-        {
-            "detected points": [
-                {"type": "Point", "start": [12, 13, 14], "end": [15, 16, 17]}
-            ]
-        },
-    ]
-    for res, det in zip(results, detections, strict=True):
-        _create_job_result(users, algorithm_image, cases_image, res, det)
+    for result in results:
+        algorithms_job = Job.objects.create(
+            creator=users["algorithm"],
+            algorithm_image=algorithm_image,
+            status=Evaluation.SUCCESS,
+        )
+
+        algorithms_job.inputs.add(input_civ)
+
+        algorithms_job.outputs.add(
+            ComponentInterfaceValue.objects.create(
+                interface=ComponentInterface.objects.get(
+                    slug="results-json-file"
+                ),
+                value=result,
+            )
+        )
 
     return algorithm
-
-
-def _create_job_result(users, algorithm_image, cases_image, result, detection):
-    algorithms_job = Job(
-        creator=users["algorithm"],
-        algorithm_image=algorithm_image,
-        status=Evaluation.SUCCESS,
-    )
-    algorithms_job.save()
-    algorithms_job.inputs.add(
-        ComponentInterfaceValue.objects.create(
-            interface=ComponentInterface.objects.get(
-                slug="generic-medical-image"
-            ),
-            image=cases_image,
-        )
-    )
-    algorithms_job.outputs.add(
-        ComponentInterfaceValue.objects.create(
-            interface=ComponentInterface.objects.get(slug="results-json-file"),
-            value=result,
-        )
-    )
-    civ = ComponentInterfaceValue.objects.create(
-        interface=ComponentInterface.objects.get(slug="detection-results")
-    )
-    civ.file.save(
-        "detection_results.json",
-        ContentFile(
-            bytes(json.dumps(detection, ensure_ascii=True, indent=2), "utf-8")
-        ),
-    )
-
-    algorithms_job.outputs.add(civ)
 
 
 def _create_workstation(users):
@@ -556,6 +414,7 @@ def _create_reader_studies(users):
         reader_study=reader_study,
         question_text="foo",
         answer_type=Question.AnswerType.TEXT,
+        widget=QuestionWidgetKindChoices.TEXT_INPUT,
     )
 
     display_set = DisplaySet.objects.create(reader_study=reader_study)
@@ -620,7 +479,6 @@ def _create_user_tokens(users):
     # Hard code tokens used in gcapi integration tests
     user_tokens = {
         "admin": "1b9436200001f2eaf57cd77db075cbb60a49a00a",
-        "retina": "f1f98a1733c05b12118785ffd995c250fe4d90da",
         "readerstudy": "01614a77b1c0b4ecd402be50a8ff96188d5b011d",
         "demop": "00aa710f4dc5621a0cb64b0795fbba02e39d7700",
         "archive": "0d284528953157759d26c469297afcf6fd367f71",

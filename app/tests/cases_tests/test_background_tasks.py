@@ -151,9 +151,10 @@ def test_staged_mhd_upload_with_additional_headers(
 
     image: Image = images[0]
     tmp_header_filename = tmp_path / "tmp_header.mhd"
-    with image.files.get(file__endswith=".mha").file.open(
-        "rb"
-    ) as in_file, open(tmp_header_filename, "wb") as out_file:
+    with (
+        image.files.get(file__endswith=".mha").file.open("rb") as in_file,
+        open(tmp_header_filename, "wb") as out_file,
+    ):
         out_file.write(in_file.read())
 
     headers = parse_mh_header(tmp_header_filename)

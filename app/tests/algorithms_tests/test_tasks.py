@@ -9,7 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile, File
 from requests import put
 
-from grandchallenge.algorithms.models import DEFAULT_INPUT_INTERFACE_SLUG, Job
+from grandchallenge.algorithms.models import Job
 from grandchallenge.algorithms.tasks import (
     create_algorithm_jobs,
     execute_algorithm_job_for_inputs,
@@ -50,9 +50,7 @@ from tests.utils import get_view_for_user, recurse_callbacks
 class TestCreateAlgorithmJobs:
     @property
     def default_input_interface(self):
-        return ComponentInterface.objects.get(
-            slug=DEFAULT_INPUT_INTERFACE_SLUG
-        )
+        return ComponentInterface.objects.get(slug="generic-medical-image")
 
     def test_no_images_does_nothing(self):
         ai = AlgorithmImageFactory()
@@ -76,9 +74,11 @@ class TestCreateAlgorithmJobs:
     def test_creates_job_correctly(self):
         ai = AlgorithmImageFactory()
         image = ImageFactory()
-        civ = ComponentInterfaceValueFactory(
-            image=image, interface=ai.algorithm.inputs.get()
+        interface = ComponentInterface.objects.get(
+            slug="generic-medical-image"
         )
+        ai.algorithm.inputs.set([interface])
+        civ = ComponentInterfaceValueFactory(image=image, interface=interface)
         assert Job.objects.count() == 0
         jobs = create_algorithm_jobs(algorithm_image=ai, civ_sets=[{civ}])
         assert Job.objects.count() == 1
@@ -86,7 +86,7 @@ class TestCreateAlgorithmJobs:
         assert j.algorithm_image == ai
         assert j.creator is None
         assert (
-            j.inputs.get(interface__slug=DEFAULT_INPUT_INTERFACE_SLUG).image
+            j.inputs.get(interface__slug="generic-medical-image").image
             == image
         )
         assert j.pk == jobs[0].pk
@@ -94,9 +94,10 @@ class TestCreateAlgorithmJobs:
     def test_is_idempotent(self):
         ai = AlgorithmImageFactory()
         image = ImageFactory()
-        civ = ComponentInterfaceValueFactory(
-            image=image, interface=ai.algorithm.inputs.get()
+        interface = ComponentInterface.objects.get(
+            slug="generic-medical-image"
         )
+        civ = ComponentInterfaceValueFactory(image=image, interface=interface)
         assert Job.objects.count() == 0
         create_algorithm_jobs(algorithm_image=ai, civ_sets=[{civ}])
         assert Job.objects.count() == 1
@@ -106,9 +107,10 @@ class TestCreateAlgorithmJobs:
 
     def test_extra_viewer_groups(self):
         ai = AlgorithmImageFactory()
-        civ = ComponentInterfaceValueFactory(
-            interface=ai.algorithm.inputs.get()
+        interface = ComponentInterface.objects.get(
+            slug="generic-medical-image"
         )
+        civ = ComponentInterfaceValueFactory(interface=interface)
         groups = (GroupFactory(), GroupFactory(), GroupFactory())
         jobs = create_algorithm_jobs(
             algorithm_image=ai, civ_sets=[{civ}], extra_viewer_groups=groups
@@ -129,12 +131,9 @@ def test_no_jobs_workflow(django_capture_on_commit_callbacks):
 def test_jobs_workflow(django_capture_on_commit_callbacks):
     ai = AlgorithmImageFactory()
     images = [ImageFactory(), ImageFactory()]
+    interface = ComponentInterface.objects.get(slug="generic-medical-image")
     civ_sets = [
-        {
-            ComponentInterfaceValueFactory(
-                image=im, interface=ai.algorithm.inputs.get()
-            )
-        }
+        {ComponentInterfaceValueFactory(image=im, interface=interface)}
         for im in images
     ]
     with django_capture_on_commit_callbacks() as callbacks:
@@ -144,7 +143,7 @@ def test_jobs_workflow(django_capture_on_commit_callbacks):
 
 @pytest.mark.django_db
 def test_algorithm(
-    client, algorithm_image, settings, django_capture_on_commit_callbacks
+    algorithm_image, settings, django_capture_on_commit_callbacks
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
@@ -173,13 +172,24 @@ def test_algorithm(
     image_file = ImageFileFactory(
         file__from_path=Path(__file__).parent / "resources" / "input_file.tif"
     )
-    civ = ComponentInterfaceValueFactory(
-        image=image_file.image, interface=alg.algorithm.inputs.get(), file=None
+
+    input_interface = ComponentInterface.objects.get(
+        slug="generic-medical-image"
     )
-    assert civ.interface.slug == "generic-medical-image"
+    json_result_interface = ComponentInterface.objects.get(
+        slug="results-json-file"
+    )
+    heatmap_interface = ComponentInterface.objects.get(slug="generic-overlay")
+    alg.algorithm.inputs.set([input_interface])
+    alg.algorithm.outputs.set([json_result_interface, heatmap_interface])
+
+    civ = ComponentInterfaceValueFactory(
+        image=image_file.image, interface=input_interface, file=None
+    )
 
     with django_capture_on_commit_callbacks() as callbacks:
         create_algorithm_jobs(algorithm_image=alg, civ_sets=[{civ}])
+
     recurse_callbacks(
         callbacks=callbacks,
         django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
@@ -199,16 +209,13 @@ def test_algorithm(
     # The job should have two ComponentInterfaceValues,
     # one for the results.json and one for output.tif
     assert len(jobs[0].outputs.all()) == 2
-    json_result_interface = ComponentInterface.objects.get(
-        slug="results-json-file"
-    )
+
     json_result_civ = jobs[0].outputs.get(interface=json_result_interface)
     assert json_result_civ.value == {
         "entity": "out.tif",
         "metrics": {"abnormal": 0.19, "normal": 0.81},
     }
 
-    heatmap_interface = ComponentInterface.objects.get(slug="generic-overlay")
     heatmap_civ = jobs[0].outputs.get(interface=heatmap_interface)
 
     assert heatmap_civ.image.name == "output.tif"
@@ -227,11 +234,12 @@ def test_algorithm(
         file__from_path=Path(__file__).parent / "resources" / "input_file.tif"
     )
     civ = ComponentInterfaceValueFactory(
-        image=image_file.image, interface=alg.algorithm.inputs.get(), file=None
+        image=image_file.image, interface=input_interface, file=None
     )
 
     with django_capture_on_commit_callbacks() as callbacks:
         create_algorithm_jobs(algorithm_image=alg, civ_sets=[{civ}])
+
     recurse_callbacks(
         callbacks=callbacks,
         django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
@@ -253,7 +261,7 @@ def test_algorithm(
 
 @pytest.mark.django_db
 def test_algorithm_with_invalid_output(
-    client, algorithm_image, settings, django_capture_on_commit_callbacks
+    algorithm_image, settings, django_capture_on_commit_callbacks
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
@@ -275,19 +283,25 @@ def test_algorithm_with_invalid_output(
     alg.refresh_from_db()
 
     # Make sure the job fails when trying to upload an invalid file
+    input_interface = ComponentInterface.objects.get(
+        slug="generic-medical-image"
+    )
     detection_interface = ComponentInterfaceFactory(
         store_in_database=False,
         relative_path="some_text.txt",
         slug="detection-json-file",
         kind=ComponentInterface.Kind.ANY,
     )
+    alg.algorithm.inputs.add(input_interface)
     alg.algorithm.outputs.add(detection_interface)
     alg.save()
+
     image_file = ImageFileFactory(
         file__from_path=Path(__file__).parent / "resources" / "input_file.tif"
     )
+
     civ = ComponentInterfaceValueFactory(
-        image=image_file.image, interface=alg.algorithm.inputs.get(), file=None
+        image=image_file.image, interface=input_interface, file=None
     )
 
     with django_capture_on_commit_callbacks() as callbacks:
@@ -310,7 +324,6 @@ def test_algorithm_with_invalid_output(
 
 @pytest.mark.django_db
 def test_algorithm_multiple_inputs(
-    client,
     algorithm_io_image,
     settings,
     component_interfaces,
@@ -399,7 +412,7 @@ def test_algorithm_multiple_inputs(
 
 @pytest.mark.django_db
 def test_algorithm_input_image_multiple_files(
-    client, settings, component_interfaces, django_capture_on_commit_callbacks
+    settings, component_interfaces, django_capture_on_commit_callbacks
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
@@ -418,7 +431,7 @@ def test_algorithm_input_image_multiple_files(
 
     ImageFactory(origin=us)
     ImageFactory(origin=us)
-    ci = ComponentInterface.objects.get(slug=DEFAULT_INPUT_INTERFACE_SLUG)
+    ci = ComponentInterface.objects.get(slug="generic-medical-image")
 
     civ = ComponentInterfaceValue.objects.create(interface=ci)
 
@@ -442,7 +455,7 @@ def test_algorithm_input_image_multiple_files(
 
 @pytest.mark.django_db
 def test_algorithm_input_user_upload(
-    client, settings, component_interfaces, django_capture_on_commit_callbacks
+    settings, component_interfaces, django_capture_on_commit_callbacks
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
@@ -518,7 +531,7 @@ def test_add_image_to_component_interface_value():
     us = RawImageUploadSessionFactory()
     ImageFactory(origin=us)
     ImageFactory(origin=us)
-    ci = ComponentInterface.objects.get(slug=DEFAULT_INPUT_INTERFACE_SLUG)
+    ci = ComponentInterface.objects.get(slug="generic-medical-image")
 
     civ = ComponentInterfaceValueFactory(interface=ci, image=None, file=None)
 
@@ -541,7 +554,7 @@ def test_add_image_to_component_interface_value():
 
 
 @pytest.mark.django_db
-def test_execute_algorithm_job_for_inputs(client, settings):
+def test_execute_algorithm_job_for_inputs(settings):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
@@ -553,7 +566,7 @@ def test_execute_algorithm_job_for_inputs(client, settings):
     alg.algorithm.add_editor(creator)
 
     # create the job without value for the ComponentInterfaceValues
-    ci = ComponentInterface.objects.get(slug=DEFAULT_INPUT_INTERFACE_SLUG)
+    ci = ComponentInterface.objects.get(slug="generic-medical-image")
     civ = ComponentInterfaceValue.objects.create(interface=ci)
     job = Job.objects.create(
         creator=creator, algorithm_image=alg, input_civ_set=[civ]

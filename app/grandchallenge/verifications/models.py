@@ -5,12 +5,13 @@ from allauth.account.signals import email_confirmed
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
-from django.core.mail import send_mail
 from django.db import models
 from django.db.models import Q
 from django.utils.html import format_html
 from pyswot import is_academic
 
+from grandchallenge.emails.emails import send_standard_email_batch
+from grandchallenge.profiles.models import EmailSubscriptionTypes
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.tokens import (
     email_verification_token_generator,
@@ -83,21 +84,21 @@ class Verification(models.Model):
             # Nothing to do
             return
 
-        site = Site.objects.get_current()
-        message = (
-            f"Dear {self.user.username},\n\n"
-            "Please confirm this email address for account validation by visiting the following link: "
-            f"{self.verification_url}\n\n"
-            "Please disregard this email if you did not make this validation request.\n\n"
-            "Regards,\n"
-            f"{site.name}\n"
-            f"This is an automated service email from {site.domain}."
+        message = format_html(
+            (
+                "Please confirm this email address for account validation by "
+                "visiting the following link: [{url}]({url}) \n\n"
+                "Please disregard this email if you did not make this validation request."
+            ),
+            url=self.verification_url,
         )
-        send_mail(
-            subject=f"[{site.domain.lower()}] Please confirm your email address for account validation",
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[self.email],
-            message=message,
+        site = Site.objects.get_current()
+        send_standard_email_batch(
+            site=site,
+            subject="Please confirm your email address for account validation",
+            markdown_message=message,
+            recipients=[self.user],
+            subscription_type=EmailSubscriptionTypes.SYSTEM,
         )
 
 

@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 from guardian.shortcuts import assign_perm, remove_perm
+from requests import put
 
 from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.cases.widgets import WidgetChoices
@@ -15,16 +16,16 @@ from tests.archives_tests.factories import (
     ArchivePermissionRequestFactory,
 )
 from tests.cases_tests import RESOURCE_PATH
-from tests.cases_tests.test_background_tasks import (
-    create_raw_upload_image_session,
-)
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
-from tests.uploads_tests.factories import create_upload_from_file
+from tests.uploads_tests.factories import (
+    UserUploadFactory,
+    create_upload_from_file,
+)
 from tests.utils import get_view_for_user, recurse_callbacks
 
 
@@ -58,8 +59,6 @@ class TestObjectPermissionRequiredViews:
                 a,
                 None,
             ),
-            ("cases-list", {"slug": a.slug}, "use_archive", a, None),
-            ("items-list", {"slug": a.slug}, "use_archive", a, None),
             ("cases-create", {"slug": a.slug}, "upload_archive", a, None),
             (
                 "items-reader-study-update",
@@ -291,68 +290,6 @@ def test_api_archive_item_retrieve_permissions(client):
     )
     assert response.status_code == 200
     assert response.json()["pk"] == str(i1.pk)
-
-
-@pytest.mark.django_db
-def test_api_archive_item_interface_type_update(
-    client, settings, django_capture_on_commit_callbacks
-):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
-    archive = ArchiveFactory()
-    editor = UserFactory()
-    archive.add_editor(editor)
-    item = ArchiveItemFactory(archive=archive)
-
-    session, _ = create_raw_upload_image_session(
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-        images=["image10x10x10.mha"],
-        user=editor,
-    )
-    session.refresh_from_db()
-    im = session.image_set.get()
-    ci = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.IMAGE
-    )
-    civ = ComponentInterfaceValueFactory(interface=ci, image=im)
-    item.values.add(civ)
-    civ.image.update_viewer_groups_permissions()
-    assert item.values.count() == 1
-
-    # change interface type from generic medical image to generic overlay
-    # for the already uploaded image
-    with django_capture_on_commit_callbacks() as callbacks:
-        response = get_view_for_user(
-            viewname="api:archives-item-detail",
-            reverse_kwargs={"pk": item.pk},
-            data={
-                "values": [
-                    {"interface": "generic-overlay", "image": im.api_url}
-                ]
-            },
-            user=editor,
-            client=client,
-            method=client.patch,
-            content_type="application/json",
-            HTTP_X_FORWARDED_PROTO="https",
-        )
-    recurse_callbacks(
-        callbacks=callbacks,
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-    )
-
-    assert response.status_code == 200
-    assert response.json()["pk"] == str(item.pk)
-    item.refresh_from_db()
-    # check that the old item was removed and a new one was added with the same
-    # image but the new interface type
-    assert item.values.count() == 1
-    new_civ = item.values.get()
-    assert new_civ.interface.slug == "generic-overlay"
-    assert new_civ.image == im
-    assert new_civ != civ
 
 
 @pytest.mark.django_db
@@ -596,6 +533,7 @@ def test_api_archive_item_create(client, settings):
     editor, user = UserFactory.create_batch(2)
     archive.add_editor(editor)
     archive.add_user(user)
+    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.STRING)
 
     response = get_view_for_user(
         viewname="api:archives-item-list",
@@ -618,12 +556,16 @@ def test_api_archive_item_create(client, settings):
         viewname="api:archives-item-list",
         client=client,
         method=client.post,
-        data={"archive": archive.api_url, "values": [{}]},
+        data={
+            "archive": archive.api_url,
+            "values": [{"interface": ci.slug, "value": "bar"}],
+        },
         user=editor,
         content_type="application/json",
         follow=True,
     )
     assert response.status_code == 400
+    assert "Values can only be added via update" in response.json()
     assert archive.items.count() == 0
 
     response = get_view_for_user(
@@ -740,20 +682,18 @@ def test_archive_item_add_image(
                 method=client.post,
                 reverse_kwargs={
                     "pk": item.pk,
-                    "interface_slug": ci_img.slug,
-                    "archive_slug": archive.slug,
+                    "slug": archive.slug,
                 },
                 user=editor,
-                follow=True,
                 data={
                     ci_img.slug: upload.pk,
                     f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_UPLOAD.name,
                 },
             )
-    assert response.status_code == 200
+    assert response.status_code == 302
     assert item.values.count() == 2
-    assert "image10x10x10.mha" == item.values.first().image.name
-    old_civ = item.values.first()
+    assert "image10x10x10.mha" == item.values.get(interface=ci_img).image.name
+    old_civ_img = item.values.get(interface=ci_img)
 
     with django_capture_on_commit_callbacks(execute=True):
         with django_capture_on_commit_callbacks(execute=True):
@@ -763,19 +703,17 @@ def test_archive_item_add_image(
                 method=client.post,
                 reverse_kwargs={
                     "pk": item.pk,
-                    "interface_slug": ci_img.slug,
-                    "archive_slug": archive.slug,
+                    "slug": archive.slug,
                 },
                 user=editor,
-                follow=True,
                 data={
-                    ci_img.slug: old_civ.image.pk,
+                    ci_img.slug: old_civ_img.image.pk,
                     f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
                 },
             )
-    assert response.status_code == 200
-    assert item.values.first().image.pk == old_civ.image.pk
-    assert item.values.first() == old_civ
+    assert response.status_code == 302
+    assert item.values.get(interface=ci_img).image.pk == old_civ_img.image.pk
+    assert item.values.get(interface=ci_img) == old_civ_img
 
     image = ImageFactory()
     assign_perm("cases.view_image", editor, image)
@@ -787,19 +725,17 @@ def test_archive_item_add_image(
                 method=client.post,
                 reverse_kwargs={
                     "pk": item.pk,
-                    "interface_slug": ci_img.slug,
-                    "archive_slug": archive.slug,
+                    "slug": archive.slug,
                 },
                 user=editor,
-                follow=True,
                 data={
                     ci_img.slug: image.pk,
                     f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
                 },
             )
-    assert response.status_code == 200
-    assert item.values.first().image.pk == image.pk
-    assert item.values.first() != old_civ
+    assert response.status_code == 302
+    assert item.values.get(interface=ci_img).image.pk == image.pk
+    assert item.values.get(interface=ci_img) != old_civ_img
 
 
 @pytest.mark.django_db
@@ -825,14 +761,12 @@ def test_archive_item_add_file(
                 method=client.post,
                 reverse_kwargs={
                     "pk": item.pk,
-                    "interface_slug": ci.slug,
-                    "archive_slug": archive.slug,
+                    "slug": archive.slug,
                 },
                 user=editor,
-                follow=True,
                 data={ci.slug: upload.pk},
             )
-    assert response.status_code == 200
+    assert response.status_code == 302
     assert "test" in ArchiveItem.objects.get().values.first().file.name
 
 
@@ -864,14 +798,12 @@ def test_archive_item_add_json_file(
                     method=client.post,
                     reverse_kwargs={
                         "pk": item.pk,
-                        "interface_slug": ci.slug,
-                        "archive_slug": archive.slug,
+                        "slug": archive.slug,
                     },
                     user=editor,
-                    follow=True,
                     data={ci.slug: upload.pk},
                 )
-        assert response.status_code == 200
+        assert response.status_code == 302
         assert (
             file.name.split("/")[-1]
             in ArchiveItem.objects.get().values.first().file.name
@@ -900,12 +832,130 @@ def test_archive_item_add_value(
                 method=client.post,
                 reverse_kwargs={
                     "pk": item.pk,
-                    "interface_slug": ci.slug,
-                    "archive_slug": archive.slug,
+                    "slug": archive.slug,
                 },
                 user=editor,
-                follow=True,
                 data={ci.slug: True},
             )
-    assert response.status_code == 200
+    assert response.status_code == 302
     assert ArchiveItem.objects.get().values.first().value
+
+
+@pytest.mark.django_db
+def test_archive_item_create_permissions(client):
+    archive = ArchiveFactory()
+    user, uploader, editor = UserFactory.create_batch(3)
+    archive.add_user(user)
+    archive.add_uploader(uploader)
+    archive.add_editor(editor)
+
+    response = get_view_for_user(
+        viewname="archives:item-create",
+        reverse_kwargs={"slug": archive.slug},
+        client=client,
+        user=user,
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname="archives:item-create",
+        reverse_kwargs={"slug": archive.slug},
+        client=client,
+        user=uploader,
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname="archives:item-create",
+        reverse_kwargs={"slug": archive.slug},
+        client=client,
+        user=editor,
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_archive_item_create_view(
+    client, settings, django_capture_on_commit_callbacks
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    archive = ArchiveFactory()
+    editor = UserFactory()
+    archive.add_editor(editor)
+    ai1 = ArchiveItemFactory(archive=archive)
+    ci_str = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.STRING
+    )
+    ci_img = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.IMAGE
+    )
+    ci_img2 = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.IMAGE
+    )
+    ci_json = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=False
+    )
+    ci_json2 = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=True
+    )
+
+    im1, im2 = ImageFactory.create_batch(2)
+    civ_str = ComponentInterfaceValueFactory(
+        interface=ci_str, value="civ-title"
+    )
+    civ_img = ComponentInterfaceValueFactory(interface=ci_img, image=im1)
+    ai1.values.set([civ_str, civ_img])
+
+    response = get_view_for_user(
+        viewname="archives:item-create",
+        reverse_kwargs={"slug": archive.slug},
+        client=client,
+        user=editor,
+    )
+    assert len(response.context["form"].fields) == 2
+    assert response.context["form"].fields[ci_str.slug]
+    assert response.context["form"].fields[ci_img.slug]
+
+    im_upload = create_upload_from_file(
+        file_path=RESOURCE_PATH / "test_grayscale.jpg",
+        creator=editor,
+    )
+    image = ImageFactory()
+    assign_perm("cases.view_image", editor, image)
+    upload = UserUploadFactory(filename="file.json", creator=editor)
+    presigned_urls = upload.generate_presigned_urls(part_numbers=[1])
+    response = put(presigned_urls["1"], data=b'{"foo": "bar"}')
+    upload.complete_multipart_upload(
+        parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
+    )
+    upload.save()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="archives:item-create",
+            client=client,
+            reverse_kwargs={"slug": archive.slug},
+            data={
+                ci_str.slug: "new-title",
+                ci_img.slug: str(im_upload.pk),
+                f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_UPLOAD.name,
+                ci_img2.slug: str(image.pk),
+                f"WidgetChoice-{ci_img2.slug}": WidgetChoices.IMAGE_SEARCH.name,
+                ci_json.slug: str(upload.pk),
+                ci_json2.slug: '{"some": "content"}',
+            },
+            user=editor,
+            method=client.post,
+        )
+
+    assert response.status_code == 302
+    assert ArchiveItem.objects.count() == 2
+    ai2 = ArchiveItem.objects.order_by("created").last()
+    assert ai2.values.count() == 5
+    assert ai2.values.get(interface=ci_str).value == "new-title"
+    assert ai2.values.get(interface=ci_img).image.name == "test_grayscale.jpg"
+    assert ai2.values.get(interface=ci_img2).image == image
+    assert ai2.values.get(interface=ci_json).file.read() == b'{"foo": "bar"}'
+    assert ai2.values.get(interface=ci_json2).value == {"some": "content"}

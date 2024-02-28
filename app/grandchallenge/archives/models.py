@@ -12,7 +12,11 @@ from stdimage import JPEGField
 
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.anatomy.models import BodyStructure
-from grandchallenge.components.models import ComponentInterfaceValue
+from grandchallenge.components.models import (
+    CIVForObjectMixin,
+    ComponentInterfaceValue,
+    ValuesForInterfacesMixin,
+)
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
     get_logo_path,
@@ -23,14 +27,19 @@ from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
     process_access_request,
 )
-from grandchallenge.hanging_protocols.models import ViewContentMixin
+from grandchallenge.hanging_protocols.models import HangingProtocolMixin
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
 from grandchallenge.subdomains.utils import reverse
 
 
-class Archive(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
+class Archive(
+    UUIDModel,
+    TitleSlugDescriptionModel,
+    HangingProtocolMixin,
+    ValuesForInterfacesMixin,
+):
     """Model for archive. Contains a collection of images."""
 
     detail_page_markdown = models.TextField(blank=True)
@@ -79,12 +88,6 @@ class Archive(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     )
     workstation_config = models.ForeignKey(
         "workstation_configs.WorkstationConfig",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-    )
-    hanging_protocol = models.ForeignKey(
-        "hanging_protocols.HangingProtocol",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
@@ -240,6 +243,30 @@ class Archive(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     def api_url(self) -> str:
         return reverse("api:archive-detail", kwargs={"pk": self.pk})
 
+    @property
+    def civ_sets_list_url(self):
+        return reverse("archives:items-list", kwargs={"slug": self.slug})
+
+    @property
+    def list_url(self):
+        return reverse("archives:list")
+
+    @property
+    def civ_sets_related_manager(self):
+        return self.items
+
+    @property
+    def civ_set_model(self):
+        return ArchiveItem
+
+    @property
+    def create_civ_set_url(self):
+        return reverse("archives:item-create", kwargs={"slug": self.slug})
+
+    @property
+    def create_civ_set_batch_url(self):
+        return reverse("archives:cases-create", kwargs={"slug": self.slug})
+
 
 class ArchiveUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(Archive, on_delete=models.CASCADE)
@@ -249,7 +276,7 @@ class ArchiveGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(Archive, on_delete=models.CASCADE)
 
 
-class ArchiveItem(UUIDModel):
+class ArchiveItem(CIVForObjectMixin, UUIDModel):
     archive = models.ForeignKey(
         Archive, related_name="items", on_delete=models.PROTECT
     )
@@ -293,6 +320,35 @@ class ArchiveItem(UUIDModel):
             f"change_{self._meta.model_name}",
             self.archive.uploaders_group,
             self,
+        )
+        # Archive editors can delete this archive item
+        assign_perm(
+            f"delete_{self._meta.model_name}",
+            self.archive.editors_group,
+            self,
+        )
+
+    @property
+    def base_object(self):
+        return self.archive
+
+    @property
+    def is_editable(self):
+        # always editable
+        return True
+
+    @property
+    def update_url(self):
+        return reverse(
+            "archives:item-edit",
+            kwargs={"slug": self.base_object.slug, "pk": self.pk},
+        )
+
+    @property
+    def delete_url(self):
+        return reverse(
+            "archives:item-delete",
+            kwargs={"slug": self.base_object.slug, "pk": self.pk},
         )
 
 

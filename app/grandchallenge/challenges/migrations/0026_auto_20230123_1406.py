@@ -76,7 +76,7 @@ class Migration(migrations.Migration):
                 help_text="Average run time per algorithm job in minutes.",
                 null=True,
                 validators=[
-                    django.core.validators.MinValueValidator(limit_value=1),
+                    django.core.validators.MinValueValidator(limit_value=5),
                     django.core.validators.MaxValueValidator(limit_value=60),
                 ],
             ),

@@ -1,6 +1,9 @@
+import gzip
 import os
+import shutil
 from contextlib import contextmanager
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -10,6 +13,7 @@ from grandchallenge.algorithms.models import Algorithm, AlgorithmImage
 from grandchallenge.archives.models import Archive, ArchiveItem
 from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.components.backends import docker_client
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -45,12 +49,6 @@ def run():
         outputs=outputs,
         suffix=f"Image {challenge_count}",
     )
-    _create_algorithm(
-        creator=users["demop"],
-        inputs=_get_json_file_inputs(),
-        outputs=outputs,
-        suffix=f"File {challenge_count}",
-    )
 
 
 def _get_users():
@@ -62,17 +60,6 @@ def _get_inputs():
     return ComponentInterface.objects.filter(
         slug__in=["generic-medical-image"]
     )
-
-
-def _get_json_file_inputs():
-    return [
-        ComponentInterface.objects.get_or_create(
-            title="JSON File",
-            relative_path="json-file",
-            kind=ComponentInterface.Kind.ANY,
-            store_in_database=False,
-        )[0]
-    ]
 
 
 def _get_outputs():
@@ -132,7 +119,9 @@ def _create_challenge(
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
 
-    p = Phase.objects.create(challenge=c, title="Phase 1")
+    p = Phase.objects.create(
+        challenge=c, title="Phase 1", algorithm_time_limit=300
+    )
 
     p.algorithm_inputs.set(inputs)
     p.algorithm_outputs.set(outputs)
@@ -146,7 +135,7 @@ def _create_challenge(
 
     m = Method(creator=creator, phase=p)
 
-    with _uploaded_container_image() as container:
+    with _gc_demo_algorithm() as container:
         m.image.save("algorithm_io.tar", container)
 
 
@@ -161,14 +150,34 @@ def _create_algorithm(*, creator, inputs, outputs, suffix):
 
     algorithm_image = AlgorithmImage(creator=creator, algorithm=algorithm)
 
-    with _uploaded_container_image() as container:
+    with _gc_demo_algorithm() as container:
         algorithm_image.image.save("algorithm_io.tar", container)
 
 
 @contextmanager
-def _uploaded_container_image():
-    path = Path(__file__).parent / "algorithm_io.tar"
-    yield from _uploaded_file(path=path)
+def _gc_demo_algorithm():
+    with TemporaryDirectory() as tmp_dir:
+        tmp_path = Path(tmp_dir)
+
+        repo_tag = "fixtures-algorithm-io:latest"
+        demo_algorithm_path = (
+            settings.SITE_ROOT / "tests" / "resources" / "gc_demo_algorithm"
+        )
+
+        docker_client.build_image(
+            path=str(demo_algorithm_path.absolute()), repo_tag=repo_tag
+        )
+
+        outfile = tmp_path / f"{repo_tag}.tar"
+        output_gz = f"{outfile}.gz"
+
+        docker_client.save_image(repo_tag=repo_tag, output=outfile)
+
+        with open(outfile, "rb") as f_in:
+            with gzip.open(output_gz, "wb") as f_out:
+                shutil.copyfileobj(f_in, f_out)
+
+        yield from _uploaded_file(path=output_gz)
 
 
 @contextmanager

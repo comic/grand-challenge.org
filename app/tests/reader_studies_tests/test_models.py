@@ -85,6 +85,7 @@ def test_read_only_fields():
         "answer_min_length",
         "answer_max_length",
         "answer_match_pattern",
+        "interface",
     ]
 
 
@@ -677,7 +678,10 @@ def test_display_set_description():
 
 @pytest.mark.django_db
 def test_question_interface():
-    q = QuestionFactory(answer_type=AnswerType.SINGLE_LINE_TEXT)
+    q = QuestionFactory(
+        answer_type=AnswerType.TEXT,
+        widget=QuestionWidgetKindChoices.TEXT_INPUT,
+    )
     ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
     q.interface = ci_str
     q.clean()
@@ -696,40 +700,12 @@ def test_question_interface():
 
     assert e.value.message == (
         f"The interface {ci_img} is not allowed for this "
-        f"question type ({AnswerType.SINGLE_LINE_TEXT})"
+        f"question type ({AnswerType.TEXT})"
     )
 
     q.refresh_from_db()
 
     assert q.interface == ci_str
-
-
-@pytest.mark.django_db
-def test_main_image_from_ds():
-    ds = DisplaySetFactory()
-    ci1, ci2 = ComponentInterfaceFactory.create_batch(
-        2, kind=InterfaceKindChoices.IMAGE
-    )
-    im1, im2 = ImageFactory.create_batch(2)
-    ds.values.add(ComponentInterfaceValueFactory(interface=ci1, image=im1))
-    ds.values.add(ComponentInterfaceValueFactory(interface=ci2, image=im2))
-
-    # without view content set, the first image title is returned
-    assert im1.name == ds.main_image_title
-
-    # with a view content set, the first image title of the main viewport is returned
-    ds.reader_study.view_content = {"main": [ci2.slug]}
-    ds.reader_study.save()
-    del ds.main_image_title
-    assert im2.name == ds.main_image_title
-
-    # if the ds does not have a civ for the interface specified in the view content, the first image title is returned
-    ci3 = ComponentInterfaceFactory(kind=InterfaceKindChoices.IMAGE)
-    ds.reader_study.view_content = {"main": [ci3.slug]}
-    ds.reader_study.save()
-    ds.refresh_from_db()
-    del ds.main_image_title
-    assert im1.name == ds.main_image_title
 
 
 @pytest.mark.django_db
@@ -969,3 +945,71 @@ def test_clean_widget_options(
 
     if error_message:
         assert e.value.message == error_message
+
+
+@pytest.mark.django_db
+def test_annotation_view_port_contains_image():
+    image_interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.IMAGE
+    )
+    mp4_interface = ComponentInterfaceFactory(kind=InterfaceKindChoices.MP4)
+
+    reader_study = ReaderStudyFactory(
+        view_content={
+            "main": [image_interface.slug],
+            "secondary": [mp4_interface.slug],
+        }
+    )
+    reader_study.full_clean()
+
+    question = Question(
+        reader_study=reader_study,
+        question_text="foo",
+        answer_type=AnswerType.MASK,
+        image_port=Question.ImagePort.MAIN,
+    )
+    question.full_clean()
+    question.save()
+
+    question = Question(
+        reader_study=reader_study,
+        question_text="foo",
+        answer_type=AnswerType.MASK,
+        image_port=Question.ImagePort.SECONDARY,
+    )
+
+    with pytest.raises(ValidationError) as err:
+        question.full_clean()
+
+    assert (
+        "The Secondary view port does not contain an image. "
+        "Please update the view content of this reader study or select a different view port for question foo"
+        in str(err.value)
+    )
+
+    question = Question(
+        reader_study=reader_study,
+        question_text="foo",
+        answer_type=AnswerType.MASK,
+        image_port=Question.ImagePort.TERTIARY,
+    )
+
+    with pytest.raises(ValidationError) as err:
+        question.full_clean()
+
+    assert (
+        "The Tertiary view port has not been defined. "
+        "Please update the view content of this reader study or select a different view port for question foo"
+        in str(err.value)
+    )
+
+    reader_study.view_content = {"secondary": [mp4_interface.slug]}
+
+    with pytest.raises(ValidationError) as err:
+        reader_study.full_clean()
+
+    assert (
+        "The Main view port has not been defined. "
+        "Please update the view content of this reader study or select a different view port for question foo"
+        in str(err.value)
+    )

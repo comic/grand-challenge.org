@@ -7,10 +7,11 @@ from django.db import models
 from django.db.transaction import on_commit
 from django.utils import timezone
 from django.utils.text import get_valid_filename
+from django.utils.translation import gettext_lazy as _
 
 from grandchallenge.core.storage import private_s3_storage
+from grandchallenge.github.exceptions import GitHubBadRefreshTokenException
 from grandchallenge.github.tasks import get_zipfile, unlink_algorithm
-from grandchallenge.github.utils import CloneStatusChoices
 
 
 def zipfile_path(instance, filename):
@@ -55,7 +56,18 @@ class GitHubUserToken(models.Model):
             headers={"Accept": "application/vnd.github+json"},
         )
         resp.raise_for_status()
-        self.update_from_payload(payload=resp.json())
+
+        payload = resp.json()
+
+        if "error" in payload:
+            if payload["error"] == "bad_refresh_token":
+                # User has deleted their installation, they need
+                # to start the auth process again
+                raise GitHubBadRefreshTokenException
+            else:
+                raise RuntimeError(payload["error"])
+        else:
+            self.update_from_payload(payload=payload)
 
     def update_from_payload(self, *, payload):
         # Small grace time for when the tokens were issued
@@ -71,7 +83,18 @@ class GitHubUserToken(models.Model):
         )
 
 
+class CloneStatusChoices(models.TextChoices):
+    PENDING = "PENDING", _("Pending")
+    STARTED = "STARTED", _("Started")
+    SUCCESS = "SUCCESS", _("Success")
+    FAILURE = "FAILURE", _("Failure")
+    INVALID = "INVALID", _("Invalid")
+    NOT_APPLICABLE = "NOT_APPLICABLE", _("Not Applicable")
+
+
 class GitHubWebhookMessage(models.Model):
+    CloneStatusChoices = CloneStatusChoices
+
     created = models.DateTimeField(
         auto_now_add=True, help_text="When we received the event."
     )

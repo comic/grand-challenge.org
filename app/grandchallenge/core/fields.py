@@ -6,19 +6,16 @@ from django.db import models
 
 
 class HexColorField(models.CharField):
-    def __init__(self, **kwargs):
-        validators = kwargs.pop("validators", [])
-        validators.append(
-            RegexValidator(
-                regex=r"^#[a-fA-F0-9]{6}$",
-                message="This is an invalid color code. It must be an HTML hexadecimal color code e.g. #000000",
-            )
+    default_validators = [
+        RegexValidator(
+            regex=r"^#[a-fA-F0-9]{6}$",
+            message="This is an invalid color code. It must be an HTML hexadecimal color code e.g. #000000",
         )
-        kwargs["validators"] = validators
+    ]
+
+    def __init__(self, *args, **kwargs):
         kwargs["max_length"] = 7
-        super().__init__(
-            **kwargs,
-        )
+        super().__init__(*args, **kwargs)
 
 
 class RegexField(models.TextField):

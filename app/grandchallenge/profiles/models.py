@@ -3,8 +3,11 @@ from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.signing import Signer
 from django.db import models
+from django.db.models import TextChoices
 from django.db.models.signals import post_save
+from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from django_countries.fields import CountryField
@@ -16,6 +19,14 @@ from stdimage import JPEGField
 from grandchallenge.core.storage import get_mugshot_path
 from grandchallenge.core.utils import disable_for_loaddata
 from grandchallenge.subdomains.utils import reverse
+
+UNSUBSCRIBE_SALT = "email-subscription-preferences"
+
+
+class EmailSubscriptionTypes(TextChoices):
+    NEWSLETTER = "NEWSLETTER"
+    NOTIFICATION = "NOTIFICATION"
+    SYSTEM = "SYSTEM"
 
 
 class UserProfile(models.Model):
@@ -116,6 +127,38 @@ class UserProfile(models.Model):
             self.department,
             self.country.name,
         )
+
+    @cached_property
+    def unsubscribe_token(self):
+        return Signer(salt=UNSUBSCRIBE_SALT).sign_object(
+            {"username": self.user.username}
+        )
+
+    def get_unsubscribe_link(self, *, subscription_type):
+        if not self.user.is_active:
+            raise ValueError("Inactive users cannot be emailed")
+        elif subscription_type == EmailSubscriptionTypes.NEWSLETTER:
+            if self.receive_newsletter:
+                return reverse(
+                    "newsletter-unsubscribe",
+                    kwargs={"token": self.unsubscribe_token},
+                )
+            else:
+                raise ValueError("User has opted out of newsletter emails")
+        elif subscription_type == EmailSubscriptionTypes.NOTIFICATION:
+            if self.receive_notification_emails:
+                return reverse(
+                    "notification-unsubscribe",
+                    kwargs={"token": self.unsubscribe_token},
+                )
+            else:
+                raise ValueError("User has opted out of notification emails")
+        elif subscription_type == EmailSubscriptionTypes.SYSTEM:
+            return None
+        else:
+            return NotImplementedError(
+                f"Unknown subscription type: {subscription_type}"
+            )
 
 
 class UserProfileUserObjectPermission(UserObjectPermissionBase):

@@ -47,7 +47,7 @@ from grandchallenge.core.utils.access_requests import (
 )
 from grandchallenge.credits.models import Credit
 from grandchallenge.evaluation.utils import get
-from grandchallenge.hanging_protocols.models import ViewContentMixin
+from grandchallenge.hanging_protocols.models import HangingProtocolMixin
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
@@ -57,13 +57,10 @@ from grandchallenge.workstations.models import Workstation
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_INPUT_INTERFACE_SLUG = "generic-medical-image"
-DEFAULT_OUTPUT_INTERFACE_SLUG = "generic-overlay"
-
 JINJA_ENGINE = sandbox.ImmutableSandboxedEnvironment()
 
 
-class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
+class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
     editors_group = models.OneToOneField(
         Group,
         on_delete=models.PROTECT,
@@ -93,12 +90,6 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     )
     workstation_config = models.ForeignKey(
         "workstation_configs.WorkstationConfig",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-    )
-    hanging_protocol = models.ForeignKey(
-        "hanging_protocols.HangingProtocol",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
@@ -183,11 +174,11 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         ),
     )
     time_limit = models.PositiveSmallIntegerField(
-        default=60 * 60,
+        default=3600,
         help_text="Time limit for inference jobs in seconds",
         validators=[
-            MinValueValidator(limit_value=60),
-            MaxValueValidator(limit_value=3600),
+            MinValueValidator(limit_value=300),
+            MaxValueValidator(limit_value=7200),
         ],
     )
     average_duration = models.DurationField(
@@ -278,9 +269,6 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
 
         super().save(*args, **kwargs)
 
-        if adding:
-            self.set_default_interfaces()
-
         self.assign_permissions()
         self.assign_workstation_permissions()
 
@@ -298,25 +286,6 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         self.users_group = Group.objects.create(
             name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_users"
         )
-
-    def set_default_interfaces(self):
-        if not self.inputs.exists():
-            self.inputs.set(
-                [
-                    ComponentInterface.objects.get(
-                        slug=DEFAULT_INPUT_INTERFACE_SLUG
-                    )
-                ]
-            )
-        if not self.outputs.exists():
-            self.outputs.set(
-                [
-                    ComponentInterface.objects.get(slug="results-json-file"),
-                    ComponentInterface.objects.get(
-                        slug=DEFAULT_OUTPUT_INTERFACE_SLUG
-                    ),
-                ]
-            )
 
     def assign_permissions(self):
         # Editors and users can view this algorithm

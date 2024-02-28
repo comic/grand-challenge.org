@@ -13,8 +13,6 @@ from crispy_forms.layout import (
     Layout,
     Submit,
 )
-from dal import autocomplete
-from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import BLANK_CHOICE_DASH
 from django.forms import (
@@ -35,40 +33,33 @@ from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 from dynamic_forms import DynamicField, DynamicFormMixin
 
-from grandchallenge.cases.widgets import (
-    FlexibleImageField,
-    FlexibleImageWidget,
-)
-from grandchallenge.components.form_fields import InterfaceFormField
-from grandchallenge.components.models import (
-    ComponentInterface,
-    ComponentInterfaceValue,
-    InterfaceSuperKindChoices,
-)
+from grandchallenge.components.forms import MultipleCIVForm
+from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
     WorkstationUserFilterMixin,
 )
-from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.layout import Formset
-from grandchallenge.core.widgets import JSONEditorWidget, MarkdownEditorWidget
+from grandchallenge.core.widgets import (
+    ColorEditorWidget,
+    JSONEditorWidget,
+    MarkdownEditorWidget,
+)
 from grandchallenge.groups.forms import UserGroupForm
-from grandchallenge.hanging_protocols.forms import ViewContentMixin
+from grandchallenge.hanging_protocols.models import VIEW_CONTENT_SCHEMA
 from grandchallenge.reader_studies.models import (
     ANSWER_TYPE_TO_INTERFACE_KIND_MAP,
     ANSWER_TYPE_TO_QUESTION_WIDGET_CHOICES,
     CASE_TEXT_SCHEMA,
+    Answer,
     AnswerType,
     CategoricalOption,
     Question,
     ReaderStudy,
     ReaderStudyPermissionRequest,
 )
-from grandchallenge.reader_studies.widgets import SelectUploadWidget
 from grandchallenge.subdomains.utils import reverse_lazy
-from grandchallenge.uploads.models import UserUpload
-from grandchallenge.uploads.widgets import UserUploadSingleWidget
 from grandchallenge.workstation_configs.models import OVERLAY_SEGMENTS_SCHEMA
 
 logger = logging.getLogger(__name__)
@@ -127,6 +118,7 @@ class ReaderStudyCreateForm(
             "workstation",
             "workstation_config",
             "is_educational",
+            "instant_verification",
             "public",
             "access_request_handling",
             "allow_answer_modification",
@@ -175,10 +167,19 @@ class ReaderStudyCreateForm(
                 field=None,
             )
 
+        if (
+            self.cleaned_data["instant_verification"]
+            and not self.cleaned_data["is_educational"]
+        ):
+            self.add_error(
+                error=ValidationError(
+                    "Reader study must be educational when instant verification is enabled."
+                ),
+                field="is_educational",
+            )
 
-class ReaderStudyUpdateForm(
-    ReaderStudyCreateForm, ModelForm, ViewContentMixin
-):
+
+class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
     class Meta(ReaderStudyCreateForm.Meta):
         fields = (
             "title",
@@ -197,6 +198,7 @@ class ReaderStudyUpdateForm(
             "help_text_markdown",
             "shuffle_hanging_list",
             "is_educational",
+            "instant_verification",
             "public",
             "access_request_handling",
             "allow_answer_modification",
@@ -214,8 +216,8 @@ class ReaderStudyUpdateForm(
             "structures": Select2MultipleWidget,
             "organizations": Select2MultipleWidget,
             "optional_hanging_protocols": Select2MultipleWidget,
+            "view_content": JSONEditorWidget(schema=VIEW_CONTENT_SCHEMA),
         }
-        widgets.update(ViewContentMixin.Meta.widgets)
         help_texts = {
             **READER_STUDY_HELP_TEXTS,
             "shuffle_hanging_list": (
@@ -241,7 +243,6 @@ class ReaderStudyUpdateForm(
                 reverse_lazy("hanging-protocols:list"),
             ),
         }
-        help_texts.update(ViewContentMixin.Meta.help_texts)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -275,12 +276,30 @@ class ReaderStudyCopyForm(Form):
 
 
 class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, reader_study, **kwargs):
         super().__init__(*args, **kwargs)
 
         for field_name in self.instance.read_only_fields:
             self.fields[field_name].required = False
             self.fields[field_name].disabled = True
+
+        self.fields["reader_study"].queryset = ReaderStudy.objects.filter(
+            pk=reader_study.pk
+        )
+        self.fields["reader_study"].initial = reader_study
+        self.fields["reader_study"].disabled = True
+        self.fields["reader_study"].hidden = True
+
+        self.fields["answer_type"].widget = Select(
+            attrs={
+                "hx-get": reverse_lazy(
+                    "reader-studies:question-interfaces",
+                    kwargs={"slug": reader_study.slug},
+                ),
+                "hx-target": "#id_interface",
+            }
+        )
+        self.fields["answer_type"].choices = AnswerType.choices
 
         self.helper = FormHelper()
         self.helper.form_tag = True
@@ -292,7 +311,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                 Field("widget"),
                 HTML(
                     f"<div "
-                    f"hx-get={reverse_lazy('reader-studies:question-widgets')!r} "
+                    f"hx-get={reverse_lazy('reader-studies:question-widgets', kwargs={'slug': reader_study.slug})!r} "
                     f"hx-trigger='change from:#id_answer_type' "
                     f"hx-target='#id_widget' "
                     f"hx-include='[id=id_answer_type]'>"
@@ -315,6 +334,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                 ),
                 Field("required"),
                 Field("image_port"),
+                Field("default_annotation_color"),
                 Field("direction"),
                 Field("order"),
                 Field("interface"),
@@ -325,8 +345,16 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
             )
         )
 
+    def __get_answer_type(self):
+        if not self.instance.is_fully_editable:
+            # disabled form elements are not sent along with the form,
+            # so retrieve the answer type from the instance
+            return self.instance.answer_type
+        else:
+            return self["answer_type"].value()
+
     def interface_choices(self):
-        answer_type = self["answer_type"].value()
+        answer_type = self.__get_answer_type()
         if answer_type is None:
             return ComponentInterface.objects.none()
         return ComponentInterface.objects.filter(
@@ -334,12 +362,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
         )
 
     def widget_choices(self):
-        if not self.instance.is_fully_editable:
-            # disabled form elements are not sent along with the form,
-            # so retrieve the answer type from the instance
-            answer_type = self.instance.answer_type
-        else:
-            answer_type = self["answer_type"].value()
+        answer_type = self.__get_answer_type()
         choices = [*BLANK_CHOICE_DASH]
 
         if not answer_type:
@@ -390,6 +413,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
             "answer_type",
             "required",
             "image_port",
+            "default_annotation_color",
             "direction",
             "order",
             "interface",
@@ -402,6 +426,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
             "answer_min_length",
             "answer_max_length",
             "answer_match_pattern",
+            "reader_study",
         )
         help_texts = {
             "question_text": (
@@ -442,14 +467,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
             "overlay_segments": JSONEditorWidget(
                 schema=OVERLAY_SEGMENTS_SCHEMA
             ),
-            "answer_type": Select(
-                attrs={
-                    "hx-get": reverse_lazy(
-                        "reader-studies:question-interfaces"
-                    ),
-                    "hx-target": "#id_interface",
-                }
-            ),
+            "default_annotation_color": ColorEditorWidget(format="hex"),
         }
 
     interface = DynamicField(
@@ -529,13 +547,16 @@ class GroundTruthForm(SaveFormInitMixin, Form):
         " the question text provided in the header.",
     )
 
-    def __init__(self, *args, reader_study, **kwargs):
+    def __init__(self, *args, user, reader_study, **kwargs):
         super().__init__(*args, **kwargs)
-        self.reader_study = reader_study
+        self._reader_study = reader_study
+        self._user = user
+        self._answers = []
 
     def clean_ground_truth(self):
         csv_file = self.cleaned_data.get("ground_truth")
         csv_file.seek(0)
+
         rdr = csv.DictReader(
             io.StringIO(csv_file.read().decode("utf-8")),
             quoting=csv.QUOTE_ALL,
@@ -543,229 +564,105 @@ class GroundTruthForm(SaveFormInitMixin, Form):
             quotechar="'",
         )
         headers = rdr.fieldnames
+
         if sorted(
             filter(lambda x: not x.endswith("__explanation"), headers)
-        ) != sorted(self.reader_study.ground_truth_file_headers):
+        ) != sorted(self._reader_study.ground_truth_file_headers):
             raise ValidationError(
                 f"Fields provided do not match with reader study. Fields should "
-                f"be: {','.join(self.reader_study.ground_truth_file_headers)}"
+                f"be: {','.join(self._reader_study.ground_truth_file_headers)}"
             )
 
-        values = [x for x in rdr]
+        ground_truth = [x for x in rdr]
 
-        return values
+        self.create_answers(ground_truth=ground_truth)
+
+        return ground_truth
+
+    def create_answers(self, *, ground_truth):  # noqa: C901
+        self._answers = []
+
+        for gt in ground_truth:
+            display_set = self._reader_study.display_sets.get(pk=gt["case"])
+
+            for key in gt.keys():
+                if key == "case" or key.endswith("__explanation"):
+                    continue
+
+                question = self._reader_study.questions.get(question_text=key)
+                answer = json.loads(gt[key])
+
+                if answer is None and question.required is False:
+                    continue
+
+                if question.answer_type == Question.AnswerType.CHOICE:
+                    try:
+                        option = question.options.get(title=answer)
+                        answer = option.pk
+                    except CategoricalOption.DoesNotExist:
+                        raise ValidationError(
+                            f"Option {answer!r} is not valid for question {question.question_text}"
+                        )
+
+                if question.answer_type == Question.AnswerType.MULTIPLE_CHOICE:
+                    answer = list(
+                        question.options.filter(title__in=answer).values_list(
+                            "pk", flat=True
+                        )
+                    )
+
+                try:
+                    explanation = json.loads(gt.get(key + "__explanation", ""))
+                except (json.JSONDecodeError, TypeError):
+                    explanation = ""
+
+                common_answer_kwargs = {
+                    "display_set": display_set,
+                    "question": question,
+                    "is_ground_truth": True,
+                }
+
+                try:
+                    answer_obj = Answer.objects.get(**common_answer_kwargs)
+                except ObjectDoesNotExist:
+                    answer_obj = Answer(**common_answer_kwargs)
+
+                # Update the answer object
+                answer_obj.creator = self._user
+                answer_obj.answer = answer
+                answer_obj.explanation = explanation
+
+                answer_obj.validate(
+                    creator=answer_obj.creator,
+                    question=answer_obj.question,
+                    answer=answer_obj.answer,
+                    is_ground_truth=answer_obj.is_ground_truth,
+                    display_set=answer_obj.display_set,
+                )
+
+                self._answers.append(answer_obj)
+
+    def save_answers(self):
+        for answer in self._answers:
+            answer.save()
 
 
-class DisplaySetCreateForm(Form):
-    _possible_widgets = {
-        *InterfaceFormField._possible_widgets,
-    }
-
-    def __init__(self, *args, instance, reader_study, user, **kwargs):
+class DisplaySetCreateForm(MultipleCIVForm):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        self.instance = instance
-        self.reader_study = reader_study
-        self.user = user
-
-        for slug, values in reader_study.values_for_interfaces.items():
-            current_value = None
-
-            if instance:
-                current_value = instance.values.filter(
-                    interface__slug=slug
-                ).first()
-
-            interface = ComponentInterface.objects.get(slug=slug)
-
-            if interface.is_image_kind:
-                self.fields[slug] = self._get_image_field(
-                    interface=interface,
-                    values=values,
-                    current_value=current_value,
-                )
-            elif interface.requires_file:
-                self.fields[slug] = self._get_file_field(
-                    interface=interface,
-                    values=values,
-                    current_value=current_value,
-                )
-            else:
-                self.fields[slug] = self._get_default_field(
-                    interface=interface, current_value=current_value
-                )
 
         self.fields["order"] = IntegerField(
             initial=(
-                instance.order
-                if instance
-                else reader_study.next_display_set_order
+                self.instance.order
+                if self.instance
+                else self.base_obj.next_display_set_order
             )
         )
-
-    def _get_image_field(self, *, interface, values, current_value):
-        return self._get_default_field(
-            interface=interface, current_value=current_value
-        )
-
-    def _get_file_field(self, *, interface, values, current_value):
-        return self._get_default_field(
-            interface=interface, current_value=current_value
-        )
-
-    def _get_default_field(self, *, interface, current_value):
-        return InterfaceFormField(
-            instance=interface,
-            initial=current_value.value if current_value else None,
-            required=False,
-            user=self.user,
-        ).field
 
 
 class DisplaySetUpdateForm(DisplaySetCreateForm):
-    _possible_widgets = {
-        SelectUploadWidget,
-        *DisplaySetCreateForm._possible_widgets,
-    }
-
-    def _get_image_field(self, *, interface, values, current_value):
-        return FlexibleImageField(
-            image_queryset=get_objects_for_user(self.user, "cases.view_image"),
-            upload_queryset=get_objects_for_user(
-                self.user, "uploads.change_userupload"
-            ).filter(status=UserUpload.StatusChoices.COMPLETED),
-            widget=FlexibleImageWidget(
-                user=self.user, current_value=current_value
-            ),
-            required=False,
-        )
-
-    def _get_file_field(self, *, interface, values, current_value):
-        return self._get_select_upload_widget_field(
-            interface=interface, values=values, current_value=current_value
-        )
-
-    def _get_select_upload_widget_field(
-        self, *, interface, values, current_value
-    ):
-        return ModelChoiceField(
-            queryset=ComponentInterfaceValue.objects.filter(id__in=values),
-            initial=current_value,
-            required=False,
-            widget=SelectUploadWidget(
-                attrs={
-                    "reader_study_slug": self.reader_study.slug,
-                    "display_set_pk": self.instance.pk,
-                    "interface_slug": interface.slug,
-                    "interface_type": interface.super_kind,
-                    "interface_super_kinds": {
-                        kind.name: kind.value
-                        for kind in InterfaceSuperKindChoices
-                    },
-                }
-            ),
-        )
-
-
-class FileForm(Form):
-    _possible_widgets = {
-        UserUploadSingleWidget,
-    }
-
-    user_upload = ModelChoiceField(
-        label="File",
-        queryset=None,
-    )
-
-    def __init__(
-        self, *args, user, display_set, interface, instance=None, **kwargs
-    ):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["user_upload"].widget = UserUploadSingleWidget(
-            allowed_file_types=interface.file_mimetypes
-        )
-        self.fields["user_upload"].queryset = get_objects_for_user(
-            user,
-            "uploads.change_userupload",
-        ).filter(status=UserUpload.StatusChoices.COMPLETED)
-        self.interface = interface
-        self.display_set = display_set
-
-
-class DisplaySetInterfacesCreateForm(Form):
-    _possible_widgets = {
-        *InterfaceFormField._possible_widgets,
-        autocomplete.ModelSelect2,
-        Select,
-    }
-
-    def __init__(self, *args, pk, interface, reader_study, user, **kwargs):
-        super().__init__(*args, **kwargs)
-        selected_interface = None
-        if interface:
-            selected_interface = ComponentInterface.objects.get(pk=interface)
-        data = kwargs.get("data")
-        if data and data.get("interface"):
-            selected_interface = ComponentInterface.objects.get(
-                pk=data["interface"]
-            )
-        qs = ComponentInterface.objects.exclude(
-            slug__in=reader_study.values_for_interfaces.keys()
-        )
-        widget_kwargs = {}
-        attrs = {}
-        if pk is None and selected_interface is not None:
-            widget = Select
-        else:
-            widget = autocomplete.ModelSelect2
-            attrs.update(
-                {
-                    "data-placeholder": "Search for an interface ...",
-                    "data-minimum-input-length": 3,
-                    "data-theme": settings.CRISPY_TEMPLATE_PACK,
-                    "data-html": True,
-                }
-            )
-            widget_kwargs[
-                "url"
-            ] = "components:component-interface-autocomplete"
-            widget_kwargs["forward"] = ["interface"]
-
-        if pk is not None:
-            attrs.update(
-                {
-                    "hx-get": reverse_lazy(
-                        "reader-studies:display-set-interfaces-create",
-                        kwargs={"pk": pk, "slug": reader_study.slug},
-                    ),
-                    "hx-target": f"#ds-content-{pk}",
-                    "hx-trigger": "interfaceSelected",
-                }
-            )
-        else:
-            attrs.update(
-                {
-                    "hx-get": reverse_lazy(
-                        "reader-studies:display-set-new-interfaces-create",
-                        kwargs={"slug": reader_study.slug},
-                    ),
-                    "hx-target": f"#form-{kwargs['auto_id'][:-3]}",
-                    "hx-swap": "outerHTML",
-                    "hx-trigger": "interfaceSelected",
-                    "disabled": selected_interface is not None,
-                }
-            )
-        widget_kwargs["attrs"] = attrs
-
-        self.fields["interface"] = ModelChoiceField(
-            initial=selected_interface,
-            queryset=qs,
-            widget=widget(**widget_kwargs),
-        )
-
-        if selected_interface is not None:
-            self.fields[selected_interface.slug] = InterfaceFormField(
-                instance=selected_interface,
-                user=user,
-                required=True,
-            ).field
+        if not self.instance.is_editable:
+            for _, field in self.fields.items():
+                field.disabled = True

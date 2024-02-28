@@ -28,6 +28,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
 )
+from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.cases_tests.factories import ImageFactoryWithImageFileTiff
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
@@ -35,7 +36,11 @@ from tests.components_tests.factories import (
 )
 from tests.evaluation_tests.factories import EvaluationFactory
 from tests.factories import ImageFactory
-from tests.reader_studies_tests.factories import QuestionFactory
+from tests.reader_studies_tests.factories import (
+    DisplaySetFactory,
+    QuestionFactory,
+    ReaderStudyFactory,
+)
 
 
 @pytest.mark.django_db
@@ -1209,34 +1214,6 @@ def test_can_execute():
 
 
 @pytest.mark.django_db
-def test_can_execute_with_sagemaker(settings):
-    settings.COMPONENTS_CREATE_SAGEMAKER_MODEL = False
-
-    ai = AlgorithmImageFactory(
-        is_manifest_valid=True,
-        is_in_registry=True,
-        is_on_sagemaker=False,
-        image=None,
-    )
-
-    assert ai.can_execute is True
-    assert ai in AlgorithmImage.objects.executable_images()
-
-    settings.COMPONENTS_CREATE_SAGEMAKER_MODEL = True
-
-    del ai.can_execute
-    assert ai.can_execute is False
-    assert ai not in AlgorithmImage.objects.executable_images()
-
-    ai.is_on_sagemaker = True
-    ai.save()
-
-    del ai.can_execute
-    assert ai.can_execute is True
-    assert ai in AlgorithmImage.objects.executable_images()
-
-
-@pytest.mark.django_db
 def test_no_job_without_image(django_capture_on_commit_callbacks):
     with django_capture_on_commit_callbacks() as callbacks:
         ai = AlgorithmImageFactory(image=None)
@@ -1320,7 +1297,6 @@ def test_remove_container_image_from_registry(
     assert ai.is_manifest_valid is True
     assert ai.latest_shimmed_version == ""
     assert ai.is_in_registry is False
-    assert ai.is_on_sagemaker is False
 
 
 @pytest.mark.django_db
@@ -1342,3 +1318,35 @@ def test_mark_desired_version():
         image.refresh_from_db()
     assert i2.is_desired_version
     assert not any([i1.is_desired_version, i3.is_desired_version])
+
+
+@pytest.mark.parametrize(
+    "base_object_factory, related_item_factory, base_object_lookup",
+    (
+        (ReaderStudyFactory, DisplaySetFactory, "reader_study"),
+        (ArchiveFactory, ArchiveItemFactory, "archive"),
+    ),
+)
+@pytest.mark.django_db
+def test_values_for_interfaces(
+    base_object_factory, related_item_factory, base_object_lookup
+):
+    base_obj = base_object_factory()
+    ob1, ob2 = related_item_factory.create_batch(
+        2, **{base_object_lookup: base_obj}
+    )
+    ci1, ci2, ci3 = ComponentInterfaceFactory.create_batch(3)
+    civ1a, _ = ComponentInterfaceValueFactory.create_batch(2, interface=ci1)
+    civ2a, civ2b = ComponentInterfaceValueFactory.create_batch(
+        2, interface=ci2
+    )
+    civ3 = ComponentInterfaceValueFactory(interface=ci3)
+
+    ob1.values.add(civ1a, civ2a)
+    ob2.values.add(civ1a, civ2b, civ3)
+
+    assert base_obj.values_for_interfaces == {
+        ci1.slug: [civ1a.pk],
+        ci2.slug: [civ2a.pk, civ2b.pk],
+        ci3.slug: [civ3.pk],
+    }

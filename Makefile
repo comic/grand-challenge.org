@@ -1,5 +1,5 @@
 USER_ID=$(shell id -u)
-PYTHON_VERSION="3.10"
+PYTHON_VERSION="3.11"
 POETRY_HASH=$(shell shasum -a 512 poetry.lock | cut -c 1-8)
 GIT_COMMIT_ID=$(shell git describe --always --dirty)
 GIT_BRANCH_NAME=$(shell git rev-parse --abbrev-ref HEAD | sed "s/[^[:alnum:]]//g")
@@ -101,33 +101,19 @@ development_fixtures:
 	docker compose run \
 		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
 		--rm \
-		web \
+		celery_worker_evaluation \
 		bash -c "python manage.py migrate && python manage.py runscript minio development_fixtures"
 
 
-retina_archive_structures:
+algorithm_evaluation_fixtures:
 	docker compose run \
 		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
 		--rm \
-		web \
-		bash -c "python manage.py runscript create_retina_archive_structures"
-
-
-scripts/algorithm_io.tar:
-	docker buildx build --platform linux/amd64 -t algorithm_io app/tests/resources/gc_demo_algorithm/
-	docker save algorithm_io -o scripts/algorithm_io.tar
-	chmod a+r scripts/algorithm_io.tar
-
-
-algorithm_evaluation_fixtures: scripts/algorithm_io.tar
-	docker compose run \
-		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
-		--rm \
-		web \
+		celery_worker_evaluation \
 		python manage.py runscript algorithm_evaluation_fixtures
 
 
-cost_fixtures: scripts/algorithm_io.tar
+cost_fixtures:
 	docker compose run \
 		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
 		--rm \

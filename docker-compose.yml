@@ -27,7 +27,7 @@ services:
     restart: always
 
   minio.localhost:
-    image: minio/minio:RELEASE.2023-05-18T00-05-36Z
+    image: minio/minio
     ports:
       - "127.0.0.1:9000:9000"
     entrypoint: "/bin/sh"
@@ -47,6 +47,7 @@ services:
       <<: [*postgres-env, *minio-env]
       COMPONENTS_REGISTRY_INSECURE: 'true'
       COMPONENTS_DEFAULT_BACKEND: 'grandchallenge.components.backends.docker.DockerExecutor'
+      COMPONENTS_STRIP_LEADING_PREFIX_SLASH: 'true'
       DEBUG: 'true'
       COMPRESS_OFFLINE: 'false'
       PYTHONDONTWRITEBYTECODE: 1
@@ -108,10 +109,9 @@ services:
       <<: [*postgres-env, *minio-env]
       COMPONENTS_REGISTRY_INSECURE: 'true'
       COMPONENTS_DEFAULT_BACKEND: 'grandchallenge.components.backends.docker.DockerExecutor'
+      COMPONENTS_STRIP_LEADING_PREFIX_SLASH: 'true'
       DEBUG: 'true'
       PYTHONDONTWRITEBYTECODE: 1
-      WORKBENCH_SECRET_KEY: "${WORKBENCH_SECRET_KEY-}"
-      WORKBENCH_API_URL: "${WORKBENCH_API_URL-}"
     restart: always
     command: watchfiles --filter python "celery -A config worker -l info -c 1 -Q celery" /app
     scale: 1
@@ -138,6 +138,7 @@ services:
       REMAP_SIGTERM: 'SIGQUIT'
       COMPONENTS_REGISTRY_INSECURE: 'true'
       COMPONENTS_DEFAULT_BACKEND: 'grandchallenge.components.backends.docker.DockerExecutor'
+      COMPONENTS_STRIP_LEADING_PREFIX_SLASH: 'true'
       DEBUG: 'true'
       PYTHONDONTWRITEBYTECODE: 1
     restart: always
@@ -219,7 +220,7 @@ services:
       - workstations
 
   registry:
-    image: registry:2.7
+    image: registry:2
     ports:
       - "127.0.0.1:5000:5000"
     environment:

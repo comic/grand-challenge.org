@@ -48,9 +48,7 @@ class VerificationForm(SaveFormInitMixin, forms.ModelForm):
 
         self.fields["email"].initial = self.user.email
         self.fields["email"].required = True
-        self.fields[
-            "email"
-        ].help_text = (
+        self.fields["email"].help_text = (
             "Please provide your work, corporate or institutional email."
         )
 
@@ -90,22 +88,30 @@ class VerificationForm(SaveFormInitMixin, forms.ModelForm):
 
     def clean(self):
         if self.user.user_profile.is_incomplete:
-            profile_link = reverse(
-                "profile-update", kwargs={"username": self.user.username}
-            )
             raise ValidationError(
                 format_html(
                     (
-                        "Your profile information is incomplete. You can complete "
-                        "your profile <a href='{}'>here</a>."
+                        "Your profile information is incomplete. "
+                        "You can complete your profile "
+                        "<a href='{profile_url}'>here</a>."
                     ),
-                    profile_link,
+                    profile_url=reverse(
+                        "profile-update",
+                        kwargs={"username": self.user.username},
+                    ),
                 )
             )
         try:
             if self.user.verification:
                 raise ValidationError(
-                    "You have already made a verification request"
+                    format_html(
+                        (
+                            "You have already made a verification request. "
+                            "You can check the status of that request "
+                            "<a href='{status_url}'>here</a>."
+                        ),
+                        status_url=reverse("verifications:detail"),
+                    )
                 )
         except ObjectDoesNotExist:
             pass

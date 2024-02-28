@@ -11,7 +11,6 @@ from lzma import LZMAError
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
-import boto3
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import shared_task
 from celery.exceptions import MaxRetriesExceededError
@@ -26,7 +25,7 @@ from django.utils.module_loading import import_string
 from django.utils.timezone import now
 from panimg.models import SimpleITKImage
 
-from grandchallenge.cases.models import ImageFile, RawImageUploadSession
+from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.cases.utils import get_sitk_image
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
@@ -34,7 +33,6 @@ from grandchallenge.components.backends.exceptions import (
     RetryTask,
     TaskCancelled,
 )
-from grandchallenge.components.backends.utils import get_sagemaker_model_name
 from grandchallenge.components.emails import send_invalid_dockerfile_email
 from grandchallenge.components.exceptions import PriorStepFailed
 from grandchallenge.components.registry import _get_registry_auth_config
@@ -48,51 +46,27 @@ MAX_RETRIES = 60 * 24  # 1 day assuming 60 seconds delay
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
-def update_sagemaker_shim_version():
+@transaction.atomic
+def update_all_container_image_shims():
     """Updates existing images to new versions of sagemaker shim"""
-    with transaction.atomic():
-        for app_label, model_name in (
-            ("algorithms", "algorithmimage"),
-            ("evaluation", "method"),
-        ):
-            model = apps.get_model(app_label=app_label, model_name=model_name)
-
-            for instance in model.objects.executable_images().exclude(
-                latest_shimmed_version=settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
-            ):
-                on_commit(
-                    shim_image.signature(
-                        kwargs={
-                            "pk": str(instance.pk),
-                            "app_label": instance._meta.app_label,
-                            "model_name": instance._meta.model_name,
-                        }
-                    ).apply_async
-                )
-
-
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
-def shim_image(*, pk: uuid.UUID, app_label: str, model_name: str):
-    """Shim an existing container image"""
-    model = apps.get_model(app_label=app_label, model_name=model_name)
-    instance = model.objects.get(pk=pk)
-
-    if (
-        instance.is_manifest_valid
-        and instance.is_in_registry
-        and instance.SHIM_IMAGE
-        and instance.latest_shimmed_version
-        != settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
+    for app_label, model_name in (
+        ("algorithms", "algorithmimage"),
+        ("evaluation", "method"),
     ):
-        shim_container_image(instance=instance)
-        instance.is_on_sagemaker = False
-        instance.save()
+        model = apps.get_model(app_label=app_label, model_name=model_name)
 
-        if settings.COMPONENTS_CREATE_SAGEMAKER_MODEL:
-            # Only create SageMaker models for shimmed images for now
-            create_sagemaker_model(repo_tag=instance.shimmed_repo_tag)
-            instance.is_on_sagemaker = True
-            instance.save()
+        for instance in model.objects.executable_images().exclude(
+            latest_shimmed_version=settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
+        ):
+            on_commit(
+                update_container_image_shim.signature(
+                    kwargs={
+                        "pk": str(instance.pk),
+                        "app_label": instance._meta.app_label,
+                        "model_name": instance._meta.model_name,
+                    }
+                ).apply_async
+            )
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
@@ -171,18 +145,6 @@ def upload_to_registry_and_sagemaker(
         != settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
     ):
         shim_container_image(instance=instance)
-        instance.is_on_sagemaker = False
-        instance.save()
-
-    if (
-        instance.SHIM_IMAGE
-        and settings.COMPONENTS_CREATE_SAGEMAKER_MODEL
-        and not instance.is_on_sagemaker
-    ):
-        # Only create SageMaker models for shimmed images for now
-        # See ComponentImageManager
-        create_sagemaker_model(repo_tag=instance.shimmed_repo_tag)
-        instance.is_on_sagemaker = True
         instance.save()
 
     instance.import_status = instance.ImportStatusChoices.COMPLETED
@@ -190,6 +152,34 @@ def upload_to_registry_and_sagemaker(
 
     if mark_as_desired:
         instance.mark_desired_version()
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def update_container_image_shim(
+    *,
+    pk: uuid.UUID,
+    app_label: str,
+    model_name: str,
+):
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+    instance = model.objects.get(pk=pk)
+
+    if (
+        instance.is_in_registry
+        and instance.SHIM_IMAGE
+        and (
+            instance.latest_shimmed_version
+            != settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
+        )
+    ):
+        existing_shimmed_repo_tag = instance.shimmed_repo_tag
+
+        remove_tag_from_registry(repo_tag=existing_shimmed_repo_tag)
+        instance.latest_shimmed_version = ""
+        instance.save()
+
+        shim_container_image(instance=instance)
+        instance.save()
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
@@ -230,11 +220,6 @@ def remove_container_image_from_registry(
     model = apps.get_model(app_label=app_label, model_name=model_name)
     instance = model.objects.get(pk=pk)
 
-    if instance.is_on_sagemaker:
-        delete_sagemaker_model(repo_tag=instance.shimmed_repo_tag)
-        instance.is_on_sagemaker = False
-        instance.save()
-
     if instance.latest_shimmed_version:
         remove_tag_from_registry(repo_tag=instance.shimmed_repo_tag)
         instance.latest_shimmed_version = ""
@@ -267,30 +252,22 @@ def push_container_image(*, instance):
 
 
 def remove_tag_from_registry(*, repo_tag):
-    if settings.COMPONENTS_REGISTRY_INSECURE:
+    try:
         digest_cmd = _repo_login_and_run(command=["crane", "digest", repo_tag])
+    except subprocess.CalledProcessError as error:
+        if "MANIFEST_UNKNOWN: Requested image not found" in getattr(
+            error, "stderr", ""
+        ):
+            # The image has already been deleted
+            return
+        else:
+            raise error
 
-        digests = digest_cmd.stdout.decode("utf-8").splitlines()
+    digests = digest_cmd.stdout.splitlines()
 
-        for digest in digests:
-            _repo_login_and_run(
-                command=["crane", "delete", f"{repo_tag}@{digest}"]
-            )
-    else:
-        client = boto3.client(
-            "ecr", region_name=settings.COMPONENTS_AMAZON_ECR_REGION
-        )
-
-        repo_name, image_tag = repo_tag.rsplit(":", 1)
-        repo_name = repo_name.replace(
-            f"{settings.COMPONENTS_REGISTRY_URL}/", "", 1
-        )
-
-        client.batch_delete_image(
-            repositoryName=repo_name,
-            imageIds=[
-                {"imageTag": image_tag},
-            ],
+    for digest in digests:
+        _repo_login_and_run(
+            command=["crane", "delete", f"{repo_tag}@{digest}"]
         )
 
 
@@ -317,7 +294,10 @@ def _repo_login_and_run(*, command):
         clean_command = f"{login_command} && {shlex.join(command)}"
 
     return subprocess.run(
-        ["/bin/sh", "-c", clean_command], check=True, capture_output=True
+        ["/bin/sh", "-c", clean_command],
+        check=True,
+        capture_output=True,
+        text=True,
     )
 
 
@@ -359,21 +339,21 @@ def _get_container_image_config(*, original_repo_tag):
     output = _repo_login_and_run(
         command=["crane", "config", original_repo_tag]
     )
-    return json.loads(output.stdout.decode("utf-8"))
+    return json.loads(output.stdout)
 
 
 def _get_shim_env_vars(*, original_config):
     """Get the environment variables for a shimmed container image"""
     cmd = original_config["config"].get("Cmd")
     entrypoint = original_config["config"].get("Entrypoint")
+    user = original_config["config"]["User"]
 
     return {
         "GRAND_CHALLENGE_COMPONENT_CMD_B64J": encode_b64j(val=cmd),
         "GRAND_CHALLENGE_COMPONENT_ENTRYPOINT_B64J": encode_b64j(
             val=entrypoint
         ),
-        "no_proxy": "amazonaws.com",
-        "PYTHONUNBUFFERED": "1",
+        "GRAND_CHALLENGE_COMPONENT_USER": user,
     }
 
 
@@ -387,12 +367,12 @@ def _mutate_container_image(
 
         with tarfile.open(new_layer, "w") as f:
 
-            def _set_root_555_perms(
+            def _set_root_500_perms(
                 tarinfo,
             ):
                 tarinfo.uid = 0
                 tarinfo.gid = 0
-                tarinfo.mode = 0o555
+                tarinfo.mode = 0o500
                 return tarinfo
 
             f.add(
@@ -401,16 +381,16 @@ def _mutate_container_image(
                     f"sagemaker-shim-{version}-Linux-x86_64"
                 ),
                 arcname="/sagemaker-shim",
-                filter=_set_root_555_perms,
+                filter=_set_root_500_perms,
             )
 
             for dir in ["/input", "/output", "/tmp"]:
-                # /tmp is required by staticx
+                # staticx will unpack into /tmp
                 tarinfo = tarfile.TarInfo(dir)
                 tarinfo.type = tarfile.DIRTYPE
                 tarinfo.uid = 0
                 tarinfo.gid = 0
-                tarinfo.mode = 0o777
+                tarinfo.mode = 0o755 if dir == "/input" else 0o777
                 f.addfile(tarinfo=tarinfo)
 
         _repo_login_and_run(
@@ -418,6 +398,11 @@ def _mutate_container_image(
                 "crane",
                 "mutate",
                 original_repo_tag,
+                # Running as root is required on SageMaker Training
+                # due to the permissions of most of the filesystem
+                # including /tmp which we need to use
+                "--user",
+                "0",
                 "--cmd",
                 "",
                 "--entrypoint",
@@ -435,32 +420,20 @@ def _mutate_container_image(
 
 def _decompress_tarball(*, in_fileobj, out_fileobj):
     """Create an uncompress tarball from a (compressed) tarball"""
-    with tarfile.open(fileobj=in_fileobj, mode="r") as it, tarfile.open(
-        fileobj=out_fileobj, mode="w|"
-    ) as ot:
+    with (
+        tarfile.open(fileobj=in_fileobj, mode="r") as it,
+        tarfile.open(fileobj=out_fileobj, mode="w|") as ot,
+    ):
         for member in it.getmembers():
             extracted = it.extractfile(member)
             ot.addfile(member, extracted)
 
 
 def _validate_docker_image_manifest(*, instance) -> str:
-    manifest = _extract_docker_image_file(
-        instance=instance, filename="manifest.json"
-    )
-    manifest = json.loads(manifest)
+    config_and_sha256 = _get_image_config_and_sha256(instance=instance)
 
-    if len(manifest) != 1:
-        raise ValidationError(
-            f"The container image file should only have 1 image. "
-            f"This file contains {len(manifest)}."
-        )
-
-    image_sha256 = manifest[0]["Config"][:64]
-
-    config = _extract_docker_image_file(
-        instance=instance, filename=f"{image_sha256}.json"
-    )
-    config = json.loads(config)
+    config = config_and_sha256["config"]
+    image_sha256 = config_and_sha256["image_sha256"]
 
     user = str(config["config"].get("User", "")).lower()
     if (
@@ -487,55 +460,85 @@ def _validate_docker_image_manifest(*, instance) -> str:
     return f"sha256:{image_sha256}"
 
 
-def _extract_docker_image_file(*, instance, filename: str):
-    """Extract a file from the root of a tarball."""
+def _get_image_config_and_sha256(*, instance):
     try:
-        with instance.image.open(mode="rb") as im, tarfile.open(
-            fileobj=im, mode="r"
-        ) as t:
-            member = dict(zip(t.getnames(), t.getmembers(), strict=True))[
-                filename
-            ]
-            file = t.extractfile(member).read()
-        return file
-    except (KeyError, tarfile.ReadError):
-        raise ValidationError(
-            f"{filename} not found at the root of the container image "
-            f"file. Was this created with docker save?"
-        )
-    except (EOFError, zlib.error, LZMAError):
+        with (
+            instance.image.open(mode="rb") as im,
+            tarfile.open(fileobj=im, mode="r") as open_tarfile,
+        ):
+            container_image_files = {
+                tarinfo.name: tarinfo
+                for tarinfo in open_tarfile.getmembers()
+                if tarinfo.isfile()
+            }
+
+            image_manifest = _get_image_manifest(
+                container_image_files=container_image_files,
+                open_tarfile=open_tarfile,
+            )
+
+            return _get_image_config_file(
+                image_manifest=image_manifest,
+                container_image_files=container_image_files,
+                open_tarfile=open_tarfile,
+            )
+
+    except (EOFError, zlib.error, LZMAError, tarfile.ReadError, MemoryError):
         raise ValidationError("Could not decompress the container image file.")
 
 
-def create_sagemaker_model(*, repo_tag):
-    sagemaker_client = boto3.client(
-        "sagemaker",
-        region_name=settings.COMPONENTS_AMAZON_ECR_REGION,
-    )
+def _get_image_manifest(*, container_image_files, open_tarfile):
+    try:
+        manifest = json.loads(
+            open_tarfile.extractfile(
+                container_image_files["manifest.json"]
+            ).read()
+        )
+    except KeyError:
+        raise ValidationError(
+            "Could not find manifest.json in the container image file. "
+            "Was this created with docker save?"
+        )
 
-    sagemaker_client.create_model(
-        ModelName=get_sagemaker_model_name(repo_tag=repo_tag),
-        PrimaryContainer={"Image": repo_tag},
-        ExecutionRoleArn=settings.COMPONENTS_AMAZON_SAGEMAKER_EXECUTION_ROLE_ARN,
-        EnableNetworkIsolation=False,  # Restricted by VPC
-        VpcConfig={
-            "SecurityGroupIds": [
-                settings.COMPONENTS_AMAZON_SAGEMAKER_SECURITY_GROUP_ID,
-            ],
-            "Subnets": settings.COMPONENTS_AMAZON_SAGEMAKER_SUBNETS,
-        },
-    )
+    if len(manifest) != 1:
+        raise ValidationError(
+            f"The container image file should only have 1 image. "
+            f"This file contains {len(manifest)}."
+        )
+
+    return manifest[0]
 
 
-def delete_sagemaker_model(*, repo_tag):
-    sagemaker_client = boto3.client(
-        "sagemaker",
-        region_name=settings.COMPONENTS_AMAZON_ECR_REGION,
-    )
+def _get_image_config_file(
+    *, image_manifest, container_image_files, open_tarfile
+):
+    config_filename = image_manifest["Config"]
 
-    sagemaker_client.delete_model(
-        ModelName=get_sagemaker_model_name(repo_tag=repo_tag)
-    )
+    try:
+        config = json.loads(
+            open_tarfile.extractfile(
+                container_image_files[config_filename]
+            ).read()
+        )
+    except KeyError:
+        raise ValidationError(
+            "Could not find the config file in the container image file. "
+            "Was this created with docker save?"
+        )
+
+    if config_filename.endswith(".json"):
+        # Docker <25 container image
+        image_sha256 = config_filename.split(".")[0]
+    else:
+        # Docker >=25 container image
+        image_sha256 = image_manifest["Config"].split("/")[-1]
+
+    if len(image_sha256) != 64:
+        raise ValidationError(
+            "The container image file does not have a valid sha256 hash."
+        )
+
+    return {"image_sha256": image_sha256, "config": config}
 
 
 def retry_if_dropped(func):
@@ -747,7 +750,21 @@ def execute_job(  # noqa: C901
             )
 
 
+def get_update_status_kwargs(*, executor=None):
+    if executor is not None:
+        return {
+            "stdout": executor.stdout,
+            "stderr": executor.stderr,
+            "duration": executor.duration,
+            "compute_cost_euro_millicents": executor.compute_cost_euro_millicents,
+            "runtime_metrics": executor.runtime_metrics,
+        }
+    else:
+        return {}
+
+
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@transaction.atomic
 def handle_event(*, event, backend, retries=0):  # noqa: C901
     """
     Receives events when tasks have stops and determines what to do next.
@@ -762,26 +779,19 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
     """
     Backend = import_string(backend)  # noqa: N806
 
-    job_params = Backend.get_job_params(event=event)
+    job_name = Backend.get_job_name(event=event)
+    job_params = Backend.get_job_params(job_name=job_name)
 
-    job = get_model_instance(
-        pk=job_params.pk,
-        app_label=job_params.app_label,
-        model_name=job_params.model_name,
-        attempt=job_params.attempt,
+    model = apps.get_model(
+        app_label=job_params.app_label, model_name=job_params.model_name
     )
-    executor = job.get_executor(backend=backend)
 
-    if job.status != job.EXECUTING:
-        deprovision_job.signature(**job.signature_kwargs).apply_async()
-        raise PriorStepFailed("Job is not executing")
+    queryset = model.objects.filter(
+        pk=job_params.pk,
+        attempt=job_params.attempt,
+    ).select_for_update(nowait=True)
 
-    try:
-        executor.handle_event(event=event)
-    except TaskCancelled:
-        job.update_status(status=job.CANCELLED)
-        return
-    except RetryStep:
+    def retry_handle_event(*, _executor=None):
         try:
             _retry(
                 task=handle_event,
@@ -790,18 +800,38 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
                 },
                 retries=retries,
             )
-            return
         except MaxRetriesExceededError:
             job.update_status(
                 status=job.FAILURE,
-                stdout=executor.stdout,
-                stderr=executor.stderr,
-                duration=executor.duration,
-                compute_cost_euro_millicents=executor.compute_cost_euro_millicents,
-                runtime_metrics=executor.runtime_metrics,
-                error_message="Time limit exceeded",
+                error_message="An unexpected error occurred",
+                **get_update_status_kwargs(executor=_executor),
             )
             raise
+
+    try:
+        # Acquire the lock
+        job = queryset.get()
+    except OperationalError:
+        # Could not acquire locks
+        retry_handle_event()
+        return
+
+    executor = job.get_executor(backend=backend)
+
+    if job.status != job.EXECUTING:
+        # Nothing to do
+        return
+
+    try:
+        executor.handle_event(event=event)
+    except TaskCancelled:
+        job.update_status(
+            status=job.CANCELLED, **get_update_status_kwargs(executor=executor)
+        )
+        return
+    except RetryStep:
+        retry_handle_event(_executor=executor)
+        return
     except RetryTask:
         job.update_status(status=job.PROVISIONED)
         step = _delay(task=retry_task, signature_kwargs=job.signature_kwargs)
@@ -809,32 +839,20 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
     except ComponentException as e:
         job.update_status(
             status=job.FAILURE,
-            stdout=executor.stdout,
-            stderr=executor.stderr,
-            duration=executor.duration,
-            compute_cost_euro_millicents=executor.compute_cost_euro_millicents,
-            runtime_metrics=executor.runtime_metrics,
             error_message=str(e),
+            **get_update_status_kwargs(executor=executor),
         )
     except Exception:
         job.update_status(
             status=job.FAILURE,
-            stdout=executor.stdout,
-            stderr=executor.stderr,
-            duration=executor.duration,
-            compute_cost_euro_millicents=executor.compute_cost_euro_millicents,
-            runtime_metrics=executor.runtime_metrics,
             error_message="An unexpected error occurred",
+            **get_update_status_kwargs(executor=executor),
         )
         raise
     else:
         job.update_status(
             status=job.EXECUTED,
-            stdout=executor.stdout,
-            stderr=executor.stderr,
-            duration=executor.duration,
-            compute_cost_euro_millicents=executor.compute_cost_euro_millicents,
-            runtime_metrics=executor.runtime_metrics,
+            **get_update_status_kwargs(executor=executor),
         )
         on_commit(
             parse_job_outputs.signature(**job.signature_kwargs).apply_async
@@ -1094,3 +1112,104 @@ def validate_voxel_values(*, civ_pk):
             civ.image.save()
 
     civ.interface._validate_voxel_values(civ.image)
+
+
+@shared_task(
+    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"],
+)
+@transaction.atomic
+def add_image_to_object(
+    *,
+    app_label,
+    model_name,
+    object_pk,
+    interface_pk,
+    upload_session_pk,
+):
+    from grandchallenge.components.models import (
+        ComponentInterface,
+        ComponentInterfaceValue,
+    )
+
+    object = get_model_instance(
+        pk=object_pk,
+        app_label=app_label,
+        model_name=model_name,
+    )
+    interface = ComponentInterface.objects.get(pk=interface_pk)
+    upload_session = RawImageUploadSession.objects.get(pk=upload_session_pk)
+    try:
+        image = Image.objects.get(origin_id=upload_session_pk)
+    except (Image.DoesNotExist, Image.MultipleObjectsReturned):
+        error_message = "Image imports should result in a single image"
+        upload_session.status = RawImageUploadSession.FAILURE
+        upload_session.error_message = error_message
+        upload_session.save()
+        return
+
+    object.values.remove(*object.values.filter(interface=interface))
+    civ, created = ComponentInterfaceValue.objects.get_or_create(
+        interface=interface, image=image
+    )
+
+    if created:
+        try:
+            civ.full_clean()
+        except ValidationError as e:
+            # this should only happen for new uploads
+            upload_session.status = RawImageUploadSession.FAILURE
+            upload_session.error_message = e.message
+            upload_session.save()
+            return
+    object.values.add(civ)
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@transaction.atomic
+def add_file_to_object(
+    *,
+    app_label,
+    model_name,
+    user_upload_pk,
+    object_pk,
+    interface_pk,
+    civ_pk=None,
+):
+    from grandchallenge.components.models import (
+        ComponentInterface,
+        ComponentInterfaceValue,
+    )
+
+    user_upload = UserUpload.objects.get(pk=user_upload_pk)
+    object = get_model_instance(
+        pk=object_pk,
+        app_label=app_label,
+        model_name=model_name,
+    )
+    interface = ComponentInterface.objects.get(pk=interface_pk)
+    error = None
+    civ = ComponentInterfaceValue(interface=interface)
+    try:
+        civ.validate_user_upload(user_upload)
+        civ.full_clean()
+        civ.save()
+        user_upload.copy_object(to_field=civ.file)
+        object.values.add(civ)
+        if civ_pk is not None:
+            # Remove the previously assigned civ from the display set
+            civ = ComponentInterfaceValue.objects.get(pk=civ_pk)
+            object.values.remove(civ)
+    except ValidationError as e:
+        error = str(e)
+
+    if error is not None:
+        Notification.send(
+            kind=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
+            actor=user_upload.creator,
+            message=f"File for interface {interface.title} failed validation.",
+            target=object.base_object,
+            description=(
+                f"File for interface {interface.title} added to {object_pk} "
+                f"in {object.base_object.title} failed validation:\n{error}."
+            ),
+        )

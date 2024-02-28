@@ -68,13 +68,17 @@
                             {% endif %}
                             <a class="list-group-item list-group-item-action"
                                href='{% url 'profile-update' user.username %}'><i
-                                    class="fa fa-edit fa-fw"></i>&nbsp;{% trans "Edit profile" %}</a>
+                                    class="fa fa-edit fa-fw"></i>&nbsp;{% trans "Edit Profile" %}</a>
                             {% if profile.user.has_usable_password %}
                                 <a class="list-group-item list-group-item-action"
                                    href='{% url 'account_change_password' %}'><i
-                                        class="fa fa-key fa-fw"></i>&nbsp;{% trans "Change password" %}
+                                        class="fa fa-key fa-fw"></i>&nbsp;{% trans "Change Password" %}
                                 </a>
                             {% endif %}
+                            <a class="list-group-item list-group-item-action"
+                                   href='{% url 'account_email' %}'><i
+                                        class="fa fa-envelope fa-fw"></i>&nbsp;{% trans "Change Email" %}
+                                </a>
                             <a class="list-group-item list-group-item-action"
                                href='{% url 'api-tokens:list' %}'><i
                                     class="fas fa-unlock fa-fw"></i>&nbsp;{% trans "Manage API Tokens" %}</a>

@@ -36,9 +36,12 @@ def get_sitk_image(*, image):
 
     with TemporaryDirectory() as tempdirname:
         for file in files:
-            with file.file.open("rb") as infile, open(
-                Path(tempdirname) / Path(file.file.name).name, "wb"
-            ) as outfile:
+            with (
+                file.file.open("rb") as infile,
+                open(
+                    Path(tempdirname) / Path(file.file.name).name, "wb"
+                ) as outfile,
+            ):
                 buffer = True
                 while buffer:
                     buffer = infile.read(1024)

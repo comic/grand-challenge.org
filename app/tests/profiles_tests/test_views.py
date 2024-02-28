@@ -1,3 +1,6 @@
+import random
+import string
+
 import pytest
 from allauth.account.models import EmailAddress
 from rest_framework import status
@@ -5,6 +8,7 @@ from rest_framework.test import force_authenticate
 
 from grandchallenge.profiles.views import UserProfileViewSet
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.verifications.models import VerificationUserSet
 from tests.factories import PolicyFactory, UserFactory
 from tests.organizations_tests.factories import OrganizationFactory
 from tests.utils import get_view_for_user
@@ -179,3 +183,124 @@ class TestProfileViewSets:
         )
 
         assert org1.title not in response.content.decode()
+
+
+@pytest.mark.parametrize(
+    "viewname",
+    ("newsletter-unsubscribe", "notification-unsubscribe"),
+)
+@pytest.mark.django_db
+def test_one_click_unsubscribe_invalid_token(client, viewname):
+    user = UserFactory()
+
+    valid_token = user.user_profile.unsubscribe_token
+    invalid_token = "".join(
+        random.choices(string.ascii_letters + string.digits + "_-", k=20)
+    )
+
+    response = get_view_for_user(
+        client=client,
+        viewname=viewname,
+        reverse_kwargs={"token": valid_token},
+    )
+    assert response.status_code == 200
+
+    response = get_view_for_user(
+        client=client,
+        viewname=viewname,
+        reverse_kwargs={"token": invalid_token},
+    )
+    assert response.status_code == 403
+
+
+@pytest.mark.parametrize(
+    "viewname,subscription_attr,unchanged_subscription_attr,logged_in",
+    (
+        (
+            "newsletter-unsubscribe",
+            "receive_newsletter",
+            "receive_notification_emails",
+            True,
+        ),
+        (
+            "newsletter-unsubscribe",
+            "receive_newsletter",
+            "receive_notification_emails",
+            False,
+        ),
+        (
+            "notification-unsubscribe",
+            "receive_notification_emails",
+            "receive_newsletter",
+            True,
+        ),
+        (
+            "notification-unsubscribe",
+            "receive_notification_emails",
+            "receive_newsletter",
+            False,
+        ),
+    ),
+)
+@pytest.mark.django_db
+def test_one_click_unsubscribe_functionality(
+    client, viewname, subscription_attr, unchanged_subscription_attr, logged_in
+):
+    user = UserFactory()
+    user.user_profile.receive_newsletter = True
+    user.user_profile.receive_notification_emails = True
+    user.user_profile.save()
+
+    token = user.user_profile.unsubscribe_token
+    response = get_view_for_user(
+        client=client,
+        viewname=viewname,
+        reverse_kwargs={"token": token},
+        method=client.post,
+        user=user if logged_in else None,
+    )
+    assert response.status_code == 302
+    user.user_profile.refresh_from_db()
+    assert not getattr(user.user_profile, subscription_attr)
+    assert getattr(user.user_profile, unchanged_subscription_attr)
+    assert VerificationUserSet.objects.count() == 0
+
+
+@pytest.mark.parametrize(
+    "viewname,subscription_attr",
+    (
+        ("newsletter-unsubscribe", "receive_newsletter"),
+        ("notification-unsubscribe", "receive_notification_emails"),
+    ),
+)
+@pytest.mark.django_db
+def test_one_click_unsubscribe_user_mismatch(
+    client, settings, viewname, subscription_attr
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    user = UserFactory()
+    user.user_profile.receive_newsletter = True
+    user.user_profile.receive_notification_emails = True
+    user.user_profile.save()
+
+    token = user.user_profile.unsubscribe_token
+
+    other_user = UserFactory()
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname=viewname,
+        reverse_kwargs={"token": token},
+        user=other_user,
+    )
+    assert response.status_code == 302
+    user.user_profile.refresh_from_db()
+    # token owner is unsubscribed
+    assert not getattr(user.user_profile, subscription_attr)
+    # token owner and requesting user are added to a verification user set
+    user_set = VerificationUserSet.objects.get()
+    assert user in user_set.users.all()
+    assert other_user in user_set.users.all()

@@ -19,4 +19,7 @@
 
 {% block form_heading %}
     <h2>Add {{ type_to_add }} to {{ object }}</h2>
+    {% if type_to_add == "images" %}
+        <p>This will create one new display set for each uploaded image using the interface you choose below.</p>
+    {% endif %}
 {% endblock %}

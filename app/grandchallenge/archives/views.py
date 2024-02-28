@@ -1,8 +1,6 @@
-from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db.transaction import on_commit
 from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -32,7 +30,6 @@ from grandchallenge.archives.filters import ArchiveFilter
 from grandchallenge.archives.forms import (
     AddCasesForm,
     ArchiveForm,
-    ArchiveItemForm,
     ArchiveItemsToReaderStudyForm,
     ArchivePermissionRequestUpdateForm,
     UploadersForm,
@@ -48,14 +45,16 @@ from grandchallenge.archives.serializers import (
     ArchiveItemSerializer,
     ArchiveSerializer,
 )
-from grandchallenge.archives.tasks import (
-    add_images_to_archive,
-    start_archive_item_update_tasks,
-    update_archive_item_update_kwargs,
-)
+from grandchallenge.archives.tasks import add_images_to_archive
 from grandchallenge.cases.models import Image, RawImageUploadSession
-from grandchallenge.cases.widgets import WidgetChoices
-from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.forms import MultipleCIVForm, NewFileUploadForm
+from grandchallenge.components.views import (
+    CIVSetDeleteView,
+    CIVSetFormMixin,
+    CivSetListView,
+    InterfacesCreateBaseView,
+    MultipleCIVProcessingBaseView,
+)
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
@@ -65,11 +64,11 @@ from grandchallenge.core.guardian import (
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
-from grandchallenge.datatables.views import Column, PaginatedTableListView
+from grandchallenge.datatables.views import Column
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
 from grandchallenge.reader_studies.models import DisplaySet, ReaderStudy
-from grandchallenge.subdomains.utils import reverse
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
 class ArchiveList(FilterMixin, PermissionListMixin, ListView):
@@ -364,285 +363,80 @@ class ArchiveUploadSessionCreate(
         return context
 
 
-class ArchiveEditArchiveItem(
-    LoginRequiredMixin,
-    UserFormKwargsMixin,
-    ObjectPermissionRequiredMixin,
-    FormView,
-):
-    form_class = ArchiveItemForm
-    template_name = "archives/archive_item_form.html"
+class ArchiveItemUpdate(CIVSetFormMixin, MultipleCIVProcessingBaseView):
+    form_class = MultipleCIVForm
     permission_required = (
         f"{ArchiveItem._meta.app_label}.change_{ArchiveItem._meta.model_name}"
     )
-    raise_exception = True
+    included_form_classes = (
+        MultipleCIVForm,
+        NewFileUploadForm,
+        *MultipleCIVProcessingBaseView.included_form_classes,
+    )
+    success_message = "Archive item has been updated."
 
     def get_permission_object(self):
-        return self.archive_item
+        return self.object
 
     @cached_property
-    def archive(self):
-        return get_object_or_404(Archive, slug=self.kwargs["archive_slug"])
-
-    @cached_property
-    def archive_item(self):
+    def object(self):
         return get_object_or_404(ArchiveItem, pk=self.kwargs["pk"])
 
     @cached_property
-    def interface(self):
-        return get_object_or_404(
-            ComponentInterface, slug=self.kwargs["interface_slug"]
+    def base_object(self):
+        return self.object.base_object
+
+    def get_success_url(self):
+        return self.return_url
+
+    @property
+    def form_url(self):
+        return reverse(
+            "archives:item-edit",
+            kwargs={"slug": self.base_object.slug, "pk": self.object.pk},
         )
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update(
-            {"archive_item": self.archive_item, "interface": self.interface}
+    @property
+    def return_url(self):
+        return reverse(
+            "archives:items-list", kwargs={"slug": self.base_object.slug}
         )
-        return kwargs
 
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context.update({"archive": self.archive})
-        return context
+    @property
+    def new_interface_url(self):
+        return reverse(
+            "archives:item-interface-create",
+            kwargs={"slug": self.base_object.slug, "pk": self.object.pk},
+        )
 
-    def form_valid(self, form):
-        def create_upload(image_files):
-            if not image_files:
-                return
-            upload_session = RawImageUploadSession.objects.create(
-                creator=self.request.user
+    def process_data_for_object(self, data):
+        """Updates the archive item"""
+        instance = self.object
+        for ci_slug, new_value in data.items():
+            instance.create_civ(
+                ci_slug=ci_slug, new_value=new_value, user=self.request.user
             )
-            upload_session.user_uploads.set(image_files)
-            return upload_session
-
-        upload_pks = {}
-        civ_pks_to_add = set()
-
-        for slug, value in form.cleaned_data.items():
-            if value is None:
-                continue
-
-            ci = ComponentInterface.objects.get(slug=slug)
-
-            if ci.is_image_kind:
-                widget = form.data[f"WidgetChoice-{ci.slug}"]
-                if widget == WidgetChoices.IMAGE_SEARCH.name:
-                    image = value
-                    upload_session = None
-                elif widget == WidgetChoices.IMAGE_UPLOAD.name:
-                    upload_session = create_upload(value)
-                    image = None
-                else:
-                    raise RuntimeError(
-                        f"{widget} is not a valid widget choice."
-                    )
-            else:
-                upload_session = None
-                image = None
-
-            update_archive_item_update_kwargs(
-                instance=self.archive_item,
-                interface=ci,
-                value=value
-                if ci.is_json_kind and not ci.requires_file
-                else None,
-                user_upload=value if ci.requires_file else None,
-                upload_session=upload_session,
-                civ_pks_to_add=civ_pks_to_add,
-                upload_pks=upload_pks,
-                image=image,
-            )
-
-        on_commit(
-            start_archive_item_update_tasks.signature(
-                kwargs={
-                    "archive_item_pk": self.archive_item.pk,
-                    "civ_pks_to_add": list(civ_pks_to_add),
-                    "upload_pks": upload_pks,
-                }
-            ).apply_async
-        )
-        messages.add_message(
-            self.request,
-            messages.SUCCESS,
-            "Archive item will be updated. It may take some time for your "
-            "changes to become visible.",
-        )
-        return HttpResponseRedirect(
-            reverse("archives:items-list", kwargs={"slug": self.archive.slug})
-        )
+        return instance
 
 
-class ArchiveItemsList(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, PaginatedTableListView
-):
+class ArchiveItemsList(CivSetListView):
     model = ArchiveItem
     permission_required = (
-        f"{Archive._meta.app_label}.use_{Archive._meta.model_name}"
+        f"{Archive._meta.app_label}.view_{ArchiveItem._meta.model_name}"
     )
-    raise_exception = True
-    template_name = "archives/archive_items_list.html"
-    row_template = "archives/archive_items_row.html"
-    search_fields = [
-        "pk",
-        "values__interface__title",
-        "values__value",
-        "values__image__name",
-        "values__file",
-    ]
     columns = [
-        Column(title="Values", sort_field="created"),
-        Column(title="Add"),
-        Column(title="View"),
+        Column(title="ArchiveItem ID", sort_field="pk"),
+        *CivSetListView.columns,
     ]
 
     @cached_property
-    def archive(self):
+    def base_object(self):
         return get_object_or_404(Archive, slug=self.kwargs["slug"])
 
-    def get_permission_object(self):
-        return self.archive
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(
-            {
-                "archive": self.archive,
-                "interfaces": ComponentInterface.objects.all().order_by(
-                    "title"
-                ),
-            }
-        )
-        return context
-
-    def render_row(self, *, object_, page_context):
-        page_context["object_interfaces"] = [
-            v.interface for v in object_.values.all()
-        ]
-        return super().render_row(object_=object_, page_context=page_context)
-
     def get_queryset(self):
-        qs = super().get_queryset()
-        return qs.filter(archive=self.archive).prefetch_related("values")
-
-
-class ArchiveCasesList(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, PaginatedTableListView
-):
-    model = Image
-    permission_required = (
-        f"{Archive._meta.app_label}.use_{Archive._meta.model_name}"
-    )
-    raise_exception = True
-    template_name = "archives/archive_cases_list.html"
-    row_template = "archives/archive_cases_row.html"
-    search_fields = [
-        "pk",
-        "name",
-        "patient_id",
-        "patient_name",
-        "patient_birth_date",
-        "patient_age",
-        "patient_sex",
-        "study_date",
-        "study_instance_uid",
-        "series_instance_uid",
-        "study_description",
-        "series_description",
-    ]
-    columns = [
-        Column(title="Name", sort_field="name"),
-        Column(title="Created", sort_field="created"),
-        Column(title="Creator", sort_field="origin__creator__username"),
-        Column(
-            title="Patient ID",
-            sort_field="patient_id",
-            optional_condition=lambda o: o.patient_id,
-        ),
-        Column(
-            title="Patient name",
-            sort_field="patient_name",
-            optional_condition=lambda o: o.patient_name,
-        ),
-        Column(
-            title="Patient birth date",
-            sort_field="patient_birth_date",
-            optional_condition=lambda o: o.patient_birth_date,
-        ),
-        Column(
-            title="Patient age",
-            sort_field="patient_age",
-            optional_condition=lambda o: o.patient_age,
-        ),
-        Column(
-            title="Patient sex",
-            sort_field="patient_sex",
-            optional_condition=lambda o: o.patient_sex,
-        ),
-        Column(
-            title="Study Instance UID",
-            sort_field="study_instance_uid",
-            optional_condition=lambda o: o.study_instance_uid,
-        ),
-        Column(
-            title="Study description",
-            sort_field="study_description",
-            optional_condition=lambda o: o.study_description,
-        ),
-        Column(
-            title="Study date",
-            sort_field="study_date",
-            optional_condition=lambda o: o.study_date,
-        ),
-        Column(
-            title="Series Instance UID",
-            sort_field="series_instance_uid",
-            optional_condition=lambda o: o.series_instance_uid,
-        ),
-        Column(
-            title="Series description",
-            sort_field="series_description",
-            optional_condition=lambda o: o.series_description,
-        ),
-        Column(title="View"),
-        Column(
-            title="Algorithm Results",
-            sort_field="pk",
-            optional_condition=lambda o: any(
-                civ.algorithms_jobs_as_input.exists()
-                for civ in o.componentinterfacevalue_set.all()
-            ),
-        ),
-        Column(title="Download"),
-    ]
-
-    @cached_property
-    def archive(self):
-        return get_object_or_404(Archive, slug=self.kwargs["slug"])
-
-    def get_permission_object(self):
-        return self.archive
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update({"archive": self.archive})
-        return context
-
-    def get_queryset(self):
-        qs = super().get_queryset()
-        return (
-            qs.filter(
-                componentinterfacevalue__archive_items__archive=self.archive
-            )
-            .prefetch_related(
-                "files",
-                "componentinterfacevalue_set__algorithms_jobs_as_input__algorithm_image__algorithm",
-            )
-            .select_related(
-                "origin__creator__user_profile",
-                "origin__creator__verification",
-            )
+        queryset = super().get_queryset()
+        return queryset.filter(archive=self.base_object).select_related(
+            "archive"
         )
 
 
@@ -751,3 +545,101 @@ class ArchiveItemViewSet(
             return ArchiveItemPostSerializer
         else:
             return ArchiveItemSerializer
+
+
+class ArchiveItemCreateView(
+    CIVSetFormMixin,
+    MultipleCIVProcessingBaseView,
+):
+    form_class = MultipleCIVForm
+    permission_required = (
+        f"{Archive._meta.app_label}.change_{Archive._meta.model_name}"
+    )
+    included_form_classes = (
+        MultipleCIVForm,
+        *MultipleCIVProcessingBaseView.included_form_classes,
+    )
+    success_message = "Archive item has been created."
+
+    def get_permission_object(self):
+        return self.base_object
+
+    @property
+    def base_object(self):
+        return Archive.objects.get(slug=self.kwargs["slug"])
+
+    @property
+    def form_url(self):
+        return reverse(
+            "archives:item-create", kwargs={"slug": self.base_object.slug}
+        )
+
+    @property
+    def return_url(self):
+        return reverse(
+            "archives:items-list", kwargs={"slug": self.base_object.slug}
+        )
+
+    @property
+    def new_interface_url(self):
+        return reverse(
+            "archives:item-new-interface-create",
+            kwargs={"slug": self.base_object.slug},
+        )
+
+    def process_data_for_object(self, data):
+        """Creates an archive item"""
+        instance = ArchiveItem.objects.create(archive=self.base_object)
+        for slug in data:
+            instance.create_civ(
+                ci_slug=slug, new_value=data[slug], user=self.request.user
+            )
+        return instance
+
+    def get_success_url(self):
+        return self.return_url
+
+
+class ArchiveItemInterfaceCreate(InterfacesCreateBaseView):
+    def get_required_permissions(self, request):
+        if self.object:
+            return [
+                f"{Archive._meta.app_label}.change_{ArchiveItem._meta.model_name}"
+            ]
+        else:
+            return [
+                f"{Archive._meta.app_label}.change_{Archive._meta.model_name}"
+            ]
+
+    @property
+    def object(self):
+        if self.kwargs.get("pk"):
+            return ArchiveItem.objects.get(pk=self.kwargs["pk"])
+        else:
+            return None
+
+    @property
+    def base_object(self):
+        return Archive.objects.get(slug=self.kwargs["slug"])
+
+    def get_htmx_url(self):
+        if self.kwargs.get("pk") is not None:
+            return reverse_lazy(
+                "archives:item-interface-create",
+                kwargs={
+                    "pk": self.kwargs.get("pk"),
+                    "slug": self.base_object.slug,
+                },
+            )
+        else:
+            return reverse_lazy(
+                "archives:item-new-interface-create",
+                kwargs={"slug": self.base_object.slug},
+            )
+
+
+class ArchiveItemDeleteView(CIVSetDeleteView):
+    model = ArchiveItem
+    permission_required = (
+        f"{Archive._meta.app_label}.delete_{ArchiveItem._meta.model_name}"
+    )

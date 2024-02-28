@@ -5,8 +5,10 @@ from django.contrib.auth import get_user_model
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.forms.utils import ErrorList
-from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect
 from django.templatetags.static import static
+from django.views import View
 from django.views.generic import TemplateView, UpdateView
 from guardian.mixins import LoginRequiredMixin
 
@@ -100,40 +102,11 @@ class HomeTemplate(TemplateView):
                 url_title="Algorithms",
                 image="images/algorithms.png",
             ),
-            Highlight(
-                title="Find Certified Solutions",
-                bullet_points=[
-                    "Filter to easily find solutions to your clinical questions",
-                    "Compare product specifications",
-                    "Verify CE and FDA certification",
-                ],
-                url=reverse("products:product-list"),
-                url_title="Products",
-                image="images/products.png",
-            ),
         ]
 
-        latest_news_item = Post.objects.filter(
+        news_carousel_items = Post.objects.filter(
             published=True, highlight=True
-        ).first()
-        latest_ai_for_radiology_post = Post.objects.filter(
-            published=True, tags__slug="products"
-        ).first()
-        latest_gc_blog_post = (
-            Post.objects.filter(published=True)
-            .exclude(tags__slug="products")
-            .exclude(highlight=True)
-            .first()
-        )
-        news_caroussel_items = [
-            item
-            for item in [
-                latest_news_item,
-                latest_ai_for_radiology_post,
-                latest_gc_blog_post,
-            ]
-            if item
-        ]
+        ).order_by("-created")[:3]
 
         context.update(
             {
@@ -159,8 +132,7 @@ class HomeTemplate(TemplateView):
                 .prefetch_related("publications")
                 .order_by("-created")
                 .all()[:4],
-                "news_caroussel_items": news_caroussel_items,
-                "latest_news_item": latest_news_item,
+                "news_carousel_items": news_carousel_items,
             }
         )
         return context
@@ -234,4 +206,23 @@ class PermissionRequestUpdate(
         return reverse(
             f"{self.redirect_namespace}:permission-request-list",
             kwargs={"slug": self.base_object.slug},
+        )
+
+
+def healthcheck(request):
+    return HttpResponse("")
+
+
+class RedirectPath(View):
+    """Redirects all sub-paths to a different domain."""
+
+    netloc = None
+    permanent = False
+
+    def get(self, request, *args, path="", **kwargs):
+        if self.netloc is None:
+            raise ImproperlyConfigured("`netloc` must be set.")
+
+        return redirect(
+            f"https://{self.netloc}/{path}", permanent=self.permanent
         )

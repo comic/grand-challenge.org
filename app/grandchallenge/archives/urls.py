@@ -1,13 +1,15 @@
 from django.urls import path
 
 from grandchallenge.archives.views import (
-    ArchiveCasesList,
     ArchiveCreate,
     ArchiveDetail,
-    ArchiveEditArchiveItem,
     ArchiveEditorsUpdate,
+    ArchiveItemCreateView,
+    ArchiveItemDeleteView,
+    ArchiveItemInterfaceCreate,
     ArchiveItemsList,
     ArchiveItemsToReaderStudyUpdate,
+    ArchiveItemUpdate,
     ArchiveList,
     ArchivePermissionRequestCreate,
     ArchivePermissionRequestList,
@@ -55,17 +57,36 @@ urlpatterns = [
         ArchivePermissionRequestUpdate.as_view(),
         name="permission-request-update",
     ),
-    path("<slug>/cases/", ArchiveCasesList.as_view(), name="cases-list"),
     path("<slug>/items/", ArchiveItemsList.as_view(), name="items-list"),
+    path(
+        "<slug>/items/create/",
+        ArchiveItemCreateView.as_view(),
+        name="item-create",
+    ),
+    path(
+        "<slug>/items/new/interface/create/",
+        ArchiveItemInterfaceCreate.as_view(),
+        name="item-new-interface-create",
+    ),
+    path(
+        "<slug>/items/<uuid:pk>/delete/",
+        ArchiveItemDeleteView.as_view(),
+        name="item-delete",
+    ),
+    path(
+        "<slug>/items/<uuid:pk>/edit/",
+        ArchiveItemUpdate.as_view(),
+        name="item-edit",
+    ),
+    path(
+        "<slug>/items/<uuid:pk>/interface/create/",
+        ArchiveItemInterfaceCreate.as_view(),
+        name="item-interface-create",
+    ),
     path(
         "<slug>/cases/add/",
         ArchiveUploadSessionCreate.as_view(),
         name="cases-create",
-    ),
-    path(
-        "<slug:archive_slug>/items/<uuid:pk>/edit/<slug:interface_slug>/",
-        ArchiveEditArchiveItem.as_view(),
-        name="item-edit",
     ),
     path(
         "<slug>/items/reader-study/update/",

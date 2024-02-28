@@ -11,6 +11,7 @@ from factory.django import ImageField
 from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.algorithms.models import Algorithm
+from grandchallenge.components.models import InterfaceKindChoices
 from grandchallenge.evaluation.models import CombinedLeaderboard, Evaluation
 from grandchallenge.evaluation.tasks import update_combined_leaderboard
 from grandchallenge.evaluation.utils import SubmissionKindChoices
@@ -740,12 +741,14 @@ def test_create_algorithm_for_phase_presets(client):
     phase.submission_kind = SubmissionKindChoices.ALGORITHM
     phase.creator_must_be_verified = True
     phase.archive = ArchiveFactory()
-    ci1 = ComponentInterfaceFactory()
-    ci2 = ComponentInterfaceFactory()
+    ci1 = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    ci2 = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
     optional_protocol = HangingProtocolFactory()
     phase.algorithm_inputs.set([ci1])
     phase.algorithm_outputs.set([ci2])
-    phase.hanging_protocol = HangingProtocolFactory()
+    phase.hanging_protocol = HangingProtocolFactory(
+        json=[{"viewport_name": "main"}]
+    )
     phase.optional_hanging_protocols.set([optional_protocol])
     phase.workstation_config = WorkstationConfigFactory()
     phase.view_content = {"main": [ci1.slug]}

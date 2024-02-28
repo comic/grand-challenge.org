@@ -73,8 +73,12 @@ class ChallengeRequestFactory(factory.django.DjangoModelFactory):
     creator = factory.SubFactory(UserFactory)
     short_name = factory.Sequence(lambda n: f"test-challenge-{n}")
     title = factory.fuzzy.FuzzyText()
-    start_date = fuzzy.FuzzyDate(datetime.date(1970, 1, 1))
-    end_date = fuzzy.FuzzyDate(datetime.date(1971, 1, 1))
+    start_date = fuzzy.FuzzyDate(
+        datetime.date(1970, 1, 1), end_date=datetime.date.today()
+    )
+    end_date = fuzzy.FuzzyDate(
+        datetime.date(1971, 1, 1), end_date=datetime.date.today()
+    )
     expected_number_of_teams = 10
     inference_time_limit_in_minutes = 10
     average_size_of_test_image_in_mb = 10
@@ -180,36 +184,6 @@ class SessionFactory(factory.django.DjangoModelFactory):
 
     creator = factory.SubFactory(UserFactory)
     workstation_image = factory.SubFactory(WorkstationImageFactory)
-
-
-class FuzzyFloatCoordinatesList(factory.fuzzy.BaseFuzzyAttribute):
-    def __init__(self, size=None, **kwargs):
-        super().__init__(**kwargs)
-        self.size = size
-
-    def fuzz(self):
-        if self.size is None:
-            size = factory.fuzzy.random.randgen.randint(2, 30)
-        else:
-            size = self.size
-
-        fuzzy_list = []
-        for _ in range(size):
-            fuzzy_list.append(
-                [
-                    round(
-                        factory.fuzzy.random.randgen.uniform(0.0, 1000.0), 12
-                    ),
-                    round(
-                        factory.fuzzy.random.randgen.uniform(0.0, 1000.0), 12
-                    ),
-                ]
-            )
-
-        if size == 1:
-            return fuzzy_list[0]
-
-        return fuzzy_list
 
 
 class PolicyFactory(factory.django.DjangoModelFactory):

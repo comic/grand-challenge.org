@@ -66,10 +66,10 @@ from grandchallenge.core.forms import (
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
-from grandchallenge.core.widgets import MarkdownEditorWidget
+from grandchallenge.core.widgets import JSONEditorWidget, MarkdownEditorWidget
 from grandchallenge.evaluation.utils import get
 from grandchallenge.groups.forms import UserGroupForm
-from grandchallenge.hanging_protocols.forms import ViewContentMixin
+from grandchallenge.hanging_protocols.models import VIEW_CONTENT_SCHEMA
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.workstations.models import Workstation
@@ -97,9 +97,9 @@ class JobCreateForm(SaveFormInitMixin, Form):
         active_image = self._algorithm.active_image
 
         if active_image:
-            self.fields[
-                "algorithm_image"
-            ].queryset = AlgorithmImage.objects.filter(pk=active_image.pk)
+            self.fields["algorithm_image"].queryset = (
+                AlgorithmImage.objects.filter(pk=active_image.pk)
+            )
             self.fields["algorithm_image"].initial = active_image
 
         for inp in self._algorithm.inputs.all():
@@ -107,7 +107,7 @@ class JobCreateForm(SaveFormInitMixin, Form):
                 instance=inp,
                 initial=inp.default_value,
                 user=self._user,
-                required=(inp.kind != InterfaceKindChoices.BOOL),
+                required=inp.value_required,
                 help_text=clean(inp.description) if inp.description else "",
             ).field
 
@@ -157,7 +157,6 @@ class AlgorithmForm(
     AlgorithmIOValidationMixin,
     WorkstationUserFilterMixin,
     ModelForm,
-    ViewContentMixin,
 ):
     inputs = ModelMultipleChoiceField(
         queryset=ComponentInterface.objects.exclude(
@@ -228,8 +227,8 @@ class AlgorithmForm(
             "display_editors": Select(
                 choices=(("", "-----"), (True, "Yes"), (False, "No"))
             ),
+            "view_content": JSONEditorWidget(schema=VIEW_CONTENT_SCHEMA),
         }
-        widgets.update(ViewContentMixin.Meta.widgets)
         help_texts = {
             "workstation_config": format_lazy(
                 (
@@ -271,7 +270,6 @@ class AlgorithmForm(
                 reverse_lazy("hanging-protocols:list"),
             ),
         }
-        help_texts.update(ViewContentMixin.Meta.help_texts)
         labels = {
             "workstation": "Viewer",
             "workstation_config": "Viewer Configuration",
@@ -464,9 +462,9 @@ class AlgorithmForPhaseForm(UserAlgorithmsForPhaseMixin, ModelForm):
         self.fields["workstation_config"].disabled = True
         self.fields["hanging_protocol"].initial = hanging_protocol
         self.fields["hanging_protocol"].disabled = True
-        self.fields[
-            "optional_hanging_protocols"
-        ].initial = optional_hanging_protocols
+        self.fields["optional_hanging_protocols"].initial = (
+            optional_hanging_protocols
+        )
         self.fields["optional_hanging_protocols"].disabled = True
         self.fields["view_content"].initial = view_content
         self.fields["view_content"].disabled = True
@@ -601,9 +599,9 @@ class AlgorithmImageForm(ContainerImageForm):
         self.fields["algorithm"].initial = algorithm
 
         self.fields["requires_gpu"].initial = algorithm.image_requires_gpu
-        self.fields[
-            "requires_memory_gb"
-        ].initial = algorithm.image_requires_memory_gb
+        self.fields["requires_memory_gb"].initial = (
+            algorithm.image_requires_memory_gb
+        )
 
     class Meta(ContainerImageForm.Meta):
         model = AlgorithmImage

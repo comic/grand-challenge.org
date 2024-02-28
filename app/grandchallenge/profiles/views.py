@@ -1,7 +1,11 @@
 from allauth_2fa.views import TwoFactorSetup
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import get_user_model
+from django.contrib.auth.mixins import UserPassesTestMixin
+from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.signing import BadSignature, Signer
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
@@ -22,10 +26,19 @@ from grandchallenge.core.guardian import (
 )
 from grandchallenge.evaluation.models import Submission
 from grandchallenge.organizations.models import Organization
-from grandchallenge.profiles.forms import NewsletterSignupForm, UserProfileForm
-from grandchallenge.profiles.models import UserProfile
+from grandchallenge.profiles.forms import (
+    NewsletterSignupForm,
+    SubscriptionPreferenceForm,
+    UserProfileForm,
+)
+from grandchallenge.profiles.models import (
+    UNSUBSCRIBE_SALT,
+    EmailSubscriptionTypes,
+    UserProfile,
+)
 from grandchallenge.profiles.serializers import UserProfileSerializer
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.verifications.tasks import update_verification_user_set
 
 
 def profile(request):
@@ -197,3 +210,102 @@ class TwoFactorSetup(TwoFactorSetup):
         # and display an error message
         messages.add_message(self.request, messages.ERROR, "Incorrect token.")
         return response
+
+
+class EmailPreferencesUpdate(
+    SuccessMessageMixin, UserPassesTestMixin, UpdateView
+):
+    model = UserProfile
+    form_class = SubscriptionPreferenceForm
+    template_name = "profiles/subscription_form.html"
+    raise_exception = True
+    subscription_type = None
+
+    def test_func(self):
+        try:
+            username = self.username_from_token
+        except BadSignature:
+            return False
+
+        try:
+            user = get_user_model().objects.get(username=username)
+        except ObjectDoesNotExist:
+            return False
+
+        if self.request.user.is_authenticated and user != self.request.user:
+            update_verification_user_set.signature(
+                kwargs={
+                    "usernames": [
+                        self.request.user.username,
+                        user.username,
+                    ]
+                }
+            ).apply_async()
+
+        return True
+
+    @property
+    def username_from_token(self):
+        return Signer(salt=UNSUBSCRIBE_SALT).unsign_object(
+            self.kwargs.get("token")
+        )["username"]
+
+    def get_object(self):
+        return get_object_or_404(
+            UserProfile, user__username=self.username_from_token
+        )
+
+    def get_success_url(self):
+        return reverse(
+            "email-preferences",
+            kwargs={"token": self.kwargs.get("token")},
+        )
+
+    def get_success_message(self, cleaned_data):
+        message = "You successfully updated your email preferences. "
+        if self.subscription_type:
+            message += f"You will no longer receive {self.subscription_type.lower()} emails."
+        return message
+
+
+class NewsletterUnsubscribeView(EmailPreferencesUpdate):
+    subscription_type = EmailSubscriptionTypes.NEWSLETTER
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                "receive_newsletter": False,
+                "receive_notification_emails": self.object.receive_notification_emails,
+                "autosubmit": True,
+            }
+        )
+        return kwargs
+
+
+class NotificationUnsubscribeView(EmailPreferencesUpdate):
+    subscription_type = EmailSubscriptionTypes.NOTIFICATION
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                "receive_newsletter": self.object.receive_newsletter,
+                "receive_notification_emails": False,
+                "autosubmit": True,
+            }
+        )
+        return kwargs
+
+
+class EmailPreferencesManagementView(EmailPreferencesUpdate):
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                "receive_newsletter": self.object.receive_newsletter,
+                "receive_notification_emails": self.object.receive_notification_emails,
+                "autosubmit": False,
+            }
+        )
+        return kwargs

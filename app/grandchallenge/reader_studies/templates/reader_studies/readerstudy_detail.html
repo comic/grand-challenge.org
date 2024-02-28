@@ -45,10 +45,9 @@
                 ><i class="fas fa-question fa-fw"></i>&nbsp;Requests&nbsp;<span
                         class="badge badge-pill badge-secondary align-middle">{{ pending_permission_requests }}</span>
                 </a>
-                <a class="nav-link" id="v-pills-cases-tab" data-toggle="pill"
-                   href="#cases" role="tab" aria-controls="v-pills-cases"
-                   aria-selected="false"><i class="fas fa-image fa-fw"></i>&nbsp;Cases&nbsp;
-                   <span class="badge badge-pill badge-secondary align-middle">
+                <a class="nav-link"
+                   href="{% url 'reader-studies:display_sets' slug=object.slug %}"><i class="fas fa-image fa-fw"></i> &nbspCases
+                    <span class="badge badge-pill badge-secondary align-middle">
                       {{ object.display_sets.count }}
                    </span>
                 </a>
@@ -285,7 +284,7 @@
                 </p>
 
                 {% url 'reader-studies:readers-update' slug=object.slug as readers_update_url %}
-                {% include "groups/partials/user_list.html" with role_name="readers" edit_url=readers_update_url form=editor_remove_form users=readers %}
+                {% include "groups/partials/user_list.html" with role_name="readers" edit_url=readers_update_url form=editor_remove_form users=readers display_direct_message_link=True %}
             </div>
 
             <div class="tab-pane fade"

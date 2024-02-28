@@ -1,6 +1,0 @@
-<select name="{{ widget.name }}"{% include "django/forms/widgets/attrs.html" %}>{% for group_name, group_choices, group_index in widget.optgroups %}{% if group_name %}
-  <optgroup label="{{ group_name }}">{% endif %}{% for option in group_choices %}
-  {% include option.template_name with widget=option %}{% endfor %}{% if group_name %}
-  </optgroup>{% endif %}{% endfor %}
-</select>
-<a href="" hx-get="{% url 'reader-studies:display-set-files-update' pk=widget.attrs.display_set_pk interface_slug=widget.attrs.interface_slug slug=widget.attrs.reader_study_slug %}" hx-target="#form-{{ widget.attrs.display_set_pk }}" hx-swap="outerHTML">Upload new</a>

@@ -1,7 +1,6 @@
 import boto3
 from celery import shared_task
 from django.conf import settings
-from django.contrib.sitemaps import ping_google as _ping_google
 from django.contrib.sites.models import Site
 from django.core.management import call_command
 from django.db.models import Count
@@ -16,11 +15,6 @@ from grandchallenge.workstations.models import Session
 def clear_sessions():
     """Clear the expired sessions stored in django_session."""
     call_command("clearsessions")
-
-
-@shared_task
-def ping_google():
-    _ping_google()
 
 
 @shared_task

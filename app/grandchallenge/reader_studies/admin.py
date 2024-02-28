@@ -31,6 +31,7 @@ class ReaderStudyAdmin(GuardedModelAdmin):
         "pk",
         "public",
         "is_educational",
+        "instant_verification",
         "allow_answer_modification",
         "allow_case_navigation",
         "workstation",
@@ -38,6 +39,7 @@ class ReaderStudyAdmin(GuardedModelAdmin):
     list_filter = (
         "public",
         "is_educational",
+        "instant_verification",
         "allow_answer_modification",
         "allow_case_navigation",
         "workstation__slug",

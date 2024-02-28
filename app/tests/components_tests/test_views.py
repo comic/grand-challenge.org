@@ -3,6 +3,9 @@ import json
 import pytest
 from django.conf import settings
 
+from grandchallenge.archives.models import ArchiveItem
+from grandchallenge.reader_studies.models import DisplaySet, ReaderStudy
+from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -91,7 +94,11 @@ def test_component_interface_autocomplete(client):
         client=client,
         viewname="components:component-interface-autocomplete",
         user=user,
-        data={"forward": json.dumps({"reader-study": rs.slug})},
+        data={
+            "forward": json.dumps(
+                {"object": rs.slug, "model": ReaderStudy._meta.model_name}
+            )
+        },
     )
     assert response.status_code == 200
     ids = [x["id"] for x in response.json()["results"]]
@@ -105,7 +112,11 @@ def test_component_interface_autocomplete(client):
         user=user,
         data={
             "forward": json.dumps(
-                {"reader-study": rs.slug, "interface-0": ci_img_2.pk}
+                {
+                    "object": rs.slug,
+                    "model": ReaderStudy._meta.model_name,
+                    "interface-0": ci_img_2.pk,
+                }
             )
         },
     )
@@ -114,3 +125,225 @@ def test_component_interface_autocomplete(client):
     assert str(ci_img.id) not in ids
     assert str(ci_img_2.id) not in ids
     assert str(ci_json.id) in ids
+
+
+@pytest.mark.parametrize(
+    "base_object_factory,base_obj_lookup,object_factory,view_with_object,view_without_object",
+    (
+        (
+            ReaderStudyFactory,
+            "reader_study",
+            DisplaySetFactory,
+            "reader-studies:display-set-interfaces-create",
+            "reader-studies:display-set-new-interfaces-create",
+        ),
+        (
+            ArchiveFactory,
+            "archive",
+            ArchiveItemFactory,
+            "archives:item-interface-create",
+            "archives:item-new-interface-create",
+        ),
+    ),
+)
+@pytest.mark.django_db
+def test_interfaces_create_permissions(
+    client,
+    base_object_factory,
+    base_obj_lookup,
+    object_factory,
+    view_with_object,
+    view_without_object,
+):
+    editor, user = UserFactory.create_batch(2)
+    base_obj = base_object_factory()
+    obj = object_factory(**{base_obj_lookup: base_obj})
+    base_obj.add_editor(editor)
+
+    response = get_view_for_user(
+        viewname=view_with_object,
+        client=client,
+        reverse_kwargs={"pk": obj.pk, "slug": base_obj.slug},
+        user=user,
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname=view_with_object,
+        client=client,
+        reverse_kwargs={"pk": obj.pk, "slug": base_obj.slug},
+        user=editor,
+    )
+    assert response.status_code == 200
+
+    response = get_view_for_user(
+        viewname=view_without_object,
+        client=client,
+        reverse_kwargs={"slug": base_obj.slug},
+        user=user,
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname=view_without_object,
+        client=client,
+        reverse_kwargs={"slug": base_obj.slug},
+        user=editor,
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.parametrize(
+    "base_object_factory,base_obj_lookup,object_factory,viewname,add_collaborator_attr",
+    (
+        (
+            ReaderStudyFactory,
+            "reader_study",
+            DisplaySetFactory,
+            "reader-studies:display-set-delete",
+            "add_reader",
+        ),
+        (
+            ArchiveFactory,
+            "archive",
+            ArchiveItemFactory,
+            "archives:item-delete",
+            "add_uploader",
+        ),
+    ),
+)
+@pytest.mark.django_db
+def test_civset_delete_view(
+    client,
+    base_object_factory,
+    base_obj_lookup,
+    object_factory,
+    viewname,
+    add_collaborator_attr,
+):
+    user, editor, collaborator = UserFactory.create_batch(3)
+    base_obj = base_object_factory()
+    obj = object_factory(**{base_obj_lookup: base_obj})
+    base_obj.add_editor(editor)
+    method = getattr(base_obj, add_collaborator_attr)
+    setattr(base_obj, add_collaborator_attr, method)
+    getattr(base_obj, add_collaborator_attr)(collaborator)
+
+    response = get_view_for_user(
+        viewname=viewname,
+        client=client,
+        user=user,
+        reverse_kwargs={"slug": base_obj.slug, "pk": obj.pk},
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname=viewname,
+        client=client,
+        user=collaborator,
+        reverse_kwargs={"slug": base_obj.slug, "pk": obj.pk},
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname=viewname,
+        client=client,
+        user=editor,
+        reverse_kwargs={"slug": base_obj.slug, "pk": obj.pk},
+    )
+    assert response.status_code == 200
+
+    response = get_view_for_user(
+        viewname=viewname,
+        client=client,
+        method=client.post,
+        user=editor,
+        reverse_kwargs={"slug": base_obj.slug, "pk": obj.pk},
+    )
+    assert response.status_code == 302
+    assert ArchiveItem.objects.count() == 0
+    assert DisplaySet.objects.count() == 0
+
+
+@pytest.mark.parametrize(
+    "base_object_factory,base_obj_lookup,object_factory,viewname,add_collaborator_attr,collaborator_visible_obj_count",
+    (
+        (
+            ReaderStudyFactory,
+            "reader_study",
+            DisplaySetFactory,
+            "reader-studies:display_sets",
+            "add_reader",
+            0,
+        ),
+        (
+            ArchiveFactory,
+            "archive",
+            ArchiveItemFactory,
+            "archives:items-list",
+            "add_uploader",
+            3,
+        ),
+        (
+            ArchiveFactory,
+            "archive",
+            ArchiveItemFactory,
+            "archives:items-list",
+            "add_user",
+            3,
+        ),
+    ),
+)
+@pytest.mark.django_db
+def test_civset_list_view_permissions(
+    client,
+    base_object_factory,
+    base_obj_lookup,
+    object_factory,
+    viewname,
+    add_collaborator_attr,
+    collaborator_visible_obj_count,
+):
+    user, editor, collaborator = UserFactory.create_batch(3)
+    base_obj = base_object_factory()
+    base_obj.add_editor(editor)
+    method = getattr(base_obj, add_collaborator_attr)
+    setattr(base_obj, add_collaborator_attr, method)
+    getattr(base_obj, add_collaborator_attr)(collaborator)
+    ob1, ob2, ob3 = object_factory.create_batch(
+        3, **{base_obj_lookup: base_obj}
+    )
+    ob4, ob5 = object_factory.create_batch(2)
+
+    response = get_view_for_user(
+        viewname=viewname,
+        client=client,
+        user=user,
+        reverse_kwargs={"slug": base_obj.slug},
+    )
+    assert response.status_code == 200
+    assert len(response.context["object_list"]) == 0
+
+    response = get_view_for_user(
+        viewname=viewname,
+        client=client,
+        user=collaborator,
+        reverse_kwargs={"slug": base_obj.slug},
+    )
+    assert response.status_code == 200
+    assert (
+        len(response.context["object_list"]) == collaborator_visible_obj_count
+    )
+
+    response = get_view_for_user(
+        viewname=viewname,
+        client=client,
+        user=editor,
+        reverse_kwargs={"slug": base_obj.slug},
+    )
+    assert response.status_code == 200
+    assert len(response.context["object_list"]) == 3
+    for obj in [ob1, ob2, ob3]:
+        assert obj in response.context["object_list"]
+    for obj in [ob4, ob5]:
+        assert obj not in response.context["object_list"]

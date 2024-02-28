@@ -1,10 +1,8 @@
 message: If you use this software, please cite it using these metadata.
-cff-version: 1.1.0
+cff-version: 1.2.0
 title: Grand-Challenge.org
 abstract: A platform for end-to-end development of machine learning solutions in biomedical imaging
 license: Apache-2.0
-version: '2021.07'
-date-released: 2021-07-28
 authors:
   - affiliation: Department of Radiology, Nuclear Medicine and Anatomy, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
     family-names: Meakin

@@ -30,8 +30,8 @@ class Migration(migrations.Migration):
                 default=1200,
                 help_text="Time limit for inference jobs in seconds",
                 validators=[
-                    django.core.validators.MinValueValidator(limit_value=60),
-                    django.core.validators.MaxValueValidator(limit_value=3600),
+                    django.core.validators.MinValueValidator(limit_value=300),
+                    django.core.validators.MaxValueValidator(limit_value=7200),
                 ],
             ),
         ),

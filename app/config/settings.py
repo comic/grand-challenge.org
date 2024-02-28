@@ -1,8 +1,10 @@
 import os
 import re
+import socket
 from datetime import datetime, timedelta
 from itertools import product
 from pathlib import Path
+from subprocess import CalledProcessError
 
 import sentry_sdk
 from celery.schedules import crontab
@@ -140,20 +142,11 @@ COMPONENTS_ECR_USD_MILLICENTS_PER_YEAR_PER_TB = (
     39_600_000  # Last calculated 23/08/2023
 )
 
-# Costs (in US dollar cents)
-# based on 0.023 / GB / month S3 standard pricing
-CHALLENGES_S3_STORAGE_COST_CENTS_PER_TB_PER_YEAR = int(
-    os.environ.get("CHALLENGES_S3_STORAGE_COST_CENTS_PER_TB_PER_YEAR", 27600)
-)
-# based on cost calculation by James on 21.12.2022
-CHALLENGES_ECR_STORAGE_COST_CENTS_PER_TB_PER_YEAR = int(
-    os.environ.get("CHALLENGES_ECR_STORAGE_COST_CENTS_PER_TB_PER_YEAR", 32000)
-)
-CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR = int(
-    os.environ.get("CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR", 100)
-)
 CHALLENGE_BASE_COST_IN_EURO = int(
     os.environ.get("CHALLENGE_BASE_COST_IN_EURO", 5000)
+)
+CHALLENGE_NUM_SUPPORT_YEARS = int(
+    os.environ.get("CHALLENGE_NUM_SUPPORT_YEARS", 5)
 )
 
 ##############################################################################
@@ -321,8 +314,15 @@ SECURE_SSL_REDIRECT = strtobool(os.environ.get("SECURE_SSL_REDIRECT", "True"))
 SECURE_CROSS_ORIGIN_OPENER_POLICY = os.environ.get(
     "SECURE_CROSS_ORIGIN_OPENER_POLICY", "same-origin"
 )
+
+
+def get_private_ip():
+    return socket.gethostbyname(socket.gethostname())
+
+
 # Set the allowed hosts to the cookie domain
-ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, "web"]
+# Adding the private ip allows the health check to work
+ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, get_private_ip()]
 
 # Security options
 SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "0"))
@@ -360,12 +360,6 @@ PERMISSIONS_POLICY = {
     "payment": [],
     "usb": [],
 }
-
-IPWARE_META_PRECEDENCE_ORDER = (
-    # Set by nginx
-    "HTTP_X_FORWARDED_FOR",
-    "HTTP_X_REAL_IP",
-)
 
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself; store your static files
@@ -573,17 +567,10 @@ LOCAL_APPS = [
     "grandchallenge.components",
     "grandchallenge.statistics",
     "grandchallenge.archives",
-    "grandchallenge.patients",
-    "grandchallenge.studies",
-    "grandchallenge.registrations",
-    "grandchallenge.annotations",
-    "grandchallenge.retina_api",
     "grandchallenge.workstations",
-    "grandchallenge.workspaces",
     "grandchallenge.reader_studies",
     "grandchallenge.workstation_configs",
     "grandchallenge.policies",
-    "grandchallenge.products",
     "grandchallenge.serving",
     "grandchallenge.blogs",
     "grandchallenge.publications",
@@ -623,16 +610,24 @@ GOOGLE_ANALYTICS_ID = os.environ.get("GOOGLE_ANALYTICS_ID", "GA_TRACKING_ID")
 ##############################################################################
 #
 # django-allauth
+# https://docs.allauth.org/en/latest/account/configuration.html
+# https://docs.allauth.org/en/latest/socialaccount/configuration.html
+# https://docs.allauth.org/en/latest/mfa/configuration.html
+# https://docs.allauth.org/en/latest/usersessions/configuration.html
+# https://docs.allauth.org/en/latest/common/configuration.html
 #
 ##############################################################################
 
 ACCOUNT_ADAPTER = "grandchallenge.profiles.adapters.AccountAdapter"
 ACCOUNT_SIGNUP_FORM_CLASS = "grandchallenge.profiles.forms.SignupForm"
 
-ACCOUNT_EMAIL_CONFIRMATION_COOLDOWN = 30
 ACCOUNT_AUTHENTICATION_METHOD = "username_email"
+ACCOUNT_EMAIL_NOTIFICATIONS = True
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+ACCOUNT_EMAIL_UNKNOWN_ACCOUNTS = False
+ACCOUNT_CHANGE_EMAIL = True
+ACCOUNT_CONFIRM_EMAIL_ON_GET = False
 ACCOUNT_USERNAME_MIN_LENGTH = 4
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
@@ -640,6 +635,7 @@ ACCOUNT_USERNAME_BLACKLIST = USERNAME_DENYLIST
 ACCOUNT_USERNAME_VALIDATORS = (
     "grandchallenge.profiles.validators.username_validators"
 )
+
 SOCIALACCOUNT_ADAPTER = "grandchallenge.profiles.adapters.SocialAccountAdapter"
 SOCIALACCOUNT_AUTO_SIGNUP = False
 SOCIALACCOUNT_STORE_TOKENS = False
@@ -796,6 +792,7 @@ MARKDOWNX_MARKDOWN_EXTENSIONS = [
     "markdown.extensions.attr_list",
     BS4Extension(),
 ]
+MARKDOWN_POST_PROCESSORS = []
 MARKDOWNX_MARKDOWNIFY_FUNCTION = (
     "grandchallenge.core.templatetags.bleach.md2html"
 )
@@ -877,6 +874,29 @@ SENTRY_ENABLE_JS_REPORTING = strtobool(
 WORKSTATION_SENTRY_DSN = os.environ.get("WORKSTATION_SENTRY_DSN", "")
 
 if SENTRY_DSN:
+
+    def sentry_before_send(event, hint):
+        """Add stderr to the event if the exception is a CalledProcessError"""
+        if "exc_info" in hint:
+            exc_type, exc_value, tb = hint["exc_info"]
+
+            if isinstance(exc_value, CalledProcessError) and hasattr(
+                exc_value, "stderr"
+            ):
+                event["extra"] = event.get("extra", {})
+
+                if isinstance(exc_value.stderr, str):
+                    event["extra"]["stderr"] = exc_value.stderr
+                elif isinstance(exc_value.stderr, bytes):
+                    event["extra"]["stderr"] = exc_value.stderr.decode(
+                        "utf-8", "replace"
+                    )
+                else:
+                    # Do not include stderr
+                    pass
+
+        return event
+
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         integrations=[DjangoIntegration(), CeleryIntegration()],
@@ -885,6 +905,7 @@ if SENTRY_DSN:
             os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.0")
         ),
         ignore_errors=[PriorStepFailed],
+        before_send=sentry_before_send,
     )
     ignore_logger("django.security.DisallowedHost")
     ignore_logger("aws_xray_sdk")
@@ -1025,7 +1046,7 @@ CELERY_EMAIL_TASK_CONFIG = {"ignore_result": False}
 
 COMPONENTS_DEFAULT_BACKEND = os.environ.get(
     "COMPONENTS_DEFAULT_BACKEND",
-    "grandchallenge.components.backends.amazon_sagemaker_batch.AmazonSageMakerBatchExecutor",
+    "grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor",
 )
 COMPONENTS_REGISTRY_URL = os.environ.get(
     "COMPONENTS_REGISTRY_URL", "registry:5000"
@@ -1041,9 +1062,6 @@ COMPONENTS_SAGEMAKER_SHIM_VERSION = os.environ.get(
 )
 COMPONENTS_SAGEMAKER_SHIM_LOCATION = os.environ.get(
     "COMPONENTS_SAGEMAKER_SHIM_LOCATION", "/opt/sagemaker-shim"
-)
-COMPONENTS_CREATE_SAGEMAKER_MODEL = strtobool(
-    os.environ.get("COMPONENTS_CREATE_SAGEMAKER_MODEL", "False")
 )
 COMPONENTS_INPUT_BUCKET_NAME = os.environ.get(
     "COMPONENTS_INPUT_BUCKET_NAME", "grand-challenge-components-inputs"
@@ -1077,6 +1095,9 @@ COMPONENTS_DOCKER_TASK_AWS_ACCESS_KEY_ID = os.environ.get(
 COMPONENTS_DOCKER_TASK_AWS_SECRET_ACCESS_KEY = os.environ.get(
     "COMPONENTS_DOCKER_TASK_AWS_SECRET_ACCESS_KEY", "componentstask123"
 )
+COMPONENTS_DOCKER_KEEP_CAPS_UNSAFE = strtobool(
+    os.environ.get("COMPONENTS_DOCKER_KEEP_CAPS_UNSAFE", "False")
+)
 COMPONENTS_PUBLISH_PORTS = strtobool(
     os.environ.get("COMPONENTS_PUBLISH_PORTS", "False")
 )
@@ -1095,6 +1116,13 @@ COMPONENTS_NVIDIA_VISIBLE_DEVICES = os.environ.get(
     "COMPONENTS_NVIDIA_VISIBLE_DEVICES", "void"
 )
 COMPONENTS_CONTAINER_PLATFORM = "linux/amd64"
+COMPONENTS_STRIP_LEADING_PREFIX_SLASH = strtobool(
+    os.environ.get(
+        # Fix for MINIO which doesn't respect leading slashes in list_objects_v2
+        "COMPONENTS_STRIP_LEADING_PREFIX_SLASH",
+        "False",
+    )
+)
 
 # Set which template pack to use for forms
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
@@ -1105,16 +1133,6 @@ MESSAGE_TAGS = {messages.ERROR: "danger"}
 
 # The name of the group whose members will be able to create reader studies
 READER_STUDY_CREATORS_GROUP_NAME = "reader_study_creators"
-
-###############################################################################
-#
-# workspaces
-#
-###############################################################################
-
-WORKBENCH_SECRET_KEY = os.environ.get("WORKBENCH_SECRET_KEY")
-WORKBENCH_API_URL = os.environ.get("WORKBENCH_API_URL")
-WORKBENCH_ADMIN_USERNAME = os.environ.get("WORKBENCH_ADMIN_USERNAME", "demo")
 
 ###############################################################################
 #
@@ -1193,10 +1211,6 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.github.tasks.cleanup_expired_tokens",
         "schedule": crontab(hour=0, minute=30),
     },
-    "ping_google": {
-        "task": "grandchallenge.core.tasks.ping_google",
-        "schedule": crontab(hour=0, minute=45),
-    },
     "clear_sessions": {
         "task": "grandchallenge.core.tasks.clear_sessions",
         "schedule": crontab(hour=1, minute=0),
@@ -1274,9 +1288,9 @@ ALGORITHMS_MAX_ACTIVE_JOBS = int(
 # Maximum and minimum values the user can set for algorithm requirements
 ALGORITHMS_MIN_MEMORY_GB = 4
 ALGORITHMS_MAX_MEMORY_GB = 32
-# The SageMaker backend currently has a maximum limit of 3600s
-ALGORITHMS_JOB_TIME_LIMIT_SECONDS = os.environ.get(
-    "ALGORITHMS_JOB_TIME_LIMIT_SECONDS", "3600"
+# The SageMaker Training backend has a maximum limit of 28 Days
+ALGORITHMS_JOB_DEFAULT_TIME_LIMIT_SECONDS = os.environ.get(
+    "ALGORITHMS_JOB_DEFAULT_TIME_LIMIT_SECONDS", "3600"
 )
 # How many cents per month each user receives by default
 ALGORITHMS_USER_CENTS_PER_MONTH = int(
@@ -1360,6 +1374,12 @@ GITHUB_PRIVATE_KEY_BASE64 = os.environ.get("GITHUB_PRIVATE_KEY_BASE64", "")
 GITHUB_WEBHOOK_SECRET = os.environ.get("GITHUB_WEBHOOK_SECRET", "")
 
 CODEBUILD_PROJECT_NAME = os.environ.get("CODEBUILD_PROJECT_NAME", "")
+CODEBUILD_BUILD_LOGS_GROUP_NAME = os.environ.get(
+    "CODEBUILD_BUILD_LOGS_GROUP_NAME", ""
+)
+CODEBUILD_ARTIFACTS_BUCKET_NAME = os.environ.get(
+    "CODEBUILD_ARTIFACTS_BUCKET_NAME", ""
+)
 
 # Statistics App
 STATISTICS_SITE_CACHE_KEY = "statistics/site_statistics"
@@ -1402,10 +1422,6 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 16 * MEGABYTE
 DATA_UPLOAD_MAX_NUMBER_FIELDS = int(
     os.environ.get("DATA_UPLOAD_MAX_NUMBER_FIELDS", "2048")
 )
-
-# Retina specific settings
-RETINA_GRADERS_GROUP_NAME = "retina_graders"
-RETINA_ADMINS_GROUP_NAME = "retina_admins"
 
 
 ##########################
@@ -1462,7 +1478,9 @@ CSP_IMG_SRC = (
     "'self'",  # Used by Open Sea Dragon
     "https:",  # Arbitrary files used on blog posts and challenge pages
 )
-CSP_FRAME_SRC = ("https://mailchi.mp",)  # For products blog posts
+CSP_FRAME_SRC = (
+    "https://www.youtube-nocookie.com",  # Embedding YouTube videos
+)
 CSP_MEDIA_SRC = (
     *CSP_MEDIA_HOSTS,
     "https://user-images.githubusercontent.com",  # Used in blog posts

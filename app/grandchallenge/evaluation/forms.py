@@ -33,7 +33,7 @@ from grandchallenge.evaluation.models import (
     Submission,
 )
 from grandchallenge.evaluation.utils import SubmissionKindChoices
-from grandchallenge.hanging_protocols.forms import ViewContentMixin
+from grandchallenge.hanging_protocols.models import VIEW_CONTENT_SCHEMA
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadSingleWidget
@@ -124,7 +124,6 @@ class PhaseCreateForm(PhaseTitleMixin, SaveFormInitMixin, forms.ModelForm):
 class PhaseUpdateForm(
     PhaseTitleMixin,
     WorkstationUserFilterMixin,
-    ViewContentMixin,
     forms.ModelForm,
 ):
     def __init__(self, *args, **kwargs):
@@ -181,8 +180,8 @@ class PhaseUpdateForm(
             "submissions_close_at": forms.DateTimeInput(
                 format=("%Y-%m-%dT%H:%M"), attrs={"type": "datetime-local"}
             ),
+            "view_content": JSONEditorWidget(schema=VIEW_CONTENT_SCHEMA),
         }
-        widgets.update(ViewContentMixin.Meta.widgets)
         help_texts = {
             "workstation_config": format_lazy(
                 (
@@ -215,7 +214,6 @@ class PhaseUpdateForm(
                 reverse_lazy("hanging-protocols:list"),
             ),
         }
-        help_texts.update(ViewContentMixin.Meta.help_texts)
         labels = {
             "workstation": "Viewer",
             "workstation_config": "Viewer Configuration",
@@ -301,9 +299,9 @@ class SubmissionForm(
             del self.fields["comment"]
 
         if self._phase.supplementary_file_label:
-            self.fields[
-                "supplementary_file"
-            ].label = self._phase.supplementary_file_label
+            self.fields["supplementary_file"].label = (
+                self._phase.supplementary_file_label
+            )
 
         if self._phase.supplementary_file_help_text:
             self.fields["supplementary_file"].help_text = clean(
@@ -316,9 +314,9 @@ class SubmissionForm(
             del self.fields["supplementary_file"]
 
         if self._phase.supplementary_url_label:
-            self.fields[
-                "supplementary_url"
-            ].label = self._phase.supplementary_url_label
+            self.fields["supplementary_url"].label = (
+                self._phase.supplementary_url_label
+            )
 
         if self._phase.supplementary_url_help_text:
             self.fields["supplementary_url"].help_text = clean(
@@ -333,10 +331,8 @@ class SubmissionForm(
         if self._phase.submission_kind == SubmissionKindChoices.ALGORITHM:
             del self.fields["user_upload"]
 
-            self.fields[
-                "algorithm_image"
-            ].queryset = self.user_active_images_for_phase.order_by(
-                "algorithm__title"
+            self.fields["algorithm_image"].queryset = (
+                self.user_active_images_for_phase.order_by("algorithm__title")
             )
 
             self._algorithm_inputs = self._phase.algorithm_inputs.all()

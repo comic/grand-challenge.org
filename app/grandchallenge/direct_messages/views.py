@@ -30,6 +30,7 @@ from grandchallenge.direct_messages.models import (
     DirectMessageUnreadBy,
     Mute,
 )
+from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -42,11 +43,17 @@ class ConversationCreate(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         if settings.ANONYMOUS_USER_NAME == self.kwargs["username"]:
             return False
         else:
-            # Only challenge admins can message their participants
-            return Challenge.objects.filter(
-                admins_group__user=self.request.user,
-                participants_group__user__username=self.kwargs["username"],
-            ).exists()
+            # Only challenge or reader study admins can message their participants
+            return (
+                Challenge.objects.filter(
+                    admins_group__user=self.request.user,
+                    participants_group__user__username=self.kwargs["username"],
+                ).exists()
+                or ReaderStudy.objects.filter(
+                    editors_group__user=self.request.user,
+                    readers_group__user__username=self.kwargs["username"],
+                ).exists()
+            )
 
     def get_form_kwargs(self, *args, **kwargs):
         form_kwargs = super().get_form_kwargs(*args, **kwargs)

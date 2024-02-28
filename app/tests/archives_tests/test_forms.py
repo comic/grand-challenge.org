@@ -202,28 +202,14 @@ def test_social_image_meta_tag(client, uploaded_image):
 
 
 @pytest.mark.django_db
-def test_archive_item_form(
-    client, settings, django_capture_on_commit_callbacks
-):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
+def test_archive_item_update_permissions(client):
     archive = ArchiveFactory()
 
     editor = UserFactory()
     user = UserFactory()
 
-    archive.editors_group.user_set.add(editor)
-
-    ci = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.BOOL
-    )
-    civ = ComponentInterfaceValueFactory(
-        interface=ci, value=True, file=None, image=None
-    )
+    archive.add_editor(editor)
     ai = ArchiveItemFactory(archive=archive)
-    ai.values.add(civ)
 
     # user cannot edit archive item
     response = get_view_for_user(
@@ -231,11 +217,9 @@ def test_archive_item_form(
         client=client,
         method=client.get,
         reverse_kwargs={
-            "archive_slug": archive.slug,
+            "slug": archive.slug,
             "pk": ai.pk,
-            "interface_slug": ci.slug,
         },
-        follow=True,
         user=user,
     )
     assert response.status_code == 403
@@ -246,11 +230,9 @@ def test_archive_item_form(
         client=client,
         method=client.get,
         reverse_kwargs={
-            "archive_slug": archive.slug,
+            "slug": archive.slug,
             "pk": ai.pk,
-            "interface_slug": ci.slug,
         },
-        follow=True,
         user=user,
     )
     assert response.status_code == 200
@@ -260,18 +242,34 @@ def test_archive_item_form(
         client=client,
         method=client.get,
         reverse_kwargs={
-            "archive_slug": archive.slug,
+            "slug": archive.slug,
             "pk": ai.pk,
-            "interface_slug": ci.slug,
         },
-        follow=True,
         user=editor,
     )
     assert response.status_code == 200
 
-    assert ci.slug in response.rendered_content
 
-    assert f'id="id_{ci.slug}" checked' in response.rendered_content
+@pytest.mark.django_db
+def test_archive_item_update_triggers_algorithm_jobs(
+    client, settings, django_capture_on_commit_callbacks
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    archive = ArchiveFactory()
+    editor = UserFactory()
+    archive.add_editor(editor)
+
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.BOOL
+    )
+    civ = ComponentInterfaceValueFactory(
+        interface=ci, value=True, file=None, image=None
+    )
+    ai = ArchiveItemFactory(archive=archive)
+    ai.values.add(civ)
 
     assert Job.objects.count() == 0
 
@@ -296,12 +294,10 @@ def test_archive_item_form(
             client=client,
             method=client.post,
             reverse_kwargs={
-                "archive_slug": archive.slug,
+                "slug": archive.slug,
                 "pk": ai.pk,
-                "interface_slug": ci.slug,
             },
             data={ci.slug: False},
-            follow=True,
             user=editor,
         )
     recurse_callbacks(
@@ -323,12 +319,10 @@ def test_archive_item_form(
             client=client,
             method=client.post,
             reverse_kwargs={
-                "archive_slug": archive.slug,
+                "slug": archive.slug,
                 "pk": ai.pk,
-                "interface_slug": ci.slug,
             },
             data={ci.slug: True},
-            follow=True,
             user=editor,
         )
     recurse_callbacks(

@@ -100,9 +100,9 @@ class TestVerificationForm:
         VerificationFactory(user=u)
         form = VerificationForm(user=u, data={"email": u.email, "user": u})
 
-        assert ["You have already made a verification request"] == form.errors[
-            "__all__"
-        ]
+        assert [
+            "You have already made a verification request. You can check the status of that request <a href='https://testserver/verifications/'>here</a>."
+        ] == form.errors["__all__"]
 
     def test_can_only_create_verification_request_with_complete_profile(self):
         u = UserFactory(email="test@google.com")

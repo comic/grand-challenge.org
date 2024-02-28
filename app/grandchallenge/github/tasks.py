@@ -20,7 +20,7 @@ from django.utils.timezone import now
 
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.codebuild.tasks import create_codebuild_build
-from grandchallenge.github.utils import CloneStatusChoices
+from grandchallenge.github.exceptions import GitHubBadRefreshTokenException
 
 logger = logging.getLogger(__name__)
 
@@ -119,14 +119,12 @@ def get_zipfile(*, pk):
     )
     ghwm = GitHubWebhookMessage.objects.get(pk=pk)
 
-    if ghwm.clone_status != CloneStatusChoices.PENDING:
-        ghwm.clone_status = CloneStatusChoices.FAILURE
-        ghwm.save()
+    if ghwm.clone_status != GitHubWebhookMessage.CloneStatusChoices.PENDING:
         raise RuntimeError("Clone status was not pending")
 
     payload = ghwm.payload
     repo_url = get_repo_url(payload)
-    ghwm.clone_status = CloneStatusChoices.STARTED
+    ghwm.clone_status = GitHubWebhookMessage.CloneStatusChoices.STARTED
     ghwm.save()
 
     try:
@@ -135,7 +133,9 @@ def get_zipfile(*, pk):
         ).recurse_submodules
     except Algorithm.DoesNotExist:
         logger.info("No algorithm linked to this repo")
-        ghwm.clone_status = CloneStatusChoices.NOT_APPLICABLE
+        ghwm.clone_status = (
+            GitHubWebhookMessage.CloneStatusChoices.NOT_APPLICABLE
+        )
         ghwm.save()
         return
 
@@ -151,7 +151,7 @@ def get_zipfile(*, pk):
             # update GithubWebhook object
             ghwm.zipfile = temp_file
             ghwm.license_check_result = license_check_result
-            ghwm.clone_status = CloneStatusChoices.SUCCESS
+            ghwm.clone_status = GitHubWebhookMessage.CloneStatusChoices.SUCCESS
             ghwm.save()
 
             build_repo(ghwm.pk)
@@ -159,7 +159,7 @@ def get_zipfile(*, pk):
         except Exception as e:
             ghwm.stdout = str(getattr(e, "stdout", ""))
             ghwm.stderr = str(getattr(e, "stderr", ""))
-            ghwm.clone_status = CloneStatusChoices.FAILURE
+            ghwm.clone_status = GitHubWebhookMessage.CloneStatusChoices.FAILURE
             ghwm.save()
 
             if not ghwm.user_error:
@@ -191,8 +191,15 @@ def refresh_user_token(*, pk):
     GitHubUserToken = apps.get_model(  # noqa: N806
         app_label="github", model_name="GitHubUserToken"
     )
+
     token = GitHubUserToken.objects.get(pk=pk)
-    token.refresh_access_token()
+
+    try:
+        token.refresh_access_token()
+    except GitHubBadRefreshTokenException:
+        token.delete()
+        return
+
     token.save()
 
 

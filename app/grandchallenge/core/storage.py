@@ -136,10 +136,6 @@ def get_logo_path(instance, filename):
     return f"logos/{instance.__class__.__name__.lower()}/{instance.pk}/{get_valid_filename(filename)}"
 
 
-def get_pdf_path(instance, filename):
-    return f"pdfs/{instance.__class__.__name__.lower()}/{instance.pk}/{get_valid_filename(filename)}"
-
-
 def get_social_image_path(instance, filename):
     return f"social-images/{instance.__class__.__name__.lower()}/{instance.pk}/{get_valid_filename(filename)}"
 
@@ -168,10 +164,24 @@ def copy_s3_object(*, to_field, dest_filename, src_bucket, src_key, save):
         name=target_key, max_length=to_field.field.max_length
     )
 
+    if settings.AWS_S3_OBJECT_PARAMETERS[
+        "StorageClass"
+    ] != "STANDARD" and target_bucket in {
+        settings.PRIVATE_S3_STORAGE_KWARGS["bucket_name"],
+        settings.PROTECTED_S3_STORAGE_KWARGS["bucket_name"],
+        settings.PUBLIC_S3_STORAGE_KWARGS["bucket_name"],
+    }:
+        extra_args = {
+            "StorageClass": settings.AWS_S3_OBJECT_PARAMETERS["StorageClass"]
+        }
+    else:
+        extra_args = None
+
     target_client.copy(
         CopySource={"Bucket": src_bucket, "Key": src_key},
         Bucket=target_bucket,
         Key=target_key,
+        ExtraArgs=extra_args,
     )
 
     to_field.name = target_key

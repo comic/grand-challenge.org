@@ -13,11 +13,21 @@ from tests.direct_messages_tests.factories import (
     MuteFactory,
 )
 from tests.factories import ChallengeFactory, UserFactory
+from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
-def test_conversation_create_permissions(client, settings):
+@pytest.mark.parametrize(
+    "base_factory,admins_group,participants_group",
+    (
+        (ChallengeFactory, "admins_group", "participants_group"),
+        (ReaderStudyFactory, "editors_group", "readers_group"),
+    ),
+)
+def test_conversation_create_permissions(
+    client, settings, base_factory, admins_group, participants_group
+):
     def try_create_conversation(creator, target):
         return get_view_for_user(
             client=client,
@@ -27,19 +37,22 @@ def test_conversation_create_permissions(client, settings):
         )
 
     admin, participant = UserFactory.create_batch(2)
-    challenge = ChallengeFactory()
+    base_model = base_factory()
+
+    admins_group = getattr(base_model, admins_group)
+    participants_group = getattr(base_model, participants_group)
 
     # Normal users cannot create conversations with each other
     response = try_create_conversation(creator=admin, target=participant)
     assert response.status_code == 403
 
     # Challenge admins cannot message anyone
-    challenge.add_admin(user=admin)
+    admins_group.user_set.add(admin)
     response = try_create_conversation(creator=admin, target=participant)
     assert response.status_code == 403
 
     # Only admins should be able to contact participants
-    challenge.add_participant(user=participant)
+    participants_group.user_set.add(participant)
     response = try_create_conversation(creator=admin, target=participant)
     assert response.status_code == 200
 
@@ -49,12 +62,12 @@ def test_conversation_create_permissions(client, settings):
 
     # Anonymous user shouldn't be messaged
     anon = get_anonymous_user()
-    challenge.participants_group.user_set.add(anon)
+    participants_group.user_set.add(anon)
     response = try_create_conversation(creator=admin, target=anon)
     assert response.status_code == 403
 
     # Anonymous user shouldn't be able to create messages
-    challenge.admins_group.user_set.add(anon)
+    admins_group.user_set.add(anon)
     response = try_create_conversation(creator=anon, target=participant)
     assert response.status_code == 302
     assert response.url.startswith(settings.LOGIN_URL)

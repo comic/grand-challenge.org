@@ -1,6 +1,9 @@
+import json
+
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
 from django.core.exceptions import ValidationError
+from django.utils.html import format_html
 
 from grandchallenge.challenges.emails import send_challenge_status_update_email
 from grandchallenge.challenges.models import (
@@ -15,11 +18,18 @@ from grandchallenge.core.admin import (
     UserObjectPermissionAdmin,
 )
 from grandchallenge.core.templatetags.costs import millicents_to_euro
+from grandchallenge.core.utils.grand_challenge_forge import (
+    get_forge_json_description,
+)
 
 
 @admin.register(Challenge)
 class ChallengeAdmin(ModelAdmin):
-    readonly_fields = ("creator",)
+    readonly_fields = (
+        "short_name",
+        "creator",
+        "challenge_forge_json",
+    )
     autocomplete_fields = ("publications",)
     ordering = ("-created",)
     list_display = (
@@ -39,6 +49,13 @@ class ChallengeAdmin(ModelAdmin):
 
     def available_compute_euros(self, obj):
         return millicents_to_euro(obj.available_compute_euro_millicents)
+
+    @staticmethod
+    def challenge_forge_json(obj):
+        json_desc = get_forge_json_description(challenge=obj)
+        return format_html(
+            "<pre>{json_desc}</pre>", json_desc=json.dumps(json_desc, indent=2)
+        )
 
 
 @admin.register(ChallengeRequest)

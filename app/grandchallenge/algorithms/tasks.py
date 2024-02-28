@@ -263,7 +263,7 @@ def create_algorithm_jobs(
         civ_sets = civ_sets[:max_jobs]
 
     if time_limit is None:
-        time_limit = settings.ALGORITHMS_JOB_TIME_LIMIT_SECONDS
+        time_limit = settings.ALGORITHMS_JOB_DEFAULT_TIME_LIMIT_SECONDS
 
     jobs = []
 

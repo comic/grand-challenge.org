@@ -6,6 +6,7 @@ from django.core.validators import (
     RegexValidator,
 )
 from django.db import models
+from django.db.models import PositiveSmallIntegerField
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
@@ -240,6 +241,11 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         help_text="The method used to interpolate multiple voxels of the image and project them to screen pixels",
     )
 
+    default_limit_view_area_to_image_volume = models.BooleanField(
+        default=False,
+        help_text="When enabled, the view area is limited to the image volume, ensuring that changes in orientation and panning do not obscure parts of the image",
+    )
+
     # 3 digits, 2 decimal places, 0.00 min, 1.00 max
     default_overlay_alpha = models.DecimalField(
         blank=True,
@@ -289,6 +295,12 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         blank=True,
         null=True,
         help_text="Default color for displaying and creating annotations",
+    )
+
+    default_annotation_line_width = PositiveSmallIntegerField(
+        blank=True,
+        null=True,
+        help_text="Default line width in pixels for displaying and creating annotations",
     )
 
     show_image_info_plugin = models.BooleanField(

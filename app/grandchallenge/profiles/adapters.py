@@ -12,11 +12,12 @@ from django import forms
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.exceptions import PermissionDenied
-from django.core.mail import send_mail
 from django.http import HttpResponseRedirect
 from django.utils.http import url_has_allowed_host_and_scheme, urlencode
 
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.emails.emails import send_standard_email_batch
+from grandchallenge.profiles.models import EmailSubscriptionTypes
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -115,11 +116,12 @@ class AccountAdapter(DefaultAccountAdapter):
         response = super().post_login(request, user, **kwargs)
         site = Site.objects.get_current()
         if user.is_staff or user.is_superuser:
-            send_mail(
-                subject=f"[{site.domain.lower()}] Security Alert",
-                message=f"Dear {user.username}, \n We noticed a new login to your account. If this was you, you don't need to do anything. If not, please change your password and update your 2FA device. \n Regards,\n {site.name}\n This is an automated service email from {site.domain}.",
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
+            send_standard_email_batch(
+                site=site,
+                subject="Security Alert",
+                markdown_message="We noticed a new login to your account. If this was you, you don't need to do anything. If not, please change your password and update your 2FA device.",
+                recipients=[user],
+                subscription_type=EmailSubscriptionTypes.SYSTEM,
             )
         return response
 

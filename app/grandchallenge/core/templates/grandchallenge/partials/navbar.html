@@ -39,7 +39,6 @@
                     <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
                         <a class="dropdown-item" href="{% url 'blogs:list' %}">Blog</a>
                         <a class="dropdown-item" href="{% url 'archives:list' %}">Archives</a>
-                        <a class="dropdown-item" href="{% url 'products:product-list' %}">Commercial products</a>
                         <div class="dropdown-divider"></div>
                         {% get_flatpages about_page_url as about_page %}
                         <a class="dropdown-item" href="{{ request.scheme }}://{{ request.site.domain }}{{ about_page_url }}">{{ about_page.first.title }}</a>
@@ -51,9 +50,7 @@
                 </li>
             </ul>
             <ul class="navbar-nav">
-                {% if not hide_userlinks %}
-                    {% include "grandchallenge/partials/userlinks.html" %}
-                {% endif %}
+                {% include "grandchallenge/partials/userlinks.html" with hide_userlinks=hide_userlinks %}
             </ul>
         </div>
     </div>

@@ -14,13 +14,15 @@ ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN]
 SECURE_SSL_REDIRECT = False
 DEFAULT_SCHEME = "https"
 COMPONENTS_REGISTRY_PREFIX = "localhost"
+COMPONENTS_DOCKER_KEEP_CAPS_UNSAFE = True
+COMPONENTS_STRIP_LEADING_PREFIX_SLASH = True
 
 TEMPLATES[0]["DIRS"].append(SITE_ROOT / "tests" / "templates")  # noqa 405
 
 # Speed up token generation in tests
-REST_KNOX[  # noqa F405
-    "SECURE_HASH_ALGORITHM"
-] = "cryptography.hazmat.primitives.hashes.MD5"
+REST_KNOX["SECURE_HASH_ALGORITHM"] = (  # noqa F405
+    "cryptography.hazmat.primitives.hashes.MD5"
+)
 
 WHITENOISE_AUTOREFRESH = True
 STORAGES["staticfiles"][  # noqa F405
@@ -30,8 +32,7 @@ STORAGES["staticfiles"][  # noqa F405
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
 FORUMS_MIN_ACCOUNT_AGE_DAYS = 0
-ACCOUNT_EMAIL_CONFIRMATION_COOLDOWN = 0
-ACCOUNT_RATE_LIMITS = {}
+ACCOUNT_RATE_LIMITS = False
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 
 ROOT_URLCONF = "tests.urls.root"

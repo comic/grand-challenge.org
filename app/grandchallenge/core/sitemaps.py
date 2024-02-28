@@ -1,10 +1,18 @@
 from django.contrib.flatpages.models import FlatPage
-from django.contrib.sitemaps import Sitemap
+from django.contrib.sitemaps import Sitemap  # noqa: I251
 
 from grandchallenge.subdomains.utils import reverse
 
 
 class SubdomainSitemap(Sitemap):
+    def lastmod(self, item):
+        if hasattr(item, "lastmod"):
+            return item.lastmod
+        elif hasattr(item, "modified"):
+            return item.modified
+        else:
+            return None
+
     def _urls(self, page, protocol, domain):
         urls = super()._urls(page, protocol, domain)
 
@@ -29,7 +37,6 @@ class CoreSitemap(SubdomainSitemap):
             "reader-studies:list",
             "challenges:list",
             "algorithms:list",
-            "products:product-list",
         ]
 
     def location(self, item):

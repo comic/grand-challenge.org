@@ -65,12 +65,10 @@ class Executor(ABC):
         )
 
     @abstractmethod
-    def execute(self, *, input_civs, input_prefixes):
-        ...
+    def execute(self, *, input_civs, input_prefixes): ...
 
     @abstractmethod
-    def handle_event(self, *, event):
-        ...
+    def handle_event(self, *, event): ...
 
     def get_outputs(self, *, output_interfaces):
         """Create ComponentInterfaceValues from the output interfaces"""
@@ -103,8 +101,12 @@ class Executor(ABC):
 
     @staticmethod
     @abstractmethod
-    def get_job_params(*, event):
-        ...
+    def get_job_name(*, event):
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def get_job_params(*, job_name): ...
 
     @property
     def stdout(self):
@@ -116,18 +118,23 @@ class Executor(ABC):
 
     @property
     @abstractmethod
-    def duration(self):
-        ...
+    def duration(self): ...
 
     @property
     @abstractmethod
-    def usd_cents_per_hour(self):
-        ...
+    def usd_cents_per_hour(self): ...
 
     @property
     @abstractmethod
-    def runtime_metrics(self):
-        ...
+    def runtime_metrics(self): ...
+
+    @property
+    def invocation_environment(self):
+        return {  # Up to 16 pairs
+            "LOG_LEVEL": "INFO",
+            "PYTHONUNBUFFERED": "1",
+            "no_proxy": "amazonaws.com",
+        }
 
     @property
     def compute_cost_euro_millicents(self):
@@ -228,9 +235,14 @@ class Executor(ABC):
 
     def _create_images_result(self, *, interface):
         prefix = safe_join(self._io_prefix, interface.relative_path)
+
         response = self._s3_client.list_objects_v2(
             Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-            Prefix=prefix,
+            Prefix=(
+                prefix.lstrip("/")
+                if settings.COMPONENTS_STRIP_LEADING_PREFIX_SLASH
+                else prefix
+            ),
         )
 
         if response.get("IsTruncated", False):
@@ -247,14 +259,16 @@ class Executor(ABC):
         with TemporaryDirectory() as tmpdir:
             for file in output_files:
                 try:
-                    key = safe_join("/", file["Key"])
-                    dest = safe_join(tmpdir, Path(key).relative_to(prefix))
+                    root_key = safe_join("/", file["Key"])
+                    dest = safe_join(
+                        tmpdir, Path(root_key).relative_to(prefix)
+                    )
                 except (SuspiciousFileOperation, ValueError):
                     logger.warning(f"Skipping {file=} for {interface=}")
                     continue
 
                 logger.info(
-                    f"Downloading {key} to {dest} from "
+                    f"Downloading {file['Key']} to {dest} from "
                     f"{settings.COMPONENTS_OUTPUT_BUCKET_NAME}"
                 )
 
@@ -262,7 +276,7 @@ class Executor(ABC):
                 self._s3_client.download_file(
                     Filename=dest,
                     Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-                    Key=key,
+                    Key=file["Key"],
                 )
 
             importer_result = import_images(
@@ -348,7 +362,9 @@ class Executor(ABC):
     def _delete_objects(self, *, bucket, prefix):
         """Deletes all objects with a given prefix"""
         if not (
-            prefix.startswith("/io/") or prefix.startswith("/invocations/")
+            prefix.startswith("/io/")
+            or prefix.startswith("/invocations/")
+            or prefix.startswith("/training-outputs/")
         ) or bucket not in {
             settings.COMPONENTS_OUTPUT_BUCKET_NAME,
             settings.COMPONENTS_INPUT_BUCKET_NAME,
@@ -360,7 +376,11 @@ class Executor(ABC):
 
         objects_list = self._s3_client.list_objects_v2(
             Bucket=bucket,
-            Prefix=prefix,
+            Prefix=(
+                prefix.lstrip("/")
+                if settings.COMPONENTS_STRIP_LEADING_PREFIX_SLASH
+                else prefix
+            ),
         )
 
         if contents := objects_list.get("Contents"):

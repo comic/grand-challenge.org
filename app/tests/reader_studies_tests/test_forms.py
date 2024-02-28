@@ -9,21 +9,21 @@ from django.db.models import BLANK_CHOICE_DASH
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.cases.widgets import FlexibleImageWidget
+from grandchallenge.components.forms import SingleCIVForm
 from grandchallenge.components.models import (
     ComponentInterface,
     InterfaceKind,
     InterfaceKindChoices,
 )
+from grandchallenge.components.widgets import SelectUploadWidget
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.reader_studies.forms import (
     DisplaySetCreateForm,
-    DisplaySetInterfacesCreateForm,
     DisplaySetUpdateForm,
     QuestionForm,
-    SelectUploadWidget,
 )
 from grandchallenge.reader_studies.models import (
     Answer,
@@ -155,6 +155,8 @@ def test_reader_study_create(client, uploaded_image):
         roll_over_answers_for_n_cases=0,
         public=True,
         description="",
+        is_educational=False,
+        instant_verification=False,
     ):
         return get_view_for_user(
             viewname="reader-studies:create",
@@ -171,6 +173,8 @@ def test_reader_study_create(client, uploaded_image):
                 "roll_over_answers_for_n_cases": roll_over_answers_for_n_cases,
                 "public": public,
                 "description": description,
+                "is_educational": is_educational,
+                "instant_verification": instant_verification,
             },
             follow=True,
             user=creator,
@@ -199,8 +203,15 @@ def test_reader_study_create(client, uploaded_image):
     assert roll_over_error not in response.rendered_content
     assert public_error in response.rendered_content
 
+    educational_error = "Reader study must be educational when instant verification is enabled."
+    response = try_create_rs(is_educational=False, instant_verification=True)
+    assert educational_error in response.rendered_content
+
     response = try_create_rs(
-        roll_over_answers_for_n_cases=1, description="Some description"
+        roll_over_answers_for_n_cases=1,
+        description="Some description",
+        is_educational=True,
+        instant_verification=True,
     )
     assert "error_1_id_workstation" not in response.rendered_content
     assert roll_over_error not in response.rendered_content
@@ -235,7 +246,8 @@ def test_question_create(client):
             method=client.post,
             data={
                 "question_text": "What?",
-                "answer_type": "STXT",
+                "answer_type": AnswerType.TEXT,
+                "widget": QuestionWidgetKindChoices.TEXT_INPUT,
                 "order": 1,
                 "image_port": "",
                 "direction": "H",
@@ -270,7 +282,7 @@ def test_question_update(client):
     question = QuestionFactory(
         question_text="foo",
         reader_study=rs,
-        answer_type=Question.AnswerType.SINGLE_LINE_TEXT,
+        answer_type=Question.AnswerType.TEXT,
         direction=Question.Direction.HORIZONTAL,
         order=100,
     )
@@ -298,7 +310,7 @@ def test_question_update(client):
     assert response.status_code == 200
 
     assert question.question_text == "foo"
-    assert question.answer_type == Question.AnswerType.SINGLE_LINE_TEXT
+    assert question.answer_type == Question.AnswerType.TEXT
     assert question.direction == Question.Direction.HORIZONTAL
     assert question.order == 100
     assert question.interface is None
@@ -311,6 +323,7 @@ def test_question_update(client):
         ],
     )
     form = QuestionForm(
+        reader_study=question.reader_study,
         instance=question,
         data={
             "question_text": "bar",
@@ -326,6 +339,7 @@ def test_question_update(client):
             "options-INITIAL_FORMS": 1,
             "options-MIN_NUM_FORMS": 0,
             "options-MAX_NUM_FORMS": 1000,
+            "reader_study": question.reader_study.pk,
         },
     )
     with pytest.raises(ValueError):
@@ -340,6 +354,7 @@ def test_question_update(client):
     }
 
     form = QuestionForm(
+        reader_study=question.reader_study,
         instance=question,
         data={
             "question_text": "bar",
@@ -356,6 +371,7 @@ def test_question_update(client):
             "options-INITIAL_FORMS": 1,
             "options-MIN_NUM_FORMS": 0,
             "options-MAX_NUM_FORMS": 1000,
+            "reader_study": question.reader_study.pk,
         },
     )
     form.save()
@@ -376,10 +392,11 @@ def test_question_update(client):
     # An answer is added, so changing the question text or overlay segments
     # should no longer be possible
     form = QuestionForm(
+        reader_study=question.reader_study,
         instance=question,
         data={
             "question_text": "foo",
-            "answer_type": Question.AnswerType.SINGLE_LINE_TEXT,
+            "answer_type": Question.AnswerType.TEXT,
             "direction": Question.Direction.HORIZONTAL,
             "overlay_segments": '[{"name": "s1", "visible": true, "voxel_value": 0}]',
             "order": 100,
@@ -387,6 +404,7 @@ def test_question_update(client):
             "options-INITIAL_FORMS": 1,
             "options-MIN_NUM_FORMS": 0,
             "options-MAX_NUM_FORMS": 1000,
+            "reader_study": question.reader_study.pk,
         },
     )
     form.save()
@@ -407,8 +425,6 @@ def test_question_update(client):
     "answer_type,interface_kind",
     (
         (AnswerType.TEXT, InterfaceKindChoices.STRING),
-        (AnswerType.SINGLE_LINE_TEXT, InterfaceKindChoices.STRING),
-        (AnswerType.MULTI_LINE_TEXT, InterfaceKindChoices.STRING),
         (AnswerType.BOOL, InterfaceKindChoices.BOOL),
         (AnswerType.NUMBER, InterfaceKindChoices.FLOAT),
         (AnswerType.NUMBER, InterfaceKindChoices.INTEGER),
@@ -435,10 +451,6 @@ def test_question_update(client):
         (AnswerType.MULTIPLE_ANGLES, InterfaceKindChoices.MULTIPLE_ANGLES),
         (AnswerType.CHOICE, InterfaceKindChoices.CHOICE),
         (AnswerType.MULTIPLE_CHOICE, InterfaceKindChoices.MULTIPLE_CHOICE),
-        (
-            AnswerType.MULTIPLE_CHOICE_DROPDOWN,
-            InterfaceKindChoices.MULTIPLE_CHOICE,
-        ),
         (AnswerType.MASK, InterfaceKindChoices.SEGMENTATION),
         (AnswerType.ELLIPSE, InterfaceKindChoices.ELLIPSE),
         (AnswerType.MULTIPLE_ELLIPSES, InterfaceKindChoices.MULTIPLE_ELLIPSES),
@@ -450,7 +462,9 @@ def test_question_form_interface_field(answer_type, interface_kind):
         kind=InterfaceKindChoices.IMAGE
     ).first()
     assert ci_img is not None
-    form = QuestionForm(initial={"answer_type": answer_type})
+    form = QuestionForm(
+        reader_study=ReaderStudyFactory(), initial={"answer_type": answer_type}
+    )
     assert form.interface_choices().filter(pk=ci.pk).exists()
     assert not form.interface_choices().filter(pk=ci_img.pk).exists()
 
@@ -458,7 +472,9 @@ def test_question_form_interface_field(answer_type, interface_kind):
 @pytest.mark.django_db
 def test_question_form_interface_field_no_answer_type():
     assert ComponentInterface.objects.count() > 0
-    form = QuestionForm(initial={"answer_type": None})
+    form = QuestionForm(
+        reader_study=ReaderStudyFactory(), initial={"answer_type": None}
+    )
     # No answer_type provided, this happens for answers that already have
     # answers. The form shouldn't error and the interface_choices should
     # be empty.
@@ -469,9 +485,6 @@ def test_question_form_interface_field_no_answer_type():
 @pytest.mark.parametrize(
     "answer_type,port,questions_created",
     (
-        ("STXT", "", 1),
-        ("STXT", "M", 0),
-        ("STXT", "S", 0),
         ("HEAD", "", 1),
         ("HEAD", "M", 0),
         ("HEAD", "S", 0),
@@ -544,7 +557,7 @@ def test_reader_study_copy(
         reader_study=rs,
         question_text="question 1",
         help_text="Some help text",
-        answer_type=Question.AnswerType.BOOL,
+        answer_type=Question.AnswerType.NUMBER,
         image_port=Question.ImagePort.MAIN,
         required=False,
         direction=Question.Direction.VERTICAL,
@@ -553,7 +566,15 @@ def test_reader_study_copy(
         interface=ComponentInterfaceFactory(),
         overlay_segments={"foo": "bar"},
         look_up_table=lut,
+        widget=QuestionWidgetKindChoices.NUMBER_INPUT,
+        answer_max_value=20,
+        answer_min_value=1,
+        answer_step_size=0.5,
+        answer_min_length=1,
+        answer_max_length=3,
+        answer_match_pattern=r"^hello world$",
     )
+    CategoricalOptionFactory(question=question, title="option1")
     QuestionFactory(
         reader_study=rs,
         answer_type=Question.AnswerType.BOOL,
@@ -659,17 +680,27 @@ def test_reader_study_copy(
 
     assert question.reader_study == rs
     assert copied_question.pk != question.pk
-    assert copied_question.question_text == question.question_text
-    assert copied_question.help_text == question.help_text
-    assert copied_question.answer_type == question.answer_type
-    assert copied_question.image_port == question.image_port
-    assert copied_question.required == question.required
-    assert copied_question.direction == question.direction
-    assert copied_question.scoring_function == question.scoring_function
-    assert copied_question.order == question.order
-    assert copied_question.interface == question.interface
-    assert copied_question.look_up_table == question.look_up_table
-    assert copied_question.overlay_segments == question.overlay_segments
+    assert copied_question.reader_study != question.reader_study
+
+    # check that all but the specified fields have been copied over
+    non_copied_fields = [
+        "questionuserobjectpermission",
+        "questiongroupobjectpermission",
+        "answer",
+        "reader_study",
+        "id",
+        "created",
+        "modified",
+        "options",
+    ]
+    for field in copied_question._meta.get_fields():
+        if field.name not in non_copied_fields:
+            assert getattr(copied_question, field.name) == getattr(
+                question, field.name
+            )
+
+    assert copied_question.options.get().title == question.options.get().title
+    assert copied_question.options.get().pk != question.options.get().pk
 
     with django_capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
@@ -857,7 +888,7 @@ def test_reader_study_add_ground_truth(client, settings):
     q = QuestionFactory(
         reader_study=rs,
         question_text="bar",
-        answer_type=Question.AnswerType.SINGLE_LINE_TEXT,
+        answer_type=Question.AnswerType.TEXT,
     )
     q0 = QuestionFactory(
         reader_study=rs,
@@ -1026,6 +1057,7 @@ def test_reader_study_add_ground_truth(client, settings):
         Answer.objects.get(display_set=ds1, question=q).explanation
         == "new explanation"
     )
+    assert Answer.objects.get(display_set=ds1, question=q).creator == editor
     assert (
         Answer.objects.get(display_set=ds2, question=q).explanation
         == "explanation"
@@ -1049,7 +1081,7 @@ def test_reader_study_add_ground_truth_ds(client, settings):
     QuestionFactory(
         reader_study=rs,
         question_text="bar",
-        answer_type=Question.AnswerType.SINGLE_LINE_TEXT,
+        answer_type=Question.AnswerType.TEXT,
     )
 
     civ = ComponentInterfaceValueFactory(image=ImageFactory())
@@ -1089,24 +1121,25 @@ def test_display_set_update_form(form_class, file_widget):
     rs = ReaderStudyFactory()
     user = UserFactory()
     rs.add_editor(user)
+    ds = DisplaySetFactory(reader_study=rs)
     for slug, store_in_db in [("slug-1", False), ("slug-2", True)]:
         ci = ComponentInterfaceFactory(
             title=slug, kind="JSON", store_in_database=store_in_db
         )
         civ = ComponentInterfaceValueFactory(interface=ci)
-        ds = DisplaySetFactory(reader_study=rs)
         ds.values.add(civ)
 
     instance = None if form_class == DisplaySetCreateForm else ds
-    form = form_class(user=user, instance=instance, reader_study=rs)
+    form = form_class(user=user, instance=instance, base_obj=rs)
     assert sorted(form.fields.keys()) == ["order", "slug-1", "slug-2"]
     assert isinstance(form.fields["slug-1"].widget, file_widget)
     assert isinstance(form.fields["slug-2"].widget, JSONEditorWidget)
 
     ci = ComponentInterfaceFactory(kind="STR", title="slug-3")
-    QuestionFactory(reader_study=rs, answer_type="STXT", interface=ci)
+    QuestionFactory(reader_study=rs, answer_type=AnswerType.TEXT, interface=ci)
+    del rs.interfaces_and_values
     del rs.values_for_interfaces
-    form = form_class(user=user, instance=instance, reader_study=rs)
+    form = form_class(user=user, instance=instance, base_obj=rs)
     assert sorted(form.fields.keys()) == [
         "order",
         "slug-1",
@@ -1136,7 +1169,7 @@ def test_display_set_form_interface_fields_not_required(form_class):
         ds.values.add(civ)
 
     instance = None if form_class == DisplaySetCreateForm else ds
-    form = form_class(user=user, instance=instance, reader_study=rs)
+    form = form_class(user=user, instance=instance, base_obj=rs)
     for name, field in form.fields.items():
         if not name == "order":
             assert not field.required
@@ -1159,7 +1192,7 @@ def test_display_set_update_form_image_field_queryset_filters():
     civ_img = ComponentInterfaceValueFactory(interface=ci_img)
     ds = DisplaySetFactory(reader_study=rs)
     ds.values.add(civ_img)
-    form = DisplaySetUpdateForm(user=user, instance=ds, reader_study=rs)
+    form = DisplaySetUpdateForm(user=user, instance=ds, base_obj=rs)
     assert im1 in form.fields["image"].fields[0].queryset.all()
     assert im2 not in form.fields["image"].fields[0].queryset.all()
     assert upload1 in form.fields["image"].fields[1].queryset.all()
@@ -1177,25 +1210,45 @@ def test_display_set_add_interface_form():
     ci_value = ComponentInterfaceFactory(kind="JSON", store_in_database=True)
     ci_image = ComponentInterfaceFactory(kind="IMG", store_in_database=False)
 
-    form = DisplaySetInterfacesCreateForm(
-        pk=ds.pk, reader_study=rs, interface=None, user=user
+    form = SingleCIVForm(
+        pk=ds.pk,
+        base_obj=rs,
+        interface=None,
+        user=user,
+        htmx_url="foo",
+        auto_id="1",
     )
-    assert sorted(form.fields.keys()) == ["interface"]
+    assert sorted(form.fields.keys()) == ["interface-1"]
 
-    form = DisplaySetInterfacesCreateForm(
-        pk=ds.pk, reader_study=rs, interface=ci_file.pk, user=user
+    form = SingleCIVForm(
+        pk=ds.pk,
+        base_obj=rs,
+        interface=ci_file.pk,
+        user=user,
+        htmx_url="foo",
+        auto_id="1",
     )
     assert sorted(form.fields.keys()) == [ci_file.slug, "interface"]
     assert isinstance(form.fields[ci_file.slug].widget, UserUploadSingleWidget)
 
-    form = DisplaySetInterfacesCreateForm(
-        pk=ds.pk, reader_study=rs, interface=ci_value.pk, user=user
+    form = SingleCIVForm(
+        pk=ds.pk,
+        base_obj=rs,
+        interface=ci_value.pk,
+        user=user,
+        htmx_url="foo",
+        auto_id="1",
     )
     assert sorted(form.fields.keys()) == [ci_value.slug, "interface"]
     assert isinstance(form.fields[ci_value.slug].widget, JSONEditorWidget)
 
-    form = DisplaySetInterfacesCreateForm(
-        pk=ds.pk, reader_study=rs, interface=ci_image.pk, user=user
+    form = SingleCIVForm(
+        pk=ds.pk,
+        base_obj=rs,
+        interface=ci_image.pk,
+        user=user,
+        htmx_url="foo",
+        auto_id="1",
     )
     assert sorted(form.fields.keys()) == [ci_image.slug, "interface"]
     assert isinstance(form.fields[ci_image.slug].widget, FlexibleImageWidget)
@@ -1205,18 +1258,16 @@ def test_display_set_add_interface_form():
 @pytest.mark.parametrize(
     "answer_type, choices",
     (
-        (AnswerType.SINGLE_LINE_TEXT, BLANK_CHOICE_DASH),
         (
             AnswerType.TEXT,
             [("TEXT_INPUT", "Text Input"), ("TEXT_AREA", "Text Area")],
         ),
-        (AnswerType.MULTI_LINE_TEXT, BLANK_CHOICE_DASH),
         (AnswerType.BOOL, BLANK_CHOICE_DASH),
         (
             AnswerType.NUMBER,
             [
                 BLANK_CHOICE_DASH[0],
-                ("NUMBER_INPUT", "Number input"),
+                ("NUMBER_INPUT", "Number Input"),
                 ("NUMBER_RANGE", "Number Range"),
             ],
         ),
@@ -1279,35 +1330,36 @@ def test_display_set_add_interface_form():
         (
             AnswerType.CHOICE,
             [
-                ("SELECT", "Select"),
                 ("RADIO_SELECT", "Radio Select"),
+                ("SELECT", "Select"),
             ],
         ),
         (
             AnswerType.MULTIPLE_CHOICE,
             [
                 BLANK_CHOICE_DASH[0],
-                ("SELECT_MULTIPLE", "Select Multiple"),
                 ("CHECKBOX_SELECT_MULTIPLE", "Checkbox Select Multiple"),
+                ("SELECT_MULTIPLE", "Select Multiple"),
             ],
         ),
-        (AnswerType.MULTIPLE_CHOICE_DROPDOWN, BLANK_CHOICE_DASH),
         (AnswerType.MASK, BLANK_CHOICE_DASH),
     ),
 )
 def test_question_form_answer_widget_choices(answer_type, choices):
-    form = QuestionForm(initial={"answer_type": answer_type})
+    form = QuestionForm(
+        reader_study=ReaderStudyFactory(), initial={"answer_type": answer_type}
+    )
     assert form.widget_choices() == choices
 
 
 @pytest.mark.django_db
 def test_question_form_initial_widget():
-    qu = QuestionFactory()
-    form = QuestionForm(instance=qu)
+    qu = QuestionFactory(answer_type=AnswerType.TEXT)
+    form = QuestionForm(reader_study=ReaderStudyFactory(), instance=qu)
     assert not form.initial_widget()
 
     qu.widget = QuestionWidgetKindChoices.ACCEPT_REJECT
-    form2 = QuestionForm(instance=qu)
+    form2 = QuestionForm(reader_study=ReaderStudyFactory(), instance=qu)
     assert form2.initial_widget() == QuestionWidgetKindChoices.ACCEPT_REJECT
 
 
@@ -1315,14 +1367,105 @@ def test_question_form_initial_widget():
 def test_question_widget_choices_for_non_editable_instance():
     # no matter whether the question is editable, widget choices should be the same
     qu = QuestionFactory(answer_type=AnswerType.TEXT)
-    form = QuestionForm(instance=qu)
+    form = QuestionForm(reader_study=ReaderStudyFactory(), instance=qu)
     assert form.widget_choices() == [
         ("TEXT_INPUT", "Text Input"),
         ("TEXT_AREA", "Text Area"),
     ]
     AnswerFactory(question=qu, answer="Foo")
-    form = QuestionForm(instance=qu)
+    form = QuestionForm(reader_study=ReaderStudyFactory(), instance=qu)
     assert form.widget_choices() == [
         ("TEXT_INPUT", "Text Input"),
         ("TEXT_AREA", "Text Area"),
     ]
+
+
+@pytest.mark.django_db
+def test_question_default_annotation_color():
+    form = QuestionForm(
+        reader_study=ReaderStudyFactory(),
+        data={
+            "answer_type": AnswerType.TEXT,
+            "widget": QuestionWidgetKindChoices.TEXT_AREA,
+            "direction": Question.Direction.HORIZONTAL,
+            "order": 100,
+            "question_text": "gfda",
+            "default_annotation_color": "#000000",
+        },
+    )
+
+    assert form.is_valid() is False
+    assert form.errors == {
+        "__all__": [
+            "Default annotation color should only be set for annotation questions"
+        ]
+    }
+
+    form = QuestionForm(
+        reader_study=ReaderStudyFactory(),
+        data={
+            "answer_type": AnswerType.MASK,
+            "image_port": Question.ImagePort.MAIN,
+            "direction": Question.Direction.HORIZONTAL,
+            "order": 100,
+            "question_text": "gfda",
+            "default_annotation_color": "#000000",
+        },
+    )
+    assert form.is_valid()
+
+    form = QuestionForm(
+        reader_study=ReaderStudyFactory(),
+        data={
+            "answer_type": AnswerType.TEXT,
+            "widget": QuestionWidgetKindChoices.TEXT_AREA,
+            "direction": Question.Direction.HORIZONTAL,
+            "order": 100,
+            "question_text": "gfda",
+            "default_annotation_color": "",
+        },
+    )
+    assert form.is_valid()
+
+    form = QuestionForm(
+        reader_study=ReaderStudyFactory(),
+        data={
+            "answer_type": AnswerType.TEXT,
+            "widget": QuestionWidgetKindChoices.TEXT_AREA,
+            "direction": Question.Direction.HORIZONTAL,
+            "order": 100,
+            "question_text": "gfda",
+            "default_annotation_color": None,
+        },
+    )
+    assert form.is_valid()
+
+    form = QuestionForm(
+        reader_study=ReaderStudyFactory(),
+        data={
+            "answer_type": AnswerType.TEXT,
+            "widget": QuestionWidgetKindChoices.TEXT_AREA,
+            "direction": Question.Direction.HORIZONTAL,
+            "order": 100,
+            "question_text": "gfda",
+        },
+    )
+    assert form.is_valid()
+
+    form = QuestionForm(
+        reader_study=ReaderStudyFactory(),
+        data={
+            "answer_type": AnswerType.MASK,
+            "image_port": Question.ImagePort.MAIN,
+            "direction": Question.Direction.HORIZONTAL,
+            "order": 100,
+            "question_text": "gfda",
+            "default_annotation_color": "#000",
+        },
+    )
+    assert form.is_valid() is False
+    assert form.errors == {
+        "default_annotation_color": [
+            "This is an invalid color code. It must be an HTML hexadecimal color code e.g. #000000"
+        ]
+    }

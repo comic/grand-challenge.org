@@ -4,12 +4,17 @@ import re
 from datetime import timedelta
 from json import JSONDecodeError
 from pathlib import Path
+from typing import NamedTuple
 
 from celery import signature
 from django import forms
 from django.apps import apps
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.core.exceptions import (
+    MultipleObjectsReturned,
+    ObjectDoesNotExist,
+    ValidationError,
+)
 from django.core.files import File
 from django.core.files.base import ContentFile
 from django.core.validators import (
@@ -32,7 +37,7 @@ from django_deprecate_fields import deprecate_field
 from django_extensions.db.fields import AutoSlugField
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
-from grandchallenge.cases.models import Image, ImageFile
+from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.cases.widgets import FlexibleImageField
 from grandchallenge.charts.specs import components_line
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
@@ -65,8 +70,6 @@ from grandchallenge.workstation_configs.models import (
 )
 
 logger = logging.getLogger(__name__)
-
-DEFAULT_OUTPUT_INTERFACE_SLUG = "generic-overlay"
 
 
 class InterfaceKindChoices(models.TextChoices):
@@ -409,7 +412,9 @@ class InterfaceKind:
         Example json for Angle annotation
             required: "type", "lines", "version"
             optional: "name", "probability"
+
         .. code-block:: json
+
             {
                 "name": "Some angle",
                 "type": "Angle",
@@ -421,7 +426,9 @@ class InterfaceKind:
         Example json for Multiple angles annotation
             required: "type", "angles", "version"
             optional: "name", "probability"
+
         .. code-block:: json
+
             {
                 "name": "Some angles",
                 "type": "Multiple angles",
@@ -440,6 +447,84 @@ class InterfaceKind:
                         "name": "Third angle",
                         "lines": [[[20, 30, 0.5], [20, 100, 0.5]], [[180, 200, 0.5], [210, 200, 0.5]]],
                         "probability": 0.98
+                    }
+                ],
+                "version": {"major": 1, "minor": 0}
+            }
+
+        Example json for Ellipse annotation
+            required: "type", "major_axis", "minor_axis", "version"
+            optional: "name", "probability"
+
+        .. code-block:: json
+
+            {
+                "name": "Some ellipse",
+                "type": "Ellipse",
+                "major_axis": [[-10, 606, 0.5], [39, 559, 0.5]],
+                "minor_axis": [[2, 570, 0.5], [26, 595, 0.5]],
+                "probability": 0.92,
+                "version": {"major": 1, "minor": 0}
+            }
+
+        Example json for Multiple ellipse annotation
+            required: "type", "ellipses", "version"
+            optional: "name", "probability"
+
+        .. code-block:: json
+
+            {
+                "name": "Some ellipse",
+                "type": "Multiple ellipses",
+                "ellipses": [
+                    {
+                        "major_axis": [[-44, 535, 0.5], [-112, 494, 0.5]],
+                        "minor_axis": [[-88, 532, 0.5], [-68, 497, 0.5]],
+                        "probability": 0.69
+                    },
+                    {
+                        "major_axis": [[-17, 459, 0.5], [-94, 436, 0.5]],
+                        "minor_axis": [[-61, 467, 0.5], [-50, 428, 0.5]],
+                        "probability": 0.92
+                    }
+                ],
+                "version": {"major": 1, "minor": 0}
+            }
+
+        Example json for Three-point angle annotation
+            required: "type", "angle", "version"
+            optional: "name", "probability"
+
+        .. code-block:: json
+
+            {
+                "name": "Some 3-point angle",
+                "type": "Three-point angle",
+                "angle": [[177, 493, 0.5], [22, 489, 0.5], [112, 353, 0.5]],
+                "probability": 0.003,
+                "version": {"major": 1, "minor": 0}
+            }
+
+        Example json for Three-point angle annotation
+            required: "type", "angles", "version"
+            optional: "name", "probability"
+
+        .. code-block:: json
+
+
+            {
+                "name": "Multiple 3-point angles",
+                "type": "Multiple three-point angles",
+                "angles": [
+                    {
+                        "name": "first",
+                        "angle": [[300, 237, 0.5], [263, 282, 0.5], [334, 281, 0.5]],
+                        "probability": 0.92
+                    },
+                    {
+                        "name": "second",
+                        "angle": [[413, 237, 0.5], [35, 160, 0.5], [367, 293, 0.5]],
+                        "probability": 0.69
                     }
                 ],
                 "version": {"major": 1, "minor": 0}
@@ -646,6 +731,26 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
             InterfaceKind.InterfaceKindChoices.OBJ,
             InterfaceKind.InterfaceKindChoices.MP4,
+        }
+
+    @staticmethod
+    def interface_type_mandatory_isolation():
+        """Interfaces that can only be displayed in isolation."""
+        return {
+            InterfaceKind.InterfaceKindChoices.CHART,
+            InterfaceKind.InterfaceKindChoices.PDF,
+            InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG,
+            InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
+            InterfaceKind.InterfaceKindChoices.MP4,
+        }
+
+    @staticmethod
+    def interface_type_undisplayable():
+        """Interfaces that cannot be displayed."""
+        return {
+            InterfaceKind.InterfaceKindChoices.CSV,
+            InterfaceKind.InterfaceKindChoices.ZIP,
+            InterfaceKind.InterfaceKindChoices.OBJ,
         }
 
 
@@ -995,6 +1100,19 @@ class ComponentInterface(OverlaySegmentsMixin):
 
         if self.schema:
             JSONValidator(schema=self.schema)(value=value)
+
+    @cached_property
+    def value_required(self):
+        value_required = True
+        if not self.is_image_kind and not self.requires_file:
+            try:
+                self.validate_against_schema(value=None)
+                value_required = False
+            except ValidationError:
+                pass
+        elif self.kind == InterfaceKindChoices.BOOL:
+            value_required = False
+        return value_required
 
     class Meta:
         ordering = ("pk",)
@@ -1357,11 +1475,11 @@ class ComponentJob(models.Model):
         help_text="Serialized task that is run on job failure",
     )
     time_limit = models.PositiveSmallIntegerField(
-        default=60 * 60,
+        default=3600,
         help_text="Time limit for the job in seconds",
         validators=[
-            MinValueValidator(limit_value=60),
-            MaxValueValidator(limit_value=60 * 60),
+            MinValueValidator(limit_value=300),
+            MaxValueValidator(limit_value=7200),
         ],
     )
 
@@ -1580,17 +1698,7 @@ class ImportStatusChoices(IntegerChoices):
 
 class ComponentImageManager(models.Manager):
     def executable_images(self):
-        queryset = self.filter(is_manifest_valid=True, is_in_registry=True)
-
-        if (
-            self.model.SHIM_IMAGE
-            and settings.COMPONENTS_CREATE_SAGEMAKER_MODEL
-        ):
-            # SageMaker models are only created for shimmed images
-            # See validate_docker_image
-            return queryset.filter(is_on_sagemaker=True)
-        else:
-            return queryset
+        return self.filter(is_manifest_valid=True, is_in_registry=True)
 
     def active_images(self):
         return self.executable_images().filter(is_desired_version=True)
@@ -1627,8 +1735,8 @@ class ComponentImage(FieldChangeMixin, models.Model):
             )
         ],
         help_text=(
-            ".tar.xz archive of the container image produced from the command "
-            "'docker save IMAGE | xz -T0 -c > IMAGE.tar.xz'. See "
+            ".tar.gz archive of the container image produced from the command "
+            "'docker save IMAGE | gzip -c > IMAGE.tar.gz'. See "
             "https://docs.docker.com/engine/reference/commandline/save/"
         ),
         storage=private_s3_storage,
@@ -1653,11 +1761,6 @@ class ComponentImage(FieldChangeMixin, models.Model):
         default=False,
         editable=False,
         help_text="Is this image in the container registry?",
-    )
-    is_on_sagemaker = models.BooleanField(
-        default=False,
-        editable=False,
-        help_text="Does a SageMaker model for this image exist?",
     )
     status = models.TextField(editable=False)
 
@@ -1832,7 +1935,7 @@ class ComponentImage(FieldChangeMixin, models.Model):
             command = _repo_login_and_run(
                 command=["crane", "manifest", self.original_repo_tag]
             )
-            manifest = json.loads(command.stdout.decode("utf-8"))
+            manifest = json.loads(command.stdout)
             return (
                 sum(layer["size"] for layer in manifest["layers"])
                 + manifest["config"]["size"]
@@ -1847,3 +1950,144 @@ class ComponentImage(FieldChangeMixin, models.Model):
         else:
             self.size_in_storage = self.image.size
             self.size_in_registry = self.calculate_size_in_registry()
+
+
+class CIVForObjectMixin:
+    def create_civ(self, *, ci_slug, new_value, user=None):
+        ci = ComponentInterface.objects.get(slug=ci_slug)
+        try:
+            current_civ = self.values.filter(interface=ci).get()
+        except ObjectDoesNotExist:
+            current_civ = None
+        except MultipleObjectsReturned as e:
+            raise e
+
+        if ci.is_json_kind and not ci.requires_file:
+            return self.create_civ_for_value(
+                ci=ci, current_civ=current_civ, new_value=new_value
+            )
+        elif ci.is_image_kind:
+            return self.create_civ_for_image(
+                ci=ci, current_civ=current_civ, new_value=new_value, user=user
+            )
+        elif ci.requires_file:
+            return self.create_civ_for_file(
+                ci=ci, current_civ=current_civ, new_value=new_value
+            )
+        else:
+            NotImplementedError(f"CIV creation for {ci} not handled.")
+
+    def create_civ_for_value(self, *, ci, current_civ, new_value):
+        current_value = current_civ.value if current_civ else None
+        civ = ComponentInterfaceValue(interface=ci, value=new_value)
+        if current_value != new_value or (
+            current_civ is None and new_value is None
+        ):
+            try:
+                civ.full_clean()
+                civ.save()
+                self.values.remove(current_civ)
+                self.values.add(civ)
+            except ValidationError as e:
+                if new_value:
+                    raise e
+                else:
+                    self.values.remove(current_civ)
+
+    def create_civ_for_image(self, *, ci, current_civ, new_value, user):
+        current_image = current_civ.image if current_civ else None
+        if isinstance(new_value, Image) and current_image != new_value:
+            self.values.remove(current_civ)
+            civ, created = ComponentInterfaceValue.objects.get_or_create(
+                interface=ci, image=new_value
+            )
+            if created:
+                civ.full_clean()
+            self.values.add(civ)
+        elif isinstance(new_value, QuerySet):
+            # Local import to avoid circular dependency
+            from grandchallenge.components.tasks import add_image_to_object
+
+            us = RawImageUploadSession.objects.create(
+                creator=user,
+            )
+            us.user_uploads.set(new_value)
+            us.process_images(
+                linked_task=add_image_to_object.signature(
+                    kwargs={
+                        "app_label": self._meta.app_label,
+                        "model_name": self._meta.model_name,
+                        "object_pk": self.pk,
+                        "interface_pk": str(ci.pk),
+                    },
+                    immutable=True,
+                )
+            )
+
+    def create_civ_for_file(self, *, ci, current_civ, new_value):
+        if (
+            isinstance(new_value, ComponentInterfaceValue)
+            and current_civ != new_value
+        ):
+            self.values.remove(current_civ)
+            self.values.add(new_value)
+        elif isinstance(new_value, UserUpload):
+            from grandchallenge.components.tasks import add_file_to_object
+
+            transaction.on_commit(
+                add_file_to_object.signature(
+                    kwargs={
+                        "app_label": self._meta.app_label,
+                        "model_name": self._meta.model_name,
+                        "user_upload_pk": str(new_value.pk),
+                        "interface_pk": str(ci.pk),
+                        "object_pk": self.pk,
+                        "civ_pk": current_civ.pk if current_civ else None,
+                    }
+                ).apply_async
+            )
+        elif not new_value:
+            # if no new value is provided (user selects '---' in dropdown)
+            # delete old CIV
+            self.values.remove(current_civ)
+
+
+class InterfacesAndValues(NamedTuple):
+    interfaces: set
+    values: dict
+
+
+class ValuesForInterfacesMixin:
+    @property
+    def civ_sets_related_manager(self):
+        raise NotImplementedError
+
+    @cached_property
+    def interfaces_and_values(self):
+        vals = list(
+            self.civ_sets_related_manager.select_related(
+                "values", "values__interface", "values__image"
+            )
+            .filter(values__interface__slug__isnull=False)
+            .values(
+                "values__interface__slug",
+                "values__id",
+            )
+            .order_by("values__id")
+            .distinct()
+        )
+        interfaces = [x["values__interface__slug"] for x in vals]
+        return InterfacesAndValues(interfaces=set(interfaces), values=vals)
+
+    @cached_property
+    def values_for_interfaces(self):
+        interfaces_and_values = self.interfaces_and_values
+        values_for_interfaces = {
+            interface: [
+                x["values__id"]
+                for x in interfaces_and_values.values
+                if x["values__interface__slug"] == interface
+            ]
+            for interface in interfaces_and_values.interfaces
+        }
+        return values_for_interfaces
