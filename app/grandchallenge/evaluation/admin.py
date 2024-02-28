@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.forms import Form, ModelForm, ModelMultipleChoiceField
 from django.urls import path, reverse
 from django.utils.html import format_html
+from django.utils.text import slugify
 from django.views.generic import FormView
 
 from grandchallenge.archives.models import Archive
@@ -61,7 +62,9 @@ class PhaseAdminForm(ModelForm):
 
 class ConfigureAlgorithmPhasesForm(Form):
     phases = ModelMultipleChoiceField(
-        queryset=Phase.objects.select_related("challenge").all()
+        queryset=Phase.objects.select_related("challenge")
+        .filter(submission_kind=SubmissionKindChoices.CSV)
+        .all()
     )
     algorithm_inputs = ModelMultipleChoiceField(
         queryset=ComponentInterface.objects.all()
@@ -72,17 +75,16 @@ class ConfigureAlgorithmPhasesForm(Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        for phase in self.cleaned_data["phases"]:
-            if phase.submission_kind == SubmissionKindChoices.ALGORITHM:
-                raise ValidationError(
-                    f"{phase.title} is already configured as an algorithm phase."
-                )
-            if Archive.objects.filter(
-                title=f"{phase.challenge.short_name} {phase.title} data set"
-            ).exists():
-                raise ValidationError(
-                    f"Archive for {phase.title} already exists."
-                )
+        try:
+            for phase in self.cleaned_data["phases"]:
+                if Archive.objects.filter(
+                    slug=f"{slugify(phase.challenge.short_name)}-{slugify(phase.title)}-dataset"
+                ).exists():
+                    raise ValidationError(
+                        f"Archive for {phase} already exists."
+                    )
+        except KeyError:
+            pass
         return cleaned_data
 
 
@@ -119,7 +121,7 @@ class ConfigureAlgorithmPhasesView(PermissionRequiredMixin, FormView):
     def turn_phase_into_algorithm_phase(self, *, phase, inputs, outputs):
         archive = Archive.objects.create(
             title=format_html(
-                "{challenge_name} {phase_title} data set",
+                "{challenge_name} {phase_title} dataset",
                 challenge_name=phase.challenge.short_name,
                 phase_title=phase.title,
             )
@@ -168,7 +170,7 @@ class PhaseAdmin(admin.ModelAdmin):
 
     def get_urls(self):
         urls = super().get_urls()
-        my_urls = [
+        extra_url = [
             path(
                 "create_algorithm_phase/",
                 self.admin_site.admin_view(
@@ -177,7 +179,7 @@ class PhaseAdmin(admin.ModelAdmin):
                 name="algorithm_phase_create",
             )
         ]
-        return my_urls + urls
+        return extra_url + urls
 
     @admin.display(boolean=True)
     def open_for_submissions(self, instance):
