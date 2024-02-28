@@ -1389,15 +1389,15 @@ class Question(UUIDModel, OverlaySegmentsMixin):
                 "required at the same time"
             )
 
-        if self.answer_type in (
-            AnswerType.HEADING,
-            AnswerType.BOOL,
-            AnswerType.CHOICE,
-            AnswerType.MULTIPLE_CHOICE,
+        if self.answer_type not in (
+            *AnswerType.get_annotation_types(),
+            AnswerType.NUMBER,
+            AnswerType.TEXT,
         ):
             raise ValidationError(
-                "Empty answer confirmation is not supported for Heading, Boolean, "
-                "and Choice types. For Choice types, you can add an empty option "
+                "Empty answer confirmation is not supported for "
+                f"{self.get_answer_type_display()} type questions. "
+                "For (Multiple) Choice types, you can add an empty option "
                 "and make the question required"
             )
 

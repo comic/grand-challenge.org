@@ -1029,22 +1029,19 @@ def test_annotation_view_port_contains_image():
             AnswerType.HEADING,
             False,
             pytest.raises(ValidationError),
-            "Empty answer confirmation is not supported for Heading, Boolean, and "
-            "Choice types.",
+            "Empty answer confirmation is not supported for Heading type questions.",
         ),
         (
             AnswerType.CHOICE,
             False,
             pytest.raises(ValidationError),
-            "Empty answer confirmation is not supported for Heading, Boolean, and "
-            "Choice types.",
+            "Empty answer confirmation is not supported for Choice type questions.",
         ),
         (
             AnswerType.MULTIPLE_CHOICE,
             False,
             pytest.raises(ValidationError),
-            "Empty answer confirmation is not supported for Heading, Boolean, and "
-            "Choice types.",
+            "Empty answer confirmation is not supported for Multiple choice type questions.",
         ),
         (
             AnswerType.NUMBER,
