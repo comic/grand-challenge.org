@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Configure algorithm phases
+        </li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h3>Configure algorithm submission phases</h3>
+    <form method="post">
+        {% crispy form %}
+    </form>
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    {{ form.media }}
+{% endblock %}

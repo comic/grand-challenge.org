@@ -29,6 +29,7 @@ from tests.evaluation_tests.factories import (
 )
 from tests.factories import (
     ChallengeFactory,
+    ChallengeRequestFactory,
     GroupFactory,
     UserFactory,
     WorkstationConfigFactory,
@@ -1251,3 +1252,62 @@ def test_update_view_permissions(client):
 
     # Only phases for this challenge
     assert {*response.context["form"].fields["phases"].queryset} == {ph1}
+
+
+@pytest.mark.django_db
+def test_configure_algorithm_phases_permissions(client):
+    user = UserFactory()
+    response = get_view_for_user(
+        viewname="challenges:configure-algorithm-phases",
+        client=client,
+        user=user,
+    )
+    assert response.status_code == 403
+
+    assign_perm("evaluation.configure_algorithm_phase", user)
+    response = get_view_for_user(
+        viewname="challenges:configure-algorithm-phases",
+        client=client,
+        user=user,
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_configure_algorithm_phases_admin_view(client):
+    user = UserFactory()
+    p1, p2 = PhaseFactory.create_batch(
+        2, submission_kind=SubmissionKindChoices.CSV
+    )
+    ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
+    challenge_request = ChallengeRequestFactory(
+        short_name=p1.challenge.short_name
+    )
+    assign_perm("evaluation.configure_algorithm_phase", user)
+    response = get_view_for_user(
+        viewname="challenges:configure-algorithm-phases",
+        client=client,
+        method=client.post,
+        user=user,
+        data={
+            "phases": [p1.pk, p2.pk],
+            "algorithm_inputs": [ci1.pk],
+            "algorithm_outputs": [ci2.pk],
+        },
+    )
+    assert response.status_code == 302
+    for phase in [p1, p2]:
+        phase.refresh_from_db()
+        assert phase.submission_kind == SubmissionKindChoices.ALGORITHM
+        assert phase.creator_must_be_verified
+        assert (
+            phase.archive.title
+            == f"{phase.challenge.short_name} {phase.title} dataset"
+        )
+        assert list(phase.algorithm_inputs.all()) == [ci1]
+        assert list(phase.algorithm_outputs.all()) == [ci2]
+    assert (
+        p1.algorithm_time_limit
+        == challenge_request.inference_time_limit_in_minutes
+    )
+    assert p2.algorithm_time_limit == 1200

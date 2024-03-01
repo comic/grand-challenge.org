@@ -6,14 +6,22 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.forms import CheckboxInput, HiddenInput, ModelChoiceField
+from django.forms import (
+    CheckboxInput,
+    Form,
+    HiddenInput,
+    ModelChoiceField,
+    ModelMultipleChoiceField,
+)
 from django.utils.html import format_html
 from django.utils.text import format_lazy
+from django_select2.forms import Select2MultipleWidget
 from django_summernote.widgets import SummernoteInplaceWidget
 
 from grandchallenge.algorithms.forms import UserAlgorithmsForPhaseMixin
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.forms import ContainerImageForm
+from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.forms import (
     SaveFormInitMixin,
     WorkstationUserFilterMixin,
@@ -539,3 +547,24 @@ class EvaluationForm(SaveFormInitMixin, forms.Form):
             raise ValidationError("This challenge has exceeded its budget")
 
         return cleaned_data
+
+
+class ConfigureAlgorithmPhasesForm(SaveFormInitMixin, Form):
+    phases = ModelMultipleChoiceField(
+        queryset=Phase.objects.select_related("challenge")
+        .filter(
+            submission_kind=SubmissionKindChoices.CSV,
+            submission__isnull=True,
+            method__isnull=True,
+        )
+        .all(),
+        widget=Select2MultipleWidget,
+    )
+    algorithm_inputs = ModelMultipleChoiceField(
+        queryset=ComponentInterface.objects.all(),
+        widget=Select2MultipleWidget,
+    )
+    algorithm_outputs = ModelMultipleChoiceField(
+        queryset=ComponentInterface.objects.all(),
+        widget=Select2MultipleWidget,
+    )

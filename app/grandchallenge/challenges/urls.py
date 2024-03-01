@@ -11,12 +11,18 @@ from grandchallenge.challenges.views import (
     ChallengeRequestStatusUpdate,
     UsersChallengeList,
 )
+from grandchallenge.evaluation.views import ConfigureAlgorithmPhasesView
 
 app_name = "challenges"
 
 urlpatterns = [
     path("", ChallengeList.as_view(), name="list"),
     path("my-challenges/", UsersChallengeList.as_view(), name="users-list"),
+    path(
+        "configure-algorithm-phases/",
+        ConfigureAlgorithmPhasesView.as_view(),
+        name="configure-algorithm-phases",
+    ),
     path("requests/", ChallengeRequestList.as_view(), name="requests-list"),
     path(
         "requests/create/",
