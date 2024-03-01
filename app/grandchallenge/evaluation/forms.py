@@ -564,6 +564,10 @@ class ConfigureAlgorithmPhasesForm(SaveFormInitMixin, Form):
         queryset=ComponentInterface.objects.all(),
         widget=Select2MultipleWidget,
     )
+    algorithm_time_limit = IntegerField(
+        widget=forms.HiddenInput(),
+        disabled=True,
+    )
 
     def __init__(self, *args, challenge, **kwargs):
         super().__init__(*args, **kwargs)
@@ -587,18 +591,10 @@ class ConfigureAlgorithmPhasesForm(SaveFormInitMixin, Form):
             challenge_request = ChallengeRequest.objects.get(
                 short_name=challenge.short_name
             )
-            self.fields["algorithm_time_limit"] = IntegerField(
-                label="algorithm_time_limit",
-                widget=forms.HiddenInput(),
-                disabled=True,
-                initial=challenge_request.inference_time_limit_in_minutes * 60,
+            self.fields["algorithm_time_limit"].initial = (
+                challenge_request.inference_time_limit_in_minutes * 60
             )
         except ObjectDoesNotExist:
-            self.fields["algorithm_time_limit"] = IntegerField(
-                label="algorithm_time_limit",
-                disabled=True,
-                widget=forms.HiddenInput(),
-                initial=Phase._meta.get_field(
-                    "algorithm_time_limit"
-                ).get_default(),
+            self.fields["algorithm_time_limit"].initial = (
+                Phase._meta.get_field("algorithm_time_limit").get_default()
             )
