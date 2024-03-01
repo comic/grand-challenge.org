@@ -28,6 +28,7 @@ from tests.evaluation_tests.factories import (
     SubmissionFactory,
 )
 from tests.factories import (
+    ChallengeFactory,
     UserFactory,
     WorkstationConfigFactory,
     WorkstationFactory,
@@ -537,29 +538,33 @@ def test_algorithm_for_phase_form_validation():
 
 @pytest.mark.django_db
 def test_configure_algorithm_phases_form():
+    ch = ChallengeFactory()
     p1, p2, p3 = PhaseFactory.create_batch(
-        3, submission_kind=SubmissionKindChoices.CSV
+        3, challenge=ch, submission_kind=SubmissionKindChoices.CSV
     )
+    p4 = PhaseFactory(submission_kind=SubmissionKindChoices.CSV)
     SubmissionFactory(phase=p1)
     MethodFactory(phase=p2)
     p_alg = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
     ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
 
     form = ConfigureAlgorithmPhasesForm(
+        challenge=ch,
         data={
-            "phases": [p1, p2, p3, p_alg],
+            "phases": [p1, p2, p3, p4, p_alg],
             "algorithm_inputs": [ci1],
             "algorithm_outputs": [ci2],
-        }
+        },
     )
     assert form.is_valid() is False
     assert list(form.fields["phases"].queryset) == [p3]
 
     form3 = ConfigureAlgorithmPhasesForm(
+        challenge=ch,
         data={
             "phases": [p3],
             "algorithm_inputs": [ci1],
             "algorithm_outputs": [ci2],
-        }
+        },
     )
     assert form3.is_valid()

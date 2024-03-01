@@ -8,8 +8,10 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.forms import (
     CheckboxInput,
+    CheckboxSelectMultiple,
     Form,
     HiddenInput,
+    IntegerField,
     ModelChoiceField,
     ModelMultipleChoiceField,
 )
@@ -19,7 +21,7 @@ from django_select2.forms import Select2MultipleWidget
 from django_summernote.widgets import SummernoteInplaceWidget
 
 from grandchallenge.algorithms.forms import UserAlgorithmsForPhaseMixin
-from grandchallenge.challenges.models import Challenge
+from grandchallenge.challenges.models import Challenge, ChallengeRequest
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.forms import (
@@ -551,14 +553,8 @@ class EvaluationForm(SaveFormInitMixin, forms.Form):
 
 class ConfigureAlgorithmPhasesForm(SaveFormInitMixin, Form):
     phases = ModelMultipleChoiceField(
-        queryset=Phase.objects.select_related("challenge")
-        .filter(
-            submission_kind=SubmissionKindChoices.CSV,
-            submission__isnull=True,
-            method__isnull=True,
-        )
-        .all(),
-        widget=Select2MultipleWidget,
+        queryset=None,
+        widget=CheckboxSelectMultiple,
     )
     algorithm_inputs = ModelMultipleChoiceField(
         queryset=ComponentInterface.objects.all(),
@@ -568,3 +564,41 @@ class ConfigureAlgorithmPhasesForm(SaveFormInitMixin, Form):
         queryset=ComponentInterface.objects.all(),
         widget=Select2MultipleWidget,
     )
+
+    def __init__(self, *args, challenge, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["phases"].queryset = (
+            Phase.objects.select_related("challenge")
+            .filter(
+                challenge=challenge,
+                submission_kind=SubmissionKindChoices.CSV,
+                submission__isnull=True,
+                method__isnull=True,
+            )
+            .all()
+        )
+
+        self.fields["algorithm_time_limit"] = IntegerField(
+            label="algorithm_time_limit",
+            widget=forms.HiddenInput(),
+        )
+
+        try:
+            challenge_request = ChallengeRequest.objects.get(
+                short_name=challenge.short_name
+            )
+            self.fields["algorithm_time_limit"] = IntegerField(
+                label="algorithm_time_limit",
+                widget=forms.HiddenInput(),
+                disabled=True,
+                initial=challenge_request.inference_time_limit_in_minutes * 60,
+            )
+        except ObjectDoesNotExist:
+            self.fields["algorithm_time_limit"] = IntegerField(
+                label="algorithm_time_limit",
+                disabled=True,
+                widget=forms.HiddenInput(),
+                initial=Phase._meta.get_field(
+                    "algorithm_time_limit"
+                ).get_default(),
+            )

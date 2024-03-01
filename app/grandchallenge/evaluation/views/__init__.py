@@ -27,7 +27,6 @@ from guardian.mixins import LoginRequiredMixin
 from grandchallenge.algorithms.forms import AlgorithmForPhaseForm
 from grandchallenge.algorithms.models import Algorithm, Job
 from grandchallenge.archives.models import Archive
-from grandchallenge.challenges.models import ChallengeRequest
 from grandchallenge.components.models import InterfaceKind
 from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.core.forms import UserFormKwargsMixin
@@ -995,20 +994,30 @@ class ConfigureAlgorithmPhasesView(PermissionRequiredMixin, FormView):
     template_name = "evaluation/configure_algorithm_phases_form.html"
     raise_exception = True
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"challenge": self.request.challenge})
+        return kwargs
+
     def form_valid(self, form):
         for phase in form.cleaned_data["phases"]:
             self.turn_phase_into_algorithm_phase(
                 phase=phase,
                 inputs=form.cleaned_data["algorithm_inputs"],
                 outputs=form.cleaned_data["algorithm_outputs"],
+                algorithm_time_limit=form.cleaned_data["algorithm_time_limit"],
             )
         messages.success(self.request, "Phases were successfully updated")
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse("challenges:list")
+        return reverse(
+            "challenges:requests-list",
+        )
 
-    def turn_phase_into_algorithm_phase(self, *, phase, inputs, outputs):
+    def turn_phase_into_algorithm_phase(
+        self, *, phase, inputs, outputs, algorithm_time_limit
+    ):
         archive = Archive.objects.create(
             title=format_html(
                 "{challenge_name} {phase_title} dataset",
@@ -1030,19 +1039,7 @@ class ConfigureAlgorithmPhasesView(PermissionRequiredMixin, FormView):
         for user in phase.challenge.admins_group.user_set.all():
             archive.add_editor(user)
 
-        try:
-            challenge_request = ChallengeRequest.objects.get(
-                short_name=phase.challenge.short_name
-            )
-            phase.algorithm_time_limit = (
-                challenge_request.inference_time_limit_in_minutes
-            )
-        except ObjectDoesNotExist:
-            messages.warning(
-                self.request,
-                f"Algorithm run time limit could not be configured for {phase}.",
-            )
-
+        phase.algorithm_time_limit = algorithm_time_limit
         phase.archive = archive
         phase.submission_kind = phase.SubmissionKindChoices.ALGORITHM
         phase.creator_must_be_verified = True

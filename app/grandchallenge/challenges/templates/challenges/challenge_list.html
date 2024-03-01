@@ -16,15 +16,6 @@
                 <i class="fas fa-plus mr-1"></i> Host your own Challenge
             </a>
         </div>
-        {% if perms.evaluation.configure_algorithm_phase %}
-            <div class="col-xl-4 col-lg-5 col-md-6 mb-3 text-md-right">
-                <a class="btn btn-primary"
-                   href="{% url 'challenges:configure-algorithm-phases' %}"
-                   title="Configure algorithm phases">
-                    <i class="fas fa-edit mr-1"></i> Configure algorithm phases
-                </a>
-            </div>
-        {% endif %}
     </div>
     {% include "grandchallenge/partials/filters.html" with filter=filter filters_applied=filters_applied %}
 
