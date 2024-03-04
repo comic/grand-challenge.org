@@ -582,11 +582,6 @@ class ConfigureAlgorithmPhasesForm(SaveFormInitMixin, Form):
             .all()
         )
 
-        self.fields["algorithm_time_limit"] = IntegerField(
-            label="algorithm_time_limit",
-            widget=forms.HiddenInput(),
-        )
-
         try:
             challenge_request = ChallengeRequest.objects.get(
                 short_name=challenge.short_name

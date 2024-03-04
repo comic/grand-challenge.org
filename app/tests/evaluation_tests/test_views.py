@@ -1281,7 +1281,7 @@ def test_configure_algorithm_phases_permissions(client):
 
 
 @pytest.mark.django_db
-def test_configure_algorithm_phases_admin_view(client):
+def test_configure_algorithm_phases_view(client):
     user = UserFactory()
     ch = ChallengeFactory()
     phase = PhaseFactory(
