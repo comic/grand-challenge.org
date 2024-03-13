@@ -23,6 +23,12 @@ from grandchallenge.subdomains.utils import reverse
 UNSUBSCRIBE_SALT = "email-subscription-preferences"
 
 
+class NotificationSubscriptionOptions(TextChoices):
+    DAILY_SUMMARY = "DAILY_SUMMARY", _("Send me an email with a daily summary")
+    DISABLED = "DISABLED", _("Do not send me notification emails")
+    INSTANT = "INSTANT", _("Send me an email immediately")
+
+
 class EmailSubscriptionTypes(TextChoices):
     NEWSLETTER = "NEWSLETTER"
     NOTIFICATION = "NOTIFICATION"
@@ -55,9 +61,13 @@ class UserProfile(models.Model):
         help_text="Display the organizations that you are a member of in your profile.",
     )
 
-    receive_notification_emails = models.BooleanField(
-        default=True,
-        help_text="Whether to receive notification emails",
+    receive_notification_emails = models.CharField(
+        max_length=50,
+        choices=NotificationSubscriptionOptions.choices,
+        default=NotificationSubscriptionOptions.DAILY_SUMMARY,
+        help_text=(
+            "Whether to receive emails about unread notifications and how often (immediately vs. once a day if necessary."
+        ),
     )
     notification_email_last_sent_at = models.DateTimeField(
         default=None, null=True, editable=False
