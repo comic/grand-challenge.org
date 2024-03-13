@@ -11,6 +11,7 @@ from grandchallenge.direct_messages.emails import (
 from grandchallenge.direct_messages.tasks import (
     send_new_unread_direct_messages_emails,
 )
+from grandchallenge.profiles.models import NotificationSubscriptionOptions
 from tests.direct_messages_tests.factories import DirectMessageFactory
 from tests.factories import UserFactory
 
@@ -65,7 +66,9 @@ def test_get_users_to_send_new_unread_direct_messages_email(
 
     # Opt out user should not be notified
     opt_out_user = UserFactory()
-    opt_out_user.user_profile.receive_notification_emails = False
+    opt_out_user.user_profile.receive_notification_emails = (
+        NotificationSubscriptionOptions.DISABLED
+    )
     opt_out_user.user_profile.save()
     DirectMessageFactory().unread_by.add(opt_out_user)
 

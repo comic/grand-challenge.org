@@ -4,29 +4,38 @@ from django.utils.timezone import now
 
 from grandchallenge.notifications.models import Notification
 from grandchallenge.notifications.tasks import send_unread_notification_emails
+from grandchallenge.profiles.models import NotificationSubscriptionOptions
 from tests.factories import UserFactory
 from tests.notifications_tests.factories import NotificationFactory
 
 
+@pytest.mark.parametrize(
+    "notification_preference, num_emails",
+    [
+        (NotificationSubscriptionOptions.DAILY_SUMMARY, 1),
+        (NotificationSubscriptionOptions.INSTANT, 1),
+        (NotificationSubscriptionOptions.DISABLED, 0),
+    ],
+)
 @pytest.mark.django_db
-def test_notification_email():
+def test_notification_email(notification_preference, num_emails):
     user1, user2 = UserFactory.create_batch(2)
-    user2.is_active = False
-    user2.save()
-    _ = NotificationFactory(user=user1, type=Notification.Type.GENERIC)
-    _ = NotificationFactory(user=user2, type=Notification.Type.GENERIC)
+    user1.is_active = False
+    user1.save()
+    for user in [user1, user2]:
+        user.user_profile.receive_notification_emails = notification_preference
+        user.user_profile.save()
+        _ = NotificationFactory(user=user, type=Notification.Type.GENERIC)
+        assert user.user_profile.has_unread_notifications
 
-    assert user1.user_profile.has_unread_notifications
-    assert user1.user_profile.receive_notification_emails
-    assert user2.user_profile.has_unread_notifications
-    assert user2.user_profile.receive_notification_emails
     assert len(mail.outbox) == 0
+
     send_unread_notification_emails()
-    assert len(mail.outbox) == 1
-    email = mail.outbox[-1]
-    assert user1.email in email.to
-    assert user2.email not in email.to
-    assert "You have 1 new notification" in email.body
+    assert len(mail.outbox) == num_emails
+    for email in mail.outbox:
+        assert user2.email in email.to
+        assert user1.email not in email.to
+        assert "You have 1 new notification" in str(email.body)
 
 
 @pytest.mark.django_db
@@ -58,22 +67,24 @@ def test_notification_email_only_about_new_unread_notifications():
     assert "You have 1 new notification" in mail.outbox[-1].body
 
 
+@pytest.mark.parametrize(
+    "preference,num_emails",
+    [
+        (NotificationSubscriptionOptions.DAILY_SUMMARY, 1),
+        (NotificationSubscriptionOptions.INSTANT, 1),
+        (NotificationSubscriptionOptions.DISABLED, 0),
+    ],
+)
 @pytest.mark.django_db
-def test_notification_email_opt_out():
+def test_notification_email_opt_out(preference, num_emails):
     user1 = UserFactory()
-    user1.user_profile.receive_notification_emails = False
+    user1.user_profile.receive_notification_emails = preference
     user1.user_profile.save()
 
     _ = NotificationFactory(user=user1, type=Notification.Type.GENERIC)
 
     send_unread_notification_emails()
-    assert len(mail.outbox) == 0
-
-    user1.user_profile.receive_notification_emails = True
-    user1.user_profile.save()
-
-    send_unread_notification_emails()
-    assert len(mail.outbox) == 1
+    assert len(mail.outbox) == num_emails
 
 
 @pytest.mark.django_db

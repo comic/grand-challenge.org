@@ -134,7 +134,6 @@ class SubscriptionPreferenceForm(forms.ModelForm):
             "receive_newsletter",
         )
         widgets = {
-            "receive_notification_emails": CheckboxInput,
             "receive_newsletter": CheckboxInput,
         }
 

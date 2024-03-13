@@ -34,6 +34,7 @@ from grandchallenge.profiles.forms import (
 from grandchallenge.profiles.models import (
     UNSUBSCRIBE_SALT,
     EmailSubscriptionTypes,
+    NotificationSubscriptionOptions,
     UserProfile,
 )
 from grandchallenge.profiles.serializers import UserProfileSerializer
@@ -291,7 +292,7 @@ class NotificationUnsubscribeView(EmailPreferencesUpdate):
         kwargs.update(
             {
                 "receive_newsletter": self.object.receive_newsletter,
-                "receive_notification_emails": False,
+                "receive_notification_emails": NotificationSubscriptionOptions.DISABLED,
                 "autosubmit": True,
             }
         )

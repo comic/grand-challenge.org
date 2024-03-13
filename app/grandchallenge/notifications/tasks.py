@@ -5,7 +5,10 @@ from django.db.models import Count, F, Q
 from django.utils.timezone import now
 
 from grandchallenge.notifications.emails import send_unread_notifications_email
-from grandchallenge.profiles.models import UserProfile
+from grandchallenge.profiles.models import (
+    NotificationSubscriptionOptions,
+    UserProfile,
+)
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
@@ -14,8 +17,10 @@ def send_unread_notification_emails():
 
     profiles = (
         UserProfile.objects.filter(
-            receive_notification_emails=True,
             user__is_active=True,
+        )
+        .exclude(
+            receive_notification_emails=NotificationSubscriptionOptions.DISABLED
         )
         .annotate(
             unread_notification_count=Count(

@@ -156,13 +156,16 @@ class UserProfile(models.Model):
             else:
                 raise ValueError("User has opted out of newsletter emails")
         elif subscription_type == EmailSubscriptionTypes.NOTIFICATION:
-            if self.receive_notification_emails:
+            if (
+                self.receive_notification_emails
+                == NotificationSubscriptionOptions.DISABLED
+            ):
+                raise ValueError("User has opted out of notification emails")
+            else:
                 return reverse(
                     "notification-unsubscribe",
                     kwargs={"token": self.unsubscribe_token},
                 )
-            else:
-                raise ValueError("User has opted out of notification emails")
         elif subscription_type == EmailSubscriptionTypes.SYSTEM:
             return None
         else:

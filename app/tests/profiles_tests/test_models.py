@@ -2,6 +2,7 @@ import pytest
 from actstream.actions import follow
 
 from grandchallenge.notifications.models import Notification
+from grandchallenge.profiles.models import NotificationSubscriptionOptions
 from tests.factories import UserFactory
 from tests.notifications_tests.factories import NotificationFactory
 from tests.utils import get_view_for_user
@@ -15,7 +16,10 @@ def test_notification_preference_created():
 
     assert prefs
     assert prefs.user == u
-    assert prefs.receive_notification_emails is True
+    assert (
+        prefs.receive_notification_emails
+        is NotificationSubscriptionOptions.DAILY_SUMMARY
+    )
     assert prefs.notification_email_last_sent_at is None
     assert prefs.has_unread_notifications is False
 

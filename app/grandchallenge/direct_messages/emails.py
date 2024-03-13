@@ -6,7 +6,10 @@ from django.utils.html import format_html
 
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.emails.emails import send_standard_email_batch
-from grandchallenge.profiles.models import EmailSubscriptionTypes
+from grandchallenge.profiles.models import (
+    EmailSubscriptionTypes,
+    NotificationSubscriptionOptions,
+)
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -17,8 +20,10 @@ def get_users_to_send_new_unread_direct_messages_email():
             "unread_direct_messages__sender", "user_profile"
         )
         .filter(
-            user_profile__receive_notification_emails=True,
             is_active=True,
+        )
+        .exclude(
+            user_profile__receive_notification_emails=NotificationSubscriptionOptions.DISABLED,
         )
         .annotate(
             new_unread_message_count=Count(

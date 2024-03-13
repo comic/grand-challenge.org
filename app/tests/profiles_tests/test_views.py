@@ -6,6 +6,7 @@ from allauth.account.models import EmailAddress
 from rest_framework import status
 from rest_framework.test import force_authenticate
 
+from grandchallenge.profiles.models import NotificationSubscriptionOptions
 from grandchallenge.profiles.views import UserProfileViewSet
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.models import VerificationUserSet
@@ -214,24 +215,33 @@ def test_one_click_unsubscribe_invalid_token(client, viewname):
 
 
 @pytest.mark.parametrize(
-    "viewname,subscription_attr,unchanged_subscription_attr,logged_in",
+    "viewname,subscription_attr,unchanged_subscription_attr,logged_in,notification_preference,subscription_preference,unchanged_subscription_preference",
     (
         (
             "newsletter-unsubscribe",
             "receive_newsletter",
             "receive_notification_emails",
             True,
+            NotificationSubscriptionOptions.DAILY_SUMMARY,
+            False,
+            NotificationSubscriptionOptions.DAILY_SUMMARY,
         ),
         (
             "newsletter-unsubscribe",
             "receive_newsletter",
             "receive_notification_emails",
             False,
+            NotificationSubscriptionOptions.DAILY_SUMMARY,
+            False,
+            NotificationSubscriptionOptions.DAILY_SUMMARY,
         ),
         (
             "notification-unsubscribe",
             "receive_notification_emails",
             "receive_newsletter",
+            True,
+            NotificationSubscriptionOptions.DAILY_SUMMARY,
+            NotificationSubscriptionOptions.DISABLED,
             True,
         ),
         (
@@ -239,16 +249,62 @@ def test_one_click_unsubscribe_invalid_token(client, viewname):
             "receive_notification_emails",
             "receive_newsletter",
             False,
+            NotificationSubscriptionOptions.DAILY_SUMMARY,
+            NotificationSubscriptionOptions.DISABLED,
+            True,
+        ),
+        (
+            "newsletter-unsubscribe",
+            "receive_newsletter",
+            "receive_notification_emails",
+            True,
+            NotificationSubscriptionOptions.INSTANT,
+            False,
+            NotificationSubscriptionOptions.INSTANT,
+        ),
+        (
+            "newsletter-unsubscribe",
+            "receive_newsletter",
+            "receive_notification_emails",
+            False,
+            NotificationSubscriptionOptions.INSTANT,
+            False,
+            NotificationSubscriptionOptions.INSTANT,
+        ),
+        (
+            "notification-unsubscribe",
+            "receive_notification_emails",
+            "receive_newsletter",
+            True,
+            NotificationSubscriptionOptions.INSTANT,
+            NotificationSubscriptionOptions.DISABLED,
+            True,
+        ),
+        (
+            "notification-unsubscribe",
+            "receive_notification_emails",
+            "receive_newsletter",
+            False,
+            NotificationSubscriptionOptions.INSTANT,
+            NotificationSubscriptionOptions.DISABLED,
+            True,
         ),
     ),
 )
 @pytest.mark.django_db
 def test_one_click_unsubscribe_functionality(
-    client, viewname, subscription_attr, unchanged_subscription_attr, logged_in
+    client,
+    viewname,
+    subscription_attr,
+    unchanged_subscription_attr,
+    logged_in,
+    notification_preference,
+    subscription_preference,
+    unchanged_subscription_preference,
 ):
     user = UserFactory()
     user.user_profile.receive_newsletter = True
-    user.user_profile.receive_notification_emails = True
+    user.user_profile.receive_notification_emails = notification_preference
     user.user_profile.save()
 
     token = user.user_profile.unsubscribe_token
@@ -261,8 +317,14 @@ def test_one_click_unsubscribe_functionality(
     )
     assert response.status_code == 302
     user.user_profile.refresh_from_db()
-    assert not getattr(user.user_profile, subscription_attr)
-    assert getattr(user.user_profile, unchanged_subscription_attr)
+    assert (
+        getattr(user.user_profile, subscription_attr)
+        == subscription_preference
+    )
+    assert (
+        getattr(user.user_profile, unchanged_subscription_attr)
+        == unchanged_subscription_preference
+    )
     assert VerificationUserSet.objects.count() == 0
 
 
@@ -283,7 +345,9 @@ def test_one_click_unsubscribe_user_mismatch(
 
     user = UserFactory()
     user.user_profile.receive_newsletter = True
-    user.user_profile.receive_notification_emails = True
+    user.user_profile.receive_notification_emails = (
+        NotificationSubscriptionOptions.DAILY_SUMMARY
+    )
     user.user_profile.save()
 
     token = user.user_profile.unsubscribe_token
