@@ -12,4 +12,4 @@ def test_check_sagemaker_is_used(settings):
 
     assert len(errors) == 1
     assert errors[0].id == "grandchallenge.components.E001"
-    assert errors[0].msg == f"{expected_backend} is not the default backend. "
+    assert errors[0].msg == f"{expected_backend} is not the default backend."

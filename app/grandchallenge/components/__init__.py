@@ -16,7 +16,7 @@ def check_sagemaker_is_used(app_configs, **kwargs):
     if settings.COMPONENTS_DEFAULT_BACKEND != expected_backend:
         errors.append(
             Error(
-                f"{expected_backend} is not the default backend. ",
+                f"{expected_backend} is not the default backend.",
                 hint=f"Set COMPONENTS_DEFAULT_BACKEND={expected_backend} in your environment.",
                 id="grandchallenge.components.E001",
             )
