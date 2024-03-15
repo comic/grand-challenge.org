@@ -94,7 +94,6 @@ django-ses = "*"
 Pygments = "*"
 django-forms-dynamic = "*"
 django-allauth-2fa = "*"
-urllib3 = "<2"  # Pinned due to lack of support in botocore (https://github.com/boto/botocore/issues/2926)
 django-compressor = "*"
 django-libsass = "*"
 django-csp = "*"
