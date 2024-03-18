@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.humanize.templatetags.humanize import naturaltime
+from django.contrib.sites.models import Site
 from django.db import models
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
@@ -11,6 +12,11 @@ from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.models import UUIDModel
+from grandchallenge.emails.emails import send_standard_email_batch
+from grandchallenge.profiles.models import (
+    EmailSubscriptionTypes,
+    NotificationSubscriptionOptions,
+)
 from grandchallenge.profiles.templatetags.profiles import user_profile_link
 from grandchallenge.subdomains.utils import reverse
 
@@ -134,6 +140,31 @@ class Notification(UUIDModel):
         assign_perm("change_notification", self.user, self)
 
     @staticmethod
+    def send_instant_notification_email(*, receivers, kind):
+        receivers_with_instant_email_opt_in = [
+            receiver
+            for receiver in receivers
+            if receiver.user_profile.receive_notification_emails
+            == NotificationSubscriptionOptions.INSTANT
+        ]
+        site = Site.objects.get_current()
+        email_content = format_html(
+            (
+                "You have a new {kind} notification.\n\n"
+                "Read and manage your notifications [here]({url})."
+            ),
+            kind=kind.lower(),
+            url=reverse("notifications:list"),
+        )
+        send_standard_email_batch(
+            site=site,
+            subject="You have a new notification",
+            markdown_message=email_content,
+            recipients=receivers_with_instant_email_opt_in,
+            subscription_type=EmailSubscriptionTypes.NOTIFICATION,
+        )
+
+    @staticmethod
     def send(
         *,
         kind,
@@ -159,6 +190,10 @@ class Notification(UUIDModel):
                 description=description,
                 context_class=context_class,
             )
+
+        Notification.send_instant_notification_email(
+            receivers=receivers, kind=kind
+        )
 
     @staticmethod
     def get_receivers(*, kind, actor, action_object, target):  # noqa: C901

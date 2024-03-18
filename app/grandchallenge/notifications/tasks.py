@@ -18,9 +18,7 @@ def send_unread_notification_emails():
     profiles = (
         UserProfile.objects.filter(
             user__is_active=True,
-        )
-        .exclude(
-            receive_notification_emails=NotificationSubscriptionOptions.DISABLED
+            receive_notification_emails=NotificationSubscriptionOptions.DAILY_SUMMARY,
         )
         .annotate(
             unread_notification_count=Count(
