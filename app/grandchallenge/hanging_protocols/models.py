@@ -356,7 +356,7 @@ class HangingProtocolMixin(models.Model):
 
             if len(image_interfaces) > 1:
                 raise ValidationError(
-                    "Maximum of one image interfaces are allowed per viewport, "
+                    "Maximum of one image interface is allowed per viewport, "
                     f"got {len(image_interfaces)} for viewport {viewport}: "
                     f"{', '.join(i.slug for i in image_interfaces)}"
                 )
