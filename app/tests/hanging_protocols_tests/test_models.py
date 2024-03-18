@@ -522,7 +522,8 @@ def test_at_most_two_images():
         hp.full_clean()
 
     assert (
-        "Maximum of one image interfaces are allowed per viewport, got 2 for viewport main:"
+        "Maximum of one image interface is allowed per viewport, got 2 for viewport main:"
+
         in str(err.value)
     )
 
