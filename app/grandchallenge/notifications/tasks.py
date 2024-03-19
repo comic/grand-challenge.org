@@ -2,9 +2,7 @@ from celery import shared_task
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.db.models import Count, F, Q
-from django.utils.timezone import now
 
-from grandchallenge.notifications.emails import send_unread_notifications_email
 from grandchallenge.profiles.models import (
     NotificationSubscriptionOptions,
     UserProfile,
@@ -41,11 +39,4 @@ def send_unread_notification_emails():
     )
 
     for profile in profiles.iterator():
-        profile.notification_email_last_sent_at = now()
-        profile.save(update_fields=["notification_email_last_sent_at"])
-
-        send_unread_notifications_email(
-            site=site,
-            user=profile.user,
-            n_notifications=profile.unread_notification_count,
-        )
+        profile.send_unread_notifications_email(site=site)

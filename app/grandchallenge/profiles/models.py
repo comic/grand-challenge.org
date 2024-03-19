@@ -9,6 +9,7 @@ from django.db.models import TextChoices
 from django.db.models.signals import post_save
 from django.utils.functional import cached_property
 from django.utils.html import format_html
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_countries.fields import CountryField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
@@ -18,6 +19,7 @@ from stdimage import JPEGField
 
 from grandchallenge.core.storage import get_mugshot_path
 from grandchallenge.core.utils import disable_for_loaddata
+from grandchallenge.notifications.emails import send_unread_notifications_email
 from grandchallenge.subdomains.utils import reverse
 
 UNSUBSCRIBE_SALT = "email-subscription-preferences"
@@ -172,6 +174,22 @@ class UserProfile(models.Model):
             return NotImplementedError(
                 f"Unknown subscription type: {subscription_type}"
             )
+
+    def send_unread_notifications_email(
+        self, site, unread_notification_count=None
+    ):
+        self.notification_email_last_sent_at = now()
+        self.save(update_fields=["notification_email_last_sent_at"])
+
+        send_unread_notifications_email(
+            site=site,
+            user=self.user,
+            n_notifications=(
+                unread_notification_count
+                if unread_notification_count
+                else self.unread_notification_count
+            ),
+        )
 
 
 class UserProfileUserObjectPermission(UserObjectPermissionBase):

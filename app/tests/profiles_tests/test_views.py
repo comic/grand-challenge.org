@@ -329,15 +329,19 @@ def test_one_click_unsubscribe_functionality(
 
 
 @pytest.mark.parametrize(
-    "viewname,subscription_attr",
+    "viewname,subscription_attr,new_subscription_preference",
     (
-        ("newsletter-unsubscribe", "receive_newsletter"),
-        ("notification-unsubscribe", "receive_notification_emails"),
+        ("newsletter-unsubscribe", "receive_newsletter", False),
+        (
+            "notification-unsubscribe",
+            "receive_notification_emails",
+            NotificationSubscriptionOptions.DISABLED,
+        ),
     ),
 )
 @pytest.mark.django_db
 def test_one_click_unsubscribe_user_mismatch(
-    client, settings, viewname, subscription_attr
+    client, settings, viewname, subscription_attr, new_subscription_preference
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
@@ -363,7 +367,10 @@ def test_one_click_unsubscribe_user_mismatch(
     assert response.status_code == 302
     user.user_profile.refresh_from_db()
     # token owner is unsubscribed
-    assert not getattr(user.user_profile, subscription_attr)
+    assert (
+        getattr(user.user_profile, subscription_attr)
+        == new_subscription_preference
+    )
     # token owner and requesting user are added to a verification user set
     user_set = VerificationUserSet.objects.get()
     assert user in user_set.users.all()

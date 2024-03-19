@@ -12,11 +12,7 @@ from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.models import UUIDModel
-from grandchallenge.emails.emails import send_standard_email_batch
-from grandchallenge.profiles.models import (
-    EmailSubscriptionTypes,
-    NotificationSubscriptionOptions,
-)
+from grandchallenge.profiles.models import NotificationSubscriptionOptions
 from grandchallenge.profiles.templatetags.profiles import user_profile_link
 from grandchallenge.subdomains.utils import reverse
 
@@ -140,31 +136,6 @@ class Notification(UUIDModel):
         assign_perm("change_notification", self.user, self)
 
     @staticmethod
-    def send_instant_notification_email(*, receivers, kind):
-        receivers_with_instant_email_opt_in = [
-            receiver
-            for receiver in receivers
-            if receiver.user_profile.receive_notification_emails
-            == NotificationSubscriptionOptions.INSTANT
-        ]
-        site = Site.objects.get_current()
-        email_content = format_html(
-            (
-                "You have a new {kind} notification.\n\n"
-                "Read and manage your notifications [here]({url})."
-            ),
-            kind=kind.lower(),
-            url=reverse("notifications:list"),
-        )
-        send_standard_email_batch(
-            site=site,
-            subject="You have a new notification",
-            markdown_message=email_content,
-            recipients=receivers_with_instant_email_opt_in,
-            subscription_type=EmailSubscriptionTypes.NOTIFICATION,
-        )
-
-    @staticmethod
     def send(
         *,
         kind,
@@ -178,6 +149,7 @@ class Notification(UUIDModel):
         receivers = Notification.get_receivers(
             action_object=action_object, actor=actor, kind=kind, target=target
         )
+        site = Site.objects.get_current()
 
         for receiver in receivers:
             Notification.objects.create(
@@ -190,10 +162,13 @@ class Notification(UUIDModel):
                 description=description,
                 context_class=context_class,
             )
-
-        Notification.send_instant_notification_email(
-            receivers=receivers, kind=kind
-        )
+            if (
+                receiver.user_profile.receive_notification_emails
+                == NotificationSubscriptionOptions.INSTANT
+            ):
+                receiver.user_profile.send_unread_notifications_email(
+                    site=site, unread_notification_count=1
+                )
 
     @staticmethod
     def get_receivers(*, kind, actor, action_object, target):  # noqa: C901
