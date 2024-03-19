@@ -3,14 +3,14 @@ from django.conf import settings
 from django.contrib.sites.models import Site
 from django.db.models import Count, F, Q
 
-from grandchallenge.profiles.models import (
-    NotificationSubscriptionOptions,
-    UserProfile,
-)
+from grandchallenge.profiles.models import UserProfile
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
 def send_unread_notification_emails():
+    # import locally to avoid circular dependency
+    from grandchallenge.profiles.models import NotificationSubscriptionOptions
+
     site = Site.objects.get_current()
 
     profiles = (
@@ -39,4 +39,4 @@ def send_unread_notification_emails():
     )
 
     for profile in profiles.iterator():
-        profile.send_unread_notifications_email(site=site)
+        profile.dispatch_unread_notifications_email(site=site)

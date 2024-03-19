@@ -166,7 +166,7 @@ class Notification(UUIDModel):
                 receiver.user_profile.receive_notification_emails
                 == NotificationSubscriptionOptions.INSTANT
             ):
-                receiver.user_profile.send_unread_notifications_email(
+                receiver.user_profile.dispatch_unread_notifications_email(
                     site=site, unread_notification_count=1
                 )
 

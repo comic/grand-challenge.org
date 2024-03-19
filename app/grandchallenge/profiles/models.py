@@ -175,8 +175,8 @@ class UserProfile(models.Model):
                 f"Unknown subscription type: {subscription_type}"
             )
 
-    def send_unread_notifications_email(
-        self, site, unread_notification_count=None
+    def dispatch_unread_notifications_email(
+        self, *, site, unread_notification_count=None
     ):
         self.notification_email_last_sent_at = now()
         self.save(update_fields=["notification_email_last_sent_at"])
