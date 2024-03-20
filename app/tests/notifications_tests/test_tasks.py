@@ -10,16 +10,6 @@ from tests.notifications_tests.factories import NotificationFactory
 
 
 @pytest.mark.django_db
-def test_notification_email_last_sent_at_updated():
-    user1 = UserFactory()
-    _ = NotificationFactory(user=user1, type=Notification.Type.GENERIC)
-    assert not user1.user_profile.notification_email_last_sent_at
-    send_unread_notification_emails()
-    user1.refresh_from_db()
-    assert user1.user_profile.notification_email_last_sent_at
-
-
-@pytest.mark.django_db
 def test_daily_notification_email_only_about_new_unread_notifications():
     user1 = UserFactory()
     _ = NotificationFactory(user=user1, type=Notification.Type.GENERIC)

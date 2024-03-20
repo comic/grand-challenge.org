@@ -215,102 +215,41 @@ def test_one_click_unsubscribe_invalid_token(client, viewname):
 
 
 @pytest.mark.parametrize(
-    "viewname,subscription_attr,unchanged_subscription_attr,logged_in,notification_preference,subscription_preference,unchanged_subscription_preference",
+    "logged_in,notification_preference",
     (
         (
-            "newsletter-unsubscribe",
-            "receive_newsletter",
-            "receive_notification_emails",
-            True,
-            NotificationSubscriptionOptions.DAILY_SUMMARY,
             False,
             NotificationSubscriptionOptions.DAILY_SUMMARY,
         ),
         (
-            "newsletter-unsubscribe",
-            "receive_newsletter",
-            "receive_notification_emails",
-            False,
-            NotificationSubscriptionOptions.DAILY_SUMMARY,
-            False,
-            NotificationSubscriptionOptions.DAILY_SUMMARY,
-        ),
-        (
-            "notification-unsubscribe",
-            "receive_notification_emails",
-            "receive_newsletter",
             True,
             NotificationSubscriptionOptions.DAILY_SUMMARY,
-            NotificationSubscriptionOptions.DISABLED,
-            True,
         ),
         (
-            "notification-unsubscribe",
-            "receive_notification_emails",
-            "receive_newsletter",
-            False,
-            NotificationSubscriptionOptions.DAILY_SUMMARY,
-            NotificationSubscriptionOptions.DISABLED,
             True,
-        ),
-        (
-            "newsletter-unsubscribe",
-            "receive_newsletter",
-            "receive_notification_emails",
-            True,
-            NotificationSubscriptionOptions.INSTANT,
-            False,
             NotificationSubscriptionOptions.INSTANT,
         ),
         (
-            "newsletter-unsubscribe",
-            "receive_newsletter",
-            "receive_notification_emails",
             False,
             NotificationSubscriptionOptions.INSTANT,
-            False,
-            NotificationSubscriptionOptions.INSTANT,
-        ),
-        (
-            "notification-unsubscribe",
-            "receive_notification_emails",
-            "receive_newsletter",
-            True,
-            NotificationSubscriptionOptions.INSTANT,
-            NotificationSubscriptionOptions.DISABLED,
-            True,
-        ),
-        (
-            "notification-unsubscribe",
-            "receive_notification_emails",
-            "receive_newsletter",
-            False,
-            NotificationSubscriptionOptions.INSTANT,
-            NotificationSubscriptionOptions.DISABLED,
-            True,
         ),
     ),
 )
 @pytest.mark.django_db
-def test_one_click_unsubscribe_functionality(
+def test_one_click_unsubscribe_functionality_for_notifications(
     client,
-    viewname,
-    subscription_attr,
-    unchanged_subscription_attr,
     logged_in,
     notification_preference,
-    subscription_preference,
-    unchanged_subscription_preference,
 ):
     user = UserFactory()
-    user.user_profile.receive_newsletter = True
     user.user_profile.receive_notification_emails = notification_preference
     user.user_profile.save()
+    assert user.user_profile.receive_newsletter is None
 
     token = user.user_profile.unsubscribe_token
     response = get_view_for_user(
         client=client,
-        viewname=viewname,
+        viewname="notification-unsubscribe",
         reverse_kwargs={"token": token},
         method=client.post,
         user=user if logged_in else None,
@@ -318,12 +257,43 @@ def test_one_click_unsubscribe_functionality(
     assert response.status_code == 302
     user.user_profile.refresh_from_db()
     assert (
-        getattr(user.user_profile, subscription_attr)
-        == subscription_preference
+        user.user_profile.receive_notification_emails
+        == NotificationSubscriptionOptions.DISABLED
     )
+    # newsletter preference remains unchanged
+    assert user.user_profile.receive_newsletter is None
+    assert VerificationUserSet.objects.count() == 0
+
+
+@pytest.mark.parametrize("logged_in", [True, False])
+@pytest.mark.django_db
+def test_one_click_unsubscribe_functionality_for_newsletter(
+    client,
+    logged_in,
+):
+    user = UserFactory()
+    user.user_profile.receive_newsletter = True
+    user.user_profile.save()
     assert (
-        getattr(user.user_profile, unchanged_subscription_attr)
-        == unchanged_subscription_preference
+        user.user_profile.receive_notification_emails
+        == NotificationSubscriptionOptions.DAILY_SUMMARY
+    )
+
+    token = user.user_profile.unsubscribe_token
+    response = get_view_for_user(
+        client=client,
+        viewname="newsletter-unsubscribe",
+        reverse_kwargs={"token": token},
+        method=client.post,
+        user=user if logged_in else None,
+    )
+    assert response.status_code == 302
+    user.user_profile.refresh_from_db()
+    assert not user.user_profile.receive_newsletter
+    # notification preference remains unchanged
+    assert (
+        user.user_profile.receive_notification_emails
+        == NotificationSubscriptionOptions.DAILY_SUMMARY
     )
     assert VerificationUserSet.objects.count() == 0
 

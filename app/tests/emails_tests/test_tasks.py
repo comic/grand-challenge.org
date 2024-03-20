@@ -104,37 +104,29 @@ def test_email_content(settings):
 
 
 @pytest.mark.parametrize(
-    "subscription_type, unsubscribe_viewname, notification_preference",
+    "subscription_type, unsubscribe_viewname",
     [
         (
             EmailSubscriptionTypes.NEWSLETTER,
             "newsletter-unsubscribe",
-            NotificationSubscriptionOptions.DAILY_SUMMARY,
         ),
         (
             EmailSubscriptionTypes.NOTIFICATION,
             "notification-unsubscribe",
-            NotificationSubscriptionOptions.DAILY_SUMMARY,
-        ),
-        (
-            EmailSubscriptionTypes.NOTIFICATION,
-            "notification-unsubscribe",
-            NotificationSubscriptionOptions.INSTANT,
         ),
         (
             EmailSubscriptionTypes.SYSTEM,
             None,
-            NotificationSubscriptionOptions.DAILY_SUMMARY,
         ),
     ],
 )
 @pytest.mark.django_db
-def test_unsubscribe_headers(
-    subscription_type, unsubscribe_viewname, notification_preference
-):
+def test_unsubscribe_headers(subscription_type, unsubscribe_viewname):
     user = UserFactory()
     user.user_profile.receive_newsletter = True
-    user.user_profile.receive_notification_emails = notification_preference
+    user.user_profile.receive_notification_emails = (
+        NotificationSubscriptionOptions.DAILY_SUMMARY
+    )
     user.user_profile.save()
     site = Site.objects.get_current()
 
@@ -269,10 +261,6 @@ def test_can_email_newsletter_if_opted_in():
     user = UserFactory(is_active=True)
 
     user.user_profile.receive_newsletter = True
-    user.user_profile.receive_notification_emails = (
-        NotificationSubscriptionOptions.DISABLED
-    )
-    user.user_profile.save()
 
     email = create_email_object(
         recipient=user,
@@ -312,7 +300,6 @@ def test_can_email_newsletter_if_opted_in():
 def test_can_email_notification_if_opted_in(opt_in_type):
     user = UserFactory(is_active=True)
 
-    user.user_profile.receive_newsletter = False
     user.user_profile.receive_notification_emails = opt_in_type
     user.user_profile.save()
 
