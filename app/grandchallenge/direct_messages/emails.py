@@ -82,5 +82,5 @@ def send_new_unread_direct_messages_email(
         subject=subject,
         markdown_message=msg,
         recipients=[user],
-        subscription_type=EmailSubscriptionTypes.SYSTEM,
+        subscription_type=EmailSubscriptionTypes.NOTIFICATION,
     )
