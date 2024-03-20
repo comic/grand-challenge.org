@@ -807,7 +807,7 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
         ):
             users_process_exit_code = self._get_task_return_code()
 
-            if users_process_exit_code in (-9, 137):
+            if users_process_exit_code in (-9, 1, 137):
                 raise ComponentException(
                     "The container was killed as it exceeded its memory limit"
                 )
