@@ -12,8 +12,12 @@ from grandchallenge.direct_messages.tasks import (
     send_new_unread_direct_messages_emails,
 )
 from grandchallenge.profiles.models import NotificationSubscriptionOptions
-from tests.direct_messages_tests.factories import DirectMessageFactory
+from tests.direct_messages_tests.factories import (
+    ConversationFactory,
+    DirectMessageFactory,
+)
 from tests.factories import UserFactory
+from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
@@ -134,3 +138,44 @@ def test_get_users_to_send_new_unread_direct_messages_email(
         f"[testserver] You have 1 new message from {dm5b.sender.first_name}",
         f"[testserver] You have 1 new message from {dm6.sender.first_name}",
     ]
+
+
+@pytest.mark.django_db
+def test_instant_email_when_opted_in(client):
+    u1, u2, u3, u4, u5 = UserFactory.create_batch(5)
+    u1.user_profile.receive_notification_emails = (
+        NotificationSubscriptionOptions.DISABLED
+    )
+    u2.user_profile.receive_notification_emails = (
+        NotificationSubscriptionOptions.INSTANT
+    )
+    u3.user_profile.receive_notification_emails = (
+        NotificationSubscriptionOptions.DAILY_SUMMARY
+    )
+    u4.is_active = False
+    u1.user_profile.save()
+    u2.user_profile.save()
+    u3.user_profile.save()
+    u4.save()
+
+    conversation = ConversationFactory()
+    conversation.participants.set([u1, u2, u3, u4, u5])
+
+    get_view_for_user(
+        client=client,
+        viewname="direct_messages:direct-message-create",
+        reverse_kwargs={"pk": conversation.pk},
+        user=u5,
+        method=client.post,
+        data={"message": "🙈"},
+    )
+
+    assert len(mail.outbox) == 1
+    assert mail.outbox[0].to == [u2.email]
+    for user in [u1, u2, u3, u4, u5]:
+        user.user_profile.refresh_from_db()
+    assert u2.user_profile.unread_messages_email_last_sent_at
+    assert not u1.user_profile.unread_messages_email_last_sent_at
+    assert not u3.user_profile.unread_messages_email_last_sent_at
+    assert not u4.user_profile.unread_messages_email_last_sent_at
+    assert not u5.user_profile.unread_messages_email_last_sent_at

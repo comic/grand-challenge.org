@@ -1,19 +1,17 @@
 from django.contrib.auth import get_user_model
-from django.contrib.sites.models import Site
 from django.db.models import Count, F, Q
 from django.template.defaultfilters import pluralize
 from django.utils.html import format_html
 
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.emails.emails import send_standard_email_batch
-from grandchallenge.profiles.models import (
-    EmailSubscriptionTypes,
-    NotificationSubscriptionOptions,
-)
 from grandchallenge.subdomains.utils import reverse
 
 
 def get_users_to_send_new_unread_direct_messages_email():
+    # local import to avoid circular dependency
+    from grandchallenge.profiles.models import NotificationSubscriptionOptions
+
     return (
         get_user_model()
         .objects.prefetch_related(
@@ -21,9 +19,7 @@ def get_users_to_send_new_unread_direct_messages_email():
         )
         .filter(
             is_active=True,
-        )
-        .exclude(
-            user_profile__receive_notification_emails=NotificationSubscriptionOptions.DISABLED,
+            user_profile__receive_notification_emails=NotificationSubscriptionOptions.DAILY_SUMMARY,
         )
         .annotate(
             new_unread_message_count=Count(
@@ -56,8 +52,11 @@ def get_new_senders(*, user):
 
 
 def send_new_unread_direct_messages_email(
-    *, user, new_senders, new_unread_message_count
+    *, site, user, new_senders, new_unread_message_count
 ):
+    # local import to avoid circular dependency
+    from grandchallenge.profiles.models import EmailSubscriptionTypes
+
     subject = format_html(
         (
             "You have {new_unread_message_count} new message{suffix} "
@@ -78,7 +77,6 @@ def send_new_unread_direct_messages_email(
         new_senders=oxford_comma(new_senders),
         url=reverse("direct-messages:conversation-list"),
     )
-    site = Site.objects.get_current()
     send_standard_email_batch(
         site=site,
         subject=subject,

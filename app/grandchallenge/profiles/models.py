@@ -19,6 +19,10 @@ from stdimage import JPEGField
 
 from grandchallenge.core.storage import get_mugshot_path
 from grandchallenge.core.utils import disable_for_loaddata
+from grandchallenge.direct_messages.emails import (
+    get_new_senders,
+    send_new_unread_direct_messages_email,
+)
 from grandchallenge.notifications.emails import send_unread_notifications_email
 from grandchallenge.subdomains.utils import reverse
 
@@ -188,6 +192,25 @@ class UserProfile(models.Model):
                 unread_notification_count
                 if unread_notification_count
                 else self.unread_notification_count
+            ),
+        )
+
+    def dispatch_unread_direct_messages_email(
+        self, *, site, new_unread_message_count=None
+    ):
+        new_senders = [s.first_name for s in get_new_senders(user=self.user)]
+
+        self.unread_messages_email_last_sent_at = now()
+        self.save(update_fields=["unread_messages_email_last_sent_at"])
+
+        send_new_unread_direct_messages_email(
+            user=self.user,
+            site=site,
+            new_senders=new_senders,
+            new_unread_message_count=(
+                new_unread_message_count
+                if new_unread_message_count
+                else self.user.new_unread_message_count
             ),
         )
 
