@@ -463,27 +463,33 @@ def test_submission_time_limit(client, two_challenge_sets):
 def test_evaluation_list(client, two_challenge_sets):
     # participant 0, submission 1, challenge 1, etc
     e_p_s1 = EvaluationFactory(
+        method__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
         submission__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
         submission__creator=two_challenge_sets.challenge_set_1.participant,
     )
     e_p_s2 = EvaluationFactory(
+        method__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
         submission__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
         submission__creator=two_challenge_sets.challenge_set_1.participant,
     )
     e_p1_s1 = EvaluationFactory(
+        method__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
         submission__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
         submission__creator=two_challenge_sets.challenge_set_1.participant1,
     )
     # participant12, submission 1 to each challenge
     e_p12_s1_c1 = EvaluationFactory(
+        method__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
         submission__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
         submission__creator=two_challenge_sets.participant12,
     )
     e_p12_s1_c2 = EvaluationFactory(
+        method__phase=two_challenge_sets.challenge_set_2.challenge.phase_set.get(),
         submission__phase=two_challenge_sets.challenge_set_2.challenge.phase_set.get(),
         submission__creator=two_challenge_sets.participant12,
     )
     e_p_s3_p2 = EvaluationFactory(
+        method__phase=two_challenge_sets.challenge_set_2.challenge.phase_set.get(),
         submission__phase=PhaseFactory(
             challenge=two_challenge_sets.challenge_set_2.challenge
         ),

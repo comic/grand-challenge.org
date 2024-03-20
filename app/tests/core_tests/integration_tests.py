@@ -9,6 +9,7 @@ from django.test import TestCase
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.pages.models import Page
+from grandchallenge.profiles.models import NotificationSubscriptionOptions
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.models import Verification
 from tests.factories import (
@@ -165,6 +166,7 @@ class GrandChallengeFrameworkTestCase(TestCase):
             "country": "NL",
             "website": "https://www.example.com",
             "accept_terms": True,
+            "receive_notification_emails": NotificationSubscriptionOptions.DAILY_SUMMARY,
         }
         data.update(override)
 

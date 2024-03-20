@@ -171,6 +171,7 @@ class TestProfileViewSets:
                 "department": "Department",
                 "country": "NL",
                 "display_organizations": False,
+                "receive_notification_emails": NotificationSubscriptionOptions.DAILY_SUMMARY,
             },
         )
 
