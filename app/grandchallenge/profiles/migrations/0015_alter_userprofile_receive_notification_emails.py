@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
                     ("INSTANT", "Send me an email immediately"),
                 ],
                 default="DAILY_SUMMARY",
-                help_text="Whether to receive emails about unread notifications and how often (immediately vs. once a day if necessary.",
+                help_text="Whether to receive emails about unread notifications and how often (immediately vs. once a day if necessary).",
                 max_length=50,
             ),
         ),

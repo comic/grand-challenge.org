@@ -80,15 +80,19 @@ class DirectMessageUnreadBy(models.Model):
 
 
 @receiver(m2m_changed, sender=DirectMessageUnreadBy)
-def notify_subscribed_users(
+def email_subscribed_users_about_new_message(
     sender, instance, action, reverse, model, pk_set, **_
 ):
     if action != "post_add" or reverse:
         return
     site = Site.objects.get_current()
-    for user in instance.unread_by.filter(
-        user_profile__receive_notification_emails=NotificationSubscriptionOptions.INSTANT
-    ).all():
+    for user in (
+        instance.unread_by.select_related("user_profile")
+        .filter(
+            user_profile__receive_notification_emails=NotificationSubscriptionOptions.INSTANT
+        )
+        .all()
+    ):
         user.user_profile.dispatch_unread_direct_messages_email(
             site=site, new_unread_message_count=1
         )

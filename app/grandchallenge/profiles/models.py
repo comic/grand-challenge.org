@@ -72,7 +72,7 @@ class UserProfile(models.Model):
         choices=NotificationSubscriptionOptions.choices,
         default=NotificationSubscriptionOptions.DAILY_SUMMARY,
         help_text=(
-            "Whether to receive emails about unread notifications and how often (immediately vs. once a day if necessary."
+            "Whether to receive emails about unread notifications and how often (immediately vs. once a day if necessary)."
         ),
     )
     notification_email_last_sent_at = models.DateTimeField(
