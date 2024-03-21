@@ -1,6 +1,7 @@
 from urllib.parse import urlencode
 
 from django.contrib.auth import get_user_model
+from django.contrib.sites.models import Site
 from django.db import models
 from django.db.models import (
     BooleanField,
@@ -13,10 +14,13 @@ from django.db.models import (
     Value,
     When,
 )
+from django.db.models.signals import m2m_changed
+from django.dispatch import receiver
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.models import UUIDModel
+from grandchallenge.profiles.models import NotificationEmailOptions
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -73,6 +77,25 @@ class DirectMessageUnreadBy(models.Model):
     # https://docs.djangoproject.com/en/4.2/topics/db/models/#intermediary-manytomany
     direct_message = models.ForeignKey(DirectMessage, on_delete=models.CASCADE)
     unread_by = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+
+
+@receiver(m2m_changed, sender=DirectMessageUnreadBy)
+def email_subscribed_users_about_new_message(
+    sender, instance, action, reverse, model, pk_set, **_
+):
+    if action != "post_add" or reverse:
+        return
+    site = Site.objects.get_current()
+    for user in (
+        instance.unread_by.select_related("user_profile")
+        .filter(
+            user_profile__notification_email_choice=NotificationEmailOptions.INSTANT
+        )
+        .all()
+    ):
+        user.user_profile.dispatch_unread_direct_messages_email(
+            site=site, new_unread_message_count=1
+        )
 
 
 class DirectMessageUserObjectPermission(UserObjectPermissionBase):

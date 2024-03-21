@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.humanize.templatetags.humanize import naturaltime
+from django.contrib.sites.models import Site
 from django.db import models
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
@@ -11,6 +12,7 @@ from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.models import UUIDModel
+from grandchallenge.profiles.models import NotificationEmailOptions
 from grandchallenge.profiles.templatetags.profiles import user_profile_link
 from grandchallenge.subdomains.utils import reverse
 
@@ -147,6 +149,7 @@ class Notification(UUIDModel):
         receivers = Notification.get_receivers(
             action_object=action_object, actor=actor, kind=kind, target=target
         )
+        site = Site.objects.get_current()
 
         for receiver in receivers:
             Notification.objects.create(
@@ -159,6 +162,13 @@ class Notification(UUIDModel):
                 description=description,
                 context_class=context_class,
             )
+            if (
+                receiver.user_profile.notification_email_choice
+                == NotificationEmailOptions.INSTANT
+            ):
+                receiver.user_profile.dispatch_unread_notifications_email(
+                    site=site, unread_notification_count=1
+                )
 
     @staticmethod
     def get_receivers(*, kind, actor, action_object, target):  # noqa: C901

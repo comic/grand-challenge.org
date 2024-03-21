@@ -9,6 +9,7 @@ from django.db.models import TextChoices
 from django.db.models.signals import post_save
 from django.utils.functional import cached_property
 from django.utils.html import format_html
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_countries.fields import CountryField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
@@ -18,6 +19,11 @@ from stdimage import JPEGField
 
 from grandchallenge.core.storage import get_mugshot_path
 from grandchallenge.core.utils import disable_for_loaddata
+from grandchallenge.direct_messages.emails import (
+    get_new_senders,
+    send_new_unread_direct_messages_email,
+)
+from grandchallenge.notifications.emails import send_unread_notifications_email
 from grandchallenge.subdomains.utils import reverse
 
 UNSUBSCRIBE_SALT = "email-subscription-preferences"
@@ -176,6 +182,41 @@ class UserProfile(models.Model):
             return NotImplementedError(
                 f"Unknown subscription type: {subscription_type}"
             )
+
+    def dispatch_unread_notifications_email(
+        self, *, site, unread_notification_count=None
+    ):
+        self.notification_email_last_sent_at = now()
+        self.save(update_fields=["notification_email_last_sent_at"])
+
+        send_unread_notifications_email(
+            site=site,
+            user=self.user,
+            n_notifications=(
+                unread_notification_count
+                if unread_notification_count
+                else self.unread_notification_count
+            ),
+        )
+
+    def dispatch_unread_direct_messages_email(
+        self, *, site, new_unread_message_count=None
+    ):
+        new_senders = [s.first_name for s in get_new_senders(user=self.user)]
+
+        self.unread_messages_email_last_sent_at = now()
+        self.save(update_fields=["unread_messages_email_last_sent_at"])
+
+        send_new_unread_direct_messages_email(
+            user=self.user,
+            site=site,
+            new_senders=new_senders,
+            new_unread_message_count=(
+                new_unread_message_count
+                if new_unread_message_count
+                else self.user.new_unread_message_count
+            ),
+        )
 
 
 class UserProfileUserObjectPermission(UserObjectPermissionBase):

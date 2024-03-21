@@ -2,10 +2,11 @@ from celery import shared_task
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.db.models import Count, F, Q
-from django.utils.timezone import now
 
-from grandchallenge.notifications.emails import send_unread_notifications_email
-from grandchallenge.profiles.models import UserProfile
+from grandchallenge.profiles.models import (
+    NotificationEmailOptions,
+    UserProfile,
+)
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
@@ -14,7 +15,7 @@ def send_unread_notification_emails():
 
     profiles = (
         UserProfile.objects.filter(
-            receive_notification_emails=True,
+            notification_email_choice=NotificationEmailOptions.DAILY_SUMMARY,
             user__is_active=True,
         )
         .annotate(
@@ -38,11 +39,4 @@ def send_unread_notification_emails():
     )
 
     for profile in profiles.iterator():
-        profile.notification_email_last_sent_at = now()
-        profile.save(update_fields=["notification_email_last_sent_at"])
-
-        send_unread_notifications_email(
-            site=site,
-            user=profile.user,
-            n_notifications=profile.unread_notification_count,
-        )
+        profile.dispatch_unread_notifications_email(site=site)
