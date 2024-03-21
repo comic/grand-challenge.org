@@ -68,7 +68,7 @@ DATABASES = {
         "OPTIONS": {
             "sslmode": os.environ.get("POSTGRES_SSL_MODE", "prefer"),
             "sslrootcert": os.path.join(
-                SITE_ROOT, "config", "certs", "rds-ca-2019-root.pem"
+                SITE_ROOT, "config", "certs", "global-bundle.pem"
             ),
         },
         "ATOMIC_REQUESTS": strtobool(
