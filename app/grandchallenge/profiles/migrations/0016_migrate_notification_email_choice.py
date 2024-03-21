@@ -20,5 +20,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(migrate_notification_email_preferences),
+        migrations.RunPython(
+            migrate_notification_email_preferences, elidable=True
+        ),
     ]
