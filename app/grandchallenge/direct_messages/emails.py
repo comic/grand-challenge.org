@@ -5,11 +5,13 @@ from django.utils.html import format_html
 
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.emails.emails import send_standard_email_batch
-from grandchallenge.profiles.models import NotificationEmailOptions
 from grandchallenge.subdomains.utils import reverse
 
 
 def get_users_to_send_new_unread_direct_messages_email():
+    # local import to avoid circular dependency
+    from grandchallenge.profiles.models import NotificationEmailOptions
+
     return (
         get_user_model()
         .objects.prefetch_related(
