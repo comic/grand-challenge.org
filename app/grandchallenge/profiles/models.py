@@ -7,6 +7,7 @@ from django.core.signing import Signer
 from django.db import models
 from django.db.models import TextChoices
 from django.db.models.signals import post_save
+from django.template.defaultfilters import pluralize
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.timezone import now
@@ -18,12 +19,10 @@ from guardian.utils import get_anonymous_user
 from stdimage import JPEGField
 
 from grandchallenge.core.storage import get_mugshot_path
+from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.utils import disable_for_loaddata
-from grandchallenge.direct_messages.emails import (
-    get_new_senders,
-    send_new_unread_direct_messages_email,
-)
-from grandchallenge.notifications.emails import send_unread_notifications_email
+from grandchallenge.direct_messages.tasks import get_new_senders
+from grandchallenge.emails.emails import send_standard_email_batch
 from grandchallenge.subdomains.utils import reverse
 
 UNSUBSCRIBE_SALT = "email-subscription-preferences"
@@ -189,33 +188,77 @@ class UserProfile(models.Model):
         self.notification_email_last_sent_at = now()
         self.save(update_fields=["notification_email_last_sent_at"])
 
-        send_unread_notifications_email(
-            site=site,
-            user=self.user,
-            n_notifications=(
-                unread_notification_count
-                if unread_notification_count
-                else self.unread_notification_count
+        n_notifications = (
+            unread_notification_count
+            if unread_notification_count
+            else self.unread_notification_count
+        )
+
+        subject = format_html(
+            ("You have {unread_notification_count} new notification{suffix}"),
+            unread_notification_count=n_notifications,
+            suffix=pluralize(n_notifications),
+        )
+
+        msg = format_html(
+            (
+                "You have {unread_notification_count} new notification{suffix}.\n\n"
+                "Read and manage your notifications [here]({url})."
             ),
+            unread_notification_count=n_notifications,
+            suffix=pluralize(n_notifications),
+            url=reverse("notifications:list"),
+        )
+        send_standard_email_batch(
+            site=site,
+            subject=subject,
+            markdown_message=msg,
+            recipients=[self.user],
+            subscription_type=EmailSubscriptionTypes.NOTIFICATION,
         )
 
     def dispatch_unread_direct_messages_email(
-        self, *, site, new_unread_message_count=None
+        self, *, site, new_unread_message_count=None, new_senders=None
     ):
-        new_senders = [s.first_name for s in get_new_senders(user=self.user)]
+        if not new_senders:
+            new_senders = [
+                s.first_name for s in get_new_senders(user=self.user)
+            ]
 
         self.unread_messages_email_last_sent_at = now()
         self.save(update_fields=["unread_messages_email_last_sent_at"])
 
-        send_new_unread_direct_messages_email(
-            user=self.user,
-            site=site,
-            new_senders=new_senders,
-            new_unread_message_count=(
-                new_unread_message_count
-                if new_unread_message_count
-                else self.user.new_unread_message_count
+        n_unread_messages = (
+            new_unread_message_count
+            if new_unread_message_count
+            else self.user.new_unread_message_count
+        )
+        subject = format_html(
+            (
+                "You have {new_unread_message_count} new message{suffix} "
+                "from {new_senders}"
             ),
+            new_unread_message_count=n_unread_messages,
+            suffix=pluralize(n_unread_messages),
+            new_senders=oxford_comma(new_senders),
+        )
+
+        msg = format_html(
+            (
+                "You have {new_unread_message_count} new message{suffix} from {new_senders}.\n\n"
+                "To read and manage your messages, click [here]({url})."
+            ),
+            new_unread_message_count=n_unread_messages,
+            suffix=pluralize(n_unread_messages),
+            new_senders=oxford_comma(new_senders),
+            url=reverse("direct-messages:conversation-list"),
+        )
+        send_standard_email_batch(
+            site=site,
+            subject=subject,
+            markdown_message=msg,
+            recipients=[self.user],
+            subscription_type=EmailSubscriptionTypes.NOTIFICATION,
         )
 
 

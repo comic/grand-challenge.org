@@ -94,7 +94,9 @@ def email_subscribed_users_about_new_message(
         .all()
     ):
         user.user_profile.dispatch_unread_direct_messages_email(
-            site=site, new_unread_message_count=1
+            site=site,
+            new_unread_message_count=1,
+            new_senders=[instance.sender],
         )
 
 

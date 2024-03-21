@@ -4,11 +4,9 @@ import pytest
 from django.core import mail
 from django.utils.timezone import now
 
-from grandchallenge.direct_messages.emails import (
+from grandchallenge.direct_messages.tasks import (
     get_new_senders,
     get_users_to_send_new_unread_direct_messages_email,
-)
-from grandchallenge.direct_messages.tasks import (
     send_new_unread_direct_messages_emails,
 )
 from grandchallenge.profiles.models import NotificationEmailOptions

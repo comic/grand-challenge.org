@@ -98,63 +98,93 @@ def test_dispatch_notifications_email():
 
 
 @pytest.mark.parametrize(
-    "subscription_type,subscription_attr,subscription_preference,unsubscribe_viewname,expectation",
+    "subscription_type,subscription_attr,subscription_preference,expectation",
     (
         (
             EmailSubscriptionTypes.NOTIFICATION,
             "notification_email_choice",
             NotificationEmailOptions.DAILY_SUMMARY,
-            "notification-unsubscribe",
             nullcontext(),
         ),
         (
             EmailSubscriptionTypes.NOTIFICATION,
             "notification_email_choice",
             NotificationEmailOptions.INSTANT,
-            "notification-unsubscribe",
             nullcontext(),
         ),
         (
             EmailSubscriptionTypes.NOTIFICATION,
             "notification_email_choice",
             NotificationEmailOptions.DISABLED,
-            "notification-unsubscribe",
             pytest.raises(ValueError),
         ),
         (
             EmailSubscriptionTypes.NEWSLETTER,
             "receive_newsletter",
             True,
-            "newsletter-unsubscribe",
             nullcontext(),
         ),
         (
             EmailSubscriptionTypes.NEWSLETTER,
             "receive_newsletter",
             False,
-            "newsletter-unsubscribe",
             pytest.raises(ValueError),
         ),
-        (EmailSubscriptionTypes.SYSTEM, None, None, None, nullcontext()),
+        (EmailSubscriptionTypes.SYSTEM, None, None, nullcontext()),
     ),
 )
 @pytest.mark.django_db
-def test_get_unsubscribe_link(
+def test_get_unsubscribe_link_only_when_subscribed(
     subscription_type,
     subscription_attr,
     subscription_preference,
-    unsubscribe_viewname,
     expectation,
 ):
     user = UserFactory()
     if subscription_preference:
         setattr(user.user_profile, subscription_attr, subscription_preference)
     with expectation:
-        link = user.user_profile.get_unsubscribe_link(
+        user.user_profile.get_unsubscribe_link(
             subscription_type=subscription_type
         )
-        if link:
-            assert link == reverse(
-                unsubscribe_viewname,
-                kwargs={"token": user.user_profile.unsubscribe_token},
-            )
+
+
+@pytest.mark.parametrize(
+    "subscription_type,subscription_attr,subscription_preference,unsubscribe_viewname",
+    (
+        (
+            EmailSubscriptionTypes.NOTIFICATION,
+            "notification_email_choice",
+            NotificationEmailOptions.DAILY_SUMMARY,
+            "notification-unsubscribe",
+        ),
+        (
+            EmailSubscriptionTypes.NOTIFICATION,
+            "notification_email_choice",
+            NotificationEmailOptions.INSTANT,
+            "notification-unsubscribe",
+        ),
+        (
+            EmailSubscriptionTypes.NEWSLETTER,
+            "receive_newsletter",
+            True,
+            "newsletter-unsubscribe",
+        ),
+    ),
+)
+@pytest.mark.django_db
+def test_unsubscribe_link(
+    subscription_type,
+    subscription_attr,
+    subscription_preference,
+    unsubscribe_viewname,
+):
+    user = UserFactory()
+    setattr(user.user_profile, subscription_attr, subscription_preference)
+    link = user.user_profile.get_unsubscribe_link(
+        subscription_type=subscription_type
+    )
+    assert link == reverse(
+        unsubscribe_viewname,
+        kwargs={"token": user.user_profile.unsubscribe_token},
+    )
