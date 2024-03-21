@@ -29,6 +29,12 @@ class EmailSubscriptionTypes(TextChoices):
     SYSTEM = "SYSTEM"
 
 
+class NotificationSubscriptionOptions(TextChoices):
+    DAILY_SUMMARY = "DAILY_SUMMARY", _("Send me an email with a daily summary")
+    DISABLED = "DISABLED", _("Do not send me notification emails")
+    INSTANT = "INSTANT", _("Send me an email immediately")
+
+
 class UserProfile(models.Model):
     user = models.OneToOneField(
         get_user_model(),
@@ -69,6 +75,14 @@ class UserProfile(models.Model):
         null=True,
         blank=True,
         help_text="Would you like to be put on our mailing list and receive newsletters about Grand Challenge updates?",
+    )
+    notification_email_choice = models.CharField(
+        max_length=13,
+        choices=NotificationSubscriptionOptions.choices,
+        default=NotificationSubscriptionOptions.DAILY_SUMMARY,
+        help_text=(
+            "Whether to receive emails about unread notifications and direct messages, and how often (immediately vs. once a day if necessary)."
+        ),
     )
 
     def save(self, *args, **kwargs):
