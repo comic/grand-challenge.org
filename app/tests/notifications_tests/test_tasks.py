@@ -28,6 +28,7 @@ def test_daily_notification_email_only_about_new_unread_notifications():
     assert "You have 1 new notification" in mail.outbox[-1].body
 
 
+@pytest.mark.django_db
 def test_daily_notification_email_opt_in():
     inactive_user, user_no_email, user_instant_email, user_daily_email = (
         UserFactory.create_batch(4)
