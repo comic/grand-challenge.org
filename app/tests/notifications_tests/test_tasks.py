@@ -4,43 +4,13 @@ from django.utils.timezone import now
 
 from grandchallenge.notifications.models import Notification
 from grandchallenge.notifications.tasks import send_unread_notification_emails
+from grandchallenge.profiles.models import NotificationEmailOptions
 from tests.factories import UserFactory
 from tests.notifications_tests.factories import NotificationFactory
 
 
 @pytest.mark.django_db
-def test_notification_email():
-    user1, user2 = UserFactory.create_batch(2)
-    user2.is_active = False
-    user2.save()
-    _ = NotificationFactory(user=user1, type=Notification.Type.GENERIC)
-    _ = NotificationFactory(user=user2, type=Notification.Type.GENERIC)
-
-    assert user1.user_profile.has_unread_notifications
-    assert user1.user_profile.receive_notification_emails
-    assert user2.user_profile.has_unread_notifications
-    assert user2.user_profile.receive_notification_emails
-    assert len(mail.outbox) == 0
-    send_unread_notification_emails()
-    assert len(mail.outbox) == 1
-    email = mail.outbox[-1]
-    assert user1.email in email.to
-    assert user2.email not in email.to
-    assert "You have 1 new notification" in email.body
-
-
-@pytest.mark.django_db
-def test_notification_email_last_sent_at_updated():
-    user1 = UserFactory()
-    _ = NotificationFactory(user=user1, type=Notification.Type.GENERIC)
-    assert not user1.user_profile.notification_email_last_sent_at
-    send_unread_notification_emails()
-    user1.refresh_from_db()
-    assert user1.user_profile.notification_email_last_sent_at
-
-
-@pytest.mark.django_db
-def test_notification_email_only_about_new_unread_notifications():
+def test_daily_notification_email_only_about_new_unread_notifications():
     user1 = UserFactory()
     _ = NotificationFactory(user=user1, type=Notification.Type.GENERIC)
 
@@ -58,22 +28,41 @@ def test_notification_email_only_about_new_unread_notifications():
     assert "You have 1 new notification" in mail.outbox[-1].body
 
 
-@pytest.mark.django_db
-def test_notification_email_opt_out():
-    user1 = UserFactory()
-    user1.user_profile.receive_notification_emails = False
-    user1.user_profile.save()
+def test_daily_notification_email_opt_in():
+    inactive_user, user_no_email, user_instant_email, user_daily_email = (
+        UserFactory.create_batch(4)
+    )
 
-    _ = NotificationFactory(user=user1, type=Notification.Type.GENERIC)
+    inactive_user.is_active = False
+    inactive_user.save()
 
-    send_unread_notification_emails()
-    assert len(mail.outbox) == 0
+    user_no_email.user_profile.notification_email_choice = (
+        NotificationEmailOptions.DISABLED
+    )
+    user_no_email.user_profile.save()
 
-    user1.user_profile.receive_notification_emails = True
-    user1.user_profile.save()
+    user_instant_email.user_profile.notification_email_choice = (
+        NotificationEmailOptions.INSTANT
+    )
+    user_instant_email.user_profile.save()
+
+    user_daily_email.user_profile.notification_email_choice = (
+        NotificationEmailOptions.DAILY_SUMMARY
+    )
+    user_daily_email.user_profile.save()
+
+    _ = NotificationFactory(user=inactive_user, type=Notification.Type.GENERIC)
+    _ = NotificationFactory(user=user_no_email, type=Notification.Type.GENERIC)
+    _ = NotificationFactory(
+        user=user_instant_email, type=Notification.Type.GENERIC
+    )
+    _ = NotificationFactory(
+        user=user_daily_email, type=Notification.Type.GENERIC
+    )
 
     send_unread_notification_emails()
     assert len(mail.outbox) == 1
+    assert mail.outbox[0].to == [user_daily_email.email]
 
 
 @pytest.mark.django_db
@@ -95,3 +84,45 @@ def test_notification_email_counts():
 
     send_unread_notification_emails()
     assert len(mail.outbox) == 2
+
+
+@pytest.mark.django_db
+def test_instant_email_notification_opt_in():
+    inactive_user, user_no_email, user_instant_email, user_daily_email = (
+        UserFactory.create_batch(4)
+    )
+
+    inactive_user.is_active = False
+    inactive_user.save()
+
+    user_no_email.user_profile.notification_email_choice = (
+        NotificationEmailOptions.DISABLED
+    )
+    user_no_email.user_profile.save()
+
+    user_instant_email.user_profile.notification_email_choice = (
+        NotificationEmailOptions.INSTANT
+    )
+    user_instant_email.user_profile.save()
+
+    user_daily_email.user_profile.notification_email_choice = (
+        NotificationEmailOptions.DAILY_SUMMARY
+    )
+    user_daily_email.user_profile.save()
+
+    Notification.send(
+        kind=Notification.Type.FILE_COPY_STATUS, actor=inactive_user
+    )
+    Notification.send(
+        kind=Notification.Type.FILE_COPY_STATUS, actor=user_no_email
+    )
+    Notification.send(
+        kind=Notification.Type.FILE_COPY_STATUS, actor=user_instant_email
+    )
+    Notification.send(
+        kind=Notification.Type.FILE_COPY_STATUS, actor=user_daily_email
+    )
+
+    # only the user with instant notification emails enabled gets an email
+    assert len(mail.outbox) == 1
+    assert mail.outbox[0].to == [user_instant_email.email]
