@@ -29,7 +29,7 @@ class EmailSubscriptionTypes(TextChoices):
     SYSTEM = "SYSTEM"
 
 
-class NotificationSubscriptionOptions(TextChoices):
+class NotificationEmailOptions(TextChoices):
     DAILY_SUMMARY = "DAILY_SUMMARY", _("Send me an email with a daily summary")
     DISABLED = "DISABLED", _("Do not send me notification emails")
     INSTANT = "INSTANT", _("Send me an email immediately")
@@ -78,8 +78,8 @@ class UserProfile(models.Model):
     )
     notification_email_choice = models.CharField(
         max_length=13,
-        choices=NotificationSubscriptionOptions.choices,
-        default=NotificationSubscriptionOptions.DAILY_SUMMARY,
+        choices=NotificationEmailOptions.choices,
+        default=NotificationEmailOptions.DAILY_SUMMARY,
         help_text=(
             "Whether to receive emails about unread notifications and direct messages, and how often (immediately vs. once a day if necessary)."
         ),
@@ -160,13 +160,16 @@ class UserProfile(models.Model):
             else:
                 raise ValueError("User has opted out of newsletter emails")
         elif subscription_type == EmailSubscriptionTypes.NOTIFICATION:
-            if self.receive_notification_emails:
+            if (
+                self.notification_email_choice
+                == NotificationEmailOptions.DISABLED
+            ):
+                raise ValueError("User has opted out of notification emails")
+            else:
                 return reverse(
                     "notification-unsubscribe",
                     kwargs={"token": self.unsubscribe_token},
                 )
-            else:
-                raise ValueError("User has opted out of notification emails")
         elif subscription_type == EmailSubscriptionTypes.SYSTEM:
             return None
         else:
