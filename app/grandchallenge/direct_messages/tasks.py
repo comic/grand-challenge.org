@@ -4,11 +4,10 @@ from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 from django.db.models import Count, F, Q
 
+from grandchallenge.profiles.models import NotificationEmailOptions
+
 
 def get_users_to_send_new_unread_direct_messages_email():
-    # local import to avoid circular dependency
-    from grandchallenge.profiles.models import NotificationEmailOptions
-
     return (
         get_user_model()
         .objects.prefetch_related(
@@ -45,13 +44,19 @@ def get_new_senders(*, user):
             > user.user_profile.unread_messages_email_last_sent_at
         )
     }
+
     return sorted(list(new_senders), key=lambda s: s.pk)
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
 def send_new_unread_direct_messages_emails():
     site = Site.objects.get_current()
+
     for user in get_users_to_send_new_unread_direct_messages_email().iterator(
         chunk_size=100
     ):
-        user.user_profile.dispatch_unread_direct_messages_email(site=site)
+        user.user_profile.dispatch_unread_direct_messages_email(
+            site=site,
+            new_unread_message_count=user.new_unread_message_count,
+            new_senders=get_new_senders(user=user),
+        )

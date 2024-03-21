@@ -85,7 +85,9 @@ def email_subscribed_users_about_new_message(
 ):
     if action != "post_add" or reverse:
         return
+
     site = Site.objects.get_current()
+
     for user in (
         instance.unread_by.select_related("user_profile")
         .filter(

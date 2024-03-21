@@ -21,7 +21,6 @@ from stdimage import JPEGField
 from grandchallenge.core.storage import get_mugshot_path
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.utils import disable_for_loaddata
-from grandchallenge.direct_messages.tasks import get_new_senders
 from grandchallenge.emails.emails import send_standard_email_batch
 from grandchallenge.subdomains.utils import reverse
 
@@ -183,21 +182,15 @@ class UserProfile(models.Model):
             )
 
     def dispatch_unread_notifications_email(
-        self, *, site, unread_notification_count=None
+        self, *, site, unread_notification_count
     ):
         self.notification_email_last_sent_at = now()
         self.save(update_fields=["notification_email_last_sent_at"])
 
-        n_notifications = (
-            unread_notification_count
-            if unread_notification_count
-            else self.unread_notification_count
-        )
-
         subject = format_html(
             ("You have {unread_notification_count} new notification{suffix}"),
-            unread_notification_count=n_notifications,
-            suffix=pluralize(n_notifications),
+            unread_notification_count=unread_notification_count,
+            suffix=pluralize(unread_notification_count),
         )
 
         msg = format_html(
@@ -205,10 +198,11 @@ class UserProfile(models.Model):
                 "You have {unread_notification_count} new notification{suffix}.\n\n"
                 "Read and manage your notifications [here]({url})."
             ),
-            unread_notification_count=n_notifications,
-            suffix=pluralize(n_notifications),
+            unread_notification_count=unread_notification_count,
+            suffix=pluralize(unread_notification_count),
             url=reverse("notifications:list"),
         )
+
         send_standard_email_batch(
             site=site,
             subject=subject,
@@ -218,29 +212,21 @@ class UserProfile(models.Model):
         )
 
     def dispatch_unread_direct_messages_email(
-        self, *, site, new_unread_message_count=None, new_senders=None
+        self, *, site, new_unread_message_count, new_senders
     ):
-        if not new_senders:
-            new_senders = [
-                s.first_name for s in get_new_senders(user=self.user)
-            ]
-
         self.unread_messages_email_last_sent_at = now()
         self.save(update_fields=["unread_messages_email_last_sent_at"])
 
-        n_unread_messages = (
-            new_unread_message_count
-            if new_unread_message_count
-            else self.user.new_unread_message_count
-        )
+        new_sender_first_names = [s.first_name for s in new_senders]
+
         subject = format_html(
             (
                 "You have {new_unread_message_count} new message{suffix} "
                 "from {new_senders}"
             ),
-            new_unread_message_count=n_unread_messages,
-            suffix=pluralize(n_unread_messages),
-            new_senders=oxford_comma(new_senders),
+            new_unread_message_count=new_unread_message_count,
+            suffix=pluralize(new_unread_message_count),
+            new_senders=oxford_comma(new_sender_first_names),
         )
 
         msg = format_html(
@@ -248,11 +234,12 @@ class UserProfile(models.Model):
                 "You have {new_unread_message_count} new message{suffix} from {new_senders}.\n\n"
                 "To read and manage your messages, click [here]({url})."
             ),
-            new_unread_message_count=n_unread_messages,
-            suffix=pluralize(n_unread_messages),
-            new_senders=oxford_comma(new_senders),
+            new_unread_message_count=new_unread_message_count,
+            suffix=pluralize(new_unread_message_count),
+            new_senders=oxford_comma(new_sender_first_names),
             url=reverse("direct-messages:conversation-list"),
         )
+
         send_standard_email_batch(
             site=site,
             subject=subject,

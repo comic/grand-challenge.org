@@ -39,4 +39,7 @@ def send_unread_notification_emails():
     )
 
     for profile in profiles.iterator():
-        profile.dispatch_unread_notifications_email(site=site)
+        profile.dispatch_unread_notifications_email(
+            site=site,
+            unread_notification_count=profile.unread_notification_count,
+        )
