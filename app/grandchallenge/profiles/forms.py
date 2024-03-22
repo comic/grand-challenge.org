@@ -31,7 +31,7 @@ class UserProfileForm(forms.ModelForm):
             "country",
             "website",
             "display_organizations",
-            "receive_notification_emails",
+            "notification_email_choice",
             "receive_newsletter",
         )
         widgets = {"receive_newsletter": CheckboxInput()}
@@ -130,27 +130,24 @@ class SubscriptionPreferenceForm(forms.ModelForm):
     class Meta:
         model = UserProfile
         fields = (
-            "receive_notification_emails",
+            "notification_email_choice",
             "receive_newsletter",
         )
         widgets = {
-            "receive_notification_emails": CheckboxInput,
             "receive_newsletter": CheckboxInput,
         }
 
     def __init__(
         self,
         *args,
-        receive_notification_emails,
+        notification_email_choice,
         receive_newsletter,
         autosubmit,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
 
-        self.initial["receive_notification_emails"] = (
-            receive_notification_emails
-        )
+        self.initial["notification_email_choice"] = notification_email_choice
         self.initial["receive_newsletter"] = receive_newsletter
 
         self.helper = FormHelper(self)
@@ -158,7 +155,7 @@ class SubscriptionPreferenceForm(forms.ModelForm):
 
         if autosubmit:
             self.helper.form_class = "auto-submit"
-            self.fields["receive_notification_emails"].disabled = True
+            self.fields["notification_email_choice"].disabled = True
             self.fields["receive_newsletter"].disabled = True
         else:
             self.helper.add_input(Submit("save", "save"))

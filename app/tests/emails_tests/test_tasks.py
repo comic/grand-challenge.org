@@ -9,7 +9,10 @@ from grandchallenge.emails.emails import (
 )
 from grandchallenge.emails.tasks import get_receivers, send_bulk_email
 from grandchallenge.emails.utils import SendActionChoices
-from grandchallenge.profiles.models import EmailSubscriptionTypes
+from grandchallenge.profiles.models import (
+    EmailSubscriptionTypes,
+    NotificationEmailOptions,
+)
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.emails_tests.factories import EmailFactory
@@ -106,13 +109,27 @@ def test_email_content(settings):
         (EmailSubscriptionTypes.NEWSLETTER, "newsletter-unsubscribe"),
         (EmailSubscriptionTypes.NOTIFICATION, "notification-unsubscribe"),
         (EmailSubscriptionTypes.SYSTEM, None),
+        (
+            EmailSubscriptionTypes.NEWSLETTER,
+            "newsletter-unsubscribe",
+        ),
+        (
+            EmailSubscriptionTypes.NOTIFICATION,
+            "notification-unsubscribe",
+        ),
+        (
+            EmailSubscriptionTypes.SYSTEM,
+            None,
+        ),
     ],
 )
 @pytest.mark.django_db
 def test_unsubscribe_headers(subscription_type, unsubscribe_viewname):
     user = UserFactory()
     user.user_profile.receive_newsletter = True
-    user.user_profile.receive_notification_emails = True
+    user.user_profile.notification_email_choice = (
+        NotificationEmailOptions.DAILY_SUMMARY
+    )
     user.user_profile.save()
     site = Site.objects.get_current()
 
@@ -148,7 +165,7 @@ def test_unsubscribe_headers(subscription_type, unsubscribe_viewname):
     "subscription_type,expected_recipients",
     [
         (EmailSubscriptionTypes.NEWSLETTER, [True, False, True]),
-        (EmailSubscriptionTypes.NOTIFICATION, [True, False, False]),
+        (EmailSubscriptionTypes.NOTIFICATION, [True, True, False]),
         (EmailSubscriptionTypes.SYSTEM, [True, True, True]),
     ],
 )
@@ -158,15 +175,21 @@ def test_send_email_is_filtered(subscription_type, expected_recipients):
     u1, u2, u3 = UserFactory.create_batch(3)
 
     u1.user_profile.receive_newsletter = True
-    u1.user_profile.receive_notification_emails = True
+    u1.user_profile.notification_email_choice = (
+        NotificationEmailOptions.DAILY_SUMMARY
+    )
     u1.user_profile.save()
 
     u2.user_profile.receive_newsletter = False
-    u2.user_profile.receive_notification_emails = False
+    u2.user_profile.notification_email_choice = (
+        NotificationEmailOptions.INSTANT
+    )
     u2.user_profile.save()
 
     u3.user_profile.receive_newsletter = True
-    u3.user_profile.receive_notification_emails = False
+    u3.user_profile.notification_email_choice = (
+        NotificationEmailOptions.DISABLED
+    )
     u3.user_profile.save()
 
     send_standard_email_batch(
@@ -219,7 +242,9 @@ def test_can_always_email_system_messages():
     user = UserFactory(is_active=True)
 
     user.user_profile.receive_newsletter = False
-    user.user_profile.receive_notification_emails = False
+    user.user_profile.notification_email_choice = (
+        NotificationEmailOptions.DISABLED
+    )
     user.user_profile.save()
 
     email = create_email_object(
@@ -239,7 +264,9 @@ def test_can_email_newsletter_if_opted_in():
     user = UserFactory(is_active=True)
 
     user.user_profile.receive_newsletter = True
-    user.user_profile.receive_notification_emails = False
+    user.user_profile.notification_email_choice = (
+        NotificationEmailOptions.DISABLED
+    )
     user.user_profile.save()
 
     email = create_email_object(
@@ -269,12 +296,19 @@ def test_can_email_newsletter_if_opted_in():
     assert str(error.value) == "User has opted out of newsletter emails"
 
 
+@pytest.mark.parametrize(
+    "opt_in_type",
+    [
+        NotificationEmailOptions.DAILY_SUMMARY,
+        NotificationEmailOptions.INSTANT,
+    ],
+)
 @pytest.mark.django_db
-def test_can_email_notification_if_opted_in():
+def test_can_email_notification_if_opted_in(opt_in_type):
     user = UserFactory(is_active=True)
 
     user.user_profile.receive_newsletter = False
-    user.user_profile.receive_notification_emails = True
+    user.user_profile.notification_email_choice = opt_in_type
     user.user_profile.save()
 
     email = create_email_object(
@@ -288,7 +322,9 @@ def test_can_email_notification_if_opted_in():
 
     assert email
 
-    user.user_profile.receive_notification_emails = False
+    user.user_profile.notification_email_choice = (
+        NotificationEmailOptions.DISABLED
+    )
     user.user_profile.save()
 
     with pytest.raises(ValueError) as error:

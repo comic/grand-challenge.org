@@ -7,8 +7,10 @@ from django.core.signing import Signer
 from django.db import models
 from django.db.models import TextChoices
 from django.db.models.signals import post_save
+from django.template.defaultfilters import pluralize
 from django.utils.functional import cached_property
 from django.utils.html import format_html
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_countries.fields import CountryField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
@@ -17,7 +19,9 @@ from guardian.utils import get_anonymous_user
 from stdimage import JPEGField
 
 from grandchallenge.core.storage import get_mugshot_path
+from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.utils import disable_for_loaddata
+from grandchallenge.emails.emails import send_standard_email_batch
 from grandchallenge.subdomains.utils import reverse
 
 UNSUBSCRIBE_SALT = "email-subscription-preferences"
@@ -27,6 +31,12 @@ class EmailSubscriptionTypes(TextChoices):
     NEWSLETTER = "NEWSLETTER"
     NOTIFICATION = "NOTIFICATION"
     SYSTEM = "SYSTEM"
+
+
+class NotificationEmailOptions(TextChoices):
+    DAILY_SUMMARY = "DAILY_SUMMARY", _("Send me an email with a daily summary")
+    DISABLED = "DISABLED", _("Do not send me notification emails")
+    INSTANT = "INSTANT", _("Send me an email immediately")
 
 
 class UserProfile(models.Model):
@@ -69,6 +79,14 @@ class UserProfile(models.Model):
         null=True,
         blank=True,
         help_text="Would you like to be put on our mailing list and receive newsletters about Grand Challenge updates?",
+    )
+    notification_email_choice = models.CharField(
+        max_length=13,
+        choices=NotificationEmailOptions.choices,
+        default=NotificationEmailOptions.DAILY_SUMMARY,
+        help_text=(
+            "Whether to receive emails about unread notifications and direct messages, and how often (immediately vs. once a day if necessary)."
+        ),
     )
 
     def save(self, *args, **kwargs):
@@ -146,19 +164,89 @@ class UserProfile(models.Model):
             else:
                 raise ValueError("User has opted out of newsletter emails")
         elif subscription_type == EmailSubscriptionTypes.NOTIFICATION:
-            if self.receive_notification_emails:
+            if (
+                self.notification_email_choice
+                == NotificationEmailOptions.DISABLED
+            ):
+                raise ValueError("User has opted out of notification emails")
+            else:
                 return reverse(
                     "notification-unsubscribe",
                     kwargs={"token": self.unsubscribe_token},
                 )
-            else:
-                raise ValueError("User has opted out of notification emails")
         elif subscription_type == EmailSubscriptionTypes.SYSTEM:
             return None
         else:
             return NotImplementedError(
                 f"Unknown subscription type: {subscription_type}"
             )
+
+    def dispatch_unread_notifications_email(
+        self, *, site, unread_notification_count
+    ):
+        self.notification_email_last_sent_at = now()
+        self.save(update_fields=["notification_email_last_sent_at"])
+
+        subject = format_html(
+            ("You have {unread_notification_count} new notification{suffix}"),
+            unread_notification_count=unread_notification_count,
+            suffix=pluralize(unread_notification_count),
+        )
+
+        msg = format_html(
+            (
+                "You have {unread_notification_count} new notification{suffix}.\n\n"
+                "Read and manage your notifications [here]({url})."
+            ),
+            unread_notification_count=unread_notification_count,
+            suffix=pluralize(unread_notification_count),
+            url=reverse("notifications:list"),
+        )
+
+        send_standard_email_batch(
+            site=site,
+            subject=subject,
+            markdown_message=msg,
+            recipients=[self.user],
+            subscription_type=EmailSubscriptionTypes.NOTIFICATION,
+        )
+
+    def dispatch_unread_direct_messages_email(
+        self, *, site, new_unread_message_count, new_senders
+    ):
+        self.unread_messages_email_last_sent_at = now()
+        self.save(update_fields=["unread_messages_email_last_sent_at"])
+
+        new_sender_first_names = [s.first_name for s in new_senders]
+
+        subject = format_html(
+            (
+                "You have {new_unread_message_count} new message{suffix} "
+                "from {new_senders}"
+            ),
+            new_unread_message_count=new_unread_message_count,
+            suffix=pluralize(new_unread_message_count),
+            new_senders=oxford_comma(new_sender_first_names),
+        )
+
+        msg = format_html(
+            (
+                "You have {new_unread_message_count} new message{suffix} from {new_senders}.\n\n"
+                "To read and manage your messages, click [here]({url})."
+            ),
+            new_unread_message_count=new_unread_message_count,
+            suffix=pluralize(new_unread_message_count),
+            new_senders=oxford_comma(new_sender_first_names),
+            url=reverse("direct-messages:conversation-list"),
+        )
+
+        send_standard_email_batch(
+            site=site,
+            subject=subject,
+            markdown_message=msg,
+            recipients=[self.user],
+            subscription_type=EmailSubscriptionTypes.NOTIFICATION,
+        )
 
 
 class UserProfileUserObjectPermission(UserObjectPermissionBase):
