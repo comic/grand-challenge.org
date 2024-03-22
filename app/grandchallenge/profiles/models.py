@@ -13,7 +13,6 @@ from django.utils.html import format_html
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_countries.fields import CountryField
-from django_deprecate_fields import deprecate_field
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 from guardian.utils import get_anonymous_user
@@ -64,13 +63,6 @@ class UserProfile(models.Model):
     display_organizations = models.BooleanField(
         default=True,
         help_text="Display the organizations that you are a member of in your profile.",
-    )
-
-    receive_notification_emails = deprecate_field(
-        models.BooleanField(
-            default=True,
-            help_text="Whether to receive notification emails",
-        )
     )
     notification_email_last_sent_at = models.DateTimeField(
         default=None, null=True, editable=False
