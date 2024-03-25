@@ -158,7 +158,6 @@ class UserProfileDetail(UserProfileObjectMixin, DetailView):
 class UserProfileUpdate(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
-    UserProfileObjectMixin,
     UpdateView,
 ):
     model = UserProfile
@@ -166,6 +165,12 @@ class UserProfileUpdate(
     context_object_name = "profile"
     permission_required = "change_userprofile"
     raise_exception = True
+
+    def get_object(self, queryset=None):
+        try:
+            return self.request.user.user_profile
+        except ObjectDoesNotExist:
+            raise Http404("User not found")
 
 
 class NewsletterSignUp(

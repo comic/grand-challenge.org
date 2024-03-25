@@ -163,7 +163,6 @@ class TestProfileViewSets:
             client=client,
             method=client.post,
             user=u1,
-            reverse_kwargs={"username": u1.username},
             data={
                 "first_name": "Firstname",
                 "last_name": "Lastname",
