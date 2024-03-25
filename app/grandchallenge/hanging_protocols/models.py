@@ -131,6 +131,11 @@ HANGING_PROTOCOL_SCHEMA = {
                 "type": "number",
                 "minimum": 0,
             },
+            "relative_start_position": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+            },
         },
         "additionalProperties": False,
         "allOf": [
