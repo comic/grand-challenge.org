@@ -1049,7 +1049,7 @@ def add_file_to_component_interface_value(
             civ.full_clean()
         except ValidationError as e:
             civ.delete()
-            error = str(e)
+            error = str(e.message)
         else:
             user_upload.copy_object(to_field=civ.file)
             civ.save()
@@ -1200,7 +1200,7 @@ def add_file_to_object(
             civ = ComponentInterfaceValue.objects.get(pk=civ_pk)
             object.values.remove(civ)
     except ValidationError as e:
-        error = str(e)
+        error = str(e.message)
 
     if error is not None:
         Notification.send(
@@ -1209,7 +1209,7 @@ def add_file_to_object(
             message=f"File for interface {interface.title} failed validation.",
             target=object.base_object,
             description=(
-                f"File for interface {interface.title} added to {object_pk} "
-                f"in {object.base_object.title} failed validation:\n{error}."
+                f"File for interface {interface.title} "
+                f"failed validation:\n{error}."
             ),
         )
