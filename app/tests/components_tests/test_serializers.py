@@ -346,7 +346,7 @@ def test_civ_post_value_required(kind):
 
     # verify
     assert not serializer.is_valid()
-    assert "JSON does not fulfill schema: None is not of type" in str(
+    assert "JSON does not fulfill schema: instance is not of type" in str(
         serializer.errors["__all__"][0]
     )
 
