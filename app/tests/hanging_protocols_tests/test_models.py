@@ -63,6 +63,7 @@ from tests.hanging_protocols_tests.factories import HangingProtocolFactory
                     "show_current_slice": True,
                     "show_mouse_coordinate": True,
                     "show_mouse_voxel_value": True,
+                    "relative_start_position": 0.5,
                     "label": "Test label",
                     "opacity": 0.5,
                 }
