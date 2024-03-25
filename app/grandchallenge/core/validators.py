@@ -162,7 +162,7 @@ class JSONValidator:
             validate(value, self.schema, registry=self.registry)
         except JSONValidationError as e:
             raise ValidationError(
-                f"JSON does not fulfill schema: instance {e.message.replace(str(e.instance), '')}"
+                f"JSON does not fulfill schema: instance {e.message.replace(str(e.instance) + ' ', '')}"
             )
 
     def __eq__(self, other):
