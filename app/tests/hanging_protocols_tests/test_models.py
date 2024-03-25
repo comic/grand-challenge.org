@@ -425,6 +425,36 @@ from tests.hanging_protocols_tests.factories import HangingProtocolFactory
             ],
             pytest.raises(ValidationError),
         ),
+        # valid json containing relative_start_position
+        (
+            [
+                {
+                    "viewport_name": "main",
+                    "relative_start_position": 0.5,
+                }
+            ],
+            nullcontext(),
+        ),
+        # invalid json containing relative_start_position > 1
+        (
+            [
+                {
+                    "viewport_name": "main",
+                    "relative_start_position": 1.5,
+                }
+            ],
+            pytest.raises(ValidationError),
+        ),
+        # invalid json containing relative_start_position < 0
+        (
+            [
+                {
+                    "viewport_name": "main",
+                    "relative_start_position": -1.5,
+                }
+            ],
+            pytest.raises(ValidationError),
+        ),
     ],
 )
 def test_hanging_protocol_schema_validation(client, json, expectation):
