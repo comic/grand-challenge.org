@@ -185,13 +185,13 @@ trio = ["trio (>=0.23)"]
 
 [[package]]
 name = "asgiref"
-version = "3.7.2"
+version = "3.8.1"
 description = "ASGI specs, helper code, and adapters"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "asgiref-3.7.2-py3-none-any.whl", hash = "sha256:89b2ef2247e3b562a16eef663bc0e2e703ec6468e2fa8a5cd61cd449786d4f6e"},
-    {file = "asgiref-3.7.2.tar.gz", hash = "sha256:9e0ce3aa93a819ba5b45120216b23878cf6e8525eb3848653452b4192b92afed"},
+    {file = "asgiref-3.8.1-py3-none-any.whl", hash = "sha256:3e1e3ecc849832fe52ccf2cb6686b7a55f82bb1d6aee72a58826471390335e47"},
+    {file = "asgiref-3.8.1.tar.gz", hash = "sha256:c343bd80a0bec947a9860adb4c432ffa7db769836c64238fc34bdc3fec84d590"},
 ]
 
 [package.extras]
@@ -309,17 +309,17 @@ css = ["tinycss2 (>=1.1.0,<1.3)"]
 
 [[package]]
 name = "boto3"
-version = "1.34.66"
+version = "1.34.70"
 description = "The AWS SDK for Python"
 optional = false
-python-versions = ">= 3.8"
+python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.34.66-py3-none-any.whl", hash = "sha256:036989117c0bc4029daaa4cf713c4ff8c227b3eac6ef0e2118eb4098c114080e"},
-    {file = "boto3-1.34.66.tar.gz", hash = "sha256:b1d6be3d5833e56198dc635ff4b428b93e5a2a2bd9bc4d94581a572a1ce97cfe"},
+    {file = "boto3-1.34.70-py3-none-any.whl", hash = "sha256:8d7902e2c0c62837457ba18146e3feaf1dec62018617edc5c0336b65b305b682"},
+    {file = "boto3-1.34.70.tar.gz", hash = "sha256:54150a52eb93028b8e09df00319e8dcb68be7459333d5da00d706d75ba5130d6"},
 ]
 
 [package.dependencies]
-botocore = ">=1.34.66,<1.35.0"
+botocore = ">=1.34.70,<1.35.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -328,13 +328,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.34.66"
+version = "1.34.70"
 description = "Low-level, data-driven core of boto 3."
 optional = false
-python-versions = ">= 3.8"
+python-versions = ">=3.8"
 files = [
-    {file = "botocore-1.34.66-py3-none-any.whl", hash = "sha256:92560f8fbdaa9dd221212a3d3a7609219ba0bbf308c13571674c0cda9d8f39e1"},
-    {file = "botocore-1.34.66.tar.gz", hash = "sha256:fd7d8742007c220f897cb126b8916ca0cf3724a739d4d716aa5385d7f9d8aeb1"},
+    {file = "botocore-1.34.70-py3-none-any.whl", hash = "sha256:c86944114e85c8a8d5da06fb84f2609ed3bd23cd2fc06b30250bef7e37e8c589"},
+    {file = "botocore-1.34.70.tar.gz", hash = "sha256:fa03d4972cd57d505e6c0eb5d7c7a1caeb7dd49e84f963f7ebeca41fe8ab736e"},
 ]
 
 [package.dependencies]
@@ -703,13 +703,13 @@ colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
 name = "click-didyoumean"
-version = "0.3.0"
+version = "0.3.1"
 description = "Enables git-like *did-you-mean* feature in click"
 optional = false
-python-versions = ">=3.6.2,<4.0.0"
+python-versions = ">=3.6.2"
 files = [
-    {file = "click-didyoumean-0.3.0.tar.gz", hash = "sha256:f184f0d851d96b6d29297354ed981b7dd71df7ff500d82fa6d11f0856bee8035"},
-    {file = "click_didyoumean-0.3.0-py3-none-any.whl", hash = "sha256:a0713dc7a1de3f06bc0df5a9567ad19ead2d3d5689b434768a6145bff77c0667"},
+    {file = "click_didyoumean-0.3.1-py3-none-any.whl", hash = "sha256:5c4bb6007cfea5f2fd6583a2fb6701a22a41eb98957e63d0fac41c10e7c3117c"},
+    {file = "click_didyoumean-0.3.1.tar.gz", hash = "sha256:4f82fdff0dbe64ef8ab2279bd6aa3f6a99c3b28c05aa09cbfc07c9d7fbb5a463"},
 ]
 
 [package.dependencies]
@@ -956,13 +956,13 @@ gcp = ["dataclasses (>=0.8)", "google-auth (>=1.6)", "google-oauth (>=1.0)"]
 
 [[package]]
 name = "disposable-email-domains"
-version = "0.0.98"
+version = "0.0.100"
 description = "A set of disposable email domains"
 optional = false
 python-versions = "*"
 files = [
-    {file = "disposable-email-domains-0.0.98.tar.gz", hash = "sha256:009b2b2c05191d157f14d4cfe501e0359a525aa8c05191bd169837db8e7fb546"},
-    {file = "disposable_email_domains-0.0.98-py2.py3-none-any.whl", hash = "sha256:7de6b8d3ae97f4971834e3f91ab9d467b62a38c81f6fffc350436392bea662ba"},
+    {file = "disposable-email-domains-0.0.100.tar.gz", hash = "sha256:5b4ebb3cee14783a8582dad59f4700d3a1706081cfb61da1259bf967b4716948"},
+    {file = "disposable_email_domains-0.0.100-py2.py3-none-any.whl", hash = "sha256:faeabda971e2f451edecba02227e18b399184a80ff9250af22f96d6ee793ec31"},
 ]
 
 [package.extras]
@@ -1611,13 +1611,13 @@ files = [
 
 [[package]]
 name = "djangorestframework"
-version = "3.15.0"
+version = "3.15.1"
 description = "Web APIs for Django, made easy."
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "djangorestframework-3.15.0-py3-none-any.whl", hash = "sha256:5fa616048a7ec287fdaab3148aa5151efb73f7f8be1e23a9d18484e61e672695"},
-    {file = "djangorestframework-3.15.0.tar.gz", hash = "sha256:3f4a263012e1b263bf49a4907eb4cfe14de840a09b1ba64596d01a9c54835919"},
+    {file = "djangorestframework-3.15.1-py3-none-any.whl", hash = "sha256:3ccc0475bce968608cf30d07fb17d8e52d1d7fc8bfe779c905463200750cbca6"},
+    {file = "djangorestframework-3.15.1.tar.gz", hash = "sha256:f88fad74183dfc7144b2756d0d2ac716ea5b4c7c9840995ac3bfd8ec034333c1"},
 ]
 
 [package.dependencies]
@@ -1721,13 +1721,13 @@ doc = ["Sphinx", "sphinx-rtd-theme", "sphinxcontrib-spelling"]
 
 [[package]]
 name = "faker"
-version = "24.3.0"
+version = "24.4.0"
 description = "Faker is a Python package that generates fake data for you."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "Faker-24.3.0-py3-none-any.whl", hash = "sha256:9978025e765ba79f8bf6154c9630a9c2b7f9c9b0f175d4ad5e04b19a82a8d8d6"},
-    {file = "Faker-24.3.0.tar.gz", hash = "sha256:5fb5aa9749d09971e04a41281ae3ceda9414f683d4810a694f8a8eebb8f9edec"},
+    {file = "Faker-24.4.0-py3-none-any.whl", hash = "sha256:998c29ee7d64429bd59204abffa9ba11f784fb26c7b9df4def78d1a70feb36a7"},
+    {file = "Faker-24.4.0.tar.gz", hash = "sha256:a5ddccbe97ab691fad6bd8036c31f5697cfaa550e62e000078d1935fa8a7ec2e"},
 ]
 
 [package.dependencies]
@@ -3120,42 +3120,42 @@ numpy = ">=1.24,<2.0"
 
 [[package]]
 name = "pylibjpeg-openjpeg"
-version = "2.1.1"
+version = "2.2.1"
 description = "A Python wrapper for openjpeg, with a focus on use as a plugin for for pylibjpeg"
 optional = false
-python-versions = ">=3.8,<4.0"
+python-versions = "<4.0,>=3.8"
 files = [
-    {file = "pylibjpeg_openjpeg-2.1.1-cp310-cp310-macosx_12_0_arm64.whl", hash = "sha256:d4483f1ca4d41311bcfaf451dd377590fc03e8243dbe6b6e79525c48ed9947af"},
-    {file = "pylibjpeg_openjpeg-2.1.1-cp310-cp310-macosx_12_0_x86_64.whl", hash = "sha256:49490d788e61732cf2b506dc92226091648a85b21f34a0a9359d73279f2a07d7"},
-    {file = "pylibjpeg_openjpeg-2.1.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:495a8e01806eeb41c54ecb2c8fbe56b2c0a5e7a971b61efce481c7e63ed10134"},
-    {file = "pylibjpeg_openjpeg-2.1.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6ee5817a3769524641f33d792bdf63a0543b2d218ca9035bf94722650df3741a"},
-    {file = "pylibjpeg_openjpeg-2.1.1-cp310-cp310-win32.whl", hash = "sha256:68b9e6ac6fa8ef0ff2b7c5a1ea2d44ee01517d575b9d318d260ba9be9e78beeb"},
-    {file = "pylibjpeg_openjpeg-2.1.1-cp310-cp310-win_amd64.whl", hash = "sha256:c94e9f89440ef2ab4ca88eed790c7d0a6c9a37ab4764b0d9b238d52cc1442322"},
-    {file = "pylibjpeg_openjpeg-2.1.1-cp311-cp311-macosx_12_0_arm64.whl", hash = "sha256:8dc6a2ebe472143ed97b0b3a5d5c74c850298310bf1cef7bc0f6a9d097ca3c77"},
-    {file = "pylibjpeg_openjpeg-2.1.1-cp311-cp311-macosx_12_0_x86_64.whl", hash = "sha256:1d90cd994bde1268527a1e15d80479876815ec25a3c43f316cb62515f801dd72"},
-    {file = "pylibjpeg_openjpeg-2.1.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:e0dbb1907b9c4f2d2d5c62fef6fdd87984735f69cb97550d3d28bfbc184c1417"},
-    {file = "pylibjpeg_openjpeg-2.1.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:022258a548f6b9105441e1e47b04c03fc740e2f1079b9edf7a0a280bba64c9c1"},
-    {file = "pylibjpeg_openjpeg-2.1.1-cp311-cp311-win32.whl", hash = "sha256:d2e98bca8eb98ae98271852267f7cd04f1898ecde714428380a593cfea98bf4a"},
-    {file = "pylibjpeg_openjpeg-2.1.1-cp311-cp311-win_amd64.whl", hash = "sha256:69a65ac65042ff08013e1d5d3671fab47cdfa75ffd37cb8d92546133a6e65ca2"},
-    {file = "pylibjpeg_openjpeg-2.1.1-cp312-cp312-macosx_12_0_arm64.whl", hash = "sha256:9e3f57f0910a525c920b1f8da79e7cf1c20d1130a37f39bfae50cdbd49ca3ec4"},
-    {file = "pylibjpeg_openjpeg-2.1.1-cp312-cp312-macosx_12_0_x86_64.whl", hash = "sha256:0804daabfc4c75919763d8b39aa88a80854c4517c4d06d70fb6f678d25998d56"},
-    {file = "pylibjpeg_openjpeg-2.1.1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:84b1782ca23fb016f25c7e9bffe043461739bce9764647203539acea5b358d66"},
-    {file = "pylibjpeg_openjpeg-2.1.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:3f7a91d8bb05581059a43c19736b84b752f86dc685bbe3058dc2982ccc788a5f"},
-    {file = "pylibjpeg_openjpeg-2.1.1-cp312-cp312-win32.whl", hash = "sha256:57d1fe3e713e2c46c9d6268cd30ab934659a08cbe105056834607d7b19c9f95f"},
-    {file = "pylibjpeg_openjpeg-2.1.1-cp312-cp312-win_amd64.whl", hash = "sha256:4e25a94741a7ac0b763adcdfd612342ff9eab82c20f6e8a9ba3a43055860d725"},
-    {file = "pylibjpeg_openjpeg-2.1.1-cp38-cp38-macosx_12_0_arm64.whl", hash = "sha256:06dac38fee9f569b94c34b2361745fa7ecdc6d965c22a6e4bd7563dc55a0c59f"},
-    {file = "pylibjpeg_openjpeg-2.1.1-cp38-cp38-macosx_12_0_x86_64.whl", hash = "sha256:8513fca7b5c02ae0b9f14f7f4a5a4a913d480eed75fca67a438ca86e9f76a2b2"},
-    {file = "pylibjpeg_openjpeg-2.1.1-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:8f424fff4d61886b7d656c1402f7c6b8aed6d3836d73bc3c39f2f73fccb7a3c8"},
-    {file = "pylibjpeg_openjpeg-2.1.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1f200e14e95857092da3c5b554be51aff810f8b6869eb3f453d7325cddca72e4"},
-    {file = "pylibjpeg_openjpeg-2.1.1-cp38-cp38-win32.whl", hash = "sha256:7edd1b990bba0957d509bfe4f71e32fa47568b1db42a8790ee7923370eeed06a"},
-    {file = "pylibjpeg_openjpeg-2.1.1-cp38-cp38-win_amd64.whl", hash = "sha256:30583f2744d8f97c4b3b6d3cd31fcbc5ff62be49f2fe34d58a6d2d4ba4018297"},
-    {file = "pylibjpeg_openjpeg-2.1.1-cp39-cp39-macosx_12_0_arm64.whl", hash = "sha256:4a4c87e4be0e614339da9fdc8c31f005d84db4b7979459cc301ecf2bdb80b1fd"},
-    {file = "pylibjpeg_openjpeg-2.1.1-cp39-cp39-macosx_12_0_x86_64.whl", hash = "sha256:2262526ed6df5a0f00abb29ee1ff4334d466c2d1111b5a4e776247c61b74f180"},
-    {file = "pylibjpeg_openjpeg-2.1.1-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:1cc22d743744f031ef47be8a898bf1bf5b4ea30eb178f845743919a7348db8fa"},
-    {file = "pylibjpeg_openjpeg-2.1.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7b7a8a3004b31914c7a7201bcef305a502c3aa791e6d436426c915aa6a9771c7"},
-    {file = "pylibjpeg_openjpeg-2.1.1-cp39-cp39-win32.whl", hash = "sha256:e4e190fa6b8fe211eb3df13be6213933a2537c3cc6539bd982a579757142b6b5"},
-    {file = "pylibjpeg_openjpeg-2.1.1-cp39-cp39-win_amd64.whl", hash = "sha256:909a1f661ada1a394b10527f44ac739cf7578f3238ea00a52f8ceede3468dfdd"},
-    {file = "pylibjpeg_openjpeg-2.1.1.tar.gz", hash = "sha256:7374ada3a3c93ccfb7d70565b5f72acd5a7d2a3b20467ef9906e443795b2fd2a"},
+    {file = "pylibjpeg_openjpeg-2.2.1-cp310-cp310-macosx_12_0_arm64.whl", hash = "sha256:c2478ab0b999ccd89b4fb72dffe5bba4447497501df3fbf3a96c1a27b2fefa68"},
+    {file = "pylibjpeg_openjpeg-2.2.1-cp310-cp310-macosx_12_0_x86_64.whl", hash = "sha256:8abccab4c3559ede12f51df49a1b834754707d9bf607194b130a87015182221f"},
+    {file = "pylibjpeg_openjpeg-2.2.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:c2823a930cc88263efb4af9d98e3fa29c91790cff9fec4e36cf0799eb2a6af59"},
+    {file = "pylibjpeg_openjpeg-2.2.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:78978b5c860891e300d4dad353044a1f5f9094bbc16846b007232b2ff3c2630d"},
+    {file = "pylibjpeg_openjpeg-2.2.1-cp310-cp310-win32.whl", hash = "sha256:3f4952e9b4edb694ff4b5a34f323d229d1401c6b39f2509342d53cf51a0175ed"},
+    {file = "pylibjpeg_openjpeg-2.2.1-cp310-cp310-win_amd64.whl", hash = "sha256:4e7a316f21aaf2a4b68948fb7b7bc96933f90909da2fbf338c760db7d5e98078"},
+    {file = "pylibjpeg_openjpeg-2.2.1-cp311-cp311-macosx_12_0_arm64.whl", hash = "sha256:be7256e0ffd6f2095bf8cd5d6d0a6445dee2f3a51ecec817ed2a65b0fbbe3d27"},
+    {file = "pylibjpeg_openjpeg-2.2.1-cp311-cp311-macosx_12_0_x86_64.whl", hash = "sha256:e6b5ca65c796bf70ddea0a8740ab638dc364a087099d5650db84e46e5a6359cd"},
+    {file = "pylibjpeg_openjpeg-2.2.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:81b3039b4ef600a259814fea4765f977db477c7f5307e0f1283fdfaa7231bc27"},
+    {file = "pylibjpeg_openjpeg-2.2.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8ec3be3ee8ca10da019587b5f32839b29e1d7e009411d3b773d1a6054a96e2f1"},
+    {file = "pylibjpeg_openjpeg-2.2.1-cp311-cp311-win32.whl", hash = "sha256:4d63d4a16c4df358255e55ef05ecd08e1ed7b4dd30d1c35d0e7e36e8f713c754"},
+    {file = "pylibjpeg_openjpeg-2.2.1-cp311-cp311-win_amd64.whl", hash = "sha256:c0c13a77e3327015c7564d64a8999499f81c1d00e96c87daf3a80ee44e469826"},
+    {file = "pylibjpeg_openjpeg-2.2.1-cp312-cp312-macosx_12_0_arm64.whl", hash = "sha256:47f9c8ade97c451a3210139bb560c75be2beed69555e56fa2b268185e1c5e6a8"},
+    {file = "pylibjpeg_openjpeg-2.2.1-cp312-cp312-macosx_12_0_x86_64.whl", hash = "sha256:5e0e5a86e6df2f0250479c964a95fdec6fde3a82dd86a3d21aa7f4b21b76b64f"},
+    {file = "pylibjpeg_openjpeg-2.2.1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:7df7346c32b54230ce787e79067cd3adf4f932d1a0b6229b1e7295138993f633"},
+    {file = "pylibjpeg_openjpeg-2.2.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:502941d0fdd1e2f9b5bc51f2d1738e067da7a04e193bbf8b4dcc1879fdf81d80"},
+    {file = "pylibjpeg_openjpeg-2.2.1-cp312-cp312-win32.whl", hash = "sha256:4beed38a7c0e2f7f222f89d06e5f788237f3fc74dba8c69ab587142df1ac8dd3"},
+    {file = "pylibjpeg_openjpeg-2.2.1-cp312-cp312-win_amd64.whl", hash = "sha256:bc0b9133873bef865ff4c7f175a1d3556ca7a3b0ccded48ba6464b72fc975022"},
+    {file = "pylibjpeg_openjpeg-2.2.1-cp38-cp38-macosx_12_0_arm64.whl", hash = "sha256:fbfc67656eee4ecec409e0ee40deabb4f2ffb9a107d3f267fab29ffb0ca873da"},
+    {file = "pylibjpeg_openjpeg-2.2.1-cp38-cp38-macosx_12_0_x86_64.whl", hash = "sha256:a0e3bf729fd715cf478d650814c1a3c3971c1e1049171a3601b150b9e976d4a2"},
+    {file = "pylibjpeg_openjpeg-2.2.1-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:54e97fd7a541adb816a8fbba81062582c81efd8b424de211b7366266397537b0"},
+    {file = "pylibjpeg_openjpeg-2.2.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:fb22e04cfb3461c066156bc9ee010e343e102db605f15250e4bbcbf7db38661c"},
+    {file = "pylibjpeg_openjpeg-2.2.1-cp38-cp38-win32.whl", hash = "sha256:9686026457437e0016d38de29d86463c5016f2ba3ec1a99eee02dd3fe98e73bd"},
+    {file = "pylibjpeg_openjpeg-2.2.1-cp38-cp38-win_amd64.whl", hash = "sha256:d56a3e8c79e307485753291fc7c4786c161106e849a696ba058995781336636d"},
+    {file = "pylibjpeg_openjpeg-2.2.1-cp39-cp39-macosx_12_0_arm64.whl", hash = "sha256:de825e375fc4267de6b0bf109eb1bb0eacc0eb187d7d622fe8c0361f3e0522af"},
+    {file = "pylibjpeg_openjpeg-2.2.1-cp39-cp39-macosx_12_0_x86_64.whl", hash = "sha256:f15856bfb081ed053f0548bae50eba74ea3be3b0f1dd6d5f10868f27faf07d5e"},
+    {file = "pylibjpeg_openjpeg-2.2.1-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:d5892c3769d4269d8895bf276052ef92aebeeb0d78fc6efb82e762041a9ff666"},
+    {file = "pylibjpeg_openjpeg-2.2.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:cf151111948a39e8c68ed8b569511e310d77d42bde581982cec6deaf5ade9eed"},
+    {file = "pylibjpeg_openjpeg-2.2.1-cp39-cp39-win32.whl", hash = "sha256:0f9cce27d21e2e0b5fa852c0ed6c5d754cc93c084e0ac6cd768a01d03ce733f9"},
+    {file = "pylibjpeg_openjpeg-2.2.1-cp39-cp39-win_amd64.whl", hash = "sha256:b3088140e4d5ac632c6c6eadaeebd4451ff83aeaa17ff4faa99cc681e6327ee8"},
+    {file = "pylibjpeg_openjpeg-2.2.1.tar.gz", hash = "sha256:8c497c661ee4e99e4803995f7728ae89b3a9e1a28049314299ad83f27108f92f"},
 ]
 
 [package.dependencies]
@@ -3174,13 +3174,13 @@ files = [
 
 [[package]]
 name = "pyswot"
-version = "0.3.1"
+version = "0.3.2"
 description = "Python wrapper for JetBrains/swot"
 optional = false
-python-versions = ">=3.8,<4.0"
+python-versions = "<4.0,>=3.8"
 files = [
-    {file = "pyswot-0.3.1-py3-none-any.whl", hash = "sha256:0004dbcb3068f85b0b59d45a72f138b0af60e65b70606993077cd5d9141a446d"},
-    {file = "pyswot-0.3.1.tar.gz", hash = "sha256:654f6ffc6641809ff5c81b4c254263098ee4fbe3898e0fa994b2b412bd71988b"},
+    {file = "pyswot-0.3.2-py3-none-any.whl", hash = "sha256:251fb56dad5e29fc92a7ee08107f8d44c5402b9b119da96f2719dd01bb15d13e"},
+    {file = "pyswot-0.3.2.tar.gz", hash = "sha256:0896ca506674bf773971a55521cedad1c45ef3dff62a9fa0e6d6a4170a771147"},
 ]
 
 [[package]]
@@ -3223,13 +3223,13 @@ test = ["black (>=22.1.0)", "flake8 (>=4.0.1)", "pre-commit (>=2.17.0)", "pytest
 
 [[package]]
 name = "pytest-cov"
-version = "4.1.0"
+version = "5.0.0"
 description = "Pytest plugin for measuring coverage."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "pytest-cov-4.1.0.tar.gz", hash = "sha256:3904b13dfbfec47f003b8e77fd5b589cd11904a21ddf1ab38a64f204d6a10ef6"},
-    {file = "pytest_cov-4.1.0-py3-none-any.whl", hash = "sha256:6ba70b9e97e69fcc3fb45bfeab2d0a138fb65c4d0d6a41ef33983ad114be8c3a"},
+    {file = "pytest-cov-5.0.0.tar.gz", hash = "sha256:5837b58e9f6ebd335b0f8060eecce69b662415b16dc503883a02f45dfeb14857"},
+    {file = "pytest_cov-5.0.0-py3-none-any.whl", hash = "sha256:4f0764a1219df53214206bf1feea4633c3b558a2925c8b59f144f682861ce652"},
 ]
 
 [package.dependencies]
@@ -3237,7 +3237,7 @@ coverage = {version = ">=5.2.1", extras = ["toml"]}
 pytest = ">=4.6"
 
 [package.extras]
-testing = ["fields", "hunter", "process-tests", "pytest-xdist", "six", "virtualenv"]
+testing = ["fields", "hunter", "process-tests", "pytest-xdist", "virtualenv"]
 
 [[package]]
 name = "pytest-django"
@@ -3259,17 +3259,17 @@ testing = ["Django", "django-configurations (>=2.0)"]
 
 [[package]]
 name = "pytest-mock"
-version = "3.12.0"
+version = "3.14.0"
 description = "Thin-wrapper around the mock package for easier use with pytest"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pytest-mock-3.12.0.tar.gz", hash = "sha256:31a40f038c22cad32287bb43932054451ff5583ff094bca6f675df2f8bc1a6e9"},
-    {file = "pytest_mock-3.12.0-py3-none-any.whl", hash = "sha256:0972719a7263072da3a21c7f4773069bcc7486027d7e8e1f81d98a47e701bc4f"},
+    {file = "pytest-mock-3.14.0.tar.gz", hash = "sha256:2719255a1efeceadbc056d6bf3df3d1c5015530fb40cf347c0f9afac88410bd0"},
+    {file = "pytest_mock-3.14.0-py3-none-any.whl", hash = "sha256:0b72c38033392a5f4621342fe11e9219ac11ec9d375f8e2a0c164539e0d70f6f"},
 ]
 
 [package.dependencies]
-pytest = ">=5.0"
+pytest = ">=6.2.5"
 
 [package.extras]
 dev = ["pre-commit", "pytest-asyncio", "tox"]
@@ -3632,13 +3632,13 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "requests-oauthlib"
-version = "1.4.0"
+version = "2.0.0"
 description = "OAuthlib authentication support for Requests."
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+python-versions = ">=3.4"
 files = [
-    {file = "requests-oauthlib-1.4.0.tar.gz", hash = "sha256:acee623221e4a39abcbb919312c8ff04bd44e7e417087fb4bd5e2a2f53d5e79a"},
-    {file = "requests_oauthlib-1.4.0-py2.py3-none-any.whl", hash = "sha256:7a3130d94a17520169e38db6c8d75f2c974643788465ecc2e4b36d288bf13033"},
+    {file = "requests-oauthlib-2.0.0.tar.gz", hash = "sha256:b3dffaebd884d8cd778494369603a9e7b58d29111bf6b41bdc2dcd87203af4e9"},
+    {file = "requests_oauthlib-2.0.0-py2.py3-none-any.whl", hash = "sha256:7dd8a5c40426b779b0868c404bdef9768deccf22749cde15852df527e6269b36"},
 ]
 
 [package.dependencies]
@@ -3821,13 +3821,13 @@ crt = ["botocore[crt] (>=1.33.2,<2.0a.0)"]
 
 [[package]]
 name = "sentry-sdk"
-version = "1.42.0"
+version = "1.43.0"
 description = "Python client for Sentry (https://sentry.io)"
 optional = false
 python-versions = "*"
 files = [
-    {file = "sentry-sdk-1.42.0.tar.gz", hash = "sha256:4a8364b8f7edbf47f95f7163e48334c96100d9c098f0ae6606e2e18183c223e6"},
-    {file = "sentry_sdk-1.42.0-py2.py3-none-any.whl", hash = "sha256:a654ee7e497a3f5f6368b36d4f04baeab1fe92b3105f7f6965d6ef0de35a9ba4"},
+    {file = "sentry-sdk-1.43.0.tar.gz", hash = "sha256:41df73af89d22921d8733714fb0fc5586c3461907e06688e6537d01a27e0e0f6"},
+    {file = "sentry_sdk-1.43.0-py2.py3-none-any.whl", hash = "sha256:8d768724839ca18d7b4c7463ef7528c40b7aa2bfbf7fe554d5f9a7c044acfd36"},
 ]
 
 [package.dependencies]
@@ -3841,6 +3841,7 @@ asyncpg = ["asyncpg (>=0.23)"]
 beam = ["apache-beam (>=2.12)"]
 bottle = ["bottle (>=0.12.13)"]
 celery = ["celery (>=3)"]
+celery-redbeat = ["celery-redbeat (>=2)"]
 chalice = ["chalice (>=1.16.0)"]
 clickhouse-driver = ["clickhouse-driver (>=0.2.0)"]
 django = ["django (>=1.8)"]
@@ -4734,13 +4735,13 @@ files = [
 
 [[package]]
 name = "wsidicom"
-version = "0.20.3"
+version = "0.20.4"
 description = "Tools for handling DICOM based whole scan images"
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "wsidicom-0.20.3-py3-none-any.whl", hash = "sha256:cde5fac11ea0286da659f4cf0c882210fea6903456a9eac518610681a6c8c8e1"},
-    {file = "wsidicom-0.20.3.tar.gz", hash = "sha256:265c53f2abd35c882616e712899b291619a11fd4c4389a6fb1a4e5adcaa43949"},
+    {file = "wsidicom-0.20.4-py3-none-any.whl", hash = "sha256:6760af7d4e6ecc322c5c23ac2e1aad8f6ee904e126d8c840da90210d95ee0aeb"},
+    {file = "wsidicom-0.20.4.tar.gz", hash = "sha256:3d4df665b325e3c990b573258a2cfb974f68ee6d977ce74e9c97fbc6ab8c3663"},
 ]
 
 [package.dependencies]
