@@ -97,7 +97,6 @@ class VerificationForm(SaveFormInitMixin, forms.ModelForm):
                     ),
                     profile_url=reverse(
                         "profile-update",
-                        kwargs={"username": self.user.username},
                     ),
                 )
             )
