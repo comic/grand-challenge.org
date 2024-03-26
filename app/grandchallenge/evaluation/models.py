@@ -515,7 +515,10 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
     class Meta:
         unique_together = (("challenge", "title"), ("challenge", "slug"))
         ordering = ("challenge", "submissions_open_at", "created")
-        permissions = (("create_phase_submission", "Create Phase Submission"),)
+        permissions = (
+            ("create_phase_submission", "Create Phase Submission"),
+            ("configure_algorithm_phase", "Configure Algorithm Phase"),
+        )
 
     def __str__(self):
         return f"{self.title} Evaluation for {self.challenge.short_name}"

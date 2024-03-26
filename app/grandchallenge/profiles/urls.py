@@ -33,15 +33,15 @@ urlpatterns = [
         name="email-preferences",
     ),
     path("profile/", profile, name="profile-detail-redirect"),
+    path(
+        "profile/edit/",
+        UserProfileUpdate.as_view(),
+        name="profile-update",
+    ),
     re_path(
         r"^(?P<username>[\@\.\+\w-]+)/$",
         UserProfileDetail.as_view(),
         name="profile-detail",
-    ),
-    re_path(
-        r"^(?P<username>[\@\.\+\w-]+)/edit/$",
-        UserProfileUpdate.as_view(),
-        name="profile-update",
     ),
     re_path(
         r"^(?P<username>[\@\.\+\w-]+)/newsletter-sign-up/$",

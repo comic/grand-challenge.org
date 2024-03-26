@@ -5,6 +5,7 @@ from grandchallenge.evaluation.views import (
     CombinedLeaderboardDelete,
     CombinedLeaderboardDetail,
     CombinedLeaderboardUpdate,
+    ConfigureAlgorithmPhasesView,
     EvaluationAdminList,
     EvaluationCreate,
     EvaluationDetail,
@@ -31,6 +32,11 @@ urlpatterns = [
     # UUID should be matched before slugs
     path("<uuid:pk>/update/", EvaluationUpdate.as_view(), name="update"),
     path("phase/create/", PhaseCreate.as_view(), name="phase-create"),
+    path(
+        "configure-algorithm-phases/",
+        ConfigureAlgorithmPhasesView.as_view(),
+        name="configure-algorithm-phases",
+    ),
     path("submissions/", SubmissionList.as_view(), name="submission-list"),
     path(
         "combined-leaderboards/create/",

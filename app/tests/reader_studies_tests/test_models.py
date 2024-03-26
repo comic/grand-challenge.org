@@ -1013,3 +1013,57 @@ def test_annotation_view_port_contains_image():
         "Please update the view content of this reader study or select a different view port for question foo"
         in str(err.value)
     )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "answer_type, required, error, error_message",
+    (
+        (
+            AnswerType.NUMBER,
+            False,
+            nullcontext(),
+            None,
+        ),
+        (
+            AnswerType.HEADING,
+            False,
+            pytest.raises(ValidationError),
+            "Empty answer confirmation is not supported for Heading type questions.",
+        ),
+        (
+            AnswerType.CHOICE,
+            False,
+            pytest.raises(ValidationError),
+            "Empty answer confirmation is not supported for Choice type questions.",
+        ),
+        (
+            AnswerType.MULTIPLE_CHOICE,
+            False,
+            pytest.raises(ValidationError),
+            "Empty answer confirmation is not supported for Multiple choice type questions.",
+        ),
+        (
+            AnswerType.NUMBER,
+            True,
+            pytest.raises(ValidationError),
+            "Cannot have answer confirmation and have a question be "
+            "required at the same time",
+        ),
+    ),
+)
+def test_empty_answer_confirmation_validation(
+    answer_type, required, error, error_message
+):
+    qu = QuestionFactory(
+        empty_answer_confirmation=True,
+        answer_type=answer_type,
+        required=required,
+        question_text="foo",
+    )
+
+    with error as e:
+        qu._clean_empty_answer_confirmation()
+
+    if error_message:
+        assert error_message in str(e.value)

@@ -4,7 +4,7 @@
         name="WidgetChoice-{{ widget.name }}"
         id="widgetSelect-{{ widget.name }}"
         hx-get="{% url 'cases:select-image-widget' %}"
-        hx-target="#{{ widget.name }}-area"
+        hx-target="#area-{{ widget.name }}"
         hx-trigger="widgetSelected, change"
         hx-include="[id='values-{{ widget.name }}']"
 >
@@ -23,6 +23,6 @@
     <input type="hidden" name="current_value" value="{{ widget.attrs.current_value.image.pk }}">
 </div>
 
-<div class="mt-3" id="{{ widget.name }}-area"></div>
+<div class="mt-3" id="area-{{ widget.name }}"></div>
 
 <script type="text/javascript" src="{% static "cases/js/flexible_image_widget.js" %}"></script>

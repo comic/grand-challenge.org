@@ -81,6 +81,8 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "answer_min_length",
             "answer_max_length",
             "answer_match_pattern",
+            "empty_answer_confirmation",
+            "empty_answer_confirmation_label",
         )
 
 

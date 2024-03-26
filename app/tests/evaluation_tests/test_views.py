@@ -29,6 +29,7 @@ from tests.evaluation_tests.factories import (
 )
 from tests.factories import (
     ChallengeFactory,
+    ChallengeRequestFactory,
     GroupFactory,
     UserFactory,
     WorkstationConfigFactory,
@@ -462,27 +463,33 @@ def test_submission_time_limit(client, two_challenge_sets):
 def test_evaluation_list(client, two_challenge_sets):
     # participant 0, submission 1, challenge 1, etc
     e_p_s1 = EvaluationFactory(
+        method__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
         submission__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
         submission__creator=two_challenge_sets.challenge_set_1.participant,
     )
     e_p_s2 = EvaluationFactory(
+        method__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
         submission__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
         submission__creator=two_challenge_sets.challenge_set_1.participant,
     )
     e_p1_s1 = EvaluationFactory(
+        method__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
         submission__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
         submission__creator=two_challenge_sets.challenge_set_1.participant1,
     )
     # participant12, submission 1 to each challenge
     e_p12_s1_c1 = EvaluationFactory(
+        method__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
         submission__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
         submission__creator=two_challenge_sets.participant12,
     )
     e_p12_s1_c2 = EvaluationFactory(
+        method__phase=two_challenge_sets.challenge_set_2.challenge.phase_set.get(),
         submission__phase=two_challenge_sets.challenge_set_2.challenge.phase_set.get(),
         submission__creator=two_challenge_sets.participant12,
     )
     e_p_s3_p2 = EvaluationFactory(
+        method__phase=two_challenge_sets.challenge_set_2.challenge.phase_set.get(),
         submission__phase=PhaseFactory(
             challenge=two_challenge_sets.challenge_set_2.challenge
         ),
@@ -1251,3 +1258,69 @@ def test_update_view_permissions(client):
 
     # Only phases for this challenge
     assert {*response.context["form"].fields["phases"].queryset} == {ph1}
+
+
+@pytest.mark.django_db
+def test_configure_algorithm_phases_permissions(client):
+    user = UserFactory()
+    ch = ChallengeFactory()
+    response = get_view_for_user(
+        viewname="evaluation:configure-algorithm-phases",
+        client=client,
+        user=user,
+        reverse_kwargs={
+            "challenge_short_name": ch.short_name,
+        },
+    )
+    assert response.status_code == 403
+
+    assign_perm("evaluation.configure_algorithm_phase", user)
+    response = get_view_for_user(
+        viewname="evaluation:configure-algorithm-phases",
+        client=client,
+        user=user,
+        reverse_kwargs={
+            "challenge_short_name": ch.short_name,
+        },
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_configure_algorithm_phases_view(client):
+    user = UserFactory()
+    ch = ChallengeFactory()
+    phase = PhaseFactory(
+        challenge=ch, submission_kind=SubmissionKindChoices.CSV
+    )
+    ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
+    challenge_request = ChallengeRequestFactory(short_name=ch.short_name)
+    assign_perm("evaluation.configure_algorithm_phase", user)
+    response = get_view_for_user(
+        viewname="evaluation:configure-algorithm-phases",
+        client=client,
+        method=client.post,
+        user=user,
+        reverse_kwargs={
+            "challenge_short_name": ch.short_name,
+        },
+        data={
+            "phases": [phase.pk],
+            "algorithm_inputs": [ci1.pk],
+            "algorithm_outputs": [ci2.pk],
+        },
+    )
+    assert response.status_code == 302
+    phase.refresh_from_db()
+    assert phase.submission_kind == SubmissionKindChoices.ALGORITHM
+    assert phase.creator_must_be_verified
+    assert (
+        phase.archive.title
+        == f"{phase.challenge.short_name} {phase.title} dataset"
+    )
+    assert list(phase.algorithm_inputs.all()) == [ci1]
+    assert list(phase.algorithm_outputs.all()) == [ci2]
+    assert (
+        phase.algorithm_time_limit
+        == challenge_request.inference_time_limit_in_minutes * 60
+    )

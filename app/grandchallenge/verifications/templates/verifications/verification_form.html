@@ -31,7 +31,7 @@
         <li>Country: {% if request.user.user_profile.country.name %} {{ request.user.user_profile.country.name }} {% else %} <span class="text-danger">None</span> {% endif %}</li>
     </p>
     <p>
-        If you would like to update this information, please <a href="{% url 'profile-update' username=request.user.username %}">edit your profile</a> before making a verification request.
+        If you would like to update this information, please <a href="{% url 'profile-update' %}">edit your profile</a> before making a verification request.
     </p>
 
     {% crispy form %}

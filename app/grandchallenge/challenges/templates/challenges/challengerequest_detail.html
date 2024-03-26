@@ -43,6 +43,13 @@
             {% if not object.structured_challenge_submission_form and not object.structured_challenge_submission_doi %}
                 <i class="fa fa-paperclip text-primary pr-3"></i> No challenge submission form available
             {% endif %}
+            {% if object.status == object.ChallengeRequestStatusChoices.ACCEPTED and perms.evaluation.configure_algorithm_phase %}
+                <a class="btn btn-primary btn-sm mt-3"
+                   href="{% url 'evaluation:configure-algorithm-phases' challenge_short_name=object.short_name %}"
+                   title="Configure algorithm phases">
+                    <i class="fas fa-edit mr-1"></i> Configure algorithm phases
+                </a>
+            {% endif %}
         </div>
     </div>
     <div class="table-responsive">

@@ -63,6 +63,7 @@ from tests.hanging_protocols_tests.factories import HangingProtocolFactory
                     "show_current_slice": True,
                     "show_mouse_coordinate": True,
                     "show_mouse_voxel_value": True,
+                    "relative_start_position": 0.5,
                     "label": "Test label",
                     "opacity": 0.5,
                 }
@@ -425,6 +426,36 @@ from tests.hanging_protocols_tests.factories import HangingProtocolFactory
             ],
             pytest.raises(ValidationError),
         ),
+        # valid json containing relative_start_position
+        (
+            [
+                {
+                    "viewport_name": "main",
+                    "relative_start_position": 0.5,
+                }
+            ],
+            nullcontext(),
+        ),
+        # invalid json containing relative_start_position > 1
+        (
+            [
+                {
+                    "viewport_name": "main",
+                    "relative_start_position": 1.5,
+                }
+            ],
+            pytest.raises(ValidationError),
+        ),
+        # invalid json containing relative_start_position < 0
+        (
+            [
+                {
+                    "viewport_name": "main",
+                    "relative_start_position": -1.5,
+                }
+            ],
+            pytest.raises(ValidationError),
+        ),
     ],
 )
 def test_hanging_protocol_schema_validation(client, json, expectation):
@@ -479,6 +510,7 @@ def test_view_content_validation():
 @pytest.mark.django_db
 def test_at_most_two_images():
     image = ComponentInterfaceFactory(kind=InterfaceKindChoices.IMAGE)
+    image2 = ComponentInterfaceFactory(kind=InterfaceKindChoices.IMAGE)
     heatmap = ComponentInterfaceFactory(kind=InterfaceKindChoices.HEAT_MAP)
     segmentation = ComponentInterfaceFactory(
         kind=InterfaceKindChoices.SEGMENTATION
@@ -509,12 +541,19 @@ def test_at_most_two_images():
     hp = HangingProtocolTestModel(
         view_content={"main": [image.slug, heatmap.slug, segmentation.slug]}
     )
+    hp.full_clean()
+
+    hp = HangingProtocolTestModel(
+        view_content={
+            "main": [image.slug, image2.slug, heatmap.slug, segmentation.slug]
+        }
+    )
 
     with pytest.raises(ValidationError) as err:
         hp.full_clean()
 
     assert (
-        "Maximum of two image interfaces are allowed per viewport, got 3 for viewport main:"
+        "Maximum of one image interface is allowed per viewport, got 2 for viewport main:"
         in str(err.value)
     )
 

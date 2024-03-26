@@ -1234,6 +1234,14 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         blank=True,
         help_text="Regular expression to match a pattern for answers of type Text. Can only be set in combination with the 'Text Input' or 'Text Area' widgets.",
     )
+    empty_answer_confirmation = models.BooleanField(
+        default=False,
+        help_text="Require an explicit confirmation when saving an empty answer to this question.",
+    )
+    empty_answer_confirmation_label = models.TextField(
+        blank=True,
+        help_text="Label to show when confirming an empty answer.",
+    )
 
     class Meta:
         ordering = ("order", "created")
@@ -1338,6 +1346,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     def clean(self):
         super().clean()
         self._clean_answer_type()
+        self._clean_empty_answer_confirmation()
         self._clean_interface()
         self._clean_image_port()
         self._clean_widget()
@@ -1368,6 +1377,28 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         ):
             raise ValidationError(
                 "Default annotation color should only be set for annotation questions"
+            )
+
+    def _clean_empty_answer_confirmation(self):
+        if not self.empty_answer_confirmation:
+            return
+
+        if self.required:
+            raise ValidationError(
+                "Cannot have answer confirmation and have a question be "
+                "required at the same time"
+            )
+
+        if self.answer_type not in (
+            *AnswerType.get_annotation_types(),
+            AnswerType.NUMBER,
+            AnswerType.TEXT,
+        ):
+            raise ValidationError(
+                "Empty answer confirmation is not supported for "
+                f"{self.get_answer_type_display()} type questions. "
+                "For (Multiple) Choice types, you can add an empty option "
+                "and make the question required"
             )
 
     def _clean_interface(self):

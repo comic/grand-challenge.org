@@ -34,6 +34,7 @@ from grandchallenge.profiles.forms import (
 from grandchallenge.profiles.models import (
     UNSUBSCRIBE_SALT,
     EmailSubscriptionTypes,
+    NotificationEmailOptions,
     UserProfile,
 )
 from grandchallenge.profiles.serializers import UserProfileSerializer
@@ -157,7 +158,6 @@ class UserProfileDetail(UserProfileObjectMixin, DetailView):
 class UserProfileUpdate(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
-    UserProfileObjectMixin,
     UpdateView,
 ):
     model = UserProfile
@@ -165,6 +165,12 @@ class UserProfileUpdate(
     context_object_name = "profile"
     permission_required = "change_userprofile"
     raise_exception = True
+
+    def get_object(self, queryset=None):
+        try:
+            return self.request.user.user_profile
+        except ObjectDoesNotExist:
+            raise Http404("User not found")
 
 
 class NewsletterSignUp(
@@ -276,7 +282,7 @@ class NewsletterUnsubscribeView(EmailPreferencesUpdate):
         kwargs.update(
             {
                 "receive_newsletter": False,
-                "receive_notification_emails": self.object.receive_notification_emails,
+                "notification_email_choice": self.object.notification_email_choice,
                 "autosubmit": True,
             }
         )
@@ -291,7 +297,7 @@ class NotificationUnsubscribeView(EmailPreferencesUpdate):
         kwargs.update(
             {
                 "receive_newsletter": self.object.receive_newsletter,
-                "receive_notification_emails": False,
+                "notification_email_choice": NotificationEmailOptions.DISABLED,
                 "autosubmit": True,
             }
         )
@@ -304,7 +310,7 @@ class EmailPreferencesManagementView(EmailPreferencesUpdate):
         kwargs.update(
             {
                 "receive_newsletter": self.object.receive_newsletter,
-                "receive_notification_emails": self.object.receive_notification_emails,
+                "notification_email_choice": self.object.notification_email_choice,
                 "autosubmit": False,
             }
         )

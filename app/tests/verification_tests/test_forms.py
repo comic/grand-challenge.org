@@ -108,7 +108,7 @@ class TestVerificationForm:
         u = UserFactory(email="test@google.com")
         form = VerificationForm(user=u, data={"email": u.email, "user": u})
         profile_link = reverse(
-            "profile-update", kwargs={"username": u.username}
+            "profile-update",
         )
         assert [
             f"Your profile information is incomplete. You can complete your profile <a href={profile_link!r}>here</a>."
