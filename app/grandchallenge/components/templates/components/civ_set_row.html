@@ -7,6 +7,15 @@
 
 {% get_obj_perms request.user for object as "object_perms" %}
 
+
+<input class="checkbox pr-1 mr-1"
+       name="selected-for-deletion"
+       value="{{ object.id }}"
+       type="checkbox"
+       {% if not object.is_editable %} disabled {% endif %}
+>
+<split></split>
+
 {{ object.pk }}
 <split></split>
 

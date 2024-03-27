@@ -15,12 +15,17 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from grandchallenge.algorithms.forms import NON_ALGORITHM_INTERFACES
 from grandchallenge.api.permissions import IsAuthenticated
 from grandchallenge.archives.models import Archive
-from grandchallenge.components.forms import NewFileUploadForm, SingleCIVForm
+from grandchallenge.components.forms import (
+    CIVSetDeleteForm,
+    NewFileUploadForm,
+    SingleCIVForm,
+)
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.components.serializers import ComponentInterfaceSerializer
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
+    get_objects_for_user,
 )
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.reader_studies.models import ReaderStudy
@@ -337,3 +342,74 @@ class CivSetListView(
         return queryset.prefetch_related(
             "values", "values__image", "values__interface"
         )
+
+
+class CIVSetBulkDeleteView(LoginRequiredMixin, FormView):
+    form_class = CIVSetDeleteForm
+    model = None
+    template_name = "components/civ_set_delete_confirm.html"
+
+    @property
+    def base_object(self):
+        raise NotImplementedError
+
+    def get_queryset(self, *args, **kwargs):
+        permission = f"{self.model._meta.app_label}.delete_{self.model._meta.model_name}"
+        return get_objects_for_user(
+            user=self.request.user,
+            perms=[permission],
+            klass=self.base_object.civ_sets_related_manager.all(),
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "base_object": self.base_object,
+                "delete_count": (
+                    self.selected_objects.count()
+                    if self.selected_objects
+                    else 0
+                ),
+            }
+        )
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                "queryset": (
+                    self.selected_objects
+                    if self.selected_objects
+                    else self.get_queryset()
+                ),
+            }
+        )
+        return kwargs
+
+    @cached_property
+    def selected_objects(self):
+        # Selecting happens on the ListView through a GET request to this view
+        # on POST the selected objects are part of the form field
+        if self.request.method != "GET":
+            return None
+        else:
+            delete_all = self.request.GET.get("delete_all", None)
+            if delete_all:
+                return self.get_queryset()
+            else:
+                selected = self.request.GET.getlist(
+                    "selected-for-deletion", None
+                )
+                # filtering the original queryset
+                # so that only objects with permission are included
+                return self.get_queryset().filter(pk__in=selected)
+
+    def get(self, request, *args, **kwargs):
+        return self.render_to_response(self.get_context_data())
+
+    def form_valid(self, form):
+        for civ_set in form.cleaned_data["civ_sets_to_delete"]:
+            civ_set.delete()
+        return super().form_valid(form)

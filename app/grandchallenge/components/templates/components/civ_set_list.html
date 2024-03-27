@@ -22,9 +22,29 @@
            href="{{ base_object.create_civ_set_batch_url }}"
         ><i class="fas fa-fw fa-plus"></i> Add Image-Only {{ base_object.civ_set_model|verbose_name_plural|title }} (batch)
         </a>
+        <button class="btn btn-danger"
+                name="delete"
+                type="button"
+                id="delete"
+                hx-get="{{ base_object.bulk_delete_url }}"
+                hx-push-url="{{ base_object.bulk_delete_url }}"
+                hx-include="[id='civ-set-table']"
+                hx-target="body"
+        > Delete selected</button>
+        <button class="btn btn-danger"
+                name="delete"
+                type="button"
+                id="delete"
+                hx-get="{{ base_object.bulk_delete_url }}"
+                hx-push-url="{{ base_object.bulk_delete_url }}"
+                hx-vals='{"delete_all": "True"}'
+                hx-target="body"
+        > Delete all {{ base_object.civ_set_model|verbose_name_plural }}</button>
     </p>
 
-    {{ block.super }}
+    <form id="civ-set-table">
+        {{ block.super }}
+    </form>
 
 {% endblock %}
 
