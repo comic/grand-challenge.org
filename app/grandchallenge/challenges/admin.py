@@ -10,6 +10,8 @@ from grandchallenge.challenges.models import (
     Challenge,
     ChallengeGroupObjectPermission,
     ChallengeRequest,
+    ChallengeRequestGroupObjectPermission,
+    ChallengeRequestUserObjectPermission,
     ChallengeSeries,
     ChallengeUserObjectPermission,
 )
@@ -128,4 +130,10 @@ class ChallengeRequestAdmin(ModelAdmin):
 
 admin.site.register(ChallengeUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(ChallengeGroupObjectPermission, GroupObjectPermissionAdmin)
+admin.site.register(
+    ChallengeRequestUserObjectPermission, UserObjectPermissionAdmin
+)
+admin.site.register(
+    ChallengeRequestGroupObjectPermission, GroupObjectPermissionAdmin
+)
 admin.site.register(ChallengeSeries)
