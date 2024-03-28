@@ -354,6 +354,7 @@ class CIVSetBulkDeleteView(LoginRequiredMixin, FormView):
         raise NotImplementedError
 
     def get_queryset(self, *args, **kwargs):
+        # subset by permission
         permission = f"{self.model._meta.app_label}.delete_{self.model._meta.model_name}"
         return get_objects_for_user(
             user=self.request.user,
@@ -395,7 +396,7 @@ class CIVSetBulkDeleteView(LoginRequiredMixin, FormView):
         if self.request.method != "GET":
             return None
         else:
-            delete_all = self.request.GET.get("delete_all", None)
+            delete_all = self.request.GET.get("delete-all", None)
             if delete_all:
                 return self.get_queryset()
             else:

@@ -389,7 +389,7 @@ class ReaderStudyDisplaySetList(CivSetListView):
         Column(title="Order", sort_field="order"),
         *CivSetListView.columns,
     ]
-    default_sort_column = 1
+    default_sort_column = 2
 
     @cached_property
     def base_object(self):

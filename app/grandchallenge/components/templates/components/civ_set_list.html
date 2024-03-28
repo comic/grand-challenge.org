@@ -37,7 +37,7 @@
                 id="delete"
                 hx-get="{{ base_object.bulk_delete_url }}"
                 hx-push-url="{{ base_object.bulk_delete_url }}"
-                hx-vals='{"delete_all": "True"}'
+                hx-vals='{"delete-all": "True"}'
                 hx-target="body"
         > Delete all {{ base_object.civ_set_model|verbose_name_plural }}</button>
     </p>
