@@ -49,6 +49,7 @@ from grandchallenge.archives.tasks import add_images_to_archive
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.components.forms import MultipleCIVForm, NewFileUploadForm
 from grandchallenge.components.views import (
+    CIVSetBulkDeleteView,
     CIVSetDeleteView,
     CIVSetFormMixin,
     CivSetListView,
@@ -425,9 +426,11 @@ class ArchiveItemsList(CivSetListView):
         f"{Archive._meta.app_label}.view_{ArchiveItem._meta.model_name}"
     )
     columns = [
+        Column(title=""),
         Column(title="ArchiveItem ID", sort_field="pk"),
         *CivSetListView.columns,
     ]
+    default_sort_column = 1
 
     @cached_property
     def base_object(self):
@@ -643,3 +646,11 @@ class ArchiveItemDeleteView(CIVSetDeleteView):
     permission_required = (
         f"{Archive._meta.app_label}.delete_{ArchiveItem._meta.model_name}"
     )
+
+
+class ArchiveItemBulkDeleteView(CIVSetBulkDeleteView):
+    model = ArchiveItem
+
+    @property
+    def base_object(self):
+        return Archive.objects.get(slug=self.kwargs["slug"])

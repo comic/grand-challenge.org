@@ -353,6 +353,9 @@ class CIVSetBulkDeleteView(LoginRequiredMixin, FormView):
     def base_object(self):
         raise NotImplementedError
 
+    def get_success_url(self):
+        return self.base_object.civ_sets_list_url
+
     def get_queryset(self, *args, **kwargs):
         # subset by permission
         permission = f"{self.model._meta.app_label}.delete_{self.model._meta.model_name}"

@@ -252,6 +252,13 @@ class Archive(
         return reverse("archives:list")
 
     @property
+    def bulk_delete_url(self):
+        return reverse(
+            "archives:items-bulk-delete",
+            kwargs={"slug": self.slug},
+        )
+
+    @property
     def civ_sets_related_manager(self):
         return self.items
 

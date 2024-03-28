@@ -4,6 +4,7 @@ from grandchallenge.archives.views import (
     ArchiveCreate,
     ArchiveDetail,
     ArchiveEditorsUpdate,
+    ArchiveItemBulkDeleteView,
     ArchiveItemCreateView,
     ArchiveItemDeleteView,
     ArchiveItemInterfaceCreate,
@@ -62,6 +63,11 @@ urlpatterns = [
         "<slug>/items/create/",
         ArchiveItemCreateView.as_view(),
         name="item-create",
+    ),
+    path(
+        "<slug>/items/delete/",
+        ArchiveItemBulkDeleteView.as_view(),
+        name="items-bulk-delete",
     ),
     path(
         "<slug>/items/new/interface/create/",

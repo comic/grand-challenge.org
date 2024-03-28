@@ -347,3 +347,98 @@ def test_civset_list_view_permissions(
         assert obj in response.context["object_list"]
     for obj in [ob4, ob5]:
         assert obj not in response.context["object_list"]
+
+
+@pytest.mark.parametrize(
+    "base_object_factory,base_obj_lookup,object_factory,viewname",
+    (
+        (
+            ReaderStudyFactory,
+            "reader_study",
+            DisplaySetFactory,
+            "reader-studies:display-sets-bulk-delete",
+        ),
+        (
+            ArchiveFactory,
+            "archive",
+            ArchiveItemFactory,
+            "archives:items-bulk-delete",
+        ),
+    ),
+)
+@pytest.mark.django_db
+def test_display_set_bulk_delete_confirmation_page(
+    client, base_object_factory, base_obj_lookup, object_factory, viewname
+):
+    editor = UserFactory()
+    base_obj = base_object_factory()
+    base_obj.add_editor(editor)
+
+    ob1, ob2, ob3, ob4, ob5 = object_factory.create_batch(
+        5, **{base_obj_lookup: base_obj}
+    )
+    response = get_view_for_user(
+        client=client,
+        viewname=viewname,
+        reverse_kwargs={"slug": base_obj.slug},
+        user=editor,
+        data={"selected-for-deletion": ob1.pk},
+    )
+    assert response.status_code == 200
+    assert "Are you sure you want to delete the following 1 " in str(
+        response.content
+    )
+
+    response = get_view_for_user(
+        client=client,
+        viewname=viewname,
+        reverse_kwargs={"slug": base_obj.slug},
+        user=editor,
+        data={"delete-all": True},
+    )
+    assert response.status_code == 200
+    assert "Are you sure you want to delete the following 5 " in str(
+        response.content
+    )
+
+
+@pytest.mark.parametrize(
+    "base_object_factory,base_obj_lookup,object_factory,viewname",
+    (
+        (
+            ReaderStudyFactory,
+            "reader_study",
+            DisplaySetFactory,
+            "reader-studies:display-sets-bulk-delete",
+        ),
+        (
+            ArchiveFactory,
+            "archive",
+            ArchiveItemFactory,
+            "archives:items-bulk-delete",
+        ),
+    ),
+)
+@pytest.mark.django_db
+def test_display_set_bulk_delete(
+    client, base_object_factory, base_obj_lookup, object_factory, viewname
+):
+    editor = UserFactory()
+    base_obj = base_object_factory()
+    base_obj.add_editor(editor)
+
+    ob1, ob2, ob3, ob4, ob5 = object_factory.create_batch(
+        5, **{base_obj_lookup: base_obj}
+    )
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname=viewname,
+        reverse_kwargs={"slug": base_obj.slug},
+        user=editor,
+        data={"civ_sets_to_delete": [ob1.pk, ob2.pk]},
+    )
+    assert response.status_code == 302
+    assert base_obj.civ_sets_related_manager.count() == 3
+    assert ob1 not in base_obj.civ_sets_related_manager.all()
+    assert ob2 not in base_obj.civ_sets_related_manager.all()

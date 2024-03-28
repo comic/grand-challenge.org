@@ -1442,6 +1442,3 @@ class DisplaySetBulkDeleteView(CIVSetBulkDeleteView):
         return self.base_object.civ_sets_related_manager.filter(
             pk__in=[ds.pk for ds in qs if ds.is_editable]
         )
-
-    def get_success_url(self):
-        return self.base_object.civ_sets_list_url
