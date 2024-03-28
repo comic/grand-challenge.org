@@ -23,6 +23,7 @@
                 <th class="datatables-non-sortable"></th>
                 <th class="text-center">Acronym</th>
                 <th class="text-center">Creator</th>
+                <th class="text-center">Planned start date</th>
                 <th class="text-center">Submission date</th>
                 <th class="text-center">Status</th>
                 <th class="text-center">Contact</th>
@@ -36,6 +37,7 @@
                         </td>
                         <td class="text-center align-middle">{{ object.short_name }}</td>
                         <td class="text-center align-middle">{{ object.creator|user_profile_link }}</td>
+                        <td class="text-center align-middle" data-order="{{ object.start_date|date:'U' }}">{{ object.start_date|date:'F j, Y' }}</td>
                         {% if object.status == object.ChallengeRequestStatusChoices.ACCEPTED %}
                             <td class="text-center align-middle" data-order="{{ object.created|date:'U' }}"><span class="badge p-2 badge-primary">{{ object.created|date:'F j, Y' }}</span></td>
                             <td class="text-center align-middle"><span class="badge p-2 badge-success">Accepted</span></td>
@@ -52,7 +54,7 @@
                             {% endif %}
                             </td>
                         {% endif %}
-                        <td class="text-center align-middle"><a href="mailto:{{ object.contact_email }}"> {{ object.contact_email }}</a></td>
+                        <td class="text-center align-middle"><a class="btn btn-primary btn-sm" href="mailto:{{ object.contact_email }}"> <i class="fas fa-envelope" aria-hidden="true"></i></a></td>
                     </tr>
                 {% endfor %}
             </tbody>
