@@ -1,9 +1,18 @@
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import ButtonHolder, Layout, Submit
 from dal import autocomplete
 from dal.widgets import Select
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied
-from django.forms import Form, HiddenInput, ModelChoiceField, ModelForm
+from django.forms import (
+    CheckboxSelectMultiple,
+    Form,
+    HiddenInput,
+    ModelChoiceField,
+    ModelForm,
+    ModelMultipleChoiceField,
+)
 
 from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.components.form_fields import InterfaceFormField
@@ -327,3 +336,29 @@ class NewFileUploadForm(Form):
         self.fields[interface.slug].widget = UserUploadSingleWidget(
             allowed_file_types=interface.file_mimetypes
         )
+
+
+class CIVSetDeleteForm(Form):
+    civ_sets_to_delete = ModelMultipleChoiceField(
+        queryset=None,
+        label="",
+        widget=CheckboxSelectMultiple,
+    )
+
+    def __init__(self, *args, queryset, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        # prepend button since the list of objects can be long
+        self.helper.layout = Layout(
+            ButtonHolder(
+                Submit(
+                    "save",
+                    "Yes, I confirm that I want to delete all of the below selected items.",
+                    css_class="border-danger bg-danger mb-3",
+                )
+            ),
+            "civ_sets_to_delete",
+        )
+
+        self.fields["civ_sets_to_delete"].queryset = queryset
+        self.fields["civ_sets_to_delete"].initial = queryset

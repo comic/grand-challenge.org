@@ -58,6 +58,7 @@ from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
 )
 from grandchallenge.components.views import (
+    CIVSetBulkDeleteView,
     CIVSetDeleteView,
     CIVSetFormMixin,
     CivSetListView,
@@ -383,11 +384,12 @@ class ReaderStudyDisplaySetList(CivSetListView):
     model = DisplaySet
     permission_required = f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"  # change instead of view permission so that readers don't get access
     columns = [
+        Column(title=""),
         Column(title="DisplaySet ID", sort_field="pk"),
         Column(title="Order", sort_field="order"),
         *CivSetListView.columns,
     ]
-    default_sort_column = 1
+    default_sort_column = 2
 
     @cached_property
     def base_object(self):
@@ -1426,3 +1428,20 @@ class DisplaySetDeleteView(CIVSetDeleteView):
     permission_required = (
         f"{ReaderStudy._meta.app_label}.delete_{DisplaySet._meta.model_name}"
     )
+
+
+class DisplaySetBulkDeleteView(CIVSetBulkDeleteView):
+    model = DisplaySet
+
+    @property
+    def base_object(self):
+        return ReaderStudy.objects.get(slug=self.kwargs["slug"])
+
+    def get_queryset(self, *args, **kwargs):
+        qs = super().get_queryset()
+        return self.base_object.civ_sets_related_manager.filter(
+            pk__in=[ds.pk for ds in qs if ds.is_editable]
+        )
+
+    def get_success_url(self):
+        return self.base_object.civ_sets_list_url

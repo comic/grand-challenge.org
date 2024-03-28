@@ -717,6 +717,13 @@ class ReaderStudy(
         )
 
     @property
+    def bulk_delete_url(self):
+        return reverse(
+            "reader-studies:display-sets-bulk-delete",
+            kwargs={"slug": self.slug},
+        )
+
+    @property
     def list_url(self):
         return reverse("reader-studies:list")
 

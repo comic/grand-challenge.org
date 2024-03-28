@@ -352,13 +352,13 @@ def test_reader_study_display_set_list(client):
             "length": 10,
             "draw": 1,
             "order[0][dir]": "desc",
-            "order[0][column]": 0,
+            "order[0][column]": 2,
         },
         **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
     )
 
     resp = response.json()
-    assert str(ds.pk) in resp["data"][0][0]
+    assert str(ds.pk) in resp["data"][0][1]
 
 
 @pytest.mark.django_db
@@ -705,3 +705,96 @@ def test_display_set_interfaces_create(
     assert isinstance(
         response.context["form"].fields[str(ci.slug)], field_type
     )
+
+
+@pytest.mark.django_db
+def test_display_set_bulk_delete_permissions(client):
+    user, editor = UserFactory.create_batch(2)
+    rs = ReaderStudyFactory()
+    rs.add_editor(editor)
+
+    ds1, ds2, ds3 = DisplaySetFactory.create_batch(3, reader_study=rs)
+    DisplaySetFactory()
+    AnswerFactory(display_set=ds1)
+
+    response = get_view_for_user(
+        client=client,
+        viewname="reader-studies:display-sets-bulk-delete",
+        reverse_kwargs={"slug": rs.slug},
+        user=editor,
+    )
+    # ds with answer and ds from other reader study are not in queryset
+    assert list(
+        response.context["form"].fields["civ_sets_to_delete"].queryset
+    ) == [ds2, ds3]
+
+    # for the normal user the queryset is empty
+    response = get_view_for_user(
+        client=client,
+        viewname="reader-studies:display-sets-bulk-delete",
+        reverse_kwargs={"slug": rs.slug},
+        user=user,
+    )
+    assert (
+        list(response.context["form"].fields["civ_sets_to_delete"].queryset)
+        == []
+    )
+
+
+@pytest.mark.django_db
+def test_display_set_bulk_delete_confirmation_page(client):
+    editor = UserFactory()
+    rs = ReaderStudyFactory()
+    rs.add_editor(editor)
+
+    ds1, ds2, ds3, ds4, ds5 = DisplaySetFactory.create_batch(
+        5, reader_study=rs
+    )
+    response = get_view_for_user(
+        client=client,
+        viewname="reader-studies:display-sets-bulk-delete",
+        reverse_kwargs={"slug": rs.slug},
+        user=editor,
+        data={"selected-for-deletion": ds1.pk},
+    )
+    assert response.status_code == 200
+    assert (
+        "Are you sure you want to delete the following 1 display sets?"
+        in str(response.content)
+    )
+
+    response = get_view_for_user(
+        client=client,
+        viewname="reader-studies:display-sets-bulk-delete",
+        reverse_kwargs={"slug": rs.slug},
+        user=editor,
+        data={"delete-all": True},
+    )
+    assert response.status_code == 200
+    assert (
+        "Are you sure you want to delete the following 5 display sets?"
+        in str(response.content)
+    )
+
+
+@pytest.mark.django_db
+def test_display_set_bulk_delete(client):
+    editor = UserFactory()
+    rs = ReaderStudyFactory()
+    rs.add_editor(editor)
+
+    ds1, ds2, ds3, ds4, ds5 = DisplaySetFactory.create_batch(
+        5, reader_study=rs
+    )
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname="reader-studies:display-sets-bulk-delete",
+        reverse_kwargs={"slug": rs.slug},
+        user=editor,
+        data={"civ_sets_to_delete": [ds1.pk, ds2.pk]},
+    )
+    assert response.status_code == 302
+    assert rs.display_sets.count() == 3
+    assert ds1 not in rs.display_sets.all()
+    assert ds2 not in rs.display_sets.all()

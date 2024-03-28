@@ -6,6 +6,7 @@ from grandchallenge.reader_studies.views import (
     AddQuestionToReaderStudy,
     AnswersRemoveForUser,
     AnswersRemoveGroundTruth,
+    DisplaySetBulkDeleteView,
     DisplaySetCreateView,
     DisplaySetDeleteView,
     DisplaySetFilesUpdate,
@@ -81,6 +82,11 @@ urlpatterns = [
         "<slug>/display-sets/create/",
         AddDisplaySetsToReaderStudy.as_view(),
         name="display-sets-create",
+    ),
+    path(
+        "<slug>/display-sets/delete/",
+        DisplaySetBulkDeleteView.as_view(),
+        name="display-sets-bulk-delete",
     ),
     path(
         "<slug>/display-sets/create-single/",
