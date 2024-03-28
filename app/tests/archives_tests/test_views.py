@@ -959,3 +959,34 @@ def test_archive_item_create_view(
     assert ai2.values.get(interface=ci_img2).image == image
     assert ai2.values.get(interface=ci_json).file.read() == b'{"foo": "bar"}'
     assert ai2.values.get(interface=ci_json2).value == {"some": "content"}
+
+
+@pytest.mark.django_db
+def test_archive_item_bulk_delete_permissions(client):
+    user, editor = UserFactory.create_batch(2)
+    archive = ArchiveFactory()
+    archive.add_editor(editor)
+
+    i1, i2 = ArchiveItemFactory.create_batch(2, archive=archive)
+
+    response = get_view_for_user(
+        client=client,
+        viewname="archives:items-bulk-delete",
+        reverse_kwargs={"slug": archive.slug},
+        user=editor,
+    )
+    assert list(
+        response.context["form"].fields["civ_sets_to_delete"].queryset
+    ) == [i1, i2]
+
+    # for the normal user the queryset is empty
+    response = get_view_for_user(
+        client=client,
+        viewname="archives:items-bulk-delete",
+        reverse_kwargs={"slug": archive.slug},
+        user=user,
+    )
+    assert (
+        list(response.context["form"].fields["civ_sets_to_delete"].queryset)
+        == []
+    )
