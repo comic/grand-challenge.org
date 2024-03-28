@@ -367,11 +367,7 @@ class CIVSetBulkDeleteView(LoginRequiredMixin, FormView):
         context.update(
             {
                 "base_object": self.base_object,
-                "delete_count": (
-                    self.selected_objects.count()
-                    if self.selected_objects
-                    else 0
-                ),
+                "delete_count": (self.selected_objects.count()),
             }
         )
         return context
@@ -405,7 +401,7 @@ class CIVSetBulkDeleteView(LoginRequiredMixin, FormView):
                 # so that only objects with permission are included
                 return self.get_queryset().filter(pk__in=selected)
         else:
-            return None
+            return self.model.objects.none()
 
     def get(self, request, *args, **kwargs):
         return self.render_to_response(self.get_context_data())
