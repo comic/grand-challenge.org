@@ -393,9 +393,7 @@ class CIVSetBulkDeleteView(LoginRequiredMixin, FormView):
     def selected_objects(self):
         # Selecting happens on the ListView through a GET request to this view
         # on POST the selected objects are part of the form field
-        if self.request.method != "GET":
-            return None
-        else:
+        if self.request.method == "GET":
             delete_all = self.request.GET.get("delete-all", None)
             if delete_all:
                 return self.get_queryset()
@@ -406,6 +404,8 @@ class CIVSetBulkDeleteView(LoginRequiredMixin, FormView):
                 # filtering the original queryset
                 # so that only objects with permission are included
                 return self.get_queryset().filter(pk__in=selected)
+        else:
+            return None
 
     def get(self, request, *args, **kwargs):
         return self.render_to_response(self.get_context_data())
