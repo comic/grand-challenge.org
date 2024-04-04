@@ -352,9 +352,9 @@ class Executor(ABC):
             raise ComponentException(
                 f"Output file {interface.relative_path!r} was not produced"
             )
-        except ValidationError:
+        except ValidationError as e:
             raise ComponentException(
-                f"The output file {interface.relative_path!r} is not valid"
+                f"The output file {interface.relative_path!r} is not valid. {e}"
             )
 
         return civ
