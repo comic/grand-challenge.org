@@ -300,7 +300,7 @@ class Executor(ABC):
             )
         except ValidationError as e:
             raise ComponentException(
-                f"The image produced in {interface.relative_path!r} is not valid. {e}"
+                f"The image produced in {interface.relative_path!r} is not valid. {e.message}"
             )
 
         return civ
@@ -331,7 +331,7 @@ class Executor(ABC):
             )
         except ValidationError as e:
             raise ComponentException(
-                f"The output file {interface.relative_path!r} is not valid. {e}"
+                f"The output file {interface.relative_path!r} is not valid. {e.message}"
             )
 
         return civ
@@ -354,7 +354,7 @@ class Executor(ABC):
             )
         except ValidationError as e:
             raise ComponentException(
-                f"The output file {interface.relative_path!r} is not valid. {e}"
+                f"The output file {interface.relative_path!r} is not valid. {e.message}"
             )
 
         return civ
