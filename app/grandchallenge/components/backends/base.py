@@ -286,7 +286,8 @@ class Executor(ABC):
 
         if len(importer_result.new_images) == 0:
             raise ComponentException(
-                f"No output images could be imported from {interface.relative_path!r}"
+                message=f"No output images could be imported from {interface.relative_path!r}",
+                message_details=importer_result.file_errors,
             )
         elif len(importer_result.new_images) > 1:
             raise ComponentException(

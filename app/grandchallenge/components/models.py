@@ -1443,6 +1443,9 @@ class ComponentJob(models.Model):
     stderr = models.TextField(default="")
     runtime_metrics = models.JSONField(default=dict, editable=False)
     error_message = models.CharField(max_length=1024, default="")
+    detailed_error_message = models.JSONField(
+        blank=True, null=True, default=None
+    )
     started_at = models.DateTimeField(null=True)
     completed_at = models.DateTimeField(null=True)
     compute_cost_euro_millicents = models.PositiveIntegerField(
@@ -1501,6 +1504,7 @@ class ComponentJob(models.Model):
         stdout: str = "",
         stderr: str = "",
         error_message="",
+        detailed_error_message=None,
         duration: timedelta | None = None,
         compute_cost_euro_millicents=None,
         runtime_metrics=None,
@@ -1515,6 +1519,9 @@ class ComponentJob(models.Model):
 
         if error_message:
             self.error_message = error_message[:1024]
+
+        if detailed_error_message:
+            self.detailed_error_message = detailed_error_message
 
         if (
             status in [self.STARTED, self.EXECUTING]

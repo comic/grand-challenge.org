@@ -600,7 +600,11 @@ def provision_job(
             input_prefixes=job.input_prefixes,
         )
     except ComponentException as e:
-        job.update_status(status=job.FAILURE, error_message=str(e))
+        job.update_status(
+            status=job.FAILURE,
+            error_message=str(e),
+            detailed_error_message=e.message_details,
+        )
     except Exception:
         job.update_status(
             status=job.FAILURE, error_message="Could not provision resources"

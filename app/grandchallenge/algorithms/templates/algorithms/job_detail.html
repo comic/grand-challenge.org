@@ -7,6 +7,7 @@
 {% load static %}
 {% load url %}
 {% load meta_attr %}
+{% load evaluation_extras %}
 
 {% block title %}
     Algorithm Result - {{ block.super }}
@@ -152,6 +153,11 @@
                 {% if object.error_message %}
                     <dt class="col-sm-3">Error Message</dt>
                     <dd class="col-sm-9">{{ object.error_message }}</dd>
+                {% endif %}
+
+                {% if object.detailed_error_message %}
+                    <dt class="col-sm-3">Detailed Error Message</dt>
+                    <dd class="col-sm-9"><pre>{{ object.detailed_error_message|json_dumps }}</pre></dd>
                 {% endif %}
 
                 {% if object.duration %}
