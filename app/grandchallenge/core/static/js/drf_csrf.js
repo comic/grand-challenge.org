@@ -5,3 +5,6 @@ window.drf = {
     csrfHeaderName: csrfHeaderName,
     csrfToken: csrfToken
 };
+
+const drfDiv = document.getElementById("drf_csrf");
+drfDiv.textContent = JSON.stringify(window.drf);

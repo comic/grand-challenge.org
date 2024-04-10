@@ -9,5 +9,7 @@
     {{ ""|json_script:"csrfToken" }}
 {% endif %}
 
+<div id="drf_csrf"></div>
+
 <script src="{% static 'js/drf_csrf.js' %}"></script>
 <script src="{% static "rest_framework/js/csrf.js" %}"></script>
