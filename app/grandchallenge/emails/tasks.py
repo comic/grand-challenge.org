@@ -104,10 +104,13 @@ def send_bulk_email(action, email_pk):
 
 
 @shared_task(name="djcelery_email_send_multiple")
-def eat_bulk_email(messages, **kwargs):
+def eat_bulk_email(*args, **kwargs):
+    messages = args[0]
+
     for message in messages:
         subject = message["subject"].split("] ")[1]
         if Email.objects.get(subject=subject).exists():
-            logger.warning("Skipping sending bulk email")
-        else:
-            send_emails.apply_async(args=([message],), kwargs=kwargs)
+            logger.warning(f"Skipping sending bulk email: {subject}")
+            return
+
+    send_emails.apply_async(args=args, kwargs=kwargs)
