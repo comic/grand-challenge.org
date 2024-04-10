@@ -1042,7 +1042,10 @@ else:
 
 # Keep results of sent emails
 CELERY_EMAIL_CHUNK_SIZE = 1
-CELERY_EMAIL_TASK_CONFIG = {"ignore_result": False}
+CELERY_EMAIL_TASK_CONFIG = {
+    "name": "djcelery_send_emails",
+    "ignore_result": False,
+}
 
 COMPONENTS_DEFAULT_BACKEND = os.environ.get(
     "COMPONENTS_DEFAULT_BACKEND",

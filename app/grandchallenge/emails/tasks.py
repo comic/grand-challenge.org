@@ -1,3 +1,5 @@
+import logging
+
 from celery import shared_task
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -5,11 +7,14 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from django.utils.timezone import now
+from djcelery_email.tasks import send_emails
 
 from grandchallenge.emails.emails import send_standard_email_batch
 from grandchallenge.emails.models import Email
 from grandchallenge.emails.utils import SendActionChoices
 from grandchallenge.profiles.models import EmailSubscriptionTypes
+
+logger = logging.getLogger(__name__)
 
 
 def get_receivers(action):
@@ -96,3 +101,13 @@ def send_bulk_email(action, email_pk):
     email.sent_at = now()
     email.status_report = None
     email.save()
+
+
+@shared_task(name="djcelery_email_send_multiple")
+def eat_bulk_email(messages, **kwargs):
+    for message in messages:
+        subject = message["subject"].split("] ")[1]
+        if Email.objects.get(subject=subject).exists():
+            logger.warning("Skipping sending bulk email")
+        else:
+            send_emails.apply_async(args=([message],), kwargs=kwargs)
