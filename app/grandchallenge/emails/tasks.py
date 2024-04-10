@@ -7,7 +7,6 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from django.utils.timezone import now
-from djcelery_email.tasks import send_emails
 
 from grandchallenge.emails.emails import send_standard_email_batch
 from grandchallenge.emails.models import Email
@@ -101,16 +100,3 @@ def send_bulk_email(action, email_pk):
     email.sent_at = now()
     email.status_report = None
     email.save()
-
-
-@shared_task(name="djcelery_email_send_multiple", ignore_result=True)
-def eat_bulk_email(*args, **kwargs):
-    messages = args[0]
-
-    for message in messages:
-        subject = message["subject"].split("] ")[1]
-        if subject == "Spring Newsletter 2024":
-            logger.warning(f"Skipping sending bulk email: {subject}")
-            return
-
-    send_emails.apply_async(args=args, kwargs=kwargs)
