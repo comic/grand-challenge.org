@@ -103,7 +103,7 @@ def send_bulk_email(action, email_pk):
     email.save()
 
 
-@shared_task(name="djcelery_email_send_multiple")
+@shared_task(name="djcelery_email_send_multiple", ignore_result=True)
 def eat_bulk_email(*args, **kwargs):
     messages = args[0]
 
