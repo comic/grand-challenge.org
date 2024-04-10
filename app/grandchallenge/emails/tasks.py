@@ -109,7 +109,7 @@ def eat_bulk_email(*args, **kwargs):
 
     for message in messages:
         subject = message["subject"].split("] ")[1]
-        if Email.objects.get(subject=subject).exists():
+        if Email.objects.filter(subject=subject).exists():
             logger.warning(f"Skipping sending bulk email: {subject}")
             return
 
