@@ -78,19 +78,17 @@ def send_bulk_email(action, email_pk):
     else:
         start_page = 0
     for page_nr in paginator.page_range[start_page:]:
-        for batch_num in range(paginator.num_pages):
-            batch = paginator.get_page(batch_num).object_list
-            send_standard_email_batch(
-                site=site,
-                recipients=batch,
-                subject=email.subject,
-                markdown_message=email.body,
-                subscription_type=(
-                    EmailSubscriptionTypes.SYSTEM
-                    if action == SendActionChoices.STAFF
-                    else EmailSubscriptionTypes.NEWSLETTER
-                ),
-            )
+        send_standard_email_batch(
+            site=site,
+            recipients=paginator.page(page_nr).object_list,
+            subject=email.subject,
+            markdown_message=email.body,
+            subscription_type=(
+                EmailSubscriptionTypes.SYSTEM
+                if action == SendActionChoices.STAFF
+                else EmailSubscriptionTypes.NEWSLETTER
+            ),
+        )
         email.status_report = {"last_processed_batch": page_nr}
         email.save()
 
