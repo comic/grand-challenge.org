@@ -1,18 +1,38 @@
 import pytest
 
+from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.core.tasks import _get_metrics
-from tests.algorithms_tests.factories import AlgorithmJobFactory
-from tests.evaluation_tests.factories import EvaluationFactory
+from grandchallenge.evaluation.models import Method
+from tests.algorithms_tests.factories import (
+    AlgorithmImageFactory,
+    AlgorithmJobFactory,
+)
+from tests.evaluation_tests.factories import EvaluationFactory, MethodFactory
 from tests.factories import SessionFactory, UploadSessionFactory
 
 
 @pytest.mark.django_db
 def test_get_metrics():
-    AlgorithmJobFactory()
-    EvaluationFactory()
-    SessionFactory()
+    ai = AlgorithmImageFactory(
+        import_status=AlgorithmImage.ImportStatusChoices.COMPLETED
+    )
+
+    a = AlgorithmJobFactory(algorithm_image=ai)
+    a.status = a.SUCCESS
+    a.save()
+
+    m = MethodFactory(import_status=Method.ImportStatusChoices.COMPLETED)
+
+    e = EvaluationFactory(method=m)
+    e.status = e.SUCCESS
+    e.save()
+
+    s = SessionFactory()
+    s.status = s.RUNNING
+    s.save()
+
     s = UploadSessionFactory()
-    s.status = s.REQUEUED
+    s.status = s.SUCCESS
     s.save()
 
     # Note, this is the format expected by CloudWatch,
@@ -23,11 +43,11 @@ def test_get_metrics():
         {
             "Namespace": "testserver/algorithms",
             "MetricData": [
-                {"MetricName": "JobsQueued", "Value": 1, "Unit": "Count"},
+                {"MetricName": "JobsQueued", "Value": 0, "Unit": "Count"},
                 {"MetricName": "JobsStarted", "Value": 0, "Unit": "Count"},
                 {"MetricName": "JobsReQueued", "Value": 0, "Unit": "Count"},
                 {"MetricName": "JobsFailed", "Value": 0, "Unit": "Count"},
-                {"MetricName": "JobsSucceeded", "Value": 0, "Unit": "Count"},
+                {"MetricName": "JobsSucceeded", "Value": 1, "Unit": "Count"},
                 {"MetricName": "JobsCancelled", "Value": 0, "Unit": "Count"},
                 {
                     "MetricName": "JobsProvisioning",
@@ -54,7 +74,7 @@ def test_get_metrics():
             "MetricData": [
                 {
                     "MetricName": "EvaluationsQueued",
-                    "Value": 1,
+                    "Value": 0,
                     "Unit": "Count",
                 },
                 {
@@ -74,7 +94,7 @@ def test_get_metrics():
                 },
                 {
                     "MetricName": "EvaluationsSucceeded",
-                    "Value": 0,
+                    "Value": 1,
                     "Unit": "Count",
                 },
                 {
@@ -117,9 +137,9 @@ def test_get_metrics():
         {
             "Namespace": "testserver/workstations",
             "MetricData": [
-                {"MetricName": "SessionsQueued", "Value": 1, "Unit": "Count"},
+                {"MetricName": "SessionsQueued", "Value": 0, "Unit": "Count"},
                 {"MetricName": "SessionsStarted", "Value": 0, "Unit": "Count"},
-                {"MetricName": "SessionsRunning", "Value": 0, "Unit": "Count"},
+                {"MetricName": "SessionsRunning", "Value": 1, "Unit": "Count"},
                 {"MetricName": "SessionsFailed", "Value": 0, "Unit": "Count"},
                 {"MetricName": "SessionsStopped", "Value": 0, "Unit": "Count"},
             ],
@@ -139,7 +159,7 @@ def test_get_metrics():
                 },
                 {
                     "MetricName": "RawImageUploadSessionsReQueued",
-                    "Value": 1,
+                    "Value": 0,
                     "Unit": "Count",
                 },
                 {
@@ -149,13 +169,48 @@ def test_get_metrics():
                 },
                 {
                     "MetricName": "RawImageUploadSessionsSucceeded",
-                    "Value": 0,
+                    "Value": 1,
                     "Unit": "Count",
                 },
                 {
                     "MetricName": "RawImageUploadSessionsCancelled",
                     "Value": 0,
                     "Unit": "Count",
+                },
+            ],
+        },
+        {
+            "Namespace": "testserver/AsyncTasks",
+            "MetricData": [
+                {
+                    "MetricName": "OldestActiveAlgorithmImage",
+                    "Unit": "Seconds",
+                    "Value": 0,
+                },
+                {
+                    "MetricName": "OldestActiveMethod",
+                    "Unit": "Seconds",
+                    "Value": 0,
+                },
+                {
+                    "MetricName": "OldestActiveEvaluation",
+                    "Unit": "Seconds",
+                    "Value": 0,
+                },
+                {
+                    "MetricName": "OldestActiveJob",
+                    "Unit": "Seconds",
+                    "Value": 0,
+                },
+                {
+                    "MetricName": "OldestActiveRawImageUploadSession",
+                    "Unit": "Seconds",
+                    "Value": 0,
+                },
+                {
+                    "MetricName": "OldestActiveSession",
+                    "Unit": "Seconds",
+                    "Value": 0,
                 },
             ],
         },
