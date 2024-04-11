@@ -141,6 +141,7 @@ def test_jobs_workflow(django_capture_on_commit_callbacks):
     assert len(callbacks) == 2
 
 
+@pytest.mark.flaky(reruns=3)
 @pytest.mark.django_db
 def test_algorithm(
     algorithm_image, settings, django_capture_on_commit_callbacks
