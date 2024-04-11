@@ -4,10 +4,11 @@ from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.management import call_command
 from django.db.models import Count
+from django.utils import timezone
 
-from grandchallenge.algorithms.models import Job
+from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.cases.models import RawImageUploadSession
-from grandchallenge.evaluation.models import Evaluation
+from grandchallenge.evaluation.models import Evaluation, Method
 from grandchallenge.workstations.models import Session
 
 
@@ -65,5 +66,53 @@ def _get_metrics():
                 ],
             }
         )
+
+    now = timezone.now()
+    component_metric_data = []
+
+    for queryset in (
+        AlgorithmImage.objects.filter(
+            import_status__in=[
+                AlgorithmImage.ImportStatusChoices.QUEUED,
+                AlgorithmImage.ImportStatusChoices.STARTED,
+            ]
+        ),
+        Method.objects.filter(
+            import_status__in=[
+                Method.ImportStatusChoices.QUEUED,
+                Method.ImportStatusChoices.STARTED,
+            ]
+        ),
+        Evaluation.objects.active(),
+        Job.objects.active(),
+        RawImageUploadSession.objects.filter(
+            status__in=[
+                RawImageUploadSession.REQUEUED,
+                RawImageUploadSession.STARTED,
+            ]
+        ),
+        Session.objects.filter(status=Session.QUEUED),
+    ):
+        try:
+            total_seconds = (
+                now - queryset.order_by("created").first().created
+            ).total_seconds()
+        except AttributeError:
+            total_seconds = 0
+
+        component_metric_data.append(
+            {
+                "MetricName": f"OldestActive{queryset.model.__name__}",
+                "Value": total_seconds,
+                "Unit": "Seconds",
+            }
+        )
+
+    metric_data.append(
+        {
+            "Namespace": f"{site.domain}/asyncTasks",
+            "MetricData": component_metric_data,
+        }
+    )
 
     return metric_data
