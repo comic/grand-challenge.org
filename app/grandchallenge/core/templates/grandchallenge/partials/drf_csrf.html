@@ -1,7 +1,7 @@
 {% load static %}
 {% load csrf %}
 
-{% csrf_data csrf_token as drf_data %}
+{% csrf_data csrf_token csrf_header_name|default:'X-CSRFToken' as drf_data %}
 {{ drf_data|json_script:"drf_csrf" }}
 
 <script src="{% static "rest_framework/js/csrf.js" %}"></script>
