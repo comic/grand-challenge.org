@@ -33,6 +33,8 @@ def check_configuration(*, instance, **__):
             raise ImproperlyConfigured("Worker autoscaling must be disabled")
         elif not instance.task_events:
             raise ImproperlyConfigured("Worker must send task events")
+        elif instance.prefetch_multiplier != 1:
+            raise ImproperlyConfigured("Worker prefetch multiplier must be 1")
         else:
             celery_app.is_solo_worker = True
             logger.info("Worker solo setup OK")
