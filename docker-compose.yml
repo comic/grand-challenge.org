@@ -110,6 +110,7 @@ services:
       <<: [*postgres-env, *minio-env]
       COMPONENTS_REGISTRY_INSECURE: 'true'
       COMPONENTS_DEFAULT_BACKEND: 'tests.components_tests.resources.backends.InsecureDockerExecutor'
+      COMPONENTS_DOCKER_KEEP_CAPS_UNSAFE: 'true'
       COMPONENTS_STRIP_LEADING_PREFIX_SLASH: 'true'
       DEBUG: 'true'
       PYTHONDONTWRITEBYTECODE: 1
@@ -139,6 +140,7 @@ services:
       REMAP_SIGTERM: 'SIGQUIT'
       COMPONENTS_REGISTRY_INSECURE: 'true'
       COMPONENTS_DEFAULT_BACKEND: 'tests.components_tests.resources.backends.InsecureDockerExecutor'
+      COMPONENTS_DOCKER_KEEP_CAPS_UNSAFE: 'true'
       COMPONENTS_STRIP_LEADING_PREFIX_SLASH: 'true'
       DEBUG: 'true'
       PYTHONDONTWRITEBYTECODE: 1
