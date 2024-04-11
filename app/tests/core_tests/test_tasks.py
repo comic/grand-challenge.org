@@ -180,7 +180,7 @@ def test_get_metrics():
             ],
         },
         {
-            "Namespace": "testserver/components",
+            "Namespace": "testserver/AsyncTasks",
             "MetricData": [
                 {
                     "MetricName": "OldestActiveAlgorithmImage",

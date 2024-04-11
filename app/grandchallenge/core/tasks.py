@@ -110,7 +110,7 @@ def _get_metrics():
 
     metric_data.append(
         {
-            "Namespace": f"{site.domain}/asyncTasks",
+            "Namespace": f"{site.domain}/AsyncTasks",
             "MetricData": component_metric_data,
         }
     )
