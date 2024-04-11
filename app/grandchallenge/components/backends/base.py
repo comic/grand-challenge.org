@@ -286,7 +286,8 @@ class Executor(ABC):
 
         if len(importer_result.new_images) == 0:
             raise ComponentException(
-                f"No output images could be imported from {interface.relative_path!r}"
+                message=f"No output images could be imported from {interface.relative_path!r}",
+                message_details=importer_result.file_errors,
             )
         elif len(importer_result.new_images) > 1:
             raise ComponentException(
@@ -298,9 +299,9 @@ class Executor(ABC):
             civ = interface.create_instance(
                 image=next(iter(importer_result.new_images))
             )
-        except ValidationError:
+        except ValidationError as e:
             raise ComponentException(
-                f"The image produced in {interface.relative_path!r} is not valid"
+                f"The image produced in {interface.relative_path!r} is not valid. {e.message}"
             )
 
         return civ
@@ -329,9 +330,9 @@ class Executor(ABC):
             raise ComponentException(
                 f"The output file {interface.relative_path!r} is not valid json"
             )
-        except ValidationError:
+        except ValidationError as e:
             raise ComponentException(
-                f"The output file {interface.relative_path!r} is not valid"
+                f"The output file {interface.relative_path!r} is not valid. {e.message}"
             )
 
         return civ
@@ -352,9 +353,9 @@ class Executor(ABC):
             raise ComponentException(
                 f"Output file {interface.relative_path!r} was not produced"
             )
-        except ValidationError:
+        except ValidationError as e:
             raise ComponentException(
-                f"The output file {interface.relative_path!r} is not valid"
+                f"The output file {interface.relative_path!r} is not valid. {e.message}"
             )
 
         return civ
