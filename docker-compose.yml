@@ -113,7 +113,7 @@ services:
       DEBUG: 'true'
       PYTHONDONTWRITEBYTECODE: 1
     restart: always
-    command: watchfiles --filter python "celery -A config worker -l info -c 1 -Q celery" /app
+    command: watchfiles --filter python "celery --app config worker --loglevel info --concurrency 1 --queues celery" /app
     scale: 1
     hostname: "celery-worker"
     depends_on:
@@ -142,7 +142,7 @@ services:
       DEBUG: 'true'
       PYTHONDONTWRITEBYTECODE: 1
     restart: always
-    command: watchfiles --filter python "celery -A config worker -l info -c 1 --pool solo -Q workstations-eu-central-1,acks-late-2xlarge,acks-late-2xlarge-delay,acks-late-micro-short,acks-late-micro-short-delay" /app
+    command: watchfiles --filter python "celery --app config worker --loglevel info --concurrency 1 --pool prefork --queues workstations-eu-central-1,acks-late-2xlarge,acks-late-2xlarge-delay,acks-late-micro-short,acks-late-micro-short-delay" /app
     scale: 1
     hostname: "celery-worker-evaluation"
     depends_on:
@@ -181,7 +181,7 @@ services:
     command: >-
         bash -c "
         rm -f /tmp/celerybeat.pid
-        && celery -A config beat --scheduler django_celery_beat.schedulers:DatabaseScheduler --pidfile=\"/tmp/celerybeat.pid\"
+        && celery --app config beat --scheduler django_celery_beat.schedulers:DatabaseScheduler --pidfile=\"/tmp/celerybeat.pid\"
         "
     depends_on:
       web:
