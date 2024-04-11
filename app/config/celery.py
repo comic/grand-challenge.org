@@ -4,7 +4,6 @@ from math import ceil
 
 import requests
 from celery import Celery
-from celery.concurrency.solo import TaskPool
 from celery.exceptions import ImproperlyConfigured
 from celery.signals import celeryd_after_setup, task_postrun, task_prerun
 from django.conf import settings
@@ -30,8 +29,8 @@ def check_configuration(*, instance, **__):
     if any(q in instance.app.amqp.queues for q in settings.CELERY_SOLO_QUEUES):
         if instance.concurrency != 1:
             raise ImproperlyConfigured("Worker concurrency must be 1")
-        elif not isinstance(instance.pool, TaskPool):
-            raise ImproperlyConfigured("Worker must use the solo task pool")
+        elif instance.autoscale is not None:
+            raise ImproperlyConfigured("Worker autoscaling must be disabled")
         elif not instance.task_events:
             raise ImproperlyConfigured("Worker must send task events")
         else:
