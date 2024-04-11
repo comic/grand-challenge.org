@@ -113,7 +113,7 @@ services:
       DEBUG: 'true'
       PYTHONDONTWRITEBYTECODE: 1
     restart: always
-    command: watchfiles --filter python "celery --app config worker --loglevel info --concurrency 1 --queues celery" /app
+    command: watchfiles --filter python "celery --app config worker --loglevel info --concurrency 1 --pool prefork --queues celery" /app
     scale: 1
     hostname: "celery-worker"
     depends_on:
