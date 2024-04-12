@@ -117,12 +117,17 @@ def send_raw_email(*, raw_email_pk):
         except ObjectDoesNotExist:
             return
 
-        client = boto3.client("ses", region_name=settings.AWS_SES_REGION_NAME)
-        client.send_raw_email(
-            RawMessage={
-                "Data": raw_email.message,
-            },
-        )
+        if settings.DEBUG:
+            logger.info(f"Would send raw email {raw_email.pk}")
+        else:
+            client = boto3.client(
+                "ses", region_name=settings.AWS_SES_REGION_NAME
+            )
+            client.send_raw_email(
+                RawMessage={
+                    "Data": raw_email.message,
+                },
+            )
 
         raw_email.sent_at = now()
         raw_email.save()
