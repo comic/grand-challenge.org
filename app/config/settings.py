@@ -496,7 +496,6 @@ THIRD_PARTY_APPS = [
     "aws_xray_sdk.ext.django",  # tracing
     "django_celery_results",  # database results backend
     "django_celery_beat",  # periodic tasks
-    "djcelery_email",  # asynchronous emails
     "guardian",  # per object permissions
     "rest_framework",  # provides REST API
     "knox",  # token auth for REST API
