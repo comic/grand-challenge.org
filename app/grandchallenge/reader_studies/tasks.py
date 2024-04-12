@@ -8,6 +8,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
+from grandchallenge.core.utils.error_messages import format_error_message
 from grandchallenge.reader_studies.models import (
     Answer,
     DisplaySet,
@@ -69,7 +70,7 @@ def create_display_sets_for_upload_session(
                 civ.full_clean()
             except ValidationError as e:
                 upload_session.status = RawImageUploadSession.FAILURE
-                upload_session.error_message = e.message
+                upload_session.error_message = format_error_message(error=e)
                 upload_session.save()
             else:
                 civ.save()
@@ -98,7 +99,7 @@ def add_image_to_answer(*, upload_session_pk, answer_pk):
                 pk=upload_session_pk
             )
             upload_session.status = RawImageUploadSession.FAILURE
-            upload_session.error_message = e.message
+            upload_session.error_message = format_error_message(error=e)
             upload_session.save()
         else:
             add_image(answer, image)
