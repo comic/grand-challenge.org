@@ -108,7 +108,7 @@ def send_bulk_email(action, email_pk):
 def send_raw_email(*, raw_email_pk):
     queryset = RawEmail.objects.filter(
         pk=raw_email_pk, sent_at__isnull=True
-    ).select_for_update()
+    ).select_for_update(nowait=True)
 
     with transaction.atomic():
         try:
