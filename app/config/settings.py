@@ -77,7 +77,10 @@ DATABASES = {
     }
 }
 
-EMAIL_BACKEND = "djcelery_email.backends.CeleryEmailBackend"
+EMAIL_BACKEND = os.environ.get(
+    "DJANGO_EMAIL_BACKEND", "grandchallenge.emails.backends.CelerySESBackend"
+)
+# TODO this can be removed when migration to new email is complete
 CELERY_EMAIL_BACKEND = os.environ.get(
     "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
 )
@@ -184,6 +187,8 @@ AWS_S3_OBJECT_PARAMETERS = {
 }
 AWS_CLOUDWATCH_REGION_NAME = os.environ.get("AWS_CLOUDWATCH_REGION_NAME")
 AWS_CODEBUILD_REGION_NAME = os.environ.get("AWS_CODEBUILD_REGION_NAME")
+AWS_SES_REGION_NAME = os.environ.get("AWS_SES_REGION_NAME")
+# TODO can be deleted after the migration to the new email provider is complete
 AWS_SES_REGION_ENDPOINT = f'email.{os.environ.get("AWS_SES_REGION_NAME", AWS_DEFAULT_REGION)}.amazonaws.com'
 
 # This is for storing files that should not be served to the public

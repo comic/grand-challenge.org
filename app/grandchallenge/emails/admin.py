@@ -1,10 +1,11 @@
 from django.contrib import admin, messages
+from django.contrib.admin import ModelAdmin
 from django.db.transaction import on_commit
 from django.forms import ModelForm
 from markdownx.admin import MarkdownxModelAdmin
 
 from grandchallenge.core.widgets import MarkdownEditorAdminWidget
-from grandchallenge.emails.models import Email
+from grandchallenge.emails.models import Email, RawEmail
 from grandchallenge.emails.tasks import send_bulk_email
 from grandchallenge.emails.utils import SendActionChoices
 
@@ -88,3 +89,10 @@ class EmailAdmin(MarkdownxModelAdmin):
             request=request,
             action=SendActionChoices.ALGORITHM_EDITORS,
         )
+
+
+@admin.register(RawEmail)
+class RawEmailAdmin(ModelAdmin):
+    list_display = ("pk", "created", "sent_at")
+    readonly_fields = ("created", "message")
+    search_fields = ("message",)

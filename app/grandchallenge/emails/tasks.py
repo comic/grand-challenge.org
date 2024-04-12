@@ -1,15 +1,17 @@
 import logging
 
+import boto3
 from celery import shared_task
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.utils.timezone import now
 
 from grandchallenge.emails.emails import send_standard_email_batch
-from grandchallenge.emails.models import Email
+from grandchallenge.emails.models import Email, RawEmail
 from grandchallenge.emails.utils import SendActionChoices
 from grandchallenge.profiles.models import EmailSubscriptionTypes
 
@@ -100,3 +102,27 @@ def send_bulk_email(action, email_pk):
     email.sent_at = now()
     email.status_report = None
     email.save()
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+def send_raw_email(*, raw_email_pk):
+    queryset = RawEmail.objects.filter(
+        pk=raw_email_pk, sent_at__isnull=True
+    ).select_for_update()
+
+    with transaction.atomic():
+        try:
+            # Acquire lock
+            raw_email = queryset.get()
+        except ObjectDoesNotExist:
+            return
+
+        client = boto3.client("ses", region_name=settings.AWS_SES_REGION_NAME)
+        client.send_raw_email(
+            RawMessage={
+                "Data": raw_email.message,
+            },
+        )
+
+        raw_email.sent_at = now()
+        raw_email.save()

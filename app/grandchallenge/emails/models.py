@@ -1,6 +1,8 @@
 from django.db import models
 from django.urls import reverse
 
+from grandchallenge.core.models import UUIDModel
+
 
 class Email(models.Model):
 
@@ -25,3 +27,11 @@ class Email(models.Model):
 
     def get_absolute_url(self):
         return reverse("emails:detail", kwargs={"pk": self.pk})
+
+
+class RawEmail(UUIDModel):
+    message = models.TextField(editable=False)
+    sent_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        ordering = ("-created",)
