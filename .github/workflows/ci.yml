@@ -3,7 +3,8 @@ name: CI
 on: [push, pull_request]
 
 env:
-  PYTHON_VERSION: '3.11'
+  # TODO: Update the Python version to the latest version, see https://github.com/comic/grand-challenge.org/issues/3308
+  PYTHON_VERSION: '3.11.8'
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
