@@ -37,7 +37,9 @@ from grandchallenge.components.emails import send_invalid_dockerfile_email
 from grandchallenge.components.exceptions import PriorStepFailed
 from grandchallenge.components.registry import _get_registry_auth_config
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
-from grandchallenge.core.utils.error_messages import format_error_message
+from grandchallenge.core.utils.error_messages import (
+    format_validation_error_message,
+)
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.uploads.models import UserUpload
 
@@ -603,7 +605,7 @@ def provision_job(
     except ComponentException as e:
         job.update_status(
             status=job.FAILURE,
-            error_message=format_error_message(error=e),
+            error_message=format_validation_error_message(error=e),
             detailed_error_message=e.message_details,
         )
     except Exception:
@@ -1054,7 +1056,7 @@ def add_file_to_component_interface_value(
             civ.full_clean()
         except ValidationError as e:
             civ.delete()
-            error = format_error_message(error=e)
+            error = format_validation_error_message(error=e)
         else:
             user_upload.copy_object(to_field=civ.file)
             civ.save()
@@ -1163,7 +1165,9 @@ def add_image_to_object(
         except ValidationError as e:
             # this should only happen for new uploads
             upload_session.status = RawImageUploadSession.FAILURE
-            upload_session.error_message = format_error_message(error=e)
+            upload_session.error_message = format_validation_error_message(
+                error=e
+            )
             upload_session.save()
             return
     object.values.add(civ)
@@ -1205,7 +1209,7 @@ def add_file_to_object(
             civ = ComponentInterfaceValue.objects.get(pk=civ_pk)
             object.values.remove(civ)
     except ValidationError as e:
-        error = format_error_message(error=e)
+        error = format_validation_error_message(error=e)
 
     if error is not None:
         Notification.send(

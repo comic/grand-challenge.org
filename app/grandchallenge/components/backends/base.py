@@ -21,7 +21,9 @@ from panimg.image_builders import image_builder_mhd, image_builder_tiff
 from grandchallenge.cases.tasks import import_images
 from grandchallenge.components.backends.exceptions import ComponentException
 from grandchallenge.components.models import GPUTypeChoices
-from grandchallenge.core.utils.error_messages import format_error_message
+from grandchallenge.core.utils.error_messages import (
+    format_validation_error_message,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -302,7 +304,7 @@ class Executor(ABC):
             )
         except ValidationError as e:
             raise ComponentException(
-                f"The image produced in {interface.relative_path!r} is not valid. {format_error_message(error=e)}"
+                f"The image produced in {interface.relative_path!r} is not valid. {format_validation_error_message(error=e)}"
             )
 
         return civ
@@ -333,7 +335,7 @@ class Executor(ABC):
             )
         except ValidationError as e:
             raise ComponentException(
-                f"The output file {interface.relative_path!r} is not valid. {format_error_message(error=e)}"
+                f"The output file {interface.relative_path!r} is not valid. {format_validation_error_message(error=e)}"
             )
 
         return civ
@@ -356,7 +358,7 @@ class Executor(ABC):
             )
         except ValidationError as e:
             raise ComponentException(
-                f"The output file {interface.relative_path!r} is not valid. {format_error_message(error=e)}"
+                f"The output file {interface.relative_path!r} is not valid. {format_validation_error_message(error=e)}"
             )
 
         return civ
