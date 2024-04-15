@@ -121,7 +121,10 @@ def _send_bulk_email(*, action, email_pk):
     email.save()
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@shared_task(
+    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"],
+    ignore_result=True,
+)
 def send_raw_emails():
     try:
         with cache.lock(
