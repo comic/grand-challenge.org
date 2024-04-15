@@ -165,3 +165,10 @@ def _send_raw_emails():
 
         if elapsed < min_send_duration:
             time.sleep((min_send_duration - elapsed).total_seconds())
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+def cleanup_sent_raw_emails():
+    RawEmail.objects.filter(
+        sent_at__isnull=False, created__lt=now() - timedelta(days=7)
+    ).delete()
