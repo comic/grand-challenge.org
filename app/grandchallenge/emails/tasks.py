@@ -149,20 +149,29 @@ def _send_raw_emails():
         )
 
     # Transaction and locking unnecessary here as a cache lock is being used
-    for raw_email in RawEmail.objects.filter(sent_at__isnull=True).iterator():
+    for raw_email in RawEmail.objects.filter(
+        sent_at__isnull=True, errored=False
+    ).iterator():
         start = now()
 
-        if settings.DEBUG:
-            logger.info(f"Would send raw email {raw_email.pk} {start}")
+        try:
+            if settings.DEBUG:
+                response = {"MessageId": "debug"}
+            else:
+                response = client.send_raw_email(
+                    RawMessage={"Data": raw_email.message}
+                )
+        except Exception as error:
+            raw_email.errored = True
+            raw_email.save()
+            logger.error(f"Error sending raw email {raw_email.pk}: {error}")
+            continue
         else:
-            client.send_raw_email(
-                RawMessage={
-                    "Data": raw_email.message,
-                },
+            raw_email.sent_at = now()
+            raw_email.save()
+            logger.info(
+                f"Sent raw email {raw_email.pk}: {response['MessageId']}"
             )
-
-        raw_email.sent_at = now()
-        raw_email.save()
 
         elapsed = now() - start
 
@@ -173,5 +182,7 @@ def _send_raw_emails():
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
 def cleanup_sent_raw_emails():
     RawEmail.objects.filter(
-        sent_at__isnull=False, created__lt=now() - timedelta(days=7)
+        sent_at__isnull=False,
+        errored=False,
+        created__lt=now() - timedelta(days=7),
     ).delete()

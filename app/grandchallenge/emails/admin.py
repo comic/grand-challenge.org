@@ -93,6 +93,7 @@ class EmailAdmin(MarkdownxModelAdmin):
 
 @admin.register(RawEmail)
 class RawEmailAdmin(ModelAdmin):
-    list_display = ("pk", "created", "sent_at")
+    list_display = ("pk", "created", "sent_at", "errored")
+    list_filter = ("errored",)
     readonly_fields = ("created", "message")
     search_fields = ("message",)

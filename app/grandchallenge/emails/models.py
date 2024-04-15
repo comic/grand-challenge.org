@@ -31,6 +31,7 @@ class Email(models.Model):
 
 class RawEmail(UUIDModel):
     message = models.TextField(editable=False)
+    errored = models.BooleanField(default=False)
     sent_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
