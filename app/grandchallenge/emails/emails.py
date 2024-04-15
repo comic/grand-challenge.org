@@ -23,6 +23,8 @@ def send_standard_email_batch(
                 )
             )
         except ValueError:
+            # Raised if the user cannot be emailed due to
+            # preferences or blocked status
             continue
 
     return connection.send_messages(messages)

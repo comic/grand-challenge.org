@@ -1036,13 +1036,6 @@ if os.environ.get("BROKER_TYPE", "").lower() == "sqs":
 else:
     CELERY_BROKER_URL = os.environ.get("BROKER_URL", f"{REDIS_ENDPOINT}/1")
 
-# Keep results of sent emails
-CELERY_EMAIL_CHUNK_SIZE = 1
-CELERY_EMAIL_TASK_CONFIG = {
-    "name": "djcelery_send_emails",
-    "ignore_result": False,
-}
-
 COMPONENTS_DEFAULT_BACKEND = os.environ.get(
     "COMPONENTS_DEFAULT_BACKEND",
     "grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor",
@@ -1253,6 +1246,10 @@ CELERY_BEAT_SCHEDULE = {
     "update_challenge_results_cache": {
         "task": "grandchallenge.challenges.tasks.update_challenge_results_cache",
         "schedule": crontab(minute="*/5"),
+    },
+    "send_raw_emails": {
+        "task": "grandchallenge.emails.tasks.send_raw_emails",
+        "schedule": timedelta(seconds=30),
     },
     **{
         f"stop_expired_services_{region}": {
