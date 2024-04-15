@@ -76,16 +76,12 @@ def get_receivers(action):
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
 def send_bulk_email(*, action, email_pk):
-    try:
-        with cache.lock(
-            _cache_key_from_method(send_bulk_email),
-            timeout=settings.CELERY_TASK_TIME_LIMIT,
-            blocking_timeout=1,
-        ):
-            _send_bulk_email(action=action, email_pk=email_pk)
-    except LockError as error:
-        logger.info(f"Could not acquire lock: {error}")
-        return
+    with cache.lock(
+        _cache_key_from_method(send_bulk_email),
+        timeout=settings.CELERY_TASK_TIME_LIMIT,
+        blocking_timeout=1,
+    ):
+        _send_bulk_email(action=action, email_pk=email_pk)
 
 
 def _send_bulk_email(*, action, email_pk):
