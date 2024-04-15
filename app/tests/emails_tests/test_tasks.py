@@ -2,12 +2,19 @@ import pytest
 from django.contrib.sites.models import Site
 from django.core import mail
 from django.core.mail import get_connection
+from django.utils import timezone
 
 from grandchallenge.emails.emails import (
     create_email_object,
     send_standard_email_batch,
 )
-from grandchallenge.emails.tasks import get_receivers, send_bulk_email
+from grandchallenge.emails.models import RawEmail
+from grandchallenge.emails.tasks import (
+    cleanup_sent_raw_emails,
+    get_receivers,
+    send_bulk_email,
+    send_raw_emails,
+)
 from grandchallenge.emails.utils import SendActionChoices
 from grandchallenge.profiles.models import (
     EmailSubscriptionTypes,
@@ -15,7 +22,7 @@ from grandchallenge.profiles.models import (
 )
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import AlgorithmFactory
-from tests.emails_tests.factories import EmailFactory
+from tests.emails_tests.factories import EmailFactory, RawEmailFactory
 from tests.factories import ChallengeFactory, UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 
@@ -338,3 +345,36 @@ def test_can_email_notification_if_opted_in(opt_in_type):
         )
 
     assert str(error.value) == "User has opted out of notification emails"
+
+
+@pytest.mark.django_db
+def test_cleanup_sent_raw_emails():
+    e1, e2, e3 = RawEmailFactory.create_batch(3)
+
+    e1.sent_at = timezone.now()
+    e1.save()
+
+    e2.sent_at = timezone.now() - timezone.timedelta(days=8)
+    e2.created = e2.sent_at
+    e2.save()
+
+    cleanup_sent_raw_emails()
+
+    assert {*RawEmail.objects.all()} == {e1, e3}
+
+
+@pytest.mark.django_db
+def test_send_raw_emails(settings):
+    settings.DEBUG = True  # Do not connect to SQS
+
+    sent_at_time = timezone.now()
+
+    e1, e2 = RawEmailFactory.create_batch(2)
+
+    e1.sent_at = sent_at_time
+    e1.save()
+
+    send_raw_emails()
+
+    assert RawEmail.objects.filter(sent_at__isnull=True).count() == 0
+    assert RawEmail.objects.get(pk=e1.pk).sent_at == sent_at_time
