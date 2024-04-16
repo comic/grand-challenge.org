@@ -41,7 +41,6 @@ def challenge(request):
 
 def deployment_info(*_, **__):
     return {
-        "google_analytics_id": settings.GOOGLE_ANALYTICS_ID,
         "COMMIT_ID": settings.COMMIT_ID,
     }
 

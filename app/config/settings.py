@@ -601,8 +601,6 @@ AUTHENTICATION_BACKENDS = [
     "guardian.backends.ObjectPermissionBackend",
 ]
 
-GOOGLE_ANALYTICS_ID = os.environ.get("GOOGLE_ANALYTICS_ID", "GA_TRACKING_ID")
-
 ##############################################################################
 #
 # django-allauth
@@ -1454,8 +1452,6 @@ CSP_MEDIA_HOSTS = (
 CSP_DEFAULT_SRC = "'none'"
 CSP_SCRIPT_SRC = (
     CSP_STATIC_HOST,
-    "https://www.googletagmanager.com",  # For Google Analytics
-    "https://*.google-analytics.com",  # For Google Analytics
     "'unsafe-eval'",  # Required for vega https://github.com/vega/vega/issues/1106
     "'self'",  # Used in the Django admin
 )
@@ -1472,8 +1468,6 @@ CSP_IMG_SRC = (
     CSP_STATIC_HOST,
     *CSP_MEDIA_HOSTS,
     "https://www.gravatar.com",  # Used for default mugshots
-    "https://www.googletagmanager.com",  # For Google Analytics
-    "https://*.google-analytics.com",  # For Google Analytics
     "data:",  # Used by jsoneditor
     "'self'",  # Used by Open Sea Dragon
     "https:",  # Arbitrary files used on blog posts and challenge pages
@@ -1494,7 +1488,6 @@ CSP_CONNECT_SRC = (
         f"{DEFAULT_SCHEME}://{region}{SESSION_COOKIE_DOMAIN}{f':{SITE_SERVER_PORT}' if SITE_SERVER_PORT else ''}"
         for region in WORKSTATIONS_ACTIVE_REGIONS
     ),
-    "https://*.google-analytics.com",  # For Google Analytics
     "https://*.ingest.sentry.io",  # For Sentry errors
 )
 
