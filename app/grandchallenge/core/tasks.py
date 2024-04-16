@@ -18,7 +18,7 @@ def clear_sessions():
     call_command("clearsessions")
 
 
-@shared_task
+@shared_task(ignore_result=True)
 def put_cloudwatch_metrics():
     client = boto3.client(
         "cloudwatch", region_name=settings.AWS_CLOUDWATCH_REGION_NAME

@@ -77,13 +77,7 @@ DATABASES = {
     }
 }
 
-EMAIL_BACKEND = os.environ.get(
-    "DJANGO_EMAIL_BACKEND", "grandchallenge.emails.backends.CelerySESBackend"
-)
-# TODO this can be removed when migration to new email is complete
-CELERY_EMAIL_BACKEND = os.environ.get(
-    "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
-)
+EMAIL_BACKEND = "grandchallenge.emails.backends.CelerySESBackend"
 DEFAULT_FROM_EMAIL = os.environ.get(
     "DEFAULT_FROM_EMAIL", "grandchallenge@localhost"
 )
@@ -188,8 +182,6 @@ AWS_S3_OBJECT_PARAMETERS = {
 AWS_CLOUDWATCH_REGION_NAME = os.environ.get("AWS_CLOUDWATCH_REGION_NAME")
 AWS_CODEBUILD_REGION_NAME = os.environ.get("AWS_CODEBUILD_REGION_NAME")
 AWS_SES_REGION_NAME = os.environ.get("AWS_SES_REGION_NAME")
-# TODO can be deleted after the migration to the new email provider is complete
-AWS_SES_REGION_ENDPOINT = f'email.{os.environ.get("AWS_SES_REGION_NAME", AWS_DEFAULT_REGION)}.amazonaws.com'
 
 # This is for storing files that should not be served to the public
 PRIVATE_S3_STORAGE_KWARGS = {
@@ -504,7 +496,6 @@ THIRD_PARTY_APPS = [
     "aws_xray_sdk.ext.django",  # tracing
     "django_celery_results",  # database results backend
     "django_celery_beat",  # periodic tasks
-    "djcelery_email",  # asynchronous emails
     "guardian",  # per object permissions
     "rest_framework",  # provides REST API
     "knox",  # token auth for REST API
@@ -1045,13 +1036,6 @@ if os.environ.get("BROKER_TYPE", "").lower() == "sqs":
 else:
     CELERY_BROKER_URL = os.environ.get("BROKER_URL", f"{REDIS_ENDPOINT}/1")
 
-# Keep results of sent emails
-CELERY_EMAIL_CHUNK_SIZE = 1
-CELERY_EMAIL_TASK_CONFIG = {
-    "name": "djcelery_send_emails",
-    "ignore_result": False,
-}
-
 COMPONENTS_DEFAULT_BACKEND = os.environ.get(
     "COMPONENTS_DEFAULT_BACKEND",
     "grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor",
@@ -1259,9 +1243,17 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.statistics.tasks.update_site_statistics_cache",
         "schedule": crontab(hour=5, minute=30),
     },
+    "cleanup_sent_raw_emails": {
+        "task": "grandchallenge.emails.tasks.cleanup_sent_raw_emails",
+        "schedule": crontab(hour=6, minute=0),
+    },
     "update_challenge_results_cache": {
         "task": "grandchallenge.challenges.tasks.update_challenge_results_cache",
         "schedule": crontab(minute="*/5"),
+    },
+    "send_raw_emails": {
+        "task": "grandchallenge.emails.tasks.send_raw_emails",
+        "schedule": timedelta(seconds=30),
     },
     **{
         f"stop_expired_services_{region}": {
