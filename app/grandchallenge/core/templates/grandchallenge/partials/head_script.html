@@ -8,10 +8,5 @@
     <script type="module" src="{% static 'js/sentry.mjs' %}"></script>
 {% endif %}
 
-{# Global Site Tag (gtag.js) - Google Analytics #}
-<script async src="https://www.googletagmanager.com/gtag/js?id={{ google_analytics_id }}"></script>
-{{ google_analytics_id|json_script:"googleAnalyticsID" }}
-<script type="module" src="{% static 'js/google_analytics.mjs' %}"></script>
-
 {# Needs to be inline for some forms (summernote) #}
 <script type="text/javascript" src="{% static "vendored/jquery/jquery.min.js" %}"></script>
