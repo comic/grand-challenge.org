@@ -18,14 +18,14 @@ from tests.factories import ImageFactory, UserFactory
 
 
 @pytest.mark.django_db
-def test_algorithm_title_on_job_serializer(rf):
+def test_algorithm_relations_on_job_serializer(rf):
     job = AlgorithmJobFactory()
     serializer = HyperlinkedJobSerializer(
-        job, context={"request": rf.get("/foo")}
+        job, context={"request": rf.get("/foo", secure=True)}
     )
+    assert serializer.data["algorithm_image"] == job.algorithm_image.api_url
     assert (
-        serializer.data["algorithm_title"]
-        == job.algorithm_image.algorithm.title
+        serializer.data["algorithm"] == job.algorithm_image.algorithm.api_url
     )
 
 
