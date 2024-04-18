@@ -84,7 +84,6 @@ class JobSerializer(serializers.ModelSerializer):
     """Serializer without hyperlinks for internal use"""
 
     algorithm_image = StringRelatedField()
-    algorithm = StringRelatedField()
 
     inputs = ComponentInterfaceValueSerializer(many=True)
     outputs = ComponentInterfaceValueSerializer(many=True)
@@ -113,7 +112,6 @@ class JobSerializer(serializers.ModelSerializer):
             "url",
             "api_url",
             "algorithm_image",
-            "algorithm",
             "inputs",
             "outputs",
             "status",
@@ -143,7 +141,10 @@ class HyperlinkedJobSerializer(JobSerializer):
     outputs = HyperlinkedComponentInterfaceValueSerializer(many=True)
 
     class Meta(JobSerializer.Meta):
-        pass
+        fields = [
+            *JobSerializer.Meta.fields,
+            "algorithm",
+        ]
 
 
 class JobPostSerializer(JobSerializer):
