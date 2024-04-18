@@ -36,6 +36,7 @@ from grandchallenge.core.models import (
     UUIDModel,
 )
 from grandchallenge.core.storage import protected_s3_storage, public_s3_storage
+from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.validators import (
     ExtensionValidator,
     JSONValidator,
@@ -509,6 +510,14 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         default=0,
         help_text="The total compute cost for this phase in Euro Cents, including Tax",
     )
+    parent = models.ForeignKey(
+        "self",
+        on_delete=models.PROTECT,
+        related_name="children",
+        null=True,
+        blank=True,
+        help_text="Is this phase dependent on another phase? If selected, submissions to the current phase will only be possible after a succesful submission has been made to the parent phase.",
+    )
 
     objects = PhaseManager()
 
@@ -564,7 +573,11 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
 
     def clean(self):
         super().clean()
+        self._clean_algorithm_submission_settings()
+        self._clean_submission_limits()
+        self._clean_parent_phase()
 
+    def _clean_algorithm_submission_settings(self):
         if self.submission_kind == SubmissionKindChoices.ALGORITHM:
             if not self.creator_must_be_verified:
                 raise ValidationError(
@@ -581,7 +594,16 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                     "test data to this phase and define the inputs and outputs that the submitted algorithms need to "
                     "read/write. To configure these settings, please get in touch with support@grand-challenge.org."
                 )
+        if (
+            self.give_algorithm_editors_job_view_permissions
+            and not self.submission_kind
+            == self.SubmissionKindChoices.ALGORITHM
+        ):
+            raise ValidationError(
+                "Give Algorithm Editors Job View Permissions can only be enabled for Algorithm type phases"
+            )
 
+    def _clean_submission_limits(self):
         if (
             self.submissions_limit_per_user_per_period > 0
             and not self.active_image
@@ -608,14 +630,27 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                 "submissions_limit_per_user_per_period to 0, or set appropriate phase start / end dates."
             )
 
-        if (
-            self.give_algorithm_editors_job_view_permissions
-            and not self.submission_kind
-            == self.SubmissionKindChoices.ALGORITHM
-        ):
-            raise ValidationError(
-                "Give Algorithm Editors Job View Permissions can only be enabled for Algorithm type phases"
-            )
+    @property
+    def common_parent_phase_fields(self):
+        common_fields = ["challenge", "submission_kind"]
+        if self.submission_kind == SubmissionKindChoices.ALGORITHM:
+            common_fields += ["algorithm_inputs", "algorithm_outputs"]
+        return common_fields
+
+    def _clean_parent_phase(self):
+        if self.parent:
+            if self.parent not in self.parent_phase_choices:
+                raise ValidationError(
+                    f"This phase cannot be selected as parent phase for the current "
+                    f"phase. The parent phase needs to match the current phase in "
+                    f"all of the following settings: "
+                    f"{oxford_comma(self.common_parent_phase_fields)}"
+                )
+
+            if self.parent.count_valid_archive_items < 1:
+                raise ValidationError(
+                    "The parent phase needs to have at least 1 valid archive item."
+                )
 
     def set_default_interfaces(self):
         self.inputs.set(
@@ -856,6 +891,45 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                 "user_profile"
             ).all(),
             subscription_type=EmailSubscriptionTypes.SYSTEM,
+        )
+
+    @cached_property
+    def parent_phase_choices(self):
+        extra_filters = {}
+        extra_annotations = {}
+        if self.submission_kind == SubmissionKindChoices.ALGORITHM:
+            algorithm_inputs = self.algorithm_inputs.all()
+            algorithm_outputs = self.algorithm_outputs.all()
+            extra_annotations = {
+                "total_input_count": Count("algorithm_inputs", distinct=True),
+                "total_output_count": Count(
+                    "algorithm_outputs", distinct=True
+                ),
+                "relevant_input_count": Count(
+                    "algorithm_inputs",
+                    filter=Q(algorithm_inputs__in=algorithm_inputs),
+                    distinct=True,
+                ),
+                "relevant_output_count": Count(
+                    "algorithm_outputs",
+                    filter=Q(algorithm_outputs__in=algorithm_outputs),
+                    distinct=True,
+                ),
+            }
+            extra_filters = {
+                "total_input_count": len(algorithm_inputs),
+                "total_output_count": len(algorithm_outputs),
+                "relevant_input_count": len(algorithm_inputs),
+                "relevant_output_count": len(algorithm_outputs),
+            }
+        return (
+            Phase.objects.annotate(**extra_annotations)
+            .filter(
+                challenge=self.challenge,
+                submission_kind=self.submission_kind,
+                **extra_filters,
+            )
+            .exclude(pk=self.pk)
         )
 
 

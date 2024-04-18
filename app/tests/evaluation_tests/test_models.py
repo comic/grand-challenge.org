@@ -1,4 +1,5 @@
 from collections import namedtuple
+from contextlib import nullcontext
 from datetime import timedelta
 from itertools import chain
 
@@ -20,6 +21,7 @@ from grandchallenge.evaluation.tasks import (
     create_evaluation,
     update_combined_leaderboard,
 )
+from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.invoices.models import PaymentStatusChoices
 from tests.algorithms_tests.factories import AlgorithmImageFactory
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
@@ -740,3 +742,63 @@ def test_give_algorithm_editors_job_view_permissions_only_for_algorithm_phase():
 
     phase.submission_kind = Phase.SubmissionKindChoices.ALGORITHM
     phase.full_clean()
+
+
+@pytest.mark.django_db
+def test_parent_phase_choices():
+    p1, p2, p3, p4, p5 = PhaseFactory.create_batch(
+        5, challenge=ChallengeFactory()
+    )
+    p6 = PhaseFactory()
+
+    for phase in [p1, p2, p3, p4, p6]:
+        phase.submission_kind = SubmissionKindChoices.ALGORITHM
+    p5.submission_kind = SubmissionKindChoices.CSV
+
+    ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
+
+    for phase in [p1, p2, p3, p4, p5, p6]:
+        phase.algorithm_inputs.set([ci1])
+
+    for phase in [p1, p4, p5]:
+        phase.algorithm_outputs.set([ci2, ci3])
+    p2.algorithm_outputs.set([ci2, ci4])
+    p3.algorithm_outputs.set([ci2])
+
+    for phase in [p1, p2, p3, p4, p5, p6]:
+        phase.save()
+
+    assert list(p1.parent_phase_choices) == [p4]
+
+
+@pytest.mark.django_db
+def test_clean_parent_phase():
+    p1, p2, p3 = PhaseFactory.create_batch(
+        3, challenge=ChallengeFactory(), creator_must_be_verified=True
+    )
+    ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
+
+    for phase in [p1, p2, p3]:
+        phase.submission_kind = SubmissionKindChoices.ALGORITHM
+        phase.algorithm_inputs.set([ci1])
+        phase.algorithm_outputs.set([ci2])
+        phase.save()
+
+    ai = ArchiveItemFactory()
+    ai.values.add(ComponentInterfaceValueFactory(interface=ci1))
+    p1.archive = ai.archive
+    p2.archive = ai.archive
+    p1.save()
+    p2.save()
+
+    p1.parent = p3
+    with pytest.raises(ValidationError) as e:
+        p1.clean()
+    assert (
+        "The parent phase needs to have at least 1 valid archive item."
+        in str(e)
+    )
+
+    p1.parent = p2
+    with nullcontext():
+        p1.clean()
