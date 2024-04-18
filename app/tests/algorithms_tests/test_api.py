@@ -76,3 +76,31 @@ def test_job_time_limit(client):
 
     assert job.algorithm_image == algorithm_image
     assert job.time_limit == 600
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "num_jobs",
+    (
+        (1),
+        (3),
+    ),
+)
+def test_job_list_view_num_queries(
+    client, django_assert_num_queries, num_jobs
+):
+    user = UserFactory()
+    AlgorithmJobFactory.create_batch(num_jobs, creator=user)
+
+    with django_assert_num_queries(33) as _:
+        response = get_view_for_user(
+            viewname="api:algorithms-job-list",
+            client=client,
+            method=client.get,
+            user=user,
+            content_type="application/json",
+        )
+
+        # Sanity checks
+        assert response.status_code == 200
+        assert len(response.json()["results"]) == num_jobs
