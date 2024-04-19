@@ -5,7 +5,13 @@ from django.utils.html import format_html
 
 
 def send_standard_email_batch(
-    *, site, subject, markdown_message, recipients, subscription_type
+    *,
+    site,
+    subject,
+    markdown_message,
+    recipients,
+    subscription_type,
+    user_email_override=None,
 ):
     connection = get_connection()
     messages = []
@@ -20,6 +26,7 @@ def send_standard_email_batch(
                     markdown_message=markdown_message,
                     subscription_type=subscription_type,
                     connection=connection,
+                    user_email_override=user_email_override,
                 )
             )
         except ValueError:
@@ -48,6 +55,7 @@ def create_email_object(
     markdown_message,
     connection,
     subscription_type,
+    user_email_override=None,
 ):
     unsubscribe_link = recipient.user_profile.get_unsubscribe_link(
         subscription_type=subscription_type
@@ -65,6 +73,7 @@ def create_email_object(
             "site": site,
         },
     )
+
     text_content = render_to_string(
         "emails/standard_plaintext_email.txt",
         {
@@ -76,13 +85,18 @@ def create_email_object(
         },
     )
 
+    if user_email_override is not None and recipient in user_email_override:
+        to = [user_email_override[recipient]]
+    else:
+        to = [recipient.email]
+
     email = EmailMultiAlternatives(
         subject=format_html(
             "[{domain}] {subject}", domain=site.domain.lower(), subject=subject
         ),
         body=text_content,
         from_email=settings.DEFAULT_FROM_EMAIL,
-        to=[recipient.email],
+        to=to,
         connection=connection,
         headers=headers,
     )
