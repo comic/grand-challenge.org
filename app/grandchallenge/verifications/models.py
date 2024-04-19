@@ -99,6 +99,7 @@ class Verification(models.Model):
             markdown_message=message,
             recipients=[self.user],
             subscription_type=EmailSubscriptionTypes.SYSTEM,
+            user_email_override={self.user: self.email},
         )
 
 
