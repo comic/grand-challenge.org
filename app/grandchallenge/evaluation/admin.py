@@ -45,6 +45,11 @@ class PhaseAdminForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["parent"].queryset = self.instance.parent_phase_choices
+        if self.instance.parent or self.instance.children.exists():
+            for (
+                field_name
+            ) in self.instance.read_only_fields_for_dependent_phases:
+                self.fields[field_name].disabled = True
 
     def clean(self):
         cleaned_data = super().clean()

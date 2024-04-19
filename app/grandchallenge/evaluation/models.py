@@ -631,8 +631,8 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             )
 
     @property
-    def common_parent_phase_fields(self):
-        common_fields = ["challenge", "submission_kind"]
+    def read_only_fields_for_dependent_phases(self):
+        common_fields = ["submission_kind"]
         if self.submission_kind == SubmissionKindChoices.ALGORITHM:
             common_fields += ["algorithm_inputs", "algorithm_outputs"]
         return common_fields
@@ -644,7 +644,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                     f"This phase cannot be selected as parent phase for the current "
                     f"phase. The parent phase needs to match the current phase in "
                     f"all of the following settings: "
-                    f"{oxford_comma(self.common_parent_phase_fields)}"
+                    f"{oxford_comma(self.read_only_fields_for_dependent_phases)}"
                 )
 
             if self.parent.count_valid_archive_items < 1:

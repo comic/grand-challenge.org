@@ -802,3 +802,20 @@ def test_clean_parent_phase():
     p1.parent = p2
     with nullcontext():
         p1.clean()
+
+
+@pytest.mark.django_db
+def test_read_only_fields_for_dependent_phases():
+    p1 = PhaseFactory(
+        submission_kind=SubmissionKindChoices.ALGORITHM,
+        challenge=ChallengeFactory(),
+    )
+    p2 = PhaseFactory(
+        submission_kind=SubmissionKindChoices.CSV, challenge=ChallengeFactory()
+    )
+    assert p1.read_only_fields_for_dependent_phases == [
+        "submission_kind",
+        "algorithm_inputs",
+        "algorithm_outputs",
+    ]
+    assert p2.read_only_fields_for_dependent_phases == ["submission_kind"]

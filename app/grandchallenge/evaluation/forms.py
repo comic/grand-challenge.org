@@ -48,7 +48,7 @@ from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadSingleWidget
 
-phase_options = ("title", "public")
+phase_options = ("title", "public", "parent")
 
 submission_options = (
     "submissions_open_at",
@@ -138,6 +138,7 @@ class PhaseUpdateForm(
 ):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["parent"].queryset = self.instance.parent_phase_choices
         self.helper = FormHelper(self)
         self.helper.layout = Layout(
             TabHolder(
