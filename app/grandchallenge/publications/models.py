@@ -25,7 +25,7 @@ class ConsortiumNameCiteProcJSON(CiteProcJSON):
         for name_data in json_data:
             if "family" not in name_data and "name" in name_data:
                 # Handle consortium data
-                name_data["family"] = name_data.pop("name")  # noqa: B909
+                name_data["family"] = name_data.pop("name")
             name = Name(**name_data)
             names.append(name)
         return names

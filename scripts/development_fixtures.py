@@ -141,7 +141,7 @@ def _create_users(usernames):
         user.user_profile.country = fake.country_code()
         user.user_profile.receive_newsletter = True
         user.user_profile.save()
-        users[username] = user  # noqa: B909
+        users[username] = user
 
     return users
 

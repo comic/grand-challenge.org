@@ -19,7 +19,7 @@ class SubdomainSitemap(Sitemap):
         # Remove the automatically added location as this is added by our
         # subdomain reversal
         for url in urls:
-            url["location"] = url["location"].replace(  # noqa: B909
+            url["location"] = url["location"].replace(
                 f"{protocol}://{domain}{protocol}://", f"{protocol}://"
             )
 

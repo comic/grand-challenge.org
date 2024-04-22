@@ -43,7 +43,7 @@ def create_raw_upload_image_session(
         upload = create_upload_from_file(
             file_path=RESOURCE_PATH / image, creator=creator
         )
-        uploaded_images[upload.filename] = upload  # noqa: B909
+        uploaded_images[upload.filename] = upload
         upload_session.user_uploads.add(upload)
 
     if delete_file:

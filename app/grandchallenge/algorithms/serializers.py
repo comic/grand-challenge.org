@@ -228,7 +228,7 @@ class JobPostSerializer(JobSerializer):
                 # CIVs with upload sessions cannot be validated, done in
                 # run_algorithm_job_for_inputs
                 civ.save()
-                upload_session_pks[civ.pk] = upload_session.pk  # noqa: B909
+                upload_session_pks[civ.pk] = upload_session.pk
             elif civ.interface.requires_file and user_upload:
                 civ.save()
                 user_upload_pks[civ.pk] = user_upload.pk

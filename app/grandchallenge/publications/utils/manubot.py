@@ -171,9 +171,9 @@ def get_arxiv_csl(*, arxiv_id):
         given = author_elem.findtext(f"{ns_arxiv}forenames")
         family = author_elem.findtext(f"{ns_arxiv}keyname")
         if given:
-            author["given"] = given  # noqa: B909
+            author["given"] = given
         if family:
-            author["family"] = family  # noqa: B909
+            author["family"] = family
         authors.append(author)
 
     csl_item["author"] = authors

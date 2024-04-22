@@ -426,7 +426,7 @@ def filter_by_creators_best(*, evaluations, ranks):
         if creator not in best_result_per_user or (
             this_rank < ranks[best_result_per_user[creator].pk]
         ):
-            best_result_per_user[creator] = e  # noqa: B909
+            best_result_per_user[creator] = e
 
     return [r for r in best_result_per_user.values()]
 

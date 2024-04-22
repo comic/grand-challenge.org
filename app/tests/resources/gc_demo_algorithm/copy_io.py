@@ -111,7 +111,7 @@ def create_output():
             warn(f"Could not load {file} as json, {e}")
             val = "file"
 
-        res[str(file.absolute())] = val  # noqa: B909
+        res[str(file.absolute())] = val
 
         # Copy all the input files to output
         new_file = Path("/output/") / file.relative_to("/input/")

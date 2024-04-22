@@ -20,6 +20,6 @@ def get_associated_objects(*, publication, checker):
     objects = {}
     for obj in object_list:
         if checker.has_perm(f"view_{obj._meta.model_name}", obj):
-            objects[obj] = obj._meta.model_name  # noqa: B909
+            objects[obj] = obj._meta.model_name
 
     return objects
