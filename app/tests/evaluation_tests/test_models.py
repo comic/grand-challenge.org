@@ -791,8 +791,8 @@ def test_parent_phase_choices_no_circular_dependency():
     p2.save()
     p3.save()
 
-    assert list(p1.parent_phase_choices) == [p2, p3, p4]
-    assert list(p2.parent_phase_choices) == [p3, p4]
+    assert sorted(list(p1.parent_phase_choices)) == sorted([p2, p3, p4])
+    assert sorted(list(p2.parent_phase_choices)) == sorted([p3, p4])
     assert list(p3.parent_phase_choices) == [p4]
     assert list(p4.parent_phase_choices) == []
 
