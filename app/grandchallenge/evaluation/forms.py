@@ -348,7 +348,7 @@ class SubmissionForm(
                     submission__phase=self._phase.parent,
                     submission__evaluation__status=Evaluation.SUCCESS,
                     job__status=Job.SUCCESS,
-                )
+                ).distinct()
             self.fields["algorithm_image"].queryset = qs
 
             self._algorithm_inputs = self._phase.algorithm_inputs.all()

@@ -644,7 +644,9 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                     f"This phase cannot be selected as parent phase for the current "
                     f"phase. The parent phase needs to match the current phase in "
                     f"all of the following settings: "
-                    f"{oxford_comma(self.read_only_fields_for_dependent_phases)}"
+                    f"{oxford_comma(self.read_only_fields_for_dependent_phases)}. "
+                    f"The parent phase cannot have the current phase or any of "
+                    f"the current phase's children set as its parent."
                 )
 
             if self.parent.count_valid_archive_items < 1:
