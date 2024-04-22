@@ -358,7 +358,7 @@ class ReaderStudy(
         }
         for images in self.image_groups:
             _answers = answers.copy()
-            _answers["case"] = str(images)
+            _answers["case"] = str(images)  # noqa: B909
             result.append(_answers)
         return result
 

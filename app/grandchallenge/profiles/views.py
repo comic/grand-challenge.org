@@ -132,11 +132,11 @@ class UserProfileDetail(UserProfileObjectMixin, DetailView):
         for obj in object_list:
             obj_perms = checker.get_perms(obj)
             if f"change_{obj._meta.model_name}" in obj_perms:
-                role[obj] = "editor"
+                role[obj] = "editor"  # noqa: B909
             elif f"view_{obj._meta.model_name}" in obj_perms:
-                role[obj] = "user"
+                role[obj] = "user"  # noqa: B909
             else:
-                role[obj] = "participant"
+                role[obj] = "participant"  # noqa: B909
 
         context.update(
             {

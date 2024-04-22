@@ -40,7 +40,7 @@ def stacked_bar(*, values, lookup, title, facet, domain):
 
     totals = {str(d): 0 for d in domain.values()}
     for datum in values:
-        datum[facet] = domain[datum[facet]]
+        datum[facet] = domain[datum[facet]]  # noqa: B909
         totals[str(datum[facet])] += datum[lookup]
 
     chart = {

@@ -55,7 +55,7 @@ class TagSubstitution:
     @property
     def pattern(self) -> str:
         var_match = r"\s+([a-zA-Z0-9_\-]+)"
-        return rf"\[\s*{self.tag_name}{var_match*self.num_args}\s*\]"
+        return rf"\[\s*{self.tag_name}{var_match * self.num_args}\s*\]"  # noqa: B909
 
     @staticmethod
     def _get_num_positional_args(func) -> int:

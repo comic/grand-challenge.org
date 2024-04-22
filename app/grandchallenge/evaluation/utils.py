@@ -106,7 +106,7 @@ def _get_rank_per_metric(
             )
             for e in evaluations
         }
-        metric_rank[metric.path] = _scores_to_ranks(
+        metric_rank[metric.path] = _scores_to_ranks(  # noqa: B909
             scores=metric_scores, reverse=metric.reverse
         )
 

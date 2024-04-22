@@ -664,7 +664,7 @@ def test_display_set_description():
     result = {}
     for image in images:
         ds = DisplaySetFactory(reader_study=rs)
-        result[ds.pk] = f"<p>{str(image.pk)}</p>"
+        result[ds.pk] = f"<p>{str(image.pk)}</p>"  # noqa: B909
         civ = ComponentInterfaceValueFactory(interface=ci, image=image)
         ds.values.add(civ)
 
