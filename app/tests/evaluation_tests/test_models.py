@@ -772,6 +772,32 @@ def test_parent_phase_choices():
 
 
 @pytest.mark.django_db
+def test_parent_phase_choices_no_circular_dependency():
+    p1, p2, p3, p4 = PhaseFactory.create_batch(
+        4,
+        challenge=ChallengeFactory(),
+        submission_kind=SubmissionKindChoices.ALGORITHM,
+    )
+    ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
+
+    for phase in [p1, p2, p3, p4]:
+        phase.algorithm_inputs.set([ci1])
+        phase.algorithm_outputs.set([ci2])
+
+    p1.parent = p2
+    p2.parent = p3
+    p3.parent = p4
+    p1.save()
+    p2.save()
+    p3.save()
+
+    assert list(p1.parent_phase_choices) == [p2, p3, p4]
+    assert list(p2.parent_phase_choices) == [p3, p4]
+    assert list(p3.parent_phase_choices) == [p4]
+    assert list(p4.parent_phase_choices) == []
+
+
+@pytest.mark.django_db
 def test_clean_parent_phase():
     p1, p2, p3 = PhaseFactory.create_batch(
         3, challenge=ChallengeFactory(), creator_must_be_verified=True

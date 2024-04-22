@@ -894,6 +894,15 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         )
 
     @cached_property
+    def descendants(self):
+        descendants = []
+        children = self.children.all()
+        for child in children:
+            descendants.append(child)
+            descendants.extend(child.descendants)
+        return descendants
+
+    @cached_property
     def parent_phase_choices(self):
         extra_filters = {}
         extra_annotations = {}
@@ -929,7 +938,12 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                 submission_kind=self.submission_kind,
                 **extra_filters,
             )
-            .exclude(pk=self.pk)
+            .exclude(
+                pk=self.pk,
+            )
+            .exclude(
+                parent__in=[self, *self.descendants],
+            )
         )
 
 
