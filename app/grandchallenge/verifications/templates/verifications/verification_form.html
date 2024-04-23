@@ -25,6 +25,7 @@
     </p>
     <p>
         Your current profile information:
+        <li>Username: {{ request.user.username }}</li>
         <li>Name: {% if request.user.first_name and request.user.last_name %}{{ request.user.first_name }} {{ request.user.last_name }}{% else %}<span class="text-danger">None</span>{% endif %}</li>
         <li>Institution: {% if request.user.user_profile.institution %} {{ request.user.user_profile.institution }} {% else %} <span class="text-danger">None</span> {% endif %}</li>
         <li>Department: {% if request.user.user_profile.department %} {{ request.user.user_profile.department }} {% else %} <span class="text-danger">None</span> {% endif %}</li>
