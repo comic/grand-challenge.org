@@ -4,8 +4,8 @@
 {% load humanize %}
 {% load cache %}
 
-{% cache 600 homepage %}
-    {% block content %}
+{% block content %}
+    {% cache 600 homepage %}
         {% if news_carousel_items %}
             <div id="newsCarousel" class="carousel slide" data-ride="carousel" data-interval="10000">
 
@@ -124,8 +124,8 @@
         </div>
 
         {% include "grandchallenge/partials/cards_info_modal.html" %}
-    {% endblock %}
-{% endcache %}
+    {% endcache %}
+{% endblock %}
 
 {% block script %}
     {{ block.super }}
