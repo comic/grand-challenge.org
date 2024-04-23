@@ -1131,7 +1131,7 @@ def test_display_set_update_form(form_class, file_widget):
 
     instance = None if form_class == DisplaySetCreateForm else ds
     form = form_class(user=user, instance=instance, base_obj=rs)
-    assert sorted(form.fields.keys()) == ["order", "slug-1", "slug-2"]
+    assert sorted(form.fields.keys()) == ["order", "slug-1", "slug-2", "title"]
     assert isinstance(form.fields["slug-1"].widget, file_widget)
     assert isinstance(form.fields["slug-2"].widget, JSONEditorWidget)
 
@@ -1145,6 +1145,7 @@ def test_display_set_update_form(form_class, file_widget):
         "slug-1",
         "slug-2",
         "slug-3",
+        "title",
     ]
 
 

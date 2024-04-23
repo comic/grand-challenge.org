@@ -417,7 +417,10 @@ def _create_reader_studies(users):
         widget=QuestionWidgetKindChoices.TEXT_INPUT,
     )
 
-    display_set = DisplaySet.objects.create(reader_study=reader_study)
+    display_set = DisplaySet.objects.create(
+        reader_study=reader_study,
+        order=10,
+    )
     image = Image(
         name="test_image2.mha",
         modality=ImagingModality.objects.get(modality="MR"),

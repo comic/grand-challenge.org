@@ -16,6 +16,7 @@ from django.db.models import Avg, Count, Q, Sum
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.functional import cached_property
+from django_extensions.db.fields import AutoSlugField
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
@@ -795,6 +796,17 @@ class DisplaySet(CIVForObjectMixin, UUIDModel):
         ComponentInterfaceValue, blank=True, related_name="display_sets"
     )
     order = models.PositiveIntegerField(default=0)
+    title = models.CharField(max_length=255, default="", blank=True)
+    slug = AutoSlugField(
+        populate_from=["title", "order", "reader_study__slug"],
+        max_length=511,
+    )
+
+    def __str__(self):
+        result = str(self.id)
+        if self.title:
+            result += f", {self.title}"
+        return result
 
     def save(self, *args, **kwargs):
         adding = self._state.adding

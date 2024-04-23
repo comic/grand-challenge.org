@@ -55,6 +55,7 @@ from grandchallenge.reader_studies.models import (
     Answer,
     AnswerType,
     CategoricalOption,
+    DisplaySet,
     Question,
     ReaderStudy,
     ReaderStudyPermissionRequest,
@@ -656,12 +657,18 @@ class DisplaySetCreateForm(MultipleCIVForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.fields["title"] = CharField(
+            required=False,
+            initial=self.instance and self.instance.title or "",
+            max_length=DisplaySet._meta.get_field("title").max_length,
+        )
         self.fields["order"] = IntegerField(
             initial=(
                 self.instance.order
                 if self.instance
                 else self.base_obj.next_display_set_order
-            )
+            ),
+            min_value=0,
         )
 
 

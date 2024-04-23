@@ -19,7 +19,7 @@ from django.http import (
     JsonResponse,
 )
 from django.shortcuts import get_object_or_404
-from django.utils.functional import cached_property
+from django.utils.functional import cached_property, empty
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.timezone import now
@@ -385,11 +385,22 @@ class ReaderStudyDisplaySetList(CivSetListView):
     permission_required = f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"  # change instead of view permission so that readers don't get access
     columns = [
         Column(title=""),
-        Column(title="DisplaySet ID", sort_field="pk"),
+        Column(title="ID", sort_field="pk"),
+        Column(
+            title="Title",
+            sort_field="title",
+            optional_condition=lambda obj: bool(obj.title),
+        ),
         Column(title="Order", sort_field="order"),
         *CivSetListView.columns,
     ]
-    default_sort_column = 2
+
+    default_sort_column = 3
+    search_fields = [
+        "title",
+        "order",
+        *CivSetListView.search_fields,
+    ]
 
     @cached_property
     def base_object(self):
@@ -1300,15 +1311,24 @@ class DisplaySetUpdate(CIVSetFormMixin, MultipleCIVProcessingBaseView):
     def process_data_for_object(self, data):
         """Updates the display set"""
         instance = self.object
-        for ci_slug, new_value in data.items():
-            if ci_slug == "order":
+        non_civ_data_keys = ("order", "title")
+
+        save = False
+        for f in non_civ_data_keys:
+            value = data.get(f, empty)
+            if value is not empty and value != getattr(instance, f):
+                setattr(instance, f, value)
+                save = True
+        if save:
+            instance.save()
+
+        for key in data:
+            if key in non_civ_data_keys:
                 continue
             instance.create_civ(
-                ci_slug=ci_slug, new_value=new_value, user=self.request.user
+                ci_slug=key, new_value=data[key], user=self.request.user
             )
-        if data.get("order") and data["order"] != instance.order:
-            instance.order = data["order"]
-            instance.save()
+
         return instance
 
 
@@ -1410,13 +1430,20 @@ class DisplaySetCreateView(
 
     def process_data_for_object(self, data):
         """Creates a display set"""
-        instance = DisplaySet.objects.create(reader_study=self.base_object)
-        instance.order = data.pop("order")
-        instance.save()
-        for slug in data:
+        non_civ_data_keys = ("order", "title")
+
+        instance = DisplaySet.objects.create(
+            reader_study=self.base_object,
+            **{k: data.get(k) for k in non_civ_data_keys},
+        )
+
+        for key in data:
+            if key in non_civ_data_keys:
+                continue
             instance.create_civ(
-                ci_slug=slug, new_value=data[slug], user=self.request.user
+                ci_slug=key, new_value=data[key], user=self.request.user
             )
+
         return instance
 
     def get_success_url(self):

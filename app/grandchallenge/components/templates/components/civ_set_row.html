@@ -20,6 +20,10 @@
 <split></split>
 
 {% if base_object|model_name == base_model_options.READER_STUDY %}
+
+    {{ object.title }}
+    <split></split>
+
     {{ object.order }}
     <split></split>
 {% endif %}
