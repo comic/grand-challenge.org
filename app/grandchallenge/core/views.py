@@ -110,7 +110,9 @@ class HomeTemplate(TemplateView):
 
         context.update(
             {
-                "all_users": get_user_model().objects.all(),
+                "all_users": get_user_model().objects.filter(
+                    is_active=True, last_login__isnull=False
+                ),
                 "all_challenges": Challenge.objects.all(),
                 "all_algorithms": Algorithm.objects.all(),
                 "highlights": highlights,

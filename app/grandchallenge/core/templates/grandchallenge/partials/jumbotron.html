@@ -2,6 +2,7 @@
 {% load image_filter %}
 {% load round_to %}
 {% load humanize %}
+{% load cache %}
 
 
 {% if jumbotron_title or jumbotron_background_url %}
@@ -16,31 +17,33 @@
                 </div>
             </div>
             {% if request.resolver_match.view_name == 'home' %}
-                <div class="text-light text-center row pt-lg-5 pt-md-5 pt-sm-4">
-                    <div class="col-sm-2 mb-2">
-                        <i class="fa fa-users fa-lg mr-2" aria-hidden="true"></i>
-                        {{ all_users.count|round_to:1000|floatformat:0|intcomma }}+&nbsp;users
+                {% cache 86400 home_jumbotron %}
+                    <div class="text-light text-center row pt-lg-5 pt-md-5 pt-sm-4">
+                        <div class="col-sm-2 mb-2">
+                            <i class="fa fa-users fa-lg mr-2" aria-hidden="true"></i>
+                            {{ all_users.count|round_to:1000|floatformat:0|intcomma }}+&nbsp;users
+                        </div>
+                        <div class="col-sm-2 mb-2">
+                            <i class="fa fa-trophy fa-lg mr-2" aria-hidden="true"></i>
+                            {{ all_challenges.count|intcomma }} &nbsp;challenges
+                        </div>
+                        <div class="col-sm-2 mb-2">
+                            <i class="fa fa-code fa-lg mr-2" aria-hidden="true"></i>
+                            {{ all_algorithms.count|intcomma }} &nbsp;algorithms
+                        </div>
+                        <div class="col-sm-2 ml-auto mb-2">
+                            <a class="text-white" href='https://aws.amazon.com/'>
+                                <img style="height: 1.6em;"
+                                     class="jumbotron-image"
+                                     loading="lazy"
+                                     src="{% static 'images/Powered-By_logo-horiz_RGB_REV.png' %}"
+                                     alt="Logo of Amazon Web Services"
+                                     title="Grand Challenge is sponsored by Amazon Web Services"
+                                >
+                            </a>
+                        </div>
                     </div>
-                    <div class="col-sm-2 mb-2">
-                        <i class="fa fa-trophy fa-lg mr-2" aria-hidden="true"></i>
-                        {{ all_challenges.count|intcomma }} &nbsp;challenges
-                    </div>
-                    <div class="col-sm-2 mb-2">
-                        <i class="fa fa-code fa-lg mr-2" aria-hidden="true"></i>
-                        {{ all_algorithms.count|intcomma }} &nbsp;algorithms
-                    </div>
-                    <div class="col-sm-2 ml-auto mb-2">
-                        <a class="text-white" href='https://aws.amazon.com/'>
-                            <img style="height: 1.6em;"
-                                 class="jumbotron-image"
-                                 loading="lazy"
-                                 src="{% static 'images/Powered-By_logo-horiz_RGB_REV.png' %}"
-                                 alt="Logo of Amazon Web Services"
-                                 title="Grand Challenge is sponsored by Amazon Web Services"
-                            >
-                        </a>
-                    </div>
-                </div>
+                {% endcache %}
             {% endif %}
         </div>
     </div>
