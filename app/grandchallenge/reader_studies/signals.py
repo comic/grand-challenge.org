@@ -103,7 +103,6 @@ def set_display_set_order(sender, instance, **_):
     if instance.order:
         return
     instance.order = instance.reader_study.next_display_set_order
-    instance.save()
 
 
 @receiver(post_save, sender=Answer)
