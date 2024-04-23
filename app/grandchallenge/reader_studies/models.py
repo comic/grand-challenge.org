@@ -803,10 +803,11 @@ class DisplaySet(CIVForObjectMixin, UUIDModel):
     )
 
     def __str__(self):
-        result = str(self.id)
+        parts = [self._meta.verbose_name.title()]
         if self.title:
-            result += f", {self.title}"
-        return result
+            parts.append(f"{self.title!r}")
+        parts.append(f"(ID: {self.id})")
+        return " ".join(parts)
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
