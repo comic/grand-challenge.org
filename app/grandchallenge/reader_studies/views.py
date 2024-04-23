@@ -1314,14 +1314,13 @@ class DisplaySetUpdate(CIVSetFormMixin, MultipleCIVProcessingBaseView):
         non_civ_data_keys = ("order", "title")
 
         save = False
-        for f in non_civ_data_keys:
-            value = data.get(f, empty)
-            if value is not empty and value != getattr(instance, f):
-                setattr(instance, f, value)
+        for key in non_civ_data_keys:
+            value = data.get(key, empty)
+            if value is not empty and value != getattr(instance, key):
+                setattr(instance, key, value)
                 save = True
         if save:
             instance.save()
-
         for key in data:
             if key in non_civ_data_keys:
                 continue
