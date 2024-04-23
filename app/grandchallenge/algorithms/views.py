@@ -862,7 +862,11 @@ class JobViewSet(
 ):
     queryset = (
         Job.objects.all()
-        .prefetch_related("outputs__interface", "inputs__interface")
+        .prefetch_related(
+            "outputs__interface",
+            "inputs__interface",
+            "algorithm_image__algorithm__optional_hanging_protocols",
+        )
         .select_related(
             "algorithm_image__algorithm__hanging_protocol",
         )
