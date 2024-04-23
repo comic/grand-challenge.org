@@ -84,13 +84,12 @@ class JobSerializer(serializers.ModelSerializer):
     """Serializer without hyperlinks for internal use"""
 
     algorithm_image = StringRelatedField()
+
     inputs = ComponentInterfaceValueSerializer(many=True)
     outputs = ComponentInterfaceValueSerializer(many=True)
 
     status = CharField(source="get_status_display", read_only=True)
-    algorithm_title = CharField(
-        source="algorithm_image.algorithm.title", read_only=True
-    )
+    url = URLField(source="get_absolute_url", read_only=True)
     hanging_protocol = HangingProtocolSerializer(
         source="algorithm_image.algorithm.hanging_protocol",
         read_only=True,
@@ -110,13 +109,13 @@ class JobSerializer(serializers.ModelSerializer):
         model = Job
         fields = [
             "pk",
+            "url",
             "api_url",
             "algorithm_image",
             "inputs",
             "outputs",
             "status",
             "rendered_result_text",
-            "algorithm_title",
             "started_at",
             "completed_at",
             "hanging_protocol",
@@ -132,11 +131,20 @@ class HyperlinkedJobSerializer(JobSerializer):
         queryset=AlgorithmImage.objects.all(),
         view_name="api:algorithms-image-detail",
     )
+    algorithm = HyperlinkedRelatedField(
+        source="algorithm_image.algorithm",
+        view_name="api:algorithm-detail",
+        read_only=True,
+    )
+
     inputs = HyperlinkedComponentInterfaceValueSerializer(many=True)
     outputs = HyperlinkedComponentInterfaceValueSerializer(many=True)
 
     class Meta(JobSerializer.Meta):
-        pass
+        fields = [
+            *JobSerializer.Meta.fields,
+            "algorithm",
+        ]
 
 
 class JobPostSerializer(JobSerializer):
