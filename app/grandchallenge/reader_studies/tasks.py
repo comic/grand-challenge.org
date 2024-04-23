@@ -120,5 +120,9 @@ def copy_reader_study_display_sets(*, orig_pk, new_pk):
 
     with transaction.atomic():
         for ds in orig.display_sets.all():
-            new_ds = DisplaySet.objects.create(reader_study=new)
+            new_ds = DisplaySet.objects.create(
+                reader_study=new,
+                order=ds.order,
+                title=ds.title,
+            )
             new_ds.values.set(ds.values.all())

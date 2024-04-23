@@ -584,10 +584,15 @@ def test_reader_study_copy(
 
     im1, im2 = ImageFactory(), ImageFactory()
     interfaces = []
-    for im in [im1, im2]:
+    for index, im in enumerate([im1, im2]):
         civ = ComponentInterfaceValueFactory(image=im)
         interfaces.append(civ.interface.slug)
-        ds = DisplaySetFactory(reader_study=rs)
+        count = index + 1
+        ds = DisplaySetFactory(
+            reader_study=rs,
+            title=f"display set title {count}",
+            order=count,
+        )
         ds.values.add(civ)
     rs.view_content = {"main": interfaces[0], "secondary": interfaces[1]}
     rs.hanging_protocol = HangingProtocolFactory()
@@ -720,6 +725,9 @@ def test_reader_study_copy(
     assert _rs.title == "3"
     assert _rs.questions.count() == 0
     assert _rs.display_sets.count() == 2
+    _ds = _rs.display_sets.first()
+    assert _ds.title == "display set title 1"
+    assert _ds.order == 1
     assert _rs.view_content == {}
     assert _rs.hanging_protocol is None
     assert _rs.case_text == {}
