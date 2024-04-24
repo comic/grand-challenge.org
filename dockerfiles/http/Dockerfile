@@ -1,4 +1,4 @@
-FROM nginx:1.20
+FROM nginx:1
 
 RUN apt-get update && \
     apt-get install -y \
