@@ -199,7 +199,10 @@ class GrandChallengeFrameworkTestCase(TestCase):
         self._signup_user(data)
 
         validation_mail = [
-            e for e in mail.outbox if e.recipients() == [data["email"].lower()]
+            e
+            for e in mail.outbox
+            if {r.casefold() for r in e.recipients()}
+            == {data["email"].casefold()}
         ][0]
 
         self.assertTrue(
