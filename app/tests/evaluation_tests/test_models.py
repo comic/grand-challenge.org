@@ -1,5 +1,4 @@
 from collections import namedtuple
-from contextlib import nullcontext
 from datetime import timedelta
 from itertools import chain
 
@@ -791,14 +790,10 @@ def test_parent_phase_choices_no_circular_dependency():
     p2.save()
     p3.save()
 
-    for p in [p2, p3, p4]:
-        assert p in p1.parent_phase_choices
-    assert p1 not in p1.parent_phase_choices
-    for p in [p3, p4]:
-        assert p in p2.parent_phase_choices
-    assert p1 not in p2.parent_phase_choices
-    assert list(p3.parent_phase_choices) == [p4]
-    assert list(p4.parent_phase_choices) == []
+    assert set(p1.parent_phase_choices) == {p2, p3, p4}
+    assert set(p2.parent_phase_choices) == {p3, p4}
+    assert set(p3.parent_phase_choices) == {p4}
+    assert set(p4.parent_phase_choices) == set()
 
 
 @pytest.mark.django_db
@@ -830,8 +825,7 @@ def test_clean_parent_phase():
     )
 
     p1.parent = p2
-    with nullcontext():
-        p1.clean()
+    p1.clean()
 
 
 @pytest.mark.django_db

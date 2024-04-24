@@ -516,7 +516,15 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         related_name="children",
         null=True,
         blank=True,
-        help_text="Is this phase dependent on another phase? If selected, submissions to the current phase will only be possible after a succesful submission has been made to the parent phase.",
+        help_text=(
+            "Is this phase dependent on another phase? If selected, submissions "
+            "to the current phase will only be possible after a successful "
+            "submission has been made to the parent phase."
+            "<b>Bear in mind that if you require a successful submission to a "
+            "sanity check phase in order to submit to a final test phase, "
+            "it could prevent people from submitting to the test phase on deadline "
+            "day if the sanity check submission takes a long time to execute. </b>"
+        ),
     )
 
     objects = PhaseManager()

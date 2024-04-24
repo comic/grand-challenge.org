@@ -34,5 +34,18 @@ def test_read_only_fields_disabled():
     form = PhaseAdmin.form(
         instance=p1,
     )
-    for field in p1.read_only_fields_for_dependent_phases:
-        assert form.fields[field].disabled
+    assert form.fields["algorithm_inputs"].disabled
+    assert form.fields["algorithm_outputs"].disabled
+    assert form.fields["submission_kind"].disabled
+
+    p3, p4 = PhaseFactory.create_batch(
+        2,
+        submission_kind=SubmissionKindChoices.CSV,
+        challenge=ChallengeFactory(),
+    )
+    p3.parent = p4
+    p3.save()
+    form = PhaseAdmin.form(
+        instance=p3,
+    )
+    assert form.fields["submission_kind"].disabled
