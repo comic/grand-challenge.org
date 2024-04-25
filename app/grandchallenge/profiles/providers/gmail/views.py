@@ -4,11 +4,9 @@ from allauth.socialaccount.providers.oauth2.views import (
     OAuth2LoginView,
 )
 
-from grandchallenge.profiles.providers.gmail.provider import GmailProvider
-
 
 class GmailOAuth2Adapter(GoogleOAuth2Adapter):
-    provider_id = GmailProvider.id
+    provider_id = "gmail"
 
 
 oauth2_login = OAuth2LoginView.adapter_view(GmailOAuth2Adapter)
