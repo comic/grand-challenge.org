@@ -21,6 +21,7 @@ from django_select2.forms import Select2MultipleWidget
 from django_summernote.widgets import SummernoteInplaceWidget
 
 from grandchallenge.algorithms.forms import UserAlgorithmsForPhaseMixin
+from grandchallenge.algorithms.models import Job
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.components.models import ComponentInterface
@@ -48,7 +49,7 @@ from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadSingleWidget
 
-phase_options = ("title", "public")
+phase_options = ("title", "public", "parent")
 
 submission_options = (
     "submissions_open_at",
@@ -138,6 +139,7 @@ class PhaseUpdateForm(
 ):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["parent"].queryset = self.instance.parent_phase_choices
         self.helper = FormHelper(self)
         self.helper.layout = Layout(
             TabHolder(
@@ -340,10 +342,14 @@ class SubmissionForm(
 
         if self._phase.submission_kind == SubmissionKindChoices.ALGORITHM:
             del self.fields["user_upload"]
-
-            self.fields["algorithm_image"].queryset = (
-                self.user_active_images_for_phase.order_by("algorithm__title")
-            )
+            qs = self.user_active_images_for_phase.order_by("algorithm__title")
+            if self._phase.parent:
+                qs = qs.filter(
+                    submission__phase=self._phase.parent,
+                    submission__evaluation__status=Evaluation.SUCCESS,
+                    job__status=Job.SUCCESS,
+                ).distinct()
+            self.fields["algorithm_image"].queryset = qs
 
             self._algorithm_inputs = self._phase.algorithm_inputs.all()
             self._algorithm_outputs = self._phase.algorithm_outputs.all()
