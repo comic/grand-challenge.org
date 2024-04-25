@@ -115,6 +115,7 @@
     <span class="n">UUIDModel</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.core.storage</span> <span class="kn">import</span> <span class="n">protected_s3_storage</span><span class="p">,</span> <span class="n">public_s3_storage</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.core.templatetags.remove_whitespace</span> <span class="kn">import</span> <span class="n">oxford_comma</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.core.validators</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">ExtensionValidator</span><span class="p">,</span>
     <span class="n">JSONValidator</span><span class="p">,</span>
@@ -590,6 +591,22 @@
         <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The total compute cost for this phase in Euro Cents, including Tax&quot;</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="s2">&quot;self&quot;</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;children&quot;</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Is this phase dependent on another phase? If selected, submissions &quot;</span>
+            <span class="s2">&quot;to the current phase will only be possible after a successful &quot;</span>
+            <span class="s2">&quot;submission has been made to the parent phase.&quot;</span>
+            <span class="s2">&quot;&lt;b&gt;Bear in mind that if you require a successful submission to a &quot;</span>
+            <span class="s2">&quot;sanity check phase in order to submit to a final test phase, &quot;</span>
+            <span class="s2">&quot;it could prevent people from submitting to the test phase on deadline &quot;</span>
+            <span class="s2">&quot;day if the sanity check submission takes a long time to execute. &lt;/b&gt;&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
 
     <span class="n">objects</span> <span class="o">=</span> <span class="n">PhaseManager</span><span class="p">()</span>
 
@@ -650,7 +667,12 @@
 <a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase.clean">[docs]</a>
     <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clean_algorithm_submission_settings</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clean_submission_limits</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clean_parent_phase</span><span class="p">()</span></div>
 
+
+    <span class="k">def</span> <span class="nf">_clean_algorithm_submission_settings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_kind</span> <span class="o">==</span> <span class="n">SubmissionKindChoices</span><span class="o">.</span><span class="n">ALGORITHM</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">creator_must_be_verified</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
@@ -667,7 +689,16 @@
                     <span class="s2">&quot;test data to this phase and define the inputs and outputs that the submitted algorithms need to &quot;</span>
                     <span class="s2">&quot;read/write. To configure these settings, please get in touch with support@grand-challenge.org.&quot;</span>
                 <span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">give_algorithm_editors_job_view_permissions</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_kind</span>
+            <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">SubmissionKindChoices</span><span class="o">.</span><span class="n">ALGORITHM</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;Give Algorithm Editors Job View Permissions can only be enabled for Algorithm type phases&quot;</span>
+            <span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">_clean_submission_limits</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">submissions_limit_per_user_per_period</span> <span class="o">&gt;</span> <span class="mi">0</span>
             <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_image</span>
@@ -694,15 +725,29 @@
                 <span class="s2">&quot;submissions_limit_per_user_per_period to 0, or set appropriate phase start / end dates.&quot;</span>
             <span class="p">)</span>
 
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">give_algorithm_editors_job_view_permissions</span>
-            <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_kind</span>
-            <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">SubmissionKindChoices</span><span class="o">.</span><span class="n">ALGORITHM</span>
-        <span class="p">):</span>
-            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
-                <span class="s2">&quot;Give Algorithm Editors Job View Permissions can only be enabled for Algorithm type phases&quot;</span>
-            <span class="p">)</span></div>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">read_only_fields_for_dependent_phases</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">common_fields</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;submission_kind&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_kind</span> <span class="o">==</span> <span class="n">SubmissionKindChoices</span><span class="o">.</span><span class="n">ALGORITHM</span><span class="p">:</span>
+            <span class="n">common_fields</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;algorithm_inputs&quot;</span><span class="p">,</span> <span class="s2">&quot;algorithm_outputs&quot;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">common_fields</span>
 
+    <span class="k">def</span> <span class="nf">_clean_parent_phase</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_phase_choices</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;This phase cannot be selected as parent phase for the current &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;phase. The parent phase needs to match the current phase in &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;all of the following settings: &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">oxford_comma</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">read_only_fields_for_dependent_phases</span><span class="p">)</span><span class="si">}</span><span class="s2">. &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;The parent phase cannot have the current phase or any of &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;the current phase&#39;s children set as its parent.&quot;</span>
+                <span class="p">)</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">count_valid_archive_items</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                    <span class="s2">&quot;The parent phase needs to have at least 1 valid archive item.&quot;</span>
+                <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">set_default_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
@@ -946,6 +991,59 @@
                 <span class="s2">&quot;user_profile&quot;</span>
             <span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span>
             <span class="n">subscription_type</span><span class="o">=</span><span class="n">EmailSubscriptionTypes</span><span class="o">.</span><span class="n">SYSTEM</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span> <span class="nf">descendants</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">descendants</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">children</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">children</span><span class="p">:</span>
+            <span class="n">descendants</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+            <span class="n">descendants</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">descendants</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">descendants</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span> <span class="nf">parent_phase_choices</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">extra_filters</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">extra_annotations</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_kind</span> <span class="o">==</span> <span class="n">SubmissionKindChoices</span><span class="o">.</span><span class="n">ALGORITHM</span><span class="p">:</span>
+            <span class="n">algorithm_inputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_inputs</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+            <span class="n">algorithm_outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_outputs</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+            <span class="n">extra_annotations</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;total_input_count&quot;</span><span class="p">:</span> <span class="n">Count</span><span class="p">(</span><span class="s2">&quot;algorithm_inputs&quot;</span><span class="p">,</span> <span class="n">distinct</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+                <span class="s2">&quot;total_output_count&quot;</span><span class="p">:</span> <span class="n">Count</span><span class="p">(</span>
+                    <span class="s2">&quot;algorithm_outputs&quot;</span><span class="p">,</span> <span class="n">distinct</span><span class="o">=</span><span class="kc">True</span>
+                <span class="p">),</span>
+                <span class="s2">&quot;relevant_input_count&quot;</span><span class="p">:</span> <span class="n">Count</span><span class="p">(</span>
+                    <span class="s2">&quot;algorithm_inputs&quot;</span><span class="p">,</span>
+                    <span class="nb">filter</span><span class="o">=</span><span class="n">Q</span><span class="p">(</span><span class="n">algorithm_inputs__in</span><span class="o">=</span><span class="n">algorithm_inputs</span><span class="p">),</span>
+                    <span class="n">distinct</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="s2">&quot;relevant_output_count&quot;</span><span class="p">:</span> <span class="n">Count</span><span class="p">(</span>
+                    <span class="s2">&quot;algorithm_outputs&quot;</span><span class="p">,</span>
+                    <span class="nb">filter</span><span class="o">=</span><span class="n">Q</span><span class="p">(</span><span class="n">algorithm_outputs__in</span><span class="o">=</span><span class="n">algorithm_outputs</span><span class="p">),</span>
+                    <span class="n">distinct</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">}</span>
+            <span class="n">extra_filters</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;total_input_count&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">algorithm_inputs</span><span class="p">),</span>
+                <span class="s2">&quot;total_output_count&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">algorithm_outputs</span><span class="p">),</span>
+                <span class="s2">&quot;relevant_input_count&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">algorithm_inputs</span><span class="p">),</span>
+                <span class="s2">&quot;relevant_output_count&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">algorithm_outputs</span><span class="p">),</span>
+            <span class="p">}</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">Phase</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="o">**</span><span class="n">extra_annotations</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">challenge</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="p">,</span>
+                <span class="n">submission_kind</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">submission_kind</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">extra_filters</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
+                <span class="n">pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
+                <span class="n">parent__in</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">descendants</span><span class="p">],</span>
+            <span class="p">)</span>
         <span class="p">)</span></div>
 
 
