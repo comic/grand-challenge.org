@@ -231,6 +231,10 @@ class Challenge(ChallengeBase):
         default=True,
         help_text="Do not display this Challenge in any public overview",
     )
+    is_suspended = models.BooleanField(
+        default=False,
+        help_text="Challenge is suspended and not accepting submissions",
+    )
     educational = models.BooleanField(
         default=False, help_text="It is an educational challenge"
     )

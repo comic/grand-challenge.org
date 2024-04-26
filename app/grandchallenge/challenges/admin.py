@@ -40,12 +40,16 @@ class ChallengeAdmin(ModelAdmin):
         "short_name",
         "created",
         "hidden",
+        "is_suspended",
         "compute_cost_euro_millicents",
         "size_in_storage",
         "size_in_registry",
         "available_compute_euros",
     )
-    list_filter = ("hidden",)
+    list_filter = (
+        "is_suspended",
+        "hidden",
+    )
     search_fields = ("short_name",)
 
     def get_queryset(self, *args, **kwargs):

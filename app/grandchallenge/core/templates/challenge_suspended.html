@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load url %}
+
+{% block meta %}
+    {{ block.super }}
+    <meta name="robots" content="noindex">
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item active">Challenge Suspended</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Challenge Suspended</h2>
+
+    <p>This challenge has been suspended.</p>
+{% endblock %}

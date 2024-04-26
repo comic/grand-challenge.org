@@ -12,7 +12,12 @@ from grandchallenge.archives.sitemaps import ArchivesSitemap
 from grandchallenge.blogs.sitemaps import PostsSitemap
 from grandchallenge.challenges.sitemaps import ChallengesSitemap
 from grandchallenge.core.sitemaps import CoreSitemap, FlatPagesSitemap
-from grandchallenge.core.views import HomeTemplate, RedirectPath, healthcheck
+from grandchallenge.core.views import (
+    ChallengeSuspendedView,
+    HomeTemplate,
+    RedirectPath,
+    healthcheck,
+)
 from grandchallenge.pages.sitemaps import PagesSitemap
 from grandchallenge.policies.sitemaps import PoliciesSitemap
 from grandchallenge.profiles.views import TwoFactorSetup
@@ -42,6 +47,11 @@ sitemaps = {
 
 urlpatterns = [
     path("", HomeTemplate.as_view(), name="home"),
+    path(
+        "challenge-suspended/",
+        ChallengeSuspendedView.as_view(),
+        name="challenge-suspended",
+    ),
     path(
         "robots.txt",
         TemplateView.as_view(
