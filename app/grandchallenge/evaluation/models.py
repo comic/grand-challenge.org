@@ -131,6 +131,13 @@ class PhaseManager(models.Manager):
         )
 
 
+SUBMISSION_WINDOW_PARENT_VALIDATION_TEXT = (
+    "The parent phase needs to open submissions before the current "
+    "phase since submissions to this phase will only be possible "
+    "after successful submission to the parent phase."
+)
+
+
 class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
     # This must match the syntax used in jquery datatables
     # https://datatables.net/reference/option/order
@@ -638,6 +645,14 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                 "submissions_limit_per_user_per_period to 0, or set appropriate phase start / end dates."
             )
 
+        if (
+            self.submissions_open_at
+            and self.parent
+            and self.parent.submissions_open_at
+            and self.submissions_open_at < self.parent.submissions_open_at
+        ):
+            raise ValidationError(SUBMISSION_WINDOW_PARENT_VALIDATION_TEXT)
+
     @property
     def read_only_fields_for_dependent_phases(self):
         common_fields = ["submission_kind"]
@@ -661,6 +676,13 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                 raise ValidationError(
                     "The parent phase needs to have at least 1 valid archive item."
                 )
+
+            if (
+                self.submissions_open_at
+                and self.parent.submissions_open_at
+                and self.submissions_open_at < self.parent.submissions_open_at
+            ):
+                raise ValidationError(SUBMISSION_WINDOW_PARENT_VALIDATION_TEXT)
 
     def set_default_interfaces(self):
         self.inputs.set(
