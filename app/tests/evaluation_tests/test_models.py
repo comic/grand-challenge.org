@@ -11,6 +11,7 @@ from django.utils.timezone import now
 from grandchallenge.algorithms.models import Job
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.evaluation.models import (
+    SUBMISSION_WINDOW_PARENT_VALIDATION_TEXT,
     CombinedLeaderboard,
     Evaluation,
     Phase,
@@ -798,12 +799,12 @@ def test_parent_phase_choices_no_circular_dependency():
 
 @pytest.mark.django_db
 def test_clean_parent_phase():
-    p1, p2, p3 = PhaseFactory.create_batch(
-        3, challenge=ChallengeFactory(), creator_must_be_verified=True
+    p1, p2, p3, p4 = PhaseFactory.create_batch(
+        4, challenge=ChallengeFactory(), creator_must_be_verified=True
     )
     ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
 
-    for phase in [p1, p2, p3]:
+    for phase in [p1, p2, p3, p4]:
         phase.submission_kind = SubmissionKindChoices.ALGORITHM
         phase.algorithm_inputs.set([ci1])
         phase.algorithm_outputs.set([ci2])
@@ -813,8 +814,12 @@ def test_clean_parent_phase():
     ai.values.add(ComponentInterfaceValueFactory(interface=ci1))
     p1.archive = ai.archive
     p2.archive = ai.archive
+    p4.archive = ai.archive
+    p4.submissions_open_at = now()
+    p1.submissions_open_at = now() - timedelta(days=1)
     p1.save()
     p2.save()
+    p4.save()
 
     p1.parent = p3
     with pytest.raises(ValidationError) as e:
@@ -823,6 +828,11 @@ def test_clean_parent_phase():
         "The parent phase needs to have at least 1 valid archive item."
         in str(e)
     )
+
+    p1.parent = p4
+    with pytest.raises(ValidationError) as e:
+        p1.clean()
+    assert SUBMISSION_WINDOW_PARENT_VALIDATION_TEXT in str(e)
 
     p1.parent = p2
     p1.clean()
