@@ -210,6 +210,13 @@
         <span class="p">)</span>
 
 
+<span class="n">SUBMISSION_WINDOW_PARENT_VALIDATION_TEXT</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;The parent phase needs to open submissions before the current &quot;</span>
+    <span class="s2">&quot;phase since submissions to this phase will only be possible &quot;</span>
+    <span class="s2">&quot;after successful submission to the parent phase.&quot;</span>
+<span class="p">)</span>
+
+
 <div class="viewcode-block" id="Phase">
 <a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase">[docs]</a>
 <span class="k">class</span> <span class="nc">Phase</span><span class="p">(</span><span class="n">FieldChangeMixin</span><span class="p">,</span> <span class="n">HangingProtocolMixin</span><span class="p">,</span> <span class="n">UUIDModel</span><span class="p">):</span>
@@ -725,6 +732,14 @@
                 <span class="s2">&quot;submissions_limit_per_user_per_period to 0, or set appropriate phase start / end dates.&quot;</span>
             <span class="p">)</span>
 
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">submissions_open_at</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">submissions_open_at</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">submissions_open_at</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">submissions_open_at</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="n">SUBMISSION_WINDOW_PARENT_VALIDATION_TEXT</span><span class="p">)</span>
+
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">read_only_fields_for_dependent_phases</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">common_fields</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;submission_kind&quot;</span><span class="p">]</span>
@@ -748,6 +763,13 @@
                 <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                     <span class="s2">&quot;The parent phase needs to have at least 1 valid archive item.&quot;</span>
                 <span class="p">)</span>
+
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">submissions_open_at</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">submissions_open_at</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">submissions_open_at</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">submissions_open_at</span>
+            <span class="p">):</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="n">SUBMISSION_WINDOW_PARENT_VALIDATION_TEXT</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">set_default_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
