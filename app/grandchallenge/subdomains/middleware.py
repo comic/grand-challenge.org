@@ -2,9 +2,10 @@ import logging
 import re
 
 from django.conf import settings
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,9 @@ def challenge_subdomain_middleware(get_response):
                 .prefetch_related("phase_set"),
                 short_name__iexact=subdomain,
             )
+
+            if request.challenge.is_suspended:
+                return redirect(reverse("challenge-suspended"))
 
         response = get_response(request)
 

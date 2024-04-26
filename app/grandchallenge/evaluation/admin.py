@@ -84,8 +84,8 @@ class PhaseAdmin(admin.ModelAdmin):
     search_fields = ("pk", "title", "slug", "challenge__short_name")
     list_filter = (
         "submission_kind",
-        "challenge__short_name",
         "give_algorithm_editors_job_view_permissions",
+        "challenge__short_name",
     )
     autocomplete_fields = (
         "inputs",
@@ -146,7 +146,7 @@ class SubmissionAdmin(admin.ModelAdmin):
 class EvaluationAdmin(admin.ModelAdmin):
     ordering = ("-created",)
     list_display = ("pk", "created", "submission", "status", "error_message")
-    list_filter = ("submission__phase__challenge__short_name", "status")
+    list_filter = ("status", "submission__phase__challenge__short_name")
     list_select_related = (
         "submission__phase__challenge",
         "submission__creator",

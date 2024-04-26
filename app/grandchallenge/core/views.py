@@ -140,6 +140,10 @@ class HomeTemplate(TemplateView):
         return context
 
 
+class ChallengeSuspendedView(TemplateView):
+    template_name = "challenge_suspended.html"
+
+
 class PermissionRequestUpdate(
     LoginRequiredMixin,
     SuccessMessageMixin,
