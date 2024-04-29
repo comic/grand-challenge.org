@@ -42,7 +42,7 @@ def migrate_mfa(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("mfa", "0002_authenticator_timestamps"),
+        ("profiles", "0018_remove_userprofile_receive_notification_emails"),
     ]
 
     operations = [
