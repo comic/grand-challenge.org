@@ -6,12 +6,12 @@ from pathlib import Path
 from typing import NamedTuple
 
 import pytest
+from allauth.mfa import recovery_codes, totp
+from allauth.mfa.models import Authenticator
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import Group
 from django.contrib.sites.models import Site
-from django_otp.oath import TOTP
-from django_otp.plugins.otp_totp.models import TOTPDevice
 
 from grandchallenge.components.backends import docker_client
 from grandchallenge.components.models import ComponentInterface
@@ -449,37 +449,34 @@ def challenge_reviewer():
     return user
 
 
-AUTH_URL = reverse_lazy("two-factor-authenticate")
-
-
-def get_token_from_totp_device(totp_model) -> str:
-    return TOTP(
-        key=totp_model.bin_key,
-        step=totp_model.step,
-        t0=totp_model.t0,
-        digits=totp_model.digits,
-    ).token()
+AUTH_URL = reverse_lazy("mfa_authenticate")
 
 
 def do_totp_authentication(
     client,
-    totp_device: TOTPDevice,
+    user,
     *,
-    auth_url: str = AUTH_URL,
+    auth_url=AUTH_URL,
 ):
-    token = get_token_from_totp_device(totp_device)
-    client.post(auth_url, {"otp_token": token})
+    device = Authenticator.objects.get(
+        user=user, type=Authenticator.Type.RECOVERY_CODES
+    )
+    client.post(
+        auth_url,
+        {"code": device.wrap().get_unused_codes()[0]},
+    )
 
 
 @pytest.fixture
 def authenticated_staff_user(client):
     user = UserFactory(username="john", is_staff=True)
-    totp_device = user.totpdevice_set.create()
+    totp.TOTP.activate(user, totp.generate_totp_secret())
+    recovery_codes.RecoveryCodes.activate(user)
     user = authenticate(
         username=user.username, password=SUPER_SECURE_TEST_PASSWORD
     )
     do_totp_authentication(
         client=client,
-        totp_device=totp_device,
+        user=user,
     )
     return user
