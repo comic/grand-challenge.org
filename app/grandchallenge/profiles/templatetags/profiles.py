@@ -1,4 +1,4 @@
-from allauth_2fa.utils import user_has_valid_totp_device
+from allauth.mfa.utils import is_mfa_enabled
 from django import template
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
@@ -65,4 +65,4 @@ def user_profile_links_from_usernames(usernames):
 
 @register.filter
 def has_2fa_enabled(user):
-    return user_has_valid_totp_device(user)
+    return is_mfa_enabled(user)
