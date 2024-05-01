@@ -1,4 +1,5 @@
 import pytest
+from allauth.mfa import recovery_codes, totp
 from allauth.mfa.models import Authenticator
 from django.core import mail
 from django.test import override_settings
@@ -8,6 +9,13 @@ from grandchallenge.core.utils.list_url_names import list_url_names
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from tests.factories import SUPER_SECURE_TEST_PASSWORD, UserFactory
 from tests.utils import get_view_for_user
+
+
+def get_user_with_totp(is_staff=False):
+    user = UserFactory(is_staff=is_staff)
+    totp.TOTP.activate(user, totp.generate_totp_secret())
+    recovery_codes.RecoveryCodes.activate(user)
+    return user
 
 
 def get_totp_token(user):
@@ -89,8 +97,8 @@ def test_require_mfa_not_on_allowed_urls(
 
 @override_settings(ACCOUNT_EMAIL_VERIFICATION=None)
 @pytest.mark.django_db
-def test_email_after_2fa_login_for_staff(client, user_with_totp):
-    staff = user_with_totp(is_staff=True)
+def test_email_after_2fa_login_for_staff(client):
+    staff = get_user_with_totp(is_staff=True)
     client.post(
         reverse("account_login"),
         {"login": staff.username, "password": SUPER_SECURE_TEST_PASSWORD},
@@ -104,7 +112,7 @@ def test_email_after_2fa_login_for_staff(client, user_with_totp):
     assert mail.outbox[0].to == [staff.email]
 
     mail.outbox.clear()
-    user = user_with_totp()
+    user = get_user_with_totp()
     client.post(
         reverse("account_login"),
         {"login": user.username, "password": SUPER_SECURE_TEST_PASSWORD},

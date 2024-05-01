@@ -12,7 +12,7 @@ from grandchallenge.subdomains.utils import reverse
 class RequireStaffAndSuperuser2FAMiddleware(MiddlewareMixin):
     """Force multi-factor authentication for staff users and superusers."""
 
-    allowed_urls = list_url_names("allauth.account.urls")
+    allowed_urls = list_url_names("allauth.urls")
 
     def mfa_required(self, request):
         return request.user.is_staff or request.user.is_superuser
