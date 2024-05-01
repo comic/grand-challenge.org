@@ -1521,7 +1521,10 @@ class ComponentJob(models.Model):
             self.error_message = error_message[:1024]
 
         if detailed_error_message:
-            self.detailed_error_message = detailed_error_message
+            self.detailed_error_message = {
+                str(key): value
+                for key, value in detailed_error_message.items()
+            }
 
         if (
             status in [self.STARTED, self.EXECUTING]
