@@ -87,6 +87,7 @@ class JobAdmin(GuardedModelAdmin):
         "stdout",
         "stderr",
         "error_message",
+        "detailed_error_message",
         "input_prefixes",
         "task_on_success",
         "task_on_failure",
