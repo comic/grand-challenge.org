@@ -605,7 +605,7 @@ def provision_job(
     except ComponentException as e:
         job.update_status(
             status=job.FAILURE,
-            error_message=format_validation_error_message(error=e),
+            error_message=str(e),
             detailed_error_message=e.message_details,
         )
     except Exception:
@@ -721,6 +721,7 @@ def execute_job(  # noqa: C901
             stdout=executor.stdout,
             stderr=executor.stderr,
             error_message=str(e),
+            detailed_error_message=e.message_details,
         )
     except (SoftTimeLimitExceeded, TimeLimitExceeded):
         job = get_model_instance(
@@ -847,7 +848,8 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
         job.update_status(
             status=job.FAILURE,
             error_message=str(e),
-            **get_update_status_kwargs(executor=executor),
+            detailed_error_message=e.message_details
+            ** get_update_status_kwargs(executor=executor),
         )
     except Exception:
         job.update_status(
@@ -886,7 +888,11 @@ def parse_job_outputs(
             output_interfaces=job.output_interfaces.all()
         )
     except ComponentException as e:
-        job.update_status(status=job.FAILURE, error_message=str(e))
+        job.update_status(
+            status=job.FAILURE,
+            error_message=str(e),
+            detailed_error_message=e.message_details,
+        )
         raise PriorStepFailed("Could not parse outputs")
     except Exception:
         job.update_status(
