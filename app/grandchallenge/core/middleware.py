@@ -13,7 +13,7 @@ from grandchallenge.subdomains.utils import reverse
 
 
 class RequireStaffAndSuperuser2FAMiddleware(MiddlewareMixin):
-    """Force multi-factor authentication for certain users."""
+    """Force multi-factor authentication for staff users and superusers."""
 
     allowed_urls = [
         *[pattern.name for pattern in account_urlpatterns],
