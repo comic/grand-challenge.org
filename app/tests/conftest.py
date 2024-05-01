@@ -480,3 +480,14 @@ def authenticated_staff_user(client):
         user=user,
     )
     return user
+
+
+@pytest.fixture
+def user_with_totp():
+    def _make_user_with_totp(is_staff=False):
+        user = UserFactory(is_staff=is_staff)
+        totp.TOTP.activate(user, totp.generate_totp_secret())
+        recovery_codes.RecoveryCodes.activate(user)
+        return user
+
+    return _make_user_with_totp
