@@ -1,27 +1,18 @@
 from allauth import app_settings
 from allauth.account.adapter import get_adapter
-from allauth.account.urls import urlpatterns as account_urlpatterns
 from allauth.mfa.utils import is_mfa_enabled
-from allauth.socialaccount.urls import (
-    urlpatterns as social_account_urlpatterns,
-)
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.utils.deprecation import MiddlewareMixin
 
+from grandchallenge.core.utils.list_url_names import list_url_names
 from grandchallenge.subdomains.utils import reverse
 
 
 class RequireStaffAndSuperuser2FAMiddleware(MiddlewareMixin):
     """Force multi-factor authentication for staff users and superusers."""
 
-    allowed_urls = [
-        *[pattern.name for pattern in account_urlpatterns],
-        *[pattern.name for pattern in social_account_urlpatterns],
-        # mfa urls
-        "mfa_activate_totp",
-        "mfa_index",
-    ]
+    allowed_urls = list_url_names("allauth.account.urls")
 
     def mfa_required(self, request):
         return request.user.is_staff or request.user.is_superuser

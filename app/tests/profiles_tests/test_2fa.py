@@ -4,6 +4,7 @@ from django.core import mail
 from django.test import override_settings
 from django.utils.http import int_to_base36
 
+from grandchallenge.core.utils.list_url_names import list_url_names
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from tests.factories import SUPER_SECURE_TEST_PASSWORD, UserFactory
 from tests.utils import get_view_for_user
@@ -74,12 +75,12 @@ def test_require_mfa_not_on_allowed_urls(
     login_required,
     expected_status_code,
 ):
-    user = UserFactory(is_staff=True)
+    staff_user = UserFactory(is_staff=True)
     resp = get_view_for_user(
         viewname=url,
         reverse_kwargs=url_kwargs,
         client=client,
-        user=user if login_required else None,
+        user=staff_user if login_required else None,
     )
     assert resp.status_code == expected_status_code
     if expected_status_code == 302:
@@ -112,3 +113,36 @@ def test_email_after_2fa_login_for_staff(client, user_with_totp):
         reverse_lazy("mfa_authenticate"), {"code": get_totp_token(user)}
     )
     assert len(mail.outbox) == 0
+
+
+def test_allowed_urls():
+    assert list_url_names("allauth.urls") == {
+        "account_signup",
+        "account_email_verification_sent",
+        "mfa_reauthenticate",
+        "mfa_download_recovery_codes",
+        "mfa_view_recovery_codes",
+        "socialaccount_connections",
+        "account_inactive",
+        "account_reset_password_done",
+        "account_reset_password_from_key",
+        "mfa_deactivate_totp",
+        "socialaccount_login_cancelled",
+        "account_reauthenticate",
+        "account_email",
+        "gmail_callback",
+        "account_logout",
+        "mfa_index",
+        "account_login",
+        "socialaccount_login_error",
+        "account_reset_password",
+        "account_reset_password_from_key_done",
+        "mfa_generate_recovery_codes",
+        "gmail_login",
+        "account_change_password",
+        "mfa_activate_totp",
+        "socialaccount_signup",
+        "account_confirm_email",
+        "mfa_authenticate",
+        "account_set_password",
+    }
