@@ -1,3 +1,4 @@
+from allauth.mfa.utils import is_mfa_enabled
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin
@@ -64,7 +65,7 @@ class UserProfileAdmin(UserAdmin):
 
     @admin.display(boolean=True, description="User has 2FA enabled")
     def has_2fa_enabled(self, obj):
-        return obj.totp_device_count > 0
+        return is_mfa_enabled(obj)
 
 
 User = get_user_model()

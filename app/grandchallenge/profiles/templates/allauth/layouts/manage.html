@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% blocktrans with user.username as username %}
+    {{ username }}'s profile
+{% endblocktrans %}{% endblock %}
+{% block content_title %}
+    <h2>{{ user.username }} {% if user.get_full_name %}(
+        {{ user.get_full_name }}
+        ){% endif %}</h2>{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href>Users</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ user.username }}</li>
+    </ol>
+{% endblock %}
+
+{% block content %}{% endblock %}

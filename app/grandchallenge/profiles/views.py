@@ -1,4 +1,3 @@
-from allauth_2fa.views import TwoFactorSetup
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
@@ -208,14 +207,6 @@ class UserProfileViewSet(GenericViewSet):
         obj = get_object_or_404(UserProfile, user=request.user)
         serializer = self.get_serializer(instance=obj)
         return Response(serializer.data)
-
-
-class TwoFactorSetup(TwoFactorSetup):
-    def form_invalid(self, form):
-        response = super().form_invalid(form)
-        # and display an error message
-        messages.add_message(self.request, messages.ERROR, "Incorrect token.")
-        return response
 
 
 class EmailPreferencesUpdate(

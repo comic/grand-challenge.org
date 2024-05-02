@@ -83,11 +83,11 @@
                                href='{% url 'api-tokens:list' %}'><i
                                     class="fas fa-unlock fa-fw"></i>&nbsp;{% trans "Manage API Tokens" %}</a>
                         {% if request.user|has_2fa_enabled %}
-                            <a class="list-group-item list-group-item-action" href="{% url 'two-factor-backup-tokens' %}" title="Two-Factor Authentication Settings"><i
-                                   class="fas fa-qrcode fa-fw"></i>{% trans "2FA Settings" %}</a>
+                            <a class="list-group-item list-group-item-action" href="{% url 'mfa_index' %}" title="Multi-Factor Authentication Settings"><i
+                                   class="fas fa-qrcode fa-fw"></i>{% trans "MFA Settings" %}</a>
                         {% else %}
-                            <a class="list-group-item list-group-item-action" href="{% url 'two-factor-setup' %}" title="Enable Two-Factor Authentication"><i
-                                   class="fas fa-qrcode fa-fw"></i>{% trans "Enable 2FA" %}</a>
+                            <a class="list-group-item list-group-item-action" href="{% url 'mfa_activate_totp' %}" title="Enable Multi-Factor Authentication"><i
+                                   class="fas fa-qrcode fa-fw"></i>{% trans "Enable MFA" %}</a>
                         {% endif %}
                         </ul>
                     {% endif %}

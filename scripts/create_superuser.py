@@ -1,6 +1,6 @@
 from allauth.account.models import EmailAddress
+from allauth.mfa import recovery_codes, totp
 from django.contrib.auth import get_user_model
-from django_otp.plugins.otp_static.models import StaticToken
 
 from grandchallenge.verifications.models import Verification
 
@@ -24,10 +24,9 @@ def run():
     )
     Verification.objects.create(user=su, email=su.email, is_verified=True)
 
-    su.totpdevice_set.create()
-    static_device = su.staticdevice_set.create(name="backup")
+    totp.TOTP.activate(su, totp.generate_totp_secret())
+    recovery_code_device = recovery_codes.RecoveryCodes.activate(su)
+    codes = recovery_code_device.generate_codes()
 
-    for _ in range(5):
-        token = StaticToken.random_token()
-        static_device.token_set.create(token=token)
+    for token in codes:
         print(f"Added one time token: {token}")
