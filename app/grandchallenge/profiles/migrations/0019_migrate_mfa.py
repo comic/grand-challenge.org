@@ -36,7 +36,7 @@ def migrate_mfa(apps, schema_editor):
                 },
             )
         )
-        Authenticator.objects.bulk_create(authenticators)
+    Authenticator.objects.bulk_create(authenticators)
 
 
 class Migration(migrations.Migration):
