@@ -848,7 +848,7 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
         job.update_status(
             status=job.FAILURE,
             error_message=str(e),
-            detailed_error_message=e.message_details
+            detailed_error_message=e.message_details,
             **get_update_status_kwargs(executor=executor),
         )
     except Exception:
