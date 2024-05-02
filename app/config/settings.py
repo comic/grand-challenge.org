@@ -445,8 +445,6 @@ MIDDLEWARE = (
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    # Django-otp middleware must be after the AuthenticationMiddleware.
-    "django_otp.middleware.OTPMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.contrib.sites.middleware.CurrentSiteMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -532,12 +530,6 @@ THIRD_PARTY_APPS = [
     # Overridden apps
     "grandchallenge.forum_conversation",
     "grandchallenge.forum_member",
-    # Configure the django-otp package
-    "django_otp",
-    "django_otp.plugins.otp_totp",
-    "django_otp.plugins.otp_static",
-    # Enable two-factor auth
-    "allauth_2fa",
 ]
 
 LOCAL_APPS = [
