@@ -1034,23 +1034,6 @@ socialaccount = ["pyjwt[crypto] (>=1.7)", "requests (>=2.0.0)", "requests-oauthl
 steam = ["python3-openid (>=3.0.8)"]
 
 [[package]]
-name = "django-allauth-2fa"
-version = "0.11.1"
-description = "Adds two factor authentication to django-allauth"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "django_allauth_2fa-0.11.1-py3-none-any.whl", hash = "sha256:2f2d61dd488f66ad45e59780b061f5abe96caea9c3466e3ee4ea50ea1faebef6"},
-    {file = "django_allauth_2fa-0.11.1.tar.gz", hash = "sha256:02ffdf1025836f072c2f6ec0964494589cf1d52362f663f9ff6d9ca61a7b6962"},
-]
-
-[package.dependencies]
-django = ">=3.2"
-django-allauth = ">=0.53.0"
-django-otp = ">=1.1.0"
-qrcode = ">=5.3"
-
-[[package]]
 name = "django-appconf"
 version = "1.0.6"
 description = "A helper class for handling configuration defaults of packaged apps gracefully."
@@ -1380,24 +1363,6 @@ django-js-asset = "*"
 
 [package.extras]
 tests = ["coverage[toml]", "mock-django"]
-
-[[package]]
-name = "django-otp"
-version = "1.5.0"
-description = "A pluggable framework for adding two-factor authentication to Django using one-time passwords."
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "django_otp-1.5.0-py3-none-any.whl", hash = "sha256:e88871d2d3b333a86c2cd0cb721be8098d4d6344cb220315a500e5a5c8254295"},
-    {file = "django_otp-1.5.0.tar.gz", hash = "sha256:e7142139f1e9686be5f396669a3d3d61178cd9b3e9de9de5933888668908b46b"},
-]
-
-[package.dependencies]
-django = ">=3.2"
-
-[package.extras]
-qrcode = ["qrcode"]
-segno = ["segno"]
 
 [[package]]
 name = "django-permissions-policy"
@@ -4858,4 +4823,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.13"
-content-hash = "77de599dff3078495d9baa7b79f37cf517afce7b7cbc9d1e6c66c1d81b62552f"
+content-hash = "53e5e396402b668a187b1f05ca797d197e5c532cd951a85db9d036d714a046a9"
