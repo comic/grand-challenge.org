@@ -155,6 +155,8 @@ def test_allowed_urls():
         "account_confirm_email",
         "mfa_authenticate",
         "account_set_password",
+        "dummy_login",
+        "dummy_authenticate",
     }
 
 

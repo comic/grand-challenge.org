@@ -61,4 +61,4 @@ INSTALLED_APPS += [  # noqa F405
     "allauth.socialaccount.providers.dummy",
 ]
 
-SOCIALACCOUNT_PROVIDERS = {"dummy": {}}
+SOCIALACCOUNT_PROVIDERS.update({"dummy": {}})  # noqa F405
