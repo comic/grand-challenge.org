@@ -1,6 +1,8 @@
 import pytest
 from allauth.mfa import recovery_codes, totp
 from allauth.mfa.models import Authenticator
+from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core import mail
 from django.test import override_settings
 from django.utils.http import int_to_base36
@@ -154,3 +156,45 @@ def test_allowed_urls():
         "mfa_authenticate",
         "account_set_password",
     }
+
+
+@override_settings(SOCIALACCOUNT_AUTO_SIGNUP=True)
+@pytest.mark.django_db
+def test_2fa_for_for_staff_users_with_social_login(client):
+    resp = client.post(reverse("dummy_login"))
+    resp = client.post(
+        resp["location"],
+        {
+            "id": "2",
+            "email": "a@b.com",
+            "email_verified": True,
+            "username": "foo",
+        },
+    )
+    assert resp.status_code == 302
+    assert resp["location"] == settings.LOGIN_REDIRECT_URL
+
+    user_with_social_account = (
+        get_user_model().objects.filter(username="foo").get()
+    )
+    user_with_social_account.is_staff = True
+    user_with_social_account.save()
+
+    resp = client.get("/")
+    assert resp.status_code == 302
+    assert "/accounts/2fa/totp/activate/" in resp.url
+
+    # enable 2fa for the user
+    totp.TOTP.activate(user_with_social_account, totp.generate_totp_secret())
+    recovery_codes.RecoveryCodes.activate(user_with_social_account)
+
+    # logout and login again, should be asked to MFA authenticate
+    client.logout()
+    resp = client.post(reverse("dummy_login"))
+    resp = client.post(resp["location"], {"id": "2"})
+    assert resp.status_code == 302
+    assert "/accounts/2fa/authenticate/" in resp.url
+
+    token = get_totp_token(user_with_social_account)
+    resp = client.post(resp.url, {"code": token})
+    assert resp["location"] == settings.LOGIN_REDIRECT_URL
