@@ -419,7 +419,6 @@ def _create_reader_studies(users):
 
     display_set = DisplaySet.objects.create(
         reader_study=reader_study,
-        order=10,
     )
     image = Image(
         name="test_image2.mha",

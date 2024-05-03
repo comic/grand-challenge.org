@@ -700,7 +700,7 @@ def test_display_set_title():
     with pytest.raises(IntegrityError):
         ds1.save()
 
-    # Duplication attempt via edit
+    # Duplication attempt via save
     with pytest.raises(IntegrityError):
         DisplaySetFactory(
             reader_study=rs,
