@@ -673,16 +673,17 @@ class DisplaySetCreateForm(MultipleCIVForm):
 
     def clean_title(self):
         title = self.cleaned_data.get("title")
-        if (
-            title
-            and DisplaySet.objects.filter(
-                title=title, reader_study=self.base_obj
-            ).exists()
-        ):
+        if title and self._title_query(title).exists():
             raise ValidationError(
                 "A display set already exists with this title"
             )
         return title
+
+    def _title_query(self, title):
+        return DisplaySet.objects.filter(
+            title=title,
+            reader_study=self.base_obj,
+        )
 
 
 class DisplaySetUpdateForm(DisplaySetCreateForm):
@@ -691,3 +692,8 @@ class DisplaySetUpdateForm(DisplaySetCreateForm):
         if not self.instance.is_editable:
             for _, field in self.fields.items():
                 field.disabled = True
+
+    def _title_query(self, *args, **kwargs):
+        return (
+            super()._title_query(*args, **kwargs).exclude(id=self.instance.pk)
+        )
