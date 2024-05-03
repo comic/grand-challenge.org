@@ -52,17 +52,6 @@ class UserProfileAdmin(UserAdmin):
     )
     actions = (deactivate_users,)
 
-    def get_queryset(self, request):
-        return (
-            super()
-            .get_queryset(request)
-            .annotate(
-                totp_device_count=Count(
-                    "totpdevice", filter=Q(totpdevice__confirmed=True)
-                )
-            )
-        )
-
     @admin.display(boolean=True, description="User has 2FA enabled")
     def has_2fa_enabled(self, obj):
         return is_mfa_enabled(obj)
