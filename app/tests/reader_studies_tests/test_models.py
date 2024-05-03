@@ -3,6 +3,7 @@ from contextlib import nullcontext
 import pytest
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import ProtectedError
+from django.db.utils import IntegrityError
 
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -674,6 +675,43 @@ def test_display_set_description():
 
     for ds in rs.display_sets.all():
         assert ds.description == result[ds.pk]
+
+
+@pytest.mark.django_db(transaction=True)
+def test_display_set_title():
+    rs = ReaderStudyFactory()
+    ds0 = DisplaySetFactory(reader_study=rs)
+
+    # Default
+    assert ds0.title == ""
+
+    # Update
+    ds0.title = "A Display Set Title"
+    ds0.save()
+
+    # Sanity
+    ds1 = DisplaySetFactory(
+        reader_study=ds0.reader_study,
+        title="Another Display Set",
+    )
+
+    # Duplication attempt via edit
+    ds1.title = ds0.title
+    with pytest.raises(IntegrityError):
+        ds1.save()
+
+    # Duplication attempt via edit
+    with pytest.raises(IntegrityError):
+        DisplaySetFactory(
+            reader_study=rs,
+            title=ds0.title,
+        )
+
+    # Other reader study is no problem
+    DisplaySetFactory(
+        reader_study=ReaderStudyFactory(),
+        title=ds0.title,
+    )
 
 
 @pytest.mark.django_db

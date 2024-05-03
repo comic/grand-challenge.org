@@ -671,6 +671,19 @@ class DisplaySetCreateForm(MultipleCIVForm):
             min_value=0,
         )
 
+    def clean_title(self):
+        title = self.cleaned_data.get("title")
+        if (
+            title
+            and DisplaySet.objects.filter(
+                title=title, reader_study=self.base_obj
+            ).exists()
+        ):
+            raise ValidationError(
+                "A display set already exists with this title"
+            )
+        return title
+
 
 class DisplaySetUpdateForm(DisplaySetCreateForm):
     def __init__(self, *args, **kwargs):

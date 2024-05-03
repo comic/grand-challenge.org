@@ -425,25 +425,31 @@ def test_display_set_update(
     ds2.values.set([civ_json_file_new, civ_img_new])
 
     # test updating of all 3 interface types
-    response = get_view_for_user(
-        viewname="reader-studies:display-set-update",
-        client=client,
-        reverse_kwargs={"pk": ds1.pk, "slug": rs.slug},
-        data={
-            ci_json.slug: '{"foo": "new"}',
-            ci_img.slug: str(im2.pk),
-            f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
-            ci_json_file.slug: str(civ_json_file_new.pk),
-            f"value_type_{ci_json_file.slug}": "civ",
-            "order": 11,
-        },
-        user=user,
-        method=client.post,
-    )
+    def do_update():
+        return get_view_for_user(
+            viewname="reader-studies:display-set-update",
+            client=client,
+            reverse_kwargs={"pk": ds1.pk, "slug": rs.slug},
+            data={
+                ci_json.slug: '{"foo": "new"}',
+                ci_img.slug: str(im2.pk),
+                f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
+                ci_json_file.slug: str(civ_json_file_new.pk),
+                f"value_type_{ci_json_file.slug}": "civ",
+                "order": 11,
+                "title": "foobar",
+            },
+            user=user,
+            method=client.post,
+        )
+
+    response = do_update()
     assert response.status_code == 302
     assert response.headers["HX-Redirect"] == reverse(
         "reader-studies:display_sets", kwargs={"slug": rs.slug}
     )
+
+    ds1.refresh_from_db()
     assert ds1.values.count() == 3
     assert not ds1.values.filter(pk=civ_img.pk).exists()
     assert ds1.values.filter(pk=civ_img_new.pk).exists()
@@ -451,33 +457,28 @@ def test_display_set_update(
     assert ds1.values.filter(pk=civ_json_file_new.pk).exists()
     assert ds1.values.get(interface=ci_json).value == {"foo": "new"}
 
+    assert ds1.order == 11
+    assert ds1.title == "foobar"
+
     n_civs_old = ComponentInterfaceValue.objects.count()
+
     # test saving without any changes
-    response = get_view_for_user(
-        viewname="reader-studies:display-set-update",
-        client=client,
-        reverse_kwargs={"pk": ds1.pk, "slug": rs.slug},
-        data={
-            ci_json.slug: '{"foo": "new"}',
-            ci_img.slug: str(im2.pk),
-            f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
-            ci_json_file.slug: str(civ_json_file_new.pk),
-            f"value_type_{ci_json_file.slug}": "civ",
-            "order": 11,
-        },
-        user=user,
-        method=client.post,
-    )
+    response = do_update()
     assert response.status_code == 302
     assert response.headers["HX-Redirect"] == reverse(
         "reader-studies:display_sets", kwargs={"slug": rs.slug}
     )
     # no new CIVs have been created
     assert n_civs_old == ComponentInterfaceValue.objects.count()
+
+    ds1.refresh_from_db()
     assert ds1.values.count() == 3
     assert ds1.values.filter(pk=civ_img_new.pk).exists()
     assert ds1.values.filter(pk=civ_json_file_new.pk).exists()
     assert ds1.values.get(interface=ci_json).value == {"foo": "new"}
+
+    assert ds1.order == 11
+    assert ds1.title == "foobar"
 
     # test new json file upload
     upload = UserUploadFactory(filename="file.json", creator=user)
@@ -499,7 +500,7 @@ def test_display_set_update(
                 f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
                 ci_json_file.slug: str(upload.pk),
                 f"value_type_{ci_json_file.slug}": "uuid",
-                "order": 11,
+                "order": 12,
             },
             user=user,
             method=client.post,
@@ -508,12 +509,16 @@ def test_display_set_update(
     assert response.headers["HX-Redirect"] == reverse(
         "reader-studies:display_sets", kwargs={"slug": rs.slug}
     )
+
+    ds1.refresh_from_db()
     assert ds1.values.count() == 3
     assert ds1.values.filter(interface=ci_json_file).exists()
     assert (
         ds1.values.filter(interface=ci_json_file).get().file.read()
         == b'{"new": "content"}'
     )
+    assert ds1.order == 12
+    assert ds1.title == ""
 
     n_civs_old = ComponentInterfaceValue.objects.count()
 
@@ -525,7 +530,8 @@ def test_display_set_update(
         data={
             ci_img.slug: str(im2.pk),
             f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
-            "order": 11,
+            "order": 12,
+            "title": "foobar_foobar",
         },
         user=user,
         method=client.post,
@@ -534,11 +540,16 @@ def test_display_set_update(
     assert response.headers["HX-Redirect"] == reverse(
         "reader-studies:display_sets", kwargs={"slug": rs.slug}
     )
+
+    ds1.refresh_from_db()
     assert ds1.values.count() == 1
     assert n_civs_old == ComponentInterfaceValue.objects.count()
     assert ds1.values.filter(pk=civ_img_new.pk).exists()
     assert not ds1.values.filter(pk=civ_json_file_new.pk).exists()
     assert not ds1.values.filter(interface=ci_json).exists()
+
+    assert ds1.order == 12
+    assert ds1.title == "foobar_foobar"
 
 
 @pytest.mark.django_db

@@ -120,7 +120,6 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
         fields = (
             "pk",
             "title",
-            "slug",
             "reader_study",
             "values",
             "order",

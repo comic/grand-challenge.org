@@ -16,7 +16,6 @@ from django.db.models import Avg, Count, Q, Sum
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.functional import cached_property
-from django_extensions.db.fields import AutoSlugField
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
@@ -797,10 +796,6 @@ class DisplaySet(CIVForObjectMixin, UUIDModel):
     )
     order = models.PositiveIntegerField(default=0)
     title = models.CharField(max_length=255, default="", blank=True)
-    slug = AutoSlugField(
-        populate_from=["title", "order", "reader_study__slug"],
-        max_length=511,
-    )
 
     def __str__(self):
         parts = [self._meta.verbose_name.title()]
@@ -840,6 +835,13 @@ class DisplaySet(CIVForObjectMixin, UUIDModel):
 
     class Meta:
         ordering = ("order", "created")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["title", "reader_study"],
+                name="unique_title",
+                condition=~Q(title=""),
+            )
+        ]
 
     @cached_property
     def is_editable(self):
