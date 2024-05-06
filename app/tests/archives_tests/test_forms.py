@@ -402,8 +402,8 @@ def test_archive_items_to_reader_study_update_form(client, settings):
         ComponentInterfaceValueFactory(interface=overlay, image=im4),
     )
 
-    ai1 = ArchiveItemFactory(archive=archive)
-    ai2 = ArchiveItemFactory(archive=archive)
+    ai1 = ArchiveItemFactory(archive=archive, title="archive item 1")
+    ai2 = ArchiveItemFactory(archive=archive, title="archive item 2")
 
     ai1.values.add(civ1)
     ai2.values.add(civ2)
@@ -435,12 +435,21 @@ def test_archive_items_to_reader_study_update_form(client, settings):
 
     assert response.status_code == 200
     assert rs.display_sets.count() == 2
+
+    assert sorted([ds.title for ds in rs.display_sets.all()]) == sorted(
+        [ai1.title, ai2.title]
+    )
     assert sorted(
         list(rs.display_sets.values_list("values", flat=True))
     ) == sorted([civ1.pk, civ2.pk])
 
+    ai1.title = "New title 1"
     ai1.values.add(civ3)
+    ai1.save()
+
+    ai2.title = "New title 2"
     ai2.values.add(civ4)
+    ai2.save()
 
     response = get_view_for_user(
         viewname="archives:items-reader-study-update",
