@@ -11,7 +11,7 @@ from grandchallenge.reader_studies.views import (
     DisplaySetDeleteView,
     DisplaySetFilesUpdate,
     DisplaySetInterfacesCreate,
-    DisplaySetUpdate,
+    DisplaySetUpdateView,
     EditorsUpdate,
     QuestionDelete,
     QuestionInterfacesView,
@@ -95,7 +95,7 @@ urlpatterns = [
     ),
     path(
         "<slug>/display-sets/<uuid:pk>/update/",
-        DisplaySetUpdate.as_view(),
+        DisplaySetUpdateView.as_view(),
         name="display-set-update",
     ),
     path(

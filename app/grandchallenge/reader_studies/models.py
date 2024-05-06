@@ -795,6 +795,14 @@ class DisplaySet(CIVForObjectMixin, UUIDModel):
         ComponentInterfaceValue, blank=True, related_name="display_sets"
     )
     order = models.PositiveIntegerField(default=0)
+    title = models.CharField(max_length=255, default="", blank=True)
+
+    def __str__(self):
+        parts = [self._meta.verbose_name.title()]
+        if self.title:
+            parts.append(f"{self.title!r}")
+        parts.append(f"(ID: {self.id})")
+        return " ".join(parts)
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -827,6 +835,13 @@ class DisplaySet(CIVForObjectMixin, UUIDModel):
 
     class Meta:
         ordering = ("order", "created")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["title", "reader_study"],
+                name="unique_title",
+                condition=~Q(title=""),
+            )
+        ]
 
     @cached_property
     def is_editable(self):

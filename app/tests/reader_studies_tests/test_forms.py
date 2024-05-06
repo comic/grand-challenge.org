@@ -584,10 +584,15 @@ def test_reader_study_copy(
 
     im1, im2 = ImageFactory(), ImageFactory()
     interfaces = []
-    for im in [im1, im2]:
+    for index, im in enumerate([im1, im2]):
         civ = ComponentInterfaceValueFactory(image=im)
         interfaces.append(civ.interface.slug)
-        ds = DisplaySetFactory(reader_study=rs)
+        count = index + 1
+        ds = DisplaySetFactory(
+            reader_study=rs,
+            title=f"display set title {count}",
+            order=count,
+        )
         ds.values.add(civ)
     rs.view_content = {"main": interfaces[0], "secondary": interfaces[1]}
     rs.hanging_protocol = HangingProtocolFactory()
@@ -719,7 +724,12 @@ def test_reader_study_copy(
     _rs = ReaderStudy.objects.order_by("created").last()
     assert _rs.title == "3"
     assert _rs.questions.count() == 0
+
     assert _rs.display_sets.count() == 2
+    _ds = _rs.display_sets.first()
+    assert _ds.title == "display set title 1"
+    assert _ds.order == 1
+
     assert _rs.view_content == {}
     assert _rs.hanging_protocol is None
     assert _rs.case_text == {}
@@ -1131,7 +1141,7 @@ def test_display_set_update_form(form_class, file_widget):
 
     instance = None if form_class == DisplaySetCreateForm else ds
     form = form_class(user=user, instance=instance, base_obj=rs)
-    assert sorted(form.fields.keys()) == ["order", "slug-1", "slug-2"]
+    assert sorted(form.fields.keys()) == ["order", "slug-1", "slug-2", "title"]
     assert isinstance(form.fields["slug-1"].widget, file_widget)
     assert isinstance(form.fields["slug-2"].widget, JSONEditorWidget)
 
@@ -1145,7 +1155,49 @@ def test_display_set_update_form(form_class, file_widget):
         "slug-1",
         "slug-2",
         "slug-3",
+        "title",
     ]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "form_class",
+    (DisplaySetCreateForm, DisplaySetUpdateForm),
+)
+@pytest.mark.parametrize(
+    "existing_ds_title,new_ds_title,expected_validity",
+    (
+        ("", "", True),
+        ("Foo", "", True),
+        ("", "Bar", True),
+        ("Foo", "Bar", True),
+        ("Foo", "Foo", False),
+    ),
+)
+def test_display_set_form_unique_title(
+    form_class, existing_ds_title, new_ds_title, expected_validity
+):
+    rs = ReaderStudyFactory()
+    user = UserFactory()
+    rs.add_editor(user)
+
+    DisplaySetFactory(reader_study=rs, title=existing_ds_title)
+
+    instance = None
+    if form_class == DisplaySetUpdateForm:
+        instance = DisplaySetFactory(reader_study=rs)
+
+    form = form_class(
+        user=user,
+        instance=instance,
+        base_obj=rs,
+        data={
+            "order": 1,
+            "title": new_ds_title,
+        },
+    )
+
+    assert form.is_valid() is expected_validity
 
 
 @pytest.mark.parametrize(

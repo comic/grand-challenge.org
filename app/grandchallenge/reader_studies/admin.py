@@ -87,8 +87,13 @@ class ReaderStudyPermissionRequestAdmin(GuardedModelAdmin):
 @admin.register(DisplaySet)
 class DisplaySetAdmin(GuardedModelAdmin):
     list_filter = ("reader_study__slug",)
-    readonly_fields = ("reader_study", "values")
-    list_display = ("reader_study", "order")
+    readonly_fields = ("id", "reader_study", "values")
+    list_display = (
+        "id",
+        "order",
+        "title",
+        "reader_study",
+    )
     list_select_related = ("reader_study",)
 
 

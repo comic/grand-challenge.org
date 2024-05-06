@@ -1,6 +1,11 @@
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models.signals import m2m_changed, post_save, pre_delete
+from django.db.models.signals import (
+    m2m_changed,
+    post_save,
+    pre_delete,
+    pre_save,
+)
 from django.db.transaction import on_commit
 from django.dispatch import receiver
 
@@ -92,13 +97,12 @@ def update_reader_study_modification_time(
             instance.reader_study.save()
 
 
-@receiver(post_save, sender=DisplaySet)
-def set_display_set_order(sender, instance, created, **_):
+@receiver(pre_save, sender=DisplaySet)
+def set_display_set_order(sender, instance, **_):
     """Set to first multiple of 10 that is higher than the highest in this rs."""
-    if not created:
+    if instance.order:
         return
     instance.order = instance.reader_study.next_display_set_order
-    instance.save()
 
 
 @receiver(post_save, sender=Answer)

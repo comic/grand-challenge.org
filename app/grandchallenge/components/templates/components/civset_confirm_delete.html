@@ -11,7 +11,7 @@
         <li class="breadcrumb-item"><a href="{{ object.base_object.list_url }}">{{ object.base_object|verbose_name_plural|title }}</a></li>
         <li class="breadcrumb-item"><a href="{{ object.base_object.get_absolute_url }}">{{ object.base_object.title }}</a></li>
         <li class="breadcrumb-item"><a href="{{ object.base_object.civ_sets_list_url }}">{{ object|verbose_name_plural|title }}</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Delete {{ object|verbose_name|title }} {{ object.pk }}</li>
+        <li class="breadcrumb-item active" aria-current="page">Delete {{ object }}</li>
     </ol>
 {% endblock %}
 
@@ -19,15 +19,15 @@
     <h2>Confirm Deletion</h2>
     <form action="" method="post">
         {% csrf_token %}
-        <p>Are you sure that you want to delete {{ object|verbose_name|title }} {{ object.pk }}? <br>
+        <p>Are you sure that you want to delete {{ object }}? <br>
             <b class="text-danger">WARNING:
-                You are not able to undo this action. Once the {{ object|verbose_name }} is deleted
+                You are not able to undo this action. Once the {{ object }} is deleted
                 it is deleted forever.</b></p>
         <a href="{{ object.base_object.civ_sets_list_url }}"
            type="button"
            class="btn btn-secondary">Cancel</a>
         <input type="submit"
-               value="I understand, delete {{ object|verbose_name|title }} {{ object.pk }}"
+               value="I understand, delete {{ object|verbose_name }}"
                class="btn btn-danger"/>
     </form>
 {% endblock %}
