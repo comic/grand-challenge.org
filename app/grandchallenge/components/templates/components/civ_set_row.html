@@ -7,13 +7,21 @@
 
 {% get_obj_perms request.user for object as "object_perms" %}
 
-
-<input class="checkbox pr-1 mr-1"
+<div
+     {% if object.is_editable %}
+         title = "Select {{ object|verbose_name }}"
+     {% else %}
+        title="Cannot select for deletion: answers for display set exist"
+     {% endif %}
+>
+    <input class="checkbox pr-1 mr-1"
        name="selected-for-deletion"
        value="{{ object.id }}"
        type="checkbox"
        {% if not object.is_editable %} disabled {% endif %}
->
+    >
+</div>
+
 <split></split>
 
 {{ object.pk }}
@@ -45,21 +53,32 @@
 </a>
 <split></split>
 
-<a class="btn btn-primary btn-sm {% if not object.is_editable or not update_perm in object_perms %}disabled{% endif %}"
-   {% if object.is_editable %}
-        title = "Edit {{ object|verbose_name }}"
-        href="{{ object.update_url }}"
-   {% else %}
+<div
+     {% if object.is_editable %}
+         title = "Edit {{ object|verbose_name }}"
+     {% else %}
         title="Cannot edit: answers for display set exist"
-   {% endif %}
+     {% endif %}
 >
-   <i class="fas fa-fw fa-edit"></i>
-</a>
+    <a class="btn btn-primary btn-sm {% if not object.is_editable or not update_perm in object_perms %}disabled{% endif %}"
+        href="{{ object.update_url }}"
+    >
+        <i class="fas fa-fw fa-edit"></i>
+    </a>
+</div>
+
 <split></split>
 
-<a class="btn btn-danger btn-sm {% if not object.is_editable or not delete_perm in object_perms %}disabled{% endif %}"
-   title="Delete {{ object|verbose_name }}"
+<div
+     {% if object.is_editable %}
+         title = "Delete {{ object|verbose_name }}"
+     {% else %}
+        title="Cannot delete: answers for display set exist"
+     {% endif %}
+>
+   <a class="btn btn-danger btn-sm {% if not object.is_editable or not delete_perm in object_perms %}disabled{% endif %}"
    href="{{ object.delete_url }}">
    <i class="fas fa-fw fa-trash"></i>
 </a>
+</div>
 <split></split>
