@@ -410,10 +410,10 @@ class ArchiveItemUpdate(CIVSetFormMixin, MultipleCIVProcessingBaseView):
             kwargs={"slug": self.base_object.slug, "pk": self.object.pk},
         )
 
-    def process_data_for_object(self, civ_data, non_civ_data):
+    def process_data_for_object(self, data):
         """Updates the archive item"""
         instance = self.object
-        for ci_slug, new_value in civ_data.items():
+        for ci_slug, new_value in data.items():
             instance.create_civ(
                 ci_slug=ci_slug, new_value=new_value, user=self.request.user
             )
@@ -590,12 +590,12 @@ class ArchiveItemCreateView(
             kwargs={"slug": self.base_object.slug},
         )
 
-    def process_data_for_object(self, civ_data, non_civ_data):
+    def process_data_for_object(self, data):
         """Creates an archive item"""
         instance = ArchiveItem.objects.create(archive=self.base_object)
-        for slug in civ_data:
+        for slug in data:
             instance.create_civ(
-                ci_slug=slug, new_value=civ_data[slug], user=self.request.user
+                ci_slug=slug, new_value=data[slug], user=self.request.user
             )
         return instance
 
