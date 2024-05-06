@@ -126,7 +126,7 @@ class MultipleCIVProcessingBaseView(
     raise_exception = True
     success_message = None
 
-    def process_data_for_object(self, data):
+    def process_data_for_object(self, civ_data, non_civ_data):
         raise NotImplementedError
 
     @property
@@ -134,7 +134,11 @@ class MultipleCIVProcessingBaseView(
         raise NotImplementedError
 
     def form_valid(self, form):
-        form.instance = self.process_data_for_object(form.cleaned_data)
+        form.instance = self.process_data_for_object(
+            civ_data=form.cleaned_civ_data,
+            non_civ_data=form.cleaned_non_civ_data,
+        )
+
         response = super().form_valid(form)
         return HttpResponse(
             response.url,

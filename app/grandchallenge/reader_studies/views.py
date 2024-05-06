@@ -19,7 +19,7 @@ from django.http import (
     JsonResponse,
 )
 from django.shortcuts import get_object_or_404
-from django.utils.functional import cached_property, empty
+from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.timezone import now
@@ -1308,24 +1308,21 @@ class DisplaySetUpdateView(CIVSetFormMixin, MultipleCIVProcessingBaseView):
             kwargs={"slug": self.base_object.slug, "pk": self.object.pk},
         )
 
-    def process_data_for_object(self, data):
+    def process_data_for_object(self, civ_data, non_civ_data):
         """Updates the display set"""
         instance = self.object
-        non_civ_data_keys = self.form_class.non_civ_field_names
 
         save = False
-        for key in non_civ_data_keys:
-            value = data.get(key, empty)
-            if value is not empty and value != getattr(instance, key):
+        for key, value in non_civ_data.items():
+            if value != getattr(instance, key):
                 setattr(instance, key, value)
                 save = True
         if save:
             instance.save()
-        for key in data:
-            if key in non_civ_data_keys:
-                continue
+
+        for key in civ_data:
             instance.create_civ(
-                ci_slug=key, new_value=data[key], user=self.request.user
+                ci_slug=key, new_value=civ_data[key], user=self.request.user
             )
 
         return instance
@@ -1427,20 +1424,17 @@ class DisplaySetCreateView(
             kwargs={"slug": self.base_object.slug},
         )
 
-    def process_data_for_object(self, data):
+    def process_data_for_object(self, civ_data, non_civ_data):
         """Creates a display set"""
-        non_civ_data_keys = self.form_class.non_civ_field_names
 
         instance = DisplaySet.objects.create(
             reader_study=self.base_object,
-            **{k: data.get(k) for k in non_civ_data_keys},
+            **non_civ_data,
         )
 
-        for key in data:
-            if key in non_civ_data_keys:
-                continue
+        for key in civ_data:
             instance.create_civ(
-                ci_slug=key, new_value=data[key], user=self.request.user
+                ci_slug=key, new_value=civ_data[key], user=self.request.user
             )
 
         return instance

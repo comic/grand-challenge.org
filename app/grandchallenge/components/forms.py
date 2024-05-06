@@ -107,8 +107,21 @@ class MultipleCIVForm(Form):
     }
 
     @property
-    def interface_field_names(self):
-        yield from self.base_obj.values_for_interfaces.keys()
+    def cleaned_civ_data(self):
+        return {
+            k: v
+            for k, v in self.cleaned_data.items()
+            if k in self.base_obj.values_for_interfaces
+        }
+
+    @property
+    def cleaned_non_civ_data(self):
+        cleaned_civ_data = self.cleaned_civ_data
+        return {
+            k: v
+            for k, v in self.cleaned_data.items()
+            if k not in cleaned_civ_data
+        }
 
     def __init__(self, *args, instance, base_obj, user, **kwargs):
         super().__init__(*args, **kwargs)
