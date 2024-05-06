@@ -1261,7 +1261,7 @@ class QuestionWidgetsView(BaseAddObjectToReaderStudyMixin, View):
         return HttpResponse(form["widget"])
 
 
-class DisplaySetUpdate(CIVSetFormMixin, MultipleCIVProcessingBaseView):
+class DisplaySetUpdateView(CIVSetFormMixin, MultipleCIVProcessingBaseView):
     form_class = DisplaySetUpdateForm
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
