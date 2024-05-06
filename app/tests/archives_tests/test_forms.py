@@ -3,6 +3,10 @@ from actstream.actions import is_following
 from django.contrib.auth.models import Permission
 
 from grandchallenge.algorithms.models import Job
+from grandchallenge.archives.forms import (
+    ArchiveItemCreateForm,
+    ArchiveItemUpdateForm,
+)
 from grandchallenge.archives.models import Archive, ArchivePermissionRequest
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -199,6 +203,46 @@ def test_social_image_meta_tag(client, uploaded_image):
 
     archive = Archive.objects.get(title="foo bar")
     assert str(archive.social_image.x20.url) in response.content.decode()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "form_class",
+    (ArchiveItemCreateForm, ArchiveItemUpdateForm),
+)
+@pytest.mark.parametrize(
+    "existing_title,new_title,expected_validity",
+    (
+        ("", "", True),
+        ("Foo", "", True),
+        ("", "Bar", True),
+        ("Foo", "Bar", True),
+        ("Foo", "Foo", False),
+    ),
+)
+def test_archive_item_form_unique_title(
+    form_class, existing_title, new_title, expected_validity
+):
+    archive = ArchiveFactory()
+    user = UserFactory()
+    archive.add_editor(user)
+
+    ArchiveItemFactory(archive=archive, title=existing_title)
+
+    instance = None
+    if form_class == ArchiveItemUpdateForm:
+        instance = ArchiveItemFactory(archive=archive)
+
+    form = form_class(
+        user=user,
+        instance=instance,
+        base_obj=archive,
+        data={
+            "title": new_title,
+        },
+    )
+
+    assert form.is_valid() is expected_validity
 
 
 @pytest.mark.django_db

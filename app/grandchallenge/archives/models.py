@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.db.models import Q
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
@@ -290,15 +291,19 @@ class ArchiveItem(CIVForObjectMixin, UUIDModel):
     values = models.ManyToManyField(
         ComponentInterfaceValue, blank=True, related_name="archive_items"
     )
+    title = models.CharField(max_length=255, default="", blank=True)
 
     def __str__(self):
+        result = f"{self.title!r}" if self.title else str(self.pk)
+
         values = []
         for value in self.values.all():
             if value.image:
                 values.append(value.image.name)
             if value.file:
                 values.append(os.path.basename(value.file.file.name))
-        return ", ".join(values)
+        values = ", ".join(values)
+        return f"{result} ({values})" if values else f"Empty {result}"
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -307,6 +312,15 @@ class ArchiveItem(CIVForObjectMixin, UUIDModel):
 
         if adding:
             self.assign_permissions()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["title", "archive"],
+                name="unique_archive_item_title",
+                condition=~Q(title=""),
+            )
+        ]
 
     def assign_permissions(self):
         # Archive editors, uploaders and users can view this archive item

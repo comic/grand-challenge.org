@@ -5,7 +5,7 @@ from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils.datastructures import MultiValueDictKeyError
-from django.utils.functional import cached_property
+from django.utils.functional import cached_property, empty
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.timezone import now
@@ -30,7 +30,9 @@ from grandchallenge.archives.filters import ArchiveFilter
 from grandchallenge.archives.forms import (
     AddCasesForm,
     ArchiveForm,
+    ArchiveItemCreateForm,
     ArchiveItemsToReaderStudyForm,
+    ArchiveItemUpdateForm,
     ArchivePermissionRequestUpdateForm,
     UploadersForm,
     UsersForm,
@@ -365,7 +367,7 @@ class ArchiveUploadSessionCreate(
 
 
 class ArchiveItemUpdate(CIVSetFormMixin, MultipleCIVProcessingBaseView):
-    form_class = MultipleCIVForm
+    form_class = ArchiveItemUpdateForm
     permission_required = (
         f"{ArchiveItem._meta.app_label}.change_{ArchiveItem._meta.model_name}"
     )
@@ -413,7 +415,20 @@ class ArchiveItemUpdate(CIVSetFormMixin, MultipleCIVProcessingBaseView):
     def process_data_for_object(self, data):
         """Updates the archive item"""
         instance = self.object
+        non_civ_data_keys = self.form_class.Meta.non_civ_fields
+
+        save = False
+        for key in non_civ_data_keys:
+            value = data.get(key, empty)
+            if value is not empty and value != getattr(instance, key):
+                setattr(instance, key, value)
+                save = True
+        if save:
+            instance.save()
+
         for ci_slug, new_value in data.items():
+            if ci_slug in non_civ_data_keys:
+                continue
             instance.create_civ(
                 ci_slug=ci_slug, new_value=new_value, user=self.request.user
             )
@@ -427,10 +442,19 @@ class ArchiveItemsList(CivSetListView):
     )
     columns = [
         Column(title=""),
-        Column(title="ArchiveItem ID", sort_field="pk"),
+        Column(title="ID", sort_field="pk"),
+        Column(
+            title="Title",
+            sort_field="title",
+            optional_condition=lambda obj: bool(obj.title),
+        ),
         *CivSetListView.columns,
     ]
-    default_sort_column = 1
+    default_sort_column = 2
+    search_fields = [
+        "title",
+        *CivSetListView.search_fields,
+    ]
 
     @cached_property
     def base_object(self):
@@ -479,7 +503,10 @@ class ArchiveItemsToReaderStudyUpdate(
 
         for item in items:
             values = item.values.all()
-            ds = DisplaySet.objects.create(reader_study=reader_study)
+            ds = DisplaySet.objects.create(
+                reader_study=reader_study,
+                title=item.title,
+            )
             ds.values.set(values)
 
         self.success_url = reader_study.get_absolute_url()
@@ -554,7 +581,7 @@ class ArchiveItemCreateView(
     CIVSetFormMixin,
     MultipleCIVProcessingBaseView,
 ):
-    form_class = MultipleCIVForm
+    form_class = ArchiveItemCreateForm
     permission_required = (
         f"{Archive._meta.app_label}.change_{Archive._meta.model_name}"
     )
@@ -592,10 +619,18 @@ class ArchiveItemCreateView(
 
     def process_data_for_object(self, data):
         """Creates an archive item"""
-        instance = ArchiveItem.objects.create(archive=self.base_object)
-        for slug in data:
+        non_civ_data_keys = self.form_class.Meta.non_civ_fields
+
+        instance = ArchiveItem.objects.create(
+            archive=self.base_object,
+            **{k: data.get(k) for k in non_civ_data_keys},
+        )
+
+        for key in data:
+            if key in non_civ_data_keys:
+                continue
             instance.create_civ(
-                ci_slug=slug, new_value=data[slug], user=self.request.user
+                ci_slug=key, new_value=data[key], user=self.request.user
             )
         return instance
 

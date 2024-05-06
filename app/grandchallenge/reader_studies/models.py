@@ -1,3 +1,5 @@
+import os
+
 from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -798,11 +800,16 @@ class DisplaySet(CIVForObjectMixin, UUIDModel):
     title = models.CharField(max_length=255, default="", blank=True)
 
     def __str__(self):
-        parts = [self._meta.verbose_name.title()]
-        if self.title:
-            parts.append(f"{self.title!r}")
-        parts.append(f"(ID: {self.id})")
-        return " ".join(parts)
+        result = f"{self.title!r}" if self.title else str(self.pk)
+
+        values = []
+        for value in self.values.all():
+            if value.image:
+                values.append(value.image.name)
+            if value.file:
+                values.append(os.path.basename(value.file.file.name))
+        values = ", ".join(values)
+        return f"{result} ({values})" if values else f"Empty {result}"
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -838,7 +845,7 @@ class DisplaySet(CIVForObjectMixin, UUIDModel):
         constraints = [
             models.UniqueConstraint(
                 fields=["title", "reader_study"],
-                name="unique_title",
+                name="unique_display_set_title",
                 condition=~Q(title=""),
             )
         ]

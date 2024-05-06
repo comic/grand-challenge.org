@@ -1,7 +1,8 @@
 from dal import autocomplete
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.forms import (
+    CharField,
     Form,
     ModelChoiceField,
     ModelForm,
@@ -17,6 +18,7 @@ from grandchallenge.archives.models import (
     ArchivePermissionRequest,
 )
 from grandchallenge.cases.forms import UploadRawImagesForm
+from grandchallenge.components.forms import MultipleCIVForm
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
@@ -225,3 +227,44 @@ class AddCasesForm(UploadRawImagesForm):
             {"interface_pk": self.cleaned_data["interface"].pk}
         )
         return super().save(*args, **kwargs)
+
+
+class ArchiveItemCreateForm(MultipleCIVForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["title"] = CharField(
+            required=False,
+            initial=self.instance and self.instance.title or "",
+            max_length=ArchiveItem._meta.get_field("title").max_length,
+        )
+
+    class Meta:
+        non_civ_fields = ("title",)
+
+    def clean_title(self):
+        title = self.cleaned_data.get("title")
+        if title and self._title_query(title).exists():
+            raise ValidationError(
+                "An archive item already exists with this title"
+            )
+        return title
+
+    def _title_query(self, title):
+        return ArchiveItem.objects.filter(
+            title=title,
+            archive=self.base_obj,
+        )
+
+
+class ArchiveItemUpdateForm(ArchiveItemCreateForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.instance.is_editable:
+            for _, field in self.fields.items():
+                field.disabled = True
+
+    def _title_query(self, *args, **kwargs):
+        return (
+            super()._title_query(*args, **kwargs).exclude(id=self.instance.pk)
+        )
