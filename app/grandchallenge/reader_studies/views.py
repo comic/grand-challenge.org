@@ -1311,7 +1311,7 @@ class DisplaySetUpdateView(CIVSetFormMixin, MultipleCIVProcessingBaseView):
     def process_data_for_object(self, data):
         """Updates the display set"""
         instance = self.object
-        non_civ_data_keys = ("order", "title")
+        non_civ_data_keys = self.form_class.Meta.non_civ_fields
 
         save = False
         for key in non_civ_data_keys:
@@ -1429,7 +1429,7 @@ class DisplaySetCreateView(
 
     def process_data_for_object(self, data):
         """Creates a display set"""
-        non_civ_data_keys = ("order", "title")
+        non_civ_data_keys = self.form_class.Meta.non_civ_fields
 
         instance = DisplaySet.objects.create(
             reader_study=self.base_object,

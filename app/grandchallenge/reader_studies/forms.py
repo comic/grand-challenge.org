@@ -671,6 +671,9 @@ class DisplaySetCreateForm(MultipleCIVForm):
             min_value=0,
         )
 
+    class Meta:
+        non_civ_fields = ("title", "order")
+
     def clean_title(self):
         title = self.cleaned_data.get("title")
         if title and self._title_query(title).exists():
