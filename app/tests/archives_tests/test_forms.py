@@ -378,6 +378,11 @@ def test_archive_item_update_triggers_algorithm_jobs(
     assert Job.objects.count() == 3
     assert ComponentInterfaceValue.objects.count() == civ_count + 2
 
+    # A change to the title should not fire-off a new job
+    ai.title = "A new title"
+    ai.save()
+    assert Job.objects.count() == 3
+
 
 @pytest.mark.django_db
 def test_archive_items_to_reader_study_update_form(client, settings):
