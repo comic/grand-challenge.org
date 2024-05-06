@@ -2098,7 +2098,3 @@ class ValuesForInterfacesMixin:
             for interface in interfaces_and_values.interfaces
         }
         return values_for_interfaces
-
-    @cached_property
-    def interfaces(self):
-        return self.interfaces_and_values.interfaces

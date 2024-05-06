@@ -1426,6 +1426,7 @@ class DisplaySetCreateView(
 
     def process_data_for_object(self, civ_data, non_civ_data):
         """Creates a display set"""
+
         instance = DisplaySet.objects.create(
             reader_study=self.base_object,
             **non_civ_data,

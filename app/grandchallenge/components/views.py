@@ -133,23 +133,10 @@ class MultipleCIVProcessingBaseView(
     def base_object(self):
         raise NotImplementedError
 
-    def __filter_civ_data(self, data):
-        civ_data = {}
-        non_civ_data = {}
-        for k, v in data.items():
-            if k in self.base_object.interfaces:
-                slug = k
-                civ_data[slug] = v
-            else:
-                non_civ_data[k] = v
-        return civ_data, non_civ_data
-
     def form_valid(self, form):
-        civ_data, non_civ_data = self.__filter_civ_data(form.cleaned_data)
-
         form.instance = self.process_data_for_object(
-            civ_data=civ_data,
-            non_civ_data=non_civ_data,
+            civ_data=form.cleaned_civ_data,
+            non_civ_data=form.cleaned_non_civ_data,
         )
 
         response = super().form_valid(form)
