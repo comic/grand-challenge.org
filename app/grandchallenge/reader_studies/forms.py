@@ -671,6 +671,12 @@ class DisplaySetCreateForm(MultipleCIVForm):
             min_value=0,
         )
 
+    @property
+    def non_civ_field_names(self):
+        for k in self.fields.keys():
+            if k not in self.interface_field_names:
+                yield k
+
     def clean_title(self):
         title = self.cleaned_data.get("title")
         if title and self._title_query(title).exists():

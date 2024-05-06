@@ -1261,7 +1261,7 @@ class QuestionWidgetsView(BaseAddObjectToReaderStudyMixin, View):
         return HttpResponse(form["widget"])
 
 
-class DisplaySetUpdate(CIVSetFormMixin, MultipleCIVProcessingBaseView):
+class DisplaySetUpdateView(CIVSetFormMixin, MultipleCIVProcessingBaseView):
     form_class = DisplaySetUpdateForm
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
@@ -1311,7 +1311,7 @@ class DisplaySetUpdate(CIVSetFormMixin, MultipleCIVProcessingBaseView):
     def process_data_for_object(self, data):
         """Updates the display set"""
         instance = self.object
-        non_civ_data_keys = ("order", "title")
+        non_civ_data_keys = self.form_class.non_civ_field_names
 
         save = False
         for key in non_civ_data_keys:
@@ -1429,7 +1429,7 @@ class DisplaySetCreateView(
 
     def process_data_for_object(self, data):
         """Creates a display set"""
-        non_civ_data_keys = ("order", "title")
+        non_civ_data_keys = self.form_class.non_civ_field_names
 
         instance = DisplaySet.objects.create(
             reader_study=self.base_object,

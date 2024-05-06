@@ -106,6 +106,10 @@ class MultipleCIVForm(Form):
         SelectUploadWidget,
     }
 
+    @property
+    def interface_field_names(self):
+        yield from self.base_obj.values_for_interfaces.keys()
+
     def __init__(self, *args, instance, base_obj, user, **kwargs):
         super().__init__(*args, **kwargs)
         self.instance = instance
