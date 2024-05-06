@@ -46,6 +46,7 @@
           hx-include="[id='new-interfaces']"
           hx-target="body"
           id="obj-form"
+          hx-indicator="#hx-save-indicator"
     >
       {% csrf_token %}
       {{ form|crispy }}
@@ -56,11 +57,26 @@
               hx-get="{{ new_interface_url }}"
               hx-target="#new-interfaces"
               hx-swap="beforeend"
-      >Add value for new interface</button>
+              hx-indicator="#hx-add-interface-indicator"
+              hx-enable-me
+              disabled
+      >
+          Add value for new interface
+          <span id="hx-add-interface-indicator" class="htmx-indicator spinner-border spinner-grow-sm" role="status"></span>
+          <span class="spinner-grow spinner-grow-sm" role="status" hx-hide-me></span>
+      </button>
       <div class="d-flex justify-content-between pb-2">
         <div>
           <a href="{{ return_url }}" class="btn btn-outline-primary">Back</a>
-          <button type="submit" class="btn btn-primary">Save</button>
+          <button type="submit"
+                  class="btn btn-primary"
+                  hx-enable-me
+                  disabled
+          >
+              Save
+              <span id="hx-save-indicator" class="htmx-indicator spinner-border spinner-border-sm" role="status"></span>
+              <span class="spinner-grow spinner-grow-sm" role="status" hx-hide-me></span>
+          </button>
         </div>
       </div>
     </form>
@@ -69,8 +85,10 @@
 {% block script %}
     {{ block.super }}
     {{ form_media }}
-    <script type="module" src="{% static 'components/js/create_extra_interfaces.mjs' %}" type="text/javascript"></script>
-    <script type="module" src="{% static 'components/js/autocomplete_htmx.mjs' %}" type="text/javascript"></script>
+    <script type="module" src="{% static 'components/js/create_extra_interfaces.mjs' %}"></script>
+    <script type="module" src="{% static 'components/js/autocomplete_htmx.mjs' %}"></script>
+    <script type="text/javascript" src="{% static "components/js/htmx/enable-me.js" %}"></script>
+    <script type="text/javascript" src="{% static "components/js/htmx/hide-me.js" %}"></script>
     <script type="text/javascript" src="{% static "cases/js/ignore_enter_button.js" %}"></script>
     <link rel="stylesheet" href="{% static 'css/select2-bootstrap4-theme/select2-bootstrap4.css' %}">
 {% endblock %}

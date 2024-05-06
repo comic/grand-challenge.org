@@ -218,3 +218,15 @@ a[aria-expanded=true] .fa-chevron-right {
 a[aria-expanded=false] .fa-chevron-down {
    display: none;
 }
+
+
+/* htmx */
+.htmx-indicator {
+ display:none;
+}
+.htmx-request .htmx-indicator {
+    display:inline-block;
+}
+.htmx-request.htmx-indicator {
+    display:inline-block;
+}
