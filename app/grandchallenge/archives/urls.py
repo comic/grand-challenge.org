@@ -10,7 +10,7 @@ from grandchallenge.archives.views import (
     ArchiveItemInterfaceCreate,
     ArchiveItemsList,
     ArchiveItemsToReaderStudyUpdate,
-    ArchiveItemUpdate,
+    ArchiveItemUpdateView,
     ArchiveList,
     ArchivePermissionRequestCreate,
     ArchivePermissionRequestList,
@@ -81,7 +81,7 @@ urlpatterns = [
     ),
     path(
         "<slug>/items/<uuid:pk>/edit/",
-        ArchiveItemUpdate.as_view(),
+        ArchiveItemUpdateView.as_view(),
         name="item-edit",
     ),
     path(

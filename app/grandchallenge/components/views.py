@@ -5,7 +5,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q, TextChoices
 from django.forms import Media
 from django.http import HttpResponse
-from django.utils.functional import cached_property
+from django.utils.functional import cached_property, empty
 from django.utils.html import format_html
 from django.views.generic import DeleteView, FormView, ListView, TemplateView
 from django_filters.rest_framework import DjangoFilterBackend
@@ -242,6 +242,52 @@ class CIVSetFormMixin:
     @property
     def new_interface_url(self):
         raise NotImplementedError
+
+
+class CIVSetUpdateViewMixin(CIVSetFormMixin):
+    def process_data_for_object(self, data):
+        """Updates the object"""
+        instance = self.object
+        non_civ_data_keys = self.form_class.Meta.non_civ_fields
+
+        save = False
+        for key in non_civ_data_keys:
+            value = data.get(key, empty)
+            if value is not empty and value != getattr(instance, key):
+                setattr(instance, key, value)
+                save = True
+        if save:
+            instance.save()
+
+        for key in data:
+            if key in non_civ_data_keys:
+                continue
+            instance.create_civ(
+                ci_slug=key, new_value=data[key], user=self.request.user
+            )
+
+        return instance
+
+
+class CIVSetCreateViewMixin(CIVSetFormMixin):
+    def create_object(self, non_civ_data):
+        raise NotImplementedError
+
+    def process_data_for_object(self, data):
+        """Creates the object, including interfaces"""
+        non_civ_data_keys = self.form_class.Meta.non_civ_fields
+
+        instance = self.create_object(
+            non_civ_data={k: data.get(k) for k in non_civ_data_keys}
+        )
+
+        for key in data:
+            if key in non_civ_data_keys:
+                continue
+            instance.create_civ(
+                ci_slug=key, new_value=data[key], user=self.request.user
+            )
+        return instance
 
 
 class InterfacesCreateBaseView(ObjectPermissionRequiredMixin, TemplateView):

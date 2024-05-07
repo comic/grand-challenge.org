@@ -356,7 +356,7 @@ def set_evaluation_inputs(*, evaluation_pk):
                             civ for civ_set in civ_sets for civ in civ_set
                         }
                     ),
-                )
+                ),
             )
             .filter(
                 inputs_match_count=evaluation.submission.phase.algorithm_inputs.count()
