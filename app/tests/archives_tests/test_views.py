@@ -914,9 +914,10 @@ def test_archive_item_create_view(
         client=client,
         user=editor,
     )
-    assert len(response.context["form"].fields) == 2
+    assert len(response.context["form"].fields) == 3
     assert response.context["form"].fields[ci_str.slug]
     assert response.context["form"].fields[ci_img.slug]
+    assert response.context["form"].fields["title"]
 
     im_upload = create_upload_from_file(
         file_path=RESOURCE_PATH / "test_grayscale.jpg",
@@ -945,6 +946,7 @@ def test_archive_item_create_view(
                 f"WidgetChoice-{ci_img2.slug}": WidgetChoices.IMAGE_SEARCH.name,
                 ci_json.slug: str(upload.pk),
                 ci_json2.slug: '{"some": "content"}',
+                "title": "archive-item title",
             },
             user=editor,
             method=client.post,
@@ -953,6 +955,7 @@ def test_archive_item_create_view(
     assert response.status_code == 302
     assert ArchiveItem.objects.count() == 2
     ai2 = ArchiveItem.objects.order_by("created").last()
+    assert ai2.title == "archive-item title"
     assert ai2.values.count() == 5
     assert ai2.values.get(interface=ci_str).value == "new-title"
     assert ai2.values.get(interface=ci_img).image.name == "test_grayscale.jpg"
