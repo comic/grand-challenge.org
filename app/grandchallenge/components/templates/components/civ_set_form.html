@@ -61,9 +61,14 @@
               hx-enable-me
               disabled
       >
-          Add value for new interface
-          <span id="hx-add-interface-indicator" class="htmx-indicator spinner-border spinner-grow-sm" role="status"></span>
-          <span class="spinner-grow spinner-grow-sm" role="status" hx-hide-me></span>
+        <div class="d-none" hx-display-me>
+                Add value for new interface
+              <span id="hx-add-interface-indicator" class="htmx-indicator spinner-border spinner-border-sm"></span>
+          </div>
+          <div hx-hide-me>
+              <span class="spinner-border spinner-border-sm"></span>
+              Loading...
+          </div>
       </button>
       <div class="d-flex justify-content-between pb-2">
         <div>
@@ -73,9 +78,14 @@
                   hx-enable-me
                   disabled
           >
-              Save
-              <span id="hx-save-indicator" class="htmx-indicator spinner-border spinner-border-sm" role="status"></span>
-              <span class="spinner-grow spinner-grow-sm" role="status" hx-hide-me></span>
+              <div class="d-none" hx-display-me>
+                  Save
+                  <span id="hx-save-indicator" class="htmx-indicator spinner-border spinner-border-sm"></span>
+              </div>
+              <div hx-hide-me>
+                  <span class="spinner-border spinner-border-sm"></span>
+                  Loading...
+              </div>
           </button>
         </div>
       </div>
@@ -89,6 +99,7 @@
     <script type="module" src="{% static 'components/js/autocomplete_htmx.mjs' %}"></script>
     <script type="module" src="{% static "components/js/htmx/enable-me.mjs" %}"></script>
     <script type="module" src="{% static "components/js/htmx/hide-me.mjs" %}"></script>
+    <script type="module" src="{% static "components/js/htmx/display-me.mjs" %}"></script>
     <script type="text/javascript" src="{% static "cases/js/ignore_enter_button.js" %}"></script>
     <link rel="stylesheet" href="{% static 'css/select2-bootstrap4-theme/select2-bootstrap4.css' %}">
 {% endblock %}

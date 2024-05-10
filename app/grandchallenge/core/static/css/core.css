@@ -222,11 +222,11 @@ a[aria-expanded=false] .fa-chevron-down {
 
 /* htmx */
 .htmx-indicator {
- display:none;
+    display:none;
 }
 .htmx-request .htmx-indicator {
-    display:inline-block;
+    display: inline-block;
 }
 .htmx-request.htmx-indicator {
-    display:inline-block;
+    display: inline-block;
 }

@@ -1,6 +1,6 @@
-document.addEventListener('htmx:loaded', function() {
+document.addEventListener('DOMContentLoaded', (event) => {
     let elements = document.querySelectorAll('[hx-enable-me]');
-    elements.forEach(function(element) {
+    elements.forEach(function (element) {
         element.removeAttribute('disabled');
     });
 });
