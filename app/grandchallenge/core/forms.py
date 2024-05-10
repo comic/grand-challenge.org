@@ -1,7 +1,8 @@
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django.conf import settings
-from django.forms import ModelForm
+from django.core.exceptions import ValidationError
+from django.forms import CharField, ModelForm
 
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.workstation_configs.models import WorkstationConfig
@@ -51,3 +52,47 @@ class PermissionRequestUpdateForm(SaveFormInitMixin, ModelForm):
 
     class Meta:
         fields = ("status", "rejection_text")
+
+
+class CreateTitleFormMixin:
+    model = None
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["title"] = CharField(
+            required=False,
+            initial=self.instance and self.instance.title or "",
+            max_length=self.model._meta.get_field("title").max_length,
+        )
+
+    class Meta:
+        non_civ_fields = ("title",)
+
+    def clean_title(self):
+        title = self.cleaned_data.get("title")
+        if title and self._unique_title_query(title).exists():
+            raise ValidationError(
+                f"An {self.model._meta.verbose_name} already exists with this title"
+            )
+        return title
+
+    def _unique_title_query(self, title):
+        return self.model.objects.filter(
+            title=title,
+        )
+
+
+class UpdateTitleFormMixin(CreateTitleFormMixin):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.instance.is_editable:
+            for _, field in self.fields.items():
+                field.disabled = True
+
+    def _unique_title_query(self, *args, **kwargs):
+        return (
+            super()
+            ._unique_title_query(*args, **kwargs)
+            .exclude(id=self.instance.pk)
+        )

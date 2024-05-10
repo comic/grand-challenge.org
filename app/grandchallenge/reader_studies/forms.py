@@ -36,8 +36,10 @@ from dynamic_forms import DynamicField, DynamicFormMixin
 from grandchallenge.components.forms import MultipleCIVForm
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.forms import (
+    CreateTitleFormMixin,
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
+    UpdateTitleFormMixin,
     WorkstationUserFilterMixin,
 )
 from grandchallenge.core.layout import Formset
@@ -653,15 +655,12 @@ class GroundTruthForm(SaveFormInitMixin, Form):
             answer.save()
 
 
-class DisplaySetCreateForm(MultipleCIVForm):
+class DisplaySetCreateForm(CreateTitleFormMixin, MultipleCIVForm):
+    model = DisplaySet
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["title"] = CharField(
-            required=False,
-            initial=self.instance and self.instance.title or "",
-            max_length=DisplaySet._meta.get_field("title").max_length,
-        )
         self.fields["order"] = IntegerField(
             initial=(
                 self.instance.order
@@ -672,31 +671,15 @@ class DisplaySetCreateForm(MultipleCIVForm):
         )
 
     class Meta:
-        non_civ_fields = ("title", "order")
-
-    def clean_title(self):
-        title = self.cleaned_data.get("title")
-        if title and self._title_query(title).exists():
-            raise ValidationError(
-                "A display set already exists with this title"
-            )
-        return title
-
-    def _title_query(self, title):
-        return DisplaySet.objects.filter(
-            title=title,
-            reader_study=self.base_obj,
+        non_civ_fields = (
+            "order",
+            *CreateTitleFormMixin.Meta.non_civ_fields,
         )
 
+    def _unique_title_query(self, *args, **kwargs):
+        query = super()._unique_title_query(*args, **kwargs)
+        return query.filter(reader_study=self.base_obj)
 
-class DisplaySetUpdateForm(DisplaySetCreateForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if not self.instance.is_editable:
-            for _, field in self.fields.items():
-                field.disabled = True
 
-    def _title_query(self, *args, **kwargs):
-        return (
-            super()._title_query(*args, **kwargs).exclude(id=self.instance.pk)
-        )
+class DisplaySetUpdateForm(UpdateTitleFormMixin, DisplaySetCreateForm):
+    pass
