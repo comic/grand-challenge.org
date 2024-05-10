@@ -396,7 +396,7 @@ class ReaderStudyDisplaySetList(CivSetListView):
         *CivSetListView.columns,
     ]
 
-    default_sort_column = 2
+    default_sort_column = 3
     search_fields = [
         "title",
         "order",
