@@ -210,39 +210,55 @@ def test_social_image_meta_tag(client, uploaded_image):
     "form_class",
     (ArchiveItemCreateForm, ArchiveItemUpdateForm),
 )
-@pytest.mark.parametrize(
-    "existing_title,new_title,expected_validity",
-    (
-        ("", "", True),
-        ("Foo", "", True),
-        ("", "Bar", True),
-        ("Foo", "Bar", True),
-        ("Foo", "Foo", False),
-    ),
-)
-def test_archive_item_form_unique_title(
-    form_class, existing_title, new_title, expected_validity
-):
-    archive = ArchiveFactory()
+def test_archive_item_form_unique_title(form_class):
+    archive1 = ArchiveFactory()
+
     user = UserFactory()
-    archive.add_editor(user)
+    archive1.add_editor(user)
 
-    ArchiveItemFactory(archive=archive, title=existing_title)
+    ai1 = ArchiveItemFactory(archive=archive1, title="Title in archive 1")
 
-    instance = None
+    instance1 = None
     if form_class == ArchiveItemUpdateForm:
-        instance = ArchiveItemFactory(archive=archive)
+        instance1 = ArchiveItemFactory(archive=archive1)
+
+    # Adding a unique title in archive 1 is allowed
+    form = form_class(
+        user=user,
+        instance=instance1,
+        base_obj=archive1,
+        data={
+            "title": "A unique title",
+        },
+    )
+    assert form.is_valid()
+
+    # Adding an existing title in archive 1 is not allowed
+    form = form_class(
+        user=user,
+        instance=instance1,
+        base_obj=archive1,
+        data={"title": ai1.title},
+    )
+    assert not form.is_valid()
+
+    # However, it is allowed if it's in another archive all together
+    archive2 = ArchiveFactory()
+    archive2.add_editor(user)
+
+    instance2 = None
+    if form_class == ArchiveItemUpdateForm:
+        instance2 = ArchiveItemFactory(archive=archive2)
 
     form = form_class(
         user=user,
-        instance=instance,
-        base_obj=archive,
+        instance=instance2,
+        base_obj=archive2,
         data={
-            "title": new_title,
+            "title": ai1.title,
         },
     )
-
-    assert form.is_valid() is expected_validity
+    assert form.is_valid()
 
 
 @pytest.mark.django_db

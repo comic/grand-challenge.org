@@ -658,6 +658,12 @@ class GroundTruthForm(SaveFormInitMixin, Form):
 class DisplaySetCreateForm(CreateTitleFormMixin, MultipleCIVForm):
     model = DisplaySet
 
+    class Meta:
+        non_civ_fields = (
+            "order",
+            "title",
+        )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -670,16 +676,14 @@ class DisplaySetCreateForm(CreateTitleFormMixin, MultipleCIVForm):
             min_value=0,
         )
 
-    class Meta:
-        non_civ_fields = (
-            "order",
-            *CreateTitleFormMixin.Meta.non_civ_fields,
-        )
-
     def _unique_title_query(self, *args, **kwargs):
         query = super()._unique_title_query(*args, **kwargs)
         return query.filter(reader_study=self.base_obj)
 
 
 class DisplaySetUpdateForm(UpdateTitleFormMixin, DisplaySetCreateForm):
-    pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.instance.is_editable:
+            for _, field in self.fields.items():
+                field.disabled = True

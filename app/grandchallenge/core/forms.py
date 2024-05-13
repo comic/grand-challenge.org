@@ -66,9 +66,6 @@ class CreateTitleFormMixin:
             max_length=self.model._meta.get_field("title").max_length,
         )
 
-    class Meta:
-        non_civ_fields = ("title",)
-
     def clean_title(self):
         title = self.cleaned_data.get("title")
         if title and self._unique_title_query(title).exists():
@@ -84,12 +81,6 @@ class CreateTitleFormMixin:
 
 
 class UpdateTitleFormMixin(CreateTitleFormMixin):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if not self.instance.is_editable:
-            for _, field in self.fields.items():
-                field.disabled = True
-
     def _unique_title_query(self, *args, **kwargs):
         return (
             super()

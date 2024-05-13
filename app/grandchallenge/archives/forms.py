@@ -233,10 +233,17 @@ class AddCasesForm(UploadRawImagesForm):
 class ArchiveItemCreateForm(CreateTitleFormMixin, MultipleCIVForm):
     model = ArchiveItem
 
+    class Meta:
+        non_civ_fields = ("title",)
+
     def _unique_title_query(self, *args, **kwargs):
         query = super()._unique_title_query(*args, **kwargs)
         return query.filter(archive=self.base_obj)
 
 
 class ArchiveItemUpdateForm(UpdateTitleFormMixin, ArchiveItemCreateForm):
-    pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.instance.is_editable:
+            for _, field in self.fields.items():
+                field.disabled = True
