@@ -1,5 +1,3 @@
-import os
-
 from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -28,6 +26,7 @@ from stdimage import JPEGField
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.components.models import (
     CIVForObjectMixin,
+    CIVSetContainerMixin,
     ComponentInterface,
     ComponentInterfaceValue,
     InterfaceKind,
@@ -789,7 +788,7 @@ def delete_reader_study_groups_hook(*_, instance: ReaderStudy, using, **__):
         pass
 
 
-class DisplaySet(CIVForObjectMixin, UUIDModel):
+class DisplaySet(CIVSetContainerMixin, CIVForObjectMixin, UUIDModel):
     reader_study = models.ForeignKey(
         ReaderStudy, related_name="display_sets", on_delete=models.PROTECT
     )
@@ -798,18 +797,6 @@ class DisplaySet(CIVForObjectMixin, UUIDModel):
     )
     order = models.PositiveIntegerField(default=0)
     title = models.CharField(max_length=255, default="", blank=True)
-
-    def __str__(self):
-        result = f"{self.title!r}" if self.title else str(self.pk)
-
-        values = []
-        for value in self.values.all():
-            if value.image:
-                values.append(value.image.name)
-            if value.file:
-                values.append(os.path.basename(value.file.file.name))
-        values = ", ".join(values)
-        return f"{result} ({values})" if values else f"Empty {result}"
 
     def save(self, *args, **kwargs):
         adding = self._state.adding

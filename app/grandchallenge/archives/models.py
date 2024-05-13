@@ -1,5 +1,3 @@
-import os
-
 from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -15,6 +13,7 @@ from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.components.models import (
     CIVForObjectMixin,
+    CIVSetContainerMixin,
     ComponentInterfaceValue,
     ValuesForInterfacesMixin,
 )
@@ -284,7 +283,7 @@ class ArchiveGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(Archive, on_delete=models.CASCADE)
 
 
-class ArchiveItem(CIVForObjectMixin, UUIDModel):
+class ArchiveItem(CIVSetContainerMixin, CIVForObjectMixin, UUIDModel):
     archive = models.ForeignKey(
         Archive, related_name="items", on_delete=models.PROTECT
     )
@@ -292,18 +291,6 @@ class ArchiveItem(CIVForObjectMixin, UUIDModel):
         ComponentInterfaceValue, blank=True, related_name="archive_items"
     )
     title = models.CharField(max_length=255, default="", blank=True)
-
-    def __str__(self):
-        result = f"{self.title!r}" if self.title else str(self.pk)
-
-        values = []
-        for value in self.values.all():
-            if value.image:
-                values.append(value.image.name)
-            if value.file:
-                values.append(os.path.basename(value.file.file.name))
-        values = ", ".join(values)
-        return f"{result} ({values})" if values else f"Empty {result}"
 
     def save(self, *args, **kwargs):
         adding = self._state.adding

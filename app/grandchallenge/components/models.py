@@ -1962,6 +1962,30 @@ class ComponentImage(FieldChangeMixin, models.Model):
             self.size_in_registry = self.calculate_size_in_registry()
 
 
+class CIVSetContainerMixin:
+    def __str__(self):
+        result = [str(self.pk)]
+
+        if self.title:
+            result.append(f"{self.title!r}")
+
+        result.append(self.__content_str)
+        return ", ".join(result)
+
+    @property
+    def __content_str(self):
+        civs = self.values.all()
+        nr = len(civs)
+        if nr == 0:
+            return "No content"
+
+        if nr > 5:
+            return "5+ items"
+
+        content = [f"{civ.interface.title}: {civ.title[:30]}" for civ in civs]
+        return ", ".join(content)
+
+
 class CIVForObjectMixin:
     def create_civ(self, *, ci_slug, new_value, user=None):
         ci = ComponentInterface.objects.get(slug=ci_slug)
