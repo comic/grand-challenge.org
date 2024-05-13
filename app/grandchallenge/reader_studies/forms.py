@@ -666,14 +666,17 @@ class DisplaySetCreateForm(CreateUniqueTitleFormMixin, MultipleCIVForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["order"] = IntegerField(
-            initial=(
-                self.instance.order
-                if self.instance
-                else self.base_obj.next_display_set_order
+        self.fields = {
+            "order": IntegerField(
+                initial=(
+                    self.instance.order
+                    if self.instance
+                    else self.base_obj.next_display_set_order
+                ),
+                min_value=0,
             ),
-            min_value=0,
-        )
+            **self.fields,
+        }
 
     def _unique_title_query(self, *args, **kwargs):
         query = super()._unique_title_query(*args, **kwargs)

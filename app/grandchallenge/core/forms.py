@@ -64,11 +64,14 @@ class CreateUniqueTitleFormMixin:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["title"] = CharField(
-            required=False,
-            initial=self.instance and self.instance.title or "",
-            max_length=self.Meta.model._meta.get_field("title").max_length,
-        )
+        self.fields = {
+            "title": CharField(
+                required=False,
+                initial=self.instance and self.instance.title or "",
+                max_length=self.Meta.model._meta.get_field("title").max_length,
+            ),
+            **self.fields,
+        }
 
     def clean_title(self):
         title = self.cleaned_data.get("title")
