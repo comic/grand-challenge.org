@@ -20,10 +20,10 @@ from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.components.forms import MultipleCIVForm
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.core.forms import (
-    CreateTitleFormMixin,
+    CreateUniqueTitleFormMixin,
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
-    UpdateTitleFormMixin,
+    UpdateUniqueTitleFormMixin,
     WorkstationUserFilterMixin,
 )
 from grandchallenge.core.guardian import get_objects_for_user
@@ -230,10 +230,9 @@ class AddCasesForm(UploadRawImagesForm):
         return super().save(*args, **kwargs)
 
 
-class ArchiveItemCreateForm(CreateTitleFormMixin, MultipleCIVForm):
-    model = ArchiveItem
-
+class ArchiveItemCreateForm(CreateUniqueTitleFormMixin, MultipleCIVForm):
     class Meta:
+        model = ArchiveItem
         non_civ_fields = ("title",)
 
     def _unique_title_query(self, *args, **kwargs):
@@ -241,7 +240,7 @@ class ArchiveItemCreateForm(CreateTitleFormMixin, MultipleCIVForm):
         return query.filter(archive=self.base_obj)
 
 
-class ArchiveItemUpdateForm(UpdateTitleFormMixin, ArchiveItemCreateForm):
+class ArchiveItemUpdateForm(UpdateUniqueTitleFormMixin, ArchiveItemCreateForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.instance.is_editable:

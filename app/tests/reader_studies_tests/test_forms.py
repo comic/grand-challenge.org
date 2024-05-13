@@ -1220,48 +1220,6 @@ def test_display_set_form_unique_title(form_class):
     assert form.is_valid()
 
 
-# TODO: transform this into a Mixin test
-# @pytest.mark.django_db
-# @pytest.mark.parametrize(
-#     "form_class",
-#     (DisplaySetCreateForm, DisplaySetUpdateForm),
-# )
-# @pytest.mark.parametrize(
-#     "existing_ds_title,new_ds_title,expected_validity",
-#     (
-#         ("", "", True),
-#         ("Foo", "", True),
-#         ("", "Bar", True),
-#         ("Foo", "Bar", True),
-#         ("Foo", "Foo", False),
-#     ),
-# )
-# def test_display_set_form_unique_title(
-#     form_class, existing_ds_title, new_ds_title, expected_validity
-# ):
-#     rs = ReaderStudyFactory()
-#     user = UserFactory()
-#     rs.add_editor(user)
-#
-#     DisplaySetFactory(reader_study=rs, title=existing_ds_title)
-#
-#     instance = None
-#     if form_class == DisplaySetUpdateForm:
-#         instance = DisplaySetFactory(reader_study=rs)
-#
-#     form = form_class(
-#         user=user,
-#         instance=instance,
-#         base_obj=rs,
-#         data={
-#             "order": 1,
-#             "title": new_ds_title,
-#         },
-#     )
-#
-#     assert form.is_valid() is expected_validity
-
-
 @pytest.mark.parametrize(
     "form_class",
     (

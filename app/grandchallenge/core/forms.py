@@ -54,8 +54,12 @@ class PermissionRequestUpdateForm(SaveFormInitMixin, ModelForm):
         fields = ("status", "rejection_text")
 
 
-class CreateTitleFormMixin:
-    model = None
+class CreateUniqueTitleFormMixin:
+    """
+    Form mixing creating an item with a unique title.
+
+    Base class should have the `Meta.model` and `instance` attributes
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -63,24 +67,24 @@ class CreateTitleFormMixin:
         self.fields["title"] = CharField(
             required=False,
             initial=self.instance and self.instance.title or "",
-            max_length=self.model._meta.get_field("title").max_length,
+            max_length=self.Meta.model._meta.get_field("title").max_length,
         )
 
     def clean_title(self):
         title = self.cleaned_data.get("title")
         if title and self._unique_title_query(title).exists():
             raise ValidationError(
-                f"An {self.model._meta.verbose_name} already exists with this title"
+                f"An {self.Meta.model._meta.verbose_name} already exists with this title"
             )
         return title
 
     def _unique_title_query(self, title):
-        return self.model.objects.filter(
+        return self.Meta.model.objects.filter(
             title=title,
         )
 
 
-class UpdateTitleFormMixin(CreateTitleFormMixin):
+class UpdateUniqueTitleFormMixin(CreateUniqueTitleFormMixin):
     def _unique_title_query(self, *args, **kwargs):
         return (
             super()

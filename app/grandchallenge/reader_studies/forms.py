@@ -36,10 +36,10 @@ from dynamic_forms import DynamicField, DynamicFormMixin
 from grandchallenge.components.forms import MultipleCIVForm
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.forms import (
-    CreateTitleFormMixin,
+    CreateUniqueTitleFormMixin,
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
-    UpdateTitleFormMixin,
+    UpdateUniqueTitleFormMixin,
     WorkstationUserFilterMixin,
 )
 from grandchallenge.core.layout import Formset
@@ -655,10 +655,9 @@ class GroundTruthForm(SaveFormInitMixin, Form):
             answer.save()
 
 
-class DisplaySetCreateForm(CreateTitleFormMixin, MultipleCIVForm):
-    model = DisplaySet
-
+class DisplaySetCreateForm(CreateUniqueTitleFormMixin, MultipleCIVForm):
     class Meta:
+        model = DisplaySet
         non_civ_fields = (
             "order",
             "title",
@@ -681,7 +680,7 @@ class DisplaySetCreateForm(CreateTitleFormMixin, MultipleCIVForm):
         return query.filter(reader_study=self.base_obj)
 
 
-class DisplaySetUpdateForm(UpdateTitleFormMixin, DisplaySetCreateForm):
+class DisplaySetUpdateForm(UpdateUniqueTitleFormMixin, DisplaySetCreateForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.instance.is_editable:
