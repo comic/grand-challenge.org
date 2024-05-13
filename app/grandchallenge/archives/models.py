@@ -354,11 +354,6 @@ class ArchiveItem(CIVForObjectMixin, UUIDModel):
         return self.archive
 
     @property
-    def is_editable(self):
-        # always editable
-        return True
-
-    @property
     def update_url(self):
         return reverse(
             "archives:item-edit",

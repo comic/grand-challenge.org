@@ -241,8 +241,4 @@ class ArchiveItemCreateForm(CreateUniqueTitleFormMixin, MultipleCIVForm):
 
 
 class ArchiveItemUpdateForm(UpdateUniqueTitleFormMixin, ArchiveItemCreateForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if not self.instance.is_editable:
-            for _, field in self.fields.items():
-                field.disabled = True
+    pass
