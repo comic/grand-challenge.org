@@ -648,8 +648,14 @@ def test_archive_items_to_reader_study_update(client, settings):
 
     assert response.status_code == 200
 
-    assert f"{im1.name}, {im3.name}" in response.rendered_content
-    assert f"{im2.name}, {im4.name}" in response.rendered_content
+    assert (
+        f"{image.title}: {im1.name}, {overlay.title}: {im3.name}"
+        in response.rendered_content
+    )
+    assert (
+        f"{image.title}: {im2.name}, {overlay.title}: {im4.name}"
+        in response.rendered_content
+    )
 
 
 @pytest.mark.django_db
