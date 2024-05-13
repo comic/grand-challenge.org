@@ -1,5 +1,5 @@
 import pytest
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import ComponentInterfaceValueFactory
@@ -18,7 +18,7 @@ def create_archive_items_for_images(images, archive):
         ai.values.add(civ)
 
 
-@pytest.mark.django_db(transaction=True)
+@pytest.mark.django_db
 def test_archive_item_set_title():
     archive = ArchiveFactory()
     ai0 = ArchiveItemFactory(archive=archive)
@@ -38,15 +38,17 @@ def test_archive_item_set_title():
 
     # Duplication attempt via edit
     ai1.title = ai0.title
-    with pytest.raises(IntegrityError):
-        ai1.save()
+    with transaction.atomic():
+        with pytest.raises(IntegrityError):
+            ai1.save()
 
     # Duplication attempt via save
-    with pytest.raises(IntegrityError):
-        ArchiveItemFactory(
-            archive=archive,
-            title=ai1.title,
-        )
+    with transaction.atomic():
+        with pytest.raises(IntegrityError):
+            ArchiveItemFactory(
+                archive=archive,
+                title=ai1.title,
+            )
 
     # Other archive no problem
     ArchiveItemFactory(

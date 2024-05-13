@@ -2,6 +2,7 @@ from contextlib import nullcontext
 
 import pytest
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db import transaction
 from django.db.models import ProtectedError
 from django.db.utils import IntegrityError
 
@@ -677,7 +678,7 @@ def test_display_set_description():
         assert ds.description == result[ds.pk]
 
 
-@pytest.mark.django_db(transaction=True)
+@pytest.mark.django_db
 def test_display_set_title():
     rs = ReaderStudyFactory()
     ds0 = DisplaySetFactory(reader_study=rs)
@@ -697,15 +698,17 @@ def test_display_set_title():
 
     # Duplication attempt via edit
     ds1.title = ds0.title
-    with pytest.raises(IntegrityError):
-        ds1.save()
+    with transaction.atomic():
+        with pytest.raises(IntegrityError):
+            ds1.save()
 
     # Duplication attempt via save
-    with pytest.raises(IntegrityError):
-        DisplaySetFactory(
-            reader_study=rs,
-            title=ds0.title,
-        )
+    with transaction.atomic():
+        with pytest.raises(IntegrityError):
+            DisplaySetFactory(
+                reader_study=rs,
+                title=ds0.title,
+            )
 
     # Other reader study is no problem
     DisplaySetFactory(
