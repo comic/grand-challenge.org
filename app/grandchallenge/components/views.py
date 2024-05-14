@@ -126,15 +126,18 @@ class MultipleCIVProcessingBaseView(
     raise_exception = True
     success_message = None
 
-    def process_data_for_object(self, data):
-        raise NotImplementedError
-
     @property
     def base_object(self):
         raise NotImplementedError
 
     def form_valid(self, form):
-        form.instance = self.process_data_for_object(form.cleaned_data)
+        form.instance = form.process_interface_data(
+            data={
+                k: v
+                for k, v in form.cleaned_data.items()
+                if k not in form.Meta.non_interface_fields
+            }
+        )
         response = super().form_valid(form)
         return HttpResponse(
             response.url,
@@ -244,14 +247,13 @@ class CIVSetFormMixin:
         raise NotImplementedError
 
 
-class CIVSetUpdateViewMixin(CIVSetFormMixin):
-    def process_data_for_object(self, data):
-        """Updates the object"""
-        instance = self.object
-        non_civ_data_keys = self.form_class.Meta.non_civ_fields
+class CIVSetUpdateMixin:
+    def form_valid(self, form):
+        instance = form.instance
+        data = form.cleaned_data
 
         save = False
-        for key in non_civ_data_keys:
+        for key in form.Meta.non_interface_fields:
             value = data.get(key, empty)
             if value is not empty and value != getattr(instance, key):
                 setattr(instance, key, value)
@@ -259,35 +261,26 @@ class CIVSetUpdateViewMixin(CIVSetFormMixin):
         if save:
             instance.save()
 
-        for key in data:
-            if key in non_civ_data_keys:
-                continue
-            instance.create_civ(
-                ci_slug=key, new_value=data[key], user=self.request.user
-            )
-
-        return instance
+        return super().form_valid(form)
 
 
-class CIVSetCreateViewMixin(CIVSetFormMixin):
-    def create_object(self, non_civ_data):
-        raise NotImplementedError
+class CIVSetCreateMixin:
+    def form_valid(self, form):
+        model = form.Meta.model
+        non_civ_data = {
+            k: v
+            for k, v in form.cleaned_data.items()
+            if k in form.Meta.non_interface_fields
+        }
 
-    def process_data_for_object(self, data):
-        """Creates the object, including interfaces"""
-        non_civ_data_keys = self.form_class.Meta.non_civ_fields
-
-        instance = self.create_object(
-            non_civ_data={k: data.get(k) for k in non_civ_data_keys}
+        form.instance = model.objects.create(
+            **{
+                form.Meta.base_object_model_field: self.base_object,
+                **non_civ_data,
+            }
         )
 
-        for key in data:
-            if key in non_civ_data_keys:
-                continue
-            instance.create_civ(
-                ci_slug=key, new_value=data[key], user=self.request.user
-            )
-        return instance
+        return super().form_valid(form)
 
 
 class InterfacesCreateBaseView(ObjectPermissionRequiredMixin, TemplateView):

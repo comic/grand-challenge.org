@@ -249,6 +249,15 @@ class MultipleCIVForm(Form):
             user=self.user,
         ).field
 
+    def process_interface_data(self, data):
+        for slug, value in data.items():
+            self.instance.create_civ(
+                ci_slug=slug,
+                new_value=value,
+                user=self.user,
+            )
+        return self.instance
+
 
 class SingleCIVForm(Form):
     _possible_widgets = {

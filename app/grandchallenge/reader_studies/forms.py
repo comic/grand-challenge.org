@@ -658,9 +658,10 @@ class GroundTruthForm(SaveFormInitMixin, Form):
 class DisplaySetCreateForm(CreateUniqueTitleFormMixin, MultipleCIVForm):
     class Meta:
         model = DisplaySet
-        non_civ_fields = (
-            "order",
+        base_object_model_field = "reader_study"
+        non_interface_fields = (
             "title",
+            "order",
         )
 
     def __init__(self, *args, **kwargs):

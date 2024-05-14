@@ -59,10 +59,11 @@ from grandchallenge.components.serializers import (
 )
 from grandchallenge.components.views import (
     CIVSetBulkDeleteView,
-    CIVSetCreateViewMixin,
+    CIVSetCreateMixin,
     CIVSetDeleteView,
+    CIVSetFormMixin,
     CivSetListView,
-    CIVSetUpdateViewMixin,
+    CIVSetUpdateMixin,
     FileUpdateBaseView,
     InterfacesCreateBaseView,
     MultipleCIVProcessingBaseView,
@@ -1263,7 +1264,9 @@ class QuestionWidgetsView(BaseAddObjectToReaderStudyMixin, View):
 
 
 class DisplaySetUpdateView(
-    CIVSetUpdateViewMixin, MultipleCIVProcessingBaseView
+    CIVSetUpdateMixin,
+    CIVSetFormMixin,
+    MultipleCIVProcessingBaseView,
 ):
     form_class = DisplaySetUpdateForm
     permission_required = (
@@ -1367,7 +1370,8 @@ class DisplaySetInterfacesCreate(InterfacesCreateBaseView):
 
 
 class DisplaySetCreateView(
-    CIVSetCreateViewMixin,
+    CIVSetCreateMixin,
+    CIVSetFormMixin,
     MultipleCIVProcessingBaseView,
 ):
     form_class = DisplaySetCreateForm

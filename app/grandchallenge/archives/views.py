@@ -52,10 +52,11 @@ from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.components.forms import MultipleCIVForm, NewFileUploadForm
 from grandchallenge.components.views import (
     CIVSetBulkDeleteView,
-    CIVSetCreateViewMixin,
+    CIVSetCreateMixin,
     CIVSetDeleteView,
+    CIVSetFormMixin,
     CivSetListView,
-    CIVSetUpdateViewMixin,
+    CIVSetUpdateMixin,
     InterfacesCreateBaseView,
     MultipleCIVProcessingBaseView,
 )
@@ -368,7 +369,9 @@ class ArchiveUploadSessionCreate(
 
 
 class ArchiveItemUpdateView(
-    CIVSetUpdateViewMixin, MultipleCIVProcessingBaseView
+    CIVSetUpdateMixin,
+    CIVSetFormMixin,
+    MultipleCIVProcessingBaseView,
 ):
     form_class = ArchiveItemUpdateForm
     permission_required = (
@@ -559,7 +562,8 @@ class ArchiveItemViewSet(
 
 
 class ArchiveItemCreateView(
-    CIVSetCreateViewMixin,
+    CIVSetCreateMixin,
+    CIVSetFormMixin,
     MultipleCIVProcessingBaseView,
 ):
     form_class = ArchiveItemCreateForm
