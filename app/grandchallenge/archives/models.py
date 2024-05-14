@@ -266,6 +266,9 @@ class Archive(
     def civ_set_model(self):
         return ArchiveItem
 
+    def create_civ_set(self, data):
+        self.civ_set_model.objects.create(archive=self, **data)
+
     @property
     def create_civ_set_url(self):
         return reverse("archives:item-create", kwargs={"slug": self.slug})

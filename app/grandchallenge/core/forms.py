@@ -68,7 +68,7 @@ class CreateUniqueTitleFormMixin:
         self.fields["title"] = CharField(
             required=False,
             initial=self.instance and self.instance.title or "",
-            max_length=self.Meta.model._meta.get_field("title").max_length,
+            max_length=self.model._meta.get_field("title").max_length,
         )
         self.order_fields(["title", *field_order])
 
@@ -76,12 +76,12 @@ class CreateUniqueTitleFormMixin:
         title = self.cleaned_data.get("title")
         if title and self._unique_title_query(title).exists():
             raise ValidationError(
-                f"An {self.Meta.model._meta.verbose_name} already exists with this title"
+                f"An {self.model._meta.verbose_name} already exists with this title"
             )
         return title
 
     def _unique_title_query(self, title):
-        return self.Meta.model.objects.filter(
+        return self.model.objects.filter(
             title=title,
         )
 

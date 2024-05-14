@@ -266,20 +266,12 @@ class CIVSetUpdateMixin:
 
 class CIVSetCreateMixin:
     def form_valid(self, form):
-        model = form.Meta.model
         non_civ_data = {
             k: v
             for k, v in form.cleaned_data.items()
             if k in form.Meta.non_interface_fields
         }
-
-        form.instance = model.objects.create(
-            **{
-                form.Meta.base_object_model_field: self.base_object,
-                **non_civ_data,
-            }
-        )
-
+        self.base_object.create_civ_set(data=non_civ_data)
         return super().form_valid(form)
 
 

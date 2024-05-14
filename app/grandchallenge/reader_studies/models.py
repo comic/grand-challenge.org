@@ -736,6 +736,9 @@ class ReaderStudy(
     def civ_set_model(self):
         return DisplaySet
 
+    def create_civ_set(self, data):
+        return self.civ_set_model.objects.create(reader_study=self, **data)
+
     @property
     def create_civ_set_url(self):
         return reverse(

@@ -57,7 +57,6 @@ from grandchallenge.reader_studies.models import (
     Answer,
     AnswerType,
     CategoricalOption,
-    DisplaySet,
     Question,
     ReaderStudy,
     ReaderStudyPermissionRequest,
@@ -657,12 +656,14 @@ class GroundTruthForm(SaveFormInitMixin, Form):
 
 class DisplaySetCreateForm(CreateUniqueTitleFormMixin, MultipleCIVForm):
     class Meta:
-        model = DisplaySet
-        base_object_model_field = "reader_study"
         non_interface_fields = (
             "title",
             "order",
         )
+
+    @property
+    def model(self):
+        return self.base_obj.civ_set_model
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

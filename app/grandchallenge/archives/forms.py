@@ -232,9 +232,11 @@ class AddCasesForm(UploadRawImagesForm):
 
 class ArchiveItemCreateForm(CreateUniqueTitleFormMixin, MultipleCIVForm):
     class Meta:
-        model = ArchiveItem
-        base_object_model_field = "archive"
         non_interface_fields = ("title",)
+
+    @property
+    def model(self):
+        return self.base_obj.civ_set_model
 
     def _unique_title_query(self, *args, **kwargs):
         query = super()._unique_title_query(*args, **kwargs)
