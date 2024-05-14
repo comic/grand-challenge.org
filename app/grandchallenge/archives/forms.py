@@ -24,10 +24,10 @@ from grandchallenge.components.forms import (
 )
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.core.forms import (
-    CreateUniqueTitleFormMixin,
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
-    UpdateUniqueTitleFormMixin,
+    UniqueTitleCreateFormMixin,
+    UniqueTitleUpdateFormMixin,
     WorkstationUserFilterMixin,
 )
 from grandchallenge.core.guardian import get_objects_for_user
@@ -252,7 +252,7 @@ class ArchiveItemFormMixin(MultipleCIVForm):
 
 class ArchiveItemCreateForm(
     ArchiveItemFormMixin,
-    CreateUniqueTitleFormMixin,
+    UniqueTitleCreateFormMixin,
     CIVSetCreateFormMixin,
     MultipleCIVForm,
 ):
@@ -261,7 +261,7 @@ class ArchiveItemCreateForm(
 
 class ArchiveItemUpdateForm(
     ArchiveItemFormMixin,
-    UpdateUniqueTitleFormMixin,
+    UniqueTitleUpdateFormMixin,
     CIVSetUpdateFormMixin,
     MultipleCIVForm,
 ):

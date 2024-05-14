@@ -54,7 +54,7 @@ class PermissionRequestUpdateForm(SaveFormInitMixin, ModelForm):
         fields = ("status", "rejection_text")
 
 
-class CreateUniqueTitleFormMixin:
+class UniqueTitleCreateFormMixin:
     """
     Form mixing creating an item with a unique title.
 
@@ -84,7 +84,7 @@ class CreateUniqueTitleFormMixin:
         return self.model.objects.filter(title=title)
 
 
-class UpdateUniqueTitleFormMixin(CreateUniqueTitleFormMixin):
+class UniqueTitleUpdateFormMixin(UniqueTitleCreateFormMixin):
     def unique_title_query(self, *args, **kwargs):
         return (
             super()

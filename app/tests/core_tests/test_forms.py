@@ -2,8 +2,8 @@ import pytest
 from django.forms import Form
 
 from grandchallenge.core.forms import (
-    CreateUniqueTitleFormMixin,
-    UpdateUniqueTitleFormMixin,
+    UniqueTitleCreateFormMixin,
+    UniqueTitleUpdateFormMixin,
 )
 from grandchallenge.reader_studies.models import DisplaySet
 from tests.reader_studies_tests.factories import DisplaySetFactory
@@ -12,7 +12,7 @@ from tests.reader_studies_tests.factories import DisplaySetFactory
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "form_class",
-    (CreateUniqueTitleFormMixin, UpdateUniqueTitleFormMixin),
+    (UniqueTitleCreateFormMixin, UniqueTitleUpdateFormMixin),
 )
 @pytest.mark.parametrize(
     "existing_title,new_title,expected_validity",
@@ -29,8 +29,8 @@ def test_unique_title_mixin(
 ):
 
     class TestForm(form_class, Form):
-        class Meta:
-            model = DisplaySet  # For ease, use an existing model with a title
+
+        model = DisplaySet  # For ease, use an existing model with a title
 
         def __init__(self, *args, instance, **kwargs):
             self.instance = instance
@@ -42,7 +42,7 @@ def test_unique_title_mixin(
 
     # Adapt for updating
     instance = None
-    if form_class == UpdateUniqueTitleFormMixin:
+    if form_class == UniqueTitleUpdateFormMixin:
         instance = DisplaySetFactory()
 
     form = TestForm(

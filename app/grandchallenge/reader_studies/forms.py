@@ -40,10 +40,10 @@ from grandchallenge.components.forms import (
 )
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.forms import (
-    CreateUniqueTitleFormMixin,
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
-    UpdateUniqueTitleFormMixin,
+    UniqueTitleCreateFormMixin,
+    UniqueTitleUpdateFormMixin,
     WorkstationUserFilterMixin,
 )
 from grandchallenge.core.layout import Formset
@@ -693,7 +693,7 @@ class DisplaySetFormMixin:
 
 class DisplaySetCreateForm(
     DisplaySetFormMixin,
-    CreateUniqueTitleFormMixin,
+    UniqueTitleCreateFormMixin,
     CIVSetCreateFormMixin,
     MultipleCIVForm,
 ):
@@ -702,7 +702,7 @@ class DisplaySetCreateForm(
 
 class DisplaySetUpdateForm(
     DisplaySetFormMixin,
-    UpdateUniqueTitleFormMixin,
+    UniqueTitleUpdateFormMixin,
     CIVSetUpdateFormMixin,
     MultipleCIVForm,
 ):
