@@ -52,11 +52,9 @@ from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.components.forms import MultipleCIVForm, NewFileUploadForm
 from grandchallenge.components.views import (
     CIVSetBulkDeleteView,
-    CIVSetCreateMixin,
     CIVSetDeleteView,
     CIVSetFormMixin,
     CivSetListView,
-    CIVSetUpdateMixin,
     InterfacesCreateBaseView,
     MultipleCIVProcessingBaseView,
 )
@@ -369,7 +367,6 @@ class ArchiveUploadSessionCreate(
 
 
 class ArchiveItemUpdateView(
-    CIVSetUpdateMixin,
     CIVSetFormMixin,
     MultipleCIVProcessingBaseView,
 ):
@@ -562,7 +559,6 @@ class ArchiveItemViewSet(
 
 
 class ArchiveItemCreateView(
-    CIVSetCreateMixin,
     CIVSetFormMixin,
     MultipleCIVProcessingBaseView,
 ):

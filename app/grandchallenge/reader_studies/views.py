@@ -59,11 +59,9 @@ from grandchallenge.components.serializers import (
 )
 from grandchallenge.components.views import (
     CIVSetBulkDeleteView,
-    CIVSetCreateMixin,
     CIVSetDeleteView,
     CIVSetFormMixin,
     CivSetListView,
-    CIVSetUpdateMixin,
     FileUpdateBaseView,
     InterfacesCreateBaseView,
     MultipleCIVProcessingBaseView,
@@ -1264,7 +1262,6 @@ class QuestionWidgetsView(BaseAddObjectToReaderStudyMixin, View):
 
 
 class DisplaySetUpdateView(
-    CIVSetUpdateMixin,
     CIVSetFormMixin,
     MultipleCIVProcessingBaseView,
 ):
@@ -1370,7 +1367,6 @@ class DisplaySetInterfacesCreate(InterfacesCreateBaseView):
 
 
 class DisplaySetCreateView(
-    CIVSetCreateMixin,
     CIVSetFormMixin,
     MultipleCIVProcessingBaseView,
 ):

@@ -17,7 +17,11 @@ from grandchallenge.archives.models import (
     ArchivePermissionRequest,
 )
 from grandchallenge.cases.forms import UploadRawImagesForm
-from grandchallenge.components.forms import MultipleCIVForm
+from grandchallenge.components.forms import (
+    CIVSetCreateFormMixin,
+    CIVSetUpdateFormMixin,
+    MultipleCIVForm,
+)
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.core.forms import (
     CreateUniqueTitleFormMixin,
@@ -230,7 +234,7 @@ class AddCasesForm(UploadRawImagesForm):
         return super().save(*args, **kwargs)
 
 
-class ArchiveItemCreateForm(CreateUniqueTitleFormMixin, MultipleCIVForm):
+class ArchiveItemFormMixin(MultipleCIVForm):
     class Meta:
         non_interface_fields = ("title",)
 
@@ -238,10 +242,27 @@ class ArchiveItemCreateForm(CreateUniqueTitleFormMixin, MultipleCIVForm):
     def model(self):
         return self.base_obj.civ_set_model
 
-    def _unique_title_query(self, *args, **kwargs):
-        query = super()._unique_title_query(*args, **kwargs)
-        return query.filter(archive=self.base_obj)
+    def unique_title_query(self, *args, **kwargs):
+        return (
+            super()
+            .unique_title_query(*args, **kwargs)
+            .filter(archive=self.base_obj)
+        )
 
 
-class ArchiveItemUpdateForm(UpdateUniqueTitleFormMixin, ArchiveItemCreateForm):
+class ArchiveItemCreateForm(
+    ArchiveItemFormMixin,
+    CreateUniqueTitleFormMixin,
+    CIVSetCreateFormMixin,
+    MultipleCIVForm,
+):
+    pass
+
+
+class ArchiveItemUpdateForm(
+    ArchiveItemFormMixin,
+    UpdateUniqueTitleFormMixin,
+    CIVSetUpdateFormMixin,
+    MultipleCIVForm,
+):
     pass

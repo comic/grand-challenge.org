@@ -33,7 +33,11 @@ from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 from dynamic_forms import DynamicField, DynamicFormMixin
 
-from grandchallenge.components.forms import MultipleCIVForm
+from grandchallenge.components.forms import (
+    CIVSetCreateFormMixin,
+    CIVSetUpdateFormMixin,
+    MultipleCIVForm,
+)
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.forms import (
     CreateUniqueTitleFormMixin,
@@ -654,7 +658,7 @@ class GroundTruthForm(SaveFormInitMixin, Form):
             answer.save()
 
 
-class DisplaySetCreateForm(CreateUniqueTitleFormMixin, MultipleCIVForm):
+class DisplaySetFormMixin:
     class Meta:
         non_interface_fields = (
             "title",
@@ -679,12 +683,29 @@ class DisplaySetCreateForm(CreateUniqueTitleFormMixin, MultipleCIVForm):
         )
         self.order_fields(["order", *field_order])
 
-    def _unique_title_query(self, *args, **kwargs):
-        query = super()._unique_title_query(*args, **kwargs)
-        return query.filter(reader_study=self.base_obj)
+    def unique_title_query(self, *args, **kwargs):
+        return (
+            super()
+            .unique_title_query(*args, **kwargs)
+            .filter(reader_study=self.base_obj)
+        )
 
 
-class DisplaySetUpdateForm(UpdateUniqueTitleFormMixin, DisplaySetCreateForm):
+class DisplaySetCreateForm(
+    DisplaySetFormMixin,
+    CreateUniqueTitleFormMixin,
+    CIVSetCreateFormMixin,
+    MultipleCIVForm,
+):
+    pass
+
+
+class DisplaySetUpdateForm(
+    DisplaySetFormMixin,
+    UpdateUniqueTitleFormMixin,
+    CIVSetUpdateFormMixin,
+    MultipleCIVForm,
+):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.instance.is_editable:

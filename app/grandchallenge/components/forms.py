@@ -13,6 +13,7 @@ from django.forms import (
     ModelForm,
     ModelMultipleChoiceField,
 )
+from django.utils.functional import empty
 
 from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.components.form_fields import InterfaceFormField
@@ -105,6 +106,9 @@ class MultipleCIVForm(Form):
         *InterfaceFormField._possible_widgets,
         SelectUploadWidget,
     }
+
+    class Meta:
+        non_interface_fields = tuple()
 
     def __init__(self, *args, instance, base_obj, user, **kwargs):
         super().__init__(*args, **kwargs)
@@ -249,14 +253,43 @@ class MultipleCIVForm(Form):
             user=self.user,
         ).field
 
-    def process_interface_data(self, data):
-        for slug, value in data.items():
-            self.instance.create_civ(
-                ci_slug=slug,
-                new_value=value,
-                user=self.user,
-            )
-        return self.instance
+    def process_object_data(self):
+        for key, value in self.cleaned_data.items():
+            if key not in self.Meta.non_interface_fields:
+                self.instance.create_civ(
+                    ci_slug=key,
+                    new_value=value,
+                    user=self.user,
+                )
+
+
+class CIVSetCreateFormMixin:
+    instance = None
+
+    def process_object_data(self):
+        non_civ_data = {
+            k: v
+            for k, v in self.cleaned_data.items()
+            if k in self.Meta.non_interface_fields
+        }
+        self.instance = self.base_obj.create_civ_set(data=non_civ_data)
+        super().process_object_data()
+
+
+class CIVSetUpdateFormMixin:
+    def process_object_data(self):
+        instance = self.instance
+
+        save = False
+        for key in self.Meta.non_interface_fields:
+            value = self.cleaned_data.get(key, empty)
+            if value is not empty and value != getattr(instance, key):
+                setattr(instance, key, value)
+                save = True
+        if save:
+            instance.save()
+
+        super().process_object_data()
 
 
 class SingleCIVForm(Form):

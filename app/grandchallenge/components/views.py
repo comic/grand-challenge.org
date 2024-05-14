@@ -5,7 +5,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q, TextChoices
 from django.forms import Media
 from django.http import HttpResponse
-from django.utils.functional import cached_property, empty
+from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.views.generic import DeleteView, FormView, ListView, TemplateView
 from django_filters.rest_framework import DjangoFilterBackend
@@ -130,14 +130,11 @@ class MultipleCIVProcessingBaseView(
     def base_object(self):
         raise NotImplementedError
 
+    def process_data(self, data):
+        raise NotImplementedError
+
     def form_valid(self, form):
-        form.instance = form.process_interface_data(
-            data={
-                k: v
-                for k, v in form.cleaned_data.items()
-                if k not in form.Meta.non_interface_fields
-            }
-        )
+        form.process_object_data()
         response = super().form_valid(form)
         return HttpResponse(
             response.url,
@@ -245,34 +242,6 @@ class CIVSetFormMixin:
     @property
     def new_interface_url(self):
         raise NotImplementedError
-
-
-class CIVSetUpdateMixin:
-    def form_valid(self, form):
-        instance = form.instance
-        data = form.cleaned_data
-
-        save = False
-        for key in form.Meta.non_interface_fields:
-            value = data.get(key, empty)
-            if value is not empty and value != getattr(instance, key):
-                setattr(instance, key, value)
-                save = True
-        if save:
-            instance.save()
-
-        return super().form_valid(form)
-
-
-class CIVSetCreateMixin:
-    def form_valid(self, form):
-        non_civ_data = {
-            k: v
-            for k, v in form.cleaned_data.items()
-            if k in form.Meta.non_interface_fields
-        }
-        self.base_object.create_civ_set(data=non_civ_data)
-        return super().form_valid(form)
 
 
 class InterfacesCreateBaseView(ObjectPermissionRequiredMixin, TemplateView):

@@ -267,7 +267,7 @@ class Archive(
         return ArchiveItem
 
     def create_civ_set(self, data):
-        self.civ_set_model.objects.create(archive=self, **data)
+        return self.civ_set_model.objects.create(archive=self, **data)
 
     @property
     def create_civ_set_url(self):
