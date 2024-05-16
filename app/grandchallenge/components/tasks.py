@@ -536,6 +536,10 @@ def _get_image_config_file(
         # Docker >=25 container image
         image_sha256 = image_manifest["Config"].split("/")[-1]
 
+    if image_sha256.startswith("sha256:"):
+        # Images created by crane have a sha256 prefix
+        image_sha256 = image_sha256[7:]
+
     if len(image_sha256) != 64:
         raise ValidationError(
             "The container image file does not have a valid sha256 hash."
