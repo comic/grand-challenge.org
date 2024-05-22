@@ -1,6 +1,7 @@
 import os
 
 import boto3
+import magic
 from botocore.config import Config
 from django.conf import settings
 from django.db import models
@@ -77,13 +78,15 @@ class UserUpload(UUIDModel):
         choices=StatusChoices.choices, default=StatusChoices.PENDING
     )
     s3_upload_id = models.CharField(max_length=192, blank=True)
+    mimetype = models.CharField(
+        max_length=255, editable=False, default="application/octet-stream"
+    )
 
     class Meta(UUIDModel.Meta):
         pass
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
-
         if adding:
             self.create_multipart_upload()
 
@@ -196,6 +199,18 @@ class UserUpload(UUIDModel):
         assign_perm("view_userupload", self.creator, self)
         assign_perm("change_userupload", self.creator, self)
 
+    @property
+    def mimetype_from_file(self):
+        if self.status != self.StatusChoices.COMPLETED:
+            raise RuntimeError("Cannot get mimetype of incomplete upload")
+        header = self._client.get_object(
+            Bucket=self.bucket,
+            Key=self.key,
+            # 2048 bytes for best results with libmagic
+            Range="bytes=0-2047",
+        )["Body"].read()
+        return magic.from_buffer(header, mime=True)
+
     def create_multipart_upload(self):
         if self.status != self.StatusChoices.PENDING:
             raise RuntimeError("Upload is not pending")
@@ -260,6 +275,7 @@ class UserUpload(UUIDModel):
             MultipartUpload={"Parts": parts},
         )
         self.status = self.StatusChoices.COMPLETED
+        self.mimetype = self.mimetype_from_file
 
     def abort_multipart_upload(self):
         if self.status != self.StatusChoices.INITIALIZED:
@@ -286,6 +302,7 @@ class UserUpload(UUIDModel):
             dest_filename=self.filename,
             src_key=self.key,
             src_bucket=self.bucket,
+            mimetype=self.mimetype,
             save=save,
         )
 

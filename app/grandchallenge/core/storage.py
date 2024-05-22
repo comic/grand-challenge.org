@@ -150,7 +150,9 @@ def get_mugshot_path(instance, filename):
     return f"mugshots/{time_prefix}/{uuid4()}.{extension}"
 
 
-def copy_s3_object(*, to_field, dest_filename, src_bucket, src_key, save):
+def copy_s3_object(
+    *, to_field, dest_filename, src_bucket, src_key, mimetype, save
+):
     """Copies an S3 object to a Django file field on a model"""
     if not isinstance(to_field, FieldFile):
         raise ValueError("to_field must be a FieldFile")
@@ -163,6 +165,7 @@ def copy_s3_object(*, to_field, dest_filename, src_bucket, src_key, save):
     target_key = to_field.storage.get_available_name(
         name=target_key, max_length=to_field.field.max_length
     )
+    extra_args = {"ContentType": mimetype}
 
     if settings.AWS_S3_OBJECT_PARAMETERS[
         "StorageClass"
@@ -171,11 +174,9 @@ def copy_s3_object(*, to_field, dest_filename, src_bucket, src_key, save):
         settings.PROTECTED_S3_STORAGE_KWARGS["bucket_name"],
         settings.PUBLIC_S3_STORAGE_KWARGS["bucket_name"],
     }:
-        extra_args = {
-            "StorageClass": settings.AWS_S3_OBJECT_PARAMETERS["StorageClass"]
-        }
-    else:
-        extra_args = None
+        extra_args["StorageClass"] = settings.AWS_S3_OBJECT_PARAMETERS[
+            "StorageClass"
+        ]
 
     target_client.copy(
         CopySource={"Bucket": src_bucket, "Key": src_key},
