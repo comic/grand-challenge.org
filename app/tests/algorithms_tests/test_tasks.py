@@ -9,8 +9,9 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile, File
 from requests import put
 
-from grandchallenge.algorithms.models import Job
+from grandchallenge.algorithms.models import AlgorithmModel, Job
 from grandchallenge.algorithms.tasks import (
+    assign_algorithm_model_from_upload,
     create_algorithm_jobs,
     execute_algorithm_job_for_inputs,
     filter_civs_for_algorithm,
@@ -21,6 +22,7 @@ from grandchallenge.algorithms.tasks import (
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
+    ImportStatusChoices,
     InterfaceKindChoices,
 )
 from grandchallenge.components.tasks import (
@@ -28,9 +30,12 @@ from grandchallenge.components.tasks import (
 )
 from grandchallenge.notifications.models import Notification
 from tests.algorithms_tests.factories import (
+    AlgorithmFactory,
     AlgorithmImageFactory,
     AlgorithmJobFactory,
+    AlgorithmModelFactory,
 )
+from tests.cases_tests import RESOURCE_PATH
 from tests.cases_tests.factories import RawImageUploadSessionFactory
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
@@ -42,7 +47,10 @@ from tests.factories import (
     ImageFileFactory,
     UserFactory,
 )
-from tests.uploads_tests.factories import UserUploadFactory
+from tests.uploads_tests.factories import (
+    UserUploadFactory,
+    create_upload_from_file,
+)
 from tests.utils import get_view_for_user, recurse_callbacks
 
 
@@ -762,3 +770,31 @@ def test_setting_credits_per_job(
 
         alg.refresh_from_db()
         assert alg.credits_per_job == test["credits"]
+
+
+@pytest.mark.django_db(transaction=True)
+def test_assign_algorithm_model_from_upload(
+    algorithm_io_image, settings, django_capture_on_commit_callbacks
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    user = UserFactory()
+    alg = AlgorithmFactory()
+    alg.add_editor(user)
+    upload = create_upload_from_file(
+        creator=user, file_path=RESOURCE_PATH / "test.zip"
+    )
+    model = AlgorithmModelFactory(
+        algorithm=alg, creator=user, user_upload=upload
+    )
+    assert model.is_desired_version is False
+
+    with django_capture_on_commit_callbacks():
+        assign_algorithm_model_from_upload(
+            algorithm_model_pk=model.pk,
+        )
+    model = AlgorithmModel.objects.get(pk=model.pk)
+    assert model.is_desired_version
+    assert model.import_status == ImportStatusChoices.COMPLETED

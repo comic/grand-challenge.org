@@ -9,7 +9,7 @@ from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Count, Min, Q, Sum
 from django.db.models.signals import post_delete
 from django.db.transaction import on_commit
@@ -17,6 +17,7 @@ from django.dispatch import receiver
 from django.template.defaultfilters import truncatewords
 from django.utils import timezone
 from django.utils.functional import cached_property
+from django.utils.text import get_valid_filename
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
@@ -38,6 +39,7 @@ from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
     get_logo_path,
     get_social_image_path,
+    private_s3_storage,
     public_s3_storage,
 )
 from grandchallenge.core.templatetags.bleach import md2html
@@ -45,6 +47,7 @@ from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
     process_access_request,
 )
+from grandchallenge.core.validators import ExtensionValidator
 from grandchallenge.credits.models import Credit
 from grandchallenge.evaluation.utils import get
 from grandchallenge.hanging_protocols.models import HangingProtocolMixin
@@ -53,6 +56,8 @@ from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
 from grandchallenge.reader_studies.models import DisplaySet
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.uploads.models import UserUpload
+from grandchallenge.uploads.validators import validate_gzip_mimetype
 from grandchallenge.workstations.models import Workstation
 
 logger = logging.getLogger(__name__)
@@ -919,4 +924,102 @@ class OptionalHangingProtocolAlgorithm(models.Model):
     algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
     hanging_protocol = models.ForeignKey(
         "hanging_protocols.HangingProtocol", on_delete=models.CASCADE
+    )
+
+
+def algorithm_models_path(instance, filename):
+    return (
+        f"models/"
+        f"{instance._meta.app_label.lower()}/"
+        f"{instance._meta.model_name.lower()}/"
+        f"{instance.pk}/"
+        f"{get_valid_filename(filename)}"
+    )
+
+
+class AlgorithmModel(UUIDModel):
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
+    )
+    algorithm = models.ForeignKey(
+        Algorithm, on_delete=models.PROTECT, related_name="algorithm_models"
+    )
+    import_status = models.PositiveSmallIntegerField(
+        choices=ImportStatusChoices.choices,
+        default=ImportStatusChoices.INITIALIZED,
+        db_index=True,
+    )
+    user_upload = models.ForeignKey(
+        UserUpload,
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        validators=[validate_gzip_mimetype],
+    )
+    model = models.FileField(
+        blank=True,
+        upload_to=algorithm_models_path,
+        validators=[ExtensionValidator(allowed_extensions=(".tar.gz",))],
+        help_text=(
+            ".tar.gz file of the algorithm model that will be extracted to /opt/ml/model/ during inference"
+        ),
+        storage=private_s3_storage,
+    )
+    sha256 = models.CharField(editable=False, max_length=71)
+    size_in_storage = models.PositiveBigIntegerField(
+        editable=False,
+        default=0,
+        help_text="The number of bytes stored in the storage backend",
+    )
+    comment = models.TextField(
+        blank=True,
+        default="",
+        help_text="Add any information (e.g. version ID) about this image here.",
+    )
+    is_desired_version = models.BooleanField(default=False, editable=False)
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.assign_permissions()
+
+    def assign_permissions(self):
+        # Editors can view this algorithm model
+        assign_perm(
+            f"view_{self._meta.model_name}", self.algorithm.editors_group, self
+        )
+        # Editors can change this algorithm model
+        assign_perm(
+            f"change_{self._meta.model_name}",
+            self.algorithm.editors_group,
+            self,
+        )
+
+    def get_peer_models(self):
+        return AlgorithmModel.objects.filter(algorithm=self.algorithm).exclude(
+            pk=self.pk
+        )
+
+    @transaction.atomic
+    def mark_desired_version(self, peer_models=None):
+        models = list(peer_models or self.get_peer_models())
+        for model in models:
+            model.is_desired_version = False
+        self.is_desired_version = True
+        models.append(self)
+        self.__class__.objects.bulk_update(models, ["is_desired_version"])
+
+
+class AlgorithmModelUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(
+        AlgorithmModel, on_delete=models.CASCADE
+    )
+
+
+class AlgorithmModelGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(
+        AlgorithmModel, on_delete=models.CASCADE
     )

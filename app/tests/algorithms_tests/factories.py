@@ -3,6 +3,7 @@ import factory
 from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmImage,
+    AlgorithmModel,
     AlgorithmPermissionRequest,
     Job,
 )
@@ -32,6 +33,16 @@ class AlgorithmImageFactory(factory.django.DjangoModelFactory):
     creator = factory.SubFactory(UserFactory)
     image = factory.django.FileField()
     image_sha256 = factory.sequence(lambda n: hash_sha256(f"image{n}"))
+
+
+class AlgorithmModelFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = AlgorithmModel
+
+    algorithm = factory.SubFactory(AlgorithmFactory)
+    creator = factory.SubFactory(UserFactory)
+    model = factory.django.FileField()
+    sha256 = factory.sequence(lambda n: hash_sha256(f"image{n}"))
 
 
 class AlgorithmJobFactory(factory.django.DjangoModelFactory):
