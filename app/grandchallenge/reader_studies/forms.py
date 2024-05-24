@@ -364,7 +364,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
         if answer_type is None:
             return ComponentInterface.objects.none()
         return ComponentInterface.objects.filter(
-            kind__in=ANSWER_TYPE_TO_INTERFACE_KIND_MAP[answer_type]
+            kind__in=ANSWER_TYPE_TO_INTERFACE_KIND_MAP.get(answer_type, [])
         )
 
     def widget_choices(self):
