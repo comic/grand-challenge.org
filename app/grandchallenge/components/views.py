@@ -130,9 +130,6 @@ class MultipleCIVProcessingBaseView(
     def base_object(self):
         raise NotImplementedError
 
-    def process_data(self, data):
-        raise NotImplementedError
-
     def form_valid(self, form):
         form.process_object_data()
         response = super().form_valid(form)
