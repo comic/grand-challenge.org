@@ -13,7 +13,7 @@ from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.components.models import (
     CIVForObjectMixin,
-    CIVSetContainerMixin,
+    CIVSetStringRepresentationMixin,
     ComponentInterfaceValue,
     ValuesForInterfacesMixin,
 )
@@ -286,7 +286,9 @@ class ArchiveGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(Archive, on_delete=models.CASCADE)
 
 
-class ArchiveItem(CIVSetContainerMixin, CIVForObjectMixin, UUIDModel):
+class ArchiveItem(
+    CIVSetStringRepresentationMixin, CIVForObjectMixin, UUIDModel
+):
     archive = models.ForeignKey(
         Archive, related_name="items", on_delete=models.PROTECT
     )

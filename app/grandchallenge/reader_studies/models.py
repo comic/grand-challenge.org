@@ -26,7 +26,7 @@ from stdimage import JPEGField
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.components.models import (
     CIVForObjectMixin,
-    CIVSetContainerMixin,
+    CIVSetStringRepresentationMixin,
     ComponentInterface,
     ComponentInterfaceValue,
     InterfaceKind,
@@ -791,7 +791,9 @@ def delete_reader_study_groups_hook(*_, instance: ReaderStudy, using, **__):
         pass
 
 
-class DisplaySet(CIVSetContainerMixin, CIVForObjectMixin, UUIDModel):
+class DisplaySet(
+    CIVSetStringRepresentationMixin, CIVForObjectMixin, UUIDModel
+):
     reader_study = models.ForeignKey(
         ReaderStudy, related_name="display_sets", on_delete=models.PROTECT
     )
