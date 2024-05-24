@@ -290,6 +290,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
         self.fields["reader_study"].initial = reader_study
         self.fields["reader_study"].disabled = True
         self.fields["reader_study"].hidden = True
+        self.fields["answer_type"].initial = AnswerType.TEXT
 
         self.fields["answer_type"].widget = Select(
             attrs={
@@ -313,7 +314,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                 HTML(
                     f"<div "
                     f"hx-get={reverse_lazy('reader-studies:question-widgets', kwargs={'slug': reader_study.slug})!r} "
-                    f"hx-trigger='change from:#id_answer_type' "
+                    f"hx-trigger='change from:#id_answer_type, load'"
                     f"hx-target='#id_widget' "
                     f"hx-include='[id=id_answer_type]'>"
                     f"</div>"
