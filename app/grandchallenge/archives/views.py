@@ -598,12 +598,6 @@ class ArchiveItemCreateView(
             kwargs={"slug": self.base_object.slug},
         )
 
-    def create_object(self, non_civ_data):
-        return ArchiveItem.objects.create(
-            archive=self.base_object,
-            **non_civ_data,
-        )
-
     def get_success_url(self):
         return self.return_url
 
