@@ -484,7 +484,7 @@ def set_credits_per_job():
 
 
 @transaction.atomic()
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
 def assign_algorithm_model_from_upload(*, algorithm_model_pk, retries=0):
     from grandchallenge.algorithms.models import AlgorithmModel
 
@@ -512,18 +512,28 @@ def assign_algorithm_model_from_upload(*, algorithm_model_pk, retries=0):
         )
         return
 
-    # catch errors with uploading?
     current_model.user_upload.copy_object(to_field=current_model.model)
-    # retrieve sha256 and check if it's unique, error out if not
-    current_model.sha256 = get_object_sha256(current_model.model)
+
+    sha256 = get_object_sha256(current_model.model)
+    if AlgorithmModel.objects.filter(sha256=sha256).exists():
+        current_model.import_status = ImportStatusChoices.FAILED
+        current_model.status = (
+            "Algorithm model with this sha256 already exists."
+        )
+        current_model.save()
+        current_model.user_upload.delete()
+        current_model.delete_model_file()
+        return
+
+    current_model.sha256 = sha256
     current_model.size_in_storage = current_model.model.size
     current_model.import_status = ImportStatusChoices.COMPLETED
     current_model.save()
+
     current_model.user_upload.delete()
 
     # mark as desired version and pass locked peer models directly since else
-    # mark_desired_version will try to lock the peer models a second time,
-    # which will fail
+    # mark_desired_version will fail trying to access the locked models
     current_model.mark_desired_version(peer_models=peer_models)
 
 

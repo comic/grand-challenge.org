@@ -9,7 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile, File
 from requests import put
 
-from grandchallenge.algorithms.models import AlgorithmModel, Job
+from grandchallenge.algorithms.models import Job
 from grandchallenge.algorithms.tasks import (
     assign_algorithm_model_from_upload,
     create_algorithm_jobs,
@@ -35,7 +35,6 @@ from tests.algorithms_tests.factories import (
     AlgorithmJobFactory,
     AlgorithmModelFactory,
 )
-from tests.cases_tests import RESOURCE_PATH
 from tests.cases_tests.factories import RawImageUploadSessionFactory
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
@@ -772,29 +771,44 @@ def test_setting_credits_per_job(
         assert alg.credits_per_job == test["credits"]
 
 
-@pytest.mark.django_db(transaction=True)
-def test_assign_algorithm_model_from_upload(
-    algorithm_io_image, settings, django_capture_on_commit_callbacks
-):
+@pytest.mark.django_db()
+def test_assign_algorithm_model_from_upload(settings):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
     user = UserFactory()
     alg = AlgorithmFactory()
-    alg.add_editor(user)
     upload = create_upload_from_file(
-        creator=user, file_path=RESOURCE_PATH / "test.zip"
+        creator=user,
+        file_path=Path(__file__).parent / "resources" / "model.tar.gz",
     )
     model = AlgorithmModelFactory(
         algorithm=alg, creator=user, user_upload=upload
     )
     assert model.is_desired_version is False
 
-    with django_capture_on_commit_callbacks():
-        assign_algorithm_model_from_upload(
-            algorithm_model_pk=model.pk,
-        )
-    model = AlgorithmModel.objects.get(pk=model.pk)
+    assign_algorithm_model_from_upload(
+        algorithm_model_pk=model.pk,
+    )
+    model.refresh_from_db()
     assert model.is_desired_version
     assert model.import_status == ImportStatusChoices.COMPLETED
+
+    upload2 = create_upload_from_file(
+        creator=user,
+        file_path=Path(__file__).parent / "resources" / "model.tar.gz",
+    )
+    model2 = AlgorithmModelFactory(
+        algorithm=alg, creator=user, user_upload=upload2
+    )
+    assign_algorithm_model_from_upload(
+        algorithm_model_pk=model2.pk,
+    )
+    model2.refresh_from_db()
+    assert not model2.is_desired_version
+    assert model2.import_status == ImportStatusChoices.FAILED
+    assert model2.status == "Algorithm model with this sha256 already exists."
+    assert not model2.user_upload
+    with pytest.raises(FileNotFoundError):
+        model2.model.file

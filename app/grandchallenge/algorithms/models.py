@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime, timedelta
 
+import boto3
 from actstream.actions import follow, is_following
 from actstream.models import Follow
 from django.conf import settings
@@ -949,6 +950,7 @@ class AlgorithmModel(UUIDModel):
         default=ImportStatusChoices.INITIALIZED,
         db_index=True,
     )
+    status = models.TextField(editable=False)
     user_upload = models.ForeignKey(
         UserUpload,
         blank=True,
@@ -1011,6 +1013,18 @@ class AlgorithmModel(UUIDModel):
         self.is_desired_version = True
         models.append(self)
         self.__class__.objects.bulk_update(models, ["is_desired_version"])
+
+    def delete_model_file(self):
+        if not self.import_status == ImportStatusChoices.FAILED:
+            raise RuntimeError("Cannot delete model from completed upload.")
+
+        s3_client = boto3.client(
+            "s3",
+            endpoint_url=settings.AWS_S3_ENDPOINT_URL,
+        )
+        s3_client.delete_object(
+            Bucket=self.model.storage.bucket_name, Key=self.model.name
+        )
 
 
 class AlgorithmModelUserObjectPermission(UserObjectPermissionBase):
