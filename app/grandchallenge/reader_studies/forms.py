@@ -300,7 +300,10 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                 "hx-target": "#id_interface",
             }
         )
-        self.fields["answer_type"].choices = AnswerType.choices
+        self.fields["answer_type"].choices = [
+            *BLANK_CHOICE_DASH,
+            *AnswerType.choices,
+        ]
 
         self.helper = FormHelper()
         self.helper.form_tag = True
