@@ -234,7 +234,7 @@ class AddCasesForm(UploadRawImagesForm):
         return super().save(*args, **kwargs)
 
 
-class ArchiveItemFormMixin(MultipleCIVForm):
+class ArchiveItemFormMixin:
     class Meta:
         non_interface_fields = ("title",)
 
