@@ -70,6 +70,9 @@ DATABASES = {
             "sslrootcert": os.path.join(
                 SITE_ROOT, "config", "certs", "global-bundle.pem"
             ),
+            # wait 100ms to acquire DB lock rather than indefinitely,
+            # this saves having to set select_for_update() on normal views
+            "options": "-c lock_timeout=100",
         },
         "ATOMIC_REQUESTS": strtobool(
             os.environ.get("ATOMIC_REQUESTS", "True")
