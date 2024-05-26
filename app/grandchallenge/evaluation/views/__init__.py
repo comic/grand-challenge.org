@@ -719,6 +719,7 @@ class LeaderboardDetail(TeamContextMixin, PaginatedTableListView):
                         c["title"]
                         if self.phase.scoring_method_choice
                         == self.phase.ABSOLUTE
+                        or c.get("exclude_from_ranking", False)
                         else f"{c['title']} (Position)"
                     ),
                     sort_field="rank",
