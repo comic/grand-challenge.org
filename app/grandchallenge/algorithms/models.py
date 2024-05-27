@@ -625,11 +625,147 @@ class JobManager(ComponentJobManager):
         )
 
 
+def algorithm_models_path(instance, filename):
+    return (
+        f"models/"
+        f"{instance._meta.app_label.lower()}/"
+        f"{instance._meta.model_name.lower()}/"
+        f"{instance.pk}/"
+        f"{get_valid_filename(filename)}"
+    )
+
+
+class AlgorithmModel(UUIDModel):
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
+    )
+    algorithm = models.ForeignKey(
+        Algorithm, on_delete=models.PROTECT, related_name="algorithm_models"
+    )
+    import_status = models.PositiveSmallIntegerField(
+        choices=ImportStatusChoices.choices,
+        default=ImportStatusChoices.INITIALIZED,
+        db_index=True,
+    )
+    status = models.TextField(editable=False)
+    user_upload = models.ForeignKey(
+        UserUpload,
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        validators=[validate_gzip_mimetype],
+    )
+    model = models.FileField(
+        blank=True,
+        upload_to=algorithm_models_path,
+        validators=[ExtensionValidator(allowed_extensions=(".tar.gz",))],
+        help_text=(
+            ".tar.gz file of the algorithm model that will be extracted to /opt/ml/model/ during inference"
+        ),
+        storage=private_s3_storage,
+    )
+    sha256 = models.CharField(editable=False, max_length=71)
+    size_in_storage = models.PositiveBigIntegerField(
+        editable=False,
+        default=0,
+        help_text="The number of bytes stored in the storage backend",
+    )
+    comment = models.TextField(
+        blank=True,
+        default="",
+        help_text="Add any information (e.g. version ID) about this image here.",
+    )
+    is_desired_version = models.BooleanField(default=False, editable=False)
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.assign_permissions()
+
+    def assign_permissions(self):
+        # Editors can view this algorithm model
+        assign_perm(
+            f"view_{self._meta.model_name}", self.algorithm.editors_group, self
+        )
+        # Editors can change this algorithm model
+        assign_perm(
+            f"change_{self._meta.model_name}",
+            self.algorithm.editors_group,
+            self,
+        )
+
+    def get_peer_models(self):
+        return AlgorithmModel.objects.filter(algorithm=self.algorithm).exclude(
+            pk=self.pk
+        )
+
+    @transaction.atomic
+    def mark_desired_version(self, peer_models=None):
+        models = list(peer_models or self.get_peer_models())
+        for model in models:
+            model.is_desired_version = False
+        self.is_desired_version = True
+        models.append(self)
+        self.__class__.objects.bulk_update(models, ["is_desired_version"])
+
+    def delete_model_file(self):
+        if not self.import_status == ImportStatusChoices.FAILED:
+            raise RuntimeError("Cannot delete model from completed upload.")
+
+        s3_client = boto3.client(
+            "s3",
+            endpoint_url=settings.AWS_S3_ENDPOINT_URL,
+        )
+        s3_client.delete_object(
+            Bucket=self.model.storage.bucket_name, Key=self.model.name
+        )
+
+    def get_absolute_url(self):
+        return reverse(
+            "algorithms:model-detail",
+            kwargs={"slug": self.algorithm.slug, "pk": self.pk},
+        )
+
+    @property
+    def import_status_context(self):
+        if self.import_status == ImportStatusChoices.COMPLETED:
+            return "success"
+        elif self.import_status in {
+            ImportStatusChoices.FAILED,
+            ImportStatusChoices.CANCELLED,
+        }:
+            return "danger"
+        else:
+            return "info"
+
+    @property
+    def import_in_progress(self):
+        return self.import_status == ImportStatusChoices.INITIALIZED
+
+
+class AlgorithmModelUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(
+        AlgorithmModel, on_delete=models.CASCADE
+    )
+
+
+class AlgorithmModelGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(
+        AlgorithmModel, on_delete=models.CASCADE
+    )
+
+
 class Job(UUIDModel, ComponentJob):
     objects = JobManager.as_manager()
 
     algorithm_image = models.ForeignKey(
         AlgorithmImage, on_delete=models.PROTECT
+    )
+    algorithm_model = models.ForeignKey(
+        AlgorithmModel, on_delete=models.PROTECT, null=True, blank=True
     )
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
@@ -797,6 +933,13 @@ class Job(UUIDModel, ComponentJob):
             ).apply_async
         )
 
+    @property
+    def executor_kwargs(self):
+        executor_kwargs = super().executor_kwargs
+        if self.algorithm_model:
+            executor_kwargs["algorithm_model"] = self.algorithm_model.model
+        return executor_kwargs
+
     @cached_property
     def slug_to_output(self):
         outputs = {}
@@ -925,137 +1068,4 @@ class OptionalHangingProtocolAlgorithm(models.Model):
     algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
     hanging_protocol = models.ForeignKey(
         "hanging_protocols.HangingProtocol", on_delete=models.CASCADE
-    )
-
-
-def algorithm_models_path(instance, filename):
-    return (
-        f"models/"
-        f"{instance._meta.app_label.lower()}/"
-        f"{instance._meta.model_name.lower()}/"
-        f"{instance.pk}/"
-        f"{get_valid_filename(filename)}"
-    )
-
-
-class AlgorithmModel(UUIDModel):
-    creator = models.ForeignKey(
-        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
-    )
-    algorithm = models.ForeignKey(
-        Algorithm, on_delete=models.PROTECT, related_name="algorithm_models"
-    )
-    import_status = models.PositiveSmallIntegerField(
-        choices=ImportStatusChoices.choices,
-        default=ImportStatusChoices.INITIALIZED,
-        db_index=True,
-    )
-    status = models.TextField(editable=False)
-    user_upload = models.ForeignKey(
-        UserUpload,
-        blank=True,
-        null=True,
-        on_delete=models.SET_NULL,
-        validators=[validate_gzip_mimetype],
-    )
-    model = models.FileField(
-        blank=True,
-        upload_to=algorithm_models_path,
-        validators=[ExtensionValidator(allowed_extensions=(".tar.gz",))],
-        help_text=(
-            ".tar.gz file of the algorithm model that will be extracted to /opt/ml/model/ during inference"
-        ),
-        storage=private_s3_storage,
-    )
-    sha256 = models.CharField(editable=False, max_length=71)
-    size_in_storage = models.PositiveBigIntegerField(
-        editable=False,
-        default=0,
-        help_text="The number of bytes stored in the storage backend",
-    )
-    comment = models.TextField(
-        blank=True,
-        default="",
-        help_text="Add any information (e.g. version ID) about this image here.",
-    )
-    is_desired_version = models.BooleanField(default=False, editable=False)
-
-    def save(self, *args, **kwargs):
-        adding = self._state.adding
-
-        super().save(*args, **kwargs)
-
-        if adding:
-            self.assign_permissions()
-
-    def assign_permissions(self):
-        # Editors can view this algorithm model
-        assign_perm(
-            f"view_{self._meta.model_name}", self.algorithm.editors_group, self
-        )
-        # Editors can change this algorithm model
-        assign_perm(
-            f"change_{self._meta.model_name}",
-            self.algorithm.editors_group,
-            self,
-        )
-
-    def get_peer_models(self):
-        return AlgorithmModel.objects.filter(algorithm=self.algorithm).exclude(
-            pk=self.pk
-        )
-
-    @transaction.atomic
-    def mark_desired_version(self, peer_models=None):
-        models = list(peer_models or self.get_peer_models())
-        for model in models:
-            model.is_desired_version = False
-        self.is_desired_version = True
-        models.append(self)
-        self.__class__.objects.bulk_update(models, ["is_desired_version"])
-
-    def delete_model_file(self):
-        if not self.import_status == ImportStatusChoices.FAILED:
-            raise RuntimeError("Cannot delete model from completed upload.")
-
-        s3_client = boto3.client(
-            "s3",
-            endpoint_url=settings.AWS_S3_ENDPOINT_URL,
-        )
-        s3_client.delete_object(
-            Bucket=self.model.storage.bucket_name, Key=self.model.name
-        )
-
-    def get_absolute_url(self):
-        return reverse(
-            "algorithms:model-detail",
-            kwargs={"slug": self.algorithm.slug, "pk": self.pk},
-        )
-
-    @property
-    def import_status_context(self):
-        if self.import_status == ImportStatusChoices.COMPLETED:
-            return "success"
-        elif self.import_status in {
-            ImportStatusChoices.FAILED,
-            ImportStatusChoices.CANCELLED,
-        }:
-            return "danger"
-        else:
-            return "info"
-
-    @property
-    def import_in_progress(self):
-        return self.import_status == ImportStatusChoices.INITIALIZED
-
-
-class AlgorithmModelUserObjectPermission(UserObjectPermissionBase):
-    content_object = models.ForeignKey(
-        AlgorithmModel, on_delete=models.CASCADE
-    )
-
-
-class AlgorithmModelGroupObjectPermission(GroupObjectPermissionBase):
-    content_object = models.ForeignKey(
-        AlgorithmModel, on_delete=models.CASCADE
     )
