@@ -15,10 +15,12 @@ from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.evaluation.tasks import (
     create_algorithm_jobs_for_evaluation,
 )
+from grandchallenge.verifications.models import Verification
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
     AlgorithmJobFactory,
+    AlgorithmModelFactory,
 )
 from tests.algorithms_tests.utils import TwoAlgorithms
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
@@ -534,3 +536,53 @@ class TestJobPermissions:
         )
         # No-one should be in the viewers group
         assert {*job.viewers.user_set.all()} == set()
+
+
+@pytest.mark.django_db
+def test_algorithm_model_view_permissions(client):
+    user, editor = UserFactory.create_batch(2)
+    alg = AlgorithmFactory()
+    alg.add_editor(editor)
+
+    am = AlgorithmModelFactory(algorithm=alg)
+
+    response = get_view_for_user(
+        viewname="algorithms:model-create",
+        client=client,
+        reverse_kwargs={"slug": alg.slug},
+        user=user,
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname="algorithms:model-detail",
+        client=client,
+        reverse_kwargs={"slug": alg.slug, "pk": am.pk},
+        user=user,
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname="algorithms:model-create",
+        client=client,
+        reverse_kwargs={"slug": alg.slug},
+        user=editor,
+    )
+    assert response.status_code == 403
+
+    Verification.objects.create(user=editor, is_verified=True)
+    response = get_view_for_user(
+        viewname="algorithms:model-create",
+        client=client,
+        reverse_kwargs={"slug": alg.slug},
+        user=editor,
+    )
+    assert response.status_code == 200
+
+    response = get_view_for_user(
+        viewname="algorithms:model-detail",
+        client=client,
+        reverse_kwargs={"slug": alg.slug, "pk": am.pk},
+        user=editor,
+    )
+    assert response.status_code == 200
