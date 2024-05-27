@@ -810,5 +810,5 @@ def test_assign_algorithm_model_from_upload(settings):
     assert model2.import_status == ImportStatusChoices.FAILED
     assert model2.status == "Algorithm model with this sha256 already exists."
     assert not model2.user_upload
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(ValueError):
         model2.model.file
