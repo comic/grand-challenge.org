@@ -170,7 +170,7 @@ def test_calculate_ranks(
         (
             Phase.ABSOLUTE,
             [
-                b_default := {
+                {
                     "path": "b",
                     "title": "b",
                     "order": Phase.DESCENDING,
@@ -184,7 +184,9 @@ def test_calculate_ranks(
             Phase.ABSOLUTE,
             [
                 {
-                    **b_default,
+                    "path": "b",
+                    "title": "b",
+                    "order": Phase.DESCENDING,
                     "exclude_from_ranking": True,
                 }
             ],
@@ -195,7 +197,9 @@ def test_calculate_ranks(
             Phase.MEDIAN,
             [
                 {
-                    **b_default,
+                    "path": "b",
+                    "title": "b",
+                    "order": Phase.DESCENDING,
                     "exclude_from_ranking": False,
                 }
             ],
@@ -206,7 +210,9 @@ def test_calculate_ranks(
             Phase.MEDIAN,
             [
                 {
-                    **b_default,
+                    "path": "b",
+                    "title": "b",
+                    "order": Phase.DESCENDING,
                     "exclude_from_ranking": True,
                 }
             ],
@@ -217,7 +223,9 @@ def test_calculate_ranks(
             Phase.MEAN,
             [
                 {
-                    **b_default,
+                    "path": "b",
+                    "title": "b",
+                    "order": Phase.DESCENDING,
                     "exclude_from_ranking": False,
                 }
             ],
@@ -228,7 +236,9 @@ def test_calculate_ranks(
             Phase.MEAN,
             [
                 {
-                    **b_default,
+                    "path": "b",
+                    "title": "b",
+                    "order": Phase.DESCENDING,
                     "exclude_from_ranking": True,
                 }
             ],
