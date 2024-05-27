@@ -188,6 +188,12 @@
                 <span class="s2">&quot;examples&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;asc&quot;</span><span class="p">],</span>
                 <span class="s2">&quot;pattern&quot;</span><span class="p">:</span> <span class="s2">&quot;^(asc|desc)$&quot;</span><span class="p">,</span>
             <span class="p">},</span>
+            <span class="s2">&quot;exclude_from_ranking&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;$id&quot;</span><span class="p">:</span> <span class="s2">&quot;#/items/properties/exclude_from_ranking&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;boolean&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;The Exclude From Ranking Schema&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="p">},</span>
         <span class="p">},</span>
     <span class="p">},</span>
 <span class="p">}</span>
@@ -334,7 +340,8 @@
             <span class="s1">&#39;&quot;path&quot;: &quot;accuracy.mean&quot;,&#39;</span>
             <span class="s1">&#39;&quot;order&quot;: &quot;asc&quot;,&#39;</span>
             <span class="s1">&#39;&quot;title&quot;: &quot;ASSD +/- std&quot;,&#39;</span>
-            <span class="s1">&#39;&quot;error_path&quot;: &quot;accuracy.std&quot;&#39;</span>
+            <span class="s1">&#39;&quot;error_path&quot;: &quot;accuracy.std&quot;,&#39;</span>
+            <span class="s1">&#39;&quot;exclude_from_ranking&quot;: true&#39;</span>
             <span class="s2">&quot;}]&quot;</span>
         <span class="p">),</span>
         <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">JSONValidator</span><span class="p">(</span><span class="n">schema</span><span class="o">=</span><span class="n">EXTRA_RESULT_COLUMNS_SCHEMA</span><span class="p">)],</span>
