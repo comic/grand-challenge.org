@@ -11,12 +11,108 @@ from tests.factories import UserFactory
 
 
 @pytest.mark.django_db
-def test_calculate_ranks(django_assert_max_num_queries):
+@pytest.mark.parametrize(
+    "score_method, a_order, b_order, expected_ranks, expected_rank_scores",
+    (
+        (
+            Phase.ABSOLUTE,
+            Phase.DESCENDING,
+            Phase.DESCENDING,
+            [5, 3, 1, 2, 3, 0, 0, 0],
+            [5, 3, 1, 2, 3, 0, 0, 0],
+        ),
+        (
+            Phase.ABSOLUTE,
+            Phase.DESCENDING,
+            Phase.ASCENDING,
+            [5, 3, 1, 2, 3, 0, 0, 0],
+            [5, 3, 1, 2, 3, 0, 0, 0],
+        ),
+        (
+            Phase.MEDIAN,
+            Phase.DESCENDING,
+            Phase.DESCENDING,
+            [5, 4, 1, 1, 1, 0, 0, 0],
+            [5, 3.5, 2, 2, 2, 0, 0, 0],
+        ),
+        (
+            Phase.MEDIAN,
+            Phase.DESCENDING,
+            Phase.ASCENDING,
+            [3, 2, 1, 3, 5, 0, 0, 0],
+            [3, 2.5, 2, 3, 4, 0, 0, 0],
+        ),
+        (
+            Phase.MEAN,
+            Phase.DESCENDING,
+            Phase.DESCENDING,
+            [5, 4, 1, 1, 1, 0, 0, 0],
+            [5, 3.5, 2, 2, 2, 0, 0, 0],
+        ),
+        (
+            Phase.MEAN,
+            Phase.DESCENDING,
+            Phase.ASCENDING,
+            [3, 2, 1, 3, 5, 0, 0, 0],
+            [3, 2.5, 2, 3, 4, 0, 0, 0],
+        ),
+        (
+            Phase.ABSOLUTE,
+            Phase.ASCENDING,
+            Phase.DESCENDING,
+            [1, 2, 5, 4, 2, 0, 0, 0],
+            [1, 2, 5, 4, 2, 0, 0, 0],
+        ),
+        (
+            Phase.ABSOLUTE,
+            Phase.ASCENDING,
+            Phase.ASCENDING,
+            [1, 2, 5, 4, 2, 0, 0, 0],
+            [1, 2, 5, 4, 2, 0, 0, 0],
+        ),
+        (
+            Phase.MEDIAN,
+            Phase.ASCENDING,
+            Phase.DESCENDING,
+            [2, 2, 5, 2, 1, 0, 0, 0],
+            [3, 3, 4, 3, 1.5, 0, 0, 0],
+        ),
+        (
+            Phase.MEDIAN,
+            Phase.ASCENDING,
+            Phase.ASCENDING,
+            [1, 2, 4, 4, 3, 0, 0, 0],
+            [1, 2, 4, 4, 3.5, 0, 0, 0],
+        ),
+        (
+            Phase.MEAN,
+            Phase.ASCENDING,
+            Phase.DESCENDING,
+            [2, 2, 5, 2, 1, 0, 0, 0],
+            [3, 3, 4, 3, 1.5, 0, 0, 0],
+        ),
+        (
+            Phase.MEAN,
+            Phase.ASCENDING,
+            Phase.ASCENDING,
+            [1, 2, 4, 4, 3, 0, 0, 0],
+            [1, 2, 4, 4, 3.5, 0, 0, 0],
+        ),
+    ),
+)
+def test_calculate_ranks(
+    django_assert_max_num_queries,
+    score_method,
+    a_order,
+    b_order,
+    expected_ranks,
+    expected_rank_scores,
+):
     phase = PhaseFactory()
 
     results = [
-        # Warning: Do not change this values without updating the
-        # expected_ranks below.
+        # Warning: Do not change these values without updating the
+        # expected above.
         {"a": 0.0, "b": 0.0},
         {"a": 0.5, "b": 0.2},
         {"a": 1.0, "b": 0.3},
@@ -48,92 +144,171 @@ def test_calculate_ranks(django_assert_max_num_queries):
     queryset[-1].published = False
     queryset[-1].save()
 
-    expected = {
-        Phase.DESCENDING: {
-            Phase.ABSOLUTE: {
-                Phase.DESCENDING: {
-                    "ranks": [5, 3, 1, 2, 3, 0, 0, 0],
-                    "rank_scores": [5, 3, 1, 2, 3, 0, 0, 0],
-                },
-                Phase.ASCENDING: {
-                    "ranks": [5, 3, 1, 2, 3, 0, 0, 0],
-                    "rank_scores": [5, 3, 1, 2, 3, 0, 0, 0],
-                },
-            },
-            Phase.MEDIAN: {
-                Phase.DESCENDING: {
-                    "ranks": [5, 4, 1, 1, 1, 0, 0, 0],
-                    "rank_scores": [5, 3.5, 2, 2, 2, 0, 0, 0],
-                },
-                Phase.ASCENDING: {
-                    "ranks": [3, 2, 1, 3, 5, 0, 0, 0],
-                    "rank_scores": [3, 2.5, 2, 3, 4, 0, 0, 0],
-                },
-            },
-            Phase.MEAN: {
-                Phase.DESCENDING: {
-                    "ranks": [5, 4, 1, 1, 1, 0, 0, 0],
-                    "rank_scores": [5, 3.5, 2, 2, 2, 0, 0, 0],
-                },
-                Phase.ASCENDING: {
-                    "ranks": [3, 2, 1, 3, 5, 0, 0, 0],
-                    "rank_scores": [3, 2.5, 2, 3, 4, 0, 0, 0],
-                },
-            },
-        },
-        Phase.ASCENDING: {
-            Phase.ABSOLUTE: {
-                Phase.DESCENDING: {
-                    "ranks": [1, 2, 5, 4, 2, 0, 0, 0],
-                    "rank_scores": [1, 2, 5, 4, 2, 0, 0, 0],
-                },
-                Phase.ASCENDING: {
-                    "ranks": [1, 2, 5, 4, 2, 0, 0, 0],
-                    "rank_scores": [1, 2, 5, 4, 2, 0, 0, 0],
-                },
-            },
-            Phase.MEDIAN: {
-                Phase.DESCENDING: {
-                    "ranks": [2, 2, 5, 2, 1, 0, 0, 0],
-                    "rank_scores": [3, 3, 4, 3, 1.5, 0, 0, 0],
-                },
-                Phase.ASCENDING: {
-                    "ranks": [1, 2, 4, 4, 3, 0, 0, 0],
-                    "rank_scores": [1, 2, 4, 4, 3.5, 0, 0, 0],
-                },
-            },
-            Phase.MEAN: {
-                Phase.DESCENDING: {
-                    "ranks": [2, 2, 5, 2, 1, 0, 0, 0],
-                    "rank_scores": [3, 3, 4, 3, 1.5, 0, 0, 0],
-                },
-                Phase.ASCENDING: {
-                    "ranks": [1, 2, 4, 4, 3, 0, 0, 0],
-                    "rank_scores": [1, 2, 4, 4, 3.5, 0, 0, 0],
-                },
-            },
-        },
-    }
+    # Setup Phase
+    phase.score_jsonpath = "a"
+    phase.scoring_method_choice = score_method
+    phase.score_default_sort = a_order
+    phase.extra_results_columns = [
+        {"path": "b", "title": "b", "order": b_order}
+    ]
+    phase.save()
 
-    for score_method in (Phase.ABSOLUTE, Phase.MEDIAN, Phase.MEAN):
-        for a_order in (Phase.DESCENDING, Phase.ASCENDING):
-            for b_order in (Phase.DESCENDING, Phase.ASCENDING):
-                phase.score_jsonpath = "a"
-                phase.scoring_method_choice = score_method
-                phase.score_default_sort = a_order
-                phase.extra_results_columns = [
-                    {"path": "b", "title": "b", "order": b_order}
-                ]
-                phase.save()
+    with django_assert_max_num_queries(10):
+        calculate_ranks(phase_pk=phase.pk)
 
-                with django_assert_max_num_queries(10):
-                    calculate_ranks(phase_pk=phase.pk)
+    assert_ranks(
+        queryset,
+        expected_ranks,
+        expected_rank_scores,
+    )
 
-                assert_ranks(
-                    queryset,
-                    expected[a_order][score_method][b_order]["ranks"],
-                    expected[a_order][score_method][b_order]["rank_scores"],
-                )
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "score_method, extra_results_columns, expected_ranks, expected_rank_scores",
+    (
+        (
+            Phase.ABSOLUTE,
+            [
+                {
+                    "path": "b",
+                    "title": "b",
+                    "order": Phase.DESCENDING,
+                    "exclude_from_ranking": False,
+                }
+            ],
+            only_a_expected_ranks := [5, 3, 1, 2, 3, 0],
+            only_a_expected_rank_score := [5, 3, 1, 2, 3, 0],
+        ),
+        (
+            Phase.ABSOLUTE,
+            [
+                {
+                    "path": "b",
+                    "title": "b",
+                    "order": Phase.DESCENDING,
+                    "exclude_from_ranking": True,
+                }
+            ],
+            only_a_expected_ranks,
+            only_a_expected_rank_score,
+        ),
+        (
+            Phase.MEDIAN,
+            [
+                {
+                    "path": "b",
+                    "title": "b",
+                    "order": Phase.DESCENDING,
+                    "exclude_from_ranking": False,
+                }
+            ],
+            [5, 4, 1, 1, 1, 0],
+            [5, 3.5, 2, 2, 2, 0],
+        ),
+        (
+            Phase.MEDIAN,
+            [
+                {
+                    "path": "b",
+                    "title": "b",
+                    "order": Phase.DESCENDING,
+                    "exclude_from_ranking": True,
+                }
+            ],
+            only_a_expected_ranks,
+            only_a_expected_rank_score,
+        ),
+        (
+            Phase.MEAN,
+            [
+                {
+                    "path": "b",
+                    "title": "b",
+                    "order": Phase.DESCENDING,
+                    "exclude_from_ranking": False,
+                }
+            ],
+            [5, 4, 1, 1, 1, 0],
+            [5, 3.5, 2, 2, 2, 0],
+        ),
+        (
+            Phase.MEAN,
+            [
+                {
+                    "path": "b",
+                    "title": "b",
+                    "order": Phase.DESCENDING,
+                    "exclude_from_ranking": True,
+                }
+            ],
+            only_a_expected_ranks,
+            only_a_expected_rank_score,
+        ),
+        (
+            Phase.MEAN,
+            [
+                {  # Check if by default it is not excluded from ranking
+                    "path": "b",
+                    "title": "b",
+                    "order": Phase.DESCENDING,
+                }
+            ],
+            [5, 4, 1, 1, 1, 0],
+            [5, 3.5, 2, 2, 2, 0],
+        ),
+    ),
+)
+def test_calculate_ranks_with_exclusion(
+    django_assert_max_num_queries,
+    score_method,
+    extra_results_columns,
+    expected_ranks,
+    expected_rank_scores,
+):
+    phase = PhaseFactory()
+
+    results = [
+        # Warning: Do not change this values without updating the
+        # expected_ranks/expected_rank_scores above.
+        {"a": 0.0, "b": 0.0},
+        {"a": 0.5, "b": 0.2},
+        {"a": 1.0, "b": 0.3},
+        {"a": 0.7, "b": 0.4},
+        {"a": 0.5, "b": 0.5},
+        {"b": 0.3},  # Incomplete and should not be processed
+    ]
+
+    queryset = [
+        EvaluationFactory(submission__phase=phase, status=Evaluation.SUCCESS)
+        for _ in range(len(results))
+    ]
+
+    for e, r in zip(queryset, results, strict=True):
+        e.outputs.add(
+            ComponentInterfaceValue.objects.create(
+                interface=ComponentInterface.objects.get(
+                    slug="metrics-json-file"
+                ),
+                value=r,
+            )
+        )
+
+    phase.score_jsonpath = "a"
+    phase.scoring_method_choice = score_method
+    phase.score_default_sort = Phase.DESCENDING
+    phase.extra_results_columns = extra_results_columns
+
+    phase.save()
+
+    with django_assert_max_num_queries(10):
+        assert calculate_ranks(phase_pk=phase.pk) is None
+
+    assert_ranks(
+        queryset,
+        expected_ranks,
+        expected_rank_scores,
+    )
 
 
 @pytest.mark.django_db

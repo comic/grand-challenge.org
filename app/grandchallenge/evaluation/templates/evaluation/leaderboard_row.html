@@ -67,7 +67,7 @@
                     &nbsp;±&nbsp;
                     {{ object.metrics_json_file|get_jsonpath:col.error_path|floatformat:object.submission.phase.score_decimal_places }}
                 {% endif %}
-                {% if object.submission.phase.scoring_method_choice != object.submission.phase.ABSOLUTE %}
+                {% if object.submission.phase.scoring_method_choice != object.submission.phase.ABSOLUTE and not col.exclude_from_ranking %}
                     &nbsp;(
                     {{ object.rank_per_metric|get_key:col.path }}
                     )
