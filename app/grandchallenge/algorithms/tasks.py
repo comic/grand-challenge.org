@@ -483,8 +483,8 @@ def set_credits_per_job():
         algorithm.save(update_fields=("credits_per_job",))
 
 
-@transaction.atomic()
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@transaction.atomic
 def assign_algorithm_model_from_upload(*, algorithm_model_pk, retries=0):
     from grandchallenge.algorithms.models import AlgorithmModel
 
@@ -515,14 +515,23 @@ def assign_algorithm_model_from_upload(*, algorithm_model_pk, retries=0):
     current_model.user_upload.copy_object(to_field=current_model.model)
 
     sha256 = get_object_sha256(current_model.model)
-    if AlgorithmModel.objects.filter(sha256=sha256).exists():
+    if (
+        AlgorithmModel.objects.filter(sha256=sha256)
+        .exclude(pk=current_model.pk)
+        .exists()
+    ):
         current_model.import_status = ImportStatusChoices.FAILED
         current_model.status = (
             "Algorithm model with this sha256 already exists."
         )
         current_model.save()
-        current_model.user_upload.delete()
+
         current_model.delete_model_file()
+        current_model.model = None
+        current_model.save()
+
+        current_model.user_upload.delete()
+
         return
 
     current_model.sha256 = sha256

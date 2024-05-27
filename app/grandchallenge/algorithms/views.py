@@ -43,6 +43,7 @@ from grandchallenge.algorithms.forms import (
     AlgorithmImageForm,
     AlgorithmImageUpdateForm,
     AlgorithmImportForm,
+    AlgorithmModelForm,
     AlgorithmPermissionRequestUpdateForm,
     AlgorithmPublishForm,
     AlgorithmRepoForm,
@@ -57,6 +58,7 @@ from grandchallenge.algorithms.forms import (
 from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmImage,
+    AlgorithmModel,
     AlgorithmPermissionRequest,
     Job,
 )
@@ -1021,3 +1023,45 @@ class AlgorithmImportView(LoginRequiredMixin, UserPassesTestMixin, FormView):
         self.success_url = form.algorithm.get_absolute_url()
 
         return super().form_valid(form=form)
+
+
+class AlgorithmModelCreate(
+    LoginRequiredMixin,
+    VerificationRequiredMixin,
+    UserFormKwargsMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    CreateView,
+):
+    model = AlgorithmModel
+    form_class = AlgorithmModelForm
+    permission_required = "algorithms.change_algorithm"
+    raise_exception = True
+    success_message = "Model validation and upload in progress."
+
+    @property
+    def algorithm(self):
+        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"algorithm": self.algorithm})
+        return kwargs
+
+    def get_permission_object(self):
+        return self.algorithm
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update({"algorithm": self.algorithm})
+        return context
+
+
+class AlgorithmModelDetail(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    DetailView,
+):
+    model = AlgorithmModel
+    permission_required = "algorithms.view_algorithmmodel"
+    raise_exception = True

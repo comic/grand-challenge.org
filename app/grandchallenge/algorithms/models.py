@@ -1026,6 +1026,28 @@ class AlgorithmModel(UUIDModel):
             Bucket=self.model.storage.bucket_name, Key=self.model.name
         )
 
+    def get_absolute_url(self):
+        return reverse(
+            "algorithms:model-detail",
+            kwargs={"slug": self.algorithm.slug, "pk": self.pk},
+        )
+
+    @property
+    def import_status_context(self):
+        if self.import_status == ImportStatusChoices.COMPLETED:
+            return "success"
+        elif self.import_status in {
+            ImportStatusChoices.FAILED,
+            ImportStatusChoices.CANCELLED,
+        }:
+            return "danger"
+        else:
+            return "info"
+
+    @property
+    def import_in_progress(self):
+        return self.import_status == ImportStatusChoices.INITIALIZED
+
 
 class AlgorithmModelUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(
