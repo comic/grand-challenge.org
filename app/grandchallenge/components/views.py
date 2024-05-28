@@ -270,7 +270,7 @@ class InterfacesCreateBaseView(ObjectPermissionRequiredMixin, TemplateView):
         return context
 
 
-class CIVSetDeleteView(
+class CIVSetDelete(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     SuccessMessageMixin,
@@ -341,7 +341,7 @@ class CivSetListView(
         )
 
 
-class CIVSetBulkDeleteView(LoginRequiredMixin, FormView):
+class CIVSetBulkDelete(LoginRequiredMixin, FormView):
     form_class = CIVSetDeleteForm
     model = None
     template_name = "components/civ_set_delete_confirm.html"

@@ -4,13 +4,13 @@ from grandchallenge.archives.views import (
     ArchiveCreate,
     ArchiveDetail,
     ArchiveEditorsUpdate,
-    ArchiveItemBulkDeleteView,
+    ArchiveItemBulkDelete,
     ArchiveItemCreateView,
-    ArchiveItemDeleteView,
+    ArchiveItemDelete,
     ArchiveItemInterfaceCreate,
     ArchiveItemsList,
     ArchiveItemsToReaderStudyUpdate,
-    ArchiveItemUpdateView,
+    ArchiveItemUpdate,
     ArchiveList,
     ArchivePermissionRequestCreate,
     ArchivePermissionRequestList,
@@ -66,7 +66,7 @@ urlpatterns = [
     ),
     path(
         "<slug>/items/delete/",
-        ArchiveItemBulkDeleteView.as_view(),
+        ArchiveItemBulkDelete.as_view(),
         name="items-bulk-delete",
     ),
     path(
@@ -76,12 +76,12 @@ urlpatterns = [
     ),
     path(
         "<slug>/items/<uuid:pk>/delete/",
-        ArchiveItemDeleteView.as_view(),
+        ArchiveItemDelete.as_view(),
         name="item-delete",
     ),
     path(
         "<slug>/items/<uuid:pk>/edit/",
-        ArchiveItemUpdateView.as_view(),
+        ArchiveItemUpdate.as_view(),
         name="item-edit",
     ),
     path(

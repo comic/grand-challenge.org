@@ -51,8 +51,8 @@ from grandchallenge.archives.tasks import add_images_to_archive
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.components.forms import MultipleCIVForm, NewFileUploadForm
 from grandchallenge.components.views import (
-    CIVSetBulkDeleteView,
-    CIVSetDeleteView,
+    CIVSetBulkDelete,
+    CIVSetDelete,
     CIVSetFormMixin,
     CivSetListView,
     InterfacesCreateBaseView,
@@ -366,7 +366,7 @@ class ArchiveUploadSessionCreate(
         return context
 
 
-class ArchiveItemUpdateView(
+class ArchiveItemUpdate(
     CIVSetFormMixin,
     MultipleCIVProcessingBaseView,
 ):
@@ -640,14 +640,14 @@ class ArchiveItemInterfaceCreate(InterfacesCreateBaseView):
             )
 
 
-class ArchiveItemDeleteView(CIVSetDeleteView):
+class ArchiveItemDelete(CIVSetDelete):
     model = ArchiveItem
     permission_required = (
         f"{Archive._meta.app_label}.delete_{ArchiveItem._meta.model_name}"
     )
 
 
-class ArchiveItemBulkDeleteView(CIVSetBulkDeleteView):
+class ArchiveItemBulkDelete(CIVSetBulkDelete):
     model = ArchiveItem
 
     @property

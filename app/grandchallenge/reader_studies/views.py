@@ -58,8 +58,8 @@ from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
 )
 from grandchallenge.components.views import (
-    CIVSetBulkDeleteView,
-    CIVSetDeleteView,
+    CIVSetBulkDelete,
+    CIVSetDelete,
     CIVSetFormMixin,
     CivSetListView,
     FileUpdateBaseView,
@@ -1366,7 +1366,7 @@ class DisplaySetInterfacesCreate(InterfacesCreateBaseView):
             )
 
 
-class DisplaySetCreateView(
+class DisplaySetCreate(
     CIVSetFormMixin,
     MultipleCIVProcessingBaseView,
 ):
@@ -1412,14 +1412,14 @@ class DisplaySetCreateView(
         return self.return_url
 
 
-class DisplaySetDeleteView(CIVSetDeleteView):
+class DisplaySetDelete(CIVSetDelete):
     model = DisplaySet
     permission_required = (
         f"{ReaderStudy._meta.app_label}.delete_{DisplaySet._meta.model_name}"
     )
 
 
-class DisplaySetBulkDeleteView(CIVSetBulkDeleteView):
+class DisplaySetBulkDelete(CIVSetBulkDelete):
     model = DisplaySet
 
     @property
