@@ -18,6 +18,54 @@ def create_archive_items_for_images(images, archive):
         ai.values.add(civ)
 
 
+@pytest.fixture(scope="function")
+def archive_item_with_title(db):
+    archive = ArchiveFactory()
+    ai = ArchiveItemFactory(archive=archive)
+
+    # Default
+    assert ai.title == ""
+
+    # Update
+    ai.title = "An Archive Item Title"
+    ai.save()
+
+    return ai
+
+
+@pytest.mark.django_db
+def test_archive_item_duplicate_title_edit(archive_item_with_title):
+    # Sanity
+    ai = ArchiveItemFactory(
+        archive=archive_item_with_title.archive,
+        title="Another Archive Item",
+    )
+
+    ai.title = archive_item_with_title.title
+    with pytest.raises(IntegrityError):
+        ai.save()
+
+
+@pytest.mark.django_db
+def test_archive_item_duplicate_title_create(archive_item_with_title):
+    with pytest.raises(IntegrityError):
+        ArchiveItemFactory(
+            archive=archive_item_with_title.archive,
+            title=archive_item_with_title.title,
+        )
+
+
+@pytest.mark.django_db
+def test_archive_item_duplicate_title_other_archive(
+    archive_item_with_title,
+):
+    # Another archive is not a problem
+    ArchiveItemFactory(
+        archive=ArchiveFactory(),
+        title=archive_item_with_title.title,
+    )
+
+
 @pytest.mark.django_db
 def test_archive_item_set_title():
     archive = ArchiveFactory()
