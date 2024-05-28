@@ -17,7 +17,7 @@ def is_thumbnail(civ: ComponentInterfaceValue):
             InterfaceKindChoices.THUMBNAIL_JPG,
             InterfaceKindChoices.THUMBNAIL_PNG,
         )
-        and civ.interface.super_kind == InterfaceSuperKindChoices.value
+        and civ.interface.super_kind == InterfaceSuperKindChoices.VALUE
     )
 
 
@@ -25,5 +25,5 @@ def is_thumbnail(civ: ComponentInterfaceValue):
 def is_chart(civ: ComponentInterfaceValue):
     return (
         civ.interface.kind == InterfaceKindChoices.CHART
-        and civ.interface.super_kind == InterfaceSuperKindChoices.value
+        and civ.interface.super_kind == InterfaceSuperKindChoices.VALUE
     )

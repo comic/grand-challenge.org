@@ -48,7 +48,7 @@
 
     <div class="modal fade" id="infoModal-{{ civ.pk }}" tabindex="-1" role="dialog"
          aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">
@@ -67,7 +67,7 @@
                          >
                     {% elif civ|is_chart %}
                           <div class="w-100 vega-lite-chart">
-                            {{ chart.value|json_script:chart.pk }}
+                            {{ civ.value|json_script:civ.pk }}
                           </div>
                     {% else %}
                         <pre>{{ civ.value|json_dumps:4 }}</pre>
