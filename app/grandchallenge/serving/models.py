@@ -36,8 +36,3 @@ class Download(models.Model):
     feedback = models.ForeignKey(
         Feedback, null=True, on_delete=models.CASCADE, editable=False
     )
-
-    count = models.BigIntegerField(default=1, editable=False)
-
-    class Meta:
-        unique_together = ("creator", "image", "submission")
