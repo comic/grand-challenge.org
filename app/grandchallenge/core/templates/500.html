@@ -1,15 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Server Error</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-<h3>Unexpected Error</h3>
-<p>
-    Something went wrong...
-</p>
+{% block title %}Server Error{% endblock %}
 
-</body>
-</html>
+{% block content %}
+    <h2>Server Error</h2>
+    <p>
+        An unexpected error occurred while processing your request.
+        Our operations team has been informed and will investigate the issue.
+        Please try again later.
+    </p>
+{% endblock %}
