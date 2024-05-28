@@ -7,7 +7,7 @@
 {% load static %}
 {% load url %}
 {% load meta_attr %}
-{% load evaluation_extras %}
+{% load json %}
 
 {% block title %}
     Algorithm Result - {{ block.super }}
@@ -189,31 +189,13 @@
                 <dd class="col-sm-9">
                     <ul class="list-unstyled mb-0">
                         {% for input in object.inputs.all %}
-                            {% for file in input.image.files.all %}
-                                <li>
-                                    <a class="badge badge-primary"
-                                       href="{{ file.file.url }}">
-                                        <i class="fa fa-download"></i>
-                                        Input {{ forloop.parentloop.counter }} {{ input.image.name|stem }}
-                                        ({{ file.file|suffix }})
-                                    </a>
-                                </li>
-                            {% endfor %}
-                            {% if input.file %}
-                                <li>
-                                    <a class="badge badge-primary"
-                                       href="{{ input.file.url }}" download="{{ input.file.name|name }}">
-                                        <i class="fa fa-download"></i>
-                                        Input {{ forloop.parentloop.counter }} {{ input.file.name|stem }}
-                                        ({{ input.file|suffix }})
-                                    </a>
-                                </li>
-                            {% endif %}
-                            {% if input.value is not None %}
-                                <li>
-                                    {{ input.interface.slug }}: {{ input.value|truncatechars_html:1000 }}
-                                </li>
-                            {% endif %}
+                            <li>
+                                {% include 'grandchallenge/partials/component_interface_value.html' with civ=input only %}
+                            </li>
+                        {% empty %}
+                            <li>
+                                <i class="fa fa-eye-slash text-warning"></i> No inputs were found
+                            </li>
                         {% endfor %}
                     </ul>
                 </dd>
@@ -222,40 +204,14 @@
                     <dt class="col-sm-3">Outputs</dt>
                     <dd class="col-sm-9">
                         <ul class="list-unstyled mb-0">
+
                             {% for output in object.outputs.all %}
-                                {% if output.value is not None %}
-                                    <li>
-                                        <a href="#resultInfoModal"
-                                           data-toggle="modal"
-                                           data-target="#resultInfoModal"
-                                           data-title="Result Info"
-                                           data-output="{{ output.value }}"
-                                           data-pk="{{ object.pk }}"
-                                           class="badge badge-primary">
-                                            <i class="fa fa-download"></i>
-                                            {{ output.interface.title }}
-                                        </a>
-                                    </li>
-                                {% elif output.file %}
-                                    <li>
-                                        <a class="badge badge-primary"
-                                           href="{{ output.file.url }}">
-                                            <i class="fa fa-download"></i> {{ output.interface.title }}
-                                        </a>
-                                    </li>
-                                {% elif output.image %}
-                                    {% for file in output.image.files.all %}
-                                        <li>
-                                            <a class="badge badge-primary" href="{{ file.file.url }}">
-                                                <i class="fa fa-download"></i>
-                                                {{ output.interface.title }}{% if forloop.first and forloop.last %}{%else %} ({{forloop.counter }}){% endif %}
-                                            </a>
-                                        </li>
-                                    {% endfor %}
-                                {% endif %}
+                                <li>
+                                  {% include 'grandchallenge/partials/component_interface_value.html' with civ=output only %}
+                                </li>
                             {% empty %}
                                 <li>
-                                    <i class="fa fa-eye-slash text-warning"></i> No output images were found
+                                    <i class="fa fa-eye-slash text-warning"></i> No outputs were found
                                 </li>
                             {% endfor %}
                         </ul>

@@ -1,0 +1,79 @@
+{% load pathlib %}
+{% load json %}
+{% load civ_checks %}
+
+{% if civ.image %}
+    <ul class="list-unstyled mb-0">
+        {% for file in civ.image.files.all %}
+            <li>
+                <a class="badge badge-primary"
+                   href="{{ file.file.url }}"
+                   download="{{ civ.interface.slug }}-{{ forloop.parentloop.counter }}"
+                   title="{{ civ.interface.title }}-{{ civ.image.name }}-{{ forloop.parentloop.counter }}"
+                    >
+                    <i class="fa fa-download"></i>
+                     {{ civ.interface.title | truncatechars:64 }}:
+                    {{ civ.image.name|stem | truncatechars:64 }}
+                    ({{ file.file|suffix | truncatechars:64 }})
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+{% if civ.file and not civ|is_thumbnail %}
+    <a class="badge badge-primary"
+       href="{{ file.file.url }}"
+       download="{{ civ.interface.slug }}"
+       title="{{ civ.interface.title }}-{{ civ.file.name }}"
+    >
+        <i class="fa fa-download"></i>
+        {{ civ.interface.title | truncatechars:64 }}:
+        {{ civ.file.name|stem | truncatechars:64 }}
+        ({{ file.file|suffix | truncatechars:64 }})
+    </a>
+{% endif %}
+
+
+{% if civ.value is not None or civ|is_thumbnail %}
+    <a href="#infoModal-{{ civ.pk }}"
+       data-toggle="modal"
+       data-target="#infoModal-{{ civ.pk }}"
+       class="badge badge-primary"
+    >
+        <i class="fa fa-info-circle"></i>
+        {{ civ.interface.title | truncatechars:64 }}
+        <span class="badge badge-light"> {{ civ.value | json_dumps:0 | truncatechars:30 }}</span>
+    </a>
+
+    <div class="modal fade" id="infoModal-{{ civ.pk }}" tabindex="-1" role="dialog"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        {{ civ.interface.title }}
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal"
+                            aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    {% if civ|is_thumbnail %}
+                         <img class="m-3" height="400"
+                             src="{{ civ.file.url }}"
+                             alt="{{ civ.file.name }}" loading="lazy"
+                         >
+                    {% elif civ|is_chart %}
+                          <div class="w-100 vega-lite-chart">
+                            {{ chart.value|json_script:chart.pk }}
+                          </div>
+                    {% else %}
+                        <pre>{{ civ.value|json_dumps:4 }}</pre>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}

@@ -2,6 +2,7 @@
 {% load url %}
 {% load profiles %}
 {% load evaluation_extras %}
+{% load json %}
 {% load static %}
 {% load crispy_forms_tags %}
 
@@ -173,6 +174,20 @@
                 {% endfor %}
                 </tbody>
             </table>
+            {% if object.outputs.exist %}
+                <br>
+                <h3>Outputs</h3>
+                 <dd class="col-sm-9">
+                        <ul class="list-unstyled mb-0">
+
+                            {% for output in object.outputs.all %}
+                                <li>
+                                  {% include 'grandchallenge/partials/component_interface_value.html' with civ=output only %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </dd>
+            {% endif %}
         {% endif %}
 
         {% for chart in charts %}
