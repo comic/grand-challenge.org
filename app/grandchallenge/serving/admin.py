@@ -5,10 +5,9 @@ from grandchallenge.serving.models import Download
 
 @admin.register(Download)
 class DownloadAdmin(admin.ModelAdmin):
-    ordering = ("-modified",)
+    ordering = ("-created",)
     list_display = (
-        "modified",
-        "count",
+        "created",
         "creator",
         "image",
         "submission",
@@ -25,7 +24,6 @@ class DownloadAdmin(admin.ModelAdmin):
         "feedback__pk",
     )
     readonly_fields = (
-        "count",
         "creator",
         "image",
         "submission",
