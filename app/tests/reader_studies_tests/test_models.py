@@ -2,7 +2,6 @@ from contextlib import nullcontext
 
 import pytest
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.db import transaction
 from django.db.models import ProtectedError
 from django.db.utils import IntegrityError
 
@@ -678,42 +677,51 @@ def test_display_set_description():
         assert ds.description == result[ds.pk]
 
 
-@pytest.mark.django_db
-def test_display_set_title():
+@pytest.fixture(scope="function")
+def display_set_with_title(db):
     rs = ReaderStudyFactory()
-    ds0 = DisplaySetFactory(reader_study=rs)
+    ds = DisplaySetFactory(reader_study=rs)
 
     # Default
-    assert ds0.title == ""
+    assert ds.title == ""
 
     # Update
-    ds0.title = "A Display Set Title"
-    ds0.save()
+    ds.title = "A Display Set Title"
+    ds.save()
 
+    return ds
+
+
+@pytest.mark.django_db
+def test_display_set_duplicate_title_edit(display_set_with_title):
     # Sanity
-    ds1 = DisplaySetFactory(
-        reader_study=ds0.reader_study,
+    ds = DisplaySetFactory(
+        reader_study=display_set_with_title.reader_study,
         title="Another Display Set",
     )
 
-    # Duplication attempt via edit
-    ds1.title = ds0.title
-    with transaction.atomic():
-        with pytest.raises(IntegrityError):
-            ds1.save()
+    ds.title = display_set_with_title.title
+    with pytest.raises(IntegrityError):
+        ds.save()
 
-    # Duplication attempt via save
-    with transaction.atomic():
-        with pytest.raises(IntegrityError):
-            DisplaySetFactory(
-                reader_study=rs,
-                title=ds0.title,
-            )
 
-    # Other reader study is no problem
+@pytest.mark.django_db
+def test_display_set_duplicate_title_create(display_set_with_title):
+    with pytest.raises(IntegrityError):
+        DisplaySetFactory(
+            reader_study=display_set_with_title.reader_study,
+            title=display_set_with_title.title,
+        )
+
+
+@pytest.mark.django_db
+def test_display_set_duplicate_title_other_reader_study(
+    display_set_with_title,
+):
+    # Another reader study is not problem
     DisplaySetFactory(
         reader_study=ReaderStudyFactory(),
-        title=ds0.title,
+        title=display_set_with_title.title,
     )
 
 
