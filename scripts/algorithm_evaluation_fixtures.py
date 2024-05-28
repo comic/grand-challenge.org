@@ -1,4 +1,5 @@
 import gzip
+import json
 import os
 import shutil
 from contextlib import contextmanager
@@ -9,7 +10,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 
-from grandchallenge.algorithms.models import Algorithm, AlgorithmImage
+from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
 from grandchallenge.archives.models import Archive, ArchiveItem
 from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.challenges.models import Challenge
@@ -17,9 +18,10 @@ from grandchallenge.components.backends import docker_client
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
+    InterfaceKindChoices,
 )
 from grandchallenge.core.fixtures import create_uploaded_image
-from grandchallenge.evaluation.models import Method, Phase
+from grandchallenge.evaluation.models import Evaluation, Method, Phase
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.invoices.models import Invoice
 from grandchallenge.workstations.models import Workstation
@@ -48,6 +50,10 @@ def run():
         inputs=inputs,
         outputs=outputs,
         suffix=f"Image {challenge_count}",
+    )
+
+    _create_civ_rich_algorithm_job(
+        creator=users["demo"],
     )
 
 
@@ -190,3 +196,114 @@ def _uploaded_file(*, path):
     with open(os.path.join(settings.SITE_ROOT, path), "rb") as f:
         with ContentFile(f.read()) as content:
             yield content
+
+
+def _create_civ_rich_algorithm_job(creator):
+    interfaces = _get_or_create_additional_component_interfaces()
+
+    algorithm_job = Job.objects.create(
+        creator=creator,
+        algorithm_image=AlgorithmImage.objects.filter(creator=creator).first(),
+        status=Evaluation.SUCCESS,
+    )
+
+    # String
+    algorithm_job.inputs.add(
+        interfaces["string-ci"].create_instance(
+            value="Lorem inputsum dolor sit amet, consectetur adipiscing elit, sed do"
+        )
+    )
+
+    algorithm_job.outputs.add(
+        interfaces["string-ci"].create_instance(
+            value="Lorem outputsum dolor sit amet, consectetur adipiscing elit, sed do"
+        )
+    )
+
+    # Value float
+    algorithm_job.inputs.add(
+        interfaces["value-float-ci"].create_instance(value=42)
+    )
+
+    algorithm_job.outputs.add(
+        interfaces["value-float-ci"].create_instance(value=43)
+    )
+
+    # File float
+    ffc_in = ComponentInterfaceValue.objects.create(
+        interface=interfaces["file-float-ci"],
+    )
+    ffc_in.file.save(
+        "float_file_name.json", ContentFile(json.dumps(42).encode("utf-8"))
+    )
+    algorithm_job.inputs.add(ffc_in)
+
+    ffc_out = ComponentInterfaceValue.objects.create(
+        interface=interfaces["file-float-ci"],
+    )
+    ffc_out.file.save(
+        "float_file_name.json", ContentFile(json.dumps(43).encode("utf-8"))
+    )
+    algorithm_job.outputs.add(ffc_out)
+
+    # Chart
+    with open(
+        settings.SITE_ROOT / "tests" / "resources" / "bar_chart.json"
+    ) as f:
+        chart_spec = json.loads(f.read())
+        algorithm_job.inputs.add(
+            interfaces["chart-ci"].create_instance(value=chart_spec)
+        )
+        algorithm_job.outputs.add(
+            interfaces["chart-ci"].create_instance(value=chart_spec)
+        )
+
+    # Thumbnail
+    thumb_in = ComponentInterfaceValue.objects.create(
+        interface=interfaces["thumbnail-jpg-ci"],
+    )
+    thumb_in.file.save("thumbnail_image_name.jpg", create_uploaded_image())
+    algorithm_job.inputs.add(thumb_in)
+
+    thumb_out = ComponentInterfaceValue.objects.create(
+        interface=interfaces["thumbnail-jpg-ci"],
+    )
+    thumb_out.file.save("thumbnail_image_name.jpg", create_uploaded_image())
+    algorithm_job.outputs.add(thumb_out)
+
+
+def _get_or_create_additional_component_interfaces():
+    interfaces = [
+        ComponentInterface.objects.get_or_create(
+            title="Chart CI",
+            kind=InterfaceKindChoices.CHART,
+            store_in_database=True,
+            relative_path="chart.json",
+        )[0],
+        ComponentInterface.objects.get_or_create(
+            title="Thumbnail JPG CI",
+            kind=InterfaceKindChoices.THUMBNAIL_JPG,
+            store_in_database=False,
+            relative_path="images/thumbnail.jpg",
+        )[0],
+        ComponentInterface.objects.get_or_create(
+            title="File Float CI",
+            kind=InterfaceKindChoices.FLOAT,
+            store_in_database=False,
+            relative_path="float.json",
+        )[0],
+        ComponentInterface.objects.get_or_create(
+            title="Value Float CI",
+            kind=InterfaceKindChoices.FLOAT,
+            store_in_database=True,
+            relative_path="float_value.json",
+        )[0],
+        ComponentInterface.objects.get_or_create(
+            title="String CI",
+            kind=InterfaceKindChoices.STRING,
+            store_in_database=True,
+            relative_path="string.json",
+        )[0],
+    ]
+
+    return {i.slug: i for i in interfaces}
