@@ -1,15 +1,20 @@
+from collections import OrderedDict
+from typing import Optional, Dict
+
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import HTML, Layout, Submit
 from django.forms import ModelForm
 
-from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.widgets import ColorEditorWidget, JSONEditorWidget
 from grandchallenge.workstation_configs.models import (
     KEY_BINDINGS_SCHEMA,
     OVERLAY_SEGMENTS_SCHEMA,
     WorkstationConfig,
+    VisualGroups,
 )
 
 
-class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
+class WorkstationConfigForm(ModelForm):
     class Meta:
         model = WorkstationConfig
         fields = (
@@ -85,3 +90,37 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
             "key_bindings": model._meta.get_field("key_bindings").help_text
             + ". A copy and paste JSON can be obtained from the viewer",
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        ordered_fields = list(self.fields.keys())
+        DEFAULT_NAME = None
+        field_set_groups: Dict[Optional[str], list] = OrderedDict(
+            (
+                (DEFAULT_NAME, []),
+                *[(k, []) for k in VisualGroups.group_map.keys()],
+            )
+        )
+        for field_name in ordered_fields:
+            for group_name, field_list in reversed(field_set_groups.items()):
+                if (
+                    DEFAULT_NAME == group_name
+                    or field_name in VisualGroups.group_map[group_name].names
+                ):
+                    field_list.append(field_name)
+                    break
+
+        helper_fields = []
+        for group_name, field_list in field_set_groups.items():
+            if group := VisualGroups.group_map.get(group_name):
+                helper_fields.append(HTML(f"<h2>{group.title}</h2>"))
+                if desc := group.description:
+                    helper_fields.append(
+                        HTML(f'<p class="text-muted">{desc}</p>')
+                    )
+            helper_fields.extend(field_list)
+
+        self.helper = FormHelper()
+        self.helper.layout = Layout(*helper_fields)
+        self.helper.layout.append(Submit("save", "Save"))
