@@ -502,6 +502,16 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         except AttributeError:
             return False
 
+    def form_field_label(self):
+        title = f"{self.title}"
+        if self.active_image:
+            title += f" (Active image: {self.active_image.pk})"
+        if self.active_model:
+            title += f" (Active model: {self.active_model.pk})"
+        else:
+            title += " (Active model: None)"
+        return title
+
 
 class AlgorithmUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(Algorithm, on_delete=models.CASCADE)

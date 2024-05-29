@@ -226,8 +226,8 @@ def create_algorithm_jobs_for_archive(
 def create_algorithm_jobs(
     *,
     algorithm_image,
-    algorithm_model,
     civ_sets,
+    algorithm_model=None,
     extra_viewer_groups=None,
     extra_logs_viewer_groups=None,
     max_jobs=None,

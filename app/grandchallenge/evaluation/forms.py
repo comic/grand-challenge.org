@@ -264,6 +264,11 @@ class MethodUpdateForm(SaveFormInitMixin, forms.ModelForm):
         )
 
 
+class AlgorithmChoiceField(ModelChoiceField):
+    def label_from_instance(self, obj):
+        return obj.form_field_label()
+
+
 submission_fields = (
     "creator",
     "phase",
@@ -294,7 +299,7 @@ class SubmissionForm(
         label="Predictions File",
         queryset=None,
     )
-    algorithm = ModelChoiceField(queryset=None)
+    algorithm = AlgorithmChoiceField(queryset=None)
 
     def __init__(self, *args, user, phase: Phase, **kwargs):  # noqa: C901
         super().__init__(*args, user=user, phase=phase, **kwargs)
