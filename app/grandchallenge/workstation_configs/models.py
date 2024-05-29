@@ -149,14 +149,10 @@ class Group:
     def __set_name__(self, owner, name):
         owner.group_map[name] = self
 
-    def __add__(self, other):
+    def add_to_group(self, other):
         self.items.append(other)
-
-        # Remove cache from cached property
         if "names" in vars(self):
             del vars(self)["names"]
-
-        return other
 
 
 class VisualGroups:
@@ -182,12 +178,6 @@ class VisualGroups:
         if not (result := cls.__instance):
             cls.__instance = result = super().__new__(cls)
         return result
-
-    def __setattr__(self, key, value):
-        if isinstance(g := getattr(VisualGroups, key, None), Group):
-            g.items.append(value)
-        else:
-            super().__setattr__(key, value)
 
 
 class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
@@ -264,39 +254,39 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         help_text="The orientation that defines the 3D-intersection plane used to render slabs of 3D images",
     )
 
-    ghosting_slice_depth = VisualGroups().annotations + (
-        models.PositiveSmallIntegerField(
-            default=3,
-            blank=False,
-            help_text="The number of slices a polygon annotation should remain visible for on slices surrounding the annotation slice.",
-        )
+    ghosting_slice_depth = models.PositiveSmallIntegerField(
+        default=3,
+        blank=False,
+        help_text="The number of slices a polygon annotation should remain visible for on slices surrounding the annotation slice.",
     )
+    VisualGroups().annotations.add_to_group(ghosting_slice_depth)
 
-    overlay_luts = VisualGroups().annotations + models.ManyToManyField(
+    overlay_luts = models.ManyToManyField(
         to="LookUpTable",
         blank=True,
         related_name="workstation_overlay_luts",
         help_text="The preset look-up tables options that are used to project overlay-image values to "
         "displayed pixel colors",
     )
+    VisualGroups().annotations.add_to_group(overlay_luts)
 
-    default_overlay_lut = VisualGroups().annotations + models.ForeignKey(
+    default_overlay_lut = models.ForeignKey(
         to="LookUpTable",
         blank=True,
         null=True,
         on_delete=models.SET_NULL,
         help_text="The look-up table that is applied when an overlay image is first shown",
     )
+    VisualGroups().annotations.add_to_group(default_overlay_lut)
 
-    default_overlay_interpolation = VisualGroups().annotations + (
-        models.CharField(
-            max_length=2,
-            choices=ImageInterpolationType.choices,
-            default=ImageInterpolationType.NEAREST,
-            blank=True,
-            help_text="The method used to interpolate multiple voxels of overlay images and project them to screen pixels",
-        )
+    default_overlay_interpolation = models.CharField(
+        max_length=2,
+        choices=ImageInterpolationType.choices,
+        default=ImageInterpolationType.NEAREST,
+        blank=True,
+        help_text="The method used to interpolate multiple voxels of overlay images and project them to screen pixels",
     )
+    VisualGroups().annotations.add_to_group(default_overlay_interpolation)
 
     default_image_interpolation = models.CharField(
         max_length=2,
@@ -312,7 +302,7 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
     )
 
     # 3 digits, 2 decimal places, 0.00 min, 1.00 max
-    default_overlay_alpha = VisualGroups().annotations + models.DecimalField(
+    default_overlay_alpha = models.DecimalField(
         blank=True,
         null=True,
         max_digits=3,
@@ -323,13 +313,15 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         ],
         help_text="The alpha value used for setting the degree of opacity for displayed pixels of overlay images",
     )
+    VisualGroups().annotations.add_to_group(default_overlay_alpha)
 
-    overlay_segments = VisualGroups().annotations + models.JSONField(
+    overlay_segments = models.JSONField(
         default=list,
         blank=True,
         validators=[JSONValidator(schema=OVERLAY_SEGMENTS_SCHEMA)],
         help_text="The schema that defines how categories of values in the overlay images are differentiated",
     )
+    VisualGroups().annotations.add_to_group(overlay_segments)
 
     key_bindings = models.JSONField(
         default=list,
@@ -347,7 +339,7 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         validators=[MinValueValidator(limit_value=0.01)],
     )
 
-    default_brush_size = VisualGroups().annotations + models.DecimalField(
+    default_brush_size = models.DecimalField(
         blank=True,
         null=True,
         max_digits=16,  # 1000 km
@@ -355,145 +347,168 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         validators=[MinValueValidator(limit_value=1e-6)],  # 1 nm
         help_text="Default brush diameter in millimeters for creating annotations",
     )
+    VisualGroups().annotations.add_to_group(default_brush_size)
 
-    default_annotation_color = VisualGroups().annotations + HexColorField(
+    default_annotation_color = HexColorField(
         blank=True,
         null=True,
         help_text="Default color for displaying and creating annotations",
     )
+    VisualGroups().annotations.add_to_group(default_annotation_color)
 
     default_annotation_line_width = PositiveSmallIntegerField(
         blank=True,
         null=True,
         help_text="Default line width in pixels for displaying and creating annotations",
     )
+    VisualGroups().annotations.add_to_group(default_annotation_line_width)
 
-    show_image_info_plugin = VisualGroups().plugins_tools + (
-        models.BooleanField(
-            default=True,
-            help_text="A plugin that shows meta-data information derived from image headers "
-            "as well as any configured case text for reader studies",
-        )
+    show_image_info_plugin = models.BooleanField(
+        default=True,
+        help_text="A plugin that shows meta-data information derived from image headers "
+        "as well as any configured case text for reader studies",
     )
-    show_display_plugin = VisualGroups().plugins_tools + models.BooleanField(
+    VisualGroups().plugins_tools.add_to_group(show_image_info_plugin)
+
+    show_display_plugin = models.BooleanField(
         default=True,
         help_text="A plugin that allows control over display properties such as window preset, "
         "slab thickness, or orientation",
     )
-    show_image_switcher_plugin = VisualGroups().plugins_tools + (
-        models.BooleanField(
-            default=True,
-            help_text="A plugin that allows switching images when viewing algorithm outputs",
-        )
+    VisualGroups().plugins_tools.add_to_group(show_display_plugin)
+
+    show_image_switcher_plugin = models.BooleanField(
+        default=True,
+        help_text="A plugin that allows switching images when viewing algorithm outputs",
     )
-    show_algorithm_output_plugin = VisualGroups().plugins_tools + (
-        models.BooleanField(
-            default=True,
-            help_text="A plugin that shows algorithm outputs, including navigation controls",
-        )
+    VisualGroups().plugins_tools.add_to_group(show_image_switcher_plugin)
+
+    show_algorithm_output_plugin = models.BooleanField(
+        default=True,
+        help_text="A plugin that shows algorithm outputs, including navigation controls",
     )
-    show_overlay_plugin = VisualGroups().plugins_tools + models.BooleanField(
+    VisualGroups().plugins_tools.add_to_group(show_image_switcher_plugin)
+
+    show_overlay_plugin = models.BooleanField(
         default=True,
         help_text="A plugin that contains overlay-related controls, "
         "such as the overlay-selection tool and overlay-segmentation visibility",
     )
-    show_annotation_statistics_plugin = VisualGroups().plugins_tools + (
-        models.BooleanField(
-            default=False,
-            help_text="A plugin that allows analysis of segmentations. It shows voxel value "
-            "statistics of annotated areas.",
-        )
+    VisualGroups().plugins_tools.add_to_group(show_overlay_plugin)
+
+    show_annotation_statistics_plugin = models.BooleanField(
+        default=False,
+        help_text="A plugin that allows analysis of segmentations. It shows voxel value "
+        "statistics of annotated areas.",
     )
-    show_swivel_tool = VisualGroups().plugins_tools + models.BooleanField(
+    VisualGroups().plugins_tools.add_to_group(
+        show_annotation_statistics_plugin
+    )
+
+    show_swivel_tool = models.BooleanField(
         default=False,
         help_text="A tool that allows swiveling the image around axes to view a custom orientation",
     )
-    show_invert_tool = VisualGroups().plugins_tools + models.BooleanField(
+    VisualGroups().plugins_tools.add_to_group(show_swivel_tool)
+
+    show_invert_tool = models.BooleanField(
         default=True,
         help_text="A tool/button that allows inverting the displayed pixel colors of an image",
     )
-    show_flip_tool = VisualGroups().plugins_tools + models.BooleanField(
+    VisualGroups().plugins_tools.add_to_group(show_invert_tool)
+
+    show_flip_tool = models.BooleanField(
         default=True,
         help_text="A tool/button that allows vertical flipping/mirroring of an image",
     )
-    show_window_level_tool = VisualGroups().plugins_tools + (
-        models.BooleanField(
-            default=True,
-            help_text="A tool that allows selection of window presets and changing the window width/center",
-        )
+    VisualGroups().plugins_tools.add_to_group(show_flip_tool)
+
+    show_window_level_tool = models.BooleanField(
+        default=True,
+        help_text="A tool that allows selection of window presets and changing the window width/center",
     )
-    show_reset_tool = VisualGroups().plugins_tools + models.BooleanField(
+    VisualGroups().plugins_tools.add_to_group(show_window_level_tool)
+
+    show_reset_tool = models.BooleanField(
         default=True,
         help_text="A tool/button that resets all display properties of the images to defaults",
     )
-    show_overlay_selection_tool = VisualGroups().plugins_tools + (
-        models.BooleanField(
-            default=True,
-            help_text="A tool that allows switching overlay images when viewing algorithm outputs",
-        )
-    )
-    show_lut_selection_tool = VisualGroups().plugins_tools + (
-        models.BooleanField(
-            default=True,
-            verbose_name="Show overlay-lut selection tool",
-            help_text="A tool that allows switching between the overlay-lut presets",
-        )
-    )
-    show_annotation_counter_tool = VisualGroups().plugins_tools + (
-        models.BooleanField(
-            default=True,
-            help_text="A tool that can be used to show summary statistics of annotations within an area",
-        )
-    )
+    VisualGroups().plugins_tools.add_to_group(show_reset_tool)
 
-    link_images = VisualGroups().linking + models.BooleanField(
+    show_overlay_selection_tool = models.BooleanField(
+        default=True,
+        help_text="A tool that allows switching overlay images when viewing algorithm outputs",
+    )
+    VisualGroups().plugins_tools.add_to_group(show_overlay_selection_tool)
+
+    show_lut_selection_tool = models.BooleanField(
+        default=True,
+        verbose_name="Show overlay-lut selection tool",
+        help_text="A tool that allows switching between the overlay-lut presets",
+    )
+    VisualGroups().plugins_tools.add_to_group(show_lut_selection_tool)
+
+    show_annotation_counter_tool = models.BooleanField(
+        default=True,
+        help_text="A tool that can be used to show summary statistics of annotations within an area",
+    )
+    VisualGroups().plugins_tools.add_to_group(show_lut_selection_tool)
+
+    link_images = models.BooleanField(
         default=True,
         help_text="Start with the images linked",
     )
+    VisualGroups().linking.add_to_group(link_images)
 
-    link_panning = VisualGroups().linking + models.BooleanField(
+    link_panning = models.BooleanField(
         default=True,
         help_text="When panning and the images are linked, they share any new position",
     )
+    VisualGroups().linking.add_to_group(link_panning)
 
-    link_zooming = VisualGroups().linking + models.BooleanField(
+    link_zooming = models.BooleanField(
         default=True,
         help_text="When zooming and the images are linked, they share any new zoom level",
     )
+    VisualGroups().linking.add_to_group(link_zooming)
 
-    link_slicing = VisualGroups().linking + models.BooleanField(
+    link_slicing = models.BooleanField(
         default=True,
         help_text="When scrolling and the images are linked, they share any slice changes",
     )
+    VisualGroups().linking.add_to_group(link_slicing)
 
-    link_orienting = VisualGroups().linking + models.BooleanField(
+    link_orienting = models.BooleanField(
         default=True,
         help_text="When orienting and the images are linked, they share any new orientation",
     )
-    link_windowing = VisualGroups().linking + models.BooleanField(
+    VisualGroups().linking.add_to_group(link_orienting)
+
+    link_windowing = models.BooleanField(
         default=True,
         help_text="When changing window setting and the images are linked, they share any new window width/center",
     )
+    VisualGroups().linking.add_to_group(link_windowing)
 
-    link_inverting = VisualGroups().linking + models.BooleanField(
+    link_inverting = models.BooleanField(
         default=True,
         help_text="When inverting images and the images are linked, they share any new invert state",
     )
+    VisualGroups().linking.add_to_group(link_inverting)
 
-    link_flipping = VisualGroups().linking + models.BooleanField(
+    link_flipping = models.BooleanField(
         default=True,
         help_text="When flipping images and the images are linked, they share any new flip state",
     )
+    VisualGroups().linking.add_to_group(link_flipping)
 
-    enable_contrast_enhancement = VisualGroups().plugins_tools + (
-        models.BooleanField(
-            default=False,
-            verbose_name="Contrast-enhancement preprocessing tool",
-            help_text="A tool that uses image preprocessing to enhance contrast. "
-            "It is mainly used for viewing eye-fundus images",
-        )
+    enable_contrast_enhancement = models.BooleanField(
+        default=False,
+        verbose_name="Contrast-enhancement preprocessing tool",
+        help_text="A tool that uses image preprocessing to enhance contrast. "
+        "It is mainly used for viewing eye-fundus images",
     )
-    enable_contrast_enhancement.visual_group = ""
+    VisualGroups().plugins_tools.add_to_group(enable_contrast_enhancement)
 
     auto_jump_center_of_gravity = models.BooleanField(
         default=True,
