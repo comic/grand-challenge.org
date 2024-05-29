@@ -18,7 +18,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
 from django.core.validators import RegexValidator
-from django.db.models import Count, Q
+from django.db.models import Count, Exists, OuterRef, Q
 from django.db.transaction import on_commit
 from django.forms import (
     CharField,
@@ -92,6 +92,9 @@ class JobCreateForm(SaveFormInitMixin, Form):
     algorithm_image = ModelChoiceField(
         queryset=None, disabled=True, required=True, widget=HiddenInput
     )
+    algorithm_model = ModelChoiceField(
+        queryset=None, disabled=True, required=False, widget=HiddenInput
+    )
 
     def __init__(self, *args, algorithm, user, **kwargs):
         super().__init__(*args, **kwargs)
@@ -102,12 +105,19 @@ class JobCreateForm(SaveFormInitMixin, Form):
         self.helper = FormHelper()
 
         active_image = self._algorithm.active_image
+        active_model = self._algorithm.active_model
 
         if active_image:
             self.fields["algorithm_image"].queryset = (
                 AlgorithmImage.objects.filter(pk=active_image.pk)
             )
             self.fields["algorithm_image"].initial = active_image
+
+        if active_model:
+            self.fields["algorithm_model"].queryset = (
+                AlgorithmModel.objects.filter(pk=active_model.pk)
+            )
+            self.fields["algorithm_model"].initial = active_model
 
         for inp in self._algorithm.inputs.all():
             self.fields[inp.slug] = InterfaceFormField(
@@ -342,6 +352,9 @@ class UserAlgorithmsForPhaseMixin:
     @cached_property
     def user_algorithms_for_phase(self):
         inputs, outputs = self.get_phase_algorithm_inputs_outputs()
+        desired_image_subquery = AlgorithmImage.objects.filter(
+            algorithm=OuterRef("pk"), is_desired_version=True
+        )
         return (
             get_objects_for_user(self._user, "algorithms.change_algorithm")
             .annotate(
@@ -353,6 +366,7 @@ class UserAlgorithmsForPhaseMixin:
                 relevant_output_count=Count(
                     "outputs", filter=Q(outputs__in=outputs), distinct=True
                 ),
+                has_active_image=Exists(desired_image_subquery),
             )
             .filter(
                 total_input_count=len(inputs),
@@ -360,16 +374,6 @@ class UserAlgorithmsForPhaseMixin:
                 relevant_input_count=len(inputs),
                 relevant_output_count=len(outputs),
             )
-        )
-
-    @cached_property
-    def user_active_images_for_phase(self):
-        return get_objects_for_user(
-            user=self._user,
-            perms="algorithms.change_algorithmimage",
-            klass=AlgorithmImage.objects.active_images()
-            .select_related("algorithm")
-            .filter(algorithm__in=self.user_algorithms_for_phase),
         )
 
     @cached_property

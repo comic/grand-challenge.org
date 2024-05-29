@@ -223,6 +223,7 @@ def create_algorithm_jobs_for_evaluation(
         ):
             jobs = create_algorithm_jobs(
                 algorithm_image=evaluation.submission.algorithm_image,
+                algorithm_model=evaluation.submission.algorithm_model,
                 civ_sets=[
                     {*ai.values.all()}
                     for ai in evaluation.submission.phase.archive.items.prefetch_related(

@@ -205,6 +205,7 @@ def create_algorithm_jobs_for_archive(
                 ):
                     create_algorithm_jobs(
                         algorithm_image=algorithm.active_image,
+                        algorithm_model=algorithm.active_model,
                         civ_sets=[
                             {*ai.values.all()}
                             for ai in archive_items.prefetch_related(
@@ -225,6 +226,7 @@ def create_algorithm_jobs_for_archive(
 def create_algorithm_jobs(
     *,
     algorithm_image,
+    algorithm_model,
     civ_sets,
     extra_viewer_groups=None,
     extra_logs_viewer_groups=None,
@@ -279,6 +281,7 @@ def create_algorithm_jobs(
             job = Job.objects.create(
                 creator=None,  # System jobs, so no creator
                 algorithm_image=algorithm_image,
+                algorithm_model=algorithm_model,
                 task_on_success=task_on_success,
                 task_on_failure=task_on_failure,
                 time_limit=time_limit,

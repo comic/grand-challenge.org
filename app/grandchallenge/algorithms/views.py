@@ -9,7 +9,7 @@ from django.contrib.auth.mixins import (
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db.models import OuterRef, Subquery, Window
+from django.db.models import Count, OuterRef, Q, Subquery, Window
 from django.db.models.functions import Rank
 from django.forms.utils import ErrorList
 from django.http import HttpResponse, HttpResponseRedirect
@@ -502,7 +502,8 @@ class JobCreate(
         )
         return context
 
-    def form_valid(self, form):
+    def form_valid(self, form):  # noqa: C901
+        # TODO this should all be in the forms save method, not in the view
         def create_upload_session(image_files):
             upload_session = RawImageUploadSession.objects.create(
                 creator=self.request.user
@@ -516,7 +517,7 @@ class JobCreate(
         interfaces = {ci.slug: ci for ci in self.algorithm.inputs.all()}
 
         for slug, value in form.cleaned_data.items():
-            if slug == "algorithm_image":
+            if slug in ["algorithm_image", "algorithm_model"]:
                 continue
 
             ci = interfaces[slug]
@@ -559,21 +560,50 @@ class JobCreate(
                 civ = ci.create_instance(value=value)
                 component_interface_values.append(civ)
 
-        job = Job.objects.create(
-            creator=self.request.user,
-            algorithm_image=form.cleaned_data["algorithm_image"],
-            extra_logs_viewer_groups=[self.algorithm.editors_group],
-            input_civ_set=component_interface_values,
-            time_limit=self.algorithm.time_limit,
-        )
-        job.sort_inputs_and_execute(upload_session_pks=upload_session_pks)
+        # check that this job hasn't been run yet:
+        unique_kwargs = {
+            "algorithm_image": form.cleaned_data["algorithm_image"],
+        }
+        input_interface_count = self.algorithm.inputs.count()
+        if form.cleaned_data["algorithm_model"]:
+            unique_kwargs["algorithm_model"] = form.cleaned_data[
+                "algorithm_model"
+            ]
 
-        return HttpResponseRedirect(
-            reverse(
-                "algorithms:job-progress-detail",
-                kwargs={"slug": self.kwargs["slug"], "pk": job.pk},
+        if (
+            Job.objects.filter(**unique_kwargs)
+            .annotate(
+                inputs_match_count=Count(
+                    "inputs",
+                    filter=Q(inputs__in=component_interface_values),
+                )
             )
-        )
+            .filter(inputs_match_count=input_interface_count)
+            .exists()
+        ):
+            form.add_error(
+                None,
+                "A result for these inputs with the current image "
+                "and model already exists.",
+            )
+            return self.form_invalid(form)
+        else:
+            job = Job.objects.create(
+                creator=self.request.user,
+                algorithm_image=form.cleaned_data["algorithm_image"],
+                algorithm_model=form.cleaned_data["algorithm_model"],
+                extra_logs_viewer_groups=[self.algorithm.editors_group],
+                input_civ_set=component_interface_values,
+                time_limit=self.algorithm.time_limit,
+            )
+            job.sort_inputs_and_execute(upload_session_pks=upload_session_pks)
+
+            return HttpResponseRedirect(
+                reverse(
+                    "algorithms:job-progress-detail",
+                    kwargs={"slug": self.kwargs["slug"], "pk": job.pk},
+                )
+            )
 
 
 class JobProgressDetail(

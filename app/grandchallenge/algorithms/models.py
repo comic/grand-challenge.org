@@ -350,6 +350,18 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         except ObjectDoesNotExist:
             return None
 
+    @cached_property
+    def active_model(self):
+        """
+        Returns
+        -------
+            The desired model version for this algorithm or None
+        """
+        try:
+            return self.algorithm_models.filter(is_desired_version=True).get()
+        except ObjectDoesNotExist:
+            return None
+
     @property
     def image_upload_in_progress(self):
         return self.algorithm_container_images.filter(
