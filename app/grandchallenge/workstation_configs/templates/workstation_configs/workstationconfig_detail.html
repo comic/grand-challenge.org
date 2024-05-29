@@ -65,36 +65,6 @@
                 <i class="fas {% if object.default_limit_view_area_to_image_volume %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
             </td>
         </tr>
-        <tr data-toggle="tooltip" title="{% get_help_text object 'default_overlay_alpha' %}">
-            <td class="font-weight-bold">Default overlay alpha</td>
-            <td>{{ object.default_overlay_alpha }}</td>
-        </tr>
-        <tr data-toggle="tooltip" title="{% get_help_text object 'ghosting_slice_depth' %}">
-            <td class="font-weight-bold">Ghosting Slice Depth</td>
-            <td>{{ object.ghosting_slice_depth }}</td>
-        </tr>
-        <tr data-toggle="tooltip" title="{% get_help_text object 'overlay_luts' %}">
-            <td class="font-weight-bold">Overlay lookup tables</td>
-            <td>
-                {% for x in object.overlay_luts.all %}
-                    <div>{{ x }}</div>
-                {% endfor %}
-            </td>
-        </tr>
-        <tr data-toggle="tooltip" title="{% get_help_text object 'default_overlay_lut' %}">
-            <td class="font-weight-bold">Default overlay lookup table</td>
-            <td>{{ object.default_overlay_lut }}</td>
-        </tr>
-        <tr data-toggle="tooltip" title="{% get_help_text object 'default_overlay_interpolation' %}">
-            <td class="font-weight-bold">Default overlay interpolation</td>
-            <td>{{ object.get_default_overlay_interpolation_display }}</td>
-        </tr>
-        <tr data-toggle="tooltip" title="{% get_help_text object 'overlay_segments' %}">
-            <td class="font-weight-bold">Overlay segments</td>
-            <td>
-                <pre>{{ object.overlay_segments|json_dumps }}</pre>
-            </td>
-        </tr>
         <tr data-toggle="tooltip" title="{% get_help_text object 'key_bindings' %}">
             <td class="font-weight-bold">Key bindings</td>
             <td>
@@ -105,6 +75,19 @@
             <td class="font-weight-bold">Default zoom scale</td>
             <td>{{ object.default_zoom_scale }}</td>
         </tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'auto_jump_center_of_gravity' %}">
+            <td class="font-weight-bold">Jump to first center of gravity</td>
+            <td>
+                <i class="fas {% if object.auto_jump_center_of_gravity %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            </td>
+        </tr>
+    </table>
+
+    <h2>Annotations and Overlays</h2>
+
+    <p class="text-muted">Behavior or visualization settings for annotations and overlays.</p>
+
+    <table class="table table-hover my-3" >
         <tr data-toggle="tooltip" title="{% get_help_text object 'default_brush_size' %}">
             <td class="font-weight-bold">Default brush size (mm)</td>
             <td>{{ object.default_brush_size }}</td>
@@ -122,11 +105,35 @@
             <td class="font-weight-bold">Default annotation line width</td>
             <td>{{ object.default_annotation_line_width }}</td>
         </tr>
-         <tr data-toggle="tooltip" title="{% get_help_text object 'auto_jump_center_of_gravity' %}">
-            <td class="font-weight-bold">Jump to first center of gravity</td>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'ghosting_slice_depth' %}">
+            <td class="font-weight-bold">Ghosting Slice Depth</td>
+            <td>{{ object.ghosting_slice_depth }}</td>
+        </tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'default_overlay_lut' %}">
+            <td class="font-weight-bold">Default overlay lookup table</td>
+            <td>{{ object.default_overlay_lut }}</td>
+        </tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'overlay_luts' %}">
+            <td class="font-weight-bold">Overlay lookup tables</td>
             <td>
-                <i class="fas {% if object.auto_jump_center_of_gravity %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+                {% for x in object.overlay_luts.all %}
+                    <div>{{ x }}</div>
+                {% endfor %}
             </td>
+        </tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'overlay_segments' %}">
+            <td class="font-weight-bold">Overlay segments</td>
+            <td>
+                <pre>{{ object.overlay_segments|json_dumps }}</pre>
+            </td>
+        </tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'default_overlay_alpha' %}">
+            <td class="font-weight-bold">Default overlay alpha</td>
+            <td>{{ object.default_overlay_alpha }}</td>
+        </tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'default_overlay_interpolation' %}">
+            <td class="font-weight-bold">Default overlay interpolation</td>
+            <td>{{ object.get_default_overlay_interpolation_display }}</td>
         </tr>
     </table>
 
