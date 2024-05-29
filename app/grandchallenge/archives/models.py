@@ -1,10 +1,9 @@
-import os
-
 from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.db.models import Q
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
@@ -14,6 +13,7 @@ from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.components.models import (
     CIVForObjectMixin,
+    CIVSetStringRepresentationMixin,
     ComponentInterfaceValue,
     ValuesForInterfacesMixin,
 )
@@ -266,6 +266,9 @@ class Archive(
     def civ_set_model(self):
         return ArchiveItem
 
+    def create_civ_set(self, data):
+        return self.civ_set_model.objects.create(archive=self, **data)
+
     @property
     def create_civ_set_url(self):
         return reverse("archives:item-create", kwargs={"slug": self.slug})
@@ -283,22 +286,16 @@ class ArchiveGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(Archive, on_delete=models.CASCADE)
 
 
-class ArchiveItem(CIVForObjectMixin, UUIDModel):
+class ArchiveItem(
+    CIVSetStringRepresentationMixin, CIVForObjectMixin, UUIDModel
+):
     archive = models.ForeignKey(
         Archive, related_name="items", on_delete=models.PROTECT
     )
     values = models.ManyToManyField(
         ComponentInterfaceValue, blank=True, related_name="archive_items"
     )
-
-    def __str__(self):
-        values = []
-        for value in self.values.all():
-            if value.image:
-                values.append(value.image.name)
-            if value.file:
-                values.append(os.path.basename(value.file.file.name))
-        return ", ".join(values)
+    title = models.CharField(max_length=255, default="", blank=True)
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -307,6 +304,15 @@ class ArchiveItem(CIVForObjectMixin, UUIDModel):
 
         if adding:
             self.assign_permissions()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["title", "archive"],
+                name="unique_archive_item_title",
+                condition=~Q(title=""),
+            )
+        ]
 
     def assign_permissions(self):
         # Archive editors, uploaders and users can view this archive item
@@ -338,11 +344,6 @@ class ArchiveItem(CIVForObjectMixin, UUIDModel):
     @property
     def base_object(self):
         return self.archive
-
-    @property
-    def is_editable(self):
-        # always editable
-        return True
 
     @property
     def update_url(self):

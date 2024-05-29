@@ -26,6 +26,7 @@ from stdimage import JPEGField
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.components.models import (
     CIVForObjectMixin,
+    CIVSetStringRepresentationMixin,
     ComponentInterface,
     ComponentInterfaceValue,
     InterfaceKind,
@@ -735,6 +736,9 @@ class ReaderStudy(
     def civ_set_model(self):
         return DisplaySet
 
+    def create_civ_set(self, data):
+        return self.civ_set_model.objects.create(reader_study=self, **data)
+
     @property
     def create_civ_set_url(self):
         return reverse(
@@ -787,7 +791,9 @@ def delete_reader_study_groups_hook(*_, instance: ReaderStudy, using, **__):
         pass
 
 
-class DisplaySet(CIVForObjectMixin, UUIDModel):
+class DisplaySet(
+    CIVSetStringRepresentationMixin, CIVForObjectMixin, UUIDModel
+):
     reader_study = models.ForeignKey(
         ReaderStudy, related_name="display_sets", on_delete=models.PROTECT
     )
@@ -796,13 +802,6 @@ class DisplaySet(CIVForObjectMixin, UUIDModel):
     )
     order = models.PositiveIntegerField(default=0)
     title = models.CharField(max_length=255, default="", blank=True)
-
-    def __str__(self):
-        parts = [self._meta.verbose_name.title()]
-        if self.title:
-            parts.append(f"{self.title!r}")
-        parts.append(f"(ID: {self.id})")
-        return " ".join(parts)
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -838,7 +837,7 @@ class DisplaySet(CIVForObjectMixin, UUIDModel):
         constraints = [
             models.UniqueConstraint(
                 fields=["title", "reader_study"],
-                name="unique_title",
+                name="unique_display_set_title",
                 condition=~Q(title=""),
             )
         ]

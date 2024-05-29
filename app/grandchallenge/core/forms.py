@@ -1,7 +1,8 @@
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django.conf import settings
-from django.forms import ModelForm
+from django.core.exceptions import ValidationError
+from django.forms import CharField, ModelForm
 
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.workstation_configs.models import WorkstationConfig
@@ -51,3 +52,42 @@ class PermissionRequestUpdateForm(SaveFormInitMixin, ModelForm):
 
     class Meta:
         fields = ("status", "rejection_text")
+
+
+class UniqueTitleCreateFormMixin:
+    """
+    Form mixing creating an item with a unique title.
+
+    Base class should have the `model` and `instance` attributes
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        field_order = list(self.field_order or self.fields.keys())
+        self.fields["title"] = CharField(
+            required=False,
+            initial=self.instance and self.instance.title or "",
+            max_length=self.model._meta.get_field("title").max_length,
+        )
+        self.order_fields(["title", *field_order])
+
+    def clean_title(self):
+        title = self.cleaned_data.get("title")
+        if title and self.unique_title_query(title).exists():
+            raise ValidationError(
+                f"An {self.model._meta.verbose_name} already exists with this title"
+            )
+        return title
+
+    def unique_title_query(self, title):
+        return self.model.objects.filter(title=title)
+
+
+class UniqueTitleUpdateFormMixin(UniqueTitleCreateFormMixin):
+    def unique_title_query(self, *args, **kwargs):
+        return (
+            super()
+            .unique_title_query(*args, **kwargs)
+            .exclude(id=self.instance.pk)
+        )

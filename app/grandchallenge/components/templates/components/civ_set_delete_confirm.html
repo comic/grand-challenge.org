@@ -16,6 +16,11 @@
         <p>No editable {{ base_object.civ_set_model|verbose_name_plural }} selected.</p>
     {% else %}
         <h4 class="text-danger font-weight-bold my-3">Are you sure you want to delete the following {{ delete_count }} {{ base_object.civ_set_model|verbose_name_plural }}?</h4>
+        <p>
+              <b class="text-danger">WARNING:
+                You are not able to undo this action. Once the {{ base_object.civ_set_model|verbose_name_plural }} are deleted
+                they are deleted forever.</b>
+        </p>
         {% crispy form %}
     {% endif %}
 {% endblock %}

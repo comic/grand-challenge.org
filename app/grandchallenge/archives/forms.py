@@ -17,10 +17,17 @@ from grandchallenge.archives.models import (
     ArchivePermissionRequest,
 )
 from grandchallenge.cases.forms import UploadRawImagesForm
+from grandchallenge.components.forms import (
+    CIVSetCreateFormMixin,
+    CIVSetUpdateFormMixin,
+    MultipleCIVForm,
+)
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
+    UniqueTitleCreateFormMixin,
+    UniqueTitleUpdateFormMixin,
     WorkstationUserFilterMixin,
 )
 from grandchallenge.core.guardian import get_objects_for_user
@@ -225,3 +232,37 @@ class AddCasesForm(UploadRawImagesForm):
             {"interface_pk": self.cleaned_data["interface"].pk}
         )
         return super().save(*args, **kwargs)
+
+
+class ArchiveItemFormMixin:
+    class Meta:
+        non_interface_fields = ("title",)
+
+    @property
+    def model(self):
+        return self.base_obj.civ_set_model
+
+    def unique_title_query(self, *args, **kwargs):
+        return (
+            super()
+            .unique_title_query(*args, **kwargs)
+            .filter(archive=self.base_obj)
+        )
+
+
+class ArchiveItemCreateForm(
+    ArchiveItemFormMixin,
+    UniqueTitleCreateFormMixin,
+    CIVSetCreateFormMixin,
+    MultipleCIVForm,
+):
+    pass
+
+
+class ArchiveItemUpdateForm(
+    ArchiveItemFormMixin,
+    UniqueTitleUpdateFormMixin,
+    CIVSetUpdateFormMixin,
+    MultipleCIVForm,
+):
+    pass

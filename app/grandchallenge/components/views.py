@@ -126,15 +126,12 @@ class MultipleCIVProcessingBaseView(
     raise_exception = True
     success_message = None
 
-    def process_data_for_object(self, data):
-        raise NotImplementedError
-
     @property
     def base_object(self):
         raise NotImplementedError
 
     def form_valid(self, form):
-        form.instance = self.process_data_for_object(form.cleaned_data)
+        form.process_object_data()
         response = super().form_valid(form)
         return HttpResponse(
             response.url,
@@ -273,7 +270,7 @@ class InterfacesCreateBaseView(ObjectPermissionRequiredMixin, TemplateView):
         return context
 
 
-class CIVSetDeleteView(
+class CIVSetDelete(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     SuccessMessageMixin,
@@ -344,7 +341,7 @@ class CivSetListView(
         )
 
 
-class CIVSetBulkDeleteView(LoginRequiredMixin, FormView):
+class CIVSetBulkDelete(LoginRequiredMixin, FormView):
     form_class = CIVSetDeleteForm
     model = None
     template_name = "components/civ_set_delete_confirm.html"
