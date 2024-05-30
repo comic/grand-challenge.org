@@ -44,6 +44,12 @@
                     <i class="fas fa-exclamation-triangle text-danger"></i>{% endif %}
                     {# @formatter:on #}
                 </a>
+                <a class="nav-link" id="v-pills-models-tab" data-toggle="pill"
+                   href="#models" role="tab"
+                   aria-controls="v-pills-models"
+                   aria-selected="false">
+                    <i class="fas fa-project-diagram fa-fw"></i>&nbsp;Models
+                </a>
                 <a class="nav-link" id="v-pills-editors-tab" data-toggle="pill"
                    href="#editors" role="tab" aria-controls="v-pills-editors"
                    aria-selected="false"><i class="fas fa-user fa-fw"></i>&nbsp;Editors
@@ -161,12 +167,23 @@
 
             {% if object.active_image %}
                 <div class="row mb-2">
-                    <div class="col-3 font-weight-bold">Version:</div>
+                    <div class="col-3 font-weight-bold">Image Version:</div>
                     <div class="col-9">{{ object.active_image.pk }}</div>
                 </div>
                 <div class="row mb-2">
                     <div class="col-3 font-weight-bold">Last updated:</div>
                     <div class="col-9">{{ object.active_image.created }}</div>
+                </div>
+            {% endif %}
+
+            {% if object.active_model %}
+                <div class="row mb-2">
+                    <div class="col-3 font-weight-bold">Model Version:</div>
+                    <div class="col-9">{{ object.active_model.pk }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-3 font-weight-bold">Last updated:</div>
+                    <div class="col-9">{{ object.active_model.created }}</div>
                 </div>
             {% endif %}
 
@@ -505,8 +522,60 @@
                     {% endfor %}
                 </ul>
             </div>
+
+            <div class="tab-pane fade" id="models" role="tabpanel"
+                 aria-labelledby="v-pills-models">
+
+                <h2>Algorithm Models</h2>
+                <p>You can upload your algorithm's model separately from the container. If provided, the model will be extracted to <code>/opt/ml/model/</code> during inference.</p>
+
+                {% if not object.active_model %}
+                    <p>
+                        Currently, this algorithm does not have a model associated with it.
+                    </p>
+                {% endif %}
+
+                <p>
+                    <a class="btn btn-primary"
+                       href="{% url 'algorithms:model-create' slug=object.slug %}">
+                        <i class="fa fa-upload"></i> Upload a Model
+                    </a>
+                </p>
+
+            <ul class="list-unstyled">
+                {% for model in object.algorithm_models.all %}
+                    <li>
+                        <a class="btn btn-primary btn-sm"
+                           href="{{ model.get_absolute_url }}">
+                            <i class="fas fa-info-circle"></i>
+                        </a>
+
+                        Model uploaded by {{ model.creator }} {{ model.created|naturaltime }} {% if model.comment %}({{ model.comment }}) {% endif %}
+
+                        <span class="badge badge-{{ model.import_status_context }}">
+                            {% if model.import_in_progress %}
+                                <span class="spinner-border spinner-border-sm" role="status"
+                                      aria-hidden="true"></span>
+                            {% endif %}
+                            Import {{ model.get_import_status_display }}
+                        </span>
+
+                        {% if model == object.active_model %}
+                            <span class="badge badge-success">
+                                Active
+                            </span>
+                        {% else %}
+                            <span class="badge badge-danger">
+                                Inactive
+                            </span>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+            </div>
         {% endif %}
     </div>
+
 
     {#  modal  #}
     <div class="modal" id="publishAlgorithmModal" tabindex="-1" role="dialog">
