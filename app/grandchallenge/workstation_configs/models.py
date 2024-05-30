@@ -127,6 +127,7 @@ KEY_BINDINGS_SCHEMA = {
     },
 }
 
+
 class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
     class Orientation(models.TextChoices):
         AXIAL = "A", "Axial"
@@ -306,71 +307,58 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         help_text="A plugin that shows meta-data information derived from image headers "
         "as well as any configured case text for reader studies",
     )
-
     show_display_plugin = models.BooleanField(
         default=True,
         help_text="A plugin that allows control over display properties such as window preset, "
         "slab thickness, or orientation",
     )
-
     show_image_switcher_plugin = models.BooleanField(
         default=True,
         help_text="A plugin that allows switching images when viewing algorithm outputs",
     )
-
     show_algorithm_output_plugin = models.BooleanField(
         default=True,
         help_text="A plugin that shows algorithm outputs, including navigation controls",
     )
-
     show_overlay_plugin = models.BooleanField(
         default=True,
         help_text="A plugin that contains overlay-related controls, "
         "such as the overlay-selection tool and overlay-segmentation visibility",
     )
-
     show_annotation_statistics_plugin = models.BooleanField(
         default=False,
         help_text="A plugin that allows analysis of segmentations. It shows voxel value "
         "statistics of annotated areas.",
     )
-
     show_swivel_tool = models.BooleanField(
         default=False,
         help_text="A tool that allows swiveling the image around axes to view a custom orientation",
     )
-
     show_invert_tool = models.BooleanField(
         default=True,
         help_text="A tool/button that allows inverting the displayed pixel colors of an image",
     )
-
     show_flip_tool = models.BooleanField(
         default=True,
         help_text="A tool/button that allows vertical flipping/mirroring of an image",
     )
-
     show_window_level_tool = models.BooleanField(
         default=True,
         help_text="A tool that allows selection of window presets and changing the window width/center",
     )
-
     show_reset_tool = models.BooleanField(
         default=True,
         help_text="A tool/button that resets all display properties of the images to defaults",
     )
-
     show_overlay_selection_tool = models.BooleanField(
         default=True,
         help_text="A tool that allows switching overlay images when viewing algorithm outputs",
     )
-
     show_lut_selection_tool = models.BooleanField(
         default=True,
         verbose_name="Show overlay-lut selection tool",
         help_text="A tool that allows switching between the overlay-lut presets",
     )
-
     show_annotation_counter_tool = models.BooleanField(
         default=True,
         help_text="A tool that can be used to show summary statistics of annotations within an area",
@@ -400,7 +388,6 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         default=True,
         help_text="When orienting and the images are linked, they share any new orientation",
     )
-
     link_windowing = models.BooleanField(
         default=True,
         help_text="When changing window setting and the images are linked, they share any new window width/center",
