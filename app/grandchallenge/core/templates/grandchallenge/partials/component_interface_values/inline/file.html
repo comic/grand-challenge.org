@@ -1,1 +1,8 @@
-{% include "../file.html" %}
+{% extends "../file.html" %}
+
+{% load pathlib %}
+
+{% block badge_content %}
+    {{ civ.interface.title | truncatechars:64 }}:
+    {{ civ.file.name|name | truncatechars:30 }}
+{% endblock %}
