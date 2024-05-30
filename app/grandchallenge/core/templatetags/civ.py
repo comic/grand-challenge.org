@@ -1,13 +1,48 @@
+from collections.abc import Iterable
 from pathlib import Path
 
 from django import template
 from django.template.loader import render_to_string
 
-from grandchallenge.components.models import InterfaceKindChoices
+from grandchallenge.components.models import (
+    ComponentInterfaceValue,
+    InterfaceKindChoices,
+)
 
 register = template.Library()
 
 CIV_PARTIALS = Path("grandchallenge/partials/component_interface_values")
+
+
+@register.filter
+def sort_civs(civs: Iterable[ComponentInterfaceValue]):
+    values = []
+    charts = []
+    thumbnails = []
+    images = []
+    files = []
+    residual = []
+
+    for v in civs:
+        if v.value is not None:
+            if v.interface.kind == InterfaceKindChoices.CHART:
+                charts.append(v)
+            else:
+                values.append(v)
+        elif v.file:
+            if v.interface.kind in (
+                InterfaceKindChoices.THUMBNAIL_PNG,
+                InterfaceKindChoices.THUMBNAIL_JPG,
+            ):
+                thumbnails.append(v)
+            else:
+                files.append(v)
+        elif v.image:
+            images.append(v)
+        else:
+            residual.append(v)
+
+    return [*values, *thumbnails, *charts, *files, *images, *residual]
 
 
 @register.simple_tag
