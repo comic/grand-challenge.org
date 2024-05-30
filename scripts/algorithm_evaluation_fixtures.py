@@ -274,36 +274,42 @@ def _create_civ_rich_algorithm_job(creator):
 
 def _get_or_create_additional_component_interfaces():
     interfaces = [
-        ComponentInterface.objects.get_or_create(
-            title="Chart CI",
-            kind=InterfaceKindChoices.CHART,
-            store_in_database=True,
-            relative_path="chart.json",
-        )[0],
-        ComponentInterface.objects.get_or_create(
-            title="Thumbnail JPG CI",
-            kind=InterfaceKindChoices.THUMBNAIL_JPG,
-            store_in_database=False,
-            relative_path="images/thumbnail.jpg",
-        )[0],
-        ComponentInterface.objects.get_or_create(
-            title="File Float CI",
-            kind=InterfaceKindChoices.FLOAT,
-            store_in_database=False,
-            relative_path="float.json",
-        )[0],
-        ComponentInterface.objects.get_or_create(
-            title="Value Float CI",
-            kind=InterfaceKindChoices.FLOAT,
-            store_in_database=True,
-            relative_path="float_value.json",
-        )[0],
-        ComponentInterface.objects.get_or_create(
-            title="String CI",
-            kind=InterfaceKindChoices.STRING,
-            store_in_database=True,
-            relative_path="string.json",
-        )[0],
+        {
+            "title": "Chart CI",
+            "kind": InterfaceKindChoices.CHART,
+            "store_in_database": True,
+            "relative_path": "chart.json",
+        },
+        {
+            "title": "Thumbnail JPG CI",
+            "kind": InterfaceKindChoices.THUMBNAIL_JPG,
+            "store_in_database": False,
+            "relative_path": "images/thumbnail.jpg",
+        },
+        {
+            "title": "File Float CI",
+            "kind": InterfaceKindChoices.FLOAT,
+            "store_in_database": False,
+            "relative_path": "float.json",
+        },
+        {
+            "title": "Value Float CI",
+            "kind": InterfaceKindChoices.FLOAT,
+            "store_in_database": True,
+            "relative_path": "float_value.json",
+        },
+        {
+            "title": "String CI",
+            "kind": InterfaceKindChoices.STRING,
+            "store_in_database": True,
+            "relative_path": "string.json",
+        },
     ]
 
-    return {i.slug: i for i in interfaces}
+    return {
+        i.slug: i
+        for i in [
+            ComponentInterface.objects.get_or_create(**kwargs)[0]
+            for kwargs in interfaces
+        ]
+    }
