@@ -357,7 +357,7 @@ def set_evaluation_inputs(*, evaluation_pk):
                             civ for civ_set in civ_sets for civ in civ_set
                         }
                     ),
-                )
+                ),
             )
             .filter(
                 inputs_match_count=evaluation.submission.phase.algorithm_inputs.count()
@@ -455,6 +455,7 @@ def calculate_ranks(*, phase_pk: uuid.UUID):
         *[
             Metric(path=col["path"], reverse=col["order"] == phase.DESCENDING)
             for col in phase.extra_results_columns
+            if not col.get("exclude_from_ranking", False)
         ],
     )
 

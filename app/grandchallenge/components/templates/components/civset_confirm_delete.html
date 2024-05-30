@@ -11,18 +11,39 @@
         <li class="breadcrumb-item"><a href="{{ object.base_object.list_url }}">{{ object.base_object|verbose_name_plural|title }}</a></li>
         <li class="breadcrumb-item"><a href="{{ object.base_object.get_absolute_url }}">{{ object.base_object.title }}</a></li>
         <li class="breadcrumb-item"><a href="{{ object.base_object.civ_sets_list_url }}">{{ object|verbose_name_plural|title }}</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Delete {{ object }}</li>
+        <li class="breadcrumb-item active" aria-current="page">Delete {{ object.pk }} </li>
     </ol>
 {% endblock %}
 
 {% block content %}
-    <h2>Confirm Deletion</h2>
+    <h2>Confirm {{ object|verbose_name|title }} Deletion</h2>
     <form action="" method="post">
         {% csrf_token %}
-        <p>Are you sure that you want to delete {{ object }}? <br>
-            <b class="text-danger">WARNING:
-                You are not able to undo this action. Once the {{ object }} is deleted
-                it is deleted forever.</b></p>
+        <p>Are you sure that you want to delete {{ object|verbose_name }} {{ object.pk }}?</p>
+           <h2>Content</h2>
+        <div class="rounded border border-danger p-2">
+            <dl class="mb-0">
+                {% if object.title %}
+                    <dt>Title</dt>
+                    <dd>{{ object.title }}</dd>
+                {% endif %}
+                {% if object.values.exists %}
+                    {% for civ in object.values.all %}
+                        <dt>{{ civ.interface.title }}</dt>
+                        <dd>{{ civ.title|truncatechars:30 }}</dd>
+                    {% endfor %}
+                {% else %}
+                    <span class="text-muted pl-3">
+                        No content
+                    </span>
+                {% endif %}
+            </dl>
+        </div>
+        <p>
+              <b class="text-danger">WARNING:
+                You are not able to undo this action. Once the {{ object|verbose_name }} is deleted
+                it is deleted forever.</b>
+        </p>
         <a href="{{ object.base_object.civ_sets_list_url }}"
            type="button"
            class="btn btn-secondary">Cancel</a>

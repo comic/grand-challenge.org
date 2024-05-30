@@ -109,6 +109,12 @@ EXTRA_RESULT_COLUMNS_SCHEMA = {
                 "examples": ["asc"],
                 "pattern": "^(asc|desc)$",
             },
+            "exclude_from_ranking": {
+                "$id": "#/items/properties/exclude_from_ranking",
+                "type": "boolean",
+                "title": "The Exclude From Ranking Schema",
+                "default": False,
+            },
         },
     },
 }
@@ -253,7 +259,8 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             '"path": "accuracy.mean",'
             '"order": "asc",'
             '"title": "ASSD +/- std",'
-            '"error_path": "accuracy.std"'
+            '"error_path": "accuracy.std",'
+            '"exclude_from_ranking": true'
             "}]"
         ),
         validators=[JSONValidator(schema=EXTRA_RESULT_COLUMNS_SCHEMA)],

@@ -1164,40 +1164,60 @@ def test_display_set_update_form(form_class, file_widget):
     "form_class",
     (DisplaySetCreateForm, DisplaySetUpdateForm),
 )
-@pytest.mark.parametrize(
-    "existing_ds_title,new_ds_title,expected_validity",
-    (
-        ("", "", True),
-        ("Foo", "", True),
-        ("", "Bar", True),
-        ("Foo", "Bar", True),
-        ("Foo", "Foo", False),
-    ),
-)
-def test_display_set_form_unique_title(
-    form_class, existing_ds_title, new_ds_title, expected_validity
-):
-    rs = ReaderStudyFactory()
+def test_display_set_form_unique_title(form_class):
+    rs1 = ReaderStudyFactory()
+
     user = UserFactory()
-    rs.add_editor(user)
+    rs1.add_editor(user)
 
-    DisplaySetFactory(reader_study=rs, title=existing_ds_title)
+    ds1 = DisplaySetFactory(reader_study=rs1, title="Title in reader study 1")
 
-    instance = None
+    instance1 = None
     if form_class == DisplaySetUpdateForm:
-        instance = DisplaySetFactory(reader_study=rs)
+        instance1 = DisplaySetFactory(reader_study=rs1)
+
+    # Adding a unique title in reader study 1 is allowed
+    form = form_class(
+        user=user,
+        instance=instance1,
+        base_obj=rs1,
+        data={
+            "title": "A unique title",
+            "order": 10,
+        },
+    )
+    assert form.is_valid()
+
+    # Adding an existing title in reader study 1 is not allowed
+    form = form_class(
+        user=user,
+        instance=instance1,
+        base_obj=rs1,
+        data={
+            "title": ds1.title,
+            "order": 10,
+        },
+    )
+    assert not form.is_valid()
+
+    # However, it is allowed if it's in another archive all together
+    rs2 = ReaderStudyFactory()
+    rs2.add_editor(user)
+
+    instance2 = None
+    if form_class == DisplaySetUpdateForm:
+        instance2 = DisplaySetFactory(reader_study=rs2)
 
     form = form_class(
         user=user,
-        instance=instance,
-        base_obj=rs,
+        instance=instance2,
+        base_obj=rs2,
         data={
-            "order": 1,
-            "title": new_ds_title,
+            "title": ds1.title,
+            "order": 10,
         },
     )
-
-    assert form.is_valid() is expected_validity
+    assert form.is_valid()
 
 
 @pytest.mark.parametrize(

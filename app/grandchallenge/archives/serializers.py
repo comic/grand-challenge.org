@@ -34,6 +34,7 @@ class ArchiveItemSerializer(serializers.ModelSerializer):
         model = ArchiveItem
         fields = (
             "pk",
+            "title",
             "archive",
             "values",
             "hanging_protocol",
