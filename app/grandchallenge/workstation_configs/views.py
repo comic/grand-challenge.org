@@ -14,13 +14,12 @@ from grandchallenge.api.permissions import IsAuthenticated
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstation_configs.forms import WorkstationConfigForm
-from grandchallenge.workstation_configs.models import (
-    WorkstationConfig,
-    VisualGroups,
-)
+from grandchallenge.workstation_configs.models import WorkstationConfig
 from grandchallenge.workstation_configs.serializers import (
     WorkstationConfigSerializer,
 )
+
+from .visual_field_ordering import GROUPS, DETAIL_FIELDS
 
 
 class WorkstationConfigViewSet(ReadOnlyModelViewSet):
@@ -48,7 +47,7 @@ class WorkstationConfigDetail(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         return super().get_context_data(
-            **kwargs, groups=VisualGroups().group_map
+            **kwargs, groups=GROUPS, shown_field_names=DETAIL_FIELDS
         )
 
 
