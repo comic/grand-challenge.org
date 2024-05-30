@@ -3,10 +3,7 @@ from pathlib import Path
 from django import template
 from django.template.loader import render_to_string
 
-from grandchallenge.components.models import (
-    InterfaceKindChoices,
-    InterfaceSuperKindChoices,
-)
+from grandchallenge.components.models import InterfaceKindChoices
 
 register = template.Library()
 
@@ -35,7 +32,7 @@ def civ_inline(component_interface_value):
             InterfaceKindChoices.INTEGER,
             InterfaceKindChoices.STRING,
         ]
-        and component_interface_value.interface.store_in_database
+        and component_interface_value.value is not None
     ):
         template_path = "json_preview.html"
 
@@ -48,13 +45,13 @@ def civ_inline(component_interface_value):
 def _get_civ_render_template(component_interface_value) -> str:
     interface = component_interface_value.interface
 
-    if interface.super_kind == InterfaceSuperKindChoices.VALUE:
+    if component_interface_value.value is not None:
         if interface.kind == InterfaceKindChoices.CHART:
             return "vega_lite_chart.html"
 
         return "json.html"
 
-    if interface.super_kind == InterfaceSuperKindChoices.FILE:
+    if component_interface_value.file:
         if interface.kind in (
             InterfaceKindChoices.THUMBNAIL_JPG,
             InterfaceKindChoices.THUMBNAIL_PNG,
@@ -63,7 +60,7 @@ def _get_civ_render_template(component_interface_value) -> str:
 
         return "file.html"
 
-    if interface.super_kind == InterfaceSuperKindChoices.IMAGE:
+    if component_interface_value.image:
         return "image.html"
 
     return "fallback.html"
