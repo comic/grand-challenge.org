@@ -1,79 +1,81 @@
 {% load pathlib %}
 {% load json %}
 {% load civ_checks %}
+{% load string %}
 
-{% if civ.image %}
-    <ul class="list-unstyled mb-0">
-        {% for file in civ.image.files.all %}
-            <li>
-                <a class="badge badge-primary"
-                   href="{{ file.file.url }}"
-                   download="{{ civ.interface.slug }}-{{ forloop.parentloop.counter }}"
-                   title="{{ civ.interface.title }}-{{ civ.image.name }}-{{ forloop.parentloop.counter }}"
-                    >
-                    <i class="fa fa-download"></i>
-                     {{ civ.interface.title | truncatechars:64 }}:
-                    {{ civ.image.name|stem | truncatechars:64 }}
-                    ({{ file.file|suffix | truncatechars:64 }})
-                </a>
-            </li>
-        {% endfor %}
-    </ul>
-{% endif %}
+{% with civ|civ_render_template as template %}
 
-{% if civ.file and not civ|is_thumbnail %}
-    <a class="badge badge-primary"
-       href="{{ file.file.url }}"
-       download="{{ civ.interface.slug }}"
-       title="{{ civ.interface.title }}-{{ civ.file.name }}"
-    >
-        <i class="fa fa-download"></i>
-        {{ civ.interface.title | truncatechars:64 }}:
-        {{ civ.file.name|stem | truncatechars:64 }}
-        ({{ file.file|suffix | truncatechars:64 }})
-    </a>
-{% endif %}
+    {% if template %}
+        <a href="#infoModal-{{ civ.pk }}"
+           data-toggle="modal"
+           data-target="#infoModal-{{ civ.pk }}"
+           class="text-decoration-none"
+           role="button"
+        >
+            <div class="badge badge-primary">
+                <i
+                        class="fa fa-file"
+                        style="width:0.8rem;"
+                ></i>
+                {{ civ.interface.title | truncatechars:64 }}
+            </div>
 
+            {% if civ|can_preview %}
+                <div class="badge badge-light"> {{ civ.value | json_dumps:0 | truncatechars:30 }}</div>
+            {% endif %}
+        </a>
 
-{% if civ.value is not None or civ|is_thumbnail %}
-    <a href="#infoModal-{{ civ.pk }}"
-       data-toggle="modal"
-       data-target="#infoModal-{{ civ.pk }}"
-       class="badge badge-primary"
-    >
-        <i class="fa fa-info-circle"></i>
-        {{ civ.interface.title | truncatechars:64 }}
-        <span class="badge badge-light"> {{ civ.value | json_dumps:0 | truncatechars:30 }}</span>
-    </a>
-
-    <div class="modal fade" id="infoModal-{{ civ.pk }}" tabindex="-1" role="dialog"
-         aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        {{ civ.interface.title }}
-                    </h5>
-                    <button type="button" class="close" data-dismiss="modal"
-                            aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    {% if civ|is_thumbnail %}
-                         <img class="m-3" height="400"
-                             src="{{ civ.file.url }}"
-                             alt="{{ civ.file.name }}" loading="lazy"
-                         >
-                    {% elif civ|is_chart %}
-                          <div class="w-100 vega-lite-chart">
-                            {{ civ.value|json_script:civ.pk }}
-                          </div>
-                    {% else %}
-                        <pre>{{ civ.value|json_dumps:4 }}</pre>
-                    {% endif %}
+        <div class="modal fade" id="infoModal-{{ civ.pk }}" tabindex="-1" role="dialog"
+             aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            {{ civ.interface.title }}
+                        </h5>
+                        <button type="button" class="close" data-dismiss="modal"
+                                aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        {% include template with civ=civ%}
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-{% endif %}
+    {% else %}
+
+        {% if civ.image %}
+            <ul class="list-unstyled mb-0">
+                {% for file in civ.image.files.all %}
+                    <li>
+                        <a class="badge badge-primary"
+                           href="{{ file.file.url }}"
+                           title="{{ civ.interface.title }}: {{ forloop.parentloop.counter }}"
+                        >
+                            <i class="fa fa-download" style="width:0.8rem;"></i>
+                            {{ civ.interface.title | truncatechars:64 }}:
+                            {{ civ.image.name|stem | truncatechars:64 }}
+                            ({{ file.file|suffix | truncatechars:64 }})
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% if civ.file %}
+            <a class="badge badge-primary"
+               href="{{ file.file.url }}"
+               download="{{ civ.file.name|name }}"
+               title="{{ civ.interface.title }}: {{ civ.file.name|name }}"
+            >
+                <i class="fa fa-download" style="width:0.8rem;"></i>
+                {{ civ.interface.title | truncatechars:64 }}:
+                {{ civ.file.name|name | truncatechars:64 }}
+            </a>
+        {% endif %}
+
+    {% endif %}
+
+{% endwith %}

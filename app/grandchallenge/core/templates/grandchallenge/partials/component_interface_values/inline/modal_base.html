@@ -1,0 +1,36 @@
+<a href="#civModal-{{ civ.pk }}"
+       data-toggle="modal"
+       data-target="#civModal-{{ civ.pk }}"
+       class="text-decoration-none"
+       role="button"
+    >
+    <div class="badge badge-primary">
+        <i
+                class="fa fa-file"
+                style="width:0.8rem;"
+        ></i>
+        {{ civ.interface.title | truncatechars:64 }}
+    </div>
+
+    {% block preview %}{% endblock %}
+</a>
+
+<div class="modal fade" id="civModal-{{ civ.pk }}" tabindex="-1" role="dialog"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    {{ civ.interface.title }}
+                </h5>
+                <button type="button" class="close" data-dismiss="modal"
+                        aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+</div>

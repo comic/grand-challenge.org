@@ -1,0 +1,17 @@
+{% load pathlib %}
+
+<ul class="list-unstyled mb-0">
+    {% for file in civ.image.files.all %}
+        <li>
+            <a class="badge badge-primary"
+               href="{{ file.file.url }}"
+               title="{{ civ.interface.title }}: {{ forloop.parentloop.counter }}"
+            >
+                <i class="fa fa-download" style="width:0.8rem;"></i>
+                {{ civ.interface.title | truncatechars:64 }}:
+                {{ civ.image.name|stem | truncatechars:64 }}
+                ({{ file.file|suffix | truncatechars:64 }})
+            </a>
+        </li>
+    {% endfor %}
+</ul>
