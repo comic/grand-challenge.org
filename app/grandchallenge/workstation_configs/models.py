@@ -159,6 +159,7 @@ class VisualGroups:
     __instance = None
 
     group_map: Dict[str, Group] = OrderedDict()
+    _default = Group(title="")
     annotations = Group(
         title="Annotations and Overlays",
         description="Behavior or visualization settings for annotations and overlays.",

@@ -5,7 +5,7 @@
 {% load workstations %}
 {% load guardian_tags %}
 {% load evaluation_extras %}
-{% load get_help_text %}
+{% load workstation_config_tags %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -24,6 +24,48 @@
     {% if object.description %}
         <p>{{ object.description }}</p>
     {% endif %}
+
+    {% for group_name, group in groups.items %}
+        <h2>{{ group.title }}</h2>
+        {% if group.description %}
+            <p class="text-muted">{{ group.description }}</p>
+        {% endif %}
+
+        <table class="table table-hover my-3">
+        {% for name in group.names %}
+            <tr data-toggle="tooltip" title="{% get_help_text object name %}">
+                <td class="font-weight-bold">{% get_verbose_name object name %}</td>
+                <td>
+                    {% if name == "default_image_interpolation" %}
+                        {{ object.get_default_image_interpolation_display }}
+                    {% elif name == "default_overlay_interpolation" %}
+                        {{ object.get_default_overlay_interpolation_display }}
+                    {% elif object|field_type:name == "BooleanField" %}
+                        <i class="fas {% if object|field_value:name %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+                    {% elif object|field_type:name == "JSONField" %}
+                        {{ object|field_value:name|json_dumps }}
+                    {% elif object|field_type:name == "HexColorField" %}
+                        {{ object|field_value:name }}
+                        {% if object|field_value:name %}
+                            <div class="color-box" style="background-color: {{ object|field_value:name }}"></div>
+                        {% endif %}
+                    {% elif object|field_type:name == "ManyToManyField" %}
+                        {% for x in object|field_value:name %}
+                            <div>{{ x }}</div>
+                        {% endfor %}
+                    {% else %}
+                        {{ object|field_value:name }}
+                    {% endif %}
+                </td>
+                <td>
+                    {{ object|field_type:name }}
+                </td>
+            </tr>
+        {% endfor %}
+        </table>
+    {% endfor %}
+
+    <h1>====================================</h1>
 
     <p class="text-muted">Hover over the configuration for more information</p>
     <table class="table table-hover my-3">

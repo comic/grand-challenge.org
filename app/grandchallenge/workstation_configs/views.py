@@ -14,7 +14,10 @@ from grandchallenge.api.permissions import IsAuthenticated
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstation_configs.forms import WorkstationConfigForm
-from grandchallenge.workstation_configs.models import WorkstationConfig
+from grandchallenge.workstation_configs.models import (
+    WorkstationConfig,
+    VisualGroups,
+)
 from grandchallenge.workstation_configs.serializers import (
     WorkstationConfigSerializer,
 )
@@ -42,6 +45,11 @@ class WorkstationConfigCreate(PermissionRequiredMixin, CreateView):
 
 class WorkstationConfigDetail(LoginRequiredMixin, DetailView):
     model = WorkstationConfig
+
+    def get_context_data(self, **kwargs):
+        return super().get_context_data(
+            **kwargs, groups=VisualGroups().group_map
+        )
 
 
 class WorkstationConfigUpdate(
