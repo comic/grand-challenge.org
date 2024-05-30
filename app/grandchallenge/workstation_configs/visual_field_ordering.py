@@ -1,10 +1,7 @@
-from typing import List, Optional
-
-
 class Group:
     title: str
-    description: Optional[str]
-    names: List[str]
+    description: str | None
+    names: list[str]
 
     def __init__(self, *, title, description=None):
         self.title = title
@@ -78,7 +75,7 @@ ABSOLUTE_FIELD_ORDER = [
 ]
 
 
-def _construct_groups() -> List[Group]:
+def _construct_groups() -> list[Group]:
     current_group = Group(title="")
 
     i = 0

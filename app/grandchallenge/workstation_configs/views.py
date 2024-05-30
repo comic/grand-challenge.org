@@ -19,7 +19,7 @@ from grandchallenge.workstation_configs.serializers import (
     WorkstationConfigSerializer,
 )
 
-from .visual_field_ordering import GROUPS, DETAIL_FIELDS
+from .visual_field_ordering import DETAIL_FIELDS, GROUPS
 
 
 class WorkstationConfigViewSet(ReadOnlyModelViewSet):
