@@ -744,48 +744,10 @@ class JobDetail(ObjectPermissionRequiredMixin, DetailView):
         viewers_form = ViewersForm()
         viewers_form.fields["action"].initial = ViewersForm.REMOVE
 
-        files = []
-        thumbnails = []
-        charts = []
-        json = []
-        for output in self.object.outputs.all():
-            if (
-                output.interface.kind
-                == InterfaceKind.InterfaceKindChoices.CHART
-            ):
-                charts.append(output)
-            elif output.interface.kind in [
-                InterfaceKind.InterfaceKindChoices.PDF,
-                InterfaceKind.InterfaceKindChoices.CSV,
-                InterfaceKind.InterfaceKindChoices.ZIP,
-                InterfaceKind.InterfaceKindChoices.SQREG,
-            ]:
-                files.append(output)
-            elif output.interface.kind in [
-                InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
-                InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG,
-            ]:
-                thumbnails.append(output)
-            elif (
-                output.interface.kind
-                in [
-                    InterfaceKind.InterfaceKindChoices.BOOL,
-                    InterfaceKind.InterfaceKindChoices.FLOAT,
-                    InterfaceKind.InterfaceKindChoices.INTEGER,
-                    InterfaceKind.InterfaceKindChoices.STRING,
-                ]
-                and output.interface.store_in_database
-            ):
-                json.append(output)
-
         context.update(
             {
                 "viewers_form": viewers_form,
                 "job_perms": get_perms(self.request.user, self.object),
-                "charts": charts,
-                "files": files,
-                "thumbnails": thumbnails,
-                "json": json,
             }
         )
 
