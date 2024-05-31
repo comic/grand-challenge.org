@@ -359,6 +359,10 @@ class ArchiveItem(
             kwargs={"slug": self.base_object.slug, "pk": self.pk},
         )
 
+    @property
+    def is_editable(self):
+        return True
+
 
 class ArchiveItemUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(ArchiveItem, on_delete=models.CASCADE)

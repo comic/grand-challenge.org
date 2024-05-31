@@ -103,3 +103,9 @@ def test_archive_item_set_title():
         archive=ArchiveFactory(),
         title=ai0.title,
     )
+
+
+@pytest.mark.django_db
+def test_archive_item_editable():
+    ai = ArchiveItemFactory()
+    assert ai.is_editable
