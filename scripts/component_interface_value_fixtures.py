@@ -124,7 +124,7 @@ def _create_civ_rich_algorithm_job(creator, interfaces):
         # A float but in a file
         _create_file_ci_instance(
             interface=interfaces["file-float-ci"],
-            name="float_file_name.input.jpg",
+            name="float_file_name.input.json",
             content=ContentFile(json.dumps(42).encode("utf-8")),
         ),
         # A string, as value
@@ -163,7 +163,7 @@ def _create_civ_rich_algorithm_job(creator, interfaces):
         # A float but in a file
         _create_file_ci_instance(
             interface=interfaces["file-float-ci"],
-            name="float_file_name.output.jpg",
+            name="float_file_name.output.json",
             content=ContentFile(json.dumps(43).encode("utf-8")),
         ),
         # A string, as value
