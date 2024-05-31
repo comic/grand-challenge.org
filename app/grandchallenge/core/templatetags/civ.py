@@ -82,7 +82,7 @@ def _get_civ_template(component_interface_value) -> str:
 
     if component_interface_value.value is not None:
         if interface.kind == InterfaceKindChoices.CHART:
-            return "vega_lite_chart.html"
+            return "value_chart.html"
 
         return "value.html"
 
@@ -91,7 +91,7 @@ def _get_civ_template(component_interface_value) -> str:
             InterfaceKindChoices.THUMBNAIL_JPG,
             InterfaceKindChoices.THUMBNAIL_PNG,
         ):
-            return "thumbnail.html"
+            return "file_thumbnail.html"
 
         return "file.html"
 
