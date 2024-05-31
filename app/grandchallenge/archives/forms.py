@@ -1,6 +1,7 @@
 from dal import autocomplete
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Exists, OuterRef
 from django.forms import (
     Form,
     ModelChoiceField,
@@ -11,6 +12,7 @@ from django.forms import (
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 
+from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.archives.models import (
     Archive,
     ArchiveItem,
@@ -47,13 +49,21 @@ class ArchiveForm(
         super().__init__(*args, **kwargs)
         self.fields["logo"].required = True
         self.fields["workstation"].required = True
+        active_image_subquery = AlgorithmImage.objects.filter(
+            algorithm=OuterRef("pk"), is_desired_version=True
+        )
         self.fields["algorithms"].queryset = (
-            self.instance.algorithms.all()
-            | get_objects_for_user(
-                kwargs["user"],
-                "algorithms.execute_algorithm",
+            (
+                self.instance.algorithms.all()
+                | get_objects_for_user(
+                    kwargs["user"],
+                    "algorithms.execute_algorithm",
+                )
             )
-        ).distinct()
+            .annotate(has_active_image=Exists(active_image_subquery))
+            .filter(has_active_image=True)
+            .distinct()
+        )
         if self.instance:
             interface_slugs = (
                 self.instance.items.exclude(values__isnull=True)
@@ -137,6 +147,7 @@ class ArchiveForm(
                 reverse_lazy("hanging-protocols:create"),
                 reverse_lazy("hanging-protocols:list"),
             ),
+            "algorithms": "Select algorithms that will be executed on all images in this archive. Note that you can only link algorithms with an active container image.",
         }
         labels = {
             "workstation": "Viewer",
