@@ -1,12 +1,13 @@
 <a href="#civModal-{{ civ.pk }}"
-       data-toggle="modal"
-       data-target="#civModal-{{ civ.pk }}"
-       class="text-decoration-none"
-       role="button"
-    >
+   data-toggle="modal"
+   data-target="#civModal-{{ civ.pk }}"
+   class="text-decoration-none"
+   role="button"
+   title="View {{ civ.interface.title }}"
+>
     <div class="badge badge-primary">
         <i
-                class="fa fa-eye"
+                class="fa fa-eye mr-1"
                 style="width:0.8rem;"
         ></i>
         {{ civ.interface.title | truncatechars:64 }}

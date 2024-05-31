@@ -5,10 +5,10 @@
    download="{{ civ.file.name|name }}"
    title="{{ civ.interface.title }}: {{ civ.file.name|name }}"
 >
-    <i class="fa fa-download"
+    <i class="fa fa-download mr-1"
        style="width:0.8rem;"
     ></i>
-      {% block badge_content %}
+    {% block badge_content %}
         Download {{ civ.file.name|name }}
-      {% endblock %}
+    {% endblock %}
 </a>
