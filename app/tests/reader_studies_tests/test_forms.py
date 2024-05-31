@@ -1414,12 +1414,16 @@ def test_display_set_add_interface_form():
                 ("SELECT_MULTIPLE", "Select Multiple"),
             ],
         ),
+        (None, BLANK_CHOICE_DASH),
         (AnswerType.MASK, BLANK_CHOICE_DASH),
     ),
 )
 def test_question_form_answer_widget_choices(answer_type, choices):
     form = QuestionForm(
-        reader_study=ReaderStudyFactory(), initial={"answer_type": answer_type}
+        reader_study=ReaderStudyFactory(),
+        initial=(
+            {"answer_type": answer_type} if answer_type is not None else {}
+        ),
     )
     assert form.widget_choices() == choices
 

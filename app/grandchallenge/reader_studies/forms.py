@@ -305,7 +305,10 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                 "hx-target": "#id_interface",
             }
         )
-        self.fields["answer_type"].choices = AnswerType.choices
+        self.fields["answer_type"].choices = [
+            *BLANK_CHOICE_DASH,
+            *AnswerType.choices,
+        ]
 
         self.helper = FormHelper()
         self.helper.form_tag = True
@@ -366,7 +369,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
         if answer_type is None:
             return ComponentInterface.objects.none()
         return ComponentInterface.objects.filter(
-            kind__in=ANSWER_TYPE_TO_INTERFACE_KIND_MAP[answer_type]
+            kind__in=ANSWER_TYPE_TO_INTERFACE_KIND_MAP.get(answer_type, [])
         )
 
     def widget_choices(self):
