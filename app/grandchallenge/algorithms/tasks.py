@@ -319,7 +319,7 @@ def filter_civs_for_algorithm(*, civ_sets, algorithm_image):
                 ),
             )
         )
-        .filter(inputs_match_count=len(input_interfaces))
+        .filter(inputs_match_count=len(input_interfaces), creator=None)
         .prefetch_related("inputs")
     }
 
