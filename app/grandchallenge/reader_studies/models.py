@@ -1040,7 +1040,6 @@ class QuestionWidgetKindChoices(models.TextChoices):
 
 
 ANSWER_TYPE_TO_QUESTION_WIDGET = {
-    "": [],  # Blank answer type
     AnswerType.TEXT: [
         QuestionWidgetKindChoices.TEXT_INPUT,
         QuestionWidgetKindChoices.TEXT_AREA,
