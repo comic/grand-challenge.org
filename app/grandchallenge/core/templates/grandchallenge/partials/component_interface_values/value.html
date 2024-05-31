@@ -1,3 +1,11 @@
 {% load json %}
+{% load string %}
 
-<pre class="pl-1" style="max-height:16rem;">{{ civ.value|json_dumps:4 }}</pre>
+{% with str=civ.value|json_dumps:4 line_limit=16 %}
+
+<pre class="pl-1 {% if str|line_count >= line_limit %}rounded border{% endif %}"
+     style="max-height:{{ line_limit }}em;"
+>
+{{ str }}
+</pre>
+{% endwith %}
