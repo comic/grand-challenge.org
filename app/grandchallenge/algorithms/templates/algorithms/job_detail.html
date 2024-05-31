@@ -73,10 +73,12 @@
 
             <dl>
                 {% for output in object.outputs.all|sort_civs %}
-                    <dt class="mt-3">{{ output.interface.title }}</dt>
-                    <dd>
-                        {% civ output %}
-                    </dd>
+                    {% if output.interface.slug != 'results-json-file' or not object.rendered_result_text %}
+                        <dt class="mt-3">{{ output.interface.title }}</dt>
+                        <dd>
+                            {% civ output %}
+                        </dd>
+                    {% endif %}
                 {% endfor %}
             </dl>
 

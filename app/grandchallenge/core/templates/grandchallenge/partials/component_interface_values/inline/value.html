@@ -1,5 +1,7 @@
 {% extends "./modal_base.html" %}
 
+{% load json %}
+
 {% block content %}
-    {% include "../value.html" %}
+    <pre>{{ civ.value|json_dumps:4 }}</pre>
 {% endblock %}
