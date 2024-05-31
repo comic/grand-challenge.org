@@ -165,7 +165,7 @@ def copy_s3_object(
     target_key = to_field.storage.get_available_name(
         name=target_key, max_length=to_field.field.max_length
     )
-    extra_args = {"ContentType": mimetype, "ChecksumAlgorithm": "sha256"}
+    extra_args = {"ContentType": mimetype, "ChecksumAlgorithm": "SHA256"}
 
     if settings.AWS_S3_OBJECT_PARAMETERS[
         "StorageClass"

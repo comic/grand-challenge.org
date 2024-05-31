@@ -70,8 +70,6 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
             },
             Environment={
                 **self.invocation_environment,
-                # https://docs.aws.amazon.com/sagemaker/latest/dg/model-train-storage.html#model-train-storage-env-var-summary
-                "GRAND_CHALLENGE_COMPONENT_WRITABLE_DIRECTORIES": "/opt/ml/output/data:/opt/ml/model:/opt/ml/checkpoints:/tmp",
             },
             VpcConfig={
                 "SecurityGroupIds": [
