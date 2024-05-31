@@ -47,17 +47,17 @@ def sort_civs(civs: Iterable[ComponentInterfaceValue]):
 
 @register.simple_tag
 def civ(component_interface_value):
-    template_path = _get_civ_render_template(component_interface_value)
+    template_name = _get_civ_template(component_interface_value)
 
     return render_to_string(
-        template_name=str(CIV_PARTIALS / template_path),
+        template_name=str(CIV_PARTIALS / template_name),
         context={"civ": component_interface_value},
     )
 
 
 @register.simple_tag
 def civ_inline(component_interface_value):
-    template_path = _get_civ_render_template(component_interface_value)
+    template_name = _get_civ_template(component_interface_value)
 
     if (
         component_interface_value.interface.kind
@@ -69,22 +69,22 @@ def civ_inline(component_interface_value):
         ]
         and component_interface_value.value is not None
     ):
-        template_path = "json_preview.html"
+        template_name = "value_preview.html"
 
     return render_to_string(
-        template_name=str(CIV_PARTIALS / "inline" / template_path),
+        template_name=str(CIV_PARTIALS / "inline" / template_name),
         context={"civ": component_interface_value},
     )
 
 
-def _get_civ_render_template(component_interface_value) -> str:
+def _get_civ_template(component_interface_value) -> str:
     interface = component_interface_value.interface
 
     if component_interface_value.value is not None:
         if interface.kind == InterfaceKindChoices.CHART:
             return "vega_lite_chart.html"
 
-        return "json.html"
+        return "value.html"
 
     if component_interface_value.file:
         if interface.kind in (
