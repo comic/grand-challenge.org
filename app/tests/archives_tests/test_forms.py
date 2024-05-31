@@ -4,6 +4,7 @@ from django.contrib.auth.models import Permission
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.archives.forms import (
+    ArchiveForm,
     ArchiveItemCreateForm,
     ArchiveItemUpdateForm,
 )
@@ -488,3 +489,24 @@ def test_archive_items_to_reader_study_update_form(client, settings):
         sorted(list(ds.values.values_list("pk", flat=True)))
         for ds in rs.display_sets.all()
     ) == sorted([[civ1.pk], [civ2.pk], [civ1.pk, civ3.pk], [civ2.pk, civ4.pk]])
+
+
+@pytest.mark.django_db
+def test_archive_update_form_algorithm_queryset():
+    alg1, alg2, alg3 = AlgorithmFactory.create_batch(3)
+    user = UserFactory()
+    for alg in [alg1, alg2]:
+        alg.add_editor(user)
+    archive = ArchiveFactory()
+
+    AlgorithmImageFactory(
+        algorithm=alg1,
+        is_desired_version=True,
+        is_manifest_valid=True,
+        is_in_registry=True,
+    )
+
+    form = ArchiveForm(instance=archive, user=user)
+    assert alg1 in form.fields["algorithms"].queryset
+    assert alg2 not in form.fields["algorithms"].queryset
+    assert alg3 not in form.fields["algorithms"].queryset

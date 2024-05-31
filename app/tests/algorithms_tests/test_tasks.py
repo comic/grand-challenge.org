@@ -57,6 +57,10 @@ class TestCreateAlgorithmJobs:
         create_algorithm_jobs(algorithm_image=ai, civ_sets=[])
         assert Job.objects.count() == 0
 
+    def test_no_algorithm_image_errors_out(self):
+        with pytest.raises(RuntimeError):
+            create_algorithm_jobs(algorithm_image=None, civ_sets=[])
+
     def test_civ_existing_does_nothing(self):
         image = ImageFactory()
         ai = AlgorithmImageFactory()
