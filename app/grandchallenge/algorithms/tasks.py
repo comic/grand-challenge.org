@@ -486,7 +486,7 @@ def set_credits_per_job():
         algorithm.save(update_fields=("credits_per_job",))
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 @transaction.atomic
 def assign_algorithm_model_from_upload(*, algorithm_model_pk, retries=0):
     from grandchallenge.algorithms.models import AlgorithmModel
@@ -529,10 +529,7 @@ def assign_algorithm_model_from_upload(*, algorithm_model_pk, retries=0):
         )
         current_model.save()
 
-        current_model.delete_model_file()
-        current_model.model = None
-        current_model.save()
-
+        current_model.model.delete()
         current_model.user_upload.delete()
 
         return

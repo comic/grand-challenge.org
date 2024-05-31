@@ -1,7 +1,6 @@
 import logging
 from datetime import datetime, timedelta
 
-import boto3
 from actstream.actions import follow, is_following
 from actstream.models import Follow
 from django.conf import settings
@@ -15,7 +14,7 @@ from django.db.models import Count, Min, Q, Sum
 from django.db.models.signals import post_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
-from django.template.defaultfilters import truncatewords
+from django.template.defaultfilters import truncatechars, truncatewords
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
@@ -40,7 +39,7 @@ from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
     get_logo_path,
     get_social_image_path,
-    private_s3_storage,
+    protected_s3_storage,
     public_s3_storage,
 )
 from grandchallenge.core.templatetags.bleach import md2html
@@ -504,10 +503,9 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
 
     def form_field_label(self):
         title = f"{self.title}"
-        if self.active_image:
-            title += f" (Active image: {self.active_image.pk})"
+        title += f" (Active image: {' - '.join(filter(None, [truncatechars(self.active_image.comment, 25), str(self.active_image.pk)]))})"
         if self.active_model:
-            title += f" (Active model: {self.active_model.pk})"
+            title += f" (Active model: {' - '.join(filter(None, [truncatechars(self.active_model.comment, 25), str(self.active_model.pk)]))})"
         else:
             title += " (Active model: None)"
         return title
@@ -684,7 +682,7 @@ class AlgorithmModel(UUIDModel):
         help_text=(
             ".tar.gz file of the algorithm model that will be extracted to /opt/ml/model/ during inference"
         ),
-        storage=private_s3_storage,
+        storage=protected_s3_storage,
     )
     sha256 = models.CharField(editable=False, max_length=71)
     size_in_storage = models.PositiveBigIntegerField(
@@ -732,18 +730,6 @@ class AlgorithmModel(UUIDModel):
         self.is_desired_version = True
         models.append(self)
         self.__class__.objects.bulk_update(models, ["is_desired_version"])
-
-    def delete_model_file(self):
-        if not self.import_status == ImportStatusChoices.FAILED:
-            raise RuntimeError("Cannot delete model from completed upload.")
-
-        s3_client = boto3.client(
-            "s3",
-            endpoint_url=settings.AWS_S3_ENDPOINT_URL,
-        )
-        s3_client.delete_object(
-            Bucket=self.model.storage.bucket_name, Key=self.model.name
-        )
 
     def get_absolute_url(self):
         return reverse(

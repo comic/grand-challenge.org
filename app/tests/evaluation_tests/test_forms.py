@@ -267,7 +267,7 @@ class TestSubmissionForm:
             algorithm=alg,
         )
         am = AlgorithmModelFactory(algorithm=alg, is_desired_version=True)
-        AlgorithmJobFactory(algorithm_image=ai, status=4)
+        AlgorithmJobFactory(algorithm_image=ai, status=Job.SUCCESS)
 
         form = SubmissionForm(
             user=user,
