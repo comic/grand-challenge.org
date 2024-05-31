@@ -1,10 +1,13 @@
 {% load json %}
 {% load string %}
 
-{% with str=civ.value|json_dumps:4 line_limit=16 %}
+{% with str=civ.value|json_dumps:4 line_limit=12 %}
+
+{# No overflow detection, this is an approximation since spacing, font-size et cetera #}
+{#  all play a role #}
 
 <pre class="pl-1 {% if str|line_count >= line_limit %}rounded border{% endif %}"
-     style="max-height:{{ line_limit }}em;"
+     style="max-height:{{ line_limit|add:4 }}rem;"
 >
 {{ str }}
 </pre>
