@@ -385,6 +385,39 @@ def test_display_set_update_permissions(client):
 
 
 @pytest.mark.django_db
+def test_display_set_detail_permissions(client):
+    rs = ReaderStudyFactory()
+    rs.add_editor(editor := UserFactory())
+    rs.add_reader(reader := UserFactory())
+
+    ds = DisplaySetFactory(reader_study=rs)
+
+    def get_view(_user):
+        return get_view_for_user(
+            viewname="reader-studies:display-set-detail",
+            client=client,
+            reverse_kwargs={"slug": rs.slug, "pk": ds.pk},
+            user=_user,
+        )
+
+    for user in editor, reader:
+        response = get_view(user)
+        assert response.status_code == 200
+
+    # Removing the roles works
+    rs.remove_editor(editor)
+    rs.remove_reader(reader)
+
+    for user in (
+        editor,
+        reader,
+        UserFactory(),  # Random user cannot view archive item
+    ):
+        response = get_view(user)
+        assert response.status_code == 403
+
+
+@pytest.mark.django_db
 def test_display_set_update(
     client, settings, django_capture_on_commit_callbacks
 ):
