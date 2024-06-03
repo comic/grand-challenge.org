@@ -22,5 +22,8 @@
 {% block content %}
     <h3>{{ object|verbose_name|title }} {{ object.pk }}</h3>
 
+    {% if object.title %}
+        <h1>{{ object.title }}</h1>
+    {% endif %}
 
 {% endblock %}
