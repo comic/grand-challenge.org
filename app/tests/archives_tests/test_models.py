@@ -1,6 +1,8 @@
 import pytest
 from django.db import IntegrityError, transaction
 
+from grandchallenge.algorithms.models import Job
+from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import ComponentInterfaceValueFactory
 
@@ -16,6 +18,74 @@ def create_archive_items_for_images(images, archive):
         civ = ComponentInterfaceValueFactory(image=image)
         ai = ArchiveItemFactory(archive=archive)
         ai.values.add(civ)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "distractor_generator",
+    (
+        # Different CIVs in distractor
+        lambda civs: [ComponentInterfaceValueFactory()],
+        # Partial CIVs in distractor
+        lambda civs: [civs[0]],
+        # Extra CIVs in distractor
+        lambda civs: [*civs, ComponentInterfaceValueFactory()],
+    ),
+)
+def test_archive_item_algorithm_job_as_input(distractor_generator):
+    ai = ArchiveItemFactory()
+    ai.values.set(
+        [
+            ComponentInterfaceValueFactory(),
+            ComponentInterfaceValueFactory(),
+        ]
+    )
+
+    aj1 = AlgorithmJobFactory(status=Job.SUCCESS)
+    aj2 = AlgorithmJobFactory(status=Job.SUCCESS)
+    for aj in aj1, aj2:
+        aj.inputs.set(ai.values.all())
+
+    distractor = AlgorithmJobFactory(status=Job.SUCCESS)
+    distractor_civs = distractor_generator(civs=ai.values.all())
+    distractor.inputs.set(distractor_civs)
+
+    assert {aj1.pk, aj2.pk} == {job.pk for job in ai.algorithm_jobs_as_input}
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "algorithm_job_status, match",
+    (
+        (Job.SUCCESS, True),
+        (Job.PENDING, False),
+        (Job.STARTED, False),
+        (Job.RETRY, False),
+        (Job.FAILURE, False),
+        (Job.CANCELLED, False),
+        (Job.PROVISIONING, False),
+        (Job.PROVISIONED, False),
+        (Job.EXECUTING, False),
+        (Job.EXECUTED, False),
+        (Job.PARSING, False),
+        (Job.EXECUTING_PREREQUISITES, False),
+    ),
+)
+def test_archive_item_success_algorithm_job_as_input(
+    algorithm_job_status, match
+):
+    ai = ArchiveItemFactory()
+    ai.values.add(
+        ComponentInterfaceValueFactory(),
+    )
+
+    aj = AlgorithmJobFactory(status=algorithm_job_status)
+    aj.inputs.set(ai.values.all())
+
+    if match:
+        assert {aj.pk} == {job.pk for job in ai.algorithm_jobs_as_input}
+    else:
+        assert not ai.algorithm_jobs_as_input
 
 
 @pytest.fixture(scope="function")

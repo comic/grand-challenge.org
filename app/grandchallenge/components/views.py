@@ -277,7 +277,9 @@ class InterfacesCreateBaseView(ObjectPermissionRequiredMixin, TemplateView):
 
 
 class CIVSetDetail(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    DetailView,
 ):
     model = None
     permission_required = None

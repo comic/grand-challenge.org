@@ -561,7 +561,7 @@ class ArchiveItemViewSet(
 
 class ArchiveItemDetailView(CIVSetDetail):
     model = ArchiveItem
-    template_name = "archive_item_detail.html"
+    template_name = "archives/archive_item_detail.html"
 
     permission_required = (
         f"{Archive._meta.app_label}.view_{ArchiveItem._meta.model_name}"
@@ -570,6 +570,15 @@ class ArchiveItemDetailView(CIVSetDetail):
     @property
     def base_object(self):
         return self.object.base_object
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        context["algorithm_jobs_as_input"] = (
+            self.object.algorithm_jobs_as_input
+        )
+
+        return context
 
 
 class ArchiveItemCreateView(
