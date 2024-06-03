@@ -53,6 +53,7 @@ from grandchallenge.components.forms import MultipleCIVForm, NewFileUploadForm
 from grandchallenge.components.views import (
     CIVSetBulkDelete,
     CIVSetDelete,
+    CIVSetDetail,
     CIVSetFormMixin,
     CivSetListView,
     InterfacesCreateBaseView,
@@ -558,24 +559,17 @@ class ArchiveItemViewSet(
             return ArchiveItemSerializer
 
 
-class ArchiveItemDetailView(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
-):
+class ArchiveItemDetailView(CIVSetDetail):
     model = ArchiveItem
-    template = "archive_item_detail.html"
+    template_name = "archive_item_detail.html"
 
     permission_required = (
         f"{Archive._meta.app_label}.view_{ArchiveItem._meta.model_name}"
     )
-    raise_exception = True
 
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-
-        object = self.get_object()
-        context.update(dict(base_object=object.base_object))
-
-        return context
+    @property
+    def base_object(self):
+        return self.object.base_object
 
 
 class ArchiveItemCreateView(

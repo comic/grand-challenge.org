@@ -7,7 +7,13 @@ from django.forms import Media
 from django.http import HttpResponse
 from django.utils.functional import cached_property
 from django.utils.html import format_html
-from django.views.generic import DeleteView, FormView, ListView, TemplateView
+from django.views.generic import (
+    DeleteView,
+    DetailView,
+    FormView,
+    ListView,
+    TemplateView,
+)
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
 from rest_framework.viewsets import ReadOnlyModelViewSet
@@ -267,6 +273,27 @@ class InterfacesCreateBaseView(ObjectPermissionRequiredMixin, TemplateView):
                 "form": self.form_class(**self.get_form_kwargs()),
             }
         )
+        return context
+
+
+class CIVSetDetail(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
+    model = None
+    permission_required = None
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+    template_name = "components/civ_set_detail.html"
+
+    @cached_property
+    def base_object(self):
+        return NotImplementedError
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        context.update(dict(base_object=self.base_object))
+
         return context
 
 
