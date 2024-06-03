@@ -6,6 +6,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db.models import Exists, OuterRef
 from django.forms import (
     CheckboxInput,
     CheckboxSelectMultiple,
@@ -353,11 +354,38 @@ class SubmissionForm(
                 has_active_image=True
             ).order_by("title")
             if self._phase.parent:
-                qs = qs.filter(
-                    algorithm_container_images__submission__phase=self._phase.parent,
-                    algorithm_container_images__submission__evaluation__status=Evaluation.SUCCESS,
-                    algorithm_container_images__job__status=Job.SUCCESS,
-                ).distinct()
+                eval_with_active_image_and_model = Evaluation.objects.filter(
+                    submission__phase=self._phase.parent,
+                    status=Evaluation.SUCCESS,
+                    submission__algorithm_image__pk=OuterRef(
+                        "active_image_pk"
+                    ),
+                    submission__algorithm_model__pk=OuterRef(
+                        "active_model_pk"
+                    ),
+                )
+                job_with_active_image_and_model = Job.objects.filter(
+                    status=Job.SUCCESS,
+                    algorithm_image=OuterRef("active_image_pk"),
+                    algorithm_model=OuterRef("active_model_pk"),
+                )
+
+                qs = (
+                    qs.annotate(
+                        has_successful_job=Exists(
+                            job_with_active_image_and_model
+                        ),
+                        has_successful_eval=Exists(
+                            eval_with_active_image_and_model
+                        ),
+                    )
+                    .filter(
+                        has_successful_eval=True,
+                        has_successful_job=True,
+                    )
+                    .distinct()
+                )
+
             self.fields["algorithm"].queryset = qs
             self.fields["algorithm_image"].widget = HiddenInput()
             self.fields["algorithm_image"].required = False

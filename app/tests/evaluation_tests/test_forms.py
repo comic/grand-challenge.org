@@ -100,9 +100,11 @@ class TestSubmissionForm:
 
     def test_algorithm_queryset_if_parent_phase_exists(self):
         editor = UserFactory()
-        alg1, alg2, alg3, alg4 = AlgorithmFactory.create_batch(4)
+        alg1, alg2, alg3, alg4, alg5, alg6, alg7, alg8, alg9 = (
+            AlgorithmFactory.create_batch(9)
+        )
         ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
-        for alg in [alg1, alg2, alg3, alg4]:
+        for alg in [alg1, alg2, alg3, alg4, alg5, alg6, alg7, alg8, alg9]:
             alg.add_editor(editor)
             alg.inputs.set([ci1, ci2])
             alg.outputs.set([ci3, ci4])
@@ -111,6 +113,17 @@ class TestSubmissionForm:
                 is_in_registry=True,
                 is_desired_version=True,
                 is_manifest_valid=True,
+            )
+        for alg in [alg1, alg2, alg8, alg9]:
+            AlgorithmModelFactory(algorithm=alg, is_desired_version=True)
+        ai_inactive = AlgorithmImageFactory(
+            algorithm=alg6,
+        )
+        for alg in [alg1, alg2, alg3, alg4, alg5, alg6]:
+            AlgorithmJobFactory(
+                algorithm_image=alg.active_image,
+                algorithm_model=alg.active_model,
+                status=Job.SUCCESS,
             )
 
         p_parent, p_child = PhaseFactory.create_batch(
@@ -124,28 +137,78 @@ class TestSubmissionForm:
         p_child.parent = p_parent
         p_child.save()
 
+        # successful eval to parent phase with active image and model
         EvaluationFactory(
             submission__phase=p_parent,
             submission__algorithm_image=alg1.active_image,
+            submission__algorithm_model=alg1.active_model,
             status=Evaluation.SUCCESS,
         )
+        # successful eval to parent phase with active image, but not active model
         EvaluationFactory(
-            submission__phase=PhaseFactory(),
+            submission__phase=p_parent,
             submission__algorithm_image=alg2.active_image,
             status=Evaluation.SUCCESS,
         )
+        # successful eval to other phase with active image
         EvaluationFactory(
-            submission__phase=p_parent,
+            submission__phase=PhaseFactory(),
             submission__algorithm_image=alg3.active_image,
-            status=Evaluation.FAILURE,
+            status=Evaluation.SUCCESS,
         )
+        # failed eval to parent phase with active image
         EvaluationFactory(
             submission__phase=p_parent,
             submission__algorithm_image=alg4.active_image,
+            status=Evaluation.FAILURE,
+        )
+        # successful eval to parent phase with active image, but no successful job
+        EvaluationFactory(
+            submission__phase=p_parent,
+            submission__algorithm_image=alg5.active_image,
+            status=Evaluation.SUCCESS,
+        )
+        # successful eval to parent phase with active image, but not active model
+        EvaluationFactory(
+            submission__phase=p_parent,
+            submission__algorithm_image=ai_inactive,
+            status=Evaluation.SUCCESS,
+        )
+        # successful eval to parent phase with active image but failed job
+        EvaluationFactory(
+            submission__phase=p_parent,
+            submission__algorithm_image=alg7.active_image,
+            submission__algorithm_model=alg7.active_model,
             status=Evaluation.SUCCESS,
         )
         AlgorithmJobFactory(
-            algorithm_image=alg1.active_image, status=Job.SUCCESS
+            algorithm_image=alg.active_image,
+            algorithm_model=alg.active_model,
+            status=Job.FAILURE,
+        )
+        # successful eval to parent phase with active image but successful job with different image
+        EvaluationFactory(
+            submission__phase=p_parent,
+            submission__algorithm_image=alg8.active_image,
+            submission__algorithm_model=alg8.active_model,
+            status=Evaluation.SUCCESS,
+        )
+        AlgorithmJobFactory(
+            algorithm_image=AlgorithmImageFactory(algorithm=alg8),
+            algorithm_model=alg.active_model,
+            status=Job.SUCCESS,
+        )
+        # successful eval to parent phase with active image but successful job with different model
+        EvaluationFactory(
+            submission__phase=p_parent,
+            submission__algorithm_image=alg9.active_image,
+            submission__algorithm_model=alg9.active_model,
+            status=Evaluation.SUCCESS,
+        )
+        AlgorithmJobFactory(
+            algorithm_image=alg9.active_image,
+            algorithm_model=AlgorithmModelFactory(algorithm=alg9),
+            status=Job.SUCCESS,
         )
 
         form = SubmissionForm(
@@ -157,6 +220,11 @@ class TestSubmissionForm:
         assert alg2 not in form.fields["algorithm"].queryset
         assert alg3 not in form.fields["algorithm"].queryset
         assert alg4 not in form.fields["algorithm"].queryset
+        assert alg5 not in form.fields["algorithm"].queryset
+        assert alg6 not in form.fields["algorithm"].queryset
+        assert alg7 not in form.fields["algorithm"].queryset
+        assert alg8 not in form.fields["algorithm"].queryset
+        assert alg9 not in form.fields["algorithm"].queryset
 
     def test_no_algorithm_selection(self):
         form = SubmissionForm(

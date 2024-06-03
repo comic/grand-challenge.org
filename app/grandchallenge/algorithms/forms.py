@@ -355,6 +355,9 @@ class UserAlgorithmsForPhaseMixin:
         desired_image_subquery = AlgorithmImage.objects.filter(
             algorithm=OuterRef("pk"), is_desired_version=True
         )
+        desired_model_subquery = AlgorithmModel.objects.filter(
+            algorithm=OuterRef("pk"), is_desired_version=True
+        )
         return (
             get_objects_for_user(self._user, "algorithms.change_algorithm")
             .annotate(
@@ -367,6 +370,12 @@ class UserAlgorithmsForPhaseMixin:
                     "outputs", filter=Q(outputs__in=outputs), distinct=True
                 ),
                 has_active_image=Exists(desired_image_subquery),
+                active_image_pk=desired_image_subquery.values_list(
+                    "pk", flat=True
+                ),
+                active_model_pk=desired_model_subquery.values_list(
+                    "pk", flat=True
+                ),
             )
             .filter(
                 total_input_count=len(inputs),
