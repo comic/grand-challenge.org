@@ -558,6 +558,26 @@ class ArchiveItemViewSet(
             return ArchiveItemSerializer
 
 
+class ArchiveItemDetailView(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
+    model = ArchiveItem
+    template = "archive_item_detail.html"
+
+    permission_required = (
+        f"{Archive._meta.app_label}.view_{ArchiveItem._meta.model_name}"
+    )
+    raise_exception = True
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        object = self.get_object()
+        context.update(dict(base_object=object.base_object))
+
+        return context
+
+
 class ArchiveItemCreateView(
     CIVSetFormMixin,
     MultipleCIVProcessingBaseView,

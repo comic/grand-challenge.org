@@ -1261,6 +1261,26 @@ class QuestionWidgetsView(BaseAddObjectToReaderStudyMixin, View):
         return HttpResponse(form["widget"])
 
 
+class DisplaySetDetailView(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
+    model = DisplaySet
+    template_name = "components/civ_set_detail.html"
+
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.view_{DisplaySet._meta.model_name}"
+    )
+    raise_exception = True
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        object = self.get_object()
+        context.update(dict(base_object=object.base_object))
+
+        return context
+
+
 class DisplaySetUpdateView(
     CIVSetFormMixin,
     MultipleCIVProcessingBaseView,

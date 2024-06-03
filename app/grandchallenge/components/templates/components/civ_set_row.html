@@ -24,7 +24,13 @@
 
 <split></split>
 
-{{ object.pk }}
+
+<a href="{{ object.detail_url }}"
+   title="View details">
+    <i class="fa fa-info-circle"></i>
+    {{ object.pk }}
+</a>
+
 <split></split>
 
 {{ object.title }}
