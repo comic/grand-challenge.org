@@ -503,9 +503,9 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
 
     def form_field_label(self):
         title = f"{self.title}"
-        title += f" (Active image: {' - '.join(filter(None, [truncatechars(self.active_image.comment, 25), str(self.active_image.pk)]))})"
-        if self.active_model:
-            title += f" (Active model: {' - '.join(filter(None, [truncatechars(self.active_model.comment, 25), str(self.active_model.pk)]))})"
+        title += f" (Active image: {' - '.join(filter(None, [truncatechars(self.active_image_comment, 25), str(self.active_image_pk)]))})"
+        if self.active_model_pk:
+            title += f" (Active model: {' - '.join(filter(None, [truncatechars(self.active_model_comment, 25), str(self.active_model_pk)]))})"
         else:
             title += " (Active model: None)"
         return title

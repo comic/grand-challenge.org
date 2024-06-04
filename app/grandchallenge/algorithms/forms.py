@@ -376,6 +376,12 @@ class UserAlgorithmsForPhaseMixin:
                 active_model_pk=desired_model_subquery.values_list(
                     "pk", flat=True
                 ),
+                active_image_comment=desired_image_subquery.values_list(
+                    "comment", flat=True
+                ),
+                active_model_comment=desired_model_subquery.values_list(
+                    "comment", flat=True
+                ),
             )
             .filter(
                 total_input_count=len(inputs),
