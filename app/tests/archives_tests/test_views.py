@@ -6,10 +6,12 @@ import pytest
 from guardian.shortcuts import assign_perm, remove_perm
 from requests import put
 
+from grandchallenge.algorithms.models import Job
 from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.cases.widgets import WidgetChoices
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.subdomains.utils import reverse
+from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.archives_tests.factories import (
     ArchiveFactory,
     ArchiveItemFactory,
@@ -999,3 +1001,56 @@ def test_archive_item_bulk_delete_permissions(client):
         list(response.context["form"].fields["civ_sets_to_delete"].queryset)
         == []
     )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "algorithm_job_status, match",
+    (
+        (Job.SUCCESS, True),
+        (Job.PENDING, False),
+        (Job.STARTED, False),
+        (Job.RETRY, False),
+        (Job.FAILURE, False),
+        (Job.CANCELLED, False),
+        (Job.PROVISIONING, False),
+        (Job.PROVISIONED, False),
+        (Job.EXECUTING, False),
+        (Job.EXECUTED, False),
+        (Job.PARSING, False),
+        (Job.EXECUTING_PREREQUISITES, False),
+    ),
+)
+def test_archive_item_success_algorithm_job_as_input(
+    algorithm_job_status, match, client
+):
+    archive = ArchiveFactory()
+    archive.add_editor(editor := UserFactory())
+
+    ai = ArchiveItemFactory(archive=archive)
+    ai.values.add(
+        ComponentInterfaceValueFactory(),
+    )
+
+    aj = AlgorithmJobFactory(status=algorithm_job_status)
+    aj.inputs.set(ai.values.all())
+
+    response = get_view_for_user(
+        viewname="archives:item-detail",
+        client=client,
+        method=client.get,
+        reverse_kwargs={
+            "slug": archive.slug,
+            "pk": ai.pk,
+        },
+        user=editor,
+    )
+
+    assert response.status_code == 200  # Sanity
+
+    jobs = response.context["success_algorithm_jobs"]
+
+    if match:
+        assert {aj.pk} == {job.pk for job in jobs}
+    else:
+        assert not jobs.exists()

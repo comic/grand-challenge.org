@@ -373,27 +373,19 @@ class ArchiveItem(
         return True
 
     @cached_property
-    def algorithm_jobs_as_input(self, job_status=Job.SUCCESS):
+    def algorithm_jobs_as_input(self):
         input_civs = self.values.all()
         num_civs = len(input_civs)
 
-        return (
-            Job.objects.filter(
-                status=job_status,
-            )
-            .annotate(
-                num_inputs=Count("inputs"),
-                inputs_match_count=Count(
-                    "inputs",
-                    filter=Q(inputs__in=input_civs),
-                ),
-            )
-            .filter(
-                num_inputs=num_civs,
-                inputs_match_count=num_civs,
-            )
-            .distinct()
-            .prefetch_related("outputs__interface", "inputs__interface")
+        return Job.objects.annotate(
+            num_inputs=Count("inputs"),
+            inputs_match_count=Count(
+                "inputs",
+                filter=Q(inputs__in=input_civs),
+            ),
+        ).filter(
+            num_inputs=num_civs,
+            inputs_match_count=num_civs,
         )
 
 

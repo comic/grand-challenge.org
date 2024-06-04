@@ -26,6 +26,7 @@ from rest_framework.settings import api_settings
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
+from grandchallenge.algorithms.models import Job
 from grandchallenge.archives.filters import ArchiveFilter
 from grandchallenge.archives.forms import (
     AddCasesForm,
@@ -574,9 +575,14 @@ class ArchiveItemDetailView(CIVSetDetail):
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
 
-        context["algorithm_jobs_as_input"] = (
-            self.object.algorithm_jobs_as_input
+        jobs = self.object.algorithm_jobs_as_input
+
+        # Only show successful jobs
+        jobs = jobs.filter(status=Job.SUCCESS).prefetch_related(
+            "outputs__interface", "inputs__interface"
         )
+
+        context["success_algorithm_jobs"] = jobs
 
         return context
 

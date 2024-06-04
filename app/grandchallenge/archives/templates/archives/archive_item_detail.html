@@ -4,7 +4,7 @@
 {{ block.super }}
     <h3>Algorithm Results</h3>
 
-    {% for job in algorithm_jobs_as_input %}
+    {% for job in success_algorithm_jobs %}
         <div>
         {{ job.inputs }}
         </div>
