@@ -16,7 +16,7 @@
 {% block content %}
     {% get_obj_perms request.user for object as "config_perms" %}
 
-    <h1>Viewer Configuration {{ object.title }}</h1>
+    <h1>Viewer Configuration</h1>
 
     {% crispy form %}
 
