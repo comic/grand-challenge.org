@@ -1,3 +1,5 @@
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit
 from django.forms import ModelForm
 
 from grandchallenge.core.forms import SaveFormInitMixin
@@ -10,6 +12,16 @@ from grandchallenge.workstation_configs.models import (
 
 
 class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
+    def __init__(self, *args, read_only=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+
+        if read_only:
+            for field in self.fields:
+                self.fields[field].disabled = True
+        else:
+            self.helper.layout.append(Submit("save", "Save"))
+
     class Meta:
         model = WorkstationConfig
         fields = (

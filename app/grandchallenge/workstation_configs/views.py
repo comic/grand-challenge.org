@@ -43,6 +43,13 @@ class WorkstationConfigCreate(PermissionRequiredMixin, CreateView):
 class WorkstationConfigDetail(LoginRequiredMixin, DetailView):
     model = WorkstationConfig
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = WorkstationConfigForm(
+            instance=self.object, read_only=True
+        )
+        return context
+
 
 class WorkstationConfigUpdate(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
