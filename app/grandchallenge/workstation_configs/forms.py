@@ -35,6 +35,7 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
             "default_annotation_color",
             "default_annotation_line_width",
             "auto_jump_center_of_gravity",
+            "point_bounding_box_size_mm",
             "show_image_info_plugin",
             "show_display_plugin",
             "show_image_switcher_plugin",

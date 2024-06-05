@@ -128,6 +128,10 @@
                 <i class="fas {% if object.auto_jump_center_of_gravity %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
             </td>
         </tr>
+         <tr data-toggle="tooltip" title="{% get_help_text object 'point_bounding_box_size_mm' %}">
+            <td class="font-weight-bold">Bounding box size around points</td>
+            <td>{{ object.point_bounding_box_size_mm }}</td>
+        </tr>
     </table>
 
     <h2>Plugin and Tools</h2>

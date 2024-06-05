@@ -416,6 +416,14 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         "outputs or the first overlay segment when viewing a reader study",
     )
 
+    point_bounding_box_size_mm = models.FloatField(
+        default=0.0,
+        blank=False,
+        verbose_name="Bounding box size around points",
+        help_text="Size of bounding boxes in image coordinates (mm) that will be "
+        "displayed around point annotations. Set to zero to disable.",
+    )
+
     class Meta(TitleSlugDescriptionModel.Meta, UUIDModel.Meta):
         ordering = ("created", "creator")
 
