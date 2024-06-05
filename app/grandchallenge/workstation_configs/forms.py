@@ -87,7 +87,6 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
             for field in self.fields:
                 self.fields[field].disabled = True
         else:
-
             self.helper.layout.append(Submit("save", "Save"))
 
     class Meta:
