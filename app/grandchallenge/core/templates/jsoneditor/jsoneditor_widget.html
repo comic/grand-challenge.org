@@ -6,7 +6,7 @@
      style="width: 100%"></div>
 
 {# taken from https://github.com/django/django/blob/main/django/forms/widgets.py #}
-<textarea style="display: none"
+<textarea class="d-none form-control"
           name="{{ widget.name }}"{% include "django/forms/widgets/attrs.html" %}>
 {% if widget.value %}{{ widget.value }}{% endif %}</textarea>
 
