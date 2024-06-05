@@ -416,6 +416,17 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         "outputs or the first overlay segment when viewing a reader study",
     )
 
+    point_bounding_box_size_mm = models.DecimalField(
+        blank=True,
+        null=True,
+        max_digits=10,
+        decimal_places=6,
+        verbose_name="Bounding box size around points",
+        help_text="Size of bounding boxes in image coordinates (mm) that will be "
+        "displayed around point annotations.",
+        validators=[MinValueValidator(limit_value=0)],
+    )
+
     class Meta(TitleSlugDescriptionModel.Meta, UUIDModel.Meta):
         ordering = ("created", "creator")
 

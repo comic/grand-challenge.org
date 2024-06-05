@@ -34,6 +34,7 @@ GENERAL_FIELDS = (
     "default_annotation_color",
     "default_annotation_line_width",
     "auto_jump_center_of_gravity",
+    "point_bounding_box_size_mm",
 )
 PLUGIN_FIELDS = (
     "show_image_info_plugin",
