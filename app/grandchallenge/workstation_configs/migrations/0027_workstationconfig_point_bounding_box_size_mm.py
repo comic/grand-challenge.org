@@ -7,13 +7,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('workstation_configs', '0026_alter_workstationconfig_image_context'),
+        ("workstation_configs", "0026_alter_workstationconfig_image_context"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='workstationconfig',
-            name='point_bounding_box_size_mm',
-            field=models.DecimalField(decimal_places=6, default=0, help_text='Size of bounding boxes in image coordinates (mm) that will be displayed around point annotations. Set to zero to disable.', max_digits=10, validators=[django.core.validators.MinValueValidator(limit_value=0)], verbose_name='Bounding box size around points'),
+            model_name="workstationconfig",
+            name="point_bounding_box_size_mm",
+            field=models.DecimalField(
+                decimal_places=6,
+                default=0,
+                help_text="Size of bounding boxes in image coordinates (mm) that will be displayed around point annotations. Set to zero to disable.",
+                max_digits=10,
+                validators=[
+                    django.core.validators.MinValueValidator(limit_value=0)
+                ],
+                verbose_name="Bounding box size around points",
+            ),
         ),
     ]
