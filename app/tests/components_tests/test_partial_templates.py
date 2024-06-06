@@ -1,4 +1,5 @@
 import pytest
+from django.core.files.base import ContentFile
 from django.template.loader import render_to_string
 
 from grandchallenge.components.models import InterfaceKindChoices
@@ -17,69 +18,104 @@ from tests.factories import ImageFactory, ImageFileFactory
     ],
 )
 @pytest.mark.parametrize(
-    "component_interface_value,expected_snippet",
+    "component_interface, component_interface_value,expected_snippet",
     (
         (
-            ComponentInterfaceValueFactory.build(  # Value
-                interface=ComponentInterfaceFactory.build(
-                    kind=InterfaceKindChoices.FLOAT,
-                ),
+            dict(  # VALUE
+                kind=InterfaceKindChoices.FLOAT,
+            ),
+            dict(
                 value=42,
             ),
             "<pre",
         ),
-        (
-            ComponentInterfaceValueFactory.build(  # File
-                interface=ComponentInterfaceFactory.build(
-                    kind=InterfaceKindChoices.PDF,
-                ),
-                file="file.pdf",
+        (  # VALUE CHART
+            dict(
+                kind=InterfaceKindChoices.CHART,
             ),
-            "<a ",
-        ),
-        (
-            ComponentInterfaceValueFactory.build(  # Image
-                interface=ComponentInterfaceFactory.build(
-                    kind=InterfaceKindChoices.IMAGE,
-                ),
-            ),
-            "<a ",
-        ),
-        (
-            ComponentInterfaceValueFactory.build(  # Chart Value
-                interface=ComponentInterfaceFactory.build(
-                    kind=InterfaceKindChoices.CHART,
-                ),
-                value={"spec": "A chart, doesn't need to be valid"},
+            dict(
+                value={
+                    "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+                    "description": "A simple bar chart with embedded data.",
+                    "data": {
+                        "values": [
+                            {"a": "A", "b": 28},
+                            {"a": "B", "b": 55},
+                        ]
+                    },
+                    "mark": "bar",
+                    "encoding": {
+                        "x": {
+                            "field": "a",
+                            "type": "nominal",
+                            "axis": {"labelAngle": 0},
+                        },
+                        "y": {"field": "b", "type": "quantitative"},
+                    },
+                },
             ),
             "vega-lite-chart",
         ),
         (
-            ComponentInterfaceValueFactory.build(  # Thumbnail File
-                interface=ComponentInterfaceFactory.build(
-                    kind=InterfaceKindChoices.THUMBNAIL_JPG,
-                ),
-                file="thumbnail.jpg",
+            dict(  # FILE
+                kind=InterfaceKindChoices.PDF,
+                store_in_database=False,
             ),
-            "<img ",
+            dict(),
+            "<a ",
         ),
-        (
-            ComponentInterfaceValueFactory.build(  # Fallback
-                interface=ComponentInterfaceFactory.build(
-                    kind=InterfaceKindChoices.CSV,
-                ),
+        (  # FILE Thumbnail
+            dict(
+                kind=InterfaceKindChoices.THUMBNAIL_JPG,
+                store_in_database=False,
             ),
-            "cannot display",
+            dict(),
+            "<img",
+        ),
+        (  # IMAGE
+            dict(
+                kind=InterfaceKindChoices.IMAGE,
+                store_in_database=False,
+            ),
+            dict(),
+            "<a ",
+        ),
+        (  # Broken / fallback
+            dict(
+                kind=InterfaceKindChoices.SEGMENTATION,
+                store_in_database=False,
+            ),
+            dict(),
+            "cannot be displayed",
         ),
     ),
 )
 @pytest.mark.django_db
-def test_civ(template, component_interface_value, expected_snippet):
-    if component_interface_value.interface.kind == InterfaceKindChoices.IMAGE:
-        component_interface_value.image = ImageFactory()
-        ImageFileFactory(image=component_interface_value.image)
-
-    html = render_to_string(
-        template, context={"object": component_interface_value}
+def test_civ(
+    template, component_interface, component_interface_value, expected_snippet
+):
+    ci = ComponentInterfaceFactory(**component_interface)
+    civ = ComponentInterfaceValueFactory.build(
+        interface=ci, **component_interface_value
     )
+
+    if ci.kind == InterfaceKindChoices.PDF:
+        civ.file.save("file.pdf", ContentFile(b"%PDF-1.4\n"))
+
+    if ci.kind == InterfaceKindChoices.THUMBNAIL_JPG:
+        civ.file.save(
+            "thumbnail.jpg",
+            ContentFile(b"<bh:ff><bh:d8><bh:ff><bh:e0><bh:00><bh:10>JFIF"),
+        )
+
+    if ci.kind == InterfaceKindChoices.IMAGE:
+        civ.image = ImageFactory()
+        ImageFileFactory(image=civ.image)
+
+    # Actually create the CIV
+    if ci.kind != InterfaceKindChoices.SEGMENTATION:  # Intentionally broken
+        civ.full_clean()
+    civ.save()
+
+    html = render_to_string(template, context={"object": civ})
     assert expected_snippet in html
