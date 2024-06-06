@@ -1,5 +1,3 @@
-import json
-
 from django import template
 
 register = template.Library()
@@ -35,18 +33,3 @@ def get_key(obj: dict, key):
         return obj[key]
     except (KeyError, TypeError):
         return ""
-
-
-@register.filter
-def json_dumps(obj: dict):
-    """
-    Dumps a json object
-    :param obj: a dictionary
-    :return:
-    """
-    try:
-        return json.dumps(obj, indent=2)
-
-    except TypeError:
-        # Not json encodable
-        return str(obj)
