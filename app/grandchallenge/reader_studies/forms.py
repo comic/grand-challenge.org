@@ -33,11 +33,17 @@ from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 from dynamic_forms import DynamicField, DynamicFormMixin
 
-from grandchallenge.components.forms import MultipleCIVForm
+from grandchallenge.components.forms import (
+    CIVSetCreateFormMixin,
+    CIVSetUpdateFormMixin,
+    MultipleCIVForm,
+)
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
+    UniqueTitleCreateFormMixin,
+    UniqueTitleUpdateFormMixin,
     WorkstationUserFilterMixin,
 )
 from grandchallenge.core.layout import Formset
@@ -55,7 +61,6 @@ from grandchallenge.reader_studies.models import (
     Answer,
     AnswerType,
     CategoricalOption,
-    DisplaySet,
     Question,
     ReaderStudy,
     ReaderStudyPermissionRequest,
@@ -300,7 +305,10 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                 "hx-target": "#id_interface",
             }
         )
-        self.fields["answer_type"].choices = AnswerType.choices
+        self.fields["answer_type"].choices = [
+            *BLANK_CHOICE_DASH,
+            *AnswerType.choices,
+        ]
 
         self.helper = FormHelper()
         self.helper.form_tag = True
@@ -361,7 +369,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
         if answer_type is None:
             return ComponentInterface.objects.none()
         return ComponentInterface.objects.filter(
-            kind__in=ANSWER_TYPE_TO_INTERFACE_KIND_MAP[answer_type]
+            kind__in=ANSWER_TYPE_TO_INTERFACE_KIND_MAP.get(answer_type, [])
         )
 
     def widget_choices(self):
@@ -653,15 +661,21 @@ class GroundTruthForm(SaveFormInitMixin, Form):
             answer.save()
 
 
-class DisplaySetCreateForm(MultipleCIVForm):
+class DisplaySetFormMixin:
+    class Meta:
+        non_interface_fields = (
+            "title",
+            "order",
+        )
+
+    @property
+    def model(self):
+        return self.base_obj.civ_set_model
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["title"] = CharField(
-            required=False,
-            initial=self.instance and self.instance.title or "",
-            max_length=DisplaySet._meta.get_field("title").max_length,
-        )
+        field_order = list(self.field_order or self.fields.keys())
         self.fields["order"] = IntegerField(
             initial=(
                 self.instance.order
@@ -670,33 +684,33 @@ class DisplaySetCreateForm(MultipleCIVForm):
             ),
             min_value=0,
         )
+        self.order_fields(["order", *field_order])
 
-    class Meta:
-        non_civ_fields = ("title", "order")
-
-    def clean_title(self):
-        title = self.cleaned_data.get("title")
-        if title and self._title_query(title).exists():
-            raise ValidationError(
-                "A display set already exists with this title"
-            )
-        return title
-
-    def _title_query(self, title):
-        return DisplaySet.objects.filter(
-            title=title,
-            reader_study=self.base_obj,
+    def unique_title_query(self, *args, **kwargs):
+        return (
+            super()
+            .unique_title_query(*args, **kwargs)
+            .filter(reader_study=self.base_obj)
         )
 
 
-class DisplaySetUpdateForm(DisplaySetCreateForm):
+class DisplaySetCreateForm(
+    DisplaySetFormMixin,
+    UniqueTitleCreateFormMixin,
+    CIVSetCreateFormMixin,
+    MultipleCIVForm,
+):
+    pass
+
+
+class DisplaySetUpdateForm(
+    DisplaySetFormMixin,
+    UniqueTitleUpdateFormMixin,
+    CIVSetUpdateFormMixin,
+    MultipleCIVForm,
+):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.instance.is_editable:
             for _, field in self.fields.items():
                 field.disabled = True
-
-    def _title_query(self, *args, **kwargs):
-        return (
-            super()._title_query(*args, **kwargs).exclude(id=self.instance.pk)
-        )

@@ -2,7 +2,6 @@ import posixpath
 
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, PermissionDenied
-from django.db.models import F
 from django.http import Http404, HttpResponseRedirect
 from django.utils._os import safe_join
 from guardian.utils import get_anonymous_user
@@ -72,10 +71,7 @@ def _create_download(
             "creator and only one other foreign key must be set"
         )
 
-    n_updated = Download.objects.filter(**kwargs).update(count=F("count") + 1)
-
-    if n_updated == 0:
-        Download.objects.create(**kwargs)
+    Download.objects.create(**kwargs)
 
 
 def serve_images(request, *, pk, path, pa="", pb=""):

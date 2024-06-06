@@ -6,9 +6,9 @@ from grandchallenge.reader_studies.views import (
     AddQuestionToReaderStudy,
     AnswersRemoveForUser,
     AnswersRemoveGroundTruth,
-    DisplaySetBulkDeleteView,
-    DisplaySetCreateView,
-    DisplaySetDeleteView,
+    DisplaySetBulkDelete,
+    DisplaySetCreate,
+    DisplaySetDelete,
     DisplaySetFilesUpdate,
     DisplaySetInterfacesCreate,
     DisplaySetUpdateView,
@@ -85,12 +85,12 @@ urlpatterns = [
     ),
     path(
         "<slug>/display-sets/delete/",
-        DisplaySetBulkDeleteView.as_view(),
+        DisplaySetBulkDelete.as_view(),
         name="display-sets-bulk-delete",
     ),
     path(
         "<slug>/display-sets/create-single/",
-        DisplaySetCreateView.as_view(),
+        DisplaySetCreate.as_view(),
         name="display-set-create",
     ),
     path(
@@ -100,7 +100,7 @@ urlpatterns = [
     ),
     path(
         "<slug>/display-sets/<uuid:pk>/delete/",
-        DisplaySetDeleteView.as_view(),
+        DisplaySetDelete.as_view(),
         name="display-set-delete",
     ),
     path(

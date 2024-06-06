@@ -30,7 +30,9 @@ from grandchallenge.archives.filters import ArchiveFilter
 from grandchallenge.archives.forms import (
     AddCasesForm,
     ArchiveForm,
+    ArchiveItemCreateForm,
     ArchiveItemsToReaderStudyForm,
+    ArchiveItemUpdateForm,
     ArchivePermissionRequestUpdateForm,
     UploadersForm,
     UsersForm,
@@ -49,8 +51,8 @@ from grandchallenge.archives.tasks import add_images_to_archive
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.components.forms import MultipleCIVForm, NewFileUploadForm
 from grandchallenge.components.views import (
-    CIVSetBulkDeleteView,
-    CIVSetDeleteView,
+    CIVSetBulkDelete,
+    CIVSetDelete,
     CIVSetFormMixin,
     CivSetListView,
     InterfacesCreateBaseView,
@@ -364,8 +366,11 @@ class ArchiveUploadSessionCreate(
         return context
 
 
-class ArchiveItemUpdate(CIVSetFormMixin, MultipleCIVProcessingBaseView):
-    form_class = MultipleCIVForm
+class ArchiveItemUpdate(
+    CIVSetFormMixin,
+    MultipleCIVProcessingBaseView,
+):
+    form_class = ArchiveItemUpdateForm
     permission_required = (
         f"{ArchiveItem._meta.app_label}.change_{ArchiveItem._meta.model_name}"
     )
@@ -410,15 +415,6 @@ class ArchiveItemUpdate(CIVSetFormMixin, MultipleCIVProcessingBaseView):
             kwargs={"slug": self.base_object.slug, "pk": self.object.pk},
         )
 
-    def process_data_for_object(self, data):
-        """Updates the archive item"""
-        instance = self.object
-        for ci_slug, new_value in data.items():
-            instance.create_civ(
-                ci_slug=ci_slug, new_value=new_value, user=self.request.user
-            )
-        return instance
-
 
 class ArchiveItemsList(CivSetListView):
     model = ArchiveItem
@@ -427,10 +423,19 @@ class ArchiveItemsList(CivSetListView):
     )
     columns = [
         Column(title=""),
-        Column(title="ArchiveItem ID", sort_field="pk"),
+        Column(title="ID", sort_field="pk"),
+        Column(
+            title="Title",
+            sort_field="title",
+            optional_condition=lambda obj: bool(obj.title),
+        ),
         *CivSetListView.columns,
     ]
-    default_sort_column = 1
+    default_sort_column = 2
+    search_fields = [
+        "title",
+        *CivSetListView.search_fields,
+    ]
 
     @cached_property
     def base_object(self):
@@ -479,7 +484,10 @@ class ArchiveItemsToReaderStudyUpdate(
 
         for item in items:
             values = item.values.all()
-            ds = DisplaySet.objects.create(reader_study=reader_study)
+            ds = DisplaySet.objects.create(
+                reader_study=reader_study,
+                title=item.title,
+            )
             ds.values.set(values)
 
         self.success_url = reader_study.get_absolute_url()
@@ -554,7 +562,7 @@ class ArchiveItemCreateView(
     CIVSetFormMixin,
     MultipleCIVProcessingBaseView,
 ):
-    form_class = MultipleCIVForm
+    form_class = ArchiveItemCreateForm
     permission_required = (
         f"{Archive._meta.app_label}.change_{Archive._meta.model_name}"
     )
@@ -589,15 +597,6 @@ class ArchiveItemCreateView(
             "archives:item-new-interface-create",
             kwargs={"slug": self.base_object.slug},
         )
-
-    def process_data_for_object(self, data):
-        """Creates an archive item"""
-        instance = ArchiveItem.objects.create(archive=self.base_object)
-        for slug in data:
-            instance.create_civ(
-                ci_slug=slug, new_value=data[slug], user=self.request.user
-            )
-        return instance
 
     def get_success_url(self):
         return self.return_url
@@ -641,14 +640,14 @@ class ArchiveItemInterfaceCreate(InterfacesCreateBaseView):
             )
 
 
-class ArchiveItemDeleteView(CIVSetDeleteView):
+class ArchiveItemDelete(CIVSetDelete):
     model = ArchiveItem
     permission_required = (
         f"{Archive._meta.app_label}.delete_{ArchiveItem._meta.model_name}"
     )
 
 
-class ArchiveItemBulkDeleteView(CIVSetBulkDeleteView):
+class ArchiveItemBulkDelete(CIVSetBulkDelete):
     model = ArchiveItem
 
     @property

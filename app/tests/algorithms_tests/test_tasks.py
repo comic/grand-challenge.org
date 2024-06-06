@@ -57,6 +57,10 @@ class TestCreateAlgorithmJobs:
         create_algorithm_jobs(algorithm_image=ai, civ_sets=[])
         assert Job.objects.count() == 0
 
+    def test_no_algorithm_image_errors_out(self):
+        with pytest.raises(RuntimeError):
+            create_algorithm_jobs(algorithm_image=None, civ_sets=[])
+
     def test_civ_existing_does_nothing(self):
         image = ImageFactory()
         ai = AlgorithmImageFactory()
@@ -639,13 +643,19 @@ class TestJobCreation:
         cis = ComponentInterfaceFactory.create_batch(2)
         ai.algorithm.inputs.set(cis)
 
-        civs = [ComponentInterfaceValueFactory(interface=c) for c in cis]
+        civs1 = [ComponentInterfaceValueFactory(interface=c) for c in cis]
+        civs2 = [ComponentInterfaceValueFactory(interface=c) for c in cis]
 
-        j = AlgorithmJobFactory(algorithm_image=ai)
-        j.inputs.set(civs)
+        j1 = AlgorithmJobFactory(creator=None, algorithm_image=ai)
+        j1.inputs.set(civs1)
+        j2 = AlgorithmJobFactory(algorithm_image=ai)
+        j2.inputs.set(civs2)
 
         civ_sets = [
-            civs,  # Job already exists
+            {civ for civ in civs1},  # Job already exists (system job)
+            {
+                civ for civ in civs2
+            },  # Job already exists but with a creator set and hence should be ignored
             {
                 # New values
                 ComponentInterfaceValueFactory(interface=cis[0]),
@@ -653,7 +663,7 @@ class TestJobCreation:
             },
             {
                 # Changed values
-                civs[0],
+                civs1[0],
                 ComponentInterfaceValueFactory(interface=cis[1]),
             },
         ]
@@ -662,7 +672,7 @@ class TestJobCreation:
             civ_sets=civ_sets, algorithm_image=ai
         )
 
-        assert filtered_civ_sets == civ_sets[1:]
+        assert sorted(filtered_civ_sets) == sorted(civ_sets[1:])
 
 
 @pytest.mark.django_db

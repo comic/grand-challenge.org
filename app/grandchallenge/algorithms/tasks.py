@@ -217,6 +217,9 @@ def create_algorithm_jobs_for_archive(
                 logger.info(f"Retrying task due to: {error}")
                 retry_with_delay()
                 raise
+            except RuntimeError:
+                # don't schedule jobs for algorithms without an active image
+                continue
 
 
 def create_algorithm_jobs(
@@ -255,6 +258,9 @@ def create_algorithm_jobs(
     time_limit
         The time limit for the Job
     """
+    if not algorithm_image:
+        raise RuntimeError("Algorithm image required to create jobs.")
+
     civ_sets = filter_civs_for_algorithm(
         civ_sets=civ_sets, algorithm_image=algorithm_image
     )
@@ -319,7 +325,7 @@ def filter_civs_for_algorithm(*, civ_sets, algorithm_image):
                 ),
             )
         )
-        .filter(inputs_match_count=len(input_interfaces))
+        .filter(inputs_match_count=len(input_interfaces), creator=None)
         .prefetch_related("inputs")
     }
 

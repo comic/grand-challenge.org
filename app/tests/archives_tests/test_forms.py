@@ -3,6 +3,11 @@ from actstream.actions import is_following
 from django.contrib.auth.models import Permission
 
 from grandchallenge.algorithms.models import Job
+from grandchallenge.archives.forms import (
+    ArchiveForm,
+    ArchiveItemCreateForm,
+    ArchiveItemUpdateForm,
+)
 from grandchallenge.archives.models import Archive, ArchivePermissionRequest
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -202,6 +207,62 @@ def test_social_image_meta_tag(client, uploaded_image):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    "form_class",
+    (ArchiveItemCreateForm, ArchiveItemUpdateForm),
+)
+def test_archive_item_form_unique_title(form_class):
+    archive1 = ArchiveFactory()
+
+    user = UserFactory()
+    archive1.add_editor(user)
+
+    ai1 = ArchiveItemFactory(archive=archive1, title="Title in archive 1")
+
+    instance1 = None
+    if form_class == ArchiveItemUpdateForm:
+        instance1 = ArchiveItemFactory(archive=archive1)
+
+    # Adding a unique title in archive 1 is allowed
+    form = form_class(
+        user=user,
+        instance=instance1,
+        base_obj=archive1,
+        data={
+            "title": "A unique title",
+        },
+    )
+    assert form.is_valid()
+
+    # Adding an existing title in archive 1 is not allowed
+    form = form_class(
+        user=user,
+        instance=instance1,
+        base_obj=archive1,
+        data={"title": ai1.title},
+    )
+    assert not form.is_valid()
+
+    # However, it is allowed if it's in another archive all together
+    archive2 = ArchiveFactory()
+    archive2.add_editor(user)
+
+    instance2 = None
+    if form_class == ArchiveItemUpdateForm:
+        instance2 = ArchiveItemFactory(archive=archive2)
+
+    form = form_class(
+        user=user,
+        instance=instance2,
+        base_obj=archive2,
+        data={
+            "title": ai1.title,
+        },
+    )
+    assert form.is_valid()
+
+
+@pytest.mark.django_db
 def test_archive_item_update_permissions(client):
     archive = ArchiveFactory()
 
@@ -334,6 +395,11 @@ def test_archive_item_update_triggers_algorithm_jobs(
     assert Job.objects.count() == 3
     assert ComponentInterfaceValue.objects.count() == civ_count + 2
 
+    # A change to the title should not fire-off a new job
+    ai.title = "A new title"
+    ai.save()
+    assert Job.objects.count() == 3
+
 
 @pytest.mark.django_db
 def test_archive_items_to_reader_study_update_form(client, settings):
@@ -358,8 +424,8 @@ def test_archive_items_to_reader_study_update_form(client, settings):
         ComponentInterfaceValueFactory(interface=overlay, image=im4),
     )
 
-    ai1 = ArchiveItemFactory(archive=archive)
-    ai2 = ArchiveItemFactory(archive=archive)
+    ai1 = ArchiveItemFactory(archive=archive, title="archive item 1")
+    ai2 = ArchiveItemFactory(archive=archive, title="archive item 2")
 
     ai1.values.add(civ1)
     ai2.values.add(civ2)
@@ -391,12 +457,21 @@ def test_archive_items_to_reader_study_update_form(client, settings):
 
     assert response.status_code == 200
     assert rs.display_sets.count() == 2
+
+    assert sorted([ds.title for ds in rs.display_sets.all()]) == sorted(
+        [ai1.title, ai2.title]
+    )
     assert sorted(
         list(rs.display_sets.values_list("values", flat=True))
     ) == sorted([civ1.pk, civ2.pk])
 
+    ai1.title = "New title 1"
     ai1.values.add(civ3)
+    ai1.save()
+
+    ai2.title = "New title 2"
     ai2.values.add(civ4)
+    ai2.save()
 
     response = get_view_for_user(
         viewname="archives:items-reader-study-update",
@@ -414,3 +489,24 @@ def test_archive_items_to_reader_study_update_form(client, settings):
         sorted(list(ds.values.values_list("pk", flat=True)))
         for ds in rs.display_sets.all()
     ) == sorted([[civ1.pk], [civ2.pk], [civ1.pk, civ3.pk], [civ2.pk, civ4.pk]])
+
+
+@pytest.mark.django_db
+def test_archive_update_form_algorithm_queryset():
+    alg1, alg2, alg3 = AlgorithmFactory.create_batch(3)
+    user = UserFactory()
+    for alg in [alg1, alg2]:
+        alg.add_editor(user)
+    archive = ArchiveFactory()
+
+    AlgorithmImageFactory(
+        algorithm=alg1,
+        is_desired_version=True,
+        is_manifest_valid=True,
+        is_in_registry=True,
+    )
+
+    form = ArchiveForm(instance=archive, user=user)
+    assert alg1 in form.fields["algorithms"].queryset
+    assert alg2 not in form.fields["algorithms"].queryset
+    assert alg3 not in form.fields["algorithms"].queryset
