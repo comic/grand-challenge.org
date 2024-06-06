@@ -6,6 +6,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db.models import Exists, OuterRef
 from django.forms import (
     CheckboxInput,
     CheckboxSelectMultiple,
@@ -264,6 +265,11 @@ class MethodUpdateForm(SaveFormInitMixin, forms.ModelForm):
         )
 
 
+class AlgorithmChoiceField(ModelChoiceField):
+    def label_from_instance(self, obj):
+        return obj.form_field_label()
+
+
 submission_fields = (
     "creator",
     "phase",
@@ -272,6 +278,7 @@ submission_fields = (
     "supplementary_url",
     "user_upload",
     "algorithm_image",
+    "algorithm_model",
 )
 
 
@@ -293,6 +300,7 @@ class SubmissionForm(
         label="Predictions File",
         queryset=None,
     )
+    algorithm = AlgorithmChoiceField(queryset=None)
 
     def __init__(self, *args, user, phase: Phase, **kwargs):  # noqa: C901
         super().__init__(*args, user=user, phase=phase, **kwargs)
@@ -342,19 +350,51 @@ class SubmissionForm(
 
         if self._phase.submission_kind == SubmissionKindChoices.ALGORITHM:
             del self.fields["user_upload"]
-            qs = self.user_active_images_for_phase.order_by("algorithm__title")
+            qs = self.user_algorithms_for_phase.filter(
+                has_active_image=True
+            ).order_by("title")
             if self._phase.parent:
-                qs = qs.filter(
+                eval_with_active_image_and_model = Evaluation.objects.filter(
                     submission__phase=self._phase.parent,
-                    submission__evaluation__status=Evaluation.SUCCESS,
-                    job__status=Job.SUCCESS,
-                ).distinct()
-            self.fields["algorithm_image"].queryset = qs
+                    status=Evaluation.SUCCESS,
+                    submission__algorithm_image__pk=OuterRef(
+                        "active_image_pk"
+                    ),
+                    submission__algorithm_model__pk=OuterRef(
+                        "active_model_pk"
+                    ),
+                )
+                job_with_active_image_and_model = Job.objects.filter(
+                    status=Job.SUCCESS,
+                    algorithm_image=OuterRef("active_image_pk"),
+                    algorithm_model=OuterRef("active_model_pk"),
+                )
+
+                qs = (
+                    qs.annotate(
+                        has_successful_job=Exists(
+                            job_with_active_image_and_model
+                        ),
+                        has_successful_eval=Exists(
+                            eval_with_active_image_and_model
+                        ),
+                    )
+                    .filter(
+                        has_successful_eval=True,
+                        has_successful_job=True,
+                    )
+                    .distinct()
+                )
+
+            self.fields["algorithm"].queryset = qs
+            self.fields["algorithm_image"].widget = HiddenInput()
+            self.fields["algorithm_image"].required = False
+            self.fields["algorithm_model"].widget = HiddenInput()
 
             self._algorithm_inputs = self._phase.algorithm_inputs.all()
             self._algorithm_outputs = self._phase.algorithm_outputs.all()
-            self.fields["algorithm_image"].help_text = format_lazy(
-                "Select one of your algorithms' active images to submit as a solution to this "
+            self.fields["algorithm"].help_text = format_lazy(
+                "Select one of your algorithms to submit as a solution to this "
                 "challenge. The algorithms need to work with the following inputs: {} "
                 "and the following outputs: {}. If you have not created your "
                 "algorithm yet you can "
@@ -370,7 +410,9 @@ class SubmissionForm(
                 ),
             )
         else:
+            del self.fields["algorithm"]
             del self.fields["algorithm_image"]
+            del self.fields["algorithm_model"]
 
             self.fields["user_upload"].queryset = get_objects_for_user(
                 user,
@@ -389,21 +431,33 @@ class SubmissionForm(
             )
         return phase
 
-    def clean_algorithm_image(self):
-        algorithm_image = self.cleaned_data["algorithm_image"]
+    def clean_algorithm(self):
+        algorithm = self.cleaned_data["algorithm"]
+
+        extra_submission_filter = {}
+        extra_evaluation_filter = {}
+        if algorithm.active_model:
+            extra_submission_filter = {
+                "algorithm_model__sha256": algorithm.active_model.sha256
+            }
+            extra_evaluation_filter = {
+                "submission__algorithm_model__sha256": algorithm.active_model.sha256
+            }
 
         if Submission.objects.filter(
-            algorithm_image__image_sha256=algorithm_image.image_sha256,
+            algorithm_image__image_sha256=algorithm.active_image.image_sha256,
             phase=self._phase,
+            **extra_submission_filter,
         ).exists():
             raise ValidationError(
-                "A submission for this algorithm container image "
+                "A submission for this algorithm container image and model "
                 "for this phase already exists."
             )
 
         if (
             Evaluation.objects.filter(
-                submission__algorithm_image__image_sha256=algorithm_image.image_sha256
+                submission__algorithm_image__image_sha256=algorithm.active_image.image_sha256,
+                **extra_evaluation_filter,
             )
             .exclude(
                 status__in=[
@@ -423,7 +477,10 @@ class SubmissionForm(
                 "complete."
             )
 
-        return algorithm_image
+        self.cleaned_data["algorithm_image"] = algorithm.active_image
+        self.cleaned_data["algorithm_model"] = algorithm.active_model
+
+        return algorithm
 
     def clean_creator(self):
         creator = self.cleaned_data["creator"]

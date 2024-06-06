@@ -49,6 +49,7 @@ class Executor(ABC):
         time_limit: int,
         requires_gpu: bool,
         desired_gpu_type: GPUTypeChoices,
+        algorithm_model=None,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
@@ -61,11 +62,13 @@ class Executor(ABC):
         self._stdout = []
         self._stderr = []
         self.__s3_client = None
+        self._algorithm_model = algorithm_model
 
     def provision(self, *, input_civs, input_prefixes):
         self._provision_inputs(
             input_civs=input_civs, input_prefixes=input_prefixes
         )
+        self._provision_auxilliary_data()
 
     @abstractmethod
     def execute(self, *, input_civs, input_prefixes): ...
@@ -101,6 +104,10 @@ class Executor(ABC):
             bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
             prefix=self._io_prefix,
         )
+        self._delete_objects(
+            bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+            prefix=self._auxiliary_data_prefix,
+        )
 
     @staticmethod
     @abstractmethod
@@ -133,11 +140,18 @@ class Executor(ABC):
 
     @property
     def invocation_environment(self):
-        return {  # Up to 16 pairs
+        env = {  # Up to 16 pairs
             "LOG_LEVEL": "INFO",
             "PYTHONUNBUFFERED": "1",
             "no_proxy": "amazonaws.com",
+            "GRAND_CHALLENGE_COMPONENT_WRITABLE_DIRECTORIES": "/opt/ml/output/data:/opt/ml/model:/opt/ml/checkpoints:/tmp",
+            "GRAND_CHALLENGE_COMPONENT_POST_CLEAN_DIRECTORIES": "/opt/ml/output/data:/opt/ml/model",
         }
+        if self._algorithm_model:
+            env["GRAND_CHALLENGE_COMPONENT_MODEL"] = (
+                f"s3://{settings.COMPONENTS_INPUT_BUCKET_NAME}/{self._algorithm_model_key}"
+            )
+        return env
 
     @property
     def compute_cost_euro_millicents(self):
@@ -174,6 +188,14 @@ class Executor(ABC):
                 endpoint_url=settings.AWS_S3_ENDPOINT_URL,
             )
         return self.__s3_client
+
+    @property
+    def _auxiliary_data_prefix(self):
+        return safe_join("/auxiliary-data", *self.job_path_parts)
+
+    @property
+    def _algorithm_model_key(self):
+        return safe_join(self._auxiliary_data_prefix, "algorithm-model.tar.gz")
 
     def _get_key_and_relative_path(self, *, civ, input_prefixes):
         if str(civ.pk) in input_prefixes:
@@ -228,6 +250,12 @@ class Executor(ABC):
                         Bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
                         Key=key,
                     )
+
+    def _provision_auxilliary_data(self):
+        if self._algorithm_model:
+            self._copy_input_file(
+                src=self._algorithm_model, dest_key=self._algorithm_model_key
+            )
 
     def _copy_input_file(self, *, src, dest_key):
         self._s3_client.copy(
@@ -369,6 +397,7 @@ class Executor(ABC):
             prefix.startswith("/io/")
             or prefix.startswith("/invocations/")
             or prefix.startswith("/training-outputs/")
+            or prefix.startswith("/auxiliary-data/")
         ) or bucket not in {
             settings.COMPONENTS_OUTPUT_BUCKET_NAME,
             settings.COMPONENTS_INPUT_BUCKET_NAME,

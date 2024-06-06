@@ -1,8 +1,11 @@
+from pathlib import Path
+
 import pytest
 from actstream.actions import is_following
 
 from grandchallenge.algorithms.forms import (
     AlgorithmForm,
+    AlgorithmModelForm,
     AlgorithmPublishForm,
     ImageActivateForm,
     JobCreateForm,
@@ -21,15 +24,21 @@ from grandchallenge.components.models import (
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
+from grandchallenge.verifications.models import Verification
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
     AlgorithmJobFactory,
+    AlgorithmModelFactory,
     AlgorithmPermissionRequestFactory,
 )
 from tests.algorithms_tests.utils import get_algorithm_creator
 from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.factories import UserFactory, WorkstationFactory
+from tests.uploads_tests.factories import (
+    UserUploadFactory,
+    create_upload_from_file,
+)
 from tests.utils import get_view_for_user
 from tests.verification_tests.factories import VerificationFactory
 
@@ -520,4 +529,40 @@ def test_image_activate_form():
     assert not form.is_valid()
     assert "Image updating already in progress." in str(
         form.errors["algorithm_image"]
+    )
+
+
+@pytest.mark.django_db
+def test_algorithm_model_form():
+    user = UserFactory()
+    alg = AlgorithmFactory()
+    user_upload = UserUploadFactory(creator=user)
+    user_upload.status = user_upload.StatusChoices.COMPLETED
+    user_upload.save()
+
+    form = AlgorithmModelForm(
+        user=user,
+        algorithm=alg,
+        data={"user_upload": user_upload, "creator": user, "algorithm": alg},
+    )
+    assert not form.is_valid()
+    assert "This upload is not a valid .tar.gz file" in str(form.errors)
+    assert "Select a valid choice" in str(form.errors["creator"])
+
+    Verification.objects.create(user=user, is_verified=True)
+    upload = create_upload_from_file(
+        creator=user,
+        file_path=Path(__file__).parent / "resources" / "model.tar.gz",
+    )
+    AlgorithmModelFactory(creator=user)
+
+    form2 = AlgorithmModelForm(
+        user=user,
+        algorithm=alg,
+        data={"user_upload": upload, "creator": user, "algorithm": alg},
+    )
+    assert not form2.is_valid()
+    assert (
+        "You have an existing model importing, please wait for it to complete"
+        in str(form2.errors)
     )

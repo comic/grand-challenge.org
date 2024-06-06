@@ -10,6 +10,9 @@ from grandchallenge.algorithms.models import (
     AlgorithmImage,
     AlgorithmImageGroupObjectPermission,
     AlgorithmImageUserObjectPermission,
+    AlgorithmModel,
+    AlgorithmModelGroupObjectPermission,
+    AlgorithmModelUserObjectPermission,
     AlgorithmPermissionRequest,
     AlgorithmUserObjectPermission,
     Job,
@@ -110,6 +113,15 @@ class AlgorithmPermissionRequestAdmin(GuardedModelAdmin):
     readonly_fields = ("user", "algorithm")
 
 
+@admin.register(AlgorithmModel)
+class AlgorithmModelAdmin(GuardedModelAdmin):
+    exclude = ("model",)
+    list_display = ("algorithm", "created", "is_desired_version", "comment")
+    list_filter = ("is_desired_version",)
+    search_fields = ("algorithm__title", "comment")
+    readonly_fields = ("creator", "algorithm", "sha256", "size_in_storage")
+
+
 admin.site.register(AlgorithmUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(AlgorithmGroupObjectPermission, GroupObjectPermissionAdmin)
 admin.site.register(AlgorithmImage, ComponentImageAdmin)
@@ -121,3 +133,9 @@ admin.site.register(
 )
 admin.site.register(JobUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(JobGroupObjectPermission, GroupObjectPermissionAdmin)
+admin.site.register(
+    AlgorithmModelUserObjectPermission, UserObjectPermissionAdmin
+)
+admin.site.register(
+    AlgorithmModelGroupObjectPermission, GroupObjectPermissionAdmin
+)

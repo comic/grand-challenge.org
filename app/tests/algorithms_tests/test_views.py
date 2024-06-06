@@ -22,6 +22,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
     AlgorithmJobFactory,
+    AlgorithmModelFactory,
     AlgorithmPermissionRequestFactory,
 )
 from tests.cases_tests import RESOURCE_PATH
@@ -326,6 +327,7 @@ def test_algorithm_jobs_list_view(client):
 class TestObjectPermissionRequiredViews:
     def test_permission_required_views(self, client):
         ai = AlgorithmImageFactory(is_manifest_valid=True, is_in_registry=True)
+        am = AlgorithmModelFactory()
         u = UserFactory()
         j = AlgorithmJobFactory(algorithm_image=ai, status=Job.SUCCESS)
         p = AlgorithmPermissionRequestFactory(algorithm=ai.algorithm)
@@ -440,6 +442,20 @@ class TestObjectPermissionRequiredViews:
                 {"slug": ai.algorithm.slug},
                 "change_algorithm",
                 ai.algorithm,
+                None,
+            ),
+            (
+                "model-create",
+                {"slug": am.algorithm.slug},
+                "change_algorithm",
+                am.algorithm,
+                None,
+            ),
+            (
+                "model-detail",
+                {"slug": am.algorithm.slug, "pk": am.pk},
+                "view_algorithmmodel",
+                am,
                 None,
             ),
         ]:
@@ -1242,3 +1258,45 @@ def test_evaluations_are_filtered(client):
     )
 
     assert [*response.context["best_evaluation_per_phase"]] == [e, e2]
+
+
+@pytest.mark.django_db
+def test_job_create_denied_for_same_input_model_and_image(client):
+    creator = UserFactory()
+    VerificationFactory(user=creator, is_verified=True)
+    alg = AlgorithmFactory()
+    alg.add_editor(user=creator)
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.IMAGE
+    )
+    alg.inputs.set([ci])
+    ai = AlgorithmImageFactory(
+        algorithm=alg,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+    am = AlgorithmModelFactory(algorithm=alg, is_desired_version=True)
+    im = ImageFactory()
+    assign_perm("view_image", creator, im)
+    civ = ComponentInterfaceValueFactory(interface=ci, image=im)
+    j = AlgorithmJobFactory(algorithm_image=ai, algorithm_model=am)
+    j.inputs.set([civ])
+    response = get_view_for_user(
+        viewname="algorithms:job-create",
+        client=client,
+        method=client.post,
+        reverse_kwargs={
+            "slug": alg.slug,
+        },
+        user=creator,
+        data={
+            ci.slug: im.pk,
+            f"WidgetChoice-{ci.slug}": WidgetChoices.IMAGE_SEARCH.name,
+        },
+    )
+    assert not response.context["form"].is_valid()
+    assert (
+        "A result for these inputs with the current image and model already exists."
+        in str(response.context["form"].errors)
+    )

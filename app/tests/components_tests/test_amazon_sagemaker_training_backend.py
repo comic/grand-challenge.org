@@ -160,6 +160,7 @@ def test_execute(settings):
     executor = AmazonSageMakerTrainingExecutor(
         job_id=f"algorithms-job-{pk}",
         exec_image_repo_tag="",
+        algorithm_model=None,
         memory_limit=4,
         time_limit=60,
         requires_gpu=False,
@@ -196,6 +197,7 @@ def test_execute(settings):
                     "PYTHONUNBUFFERED": "1",
                     "no_proxy": "amazonaws.com",
                     "GRAND_CHALLENGE_COMPONENT_WRITABLE_DIRECTORIES": "/opt/ml/output/data:/opt/ml/model:/opt/ml/checkpoints:/tmp",
+                    "GRAND_CHALLENGE_COMPONENT_POST_CLEAN_DIRECTORIES": "/opt/ml/output/data:/opt/ml/model",
                 },
                 "VpcConfig": {
                     "SecurityGroupIds": [

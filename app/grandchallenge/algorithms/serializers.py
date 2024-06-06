@@ -183,6 +183,7 @@ class JobPostSerializer(JobSerializer):
             )
         data["creator"] = user
         data["algorithm_image"] = alg.active_image
+        data["algorithm_model"] = alg.active_model
 
         jobs_limit = alg.active_image.algorithm.get_jobs_limit(
             user=data["creator"]

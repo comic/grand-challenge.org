@@ -22,7 +22,7 @@ from django_extensions.db.fields import AutoSlugField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
 
-from grandchallenge.algorithms.models import AlgorithmImage
+from grandchallenge.algorithms.models import AlgorithmImage, AlgorithmModel
 from grandchallenge.archives.models import Archive, ArchiveItem
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.models import (
@@ -1063,6 +1063,9 @@ class Submission(UUIDModel):
     phase = models.ForeignKey(Phase, on_delete=models.PROTECT, null=True)
     algorithm_image = models.ForeignKey(
         AlgorithmImage, null=True, on_delete=models.SET_NULL
+    )
+    algorithm_model = models.ForeignKey(
+        AlgorithmModel, null=True, blank=True, on_delete=models.SET_NULL
     )
     user_upload = models.ForeignKey(
         UserUpload, blank=True, null=True, on_delete=models.SET_NULL
