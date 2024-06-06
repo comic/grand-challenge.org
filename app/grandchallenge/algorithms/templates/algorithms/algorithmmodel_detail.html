@@ -32,6 +32,18 @@
     {% get_obj_perms request.user for object as "algorithm_model_perms" %}
     {% get_obj_perms request.user for object.algorithm as "algorithm_perms" %}
 
+    {% if "change_algorithmmodel" in algorithm_model_perms %}
+        <a class="btn btn-primary"
+           href="{% url 'algorithms:model-update' slug=object.algorithm.slug pk=object.pk %}">
+            <i class="fa fa-edit"></i> Edit this algorithm model
+        </a><br>
+    {% endif %}
+
+    {% if object.import_status == import_status_choices.COMPLETED and not object.algorithm.model_upload_in_progress and not object.is_desired_version and "change_algorithm" in algorithm_perms %}
+        <div class="my-2">Activating a model will result in this model being used for future algorithm runs:</div>
+        <div class="mb-2">{% crispy model_activate_form %}</div>
+    {% endif %}
+
     <span class="badge p-2 my-2 {% if object.is_desired_version %} badge-success {% else %} badge-danger {% endif %}">{% if object.is_desired_version %}<i class="fa fa-check-circle mr-1"></i> Active model for this algorithm {% else %} <i class="fa fa-times-circle mr-1"></i> Inactive {% endif %}</span>
 
     <dl class="inline">

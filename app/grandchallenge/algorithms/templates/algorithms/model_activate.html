@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    Activate Algorithm Model - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'algorithms:list' %}">Algorithms</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ object.get_absolute_url }}">{{ object.title }}
+        </a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Activate algorithm model
+        </li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Activate algorithm model</h2>
+
+    <div class="mb-2">Activating a model will result in this model being used for all subsequent algorithm runs.</div>
+
+    {% crispy form %}
+{% endblock %}

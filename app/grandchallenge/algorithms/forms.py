@@ -1255,3 +1255,52 @@ class AlgorithmModelForm(SaveFormInitMixin, ModelForm):
     class Meta:
         model = AlgorithmModel
         fields = ("algorithm", "user_upload", "creator", "comment")
+
+
+class AlgorithmModelUpdateForm(SaveFormInitMixin, ModelForm):
+    class Meta:
+        model = AlgorithmModel
+        fields = ("comment",)
+
+
+class AlgorithmModelActivateForm(Form):
+    algorithm_model = ModelChoiceField(queryset=AlgorithmModel.objects.none())
+
+    def __init__(
+        self,
+        *args,
+        user,
+        algorithm,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self.fields["algorithm_model"].queryset = (
+            get_objects_for_user(
+                user,
+                "algorithms.change_algorithmmodel",
+            )
+            .filter(
+                algorithm=algorithm,
+                is_desired_version=False,
+            )
+            .select_related("algorithm")
+        )
+
+        self.fields["algorithm_model"].widget = HiddenInput()
+        self.helper = FormHelper(self)
+        self.helper.layout.append(Submit("save", "Activate algorithm model"))
+        self.helper.form_action = reverse(
+            "algorithms:model-activate", kwargs={"slug": algorithm.slug}
+        )
+
+    def clean_algorithm_model(self):
+        algorithm_model = self.cleaned_data["algorithm_model"]
+
+        if (
+            algorithm_model.get_peer_models()
+            .filter(import_status=ImportStatusChoices.INITIALIZED)
+            .exists()
+        ):
+            raise ValidationError("Model updating already in progress.")
+
+        return algorithm_model

@@ -43,7 +43,9 @@ from grandchallenge.algorithms.forms import (
     AlgorithmImageForm,
     AlgorithmImageUpdateForm,
     AlgorithmImportForm,
+    AlgorithmModelActivateForm,
     AlgorithmModelForm,
+    AlgorithmModelUpdateForm,
     AlgorithmPermissionRequestUpdateForm,
     AlgorithmPublishForm,
     AlgorithmRepoForm,
@@ -443,7 +445,6 @@ class AlgorithmImageActivate(
 
     def form_valid(self, form):
         response = super().form_valid(form=form)
-
         algorithm_image = form.cleaned_data["algorithm_image"]
 
         if algorithm_image.can_execute:
@@ -462,9 +463,6 @@ class AlgorithmImageActivate(
             ).apply_async()
 
         return response
-
-    def get_success_url(self):
-        return self.algorithm.get_absolute_url()
 
 
 class JobCreate(
@@ -1095,3 +1093,74 @@ class AlgorithmModelDetail(
     model = AlgorithmModel
     permission_required = "algorithms.view_algorithmmodel"
     raise_exception = True
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context.update(
+            {
+                "model_activate_form": AlgorithmModelActivateForm(
+                    initial={"algorithm_model": self.object.pk},
+                    user=self.request.user,
+                    algorithm=self.object.algorithm,
+                ),
+                "import_status_choices": ImportStatusChoices,
+            }
+        )
+
+        return context
+
+
+class AlgorithmModelUpdate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    UpdateView,
+):
+    model = AlgorithmModel
+    form_class = AlgorithmModelUpdateForm
+    permission_required = "algorithms.change_algorithmmodel"
+    raise_exception = True
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update({"algorithm": self.object.algorithm})
+        return context
+
+
+class AlgorithmModelActivate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    FormView,
+):
+    permission_required = "algorithms.change_algorithm"
+    raise_exception = True
+    template_name = "algorithms/model_activate.html"
+    form_class = AlgorithmModelActivateForm
+    success_message = "Model successfully activated."
+
+    def form_valid(self, form):
+        response = super().form_valid(form=form)
+        algorithm_model = form.cleaned_data["algorithm_model"]
+        algorithm_model.mark_desired_version()
+        return response
+
+    @cached_property
+    def algorithm(self):
+        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
+
+    def get_permission_object(self):
+        return self.algorithm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"object": self.algorithm})
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user, "algorithm": self.algorithm})
+        return kwargs
+
+    def get_success_url(self):
+        return self.algorithm.get_absolute_url()

@@ -5,6 +5,7 @@ from actstream.actions import is_following
 
 from grandchallenge.algorithms.forms import (
     AlgorithmForm,
+    AlgorithmModelActivateForm,
     AlgorithmModelForm,
     AlgorithmPublishForm,
     ImageActivateForm,
@@ -565,4 +566,43 @@ def test_algorithm_model_form():
     assert (
         "You have an existing model importing, please wait for it to complete"
         in str(form2.errors)
+    )
+
+
+@pytest.mark.django_db
+def test_model_activate_form():
+    alg = AlgorithmFactory()
+    editor = UserFactory()
+    alg.add_editor(editor)
+
+    m1 = AlgorithmModelFactory(algorithm=alg, is_desired_version=False)
+    m2 = AlgorithmModelFactory(
+        algorithm=alg,
+        is_desired_version=True,
+        import_status=ImportStatusChoices.COMPLETED,
+    )
+
+    form = AlgorithmModelActivateForm(
+        user=editor, algorithm=alg, data={"algorithm_model": m1}
+    )
+    assert m1 in form.fields["algorithm_model"].queryset
+    assert m2 not in form.fields["algorithm_model"].queryset
+    assert form.is_valid()
+
+    form = AlgorithmModelActivateForm(
+        user=editor, algorithm=alg, data={"algorithm_model": m2}
+    )
+    assert not form.is_valid()
+    assert "Select a valid choice" in str(form.errors["algorithm_model"])
+
+    m4 = AlgorithmModelFactory(
+        algorithm=alg,
+        is_desired_version=False,
+    )
+    form = AlgorithmModelActivateForm(
+        user=editor, algorithm=alg, data={"algorithm_model": m4}
+    )
+    assert not form.is_valid()
+    assert "Model updating already in progress." in str(
+        form.errors["algorithm_model"]
     )

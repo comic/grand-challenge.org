@@ -458,6 +458,13 @@ class TestObjectPermissionRequiredViews:
                 am,
                 None,
             ),
+            (
+                "model-update",
+                {"slug": am.algorithm.slug, "pk": am.pk},
+                "change_algorithmmodel",
+                am,
+                None,
+            ),
         ]:
 
             def _get_view():
@@ -1300,3 +1307,44 @@ def test_job_create_denied_for_same_input_model_and_image(client):
         "A result for these inputs with the current image and model already exists."
         in str(response.context["form"].errors)
     )
+
+
+@pytest.mark.django_db
+def test_algorithm_model_activate(settings, client):
+    alg = AlgorithmFactory()
+    m1, m2 = AlgorithmModelFactory.create_batch(
+        2, algorithm=alg, import_status=ImportStatusChoices.COMPLETED
+    )
+    m2.is_desired_version = True
+    m2.save()
+
+    editor, user = UserFactory.create_batch(2)
+    alg.add_editor(editor)
+
+    response = get_view_for_user(
+        viewname="algorithms:model-activate",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": alg.slug},
+        data={"algorithm_model": m1.pk},
+        user=user,
+        follow=True,
+    )
+    assert response.status_code == 403
+
+    response2 = get_view_for_user(
+        viewname="algorithms:model-activate",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": alg.slug},
+        data={"algorithm_model": m1.pk},
+        user=editor,
+        follow=True,
+    )
+
+    assert response2.status_code == 200
+    m1.refresh_from_db()
+    m2.refresh_from_db()
+    assert m1.is_desired_version
+    assert not m2.is_desired_version
+    assert alg.active_model == m1
