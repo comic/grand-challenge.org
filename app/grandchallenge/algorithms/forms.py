@@ -1271,6 +1271,7 @@ class AlgorithmModelActivateForm(Form):
         *args,
         user,
         algorithm,
+        hide_algorithm_model_input=False,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
@@ -1282,11 +1283,13 @@ class AlgorithmModelActivateForm(Form):
             .filter(
                 algorithm=algorithm,
                 is_desired_version=False,
+                import_status=ImportStatusChoices.COMPLETED,
             )
             .select_related("algorithm")
         )
 
-        self.fields["algorithm_model"].widget = HiddenInput()
+        if hide_algorithm_model_input:
+            self.fields["algorithm_model"].widget = HiddenInput()
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit("save", "Activate algorithm model"))
         self.helper.form_action = reverse(

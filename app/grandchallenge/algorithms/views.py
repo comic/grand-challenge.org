@@ -1107,6 +1107,7 @@ class AlgorithmModelDetail(
                     initial={"algorithm_model": self.object.pk},
                     user=self.request.user,
                     algorithm=self.object.algorithm,
+                    hide_algorithm_model_input=True,
                 ),
                 "import_status_choices": ImportStatusChoices,
             }

@@ -575,11 +575,20 @@ def test_model_activate_form():
     editor = UserFactory()
     alg.add_editor(editor)
 
-    m1 = AlgorithmModelFactory(algorithm=alg, is_desired_version=False)
+    m1 = AlgorithmModelFactory(
+        algorithm=alg,
+        is_desired_version=False,
+        import_status=ImportStatusChoices.COMPLETED,
+    )
     m2 = AlgorithmModelFactory(
         algorithm=alg,
         is_desired_version=True,
         import_status=ImportStatusChoices.COMPLETED,
+    )
+    m3 = AlgorithmModelFactory(
+        algorithm=alg,
+        is_desired_version=False,
+        import_status=ImportStatusChoices.FAILED,
     )
 
     form = AlgorithmModelActivateForm(
@@ -587,6 +596,7 @@ def test_model_activate_form():
     )
     assert m1 in form.fields["algorithm_model"].queryset
     assert m2 not in form.fields["algorithm_model"].queryset
+    assert m3 not in form.fields["algorithm_model"].queryset
     assert form.is_valid()
 
     form = AlgorithmModelActivateForm(
@@ -595,12 +605,12 @@ def test_model_activate_form():
     assert not form.is_valid()
     assert "Select a valid choice" in str(form.errors["algorithm_model"])
 
-    m4 = AlgorithmModelFactory(
+    AlgorithmModelFactory(
         algorithm=alg,
         is_desired_version=False,
     )
     form = AlgorithmModelActivateForm(
-        user=editor, algorithm=alg, data={"algorithm_model": m4}
+        user=editor, algorithm=alg, data={"algorithm_model": m1}
     )
     assert not form.is_valid()
     assert "Model updating already in progress." in str(
