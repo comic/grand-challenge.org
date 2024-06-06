@@ -8,8 +8,8 @@
 {% load url %}
 {% load meta_attr %}
 {% load json %}
-{% load civ %}
 {% load string %}
+{% load civ %}
 
 {% block title %}
     Algorithm Result - {{ block.super }}
@@ -76,7 +76,7 @@
                     {% if output.interface.slug != 'results-json-file' or not object.rendered_result_text %}
                         <dt class="mt-3">{{ output.interface.title }}</dt>
                         <dd>
-                            {% civ output %}
+                            {% include 'components/partials/civ.html' with object=output only %}
                         </dd>
                     {% endif %}
                 {% endfor %}
@@ -160,7 +160,7 @@
                     <ul class="list-unstyled mb-0">
                         {% for input in object.inputs.all|sort_civs %}
                             <li>
-                                {% civ_inline input %}
+                               {% include 'components/partials/civ_inline.html' with object=input only %}
                             </li>
                         {% empty %}
                             <li>
@@ -177,7 +177,7 @@
 
                             {% for output in object.outputs.all|sort_civs %}
                             <li>
-                                {% civ_inline output %}
+                                {% include 'components/partials/civ_inline.html' with object=output only %}
                             </li>
                             {% empty %}
                                 <li>

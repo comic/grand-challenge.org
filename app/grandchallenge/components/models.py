@@ -817,6 +817,7 @@ class OverlaySegmentsMixin(models.Model):
 
 class ComponentInterface(OverlaySegmentsMixin):
     Kind = InterfaceKind.InterfaceKindChoices
+    SuperKind = InterfaceSuperKindChoices
 
     title = models.CharField(
         max_length=255,

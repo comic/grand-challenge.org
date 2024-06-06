@@ -62,10 +62,10 @@ def _get_or_create_component_interfaces():
             "relative_path": "2d_bb_ci.json",
         },
         {
-            "title": "Broken CI",
-            "kind": InterfaceKindChoices.FLOAT,
-            "store_in_database": True,
-            "relative_path": "broken.json",
+            "title": "Broken Image CI",
+            "kind": InterfaceKindChoices.IMAGE,
+            "store_in_database": False,
+            "relative_path": "images/broken-image",
         },
     ]
 
@@ -139,9 +139,9 @@ def _create_civ_rich_algorithm_job(creator, interfaces):
         ),
         # A chart
         interfaces["chart-ci"].create_instance(value=chart_spec),
-        # Has no value/image/file
+        # Has no image
         ComponentInterfaceValue.objects.create(
-            interface=interfaces["broken-ci"],
+            interface=interfaces["broken-image-ci"],
         ),
         # 2D bb
         interfaces["2d-bb-ci"].create_instance(
@@ -178,9 +178,9 @@ def _create_civ_rich_algorithm_job(creator, interfaces):
         ),
         # A chart
         interfaces["chart-ci"].create_instance(value=chart_spec),
-        # Broken: has no value/image/file
+        # Broken: has no image
         ComponentInterfaceValue.objects.create(
-            interface=interfaces["broken-ci"],
+            interface=interfaces["broken-image-ci"],
         ),
         # Results json
         result_json.create_instance(value={"score": 0.5}),

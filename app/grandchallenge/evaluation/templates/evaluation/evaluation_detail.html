@@ -179,10 +179,11 @@
                 <br>
                 <h3>Outputs</h3>
 
-                        {% for output in object.outputs.all %}
-                            <h3 class="mt-3">{{ output.interface.title }}</h3>
-                            {% civ output %}
-                        {% endfor %}
+                {% for output in object.outputs.all|sort_civs %}
+                    <h3 class="mt-3">{{ output.interface.title }}</h3>
+                    {% include 'components/partials/civ.html' with object=output only %}
+                {% endfor %}
+
             {% endif %}
         {% endif %}
     {% endif %}
