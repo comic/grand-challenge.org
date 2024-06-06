@@ -14,10 +14,11 @@ from crispy_forms.layout import (
 )
 from dal import autocomplete
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
 from django.core.validators import RegexValidator
-from django.db.models import Count, Q
+from django.db.models import Count, Exists, OuterRef, Q
 from django.db.transaction import on_commit
 from django.forms import (
     CharField,
@@ -41,6 +42,7 @@ from django_select2.forms import Select2MultipleWidget
 from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmImage,
+    AlgorithmModel,
     AlgorithmPermissionRequest,
     Job,
 )
@@ -48,7 +50,10 @@ from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
     AlgorithmSerializer,
 )
-from grandchallenge.algorithms.tasks import import_remote_algorithm_image
+from grandchallenge.algorithms.tasks import (
+    assign_algorithm_model_from_upload,
+    import_remote_algorithm_image,
+)
 from grandchallenge.components.form_fields import InterfaceFormField
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.components.models import (
@@ -72,6 +77,8 @@ from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.hanging_protocols.models import VIEW_CONTENT_SCHEMA
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
+from grandchallenge.uploads.models import UserUpload
+from grandchallenge.uploads.widgets import UserUploadSingleWidget
 from grandchallenge.workstations.models import Workstation
 
 
@@ -85,6 +92,9 @@ class JobCreateForm(SaveFormInitMixin, Form):
     algorithm_image = ModelChoiceField(
         queryset=None, disabled=True, required=True, widget=HiddenInput
     )
+    algorithm_model = ModelChoiceField(
+        queryset=None, disabled=True, required=False, widget=HiddenInput
+    )
 
     def __init__(self, *args, algorithm, user, **kwargs):
         super().__init__(*args, **kwargs)
@@ -95,12 +105,19 @@ class JobCreateForm(SaveFormInitMixin, Form):
         self.helper = FormHelper()
 
         active_image = self._algorithm.active_image
+        active_model = self._algorithm.active_model
 
         if active_image:
             self.fields["algorithm_image"].queryset = (
                 AlgorithmImage.objects.filter(pk=active_image.pk)
             )
             self.fields["algorithm_image"].initial = active_image
+
+        if active_model:
+            self.fields["algorithm_model"].queryset = (
+                AlgorithmModel.objects.filter(pk=active_model.pk)
+            )
+            self.fields["algorithm_model"].initial = active_model
 
         for inp in self._algorithm.inputs.all():
             self.fields[inp.slug] = InterfaceFormField(
@@ -335,6 +352,12 @@ class UserAlgorithmsForPhaseMixin:
     @cached_property
     def user_algorithms_for_phase(self):
         inputs, outputs = self.get_phase_algorithm_inputs_outputs()
+        desired_image_subquery = AlgorithmImage.objects.filter(
+            algorithm=OuterRef("pk"), is_desired_version=True
+        )
+        desired_model_subquery = AlgorithmModel.objects.filter(
+            algorithm=OuterRef("pk"), is_desired_version=True
+        )
         return (
             get_objects_for_user(self._user, "algorithms.change_algorithm")
             .annotate(
@@ -346,6 +369,19 @@ class UserAlgorithmsForPhaseMixin:
                 relevant_output_count=Count(
                     "outputs", filter=Q(outputs__in=outputs), distinct=True
                 ),
+                has_active_image=Exists(desired_image_subquery),
+                active_image_pk=desired_image_subquery.values_list(
+                    "pk", flat=True
+                ),
+                active_model_pk=desired_model_subquery.values_list(
+                    "pk", flat=True
+                ),
+                active_image_comment=desired_image_subquery.values_list(
+                    "comment", flat=True
+                ),
+                active_model_comment=desired_model_subquery.values_list(
+                    "comment", flat=True
+                ),
             )
             .filter(
                 total_input_count=len(inputs),
@@ -353,16 +389,6 @@ class UserAlgorithmsForPhaseMixin:
                 relevant_input_count=len(inputs),
                 relevant_output_count=len(outputs),
             )
-        )
-
-    @cached_property
-    def user_active_images_for_phase(self):
-        return get_objects_for_user(
-            user=self._user,
-            perms="algorithms.change_algorithmimage",
-            klass=AlgorithmImage.objects.active_images()
-            .select_related("algorithm")
-            .filter(algorithm__in=self.user_algorithms_for_phase),
         )
 
     @cached_property
@@ -1161,3 +1187,71 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
                 }
             ).apply_async
         )
+
+
+class AlgorithmModelForm(SaveFormInitMixin, ModelForm):
+    algorithm = ModelChoiceField(widget=HiddenInput(), queryset=None)
+    user_upload = ModelChoiceField(
+        widget=UserUploadSingleWidget(
+            allowed_file_types=[
+                "application/x-gzip",
+                "application/gzip",
+            ]
+        ),
+        label="Algorithm Model",
+        queryset=None,
+        help_text=(
+            ".tar.gz file of the algorithm model that will be extracted"
+            " to /opt/ml/model/ during inference"
+        ),
+    )
+    creator = ModelChoiceField(
+        widget=HiddenInput(),
+        queryset=(
+            get_user_model()
+            .objects.exclude(username=settings.ANONYMOUS_USER_NAME)
+            .filter(verification__is_verified=True)
+        ),
+    )
+
+    def __init__(self, *args, user, algorithm, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["user_upload"].queryset = get_objects_for_user(
+            user,
+            "uploads.change_userupload",
+        ).filter(status=UserUpload.StatusChoices.COMPLETED)
+
+        self.fields["creator"].initial = user
+        self.fields["algorithm"].queryset = Algorithm.objects.filter(
+            pk=algorithm.pk
+        )
+        self.fields["algorithm"].initial = algorithm
+
+    def clean_creator(self):
+        creator = self.cleaned_data["creator"]
+
+        if AlgorithmModel.objects.filter(
+            import_status=ImportStatusChoices.INITIALIZED,
+            creator=creator,
+        ).exists():
+            self.add_error(
+                None,
+                "You have an existing model importing, please wait for it to complete",
+            )
+
+        return creator
+
+    def save(self, *args, **kwargs):
+        instance = super().save(*args, **kwargs)
+        on_commit(
+            assign_algorithm_model_from_upload.signature(
+                kwargs={"algorithm_model_pk": instance.pk},
+                immutable=True,
+            ).apply_async
+        )
+        return instance
+
+    class Meta:
+        model = AlgorithmModel
+        fields = ("algorithm", "user_upload", "creator", "comment")

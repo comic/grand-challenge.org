@@ -70,6 +70,7 @@ class WorkstationConfigSerializer(ModelSerializer):
     default_zoom_scale = FloatField()
 
     enabled_preprocessors = SerializerMethodField()
+    point_bounding_box_size_mm = FloatField()
 
     class Meta:
         model = WorkstationConfig
@@ -124,6 +125,7 @@ class WorkstationConfigSerializer(ModelSerializer):
             "link_windowing",
             "link_inverting",
             "link_flipping",
+            "point_bounding_box_size_mm",
         ]
 
     def get_enabled_preprocessors(self, obj) -> list[str]:

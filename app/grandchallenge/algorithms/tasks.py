@@ -1,4 +1,6 @@
 import logging
+from base64 import b64decode
+from binascii import hexlify
 from tempfile import TemporaryDirectory
 from typing import NamedTuple
 
@@ -8,7 +10,7 @@ from celery import chain, group, shared_task
 from django.conf import settings
 from django.core.cache import cache
 from django.core.files.base import File
-from django.db import transaction
+from django.db import OperationalError, transaction
 from django.db.models import Count, Q
 from django.db.transaction import on_commit
 from django.utils._os import safe_join
@@ -18,6 +20,7 @@ from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
 from grandchallenge.archives.models import Archive
 from grandchallenge.cases.tasks import build_images
+from grandchallenge.components.models import ImportStatusChoices
 from grandchallenge.components.tasks import (
     _retry,
     add_file_to_component_interface_value,
@@ -202,6 +205,7 @@ def create_algorithm_jobs_for_archive(
                 ):
                     create_algorithm_jobs(
                         algorithm_image=algorithm.active_image,
+                        algorithm_model=algorithm.active_model,
                         civ_sets=[
                             {*ai.values.all()}
                             for ai in archive_items.prefetch_related(
@@ -226,6 +230,7 @@ def create_algorithm_jobs(
     *,
     algorithm_image,
     civ_sets,
+    algorithm_model=None,
     extra_viewer_groups=None,
     extra_logs_viewer_groups=None,
     max_jobs=None,
@@ -282,6 +287,7 @@ def create_algorithm_jobs(
             job = Job.objects.create(
                 creator=None,  # System jobs, so no creator
                 algorithm_image=algorithm_image,
+                algorithm_model=algorithm_model,
                 task_on_success=task_on_success,
                 task_on_failure=task_on_failure,
                 time_limit=time_limit,
@@ -484,3 +490,77 @@ def set_credits_per_job():
             algorithm.credits_per_job = default_credits_per_job
 
         algorithm.save(update_fields=("credits_per_job",))
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@transaction.atomic
+def assign_algorithm_model_from_upload(*, algorithm_model_pk, retries=0):
+    from grandchallenge.algorithms.models import AlgorithmModel
+
+    try:
+        # try to acquire lock
+        current_model = (
+            AlgorithmModel.objects.filter(pk=algorithm_model_pk)
+            .select_for_update(nowait=True)
+            .get()
+        )
+        peer_models = current_model.get_peer_models().select_for_update(
+            nowait=True
+        )
+    except OperationalError:
+        # failed to acquire lock
+        _retry(
+            task=assign_algorithm_model_from_upload,
+            signature_kwargs={
+                "kwargs": {
+                    "algorithm_model_pk": algorithm_model_pk,
+                },
+                "immutable": True,
+            },
+            retries=retries,
+        )
+        return
+
+    current_model.user_upload.copy_object(to_field=current_model.model)
+
+    sha256 = get_object_sha256(current_model.model)
+    if (
+        AlgorithmModel.objects.filter(sha256=sha256)
+        .exclude(pk=current_model.pk)
+        .exists()
+    ):
+        current_model.import_status = ImportStatusChoices.FAILED
+        current_model.status = (
+            "Algorithm model with this sha256 already exists."
+        )
+        current_model.save()
+
+        current_model.model.delete()
+        current_model.user_upload.delete()
+
+        return
+
+    current_model.sha256 = sha256
+    current_model.size_in_storage = current_model.model.size
+    current_model.import_status = ImportStatusChoices.COMPLETED
+    current_model.save()
+
+    current_model.user_upload.delete()
+
+    # mark as desired version and pass locked peer models directly since else
+    # mark_desired_version will fail trying to access the locked models
+    current_model.mark_desired_version(peer_models=peer_models)
+
+
+def get_object_sha256(file_field):
+    response = file_field.storage.connection.meta.client.head_object(
+        Bucket=file_field.storage.bucket.name,
+        Key=file_field.name,
+        ChecksumMode="ENABLED",
+    )
+
+    # The checksums are not calculated on minio
+    if sha256 := response.get("ChecksumSHA256"):
+        return f"sha256:{hexlify(b64decode(sha256)).decode('utf-8')}"
+    else:
+        return ""

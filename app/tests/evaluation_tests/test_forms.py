@@ -2,7 +2,7 @@ import pytest
 from factory.django import ImageField
 
 from grandchallenge.algorithms.forms import AlgorithmForPhaseForm
-from grandchallenge.algorithms.models import AlgorithmImage, Job
+from grandchallenge.algorithms.models import Job
 from grandchallenge.evaluation.forms import (
     ConfigureAlgorithmPhasesForm,
     SubmissionForm,
@@ -15,6 +15,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
     AlgorithmJobFactory,
+    AlgorithmModelFactory,
 )
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import (
@@ -50,7 +51,7 @@ class TestSubmissionForm:
         assert "algorithm_image" not in form.fields
         assert "user_upload" in form.fields
 
-    def test_setting_algorithm_image(self):
+    def test_setting_algorithm(self):
         form = SubmissionForm(
             user=UserFactory(),
             phase=PhaseFactory(
@@ -59,26 +60,31 @@ class TestSubmissionForm:
         )
 
         assert "algorithm_image" in form.fields
+        assert "algorithm" in form.fields
+        assert "algorithm_model" in form.fields
         assert "user_upload" not in form.fields
 
-    def test_algorithm_image_queryset(self):
+    def test_algorithm_queryset(self):
         editor = UserFactory()
-        alg1, alg2, alg3 = AlgorithmFactory.create_batch(3)
+        alg1, alg2, alg3, alg4 = AlgorithmFactory.create_batch(4)
         alg1.add_editor(editor)
         alg2.add_editor(editor)
+        alg4.add_editor(editor)
         ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
         alg1.inputs.set([ci1, ci2])
         alg1.outputs.set([ci3, ci4])
         alg3.inputs.set([ci1, ci2])
         alg3.outputs.set([ci3, ci4])
+        alg4.inputs.set([ci1, ci2])
+        alg4.outputs.set([ci3, ci4])
         for alg in [alg1, alg2, alg3]:
-            AlgorithmImageFactory(algorithm=alg)
             AlgorithmImageFactory(
                 algorithm=alg,
                 is_in_registry=True,
                 is_desired_version=True,
                 is_manifest_valid=True,
             )
+        AlgorithmImageFactory(algorithm=alg4)
         p = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
         p.algorithm_inputs.set([ci1, ci2])
         p.algorithm_outputs.set([ci3, ci4])
@@ -87,32 +93,38 @@ class TestSubmissionForm:
             phase=p,
         )
 
-        assert alg1.active_image in form.fields["algorithm_image"].queryset
-        assert alg2.active_image not in form.fields["algorithm_image"].queryset
-        assert alg3.active_image not in form.fields["algorithm_image"].queryset
-        for im in AlgorithmImage.objects.exclude(
-            pk__in=[
-                alg1.active_image.pk,
-                alg2.active_image.pk,
-                alg3.active_image.pk,
-            ]
-        ).all():
-            assert im not in form.fields["algorithm_image"].queryset
+        assert alg1 in form.fields["algorithm"].queryset
+        assert alg2 not in form.fields["algorithm"].queryset
+        assert alg2 not in form.fields["algorithm"].queryset
+        assert alg4 not in form.fields["algorithm"].queryset
 
-    def test_algorithm_image_queryset_if_parent_phase_exists(self):
+    def test_algorithm_queryset_if_parent_phase_exists(self):
         editor = UserFactory()
-        alg = AlgorithmFactory()
-        ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
-        alg.add_editor(editor)
-        alg.inputs.set([ci1, ci2])
-        alg.outputs.set([ci3, ci4])
-        ai1, ai2, ai3, ai4 = AlgorithmImageFactory.create_batch(
-            4,
-            algorithm=alg,
-            is_in_registry=True,
-            is_desired_version=True,
-            is_manifest_valid=True,
+        alg1, alg2, alg3, alg4, alg5, alg6, alg7, alg8, alg9 = (
+            AlgorithmFactory.create_batch(9)
         )
+        ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
+        for alg in [alg1, alg2, alg3, alg4, alg5, alg6, alg7, alg8, alg9]:
+            alg.add_editor(editor)
+            alg.inputs.set([ci1, ci2])
+            alg.outputs.set([ci3, ci4])
+            AlgorithmImageFactory(
+                algorithm=alg,
+                is_in_registry=True,
+                is_desired_version=True,
+                is_manifest_valid=True,
+            )
+        for alg in [alg1, alg2, alg8, alg9]:
+            AlgorithmModelFactory(algorithm=alg, is_desired_version=True)
+        ai_inactive = AlgorithmImageFactory(
+            algorithm=alg6,
+        )
+        for alg in [alg1, alg2, alg3, alg4, alg5, alg6]:
+            AlgorithmJobFactory(
+                algorithm_image=alg.active_image,
+                algorithm_model=alg.active_model,
+                status=Job.SUCCESS,
+            )
 
         p_parent, p_child = PhaseFactory.create_batch(
             2,
@@ -125,48 +137,105 @@ class TestSubmissionForm:
         p_child.parent = p_parent
         p_child.save()
 
+        # successful eval to parent phase with active image and model
         EvaluationFactory(
             submission__phase=p_parent,
-            submission__algorithm_image=ai1,
+            submission__algorithm_image=alg1.active_image,
+            submission__algorithm_model=alg1.active_model,
             status=Evaluation.SUCCESS,
         )
+        # successful eval to parent phase with active image, but not active model
+        EvaluationFactory(
+            submission__phase=p_parent,
+            submission__algorithm_image=alg2.active_image,
+            status=Evaluation.SUCCESS,
+        )
+        # successful eval to other phase with active image
         EvaluationFactory(
             submission__phase=PhaseFactory(),
-            submission__algorithm_image=ai2,
+            submission__algorithm_image=alg3.active_image,
             status=Evaluation.SUCCESS,
         )
+        # failed eval to parent phase with active image
         EvaluationFactory(
             submission__phase=p_parent,
-            submission__algorithm_image=ai3,
+            submission__algorithm_image=alg4.active_image,
             status=Evaluation.FAILURE,
         )
+        # successful eval to parent phase with active image, but no successful job
         EvaluationFactory(
             submission__phase=p_parent,
-            submission__algorithm_image=ai4,
+            submission__algorithm_image=alg5.active_image,
             status=Evaluation.SUCCESS,
         )
-        AlgorithmJobFactory(algorithm_image=ai1, status=Job.SUCCESS)
+        # successful eval to parent phase with active image, but not active model
+        EvaluationFactory(
+            submission__phase=p_parent,
+            submission__algorithm_image=ai_inactive,
+            status=Evaluation.SUCCESS,
+        )
+        # successful eval to parent phase with active image but failed job
+        EvaluationFactory(
+            submission__phase=p_parent,
+            submission__algorithm_image=alg7.active_image,
+            submission__algorithm_model=alg7.active_model,
+            status=Evaluation.SUCCESS,
+        )
+        AlgorithmJobFactory(
+            algorithm_image=alg.active_image,
+            algorithm_model=alg.active_model,
+            status=Job.FAILURE,
+        )
+        # successful eval to parent phase with active image but successful job with different image
+        EvaluationFactory(
+            submission__phase=p_parent,
+            submission__algorithm_image=alg8.active_image,
+            submission__algorithm_model=alg8.active_model,
+            status=Evaluation.SUCCESS,
+        )
+        AlgorithmJobFactory(
+            algorithm_image=AlgorithmImageFactory(algorithm=alg8),
+            algorithm_model=alg.active_model,
+            status=Job.SUCCESS,
+        )
+        # successful eval to parent phase with active image but successful job with different model
+        EvaluationFactory(
+            submission__phase=p_parent,
+            submission__algorithm_image=alg9.active_image,
+            submission__algorithm_model=alg9.active_model,
+            status=Evaluation.SUCCESS,
+        )
+        AlgorithmJobFactory(
+            algorithm_image=alg9.active_image,
+            algorithm_model=AlgorithmModelFactory(algorithm=alg9),
+            status=Job.SUCCESS,
+        )
 
         form = SubmissionForm(
             user=editor,
             phase=p,
         )
 
-        assert ai1 in form.fields["algorithm_image"].queryset
-        assert ai2 not in form.fields["algorithm_image"].queryset
-        assert ai3 not in form.fields["algorithm_image"].queryset
-        assert ai4 not in form.fields["algorithm_image"].queryset
+        assert alg1 in form.fields["algorithm"].queryset
+        assert alg2 not in form.fields["algorithm"].queryset
+        assert alg3 not in form.fields["algorithm"].queryset
+        assert alg4 not in form.fields["algorithm"].queryset
+        assert alg5 not in form.fields["algorithm"].queryset
+        assert alg6 not in form.fields["algorithm"].queryset
+        assert alg7 not in form.fields["algorithm"].queryset
+        assert alg8 not in form.fields["algorithm"].queryset
+        assert alg9 not in form.fields["algorithm"].queryset
 
-    def test_no_algorithm_image_selection(self):
+    def test_no_algorithm_selection(self):
         form = SubmissionForm(
             user=UserFactory(),
             phase=PhaseFactory(
                 submission_kind=SubmissionKindChoices.ALGORITHM
             ),
-            data={"algorithm_image": ""},
+            data={"algorithm": ""},
         )
 
-        assert form.errors["algorithm_image"] == ["This field is required."]
+        assert form.errors["algorithm"] == ["This field is required."]
 
     def test_algorithm_no_permission(self):
         form = SubmissionForm(
@@ -174,10 +243,10 @@ class TestSubmissionForm:
             phase=PhaseFactory(
                 submission_kind=SubmissionKindChoices.ALGORITHM
             ),
-            data={"algorithm_image": AlgorithmImageFactory()},
+            data={"algorithm": AlgorithmFactory()},
         )
 
-        assert form.errors["algorithm_image"] == [
+        assert form.errors["algorithm"] == [
             "Select a valid choice. That choice is not one of the available choices."
         ]
 
@@ -222,12 +291,61 @@ class TestSubmissionForm:
         form = SubmissionForm(
             user=user,
             phase=p,
-            data={"algorithm_image": ai.pk, "creator": user, "phase": p},
+            data={"algorithm": alg, "creator": user, "phase": p},
         )
 
         assert form.errors == {}
-        assert "algorithm_image" not in form.errors
+        assert "algorithm" not in form.errors
         assert form.is_valid()
+
+    def test_algorithm_image_and_model_set(self):
+        user = UserFactory()
+        alg = AlgorithmFactory()
+        alg.add_editor(user=user)
+        ci1 = ComponentInterfaceFactory()
+        ci2 = ComponentInterfaceFactory()
+        alg.inputs.set([ci1])
+        alg.outputs.set([ci2])
+        archive = ArchiveFactory()
+        p = PhaseFactory(
+            submission_kind=SubmissionKindChoices.ALGORITHM,
+            submissions_limit_per_user_per_period=10,
+            archive=archive,
+        )
+        p.algorithm_inputs.set([ci1])
+        p.algorithm_outputs.set([ci2])
+        civ = ComponentInterfaceValueFactory(interface=ci1)
+        i = ArchiveItemFactory(archive=p.archive)
+        i.values.add(civ)
+
+        InvoiceFactory(
+            challenge=p.challenge,
+            compute_costs_euros=10,
+            payment_status=PaymentStatusChoices.COMPLIMENTARY,
+        )
+
+        # Fetch from the db to get the cost annotations
+        # Maybe this is solved with GeneratedField (Django 5)?
+        p = Phase.objects.get(pk=p.pk)
+
+        ai = AlgorithmImageFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+            algorithm=alg,
+        )
+        am = AlgorithmModelFactory(algorithm=alg, is_desired_version=True)
+        AlgorithmJobFactory(algorithm_image=ai, status=Job.SUCCESS)
+
+        form = SubmissionForm(
+            user=user,
+            phase=p,
+            data={"algorithm": alg, "creator": user, "phase": p},
+        )
+
+        assert form.is_valid()
+        assert ai == form.cleaned_data["algorithm_image"]
+        assert am == form.cleaned_data["algorithm_model"]
 
     def test_user_no_verification(self):
         user = UserFactory()
@@ -324,7 +442,7 @@ class TestSubmissionForm:
         form2 = SubmissionForm(
             user=user,
             phase=p_alg,
-            data={"algorithm_image": ai.pk, "creator": user, "phase": p_alg},
+            data={"algorithm": alg, "creator": user, "phase": p_alg},
         )
 
         assert (
@@ -340,7 +458,7 @@ class TestSubmissionForm:
         form3 = SubmissionForm(
             user=user,
             phase=p_alg,
-            data={"algorithm_image": ai.pk, "creator": user, "phase": p_alg},
+            data={"algorithm": alg, "creator": user, "phase": p_alg},
         )
         assert form3.is_valid()
 
@@ -389,13 +507,13 @@ class TestSubmissionForm:
         form = SubmissionForm(
             user=user,
             phase=p,
-            data={"algorithm_image": ai.pk, "creator": user, "phase": p},
+            data={"algorithm": alg, "creator": user, "phase": p},
         )
 
         assert not form.is_valid()
         assert (
-            "A submission for this algorithm container image for this phase already exists."
-            in form.errors["algorithm_image"]
+            "A submission for this algorithm container image and model for this phase already exists."
+            in form.errors["algorithm"]
         )
 
         Submission.objects.all().delete()
@@ -405,13 +523,13 @@ class TestSubmissionForm:
         form = SubmissionForm(
             user=user,
             phase=p,
-            data={"algorithm_image": ai.pk, "creator": user, "phase": p},
+            data={"algorithm": alg, "creator": user, "phase": p},
         )
 
         assert not form.is_valid()
         assert (
             "An evaluation for this algorithm is already in progress for another phase. Please wait for the other evaluation to complete."
-            in form.errors["algorithm_image"]
+            in form.errors["algorithm"]
         )
 
 

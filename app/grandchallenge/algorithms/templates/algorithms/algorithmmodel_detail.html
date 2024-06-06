@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% load url %}
+{% load guardian_tags %}
+{% load humanize %}
+{% load user_profile_link from profiles %}
+{% load naturaldelta %}
+
+{% block title %}
+    Algorithm Model - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'algorithms:list' %}">Algorithms</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ object.algorithm.get_absolute_url }}">{{ object.algorithm.title }}
+        </a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">{{ object }}
+        </li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Algorithm Model</h2>
+
+    {% get_obj_perms request.user for object as "algorithm_model_perms" %}
+    {% get_obj_perms request.user for object.algorithm as "algorithm_perms" %}
+
+    <span class="badge p-2 my-2 {% if object.is_desired_version %} badge-success {% else %} badge-danger {% endif %}">{% if object.is_desired_version %}<i class="fa fa-check-circle mr-1"></i> Active model for this algorithm {% else %} <i class="fa fa-times-circle mr-1"></i> Inactive {% endif %}</span>
+
+    <dl class="inline">
+        <dt>ID</dt>
+        <dd>{{ object.pk }}</dd>
+
+        <dt>Algorithm</dt>
+        <dd>
+            <a href="{{ object.algorithm.get_absolute_url }}">{{ object.algorithm.title }}</a>
+        </dd>
+
+        <dt>Creator</dt>
+        <dd>
+            {{ object.creator|user_profile_link }}
+        </dd>
+
+        <dt>Created</dt>
+        <dd>{{ object.created }}</dd>
+
+        {% if object.model %}
+            <dt>Model</dt>
+            <dd></dd>
+            <dd>{{ object.model.name }}</dd>
+
+            <dt>Model Size</dt>
+            <dd></dd>
+            <dd>{{ object.model.size|naturalsize }}</dd>
+        {% endif %}
+
+        {% if object.sha256 %}
+            <dt>SHA256</dt>
+            <dd>{{ object.sha256 }}</dd>
+        {% endif %}
+
+        <dt>Import Status</dt>
+        <dd>
+            <span class="badge badge-{{ object.import_status_context }}">
+                {% if object.import_in_progress %}
+                    <span class="spinner-border spinner-border-sm" role="status"
+                          aria-hidden="true"></span>
+                {% endif %}
+                {{ object.get_import_status_display }}
+            </span>
+        </dd>
+
+        {% if object.status %}
+            <dt>Validation Errors</dt>
+            <dd>{{ object.status }}</dd>
+        {% endif %}
+
+        <dt>Comment</dt>
+        <dd>{{ object.comment }}</dd>
+    </dl>
+
+{% endblock %}

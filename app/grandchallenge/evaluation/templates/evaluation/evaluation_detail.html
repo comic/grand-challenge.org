@@ -76,7 +76,11 @@
             <dd>
                 <a href="{{ object.submission.algorithm_image.algorithm.get_absolute_url }}">
                     {{ object.submission.algorithm_image.algorithm.title }}
-                    (Version {{ object.submission.algorithm_image.pk }})
+                    (Image Version {{ object.submission.algorithm_image.pk }}
+                    {% if object.submission.algorithm_model %}
+                        Model version {{ object.submission.algorithm_model.pk }}
+                    {% endif %}
+                    )
                 </a>
             </dd>
         {% endif %}

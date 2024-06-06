@@ -103,6 +103,9 @@
                 <dt class="col-sm-3">Algorithm Version</dt>
                 <dd class="col-sm-9">{{ object.algorithm_image.pk }}</dd>
 
+                <dt class="col-sm-3">Model Version</dt>
+                <dd class="col-sm-9">{% if object.algorithm_model %}{{ object.algorithm_model.pk }}{% else %}None{% endif %}</dd>
+
                 <dt class="col-sm-3">Creator</dt>
                 <dd class="col-sm-9">{{ object.creator|user_profile_link }}</dd>
 

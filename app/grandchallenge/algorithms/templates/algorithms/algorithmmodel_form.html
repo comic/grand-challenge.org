@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load url %}
+
+{% block title %}
+    Create An Algorithm Model - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}
+        </a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Create model
+        </li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+
+    <h2>Create An Algorithm Model</h2>
+
+    <p>
+        Upload a model that will be extracted to <code>/opt/ml/model/</code> during inference.
+    </p>
+
+    {% crispy form %}
+
+{% endblock %}
