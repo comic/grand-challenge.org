@@ -445,6 +445,7 @@ class AlgorithmImageActivate(
 
     def form_valid(self, form):
         response = super().form_valid(form=form)
+
         algorithm_image = form.cleaned_data["algorithm_image"]
 
         if algorithm_image.can_execute:
@@ -463,6 +464,9 @@ class AlgorithmImageActivate(
             ).apply_async()
 
         return response
+
+    def get_success_url(self):
+        return self.algorithm.get_absolute_url()
 
 
 class JobCreate(
