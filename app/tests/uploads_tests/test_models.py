@@ -1,11 +1,15 @@
 from urllib.parse import quote
 
 import pytest
+from botocore.stub import Stubber
 from django.conf import settings
 from requests import put
 
 from grandchallenge.uploads.models import UserUpload
-from tests.algorithms_tests.factories import AlgorithmImageFactory
+from tests.algorithms_tests.factories import (
+    AlgorithmImageFactory,
+    AlgorithmModelFactory,
+)
 from tests.factories import UserFactory
 from tests.verification_tests.factories import VerificationFactory
 
@@ -149,6 +153,58 @@ def test_upload_copy():
 
     with ai.image.open() as f:
         assert f.read() == b"123"
+
+
+@pytest.mark.django_db
+def test_upload_copy_sets_sha256():
+    upload = UserUpload.objects.create(
+        creator=UserFactory(), filename="test.tar.gz"
+    )
+    am = AlgorithmModelFactory(model=None)
+
+    with Stubber(am.model.storage.connection.meta.client) as stubber:
+        stubber.add_client_error(
+            method="head_object",
+            service_error_code="404",
+            http_status_code=404,
+            expected_params={
+                "Bucket": am.model.storage.bucket.name,
+                "Key": f"models/algorithms/algorithmmodel/{am.pk}/test.tar.gz",
+            },
+        )
+        stubber.add_response(
+            method="head_object",
+            service_response={"ContentLength": 3},
+            expected_params={
+                "Bucket": upload.bucket,
+                "Key": upload.key,
+            },
+        )
+        stubber.add_response(
+            method="copy_object",
+            service_response={},
+            expected_params={
+                "CopySource": {
+                    "Bucket": upload.bucket,
+                    "Key": upload.key,
+                },
+                "Bucket": am.model.storage.bucket.name,
+                "ContentType": "application/octet-stream",
+                "Key": f"models/algorithms/algorithmmodel/{am.pk}/test.tar.gz",
+                # We rely on ChecksumAlgorithm being set so that the checksum is calculated
+                # This is used to identify multiple versions of the same file
+                "ChecksumAlgorithm": "SHA256",
+            },
+        )
+        stubber.add_response(
+            method="head_object",
+            service_response={"ContentLength": 3},
+            expected_params={
+                "Bucket": am.model.storage.bucket.name,
+                "Key": f"models/algorithms/algorithmmodel/{am.pk}/test.tar.gz",
+            },
+        )
+        upload.copy_object(to_field=am.model)
 
 
 @pytest.mark.django_db
