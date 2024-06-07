@@ -1,4 +1,3 @@
-from distutils.util import strtobool as strtobool_i
 from functools import wraps
 
 
@@ -17,5 +16,10 @@ def disable_for_loaddata(signal_handler):
 
 
 def strtobool(val) -> bool:
-    """Return disutils.util.strtobool as a boolean."""
-    return bool(strtobool_i(val))
+    val = val.lower()
+    if val in {"y", "yes", "t", "true", "on", "1"}:
+        return True
+    elif val in {"n", "no", "f", "false", "off", "0"}:
+        return False
+    else:
+        raise ValueError(f"invalid truth value {val!r}")
