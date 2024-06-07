@@ -11,6 +11,8 @@ from grandchallenge.evaluation.views import (
     EvaluationDetail,
     EvaluationList,
     EvaluationUpdate,
+    GroundTruthCreate,
+    GroundTruthDetail,
     LeaderboardDetail,
     LeaderboardRedirect,
     MethodCreate,
@@ -68,6 +70,16 @@ urlpatterns = [
         "<slug>/algorithms/create/",
         PhaseAlgorithmCreate.as_view(),
         name="phase-algorithm-create",
+    ),
+    path(
+        "<slug>/ground-truths/<uuid:pk>/",
+        GroundTruthDetail.as_view(),
+        name="ground-truth-detail",
+    ),
+    path(
+        "<slug>/ground-truths/create/",
+        GroundTruthCreate.as_view(),
+        name="ground-truth-create",
     ),
     path(
         "<slug>/leaderboard/", LeaderboardDetail.as_view(), name="leaderboard"

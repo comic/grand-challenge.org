@@ -9,7 +9,7 @@ from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models, transaction
+from django.db import models
 from django.db.models import Count, Min, Q, Sum
 from django.db.models.signals import post_delete
 from django.db.transaction import on_commit
@@ -33,6 +33,7 @@ from grandchallenge.components.models import (
     ComponentJob,
     ComponentJobManager,
     ImportStatusChoices,
+    Tarball,
 )
 from grandchallenge.core.guardian import get_objects_for_group
 from grandchallenge.core.models import RequestBase, UUIDModel
@@ -56,8 +57,6 @@ from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
 from grandchallenge.reader_studies.models import DisplaySet
 from grandchallenge.subdomains.utils import reverse
-from grandchallenge.uploads.models import UserUpload
-from grandchallenge.uploads.validators import validate_gzip_mimetype
 from grandchallenge.workstations.models import Workstation
 
 logger = logging.getLogger(__name__)
@@ -655,25 +654,9 @@ def algorithm_models_path(instance, filename):
     )
 
 
-class AlgorithmModel(UUIDModel):
-    creator = models.ForeignKey(
-        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
-    )
+class AlgorithmModel(Tarball):
     algorithm = models.ForeignKey(
         Algorithm, on_delete=models.PROTECT, related_name="algorithm_models"
-    )
-    import_status = models.PositiveSmallIntegerField(
-        choices=ImportStatusChoices.choices,
-        default=ImportStatusChoices.INITIALIZED,
-        db_index=True,
-    )
-    status = models.TextField(editable=False)
-    user_upload = models.ForeignKey(
-        UserUpload,
-        blank=True,
-        null=True,
-        on_delete=models.SET_NULL,
-        validators=[validate_gzip_mimetype],
     )
     model = models.FileField(
         blank=True,
@@ -684,26 +667,6 @@ class AlgorithmModel(UUIDModel):
         ),
         storage=protected_s3_storage,
     )
-    sha256 = models.CharField(editable=False, max_length=71)
-    size_in_storage = models.PositiveBigIntegerField(
-        editable=False,
-        default=0,
-        help_text="The number of bytes stored in the storage backend",
-    )
-    comment = models.TextField(
-        blank=True,
-        default="",
-        help_text="Add any information (e.g. version ID) about this image here.",
-    )
-    is_desired_version = models.BooleanField(default=False, editable=False)
-
-    def save(self, *args, **kwargs):
-        adding = self._state.adding
-
-        super().save(*args, **kwargs)
-
-        if adding:
-            self.assign_permissions()
 
     def assign_permissions(self):
         # Editors can view this algorithm model
@@ -717,41 +680,16 @@ class AlgorithmModel(UUIDModel):
             self,
         )
 
-    def get_peer_models(self):
+    def get_peer_tarballs(self):
         return AlgorithmModel.objects.filter(algorithm=self.algorithm).exclude(
             pk=self.pk
         )
-
-    @transaction.atomic
-    def mark_desired_version(self, peer_models=None):
-        models = list(peer_models or self.get_peer_models())
-        for model in models:
-            model.is_desired_version = False
-        self.is_desired_version = True
-        models.append(self)
-        self.__class__.objects.bulk_update(models, ["is_desired_version"])
 
     def get_absolute_url(self):
         return reverse(
             "algorithms:model-detail",
             kwargs={"slug": self.algorithm.slug, "pk": self.pk},
         )
-
-    @property
-    def import_status_context(self):
-        if self.import_status == ImportStatusChoices.COMPLETED:
-            return "success"
-        elif self.import_status in {
-            ImportStatusChoices.FAILED,
-            ImportStatusChoices.CANCELLED,
-        }:
-            return "danger"
-        else:
-            return "info"
-
-    @property
-    def import_in_progress(self):
-        return self.import_status == ImportStatusChoices.INITIALIZED
 
 
 class AlgorithmModelUserObjectPermission(UserObjectPermissionBase):

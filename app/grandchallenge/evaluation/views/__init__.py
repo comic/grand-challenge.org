@@ -41,6 +41,7 @@ from grandchallenge.evaluation.forms import (
     CombinedLeaderboardForm,
     ConfigureAlgorithmPhasesForm,
     EvaluationForm,
+    GroundTruthForm,
     MethodForm,
     MethodUpdateForm,
     PhaseCreateForm,
@@ -50,6 +51,7 @@ from grandchallenge.evaluation.forms import (
 from grandchallenge.evaluation.models import (
     CombinedLeaderboard,
     Evaluation,
+    GroundTruth,
     Method,
     Phase,
     Submission,
@@ -1047,3 +1049,45 @@ class ConfigureAlgorithmPhasesView(PermissionRequiredMixin, FormView):
         phase.save()
         phase.algorithm_outputs.add(*outputs)
         phase.algorithm_inputs.add(*inputs)
+
+
+class GroundTruthCreate(
+    LoginRequiredMixin,
+    VerificationRequiredMixin,
+    UserFormKwargsMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    CreateView,
+):
+    model = GroundTruth
+    form_class = GroundTruthForm
+    permission_required = "evaluation.change_phase"
+    raise_exception = True
+    success_message = "Ground truth upload in progress."
+
+    @property
+    def phase(self):
+        return get_object_or_404(Phase, slug=self.kwargs["slug"])
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"phase": self.phase})
+        return kwargs
+
+    def get_permission_object(self):
+        return self.phase
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update({"phase": self.phase})
+        return context
+
+
+class GroundTruthDetail(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    DetailView,
+):
+    model = GroundTruth
+    permission_required = "evaluation.view_groundtruth"
+    raise_exception = True

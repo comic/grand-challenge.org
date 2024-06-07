@@ -29,6 +29,7 @@ from grandchallenge.components.models import (
     ComponentImage,
     ComponentInterface,
     ComponentJob,
+    Tarball,
 )
 from grandchallenge.core.models import (
     FieldChangeMixin,
@@ -1519,3 +1520,59 @@ class OptionalHangingProtocolPhase(models.Model):
     hanging_protocol = models.ForeignKey(
         "hanging_protocols.HangingProtocol", on_delete=models.CASCADE
     )
+
+
+def ground_truth_path(instance, filename):
+    return (
+        f"ground_truths/"
+        f"{instance._meta.app_label.lower()}/"
+        f"{instance._meta.model_name.lower()}/"
+        f"{instance.pk}/"
+        f"{get_valid_filename(filename)}"
+    )
+
+
+class GroundTruth(Tarball):
+    phase = models.ForeignKey(
+        Phase, on_delete=models.PROTECT, related_name="ground_truths"
+    )
+    ground_truth = models.FileField(
+        blank=True,
+        upload_to=ground_truth_path,
+        validators=[ExtensionValidator(allowed_extensions=(".tar.gz",))],
+        help_text=(
+            ".tar.gz file of the ground truth that will be extracted to /opt/ml/input/data/ground_truth/ during inference"
+        ),
+        storage=protected_s3_storage,
+    )
+
+    def assign_permissions(self):
+        # Challenge admins can view this ground truth
+        assign_perm(
+            f"view_{self._meta.model_name}",
+            self.phase.challenge.admins_group,
+            self,
+        )
+        # Challenge admins can change this ground truth
+        assign_perm(
+            f"change_{self._meta.model_name}",
+            self.phase.challenge.admins_group,
+            self,
+        )
+
+    def get_peer_tarballs(self):
+        return GroundTruth.objects.filter(phase=self.phase).exclude(pk=self.pk)
+
+    def get_absolute_url(self):
+        return reverse(
+            "evaluation:ground-truth-detail",
+            kwargs={"slug": self.phase.slug, "pk": self.pk},
+        )
+
+
+class GroundTruthUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(GroundTruth, on_delete=models.CASCADE)
+
+
+class GroundTruthGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(GroundTruth, on_delete=models.CASCADE)

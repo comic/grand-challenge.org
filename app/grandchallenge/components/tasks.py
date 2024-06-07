@@ -6,7 +6,8 @@ import subprocess
 import tarfile
 import uuid
 import zlib
-from base64 import b64encode
+from base64 import b64decode, b64encode
+from binascii import hexlify
 from lzma import LZMAError
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
@@ -1232,3 +1233,88 @@ def add_file_to_object(
                 f"failed validation:\n{error}."
             ),
         )
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@transaction.atomic
+def assign_tarball_from_upload(
+    *, app_label, model_name, tarball_pk, field_to_copy, retries=0
+):
+    from grandchallenge.components.models import ImportStatusChoices
+
+    TarballModel = apps.get_model(  # noqa: N806
+        app_label=app_label, model_name=model_name
+    )
+
+    try:
+        # try to acquire lock
+        current_tarball = (
+            TarballModel.objects.filter(pk=tarball_pk)
+            .select_for_update(nowait=True)
+            .get()
+        )
+        peer_tarballs = current_tarball.get_peer_tarballs().select_for_update(
+            nowait=True
+        )
+    except OperationalError:
+        # failed to acquire lock
+        _retry(
+            task=assign_tarball_from_upload,
+            signature_kwargs={
+                "kwargs": {
+                    "app_label": app_label,
+                    "model_name": model_name,
+                    "tarball_pk": tarball_pk,
+                    "field_to_copy": field_to_copy,
+                },
+                "immutable": True,
+            },
+            retries=retries,
+        )
+        return
+
+    current_tarball.user_upload.copy_object(
+        to_field=getattr(current_tarball, field_to_copy)
+    )
+
+    sha256 = get_object_sha256(getattr(current_tarball, field_to_copy))
+    if (
+        TarballModel.objects.filter(sha256=sha256)
+        .exclude(pk=current_tarball.pk)
+        .exists()
+    ):
+        current_tarball.import_status = ImportStatusChoices.FAILED
+        current_tarball.status = f"{TarballModel._meta.verbose_name} with this sha256 already exists."
+        current_tarball.save()
+
+        getattr(current_tarball, field_to_copy).delete()
+        current_tarball.user_upload.delete()
+
+        return
+
+    current_tarball.sha256 = sha256
+    current_tarball.size_in_storage = getattr(
+        current_tarball, field_to_copy
+    ).size
+    current_tarball.import_status = ImportStatusChoices.COMPLETED
+    current_tarball.save()
+
+    current_tarball.user_upload.delete()
+
+    # mark as desired version and pass locked peer models directly since else
+    # mark_desired_version will fail trying to access the locked models
+    current_tarball.mark_desired_version(peer_tarballs=peer_tarballs)
+
+
+def get_object_sha256(file_field):
+    response = file_field.storage.connection.meta.client.head_object(
+        Bucket=file_field.storage.bucket.name,
+        Key=file_field.name,
+        ChecksumMode="ENABLED",
+    )
+
+    # The checksums are not calculated on minio
+    if sha256 := response.get("ChecksumSHA256"):
+        return f"sha256:{hexlify(b64decode(sha256)).decode('utf-8')}"
+    else:
+        return ""
