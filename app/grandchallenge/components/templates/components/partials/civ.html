@@ -1,9 +1,10 @@
 {% load civ %}
 
+
 {% with interface=object.interface civ=object %}
 
     {% if interface.super_kind == interface.SuperKind.VALUE %}
-        {# No fallback here as a value could be null #}
+        {# No fallback here as a value could be intentionally null #}
         {% if interface.kind == interface.Kind.CHART %}
             {% include "components/partials/civ/value_chart.html" %}
         {% else %}

@@ -1,5 +1,10 @@
-<img class="m-3" height="400"
-     src="{{ civ.file.url }}"
-     alt="{{ civ.file.name }}"
-     loading="lazy"
->
+{% extends display_inline|yesno:"components/partials/civ/modal_base.html,components/partials/civ/base.html" %}
+
+
+{% block content %}
+     <img class="m-3" height="400"
+          src="{{ civ.file.url }}"
+          alt="{{ civ.file.name }}"
+          loading="lazy"
+     >
+{% endblock %}

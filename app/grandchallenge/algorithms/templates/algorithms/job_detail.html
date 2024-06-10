@@ -163,7 +163,7 @@
                     <ul class="list-unstyled mb-0">
                         {% for input in object.inputs.all|sort_civs %}
                             <li>
-                               {% include 'components/partials/civ_inline.html' with object=input only %}
+                               {% include 'components/partials/civ.html' with object=input display_inline=True only %}
                             </li>
                         {% empty %}
                             <li>
@@ -180,7 +180,7 @@
 
                             {% for output in object.outputs.all|sort_civs %}
                             <li>
-                                {% include 'components/partials/civ_inline.html' with object=output only %}
+                                {% include 'components/partials/civ.html' with object=output display_inline=True only %}
                             </li>
                             {% empty %}
                                 <li>

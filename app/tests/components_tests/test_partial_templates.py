@@ -11,11 +11,8 @@ from tests.factories import ImageFactory, ImageFileFactory
 
 
 @pytest.mark.parametrize(
-    "template",
-    [
-        "components/partials/civ.html",
-        "components/partials/civ_inline.html",
-    ],
+    "display_inline",
+    [True, False],
 )
 @pytest.mark.parametrize(
     "component_interface, component_interface_value,expected_snippet",
@@ -92,7 +89,10 @@ from tests.factories import ImageFactory, ImageFileFactory
 )
 @pytest.mark.django_db
 def test_civ(
-    template, component_interface, component_interface_value, expected_snippet
+    display_inline,
+    component_interface,
+    component_interface_value,
+    expected_snippet,
 ):
     ci = ComponentInterfaceFactory(**component_interface)
     civ = ComponentInterfaceValueFactory.build(
@@ -117,5 +117,11 @@ def test_civ(
         civ.full_clean()
     civ.save()
 
-    html = render_to_string(template, context={"object": civ})
+    html = render_to_string(
+        "components/partials/civ.html",
+        context={
+            "object": civ,
+            "display_inline": display_inline,
+        },
+    )
     assert expected_snippet in html

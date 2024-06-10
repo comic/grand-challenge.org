@@ -1,9 +1,0 @@
-{% extends "components/partials/civ_inline/value.html" %}
-
-{% load json %}
-
-{% block preview %}
-    <div class="badge badge-light">
-        {{ civ.value | json_dumps:0 | truncatechars:30 }}
-    </div>
-{% endblock %}

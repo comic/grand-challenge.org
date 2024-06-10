@@ -1,14 +1,29 @@
+{% extends display_inline|yesno:"components/partials/civ/modal_base.html,components/partials/civ/base.html" %}
+
 {% load json %}
 {% load string %}
+{% load civ %}
 
-{% with str=civ.value|json_dumps:4 line_limit=12 %}
+{% if civ|can_preview and display_inline %}
+     {% block preview %}
+     <div class="badge badge-light">
+          {{ civ.value | json_dumps:0 | truncatechars:30 }}
+     </div>
+     {% endblock %}
+{% endif %}
 
-{# No overflow detection, this is an approximation since spacing, font-size et cetera #}
-{#  all play a role #}
 
-<pre class="pl-1 {% if str|line_count >= line_limit %}rounded border{% endif %}"
+{% block content %}
+
+     {% with str=civ.value|json_dumps:4 line_limit=12 %}
+
+     {# No overflow detection, this is an approximation since spacing, font-size et cetera #}
+     {#  all play a role #}
+
+     <pre class="pl-1 {% if str|line_count >= line_limit %}rounded border{% endif %}"
      style="max-height:{{ line_limit|add:4 }}rem;"
->
-{{ str }}
-</pre>
-{% endwith %}
+     >{{ str }}</pre>
+
+     {% endwith %}
+
+{% endblock %}

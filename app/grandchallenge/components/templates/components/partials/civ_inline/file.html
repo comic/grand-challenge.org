@@ -1,8 +1,0 @@
-{% extends "components/partials/civ/file.html" %}
-
-{% load pathlib %}
-
-{% block badge_content %}
-    Download {{ civ.interface.title | truncatechars:64 }}:
-    {{ civ.file.name|name | truncatechars:30 }}
-{% endblock %}

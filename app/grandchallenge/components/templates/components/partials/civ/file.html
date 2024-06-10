@@ -8,7 +8,10 @@
     <i class="fa fa-download mr-1"
        style="width:0.8rem;"
     ></i>
-    {% block badge_content %}
+    {% if display_inline %}
+        Download {{ civ.interface.title | truncatechars:64 }}:
+        {{ civ.file.name|name | truncatechars:30 }}
+    {% else %}
         Download {{ civ.file.name|name }}
-    {% endblock %}
+    {% endif %}
 </a>

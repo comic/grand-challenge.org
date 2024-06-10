@@ -1,7 +1,0 @@
-{% extends "components/partials/civ_inline/modal_base.html" %}
-
-{% load json %}
-
-{% block content %}
-    <pre>{{ civ.value|json_dumps:4 }}</pre>
-{% endblock %}
