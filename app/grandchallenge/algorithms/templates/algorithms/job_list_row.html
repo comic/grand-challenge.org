@@ -76,7 +76,7 @@
 {% endif %}
 <split></split>
 
-{% for interface in outputs_list_display.JSON %}
+{% for interface in display_interfaces.JSON %}
     {% get_dict_values object.slug_to_output interface.slug as json %}
     {% if json %}
         <td>{{ json.value }}</td>
@@ -86,7 +86,7 @@
     {% endif %}
 {% endfor %}
 
-{% for interface in outputs_list_display.TIMG %}
+{% for interface in display_interfaces.TIMG %}
     {% get_dict_values object.slug_to_output interface.slug as image %}
     {% if image %}
         <a target="_blank" href="{% url 'algorithms:job-detail' slug=algorithm.slug pk=object.pk %}" title="Open in detail view">
@@ -101,7 +101,7 @@
     {% endif %}
 {% endfor %}
 
-{% for interface in outputs_list_display.CHART %}
+{% for interface in display_interfaces.CHART %}
     {% get_dict_values object.slug_to_output interface.slug as chart %}
     {% if chart %}
         <a class="badge badge-primary mr-1"
@@ -116,7 +116,7 @@
     {% endif %}
 {% endfor %}
 
-{% for interface in outputs_list_display.FILE %}
+{% for interface in display_interfaces.FILE %}
     {% get_dict_values object.slug_to_output interface.slug as file %}
     {% if file %}
         <a class="badge badge-primary mr-1"

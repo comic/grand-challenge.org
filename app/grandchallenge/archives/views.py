@@ -1,6 +1,7 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.db.models import Count, Q
 from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -27,6 +28,7 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.algorithms.models import Job
+from grandchallenge.algorithms.views import JobsList
 from grandchallenge.archives.filters import ArchiveFilter
 from grandchallenge.archives.forms import (
     AddCasesForm,
@@ -65,11 +67,12 @@ from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
+    filter_by_permission,
 )
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
-from grandchallenge.datatables.views import Column
+from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
 from grandchallenge.reader_studies.models import DisplaySet, ReaderStudy
@@ -560,6 +563,74 @@ class ArchiveItemViewSet(
             return ArchiveItemSerializer
 
 
+class InputValuesJobList(JobsList):
+    model = Job
+    row_template = "algorithms/job_list_row.html"
+    search_fields = [
+        "pk",
+        "creator__username",
+        "inputs__image__name",
+        "inputs__image__files__file",
+        "comment",
+    ]
+    default_sort_column = 1
+
+    columns = [
+        Column(title="Details", sort_field="pk"),
+        Column(title="Created", sort_field="created"),
+        Column(title="Creator", sort_field="creator__username"),
+        Column(title="Result", sort_field="status"),
+        Column(title="Comment", sort_field="comment"),
+        Column(title="Visibility", sort_field="public"),
+        Column(title="Viewer", sort_field="status"),
+    ]
+
+    def get_queryset(self):
+        return Job.objects
+
+        # values = self.kwargs["values"]
+
+        input_civs = self.archive_item.values.all()
+        num_civs = len(input_civs)
+
+        query_set = (
+            Job.objects.annotate(
+                num_inputs=Count("inputs"),
+            )
+            .filter(num_inputs=num_civs)
+            .annotate(
+                inputs_match_count=Count(
+                    "inputs",
+                    filter=Q(inputs__in=input_civs),
+                )
+            )
+            .filter(inputs_match_count=num_civs)
+            .filter(status=Job.SUCCESS)
+        )
+
+        return filter_by_permission(
+            queryset=query_set,
+            user=self.request.user,
+            codename="view_job",
+        )
+
+    def get_row_context(self, *, object_, **kwargs):
+        context = super().get_row_context(object_=object_, **kwargs)
+        algorithm = object_.algorithm_image.algorithm
+        context.update(
+            {
+                "algorithm": algorithm,
+                "display_interfaces": self.split_interfaces_display(
+                    interfaces=algorithm.outputs.all()
+                ),
+            }
+        )
+        return context
+
+    def get_context_data(self, *args, **kwargs):
+        return PaginatedTableListView.get_context_data(self, *args, **kwargs)
+
+
 class ArchiveItemDetailView(CIVSetDetail):
     model = ArchiveItem
     template_name = "archives/archive_item_detail.html"
@@ -568,23 +639,38 @@ class ArchiveItemDetailView(CIVSetDetail):
         f"{Archive._meta.app_label}.view_{ArchiveItem._meta.model_name}"
     )
 
-    @property
-    def base_object(self):
-        return self.object.base_object
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.job_list_view = InputValuesJobList.as_view()
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
 
-        jobs = self.object.algorithm_jobs_as_input
-
-        # Only show successful jobs
-        jobs = jobs.filter(status=Job.SUCCESS).prefetch_related(
-            "outputs__interface", "inputs__interface"
+        context.update(
+            {
+                "columns": InputValuesJobList.columns,
+                "default_sort_column": InputValuesJobList.default_sort_column,
+                "text_align": InputValuesJobList.text_align,
+                "default_sort_order": InputValuesJobList.default_sort_order,
+            }
         )
 
-        context["success_algorithm_jobs"] = jobs
-
         return context
+
+    @property
+    def base_object(self):
+        return self.object.base_object
+
+    def get(self, request, *args, **kwargs):
+        response = super().get(request, *args, **kwargs)
+
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            # Handle datatable request
+            return self.job_list_view(
+                request, *args, values=self.object.values, **kwargs
+            )
+
+        return response
 
 
 class ArchiveItemCreateView(

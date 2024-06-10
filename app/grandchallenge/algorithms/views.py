@@ -650,7 +650,8 @@ class JobsList(PaginatedTableListView):
         queryset = super().get_queryset()
 
         interface_values = {}
-        for interface in self.outputs_list_display["JSON"]:
+        interfaces = self.split_interfaces_display(self.algorithm_outputs)
+        for interface in interfaces["JSON"]:
             interface_values[interface.slug] = Subquery(
                 ComponentInterfaceValue.objects.filter(
                     interface=interface,
@@ -680,13 +681,18 @@ class JobsList(PaginatedTableListView):
             codename="view_job",
         )
 
+    @cached_property
+    def algorithm_outputs(self):
+        return self.algorithm.outputs.all()
+
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context.update(
             {
                 "algorithm": self.algorithm,
-                "columns": self.columns,
-                "outputs_list_display": self.outputs_list_display,
+                "display_interfaces": self.split_interfaces_display(
+                    interfaces=self.algorithm_outputs
+                ),
             }
         )
         return context
@@ -703,7 +709,10 @@ class JobsList(PaginatedTableListView):
             Column(title="Viewer", sort_field="status"),
         ]
 
-        for key, grouped_interfaces in self.outputs_list_display.items():
+        interfaces = self.split_interfaces_display(
+            interfaces=self.algorithm.outputs.all()
+        )
+        for key, grouped_interfaces in interfaces.items():
             for interface in grouped_interfaces:
                 if key == "JSON":
                     columns.append(
@@ -716,11 +725,11 @@ class JobsList(PaginatedTableListView):
 
         return columns
 
-    @cached_property
-    def outputs_list_display(self):
+    @staticmethod
+    def split_interfaces_display(interfaces):
         grouped_interfaces = {"JSON": [], "TIMG": [], "CHART": [], "FILE": []}
 
-        for interface in self.algorithm.outputs.all():
+        for interface in interfaces:
             if interface.kind == InterfaceKind.InterfaceKindChoices.CHART:
                 grouped_interfaces["CHART"].append(interface)
             elif interface.kind in (

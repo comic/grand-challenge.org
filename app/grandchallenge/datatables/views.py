@@ -28,17 +28,25 @@ class PaginatedTableListView(ListView):
         )
         return context
 
-    def render_row(self, *, object_, page_context):
-        return render_to_string(
-            self.row_template, context={**page_context, "object": object_}
-        ).split("<split></split>")
+    def render_row(self, *, row_context):
+        return render_to_string(self.row_template, context=row_context).split(
+            "<split></split>"
+        )
+
+    def get_row_context(self, *, object_, page_context):
+        return dict(**page_context, object=object_)
 
     def render_rows(self, *, object_list):
         page_context = self.get_context_data(object_list=object_list)
-        return [
-            self.render_row(object_=o, page_context=page_context)
-            for o in object_list
-        ]
+        rows = []
+        for o in object_list:
+            row_context = self.get_row_context(
+                object_=o, page_context=page_context
+            )
+            rows.append(
+                self.render_row(row_context=row_context),
+            )
+        return rows
 
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
