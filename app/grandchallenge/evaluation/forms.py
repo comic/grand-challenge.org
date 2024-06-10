@@ -700,7 +700,7 @@ class GroundTruthForm(SaveFormInitMixin, ModelForm):
 
         self.fields["creator"].initial = user
         self.fields["phase"].queryset = Phase.objects.filter(pk=phase.pk)
-        self.fields["algorithm"].initial = phase
+        self.fields["phase"].initial = phase
 
     def clean_creator(self):
         creator = self.cleaned_data["creator"]
@@ -724,7 +724,7 @@ class GroundTruthForm(SaveFormInitMixin, ModelForm):
                     "app_label": instance._meta.app_label,
                     "model_name": instance._meta.model_name,
                     "tarball_pk": instance.pk,
-                    "field_to_copy": "model",
+                    "field_to_copy": "ground_truth",
                 },
                 immutable=True,
             ).apply_async
@@ -734,3 +734,9 @@ class GroundTruthForm(SaveFormInitMixin, ModelForm):
     class Meta:
         model = GroundTruth
         fields = ("phase", "user_upload", "creator", "comment")
+
+
+class GroundTruthUpdateForm(SaveFormInitMixin, ModelForm):
+    class Meta:
+        model = GroundTruth
+        fields = ("comment",)

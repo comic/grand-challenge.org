@@ -1229,7 +1229,11 @@ class GroundTruth(Tarball):
     def get_absolute_url(self):
         return reverse(
             "evaluation:ground-truth-detail",
-            kwargs={"slug": self.phase.slug, "pk": self.pk},
+            kwargs={
+                "slug": self.phase.slug,
+                "pk": self.pk,
+                "challenge_short_name": self.phase.challenge.short_name,
+            },
         )
 
 
@@ -1263,7 +1267,7 @@ class Evaluation(UUIDModel, ComponentJob):
     rank_per_metric = models.JSONField(default=dict)
 
     class Meta(UUIDModel.Meta, ComponentJob.Meta):
-        unique_together = ("submission", "method")
+        unique_together = ("submission", "method", "ground_truth")
 
     def save(self, *args, **kwargs):
         adding = self._state.adding

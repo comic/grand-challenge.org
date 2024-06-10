@@ -1,0 +1,105 @@
+{% extends "pages/challenge_settings_base.html" %}
+{% load static %}
+{% load url %}
+{% load guardian_tags %}
+{% load user_profile_link from profiles %}
+{% load naturaldelta %}
+
+{% block title %}
+    Ground Truth - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'evaluation:ground-truth-list' challenge_short_name=challenge.short_name slug=object.phase.slug %}">
+                Ground truths</a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">{{ object.pk }}</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Ground Truth</h2>
+
+    {% get_obj_perms request.user for object as "ground_truth_perms" %}
+
+    {% if "change_groundtruth" in ground_truth_perms %}
+        <a class="btn btn-primary"
+           href="{% url 'evaluation:ground-truth-update' challenge_short_name=challenge.short_name slug=object.phase.slug pk=object.pk %}">
+            <i class="fa fa-edit"></i> Edit this Ground Truth
+        </a><br>
+    {% endif %}
+
+    <span class="badge p-2 my-2 {% if object.is_desired_version %} badge-success {% else %} badge-danger {% endif %}">{% if object.is_desired_version %}<i class="fa fa-check-circle mr-1"></i> Active ground truth for this phase {% else %} <i class="fa fa-times-circle mr-1"></i> Inactive {% endif %}</span>
+
+    <dl class="inline">
+        <dt>ID</dt>
+        <dd>{{ object.pk }}</dd>
+
+        <dt>Challenge</dt>
+        <dd><a href="{{ object.phase.challenge.get_absolute_url }}">{{ object.phase.challenge.short_name }}</a></dd>
+
+        <dt>Phase</dt>
+        <dd>{{ object.phase.title }}</dd>
+
+        <dt>Creator</dt>
+        <dd>
+            {{ object.creator|user_profile_link }}
+        </dd>
+
+        <dt>Created</dt>
+        <dd>{{ object.created }}</dd>
+
+        {% if object.ground_truth %}
+            <dt>Ground truth</dt>
+            <dd></dd>
+            <dd>{{ object.ground_truth.name }}</dd>
+
+            <dt>Ground truth size</dt>
+            <dd></dd>
+            <dd>{{ object.ground_truth.size|naturalsize }}</dd>
+        {% endif %}
+
+        {% if object.sha256 %}
+            <dt>SHA256</dt>
+            <dd>{{ object.sha256 }}</dd>
+        {% endif %}
+
+        <dt>Import Status</dt>
+        <dd>
+            <span class="badge badge-{{ object.import_status_context }}">
+                {% if object.import_in_progress %}
+                    <span class="spinner-border spinner-border-sm" role="status"
+                          aria-hidden="true"></span>
+                {% endif %}
+                {{ object.get_import_status_display }}
+            </span>
+        </dd>
+
+        {% if object.status %}
+            <dt>Validation Errors</dt>
+            <dd>{{ object.status }}</dd>
+        {% endif %}
+
+        <dt>Comment</dt>
+        <dd>{{ object.comment }}</dd>
+    </dl>
+
+    <h2>Evaluations using this ground truth</h2>
+    {% include 'evaluation/partials/evaluations_for_object_table.html' %}
+
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+
+    <script type="module" src="{% static "js/sort_tables.js" %}"></script>
+
+{% endblock %}

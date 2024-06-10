@@ -42,6 +42,7 @@ from grandchallenge.evaluation.forms import (
     ConfigureAlgorithmPhasesForm,
     EvaluationForm,
     GroundTruthForm,
+    GroundTruthUpdateForm,
     MethodForm,
     MethodUpdateForm,
     PhaseCreateForm,
@@ -1091,3 +1092,33 @@ class GroundTruthDetail(
     model = GroundTruth
     permission_required = "evaluation.view_groundtruth"
     raise_exception = True
+
+
+class GroundTruthList(
+    LoginRequiredMixin, PermissionListMixin, CachedPhaseMixin, ListView
+):
+    model = GroundTruth
+    permission_required = "evaluation.view_groundtruth"
+    login_url = reverse_lazy("account_login")
+    ordering = ("-is_desired_version", "-created")
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.filter(phase=self.phase)
+
+
+class GroundTruthUpdate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    UpdateView,
+):
+    model = GroundTruth
+    form_class = GroundTruthUpdateForm
+    permission_required = "change_groundtruth"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context.update({"phase": self.object.phase})
+        return context
