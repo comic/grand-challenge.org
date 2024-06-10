@@ -5,8 +5,8 @@ from actstream.actions import is_following
 
 from grandchallenge.algorithms.forms import (
     AlgorithmForm,
-    AlgorithmModelActivateForm,
     AlgorithmModelForm,
+    AlgorithmModelVersionControlForm,
     AlgorithmPublishForm,
     ImageActivateForm,
     JobCreateForm,
@@ -590,27 +590,34 @@ def test_model_activate_form():
         is_desired_version=False,
         import_status=ImportStatusChoices.FAILED,
     )
+    m4 = AlgorithmModelFactory(
+        algorithm=alg,
+        is_desired_version=True,
+        import_status=ImportStatusChoices.FAILED,
+    )
 
-    form = AlgorithmModelActivateForm(
-        user=editor, algorithm=alg, data={"algorithm_model": m1}
+    form = AlgorithmModelVersionControlForm(
+        user=editor, algorithm=alg, activate=True
     )
     assert m1 in form.fields["algorithm_model"].queryset
     assert m2 not in form.fields["algorithm_model"].queryset
     assert m3 not in form.fields["algorithm_model"].queryset
-    assert form.is_valid()
+    assert m4 not in form.fields["algorithm_model"].queryset
 
-    form = AlgorithmModelActivateForm(
-        user=editor, algorithm=alg, data={"algorithm_model": m2}
+    form = AlgorithmModelVersionControlForm(
+        user=editor, algorithm=alg, activate=False
     )
-    assert not form.is_valid()
-    assert "Select a valid choice" in str(form.errors["algorithm_model"])
+    assert m1 not in form.fields["algorithm_model"].queryset
+    assert m2 in form.fields["algorithm_model"].queryset
+    assert m3 not in form.fields["algorithm_model"].queryset
+    assert m4 in form.fields["algorithm_model"].queryset
 
     AlgorithmModelFactory(
         algorithm=alg,
         is_desired_version=False,
     )
-    form = AlgorithmModelActivateForm(
-        user=editor, algorithm=alg, data={"algorithm_model": m1}
+    form = AlgorithmModelVersionControlForm(
+        user=editor, algorithm=alg, activate=True, data={"algorithm_model": m1}
     )
     assert not form.is_valid()
     assert "Model updating already in progress." in str(

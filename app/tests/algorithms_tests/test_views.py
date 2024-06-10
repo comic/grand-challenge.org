@@ -1310,7 +1310,7 @@ def test_job_create_denied_for_same_input_model_and_image(client):
 
 
 @pytest.mark.django_db
-def test_algorithm_model_activate(settings, client):
+def test_algorithm_model_version_management(settings, client):
     alg = AlgorithmFactory()
     m1, m2 = AlgorithmModelFactory.create_batch(
         2, algorithm=alg, import_status=ImportStatusChoices.COMPLETED
@@ -1348,3 +1348,21 @@ def test_algorithm_model_activate(settings, client):
     assert m1.is_desired_version
     assert not m2.is_desired_version
     assert alg.active_model == m1
+
+    response2 = get_view_for_user(
+        viewname="algorithms:model-deactivate",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": alg.slug},
+        data={"algorithm_model": m1.pk},
+        user=editor,
+        follow=True,
+    )
+
+    assert response2.status_code == 200
+    m1.refresh_from_db()
+    m2.refresh_from_db()
+    assert not m1.is_desired_version
+    assert not m2.is_desired_version
+    del alg.active_model
+    assert not alg.active_model

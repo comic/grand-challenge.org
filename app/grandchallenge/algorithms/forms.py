@@ -1263,7 +1263,7 @@ class AlgorithmModelUpdateForm(SaveFormInitMixin, ModelForm):
         fields = ("comment",)
 
 
-class AlgorithmModelActivateForm(Form):
+class AlgorithmModelVersionControlForm(Form):
     algorithm_model = ModelChoiceField(queryset=AlgorithmModel.objects.none())
 
     def __init__(
@@ -1271,10 +1271,17 @@ class AlgorithmModelActivateForm(Form):
         *args,
         user,
         algorithm,
+        activate,
         hide_algorithm_model_input=False,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
+        self._activate = activate
+        extra_filter = {}
+
+        if activate:
+            extra_filter = {"import_status": ImportStatusChoices.COMPLETED}
+
         self.fields["algorithm_model"].queryset = (
             get_objects_for_user(
                 user,
@@ -1282,8 +1289,8 @@ class AlgorithmModelActivateForm(Form):
             )
             .filter(
                 algorithm=algorithm,
-                is_desired_version=False,
-                import_status=ImportStatusChoices.COMPLETED,
+                is_desired_version=False if activate else True,
+                **extra_filter,
             )
             .select_related("algorithm")
         )
@@ -1291,10 +1298,20 @@ class AlgorithmModelActivateForm(Form):
         if hide_algorithm_model_input:
             self.fields["algorithm_model"].widget = HiddenInput()
         self.helper = FormHelper(self)
-        self.helper.layout.append(Submit("save", "Activate algorithm model"))
-        self.helper.form_action = reverse(
-            "algorithms:model-activate", kwargs={"slug": algorithm.slug}
-        )
+        if activate:
+            self.helper.layout.append(
+                Submit("save", "Activate algorithm model")
+            )
+            self.helper.form_action = reverse(
+                "algorithms:model-activate", kwargs={"slug": algorithm.slug}
+            )
+        else:
+            self.helper.layout.append(
+                Submit("save", "Deactivate algorithm model")
+            )
+            self.helper.form_action = reverse(
+                "algorithms:model-deactivate", kwargs={"slug": algorithm.slug}
+            )
 
     def clean_algorithm_model(self):
         algorithm_model = self.cleaned_data["algorithm_model"]

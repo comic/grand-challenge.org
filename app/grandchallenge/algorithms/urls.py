@@ -10,10 +10,10 @@ from grandchallenge.algorithms.views import (
     AlgorithmImageUpdate,
     AlgorithmImportView,
     AlgorithmList,
-    AlgorithmModelActivate,
     AlgorithmModelCreate,
     AlgorithmModelDetail,
     AlgorithmModelUpdate,
+    AlgorithmModelVersionControl,
     AlgorithmPermissionRequestCreate,
     AlgorithmPermissionRequestList,
     AlgorithmPermissionRequestUpdate,
@@ -82,8 +82,13 @@ urlpatterns = [
     ),
     path(
         "<slug>/models/activate/",
-        AlgorithmModelActivate.as_view(),
+        AlgorithmModelVersionControl.as_view(activate=True),
         name="model-activate",
+    ),
+    path(
+        "<slug>/models/deactivate/",
+        AlgorithmModelVersionControl.as_view(activate=False),
+        name="model-deactivate",
     ),
     path(
         "<slug>/models/<uuid:pk>/update/",
