@@ -740,3 +740,72 @@ class GroundTruthUpdateForm(SaveFormInitMixin, ModelForm):
     class Meta:
         model = GroundTruth
         fields = ("comment",)
+
+
+class GroundTruthVersionManagementForm(Form):
+    ground_truth = ModelChoiceField(queryset=GroundTruth.objects.none())
+
+    def __init__(
+        self,
+        *args,
+        user,
+        phase,
+        activate,
+        hide_ground_truth_input=False,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self._activate = activate
+        self.fields["ground_truth"].queryset = (
+            get_objects_for_user(
+                user,
+                "evaluation.change_groundtruth",
+            )
+            .filter(
+                phase=phase,
+                is_desired_version=False if activate else True,
+            )
+            .select_related("phase")
+        )
+
+        if hide_ground_truth_input:
+            self.fields["ground_truth"].widget = HiddenInput()
+
+        self.helper = FormHelper(self)
+        if activate:
+            self.helper.layout.append(Submit("save", "Activate ground truth"))
+            self.helper.form_action = reverse(
+                "evaluation:ground-truth-activate",
+                kwargs={
+                    "slug": phase.slug,
+                    "challenge_short_name": phase.challenge.short_name,
+                },
+            )
+        else:
+            self.helper.layout.append(
+                Submit("save", "Deactivate ground truth")
+            )
+            self.helper.form_action = reverse(
+                "evaluation:ground-truth-deactivate",
+                kwargs={
+                    "slug": phase.slug,
+                    "challenge_short_name": phase.challenge.short_name,
+                },
+            )
+
+    def clean_ground_truth(self):
+        ground_truth = self.cleaned_data["ground_truth"]
+
+        if (
+            self._activate
+            and ground_truth.import_status != ImportStatusChoices.COMPLETED
+        ):
+            raise ValidationError(
+                "You cannot activate this image since it has not been "
+                "successfully uploaded."
+            )
+
+        if ground_truth.phase.ground_truth_upload_in_progress:
+            raise ValidationError("Ground_truth updating already in progress.")
+
+        return ground_truth

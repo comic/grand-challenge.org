@@ -1,0 +1,31 @@
+{% extends "pages/challenge_settings_base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    Ground Truth - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}"
+        >Challenges</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'evaluation:ground-truth-list' challenge_short_name=challenge.short_name slug=phase.slug %}">
+                Ground truths</a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Ground Truth Version Management</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Ground truth version management</h2>
+
+    <div class="mb-2">Activating a ground truth will result in this ground truth being used for all subsequent evaluation runs.</div>
+
+    {% crispy form %}
+{% endblock %}

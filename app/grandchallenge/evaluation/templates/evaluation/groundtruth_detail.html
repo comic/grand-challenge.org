@@ -4,6 +4,7 @@
 {% load guardian_tags %}
 {% load user_profile_link from profiles %}
 {% load naturaldelta %}
+{% load crispy_forms_tags %}
 
 {% block title %}
     Ground Truth - {{ block.super }}
@@ -31,10 +32,17 @@
     {% get_obj_perms request.user for object as "ground_truth_perms" %}
 
     {% if "change_groundtruth" in ground_truth_perms %}
-        <a class="btn btn-primary"
-           href="{% url 'evaluation:ground-truth-update' challenge_short_name=challenge.short_name slug=object.phase.slug pk=object.pk %}">
-            <i class="fa fa-edit"></i> Edit this Ground Truth
-        </a><br>
+        <div>
+            <a class="btn btn-primary"
+               href="{% url 'evaluation:ground-truth-update' challenge_short_name=challenge.short_name slug=object.phase.slug pk=object.pk %}">
+                <i class="fa fa-edit"></i> Edit this Ground Truth
+            </a>
+            {% if not object.is_desired_version and object.import_status == import_choices.COMPLETED %}
+                {% crispy gt_activate_form %}
+            {% elif object.is_desired_version %}
+                {% crispy gt_deactivate_form %}
+            {% endif %}
+        </div>
     {% endif %}
 
     <span class="badge p-2 my-2 {% if object.is_desired_version %} badge-success {% else %} badge-danger {% endif %}">{% if object.is_desired_version %}<i class="fa fa-check-circle mr-1"></i> Active ground truth for this phase {% else %} <i class="fa fa-times-circle mr-1"></i> Inactive {% endif %}</span>

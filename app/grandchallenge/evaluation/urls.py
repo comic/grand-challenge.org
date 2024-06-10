@@ -15,6 +15,7 @@ from grandchallenge.evaluation.views import (
     GroundTruthDetail,
     GroundTruthList,
     GroundTruthUpdate,
+    GroundTruthVersionManagement,
     LeaderboardDetail,
     LeaderboardRedirect,
     MethodCreate,
@@ -79,6 +80,21 @@ urlpatterns = [
         name="ground-truth-list",
     ),
     path(
+        "<slug>/ground-truths/activate",
+        GroundTruthVersionManagement.as_view(activate=True),
+        name="ground-truth-activate",
+    ),
+    path(
+        "<slug>/ground-truths/create/",
+        GroundTruthCreate.as_view(),
+        name="ground-truth-create",
+    ),
+    path(
+        "<slug>/ground-truths/deactivate",
+        GroundTruthVersionManagement.as_view(activate=False),
+        name="ground-truth-deactivate",
+    ),
+    path(
         "<slug>/ground-truths/<uuid:pk>/",
         GroundTruthDetail.as_view(),
         name="ground-truth-detail",
@@ -87,11 +103,6 @@ urlpatterns = [
         "<slug>/ground-truths/<uuid:pk>/update",
         GroundTruthUpdate.as_view(),
         name="ground-truth-update",
-    ),
-    path(
-        "<slug>/ground-truths/create/",
-        GroundTruthCreate.as_view(),
-        name="ground-truth-create",
     ),
     path(
         "<slug>/leaderboard/", LeaderboardDetail.as_view(), name="leaderboard"

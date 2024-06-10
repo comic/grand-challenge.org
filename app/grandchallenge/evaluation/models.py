@@ -29,6 +29,7 @@ from grandchallenge.components.models import (
     ComponentImage,
     ComponentInterface,
     ComponentJob,
+    ImportStatusChoices,
     Tarball,
 )
 from grandchallenge.core.models import (
@@ -890,6 +891,12 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             return self.ground_truths.filter(is_desired_version=True).get()
         except ObjectDoesNotExist:
             return None
+
+    @property
+    def ground_truth_upload_in_progress(self):
+        return self.ground_truths.filter(
+            import_status__in=(ImportStatusChoices.QUEUED,)
+        ).exists()
 
     @cached_property
     def valid_archive_items(self):
