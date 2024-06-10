@@ -13,7 +13,7 @@
     {% elif interface.super_kind == interface.SuperKind.FILE %}
         {% if not civ.file %}
             {% include "components/partials/civ/fallback.html" %}
-        {% elif civ|is_thumbnail_kind %}
+        {% elif civ.interface.is_thumbnail_kind %}
             {% include "components/partials/civ/file_thumbnail.html" %}
         {% else %}
             {% include "components/partials/civ/file.html" %}

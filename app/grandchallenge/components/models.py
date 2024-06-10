@@ -900,6 +900,22 @@ class ComponentInterface(OverlaySegmentsMixin):
         return self.kind in InterfaceKind.interface_type_file()
 
     @property
+    def is_thumbnail_kind(self):
+        return self.kind in [
+            InterfaceKindChoices.THUMBNAIL_JPG,
+            InterfaceKindChoices.THUMBNAIL_PNG,
+        ]
+
+    @property
+    def is_previewable(self):
+        return self.store_in_database and self.kind in [
+            InterfaceKindChoices.BOOL,
+            InterfaceKindChoices.FLOAT,
+            InterfaceKindChoices.INTEGER,
+            InterfaceKindChoices.STRING,
+        ]
+
+    @property
     def super_kind(self):
         if self.saved_in_object_store:
             if self.is_image_kind:

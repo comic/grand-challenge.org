@@ -26,10 +26,7 @@ def sort_civs(civs: Iterable[ComponentInterfaceValue]):
             else:
                 values.append(v)
         elif v.file:
-            if v.interface.kind in (
-                InterfaceKindChoices.THUMBNAIL_PNG,
-                InterfaceKindChoices.THUMBNAIL_JPG,
-            ):
+            if v.interface.is_thumbnail_kind:
                 thumbnails.append(v)
             else:
                 files.append(v)
@@ -39,21 +36,3 @@ def sort_civs(civs: Iterable[ComponentInterfaceValue]):
             residual.append(v)
 
     return [*values, *thumbnails, *charts, *files, *images, *residual]
-
-
-@register.filter
-def can_preview(component_interface_value):
-    return component_interface_value.interface.kind in [
-        InterfaceKindChoices.BOOL,
-        InterfaceKindChoices.FLOAT,
-        InterfaceKindChoices.INTEGER,
-        InterfaceKindChoices.STRING,
-    ]
-
-
-@register.filter
-def is_thumbnail_kind(component_interface_value):
-    return component_interface_value.interface.kind in [
-        InterfaceKindChoices.THUMBNAIL_JPG,
-        InterfaceKindChoices.THUMBNAIL_PNG,
-    ]
