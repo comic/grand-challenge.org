@@ -10,7 +10,7 @@
         <i class="fa fa-download mr-1" style="width: 0.8rem"></i>
         {% if display_inline %}
             Download {{ civ.interface.title|truncatechars:64 }}:
-            {{ civ.file.name|name|truncatechars:30 }}
+            {{ civ.image.name|name|truncatechars:30 }}
         {% else %}
             Download {{ civ.interface.title|truncatechars:64 }}:
             {{ civ.image.name|stem|truncatechars:30 }}
