@@ -12,6 +12,7 @@
    href="{% url 'algorithms:job-detail' slug=algorithm.slug pk=object.pk %}"
    title="View result details">
     <i class="fa fa-info-circle"></i>
+    Detail
 </a>
 <split></split>
 
@@ -21,34 +22,13 @@
 {{ object.creator|user_profile_link }}
 <split></split>
 
-<a href="#resultInfoModal"
-   class="badge badge-{{ object.status_context }}"
-   data-toggle="modal"
-   data-target="#resultInfoModal"
-   data-title="Result Info"
-   data-output="
-   {% if object.status == object.SUCCESS %}
-        {% for output in object.outputs.all %}{% if output.value %}{{ output.value }}{% endif %}{% empty %}No output produced.{% endfor %}
-   {% else %}
-        {% firstof object.error_message object.get_status_display %}
-   {% endif %}"
-   data-pk="{{ object.pk }}"
-   title="Result Info">
+<span class="badge badge-{{ object.status_context }}">
     {% if object.animate %}
         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
     {% endif %}
-    <i class="fa fa-file"></i>
-    {% for input in object.inputs.all %}
-        {{ input.image.name|truncatechars:15 }}
-    {% endfor %}
-    ({{ object.get_status_display }}{% if object.status == object.SUCCESS and object.stderr %}, with warnings{% endif %})
-</a>
-{% if object.rendered_result_text %}
-    {{ object.rendered_result_text|json_script:object.pk }}
-{% endif %}
-<split></split>
-
-{{ object.comment }}
+    {{ object.get_status_display }}{% if object.status == object.SUCCESS and object.stderr %},
+        with warnings{% endif %}
+</span>
 <split></split>
 
 {% if object.public %}
@@ -66,6 +46,12 @@
 {% endif %}
 <split></split>
 
+{{ object.comment }}
+<split></split>
+
+PLACEHOLDER: results
+<split></split>
+
 {% if object.status == object.SUCCESS %}
     <button class="btn badge badge-primary"
             title="View algorithm result"
@@ -75,57 +61,3 @@
     </button>
 {% endif %}
 <split></split>
-
-{% for interface in display_interfaces.JSON %}
-    {% get_dict_values object.slug_to_output interface.slug as json %}
-    {% if json %}
-        <td>{{ json.value }}</td>
-        <split></split>
-    {% else %}
-        <split></split>
-    {% endif %}
-{% endfor %}
-
-{% for interface in display_interfaces.TIMG %}
-    {% get_dict_values object.slug_to_output interface.slug as image %}
-    {% if image %}
-        <a target="_blank" href="{% url 'algorithms:job-detail' slug=algorithm.slug pk=object.pk %}" title="Open in detail view">
-            <img class="m-1 thumbnail"
-                 src="{{ image.file.url }}"
-                 alt="{{ image.file.name }}"
-                 loading="lazy">
-        </a>
-        <split></split>
-    {% else %}
-        <split></split>
-    {% endif %}
-{% endfor %}
-
-{% for interface in display_interfaces.CHART %}
-    {% get_dict_values object.slug_to_output interface.slug as chart %}
-    {% if chart %}
-        <a class="badge badge-primary mr-1"
-           title="Inspect {{ chart.interface.title }}"
-           target="_blank"
-           href="{% url 'algorithms:job-detail' slug=algorithm.slug pk=object.pk %}">
-            <i class="fas fa-chart-bar"></i>
-        </a>
-        <split></split>
-    {% else %}
-        <split></split>
-    {% endif %}
-{% endfor %}
-
-{% for interface in display_interfaces.FILE %}
-    {% get_dict_values object.slug_to_output interface.slug as file %}
-    {% if file %}
-        <a class="badge badge-primary mr-1"
-           title="Download {{ file.interface.title }} ({{ file.interface.kind }})"
-           href="{{ file.file.url }}">
-            <i class="fa fa-download"></i>
-        </a>
-        <split></split>
-    {% else %}
-        <split></split>
-    {% endif %}
-{% endfor %}

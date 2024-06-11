@@ -9,6 +9,7 @@ from grandchallenge.archives.views import (
     ArchiveItemDelete,
     ArchiveItemDetailView,
     ArchiveItemInterfaceCreate,
+    ArchiveItemJobListView,
     ArchiveItemsList,
     ArchiveItemsToReaderStudyUpdate,
     ArchiveItemUpdate,
@@ -64,6 +65,11 @@ urlpatterns = [
         "<slug>/items/<uuid:pk>/",
         ArchiveItemDetailView.as_view(),
         name="item-detail",
+    ),
+    path(
+        "<slug>/items/<uuid:pk>/jobs",
+        ArchiveItemJobListView.as_view(),
+        name="item-job-list",
     ),
     path(
         "<slug>/items/create/",

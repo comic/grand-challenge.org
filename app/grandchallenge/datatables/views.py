@@ -16,8 +16,8 @@ class PaginatedTableListView(ListView):
     text_align = "center"
     default_sort_order = "desc"
 
-    def get_context_data(self, *, object_list=None, **kwargs):
-        context = super().get_context_data(object_list=object_list, **kwargs)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
         context.update(
             {
                 "columns": self.columns,
@@ -28,16 +28,18 @@ class PaginatedTableListView(ListView):
         )
         return context
 
+    def get_row_context(self, *, object_, page_context):
+        context = dict(**page_context)
+        context["object"] = object_
+        return context
+
     def render_row(self, *, row_context):
         return render_to_string(self.row_template, context=row_context).split(
             "<split></split>"
         )
 
-    def get_row_context(self, *, object_, page_context):
-        return dict(**page_context, object=object_)
-
     def render_rows(self, *, object_list):
-        page_context = self.get_context_data(object_list=object_list)
+        page_context = self.get_context_data()
         rows = []
         for o in object_list:
             row_context = self.get_row_context(

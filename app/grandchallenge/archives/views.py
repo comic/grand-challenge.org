@@ -563,9 +563,11 @@ class ArchiveItemViewSet(
             return ArchiveItemSerializer
 
 
-class InputValuesJobList(JobsList):
+class ArchiveItemJobListView(JobsList):
     model = Job
+    template_name = "archives/archive_item_job_list.html"
     row_template = "algorithms/job_list_row.html"
+
     search_fields = [
         "pk",
         "creator__username",
@@ -573,22 +575,13 @@ class InputValuesJobList(JobsList):
         "inputs__image__files__file",
         "comment",
     ]
-    default_sort_column = 1
 
-    columns = [
-        Column(title="Details", sort_field="pk"),
-        Column(title="Created", sort_field="created"),
-        Column(title="Creator", sort_field="creator__username"),
-        Column(title="Result", sort_field="status"),
-        Column(title="Comment", sort_field="comment"),
-        Column(title="Visibility", sort_field="public"),
-        Column(title="Viewer", sort_field="status"),
-    ]
+    @cached_property
+    def archive_item(self):
+        return get_object_or_404(ArchiveItem, pk=self.kwargs["pk"])
 
     def get_queryset(self):
-        return Job.objects
-
-        # values = self.kwargs["values"]
+        return Job.objects.prefetch_related("outputs__interface")
 
         input_civs = self.archive_item.values.all()
         num_civs = len(input_civs)
@@ -616,19 +609,24 @@ class InputValuesJobList(JobsList):
 
     def get_row_context(self, *, object_, **kwargs):
         context = super().get_row_context(object_=object_, **kwargs)
-        algorithm = object_.algorithm_image.algorithm
         context.update(
             {
-                "algorithm": algorithm,
-                "display_interfaces": self.split_interfaces_display(
-                    interfaces=algorithm.outputs.all()
-                ),
+                "algorithm": object_.algorithm_image.algorithm,
             }
         )
         return context
 
     def get_context_data(self, *args, **kwargs):
-        return PaginatedTableListView.get_context_data(self, *args, **kwargs)
+        context = PaginatedTableListView.get_context_data(
+            self, *args, **kwargs
+        )
+        context.update(
+            {
+                "object": self.archive_item,
+                "base_object": self.archive_item.archive,
+            }
+        )
+        return context
 
 
 class ArchiveItemDetailView(CIVSetDetail):
@@ -639,38 +637,9 @@ class ArchiveItemDetailView(CIVSetDetail):
         f"{Archive._meta.app_label}.view_{ArchiveItem._meta.model_name}"
     )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.job_list_view = InputValuesJobList.as_view()
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-
-        context.update(
-            {
-                "columns": InputValuesJobList.columns,
-                "default_sort_column": InputValuesJobList.default_sort_column,
-                "text_align": InputValuesJobList.text_align,
-                "default_sort_order": InputValuesJobList.default_sort_order,
-            }
-        )
-
-        return context
-
     @property
     def base_object(self):
         return self.object.base_object
-
-    def get(self, request, *args, **kwargs):
-        response = super().get(request, *args, **kwargs)
-
-        if request.headers.get("x-requested-with") == "XMLHttpRequest":
-            # Handle datatable request
-            return self.job_list_view(
-                request, *args, values=self.object.values, **kwargs
-            )
-
-        return response
 
 
 class ArchiveItemCreateView(
