@@ -2,7 +2,6 @@ from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth.decorators import login_required
 from django.contrib.sitemaps.views import sitemap
-from django.template.response import TemplateResponse
 from django.urls import include, path
 from django.views.generic import RedirectView, TemplateView
 from machina import urls as machina_urls
@@ -26,10 +25,7 @@ admin.autodiscover()
 admin.site.login = login_required(admin.site.login)
 
 
-def handler500(request):
-    context = {"request": request}
-    template_name = "500.html"
-    return TemplateResponse(request, template_name, context, status=500)
+handler500 = "grandchallenge.core.views.handler500"
 
 
 sitemaps = {

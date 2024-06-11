@@ -7,6 +7,8 @@ from tests.workstations_tests.test_session_control import (
     WorkstationView,
 )
 
+handler500 = "grandchallenge.core.views.handler500"
+
 urlpatterns = [
     path(
         "session-control/",
