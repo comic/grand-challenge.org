@@ -6,7 +6,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.forms.utils import ErrorList
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.templatetags.static import static
 from django.views import View
 from django.views.generic import TemplateView, UpdateView
@@ -232,3 +232,8 @@ class RedirectPath(View):
         return redirect(
             f"https://{self.netloc}/{path}", permanent=self.permanent
         )
+
+
+def handler500(request):
+    response = render(request, template_name="500.html", status=500)
+    return response
