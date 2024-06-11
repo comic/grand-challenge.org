@@ -428,6 +428,7 @@ class ArchiveItemsList(CivSetListView):
     )
     columns = [
         Column(title=""),
+        Column(title="Detail"),
         Column(title="ID", sort_field="pk"),
         Column(
             title="Title",

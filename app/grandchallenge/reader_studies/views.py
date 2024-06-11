@@ -386,6 +386,7 @@ class ReaderStudyDisplaySetList(CivSetListView):
     permission_required = f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"  # change instead of view permission so that readers don't get access
     columns = [
         Column(title=""),
+        Column(title="Detail"),
         Column(title="ID", sort_field="pk"),
         Column(
             title="Title",
@@ -396,7 +397,7 @@ class ReaderStudyDisplaySetList(CivSetListView):
         *CivSetListView.columns,
     ]
 
-    default_sort_column = 3
+    default_sort_column = 2
     search_fields = [
         "title",
         "order",

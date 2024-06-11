@@ -4,6 +4,7 @@
 {% load pathlib %}
 {% load meta_attr %}
 {% load guardian_tags %}
+{% load civ %}
 
 {% get_obj_perms request.user for object as "object_perms" %}
 
@@ -24,13 +25,15 @@
 
 <split></split>
 
-
-<a href="{{ object.detail_url }}"
-   title="View details">
+<a class="btn btn-primary btn-sm"
+   href="{{ object.detail_url }}"
+   title="View {{ object|verbose_name }} details">
     <i class="fa fa-info-circle"></i>
-    {{ object.pk }}
 </a>
 
+<split></split>
+
+{{ object.pk }}
 <split></split>
 
 {{ object.title }}
@@ -43,9 +46,11 @@
 
 <ul class="list-unstyled mb-0">
     {% for civ in object.values.all %}
-        <li>
-            {{ civ.interface.title }}: {{ civ.title|truncatechars:30 }}
-        </li>
+    <li>
+        {% include "components/partials/civ.html" with object=civ display_inline=True only %}
+    </li>
+    {% empty %}
+    <span class="text-muted">Empty, or processing</span>
     {% endfor %}
 </ul>
 <split></split>
