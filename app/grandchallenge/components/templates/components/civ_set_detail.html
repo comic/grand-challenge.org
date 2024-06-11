@@ -1,5 +1,10 @@
 {% extends "base.html" %}
 {% load meta_attr %}
+{% load workstations %}
+{% load civ %}
+{% load guardian_tags %}
+
+{% get_obj_perms request.user for object as "object_perms" %}
 
 {% block title %}
     {{ object.title }} - {{ block.super }}
@@ -10,20 +15,77 @@
       <li class="breadcrumb-item"><a href="{{ base_object.list_url }}">{{ base_object|verbose_name_plural|title }}</a></li>
         <li class="breadcrumb-item"><a href="{{ base_object.get_absolute_url }}">{{ base_object }}</a></li>
         <li class="breadcrumb-item"><a href="{{ base_object.civ_sets_list_url }}">{{ base_object.civ_set_model|verbose_name_plural|title }}</a></li>
-        <li class="breadcrumb-item active" aria-current="page">
-            {{ object.pk }}
-            {% if object.title %}
-                '{{ object.title }}'
-            {% endif %}
-        </li>
+        <li class="breadcrumb-item active" aria-current="page">{{ object.pk }}</li>
     </ol>
 {% endblock %}
 
 {% block content %}
-    <h3>{{ object|verbose_name|title }} {{ object.pk }}</h3>
+    <h2>{{ object|verbose_name|title }} </h2>
+    <h4>{{ object.pk }}</h4>
+
+    <p>
+        <a class="btn btn-primary"
+            {% if base_object|model_name == base_model_options.READER_STUDY %}
+                {% workstation_session_control_data workstation=base_object.workstation context_object=object display_set=object config=base_object.workstation_config %}
+            {% elif base_object|model_name == base_model_options.ARCHIVE %}
+                {% workstation_session_control_data workstation=base_object.workstation context_object=object archive_item=object config=base_object.workstation_config %}
+            {% endif %}
+        >
+            <i class="fas fa-eye"></i> View in viewer
+        </a>
+        <span
+            {% if object.is_editable  %}
+                title = "Edit {{ object|verbose_name }}"
+            {% elif not object.is_editable %}
+                title="Cannot edit: answers for display set exist"
+            {% elif update_perm not in object_perms %}
+                title="Not allowed to edit {{ object|verbose_name }}"
+            {% endif %}
+        >
+            <a class="btn btn-primary {% if not object.is_editable or update_perm not in object_perms %}disabled{% endif %}"
+               href="{{ object.update_url }}"
+            >
+                <i class="fas fa-edit"></i> Edit
+            </a>
+        </span>
+        {% block additional_buttons %}{% endblock %}
+        <span
+            {% if object.is_editable  %}
+                title = "Delete {{ object|verbose_name }}"
+            {% elif not object.is_editable %}
+                title="Cannot delete: answers for display set exist"
+            {% elif delete_perm not in object_perms %}
+                title="Not allowed to delete {{ object|verbose_name }}"
+            {% endif %}
+            class="float-right"
+            >
+            <a class="btn btn-danger {% if not object.is_editable or delete_perm not in object_perms %}disabled{% endif %}"
+            href="{{ object.delete_url }}"
+            >
+                <i class="fas fa-trash"></i> Delete
+            </a>
+        </span>
+    </p>
+
+    <hr/>
 
     {% if object.title %}
-        <h1>{{ object.title }}</h1>
+        <h4>{{ object.title }}</h4>
     {% endif %}
+    <dl>
+        {% for civ in object.values.all|sort_civs %}
+            <dt class="mt-3">{{ civ.interface.title }}</dt>
+            <dd>
+                {% include 'components/partials/civ.html' with object=civ only %}
+            </dd>
+        {% empty %}
+            <span class="text-muted">Empty or processing</span>
+        {% endfor %}
+    </dl>
 
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    {% include 'workstations/partials/session-control.html' %}
 {% endblock %}

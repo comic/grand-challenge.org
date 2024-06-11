@@ -2,25 +2,10 @@
 {% load static %}
 {% load url %}
 
-{% block content %}
-{{ block.super }}
-    <h3>Algorithm Results</h3>
-
-    Some kind of URL setup.
-
-    {% include "datatables/partials/datatable.html" with columns=columns %}
-
-    <div>
-
-    </div>
-{% endblock %}
-
-{% block script %}
-    {{ block.super }}
-
-    {{ default_sort_column|json_script:"defaultSortColumn" }}
-    {{ text_align|json_script:"textAlign" }}
-    {{ default_sort_order|json_script:"defaultSortOrder" }}
-
-    <script type="text/javascript" src="{% static 'js/datatables/list.js' %}"></script>
+{% block additional_buttons %}
+<a class="btn btn-outline-primary"
+    href="{% url "archives:item-job-list" slug=base_object.slug pk=object.pk %}"
+>
+    <i class="fas fa-search"></i> Find algorithm results
+</a>
 {% endblock %}

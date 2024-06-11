@@ -33,7 +33,7 @@
 
 <split></split>
 
-{{ object.pk }}
+<span class="text-nowrap">{{ object.pk }}</span>
 <split></split>
 
 {{ object.title }}
@@ -45,12 +45,12 @@
 {% endif %}
 
 <ul class="list-unstyled mb-0">
-    {% for civ in object.values.all %}
+    {% for civ in object.values.all|sort_civs %}
     <li>
         {% include "components/partials/civ.html" with object=civ display_inline=True only %}
     </li>
     {% empty %}
-    <span class="text-muted">Empty, or processing</span>
+    <span class="text-muted">Empty or processing</span>
     {% endfor %}
 </ul>
 <split></split>
@@ -68,13 +68,15 @@
 <split></split>
 
 <div
-     {% if object.is_editable %}
-         title = "Edit {{ object|verbose_name }}"
-     {% else %}
+    {% if object.is_editable  %}
+        title = "Edit {{ object|verbose_name }}"
+    {% elif not object.is_editable %}
         title="Cannot edit: answers for display set exist"
-     {% endif %}
+    {% elif update_perm not in object_perms %}
+        title="Not allowed to edit {{ object|verbose_name }}"
+    {% endif %}
 >
-    <a class="btn btn-primary btn-sm {% if not object.is_editable or not update_perm in object_perms %}disabled{% endif %}"
+    <a class="btn btn-primary btn-sm {% if not object.is_editable or update_perm not in object_perms %}disabled{% endif %}"
         href="{{ object.update_url }}"
     >
         <i class="fas fa-fw fa-edit"></i>
@@ -84,13 +86,15 @@
 <split></split>
 
 <div
-     {% if object.is_editable %}
-         title = "Delete {{ object|verbose_name }}"
-     {% else %}
+    {% if object.is_editable  %}
+        title = "Delete {{ object|verbose_name }}"
+    {% elif not object.is_editable %}
         title="Cannot delete: answers for display set exist"
-     {% endif %}
+    {% elif update_perm not in object_perms %}
+        title="Not allowed to delete {{ object|verbose_name }}"
+    {% endif %}
 >
-   <a class="btn btn-danger btn-sm {% if not object.is_editable or not delete_perm in object_perms %}disabled{% endif %}"
+   <a class="btn btn-danger btn-sm {% if not object.is_editable or delete_perm not in object_perms %}disabled{% endif %}"
    href="{{ object.delete_url }}">
    <i class="fas fa-fw fa-trash"></i>
 </a>

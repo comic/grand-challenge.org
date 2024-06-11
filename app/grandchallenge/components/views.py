@@ -341,7 +341,7 @@ class CivSetListView(
     default_sort_order = "asc"
     columns = [
         Column(title="Values"),
-        Column(title="View"),
+        Column(title="Viewer"),
         Column(title="Edit"),
         Column(title="Remove"),
     ]

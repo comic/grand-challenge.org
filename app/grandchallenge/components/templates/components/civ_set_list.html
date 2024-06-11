@@ -12,7 +12,7 @@
 {% endblock %}
 
 {% block content %}
-    <h1>{{ base_object.title }} {{ base_object.civ_set_model|verbose_name_plural|title }}</h1>
+    <h2>{{ base_object.title }} {{ base_object.civ_set_model|verbose_name_plural|title }}</h2>
     <p>
         <a class="btn btn-primary"
            href="{{ base_object.create_civ_set_url }}"

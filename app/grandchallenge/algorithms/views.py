@@ -9,7 +9,7 @@ from django.contrib.auth.mixins import (
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db.models import Window
+from django.db.models import Count, Q, Window
 from django.db.models.functions import Rank
 from django.forms.utils import ErrorList
 from django.http import HttpResponse, HttpResponseRedirect
@@ -73,7 +73,6 @@ from grandchallenge.cases.widgets import WidgetChoices
 from grandchallenge.components.models import (
     ComponentInterfaceValue,
     ImportStatusChoices,
-    InterfaceKind,
 )
 from grandchallenge.components.tasks import upload_to_registry_and_sagemaker
 from grandchallenge.core.filters import FilterMixin
@@ -642,7 +641,7 @@ class JobsList(PaginatedTableListView):
     ]
 
     columns = [
-        Column(title="Details", sort_field="pk"),
+        Column(title="Detail"),
         Column(title="Created", sort_field="created"),
         Column(title="Creator", sort_field="creator__username"),
         Column(title="Status", sort_field="status"),

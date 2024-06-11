@@ -7,13 +7,14 @@
 {% load remove_whitespace %}
 {% load dict_lookup %}
 {% load meta_attr %}
+{% load civ %}
 
-<a class="badge badge-primary"
+<a class="btn btn-primary btn-sm"
    href="{% url 'algorithms:job-detail' slug=algorithm.slug pk=object.pk %}"
    title="View result details">
     <i class="fa fa-info-circle"></i>
-    Detail
 </a>
+
 <split></split>
 
 {{ object.created|naturaltime }}
@@ -49,15 +50,23 @@
 {{ object.comment }}
 <split></split>
 
-PLACEHOLDER: results
+<ul class="list-unstyled mb-0">
+    {% for civ in object.outputs.all|sort_civs %}
+    <li>
+        {% include "components/partials/civ.html" with object=civ display_inline=True only %}
+    </li>
+    {% empty %}
+    <span class="text-muted">Empty or processing</span>
+    {% endfor %}
+</ul>
 <split></split>
 
 {% if object.status == object.SUCCESS %}
-    <button class="btn badge badge-primary"
-            title="View algorithm result"
+    <button class="btn btn-primary btn-sm"
+            title="View algorithm result in viewer"
             {% workstation_session_control_data workstation=algorithm.workstation context_object=algorithm algorithm_job=object config=algorithm.workstation_config %}
 >
-        <i class="fa fa-eye"></i> Open Result in Viewer
+        <i class="fa fa-eye"></i>
     </button>
 {% endif %}
 <split></split>
