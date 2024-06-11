@@ -925,6 +925,7 @@
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterface">[docs]</a>
 <span class="k">class</span> <span class="nc">ComponentInterface</span><span class="p">(</span><span class="n">OverlaySegmentsMixin</span><span class="p">):</span>
     <span class="n">Kind</span> <span class="o">=</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span>
+    <span class="n">SuperKind</span> <span class="o">=</span> <span class="n">InterfaceSuperKindChoices</span>
 
     <span class="n">title</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
         <span class="n">max_length</span><span class="o">=</span><span class="mi">255</span><span class="p">,</span>
@@ -1008,6 +1009,22 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">is_file_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_file</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_thumbnail_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">THUMBNAIL_JPG</span><span class="p">,</span>
+            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">THUMBNAIL_PNG</span><span class="p">,</span>
+        <span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_previewable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_in_database</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">BOOL</span><span class="p">,</span>
+            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">FLOAT</span><span class="p">,</span>
+            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">INTEGER</span><span class="p">,</span>
+            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">STRING</span><span class="p">,</span>
+        <span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">super_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
