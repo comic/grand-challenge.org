@@ -895,7 +895,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
     @property
     def ground_truth_upload_in_progress(self):
         return self.ground_truths.filter(
-            import_status__in=(ImportStatusChoices.QUEUED,)
+            import_status__in=(ImportStatusChoices.INITIALIZED,)
         ).exists()
 
     @cached_property

@@ -9,9 +9,9 @@ from grandchallenge.evaluation.views import (
     EvaluationAdminList,
     EvaluationCreate,
     EvaluationDetail,
+    EvaluationGroundTruthCreate,
     EvaluationList,
     EvaluationUpdate,
-    GroundTruthCreate,
     GroundTruthDetail,
     GroundTruthList,
     GroundTruthUpdate,
@@ -86,7 +86,7 @@ urlpatterns = [
     ),
     path(
         "<slug>/ground-truths/create/",
-        GroundTruthCreate.as_view(),
+        EvaluationGroundTruthCreate.as_view(),
         name="ground-truth-create",
     ),
     path(

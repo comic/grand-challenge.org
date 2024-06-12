@@ -665,7 +665,7 @@ class ConfigureAlgorithmPhasesForm(SaveFormInitMixin, Form):
             )
 
 
-class GroundTruthForm(SaveFormInitMixin, ModelForm):
+class EvaluationGroundTruthForm(SaveFormInitMixin, ModelForm):
     phase = ModelChoiceField(widget=HiddenInput(), queryset=None)
     user_upload = ModelChoiceField(
         widget=UserUploadSingleWidget(
@@ -756,6 +756,11 @@ class GroundTruthVersionManagementForm(Form):
     ):
         super().__init__(*args, **kwargs)
         self._activate = activate
+
+        extra_filter = {}
+        if self._activate:
+            extra_filter["import_status"] = ImportStatusChoices.COMPLETED
+
         self.fields["ground_truth"].queryset = (
             get_objects_for_user(
                 user,
@@ -764,6 +769,7 @@ class GroundTruthVersionManagementForm(Form):
             .filter(
                 phase=phase,
                 is_desired_version=False if activate else True,
+                **extra_filter,
             )
             .select_related("phase")
         )
@@ -796,16 +802,7 @@ class GroundTruthVersionManagementForm(Form):
     def clean_ground_truth(self):
         ground_truth = self.cleaned_data["ground_truth"]
 
-        if (
-            self._activate
-            and ground_truth.import_status != ImportStatusChoices.COMPLETED
-        ):
-            raise ValidationError(
-                "You cannot activate this image since it has not been "
-                "successfully uploaded."
-            )
-
         if ground_truth.phase.ground_truth_upload_in_progress:
-            raise ValidationError("Ground_truth updating already in progress.")
+            raise ValidationError("Ground truth updating already in progress.")
 
         return ground_truth

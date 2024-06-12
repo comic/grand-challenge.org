@@ -41,7 +41,7 @@ from grandchallenge.evaluation.forms import (
     CombinedLeaderboardForm,
     ConfigureAlgorithmPhasesForm,
     EvaluationForm,
-    GroundTruthForm,
+    EvaluationGroundTruthForm,
     GroundTruthUpdateForm,
     GroundTruthVersionManagementForm,
     MethodForm,
@@ -1053,7 +1053,7 @@ class ConfigureAlgorithmPhasesView(PermissionRequiredMixin, FormView):
         phase.algorithm_inputs.add(*inputs)
 
 
-class GroundTruthCreate(
+class EvaluationGroundTruthCreate(
     LoginRequiredMixin,
     VerificationRequiredMixin,
     UserFormKwargsMixin,
@@ -1062,7 +1062,7 @@ class GroundTruthCreate(
     CreateView,
 ):
     model = GroundTruth
-    form_class = GroundTruthForm
+    form_class = EvaluationGroundTruthForm
     permission_required = "evaluation.change_phase"
     raise_exception = True
     success_message = "Ground truth upload in progress."
