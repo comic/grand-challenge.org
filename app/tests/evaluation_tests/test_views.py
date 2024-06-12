@@ -1331,6 +1331,55 @@ def test_configure_algorithm_phases_view(client):
 
 
 @pytest.mark.django_db
+def test_ground_truth_permissions(client):
+    phase = PhaseFactory()
+    u = UserFactory()
+    gt = GroundTruthFactory(phase=phase)
+    VerificationFactory(user=u, is_verified=True)
+
+    for view_name, kwargs, permission, obj in [
+        (
+            "ground-truth-create",
+            {},
+            "evaluation.change_phase",
+            phase,
+        ),
+        (
+            "ground-truth-detail",
+            {"pk": gt.pk},
+            "evaluation.view_groundtruth",
+            gt,
+        ),
+        (
+            "ground-truth-update",
+            {"pk": gt.pk},
+            "evaluation.change_groundtruth",
+            gt,
+        ),
+    ]:
+
+        def _get_view():
+            return get_view_for_user(
+                client=client,
+                viewname=f"evaluation:{view_name}",
+                reverse_kwargs={
+                    "challenge_short_name": phase.challenge.short_name,
+                    "slug": phase.slug,
+                    **kwargs,
+                },
+                user=u,
+            )
+
+        response = _get_view()
+        assert response.status_code == 403
+
+        assign_perm(permission, u, obj)
+
+        response = _get_view()
+        assert response.status_code == 200
+
+
+@pytest.mark.django_db
 def test_ground_truth_version_management(settings, client):
     phase = PhaseFactory()
     gt1, gt2 = GroundTruthFactory.create_batch(
@@ -1383,10 +1432,23 @@ def test_ground_truth_version_management(settings, client):
             "challenge_short_name": phase.challenge.short_name,
         },
         data={"ground_truth": gt1.pk},
+        user=user,
+    )
+    assert response3.status_code == 403
+
+    response4 = get_view_for_user(
+        viewname="evaluation:ground-truth-deactivate",
+        client=client,
+        method=client.post,
+        reverse_kwargs={
+            "slug": phase.slug,
+            "challenge_short_name": phase.challenge.short_name,
+        },
+        data={"ground_truth": gt1.pk},
         user=admin,
     )
 
-    assert response3.status_code == 302
+    assert response4.status_code == 302
     gt1.refresh_from_db()
     gt2.refresh_from_db()
     assert not gt1.is_desired_version

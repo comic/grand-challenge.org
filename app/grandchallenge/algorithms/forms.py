@@ -1320,7 +1320,7 @@ class AlgorithmModelVersionControlForm(Form):
         algorithm_model = self.cleaned_data["algorithm_model"]
 
         if (
-            algorithm_model.get_peer_models()
+            algorithm_model.get_peer_tarballs()
             .filter(import_status=ImportStatusChoices.INITIALIZED)
             .exists()
         ):
