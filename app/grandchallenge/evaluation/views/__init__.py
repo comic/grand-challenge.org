@@ -1047,7 +1047,7 @@ class EvaluationGroundTruthCreate(
         return context
 
 
-class GroundTruthDetail(
+class EvaluationGroundTruthDetail(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     DetailView,
@@ -1081,7 +1081,7 @@ class GroundTruthDetail(
         return context
 
 
-class GroundTruthList(
+class EvaluationGroundTruthList(
     LoginRequiredMixin, PermissionListMixin, CachedPhaseMixin, ListView
 ):
     model = EvaluationGroundTruth
