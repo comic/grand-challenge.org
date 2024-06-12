@@ -768,7 +768,7 @@ def test_ground_truth_form():
     Verification.objects.create(user=user, is_verified=True)
     upload = create_upload_from_file(
         creator=user,
-        file_path=Path(__file__).parent / "resources" / "model.tar.gz",
+        file_path=Path(__file__).parent / "resources" / "ground-truth.tar.gz",
     )
     GroundTruthFactory(creator=user)
 
