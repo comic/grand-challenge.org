@@ -570,7 +570,7 @@ def test_algorithm_model_form():
 
 
 @pytest.mark.django_db
-def test_model_activate_form():
+def test_model_version_control_form():
     alg = AlgorithmFactory()
     editor = UserFactory()
     alg.add_editor(editor)

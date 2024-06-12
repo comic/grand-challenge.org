@@ -156,6 +156,7 @@ def copy_s3_object(
     """Copies an S3 object to a Django file field on a model"""
     if not isinstance(to_field, FieldFile):
         raise ValueError("to_field must be a FieldFile")
+
     target_client = to_field.storage.connection.meta.client
     target_bucket = to_field.storage.bucket.name
     target_key = to_field.field.generate_filename(

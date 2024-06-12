@@ -2,7 +2,7 @@
 {% load crispy_forms_tags %}
 
 {% block title %}
-    Activate Algorithm Model - {{ block.super }}
+    Algorithm Model Version Management - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -15,15 +15,17 @@
         </a>
         </li>
         <li class="breadcrumb-item active"
-            aria-current="page">Activate algorithm model
+            aria-current="page">Algorithm model version management
         </li>
     </ol>
 {% endblock %}
 
 {% block content %}
-    <h2>Activate algorithm model</h2>
+    <h2>Algorithm model version management</h2>
 
-    <div class="mb-2">Activating a model will result in this model being used for all subsequent algorithm runs.</div>
+    {% if not object.is_desired_version %}
+        <div class="mb-2">Activating a model will result in this model being used for all subsequent algorithm runs.</div>
+    {% endif %}
 
     {% crispy form %}
 {% endblock %}
