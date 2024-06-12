@@ -22,9 +22,9 @@ from grandchallenge.core.utils.grand_challenge_forge import (
 from grandchallenge.evaluation.models import (
     CombinedLeaderboard,
     Evaluation,
+    EvaluationGroundTruth,
     EvaluationGroupObjectPermission,
     EvaluationUserObjectPermission,
-    GroundTruth,
     Method,
     MethodGroupObjectPermission,
     MethodUserObjectPermission,
@@ -184,8 +184,8 @@ class CombinedLeaderboardAdmin(admin.ModelAdmin):
     )
 
 
-@admin.register(GroundTruth)
-class GroundTruthAdmin(admin.ModelAdmin):
+@admin.register(EvaluationGroundTruth)
+class EvaluationGroundTruthAdmin(admin.ModelAdmin):
     exclude = ("ground_truth",)
     list_display = ("phase", "created", "is_desired_version", "comment")
     list_filter = ("is_desired_version",)

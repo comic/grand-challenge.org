@@ -46,7 +46,7 @@ from grandchallenge.evaluation.models import (
     EXTRA_RESULT_COLUMNS_SCHEMA,
     CombinedLeaderboard,
     Evaluation,
-    GroundTruth,
+    EvaluationGroundTruth,
     Method,
     Phase,
     Submission,
@@ -705,7 +705,7 @@ class EvaluationGroundTruthForm(SaveFormInitMixin, ModelForm):
     def clean_creator(self):
         creator = self.cleaned_data["creator"]
 
-        if GroundTruth.objects.filter(
+        if EvaluationGroundTruth.objects.filter(
             import_status=ImportStatusChoices.INITIALIZED,
             creator=creator,
         ).exists():
@@ -732,18 +732,20 @@ class EvaluationGroundTruthForm(SaveFormInitMixin, ModelForm):
         return instance
 
     class Meta:
-        model = GroundTruth
+        model = EvaluationGroundTruth
         fields = ("phase", "user_upload", "creator", "comment")
 
 
-class GroundTruthUpdateForm(SaveFormInitMixin, ModelForm):
+class EvaluationGroundTruthUpdateForm(SaveFormInitMixin, ModelForm):
     class Meta:
-        model = GroundTruth
+        model = EvaluationGroundTruth
         fields = ("comment",)
 
 
-class GroundTruthVersionManagementForm(Form):
-    ground_truth = ModelChoiceField(queryset=GroundTruth.objects.none())
+class EvaluationGroundTruthVersionManagementForm(Form):
+    ground_truth = ModelChoiceField(
+        queryset=EvaluationGroundTruth.objects.none()
+    )
 
     def __init__(
         self,
@@ -764,7 +766,7 @@ class GroundTruthVersionManagementForm(Form):
         self.fields["ground_truth"].queryset = (
             get_objects_for_user(
                 user,
-                "evaluation.change_groundtruth",
+                "evaluation.change_evaluationgroundtruth",
             )
             .filter(
                 phase=phase,

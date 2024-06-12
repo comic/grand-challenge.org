@@ -31,7 +31,7 @@
 
     {% get_obj_perms request.user for object as "ground_truth_perms" %}
 
-    {% if "change_groundtruth" in ground_truth_perms %}
+    {% if "change_evaluationgroundtruth" in ground_truth_perms %}
         <div>
             <a class="btn btn-primary"
                href="{% url 'evaluation:ground-truth-update' challenge_short_name=challenge.short_name slug=object.phase.slug pk=object.pk %}">

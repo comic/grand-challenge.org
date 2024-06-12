@@ -9,7 +9,7 @@ from grandchallenge.components.models import ImportStatusChoices
 from grandchallenge.evaluation.forms import (
     ConfigureAlgorithmPhasesForm,
     EvaluationGroundTruthForm,
-    GroundTruthVersionManagementForm,
+    EvaluationGroundTruthVersionManagementForm,
     SubmissionForm,
 )
 from grandchallenge.evaluation.models import Evaluation, Phase, Submission
@@ -30,7 +30,7 @@ from tests.components_tests.factories import (
 )
 from tests.evaluation_tests.factories import (
     EvaluationFactory,
-    GroundTruthFactory,
+    EvaluationGroundTruthFactory,
     MethodFactory,
     PhaseFactory,
     SubmissionFactory,
@@ -770,7 +770,7 @@ def test_ground_truth_form():
         creator=user,
         file_path=Path(__file__).parent / "resources" / "ground-truth.tar.gz",
     )
-    GroundTruthFactory(creator=user)
+    EvaluationGroundTruthFactory(creator=user)
 
     form2 = EvaluationGroundTruthForm(
         user=user,
@@ -790,40 +790,40 @@ def test_ground_truth_version_management_form():
     admin = UserFactory()
     phase.challenge.add_admin(admin)
 
-    gt1 = GroundTruthFactory(
+    gt1 = EvaluationGroundTruthFactory(
         phase=phase,
         is_desired_version=True,
         import_status=ImportStatusChoices.COMPLETED,
     )
-    gt2 = GroundTruthFactory(
+    gt2 = EvaluationGroundTruthFactory(
         phase=phase,
         is_desired_version=False,
         import_status=ImportStatusChoices.COMPLETED,
     )
-    gt3 = GroundTruthFactory(
+    gt3 = EvaluationGroundTruthFactory(
         phase=phase,
         is_desired_version=True,
         import_status=ImportStatusChoices.FAILED,
     )
-    _ = GroundTruthFactory(
+    _ = EvaluationGroundTruthFactory(
         phase=phase,
         is_desired_version=False,
         import_status=ImportStatusChoices.FAILED,
     )
 
-    form = GroundTruthVersionManagementForm(
+    form = EvaluationGroundTruthVersionManagementForm(
         user=admin, phase=phase, activate=True
     )
     assert list(form.fields["ground_truth"].queryset) == [gt2]
 
-    form2 = GroundTruthVersionManagementForm(
+    form2 = EvaluationGroundTruthVersionManagementForm(
         user=admin, phase=phase, activate=False
     )
     assert list(form2.fields["ground_truth"].queryset) == [gt1, gt3]
 
-    GroundTruthFactory(phase=phase, is_desired_version=False)
+    EvaluationGroundTruthFactory(phase=phase, is_desired_version=False)
 
-    form3 = GroundTruthVersionManagementForm(
+    form3 = EvaluationGroundTruthVersionManagementForm(
         user=admin, phase=phase, activate=True, data={"ground_truth": gt2.pk}
     )
     assert not form3.is_valid()

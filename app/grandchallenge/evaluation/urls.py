@@ -10,12 +10,12 @@ from grandchallenge.evaluation.views import (
     EvaluationCreate,
     EvaluationDetail,
     EvaluationGroundTruthCreate,
+    EvaluationGroundTruthDetail,
+    EvaluationGroundTruthList,
+    EvaluationGroundTruthUpdate,
+    EvaluationGroundTruthVersionManagement,
     EvaluationList,
     EvaluationUpdate,
-    GroundTruthDetail,
-    GroundTruthList,
-    GroundTruthUpdate,
-    GroundTruthVersionManagement,
     LeaderboardDetail,
     LeaderboardRedirect,
     MethodCreate,
@@ -76,12 +76,12 @@ urlpatterns = [
     ),
     path(
         "<slug>/ground-truths/",
-        GroundTruthList.as_view(),
+        EvaluationGroundTruthList.as_view(),
         name="ground-truth-list",
     ),
     path(
         "<slug>/ground-truths/activate",
-        GroundTruthVersionManagement.as_view(activate=True),
+        EvaluationGroundTruthVersionManagement.as_view(activate=True),
         name="ground-truth-activate",
     ),
     path(
@@ -91,17 +91,17 @@ urlpatterns = [
     ),
     path(
         "<slug>/ground-truths/deactivate",
-        GroundTruthVersionManagement.as_view(activate=False),
+        EvaluationGroundTruthVersionManagement.as_view(activate=False),
         name="ground-truth-deactivate",
     ),
     path(
         "<slug>/ground-truths/<uuid:pk>/",
-        GroundTruthDetail.as_view(),
+        EvaluationGroundTruthDetail.as_view(),
         name="ground-truth-detail",
     ),
     path(
         "<slug>/ground-truths/<uuid:pk>/update",
-        GroundTruthUpdate.as_view(),
+        EvaluationGroundTruthUpdate.as_view(),
         name="ground-truth-update",
     ),
     path(

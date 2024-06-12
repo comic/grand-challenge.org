@@ -1202,7 +1202,7 @@ def ground_truth_path(instance, filename):
     )
 
 
-class GroundTruth(Tarball):
+class EvaluationGroundTruth(Tarball):
     phase = models.ForeignKey(
         Phase, on_delete=models.PROTECT, related_name="ground_truths"
     )
@@ -1231,7 +1231,9 @@ class GroundTruth(Tarball):
         )
 
     def get_peer_tarballs(self):
-        return GroundTruth.objects.filter(phase=self.phase).exclude(pk=self.pk)
+        return EvaluationGroundTruth.objects.filter(phase=self.phase).exclude(
+            pk=self.pk
+        )
 
     def get_absolute_url(self):
         return reverse(
@@ -1244,12 +1246,16 @@ class GroundTruth(Tarball):
         )
 
 
-class GroundTruthUserObjectPermission(UserObjectPermissionBase):
-    content_object = models.ForeignKey(GroundTruth, on_delete=models.CASCADE)
+class EvaluationGroundTruthUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(
+        EvaluationGroundTruth, on_delete=models.CASCADE
+    )
 
 
-class GroundTruthGroupObjectPermission(GroupObjectPermissionBase):
-    content_object = models.ForeignKey(GroundTruth, on_delete=models.CASCADE)
+class EvaluationGroundTruthGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(
+        EvaluationGroundTruth, on_delete=models.CASCADE
+    )
 
 
 class Evaluation(UUIDModel, ComponentJob):
@@ -1258,7 +1264,7 @@ class Evaluation(UUIDModel, ComponentJob):
     submission = models.ForeignKey("Submission", on_delete=models.PROTECT)
     method = models.ForeignKey("Method", on_delete=models.PROTECT)
     ground_truth = models.ForeignKey(
-        GroundTruth, null=True, blank=True, on_delete=models.SET_NULL
+        EvaluationGroundTruth, null=True, blank=True, on_delete=models.SET_NULL
     )
 
     published = models.BooleanField(default=True, db_index=True)

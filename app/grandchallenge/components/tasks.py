@@ -1301,8 +1301,8 @@ def assign_tarball_from_upload(
 
     current_tarball.user_upload.delete()
 
-    # mark as desired version and pass locked peer models directly since else
-    # mark_desired_version will fail trying to access the locked models
+    # mark as desired version and pass locked peer tarballs directly since else
+    # mark_desired_version will fail trying to access the locked tarballs
     current_tarball.mark_desired_version(peer_tarballs=peer_tarballs)
 
 

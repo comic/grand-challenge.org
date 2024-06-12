@@ -42,8 +42,8 @@ from grandchallenge.evaluation.forms import (
     ConfigureAlgorithmPhasesForm,
     EvaluationForm,
     EvaluationGroundTruthForm,
-    GroundTruthUpdateForm,
-    GroundTruthVersionManagementForm,
+    EvaluationGroundTruthUpdateForm,
+    EvaluationGroundTruthVersionManagementForm,
     MethodForm,
     MethodUpdateForm,
     PhaseCreateForm,
@@ -53,7 +53,7 @@ from grandchallenge.evaluation.forms import (
 from grandchallenge.evaluation.models import (
     CombinedLeaderboard,
     Evaluation,
-    GroundTruth,
+    EvaluationGroundTruth,
     Method,
     Phase,
     Submission,
@@ -1023,7 +1023,7 @@ class EvaluationGroundTruthCreate(
     SuccessMessageMixin,
     CreateView,
 ):
-    model = GroundTruth
+    model = EvaluationGroundTruth
     form_class = EvaluationGroundTruthForm
     permission_required = "evaluation.change_phase"
     raise_exception = True
@@ -1052,8 +1052,8 @@ class GroundTruthDetail(
     ObjectPermissionRequiredMixin,
     DetailView,
 ):
-    model = GroundTruth
-    permission_required = "evaluation.view_groundtruth"
+    model = EvaluationGroundTruth
+    permission_required = "evaluation.view_evaluationgroundtruth"
     raise_exception = True
 
     def get_context_data(self, **kwargs):
@@ -1069,10 +1069,10 @@ class GroundTruthDetail(
         context.update(
             {
                 "import_choices": ImportStatusChoices,
-                "gt_activate_form": GroundTruthVersionManagementForm(
+                "gt_activate_form": EvaluationGroundTruthVersionManagementForm(
                     activate=True, **form_kwargs
                 ),
-                "gt_deactivate_form": GroundTruthVersionManagementForm(
+                "gt_deactivate_form": EvaluationGroundTruthVersionManagementForm(
                     activate=False, **form_kwargs
                 ),
             }
@@ -1084,8 +1084,8 @@ class GroundTruthDetail(
 class GroundTruthList(
     LoginRequiredMixin, PermissionListMixin, CachedPhaseMixin, ListView
 ):
-    model = GroundTruth
-    permission_required = "evaluation.view_groundtruth"
+    model = EvaluationGroundTruth
+    permission_required = "evaluation.view_evaluationgroundtruth"
     login_url = reverse_lazy("account_login")
     ordering = ("-is_desired_version", "-created")
 
@@ -1094,14 +1094,14 @@ class GroundTruthList(
         return queryset.filter(phase=self.phase)
 
 
-class GroundTruthUpdate(
+class EvaluationGroundTruthUpdate(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     UpdateView,
 ):
-    model = GroundTruth
-    form_class = GroundTruthUpdateForm
-    permission_required = "change_groundtruth"
+    model = EvaluationGroundTruth
+    form_class = EvaluationGroundTruthUpdateForm
+    permission_required = "change_evaluationgroundtruth"
     raise_exception = True
     login_url = reverse_lazy("account_login")
 
@@ -1111,7 +1111,7 @@ class GroundTruthUpdate(
         return context
 
 
-class GroundTruthVersionManagement(
+class EvaluationGroundTruthVersionManagement(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     SuccessMessageMixin,
@@ -1119,7 +1119,7 @@ class GroundTruthVersionManagement(
 ):
     permission_required = "evaluation.change_phase"
     raise_exception = True
-    form_class = GroundTruthVersionManagementForm
+    form_class = EvaluationGroundTruthVersionManagementForm
     template_name = "evaluation/ground_truth_version_management.html"
     success_message = "Ground truth successfully activated."
     activate = None

@@ -32,7 +32,7 @@ from tests.components_tests.factories import (
 from tests.evaluation_tests.factories import (
     CombinedLeaderboardFactory,
     EvaluationFactory,
-    GroundTruthFactory,
+    EvaluationGroundTruthFactory,
     MethodFactory,
     PhaseFactory,
     SubmissionFactory,
@@ -141,7 +141,7 @@ def test_create_evaluation_uniqueness_checks(
 
     assert Evaluation.objects.count() == 1
 
-    gt = GroundTruthFactory(phase=sub.phase, is_desired_version=True)
+    gt = EvaluationGroundTruthFactory(phase=sub.phase, is_desired_version=True)
     assert sub.phase.active_ground_truth == gt
 
     with django_capture_on_commit_callbacks(execute=True):

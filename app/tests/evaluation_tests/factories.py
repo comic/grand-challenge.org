@@ -3,7 +3,7 @@ import factory
 from grandchallenge.evaluation.models import (
     CombinedLeaderboard,
     Evaluation,
-    GroundTruth,
+    EvaluationGroundTruth,
     Method,
     Phase,
     Submission,
@@ -54,9 +54,9 @@ class CombinedLeaderboardFactory(factory.django.DjangoModelFactory):
     title = factory.sequence(lambda n: f"Combined Leaderboard {n}")
 
 
-class GroundTruthFactory(factory.django.DjangoModelFactory):
+class EvaluationGroundTruthFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = GroundTruth
+        model = EvaluationGroundTruth
 
     phase = factory.SubFactory(PhaseFactory)
     creator = factory.SubFactory(UserFactory)

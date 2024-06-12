@@ -41,7 +41,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.evaluation_tests.factories import (
-    GroundTruthFactory,
+    EvaluationGroundTruthFactory,
     MethodFactory,
     PhaseFactory,
 )
@@ -470,7 +470,7 @@ def test_get_image_config_and_sha256(container_image_file):
             "algorithm",
             "model",
         ),
-        (GroundTruthFactory, PhaseFactory, "phase", "ground_truth"),
+        (EvaluationGroundTruthFactory, PhaseFactory, "phase", "ground_truth"),
     ],
 )
 @pytest.mark.django_db()

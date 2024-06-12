@@ -26,7 +26,7 @@ from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.evaluation_tests.factories import (
     CombinedLeaderboardFactory,
     EvaluationFactory,
-    GroundTruthFactory,
+    EvaluationGroundTruthFactory,
     MethodFactory,
     PhaseFactory,
     SubmissionFactory,
@@ -1334,7 +1334,7 @@ def test_configure_algorithm_phases_view(client):
 def test_ground_truth_permissions(client):
     phase = PhaseFactory()
     u = UserFactory()
-    gt = GroundTruthFactory(phase=phase)
+    gt = EvaluationGroundTruthFactory(phase=phase)
     VerificationFactory(user=u, is_verified=True)
 
     for view_name, kwargs, permission, obj in [
@@ -1347,13 +1347,13 @@ def test_ground_truth_permissions(client):
         (
             "ground-truth-detail",
             {"pk": gt.pk},
-            "evaluation.view_groundtruth",
+            "evaluation.view_evaluationgroundtruth",
             gt,
         ),
         (
             "ground-truth-update",
             {"pk": gt.pk},
-            "evaluation.change_groundtruth",
+            "evaluation.change_evaluationgroundtruth",
             gt,
         ),
     ]:
@@ -1382,7 +1382,7 @@ def test_ground_truth_permissions(client):
 @pytest.mark.django_db
 def test_ground_truth_version_management(settings, client):
     phase = PhaseFactory()
-    gt1, gt2 = GroundTruthFactory.create_batch(
+    gt1, gt2 = EvaluationGroundTruthFactory.create_batch(
         2, phase=phase, import_status=ImportStatusChoices.COMPLETED
     )
     gt2.is_desired_version = True
