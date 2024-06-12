@@ -1,0 +1,29 @@
+{% load civ %}
+
+
+{% with interface=object.interface civ=object %}
+
+    {% if interface.super_kind == interface.SuperKind.VALUE %}
+        {# No fallback here as a value could be intentionally null #}
+        {% if interface.kind == interface.Kind.CHART %}
+            {% include "components/partials/civ/value_chart.html" %}
+        {% else %}
+            {% include "components/partials/civ/value.html" %}
+        {% endif %}
+    {% elif interface.super_kind == interface.SuperKind.FILE %}
+        {% if not civ.file %}
+            {% include "components/partials/civ/fallback.html" %}
+        {% elif civ.interface.is_thumbnail_kind %}
+            {% include "components/partials/civ/file_thumbnail.html" %}
+        {% else %}
+            {% include "components/partials/civ/file.html" %}
+        {% endif %}
+    {% elif interface.super_kind == interface.SuperKind.IMAGE %}
+        {% if not civ.image %}
+            {% include "components/partials/civ/fallback.html" %}
+        {% else %}
+            {% include "components/partials/civ/image.html" %}
+        {% endif %}
+    {% endif %}
+
+{% endwith %}

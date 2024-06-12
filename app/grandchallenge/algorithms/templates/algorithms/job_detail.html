@@ -7,7 +7,9 @@
 {% load static %}
 {% load url %}
 {% load meta_attr %}
-{% load evaluation_extras %}
+{% load json %}
+{% load string %}
+{% load civ %}
 
 {% block title %}
     Algorithm Result - {{ block.super }}
@@ -68,49 +70,17 @@
             <h2>Algorithm Result</h2>
 
             {{ object.rendered_result_text }}
-            <br>
-            {% if json %}
-                <table class="table table-borderless table-hover table-sm">
-                    <thead class="thead-light">
-                        <tr>
-                            <th>Metric</th>
-                            <th>Value</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for object in json %}
-                            <tr>
-                                <td>{{ object.interface.title }}</td>
-                                <td>{{ object.value }}</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% endif %}
 
-            {% for chart in charts %}
-                <h3 class="mt-3">{{ chart.interface.title }}</h3>
-                <div class="w-100 vega-lite-chart">
-                    {{ chart.value|json_script:chart.pk }}
-                </div>
-            {% endfor %}
-
-            {% for thumbnail in thumbnails %}
-                <h3 class="mt-3">{{ thumbnail.interface.title }}</h3>
-                <div class="row">
-                    <img class="m-3" height="400"
-                         src="{{ thumbnail.file.url }}"
-                         alt="{{ thumbnail.file.name }}" loading="lazy">
-                </div>
-            {% endfor %}
-
-            {% for file in files %}
-                <h3 class="mt-3">{{ file.interface.title }}</h3>
-                <div><a class="btn btn-primary mb-3"
-                   href="{{ file.file.url }}">
-                        <i class="fa fa-download"></i>&nbsp;Download {{ file.interface.kind }}
-                </a></div>
-            {% endfor %}
+            <dl>
+                {% for output in object.outputs.all|sort_civs %}
+                    {% if output.interface.slug != 'results-json-file' or not object.rendered_result_text %}
+                        <dt class="mt-3">{{ output.interface.title }}</dt>
+                        <dd>
+                            {% include 'components/partials/civ.html' with object=output only %}
+                        </dd>
+                    {% endif %}
+                {% endfor %}
+            </dl>
 
             {% if object.status == object.SUCCESS %}
                 <button class="btn btn-primary my-3"
@@ -191,32 +161,14 @@
                 <dt class="col-sm-3">Inputs</dt>
                 <dd class="col-sm-9">
                     <ul class="list-unstyled mb-0">
-                        {% for input in object.inputs.all %}
-                            {% for file in input.image.files.all %}
-                                <li>
-                                    <a class="badge badge-primary"
-                                       href="{{ file.file.url }}">
-                                        <i class="fa fa-download"></i>
-                                        Input {{ forloop.parentloop.counter }} {{ input.image.name|stem }}
-                                        ({{ file.file|suffix }})
-                                    </a>
-                                </li>
-                            {% endfor %}
-                            {% if input.file %}
-                                <li>
-                                    <a class="badge badge-primary"
-                                       href="{{ input.file.url }}" download="{{ input.file.name|name }}">
-                                        <i class="fa fa-download"></i>
-                                        Input {{ forloop.parentloop.counter }} {{ input.file.name|stem }}
-                                        ({{ input.file|suffix }})
-                                    </a>
-                                </li>
-                            {% endif %}
-                            {% if input.value is not None %}
-                                <li>
-                                    {{ input.interface.slug }}: {{ input.value|truncatechars_html:1000 }}
-                                </li>
-                            {% endif %}
+                        {% for input in object.inputs.all|sort_civs %}
+                            <li>
+                               {% include 'components/partials/civ.html' with object=input display_inline=True only %}
+                            </li>
+                        {% empty %}
+                            <li>
+                                <i class="fa fa-eye-slash text-warning"></i> No inputs were found
+                            </li>
                         {% endfor %}
                     </ul>
                 </dd>
@@ -225,40 +177,14 @@
                     <dt class="col-sm-3">Outputs</dt>
                     <dd class="col-sm-9">
                         <ul class="list-unstyled mb-0">
-                            {% for output in object.outputs.all %}
-                                {% if output.value is not None %}
-                                    <li>
-                                        <a href="#resultInfoModal"
-                                           data-toggle="modal"
-                                           data-target="#resultInfoModal"
-                                           data-title="Result Info"
-                                           data-output="{{ output.value }}"
-                                           data-pk="{{ object.pk }}"
-                                           class="badge badge-primary">
-                                            <i class="fa fa-download"></i>
-                                            {{ output.interface.title }}
-                                        </a>
-                                    </li>
-                                {% elif output.file %}
-                                    <li>
-                                        <a class="badge badge-primary"
-                                           href="{{ output.file.url }}">
-                                            <i class="fa fa-download"></i> {{ output.interface.title }}
-                                        </a>
-                                    </li>
-                                {% elif output.image %}
-                                    {% for file in output.image.files.all %}
-                                        <li>
-                                            <a class="badge badge-primary" href="{{ file.file.url }}">
-                                                <i class="fa fa-download"></i>
-                                                {{ output.interface.title }}{% if forloop.first and forloop.last %}{%else %} ({{forloop.counter }}){% endif %}
-                                            </a>
-                                        </li>
-                                    {% endfor %}
-                                {% endif %}
+
+                            {% for output in object.outputs.all|sort_civs %}
+                            <li>
+                                {% include 'components/partials/civ.html' with object=output display_inline=True only %}
+                            </li>
                             {% empty %}
                                 <li>
-                                    <i class="fa fa-eye-slash text-warning"></i> No output images were found
+                                    <i class="fa fa-eye-slash text-warning"></i> No outputs were found
                                 </li>
                             {% endfor %}
                         </ul>

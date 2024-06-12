@@ -818,6 +818,7 @@ class OverlaySegmentsMixin(models.Model):
 
 class ComponentInterface(OverlaySegmentsMixin):
     Kind = InterfaceKind.InterfaceKindChoices
+    SuperKind = InterfaceSuperKindChoices
 
     title = models.CharField(
         max_length=255,
@@ -898,6 +899,22 @@ class ComponentInterface(OverlaySegmentsMixin):
     @property
     def is_file_kind(self):
         return self.kind in InterfaceKind.interface_type_file()
+
+    @property
+    def is_thumbnail_kind(self):
+        return self.kind in [
+            InterfaceKindChoices.THUMBNAIL_JPG,
+            InterfaceKindChoices.THUMBNAIL_PNG,
+        ]
+
+    @property
+    def is_previewable(self):
+        return self.store_in_database and self.kind in [
+            InterfaceKindChoices.BOOL,
+            InterfaceKindChoices.FLOAT,
+            InterfaceKindChoices.INTEGER,
+            InterfaceKindChoices.STRING,
+        ]
 
     @property
     def super_kind(self):

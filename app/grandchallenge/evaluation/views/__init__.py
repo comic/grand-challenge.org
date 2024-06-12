@@ -27,7 +27,7 @@ from guardian.mixins import LoginRequiredMixin
 from grandchallenge.algorithms.forms import AlgorithmForPhaseForm
 from grandchallenge.algorithms.models import Algorithm, Job
 from grandchallenge.archives.models import Archive
-from grandchallenge.components.models import ImportStatusChoices, InterfaceKind
+from grandchallenge.components.models import ImportStatusChoices
 from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
@@ -570,40 +570,6 @@ class EvaluationDetail(ObjectPermissionRequiredMixin, DetailView):
         except ObjectDoesNotExist:
             predictions = None
 
-        files = []
-        thumbnails = []
-        charts = []
-        json = []
-        for output in self.object.outputs.all():
-            if (
-                output.interface.kind
-                == InterfaceKind.InterfaceKindChoices.CHART
-            ):
-                charts.append(output)
-            elif output.interface.kind in [
-                InterfaceKind.InterfaceKindChoices.PDF,
-                InterfaceKind.InterfaceKindChoices.CSV,
-                InterfaceKind.InterfaceKindChoices.ZIP,
-                InterfaceKind.InterfaceKindChoices.SQREG,
-            ]:
-                files.append(output)
-            elif output.interface.kind in [
-                InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
-                InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG,
-            ]:
-                thumbnails.append(output)
-            elif (
-                output.interface.kind
-                in [
-                    InterfaceKind.InterfaceKindChoices.BOOL,
-                    InterfaceKind.InterfaceKindChoices.FLOAT,
-                    InterfaceKind.InterfaceKindChoices.INTEGER,
-                    InterfaceKind.InterfaceKindChoices.STRING,
-                ]
-                and output.interface.store_in_database
-            ):
-                json.append(output)
-
         incomplete_jobs = filter_by_permission(
             queryset=Job.objects.exclude(status=Job.SUCCESS)
             .filter(
@@ -619,10 +585,6 @@ class EvaluationDetail(ObjectPermissionRequiredMixin, DetailView):
         context.update(
             {
                 "metrics": metrics,
-                "charts": charts,
-                "files": files,
-                "thumbnails": thumbnails,
-                "json": json,
                 "predictions": predictions,
                 "incomplete_jobs": incomplete_jobs,
                 "conversation_form": self.get_conversation_form(),

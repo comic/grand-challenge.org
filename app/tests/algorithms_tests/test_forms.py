@@ -6,6 +6,7 @@ from actstream.actions import is_following
 from grandchallenge.algorithms.forms import (
     AlgorithmForm,
     AlgorithmModelForm,
+    AlgorithmModelVersionControlForm,
     AlgorithmPublishForm,
     ImageActivateForm,
     JobCreateForm,
@@ -565,4 +566,60 @@ def test_algorithm_model_form():
     assert (
         "You have an existing model importing, please wait for it to complete"
         in str(form2.errors)
+    )
+
+
+@pytest.mark.django_db
+def test_model_version_control_form():
+    alg = AlgorithmFactory()
+    editor = UserFactory()
+    alg.add_editor(editor)
+
+    m1 = AlgorithmModelFactory(
+        algorithm=alg,
+        is_desired_version=False,
+        import_status=ImportStatusChoices.COMPLETED,
+    )
+    m2 = AlgorithmModelFactory(
+        algorithm=alg,
+        is_desired_version=True,
+        import_status=ImportStatusChoices.COMPLETED,
+    )
+    m3 = AlgorithmModelFactory(
+        algorithm=alg,
+        is_desired_version=False,
+        import_status=ImportStatusChoices.FAILED,
+    )
+    m4 = AlgorithmModelFactory(
+        algorithm=alg,
+        is_desired_version=True,
+        import_status=ImportStatusChoices.FAILED,
+    )
+
+    form = AlgorithmModelVersionControlForm(
+        user=editor, algorithm=alg, activate=True
+    )
+    assert m1 in form.fields["algorithm_model"].queryset
+    assert m2 not in form.fields["algorithm_model"].queryset
+    assert m3 not in form.fields["algorithm_model"].queryset
+    assert m4 not in form.fields["algorithm_model"].queryset
+
+    form = AlgorithmModelVersionControlForm(
+        user=editor, algorithm=alg, activate=False
+    )
+    assert m1 not in form.fields["algorithm_model"].queryset
+    assert m2 in form.fields["algorithm_model"].queryset
+    assert m3 not in form.fields["algorithm_model"].queryset
+    assert m4 in form.fields["algorithm_model"].queryset
+
+    AlgorithmModelFactory(
+        algorithm=alg,
+        is_desired_version=False,
+    )
+    form = AlgorithmModelVersionControlForm(
+        user=editor, algorithm=alg, activate=True, data={"algorithm_model": m1}
+    )
+    assert not form.is_valid()
+    assert "Model updating already in progress." in str(
+        form.errors["algorithm_model"]
     )

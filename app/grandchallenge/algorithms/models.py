@@ -369,6 +369,12 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
             )
         ).exists()
 
+    @property
+    def model_upload_in_progress(self):
+        return self.algorithm_models.filter(
+            import_status__in=(ImportStatusChoices.INITIALIZED,)
+        ).exists()
+
     @cached_property
     def default_workstation(self):
         """
