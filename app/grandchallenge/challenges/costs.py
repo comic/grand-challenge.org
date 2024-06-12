@@ -2,7 +2,11 @@ from datetime import timedelta
 
 from django.db.models import Count, Sum
 
-from grandchallenge.algorithms.models import AlgorithmImage, Job
+from grandchallenge.algorithms.models import (
+    AlgorithmImage,
+    AlgorithmModel,
+    Job,
+)
 from grandchallenge.cases.models import ImageFile
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.evaluation.models import Evaluation, Method
@@ -91,6 +95,12 @@ def update_size_in_storage_and_registry(
         .aggregate(Sum("size_in_storage"), Sum("size_in_registry"))
     )
 
+    algorithm_model_storage = (
+        AlgorithmModel.objects.filter(job__in=algorithm_jobs)
+        .distinct()
+        .aggregate(Sum("size_in_storage"))
+    )
+
     method_storage = (
         Method.objects.filter(phase__challenge=challenge)
         .distinct()
@@ -103,6 +113,7 @@ def update_size_in_storage_and_registry(
         output_image_storage,
         output_file_storage,
         algorithm_storage,
+        algorithm_model_storage,
         method_storage,
     ]
 

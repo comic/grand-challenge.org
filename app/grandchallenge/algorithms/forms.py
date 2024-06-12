@@ -1255,3 +1255,72 @@ class AlgorithmModelForm(SaveFormInitMixin, ModelForm):
     class Meta:
         model = AlgorithmModel
         fields = ("algorithm", "user_upload", "creator", "comment")
+
+
+class AlgorithmModelUpdateForm(SaveFormInitMixin, ModelForm):
+    class Meta:
+        model = AlgorithmModel
+        fields = ("comment",)
+
+
+class AlgorithmModelVersionControlForm(Form):
+    algorithm_model = ModelChoiceField(queryset=AlgorithmModel.objects.none())
+
+    def __init__(
+        self,
+        *args,
+        user,
+        algorithm,
+        activate,
+        hide_algorithm_model_input=False,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self._activate = activate
+        extra_filter = {}
+
+        if activate:
+            extra_filter = {"import_status": ImportStatusChoices.COMPLETED}
+
+        self.fields["algorithm_model"].queryset = (
+            get_objects_for_user(
+                user,
+                "algorithms.change_algorithmmodel",
+            )
+            .filter(
+                algorithm=algorithm,
+                is_desired_version=False if activate else True,
+                **extra_filter,
+            )
+            .select_related("algorithm")
+        )
+
+        if hide_algorithm_model_input:
+            self.fields["algorithm_model"].widget = HiddenInput()
+        self.helper = FormHelper(self)
+        if activate:
+            self.helper.layout.append(
+                Submit("save", "Activate algorithm model")
+            )
+            self.helper.form_action = reverse(
+                "algorithms:model-activate", kwargs={"slug": algorithm.slug}
+            )
+        else:
+            self.helper.layout.append(
+                Submit("save", "Deactivate algorithm model")
+            )
+            self.helper.form_action = reverse(
+                "algorithms:model-deactivate", kwargs={"slug": algorithm.slug}
+            )
+
+    def clean_algorithm_model(self):
+        algorithm_model = self.cleaned_data["algorithm_model"]
+
+        if (
+            algorithm_model.get_peer_models()
+            .filter(import_status=ImportStatusChoices.INITIALIZED)
+            .exists()
+        ):
+            raise ValidationError("Model updating already in progress.")
+
+        return algorithm_model

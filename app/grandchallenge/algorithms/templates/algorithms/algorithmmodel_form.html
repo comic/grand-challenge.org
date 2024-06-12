@@ -3,7 +3,7 @@
 {% load url %}
 
 {% block title %}
-    Create An Algorithm Model - {{ block.super }}
+    {% if object %}Update{% else %}Create{% endif %} An Algorithm Model - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -21,10 +21,15 @@
 
 {% block content %}
 
-    <h2>Create An Algorithm Model</h2>
+    <h2>{% if object %}Update{% else %}Create{% endif %} An Algorithm Model</h2>
 
     <p>
-        Upload a model that will be extracted to <code>/opt/ml/model/</code> during inference.
+    {% if object %}
+        Update the comment of
+    {% else %}
+        Upload
+    {% endif %}
+     a model that will be extracted to <code>/opt/ml/model/</code> during inference.
     </p>
 
     {% crispy form %}

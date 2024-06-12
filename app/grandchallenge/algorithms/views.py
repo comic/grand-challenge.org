@@ -44,6 +44,8 @@ from grandchallenge.algorithms.forms import (
     AlgorithmImageUpdateForm,
     AlgorithmImportForm,
     AlgorithmModelForm,
+    AlgorithmModelUpdateForm,
+    AlgorithmModelVersionControlForm,
     AlgorithmPermissionRequestUpdateForm,
     AlgorithmPublishForm,
     AlgorithmRepoForm,
@@ -1057,3 +1059,98 @@ class AlgorithmModelDetail(
     model = AlgorithmModel
     permission_required = "algorithms.view_algorithmmodel"
     raise_exception = True
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        form_kwargs = {
+            "initial": {"algorithm_model": self.object.pk},
+            "user": self.request.user,
+            "algorithm": self.object.algorithm,
+            "hide_algorithm_model_input": True,
+        }
+
+        context.update(
+            {
+                "model_activate_form": AlgorithmModelVersionControlForm(
+                    activate=True, **form_kwargs
+                ),
+                "model_deactivate_form": AlgorithmModelVersionControlForm(
+                    activate=False, **form_kwargs
+                ),
+                "import_status_choices": ImportStatusChoices,
+            }
+        )
+
+        return context
+
+
+class AlgorithmModelUpdate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    UpdateView,
+):
+    model = AlgorithmModel
+    form_class = AlgorithmModelUpdateForm
+    permission_required = "algorithms.change_algorithmmodel"
+    raise_exception = True
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update({"algorithm": self.object.algorithm})
+        return context
+
+
+class AlgorithmModelVersionControl(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    FormView,
+):
+    permission_required = "algorithms.change_algorithm"
+    raise_exception = True
+    template_name = "algorithms/model_version_control.html"
+    form_class = AlgorithmModelVersionControlForm
+    activate = None
+
+    def form_valid(self, form):
+        response = super().form_valid(form=form)
+        algorithm_model = form.cleaned_data["algorithm_model"]
+        if self.activate:
+            algorithm_model.mark_desired_version()
+        else:
+            algorithm_model.is_desired_version = False
+            algorithm_model.save()
+        return response
+
+    @cached_property
+    def algorithm(self):
+        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
+
+    def get_permission_object(self):
+        return self.algorithm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"object": self.algorithm})
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                "user": self.request.user,
+                "algorithm": self.algorithm,
+                "activate": self.activate,
+            }
+        )
+        return kwargs
+
+    def get_success_message(self, cleaned_data):
+        if self.activate:
+            return "Model successfully activated."
+        else:
+            "Model successfully deactivated."
+
+    def get_success_url(self):
+        return self.algorithm.get_absolute_url() + "#models"

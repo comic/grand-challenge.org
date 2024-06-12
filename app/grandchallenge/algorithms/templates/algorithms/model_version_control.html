@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    Algorithm Model Version Management - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'algorithms:list' %}">Algorithms</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ object.get_absolute_url }}">{{ object.title }}
+        </a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Algorithm model version management
+        </li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Algorithm model version management</h2>
+
+    {% if not object.is_desired_version %}
+        <div class="mb-2">Activating a model will result in this model being used for all subsequent algorithm runs.</div>
+    {% endif %}
+
+    {% crispy form %}
+{% endblock %}
