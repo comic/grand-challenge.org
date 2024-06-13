@@ -337,7 +337,6 @@ class CivSetListView(
         "values__image__name",
         "values__file",
     ]
-    text_align = "left"
     default_sort_order = "asc"
     columns = [
         Column(title="Values"),
