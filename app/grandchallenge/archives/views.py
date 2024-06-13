@@ -574,9 +574,7 @@ class ArchiveItemJobListView(
     row_template = "algorithms/job_list_row.html"
 
     search_fields = [
-        "pk",
-        "creator__username",
-        "comment",
+        *JobsList.search_fields,
         # Outputs
         "outputs__interface__title",
         "outputs__interface__description",
