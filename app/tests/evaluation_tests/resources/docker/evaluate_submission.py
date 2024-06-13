@@ -1,4 +1,5 @@
 import json
+import ssl
 import urllib.error
 import urllib.request
 from csv import DictReader
@@ -21,8 +22,12 @@ def write_metrics(metrics: dict):
 
 
 if __name__ == "__main__":
+    ssl_context = ssl.create_default_context()
+
     try:
-        urllib.request.urlopen("https://google.com/", timeout=5)
+        urllib.request.urlopen(
+            "https://google.com/", timeout=5, context=ssl_context
+        )
     except urllib.error.URLError as e:
         warn(f"Could not google: {e.reason}")
 

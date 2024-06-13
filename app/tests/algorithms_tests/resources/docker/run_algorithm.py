@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+import ssl
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -20,8 +21,12 @@ if __name__ == "__main__":
     # is free to determine the file type. The only limitation is that this will
     # be a single file.
 
+    ssl_context = ssl.create_default_context()
+
     try:
-        urllib.request.urlopen("https://google.com/", timeout=5)
+        urllib.request.urlopen(
+            "https://google.com/", timeout=5, context=ssl_context
+        )
     except urllib.error.URLError as e:
         warn(f"Could not google: {e.reason}")
 
