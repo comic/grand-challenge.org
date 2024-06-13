@@ -670,6 +670,7 @@ class JobsList(PaginatedTableListView):
                 "outputs__image__files",
                 "outputs__interface",
                 "inputs__image__files",
+                "inputs__interface",
                 "viewers__user_set",
             )
             .select_related(
@@ -704,6 +705,7 @@ class JobDetail(ObjectPermissionRequiredMixin, DetailView):
             "outputs__image__files",
             "outputs__interface",
             "inputs__image__files",
+            "inputs__interface",
             "viewers__user_set__user_profile",
             "viewers__user_set__verification",
             "viewer_groups",
