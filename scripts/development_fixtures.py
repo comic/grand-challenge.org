@@ -21,7 +21,6 @@ from machina.apps.forum.models import Forum
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
 from grandchallenge.anatomy.models import BodyRegion, BodyStructure
 from grandchallenge.archives.models import Archive, ArchiveItem
-from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.challenges.models import Challenge, ChallengeSeries
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -49,10 +48,8 @@ from grandchallenge.reader_studies.models import (
 from grandchallenge.task_categories.models import TaskType
 from grandchallenge.verifications.models import Verification
 from grandchallenge.workstations.models import Workstation
-from scripts.algorithm_evaluation_fixtures import (
-    _gc_demo_algorithm,
-    _uploaded_image_file,
-)
+from scripts.algorithm_evaluation_fixtures import _gc_demo_algorithm
+from scripts.component_interface_value_fixtures import _create_image
 
 logger = logging.getLogger(__name__)
 
@@ -326,21 +323,14 @@ def _create_task_types_regions_modalities(users):
 
 
 def _create_algorithm_demo(users):
-    cases_image = Image.objects.create(
-        name="test_image.mha",
-        width=10,
-        height=10,
-    )
-
-    im_file = ImageFile.objects.create(image=cases_image)
-
-    with _uploaded_image_file() as f:
-        im_file.file.save("test_image.mha", f)
-        im_file.save()
 
     (input_civ, _) = ComponentInterfaceValue.objects.get_or_create(
         interface=ComponentInterface.objects.get(slug="generic-medical-image"),
-        image=cases_image,
+        image=_create_image(
+            name="test_image.mha",
+            width=10,
+            height=10,
+        ),
     )
 
     algorithm = Algorithm.objects.create(
@@ -420,14 +410,14 @@ def _create_reader_studies(users):
     display_set = DisplaySet.objects.create(
         reader_study=reader_study,
     )
-    image = Image(
+    image = _create_image(
         name="test_image2.mha",
         modality=ImagingModality.objects.get(modality="MR"),
         width=128,
         height=128,
         color_space="RGB",
     )
-    image.save()
+
     annotation_interface = ComponentInterface(
         store_in_database=True,
         relative_path="annotation.json",
@@ -461,19 +451,18 @@ def _create_archive(users):
     archive.editors_group.user_set.add(users["archive"])
     archive.uploaders_group.user_set.add(users["demo"])
 
-    image = Image(
-        name="test_image2.mha",
-        modality=ImagingModality.objects.get(modality="MR"),
-        width=128,
-        height=128,
-        color_space="RGB",
-    )
-    image.save()
     item = ArchiveItem.objects.create(archive=archive)
     civ = ComponentInterfaceValue.objects.create(
         interface=ComponentInterface.objects.get(slug="generic-medical-image"),
-        image=image,
+        image=_create_image(
+            name="test_image2.mha",
+            modality=ImagingModality.objects.get(modality="MR"),
+            width=128,
+            height=128,
+            color_space="RGB",
+        ),
     )
+
     item.values.add(civ)
 
 

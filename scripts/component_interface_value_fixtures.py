@@ -12,6 +12,7 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.evaluation.models import Evaluation
+from grandchallenge.modalities.models import ImagingModality
 from scripts.algorithm_evaluation_fixtures import _uploaded_image_file
 
 
@@ -114,7 +115,13 @@ def _create_civ_rich_algorithm_job(creator, interfaces):
     )
     result_json = ComponentInterface.objects.get(slug="results-json-file")
 
-    image = _create_image()
+    image = _create_image(
+        name="test_image3.mha",
+        modality=ImagingModality.objects.get(modality="MR"),
+        width=128,
+        height=128,
+        color_space="RGB",
+    )
 
     algorithm_job.inputs.add(
         # Generic image
@@ -197,12 +204,18 @@ def _create_civ_rich_algorithm_job(creator, interfaces):
     )
 
 
-def _create_image():
-    im = Image.objects.create(name="Test Image", width=10, height=10)
+image_counter = 0
+
+
+def _create_image(**kwargs):
+    global image_counter
+
+    im = Image.objects.create(**kwargs)
     im_file = ImageFile.objects.create(image=im)
 
     with _uploaded_image_file() as f:
-        im_file.file.save("test_image.mha", f)
+        im_file.file.save(f"test_image_{image_counter}.mha", f)
+        image_counter += 1
         im_file.save()
 
     return im
