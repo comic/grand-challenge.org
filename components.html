@@ -107,6 +107,10 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#grandchallenge.components.models.OverlaySegmentsMixin"><code class="docutils literal notranslate"><span class="pre">OverlaySegmentsMixin</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.components.models.Tarball"><code class="docutils literal notranslate"><span class="pre">Tarball</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.Tarball.save"><code class="docutils literal notranslate"><span class="pre">Tarball.save()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="workstations.html">Workstations</a></li>
@@ -1074,6 +1078,45 @@ optional: “name”, “probability”</p>
 <dd class="field-odd"><p><strong>look_up_table</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v5.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <code class="xref py py-class docutils literal notranslate"><span class="pre">LookUpTable</span></code>) – Look up table. The look-up table that is applied when an overlay image is first shown</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grandchallenge.components.models.Tarball">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.components.models.</span></span><span class="sig-name descname"><span class="pre">Tarball</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#Tarball"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.Tarball" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.UUIDField" title="(in Django v5.0)"><em>UUIDField</em></a>) – Primary key: Id</p></li>
+<li><p><strong>created</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v5.0)"><em>DateTimeField</em></a>) – Created</p></li>
+<li><p><strong>modified</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v5.0)"><em>DateTimeField</em></a>) – Modified</p></li>
+<li><p><strong>import_status</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.PositiveSmallIntegerField" title="(in Django v5.0)"><em>PositiveSmallIntegerField</em></a>) – Import status</p></li>
+<li><p><strong>status</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.TextField" title="(in Django v5.0)"><em>TextField</em></a>) – Status</p></li>
+<li><p><strong>sha256</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.CharField" title="(in Django v5.0)"><em>CharField</em></a>) – Sha256</p></li>
+<li><p><strong>size_in_storage</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.PositiveBigIntegerField" title="(in Django v5.0)"><em>PositiveBigIntegerField</em></a>) – Size in storage. The number of bytes stored in the storage backend</p></li>
+<li><p><strong>comment</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.TextField" title="(in Django v5.0)"><em>TextField</em></a>) – Comment. Add any information (e.g. version ID) about this object here.</p></li>
+<li><p><strong>is_desired_version</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.BooleanField" title="(in Django v5.0)"><em>BooleanField</em></a>) – Is desired version</p></li>
+</ul>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>creator</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v5.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.User" title="(in Django v5.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code></a>) – Creator</p></li>
+<li><p><strong>user_upload</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v5.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <code class="xref py py-class docutils literal notranslate"><span class="pre">UserUpload</span></code>) – User upload</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="grandchallenge.components.models.Tarball.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#Tarball.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.Tarball.save" title="Link to this definition"></a></dt>
+<dd><p>Save the current instance. Override this in a subclass if you want to
+control the saving process.</p>
+<p>The ‘force_insert’ and ‘force_update’ parameters can be used to insist
+that the “save” must be an SQL insert or update (or equivalent for
+non-SQL backends), respectively. Normally, they should not be set.</p>
+</dd></dl>
+
 </dd></dl>
 
 </section>

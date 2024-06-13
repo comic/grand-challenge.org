@@ -131,7 +131,7 @@
     <span class="n">validate_no_slash_at_ends</span><span class="p">,</span>
     <span class="n">validate_safe_path</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.core.models</span> <span class="kn">import</span> <span class="n">FieldChangeMixin</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.core.models</span> <span class="kn">import</span> <span class="n">FieldChangeMixin</span><span class="p">,</span> <span class="n">UUIDModel</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.core.storage</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">private_s3_storage</span><span class="p">,</span>
     <span class="n">protected_s3_storage</span><span class="p">,</span>
@@ -143,6 +143,7 @@
     <span class="n">MimeTypeValidator</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.uploads.models</span> <span class="kn">import</span> <span class="n">UserUpload</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.uploads.validators</span> <span class="kn">import</span> <span class="n">validate_gzip_mimetype</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.workstation_configs.models</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">OVERLAY_SEGMENTS_SCHEMA</span><span class="p">,</span>
     <span class="n">LookUpTable</span><span class="p">,</span>
@@ -2299,6 +2300,90 @@
             <span class="k">for</span> <span class="n">interface</span> <span class="ow">in</span> <span class="n">interfaces_and_values</span><span class="o">.</span><span class="n">interfaces</span>
         <span class="p">}</span>
         <span class="k">return</span> <span class="n">values_for_interfaces</span>
+
+
+<div class="viewcode-block" id="Tarball">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.Tarball">[docs]</a>
+<span class="k">class</span> <span class="nc">Tarball</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
+    <span class="n">creator</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">settings</span><span class="o">.</span><span class="n">AUTH_USER_MODEL</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span>
+    <span class="p">)</span>
+    <span class="n">import_status</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
+        <span class="n">choices</span><span class="o">=</span><span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">INITIALIZED</span><span class="p">,</span>
+        <span class="n">db_index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span><span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">user_upload</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">UserUpload</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span><span class="p">,</span>
+        <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">validate_gzip_mimetype</span><span class="p">],</span>
+    <span class="p">)</span>
+    <span class="n">sha256</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">71</span><span class="p">)</span>
+    <span class="n">size_in_storage</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveBigIntegerField</span><span class="p">(</span>
+        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The number of bytes stored in the storage backend&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">comment</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Add any information (e.g. version ID) about this object here.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">is_desired_version</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">abstract</span> <span class="o">=</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="Tarball.save">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.Tarball.save">[docs]</a>
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assign_permissions</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span> <span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="k">def</span> <span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="k">def</span> <span class="nf">get_peer_tarballs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="nd">@transaction</span><span class="o">.</span><span class="n">atomic</span>
+    <span class="k">def</span> <span class="nf">mark_desired_version</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">peer_tarballs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">peer_tarballs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">peer_tarballs</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_peer_tarballs</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">tb</span> <span class="ow">in</span> <span class="n">peer_tarballs</span><span class="p">:</span>
+            <span class="n">tb</span><span class="o">.</span><span class="n">is_desired_version</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_desired_version</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">peer_tarballs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">bulk_update</span><span class="p">(</span>
+            <span class="n">peer_tarballs</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;is_desired_version&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">import_status_context</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="o">==</span> <span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">COMPLETED</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;success&quot;</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="ow">in</span> <span class="p">{</span>
+            <span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">FAILED</span><span class="p">,</span>
+            <span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">CANCELLED</span><span class="p">,</span>
+        <span class="p">}:</span>
+            <span class="k">return</span> <span class="s2">&quot;danger&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;info&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">import_in_progress</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="o">==</span> <span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">INITIALIZED</span></div>
+
 </pre></div>
 
            </div>
