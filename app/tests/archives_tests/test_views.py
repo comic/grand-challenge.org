@@ -6,8 +6,8 @@ import pytest
 from guardian.shortcuts import assign_perm, remove_perm
 from requests import put
 
-from grandchallenge.algorithms.models import Job
 from grandchallenge.archives.models import ArchiveItem
+from grandchallenge.archives.views import ArchiveItemJobListView
 from grandchallenge.cases.widgets import WidgetChoices
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.subdomains.utils import reverse
@@ -1005,38 +1005,42 @@ def test_archive_item_bulk_delete_permissions(client):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "algorithm_job_status, match",
+    "distractor_generator",
     (
-        (Job.SUCCESS, True),
-        (Job.PENDING, False),
-        (Job.STARTED, False),
-        (Job.RETRY, False),
-        (Job.FAILURE, False),
-        (Job.CANCELLED, False),
-        (Job.PROVISIONING, False),
-        (Job.PROVISIONED, False),
-        (Job.EXECUTING, False),
-        (Job.EXECUTED, False),
-        (Job.PARSING, False),
-        (Job.EXECUTING_PREREQUISITES, False),
+        # Different CIVs in distractor
+        lambda civs: [ComponentInterfaceValueFactory()],
+        # Partial CIVs in distractor
+        lambda civs: [civs[0]],
+        # Extra CIVs in distractor
+        lambda civs: [*civs, ComponentInterfaceValueFactory()],
     ),
 )
-def test_archive_item_success_algorithm_job_as_input(
-    algorithm_job_status, match, client
-):
+def test_archive_item_job_list_filter(distractor_generator, client):
     archive = ArchiveFactory()
     archive.add_editor(editor := UserFactory())
 
     ai = ArchiveItemFactory(archive=archive)
-    ai.values.add(
+    civs = [
         ComponentInterfaceValueFactory(),
-    )
+        ComponentInterfaceValueFactory(),
+    ]
+    ai.values.set(civs)
 
-    aj = AlgorithmJobFactory(status=algorithm_job_status)
-    aj.inputs.set(ai.values.all())
+    aj1 = AlgorithmJobFactory(public=True)
+    aj2 = AlgorithmJobFactory(public=True)
+    for aj in aj1, aj2:
+        aj.inputs.set(ai.values.all())
+
+    distractor = AlgorithmJobFactory(public=True)
+    distractor_civs = distractor_generator(civs)
+    distractor.inputs.set(distractor_civs)
+
+    # Sanity
+    sort_column = 1
+    assert ArchiveItemJobListView.columns[sort_column].sort_field == "created"
 
     response = get_view_for_user(
-        viewname="archives:item-detail",
+        viewname="archives:item-job-list",
         client=client,
         method=client.get,
         reverse_kwargs={
@@ -1044,13 +1048,105 @@ def test_archive_item_success_algorithm_job_as_input(
             "pk": ai.pk,
         },
         user=editor,
+        follow=True,
+        data={
+            "length": 10,
+            "draw": 1,
+            "order[0][dir]": "asc",
+            "order[0][column]": sort_column,
+        },
+        **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
     )
 
     assert response.status_code == 200  # Sanity
 
-    jobs = response.context["success_algorithm_jobs"]
+    resp = response.json()
 
-    if match:
-        assert {aj.pk} == {job.pk for job in jobs}
-    else:
-        assert not jobs.exists()
+    data = resp["data"]
+
+    assert len(data) == 2, "distractor is not selected"
+
+    assert resp["recordsTotal"] == 2, "page length has all items"
+
+    # Sanity
+    detail_column = 0
+    assert ArchiveItemJobListView.columns[detail_column].title == "Detail"
+
+    assert str(aj1.pk) in resp["data"][0][detail_column]
+    assert str(aj2.pk) in resp["data"][1][detail_column]
+
+
+@pytest.mark.django_db
+def test_archive_item_job_list_permissions(client):
+    archive = ArchiveFactory()
+    archive.add_editor(editor := UserFactory())
+    archive.add_uploader(uploader := UserFactory())
+
+    ai = ArchiveItemFactory(archive=archive)
+
+    def get_view(_user):
+        return get_view_for_user(
+            viewname="archives:item-job-list",
+            client=client,
+            method=client.get,
+            reverse_kwargs={
+                "slug": archive.slug,
+                "pk": ai.pk,
+            },
+            user=_user,
+        )
+
+    # As editor or uploader, one can view
+    for user in uploader, editor:
+        response = get_view(user)
+        assert response.status_code == 200
+
+    # Removing the roles works
+    archive.remove_editor(editor)
+    archive.remove_uploader(uploader)
+
+    for user in (
+        editor,
+        uploader,
+        UserFactory(),  # Random user cannot view job list
+    ):
+        response = get_view(user)
+        assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_archive_item_detail_permissions(client):
+    archive = ArchiveFactory()
+    archive.add_editor(editor := UserFactory())
+    archive.add_uploader(uploader := UserFactory())
+
+    ai = ArchiveItemFactory(archive=archive)
+
+    def get_view(_user):
+        return get_view_for_user(
+            viewname="archives:item-detail",
+            client=client,
+            method=client.get,
+            reverse_kwargs={
+                "slug": archive.slug,
+                "pk": ai.pk,
+            },
+            user=_user,
+        )
+
+    # As editor and uploader, one can view
+    for user in uploader, editor:
+        response = get_view(user)
+        assert response.status_code == 200
+
+    # Removing the roles works
+    archive.remove_editor(editor)
+    archive.remove_uploader(uploader)
+
+    for user in (
+        editor,
+        uploader,
+        UserFactory(),  # Random user cannot view archive item
+    ):
+        response = get_view(user)
+        assert response.status_code == 403
