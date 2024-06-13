@@ -411,7 +411,7 @@ def test_display_set_detail_permissions(client):
     for user in (
         editor,
         reader,
-        UserFactory(),  # Random user cannot view archive item
+        UserFactory(),  # Random user cannot view display set
     ):
         response = get_view(user)
         assert response.status_code == 403

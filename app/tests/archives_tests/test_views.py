@@ -1128,6 +1128,19 @@ def test_archive_item_job_list_permissions_filter(
 
 @pytest.mark.django_db
 def test_archive_item_job_list_permissions(client):
+    _test_archive_item_permissions(
+        viewname="archives:item-job-list", client=client
+    )
+
+
+@pytest.mark.django_db
+def test_archive_item_detail_permissions(client):
+    _test_archive_item_permissions(
+        viewname="archives:item-detail", client=client
+    )
+
+
+def _test_archive_item_permissions(viewname, client):
     archive = ArchiveFactory()
     archive.add_editor(editor := UserFactory())
     archive.add_uploader(uploader := UserFactory())
@@ -1136,7 +1149,7 @@ def test_archive_item_job_list_permissions(client):
 
     def get_view(_user):
         return get_view_for_user(
-            viewname="archives:item-job-list",
+            viewname=viewname,
             client=client,
             method=client.get,
             reverse_kwargs={
@@ -1158,45 +1171,7 @@ def test_archive_item_job_list_permissions(client):
     for user in (
         editor,
         uploader,
-        UserFactory(),  # Random user cannot view job list
-    ):
-        response = get_view(user)
-        assert response.status_code == 403
-
-
-@pytest.mark.django_db
-def test_archive_item_detail_permissions(client):
-    archive = ArchiveFactory()
-    archive.add_editor(editor := UserFactory())
-    archive.add_uploader(uploader := UserFactory())
-
-    ai = ArchiveItemFactory(archive=archive)
-
-    def get_view(_user):
-        return get_view_for_user(
-            viewname="archives:item-detail",
-            client=client,
-            method=client.get,
-            reverse_kwargs={
-                "slug": archive.slug,
-                "pk": ai.pk,
-            },
-            user=_user,
-        )
-
-    # As editor and uploader, one can view
-    for user in uploader, editor:
-        response = get_view(user)
-        assert response.status_code == 200
-
-    # Removing the roles works
-    archive.remove_editor(editor)
-    archive.remove_uploader(uploader)
-
-    for user in (
-        editor,
-        uploader,
-        UserFactory(),  # Random user cannot view archive item
+        UserFactory(),  # Random user cannot view
     ):
         response = get_view(user)
         assert response.status_code == 403

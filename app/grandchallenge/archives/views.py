@@ -589,6 +589,8 @@ class ArchiveItemJobListView(
     )
     raise_exception = True
 
+    login_url = reverse_lazy("account_login")
+
     @cached_property
     def archive_item(self):
         return get_object_or_404(ArchiveItem, pk=self.kwargs["pk"])
