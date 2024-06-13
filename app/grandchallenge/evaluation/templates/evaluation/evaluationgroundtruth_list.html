@@ -1,0 +1,66 @@
+{% extends "pages/challenge_settings_base.html" %}
+{% load url %}
+{% load static %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Ground Truths for {{ phase.title }}</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+
+    <h2>Ground Truths for {{ phase.title }}</h2>
+    <p>You can upload your ground truth separately from the method container. If provided, the ground truth will be extracted to <code>/opt/ml/input/data/ground_truth/</code> during runtime.</p>
+
+    {% include "evaluation/partials/phase_admin_warnings.html" with phase=phase %}
+
+    <p>
+        <a class="btn btn-primary"
+           href="{% url 'evaluation:ground-truth-create' challenge_short_name=challenge.short_name slug=phase.slug %}">
+            <i class="fas fa-plus"></i> Add a new ground truth
+        </a>
+    </p>
+
+    <div class="table-responsive">
+        <table class="table table-hover table-borderless table-sm" id="groundtruthsTable">
+            <thead class="thead-light">
+            <tr>
+                <th class="nonSortable"></th>
+                <th class="nonSortable">Active</th>
+                <th>Created</th>
+                <th>Uploaded by</th>
+                <th>Comment</th>
+                <th class="nonSortable">Status</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for gt in object_list %}
+                <tr>
+                    <td>
+                        <a href="{{ gt.get_absolute_url }}"><i class="fa fa-eye"></i></a>
+                    </td>
+                    <td class="d-flex justify-content-center">{% if gt.is_desired_version %}<i class="fa fa-check-circle text-success pt-1"></i>{% else %}<i class="fas fa-times-circle text-danger pt-1"></i>{% endif %}</td>
+                    <td data-order="{{ gt.created|date:"U" }}">{{ gt.created }}</td>
+                    <td><a
+                            href="{% url 'profile-detail' gt.creator.username %}">{{ gt.creator }}</a>
+                    </td>
+                    <td>{{ gt.comment }}</td>
+                    <td>{{ gt.status }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="module" src="{% static 'js/evaluation/groundtruths_table.mjs' %}"></script>
+{% endblock %}

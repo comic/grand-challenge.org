@@ -70,10 +70,14 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):
         return
 
     evaluation, created = Evaluation.objects.get_or_create(
-        submission=submission, method=method
+        submission=submission,
+        method=method,
+        ground_truth=submission.phase.active_ground_truth,
     )
     if not created:
-        logger.info("Evaluation already created for this submission")
+        logger.info(
+            "Evaluation already created for this submission, method and ground truth."
+        )
         return
 
     if submission.algorithm_image:

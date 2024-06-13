@@ -9,13 +9,17 @@ from requests import put
 
 from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.cases.models import RawImageUploadSession
-from grandchallenge.components.models import ComponentInterfaceValue
+from grandchallenge.components.models import (
+    ComponentInterfaceValue,
+    ImportStatusChoices,
+)
 from grandchallenge.components.tasks import (
     _get_image_config_and_sha256,
     _repo_login_and_run,
     _retry,
     add_file_to_object,
     add_image_to_object,
+    assign_tarball_from_upload,
     civ_value_to_file,
     encode_b64j,
     execute_job,
@@ -28,6 +32,7 @@ from grandchallenge.notifications.models import Notification
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
+    AlgorithmModelFactory,
 )
 from tests.archives_tests.factories import ArchiveItemFactory
 from tests.cases_tests.factories import RawImageUploadSessionFactory
@@ -35,10 +40,17 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
-from tests.evaluation_tests.factories import MethodFactory
+from tests.evaluation_tests.factories import (
+    EvaluationGroundTruthFactory,
+    MethodFactory,
+    PhaseFactory,
+)
 from tests.factories import ImageFactory, UserFactory, WorkstationImageFactory
 from tests.reader_studies_tests.factories import DisplaySetFactory
-from tests.uploads_tests.factories import UserUploadFactory
+from tests.uploads_tests.factories import (
+    UserUploadFactory,
+    create_upload_from_file,
+)
 
 
 @pytest.mark.django_db
@@ -447,3 +459,72 @@ def test_get_image_config_and_sha256(container_image_file):
         _get_image_config_and_sha256(instance=ai)["image_sha256"]
         == "1bf4ef3c617a6f34a728ec2a5cff1b1dcb926d2d0b93c5bccd830a7918d833da"
     )
+
+
+@pytest.mark.parametrize(
+    "factory,related_factory,related_model_lookup,field_to_copy",
+    [
+        (
+            AlgorithmModelFactory,
+            AlgorithmFactory,
+            "algorithm",
+            "model",
+        ),
+        (EvaluationGroundTruthFactory, PhaseFactory, "phase", "ground_truth"),
+    ],
+)
+@pytest.mark.django_db()
+def test_assign_tarball_from_upload(
+    settings, factory, related_factory, related_model_lookup, field_to_copy
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    user = UserFactory()
+    base_obj = related_factory()
+    upload = create_upload_from_file(
+        creator=user,
+        file_path=Path(__file__).parent
+        / "resources"
+        / "hello-scratch-oci.tar.gz",
+    )
+    kwargs = {
+        "creator": user,
+        "user_upload": upload,
+        related_model_lookup: base_obj,
+    }
+    obj = factory(**kwargs)
+    assert obj.is_desired_version is False
+
+    assign_tarball_from_upload(
+        app_label=obj._meta.app_label,
+        model_name=obj._meta.model_name,
+        tarball_pk=obj.pk,
+        field_to_copy=field_to_copy,
+    )
+    obj.refresh_from_db()
+    assert obj.is_desired_version
+    assert obj.import_status == ImportStatusChoices.COMPLETED
+
+    upload2 = create_upload_from_file(
+        creator=user,
+        file_path=Path(__file__).parent
+        / "resources"
+        / "hello-scratch-oci.tar.gz",
+    )
+    kwargs["user_upload"] = upload2
+    obj2 = factory(**kwargs)
+    assign_tarball_from_upload(
+        app_label=obj2._meta.app_label,
+        model_name=obj2._meta.model_name,
+        tarball_pk=obj2.pk,
+        field_to_copy=field_to_copy,
+    )
+    obj2.refresh_from_db()
+    assert not obj2.is_desired_version
+    assert obj2.import_status == ImportStatusChoices.FAILED
+    assert "with this sha256 already exists." in obj2.status
+    assert not obj2.user_upload
+    with pytest.raises(ValueError):
+        getattr(obj2, field_to_copy).file

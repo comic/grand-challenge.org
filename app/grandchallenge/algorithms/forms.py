@@ -50,10 +50,7 @@ from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
     AlgorithmSerializer,
 )
-from grandchallenge.algorithms.tasks import (
-    assign_algorithm_model_from_upload,
-    import_remote_algorithm_image,
-)
+from grandchallenge.algorithms.tasks import import_remote_algorithm_image
 from grandchallenge.components.form_fields import InterfaceFormField
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.components.models import (
@@ -63,6 +60,7 @@ from grandchallenge.components.models import (
     InterfaceKindChoices,
 )
 from grandchallenge.components.serializers import ComponentInterfaceSerializer
+from grandchallenge.components.tasks import assign_tarball_from_upload
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
@@ -1245,8 +1243,13 @@ class AlgorithmModelForm(SaveFormInitMixin, ModelForm):
     def save(self, *args, **kwargs):
         instance = super().save(*args, **kwargs)
         on_commit(
-            assign_algorithm_model_from_upload.signature(
-                kwargs={"algorithm_model_pk": instance.pk},
+            assign_tarball_from_upload.signature(
+                kwargs={
+                    "app_label": instance._meta.app_label,
+                    "model_name": instance._meta.model_name,
+                    "tarball_pk": instance.pk,
+                    "field_to_copy": "model",
+                },
                 immutable=True,
             ).apply_async
         )
@@ -1317,7 +1320,7 @@ class AlgorithmModelVersionControlForm(Form):
         algorithm_model = self.cleaned_data["algorithm_model"]
 
         if (
-            algorithm_model.get_peer_models()
+            algorithm_model.get_peer_tarballs()
             .filter(import_status=ImportStatusChoices.INITIALIZED)
             .exists()
         ):

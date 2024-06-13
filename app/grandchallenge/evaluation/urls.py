@@ -9,6 +9,11 @@ from grandchallenge.evaluation.views import (
     EvaluationAdminList,
     EvaluationCreate,
     EvaluationDetail,
+    EvaluationGroundTruthCreate,
+    EvaluationGroundTruthDetail,
+    EvaluationGroundTruthList,
+    EvaluationGroundTruthUpdate,
+    EvaluationGroundTruthVersionManagement,
     EvaluationList,
     EvaluationUpdate,
     LeaderboardDetail,
@@ -68,6 +73,36 @@ urlpatterns = [
         "<slug>/algorithms/create/",
         PhaseAlgorithmCreate.as_view(),
         name="phase-algorithm-create",
+    ),
+    path(
+        "<slug>/ground-truths/",
+        EvaluationGroundTruthList.as_view(),
+        name="ground-truth-list",
+    ),
+    path(
+        "<slug>/ground-truths/activate/",
+        EvaluationGroundTruthVersionManagement.as_view(activate=True),
+        name="ground-truth-activate",
+    ),
+    path(
+        "<slug>/ground-truths/create/",
+        EvaluationGroundTruthCreate.as_view(),
+        name="ground-truth-create",
+    ),
+    path(
+        "<slug>/ground-truths/deactivate/",
+        EvaluationGroundTruthVersionManagement.as_view(activate=False),
+        name="ground-truth-deactivate",
+    ),
+    path(
+        "<slug>/ground-truths/<uuid:pk>/",
+        EvaluationGroundTruthDetail.as_view(),
+        name="ground-truth-detail",
+    ),
+    path(
+        "<slug>/ground-truths/<uuid:pk>/update/",
+        EvaluationGroundTruthUpdate.as_view(),
+        name="ground-truth-update",
     ),
     path(
         "<slug>/leaderboard/", LeaderboardDetail.as_view(), name="leaderboard"

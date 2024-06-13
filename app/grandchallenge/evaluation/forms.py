@@ -7,6 +7,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Exists, OuterRef
+from django.db.transaction import on_commit
 from django.forms import (
     CheckboxInput,
     CheckboxSelectMultiple,
@@ -14,6 +15,7 @@ from django.forms import (
     HiddenInput,
     IntegerField,
     ModelChoiceField,
+    ModelForm,
     ModelMultipleChoiceField,
 )
 from django.utils.html import format_html
@@ -25,7 +27,11 @@ from grandchallenge.algorithms.forms import UserAlgorithmsForPhaseMixin
 from grandchallenge.algorithms.models import Job
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
 from grandchallenge.components.forms import ContainerImageForm
-from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ImportStatusChoices,
+)
+from grandchallenge.components.tasks import assign_tarball_from_upload
 from grandchallenge.core.forms import (
     SaveFormInitMixin,
     WorkstationUserFilterMixin,
@@ -40,6 +46,7 @@ from grandchallenge.evaluation.models import (
     EXTRA_RESULT_COLUMNS_SCHEMA,
     CombinedLeaderboard,
     Evaluation,
+    EvaluationGroundTruth,
     Method,
     Phase,
     Submission,
@@ -656,3 +663,148 @@ class ConfigureAlgorithmPhasesForm(SaveFormInitMixin, Form):
             self.fields["algorithm_time_limit"].initial = (
                 Phase._meta.get_field("algorithm_time_limit").get_default()
             )
+
+
+class EvaluationGroundTruthForm(SaveFormInitMixin, ModelForm):
+    phase = ModelChoiceField(widget=HiddenInput(), queryset=None)
+    user_upload = ModelChoiceField(
+        widget=UserUploadSingleWidget(
+            allowed_file_types=[
+                "application/x-gzip",
+                "application/gzip",
+            ]
+        ),
+        label="Ground Truth",
+        queryset=None,
+        help_text=(
+            ".tar.gz file of the ground truth that will be extracted"
+            " to /opt/ml/input/data/ground_truth/ during inference"
+        ),
+    )
+    creator = ModelChoiceField(
+        widget=HiddenInput(),
+        queryset=(
+            get_user_model()
+            .objects.exclude(username=settings.ANONYMOUS_USER_NAME)
+            .filter(verification__is_verified=True)
+        ),
+    )
+
+    def __init__(self, *args, user, phase, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["user_upload"].queryset = get_objects_for_user(
+            user,
+            "uploads.change_userupload",
+        ).filter(status=UserUpload.StatusChoices.COMPLETED)
+
+        self.fields["creator"].initial = user
+        self.fields["phase"].queryset = Phase.objects.filter(pk=phase.pk)
+        self.fields["phase"].initial = phase
+
+    def clean_creator(self):
+        creator = self.cleaned_data["creator"]
+
+        if EvaluationGroundTruth.objects.filter(
+            import_status=ImportStatusChoices.INITIALIZED,
+            creator=creator,
+        ).exists():
+            self.add_error(
+                None,
+                "You have an existing ground truth importing, please wait for it to complete",
+            )
+
+        return creator
+
+    def save(self, *args, **kwargs):
+        instance = super().save(*args, **kwargs)
+        on_commit(
+            assign_tarball_from_upload.signature(
+                kwargs={
+                    "app_label": instance._meta.app_label,
+                    "model_name": instance._meta.model_name,
+                    "tarball_pk": instance.pk,
+                    "field_to_copy": "ground_truth",
+                },
+                immutable=True,
+            ).apply_async
+        )
+        return instance
+
+    class Meta:
+        model = EvaluationGroundTruth
+        fields = ("phase", "user_upload", "creator", "comment")
+
+
+class EvaluationGroundTruthUpdateForm(SaveFormInitMixin, ModelForm):
+    class Meta:
+        model = EvaluationGroundTruth
+        fields = ("comment",)
+
+
+class EvaluationGroundTruthVersionManagementForm(Form):
+    ground_truth = ModelChoiceField(
+        queryset=EvaluationGroundTruth.objects.none()
+    )
+
+    def __init__(
+        self,
+        *args,
+        user,
+        phase,
+        activate,
+        hide_ground_truth_input=False,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self._activate = activate
+
+        extra_filter = {}
+        if self._activate:
+            extra_filter["import_status"] = ImportStatusChoices.COMPLETED
+
+        self.fields["ground_truth"].queryset = (
+            get_objects_for_user(
+                user,
+                "evaluation.change_evaluationgroundtruth",
+            )
+            .filter(
+                phase=phase,
+                is_desired_version=False if activate else True,
+                **extra_filter,
+            )
+            .select_related("phase")
+        )
+
+        if hide_ground_truth_input:
+            self.fields["ground_truth"].widget = HiddenInput()
+
+        self.helper = FormHelper(self)
+        if activate:
+            self.helper.layout.append(Submit("save", "Activate ground truth"))
+            self.helper.form_action = reverse(
+                "evaluation:ground-truth-activate",
+                kwargs={
+                    "slug": phase.slug,
+                    "challenge_short_name": phase.challenge.short_name,
+                },
+            )
+        else:
+            self.helper.layout.append(
+                Submit("save", "Deactivate ground truth")
+            )
+            self.helper.form_action = reverse(
+                "evaluation:ground-truth-deactivate",
+                kwargs={
+                    "slug": phase.slug,
+                    "challenge_short_name": phase.challenge.short_name,
+                },
+            )
+
+    def clean_ground_truth(self):
+        ground_truth = self.cleaned_data["ground_truth"]
+
+        if ground_truth.phase.ground_truth_upload_in_progress:
+            raise ValidationError("Ground truth updating already in progress.")
+
+        return ground_truth

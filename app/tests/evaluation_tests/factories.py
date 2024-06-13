@@ -3,6 +3,7 @@ import factory
 from grandchallenge.evaluation.models import (
     CombinedLeaderboard,
     Evaluation,
+    EvaluationGroundTruth,
     Method,
     Phase,
     Submission,
@@ -51,3 +52,13 @@ class CombinedLeaderboardFactory(factory.django.DjangoModelFactory):
 
     challenge = factory.SubFactory(ChallengeFactory)
     title = factory.sequence(lambda n: f"Combined Leaderboard {n}")
+
+
+class EvaluationGroundTruthFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = EvaluationGroundTruth
+
+    phase = factory.SubFactory(PhaseFactory)
+    creator = factory.SubFactory(UserFactory)
+    ground_truth = factory.django.FileField()
+    sha256 = factory.sequence(lambda n: hash_sha256(f"ground_truth{n}"))

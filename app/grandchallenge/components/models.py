@@ -52,7 +52,7 @@ from grandchallenge.components.validators import (
     validate_no_slash_at_ends,
     validate_safe_path,
 )
-from grandchallenge.core.models import FieldChangeMixin
+from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import (
     private_s3_storage,
     protected_s3_storage,
@@ -64,6 +64,7 @@ from grandchallenge.core.validators import (
     MimeTypeValidator,
 )
 from grandchallenge.uploads.models import UserUpload
+from grandchallenge.uploads.validators import validate_gzip_mimetype
 from grandchallenge.workstation_configs.models import (
     OVERLAY_SEGMENTS_SCHEMA,
     LookUpTable,
@@ -2142,3 +2143,81 @@ class ValuesForInterfacesMixin:
             for interface in interfaces_and_values.interfaces
         }
         return values_for_interfaces
+
+
+class Tarball(UUIDModel):
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
+    )
+    import_status = models.PositiveSmallIntegerField(
+        choices=ImportStatusChoices.choices,
+        default=ImportStatusChoices.INITIALIZED,
+        db_index=True,
+    )
+    status = models.TextField(editable=False)
+    user_upload = models.ForeignKey(
+        UserUpload,
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        validators=[validate_gzip_mimetype],
+    )
+    sha256 = models.CharField(editable=False, max_length=71)
+    size_in_storage = models.PositiveBigIntegerField(
+        editable=False,
+        default=0,
+        help_text="The number of bytes stored in the storage backend",
+    )
+    comment = models.TextField(
+        blank=True,
+        default="",
+        help_text="Add any information (e.g. version ID) about this object here.",
+    )
+    is_desired_version = models.BooleanField(default=False, editable=False)
+
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.assign_permissions()
+
+    def assign_permissions(self):
+        raise NotImplementedError
+
+    def get_absolute_url(self):
+        raise NotImplementedError
+
+    def get_peer_tarballs(self):
+        raise NotImplementedError
+
+    @transaction.atomic
+    def mark_desired_version(self, peer_tarballs=None):
+        peer_tarballs = list(peer_tarballs or self.get_peer_tarballs())
+        for tb in peer_tarballs:
+            tb.is_desired_version = False
+        self.is_desired_version = True
+        peer_tarballs.append(self)
+        self.__class__.objects.bulk_update(
+            peer_tarballs, ["is_desired_version"]
+        )
+
+    @property
+    def import_status_context(self):
+        if self.import_status == ImportStatusChoices.COMPLETED:
+            return "success"
+        elif self.import_status in {
+            ImportStatusChoices.FAILED,
+            ImportStatusChoices.CANCELLED,
+        }:
+            return "danger"
+        else:
+            return "info"
+
+    @property
+    def import_in_progress(self):
+        return self.import_status == ImportStatusChoices.INITIALIZED

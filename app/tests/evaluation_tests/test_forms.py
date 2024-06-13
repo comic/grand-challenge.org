@@ -1,16 +1,22 @@
+from pathlib import Path
+
 import pytest
 from factory.django import ImageField
 
 from grandchallenge.algorithms.forms import AlgorithmForPhaseForm
 from grandchallenge.algorithms.models import Job
+from grandchallenge.components.models import ImportStatusChoices
 from grandchallenge.evaluation.forms import (
     ConfigureAlgorithmPhasesForm,
+    EvaluationGroundTruthForm,
+    EvaluationGroundTruthVersionManagementForm,
     SubmissionForm,
 )
 from grandchallenge.evaluation.models import Evaluation, Phase, Submission
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.invoices.models import PaymentStatusChoices
 from grandchallenge.uploads.models import UserUpload
+from grandchallenge.verifications.models import Verification
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
@@ -24,6 +30,7 @@ from tests.components_tests.factories import (
 )
 from tests.evaluation_tests.factories import (
     EvaluationFactory,
+    EvaluationGroundTruthFactory,
     MethodFactory,
     PhaseFactory,
     SubmissionFactory,
@@ -36,7 +43,10 @@ from tests.factories import (
 )
 from tests.hanging_protocols_tests.factories import HangingProtocolFactory
 from tests.invoices_tests.factories import InvoiceFactory
-from tests.uploads_tests.factories import UserUploadFactory
+from tests.uploads_tests.factories import (
+    UserUploadFactory,
+    create_upload_from_file,
+)
 from tests.verification_tests.factories import VerificationFactory
 
 
@@ -736,3 +746,87 @@ def test_configure_algorithm_phases_form():
         },
     )
     assert form3.is_valid()
+
+
+@pytest.mark.django_db
+def test_ground_truth_form():
+    user = UserFactory()
+    phase = PhaseFactory()
+    user_upload = UserUploadFactory(creator=user)
+    user_upload.status = user_upload.StatusChoices.COMPLETED
+    user_upload.save()
+
+    form = EvaluationGroundTruthForm(
+        user=user,
+        phase=phase,
+        data={"user_upload": user_upload, "creator": user, "phase": phase},
+    )
+    assert not form.is_valid()
+    assert "This upload is not a valid .tar.gz file" in str(form.errors)
+    assert "Select a valid choice" in str(form.errors["creator"])
+
+    Verification.objects.create(user=user, is_verified=True)
+    upload = create_upload_from_file(
+        creator=user,
+        file_path=Path(__file__).parent / "resources" / "ground-truth.tar.gz",
+    )
+    EvaluationGroundTruthFactory(creator=user)
+
+    form2 = EvaluationGroundTruthForm(
+        user=user,
+        phase=phase,
+        data={"user_upload": upload, "creator": user, "phase": phase},
+    )
+    assert not form2.is_valid()
+    assert (
+        "You have an existing ground truth importing, please wait for it to complete"
+        in str(form2.errors)
+    )
+
+
+@pytest.mark.django_db
+def test_ground_truth_version_management_form():
+    phase = PhaseFactory()
+    admin = UserFactory()
+    phase.challenge.add_admin(admin)
+
+    gt1 = EvaluationGroundTruthFactory(
+        phase=phase,
+        is_desired_version=True,
+        import_status=ImportStatusChoices.COMPLETED,
+    )
+    gt2 = EvaluationGroundTruthFactory(
+        phase=phase,
+        is_desired_version=False,
+        import_status=ImportStatusChoices.COMPLETED,
+    )
+    gt3 = EvaluationGroundTruthFactory(
+        phase=phase,
+        is_desired_version=True,
+        import_status=ImportStatusChoices.FAILED,
+    )
+    _ = EvaluationGroundTruthFactory(
+        phase=phase,
+        is_desired_version=False,
+        import_status=ImportStatusChoices.FAILED,
+    )
+
+    form = EvaluationGroundTruthVersionManagementForm(
+        user=admin, phase=phase, activate=True
+    )
+    assert list(form.fields["ground_truth"].queryset) == [gt2]
+
+    form2 = EvaluationGroundTruthVersionManagementForm(
+        user=admin, phase=phase, activate=False
+    )
+    assert list(form2.fields["ground_truth"].queryset) == [gt1, gt3]
+
+    EvaluationGroundTruthFactory(phase=phase, is_desired_version=False)
+
+    form3 = EvaluationGroundTruthVersionManagementForm(
+        user=admin, phase=phase, activate=True, data={"ground_truth": gt2.pk}
+    )
+    assert not form3.is_valid()
+    assert "Ground truth updating already in progress" in str(
+        form3.errors["ground_truth"]
+    )

@@ -50,6 +50,7 @@ class Executor(ABC):
         requires_gpu: bool,
         desired_gpu_type: GPUTypeChoices,
         algorithm_model=None,
+        ground_truth=None,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
@@ -63,6 +64,7 @@ class Executor(ABC):
         self._stderr = []
         self.__s3_client = None
         self._algorithm_model = algorithm_model
+        self._ground_truth = ground_truth
 
     def provision(self, *, input_civs, input_prefixes):
         self._provision_inputs(
@@ -144,12 +146,16 @@ class Executor(ABC):
             "LOG_LEVEL": "INFO",
             "PYTHONUNBUFFERED": "1",
             "no_proxy": "amazonaws.com",
-            "GRAND_CHALLENGE_COMPONENT_WRITABLE_DIRECTORIES": "/opt/ml/output/data:/opt/ml/model:/opt/ml/checkpoints:/tmp",
-            "GRAND_CHALLENGE_COMPONENT_POST_CLEAN_DIRECTORIES": "/opt/ml/output/data:/opt/ml/model",
+            "GRAND_CHALLENGE_COMPONENT_WRITABLE_DIRECTORIES": "/opt/ml/output/data:/opt/ml/model:/opt/ml/input/data/ground_truth/:opt/ml/checkpoints:/tmp",
+            "GRAND_CHALLENGE_COMPONENT_POST_CLEAN_DIRECTORIES": "/opt/ml/output/data:/opt/ml/model:/opt/ml/input/data/ground_truth/",
         }
         if self._algorithm_model:
             env["GRAND_CHALLENGE_COMPONENT_MODEL"] = (
                 f"s3://{settings.COMPONENTS_INPUT_BUCKET_NAME}/{self._algorithm_model_key}"
+            )
+        if self._ground_truth:
+            env["GRAND_CHALLENGE_COMPONENT_GROUND_TRUTH"] = (
+                f"s3://{settings.COMPONENTS_INPUT_BUCKET_NAME}/{self._ground_truth_key}"
             )
         return env
 
@@ -196,6 +202,10 @@ class Executor(ABC):
     @property
     def _algorithm_model_key(self):
         return safe_join(self._auxiliary_data_prefix, "algorithm-model.tar.gz")
+
+    @property
+    def _ground_truth_key(self):
+        return safe_join(self._auxiliary_data_prefix, "ground-truth.tar.gz")
 
     def _get_key_and_relative_path(self, *, civ, input_prefixes):
         if str(civ.pk) in input_prefixes:
@@ -255,6 +265,10 @@ class Executor(ABC):
         if self._algorithm_model:
             self._copy_input_file(
                 src=self._algorithm_model, dest_key=self._algorithm_model_key
+            )
+        if self._ground_truth:
+            self._copy_input_file(
+                src=self._ground_truth, dest_key=self._ground_truth_key
             )
 
     def _copy_input_file(self, *, src, dest_key):

@@ -107,46 +107,7 @@
     </dl>
 
     <h2>Evaluations for this Evaluation Method</h2>
-    <div class="table-responsive">
-        <table class="table sortable table-hover table-borderless table-sm" id="evaluationTable">
-            <thead class="thead-light">
-            <tr>
-                <th>Created</th>
-                <th>Updated</th>
-                <th>Evaluation</th>
-                <th>Submission</th>
-                <th>Status</th>
-                <th>Result</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for evaluation in object.evaluation_set.all %}
-                <tr>
-                    <td data-order="{{ evaluation.created|date:"U" }}">{{ evaluation.created }}</td>
-                    <td data-order="{{ evaluation.modified|date:"U" }}">{{ evaluation.modified }}</td>
-                    <td><a href="{{ evaluation.get_absolute_url }}">{{ evaluation.id }}</a>
-                    </td>
-                    <td>
-                        <a href="{{ evaluation.submission.get_absolute_url }}">{{ evaluation.submission.id }}</a>
-                    </td>
-                    <td>
-                    <span class="badge badge-{{ evaluation.status_context }}">
-                        {% if evaluation.animate %}
-                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                        {% endif %}
-                        {{ evaluation.get_status_display }}
-                    </span>
-                    </td>
-                    <td>
-                        {% if evaluation.status == evaluation.SUCCESS %}
-                            <a href="{{ evaluation.get_absolute_url }}">Result</a>
-                        {% endif %}
-                    </td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
+    {% include 'evaluation/partials/evaluations_for_object_table.html' %}
 {% endblock %}
 
 {% block script %}

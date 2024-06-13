@@ -11,7 +11,6 @@ from requests import put
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.algorithms.tasks import (
-    assign_algorithm_model_from_upload,
     create_algorithm_jobs,
     execute_algorithm_job_for_inputs,
     filter_civs_for_algorithm,
@@ -22,7 +21,6 @@ from grandchallenge.algorithms.tasks import (
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
-    ImportStatusChoices,
     InterfaceKindChoices,
 )
 from grandchallenge.components.tasks import (
@@ -30,10 +28,8 @@ from grandchallenge.components.tasks import (
 )
 from grandchallenge.notifications.models import Notification
 from tests.algorithms_tests.factories import (
-    AlgorithmFactory,
     AlgorithmImageFactory,
     AlgorithmJobFactory,
-    AlgorithmModelFactory,
 )
 from tests.cases_tests.factories import RawImageUploadSessionFactory
 from tests.components_tests.factories import (
@@ -46,10 +42,7 @@ from tests.factories import (
     ImageFileFactory,
     UserFactory,
 )
-from tests.uploads_tests.factories import (
-    UserUploadFactory,
-    create_upload_from_file,
-)
+from tests.uploads_tests.factories import UserUploadFactory
 from tests.utils import get_view_for_user, recurse_callbacks
 
 
@@ -779,46 +772,3 @@ def test_setting_credits_per_job(
 
         alg.refresh_from_db()
         assert alg.credits_per_job == test["credits"]
-
-
-@pytest.mark.django_db()
-def test_assign_algorithm_model_from_upload(settings):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
-    user = UserFactory()
-    alg = AlgorithmFactory()
-    upload = create_upload_from_file(
-        creator=user,
-        file_path=Path(__file__).parent / "resources" / "model.tar.gz",
-    )
-    model = AlgorithmModelFactory(
-        algorithm=alg, creator=user, user_upload=upload
-    )
-    assert model.is_desired_version is False
-
-    assign_algorithm_model_from_upload(
-        algorithm_model_pk=model.pk,
-    )
-    model.refresh_from_db()
-    assert model.is_desired_version
-    assert model.import_status == ImportStatusChoices.COMPLETED
-
-    upload2 = create_upload_from_file(
-        creator=user,
-        file_path=Path(__file__).parent / "resources" / "model.tar.gz",
-    )
-    model2 = AlgorithmModelFactory(
-        algorithm=alg, creator=user, user_upload=upload2
-    )
-    assign_algorithm_model_from_upload(
-        algorithm_model_pk=model2.pk,
-    )
-    model2.refresh_from_db()
-    assert not model2.is_desired_version
-    assert model2.import_status == ImportStatusChoices.FAILED
-    assert model2.status == "Algorithm model with this sha256 already exists."
-    assert not model2.user_upload
-    with pytest.raises(ValueError):
-        model2.model.file

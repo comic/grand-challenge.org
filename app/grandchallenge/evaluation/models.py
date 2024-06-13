@@ -29,13 +29,19 @@ from grandchallenge.components.models import (
     ComponentImage,
     ComponentInterface,
     ComponentJob,
+    ImportStatusChoices,
+    Tarball,
 )
 from grandchallenge.core.models import (
     FieldChangeMixin,
     TitleSlugDescriptionModel,
     UUIDModel,
 )
-from grandchallenge.core.storage import protected_s3_storage, public_s3_storage
+from grandchallenge.core.storage import (
+    private_s3_storage,
+    protected_s3_storage,
+    public_s3_storage,
+)
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.validators import (
     ExtensionValidator,
@@ -879,6 +885,24 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             return None
 
     @cached_property
+    def active_ground_truth(self):
+        """
+        Returns
+        -------
+            The desired ground truth version for this phase or None
+        """
+        try:
+            return self.ground_truths.filter(is_desired_version=True).get()
+        except ObjectDoesNotExist:
+            return None
+
+    @property
+    def ground_truth_upload_in_progress(self):
+        return self.ground_truths.filter(
+            import_status__in=(ImportStatusChoices.INITIALIZED,)
+        ).exists()
+
+    @cached_property
     def valid_archive_items(self):
         """Returns the archive items that are valid for this phase"""
         if self.archive and self.algorithm_inputs:
@@ -1062,10 +1086,10 @@ class Submission(UUIDModel):
     )
     phase = models.ForeignKey(Phase, on_delete=models.PROTECT, null=True)
     algorithm_image = models.ForeignKey(
-        AlgorithmImage, null=True, on_delete=models.SET_NULL
+        AlgorithmImage, null=True, on_delete=models.PROTECT
     )
     algorithm_model = models.ForeignKey(
-        AlgorithmModel, null=True, blank=True, on_delete=models.SET_NULL
+        AlgorithmModel, null=True, blank=True, on_delete=models.PROTECT
     )
     user_upload = models.ForeignKey(
         UserUpload, blank=True, null=True, on_delete=models.SET_NULL
@@ -1172,11 +1196,80 @@ class SubmissionGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(Submission, on_delete=models.CASCADE)
 
 
+def ground_truth_path(instance, filename):
+    return (
+        f"ground_truths/"
+        f"{instance._meta.app_label.lower()}/"
+        f"{instance._meta.model_name.lower()}/"
+        f"{instance.pk}/"
+        f"{get_valid_filename(filename)}"
+    )
+
+
+class EvaluationGroundTruth(Tarball):
+    phase = models.ForeignKey(
+        Phase, on_delete=models.PROTECT, related_name="ground_truths"
+    )
+    ground_truth = models.FileField(
+        blank=True,
+        upload_to=ground_truth_path,
+        validators=[ExtensionValidator(allowed_extensions=(".tar.gz",))],
+        help_text=(
+            ".tar.gz file of the ground truth that will be extracted to /opt/ml/input/data/ground_truth/ during inference"
+        ),
+        storage=private_s3_storage,
+    )
+
+    def assign_permissions(self):
+        # Challenge admins can view this ground truth
+        assign_perm(
+            f"view_{self._meta.model_name}",
+            self.phase.challenge.admins_group,
+            self,
+        )
+        # Challenge admins can change this ground truth
+        assign_perm(
+            f"change_{self._meta.model_name}",
+            self.phase.challenge.admins_group,
+            self,
+        )
+
+    def get_peer_tarballs(self):
+        return EvaluationGroundTruth.objects.filter(phase=self.phase).exclude(
+            pk=self.pk
+        )
+
+    def get_absolute_url(self):
+        return reverse(
+            "evaluation:ground-truth-detail",
+            kwargs={
+                "slug": self.phase.slug,
+                "pk": self.pk,
+                "challenge_short_name": self.phase.challenge.short_name,
+            },
+        )
+
+
+class EvaluationGroundTruthUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(
+        EvaluationGroundTruth, on_delete=models.CASCADE
+    )
+
+
+class EvaluationGroundTruthGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(
+        EvaluationGroundTruth, on_delete=models.CASCADE
+    )
+
+
 class Evaluation(UUIDModel, ComponentJob):
     """Stores information about a evaluation for a given submission."""
 
     submission = models.ForeignKey("Submission", on_delete=models.PROTECT)
     method = models.ForeignKey("Method", on_delete=models.PROTECT)
+    ground_truth = models.ForeignKey(
+        EvaluationGroundTruth, null=True, blank=True, on_delete=models.PROTECT
+    )
 
     published = models.BooleanField(default=True, db_index=True)
     rank = models.PositiveIntegerField(
@@ -1191,7 +1284,7 @@ class Evaluation(UUIDModel, ComponentJob):
     rank_per_metric = models.JSONField(default=dict)
 
     class Meta(UUIDModel.Meta, ComponentJob.Meta):
-        unique_together = ("submission", "method")
+        unique_together = ("submission", "method", "ground_truth")
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -1249,6 +1342,13 @@ class Evaluation(UUIDModel, ComponentJob):
     @property
     def output_interfaces(self):
         return self.submission.phase.outputs
+
+    @property
+    def executor_kwargs(self):
+        executor_kwargs = super().executor_kwargs
+        if self.ground_truth:
+            executor_kwargs["ground_truth"] = self.ground_truth.ground_truth
+        return executor_kwargs
 
     @cached_property
     def metrics_json_file(self):

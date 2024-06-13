@@ -32,6 +32,7 @@ from tests.components_tests.factories import (
 from tests.evaluation_tests.factories import (
     CombinedLeaderboardFactory,
     EvaluationFactory,
+    EvaluationGroundTruthFactory,
     MethodFactory,
     PhaseFactory,
     SubmissionFactory,
@@ -120,6 +121,49 @@ def test_create_evaluation_is_idempotent(
         c()
 
     assert Job.objects.count() == 2
+
+
+@pytest.mark.django_db
+def test_create_evaluation_uniqueness_checks(
+    django_capture_on_commit_callbacks, settings, algorithm_submission
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    sub = SubmissionFactory(
+        phase=algorithm_submission.method.phase,
+        algorithm_image=algorithm_submission.algorithm_image,
+    )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        create_evaluation(submission_pk=sub.pk, max_initial_jobs=None)
+
+    assert Evaluation.objects.count() == 1
+
+    gt = EvaluationGroundTruthFactory(phase=sub.phase, is_desired_version=True)
+    assert sub.phase.active_ground_truth == gt
+
+    with django_capture_on_commit_callbacks(execute=True):
+        create_evaluation(submission_pk=sub.pk, max_initial_jobs=None)
+
+    assert Evaluation.objects.count() == 2
+
+    m = MethodFactory(
+        phase=sub.phase, is_in_registry=True, is_manifest_valid=True
+    )
+    m.mark_desired_version()
+    assert sub.phase.active_image == m
+
+    with django_capture_on_commit_callbacks(execute=True):
+        create_evaluation(submission_pk=sub.pk, max_initial_jobs=None)
+
+    assert Evaluation.objects.count() == 3
+
+    with django_capture_on_commit_callbacks(execute=True):
+        create_evaluation(submission_pk=sub.pk, max_initial_jobs=None)
+
+    assert Evaluation.objects.count() == 3
 
 
 @pytest.mark.django_db

@@ -11,7 +11,10 @@ from factory.django import ImageField
 from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.algorithms.models import Algorithm
-from grandchallenge.components.models import InterfaceKindChoices
+from grandchallenge.components.models import (
+    ImportStatusChoices,
+    InterfaceKindChoices,
+)
 from grandchallenge.evaluation.models import CombinedLeaderboard, Evaluation
 from grandchallenge.evaluation.tasks import update_combined_leaderboard
 from grandchallenge.evaluation.utils import SubmissionKindChoices
@@ -23,6 +26,7 @@ from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.evaluation_tests.factories import (
     CombinedLeaderboardFactory,
     EvaluationFactory,
+    EvaluationGroundTruthFactory,
     MethodFactory,
     PhaseFactory,
     SubmissionFactory,
@@ -1324,3 +1328,130 @@ def test_configure_algorithm_phases_view(client):
         phase.algorithm_time_limit
         == challenge_request.inference_time_limit_in_minutes * 60
     )
+
+
+@pytest.mark.django_db
+def test_ground_truth_permissions(client):
+    phase = PhaseFactory()
+    u = UserFactory()
+    gt = EvaluationGroundTruthFactory(phase=phase)
+    VerificationFactory(user=u, is_verified=True)
+
+    for view_name, kwargs, permission, obj in [
+        (
+            "ground-truth-create",
+            {},
+            "evaluation.change_phase",
+            phase,
+        ),
+        (
+            "ground-truth-detail",
+            {"pk": gt.pk},
+            "evaluation.view_evaluationgroundtruth",
+            gt,
+        ),
+        (
+            "ground-truth-update",
+            {"pk": gt.pk},
+            "evaluation.change_evaluationgroundtruth",
+            gt,
+        ),
+    ]:
+
+        def _get_view():
+            return get_view_for_user(
+                client=client,
+                viewname=f"evaluation:{view_name}",
+                reverse_kwargs={
+                    "challenge_short_name": phase.challenge.short_name,
+                    "slug": phase.slug,
+                    **kwargs,
+                },
+                user=u,
+            )
+
+        response = _get_view()
+        assert response.status_code == 403
+
+        assign_perm(permission, u, obj)
+
+        response = _get_view()
+        assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_ground_truth_version_management(settings, client):
+    phase = PhaseFactory()
+    gt1, gt2 = EvaluationGroundTruthFactory.create_batch(
+        2, phase=phase, import_status=ImportStatusChoices.COMPLETED
+    )
+    gt2.is_desired_version = True
+    gt2.save()
+
+    admin, user = UserFactory.create_batch(2)
+    phase.challenge.add_admin(admin)
+
+    response = get_view_for_user(
+        viewname="evaluation:ground-truth-activate",
+        client=client,
+        method=client.post,
+        reverse_kwargs={
+            "slug": phase.slug,
+            "challenge_short_name": phase.challenge.short_name,
+        },
+        data={"ground_truth": gt1.pk},
+        user=user,
+    )
+    assert response.status_code == 403
+
+    response2 = get_view_for_user(
+        viewname="evaluation:ground-truth-activate",
+        client=client,
+        method=client.post,
+        reverse_kwargs={
+            "slug": phase.slug,
+            "challenge_short_name": phase.challenge.short_name,
+        },
+        data={"ground_truth": gt1.pk},
+        user=admin,
+    )
+
+    assert response2.status_code == 302
+    gt1.refresh_from_db()
+    gt2.refresh_from_db()
+    assert gt1.is_desired_version
+    assert not gt2.is_desired_version
+    assert phase.active_ground_truth == gt1
+
+    response3 = get_view_for_user(
+        viewname="evaluation:ground-truth-deactivate",
+        client=client,
+        method=client.post,
+        reverse_kwargs={
+            "slug": phase.slug,
+            "challenge_short_name": phase.challenge.short_name,
+        },
+        data={"ground_truth": gt1.pk},
+        user=user,
+    )
+    assert response3.status_code == 403
+
+    response4 = get_view_for_user(
+        viewname="evaluation:ground-truth-deactivate",
+        client=client,
+        method=client.post,
+        reverse_kwargs={
+            "slug": phase.slug,
+            "challenge_short_name": phase.challenge.short_name,
+        },
+        data={"ground_truth": gt1.pk},
+        user=admin,
+    )
+
+    assert response4.status_code == 302
+    gt1.refresh_from_db()
+    gt2.refresh_from_db()
+    assert not gt1.is_desired_version
+    assert not gt2.is_desired_version
+    del phase.active_ground_truth
+    assert not phase.active_ground_truth

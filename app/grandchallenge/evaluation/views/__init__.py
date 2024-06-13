@@ -27,6 +27,7 @@ from guardian.mixins import LoginRequiredMixin
 from grandchallenge.algorithms.forms import AlgorithmForPhaseForm
 from grandchallenge.algorithms.models import Algorithm, Job
 from grandchallenge.archives.models import Archive
+from grandchallenge.components.models import ImportStatusChoices
 from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
@@ -40,6 +41,9 @@ from grandchallenge.evaluation.forms import (
     CombinedLeaderboardForm,
     ConfigureAlgorithmPhasesForm,
     EvaluationForm,
+    EvaluationGroundTruthForm,
+    EvaluationGroundTruthUpdateForm,
+    EvaluationGroundTruthVersionManagementForm,
     MethodForm,
     MethodUpdateForm,
     PhaseCreateForm,
@@ -49,6 +53,7 @@ from grandchallenge.evaluation.forms import (
 from grandchallenge.evaluation.models import (
     CombinedLeaderboard,
     Evaluation,
+    EvaluationGroundTruth,
     Method,
     Phase,
     Submission,
@@ -1008,3 +1013,133 @@ class ConfigureAlgorithmPhasesView(PermissionRequiredMixin, FormView):
         phase.save()
         phase.algorithm_outputs.add(*outputs)
         phase.algorithm_inputs.add(*inputs)
+
+
+class EvaluationGroundTruthCreate(
+    LoginRequiredMixin,
+    VerificationRequiredMixin,
+    UserFormKwargsMixin,
+    ObjectPermissionRequiredMixin,
+    CachedPhaseMixin,
+    SuccessMessageMixin,
+    CreateView,
+):
+    model = EvaluationGroundTruth
+    form_class = EvaluationGroundTruthForm
+    permission_required = "evaluation.change_phase"
+    raise_exception = True
+    success_message = "Ground truth upload in progress."
+
+    def get_permission_object(self):
+        return self.phase
+
+
+class EvaluationGroundTruthDetail(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    DetailView,
+):
+    model = EvaluationGroundTruth
+    permission_required = "evaluation.view_evaluationgroundtruth"
+    raise_exception = True
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        form_kwargs = {
+            "initial": {"ground_truth": self.object.pk},
+            "user": self.request.user,
+            "phase": self.object.phase,
+            "hide_ground_truth_input": True,
+        }
+
+        context.update(
+            {
+                "import_choices": ImportStatusChoices,
+                "gt_activate_form": EvaluationGroundTruthVersionManagementForm(
+                    activate=True, **form_kwargs
+                ),
+                "gt_deactivate_form": EvaluationGroundTruthVersionManagementForm(
+                    activate=False, **form_kwargs
+                ),
+            }
+        )
+
+        return context
+
+
+class EvaluationGroundTruthList(
+    LoginRequiredMixin, PermissionListMixin, CachedPhaseMixin, ListView
+):
+    model = EvaluationGroundTruth
+    permission_required = "evaluation.view_evaluationgroundtruth"
+    login_url = reverse_lazy("account_login")
+    ordering = ("-is_desired_version", "-created")
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.filter(phase=self.phase)
+
+
+class EvaluationGroundTruthUpdate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    UpdateView,
+):
+    model = EvaluationGroundTruth
+    form_class = EvaluationGroundTruthUpdateForm
+    permission_required = "change_evaluationgroundtruth"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context.update({"phase": self.object.phase})
+        return context
+
+
+class EvaluationGroundTruthVersionManagement(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    CachedPhaseMixin,
+    SuccessMessageMixin,
+    FormView,
+):
+    permission_required = "evaluation.change_phase"
+    raise_exception = True
+    form_class = EvaluationGroundTruthVersionManagementForm
+    template_name = "evaluation/ground_truth_version_management.html"
+    success_message = "Ground truth successfully activated."
+    activate = None
+
+    def get_permission_object(self):
+        return self.phase
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                "user": self.request.user,
+                "activate": self.activate,
+            }
+        )
+        return kwargs
+
+    def form_valid(self, form):
+        response = super().form_valid(form=form)
+        ground_truth = form.cleaned_data["ground_truth"]
+        if self.activate:
+            ground_truth.mark_desired_version()
+        else:
+            ground_truth.is_desired_version = False
+            ground_truth.save()
+        return response
+
+    def get_success_url(self):
+        return reverse(
+            "evaluation:ground-truth-list",
+            kwargs={
+                "challenge_short_name": self.phase.challenge.short_name,
+                "slug": self.phase.slug,
+            },
+        )
