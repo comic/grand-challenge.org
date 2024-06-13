@@ -2,6 +2,7 @@ import grp
 import json
 import os
 import pwd
+import ssl
 import time
 import urllib.error
 import urllib.request
@@ -18,8 +19,12 @@ import pynvml
 
 
 def check_connectivity():
+    ssl_context = ssl.create_default_context()
+
     try:
-        urllib.request.urlopen("https://google.com/", timeout=5)
+        urllib.request.urlopen(
+            "https://google.com/", timeout=5, context=ssl_context
+        )
         warn("COULD GOOGLE!")
     except urllib.error.URLError as e:
         print(f"CONNECTIVITY - Could not google: {e.reason}")
