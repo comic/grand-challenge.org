@@ -32,3 +32,10 @@
 
     {{ block.super }}
 {% endblock %}
+
+{% block script %}
+    {{ block.super }}
+
+    {% include 'workstations/partials/session-control.html' %}
+
+{% endblock %}
