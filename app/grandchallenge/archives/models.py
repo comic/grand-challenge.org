@@ -1,17 +1,15 @@
-from functools import cached_property
-
 from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.db.models import Count, Q
+from django.db.models import Q
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
 from stdimage import JPEGField
 
-from grandchallenge.algorithms.models import Algorithm, Job
+from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.components.models import (
     CIVForObjectMixin,
@@ -371,22 +369,6 @@ class ArchiveItem(
     @property
     def is_editable(self):
         return True
-
-    @cached_property
-    def algorithm_jobs_as_input(self):
-        input_civs = self.values.all()
-        num_civs = len(input_civs)
-
-        return Job.objects.annotate(
-            num_inputs=Count("inputs"),
-            inputs_match_count=Count(
-                "inputs",
-                filter=Q(inputs__in=input_civs),
-            ),
-        ).filter(
-            num_inputs=num_civs,
-            inputs_match_count=num_civs,
-        )
 
 
 class ArchiveItemUserObjectPermission(UserObjectPermissionBase):
