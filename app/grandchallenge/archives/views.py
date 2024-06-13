@@ -564,7 +564,9 @@ class ArchiveItemViewSet(
             return ArchiveItemSerializer
 
 
-class ArchiveItemJobListView(JobsList):
+class ArchiveItemJobListView(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, JobsList
+):
     model = Job
     template_name = "archives/archive_item_job_list.html"
     row_template = "algorithms/job_list_row.html"
@@ -577,9 +579,17 @@ class ArchiveItemJobListView(JobsList):
         "comment",
     ]
 
+    permission_required = (
+        f"{Archive._meta.app_label}.view_{ArchiveItem._meta.model_name}"
+    )
+    raise_exception = True
+
     @cached_property
     def archive_item(self):
         return get_object_or_404(ArchiveItem, pk=self.kwargs["pk"])
+
+    def get_permission_object(self):
+        return self.archive_item
 
     def get_queryset(self):
         return Job.objects.prefetch_related("outputs__interface")
