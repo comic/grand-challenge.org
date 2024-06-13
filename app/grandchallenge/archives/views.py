@@ -565,7 +565,9 @@ class ArchiveItemViewSet(
 
 
 class ArchiveItemJobListView(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, JobsList
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    JobsList,
 ):
     model = Job
     template_name = "archives/archive_item_job_list.html"
@@ -574,9 +576,14 @@ class ArchiveItemJobListView(
     search_fields = [
         "pk",
         "creator__username",
-        "inputs__image__name",
-        "inputs__image__files__file",
         "comment",
+        # Outputs
+        "outputs__interface__title",
+        "outputs__interface__description",
+        # Algorithm
+        "algorithm_image__algorithm__title",
+        "algorithm_image__algorithm__description",
+        "algorithm_image__comment",
     ]
 
     permission_required = (
@@ -592,13 +599,14 @@ class ArchiveItemJobListView(
         return self.archive_item
 
     def get_queryset(self):
-        return Job.objects.prefetch_related("outputs__interface")
-
         input_civs = self.archive_item.values.all()
         num_civs = len(input_civs)
 
+        jobs_subquery = Job.objects.filter(inputs__in=input_civs).distinct()
+
         query_set = (
-            Job.objects.annotate(
+            Job.objects.filter(pk__in=jobs_subquery)
+            .annotate(
                 num_inputs=Count("inputs"),
             )
             .filter(num_inputs=num_civs)
@@ -609,13 +617,25 @@ class ArchiveItemJobListView(
                 )
             )
             .filter(inputs_match_count=num_civs)
-            .filter(status=Job.SUCCESS)
+            .prefetch_related(
+                "outputs__image__files",
+                "outputs__interface",
+                "inputs__image__files",
+                "inputs__interface",
+                "viewers__user_set",
+            )
+            .select_related(
+                "creator__user_profile",
+                "creator__verification",
+                "algorithm_image__algorithm",
+            )
         )
 
         return filter_by_permission(
             queryset=query_set,
             user=self.request.user,
             codename="view_job",
+            accept_user_perms=False,
         )
 
     def get_row_context(self, *, object_, **kwargs):
