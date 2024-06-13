@@ -1020,6 +1020,7 @@ class EvaluationGroundTruthCreate(
     VerificationRequiredMixin,
     UserFormKwargsMixin,
     ObjectPermissionRequiredMixin,
+    CachedPhaseMixin,
     SuccessMessageMixin,
     CreateView,
 ):
@@ -1029,24 +1030,8 @@ class EvaluationGroundTruthCreate(
     raise_exception = True
     success_message = "Ground truth upload in progress."
 
-    @property
-    def phase(self):
-        return get_object_or_404(
-            Phase, slug=self.kwargs["slug"], challenge=self.request.challenge
-        )
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update({"phase": self.phase})
-        return kwargs
-
     def get_permission_object(self):
         return self.phase
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context.update({"phase": self.phase})
-        return context
 
 
 class EvaluationGroundTruthDetail(
@@ -1116,6 +1101,7 @@ class EvaluationGroundTruthUpdate(
 class EvaluationGroundTruthVersionManagement(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
+    CachedPhaseMixin,
     SuccessMessageMixin,
     FormView,
 ):
@@ -1126,26 +1112,14 @@ class EvaluationGroundTruthVersionManagement(
     success_message = "Ground truth successfully activated."
     activate = None
 
-    @cached_property
-    def phase(self):
-        return get_object_or_404(
-            Phase, slug=self.kwargs["slug"], challenge=self.request.challenge
-        )
-
     def get_permission_object(self):
         return self.phase
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update({"phase": self.phase})
-        return context
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs.update(
             {
                 "user": self.request.user,
-                "phase": self.phase,
                 "activate": self.activate,
             }
         )
