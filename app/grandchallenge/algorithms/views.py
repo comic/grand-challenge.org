@@ -652,7 +652,7 @@ class JobsList(PaginatedTableListView):
             optional_condition=lambda obj: bool(obj.comment),
         ),
         Column(title="Results", sort_field="outputs"),
-        Column(title="Viewer", sort_field="status"),
+        Column(title="Viewer"),
     ]
 
     default_sort_column = 1
