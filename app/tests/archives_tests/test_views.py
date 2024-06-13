@@ -1076,6 +1076,56 @@ def test_archive_item_job_list_filter(distractor_generator, client):
     assert str(aj2.pk) in resp["data"][1][detail_column]
 
 
+@pytest.mark.parametrize(
+    "job_creator,expected_num_matches",
+    (
+        (lambda: AlgorithmJobFactory.create_batch(3, public=True), 3),
+        (lambda: AlgorithmJobFactory.create_batch(3, public=False), 0),
+    ),
+)
+@pytest.mark.django_db
+def test_archive_item_job_list_permissions_filter(
+    job_creator, expected_num_matches, client
+):
+    archive = ArchiveFactory()
+    archive.add_editor(editor := UserFactory())
+
+    ai = ArchiveItemFactory(archive=archive)
+    civs = [
+        ComponentInterfaceValueFactory(),
+        ComponentInterfaceValueFactory(),
+    ]
+    ai.values.set(civs)
+
+    jobs = job_creator()
+    for aj in jobs:
+        aj.inputs.set(ai.values.all())
+
+    response = get_view_for_user(
+        viewname="archives:item-job-list",
+        client=client,
+        method=client.get,
+        reverse_kwargs={
+            "slug": archive.slug,
+            "pk": ai.pk,
+        },
+        user=editor,
+        follow=True,
+        data={
+            "length": 10,
+            "draw": 1,
+            "order[0][dir]": ArchiveItemJobListView.default_sort_order,
+            "order[0][column]": ArchiveItemJobListView.default_sort_column,
+        },
+        **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
+    )
+
+    assert response.status_code == 200  # Sanity
+
+    resp = response.json()
+    assert len(resp["data"]) == expected_num_matches
+
+
 @pytest.mark.django_db
 def test_archive_item_job_list_permissions(client):
     archive = ArchiveFactory()
