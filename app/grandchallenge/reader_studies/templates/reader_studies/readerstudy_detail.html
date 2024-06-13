@@ -429,6 +429,6 @@
 
 {% block script %}
     {{ block.super }}
-    <script src="{% static "js/refresh_sidebar.js" %}"></script>
+    <script type="module" src="{% static "js/refresh_sidebar.mjs" %}"></script>
     {% include 'workstations/partials/session-control.html' %}
 {% endblock %}

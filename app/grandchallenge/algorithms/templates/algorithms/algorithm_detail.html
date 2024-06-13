@@ -616,7 +616,7 @@
 
 {% block script %}
     {{ block.super }}
-    <script src="{% static "js/refresh_sidebar.js" %}"></script>
+    <script type="module" src="{% static "js/refresh_sidebar.mjs" %}"></script>
     {{ csrf_token|to_string|json_script:"csrfToken" }}
     <script type="module" src="{% static 'js/htmx_config_csrf.mjs' %}"></script>
 
