@@ -11,6 +11,7 @@ from django.utils.text import slugify
 from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
+from grandchallenge.algorithms.views import JobsList
 from grandchallenge.cases.widgets import WidgetChoices
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -251,8 +252,8 @@ def test_algorithm_jobs_list_view(client):
         data={
             "length": 10,
             "draw": 1,
-            "order[0][dir]": "desc",
-            "order[0][column]": 0,
+            "order[0][dir]": JobsList.default_sort_order,
+            "order[0][column]": JobsList.default_sort_column,
         },
         **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
     )
@@ -271,8 +272,8 @@ def test_algorithm_jobs_list_view(client):
         data={
             "length": 50,
             "draw": 1,
-            "order[0][dir]": "desc",
-            "order[0][column]": 0,
+            "order[0][dir]": JobsList.default_sort_order,
+            "order[0][column]": JobsList.default_sort_column,
         },
         **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
     )
@@ -292,7 +293,7 @@ def test_algorithm_jobs_list_view(client):
             "length": 50,
             "draw": 1,
             "order[0][dir]": "asc",
-            "order[0][column]": 0,
+            "order[0][column]": JobsList.default_sort_column,
         },
         **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
     )
@@ -312,7 +313,7 @@ def test_algorithm_jobs_list_view(client):
             "length": 50,
             "draw": 1,
             "search[value]": job.creator.username,
-            "order[0][column]": 0,
+            "order[0][column]": JobsList.default_sort_column,
         },
         **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
     )
