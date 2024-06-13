@@ -80,7 +80,7 @@ urlpatterns = [
         name="ground-truth-list",
     ),
     path(
-        "<slug>/ground-truths/activate",
+        "<slug>/ground-truths/activate/",
         EvaluationGroundTruthVersionManagement.as_view(activate=True),
         name="ground-truth-activate",
     ),
@@ -90,7 +90,7 @@ urlpatterns = [
         name="ground-truth-create",
     ),
     path(
-        "<slug>/ground-truths/deactivate",
+        "<slug>/ground-truths/deactivate/",
         EvaluationGroundTruthVersionManagement.as_view(activate=False),
         name="ground-truth-deactivate",
     ),
@@ -100,7 +100,7 @@ urlpatterns = [
         name="ground-truth-detail",
     ),
     path(
-        "<slug>/ground-truths/<uuid:pk>/update",
+        "<slug>/ground-truths/<uuid:pk>/update/",
         EvaluationGroundTruthUpdate.as_view(),
         name="ground-truth-update",
     ),

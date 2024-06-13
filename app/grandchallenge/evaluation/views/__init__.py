@@ -1031,7 +1031,9 @@ class EvaluationGroundTruthCreate(
 
     @property
     def phase(self):
-        return get_object_or_404(Phase, slug=self.kwargs["slug"])
+        return get_object_or_404(
+            Phase, slug=self.kwargs["slug"], challenge=self.request.challenge
+        )
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -1126,7 +1128,9 @@ class EvaluationGroundTruthVersionManagement(
 
     @cached_property
     def phase(self):
-        return get_object_or_404(Phase, slug=self.kwargs["slug"])
+        return get_object_or_404(
+            Phase, slug=self.kwargs["slug"], challenge=self.request.challenge
+        )
 
     def get_permission_object(self):
         return self.phase

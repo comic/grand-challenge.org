@@ -37,7 +37,11 @@ from grandchallenge.core.models import (
     TitleSlugDescriptionModel,
     UUIDModel,
 )
-from grandchallenge.core.storage import protected_s3_storage, public_s3_storage
+from grandchallenge.core.storage import (
+    private_s3_storage,
+    protected_s3_storage,
+    public_s3_storage,
+)
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.validators import (
     ExtensionValidator,
@@ -1082,10 +1086,10 @@ class Submission(UUIDModel):
     )
     phase = models.ForeignKey(Phase, on_delete=models.PROTECT, null=True)
     algorithm_image = models.ForeignKey(
-        AlgorithmImage, null=True, on_delete=models.SET_NULL
+        AlgorithmImage, null=True, on_delete=models.PROTECT
     )
     algorithm_model = models.ForeignKey(
-        AlgorithmModel, null=True, blank=True, on_delete=models.SET_NULL
+        AlgorithmModel, null=True, blank=True, on_delete=models.PROTECT
     )
     user_upload = models.ForeignKey(
         UserUpload, blank=True, null=True, on_delete=models.SET_NULL
@@ -1213,7 +1217,7 @@ class EvaluationGroundTruth(Tarball):
         help_text=(
             ".tar.gz file of the ground truth that will be extracted to /opt/ml/input/data/ground_truth/ during inference"
         ),
-        storage=protected_s3_storage,
+        storage=private_s3_storage,
     )
 
     def assign_permissions(self):
@@ -1264,7 +1268,7 @@ class Evaluation(UUIDModel, ComponentJob):
     submission = models.ForeignKey("Submission", on_delete=models.PROTECT)
     method = models.ForeignKey("Method", on_delete=models.PROTECT)
     ground_truth = models.ForeignKey(
-        EvaluationGroundTruth, null=True, blank=True, on_delete=models.SET_NULL
+        EvaluationGroundTruth, null=True, blank=True, on_delete=models.PROTECT
     )
 
     published = models.BooleanField(default=True, db_index=True)
