@@ -67,7 +67,7 @@ urlpatterns = [
         name="item-detail",
     ),
     path(
-        "<slug>/items/<uuid:pk>/jobs",
+        "<slug>/items/<uuid:pk>/jobs/",
         ArchiveItemJobListView.as_view(),
         name="item-job-list",
     ),
