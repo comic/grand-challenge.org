@@ -4,7 +4,7 @@
 
 {% block additional_buttons %}
 <a class="btn btn-outline-primary"
-    href="{% url "archives:item-job-list" slug=base_object.slug pk=object.pk %}"
+    href="{% url "archives:item-job-list" slug=object.base_object.slug pk=object.pk %}"
 >
     <i class="fas fa-search"></i> Find algorithm results
 </a>
