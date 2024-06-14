@@ -20,7 +20,10 @@
 {{ object.created|naturaltime }}
 <split></split>
 
-{{ object.creator|user_profile_link }}
+{% block column_2 %}
+    {{ object.creator|user_profile_link }}
+{% endblock %}
+
 <split></split>
 
 <span class="badge badge-{{ object.status_context }}">

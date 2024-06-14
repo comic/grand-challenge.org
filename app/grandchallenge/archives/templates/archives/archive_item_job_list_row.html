@@ -1,0 +1,9 @@
+{% extends "algorithms/job_list_row.html" %}
+
+{% load url %}
+
+{% block column_2 %}
+    <a href="{{ algorithm.get_absolute_url }}">
+        {{ algorithm.title }}
+    </a>
+{% endblock %}

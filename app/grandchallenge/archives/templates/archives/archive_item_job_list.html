@@ -7,9 +7,9 @@
 
 {% block breadcrumbs %}
      <ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="{{ base_object.list_url }}">{{ base_object|verbose_name_plural|title }}</a></li>
-        <li class="breadcrumb-item"><a href="{{ base_object.get_absolute_url }}">{{ base_object }}</a></li>
-        <li class="breadcrumb-item"><a href="{{ base_object.civ_sets_list_url }}">{{ base_object.civ_set_model|verbose_name_plural|title }}</a></li>
+      <li class="breadcrumb-item"><a href="{{ object.base_object.list_url }}">{{ object.base_object|verbose_name_plural|title }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ object.base_object.get_absolute_url }}">{{ object.base_object }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ object.base_object.civ_sets_list_url }}">{{ object.base_object.civ_set_model|verbose_name_plural|title }}</a></li>
         <li class="breadcrumb-item"><a href="{{ object.get_absolute_url}}">{{ object.pk }}</a></li>
          <li class="breadcrumb-item active" aria-current="page">Jobs</li>
     </ol>

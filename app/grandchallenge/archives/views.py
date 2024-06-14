@@ -567,14 +567,19 @@ class ArchiveItemViewSet(
 class ArchiveItemJobListView(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
-    JobsList,
+    PaginatedTableListView,
 ):
     model = Job
     template_name = "archives/archive_item_job_list.html"
-    row_template = "algorithms/job_list_row.html"
+    row_template = "archives/archive_item_job_list_row.html"
 
     search_fields = [
-        *JobsList.search_fields,
+        "pk",
+        "creator__username",
+        "comment",
+        # Inputs
+        "inputs__image__name",
+        "inputs__image__files__file",
         # Outputs
         "outputs__interface__title",
         "outputs__interface__description",
@@ -590,6 +595,15 @@ class ArchiveItemJobListView(
     raise_exception = True
 
     login_url = reverse_lazy("account_login")
+
+    columns = [
+        *JobsList.columns[:2],
+        Column(
+            title="Algorithm", sort_field="algorithm_image__algorithm__title"
+        ),
+        *JobsList.columns[3:],
+    ]
+    default_sort_column = JobsList.default_sort_column
 
     @cached_property
     def archive_item(self):
@@ -648,13 +662,10 @@ class ArchiveItemJobListView(
         return context
 
     def get_context_data(self, *args, **kwargs):
-        context = PaginatedTableListView.get_context_data(
-            self, *args, **kwargs
-        )
+        context = super().get_context_data(*args, **kwargs)
         context.update(
             {
                 "object": self.archive_item,
-                "base_object": self.archive_item.archive,
             }
         )
         return context
