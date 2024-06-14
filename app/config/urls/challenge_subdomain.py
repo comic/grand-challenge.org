@@ -4,6 +4,9 @@ from django.views.generic import TemplateView
 
 from grandchallenge.challenges.views import ChallengeUpdate
 
+handler500 = "grandchallenge.core.views.handler500"
+
+
 urlpatterns = [
     path(
         "robots.txt",
