@@ -1127,23 +1127,14 @@ def test_archive_item_job_list_permissions_filter(
 
 
 @pytest.mark.django_db
-def test_archive_item_job_list_permissions(client):
-    _test_archive_item_permissions(
-        viewname="archives:item-job-list", client=client
-    )
-
-
-@pytest.mark.django_db
-def test_archive_item_detail_permissions(client):
-    _test_archive_item_permissions(
-        viewname="archives:item-detail", client=client
-    )
-
-
-def _test_archive_item_permissions(viewname, client):
+@pytest.mark.parametrize(
+    "viewname", ("archives:item-job-list", "archives:item-detail")
+)
+def test_archive_item_permissions_detail_and_list(viewname, client):
     archive = ArchiveFactory()
     archive.add_editor(editor := UserFactory())
     archive.add_uploader(uploader := UserFactory())
+    archive.add_user(archive_user := UserFactory())
 
     ai = ArchiveItemFactory(archive=archive)
 
@@ -1167,10 +1158,12 @@ def _test_archive_item_permissions(viewname, client):
     # Removing the roles works
     archive.remove_editor(editor)
     archive.remove_uploader(uploader)
+    archive.remove_user(archive_user)
 
     for user in (
         editor,
         uploader,
+        archive_user,
         UserFactory(),  # Random user cannot view
     ):
         response = get_view(user)
