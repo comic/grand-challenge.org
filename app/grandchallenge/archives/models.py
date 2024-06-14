@@ -360,7 +360,7 @@ class ArchiveItem(
         )
 
     @property
-    def get_basolute_url(self):
+    def get_absolute_url(self):
         return reverse(
             "archives:item-detail",
             kwargs={"slug": self.base_object.slug, "pk": self.pk},
