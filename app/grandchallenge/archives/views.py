@@ -668,10 +668,6 @@ class ArchiveItemDetailView(CIVSetDetail):
         f"{Archive._meta.app_label}.view_{ArchiveItem._meta.model_name}"
     )
 
-    @property
-    def base_object(self):
-        return self.object.base_object
-
 
 class ArchiveItemCreateView(
     CIVSetFormMixin,

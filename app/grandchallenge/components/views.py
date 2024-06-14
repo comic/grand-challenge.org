@@ -289,7 +289,7 @@ class CIVSetDetail(
 
     @cached_property
     def base_object(self):
-        return NotImplementedError
+        return self.object.base_object
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)

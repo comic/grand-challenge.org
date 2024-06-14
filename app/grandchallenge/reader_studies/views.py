@@ -1269,10 +1269,6 @@ class DisplaySetDetailView(CIVSetDetail):
         f"{ReaderStudy._meta.app_label}.view_{DisplaySet._meta.model_name}"
     )
 
-    @property
-    def base_object(self):
-        return self.object.base_object
-
 
 class DisplaySetUpdateView(
     CIVSetFormMixin,
