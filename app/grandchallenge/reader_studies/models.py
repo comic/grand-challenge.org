@@ -899,7 +899,7 @@ class DisplaySet(
         )
 
     @property
-    def detail_url(self):
+    def get_absolute_url(self):
         return reverse(
             "reader-studies:display-set-detail",
             kwargs={"slug": self.base_object.slug, "pk": self.pk},
