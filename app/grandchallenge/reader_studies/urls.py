@@ -95,7 +95,7 @@ urlpatterns = [
         name="display-set-create",
     ),
     path(
-        "<slug>/display-sets/<uuid:pk>",
+        "<slug>/display-sets/<uuid:pk>/",
         DisplaySetDetailView.as_view(),
         name="display-set-detail",
     ),
