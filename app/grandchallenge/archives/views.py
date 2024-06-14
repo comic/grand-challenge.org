@@ -621,7 +621,9 @@ class ArchiveItemJobListView(
         queryset = (
             queryset.filter(
                 pk__in=Subquery(
-                    Job.objects.filter(inputs__in=input_civs).values("pk")
+                    Job.objects.filter(
+                        inputs__archive_items=self.archive_item
+                    ).values("pk"),
                 )
             )
             .annotate(
