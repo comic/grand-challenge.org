@@ -22,7 +22,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
-from tests.factories import ImageFactory, UserFactory
+from tests.factories import GroupFactory, ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.uploads_tests.factories import (
     UserUploadFactory,
@@ -1076,19 +1076,13 @@ def test_archive_item_job_list_filter(distractor_generator, client):
     assert str(aj2.pk) in resp["data"][1][detail_column]
 
 
-@pytest.mark.parametrize(
-    "job_creator,expected_num_matches",
-    (
-        (lambda: AlgorithmJobFactory.create_batch(3, public=True), 3),
-        (lambda: AlgorithmJobFactory.create_batch(3, public=False), 0),
-    ),
-)
 @pytest.mark.django_db
-def test_archive_item_job_list_permissions_filter(
-    job_creator, expected_num_matches, client
-):
+def test_archive_item_job_list_permissions_filter(client):
     archive = ArchiveFactory()
     archive.add_editor(editor := UserFactory())
+
+    group = GroupFactory()
+    editor.groups.add(group)
 
     ai = ArchiveItemFactory(archive=archive)
     civs = [
@@ -1097,33 +1091,52 @@ def test_archive_item_job_list_permissions_filter(
     ]
     ai.values.set(civs)
 
-    jobs = job_creator()
+    jobs = AlgorithmJobFactory.create_batch(3)
     for aj in jobs:
         aj.inputs.set(ai.values.all())
 
-    response = get_view_for_user(
-        viewname="archives:item-job-list",
-        client=client,
-        method=client.get,
-        reverse_kwargs={
-            "slug": archive.slug,
-            "pk": ai.pk,
-        },
-        user=editor,
-        follow=True,
-        data={
-            "length": 10,
-            "draw": 1,
-            "order[0][dir]": ArchiveItemJobListView.default_sort_order,
-            "order[0][column]": ArchiveItemJobListView.default_sort_column,
-        },
-        **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
-    )
+    def get_resp():
+        response = get_view_for_user(
+            viewname="archives:item-job-list",
+            client=client,
+            method=client.get,
+            reverse_kwargs={
+                "slug": archive.slug,
+                "pk": ai.pk,
+            },
+            user=editor,
+            follow=True,
+            data={
+                "length": 10,
+                "draw": 1,
+                "order[0][dir]": ArchiveItemJobListView.default_sort_order,
+                "order[0][column]": ArchiveItemJobListView.default_sort_column,
+            },
+            **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
+        )
+        assert response.status_code == 200  # Sanity
+        return response.json()
 
-    assert response.status_code == 200  # Sanity
+    resp_json = get_resp()
+    assert len(resp_json["data"]) == 0, "Empty without permissions"
 
-    resp = response.json()
-    assert len(resp["data"]) == expected_num_matches
+    for aj in jobs:
+        assign_perm("view_job", group, aj)
+
+    resp_json = get_resp()
+    assert len(resp_json["data"]) == 3, "Full with permissions"
+
+    for aj in jobs:
+        remove_perm("view_job", group, aj)
+    resp_json = get_resp()
+    assert len(resp_json["data"]) == 0, "Empty with permissions removed"
+
+    for aj in jobs:
+        aj.public = True
+        aj.save()
+
+    resp_json = get_resp()
+    assert len(resp_json["data"]) == 3, "Full with public algorithms"
 
 
 @pytest.mark.django_db
