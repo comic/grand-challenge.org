@@ -1,7 +1,7 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Subquery
 from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -613,13 +613,17 @@ class ArchiveItemJobListView(
         return self.archive_item
 
     def get_queryset(self):
+        queryset = super().get_queryset()
+
         input_civs = self.archive_item.values.all()
         num_civs = len(input_civs)
 
-        jobs_subquery = Job.objects.filter(inputs__in=input_civs).distinct()
-
-        query_set = (
-            Job.objects.filter(pk__in=jobs_subquery)
+        queryset = (
+            queryset.filter(
+                pk__in=Subquery(
+                    Job.objects.filter(inputs__in=input_civs).values("pk")
+                )
+            )
             .annotate(
                 num_inputs=Count("inputs"),
             )
@@ -646,7 +650,7 @@ class ArchiveItemJobListView(
         )
 
         return filter_by_permission(
-            queryset=query_set,
+            queryset=queryset,
             user=self.request.user,
             codename="view_job",
             accept_user_perms=False,
