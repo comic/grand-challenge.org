@@ -322,6 +322,7 @@ class CivSetListView(
     row_template = "components/civ_set_row.html"
     search_fields = [
         "pk",
+        "title",
         "values__interface__title",
         "values__image__name",
         "values__file",
