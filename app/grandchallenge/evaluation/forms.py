@@ -416,6 +416,8 @@ class SubmissionForm(
                     },
                 ),
             )
+            if not self._phase.active_image:
+                self.fields["algorithm"].disabled = True
         else:
             del self.fields["algorithm"]
             del self.fields["algorithm_image"]
@@ -425,6 +427,18 @@ class SubmissionForm(
                 user,
                 "uploads.change_userupload",
             ).filter(status=UserUpload.StatusChoices.COMPLETED)
+
+            if not self._phase.active_image:
+                self.fields["user_upload"].disabled = True
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if not self._phase.active_image:
+            raise ValidationError(
+                "You cannot submit to this phase because this phase "
+                "does not have an active evaluation method yet."
+            )
+        return cleaned_data
 
     def clean_phase(self):
         phase = self.cleaned_data["phase"]

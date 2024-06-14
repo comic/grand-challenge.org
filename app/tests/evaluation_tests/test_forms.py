@@ -247,6 +247,57 @@ class TestSubmissionForm:
 
         assert form.errors["algorithm"] == ["This field is required."]
 
+    def test_no_submission_possible_without_method(self):
+        csv_phase = PhaseFactory(submission_kind=SubmissionKindChoices.CSV)
+        alg_phase = PhaseFactory(
+            submission_kind=SubmissionKindChoices.ALGORITHM
+        )
+
+        form = SubmissionForm(
+            user=UserFactory(),
+            phase=csv_phase,
+            data={"creator": UserFactory()},
+        )
+        assert form.fields["user_upload"].disabled
+
+        form = SubmissionForm(
+            user=UserFactory(),
+            phase=alg_phase,
+            data={"creator": UserFactory()},
+        )
+        assert form.fields["algorithm"].disabled
+
+        form = SubmissionForm(
+            user=UserFactory(),
+            phase=csv_phase,
+            data={"creator": UserFactory()},
+        )
+        assert not form.is_valid()
+        assert (
+            "You cannot submit to this phase because this phase does "
+            "not have an active evaluation method yet." in str(form.errors)
+        )
+
+        MethodFactory(
+            phase=csv_phase,
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+        )
+        del csv_phase.active_image
+
+        form = SubmissionForm(
+            user=UserFactory(),
+            phase=csv_phase,
+            data={"creator": UserFactory()},
+        )
+        form.is_valid()
+        assert not form.fields["user_upload"].disabled
+        assert (
+            "You cannot submit to this phase because this phase does "
+            "not have an active evaluation method yet." not in str(form.errors)
+        )
+
     def test_algorithm_no_permission(self):
         form = SubmissionForm(
             user=UserFactory(),
