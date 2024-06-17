@@ -12,7 +12,7 @@
         {% endif %}
     {% elif interface.super_kind == interface.SuperKind.FILE %}
         {% if not civ.file %}
-            {% include "components/partials/civ/fallback.html" %}
+            {% include "components/partials/civ/processing.html" %}
         {% elif civ.interface.is_thumbnail_kind %}
             {% include "components/partials/civ/file_thumbnail.html" %}
         {% else %}
@@ -20,7 +20,7 @@
         {% endif %}
     {% elif interface.super_kind == interface.SuperKind.IMAGE %}
         {% if not civ.image %}
-            {% include "components/partials/civ/fallback.html" %}
+            {% include "components/partials/civ/processing.html" %}
         {% else %}
             {% include "components/partials/civ/image.html" %}
         {% endif %}
