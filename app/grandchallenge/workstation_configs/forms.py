@@ -79,7 +79,7 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
             ),
             Fieldset(
                 "Linking Configuration",
-                *PLUGIN_FIELDS,
+                *LINKED_FIELDS,
                 css_class="border rounded px-2 my-4",
             ),
         )
