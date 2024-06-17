@@ -387,8 +387,12 @@ def test_display_set_update_permissions(client):
 @pytest.mark.django_db
 def test_display_set_detail_permissions(client):
     rs = ReaderStudyFactory()
-    rs.add_editor(editor := UserFactory())
-    rs.add_reader(reader := UserFactory())
+
+    editor = UserFactory()
+    rs.add_editor(editor)
+
+    reader = UserFactory()
+    rs.add_reader(reader)
 
     ds = DisplaySetFactory(reader_study=rs)
 

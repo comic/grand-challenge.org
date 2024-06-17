@@ -1017,7 +1017,8 @@ def test_archive_item_bulk_delete_permissions(client):
 )
 def test_archive_item_job_list_filter(distractor_generator, client):
     archive = ArchiveFactory()
-    archive.add_editor(editor := UserFactory())
+    editor = UserFactory()
+    archive.add_editor(editor)
 
     ai = ArchiveItemFactory(archive=archive)
     civs = [
@@ -1079,7 +1080,8 @@ def test_archive_item_job_list_filter(distractor_generator, client):
 @pytest.mark.django_db
 def test_archive_item_job_list_permissions_filter(client):
     archive = ArchiveFactory()
-    archive.add_editor(editor := UserFactory())
+    editor = UserFactory()
+    archive.add_editor(editor)
 
     group = GroupFactory()
     editor.groups.add(group)
@@ -1145,9 +1147,15 @@ def test_archive_item_job_list_permissions_filter(client):
 )
 def test_archive_item_permissions_detail_and_list(viewname, client):
     archive = ArchiveFactory()
-    archive.add_editor(editor := UserFactory())
-    archive.add_uploader(uploader := UserFactory())
-    archive.add_user(archive_user := UserFactory())
+
+    editor = UserFactory()
+    archive.add_editor(editor)
+
+    uploader = UserFactory()
+    archive.add_uploader(uploader)
+
+    archive_user = UserFactory()
+    archive.add_user(archive_user)
 
     ai = ArchiveItemFactory(archive=archive)
 
