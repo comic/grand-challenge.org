@@ -247,12 +247,60 @@ class TestSubmissionForm:
 
         assert form.errors["algorithm"] == ["This field is required."]
 
-    def test_algorithm_no_permission(self):
+    @pytest.mark.parametrize(
+        "submission_kind,disabled_field_name",
+        (
+            [SubmissionKindChoices.CSV, "user_upload"],
+            [SubmissionKindChoices.ALGORITHM, "algorithm"],
+        ),
+    )
+    def test_no_submission_possible_without_method(
+        self, submission_kind, disabled_field_name
+    ):
+        phase = PhaseFactory(submission_kind=submission_kind)
         form = SubmissionForm(
             user=UserFactory(),
-            phase=PhaseFactory(
-                submission_kind=SubmissionKindChoices.ALGORITHM
-            ),
+            phase=phase,
+            data={"creator": UserFactory(), "phase": phase},
+        )
+        assert form.fields[disabled_field_name].disabled
+        assert not form.is_valid()
+        assert (
+            "You cannot submit to this phase because this phase does "
+            "not have an active evaluation method yet." in str(form.errors)
+        )
+
+        MethodFactory(
+            phase=phase,
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+        )
+        del phase.active_image
+
+        form = SubmissionForm(
+            user=UserFactory(),
+            phase=phase,
+            data={"creator": UserFactory(), "phase": phase},
+        )
+        assert not form.is_valid()
+        assert not form.fields[disabled_field_name].disabled
+        assert (
+            "You cannot submit to this phase because this phase does "
+            "not have an active evaluation method yet." not in str(form.errors)
+        )
+
+    def test_algorithm_no_permission(self):
+        phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
+        MethodFactory(
+            phase=phase,
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+        )
+        form = SubmissionForm(
+            user=UserFactory(),
+            phase=phase,
             data={"algorithm": AlgorithmFactory()},
         )
 
@@ -297,6 +345,12 @@ class TestSubmissionForm:
             algorithm=alg,
         )
         AlgorithmJobFactory(algorithm_image=ai, status=4)
+        MethodFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+            phase=p,
+        )
 
         form = SubmissionForm(
             user=user,
@@ -346,6 +400,12 @@ class TestSubmissionForm:
         )
         am = AlgorithmModelFactory(algorithm=alg, is_desired_version=True)
         AlgorithmJobFactory(algorithm_image=ai, status=Job.SUCCESS)
+        MethodFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+            phase=p,
+        )
 
         form = SubmissionForm(
             user=user,
@@ -419,6 +479,18 @@ class TestSubmissionForm:
         )
         p_alg.algorithm_inputs.set([ci1])
         p_alg.algorithm_outputs.set([ci2])
+        MethodFactory(
+            phase=p_alg,
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+        )
+        MethodFactory(
+            phase=p_pred,
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+        )
 
         for p in [p_alg, p_pred]:
             InvoiceFactory(
@@ -512,6 +584,12 @@ class TestSubmissionForm:
         SubmissionFactory(
             phase=p,
             algorithm_image=ai,
+        )
+        MethodFactory(
+            phase=p,
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
         )
 
         form = SubmissionForm(
