@@ -9,8 +9,9 @@
 {% load meta_attr %}
 {% load civ %}
 
+
 <a class="btn btn-primary btn-sm"
-   href="{% url 'algorithms:job-detail' slug=algorithm.slug pk=object.pk %}"
+   href="{% url 'algorithms:job-detail' slug=object.algorithm_image.algorithm.slug pk=object.pk %}"
    title="View result details">
     <i class="fa fa-info-circle"></i>
 </a>
@@ -65,11 +66,13 @@
 <split></split>
 
 {% if object.status == object.SUCCESS %}
-    <button class="btn btn-primary btn-sm"
-            title="View algorithm result in viewer"
-            {% workstation_session_control_data workstation=algorithm.workstation context_object=algorithm algorithm_job=object config=algorithm.workstation_config %}
->
-        <i class="fa fa-eye"></i>
-    </button>
+    {% with object.algorithm_image.algorithm as "algorithm" %}
+        <button class="btn btn-primary btn-sm"
+                title="View algorithm result in viewer"
+                {% workstation_session_control_data workstation=algorithm.workstation context_object=algorithm algorithm_job=object config=algorithm.workstation_config %}
+        >
+            <i class="fa fa-eye"></i>
+        </button>
+    {% endwith %}
 {% endif %}
 <split></split>

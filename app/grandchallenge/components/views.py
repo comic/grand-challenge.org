@@ -346,18 +346,6 @@ class CivSetListView(
         Column(title="Remove"),
     ]
 
-    def get_row_context(self, *, object_, page_context):
-        context = super().get_row_context(
-            object_=object_, page_context=page_context
-        )
-        context.update(
-            {
-                "delete_perm": f"delete_{object_.base_object.civ_set_model._meta.model_name}",
-                "update_perm": f"change_{object_.base_object.civ_set_model._meta.model_name}",
-            }
-        )
-        return context
-
     @property
     def base_object(self):
         return NotImplementedError
@@ -368,6 +356,8 @@ class CivSetListView(
             {
                 "base_object": self.base_object,
                 "base_model_options": BaseModelOptions,
+                "delete_perm": f"delete_{self.base_object.civ_set_model._meta.model_name}",
+                "update_perm": f"change_{self.base_object.civ_set_model._meta.model_name}",
                 "request": self.request,
             }
         )

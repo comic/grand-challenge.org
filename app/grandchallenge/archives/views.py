@@ -648,15 +648,6 @@ class ArchiveItemJobListView(
             accept_user_perms=False,
         )
 
-    def get_row_context(self, *, object_, **kwargs):
-        context = super().get_row_context(object_=object_, **kwargs)
-        context.update(
-            {
-                "algorithm": object_.algorithm_image.algorithm,
-            }
-        )
-        return context
-
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context.update(

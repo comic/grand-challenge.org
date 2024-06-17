@@ -3,7 +3,9 @@
 {% load url %}
 
 {% block column_2 %}
-    <a href="{{ algorithm.get_absolute_url }}">
-        {{ algorithm.title }}
-    </a>
+    {% with object.algorithm_image.algorithm as "algorithm" %}
+        <a href="{{ algorithm.get_absolute_url }}">
+            {{ algorithm.title }}
+        </a>
+    {% endwith %}
 {% endblock %}
