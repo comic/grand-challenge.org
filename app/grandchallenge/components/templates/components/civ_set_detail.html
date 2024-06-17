@@ -33,38 +33,41 @@
         >
             <i class="fas fa-eye"></i> View in viewer
         </a>
-        <span
-            {% if object.is_editable  %}
-                title = "Edit {{ object|verbose_name }}"
-            {% elif not object.is_editable %}
-                title="Cannot edit: answers for display set exist"
-            {% elif update_perm not in object_perms %}
-                title="Not allowed to edit {{ object|verbose_name }}"
-            {% endif %}
-        >
-            <a class="btn btn-primary {% if not object.is_editable or update_perm not in object_perms %}disabled{% endif %}"
-               href="{{ object.update_url }}"
+
+        {% if update_perm in object_perms %}
+            <span
+                {% if object.is_editable  %}
+                    title = "Edit {{ object|verbose_name }}"
+                {% elif not object.is_editable %}
+                    title="Cannot edit: answers for display set exist"
+                {% endif %}
             >
-                <i class="fas fa-edit"></i> Edit
-            </a>
-        </span>
+                <a class="btn btn-primary {% if not object.is_editable %}disabled{% endif %}"
+                href="{{ object.update_url }}"
+                >
+                    <i class="fas fa-edit"></i> Edit
+                </a>
+            </span>
+        {% endif %}
+
         {% block additional_buttons %}{% endblock %}
-        <span
-            {% if object.is_editable  %}
-                title = "Delete {{ object|verbose_name }}"
-            {% elif not object.is_editable %}
-                title="Cannot delete: answers for display set exist"
-            {% elif delete_perm not in object_perms %}
-                title="Not allowed to delete {{ object|verbose_name }}"
-            {% endif %}
-            class="float-right"
-            >
-            <a class="btn btn-danger {% if not object.is_editable or delete_perm not in object_perms %}disabled{% endif %}"
-            href="{{ object.delete_url }}"
-            >
-                <i class="fas fa-trash"></i> Delete
-            </a>
-        </span>
+
+        {% if delete_perm in object_perms %}
+            <span
+                {% if object.is_editable  %}
+                    title = "Delete {{ object|verbose_name }}"
+                {% elif not object.is_editable %}
+                    title="Cannot delete: answers for display set exist"
+                {% endif %}
+                class="float-right"
+                >
+                <a class="btn btn-danger {% if not object.is_editable %}disabled{% endif %}"
+                href="{{ object.delete_url }}"
+                >
+                    <i class="fas fa-trash"></i> Delete
+                </a>
+            </span>
+        {% endif %}
     </p>
 
     <hr/>
