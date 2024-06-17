@@ -11,8 +11,9 @@ $('#v-pills-tab a').click(function () {
 
 // store the currently selected tab in the hash value
 $("ul.nav-pills > a").on("shown.bs.tab", (e) => {
-  const newUrl = $(e.target).attr("href").substring(1);
-  history.pushState(null, null, `#${newUrl}`);
+  const href = $(e.target).attr("href");
+  const newUrl = new URL(href, window.location);
+  history.pushState(null, null, newUrl.hash);
 });
 
 function activateLocation() {
@@ -22,7 +23,7 @@ function activateLocation() {
   tab.tab('show');
 }
 
-window.addEventListener('popstate', function(event) {
+window.addEventListener('popstate', function (event) {
   activateLocation();
 });
 
