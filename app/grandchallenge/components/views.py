@@ -287,6 +287,17 @@ class CIVSetDetail(
     login_url = reverse_lazy("account_login")
     template_name = "components/civ_set_detail.html"
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update(
+            {
+                "request": self.request,
+                "delete_perm": f"delete_{self.object.base_object.civ_set_model._meta.model_name}",
+                "update_perm": f"change_{self.object.base_object.civ_set_model._meta.model_name}",
+            }
+        )
+        return context
+
 
 class CIVSetDelete(
     LoginRequiredMixin,

@@ -43,13 +43,12 @@
     {{ object.order }}
     <split></split>
 {% endif %}
-
-<ul class="list-unstyled mb-0">
+<ul class="list-unstyled mb-0 text-left">
     {% for civ in object.values.all|sort_civs %}
     <li>
         {% include "components/partials/civ.html" with object=civ display_inline=True only %}
     </li>
-    {% empty %}
+{% empty %}
     <span class="text-muted">Empty</span>
     {% endfor %}
 </ul>

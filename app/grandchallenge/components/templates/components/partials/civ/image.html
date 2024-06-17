@@ -5,16 +5,16 @@
     <li>
         <a class="badge badge-primary"
             href="{{ file.file.url }}"
-            title="{{ civ.interface.title }}: {{ forloop.parentloop.counter }}"
+            title="{{ civ.interface.title }}"
         >
-        <i class="fa fa-download mr-1" style="width: 0.8rem"></i>
+        <i class="fas fa-fw fa-download"></i>
         {% if display_inline %}
             Download {{ civ.interface.title|truncatechars:64 }}:
             {{ civ.image.name|name|truncatechars:30 }}
         {% else %}
-            Download {{ civ.interface.title|truncatechars:64 }}:
-            {{ civ.image.name|stem|truncatechars:30 }}
-            ({{ file.file|suffix|truncatechars:30 }})
+            Download {{ civ.interface.title }}:
+            {{ civ.image.name|stem}}
+            ({{ file.file|suffix }})
         {% endif %}
         </a>
     </li>
