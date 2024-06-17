@@ -16,10 +16,8 @@ $(document).ready(function() {
         const tab = $(this);
         tab.siblings().removeClass('active');
         tab.tab('show');
-    });
 
-    $("ul.nav-pills > a").on("shown.bs.tab", (e) => {
-        const hash = $(e.target).attr("href").substring(1);
+        const hash = tab.attr("href").substring(1);
         if (isValidHash(hash)) {
             history.pushState(null, null, `#${hash}`);
         }
