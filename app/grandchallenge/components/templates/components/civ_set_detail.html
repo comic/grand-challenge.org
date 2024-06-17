@@ -4,7 +4,6 @@
 {% load civ %}
 {% load guardian_tags %}
 
-{% get_obj_perms request.user for object as "object_perms" %}
 
 {% block title %}
     {{ object.title }} - {{ block.super }}
@@ -20,6 +19,9 @@
 {% endblock %}
 
 {% block content %}
+    {% get_obj_perms request.user for object as "object_perms" %}
+
+
     <h2>{{ object|verbose_name|title }} </h2>
     <h4>{{ object.pk }}</h4>
 
