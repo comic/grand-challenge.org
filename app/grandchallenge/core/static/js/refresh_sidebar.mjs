@@ -4,7 +4,7 @@ $(document).ready(function() {
     const allowedHashes = new Set(
         tabSelectors.map(function() {
             let href = this.getAttribute('href');
-            return href.startsWith('#') ? href.substring(1) : null;
+            return href.startsWith('#') ? href : null;
         }).get().filter(hash => hash !== null)
     );
 
@@ -12,21 +12,10 @@ $(document).ready(function() {
         return allowedHashes.has(hash);
     }
 
-    tabSelectors.click(function () {
-        const tab = $(this);
-        tab.siblings().removeClass('active');
-        tab.tab('show');
-
-        const hash = tab.attr("href").substring(1);
-        if (isValidHash(hash)) {
-            history.pushState(null, null, `#${hash}`);
-        }
-    });
-
     function activateLocation() {
-        const hash = window.location.hash.substring(1);
+        const hash = window.location.hash;
         if (isValidHash(hash)) {
-            const tab = $(`#v-pills-tab a[href="#${hash}"]`);
+            const tab = $(`#v-pills-tab a[href="${hash}"]`);
             tab.siblings().removeClass('active');
             tab.tab('show');
         } else {
@@ -36,6 +25,14 @@ $(document).ready(function() {
             defaultTab.tab('show');
         }
     }
+
+    tabSelectors.click(function () {
+        const hash = $(this).attr("href");
+        if (isValidHash(hash)) {
+            history.pushState(null, null, hash);
+            activateLocation();
+        }
+    });
 
     window.addEventListener('popstate', function (event) {
         activateLocation();
