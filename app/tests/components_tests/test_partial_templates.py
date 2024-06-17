@@ -113,9 +113,7 @@ def test_civ(
         ImageFileFactory(image=civ.image)
 
     # Actually create the CIV
-    if (
-        ci.kind != InterfaceKindChoices.SEGMENTATION
-    ):  # Intentionally incomplete
+    if ci.kind != InterfaceKindChoices.SEGMENTATION:  # Intentionally broken
         civ.full_clean()
     civ.save()
 
