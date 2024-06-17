@@ -575,18 +575,8 @@ class ArchiveItemJobListView(
 
     search_fields = [
         "pk",
-        "creator__username",
-        "comment",
-        # Inputs
-        "inputs__image__name",
-        "inputs__image__files__file",
-        # Outputs
         "outputs__interface__title",
-        "outputs__interface__description",
-        # Algorithm
         "algorithm_image__algorithm__title",
-        "algorithm_image__algorithm__description",
-        "algorithm_image__comment",
     ]
 
     permission_required = (
