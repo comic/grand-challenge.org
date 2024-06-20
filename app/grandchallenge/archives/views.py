@@ -426,22 +426,6 @@ class ArchiveItemsList(CivSetListView):
     permission_required = (
         f"{Archive._meta.app_label}.view_{ArchiveItem._meta.model_name}"
     )
-    columns = [
-        Column(title=""),
-        Column(title="Detail"),
-        Column(title="ID", sort_field="pk"),
-        Column(
-            title="Title",
-            sort_field="title",
-            optional_condition=lambda obj: bool(obj.title),
-        ),
-        *CivSetListView.columns,
-    ]
-    default_sort_column = 2
-    search_fields = [
-        "title",
-        *CivSetListView.search_fields,
-    ]
 
     @cached_property
     def base_object(self):

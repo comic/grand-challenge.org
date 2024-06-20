@@ -10,6 +10,7 @@ from guardian.utils import get_anonymous_user
 
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.core.guardian import (
+    ObjectPermissionCheckerMixin,
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
     filter_by_permission,
@@ -94,6 +95,29 @@ def test_object_permission_required_mixin():
     view = View()
     view.request = request
     view.check_permissions(request)
+
+
+@pytest.mark.django_db
+def test_object_permission_checker_mixin(django_assert_num_queries):
+    alg = AlgorithmFactory()
+    user = UserFactory()
+    codename = "view_algorithm"
+
+    assign_perm(codename, user, alg)
+
+    request = HttpRequest()
+    request.user = user
+
+    class View(ObjectPermissionCheckerMixin, ListView):
+        model = Algorithm
+
+    view = View()
+    view.request = request
+
+    # View adds checker to context
+    context = view.get_context_data()
+    assert "checker" in context
+    assert context["checker"] is view.permission_checker
 
 
 @pytest.mark.django_db

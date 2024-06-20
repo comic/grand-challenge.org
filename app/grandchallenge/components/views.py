@@ -29,6 +29,7 @@ from grandchallenge.components.forms import (
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.components.serializers import ComponentInterfaceSerializer
 from grandchallenge.core.guardian import (
+    ObjectPermissionCheckerMixin,
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
     get_objects_for_user,
@@ -292,8 +293,6 @@ class CIVSetDetail(
         context.update(
             {
                 "request": self.request,
-                "delete_perm": f"delete_{self.object.base_object.civ_set_model._meta.model_name}",
-                "update_perm": f"change_{self.object.base_object.civ_set_model._meta.model_name}",
             }
         )
         return context
@@ -324,7 +323,10 @@ class BaseModelOptions(TextChoices):
 
 
 class CivSetListView(
-    LoginRequiredMixin, PermissionListMixin, PaginatedTableListView
+    LoginRequiredMixin,
+    ObjectPermissionCheckerMixin,
+    PermissionListMixin,
+    PaginatedTableListView,
 ):
     model = None
     permission_required = None
@@ -340,24 +342,36 @@ class CivSetListView(
     ]
     default_sort_order = "asc"
     columns = [
+        Column(title=""),
+        Column(title="Detail"),
+        Column(title="ID", sort_field="pk"),
+        Column(
+            title="Title",
+            sort_field="title",
+            optional_condition=lambda obj: bool(obj.title),
+        ),
         Column(title="Values"),
         Column(title="Viewer"),
         Column(title="Edit"),
         Column(title="Remove"),
     ]
 
+    default_sort_column = 2
+
     @property
     def base_object(self):
         return NotImplementedError
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+    def get_context_data(self, *args, object_list=None, **kwargs):
+        context = super().get_context_data(*args, object_list=None, **kwargs)
+
+        if object_list:
+            self.permission_checker.prefetch_perms(objects=object_list)
+
         context.update(
             {
                 "base_object": self.base_object,
                 "base_model_options": BaseModelOptions,
-                "delete_perm": f"delete_{self.base_object.civ_set_model._meta.model_name}",
-                "update_perm": f"change_{self.base_object.civ_set_model._meta.model_name}",
                 "request": self.request,
             }
         )

@@ -2004,6 +2004,30 @@ class CIVSetStringRepresentationMixin:
         return ", ".join(content)
 
 
+class CIVSetObjectPermissionsMixin:
+    @property
+    def view_perm(self):
+        return f"view_{self._meta.model_name}"
+
+    @property
+    def change_perm(self):
+        return f"change_{self._meta.model_name}"
+
+    @property
+    def delete_perm(self):
+        return f"delete_{self._meta.model_name}"
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.assign_permissions()
+
+    def assign_permissions(self):
+        pass
+
+
 class CIVForObjectMixin:
     def create_civ(self, *, ci_slug, new_value, user=None):
         ci = ComponentInterface.objects.get(slug=ci_slug)

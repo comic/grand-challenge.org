@@ -1,6 +1,7 @@
-from functools import partial
+from functools import cached_property, partial
 
 from django.contrib.auth.models import Permission
+from guardian.core import ObjectPermissionChecker
 from guardian.mixins import (  # noqa: I251
     PermissionListMixin as PermissionListMixinOrig,
 )
@@ -29,6 +30,19 @@ get_objects_for_group = partial(
 
 class PermissionListMixin(PermissionListMixinOrig):
     get_objects_for_user_extra_kwargs = {"accept_global_perms": False}
+
+
+class ObjectPermissionCheckerMixin:
+    request = None
+
+    @cached_property
+    def permission_checker(self):
+        return ObjectPermissionChecker(user_or_group=self.request.user)
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["checker"] = self.permission_checker
+        return context
 
 
 class ObjectPermissionRequiredMixin(PermissionRequiredMixin):

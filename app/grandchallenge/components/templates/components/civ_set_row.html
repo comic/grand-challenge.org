@@ -6,7 +6,7 @@
 {% load guardian_tags %}
 {% load civ %}
 
-{% get_obj_perms request.user for object as "object_perms" %}
+{% get_obj_perms request.user for object as "object_perms" checker %}
 
 <div
      {% if object.is_editable %}
@@ -66,7 +66,7 @@
 </a>
 <split></split>
 
-{% if update_perm in object_perms %}
+{% if object.change_perm in object_perms %}
     <div
         {% if object.is_editable  %}
             title = "Edit {{ object|verbose_name }}"
@@ -84,7 +84,7 @@
 
 <split></split>
 
-{% if delete_perm in object_perms %}
+{% if object.delete_perm in object_perms %}
     <div
         {% if object.is_editable  %}
             title = "Delete {{ object|verbose_name }}"
