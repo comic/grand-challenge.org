@@ -7,5 +7,4 @@ function displayElements() {
 }
 
 document.addEventListener('htmx:load', displayElements);
-
-displayElements();
+document.addEventListener('DOMContentLoaded', displayElements);

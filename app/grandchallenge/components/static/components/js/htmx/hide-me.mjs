@@ -7,5 +7,4 @@ function hideElements() {
 }
 
 document.addEventListener('htmx:load', hideElements);
-
-hideElements();
+document.addEventListener('DOMContentLoaded', hideElements);
