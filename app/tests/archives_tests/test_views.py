@@ -1005,17 +1005,21 @@ def test_archive_item_bulk_delete_permissions(client):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "distractor_generator",
+    "job_civs_generator, expect_selected",
     (
-        # Different CIVs in distractor
-        lambda civs: [ComponentInterfaceValueFactory()],
-        # Partial CIVs in distractor
-        lambda civs: [civs[0]],
-        # Extra CIVs in distractor
-        lambda civs: [*civs, ComponentInterfaceValueFactory()],
+        # Same CIVs, should be selected
+        (lambda ai_civs: ai_civs, True),
+        # Different CIV, 0 overlap
+        (lambda _: [ComponentInterfaceValueFactory()], False),
+        # Partial CIVs, subset
+        (lambda ai_civs: [ai_civs[0]], False),
+        # Extra CIVs, superset
+        (lambda ai_civs: [*ai_civs, ComponentInterfaceValueFactory()], False),
     ),
 )
-def test_archive_item_job_list_filter(distractor_generator, client):
+def test_archive_item_job_list_filter(
+    job_civs_generator, expect_selected, client
+):
     archive = ArchiveFactory()
     editor = UserFactory()
     archive.add_editor(editor)
@@ -1027,14 +1031,9 @@ def test_archive_item_job_list_filter(distractor_generator, client):
     ]
     ai.values.set(civs)
 
-    aj1 = AlgorithmJobFactory(public=True)
-    aj2 = AlgorithmJobFactory(public=True)
-    for aj in aj1, aj2:
-        aj.inputs.set(ai.values.all())
-
-    distractor = AlgorithmJobFactory(public=True)
-    distractor_civs = distractor_generator(civs)
-    distractor.inputs.set(distractor_civs)
+    job = AlgorithmJobFactory(public=True)
+    job_civs = job_civs_generator(civs)
+    job.inputs.set(job_civs)
 
     # Sanity
     sort_column = 1
@@ -1065,16 +1064,20 @@ def test_archive_item_job_list_filter(distractor_generator, client):
 
     data = resp["data"]
 
-    assert len(data) == 2, "distractor is not selected"
+    if expect_selected:
+        assert len(data) == 1, "is selected"
+        num_items = 1
+    else:
+        assert len(data) == 0, "is not selected"
+        num_items = 0
 
-    assert resp["recordsTotal"] == 2, "page length has all items"
-
-    # Sanity
+    # Sanity checks for any red herrings
+    assert resp["recordsTotal"] == num_items, "page length has all items"
     detail_column = 0
     assert ArchiveItemJobListView.columns[detail_column].title == "Detail"
 
-    assert str(aj1.pk) in resp["data"][0][detail_column]
-    assert str(aj2.pk) in resp["data"][1][detail_column]
+    if expect_selected:
+        assert str(job.pk) in resp["data"][0][detail_column]
 
 
 @pytest.mark.django_db
