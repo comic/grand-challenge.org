@@ -7,7 +7,6 @@ from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned
 from django.core.files import File
 
-from grandchallenge.cases.utils import get_sitk_image
 from tests.cases_tests.factories import (
     ImageFactory,
     ImageFactoryWithImageFile,
@@ -35,38 +34,37 @@ class TestGetSitkImage:
             files=(extra_mhd, extra_raw, extra_mhd_file, extra_raw_file)
         )
         with pytest.raises(MultipleObjectsReturned):
-            get_sitk_image(image=image)
+            _ = image.sitk_image
 
     def test_4d_mhd_object(self):
         image = ImageFactoryWithImageFile4D()
-        img = get_sitk_image(image=image)
-        assert img.GetDimension() == 4
+        assert image.sitk_image.GetDimension() == 4
 
     def test_no_mhd_object(self):
         image = ImageFactoryWithImageFile()
         image.files.get(file__endswith=".mhd").delete()
         with pytest.raises(FileNotFoundError):
-            get_sitk_image(image=image)
+            _ = image.sitk_image
 
     def test_no_raw_object(self):
         image = ImageFactoryWithImageFile()
         image.files.get(file__endswith=".zraw").delete()
         with pytest.raises(FileNotFoundError):
-            get_sitk_image(image=image)
+            _ = image.sitk_image
 
     def test_file_not_found_mhd(self):
         image = ImageFactoryWithImageFile()
         imagefile = image.files.get(file__endswith=".mhd")
         imagefile.file.storage.delete(imagefile.file.name)
         with pytest.raises(FileNotFoundError):
-            get_sitk_image(image=image)
+            _ = image.sitk_image
 
     def test_file_not_found_raw(self):
         image = ImageFactoryWithImageFile()
         imagefile = image.files.get(file__endswith=".zraw")
         imagefile.file.storage.delete(imagefile.file.name)
         with pytest.raises(FileNotFoundError):
-            get_sitk_image(image=image)
+            _ = image.sitk_image
 
     def test_file_too_large_throws_error(self, tmpdir):
         image = ImageFactoryWithImageFile()
@@ -92,14 +90,14 @@ class TestGetSitkImage:
 
         # Try to open and catch expected exception
         with pytest.raises(IOError) as exec_info:
-            get_sitk_image(image=image)
+            _ = image.sitk_image
         assert "File exceeds maximum file size." in str(
             exec_info.value.args[0]
         )
 
     def test_correct_dimensions(self):
         image = ImageFactoryWithImageFile()
-        sitk_image = get_sitk_image(image=image)
+        sitk_image = image.sitk_image
         assert sitk_image.GetDimension() == 2
         assert sitk_image.GetSize() == (3, 4)
         assert sitk_image.GetOrigin() == (0.0, 0.0)

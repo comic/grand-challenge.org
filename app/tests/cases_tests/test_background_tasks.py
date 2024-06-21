@@ -4,7 +4,6 @@ from pathlib import Path
 from unittest import mock
 
 import pytest
-import SimpleITK
 from actstream.actions import is_following
 from billiard.exceptions import SoftTimeLimitExceeded
 from panimg.image_builders.metaio_utils import (
@@ -19,7 +18,6 @@ from grandchallenge.cases.tasks import (
     build_images,
     check_compressed_and_extract,
 )
-from grandchallenge.cases.utils import get_sitk_image
 from grandchallenge.notifications.models import Notification
 from grandchallenge.uploads.models import UserUpload
 from tests.cases_tests import RESOURCE_PATH
@@ -161,7 +159,7 @@ def test_staged_mhd_upload_with_additional_headers(
     for key in headers.keys():
         assert (key in ADDITIONAL_HEADERS) or (key in EXPECTED_HEADERS)
 
-    sitk_image: SimpleITK.Image = get_sitk_image(image=image)
+    sitk_image = image.sitk_image
     for key in ADDITIONAL_HEADERS:
         assert key in sitk_image.GetMetaDataKeys()
         if key in HEADERS_MATCHING_NUM_TIMEPOINTS:
@@ -246,8 +244,7 @@ def test_mhd_file_annotation_creation(
     assert image.shape_without_color == [7, 6, 5]
     assert image.color_space == Image.COLOR_SPACE_GRAY
 
-    sitk_image = get_sitk_image(image=image)
-    assert [e for e in reversed(sitk_image.GetSize())] == image.shape
+    assert [e for e in reversed(image.sitk_image.GetSize())] == image.shape
 
 
 def test_check_compressed_and_extract(tmpdir):

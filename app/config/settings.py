@@ -1395,7 +1395,7 @@ CASES_POST_PROCESSORS = os.environ.get(
     "CASES_POST_PROCESSORS", "panimg.post_processors.tiff_to_dzi"
 ).split(",")
 
-# Maximum file size in bytes to be opened by SimpleITK.ReadImage in cases_tests.utils.get_sitk_image()
+# Maximum file size in bytes to be opened by SimpleITK.ReadImage in Image.sitk_image
 MAX_SITK_FILE_SIZE = 256 * MEGABYTE
 
 # The maximum size of all the files in an upload session in bytes
