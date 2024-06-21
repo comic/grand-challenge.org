@@ -240,6 +240,15 @@ class CIVSetFormMixin:
     def new_interface_url(self):
         raise NotImplementedError
 
+    def get_success_url(self):
+        print("### TEST", self.request.POST)
+        if (
+            self.request.method == "POST"
+            and self.request.POST.get("submit") == "SaveAndAddAnother"
+        ):
+            return self.form_url
+        return self.return_url
+
 
 class InterfacesCreateBaseView(ObjectPermissionRequiredMixin, TemplateView):
     form_class = SingleCIVForm

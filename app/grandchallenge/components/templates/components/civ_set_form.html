@@ -87,8 +87,24 @@
                   Loading...
               </div>
           </button>
+          <button type="submit"
+                  name="submit"
+                  value="SaveAndAddAnother"
+                  class="btn btn-outline-primary"
+                  hx-enable-me
+                  disabled
+            >
+              <div class="d-none" hx-display-me>
+                  <span id="hx-save-indicator" class="htmx-indicator spinner-border spinner-border-sm"></span>
+                   Save and add another
+              </div>
+              <div hx-hide-me>
+                  <span class="spinner-border spinner-border-sm"></span>
+                  Loading...
+              </div>
+            </button>
+          </div>
         </div>
-      </div>
     </form>
 {% endblock %}
 

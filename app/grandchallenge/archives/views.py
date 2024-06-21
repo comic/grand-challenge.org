@@ -598,9 +598,6 @@ class ArchiveItemCreateView(
             kwargs={"slug": self.base_object.slug},
         )
 
-    def get_success_url(self):
-        return self.return_url
-
 
 class ArchiveItemInterfaceCreate(InterfacesCreateBaseView):
     def get_required_permissions(self, request):

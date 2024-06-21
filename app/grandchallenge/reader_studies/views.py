@@ -1408,9 +1408,6 @@ class DisplaySetCreate(
             kwargs={"slug": self.base_object.slug},
         )
 
-    def get_success_url(self):
-        return self.return_url
-
 
 class DisplaySetDelete(CIVSetDelete):
     model = DisplaySet
