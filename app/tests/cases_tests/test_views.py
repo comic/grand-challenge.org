@@ -1,18 +1,10 @@
 import pytest
 from guardian.shortcuts import assign_perm, remove_perm
 
-from grandchallenge.cases.models import Image
 from grandchallenge.components.models import ComponentInterface
-from tests.cases_tests.factories import (
-    ImageFactoryWithImageFile,
-    ImageFactoryWithImageFile2DGray16Bit,
-    ImageFactoryWithImageFile3D,
-    ImageFactoryWithImageFile16Bit,
-    ImageFactoryWithoutImageFile,
-    RawImageUploadSessionFactory,
-)
+from tests.cases_tests.factories import RawImageUploadSessionFactory
 from tests.components_tests.factories import ComponentInterfaceFactory
-from tests.factories import ImageFactory, ImageFileFactory, UserFactory
+from tests.factories import ImageFactory, UserFactory
 from tests.utils import get_view_for_user
 
 
@@ -20,10 +12,6 @@ from tests.utils import get_view_for_user
 class TestObjectPermissionRequiredViews:
     def test_permission_required_views(self, client):
         rius = RawImageUploadSessionFactory()
-        image_file_dzi = ImageFileFactory(image_type="DZI")
-        image_file_mh = ImageFactoryWithImageFile(
-            color_space=Image.COLOR_SPACE_GRAY
-        )
         u = UserFactory()
 
         for view_name, kwargs, permission, obj in [
@@ -32,24 +20,6 @@ class TestObjectPermissionRequiredViews:
                 {"pk": rius.pk},
                 "view_rawimageuploadsession",
                 rius,
-            ),
-            (
-                "osd-image-detail",
-                {"pk": image_file_dzi.image.pk},
-                "view_image",
-                image_file_dzi.image,
-            ),
-            (
-                "vtk-image-detail",
-                {"pk": image_file_mh.pk},
-                "view_image",
-                image_file_mh,
-            ),
-            (
-                "cs-image-detail",
-                {"pk": image_file_mh.pk},
-                "view_image",
-                image_file_mh,
             ),
         ]:
             response = get_view_for_user(
@@ -111,32 +81,6 @@ class TestObjectPermissionRequiredViews:
             assert obj not in response.context[-1]["object_list"]
 
 
-@pytest.mark.django_db
-class TestVTKImageDetail:
-    def test_permission_required_views(self, client):
-        def get_status_code(image):
-            u = UserFactory()
-            assign_perm("view_image", u, image)
-            response = get_view_for_user(
-                client=client,
-                viewname="cases:vtk-image-detail",
-                reverse_kwargs={"pk": image.pk},
-                user=u,
-            )
-            return response.status_code
-
-        for image in (
-            ImageFactoryWithoutImageFile(color_space=Image.COLOR_SPACE_GRAY),
-            ImageFactoryWithImageFile(color_space=Image.COLOR_SPACE_RGB),
-            ImageFactoryWithImageFile(color_space=Image.COLOR_SPACE_RGBA),
-            ImageFactoryWithImageFile(color_space=Image.COLOR_SPACE_YCBCR),
-        ):
-            assert get_status_code(image) == 404
-
-        image = ImageFactoryWithImageFile(color_space=Image.COLOR_SPACE_GRAY)
-        assert get_status_code(image) == 200
-
-
 P = "patient_id__isempty"
 S = "study_description__isempty"
 
@@ -184,63 +128,6 @@ def test_imageviewset_empty_fields_filtering(
         response = get_view_for_user(**view_kwargs, data=data)
         assert response.status_code == 200
         assert len(response.data["results"]) == 0
-
-
-@pytest.mark.django_db
-class TestCSImageDetail:
-    def get_status_code(self, client, viewname, image):
-        u = UserFactory()
-        assign_perm("view_image", u, image)
-        response = get_view_for_user(
-            client=client,
-            viewname=f"cases:{viewname}-image-detail",
-            reverse_kwargs={"pk": image.pk},
-            user=u,
-        )
-        return response.status_code
-
-    @pytest.mark.parametrize(
-        "viewname,factory,kwargs",
-        [
-            (
-                "cs",
-                ImageFactoryWithoutImageFile,
-                {"color_space": Image.COLOR_SPACE_GRAY},
-            ),
-            (
-                "cs3d",
-                ImageFactoryWithoutImageFile,
-                {"color_space": Image.COLOR_SPACE_GRAY},
-            ),
-            (
-                "cs",
-                ImageFactoryWithImageFile,
-                {"color_space": Image.COLOR_SPACE_YCBCR},
-            ),
-        ],
-    )
-    def test_not_allowed(self, client, viewname, factory, kwargs):
-        assert self.get_status_code(client, viewname, factory(**kwargs)) == 404
-
-    @pytest.mark.parametrize("viewname", ["cs", "cs3d"])
-    @pytest.mark.parametrize(
-        "factory,kwargs",
-        [
-            (ImageFactoryWithImageFile2DGray16Bit, {}),
-            (
-                ImageFactoryWithImageFile,
-                {"color_space": Image.COLOR_SPACE_RGB},
-            ),
-            (
-                ImageFactoryWithImageFile,
-                {"color_space": Image.COLOR_SPACE_RGBA},
-            ),
-            (ImageFactoryWithImageFile16Bit, {}),
-            (ImageFactoryWithImageFile3D, {}),
-        ],
-    )
-    def test_allowed(self, client, viewname, factory, kwargs):
-        assert self.get_status_code(client, viewname, factory(**kwargs)) == 200
 
 
 @pytest.mark.django_db

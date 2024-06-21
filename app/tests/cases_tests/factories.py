@@ -100,42 +100,6 @@ class ImageFactoryWithImageFile(ImageFactoryWithoutImageFile):
     height = 4
 
 
-class ImageFactoryWithImageFile2DGray16Bit(ImageFactoryWithoutImageFile):
-    @factory.post_generation
-    def files(self, create, extracted, **kwargs):
-        # See https://factoryboy.readthedocs.io/en/latest/recipes.html#simple-many-to-many-relationship
-        if not create:
-            return
-        if extracted:
-            for image in extracted:
-                self.files.add(image)
-        if create and not extracted:
-            ImageFileFactoryWithMHAFile2DGray16Bit(image=self)
-
-    color_space = Image.COLOR_SPACE_GRAY
-    width = 1
-    height = 2
-
-
-class ImageFactoryWithImageFile3D(ImageFactoryWithImageFile):
-    @factory.post_generation
-    def files(self, create, extracted, **kwargs):
-        # See https://factoryboy.readthedocs.io/en/latest/recipes.html#simple-many-to-many-relationship
-        if not create:
-            return
-        if extracted:
-            for image in extracted:
-                self.files.add(image)
-        if create and not extracted:
-            ImageFileFactoryWithMHDFile(image=self)
-            ImageFileFactoryWithRAWFile(image=self)
-
-    modality = factory.SubFactory(ImagingModalityFactory, modality="OCT")
-    width = 5
-    height = 6
-    depth = 7
-
-
 class ImageFactoryWithImageFile4D(ImageFactoryWithImageFile):
     @factory.post_generation
     def files(self, create, extracted, **kwargs):
@@ -148,19 +112,6 @@ class ImageFactoryWithImageFile4D(ImageFactoryWithImageFile):
         if create and not extracted:
             ImageFileFactoryWithMHDFile4D(image=self)
             ImageFileFactoryWithRAWFile4D(image=self)
-
-
-class ImageFactoryWithImageFile16Bit(ImageFactoryWithImageFile):
-    @factory.post_generation
-    def files(self, create, extracted, **kwargs):
-        # See https://factoryboy.readthedocs.io/en/latest/recipes.html#simple-many-to-many-relationship
-        if not create:
-            return
-        if extracted:
-            for image in extracted:
-                self.files.add(image)
-        if create and not extracted:
-            ImageFileFactoryWithMHA16Bit(image=self)
 
 
 class ImageFactoryWithImageFileTiff(ImageFactoryWithoutImageFile):

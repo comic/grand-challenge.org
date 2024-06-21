@@ -2,12 +2,10 @@ from functools import reduce
 from operator import or_
 
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
-from django.http import Http404, HttpResponse
+from django.http import HttpResponse
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
-from django.templatetags.static import static
 from django.views import View
 from django.views.generic import DetailView, ListView
 from django_filters.rest_framework import DjangoFilterBackend
@@ -24,7 +22,7 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.cases.filters import ImageFilterSet
 from grandchallenge.cases.forms import IMAGE_UPLOAD_HELP_TEXT
-from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
+from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.cases.serializers import (
     HyperlinkedImageSerializer,
     RawImageUploadSessionSerializer,
@@ -80,34 +78,6 @@ class RawImageUploadSessionDetail(
         return context
 
 
-class OSDImageDetail(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
-):
-    model = Image
-    permission_required = (
-        f"{Image._meta.app_label}.view_{Image._meta.model_name}"
-    )
-    raise_exception = True
-    login_url = reverse_lazy("account_login")
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        try:
-            dzi = self.object.files.get(image_type=ImageFile.IMAGE_TYPE_DZI)
-        except ObjectDoesNotExist:
-            raise Http404
-
-        context.update(
-            {
-                "dzi_url": dzi.file.url,
-                "osd_images": static("vendored/openseadragon/images/"),
-            }
-        )
-
-        return context
-
-
 class ImageViewSet(ReadOnlyModelViewSet):
     serializer_class = HyperlinkedImageSerializer
     queryset = (
@@ -131,65 +101,6 @@ class RawImageUploadSessionViewSet(
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [ObjectPermissionsFilter]
     serializer_class = RawImageUploadSessionSerializer
-
-
-class VTKImageDetail(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
-):
-    model = Image
-    permission_required = (
-        f"{Image._meta.app_label}.view_{Image._meta.model_name}"
-    )
-    raise_exception = True
-    login_url = reverse_lazy("account_login")
-    template_name = "cases/image_detail_vtk.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if self.object.color_space != Image.COLOR_SPACE_GRAY:
-            # vtk.js viewer fails to load color images
-            raise Http404
-        try:
-            mh_file, _ = self.object.get_metaimage_files()
-        except FileNotFoundError as e:
-            raise Http404 from e
-
-        context.update(
-            {
-                "mh_url": mh_file.file.url,
-                "is_2d": self.object.depth in (None, 1),
-            }
-        )
-        return context
-
-
-class CSImageDetail(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
-):
-    model = Image
-    permission_required = (
-        f"{Image._meta.app_label}.view_{Image._meta.model_name}"
-    )
-    raise_exception = True
-    login_url = reverse_lazy("account_login")
-    template_name = "cases/image_detail_cs.html"
-
-    def get_object(self):
-        img = super().get_object()
-        try:
-            img.get_metaimage_files()
-        except FileNotFoundError as e:
-            raise Http404 from e
-
-        if img.color_space not in (
-            Image.COLOR_SPACE_GRAY,
-            Image.COLOR_SPACE_RGBA,
-            Image.COLOR_SPACE_RGB,
-        ):
-            # YCrBr not supported in cornerstone
-            raise Http404
-
-        return img
 
 
 class ImageWidgetSelectView(LoginRequiredMixin, View):
@@ -272,31 +183,3 @@ class ImageSearchView(LoginRequiredMixin, ListView):
             template=self.template_name,
             context=context,
         )
-
-
-class CS3DImageDetail(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
-):
-    model = Image
-    permission_required = (
-        f"{Image._meta.app_label}.view_{Image._meta.model_name}"
-    )
-    raise_exception = True
-    login_url = reverse_lazy("account_login")
-    template_name = "cases/image_detail_cs3d.html"
-
-    def get_object(self):
-        img = super().get_object()
-        try:
-            img.get_metaimage_files()
-        except FileNotFoundError as e:
-            raise Http404 from e
-
-        return img
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(
-            {"convert_worker_path": static("js/typed_array_to_float32.js")}
-        )
-        return context

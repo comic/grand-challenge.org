@@ -27,7 +27,6 @@ from django.utils.timezone import now
 from panimg.models import SimpleITKImage
 
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
-from grandchallenge.cases.utils import get_sitk_image
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
     RetryStep,
@@ -1119,7 +1118,7 @@ def validate_voxel_values(*, civ_pk):
         and first_file.image_type == ImageFile.IMAGE_TYPE_MHD
     ):
         sitk_image = SimpleITKImage(
-            image=get_sitk_image(image=civ.image),
+            image=civ.image.sitk_image,
             name=civ.image.name,
             consumed_files=set(),
             spacing_valid=True,

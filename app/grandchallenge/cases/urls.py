@@ -1,14 +1,10 @@
 from django.urls import path
 
 from grandchallenge.cases.views import (
-    CS3DImageDetail,
-    CSImageDetail,
     ImageSearchView,
     ImageWidgetSelectView,
-    OSDImageDetail,
     RawImageUploadSessionDetail,
     RawImageUploadSessionList,
-    VTKImageDetail,
 )
 
 app_name = "cases"
@@ -25,27 +21,9 @@ urlpatterns = [
         name="raw-image-upload-session-detail",
     ),
     path(
-        "images/<uuid:pk>/osd/",
-        OSDImageDetail.as_view(),
-        name="osd-image-detail",
-    ),
-    path(
-        "images/<uuid:pk>/vtk/",
-        VTKImageDetail.as_view(),
-        name="vtk-image-detail",
-    ),
-    path(
-        "images/<uuid:pk>/cs/", CSImageDetail.as_view(), name="cs-image-detail"
-    ),
-    path(
         "select-image-widget/",
         ImageWidgetSelectView.as_view(),
         name="select-image-widget",
     ),
     path("images/search/", ImageSearchView.as_view(), name="image-search"),
-    path(
-        "images/<uuid:pk>/cs3d/",
-        CS3DImageDetail.as_view(),
-        name="cs3d-image-detail",
-    ),
 ]
