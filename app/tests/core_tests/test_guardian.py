@@ -4,7 +4,8 @@ import pytest
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest
-from django.views.generic import ListView
+from django.views.generic import ListView, TemplateView
+from guardian.core import ObjectPermissionChecker
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
 
@@ -98,26 +99,23 @@ def test_object_permission_required_mixin():
 
 
 @pytest.mark.django_db
-def test_object_permission_checker_mixin(django_assert_num_queries):
-    alg = AlgorithmFactory()
+def test_object_permission_checker_mixin():
     user = UserFactory()
-    codename = "view_algorithm"
-
-    assign_perm(codename, user, alg)
 
     request = HttpRequest()
     request.user = user
 
-    class View(ObjectPermissionCheckerMixin, ListView):
+    class TestView(ObjectPermissionCheckerMixin, TemplateView):
         model = Algorithm
 
-    view = View()
+    view = TestView()
     view.request = request
 
     # View adds checker to context
     context = view.get_context_data()
     assert "checker" in context
     assert context["checker"] is view.permission_checker
+    assert isinstance(view.permission_checker, ObjectPermissionChecker)
 
 
 @pytest.mark.django_db
