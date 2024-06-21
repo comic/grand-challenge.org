@@ -33,12 +33,6 @@ class TestObjectPermissionRequiredViews:
                 rius,
             ),
             (
-                "vtk-image-detail",
-                {"pk": image_file_mh.pk},
-                "view_image",
-                image_file_mh,
-            ),
-            (
                 "cs-image-detail",
                 {"pk": image_file_mh.pk},
                 "view_image",
@@ -102,32 +96,6 @@ class TestObjectPermissionRequiredViews:
 
             assert response.status_code == 200
             assert obj not in response.context[-1]["object_list"]
-
-
-@pytest.mark.django_db
-class TestVTKImageDetail:
-    def test_permission_required_views(self, client):
-        def get_status_code(image):
-            u = UserFactory()
-            assign_perm("view_image", u, image)
-            response = get_view_for_user(
-                client=client,
-                viewname="cases:vtk-image-detail",
-                reverse_kwargs={"pk": image.pk},
-                user=u,
-            )
-            return response.status_code
-
-        for image in (
-            ImageFactoryWithoutImageFile(color_space=Image.COLOR_SPACE_GRAY),
-            ImageFactoryWithImageFile(color_space=Image.COLOR_SPACE_RGB),
-            ImageFactoryWithImageFile(color_space=Image.COLOR_SPACE_RGBA),
-            ImageFactoryWithImageFile(color_space=Image.COLOR_SPACE_YCBCR),
-        ):
-            assert get_status_code(image) == 404
-
-        image = ImageFactoryWithImageFile(color_space=Image.COLOR_SPACE_GRAY)
-        assert get_status_code(image) == 200
 
 
 P = "patient_id__isempty"

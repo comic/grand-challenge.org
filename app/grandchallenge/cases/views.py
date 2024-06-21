@@ -104,36 +104,6 @@ class RawImageUploadSessionViewSet(
     serializer_class = RawImageUploadSessionSerializer
 
 
-class VTKImageDetail(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
-):
-    model = Image
-    permission_required = (
-        f"{Image._meta.app_label}.view_{Image._meta.model_name}"
-    )
-    raise_exception = True
-    login_url = reverse_lazy("account_login")
-    template_name = "cases/image_detail_vtk.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if self.object.color_space != Image.COLOR_SPACE_GRAY:
-            # vtk.js viewer fails to load color images
-            raise Http404
-        try:
-            mh_file, _ = self.object.get_metaimage_files()
-        except FileNotFoundError as e:
-            raise Http404 from e
-
-        context.update(
-            {
-                "mh_url": mh_file.file.url,
-                "is_2d": self.object.depth in (None, 1),
-            }
-        )
-        return context
-
-
 class CSImageDetail(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
 ):

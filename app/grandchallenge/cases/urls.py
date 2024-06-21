@@ -7,7 +7,6 @@ from grandchallenge.cases.views import (
     ImageWidgetSelectView,
     RawImageUploadSessionDetail,
     RawImageUploadSessionList,
-    VTKImageDetail,
 )
 
 app_name = "cases"
@@ -22,11 +21,6 @@ urlpatterns = [
         "uploads/<uuid:pk>/",
         RawImageUploadSessionDetail.as_view(),
         name="raw-image-upload-session-detail",
-    ),
-    path(
-        "images/<uuid:pk>/vtk/",
-        VTKImageDetail.as_view(),
-        name="vtk-image-detail",
     ),
     path(
         "images/<uuid:pk>/cs/", CSImageDetail.as_view(), name="cs-image-detail"
