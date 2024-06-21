@@ -129,7 +129,6 @@ htmx = { version = "==1.7.0", include = ["htmx(.min)?.js(.map)?"] }
 vega = { version = "==5.20.2", include = ["vega(.min)?.js(.map)?"], maps = ["vega.min.js.map"] }
 vega-lite = { version = "==5.1.0", include = ["vega-lite(.min)?.js(.map)?"] }
 vega-embed = { version = "==6.17.0", include = ["vega-embed(.min)?.js(.map)?"] }
-openseadragon = { version = "==2.4.1", include = ["openseadragon(.min)?.js(.map)?", "images/*"] }  # TODO can be removed
 jsoneditor = { version = "==9.5.2", include = ["jsoneditor(.min)?.js(.map)?", "jsoneditor(.min)?.css(.map)?", "img/*"], maps = ["jsoneditor.map"] }
 "sentry-browser" = { version = "==6.19.7", include = ["bundle(.min)?.js(.map)?"], maps = ["bundle.min.js.map", "bundle.js.map"] }
 "hammer.js" = { version = "==2.0.8", include = ["hammer(.min)?.js(.map)?"] }
@@ -140,10 +139,6 @@ font-awesome = { version = "==5.15.4", include = ["css/all(.min)?.css", "webfont
 bootstrap = { version = "==4.6.2", include = ["js/bootstrap.bundle(.min)?.js(.map)?", "css/bootstrap(.min)?.css(.map)?", "scss/*"] }
 bootswatch = { version = "==5.3.0", provider = "unpkg", include = ["dist/flatly/.*.scss"] }
 "@github/markdown-toolbar-element" = { version = "==1.2.0", provider = "unpkg", include = ["dist/index.umd.js$"] }
-itk-vtk-viewer = { version = "==11.11.2", provider = "unpkg", include = ["dist/itkVtkViewerCDN(.min)?.js$"] }  # TODO can be removed
-cornerstone-math = { version = "==0.1.6", provider = "unpkg", include = ["dist/cornerstoneMath(.min)?.js"] }  # TODO can be removed
-cornerstone-core = { version = "==2.2.4", provider = "unpkg", include = ["dist/cornerstone(.min)?.js"] }  # TODO can be removed
-itk-wasm = { version = "==1.0.0-a.10", provider = "unpkg", include = ["dist/umd/itk-wasm(.min)?.js$"] }  # TODO can be removed
 # Use the builder at https://datatables.net/download/
 "datatables.net" = { version = "==1.11.3", provider = "unpkg", include = ["js/jquery.dataTables(.min)?.js"]}
 "datatables.net-bs4" = { version = "==1.11.3", provider = "unpkg", include = ["css/dataTables.bootstrap4(.min)?.css", "js/dataTables.bootstrap4(.min)?.js"]}
