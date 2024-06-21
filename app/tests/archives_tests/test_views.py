@@ -7,7 +7,10 @@ from guardian.shortcuts import assign_perm, remove_perm
 from requests import put
 
 from grandchallenge.archives.models import ArchiveItem
-from grandchallenge.archives.views import ArchiveItemJobListView
+from grandchallenge.archives.views import (
+    ArchiveItemJobListView,
+    ArchiveItemsList,
+)
 from grandchallenge.cases.widgets import WidgetChoices
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.subdomains.utils import reverse
@@ -1192,3 +1195,44 @@ def test_archive_item_permissions_detail_and_list(viewname, client):
     ):
         response = get_view(user)
         assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_archive_item_list_database_hits(client, django_assert_num_queries):
+    archive = ArchiveFactory()
+    editor = UserFactory()
+    archive.add_editor(editor)
+
+    ArchiveItemFactory(archive=archive)
+
+    def make_request():
+        response = get_view_for_user(
+            viewname="archives:items-list",
+            reverse_kwargs={"slug": archive.slug},
+            client=client,
+            user=editor,
+            method=client.get,
+            follow=True,
+            data={
+                "length": 10,
+                "draw": 1,
+                "order[0][dir]": ArchiveItemsList.default_sort_order,
+                "order[0][column]": ArchiveItemsList.default_sort_column,
+            },
+            **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
+        )
+        assert response.status_code == 200
+        return response
+
+    make_request()  # set up caches
+
+    expected_queries = 33
+    with django_assert_num_queries(expected_queries):
+        resp = make_request()
+        assert len(resp.json()["data"]) == 1
+
+    # Add a few more
+    ArchiveItemFactory.create_batch(3, archive=archive)
+    with django_assert_num_queries(expected_queries):
+        resp = make_request()
+        assert len(resp.json()["data"]) == 4
