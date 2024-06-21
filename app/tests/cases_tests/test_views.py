@@ -20,9 +20,6 @@ from tests.utils import get_view_for_user
 class TestObjectPermissionRequiredViews:
     def test_permission_required_views(self, client):
         rius = RawImageUploadSessionFactory()
-        image_file_mh = ImageFactoryWithImageFile(
-            color_space=Image.COLOR_SPACE_GRAY
-        )
         u = UserFactory()
 
         for view_name, kwargs, permission, obj in [
@@ -31,12 +28,6 @@ class TestObjectPermissionRequiredViews:
                 {"pk": rius.pk},
                 "view_rawimageuploadsession",
                 rius,
-            ),
-            (
-                "cs-image-detail",
-                {"pk": image_file_mh.pk},
-                "view_image",
-                image_file_mh,
             ),
         ]:
             response = get_view_for_user(

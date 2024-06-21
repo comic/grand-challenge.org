@@ -104,35 +104,6 @@ class RawImageUploadSessionViewSet(
     serializer_class = RawImageUploadSessionSerializer
 
 
-class CSImageDetail(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
-):
-    model = Image
-    permission_required = (
-        f"{Image._meta.app_label}.view_{Image._meta.model_name}"
-    )
-    raise_exception = True
-    login_url = reverse_lazy("account_login")
-    template_name = "cases/image_detail_cs.html"
-
-    def get_object(self):
-        img = super().get_object()
-        try:
-            img.get_metaimage_files()
-        except FileNotFoundError as e:
-            raise Http404 from e
-
-        if img.color_space not in (
-            Image.COLOR_SPACE_GRAY,
-            Image.COLOR_SPACE_RGBA,
-            Image.COLOR_SPACE_RGB,
-        ):
-            # YCrBr not supported in cornerstone
-            raise Http404
-
-        return img
-
-
 class ImageWidgetSelectView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         interface = request.GET.get("interface_slug")
