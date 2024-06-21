@@ -2,7 +2,6 @@ from functools import reduce
 from operator import or_
 
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.http import Http404, HttpResponse
 from django.template.loader import render_to_string
@@ -24,7 +23,7 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.cases.filters import ImageFilterSet
 from grandchallenge.cases.forms import IMAGE_UPLOAD_HELP_TEXT
-from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
+from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.cases.serializers import (
     HyperlinkedImageSerializer,
     RawImageUploadSessionSerializer,
@@ -77,34 +76,6 @@ class RawImageUploadSessionDetail(
                 ).get()
             }
         )
-        return context
-
-
-class OSDImageDetail(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
-):
-    model = Image
-    permission_required = (
-        f"{Image._meta.app_label}.view_{Image._meta.model_name}"
-    )
-    raise_exception = True
-    login_url = reverse_lazy("account_login")
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        try:
-            dzi = self.object.files.get(image_type=ImageFile.IMAGE_TYPE_DZI)
-        except ObjectDoesNotExist:
-            raise Http404
-
-        context.update(
-            {
-                "dzi_url": dzi.file.url,
-                "osd_images": static("vendored/openseadragon/images/"),
-            }
-        )
-
         return context
 
 

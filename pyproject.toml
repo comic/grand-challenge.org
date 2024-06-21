@@ -129,7 +129,7 @@ htmx = { version = "==1.7.0", include = ["htmx(.min)?.js(.map)?"] }
 vega = { version = "==5.20.2", include = ["vega(.min)?.js(.map)?"], maps = ["vega.min.js.map"] }
 vega-lite = { version = "==5.1.0", include = ["vega-lite(.min)?.js(.map)?"] }
 vega-embed = { version = "==6.17.0", include = ["vega-embed(.min)?.js(.map)?"] }
-openseadragon = { version = "==2.4.1", include = ["openseadragon(.min)?.js(.map)?", "images/*"] }
+openseadragon = { version = "==2.4.1", include = ["openseadragon(.min)?.js(.map)?", "images/*"] }  # TODO can be removed
 jsoneditor = { version = "==9.5.2", include = ["jsoneditor(.min)?.js(.map)?", "jsoneditor(.min)?.css(.map)?", "img/*"], maps = ["jsoneditor.map"] }
 "sentry-browser" = { version = "==6.19.7", include = ["bundle(.min)?.js(.map)?"], maps = ["bundle.min.js.map", "bundle.js.map"] }
 "hammer.js" = { version = "==2.0.8", include = ["hammer(.min)?.js(.map)?"] }
