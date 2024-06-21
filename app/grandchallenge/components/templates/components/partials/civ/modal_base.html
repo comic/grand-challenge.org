@@ -7,8 +7,7 @@
 >
     <div class="badge badge-primary">
         <i
-                class="fa fa-eye mr-1"
-                style="width:0.8rem;"
+                class="fas fa-fw fa-eye"
         ></i>
         Inspect {{ civ.interface.title | truncatechars:64 }}
     </div>
@@ -28,7 +27,7 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body">
+            <div class="text-left modal-body">
                 {% block content %}{% endblock %}
             </div>
         </div>

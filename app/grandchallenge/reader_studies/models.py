@@ -898,6 +898,12 @@ class DisplaySet(
             kwargs={"slug": self.base_object.slug, "pk": self.pk},
         )
 
+    def get_absolute_url(self):
+        return reverse(
+            "reader-studies:display-set-detail",
+            kwargs={"slug": self.base_object.slug, "pk": self.pk},
+        )
+
     @property
     def delete_url(self):
         return reverse(

@@ -7,48 +7,33 @@
 {% load remove_whitespace %}
 {% load dict_lookup %}
 {% load meta_attr %}
+{% load civ %}
 
-<a class="badge badge-primary"
-   href="{% url 'algorithms:job-detail' slug=algorithm.slug pk=object.pk %}"
+
+<a class="btn btn-primary btn-sm"
+   href="{% url 'algorithms:job-detail' slug=object.algorithm_image.algorithm.slug pk=object.pk %}"
    title="View result details">
     <i class="fa fa-info-circle"></i>
 </a>
+
 <split></split>
 
 {{ object.created|naturaltime }}
 <split></split>
 
-{{ object.creator|user_profile_link }}
+{% block column_2 %}
+    {{ object.creator|user_profile_link }}
+{% endblock %}
+
 <split></split>
 
-<a href="#resultInfoModal"
-   class="badge badge-{{ object.status_context }}"
-   data-toggle="modal"
-   data-target="#resultInfoModal"
-   data-title="Result Info"
-   data-output="
-   {% if object.status == object.SUCCESS %}
-        {% for output in object.outputs.all %}{% if output.value %}{{ output.value }}{% endif %}{% empty %}No output produced.{% endfor %}
-   {% else %}
-        {% firstof object.error_message object.get_status_display %}
-   {% endif %}"
-   data-pk="{{ object.pk }}"
-   title="Result Info">
+<span class="badge badge-{{ object.status_context }}">
     {% if object.animate %}
         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
     {% endif %}
-    <i class="fa fa-file"></i>
-    {% for input in object.inputs.all %}
-        {{ input.image.name|truncatechars:15 }}
-    {% endfor %}
-    ({{ object.get_status_display }}{% if object.status == object.SUCCESS and object.stderr %}, with warnings{% endif %})
-</a>
-{% if object.rendered_result_text %}
-    {{ object.rendered_result_text|json_script:object.pk }}
-{% endif %}
-<split></split>
-
-{{ object.comment }}
+    {{ object.get_status_display }}{% if object.status == object.SUCCESS and object.stderr %},
+        with warnings{% endif %}
+</span>
 <split></split>
 
 {% if object.public %}
@@ -66,66 +51,28 @@
 {% endif %}
 <split></split>
 
-{% if object.status == object.SUCCESS %}
-    <button class="btn badge badge-primary"
-            title="View algorithm result"
-            {% workstation_session_control_data workstation=algorithm.workstation context_object=algorithm algorithm_job=object config=algorithm.workstation_config %}
->
-        <i class="fa fa-eye"></i> Open Result in Viewer
-    </button>
-{% endif %}
+{{ object.comment }}
 <split></split>
 
-{% for interface in outputs_list_display.JSON %}
-    {% get_dict_values object.slug_to_output interface.slug as json %}
-    {% if json %}
-        <td>{{ json.value }}</td>
-        <split></split>
-    {% else %}
-        <split></split>
-    {% endif %}
-{% endfor %}
+<ul class="list-unstyled mb-0 text-left">
+    {% for civ in object.outputs.all|sort_civs %}
+    <li>
+        {% include "components/partials/civ.html" with object=civ display_inline=True only %}
+    </li>
+    {% empty %}
+    <span class="text-muted">Empty</span>
+    {% endfor %}
+</ul>
+<split></split>
 
-{% for interface in outputs_list_display.TIMG %}
-    {% get_dict_values object.slug_to_output interface.slug as image %}
-    {% if image %}
-        <a target="_blank" href="{% url 'algorithms:job-detail' slug=algorithm.slug pk=object.pk %}" title="Open in detail view">
-            <img class="m-1 thumbnail"
-                 src="{{ image.file.url }}"
-                 alt="{{ image.file.name }}"
-                 loading="lazy">
-        </a>
-        <split></split>
-    {% else %}
-        <split></split>
-    {% endif %}
-{% endfor %}
-
-{% for interface in outputs_list_display.CHART %}
-    {% get_dict_values object.slug_to_output interface.slug as chart %}
-    {% if chart %}
-        <a class="badge badge-primary mr-1"
-           title="Inspect {{ chart.interface.title }}"
-           target="_blank"
-           href="{% url 'algorithms:job-detail' slug=algorithm.slug pk=object.pk %}">
-            <i class="fas fa-chart-bar"></i>
-        </a>
-        <split></split>
-    {% else %}
-        <split></split>
-    {% endif %}
-{% endfor %}
-
-{% for interface in outputs_list_display.FILE %}
-    {% get_dict_values object.slug_to_output interface.slug as file %}
-    {% if file %}
-        <a class="badge badge-primary mr-1"
-           title="Download {{ file.interface.title }} ({{ file.interface.kind }})"
-           href="{{ file.file.url }}">
-            <i class="fa fa-download"></i>
-        </a>
-        <split></split>
-    {% else %}
-        <split></split>
-    {% endif %}
-{% endfor %}
+{% if object.status == object.SUCCESS %}
+    {% with object.algorithm_image.algorithm as "algorithm" %}
+        <button class="btn btn-primary btn-sm"
+                title="View algorithm result in viewer"
+                {% workstation_session_control_data workstation=algorithm.workstation context_object=algorithm algorithm_job=object config=algorithm.workstation_config %}
+        >
+            <i class="fa fa-eye"></i>
+        </button>
+    {% endwith %}
+{% endif %}
+<split></split>

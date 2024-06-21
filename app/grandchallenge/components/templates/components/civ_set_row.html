@@ -4,6 +4,7 @@
 {% load pathlib %}
 {% load meta_attr %}
 {% load guardian_tags %}
+{% load civ %}
 
 {% get_obj_perms request.user for object as "object_perms" %}
 
@@ -24,64 +25,77 @@
 
 <split></split>
 
-{{ object.pk }}
+<a class="btn btn-primary btn-sm"
+   href="{{ object.get_absolute_url }}"
+   title="View {{ object|verbose_name }} details">
+    <i class="fa fa-info-circle"></i>
+</a>
+
+<split></split>
+
+<span class="text-nowrap">{{ object.pk }}</span>
 <split></split>
 
 {{ object.title }}
 <split></split>
 
-{% if base_object|model_name == base_model_options.READER_STUDY %}
+{% if object.base_object|model_name == base_model_options.READER_STUDY %}
     {{ object.order }}
     <split></split>
 {% endif %}
-
-<ul class="list-unstyled mb-0">
-    {% for civ in object.values.all %}
-        <li>
-            {{ civ.interface.title }}: {{ civ.title|truncatechars:30 }}
-        </li>
+<ul class="list-unstyled mb-0 text-left">
+    {% for civ in object.values.all|sort_civs %}
+    <li>
+        {% include "components/partials/civ.html" with object=civ display_inline=True only %}
+    </li>
+{% empty %}
+    <span class="text-muted">Empty</span>
     {% endfor %}
 </ul>
 <split></split>
 
 <a class="btn btn-primary btn-sm"
    title="View in viewer"
-   {% if base_object|model_name == base_model_options.READER_STUDY %}
-       {% workstation_session_control_data workstation=base_object.workstation context_object=object display_set=object config=base_object.workstation_config %}
-   {% elif base_object|model_name == base_model_options.ARCHIVE %}
-       {% workstation_session_control_data workstation=base_object.workstation context_object=object archive_item=object config=base_object.workstation_config %}
+   {% if object.base_object|model_name == base_model_options.READER_STUDY %}
+       {% workstation_session_control_data workstation=object.base_object.workstation context_object=object display_set=object config=object.base_object.workstation_config %}
+   {% elif object.base_object|model_name == base_model_options.ARCHIVE %}
+       {% workstation_session_control_data workstation=object.base_object.workstation context_object=object archive_item=object config=object.base_object.workstation_config %}
    {% endif %}
 >
 <i class="fas fa-fw fa-eye"></i>
 </a>
 <split></split>
 
-<div
-     {% if object.is_editable %}
-         title = "Edit {{ object|verbose_name }}"
-     {% else %}
-        title="Cannot edit: answers for display set exist"
-     {% endif %}
->
-    <a class="btn btn-primary btn-sm {% if not object.is_editable or not update_perm in object_perms %}disabled{% endif %}"
-        href="{{ object.update_url }}"
+{% if update_perm in object_perms %}
+    <div
+        {% if object.is_editable  %}
+            title = "Edit {{ object|verbose_name }}"
+        {% elif not object.is_editable %}
+            title="Cannot edit: answers for display set exist"
+        {% endif %}
     >
-        <i class="fas fa-fw fa-edit"></i>
-    </a>
-</div>
+        <a class="btn btn-primary btn-sm {% if not object.is_editable %}disabled{% endif %}"
+            href="{{ object.update_url }}"
+        >
+            <i class="fas fa-fw fa-edit"></i>
+        </a>
+    </div>
+{% endif %}
 
 <split></split>
 
-<div
-     {% if object.is_editable %}
-         title = "Delete {{ object|verbose_name }}"
-     {% else %}
-        title="Cannot delete: answers for display set exist"
-     {% endif %}
->
-   <a class="btn btn-danger btn-sm {% if not object.is_editable or not delete_perm in object_perms %}disabled{% endif %}"
-   href="{{ object.delete_url }}">
-   <i class="fas fa-fw fa-trash"></i>
-</a>
-</div>
+{% if delete_perm in object_perms %}
+    <div
+        {% if object.is_editable  %}
+            title = "Delete {{ object|verbose_name }}"
+        {% elif not object.is_editable %}
+            title="Cannot delete: answers for display set exist"
+        {% endif %}
+    >
+        <a class="btn btn-danger btn-sm {% if not object.is_editable %}disabled{% endif %}"
+        href="{{ object.delete_url }}">
+        <i class="fas fa-fw fa-trash"></i>
+        </a>
+    </div>
+{% endif %}
 <split></split>

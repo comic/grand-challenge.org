@@ -359,6 +359,12 @@ class ArchiveItem(
             kwargs={"slug": self.base_object.slug, "pk": self.pk},
         )
 
+    def get_absolute_url(self):
+        return reverse(
+            "archives:item-detail",
+            kwargs={"slug": self.base_object.slug, "pk": self.pk},
+        )
+
     @property
     def is_editable(self):
         return True

@@ -9,7 +9,7 @@ from django.contrib.auth.mixins import (
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db.models import Count, OuterRef, Q, Subquery, Window
+from django.db.models import Count, Q, Window
 from django.db.models.functions import Rank
 from django.forms.utils import ErrorList
 from django.http import HttpResponse, HttpResponseRedirect
@@ -75,7 +75,6 @@ from grandchallenge.cases.widgets import WidgetChoices
 from grandchallenge.components.models import (
     ComponentInterfaceValue,
     ImportStatusChoices,
-    InterfaceKind,
 )
 from grandchallenge.components.tasks import upload_to_registry_and_sagemaker
 from grandchallenge.core.filters import FilterMixin
@@ -642,6 +641,22 @@ class JobsList(PaginatedTableListView):
         "inputs__image__files__file",
         "comment",
     ]
+
+    columns = [
+        Column(title="Detail"),
+        Column(title="Created", sort_field="created"),
+        Column(title="Creator", sort_field="creator__username"),
+        Column(title="Status", sort_field="status"),
+        Column(title="Visibility", sort_field="public"),
+        Column(
+            title="Comment",
+            sort_field="comment",
+            optional_condition=lambda obj: bool(obj.comment),
+        ),
+        Column(title="Results"),
+        Column(title="Viewer"),
+    ]
+
     default_sort_column = 1
 
     @cached_property
@@ -651,22 +666,13 @@ class JobsList(PaginatedTableListView):
     def get_queryset(self):
         queryset = super().get_queryset()
 
-        interface_values = {}
-        for interface in self.outputs_list_display["JSON"]:
-            interface_values[interface.slug] = Subquery(
-                ComponentInterfaceValue.objects.filter(
-                    interface=interface,
-                    algorithms_jobs_as_output=OuterRef("pk"),
-                ).values_list("value", flat=True)
-            )
-
         queryset = (
             queryset.filter(algorithm_image__algorithm=self.algorithm)
-            .annotate(**interface_values)
             .prefetch_related(
                 "outputs__image__files",
                 "outputs__interface",
                 "inputs__image__files",
+                "inputs__interface",
                 "viewers__user_set",
             )
             .select_related(
@@ -687,69 +693,9 @@ class JobsList(PaginatedTableListView):
         context.update(
             {
                 "algorithm": self.algorithm,
-                "columns": self.columns,
-                "outputs_list_display": self.outputs_list_display,
             }
         )
         return context
-
-    @cached_property
-    def columns(self):
-        columns = [
-            Column(title="Details", sort_field="pk"),
-            Column(title="Created", sort_field="created"),
-            Column(title="Creator", sort_field="creator__username"),
-            Column(title="Result", sort_field="status"),
-            Column(title="Comment", sort_field="comment"),
-            Column(title="Visibility", sort_field="public"),
-            Column(title="Viewer", sort_field="status"),
-        ]
-
-        for key, grouped_interfaces in self.outputs_list_display.items():
-            for interface in grouped_interfaces:
-                if key == "JSON":
-                    columns.append(
-                        Column(
-                            title=interface.title, sort_field=interface.slug
-                        )
-                    )
-                else:
-                    columns.append(Column(title=interface.title))
-
-        return columns
-
-    @cached_property
-    def outputs_list_display(self):
-        grouped_interfaces = {"JSON": [], "TIMG": [], "CHART": [], "FILE": []}
-
-        for interface in self.algorithm.outputs.all():
-            if interface.kind == InterfaceKind.InterfaceKindChoices.CHART:
-                grouped_interfaces["CHART"].append(interface)
-            elif interface.kind in (
-                InterfaceKind.InterfaceKindChoices.PDF,
-                InterfaceKind.InterfaceKindChoices.CSV,
-                InterfaceKind.InterfaceKindChoices.ZIP,
-                InterfaceKind.InterfaceKindChoices.SQREG,
-            ):
-                grouped_interfaces["FILE"].append(interface)
-            elif interface.kind in {
-                InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
-                InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG,
-            }:
-                grouped_interfaces["TIMG"].append(interface)
-            elif (
-                interface.kind
-                in {
-                    InterfaceKind.InterfaceKindChoices.STRING,
-                    InterfaceKind.InterfaceKindChoices.INTEGER,
-                    InterfaceKind.InterfaceKindChoices.FLOAT,
-                    InterfaceKind.InterfaceKindChoices.BOOL,
-                }
-                and interface.store_in_database
-            ):
-                grouped_interfaces["JSON"].append(interface)
-
-        return grouped_interfaces
 
 
 class JobDetail(ObjectPermissionRequiredMixin, DetailView):
@@ -761,6 +707,7 @@ class JobDetail(ObjectPermissionRequiredMixin, DetailView):
             "outputs__image__files",
             "outputs__interface",
             "inputs__image__files",
+            "inputs__interface",
             "viewers__user_set__user_profile",
             "viewers__user_set__verification",
             "viewer_groups",

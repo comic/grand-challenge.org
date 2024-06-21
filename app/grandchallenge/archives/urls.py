@@ -7,7 +7,9 @@ from grandchallenge.archives.views import (
     ArchiveItemBulkDelete,
     ArchiveItemCreateView,
     ArchiveItemDelete,
+    ArchiveItemDetailView,
     ArchiveItemInterfaceCreate,
+    ArchiveItemJobListView,
     ArchiveItemsList,
     ArchiveItemsToReaderStudyUpdate,
     ArchiveItemUpdate,
@@ -59,6 +61,16 @@ urlpatterns = [
         name="permission-request-update",
     ),
     path("<slug>/items/", ArchiveItemsList.as_view(), name="items-list"),
+    path(
+        "<slug>/items/<uuid:pk>/",
+        ArchiveItemDetailView.as_view(),
+        name="item-detail",
+    ),
+    path(
+        "<slug>/items/<uuid:pk>/jobs/",
+        ArchiveItemJobListView.as_view(),
+        name="item-job-list",
+    ),
     path(
         "<slug>/items/create/",
         ArchiveItemCreateView.as_view(),

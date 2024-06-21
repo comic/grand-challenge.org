@@ -1,6 +1,7 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.db.models import Count, Q, Subquery
 from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -26,6 +27,8 @@ from rest_framework.settings import api_settings
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
+from grandchallenge.algorithms.models import Job
+from grandchallenge.algorithms.views import JobsList
 from grandchallenge.archives.filters import ArchiveFilter
 from grandchallenge.archives.forms import (
     AddCasesForm,
@@ -53,6 +56,7 @@ from grandchallenge.components.forms import MultipleCIVForm, NewFileUploadForm
 from grandchallenge.components.views import (
     CIVSetBulkDelete,
     CIVSetDelete,
+    CIVSetDetail,
     CIVSetFormMixin,
     CivSetListView,
     InterfacesCreateBaseView,
@@ -63,11 +67,12 @@ from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
+    filter_by_permission,
 )
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
-from grandchallenge.datatables.views import Column
+from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
 from grandchallenge.reader_studies.models import DisplaySet, ReaderStudy
@@ -423,6 +428,7 @@ class ArchiveItemsList(CivSetListView):
     )
     columns = [
         Column(title=""),
+        Column(title="Detail"),
         Column(title="ID", sort_field="pk"),
         Column(
             title="Title",
@@ -556,6 +562,109 @@ class ArchiveItemViewSet(
             return ArchiveItemPostSerializer
         else:
             return ArchiveItemSerializer
+
+
+class ArchiveItemJobListView(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    PaginatedTableListView,
+):
+    model = Job
+    template_name = "archives/archive_item_job_list.html"
+    row_template = "archives/archive_item_job_list_row.html"
+
+    search_fields = [
+        "pk",
+        "outputs__interface__title",
+        "algorithm_image__algorithm__title",
+    ]
+
+    permission_required = (
+        f"{Archive._meta.app_label}.view_{ArchiveItem._meta.model_name}"
+    )
+    raise_exception = True
+
+    login_url = reverse_lazy("account_login")
+
+    columns = [
+        *JobsList.columns[:2],
+        Column(
+            title="Algorithm", sort_field="algorithm_image__algorithm__title"
+        ),
+        *JobsList.columns[3:],
+    ]
+    default_sort_column = JobsList.default_sort_column
+
+    @cached_property
+    def archive_item(self):
+        return get_object_or_404(ArchiveItem, pk=self.kwargs["pk"])
+
+    def get_permission_object(self):
+        return self.archive_item
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        input_civs = self.archive_item.values.all()
+        num_civs = len(input_civs)
+
+        queryset = (
+            queryset.filter(
+                pk__in=Subquery(
+                    Job.objects.filter(
+                        inputs__archive_items=self.archive_item
+                    ).values("pk"),
+                )
+            )
+            .annotate(
+                num_inputs=Count("inputs"),
+            )
+            .filter(num_inputs=num_civs)
+            .annotate(
+                inputs_match_count=Count(
+                    "inputs",
+                    filter=Q(inputs__in=input_civs),
+                )
+            )
+            .filter(inputs_match_count=num_civs)
+            .prefetch_related(
+                "outputs__image__files",
+                "outputs__interface",
+                "inputs__image__files",
+                "inputs__interface",
+                "viewers__user_set",
+            )
+            .select_related(
+                "creator__user_profile",
+                "creator__verification",
+                "algorithm_image__algorithm",
+            )
+        )
+
+        return filter_by_permission(
+            queryset=queryset,
+            user=self.request.user,
+            codename="view_job",
+            accept_user_perms=False,
+        )
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update(
+            {
+                "object": self.archive_item,
+            }
+        )
+        return context
+
+
+class ArchiveItemDetailView(CIVSetDetail):
+    model = ArchiveItem
+    template_name = "archives/archive_item_detail.html"
+
+    permission_required = (
+        f"{Archive._meta.app_label}.view_{ArchiveItem._meta.model_name}"
+    )
 
 
 class ArchiveItemCreateView(

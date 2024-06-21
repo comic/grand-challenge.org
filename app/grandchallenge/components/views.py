@@ -7,7 +7,13 @@ from django.forms import Media
 from django.http import HttpResponse
 from django.utils.functional import cached_property
 from django.utils.html import format_html
-from django.views.generic import DeleteView, FormView, ListView, TemplateView
+from django.views.generic import (
+    DeleteView,
+    DetailView,
+    FormView,
+    ListView,
+    TemplateView,
+)
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
 from rest_framework.viewsets import ReadOnlyModelViewSet
@@ -270,6 +276,29 @@ class InterfacesCreateBaseView(ObjectPermissionRequiredMixin, TemplateView):
         return context
 
 
+class CIVSetDetail(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    DetailView,
+):
+    model = None
+    permission_required = None
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+    template_name = "components/civ_set_detail.html"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update(
+            {
+                "request": self.request,
+                "delete_perm": f"delete_{self.object.base_object.civ_set_model._meta.model_name}",
+                "update_perm": f"change_{self.object.base_object.civ_set_model._meta.model_name}",
+            }
+        )
+        return context
+
+
 class CIVSetDelete(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
@@ -304,20 +333,20 @@ class CivSetListView(
     row_template = "components/civ_set_row.html"
     search_fields = [
         "pk",
+        "title",
         "values__interface__title",
         "values__image__name",
         "values__file",
     ]
-    text_align = "left"
     default_sort_order = "asc"
     columns = [
         Column(title="Values"),
-        Column(title="View"),
+        Column(title="Viewer"),
         Column(title="Edit"),
         Column(title="Remove"),
     ]
 
-    @cached_property
+    @property
     def base_object(self):
         return NotImplementedError
 
@@ -327,9 +356,9 @@ class CivSetListView(
             {
                 "base_object": self.base_object,
                 "base_model_options": BaseModelOptions,
-                "request": self.request,
                 "delete_perm": f"delete_{self.base_object.civ_set_model._meta.model_name}",
                 "update_perm": f"change_{self.base_object.civ_set_model._meta.model_name}",
+                "request": self.request,
             }
         )
         return context

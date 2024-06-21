@@ -60,6 +60,7 @@ from grandchallenge.components.serializers import (
 from grandchallenge.components.views import (
     CIVSetBulkDelete,
     CIVSetDelete,
+    CIVSetDetail,
     CIVSetFormMixin,
     CivSetListView,
     FileUpdateBaseView,
@@ -385,6 +386,7 @@ class ReaderStudyDisplaySetList(CivSetListView):
     permission_required = f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"  # change instead of view permission so that readers don't get access
     columns = [
         Column(title=""),
+        Column(title="Detail"),
         Column(title="ID", sort_field="pk"),
         Column(
             title="Title",
@@ -395,7 +397,7 @@ class ReaderStudyDisplaySetList(CivSetListView):
         *CivSetListView.columns,
     ]
 
-    default_sort_column = 3
+    default_sort_column = 4
     search_fields = [
         "title",
         "order",
@@ -1259,6 +1261,13 @@ class QuestionWidgetsView(BaseAddObjectToReaderStudyMixin, View):
     def get(self, request, slug):
         form = QuestionForm(request.GET, reader_study=self.reader_study)
         return HttpResponse(form["widget"])
+
+
+class DisplaySetDetailView(CIVSetDetail):
+    model = DisplaySet
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.view_{DisplaySet._meta.model_name}"
+    )
 
 
 class DisplaySetUpdateView(
