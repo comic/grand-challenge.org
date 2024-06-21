@@ -1,7 +1,6 @@
 from django.urls import path
 
 from grandchallenge.cases.views import (
-    CS3DImageDetail,
     ImageSearchView,
     ImageWidgetSelectView,
     RawImageUploadSessionDetail,
@@ -27,9 +26,4 @@ urlpatterns = [
         name="select-image-widget",
     ),
     path("images/search/", ImageSearchView.as_view(), name="image-search"),
-    path(
-        "images/<uuid:pk>/cs3d/",
-        CS3DImageDetail.as_view(),
-        name="cs3d-image-detail",
-    ),
 ]
