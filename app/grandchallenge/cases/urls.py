@@ -5,7 +5,6 @@ from grandchallenge.cases.views import (
     CSImageDetail,
     ImageSearchView,
     ImageWidgetSelectView,
-    OSDImageDetail,
     RawImageUploadSessionDetail,
     RawImageUploadSessionList,
     VTKImageDetail,
@@ -23,11 +22,6 @@ urlpatterns = [
         "uploads/<uuid:pk>/",
         RawImageUploadSessionDetail.as_view(),
         name="raw-image-upload-session-detail",
-    ),
-    path(
-        "images/<uuid:pk>/osd/",
-        OSDImageDetail.as_view(),
-        name="osd-image-detail",
     ),
     path(
         "images/<uuid:pk>/vtk/",

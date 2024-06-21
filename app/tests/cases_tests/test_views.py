@@ -12,7 +12,7 @@ from tests.cases_tests.factories import (
     RawImageUploadSessionFactory,
 )
 from tests.components_tests.factories import ComponentInterfaceFactory
-from tests.factories import ImageFactory, ImageFileFactory, UserFactory
+from tests.factories import ImageFactory, UserFactory
 from tests.utils import get_view_for_user
 
 
@@ -20,7 +20,6 @@ from tests.utils import get_view_for_user
 class TestObjectPermissionRequiredViews:
     def test_permission_required_views(self, client):
         rius = RawImageUploadSessionFactory()
-        image_file_dzi = ImageFileFactory(image_type="DZI")
         image_file_mh = ImageFactoryWithImageFile(
             color_space=Image.COLOR_SPACE_GRAY
         )
@@ -32,12 +31,6 @@ class TestObjectPermissionRequiredViews:
                 {"pk": rius.pk},
                 "view_rawimageuploadsession",
                 rius,
-            ),
-            (
-                "osd-image-detail",
-                {"pk": image_file_dzi.image.pk},
-                "view_image",
-                image_file_dzi.image,
             ),
             (
                 "vtk-image-detail",
