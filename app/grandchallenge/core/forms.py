@@ -76,7 +76,7 @@ class UniqueTitleCreateFormMixin:
         title = self.cleaned_data.get("title")
         if title and self.unique_title_query(title).exists():
             raise ValidationError(
-                f"An {self.model._meta.verbose_name} already exists with this title"
+                f"There is already an existing {self.model._meta.verbose_name} with this title"
             )
         return title
 
