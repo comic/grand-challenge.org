@@ -47,6 +47,7 @@
           hx-target="body"
           id="obj-form"
           hx-indicator="#hx-save-indicator"
+          hx-disabled-elt="find input"
     >
       {% csrf_token %}
       {{ form|crispy }}

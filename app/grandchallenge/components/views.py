@@ -241,7 +241,6 @@ class CIVSetFormMixin:
         raise NotImplementedError
 
     def get_success_url(self):
-        print("### TEST", self.request.POST)
         if (
             self.request.method == "POST"
             and self.request.POST.get("submit") == "SaveAndAddAnother"
