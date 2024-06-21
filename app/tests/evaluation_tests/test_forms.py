@@ -110,11 +110,22 @@ class TestSubmissionForm:
 
     def test_algorithm_queryset_if_parent_phase_exists(self):
         editor = UserFactory()
-        alg1, alg2, alg3, alg4, alg5, alg6, alg7, alg8, alg9 = (
-            AlgorithmFactory.create_batch(9)
+        alg1, alg2, alg3, alg4, alg5, alg6, alg7, alg8, alg9, alg10 = (
+            AlgorithmFactory.create_batch(10)
         )
         ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
-        for alg in [alg1, alg2, alg3, alg4, alg5, alg6, alg7, alg8, alg9]:
+        for alg in [
+            alg1,
+            alg2,
+            alg3,
+            alg4,
+            alg5,
+            alg6,
+            alg7,
+            alg8,
+            alg9,
+            alg10,
+        ]:
             alg.add_editor(editor)
             alg.inputs.set([ci1, ci2])
             alg.outputs.set([ci3, ci4])
@@ -129,7 +140,7 @@ class TestSubmissionForm:
         ai_inactive = AlgorithmImageFactory(
             algorithm=alg6,
         )
-        for alg in [alg1, alg2, alg3, alg4, alg5, alg6]:
+        for alg in [alg1, alg2, alg3, alg4, alg6, alg10]:
             AlgorithmJobFactory(
                 algorithm_image=alg.active_image,
                 algorithm_model=alg.active_model,
@@ -220,6 +231,13 @@ class TestSubmissionForm:
             algorithm_model=AlgorithmModelFactory(algorithm=alg9),
             status=Job.SUCCESS,
         )
+        # successful evaluation and job, no algorithm model, but that should not matter
+        EvaluationFactory(
+            submission__phase=p_parent,
+            submission__algorithm_image=alg10.active_image,
+            submission__algorithm_model=alg10.active_model,
+            status=Evaluation.SUCCESS,
+        )
 
         form = SubmissionForm(
             user=editor,
@@ -227,6 +245,7 @@ class TestSubmissionForm:
         )
 
         assert alg1 in form.fields["algorithm"].queryset
+        assert alg10 in form.fields["algorithm"].queryset
         assert alg2 not in form.fields["algorithm"].queryset
         assert alg3 not in form.fields["algorithm"].queryset
         assert alg4 not in form.fields["algorithm"].queryset

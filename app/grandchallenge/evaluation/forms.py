@@ -6,7 +6,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.db.models import Exists, OuterRef
+from django.db.models import BooleanField, Case, Exists, OuterRef, When
 from django.db.transaction import on_commit
 from django.forms import (
     CheckboxInput,
@@ -361,29 +361,44 @@ class SubmissionForm(
                 has_active_image=True
             ).order_by("title")
             if self._phase.parent:
-                eval_with_active_image_and_model = Evaluation.objects.filter(
+                eval_base_query = Evaluation.objects.filter(
                     submission__phase=self._phase.parent,
                     status=Evaluation.SUCCESS,
                     submission__algorithm_image__pk=OuterRef(
                         "active_image_pk"
                     ),
+                )
+                job_base_query = Job.objects.filter(
+                    status=Job.SUCCESS,
+                    algorithm_image=OuterRef("active_image_pk"),
+                )
+                # Query when active_model_pk is not None
+                eval_with_active_model = eval_base_query.filter(
                     submission__algorithm_model__pk=OuterRef(
                         "active_model_pk"
                     ),
                 )
-                job_with_active_image_and_model = Job.objects.filter(
-                    status=Job.SUCCESS,
-                    algorithm_image=OuterRef("active_image_pk"),
+                job_with_active_model = job_base_query.filter(
                     algorithm_model=OuterRef("active_model_pk"),
                 )
 
                 qs = (
                     qs.annotate(
-                        has_successful_job=Exists(
-                            job_with_active_image_and_model
+                        has_successful_eval=Case(
+                            When(
+                                active_model_pk__isnull=False,
+                                then=Exists(eval_with_active_model),
+                            ),
+                            default=Exists(eval_base_query),
+                            output_field=BooleanField(),
                         ),
-                        has_successful_eval=Exists(
-                            eval_with_active_image_and_model
+                        has_successful_job=Case(
+                            When(
+                                active_model_pk__isnull=False,
+                                then=Exists(job_with_active_model),
+                            ),
+                            default=Exists(job_base_query),
+                            output_field=BooleanField(),
                         ),
                     )
                     .filter(
