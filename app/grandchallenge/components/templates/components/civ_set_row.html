@@ -54,16 +54,19 @@
 </ul>
 <split></split>
 
-<a class="btn btn-primary btn-sm"
-   title="View in viewer"
-   {% if object.base_object|model_name == base_model_options.READER_STUDY %}
-       {% workstation_session_control_data workstation=object.base_object.workstation context_object=object display_set=object config=object.base_object.workstation_config %}
-   {% elif object.base_object|model_name == base_model_options.ARCHIVE %}
-       {% workstation_session_control_data workstation=object.base_object.workstation context_object=object archive_item=object config=object.base_object.workstation_config %}
-   {% endif %}
->
-<i class="fas fa-fw fa-eye"></i>
-</a>
+{% if object.base_object.workstation %}
+    <a class="btn btn-primary btn-sm"
+    title="View in viewer"
+    {% if object.base_object|model_name == base_model_options.READER_STUDY %}
+        {% workstation_session_control_data workstation=object.base_object.workstation context_object=object display_set=object config=object.base_object.workstation_config %}
+    {% elif object.base_object|model_name == base_model_options.ARCHIVE %}
+        {% workstation_session_control_data workstation=object.base_object.workstation context_object=object archive_item=object config=object.base_object.workstation_config %}
+    {% endif %}
+    >
+    <i class="fas fa-fw fa-eye"></i>
+    </a>
+{% endif %}
+
 <split></split>
 
 {% if object.change_perm in object_perms %}
