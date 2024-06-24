@@ -385,6 +385,13 @@ class ReaderStudyDisplaySetList(CivSetListView):
     model = DisplaySet
     permission_required = f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"  # change instead of view permission so that readers don't get access
 
+    default_sort_column = 4
+
+    search_fields = [
+        "order",
+        *CivSetListView.search_fields,
+    ]
+
     @property
     def columns(self):
         columns = CivSetListView.columns.copy()
@@ -393,13 +400,6 @@ class ReaderStudyDisplaySetList(CivSetListView):
             Column(title="Order", sort_field="order"),
         )
         return columns
-
-    default_sort_column = 4
-
-    search_fields = [
-        "order",
-        *CivSetListView.search_fields,
-    ]
 
     @cached_property
     def base_object(self):
