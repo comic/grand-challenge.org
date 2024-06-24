@@ -2025,7 +2025,7 @@ class CIVSetObjectPermissionsMixin:
             self.assign_permissions()
 
     def assign_permissions(self):
-        pass
+        raise NotImplementedError
 
 
 class CIVForObjectMixin:
