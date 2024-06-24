@@ -26,6 +26,7 @@ from stdimage import JPEGField
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.components.models import (
     CIVForObjectMixin,
+    CIVSetObjectPermissionsMixin,
     CIVSetStringRepresentationMixin,
     ComponentInterface,
     ComponentInterfaceValue,
@@ -792,7 +793,10 @@ def delete_reader_study_groups_hook(*_, instance: ReaderStudy, using, **__):
 
 
 class DisplaySet(
-    CIVSetStringRepresentationMixin, CIVForObjectMixin, UUIDModel
+    CIVSetStringRepresentationMixin,
+    CIVSetObjectPermissionsMixin,
+    CIVForObjectMixin,
+    UUIDModel,
 ):
     reader_study = models.ForeignKey(
         ReaderStudy, related_name="display_sets", on_delete=models.PROTECT
@@ -803,31 +807,24 @@ class DisplaySet(
     order = models.PositiveIntegerField(default=0)
     title = models.CharField(max_length=255, default="", blank=True)
 
-    def save(self, *args, **kwargs):
-        adding = self._state.adding
-        super().save(*args, **kwargs)
-
-        if adding:
-            self.assign_permissions()
-
     def assign_permissions(self):
         assign_perm(
-            f"delete_{self._meta.model_name}",
+            self.delete_perm,
             self.reader_study.editors_group,
             self,
         )
         assign_perm(
-            f"change_{self._meta.model_name}",
+            self.change_perm,
             self.reader_study.editors_group,
             self,
         )
         assign_perm(
-            f"view_{self._meta.model_name}",
+            self.view_perm,
             self.reader_study.editors_group,
             self,
         )
         assign_perm(
-            f"view_{self._meta.model_name}",
+            self.view_perm,
             self.reader_study.readers_group,
             self,
         )

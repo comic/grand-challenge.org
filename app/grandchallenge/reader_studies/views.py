@@ -384,25 +384,22 @@ class ReaderStudyStatistics(
 class ReaderStudyDisplaySetList(CivSetListView):
     model = DisplaySet
     permission_required = f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"  # change instead of view permission so that readers don't get access
-    columns = [
-        Column(title=""),
-        Column(title="Detail"),
-        Column(title="ID", sort_field="pk"),
-        Column(
-            title="Title",
-            sort_field="title",
-            optional_condition=lambda obj: bool(obj.title),
-        ),
-        Column(title="Order", sort_field="order"),
-        *CivSetListView.columns,
-    ]
 
     default_sort_column = 4
+
     search_fields = [
-        "title",
         "order",
         *CivSetListView.search_fields,
     ]
+
+    @property
+    def columns(self):
+        columns = CivSetListView.columns.copy()
+        columns.insert(
+            4,
+            Column(title="Order", sort_field="order"),
+        )
+        return columns
 
     @cached_property
     def base_object(self):

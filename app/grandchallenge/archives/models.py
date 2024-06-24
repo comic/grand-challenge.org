@@ -13,6 +13,7 @@ from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.components.models import (
     CIVForObjectMixin,
+    CIVSetObjectPermissionsMixin,
     CIVSetStringRepresentationMixin,
     ComponentInterfaceValue,
     ValuesForInterfacesMixin,
@@ -287,7 +288,10 @@ class ArchiveGroupObjectPermission(GroupObjectPermissionBase):
 
 
 class ArchiveItem(
-    CIVSetStringRepresentationMixin, CIVForObjectMixin, UUIDModel
+    CIVSetStringRepresentationMixin,
+    CIVSetObjectPermissionsMixin,
+    CIVForObjectMixin,
+    UUIDModel,
 ):
     archive = models.ForeignKey(
         Archive, related_name="items", on_delete=models.PROTECT
@@ -296,14 +300,6 @@ class ArchiveItem(
         ComponentInterfaceValue, blank=True, related_name="archive_items"
     )
     title = models.CharField(max_length=255, default="", blank=True)
-
-    def save(self, *args, **kwargs):
-        adding = self._state.adding
-
-        super().save(*args, **kwargs)
-
-        if adding:
-            self.assign_permissions()
 
     class Meta:
         constraints = [
@@ -316,27 +312,21 @@ class ArchiveItem(
 
     def assign_permissions(self):
         # Archive editors, uploaders and users can view this archive item
-        assign_perm(
-            f"view_{self._meta.model_name}", self.archive.editors_group, self
-        )
-        assign_perm(
-            f"view_{self._meta.model_name}", self.archive.uploaders_group, self
-        )
-        assign_perm(
-            f"view_{self._meta.model_name}", self.archive.users_group, self
-        )
+        assign_perm(self.view_perm, self.archive.editors_group, self)
+        assign_perm(self.view_perm, self.archive.uploaders_group, self)
+        assign_perm(self.view_perm, self.archive.users_group, self)
+
         # Archive editors and uploaders can change this archive item
+        assign_perm(self.change_perm, self.archive.editors_group, self)
         assign_perm(
-            f"change_{self._meta.model_name}", self.archive.editors_group, self
-        )
-        assign_perm(
-            f"change_{self._meta.model_name}",
+            self.change_perm,
             self.archive.uploaders_group,
             self,
         )
+
         # Archive editors can delete this archive item
         assign_perm(
-            f"delete_{self._meta.model_name}",
+            self.delete_perm,
             self.archive.editors_group,
             self,
         )
