@@ -593,26 +593,22 @@ VEGA_LITE_SCHEMA = {
     "$ref": "https://vega.github.io/schema/vega-lite/v5.json",
 }
 
-AFFINE_TRANSFORM_REGISTRATION_SCHEMA ={
-  "type": "object",
-  "properties": {
-    "3d_affine_transform": {
-      "type": "array",
-      "minItems": 4,
-      "maxItems": 4,
-      "items": {
-        "type": "array",
-        "minItems": 4,
-        "maxItems": 4,
-        "items": {
-          "type": "number"
+AFFINE_TRANSFORM_REGISTRATION_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "3d_affine_transform": {
+            "type": "array",
+            "minItems": 4,
+            "maxItems": 4,
+            "items": {
+                "type": "array",
+                "minItems": 4,
+                "maxItems": 4,
+                "items": {"type": "number"},
+            },
         }
-      }
-    }
-  },
-  "required": [
-    "3d_affine_transform"
-  ]
+    },
+    "required": ["3d_affine_transform"],
 }
 
 
