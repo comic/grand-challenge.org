@@ -340,6 +340,13 @@ class Challenge(ChallengeBase):
         on_delete=models.PROTECT,
         related_name="participants_of_challenge",
     )
+    external_evaluators_group = models.OneToOneField(
+        Group,
+        editable=False,
+        null=True,
+        on_delete=models.PROTECT,
+        related_name="external_evaluators_of_challenge",
+    )
     forum = models.OneToOneField(
         Forum, editable=False, on_delete=models.PROTECT
     )
@@ -552,8 +559,12 @@ class Challenge(ChallengeBase):
         participants_group = Group.objects.create(
             name=f"{self.short_name}_participants"
         )
+        external_evaluators_group = Group.objects.create(
+            name=f"{self.short_name}_external_evaluators"
+        )
         self.admins_group = admins_group
         self.participants_group = participants_group
+        self.external_evaluators_group = external_evaluators_group
 
     def create_forum(self):
         f, created = Forum.objects.get_or_create(
