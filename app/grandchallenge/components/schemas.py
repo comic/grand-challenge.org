@@ -593,6 +593,29 @@ VEGA_LITE_SCHEMA = {
     "$ref": "https://vega.github.io/schema/vega-lite/v5.json",
 }
 
+AFFINE_TRANSFORM_REGISTRATION_SCHEMA ={
+  "type": "object",
+  "properties": {
+    "3d_affine_transform": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "array",
+        "minItems": 4,
+        "maxItems": 4,
+        "items": {
+          "type": "number"
+        }
+      }
+    }
+  },
+  "required": [
+    "3d_affine_transform"
+  ]
+}
+
+
 INTERFACE_VALUE_SCHEMA = {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "definitions": {
@@ -634,6 +657,7 @@ INTERFACE_VALUE_SCHEMA = {
         "3-point-angle-object": ANSWER_TYPE_SCHEMA["definitions"][
             "3-point-angle-object"
         ],
+        "ATRG": AFFINE_TRANSFORM_REGISTRATION_SCHEMA,
     },
     "anyOf": [
         {"$ref": "#/definitions/STR"},
@@ -660,5 +684,6 @@ INTERFACE_VALUE_SCHEMA = {
         {"$ref": "#/definitions/MELL"},
         {"$ref": "#/definitions/3ANG"},
         {"$ref": "#/definitions/M3AN"},
+        {"$ref": "#/definitions/ATRG"},
     ],
 }
