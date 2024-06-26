@@ -431,7 +431,10 @@ class SubmissionForm(
                     },
                 ),
             )
-            if not self._phase.active_image:
+            if (
+                not self._phase.active_image
+                and not self._phase.external_evaluation
+            ):
                 self.fields["algorithm"].disabled = True
         else:
             del self.fields["algorithm"]
@@ -448,7 +451,10 @@ class SubmissionForm(
 
     def clean(self):
         cleaned_data = super().clean()
-        if not self._phase.active_image:
+        if (
+            not self._phase.external_evaluation
+            and not self._phase.active_image
+        ):
             raise ValidationError(
                 "You cannot submit to this phase because this phase "
                 "does not have an active evaluation method yet."
@@ -459,6 +465,7 @@ class SubmissionForm(
         phase = self.cleaned_data["phase"]
         if (
             phase.submission_kind == SubmissionKindChoices.ALGORITHM
+            and not phase.external_evaluation
             and phase.count_valid_archive_items == 0
         ):
             self.add_error(

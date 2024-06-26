@@ -289,6 +289,24 @@ class TestSubmissionForm:
             "not have an active evaluation method yet." in str(form.errors)
         )
 
+        # for external eval phase, this check is skipped
+        phase.external_evaluation = True
+        phase.save()
+
+        form = SubmissionForm(
+            user=UserFactory(),
+            phase=phase,
+            data={"creator": UserFactory(), "phase": phase},
+        )
+        assert not form.is_valid()
+        if submission_kind == SubmissionKindChoices.ALGORITHM:
+            assert not form.fields[disabled_field_name].disabled
+        assert (
+            "You cannot submit to this phase because this phase does "
+            "not have an active evaluation method yet." not in str(form.errors)
+        )
+
+        # reset and add method
         MethodFactory(
             phase=phase,
             is_manifest_valid=True,
@@ -296,6 +314,8 @@ class TestSubmissionForm:
             is_desired_version=True,
         )
         del phase.active_image
+        phase.external_evaluation = False
+        phase.save()
 
         form = SubmissionForm(
             user=UserFactory(),
@@ -552,9 +572,9 @@ class TestSubmissionForm:
         )
         assert not form2.is_valid()
 
-        civ = ComponentInterfaceValueFactory(interface=ci1)
-        i = ArchiveItemFactory(archive=p_alg.archive)
-        i.values.add(civ)
+        # for external evaluation phases, this check is not done
+        p_alg.external_evaluation = True
+        p_alg.save()
 
         form3 = SubmissionForm(
             user=user,
@@ -562,6 +582,21 @@ class TestSubmissionForm:
             data={"algorithm": alg, "creator": user, "phase": p_alg},
         )
         assert form3.is_valid()
+
+        # reset
+        p_alg.external_evaluation = False
+        p_alg.save()
+
+        civ = ComponentInterfaceValueFactory(interface=ci1)
+        i = ArchiveItemFactory(archive=p_alg.archive)
+        i.values.add(civ)
+
+        form4 = SubmissionForm(
+            user=user,
+            phase=p_alg,
+            data={"algorithm": alg, "creator": user, "phase": p_alg},
+        )
+        assert form4.is_valid()
 
     def test_submission_or_eval_exists_for_image(self):
         user = UserFactory()
