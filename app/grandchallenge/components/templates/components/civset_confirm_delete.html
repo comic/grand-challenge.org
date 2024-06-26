@@ -20,7 +20,7 @@
     <form action="" method="post">
         {% csrf_token %}
         <p>Are you sure that you want to delete {{ object|verbose_name }} {{ object.pk }}?</p>
-           <h2>Content</h2>
+           <h2>Values</h2>
         <div class="rounded border border-danger p-2">
             <dl class="mb-0">
                 {% if object.title %}
@@ -34,7 +34,7 @@
                     {% endfor %}
                 {% else %}
                     <span class="text-muted pl-3">
-                        No content
+                        Empty
                     </span>
                 {% endif %}
             </dl>
