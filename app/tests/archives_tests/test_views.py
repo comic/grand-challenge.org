@@ -21,6 +21,7 @@ from tests.archives_tests.factories import (
     ArchivePermissionRequestFactory,
 )
 from tests.cases_tests import RESOURCE_PATH
+from tests.cases_tests.factories import RawImageUploadSessionFactory
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -442,6 +443,105 @@ def test_api_archive_item_add_and_update_non_image_file(
     new_civ = item.values.get()
     assert new_civ.interface.slug == ci.slug
     assert new_civ != civ
+
+
+@pytest.mark.django_db
+def test_api_archive_item_add_and_update_image_file(
+    client, settings, django_capture_on_commit_callbacks
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    archive = ArchiveFactory()
+    editor = UserFactory()
+    archive.add_editor(editor)
+    item = ArchiveItemFactory(archive=archive)
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.IMAGE, store_in_database=False
+    )
+
+    def set_civ(data):
+        with django_capture_on_commit_callbacks() as callbacks:
+            response = get_view_for_user(
+                viewname="api:archives-item-detail",
+                reverse_kwargs={"pk": item.pk},
+                data=data,
+                user=editor,
+                client=client,
+                method=client.patch,
+                content_type="application/json",
+                HTTP_X_FORWARDED_PROTO="https",
+            )
+        recurse_callbacks(
+            callbacks=callbacks,
+            django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+        )
+
+        assert response.status_code == 200
+        assert response.json()["pk"] == str(item.pk)
+
+        # Sanity
+        image = item.values.first().image
+        assert image.name == "image10x10x10.mha"
+        assert image.files.count() == 1
+
+    def set_civ_via_user_upload():
+        user_upload = create_upload_from_file(
+            creator=editor, file_path=RESOURCE_PATH / "image10x10x10.mha"
+        )
+        set_civ(
+            data={
+                "values": [
+                    {
+                        "interface": ci.slug,
+                        "user_upload": user_upload.api_url,
+                    }
+                ]
+            },
+        )
+
+    def set_civ_via_upload_session():
+        user_upload = create_upload_from_file(
+            creator=editor, file_path=RESOURCE_PATH / "image10x10x10.mha"
+        )
+
+        upload_session = RawImageUploadSessionFactory(creator=editor)
+        upload_session.user_uploads.set([user_upload])
+
+        set_civ(
+            data={
+                "values": [
+                    {
+                        "interface": ci.slug,
+                        "upload_session": upload_session.api_url,
+                    }
+                ]
+            },
+        )
+
+    # Add
+    assert item.values.count() == 0
+    set_civ_via_upload_session()
+    assert item.values.count() == 1
+    item.values.clear()
+
+    # Update
+    assert item.values.count() == 0
+    set_civ_via_upload_session()
+    assert item.values.count() == 1
+    item.values.clear()
+
+    # Add
+    assert item.values.count() == 0
+    set_civ_via_user_upload()
+    assert item.values.count() == 1
+    item.values.clear()
+
+    # Update
+    assert item.values.count() == 0
+    set_civ_via_user_upload()
+    assert item.values.count() == 1
 
 
 @pytest.mark.django_db

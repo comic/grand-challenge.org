@@ -1035,11 +1035,15 @@ class DisplaySetViewSet(
                 for value in serialized_data.validated_data:
                     interface = value.get("interface", None)
                     user_upload = value.get("user_upload", None)
+                    session_upload = value.get("session_upload", None)
                     image = value.get("image", None)
                     value = value.get("value", None)
                     instance.create_civ(
                         ci_slug=interface.slug,
-                        new_value=user_upload or image or value,
+                        new_value=user_upload
+                        or session_upload
+                        or image
+                        or value,
                     )
             else:
                 raise DRFValidationError(serialized_data.errors)

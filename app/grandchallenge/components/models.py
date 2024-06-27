@@ -2080,15 +2080,23 @@ class CIVForObjectMixin:
             if created:
                 civ.full_clean()
             self.values.add(civ)
-        elif isinstance(new_value, QuerySet):
+        elif isinstance(
+            new_value, (QuerySet, UserUpload, RawImageUploadSession)
+        ):
             # Local import to avoid circular dependency
             from grandchallenge.components.tasks import add_image_to_object
 
-            us = RawImageUploadSession.objects.create(
-                creator=user,
-            )
-            us.user_uploads.set(new_value)
-            us.process_images(
+            if isinstance(new_value, RawImageUploadSession):
+                upload_session = new_value
+            else:
+                upload_session = RawImageUploadSession.objects.create(
+                    creator=user
+                )
+                if isinstance(new_value, UserUpload):
+                    new_value = [new_value]
+                upload_session.user_uploads.set(new_value)
+
+            upload_session.process_images(
                 linked_task=add_image_to_object.signature(
                     kwargs={
                         "app_label": self._meta.app_label,
@@ -2099,6 +2107,8 @@ class CIVForObjectMixin:
                     immutable=True,
                 )
             )
+        else:
+            raise RuntimeError("Unexpected value presented")
 
     def create_civ_for_file(self, *, ci, current_civ, new_value):
         if (
