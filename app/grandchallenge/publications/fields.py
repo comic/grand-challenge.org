@@ -9,7 +9,7 @@ from grandchallenge.publications.utils.manubot import get_arxiv_csl
 
 # regex modified for python syntax from
 # https://www.crossref.org/blog/dois-and-matching-regular-expressions/
-DOI_REGEX = r"^10\.\d{4,9}/[-._;()/:a-z0-9]+$"
+DOI_REGEX = r"^10\.\d{4,9}/[-._;()/:a-zA-Z0-9]+$"
 ARXIV_REGEX = r"^\d{4}\.\d{4,5}$"
 
 identifier_validator = RegexValidator(regex=f"{DOI_REGEX}|{ARXIV_REGEX}")
