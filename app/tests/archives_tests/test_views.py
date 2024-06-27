@@ -446,7 +446,7 @@ def test_api_archive_item_add_and_update_non_image_file(
 
 
 @pytest.mark.django_db
-def test_api_archive_item_add_and_update_image_file(
+def test_api_archive_item_add_and_update_image(
     client, settings, django_capture_on_commit_callbacks
 ):
     # Override the celery settings
@@ -461,7 +461,7 @@ def test_api_archive_item_add_and_update_image_file(
         kind=InterfaceKind.InterfaceKindChoices.IMAGE, store_in_database=False
     )
 
-    def set_civ(data):
+    def patch_archive_item(data):
         with django_capture_on_commit_callbacks() as callbacks:
             response = get_view_for_user(
                 viewname="api:archives-item-detail",
@@ -478,30 +478,26 @@ def test_api_archive_item_add_and_update_image_file(
             django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
         )
 
-        assert response.status_code == 200
+        assert response.status_code == 200, response.content
         assert response.json()["pk"] == str(item.pk)
 
-        # Sanity
-        image = item.values.first().image
-        assert image.name == "image10x10x10.mha"
-        assert image.files.count() == 1
-
-    def set_civ_via_user_upload():
-        user_upload = create_upload_from_file(
-            creator=editor, file_path=RESOURCE_PATH / "image10x10x10.mha"
-        )
-        set_civ(
+    def patch_with_image(image):
+        patch_archive_item(
             data={
                 "values": [
                     {
                         "interface": ci.slug,
-                        "user_upload": user_upload.api_url,
+                        "image": image.api_url,
                     }
                 ]
             },
         )
 
-    def set_civ_via_upload_session():
+        # Sanity
+        linked_image = item.values.first().image
+        assert linked_image == image
+
+    def patch_with_upload_session():
         user_upload = create_upload_from_file(
             creator=editor, file_path=RESOURCE_PATH / "image10x10x10.mha"
         )
@@ -509,7 +505,7 @@ def test_api_archive_item_add_and_update_image_file(
         upload_session = RawImageUploadSessionFactory(creator=editor)
         upload_session.user_uploads.set([user_upload])
 
-        set_civ(
+        patch_archive_item(
             data={
                 "values": [
                     {
@@ -520,27 +516,38 @@ def test_api_archive_item_add_and_update_image_file(
             },
         )
 
-    # Add
-    assert item.values.count() == 0
-    set_civ_via_upload_session()
-    assert item.values.count() == 1
-    item.values.clear()
-
-    # Update
-    assert item.values.count() == 0
-    set_civ_via_upload_session()
-    assert item.values.count() == 1
-    item.values.clear()
+        # Sanity
+        image = item.values.first().image
+        assert image.name == "image10x10x10.mha"
+        assert image.files.count() == 1
 
     # Add
     assert item.values.count() == 0
-    set_civ_via_user_upload()
+    patch_with_upload_session()
     assert item.values.count() == 1
-    item.values.clear()
 
     # Update
+    patch_with_upload_session()
+    assert item.values.count() == 1
+
+    # Reset
+    item.values.clear()
     assert item.values.count() == 0
-    set_civ_via_user_upload()
+
+    # Add
+    image = ImageFactory()
+    assign_perm("cases.view_image", editor, image)
+    patch_with_image(image)
+    assert item.values.count() == 1
+
+    # Update with same image
+    patch_with_image(image)
+    assert item.values.count() == 1
+
+    # Update
+    new_image = ImageFactory()
+    assign_perm("cases.view_image", editor, new_image)
+    patch_with_image(new_image)
     assert item.values.count() == 1
 
 

@@ -127,11 +127,10 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
                 [
                     attrs.get("image"),
                     attrs.get("upload_session"),
-                    attrs.get("user_upload"),
                 ]
             ):
                 raise serializers.ValidationError(
-                    f"user_upload or upload_session or image are required for interface "
+                    f"upload_session or image are required for interface "
                     f"kind {interface.kind}"
                 )
 
