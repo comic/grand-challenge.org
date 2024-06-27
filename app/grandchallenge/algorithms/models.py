@@ -571,6 +571,13 @@ class AlgorithmImage(UUIDModel, ComponentImage):
         )
 
     @property
+    def download_url(self):
+        if self.image:
+            return self.image.url
+        else:
+            return None
+
+    @property
     def api_url(self) -> str:
         return reverse("api:algorithms-image-detail", kwargs={"pk": self.pk})
 
@@ -704,6 +711,13 @@ class AlgorithmModel(Tarball):
             "algorithms:model-detail",
             kwargs={"slug": self.algorithm.slug, "pk": self.pk},
         )
+
+    @property
+    def download_url(self):
+        if self.model:
+            return self.model.url
+        else:
+            return None
 
 
 class AlgorithmModelUserObjectPermission(UserObjectPermissionBase):

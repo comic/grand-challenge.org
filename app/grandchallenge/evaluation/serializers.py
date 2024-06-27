@@ -1,10 +1,11 @@
 from django.contrib.auth import get_user_model
-from rest_framework.fields import CharField
+from rest_framework.fields import CharField, URLField
 from rest_framework.relations import HyperlinkedRelatedField
 from rest_framework.serializers import ModelSerializer
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.serializers import (
+    ComponentInterfaceValuePostSerializer,
     ComponentInterfaceValueSerializer,
 )
 from grandchallenge.evaluation.models import Evaluation, Phase, Submission
@@ -74,3 +75,28 @@ class EvaluationSerializer(ModelSerializer):
             "status",
             "title",
         )
+
+
+class ExternalEvaluationSerializer(EvaluationSerializer):
+    algorithm_model_url = URLField(
+        source="get_algorithm_model_url", read_only=True
+    )
+    algorithm_image_url = URLField(
+        source="get_algorithm_image_url", read_only=True
+    )
+
+    class Meta:
+        model = Evaluation
+        fields = (
+            *EvaluationSerializer.Meta.fields,
+            "algorithm_model_url",
+            "algorithm_image_url",
+        )
+
+
+class ExternalEvaluationUpdateSerializer(EvaluationSerializer):
+    outputs = ComponentInterfaceValuePostSerializer(many=True)
+
+    class Meta:
+        model = Evaluation
+        fields = ("outputs",)

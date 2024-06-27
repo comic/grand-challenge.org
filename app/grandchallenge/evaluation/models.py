@@ -1185,10 +1185,13 @@ class Submission(UUIDModel):
                     actor_only=False,
                     send_action=False,
                 )
-            e = create_evaluation.signature(
-                kwargs={"submission_pk": self.pk}, immutable=True
-            )
-            on_commit(e.apply_async)
+            if self.phase.external_evaluation:
+                Evaluation.objects.create(submission=self)
+            else:
+                e = create_evaluation.signature(
+                    kwargs={"submission_pk": self.pk}, immutable=True
+                )
+                on_commit(e.apply_async)
 
     def assign_permissions(self):
         assign_perm("view_submission", self.phase.challenge.admins_group, self)
@@ -1196,16 +1199,18 @@ class Submission(UUIDModel):
             external_evaluators_group = (
                 self.phase.challenge.external_evaluators_group
             )
-            assign_perm(
-                "download_algorithmmodel",
-                external_evaluators_group,
-                self.algorithm_model,
-            )
-            assign_perm(
-                "download_algorithmimage",
-                external_evaluators_group,
-                self.algorithm_image,
-            )
+            if self.algorithm_image:
+                assign_perm(
+                    "download_algorithmimage",
+                    external_evaluators_group,
+                    self.algorithm_image,
+                )
+            if self.algorithm_model:
+                assign_perm(
+                    "download_algorithmmodel",
+                    external_evaluators_group,
+                    self.algorithm_model,
+                )
 
         if self.phase.public:
             assign_perm("view_submission", self.creator, self)
@@ -1444,6 +1449,12 @@ class Evaluation(UUIDModel, ComponentJob):
                 "challenge_short_name": self.submission.phase.challenge.short_name,
             },
         )
+
+    def get_algorithm_model_url(self):
+        return self.submission.algorithm_model.download_url
+
+    def get_algorithm_image_url(self):
+        return self.submission.algorithm_image.download_url
 
 
 class EvaluationUserObjectPermission(UserObjectPermissionBase):
