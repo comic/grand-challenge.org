@@ -1035,13 +1035,13 @@ class DisplaySetViewSet(
                 for value in serialized_data.validated_data:
                     interface = value.get("interface", None)
                     user_upload = value.get("user_upload", None)
-                    session_upload = value.get("session_upload", None)
+                    upload_session = value.get("upload_session", None)
                     image = value.get("image", None)
                     value = value.get("value", None)
                     instance.create_civ(
                         ci_slug=interface.slug,
                         new_value=user_upload
-                        or session_upload
+                        or upload_session
                         or image
                         or value,
                     )
