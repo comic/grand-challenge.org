@@ -21,6 +21,7 @@ from tests.archives_tests.factories import (
     ArchivePermissionRequestFactory,
 )
 from tests.cases_tests import RESOURCE_PATH
+from tests.cases_tests.factories import RawImageUploadSessionFactory
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -442,6 +443,112 @@ def test_api_archive_item_add_and_update_non_image_file(
     new_civ = item.values.get()
     assert new_civ.interface.slug == ci.slug
     assert new_civ != civ
+
+
+@pytest.mark.django_db
+def test_api_archive_item_add_and_update_image(
+    client, settings, django_capture_on_commit_callbacks
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    archive = ArchiveFactory()
+    editor = UserFactory()
+    archive.add_editor(editor)
+    item = ArchiveItemFactory(archive=archive)
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.IMAGE, store_in_database=False
+    )
+
+    def patch_archive_item(data):
+        with django_capture_on_commit_callbacks() as callbacks:
+            response = get_view_for_user(
+                viewname="api:archives-item-detail",
+                reverse_kwargs={"pk": item.pk},
+                data=data,
+                user=editor,
+                client=client,
+                method=client.patch,
+                content_type="application/json",
+                HTTP_X_FORWARDED_PROTO="https",
+            )
+        recurse_callbacks(
+            callbacks=callbacks,
+            django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+        )
+
+        assert response.status_code == 200, response.content
+        assert response.json()["pk"] == str(item.pk)
+
+    def patch_with_image(image):
+        patch_archive_item(
+            data={
+                "values": [
+                    {
+                        "interface": ci.slug,
+                        "image": image.api_url,
+                    }
+                ]
+            },
+        )
+
+        # Sanity
+        linked_image = item.values.first().image
+        assert linked_image == image
+
+    def patch_with_upload_session():
+        user_upload = create_upload_from_file(
+            creator=editor, file_path=RESOURCE_PATH / "image10x10x10.mha"
+        )
+
+        upload_session = RawImageUploadSessionFactory(creator=editor)
+        upload_session.user_uploads.set([user_upload])
+
+        patch_archive_item(
+            data={
+                "values": [
+                    {
+                        "interface": ci.slug,
+                        "upload_session": upload_session.api_url,
+                    }
+                ]
+            },
+        )
+
+        # Sanity
+        image = item.values.first().image
+        assert image.name == "image10x10x10.mha"
+        assert image.files.count() == 1
+
+    # Add
+    assert item.values.count() == 0
+    patch_with_upload_session()
+    assert item.values.count() == 1
+
+    # Update
+    patch_with_upload_session()
+    assert item.values.count() == 1
+
+    # Reset
+    item.values.clear()
+    assert item.values.count() == 0
+
+    # Add
+    image = ImageFactory()
+    assign_perm("cases.view_image", editor, image)
+    patch_with_image(image)
+    assert item.values.count() == 1
+
+    # Update with same image
+    patch_with_image(image)
+    assert item.values.count() == 1
+
+    # Update
+    new_image = ImageFactory()
+    assign_perm("cases.view_image", editor, new_image)
+    patch_with_image(new_image)
+    assert item.values.count() == 1
 
 
 @pytest.mark.django_db

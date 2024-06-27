@@ -123,7 +123,12 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
             )
 
         if interface.is_image_kind:
-            if not attrs.get("image") and not attrs.get("upload_session"):
+            if not any(
+                [
+                    attrs.get("image"),
+                    attrs.get("upload_session"),
+                ]
+            ):
                 raise serializers.ValidationError(
                     f"upload_session or image are required for interface "
                     f"kind {interface.kind}"

@@ -97,10 +97,12 @@ class ArchiveItemPostSerializer(ArchiveItemSerializer):
         values = validated_data.pop("values")
         for value in values:
             interface = value.get("interface", None)
+            upload_session = value.get("upload_session", None)
             user_upload = value.get("user_upload", None)
             image = value.get("image", None)
             value = value.get("value", None)
             instance.create_civ(
-                ci_slug=interface.slug, new_value=user_upload or image or value
+                ci_slug=interface.slug,
+                new_value=upload_session or user_upload or image or value,
             )
         return instance
