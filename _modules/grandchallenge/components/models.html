@@ -2234,15 +2234,19 @@
             <span class="k">if</span> <span class="n">created</span><span class="p">:</span>
                 <span class="n">civ</span><span class="o">.</span><span class="n">full_clean</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">civ</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_value</span><span class="p">,</span> <span class="n">QuerySet</span><span class="p">):</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_value</span><span class="p">,</span> <span class="p">(</span><span class="n">QuerySet</span><span class="p">,</span> <span class="n">RawImageUploadSession</span><span class="p">)):</span>
             <span class="c1"># Local import to avoid circular dependency</span>
             <span class="kn">from</span> <span class="nn">grandchallenge.components.tasks</span> <span class="kn">import</span> <span class="n">add_image_to_object</span>
 
-            <span class="n">us</span> <span class="o">=</span> <span class="n">RawImageUploadSession</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-                <span class="n">creator</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="n">us</span><span class="o">.</span><span class="n">user_uploads</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">new_value</span><span class="p">)</span>
-            <span class="n">us</span><span class="o">.</span><span class="n">process_images</span><span class="p">(</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_value</span><span class="p">,</span> <span class="n">RawImageUploadSession</span><span class="p">):</span>
+                <span class="n">upload_session</span> <span class="o">=</span> <span class="n">new_value</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">upload_session</span> <span class="o">=</span> <span class="n">RawImageUploadSession</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                    <span class="n">creator</span><span class="o">=</span><span class="n">user</span>
+                <span class="p">)</span>
+                <span class="n">upload_session</span><span class="o">.</span><span class="n">user_uploads</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">new_value</span><span class="p">)</span>
+
+            <span class="n">upload_session</span><span class="o">.</span><span class="n">process_images</span><span class="p">(</span>
                 <span class="n">linked_task</span><span class="o">=</span><span class="n">add_image_to_object</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
                     <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
                         <span class="s2">&quot;app_label&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="p">,</span>
