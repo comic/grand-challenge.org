@@ -45,25 +45,9 @@ class S3Storage(S3Boto3Storage):
         )
 
 
-@deconstructible
-class PrivateS3Storage(S3Storage):
-    def __init__(self, *args, **kwargs):
-        super().__init__(
-            *args, config=settings.PRIVATE_S3_STORAGE_KWARGS, **kwargs
-        )
-
-    def url(self, *args, **kwargs):
-        """
-        Urls for private storage should never be used, as S3Storage will
-        generate a signed URL which will allow users to download the file.
-        """
-        raise NotImplementedError
-
-
-@deconstructible
-class ProtectedS3Storage(S3Storage):
+class CloudFrontUrlMixin:
     def __init__(self, *args, internal=False, **kwargs):
-        config = copy.deepcopy(settings.PROTECTED_S3_STORAGE_KWARGS)
+        config = copy.deepcopy(self.s3_storage_kwargs)
 
         # Setting a custom domain will strip the aws headers when using minio.
         # You can get these headers back by setting the custom_domain to None
@@ -84,7 +68,7 @@ class ProtectedS3Storage(S3Storage):
         name = self._normalize_name(clean_name(name))
 
         if domain is None:
-            domain = settings.PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN
+            domain = self.cloudfront_domain
 
         url = f"https://{domain}/{filepath_to_uri(name)}"
 
@@ -114,6 +98,29 @@ class ProtectedS3Storage(S3Storage):
 
 
 @deconstructible
+class PrivateS3Storage(CloudFrontUrlMixin, S3Storage):
+
+    cloudfront_domain = settings.PRIVATE_S3_STORAGE_CLOUDFRONT_DOMAIN
+    s3_storage_kwargs = settings.PRIVATE_S3_STORAGE_KWARGS
+
+    def url(self, *args, **kwargs):
+        """
+        Urls for private storage should never be used, as S3Storage will
+        generate a signed URL which will allow users to download the file.
+        """
+        raise NotImplementedError
+
+    def unsigned_url(self, name):
+        return super().url(name=name)
+
+
+@deconstructible
+class ProtectedS3Storage(CloudFrontUrlMixin, S3Storage):
+    cloudfront_domain = settings.PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN
+    s3_storage_kwargs = settings.PROTECTED_S3_STORAGE_KWARGS
+
+
+@deconstructible
 class PublicS3Storage(S3Storage):
     def __init__(self, *args, **kwargs):
         super().__init__(
@@ -124,6 +131,7 @@ class PublicS3Storage(S3Storage):
 private_s3_storage = PrivateS3Storage()
 protected_s3_storage = ProtectedS3Storage()
 internal_protected_s3_storage = ProtectedS3Storage(internal=True)
+internal_private_s3_storage = PrivateS3Storage(internal=True)
 public_s3_storage = PublicS3Storage()
 
 storages = [private_s3_storage, protected_s3_storage, public_s3_storage]

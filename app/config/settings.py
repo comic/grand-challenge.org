@@ -190,7 +190,13 @@ AWS_SES_REGION_NAME = os.environ.get("AWS_SES_REGION_NAME")
 PRIVATE_S3_STORAGE_KWARGS = {
     "bucket_name": os.environ.get(
         "PRIVATE_S3_STORAGE_BUCKET_NAME", "grand-challenge-private"
-    )
+    ),
+    # This is the domain where people will be able to go to download data
+    # from this bucket. Usually we would use reverse to find this out,
+    # but this needs to be defined before the database is populated
+    "custom_domain": os.environ.get(
+        "PRIVATE_S3_CUSTOM_DOMAIN", "gc.localhost/media"
+    ),
 }
 
 PROTECTED_S3_STORAGE_KWARGS = {
@@ -209,6 +215,12 @@ PROTECTED_S3_STORAGE_USE_CLOUDFRONT = strtobool(
 )
 PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN = os.environ.get(
     "PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN_NAME", ""
+)
+PRIVATE_S3_STORAGE_CLOUDFRONT_DOMAIN = os.environ.get(
+    "PRIVATE_S3_STORAGE_CLOUDFRONT_DOMAIN_NAME", ""
+)
+PRIVATE_S3_STORAGE_USE_CLOUDFRONT = strtobool(
+    os.environ.get("PRIVATE_S3_STORAGE_USE_CLOUDFRONT", "False")
 )
 
 PUBLIC_S3_STORAGE_KWARGS = {

@@ -8,11 +8,15 @@ from guardian.utils import get_anonymous_user
 from knox.auth import TokenAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
+from grandchallenge.algorithms.models import AlgorithmImage, AlgorithmModel
 from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import ChallengeRequest
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.core.guardian import get_objects_for_user
-from grandchallenge.core.storage import internal_protected_s3_storage
+from grandchallenge.core.storage import (
+    internal_private_s3_storage,
+    internal_protected_s3_storage,
+)
 from grandchallenge.evaluation.models import Submission
 from grandchallenge.serving.models import Download
 from grandchallenge.workstations.models import Feedback
@@ -37,6 +41,25 @@ def protected_storage_redirect(*, name, **kwargs):
     return response
 
 
+def private_storage_redirect(*, name, **kwargs):
+    _create_download(**kwargs)
+
+    # Get the storage with the internal redirect and auth. This will prepend
+    # settings.AWS_S3_ENDPOINT_URL to the url
+    if not internal_private_s3_storage.exists(name=name):
+        raise Http404("File not found.")
+    if settings.PRIVATE_S3_STORAGE_USE_CLOUDFRONT:
+        response = HttpResponseRedirect(
+            internal_private_s3_storage.cloudfront_signed_url(name=name)
+        )
+    else:
+        response = HttpResponseRedirect(
+            internal_private_s3_storage.unsigned_url(name=name)
+        )
+
+    return response
+
+
 def _create_download(
     *,
     creator,
@@ -45,6 +68,8 @@ def _create_download(
     component_interface_value=None,
     challenge_request=None,
     feedback=None,
+    algorithm_model=None,
+    algorithm_image=None,
 ):
     if creator.is_anonymous:
         creator = get_anonymous_user()
@@ -65,6 +90,12 @@ def _create_download(
 
     if feedback is not None:
         kwargs["feedback"] = feedback
+
+    if algorithm_model is not None:
+        kwargs["algorithm_model"] = algorithm_model
+
+    if algorithm_image is not None:
+        kwargs["algorithm_image"] = algorithm_image
 
     if len(kwargs) != 2:
         raise RuntimeError(
@@ -108,6 +139,38 @@ def serve_submissions(request, *, submission_pk, **_):
             name=submission.predictions_file.name,
             creator=request.user,
             submission=submission,
+        )
+
+    raise PermissionDenied
+
+
+def serve_algorithm_images(request, *, algorithmimage_pk, **_):
+    try:
+        image = AlgorithmImage.objects.get(pk=algorithmimage_pk)
+    except AlgorithmImage.DoesNotExist:
+        raise Http404("Algorithm image not found.")
+
+    if request.user.has_perm("download_algorithmimage", image):
+        return private_storage_redirect(
+            name=image.image.name,
+            creator=request.user,
+            algorithm_image=image,
+        )
+
+    raise PermissionDenied
+
+
+def serve_algorithm_models(request, *, algorithmmodel_pk, **_):
+    try:
+        model = AlgorithmModel.objects.get(pk=algorithmmodel_pk)
+    except AlgorithmModel.DoesNotExist:
+        raise Http404("Algorithm model not found.")
+
+    if request.user.has_perm("download_algorithmmodel", model):
+        return protected_storage_redirect(
+            name=model.model.name,
+            creator=request.user,
+            algorithm_model=model,
         )
 
     raise PermissionDenied

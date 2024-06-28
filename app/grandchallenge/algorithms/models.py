@@ -552,6 +552,9 @@ class AlgorithmImage(UUIDModel, ComponentImage):
 
     class Meta(UUIDModel.Meta, ComponentImage.Meta):
         ordering = ("created", "creator")
+        permissions = [
+            ("download_algorithmimage", "Can download algorithm image")
+        ]
 
     def __str__(self):
         out = f"Algorithm image {self.pk} for {self.algorithm}"
@@ -566,6 +569,13 @@ class AlgorithmImage(UUIDModel, ComponentImage):
             "algorithms:image-detail",
             kwargs={"slug": self.algorithm.slug, "pk": self.pk},
         )
+
+    @property
+    def download_url(self):
+        if self.image:
+            return self.image.storage.unsigned_url(name=self.image.name)
+        else:
+            return None
 
     @property
     def api_url(self) -> str:
@@ -674,6 +684,11 @@ class AlgorithmModel(Tarball):
         storage=protected_s3_storage,
     )
 
+    class Meta(Tarball.Meta):
+        permissions = [
+            ("download_algorithmmodel", "Can download algorithm model")
+        ]
+
     def assign_permissions(self):
         # Editors can view this algorithm model
         assign_perm(
@@ -696,6 +711,13 @@ class AlgorithmModel(Tarball):
             "algorithms:model-detail",
             kwargs={"slug": self.algorithm.slug, "pk": self.pk},
         )
+
+    @property
+    def download_url(self):
+        if self.model:
+            return self.model.url
+        else:
+            return None
 
 
 class AlgorithmModelUserObjectPermission(UserObjectPermissionBase):
