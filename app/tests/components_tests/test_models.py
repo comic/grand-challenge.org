@@ -129,6 +129,7 @@ def test_average_duration_filtering():
         (InterfaceKindChoices.MULTIPLE_ANGLES, False, False),
         (InterfaceKindChoices.ELLIPSE, False, False),
         (InterfaceKindChoices.MULTIPLE_ELLIPSES, False, False),
+        (InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION, False, False),
         # Image types
         (InterfaceKindChoices.IMAGE, True, True),
         (InterfaceKindChoices.HEAT_MAP, True, True),
@@ -193,6 +194,7 @@ def test_saved_in_object_store(kind, object_store_required, is_image):
         (InterfaceKindChoices.MULTIPLE_ANGLES, True),
         (InterfaceKindChoices.ELLIPSE, False),
         (InterfaceKindChoices.MULTIPLE_ELLIPSES, True),
+        (InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION, False),
         # Image types
         (InterfaceKindChoices.IMAGE, True),
         (InterfaceKindChoices.HEAT_MAP, True),
@@ -622,6 +624,30 @@ def test_invalid_schema_raises_error():
                     },
                     "y": {"field": "b", "type": "quantitative"},
                 },
+            },
+            pytest.raises(ValidationError),
+        ),
+        (
+            InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION,
+            {
+                "3d_affine_transform": [
+                    [1, 2, 3, 4],
+                    [5, 6, 7, 8],
+                    [9, 10, 11, 12],
+                    [13, 14, 15, 16],
+                ],
+            },
+            nullcontext(),
+        ),
+        (
+            InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION,
+            {
+                "3d_affine_transform": [
+                    [1, 2, 3],  # <- missing one number
+                    [5, 6, 7, 8],
+                    [9, 10, 11, 12],
+                    [13, 14, 15, 16],
+                ],
             },
             pytest.raises(ValidationError),
         ),
