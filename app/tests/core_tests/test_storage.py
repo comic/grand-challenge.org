@@ -72,7 +72,14 @@ def test_custom_domain():
     assert "AWSAccessKeyId" in url
 
 
-def test_cloudfront_urls(settings):
+@pytest.mark.parametrize(
+    "storage",
+    [
+        grandchallenge.core.storage.ProtectedS3Storage(),
+        grandchallenge.core.storage.PrivateS3Storage(),
+    ],
+)
+def test_cloudfront_urls(settings, storage):
     expected_url = (
         "https://d604721fxaaqy9.cloudfront.net/horizon.jpg?Expires=1258237200"
         "&Signature=Y70zPbq2rNoDXWLHJrdrx9KXgyXXrEQJY1i1EaBrIgPhyalCM5wPUegH6"
@@ -103,8 +110,6 @@ def test_cloudfront_urls(settings):
     )
     settings.CLOUDFRONT_KEY_PAIR_ID = "PK123456789754"
 
-    storage = grandchallenge.core.storage.ProtectedS3Storage()
-
     signed_url = storage.cloudfront_signed_url(
         name="horizon.jpg",
         domain="d604721fxaaqy9.cloudfront.net",
@@ -119,3 +124,11 @@ def test_private_storage_url_generation_fails():
 
     with pytest.raises(NotImplementedError):
         storage.url(name="test.jpg")
+
+
+def test_private_storage_unsigned_url_generation():
+    storage = grandchallenge.core.storage.PrivateS3Storage()
+    assert (
+        storage.unsigned_url(name="test.jpg")
+        == "https://gc.localhost/media/test.jpg"
+    )
