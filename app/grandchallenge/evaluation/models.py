@@ -1359,6 +1359,7 @@ class Evaluation(UUIDModel, ComponentJob):
             external_evaluators = (
                 self.submission.phase.challenge.external_evaluators_group
             )
+            assign_perm("view_evaluation", external_evaluators, self)
             assign_perm("change_evaluation", external_evaluators, self)
             assign_perm("claim_evaluation", external_evaluators, self)
 
@@ -1451,7 +1452,10 @@ class Evaluation(UUIDModel, ComponentJob):
         )
 
     def get_algorithm_model_url(self):
-        return self.submission.algorithm_model.download_url
+        if self.submission.algorithm_model:
+            return self.submission.algorithm_model.download_url
+        else:
+            return None
 
     def get_algorithm_image_url(self):
         return self.submission.algorithm_image.download_url

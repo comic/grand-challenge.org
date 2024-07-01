@@ -78,6 +78,7 @@ class EvaluationViewSet(ReadOnlyModelViewSet):
     @action(
         detail=True,
         methods=["PATCH"],
+        permission_classes=[CanClaimEvaluation],
         serializer_class=ExternalEvaluationUpdateSerializer,
     )
     def update_external_evaluation(self, request, *args, **kwargs):
@@ -95,32 +96,31 @@ class EvaluationViewSet(ReadOnlyModelViewSet):
                 many=True, data=outputs, context={"request": request}
             )
             if serialized_data.is_valid():
-                if serialized_data.is_valid():
-                    for value in serialized_data.validated_data:
-                        # silly workaround and minimal implementation until we can use
-                        # CIVForObjectMixin on the evaluation model
-                        # (pending algorithm job refactoring)
-                        interface = value.get("interface", None)
-                        if not interface.is_json_kind:
-                            raise DRFValidationError(
-                                "Evaluation outputs can only be json data."
-                            )
-                        value = value.get("value", None)
-                        civ = ComponentInterfaceValue(
-                            interface=interface, value=value
+                for value in serialized_data.validated_data:
+                    # minimal implementation until we can use
+                    # CIVForObjectMixin on the evaluation model
+                    # (pending algorithm job refactoring)
+                    interface = value.get("interface", None)
+                    if not interface.is_json_kind:
+                        raise DRFValidationError(
+                            "Evaluation outputs can only be json data."
                         )
-                        try:
-                            civ.full_clean()
-                            civ.save()
-                            evaluation.outputs.add(civ)
-                        except ValidationError as e:
-                            evaluation.status = Evaluation.FAILURE
-                            evaluation.save()
-                            raise DRFValidationError(e)
-                else:
-                    evaluation.status = Evaluation.FAILURE
-                    evaluation.save()
-                    raise DRFValidationError(serialized_data.errors)
+                    value = value.get("value", None)
+                    civ = ComponentInterfaceValue(
+                        interface=interface, value=value
+                    )
+                    try:
+                        civ.full_clean()
+                        civ.save()
+                        evaluation.outputs.add(civ)
+                    except ValidationError as e:
+                        evaluation.status = Evaluation.FAILURE
+                        evaluation.save()
+                        raise DRFValidationError(e)
+            else:
+                evaluation.status = Evaluation.FAILURE
+                evaluation.save()
+                raise DRFValidationError(serialized_data.errors)
 
         evaluation.status = Evaluation.SUCCESS
         evaluation.completed_at = now()
