@@ -1,4 +1,3 @@
-from django.db.models import Q
 from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
 from guardian.shortcuts import assign_perm, remove_perm
@@ -97,13 +96,14 @@ def update_group_permissions(
         for group in groups:
             operation("view_job", group, job)
 
-    component_interface_values = ComponentInterfaceValue.objects.filter(
-        (
-            Q(algorithms_jobs_as_input__in=jobs)
-            | Q(algorithms_jobs_as_output__in=jobs)
-        )
-        & Q(image__isnull=False)
-    ).distinct()
+    queryset = ComponentInterfaceValue.objects.filter(
+        image__isnull=False
+    ).select_related("image")
+
+    input_civs = queryset.filter(algorithms_jobs_as_input__in=jobs)
+    output_civs = queryset.filter(algorithms_jobs_as_output__in=jobs)
+
+    component_interface_values = {*input_civs, *output_civs}
 
     _update_image_permissions(
         jobs=jobs,

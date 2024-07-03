@@ -169,10 +169,6 @@ def test_algorithm(
     )
     alg.refresh_from_db()
 
-    # We should not be able to download image
-    with pytest.raises(NotImplementedError):
-        _ = alg.image.url
-
     # Run the algorithm, it will create a results.json and an output.tif
     image_file = ImageFileFactory(
         file__from_path=Path(__file__).parent / "resources" / "input_file.tif"

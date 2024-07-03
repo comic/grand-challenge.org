@@ -113,6 +113,9 @@ class InterfaceKindChoices(models.TextChoices):
     SEGMENTATION = "SEG", _("Segmentation")
     HEAT_MAP = "HMAP", _("Heat Map")
 
+    # Registration types
+    AFFINE_TRANSFORM_REGISTRATION = "ATRG", _("Affine transform registration")
+
     # File types
     PDF = "PDF", _("PDF file")
     SQREG = "SQREG", _("SQREG file")
@@ -163,6 +166,7 @@ class InterfaceKind:
         * Chart
         * Ellipse
         * Multiple ellipses
+        * Affine transform registration
 
         Example json for 2D bounding box annotation
             required: "type", "corners", "version"
@@ -668,6 +672,19 @@ class InterfaceKind:
                 "version": {"major": 1, "minor": 0}
             }
 
+        Example json for an Affine Transform Registration
+            required: "3d_affine_transform"
+
+        .. code-block:: json
+
+            {
+                "3d_affine_transform": [
+                    [1, 0, 0, 0],
+                    [0, 1, 0, 0],
+                    [0, 0, 1, 0],
+                    [0, 0, 0, 1]
+                ]
+            }
         """
         return {
             InterfaceKind.InterfaceKindChoices.STRING,
@@ -694,6 +711,7 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.MULTIPLE_ELLIPSES,
             InterfaceKind.InterfaceKindChoices.THREE_POINT_ANGLE,
             InterfaceKind.InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
+            InterfaceKind.InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION,
         }
 
     @staticmethod
@@ -2080,15 +2098,19 @@ class CIVForObjectMixin:
             if created:
                 civ.full_clean()
             self.values.add(civ)
-        elif isinstance(new_value, QuerySet):
+        elif isinstance(new_value, (QuerySet, RawImageUploadSession)):
             # Local import to avoid circular dependency
             from grandchallenge.components.tasks import add_image_to_object
 
-            us = RawImageUploadSession.objects.create(
-                creator=user,
-            )
-            us.user_uploads.set(new_value)
-            us.process_images(
+            if isinstance(new_value, RawImageUploadSession):
+                upload_session = new_value
+            else:
+                upload_session = RawImageUploadSession.objects.create(
+                    creator=user
+                )
+                upload_session.user_uploads.set(new_value)
+
+            upload_session.process_images(
                 linked_task=add_image_to_object.signature(
                     kwargs={
                         "app_label": self._meta.app_label,

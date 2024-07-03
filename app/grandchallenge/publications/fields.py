@@ -122,3 +122,8 @@ class IdentifierField(models.CharField):
 
 class IdentifierFormField(CharField):
     default_validators = [identifier_validator]
+
+    def clean(self, value):
+        if value:
+            value = value.lower()
+        return super().clean(value)
