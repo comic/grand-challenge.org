@@ -1048,6 +1048,10 @@ class Method(UUIDModel, ComponentImage):
     def get_peer_images(self):
         return Method.objects.filter(phase=self.phase)
 
+    @property
+    def bucket(self):
+        raise settings.PRIVATE_S3_STORAGE_KWARGS["bucket_name"]
+
 
 class MethodUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(Method, on_delete=models.CASCADE)
@@ -1219,6 +1223,14 @@ class EvaluationGroundTruth(Tarball):
         ),
         storage=private_s3_storage,
     )
+
+    @property
+    def bucket(self):
+        return settings.PRIVATE_S3_STORAGE_KWARGS["bucket_name"]
+
+    @property
+    def key(self):
+        return self.ground_truth.name
 
     def assign_permissions(self):
         # Challenge admins can view this ground truth
