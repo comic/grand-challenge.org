@@ -22,6 +22,10 @@ from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.tasks import (
     remove_container_image_from_registry,
 )
+from grandchallenge.core.storage import (
+    private_s3_storage,
+    protected_s3_storage,
+)
 from grandchallenge.reader_studies.models import Question
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
@@ -34,8 +38,8 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
-from tests.evaluation_tests.factories import EvaluationFactory
-from tests.factories import ImageFactory
+from tests.evaluation_tests.factories import EvaluationFactory, MethodFactory
+from tests.factories import ImageFactory, WorkstationImageFactory
 from tests.reader_studies_tests.factories import (
     DisplaySetFactory,
     QuestionFactory,
@@ -1376,3 +1380,29 @@ def test_values_for_interfaces(
         ci2.slug: [civ2a.pk, civ2b.pk],
         ci3.slug: [civ3.pk],
     }
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "factory, expected_storage, download_context",
+    (
+        (
+            MethodFactory,
+            private_s3_storage,
+            pytest.raises(NotImplementedError),
+        ),
+        (
+            WorkstationImageFactory,
+            private_s3_storage,
+            pytest.raises(NotImplementedError),
+        ),
+        (AlgorithmImageFactory, protected_s3_storage, nullcontext()),
+    ),
+)
+def test_correct_storage_set(factory, expected_storage, download_context):
+    instance = factory()
+
+    assert instance._meta.get_field("image").storage == expected_storage
+
+    with download_context:
+        _ = instance.image.url
