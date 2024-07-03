@@ -1277,19 +1277,19 @@ def assign_tarball_from_upload(
     )
 
     sha256 = get_object_sha256(getattr(current_tarball, field_to_copy))
-    # if (
-    #     TarballModel.objects.filter(sha256=sha256)
-    #     .exclude(pk=current_tarball.pk)
-    #     .exists()
-    # ):
-    #     current_tarball.import_status = ImportStatusChoices.FAILED
-    #     current_tarball.status = f"{TarballModel._meta.verbose_name} with this sha256 already exists."
-    #     current_tarball.save()
-    #
-    #     getattr(current_tarball, field_to_copy).delete()
-    #     current_tarball.user_upload.delete()
-    #
-    #     return
+    if (
+        TarballModel.objects.filter(sha256=sha256)
+        .exclude(pk=current_tarball.pk)
+        .exists()
+    ):
+        current_tarball.import_status = ImportStatusChoices.FAILED
+        current_tarball.status = f"{TarballModel._meta.verbose_name} with this sha256 already exists."
+        current_tarball.save()
+
+        getattr(current_tarball, field_to_copy).delete()
+        current_tarball.user_upload.delete()
+
+        return
 
     current_tarball.sha256 = sha256
     current_tarball.size_in_storage = getattr(
