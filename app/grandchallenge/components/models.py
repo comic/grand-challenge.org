@@ -6,7 +6,6 @@ from json import JSONDecodeError
 from pathlib import Path
 from typing import NamedTuple
 
-import boto3
 from celery import signature
 from django import forms
 from django.apps import apps
@@ -64,7 +63,7 @@ from grandchallenge.core.validators import (
     JSONValidator,
     MimeTypeValidator,
 )
-from grandchallenge.uploads.models import _S3_CLIENT_KWARGS, UserUpload
+from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.validators import validate_gzip_mimetype
 from grandchallenge.workstation_configs.models import (
     OVERLAY_SEGMENTS_SCHEMA,
@@ -1838,18 +1837,6 @@ class ComponentImage(FieldChangeMixin, models.Model):
 
         return out
 
-    @property
-    def _client(self):
-        return boto3.client("s3", **_S3_CLIENT_KWARGS)
-
-    @property
-    def bucket(self):
-        raise NotImplementedError
-
-    @property
-    def key(self):
-        return self.image.name
-
     @cached_property
     def can_execute(self):
         return (
@@ -2234,18 +2221,6 @@ class Tarball(UUIDModel):
         raise NotImplementedError
 
     def get_peer_tarballs(self):
-        raise NotImplementedError
-
-    @property
-    def _client(self):
-        return boto3.client("s3", **_S3_CLIENT_KWARGS)
-
-    @property
-    def bucket(self):
-        raise NotImplementedError
-
-    @property
-    def key(self):
         raise NotImplementedError
 
     @transaction.atomic

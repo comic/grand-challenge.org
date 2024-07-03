@@ -1049,8 +1049,8 @@ class Method(UUIDModel, ComponentImage):
         return Method.objects.filter(phase=self.phase)
 
     @property
-    def bucket(self):
-        raise settings.PRIVATE_S3_STORAGE_KWARGS["bucket_name"]
+    def linked_file(self):
+        raise self.image
 
 
 class MethodUserObjectPermission(UserObjectPermissionBase):
@@ -1225,12 +1225,8 @@ class EvaluationGroundTruth(Tarball):
     )
 
     @property
-    def bucket(self):
-        return settings.PRIVATE_S3_STORAGE_KWARGS["bucket_name"]
-
-    @property
-    def key(self):
-        return self.ground_truth.name
+    def linked_file(self):
+        return self.ground_truth
 
     def assign_permissions(self):
         # Challenge admins can view this ground truth

@@ -10,4 +10,4 @@ from grandchallenge.evaluation.models import EvaluationGroundTruth, Method
 @receiver(pre_delete, sender=EvaluationGroundTruth)
 @receiver(pre_delete, sender=Method)
 def delete_file_from_s3(instance, **_):
-    instance._client.delete_object(Bucket=instance.bucket, Key=instance.key)
+    instance.linked_file.delete()

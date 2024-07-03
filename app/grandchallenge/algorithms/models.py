@@ -568,8 +568,8 @@ class AlgorithmImage(UUIDModel, ComponentImage):
         )
 
     @property
-    def bucket(self):
-        return settings.PROTECTED_S3_STORAGE_KWARGS["bucket_name"]
+    def linked_file(self):
+        return self.image
 
     @property
     def api_url(self) -> str:
@@ -679,12 +679,8 @@ class AlgorithmModel(Tarball):
     )
 
     @property
-    def bucket(self):
-        return settings.PROTECTED_S3_STORAGE_KWARGS["bucket_name"]
-
-    @property
-    def key(self):
-        return self.model.name
+    def linked_file(self):
+        return self.model
 
     def assign_permissions(self):
         # Editors can view this algorithm model
