@@ -31,3 +31,7 @@ class AlgorithmsConfig(AppConfig):
         post_migrate.connect(init_job_permissions, sender=self)
         # noinspection PyUnresolvedReferences
         import grandchallenge.algorithms.signals  # noqa: F401
+        from grandchallenge.algorithms.models import AlgorithmImage
+        from grandchallenge.core.storage import protected_s3_storage
+
+        AlgorithmImage._meta.get_field("image").storage = protected_s3_storage
