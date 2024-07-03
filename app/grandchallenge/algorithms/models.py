@@ -568,10 +568,6 @@ class AlgorithmImage(UUIDModel, ComponentImage):
         )
 
     @property
-    def linked_file(self):
-        return self.image
-
-    @property
     def api_url(self) -> str:
         return reverse("api:algorithms-image-detail", kwargs={"pk": self.pk})
 

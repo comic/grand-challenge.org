@@ -1845,6 +1845,10 @@ class ComponentImage(FieldChangeMixin, models.Model):
             .exists()
         )
 
+    @property
+    def linked_file(self):
+        return self.image
+
     def clear_can_execute_cache(self):
         try:
             del self.can_execute
@@ -2221,6 +2225,10 @@ class Tarball(UUIDModel):
         raise NotImplementedError
 
     def get_peer_tarballs(self):
+        raise NotImplementedError
+
+    @property
+    def linked_file(self):
         raise NotImplementedError
 
     @transaction.atomic

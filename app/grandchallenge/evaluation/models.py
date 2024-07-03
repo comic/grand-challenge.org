@@ -1048,10 +1048,6 @@ class Method(UUIDModel, ComponentImage):
     def get_peer_images(self):
         return Method.objects.filter(phase=self.phase)
 
-    @property
-    def linked_file(self):
-        raise self.image
-
 
 class MethodUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(Method, on_delete=models.CASCADE)
