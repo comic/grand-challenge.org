@@ -1,5 +1,10 @@
 from django.contrib.auth import get_user_model
-from rest_framework.fields import CharField, SerializerMethodField
+from rest_framework.fields import (
+    CharField,
+    ChoiceField,
+    JSONField,
+    SerializerMethodField,
+)
 from rest_framework.relations import HyperlinkedRelatedField
 from rest_framework.serializers import ModelSerializer
 
@@ -9,7 +14,6 @@ from grandchallenge.algorithms.serializers import (
 )
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.serializers import (
-    ComponentInterfaceValuePostSerializer,
     ComponentInterfaceValueSerializer,
 )
 from grandchallenge.evaluation.models import Evaluation, Phase, Submission
@@ -107,8 +111,9 @@ class ExternalEvaluationSerializer(EvaluationSerializer):
 
 
 class ExternalEvaluationUpdateSerializer(EvaluationSerializer):
-    outputs = ComponentInterfaceValuePostSerializer(many=True)
+    metrics = JSONField()
+    status = ChoiceField(choices=[Evaluation.SUCCESS, Evaluation.FAILURE])
 
     class Meta:
         model = Evaluation
-        fields = ("outputs", "status", "error_message")
+        fields = ("metrics", "status", "error_message")

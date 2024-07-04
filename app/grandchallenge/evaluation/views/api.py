@@ -10,9 +10,9 @@ from rest_framework.settings import api_settings
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
-from grandchallenge.components.models import ComponentInterfaceValue
-from grandchallenge.components.serializers import (
-    ComponentInterfaceValuePostSerializer,
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
 )
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.renderers import PaginatedCSVRenderer
@@ -90,44 +90,33 @@ class EvaluationViewSet(ReadOnlyModelViewSet):
                 },
                 status=400,
             )
-        outputs = request.data.pop("outputs", None)
-        if outputs:
-            serialized_data = ComponentInterfaceValuePostSerializer(
-                many=True, data=outputs, context={"request": request}
-            )
-            if serialized_data.is_valid():
-                for value in serialized_data.validated_data:
-                    # minimal implementation until we can use
-                    # CIVForObjectMixin on the evaluation model
-                    # (pending algorithm job refactoring)
-                    interface = value.get("interface", None)
-                    if not interface.is_json_kind:
-                        raise DRFValidationError(
-                            "Evaluation outputs can only be json data."
-                        )
-                    value = value.get("value", None)
-                    civ = ComponentInterfaceValue(
-                        interface=interface, value=value
-                    )
-                    try:
-                        civ.full_clean()
-                        civ.save()
-                        evaluation.outputs.add(civ)
-                    except ValidationError as e:
-                        evaluation.status = Evaluation.FAILURE
-                        evaluation.save()
-                        raise DRFValidationError(e)
-            else:
-                evaluation.status = Evaluation.FAILURE
-                evaluation.save()
-                raise DRFValidationError(serialized_data.errors)
 
-        evaluation.status = Evaluation.SUCCESS
+        status = request.data.pop("status", None)
+
+        if status == Evaluation.SUCCESS:
+            metrics = request.data.pop("metrics", None)
+            interface = ComponentInterface.objects.get(
+                slug="metrics-json-file"
+            )
+
+            civ = ComponentInterfaceValue(interface=interface, value=metrics)
+            try:
+                civ.full_clean()
+                civ.save()
+                evaluation.outputs.add(civ)
+            except ValidationError as e:
+                evaluation.status = Evaluation.FAILURE
+                evaluation.error_message = str(e)
+                evaluation.save()
+                raise DRFValidationError(e)
+
         evaluation.completed_at = now()
         evaluation.save()
+
         # return the serialized updated evaluation object,
         # we're using the normal serializer not the POST serializer
         serialized_evaluation = ExternalEvaluationSerializer(
             instance=evaluation, context={"request": request}
         )
+        serialized_evaluation.save()
         return Response(serialized_evaluation.data)
