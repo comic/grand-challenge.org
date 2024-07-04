@@ -269,9 +269,19 @@ def remove_tag_from_registry(*, repo_tag):
     digests = digest_cmd.stdout.splitlines()
 
     for digest in digests:
-        _repo_login_and_run(
-            command=["crane", "delete", f"{repo_tag}@{digest}"]
-        )
+        try:
+            _repo_login_and_run(
+                command=["crane", "delete", f"{repo_tag}@{digest}"]
+            )
+        except subprocess.CalledProcessError as error:
+            if "MANIFEST_UNKNOWN: Requested image not found" in getattr(
+                error, "stderr", ""
+            ):
+                # The digest has already been deleted, could be
+                # caused by parallel processes deleting the same image
+                continue
+            else:
+                raise error
 
 
 def _repo_login_and_run(*, command):
