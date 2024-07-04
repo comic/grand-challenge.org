@@ -100,7 +100,7 @@ class DisplaySetAdmin(GuardedModelAdmin):
 
 @admin.register(CategoricalOption)
 class CategoricalOptionAdmin(admin.ModelAdmin):
-    list_display = ("id", "title", "question")
+    list_display = ("id", "title", "question", "default")
 
 
 admin.site.register(ReaderStudyUserObjectPermission, UserObjectPermissionAdmin)

@@ -433,28 +433,21 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                 desired_options = [
                     option
                     for option in self.options_form_set.cleaned_data
-                    if not option.get("DELETE", False)
+                    if not option.get("DELETE", False) and option.get("title")
                 ]
 
-                if (
-                    len(
-                        list(
-                            filter(lambda x: x.get("default"), desired_options)
-                        )
-                    )
-                    > 1
-                ):
+                if len(desired_options) < 1:
                     self.add_error(
                         error=ValidationError(
-                            "Only one option can be set as default"
+                            "At least one option should be supplied for (multiple) choice questions"
                         ),
                         field=None,
                     )
 
-                if not any(option.get("title") for option in desired_options):
+                if sum(o.get("default", False) for o in desired_options) > 1:
                     self.add_error(
                         error=ValidationError(
-                            "At least one option should be supplied for (multiple) choice questions"
+                            "Only one option can be set as default"
                         ),
                         field=None,
                     )
