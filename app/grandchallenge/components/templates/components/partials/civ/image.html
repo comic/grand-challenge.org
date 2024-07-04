@@ -9,8 +9,8 @@
         >
         <i class="fas fa-fw fa-download"></i>
         {% if display_inline %}
-          {{ civ.interface.title|truncatechars:64 }}:
-          {{ civ.image.name|stem|truncatechars:32 }}
+            {{ civ.interface.title|truncatechars:64 }}:
+            {{ civ.image.name|stem|truncatechars:32 }}
         {% else %}
           {{ civ.interface.title }}:
           {{ civ.image.name|stem }}
