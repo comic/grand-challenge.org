@@ -1,3 +1,15 @@
+{% load static %}
 {% load crispy_forms_tags %}
 
+<div id="empty-form-{{ formset.prefix }}" class="d-none">
+   {% crispy formset.empty_form %}
+</div>
+
 {% crispy formset %}
+
+<button type="button" class="btn btn-primary" id="add-form-row-{{ formset.prefix }}">
+    Add another
+</button>
+
+{{ formset.prefix|json_script:"formsetPrefix" }}
+<script type="module" src="{% static 'js/formset.mjs' %}"></script>

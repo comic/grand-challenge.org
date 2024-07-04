@@ -397,6 +397,9 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
     def initial_widget(self):
         return self.instance.widget
 
+    def is_valid(self):
+        return super().is_valid() and self.options_form_set.is_valid()
+
     def clean(self):
         answer_type = self.cleaned_data.get("answer_type")
         interface = self.cleaned_data.get("interface")
@@ -423,30 +426,38 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
 
             self.options_form_set.clean()
 
-            desired_options = [
-                option
-                for option in self.options_form_set.cleaned_data
-                if not option.get("DELETE", False)
-            ]
+            if self.options_form_set.is_valid():
+                # The user will first need to make each instance valid,
+                # then we can check the set of options
 
-            if (
-                len(list(filter(lambda x: x.get("default"), desired_options)))
-                > 1
-            ):
-                self.add_error(
-                    error=ValidationError(
-                        "Only one option can be set as default"
-                    ),
-                    field=None,
-                )
+                desired_options = [
+                    option
+                    for option in self.options_form_set.cleaned_data
+                    if not option.get("DELETE", False)
+                ]
 
-            if not any(option.get("title") for option in desired_options):
-                self.add_error(
-                    error=ValidationError(
-                        "At least one option should be supplied for (multiple) choice questions"
-                    ),
-                    field=None,
-                )
+                if (
+                    len(
+                        list(
+                            filter(lambda x: x.get("default"), desired_options)
+                        )
+                    )
+                    > 1
+                ):
+                    self.add_error(
+                        error=ValidationError(
+                            "Only one option can be set as default"
+                        ),
+                        field=None,
+                    )
+
+                if not any(option.get("title") for option in desired_options):
+                    self.add_error(
+                        error=ValidationError(
+                            "At least one option should be supplied for (multiple) choice questions"
+                        ),
+                        field=None,
+                    )
 
         return super().clean()
 
@@ -550,7 +561,9 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
 class CategoricalOptionForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
         self.fields["title"].label = False
+        self.fields["title"].required = True
 
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -565,7 +578,7 @@ CategoricalOptionFormSet = inlineformset_factory(
     CategoricalOption,
     form=CategoricalOptionForm,
     fields=["title", "default"],
-    extra=1,
+    extra=0,
     can_delete=True,
 )
 
