@@ -13,7 +13,7 @@
           {{ civ.image.name|stem|truncatechars:32 }}
         {% else %}
           {{ civ.interface.title }}:
-          {{ civ.image.name|name|stem }}
+          {{ civ.image.name|stem }}
         {% endif %}
           ({{ file.file|suffix }})
         </a>
