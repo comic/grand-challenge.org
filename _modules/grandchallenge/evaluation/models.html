@@ -1311,6 +1311,10 @@
         <span class="n">storage</span><span class="o">=</span><span class="n">private_s3_storage</span><span class="p">,</span>
     <span class="p">)</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">linked_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ground_truth</span>
+
     <span class="k">def</span> <span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># Challenge admins can view this ground truth</span>
         <span class="n">assign_perm</span><span class="p">(</span>
