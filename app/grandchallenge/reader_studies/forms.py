@@ -343,7 +343,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                 Fieldset(
                     "Add options",
                     Formset(self.options_form_set),
-                    css_class="options-formset",
+                    css_class="options-formset border rounded px-2 my-4",
                 ),
                 Field("required"),
                 Field("empty_answer_confirmation"),
