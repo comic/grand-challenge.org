@@ -18,11 +18,6 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.AddField(
-            model_name="evaluation",
-            name="claimed_at",
-            field=models.DateTimeField(null=True),
-        ),
-        migrations.AddField(
             model_name="phase",
             name="external_evaluation",
             field=models.BooleanField(

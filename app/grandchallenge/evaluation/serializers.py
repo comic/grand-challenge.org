@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.fields import (
     CharField,
     ChoiceField,
@@ -111,9 +112,23 @@ class ExternalEvaluationSerializer(EvaluationSerializer):
 
 
 class ExternalEvaluationUpdateSerializer(EvaluationSerializer):
-    metrics = JSONField()
+    metrics = JSONField(required=False)
     status = ChoiceField(choices=[Evaluation.SUCCESS, Evaluation.FAILURE])
 
     class Meta:
         model = Evaluation
         fields = ("metrics", "status", "error_message")
+
+    def validate(self, data):
+        if data["status"] == Evaluation.SUCCESS and "metrics" not in data:
+            raise DRFValidationError(
+                "Metrics are required for successful evaluations."
+            )
+        if (
+            data["status"] == Evaluation.FAILURE
+            and "error_message" not in data
+        ):
+            raise DRFValidationError(
+                "An error_message is required for failed evaluations."
+            )
+        return data

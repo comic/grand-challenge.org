@@ -57,7 +57,7 @@ class EvaluationViewSet(ReadOnlyModelViewSet):
             )
 
         evaluation.status = Evaluation.EXECUTING
-        evaluation.claimed_at = now()
+        evaluation.started_at = now()
         evaluation.save()
 
         serializer = ExternalEvaluationSerializer(
@@ -91,7 +91,15 @@ class EvaluationViewSet(ReadOnlyModelViewSet):
                 status=400,
             )
 
-        status = request.data.pop("status", None)
+        serialized_evaluation = ExternalEvaluationUpdateSerializer(
+            instance=evaluation,
+            data=request.data,
+            context={"request": request},
+        )
+        if not serialized_evaluation.is_valid():
+            raise DRFValidationError(serialized_evaluation.errors)
+
+        status = request.data.get("status", None)
 
         if status == Evaluation.SUCCESS:
             metrics = request.data.pop("metrics", None)
@@ -104,19 +112,21 @@ class EvaluationViewSet(ReadOnlyModelViewSet):
                 civ.full_clean()
                 civ.save()
                 evaluation.outputs.add(civ)
+                evaluation.status = Evaluation.SUCCESS
             except ValidationError as e:
                 evaluation.status = Evaluation.FAILURE
                 evaluation.error_message = str(e)
                 evaluation.save()
                 raise DRFValidationError(e)
+        else:
+            evaluation.status = Evaluation.FAILURE
+            evaluation.error_message = request.data.get("error_message", None)
 
         evaluation.completed_at = now()
         evaluation.save()
 
-        # return the serialized updated evaluation object,
-        # we're using the normal serializer not the POST serializer
-        serialized_evaluation = ExternalEvaluationSerializer(
-            instance=evaluation, context={"request": request}
+        return Response(
+            EvaluationSerializer(
+                instance=evaluation, context={"request": request}
+            ).data
         )
-        serialized_evaluation.save()
-        return Response(serialized_evaluation.data)

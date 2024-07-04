@@ -382,7 +382,11 @@ def test_external_evaluations_perms():
             "change_evaluation",
         },
         participants: {"view_evaluation"},
-        external_evaluators: {"change_evaluation", "claim_evaluation"},
+        external_evaluators: {
+            "change_evaluation",
+            "claim_evaluation",
+            "view_evaluation",
+        },
     }
 
     assert get_groups_with_set_perms(e2.submission) == {
