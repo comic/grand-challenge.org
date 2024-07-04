@@ -1220,6 +1220,10 @@ class EvaluationGroundTruth(Tarball):
         storage=private_s3_storage,
     )
 
+    @property
+    def linked_file(self):
+        return self.ground_truth
+
     def assign_permissions(self):
         # Challenge admins can view this ground truth
         assign_perm(

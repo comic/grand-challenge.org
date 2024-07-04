@@ -674,6 +674,10 @@ class AlgorithmModel(Tarball):
         storage=protected_s3_storage,
     )
 
+    @property
+    def linked_file(self):
+        return self.model
+
     def assign_permissions(self):
         # Editors can view this algorithm model
         assign_perm(
