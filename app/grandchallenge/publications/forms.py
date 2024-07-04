@@ -1,5 +1,5 @@
 from django import forms
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 
 from grandchallenge.publications.fields import PublicationIdentifier
 from grandchallenge.publications.models import Publication
@@ -15,8 +15,16 @@ class PublicationForm(forms.ModelForm):
         identifier = self.cleaned_data.get(
             "identifier", self.instance.identifier
         )
+
         try:
             csl, new_identifier = PublicationIdentifier(identifier).csl
+        except ObjectDoesNotExist:
+            raise ValidationError(
+                f"Identifier {identifier} not found. "
+                "Please check that you have provided the correct reference. "
+                "If this article was recently published, it may not be indexed yet. "
+                "Please try again later."
+            )
         except ValueError:
             raise ValidationError("Identifier not recognised")
 
