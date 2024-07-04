@@ -440,7 +440,7 @@ MIDDLEWARE = (
     # Keep whitenoise after security and before all else
     "aws_xray_sdk.ext.django.middleware.XRayMiddleware",  # xray near the top
     "corsheaders.middleware.CorsMiddleware",  # Keep CORS near the top
-    # "csp.contrib.rate_limiting.RateLimitedCSPMiddleware",
+    "csp.contrib.rate_limiting.RateLimitedCSPMiddleware",
     "django.middleware.common.BrokenLinkEmailsMiddleware",
     # Keep BrokenLinkEmailsMiddleware near the top
     "django_permissions_policy.PermissionsPolicyMiddleware",
