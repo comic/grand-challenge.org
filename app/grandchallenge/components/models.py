@@ -113,6 +113,9 @@ class InterfaceKindChoices(models.TextChoices):
     SEGMENTATION = "SEG", _("Segmentation")
     HEAT_MAP = "HMAP", _("Heat Map")
 
+    # Registration types
+    AFFINE_TRANSFORM_REGISTRATION = "ATRG", _("Affine transform registration")
+
     # File types
     PDF = "PDF", _("PDF file")
     SQREG = "SQREG", _("SQREG file")
@@ -163,6 +166,7 @@ class InterfaceKind:
         * Chart
         * Ellipse
         * Multiple ellipses
+        * Affine transform registration
 
         Example json for 2D bounding box annotation
             required: "type", "corners", "version"
@@ -668,6 +672,19 @@ class InterfaceKind:
                 "version": {"major": 1, "minor": 0}
             }
 
+        Example json for an Affine Transform Registration
+            required: "3d_affine_transform"
+
+        .. code-block:: json
+
+            {
+                "3d_affine_transform": [
+                    [1, 0, 0, 0],
+                    [0, 1, 0, 0],
+                    [0, 0, 1, 0],
+                    [0, 0, 0, 1]
+                ]
+            }
         """
         return {
             InterfaceKind.InterfaceKindChoices.STRING,
@@ -694,6 +711,7 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.MULTIPLE_ELLIPSES,
             InterfaceKind.InterfaceKindChoices.THREE_POINT_ANGLE,
             InterfaceKind.InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
+            InterfaceKind.InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION,
         }
 
     @staticmethod
