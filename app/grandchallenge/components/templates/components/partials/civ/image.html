@@ -9,10 +9,11 @@
         >
         <i class="fas fa-fw fa-download"></i>
         {% if display_inline %}
-            Download {{ civ.interface.title|truncatechars:64 }}:
+            Download {{ civ.interface.title|truncatechars:64 }}{% if civ.image.files.all|length > 1 %} {{ forloop.counter }}{% endif %}:
             {{ civ.image.name|name|truncatechars:30 }}
+            ({{ file.file|suffix|truncatechars:30 }})
         {% else %}
-            Download {{ civ.interface.title }}:
+            Download {{ civ.interface.title }}{% if civ.image.files.all|length > 1 %} {{ forloop.counter }}{% endif %}:
             {{ civ.image.name|stem}}
             ({{ file.file|suffix }})
         {% endif %}
