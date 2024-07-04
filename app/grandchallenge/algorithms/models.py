@@ -682,6 +682,10 @@ class AlgorithmModel(Tarball):
             ("download_algorithmmodel", "Can download algorithm model")
         ]
 
+    @property
+    def linked_file(self):
+        return self.model
+
     def assign_permissions(self):
         # Editors can view this algorithm model
         assign_perm(

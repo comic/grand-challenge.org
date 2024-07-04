@@ -19,6 +19,7 @@ from grandchallenge.components.backends.exceptions import (
     ComponentException,
     RetryStep,
     RetryTask,
+    UncleanExit,
 )
 from grandchallenge.components.backends.utils import (
     LOGLINES,
@@ -732,11 +733,20 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
 
     def _get_task_return_code(self):
         with io.BytesIO() as fileobj:
-            self._s3_client.download_fileobj(
-                Fileobj=fileobj,
-                Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-                Key=self._result_key,
-            )
+            try:
+                self._s3_client.download_fileobj(
+                    Fileobj=fileobj,
+                    Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+                    Key=self._result_key,
+                )
+            except botocore.exceptions.ClientError as error:
+                if error.response["Error"]["Code"] == "NoSuchKey":
+                    raise UncleanExit(
+                        "The invocation request did not return a result"
+                    ) from error
+                else:
+                    raise
+
             fileobj.seek(0)
 
             try:
@@ -805,17 +815,21 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
             "ClientError: Please use an instance type with more memory, "
             "or reduce the size of job data processed on an instance."
         ):
-            users_process_exit_code = self._get_task_return_code()
+            try:
+                users_process_exit_code = self._get_task_return_code()
+            except UncleanExit:
+                users_process_exit_code = None
 
-            if users_process_exit_code in (-9, 1, 137):
-                raise ComponentException(
-                    "The container was killed as it exceeded its memory limit"
-                )
-            else:
-                raise RuntimeError(
+            if users_process_exit_code not in (-9, 1, 137):
+                logger.error(
                     "The instance ran out of memory, "
-                    "but this was not caused by the users process"
+                    "but this may not have been caused by the users process. "
+                    f"{users_process_exit_code=}"
                 )
+
+            raise ComponentException(
+                "The container was killed as it exceeded its memory limit"
+            )
 
         # Anything else needs investigation by a site administrator
         raise RuntimeError(failure_reason)

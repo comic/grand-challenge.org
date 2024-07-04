@@ -52,3 +52,4 @@ class CoreConfig(AppConfig):
 
     def ready(self):
         post_migrate.connect(init_default_interfaces, sender=self)
+        import grandchallenge.components.signals  # noqa: F401

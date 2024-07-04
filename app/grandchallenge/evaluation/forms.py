@@ -714,7 +714,7 @@ class EvaluationGroundTruthForm(SaveFormInitMixin, ModelForm):
         queryset=None,
         help_text=(
             ".tar.gz file of the ground truth that will be extracted"
-            " to /opt/ml/input/data/ground_truth/ during inference"
+            " to /opt/ml/input/data/ground_truth/ during evaluation"
         ),
     )
     creator = ModelChoiceField(

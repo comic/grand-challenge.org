@@ -77,6 +77,18 @@ class Publication(models.Model):
         except ValueError:
             self.referenced_by_count = None
 
+    @classmethod
+    def get_reverse_many_to_many_fields(cls):
+        """
+        Return the reverse relations to models that include
+        this class as a many-to-many field.
+        """
+        reverse_relations = []
+        for field in cls._meta.get_fields():
+            if field.is_relation and field.many_to_many:
+                reverse_relations.append(field.get_accessor_name())
+        return reverse_relations
+
     @property
     def bib_id(self):
         if self.pk:

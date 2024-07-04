@@ -21,3 +21,7 @@ class RetryTask(ComponentBaseException):
 
 class TaskCancelled(ComponentBaseException):
     """Raised if a task has been cancelled"""
+
+
+class UncleanExit(ComponentBaseException):
+    """Raised if the process did not exit cleanly"""
