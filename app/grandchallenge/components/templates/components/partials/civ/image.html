@@ -12,7 +12,7 @@
           {{ civ.interface.title|truncatechars:64 }}:
           {{ civ.image.name|name|stem|truncatechars:32 }}
         {% else %}
-          Download {{ civ.interface.title }}:
+          {{ civ.interface.title }}:
           {{ civ.image.name|name|stem }}
         {% endif %}
           ({{ file.file|suffix }})
