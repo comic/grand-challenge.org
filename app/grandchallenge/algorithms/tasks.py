@@ -33,95 +33,93 @@ logger = logging.getLogger(__name__)
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@transaction.atomic
 def run_algorithm_job_for_inputs(
     *, job_pk, upload_session_pks, user_upload_pks
 ):
-    with transaction.atomic():
-        job = Job.objects.get(pk=job_pk)
+    job = Job.objects.get(pk=job_pk)
 
-        assignment_tasks = []
+    assignment_tasks = []
 
-        if upload_session_pks:
-            assignment_tasks.extend(
-                chain(
-                    build_images.signature(
-                        kwargs={"upload_session_pk": upload_session_pk},
-                        immutable=True,
-                    ),
-                    add_image_to_component_interface_value.signature(
-                        kwargs={
-                            "component_interface_value_pk": civ_pk,
-                            "upload_session_pk": upload_session_pk,
-                        },
-                        immutable=True,
-                    ),
-                )
-                for civ_pk, upload_session_pk in upload_session_pks.items()
-            )
-
-        if user_upload_pks:
-            assignment_tasks.extend(
-                add_file_to_component_interface_value.signature(
+    if upload_session_pks:
+        assignment_tasks.extend(
+            chain(
+                build_images.signature(
+                    kwargs={"upload_session_pk": upload_session_pk},
+                    immutable=True,
+                ),
+                add_image_to_component_interface_value.signature(
                     kwargs={
                         "component_interface_value_pk": civ_pk,
-                        "user_upload_pk": user_upload_pk,
-                        "target_pk": job.algorithm_image.algorithm.pk,
-                        "target_app": "algorithms",
-                        "target_model": "algorithm",
+                        "upload_session_pk": upload_session_pk,
                     },
                     immutable=True,
-                )
-                for civ_pk, user_upload_pk in user_upload_pks.items()
+                ),
             )
-
-        canvas = chain(
-            group(assignment_tasks),
-            execute_algorithm_job_for_inputs.signature(
-                kwargs={"job_pk": job_pk}, immutable=True
-            ),
+            for civ_pk, upload_session_pk in upload_session_pks.items()
         )
 
-        on_commit(canvas.apply_async)
+    if user_upload_pks:
+        assignment_tasks.extend(
+            add_file_to_component_interface_value.signature(
+                kwargs={
+                    "component_interface_value_pk": civ_pk,
+                    "user_upload_pk": user_upload_pk,
+                    "target_pk": job.algorithm_image.algorithm.pk,
+                    "target_app": "algorithms",
+                    "target_model": "algorithm",
+                },
+                immutable=True,
+            )
+            for civ_pk, user_upload_pk in user_upload_pks.items()
+        )
+
+    canvas = chain(
+        group(assignment_tasks),
+        execute_algorithm_job_for_inputs.signature(
+            kwargs={"job_pk": job_pk}, immutable=True
+        ),
+    )
+
+    on_commit(canvas.apply_async)
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@transaction.atomic
 def execute_algorithm_job_for_inputs(*, job_pk):
-    with transaction.atomic():
-        job = Job.objects.get(pk=job_pk)
+    job = Job.objects.get(pk=job_pk)
 
-        # Notify the job creator on failure
-        linked_task = send_failed_job_notification.signature(
-            kwargs={"job_pk": str(job.pk)}, immutable=True
+    # Notify the job creator on failure
+    linked_task = send_failed_job_notification.signature(
+        kwargs={"job_pk": str(job.pk)}, immutable=True
+    )
+
+    # check if all ComponentInterfaceValue's have a value.
+    missing_inputs = list(civ for civ in job.inputs.all() if not civ.has_value)
+
+    if missing_inputs:
+        job.update_status(
+            status=job.CANCELLED,
+            error_message=(
+                f"Job can't be started, input is missing for "
+                f"{oxford_comma([c.interface.title for c in missing_inputs])}"
+            ),
         )
-
-        # check if all ComponentInterfaceValue's have a value.
-        missing_inputs = list(
-            civ for civ in job.inputs.all() if not civ.has_value
+        on_commit(linked_task.apply_async)
+    else:
+        job.task_on_success = linked_task
+        job.save()
+        on_commit(
+            execute_algorithm_job.signature(
+                kwargs={"job_pk": job_pk}, immutable=True
+            ).apply_async
         )
-
-        if missing_inputs:
-            job.update_status(
-                status=job.CANCELLED,
-                error_message=(
-                    f"Job can't be started, input is missing for "
-                    f"{oxford_comma([c.interface.title for c in missing_inputs])}"
-                ),
-            )
-            on_commit(linked_task.apply_async)
-        else:
-            job.task_on_success = linked_task
-            job.save()
-            on_commit(
-                execute_algorithm_job.signature(
-                    kwargs={"job_pk": job_pk}, immutable=True
-                ).apply_async
-            )
 
 
 @shared_task(
     **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"],
-    throws=(TooManyJobsScheduled,),
 )
+@transaction.atomic
 def execute_algorithm_job(*, job_pk, retries=0):
     def retry_with_delay():
         _retry(
@@ -135,12 +133,11 @@ def execute_algorithm_job(*, job_pk, retries=0):
             retries=retries,
         )
 
-    with transaction.atomic():
-        if Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
-            logger.info("Retrying task as too many jobs scheduled")
-            retry_with_delay()
-            raise TooManyJobsScheduled
-
+    if Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
+        logger.info("Retrying task as too many jobs scheduled")
+        retry_with_delay()
+        return
+    else:
         job = Job.objects.get(pk=job_pk)
         on_commit(job.execute)
 
