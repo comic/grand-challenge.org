@@ -111,4 +111,4 @@ class ExternalEvaluationUpdateSerializer(EvaluationSerializer):
 
     class Meta:
         model = Evaluation
-        fields = ("outputs",)
+        fields = ("outputs", "status", "error_message")
