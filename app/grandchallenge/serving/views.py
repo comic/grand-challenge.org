@@ -202,7 +202,12 @@ def serve_algorithm_images(request, *, algorithmimage_pk, **_):
     except AlgorithmImage.DoesNotExist:
         raise Http404("Algorithm image not found.")
 
-    if request.user.has_perm("download_algorithmimage", image):
+    try:
+        user, _ = TokenAuthentication().authenticate(request)
+    except (AuthenticationFailed, TypeError):
+        user = request.user
+
+    if user.has_perm("download_algorithmimage", image):
         return protected_storage_redirect(
             name=image.image.name,
             creator=request.user,
@@ -218,7 +223,12 @@ def serve_algorithm_models(request, *, algorithmmodel_pk, **_):
     except AlgorithmModel.DoesNotExist:
         raise Http404("Algorithm model not found.")
 
-    if request.user.has_perm("download_algorithmmodel", model):
+    try:
+        user, _ = TokenAuthentication().authenticate(request)
+    except (AuthenticationFailed, TypeError):
+        user = request.user
+
+    if user.has_perm("download_algorithmmodel", model):
         return protected_storage_redirect(
             name=model.model.name,
             creator=request.user,

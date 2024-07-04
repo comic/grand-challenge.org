@@ -1451,15 +1451,6 @@ class Evaluation(UUIDModel, ComponentJob):
             },
         )
 
-    def get_algorithm_model_url(self):
-        if self.submission.algorithm_model:
-            return self.submission.algorithm_model.download_url
-        else:
-            return None
-
-    def get_algorithm_image_url(self):
-        return self.submission.algorithm_image.download_url
-
 
 class EvaluationUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(Evaluation, on_delete=models.CASCADE)
