@@ -310,6 +310,10 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
             *AnswerType.choices,
         ]
 
+        self.options_form_set = CategoricalOptionFormSet(
+            instance=self.instance, data=kwargs.get("data")
+        )
+
         self.helper = FormHelper()
         self.helper.form_tag = True
         self.helper.layout = Layout(
@@ -338,7 +342,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                 ),
                 Fieldset(
                     "Add options",
-                    Formset("options"),
+                    Formset(self.options_form_set),
                     css_class="options-formset",
                 ),
                 Field("required"),
@@ -414,7 +418,47 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                 ),
                 field=None,
             )
+
+        if answer_type in Question.AnswerType.get_choice_types():
+
+            self.options_form_set.clean()
+
+            desired_options = [
+                option
+                for option in self.options_form_set.cleaned_data
+                if not option.get("DELETE", False)
+            ]
+
+            if (
+                len(list(filter(lambda x: x.get("default"), desired_options)))
+                > 1
+            ):
+                self.add_error(
+                    error=ValidationError(
+                        "Only one option can be set as default"
+                    ),
+                    field=None,
+                )
+
+            if not any(option.get("title") for option in desired_options):
+                self.add_error(
+                    error=ValidationError(
+                        "At least one option should be supplied for (multiple) choice questions"
+                    ),
+                    field=None,
+                )
+
         return super().clean()
+
+    def save(self, *args, **kwargs):
+        instance = super().save(*args, **kwargs)
+
+        if instance.answer_type in Question.AnswerType.get_choice_types():
+            self.options_form_set.save(*args, **kwargs)
+        else:
+            instance.options.all().delete()
+
+        return instance
 
     class Meta:
         model = Question
@@ -507,6 +551,9 @@ class CategoricalOptionForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["title"].label = False
+
+        self.helper = FormHelper()
+        self.helper.form_tag = False
 
     class Meta:
         model = CategoricalOption

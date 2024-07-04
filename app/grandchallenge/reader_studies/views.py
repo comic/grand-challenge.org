@@ -86,7 +86,6 @@ from grandchallenge.reader_studies.filters import (
     ReaderStudyFilter,
 )
 from grandchallenge.reader_studies.forms import (
-    CategoricalOptionFormSet,
     DisplaySetCreateForm,
     DisplaySetUpdateForm,
     GroundTruthForm,
@@ -414,48 +413,8 @@ class ReaderStudyDisplaySetList(CivSetListView):
         )
 
 
-class QuestionOptionMixin:
-    def validate_options(self, form, _super):
-        context = self.get_context_data()
-        options = context["options"]
-
-        if form.cleaned_data["answer_type"] not in [
-            Question.AnswerType.CHOICE,
-            Question.AnswerType.MULTIPLE_CHOICE,
-        ]:
-            if getattr(self, "object", None):
-                self.object.options.all().delete()
-            return _super.form_valid(form)
-
-        data = options.cleaned_data
-
-        if len(list(filter(lambda x: x.get("default"), data))) > 1:
-            error = ["Only one option can be the default option"]
-            form.add_error("answer_type", error)
-            return self.form_invalid(form)
-
-        if not any(option.get("title") for option in data):
-            error = [
-                "At least one option should be supplied for (multiple) choice questions"
-            ]
-            form.add_error("answer_type", error)
-            return self.form_invalid(form)
-
-        with transaction.atomic():
-            try:
-                self.object = form.save()
-            except Exception:
-                return self.form_invalid(form)
-            if options.is_valid():
-                options.instance = self.object
-                options.save()
-
-        return _super.form_valid(form)
-
-
 class QuestionUpdate(
     LoginRequiredMixin,
-    QuestionOptionMixin,
     ObjectPermissionRequiredMixin,
     UpdateView,
 ):
@@ -481,17 +440,8 @@ class QuestionUpdate(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        if self.request.POST:
-            context["options"] = CategoricalOptionFormSet(
-                self.request.POST, instance=self.object
-            )
-        else:
-            context["options"] = CategoricalOptionFormSet(instance=self.object)
         context.update({"reader_study": self.reader_study})
         return context
-
-    def form_valid(self, form):
-        return self.validate_options(form, super())
 
 
 class BaseAddObjectToReaderStudyMixin(
@@ -677,9 +627,7 @@ class AddDisplaySetsToReaderStudy(BaseAddObjectToReaderStudyMixin, CreateView):
         return super().form_valid(form)
 
 
-class AddQuestionToReaderStudy(
-    QuestionOptionMixin, BaseAddObjectToReaderStudyMixin, CreateView
-):
+class AddQuestionToReaderStudy(BaseAddObjectToReaderStudyMixin, CreateView):
     model = Question
     form_class = QuestionForm
     template_name = "reader_studies/readerstudy_add_object.html"
@@ -692,10 +640,7 @@ class AddQuestionToReaderStudy(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        if self.request.POST:
-            context["options"] = CategoricalOptionFormSet(self.request.POST)
-        else:
-            context["options"] = CategoricalOptionFormSet()
+        context.update({"reader_study": self.reader_study})
         return context
 
 

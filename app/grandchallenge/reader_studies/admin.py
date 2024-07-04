@@ -9,6 +9,7 @@ from grandchallenge.reader_studies.models import (
     Answer,
     AnswerGroupObjectPermission,
     AnswerUserObjectPermission,
+    CategoricalOption,
     DisplaySet,
     DisplaySetGroupObjectPermission,
     DisplaySetUserObjectPermission,
@@ -95,6 +96,11 @@ class DisplaySetAdmin(GuardedModelAdmin):
         "reader_study",
     )
     list_select_related = ("reader_study",)
+
+
+@admin.register(CategoricalOption)
+class CategoricalOptionAdmin(admin.ModelAdmin):
+    list_display = ("id", "title", "question")
 
 
 admin.site.register(ReaderStudyUserObjectPermission, UserObjectPermissionAdmin)
