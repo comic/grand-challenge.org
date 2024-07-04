@@ -55,12 +55,63 @@
 <split></split>
 
 <ul class="list-unstyled mb-0 text-left">
+    {% if object.error_message %}
+
+        <div class="modal"
+             id="errorInfoModal-{{ object.pk }}"
+             tabindex="-1"
+             role="dialog"
+             aria-labelledby="statusfoModalTitle"
+             aria-hidden="true"
+        >
+            <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            Error Message
+                        </h5>
+                        <button type="button" class="close" data-dismiss="modal"
+                                aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="text-left modal-body">
+                        {{ object.error_message }}
+                    </div>
+                    <div class="modal-footer">
+                        <a class="btn btn-primary" href="{{ object.get_absolute_url }}">
+                            <i class="fa fa-info-circle mr-1"></i>View Result Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <li>
+            <a href="#errorInfoModal-{{ object.pk }}"
+               data-toggle="modal"
+               data-target="#errorInfoModal-{{ object.pk }}"
+               class="text-decoration-none"
+            >
+                <div class="badge badge-danger">
+                    <i class="fa fa-fw fa-eye"></i>
+                    Error
+                </div>
+                <div class="badge badge-light">
+                    {{ object.error_message | truncatechars:16 }}
+                </div>
+            </a>
+        </li>
+    {% endif %}
+
     {% for civ in object.outputs.all|sort_civs %}
-    <li>
-        {% include "components/partials/civ.html" with object=civ display_inline=True only %}
-    </li>
+        <li>
+            {% include "components/partials/civ.html" with object=civ display_inline=True only %}
+        </li>
     {% empty %}
-    <span class="text-muted">Empty</span>
+        {% if not object.error_message %}
+            <span class="text-muted">Empty</span>
+        {% endif %}
     {% endfor %}
 </ul>
 <split></split>
