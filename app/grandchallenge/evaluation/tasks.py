@@ -174,7 +174,11 @@ def create_algorithm_jobs_for_evaluation(
     Evaluation = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Evaluation"
     )
-    evaluation = Evaluation.objects.get(pk=evaluation_pk)
+    evaluation = Evaluation.objects.select_related(
+        "submission__phase__challenge",
+        "submission__algorithm_image__algorithm",
+        "submission__phase__archive",
+    ).get(pk=evaluation_pk)
 
     if evaluation.status not in {
         evaluation.PENDING,

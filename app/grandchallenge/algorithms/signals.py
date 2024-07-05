@@ -52,6 +52,10 @@ def update_input_image_permissions(
                 pk__in=pk_set, image__isnull=False
             )
 
+    component_interface_values = component_interface_values.select_related(
+        "image"
+    )
+
     _update_image_permissions(
         jobs=jobs,
         component_interface_values=component_interface_values,
