@@ -539,8 +539,8 @@ class Image(UUIDModel):
         groups_missing_perms = expected_groups - current_groups
         groups_with_extra_perms = current_groups - expected_groups
 
-        for g in groups_missing_perms:
-            assign_perm("view_image", g, self)
+        if groups_missing_perms:
+            assign_perm("view_image", list(groups_missing_perms), self)
 
         for g in groups_with_extra_perms:
             remove_perm("view_image", g, self)

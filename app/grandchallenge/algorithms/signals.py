@@ -94,11 +94,13 @@ def update_group_permissions(
         else:
             groups = model.objects.filter(pk__in=pk_set)
 
-    operation = assign_perm if "add" in action else remove_perm
-
-    for job in jobs:
-        for group in groups:
-            operation("view_job", group, job)
+    if "add" in action:
+        for job in jobs:
+            assign_perm("view_job", groups, job)
+    else:
+        for job in jobs:
+            for g in groups:
+                remove_perm("view_job", g, job)
 
     queryset = ComponentInterfaceValue.objects.filter(
         image__isnull=False
