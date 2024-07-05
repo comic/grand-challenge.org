@@ -190,6 +190,11 @@ def create_algorithm_jobs_for_archive(
         else:
             archive_items = archive.items.all()
 
+        civ_sets = [
+            {*ai.values.all()}
+            for ai in archive_items.prefetch_related("values__interface")
+        ]
+
         for algorithm in algorithms:
             try:
                 with cache.lock(
@@ -200,12 +205,7 @@ def create_algorithm_jobs_for_archive(
                     create_algorithm_jobs(
                         algorithm_image=algorithm.active_image,
                         algorithm_model=algorithm.active_model,
-                        civ_sets=[
-                            {*ai.values.all()}
-                            for ai in archive_items.prefetch_related(
-                                "values__interface"
-                            )
-                        ],
+                        civ_sets=civ_sets,
                         extra_viewer_groups=archive_groups,
                         # NOTE: no emails in case the logs leak data
                         # to the algorithm editors
