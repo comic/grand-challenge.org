@@ -218,6 +218,12 @@ def create_algorithm_jobs_for_evaluation(
 
     evaluation.update_status(status=Evaluation.EXECUTING_PREREQUISITES)
 
+    civ_sets = [
+        {*ai.values.all()}
+        for ai in evaluation.submission.phase.archive.items.prefetch_related(
+            "values__interface"
+        )
+    ]
     try:
         # Method is expensive so only allow one process at a time
         with cache.lock(
@@ -228,12 +234,7 @@ def create_algorithm_jobs_for_evaluation(
             jobs = create_algorithm_jobs(
                 algorithm_image=evaluation.submission.algorithm_image,
                 algorithm_model=evaluation.submission.algorithm_model,
-                civ_sets=[
-                    {*ai.values.all()}
-                    for ai in evaluation.submission.phase.archive.items.prefetch_related(
-                        "values__interface"
-                    )
-                ],
+                civ_sets=civ_sets,
                 extra_viewer_groups=viewer_groups,
                 extra_logs_viewer_groups=viewer_groups,
                 task_on_success=task_on_success,
