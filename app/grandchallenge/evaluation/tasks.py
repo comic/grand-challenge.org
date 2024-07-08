@@ -364,7 +364,8 @@ def set_evaluation_inputs(*, evaluation_pk):
                 ),
             )
             .filter(
-                inputs_match_count=evaluation.submission.phase.algorithm_inputs.count()
+                inputs_match_count=evaluation.submission.phase.algorithm_inputs.count(),
+                creator=None,
             )
             .distinct()
             .prefetch_related("outputs__interface", "inputs__interface")
