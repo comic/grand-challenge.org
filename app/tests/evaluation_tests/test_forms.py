@@ -688,6 +688,38 @@ class TestSubmissionForm:
             in form.errors["algorithm"]
         )
 
+    def test_submission_to_external_phase_requires_confirmation(self):
+        user = UserFactory()
+        alg = AlgorithmFactory()
+        alg.add_editor(user=user)
+        ai = AlgorithmImageFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+            algorithm=alg,
+        )
+        phase = PhaseFactory(external_evaluation=True)
+        SubmissionFactory(
+            phase=phase,
+            algorithm_image=ai,
+        )
+        InvoiceFactory(
+            challenge=phase.challenge,
+            compute_costs_euros=10,
+            payment_status=PaymentStatusChoices.COMPLIMENTARY,
+        )
+        phase = Phase.objects.get(pk=phase.pk)
+        form = SubmissionForm(
+            user=user,
+            phase=phase,
+            data={"algorithm": alg, "creator": user, "phase": phase},
+        )
+        assert not form.is_valid()
+        assert (
+            "You must confirm that you want to submit to this phase."
+            in str(form.errors)
+        )
+
 
 @pytest.mark.django_db
 class TestSubmissionFormOptions:

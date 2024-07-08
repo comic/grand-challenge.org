@@ -472,9 +472,8 @@ class SubmissionForm(
                 "You cannot submit to this phase because this phase "
                 "does not have an active evaluation method yet."
             )
-        if (
-            self._phase.external_evaluation
-            and not self.cleaned_data["confirm_submission"]
+        if self._phase.external_evaluation and not self.cleaned_data.get(
+            "confirm_submission", None
         ):
             raise ValidationError(
                 "You must confirm that you want to submit to this phase."
