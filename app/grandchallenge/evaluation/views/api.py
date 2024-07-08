@@ -46,7 +46,9 @@ class EvaluationViewSet(ReadOnlyModelViewSet):
         PaginatedCSVRenderer,
     )
 
-    @action(detail=True, permission_classes=[CanClaimEvaluation])
+    @action(
+        detail=True, methods=["PATCH"], permission_classes=[CanClaimEvaluation]
+    )
     def claim(self, request, *args, **kwargs):
         evaluation = self.get_object()
 
@@ -56,7 +58,7 @@ class EvaluationViewSet(ReadOnlyModelViewSet):
                 status=400,
             )
 
-        evaluation.status = Evaluation.EXECUTING
+        evaluation.status = Evaluation.CLAIMED
         evaluation.started_at = now()
         evaluation.save()
 
@@ -83,7 +85,7 @@ class EvaluationViewSet(ReadOnlyModelViewSet):
     )
     def update_external_evaluation(self, request, *args, **kwargs):
         evaluation = self.get_object()
-        if evaluation.status != Evaluation.EXECUTING:
+        if evaluation.status != Evaluation.CLAIMED:
             return Response(
                 {
                     "status": "You need to claim an evaluation before you can update it."

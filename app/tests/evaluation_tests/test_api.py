@@ -12,7 +12,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
 )
 from tests.components_tests.factories import ComponentInterfaceFactory
-from tests.evaluation_tests.factories import PhaseFactory, SubmissionFactory
+from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
 from tests.factories import ChallengeFactory, UserFactory
 from tests.utils import get_view_for_user
 
@@ -38,8 +38,9 @@ def create_claimable_evaluation():
     ai.algorithm.inputs.set([ci1])
     ai.algorithm.inputs.set([ci2])
 
-    s = SubmissionFactory(phase=p2, algorithm_image=ai)
-    return Evaluation.objects.get(submission=s)
+    return EvaluationFactory(
+        submission__algorithm_image=ai, submission__phase=p2, method=None
+    )
 
 
 def get_user_groups(evaluation):
@@ -59,15 +60,15 @@ def test_claimable_evaluations(client):
     e1 = create_claimable_evaluation()
     assert e1.status == Evaluation.PENDING
 
-    s2 = SubmissionFactory(
-        phase=e1.submission.phase,
-        algorithm_image=e1.submission.algorithm_image,
+    e2 = EvaluationFactory(
+        submission__phase=e1.submission.phase,
+        submission__algorithm_image=e1.submission.algorithm_image,
+        method=None,
     )
-    e2 = Evaluation.objects.get(submission=s2)
     e2.status = Evaluation.EXECUTING
     e2.save()
 
-    SubmissionFactory(phase=e1.submission.phase.parent)
+    EvaluationFactory(submission__phase=e1.submission.phase.parent)
 
     external_evaluator, challenge_admin, challenge_participant = (
         get_user_groups(e1)
@@ -112,6 +113,7 @@ def test_claim_evaluation(client):
         response = get_view_for_user(
             viewname="api:evaluation-claim",
             client=client,
+            method=client.patch,
             user=user,
             reverse_kwargs={"pk": eval.pk},
             content_type="application/json",
@@ -124,13 +126,14 @@ def test_claim_evaluation(client):
     response = get_view_for_user(
         viewname="api:evaluation-claim",
         client=client,
+        method=client.patch,
         user=external_evaluator,
         reverse_kwargs={"pk": eval.pk},
         content_type="application/json",
     )
     assert response.status_code == 200
     eval.refresh_from_db()
-    assert eval.status == Evaluation.EXECUTING
+    assert eval.status == Evaluation.CLAIMED
     assert eval.started_at is not None
     assert (
         response.json()
@@ -143,6 +146,7 @@ def test_claim_evaluation(client):
     response = get_view_for_user(
         viewname="api:evaluation-claim",
         client=client,
+        method=client.patch,
         user=external_evaluator,
         reverse_kwargs={"pk": eval.pk},
         content_type="application/json",
@@ -163,7 +167,7 @@ class TestUpdateExternalEvaluation(TestCase):
 
     @pytest.mark.django_db
     def test_update_external_evaluation_permissions(self):
-        self.evaluation.status = Evaluation.EXECUTING
+        self.evaluation.status = Evaluation.CLAIMED
         self.evaluation.save()
 
         for user in [self.challenge_admin, self.challenge_participant]:
@@ -212,7 +216,7 @@ class TestUpdateExternalEvaluation(TestCase):
 
     @pytest.mark.django_db
     def test_update_failed_evaluation_without_error_message(self):
-        self.evaluation.status = Evaluation.EXECUTING
+        self.evaluation.status = Evaluation.CLAIMED
         self.evaluation.save()
 
         response = get_view_for_user(
@@ -233,7 +237,7 @@ class TestUpdateExternalEvaluation(TestCase):
 
     @pytest.mark.django_db
     def test_update_failed_external_evaluation(self):
-        self.evaluation.status = Evaluation.EXECUTING
+        self.evaluation.status = Evaluation.CLAIMED
         self.evaluation.save()
 
         response = get_view_for_user(
@@ -256,7 +260,7 @@ class TestUpdateExternalEvaluation(TestCase):
 
     @pytest.mark.django_db
     def test_updated_successful_evaluation_without_metrics(self):
-        self.evaluation.status = Evaluation.EXECUTING
+        self.evaluation.status = Evaluation.CLAIMED
         self.evaluation.save()
 
         response = get_view_for_user(
@@ -277,7 +281,7 @@ class TestUpdateExternalEvaluation(TestCase):
 
     @pytest.mark.django_db
     def test_update_successful_external_evaluation(self):
-        self.evaluation.status = Evaluation.EXECUTING
+        self.evaluation.status = Evaluation.CLAIMED
         self.evaluation.save()
 
         response = get_view_for_user(

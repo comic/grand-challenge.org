@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 @transaction.atomic
-def create_evaluation(*, submission_pk, max_initial_jobs=1):
+def create_evaluation(*, submission_pk, max_initial_jobs=1):  # noqa: C901
     """
     Creates an Evaluation for a Submission
 
@@ -49,6 +49,16 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):
     )
 
     submission = Submission.objects.get(pk=submission_pk)
+
+    if submission.phase.external_evaluation:
+        external_evaluation, created = Evaluation.objects.get_or_create(
+            submission=submission
+        )
+        if not created:
+            logger.info(
+                "External evaluation already created for this submission."
+            )
+        return
 
     if not submission.predictions_file and submission.user_upload:
         submission.user_upload.copy_object(

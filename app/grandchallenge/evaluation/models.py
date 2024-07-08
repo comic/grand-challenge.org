@@ -1185,13 +1185,11 @@ class Submission(UUIDModel):
                     actor_only=False,
                     send_action=False,
                 )
-            if self.phase.external_evaluation:
-                Evaluation.objects.create(submission=self)
-            else:
-                e = create_evaluation.signature(
-                    kwargs={"submission_pk": self.pk}, immutable=True
-                )
-                on_commit(e.apply_async)
+
+            e = create_evaluation.signature(
+                kwargs={"submission_pk": self.pk}, immutable=True
+            )
+            on_commit(e.apply_async)
 
     def assign_permissions(self):
         assign_perm("view_submission", self.phase.challenge.admins_group, self)
@@ -1363,7 +1361,6 @@ class Evaluation(UUIDModel, ComponentJob):
                 self.submission.phase.challenge.external_evaluators_group
             )
             assign_perm("view_evaluation", external_evaluators, self)
-            assign_perm("change_evaluation", external_evaluators, self)
             assign_perm("claim_evaluation", external_evaluators, self)
 
         all_user_group = Group.objects.get(

@@ -1455,6 +1455,7 @@ class ComponentJob(models.Model):
     EXECUTED = 9
     PARSING = 10
     EXECUTING_PREREQUISITES = 11
+    CLAIMED = 12  # for external evaluations
 
     STATUS_CHOICES = (
         (PENDING, "Queued"),
@@ -1469,6 +1470,7 @@ class ComponentJob(models.Model):
         (EXECUTED, "Executed"),
         (PARSING, "Parsing Outputs"),
         (EXECUTING_PREREQUISITES, "Executing Algorithm"),
+        (CLAIMED, "External evaluation in progress"),
     )
 
     status = models.PositiveSmallIntegerField(
