@@ -52,7 +52,7 @@ class Migration(migrations.Migration):
                     (9, "Executed"),
                     (10, "Parsing Outputs"),
                     (11, "Executing Algorithm"),
-                    (12, "External evaluation in progress"),
+                    (12, "External Execution In Progress"),
                 ],
                 db_index=True,
                 default=0,

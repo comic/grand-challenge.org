@@ -383,7 +383,6 @@ def test_external_evaluations_perms():
         },
         participants: {"view_evaluation"},
         external_evaluators: {
-            "change_evaluation",
             "claim_evaluation",
             "view_evaluation",
         },

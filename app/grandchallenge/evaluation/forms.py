@@ -308,6 +308,16 @@ class SubmissionForm(
         queryset=None,
     )
     algorithm = AlgorithmChoiceField(queryset=None)
+    confirm_submission = forms.BooleanField(
+        required=True,
+        label="I understand that by submitting my algorithm image and model "
+        "to this phase, I agree to sharing them with the challenge admins. "
+        "I also understand that the algorithm image and model will leave "
+        "the Grand Challenge platform and that "
+        "Grand Challenge will have no control or insight "
+        "into their subsequent use, including how frequently, "
+        "by who and with what data they will be used.",
+    )
 
     def __init__(self, *args, user, phase: Phase, **kwargs):  # noqa: C901
         super().__init__(*args, user=user, phase=phase, **kwargs)
@@ -321,6 +331,9 @@ class SubmissionForm(
         # would need to be updated if phase selections are allowed.
         self.fields["phase"].queryset = Phase.objects.filter(pk=phase.pk)
         self.fields["phase"].initial = phase
+
+        if not self._phase.external_evaluation:
+            del self.fields["confirm_submission"]
 
         if not self._phase.allow_submission_comments:
             del self.fields["comment"]
@@ -458,6 +471,13 @@ class SubmissionForm(
             raise ValidationError(
                 "You cannot submit to this phase because this phase "
                 "does not have an active evaluation method yet."
+            )
+        if (
+            self._phase.external_evaluation
+            and not self.cleaned_data["confirm_submission"]
+        ):
+            raise ValidationError(
+                "You must confirm that you want to submit to this phase."
             )
         return cleaned_data
 

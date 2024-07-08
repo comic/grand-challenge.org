@@ -61,6 +61,20 @@ class TestSubmissionForm:
         assert "algorithm_image" not in form.fields
         assert "user_upload" in form.fields
 
+    def test_confirmation_checkbox_for_external_phases(self):
+        form = SubmissionForm(
+            user=UserFactory(),
+            phase=PhaseFactory(external_evaluation=True),
+        )
+        assert "confirm_submission" in form.fields
+        assert form.fields["confirm_submission"].required
+
+        form2 = SubmissionForm(
+            user=UserFactory(),
+            phase=PhaseFactory(),
+        )
+        assert "confirm_submission" not in form2.fields
+
     def test_setting_algorithm(self):
         form = SubmissionForm(
             user=UserFactory(),
