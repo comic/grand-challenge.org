@@ -3,6 +3,7 @@ import time
 from datetime import timedelta
 
 import boto3
+from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import shared_task
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -13,6 +14,7 @@ from django.core.paginator import Paginator
 from django.utils.timezone import now
 from redis.exceptions import LockError
 
+from grandchallenge.components.tasks import _retry
 from grandchallenge.core.cache import _cache_key_from_method
 from grandchallenge.emails.emails import send_standard_email_batch
 from grandchallenge.emails.models import Email, RawEmail
@@ -75,13 +77,27 @@ def get_receivers(action):
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
-def send_bulk_email(*, action, email_pk):
-    with cache.lock(
-        _cache_key_from_method(send_bulk_email),
-        timeout=settings.CELERY_TASK_TIME_LIMIT,
-        blocking_timeout=1,
-    ):
-        _send_bulk_email(action=action, email_pk=email_pk)
+def send_bulk_email(*, action, email_pk, retries=0):
+    try:
+        with cache.lock(
+            _cache_key_from_method(send_bulk_email),
+            timeout=settings.CELERY_TASK_TIME_LIMIT,
+            blocking_timeout=1,
+        ):
+            _send_bulk_email(action=action, email_pk=email_pk)
+    except (LockError, SoftTimeLimitExceeded, TimeLimitExceeded) as error:
+        logger.info(f"send_bulk_email failed with: {error}")
+        _retry(
+            task=send_bulk_email,
+            signature_kwargs={
+                "kwargs": {
+                    "action": action,
+                    "email_pk": email_pk,
+                },
+                "immutable": True,
+            },
+            retries=retries,
+        )
 
 
 def _send_bulk_email(*, action, email_pk):
@@ -133,9 +149,9 @@ def send_raw_emails():
             blocking_timeout=1,
         ):
             _send_raw_emails()
-    except LockError as error:
-        logger.info(f"Could not acquire lock: {error}")
-        return
+    except (LockError, SoftTimeLimitExceeded, TimeLimitExceeded) as error:
+        # No need to retry here as the periodic task call this again
+        logger.info(f"send_raw_emails failed with: {error}")
 
 
 def _send_raw_emails():
