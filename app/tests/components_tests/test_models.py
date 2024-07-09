@@ -10,6 +10,7 @@ from django.utils import timezone
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
 from grandchallenge.algorithms.models import AlgorithmImage, Job
+from grandchallenge.cases.models import Image
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -138,6 +139,8 @@ def test_average_duration_filtering():
         (InterfaceKindChoices.IMAGE, True, True),
         (InterfaceKindChoices.HEAT_MAP, True, True),
         (InterfaceKindChoices.SEGMENTATION, True, True),
+        (InterfaceKindChoices.DISPLACEMENT_FIELD, True, True),
+        (InterfaceKindChoices.DEFORMATION_FIELD, True, True),
         # File types
         (InterfaceKindChoices.CSV, True, False),
         (InterfaceKindChoices.ZIP, True, False),
