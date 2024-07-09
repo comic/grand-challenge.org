@@ -737,7 +737,7 @@ def get_update_status_kwargs(*, executor=None):
         return {}
 
 
-@acks_late_micro_short_task(retry_on=(OperationalError, RetryStep))
+@acks_late_micro_short_task(retry_on=(RetryStep,))
 @transaction.atomic
 def handle_event(*, event, backend):  # noqa: C901
     """
@@ -765,8 +765,11 @@ def handle_event(*, event, backend):  # noqa: C901
         attempt=job_params.attempt,
     ).select_for_update(nowait=True)
 
-    # Acquire the lock
-    job = queryset.get()
+    try:
+        # Acquire the lock
+        job = queryset.get()
+    except OperationalError as e:
+        raise RetryStep from e
 
     executor = job.get_executor(backend=backend)
 
@@ -1153,7 +1156,7 @@ def add_file_to_object(
         )
 
 
-@acks_late_2xlarge_task(retry_on=(OperationalError,))
+@acks_late_2xlarge_task(retry_on=(RetryStep,))
 @transaction.atomic
 def assign_tarball_from_upload(
     *, app_label, model_name, tarball_pk, field_to_copy
@@ -1165,14 +1168,17 @@ def assign_tarball_from_upload(
     )
 
     # try to acquire lock
-    current_tarball = (
-        TarballModel.objects.filter(pk=tarball_pk)
-        .select_for_update(nowait=True)
-        .get()
-    )
-    peer_tarballs = current_tarball.get_peer_tarballs().select_for_update(
-        nowait=True
-    )
+    try:
+        current_tarball = (
+            TarballModel.objects.filter(pk=tarball_pk)
+            .select_for_update(nowait=True)
+            .get()
+        )
+        peer_tarballs = current_tarball.get_peer_tarballs().select_for_update(
+            nowait=True
+        )
+    except OperationalError as e:
+        raise RetryStep from e
 
     current_tarball.user_upload.copy_object(
         to_field=getattr(current_tarball, field_to_copy)
