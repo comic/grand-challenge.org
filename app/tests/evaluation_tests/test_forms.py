@@ -593,7 +593,12 @@ class TestSubmissionForm:
         form3 = SubmissionForm(
             user=user,
             phase=p_alg,
-            data={"algorithm": alg, "creator": user, "phase": p_alg},
+            data={
+                "algorithm": alg,
+                "creator": user,
+                "phase": p_alg,
+                "confirm_submission": True,
+            },
         )
         assert form3.is_valid()
 

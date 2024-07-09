@@ -22,6 +22,9 @@ from grandchallenge.evaluation.serializers import (
     ExternalEvaluationSerializer,
     ExternalEvaluationUpdateSerializer,
 )
+from grandchallenge.evaluation.tokens import (
+    external_evaluation_token_generator,
+)
 
 
 class CanClaimEvaluation(permissions.BasePermission):
@@ -60,6 +63,12 @@ class EvaluationViewSet(ReadOnlyModelViewSet):
 
         evaluation.status = Evaluation.CLAIMED
         evaluation.started_at = now()
+        evaluation.token = external_evaluation_token_generator.make_token(
+            {
+                "user": self.request.user,
+                "evaluation": evaluation,
+            }
+        )
         evaluation.save()
 
         serializer = ExternalEvaluationSerializer(
@@ -85,12 +94,16 @@ class EvaluationViewSet(ReadOnlyModelViewSet):
     )
     def update_external_evaluation(self, request, *args, **kwargs):
         evaluation = self.get_object()
-        if evaluation.status != Evaluation.CLAIMED:
+
+        # only claimed evaluations without outputs or an error_message set
+        # can be updated by the user who originally claimed the evaluation
+        if not external_evaluation_token_generator.check_token(
+            user={"user": self.request.user, "evaluation": evaluation},
+            token=evaluation.token,
+        ):
             return Response(
-                {
-                    "status": "You need to claim an evaluation before you can update it."
-                },
-                status=400,
+                {"status": "You are not allowed to update this evaluation."},
+                status=403,
             )
 
         serialized_evaluation = ExternalEvaluationUpdateSerializer(

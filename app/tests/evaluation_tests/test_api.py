@@ -1,5 +1,7 @@
+import time
+
 import pytest
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from grandchallenge.evaluation.models import Evaluation
 from grandchallenge.evaluation.serializers import (
@@ -11,7 +13,10 @@ from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
 )
-from tests.components_tests.factories import ComponentInterfaceFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
 from tests.factories import ChallengeFactory, UserFactory
 from tests.utils import get_view_for_user
@@ -38,9 +43,11 @@ def create_claimable_evaluation():
     ai.algorithm.inputs.set([ci1])
     ai.algorithm.inputs.set([ci2])
 
-    return EvaluationFactory(
+    evaluation = EvaluationFactory(
         submission__algorithm_image=ai, submission__phase=p2, method=None
     )
+
+    return evaluation
 
 
 def get_user_groups(evaluation):
@@ -135,6 +142,7 @@ def test_claim_evaluation(client):
     eval.refresh_from_db()
     assert eval.status == Evaluation.CLAIMED
     assert eval.started_at is not None
+    assert eval.token is not None
     assert (
         response.json()
         == ExternalEvaluationSerializer(
@@ -158,25 +166,38 @@ def test_claim_evaluation(client):
 @pytest.mark.usefixtures("client")
 class TestUpdateExternalEvaluation(TestCase):
     def setUp(self):
-        self.evaluation = create_claimable_evaluation()
+        self.claimed_evaluation = create_claimable_evaluation()
         (
             self.external_evaluator,
             self.challenge_admin,
             self.challenge_participant,
-        ) = get_user_groups(self.evaluation)
+        ) = get_user_groups(self.claimed_evaluation)
+
+        self.unclaimed_evaluation = EvaluationFactory(
+            submission__algorithm_image=self.claimed_evaluation.submission.algorithm_image,
+            submission__phase=self.claimed_evaluation.submission.phase,
+            method=None,
+        )
+
+        _ = get_view_for_user(
+            viewname="api:evaluation-claim",
+            client=self.client,
+            method=self.client.patch,
+            user=self.external_evaluator,
+            reverse_kwargs={"pk": self.claimed_evaluation.pk},
+            content_type="application/json",
+        )
+        self.claimed_evaluation.refresh_from_db()
 
     @pytest.mark.django_db
     def test_update_external_evaluation_permissions(self):
-        self.evaluation.status = Evaluation.CLAIMED
-        self.evaluation.save()
-
         for user in [self.challenge_admin, self.challenge_participant]:
             response = get_view_for_user(
                 viewname="api:evaluation-update-external-evaluation",
                 client=self.client,
                 method=self.client.patch,
                 user=user,
-                reverse_kwargs={"pk": self.evaluation.pk},
+                reverse_kwargs={"pk": self.claimed_evaluation.pk},
                 content_type="application/json",
             )
             assert response.status_code == 403
@@ -189,7 +210,7 @@ class TestUpdateExternalEvaluation(TestCase):
             client=self.client,
             method=self.client.patch,
             user=self.external_evaluator,
-            reverse_kwargs={"pk": self.evaluation.pk},
+            reverse_kwargs={"pk": self.claimed_evaluation.pk},
             content_type="application/json",
             data={
                 "status": Evaluation.FAILURE,
@@ -205,26 +226,22 @@ class TestUpdateExternalEvaluation(TestCase):
             client=self.client,
             method=self.client.patch,
             user=self.external_evaluator,
-            reverse_kwargs={"pk": self.evaluation.pk},
+            reverse_kwargs={"pk": self.unclaimed_evaluation.pk},
             content_type="application/json",
         )
-        assert response.status_code == 400
-        assert (
-            "You need to claim an evaluation before you can update it."
-            in str(response.json())
+        assert response.status_code == 403
+        assert "You are not allowed to update this evaluation" in str(
+            response.json()
         )
 
     @pytest.mark.django_db
     def test_update_failed_evaluation_without_error_message(self):
-        self.evaluation.status = Evaluation.CLAIMED
-        self.evaluation.save()
-
         response = get_view_for_user(
             viewname="api:evaluation-update-external-evaluation",
             client=self.client,
             method=self.client.patch,
             user=self.external_evaluator,
-            reverse_kwargs={"pk": self.evaluation.pk},
+            reverse_kwargs={"pk": self.claimed_evaluation.pk},
             data={
                 "status": Evaluation.FAILURE,
             },
@@ -237,15 +254,12 @@ class TestUpdateExternalEvaluation(TestCase):
 
     @pytest.mark.django_db
     def test_update_failed_external_evaluation(self):
-        self.evaluation.status = Evaluation.CLAIMED
-        self.evaluation.save()
-
         response = get_view_for_user(
             viewname="api:evaluation-update-external-evaluation",
             client=self.client,
             method=self.client.patch,
             user=self.external_evaluator,
-            reverse_kwargs={"pk": self.evaluation.pk},
+            reverse_kwargs={"pk": self.claimed_evaluation.pk},
             data={
                 "status": Evaluation.FAILURE,
                 "error_message": "Error message",
@@ -253,22 +267,19 @@ class TestUpdateExternalEvaluation(TestCase):
             content_type="application/json",
         )
         assert response.status_code == 200
-        self.evaluation.refresh_from_db()
-        assert self.evaluation.status == Evaluation.FAILURE
-        assert self.evaluation.completed_at is not None
-        assert self.evaluation.outputs.count() == 0
+        self.claimed_evaluation.refresh_from_db()
+        assert self.claimed_evaluation.status == Evaluation.FAILURE
+        assert self.claimed_evaluation.completed_at is not None
+        assert self.claimed_evaluation.outputs.count() == 0
 
     @pytest.mark.django_db
     def test_updated_successful_evaluation_without_metrics(self):
-        self.evaluation.status = Evaluation.CLAIMED
-        self.evaluation.save()
-
         response = get_view_for_user(
             viewname="api:evaluation-update-external-evaluation",
             client=self.client,
             method=self.client.patch,
             user=self.external_evaluator,
-            reverse_kwargs={"pk": self.evaluation.pk},
+            reverse_kwargs={"pk": self.claimed_evaluation.pk},
             data={
                 "status": Evaluation.SUCCESS,
             },
@@ -281,26 +292,79 @@ class TestUpdateExternalEvaluation(TestCase):
 
     @pytest.mark.django_db
     def test_update_successful_external_evaluation(self):
-        self.evaluation.status = Evaluation.CLAIMED
-        self.evaluation.save()
+        response = get_view_for_user(
+            viewname="api:evaluation-update-external-evaluation",
+            client=self.client,
+            method=self.client.patch,
+            user=self.external_evaluator,
+            reverse_kwargs={"pk": self.claimed_evaluation.pk},
+            data={"metrics": "foo-bar", "status": Evaluation.SUCCESS},
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        self.claimed_evaluation.refresh_from_db()
+        assert self.claimed_evaluation.status == Evaluation.SUCCESS
+        assert self.claimed_evaluation.completed_at is not None
+        assert self.claimed_evaluation.outputs.count() == 1
+        assert (
+            response.json()
+            == EvaluationSerializer(
+                self.claimed_evaluation,
+                context={"request": response.wsgi_request},
+            ).data
+        )
+
+    @pytest.mark.django_db
+    def test_invalid_token_when_state_changed(self):
+        self.claimed_evaluation.error_message = "Error message"
+        self.claimed_evaluation.save()
 
         response = get_view_for_user(
             viewname="api:evaluation-update-external-evaluation",
             client=self.client,
             method=self.client.patch,
             user=self.external_evaluator,
-            reverse_kwargs={"pk": self.evaluation.pk},
+            reverse_kwargs={"pk": self.claimed_evaluation.pk},
             data={"metrics": "foo-bar", "status": Evaluation.SUCCESS},
             content_type="application/json",
         )
-        assert response.status_code == 200
-        self.evaluation.refresh_from_db()
-        assert self.evaluation.status == Evaluation.SUCCESS
-        assert self.evaluation.completed_at is not None
-        assert self.evaluation.outputs.count() == 1
-        assert (
-            response.json()
-            == EvaluationSerializer(
-                self.evaluation, context={"request": response.wsgi_request}
-            ).data
+        assert response.status_code == 403
+        assert response.json() == {
+            "status": "You are not allowed to update this evaluation."
+        }
+
+        self.claimed_evaluation.error_message = ""
+        self.claimed_evaluation.outputs.add(ComponentInterfaceValueFactory())
+        self.claimed_evaluation.save()
+
+        response = get_view_for_user(
+            viewname="api:evaluation-update-external-evaluation",
+            client=self.client,
+            method=self.client.patch,
+            user=self.external_evaluator,
+            reverse_kwargs={"pk": self.claimed_evaluation.pk},
+            data={"metrics": "foo-bar", "status": Evaluation.SUCCESS},
+            content_type="application/json",
         )
+        assert response.status_code == 403
+        assert response.json() == {
+            "status": "You are not allowed to update this evaluation."
+        }
+
+    @override_settings(PASSWORD_RESET_TIMEOUT=0)
+    @pytest.mark.django_db
+    def test_token_timeout(self):
+        time.sleep(1)
+        response = get_view_for_user(
+            viewname="api:evaluation-update-external-evaluation",
+            client=self.client,
+            method=self.client.patch,
+            user=self.external_evaluator,
+            reverse_kwargs={"pk": self.claimed_evaluation.pk},
+            data={"metrics": "foo-bar", "status": Evaluation.SUCCESS},
+            content_type="application/json",
+        )
+        assert response.status_code == 403
+        assert response.json() == {
+            "status": "You are not allowed to update this evaluation."
+        }
