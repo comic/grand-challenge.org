@@ -19,7 +19,6 @@ from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
 from grandchallenge.archives.models import Archive
 from grandchallenge.cases.tasks import build_images
 from grandchallenge.components.tasks import (
-    _retry,
     add_file_to_component_interface_value,
     add_image_to_component_interface_value,
 )
@@ -120,56 +119,24 @@ def execute_algorithm_job_for_inputs(*, job_pk):
         )
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(retry_on=(TooManyJobsScheduled,))
 @transaction.atomic
-def execute_algorithm_job(*, job_pk, retries=0):
-    def retry_with_delay():
-        _retry(
-            task=execute_algorithm_job,
-            signature_kwargs={
-                "kwargs": {
-                    "job_pk": job_pk,
-                },
-                "immutable": True,
-            },
-            retries=retries,
-        )
-
+def execute_algorithm_job(*, job_pk):
     if Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
-        logger.info("Retrying task as too many jobs scheduled")
-        retry_with_delay()
-        return
+        raise TooManyJobsScheduled
     else:
         job = Job.objects.get(pk=job_pk)
         on_commit(job.execute)
 
 
-@acks_late_2xlarge_task(
-    throws=(
-        TooManyJobsScheduled,
-        LockError,
-    )
-)
+@acks_late_2xlarge_task(retry_on=(TooManyJobsScheduled, LockError))
 def create_algorithm_jobs_for_archive(
-    *, archive_pks, archive_item_pks=None, algorithm_pks=None, retries=0
+    *,
+    archive_pks,
+    archive_item_pks=None,
+    algorithm_pks=None,
 ):
-    def retry_with_delay():
-        _retry(
-            task=create_algorithm_jobs_for_archive,
-            signature_kwargs={
-                "kwargs": {
-                    "archive_pks": archive_pks,
-                    "archive_item_pks": archive_item_pks,
-                    "algorithm_pks": algorithm_pks,
-                },
-                "immutable": True,
-            },
-            retries=retries,
-        )
-
     if Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
-        logger.info("Retrying task as too many jobs scheduled")
-        retry_with_delay()
         raise TooManyJobsScheduled
 
     for archive in Archive.objects.filter(pk__in=archive_pks).all():
@@ -192,7 +159,7 @@ def create_algorithm_jobs_for_archive(
             archive_items = archive.items.all()
 
         for algorithm in algorithms:
-            try:
+            if algorithm.active_image:
                 with cache.lock(
                     _cache_key_from_method(create_algorithm_jobs),
                     timeout=settings.CELERY_TASK_TIME_LIMIT,
@@ -212,13 +179,6 @@ def create_algorithm_jobs_for_archive(
                         # to the algorithm editors
                         task_on_success=None,
                     )
-            except (TooManyJobsScheduled, LockError) as error:
-                logger.info(f"Retrying task due to: {error}")
-                retry_with_delay()
-                raise
-            except RuntimeError:
-                # don't schedule jobs for algorithms without an active image
-                continue
 
 
 def create_algorithm_jobs(

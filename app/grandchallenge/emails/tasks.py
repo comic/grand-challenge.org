@@ -13,7 +13,6 @@ from django.core.paginator import Paginator
 from django.utils.timezone import now
 from redis.exceptions import LockError
 
-from grandchallenge.components.tasks import _retry
 from grandchallenge.core.cache import _cache_key_from_method
 from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.emails.emails import send_standard_email_batch
@@ -76,28 +75,16 @@ def get_receivers(action):
     return receivers
 
 
-@acks_late_micro_short_task
-def send_bulk_email(*, action, email_pk, retries=0):
-    try:
-        with cache.lock(
-            _cache_key_from_method(send_bulk_email),
-            timeout=settings.CELERY_TASK_TIME_LIMIT,
-            blocking_timeout=1,
-        ):
-            _send_bulk_email(action=action, email_pk=email_pk)
-    except (LockError, SoftTimeLimitExceeded, TimeLimitExceeded) as error:
-        logger.info(f"send_bulk_email failed with: {error}")
-        _retry(
-            task=send_bulk_email,
-            signature_kwargs={
-                "kwargs": {
-                    "action": action,
-                    "email_pk": email_pk,
-                },
-                "immutable": True,
-            },
-            retries=retries,
-        )
+@acks_late_micro_short_task(
+    retry_on=(LockError, SoftTimeLimitExceeded, TimeLimitExceeded)
+)
+def send_bulk_email(*, action, email_pk):
+    with cache.lock(
+        _cache_key_from_method(send_bulk_email),
+        timeout=settings.CELERY_TASK_TIME_LIMIT,
+        blocking_timeout=1,
+    ):
+        _send_bulk_email(action=action, email_pk=email_pk)
 
 
 def _send_bulk_email(*, action, email_pk):

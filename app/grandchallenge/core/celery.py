@@ -1,7 +1,42 @@
+import logging
 from functools import wraps
 
 from celery import shared_task  # noqa: I251 Usage allowed here
+from celery.exceptions import MaxRetriesExceededError
 from django.conf import settings
+from django.db.transaction import on_commit
+
+logger = logging.getLogger(__name__)
+
+MAX_RETRIES = 60 * 24  # 1 day assuming 60 seconds delay
+
+
+def _retry(*, task, signature_kwargs, retries):
+    """
+    Retry a task using the delay queue
+
+    We need to retry a task with a delay/countdown. There are several problems
+    with doing this in Celery (with SQS/Redis).
+
+    - If a countdown is used the delay features of SQS are not used
+      https://github.com/celery/kombu/issues/1074
+    - A countdown that needs to be done on the worker results backlogs
+      https://github.com/celery/celery/issues/2541
+    - The backlogs can still occur even if the countdown/eta is set to zero
+      https://github.com/celery/celery/issues/6929
+
+    This method is a workaround for these issues, that creates a new task
+    and places this on a queue which has DelaySeconds set. The downside
+    is that we need to track retries via the kwargs of the task.
+    """
+    if retries < MAX_RETRIES:
+        step = task.signature(**signature_kwargs)
+        queue = step.options.get("queue", task.queue)
+        step.options["queue"] = f"{queue}-delay"
+        step.kwargs["_retries"] = retries + 1
+        on_commit(step.apply_async)
+    else:
+        raise MaxRetriesExceededError
 
 
 class AcksLateTaskDecorator:
@@ -14,33 +49,56 @@ class AcksLateTaskDecorator:
 
         self.queue = queue
 
-    def __call__(self, func=None, ignore_result=False, throws=()):
+    def __call__(self, func=None, ignore_result=False, retry_on=None):
         if func is None:
             # Called as @decorator(**extra_kwargs)
             return lambda func: self._decorator(
-                func=func, ignore_result=ignore_result, throws=throws
+                func=func,
+                ignore_result=ignore_result,
+                retry_on=retry_on,
             )
         else:
             # Called as @decorator or @decorator(func)
             return self._decorator(
-                func=func, ignore_result=ignore_result, throws=throws
+                func=func,
+                ignore_result=ignore_result,
+                retry_on=retry_on,
             )
 
-    def _decorator(self, *, func, ignore_result, throws):
+    def _decorator(self, *, func, ignore_result, retry_on):
+
+        @wraps(func)
+        def wrapper(*args, _retries=0, **kwargs):
+            def _retry_this():
+                _retry(
+                    task=task_func,
+                    signature_kwargs={
+                        "args": args,
+                        "kwargs": kwargs,
+                        "immutable": True,
+                    },
+                    retries=_retries,
+                )
+
+            try:
+                return func(*args, **kwargs)
+            except Exception as error:
+                if retry_on and any(isinstance(error, e) for e in retry_on):
+                    logger.info(
+                        f"Retrying task {task_func.name} due to error: {error}, {_retries=}"
+                    )
+                    return _retry_this()
+                else:
+                    raise error
 
         task_func = shared_task(
             acks_late=True,
             reject_on_worker_lost=True,
             queue=self.queue,
             ignore_result=ignore_result,
-            throws=throws,
-        )(func)
+        )(wrapper)
 
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            return task_func(*args, **kwargs)
-
-        return wrapper
+        return task_func
 
 
 # For idempotent tasks that take a long time (<7200s)

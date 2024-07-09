@@ -18,7 +18,6 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
-from grandchallenge.components.tasks import _retry
 from grandchallenge.core.cache import _cache_key_from_method
 from grandchallenge.core.celery import (
     acks_late_2xlarge_task,
@@ -131,15 +130,8 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):
         raise RuntimeError("No algorithm or predictions file found")
 
 
-@acks_late_2xlarge_task(
-    throws=(
-        TooManyJobsScheduled,
-        LockError,
-    ),
-)
-def create_algorithm_jobs_for_evaluation(
-    *, evaluation_pk, max_jobs=1, retries=0
-):
+@acks_late_2xlarge_task(retry_on=(TooManyJobsScheduled, LockError))
+def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
     """
     Creates the algorithm jobs for the evaluation
 
@@ -154,23 +146,7 @@ def create_algorithm_jobs_for_evaluation(
     max_jobs
         The maximum number of jobs to create
     """
-
-    def retry_with_delay():
-        _retry(
-            task=create_algorithm_jobs_for_evaluation,
-            signature_kwargs={
-                "kwargs": {
-                    "evaluation_pk": evaluation_pk,
-                    "max_jobs": max_jobs,
-                },
-                "immutable": True,
-            },
-            retries=retries,
-        )
-
     if Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
-        logger.info("Retrying task as too many jobs scheduled")
-        retry_with_delay()
         raise TooManyJobsScheduled
 
     Evaluation = apps.get_model(  # noqa: N806
@@ -220,33 +196,28 @@ def create_algorithm_jobs_for_evaluation(
 
     evaluation.update_status(status=Evaluation.EXECUTING_PREREQUISITES)
 
-    try:
-        # Method is expensive so only allow one process at a time
-        with cache.lock(
-            _cache_key_from_method(create_algorithm_jobs),
-            timeout=settings.CELERY_TASK_TIME_LIMIT,
-            blocking_timeout=10,
-        ):
-            jobs = create_algorithm_jobs(
-                algorithm_image=evaluation.submission.algorithm_image,
-                algorithm_model=evaluation.submission.algorithm_model,
-                civ_sets=[
-                    {*ai.values.all()}
-                    for ai in evaluation.submission.phase.archive.items.prefetch_related(
-                        "values__interface"
-                    )
-                ],
-                extra_viewer_groups=viewer_groups,
-                extra_logs_viewer_groups=viewer_groups,
-                task_on_success=task_on_success,
-                task_on_failure=task_on_failure,
-                max_jobs=max_jobs,
-                time_limit=evaluation.submission.phase.algorithm_time_limit,
-            )
-    except (TooManyJobsScheduled, LockError) as error:
-        logger.info(f"Retrying task due to: {error}")
-        retry_with_delay()
-        raise
+    # Method is expensive so only allow one process at a time
+    with cache.lock(
+        _cache_key_from_method(create_algorithm_jobs),
+        timeout=settings.CELERY_TASK_TIME_LIMIT,
+        blocking_timeout=10,
+    ):
+        jobs = create_algorithm_jobs(
+            algorithm_image=evaluation.submission.algorithm_image,
+            algorithm_model=evaluation.submission.algorithm_model,
+            civ_sets=[
+                {*ai.values.all()}
+                for ai in evaluation.submission.phase.archive.items.prefetch_related(
+                    "values__interface"
+                )
+            ],
+            extra_viewer_groups=viewer_groups,
+            extra_logs_viewer_groups=viewer_groups,
+            task_on_success=task_on_success,
+            task_on_failure=task_on_failure,
+            max_jobs=max_jobs,
+            time_limit=evaluation.submission.phase.algorithm_time_limit,
+        )
 
     if not jobs:
         # No more jobs created from this task, so everything must be
