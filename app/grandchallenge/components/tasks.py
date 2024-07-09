@@ -13,7 +13,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
-from celery import shared_task
+from celery import shared_task  # noqa: I251 TODO needs to be refactored
 from celery.exceptions import MaxRetriesExceededError
 from django.apps import apps
 from django.conf import settings
@@ -1051,7 +1051,8 @@ def add_image_to_component_interface_value(
         civ.image.update_viewer_groups_permissions()
 
 
-@shared_task
+@acks_late_micro_short_task
+@transaction.atomic
 def add_file_to_component_interface_value(
     *,
     component_interface_value_pk,
@@ -1072,17 +1073,17 @@ def add_file_to_component_interface_value(
         model_name=target_model,
     )
     error = None
-    with transaction.atomic():
-        try:
-            civ.validate_user_upload(user_upload)
-            civ.full_clean()
-        except ValidationError as e:
-            civ.delete()
-            error = format_validation_error_message(error=e)
-        else:
-            user_upload.copy_object(to_field=civ.file)
-            civ.save()
-            user_upload.delete()
+
+    try:
+        civ.validate_user_upload(user_upload)
+        civ.full_clean()
+    except ValidationError as e:
+        civ.delete()
+        error = format_validation_error_message(error=e)
+    else:
+        user_upload.copy_object(to_field=civ.file)
+        civ.save()
+        user_upload.delete()
 
     if error is not None:
         Notification.send(

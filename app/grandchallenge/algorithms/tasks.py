@@ -4,7 +4,7 @@ from typing import NamedTuple
 
 import boto3
 from botocore.exceptions import ClientError
-from celery import chain, group, shared_task
+from celery import chain, group
 from django.conf import settings
 from django.core.cache import cache
 from django.core.files.base import File
@@ -353,7 +353,8 @@ def filter_civs_for_algorithm(*, civ_sets, algorithm_image):
     return valid_job_inputs
 
 
-@shared_task
+@acks_late_micro_short_task
+@transaction.atomic
 def send_failed_job_notification(*, job_pk):
     job = Job.objects.get(pk=job_pk)
 
@@ -375,7 +376,7 @@ class ChallengeNameAndUrl(NamedTuple):
     get_absolute_url: str
 
 
-@shared_task
+@acks_late_2xlarge_task
 def update_associated_challenges():
     from grandchallenge.challenges.models import Challenge
 
@@ -390,6 +391,7 @@ def update_associated_challenges():
                 phase__submission__algorithm_image__algorithm=algorithm
             ).distinct()
         ]
+
     cache.set("challenges_for_algorithms", challenge_list, timeout=None)
 
 

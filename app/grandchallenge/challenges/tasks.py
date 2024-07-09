@@ -1,4 +1,3 @@
-from celery import shared_task
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Max
 
@@ -11,7 +10,7 @@ from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.evaluation.models import Evaluation, Phase
 
 
-@shared_task
+@acks_late_2xlarge_task
 def update_challenge_results_cache():
     challenges = Challenge.objects.all()
     evaluation_info = (
