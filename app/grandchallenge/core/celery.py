@@ -58,11 +58,26 @@ class AcksLateTaskDecorator:
     def __call__(
         self,
         func=None,
+        *,
         ignore_result=False,
         retry_on=(),
         ignore_errors=(),
         singleton=False,
     ):
+        """
+        Decorator for Celery tasks that sets the queue and acks_late options
+
+        Args
+        ----
+            func: The function to decorate
+
+        Keyword Args
+        ------------
+            ignore_result: If the task should ignore the result
+            retry_on: A tuple of exceptions that should trigger a retry on the delay queue
+            ignore_errors: A tuple of exceptions that should be ignored
+            singleton: If the task should be run as a singleton (only one concurrent execution at a time)
+        """
         if func is None:
             # Called as @decorator(**extra_kwargs)
             return lambda func: self._decorator(
