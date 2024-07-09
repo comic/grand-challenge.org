@@ -1,5 +1,4 @@
 from celery import shared_task
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Max
 
@@ -8,6 +7,7 @@ from grandchallenge.challenges.costs import (
     annotate_job_duration_and_compute_costs,
 )
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.evaluation.models import Evaluation, Phase
 
 
@@ -56,7 +56,7 @@ def update_challenge_results_cache():
     )
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def update_compute_costs_and_storage_size():
     challenges = Challenge.objects.all()
 

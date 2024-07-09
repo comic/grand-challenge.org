@@ -4,7 +4,6 @@ from datetime import timedelta
 
 import boto3
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
-from celery import shared_task
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
@@ -16,6 +15,7 @@ from redis.exceptions import LockError
 
 from grandchallenge.components.tasks import _retry
 from grandchallenge.core.cache import _cache_key_from_method
+from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.emails.emails import send_standard_email_batch
 from grandchallenge.emails.models import Email, RawEmail
 from grandchallenge.emails.utils import SendActionChoices
@@ -76,7 +76,7 @@ def get_receivers(action):
     return receivers
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task
 def send_bulk_email(*, action, email_pk, retries=0):
     try:
         with cache.lock(
@@ -137,10 +137,7 @@ def _send_bulk_email(*, action, email_pk):
     email.save()
 
 
-@shared_task(
-    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"],
-    ignore_result=True,
-)
+@acks_late_micro_short_task(ignore_result=True)
 def send_raw_emails():
     try:
         with cache.lock(
@@ -195,7 +192,7 @@ def _send_raw_emails():
             time.sleep((min_send_duration - elapsed).total_seconds())
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task
 def cleanup_sent_raw_emails():
     RawEmail.objects.filter(
         sent_at__isnull=False,

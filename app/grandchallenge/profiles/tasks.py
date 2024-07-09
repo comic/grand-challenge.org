@@ -1,6 +1,5 @@
 from datetime import timedelta
 
-from celery import shared_task
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sessions.models import Session
@@ -8,8 +7,10 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from django.utils.timezone import now
 
+from grandchallenge.core.celery import acks_late_micro_short_task
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+
+@acks_late_micro_short_task
 def deactivate_user(*, user_pk):
     user = (
         get_user_model().objects.select_related("verification").get(pk=user_pk)
@@ -37,7 +38,7 @@ def deactivate_user(*, user_pk):
                 s.delete()
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task
 def delete_users_who_dont_login():
     """Remove users who do not sign in after USER_LOGIN_TIMEOUT_DAYS"""
     get_user_model().objects.exclude(

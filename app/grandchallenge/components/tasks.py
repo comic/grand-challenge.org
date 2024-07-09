@@ -36,6 +36,10 @@ from grandchallenge.components.backends.exceptions import (
 from grandchallenge.components.emails import send_invalid_dockerfile_email
 from grandchallenge.components.exceptions import PriorStepFailed
 from grandchallenge.components.registry import _get_registry_auth_config
+from grandchallenge.core.celery import (
+    acks_late_2xlarge_task,
+    acks_late_micro_short_task,
+)
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.utils.error_messages import (
     format_validation_error_message,
@@ -48,7 +52,7 @@ logger = logging.getLogger(__name__)
 MAX_RETRIES = 60 * 24  # 1 day assuming 60 seconds delay
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 @transaction.atomic
 def update_all_container_image_shims():
     """Updates existing images to new versions of sagemaker shim"""
@@ -72,7 +76,7 @@ def update_all_container_image_shims():
             )
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def assign_docker_image_from_upload(
     *, pk: uuid.UUID, app_label: str, model_name: str
 ):
@@ -84,7 +88,7 @@ def assign_docker_image_from_upload(
         instance.user_upload.delete()
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def validate_docker_image(  # noqa C901
     *, pk: uuid.UUID, app_label: str, model_name: str, mark_as_desired: bool
 ):
@@ -120,7 +124,7 @@ def validate_docker_image(  # noqa C901
     )
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def upload_to_registry_and_sagemaker(
     *, pk: uuid.UUID, app_label: str, model_name: str, mark_as_desired: bool
 ):
@@ -157,7 +161,7 @@ def upload_to_registry_and_sagemaker(
         instance.mark_desired_version()
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def update_container_image_shim(
     *,
     pk: uuid.UUID,
@@ -185,7 +189,7 @@ def update_container_image_shim(
         instance.save()
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def remove_inactive_container_images():
     """Removes inactive container images from the registry"""
     for app_label, model_name, related_name in (
@@ -215,7 +219,7 @@ def remove_inactive_container_images():
                     )
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def remove_container_image_from_registry(
     *, pk: uuid.UUID, app_label: str, model_name: str
 ):
@@ -595,7 +599,7 @@ def get_model_instance(*, app_label, model_name, **kwargs):
     return model.objects.get(**kwargs)
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def provision_job(
     *, job_pk: uuid.UUID, job_app_label: str, job_model_name: str, backend: str
 ):
@@ -666,7 +670,7 @@ def _retry(*, task, signature_kwargs, retries):
         raise MaxRetriesExceededError
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task
 def execute_job(  # noqa: C901
     *,
     job_pk: uuid.UUID,
@@ -785,7 +789,7 @@ def get_update_status_kwargs(*, executor=None):
         return {}
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task
 @transaction.atomic
 def handle_event(*, event, backend, retries=0):  # noqa: C901
     """
@@ -882,7 +886,7 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
         )
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def parse_job_outputs(
     *, job_pk: uuid.UUID, job_app_label: str, job_model_name: str, backend: str
 ):
@@ -918,7 +922,7 @@ def parse_job_outputs(
         job.update_status(status=job.SUCCESS)
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task
 def retry_task(
     *,
     job_pk: uuid.UUID,
@@ -958,7 +962,7 @@ def retry_task(
             raise RuntimeError("Maximum attempts exceeded")
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task
 def deprovision_job(
     *,
     job_pk: uuid.UUID,
@@ -1019,9 +1023,7 @@ def stop_expired_services(*, app_label: str, model_name: str, region: str):
     return [str(s) for s in services_to_stop]
 
 
-@shared_task(
-    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"],
-)
+@acks_late_micro_short_task
 def add_image_to_component_interface_value(
     *, component_interface_value_pk, upload_session_pk
 ):
@@ -1094,7 +1096,7 @@ def add_file_to_component_interface_value(
         )
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def civ_value_to_file(*, civ_pk):
     with transaction.atomic():
         civ = get_model_instance(
@@ -1114,7 +1116,7 @@ def civ_value_to_file(*, civ_pk):
         civ.save()
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def validate_voxel_values(*, civ_pk):
     civ = get_model_instance(
         pk=civ_pk,
@@ -1141,9 +1143,7 @@ def validate_voxel_values(*, civ_pk):
     civ.interface._validate_voxel_values(civ.image)
 
 
-@shared_task(
-    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"],
-)
+@acks_late_micro_short_task
 @transaction.atomic
 def add_image_to_object(
     *,
@@ -1193,7 +1193,7 @@ def add_image_to_object(
     object.values.add(civ)
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task
 @transaction.atomic
 def add_file_to_object(
     *,
@@ -1244,7 +1244,7 @@ def add_file_to_object(
         )
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 @transaction.atomic
 def assign_tarball_from_upload(
     *, app_label, model_name, tarball_pk, field_to_copy, retries=0

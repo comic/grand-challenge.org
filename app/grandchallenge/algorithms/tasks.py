@@ -24,6 +24,10 @@ from grandchallenge.components.tasks import (
     add_image_to_component_interface_value,
 )
 from grandchallenge.core.cache import _cache_key_from_method
+from grandchallenge.core.celery import (
+    acks_late_2xlarge_task,
+    acks_late_micro_short_task,
+)
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.credits.models import Credit
 from grandchallenge.notifications.models import Notification, NotificationType
@@ -32,7 +36,7 @@ from grandchallenge.subdomains.utils import reverse
 logger = logging.getLogger(__name__)
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task
 @transaction.atomic
 def run_algorithm_job_for_inputs(
     *, job_pk, upload_session_pks, user_upload_pks
@@ -84,7 +88,7 @@ def run_algorithm_job_for_inputs(
     on_commit(canvas.apply_async)
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task
 @transaction.atomic
 def execute_algorithm_job_for_inputs(*, job_pk):
     job = Job.objects.get(pk=job_pk)
@@ -116,9 +120,7 @@ def execute_algorithm_job_for_inputs(*, job_pk):
         )
 
 
-@shared_task(
-    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"],
-)
+@acks_late_micro_short_task
 @transaction.atomic
 def execute_algorithm_job(*, job_pk, retries=0):
     def retry_with_delay():
@@ -142,12 +144,11 @@ def execute_algorithm_job(*, job_pk, retries=0):
         on_commit(job.execute)
 
 
-@shared_task(
-    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"],
+@acks_late_2xlarge_task(
     throws=(
         TooManyJobsScheduled,
         LockError,
-    ),
+    )
 )
 def create_algorithm_jobs_for_archive(
     *, archive_pks, archive_item_pks=None, algorithm_pks=None, retries=0
@@ -392,7 +393,7 @@ def update_associated_challenges():
     cache.set("challenges_for_algorithms", challenge_list, timeout=None)
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def import_remote_algorithm_image(*, remote_bucket_name, algorithm_image_pk):
     algorithm_image = AlgorithmImage.objects.get(pk=algorithm_image_pk)
 
@@ -446,7 +447,7 @@ def import_remote_algorithm_image(*, remote_bucket_name, algorithm_image_pk):
             algorithm_image.image.save(filename, File(f))
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def set_credits_per_job():
     default_credits_per_month = Credit._meta.get_field("credits").get_default()
     default_credits_per_job = Algorithm._meta.get_field(

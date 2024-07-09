@@ -957,25 +957,10 @@ CORS_ALLOW_CREDENTIALS = True
 #
 ###############################################################################
 
-CELERY_TASK_DECORATOR_KWARGS = {
-    "acks-late-2xlarge": {
-        # For idempotent tasks that take a long time (<7200s)
-        # or require a large amount of memory
-        "acks_late": True,
-        "reject_on_worker_lost": True,
-        "queue": "acks-late-2xlarge",
-    },
-    "acks-late-micro-short": {
-        # For idempotent tasks that take a short time (<300s)
-        # and do not require a large amount of memory
-        "acks_late": True,
-        "reject_on_worker_lost": True,
-        "queue": "acks-late-micro-short",
-    },
-}
 CELERY_SOLO_QUEUES = {
-    *{q["queue"] for q in CELERY_TASK_DECORATOR_KWARGS.values()},
-    *{f"{q['queue']}-delay" for q in CELERY_TASK_DECORATOR_KWARGS.values()},
+    element
+    for queue in {"acks-late-2xlarge", "acks-late-micro-short"}
+    for element in {queue, f"{queue}-delay"}
 }
 ECS_ENABLE_CELERY_SCALE_IN_PROTECTION = strtobool(
     os.environ.get("ECS_ENABLE_CELERY_SCALE_IN_PROTECTION", "False"),

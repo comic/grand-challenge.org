@@ -1,5 +1,3 @@
-from celery import shared_task
-from django.conf import settings
 from django.db import transaction
 from django.db.transaction import on_commit
 
@@ -12,9 +10,10 @@ from grandchallenge.components.models import (
 from grandchallenge.components.tasks import (
     add_image_to_component_interface_value,
 )
+from grandchallenge.core.celery import acks_late_micro_short_task
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task
 def add_images_to_archive(*, upload_session_pk, archive_pk, interface_pk=None):
     with transaction.atomic():
         images = Image.objects.filter(origin_id=upload_session_pk)
@@ -42,7 +41,7 @@ def add_images_to_archive(*, upload_session_pk, archive_pk, interface_pk=None):
             item.values.set([civ])
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task
 def add_images_to_archive_item(
     *, upload_session_pk, archive_item_pk, interface_pk
 ):
