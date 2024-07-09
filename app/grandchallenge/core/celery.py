@@ -28,16 +28,17 @@ class AcksLateTaskDecorator:
 
     def _decorator(self, *, func, ignore_result, throws):
 
-        @shared_task(
+        task_func = shared_task(
             acks_late=True,
             reject_on_worker_lost=True,
             queue=self.queue,
             ignore_result=ignore_result,
             throws=throws,
-        )
+        )(func)
+
         @wraps(func)
         def wrapper(*args, **kwargs):
-            return func(*args, **kwargs)
+            return task_func(*args, **kwargs)
 
         return wrapper
 
