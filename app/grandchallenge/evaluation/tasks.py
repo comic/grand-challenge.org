@@ -4,12 +4,10 @@ from statistics import mean, median
 
 from django.apps import apps
 from django.conf import settings
-from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count, Q
 from django.db.transaction import on_commit
-from redis.exceptions import LockError
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 from grandchallenge.algorithms.models import Job
@@ -18,7 +16,6 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
-from grandchallenge.core.cache import _cache_key_from_method
 from grandchallenge.core.celery import (
     acks_late_2xlarge_task,
     acks_late_micro_short_task,
@@ -130,7 +127,7 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):
         raise RuntimeError("No algorithm or predictions file found")
 
 
-@acks_late_2xlarge_task(retry_on=(TooManyJobsScheduled, LockError))
+@acks_late_2xlarge_task(retry_on=(TooManyJobsScheduled,), singleton=True)
 def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
     """
     Creates the algorithm jobs for the evaluation
@@ -196,28 +193,22 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
 
     evaluation.update_status(status=Evaluation.EXECUTING_PREREQUISITES)
 
-    # Method is expensive so only allow one process at a time
-    with cache.lock(
-        _cache_key_from_method(create_algorithm_jobs),
-        timeout=settings.CELERY_TASK_TIME_LIMIT,
-        blocking_timeout=10,
-    ):
-        jobs = create_algorithm_jobs(
-            algorithm_image=evaluation.submission.algorithm_image,
-            algorithm_model=evaluation.submission.algorithm_model,
-            civ_sets=[
-                {*ai.values.all()}
-                for ai in evaluation.submission.phase.archive.items.prefetch_related(
-                    "values__interface"
-                )
-            ],
-            extra_viewer_groups=viewer_groups,
-            extra_logs_viewer_groups=viewer_groups,
-            task_on_success=task_on_success,
-            task_on_failure=task_on_failure,
-            max_jobs=max_jobs,
-            time_limit=evaluation.submission.phase.algorithm_time_limit,
-        )
+    jobs = create_algorithm_jobs(
+        algorithm_image=evaluation.submission.algorithm_image,
+        algorithm_model=evaluation.submission.algorithm_model,
+        civ_sets=[
+            {*ai.values.all()}
+            for ai in evaluation.submission.phase.archive.items.prefetch_related(
+                "values__interface"
+            )
+        ],
+        extra_viewer_groups=viewer_groups,
+        extra_logs_viewer_groups=viewer_groups,
+        task_on_success=task_on_success,
+        task_on_failure=task_on_failure,
+        max_jobs=max_jobs,
+        time_limit=evaluation.submission.phase.algorithm_time_limit,
+    )
 
     if not jobs:
         # No more jobs created from this task, so everything must be

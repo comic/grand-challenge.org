@@ -7,13 +7,11 @@ from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
-from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from django.utils.timezone import now
 from redis.exceptions import LockError
 
-from grandchallenge.core.cache import _cache_key_from_method
 from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.emails.emails import send_standard_email_batch
 from grandchallenge.emails.models import Email, RawEmail
@@ -76,18 +74,10 @@ def get_receivers(action):
 
 
 @acks_late_micro_short_task(
-    retry_on=(LockError, SoftTimeLimitExceeded, TimeLimitExceeded)
+    retry_on=(SoftTimeLimitExceeded, TimeLimitExceeded),
+    singleton=True,
 )
 def send_bulk_email(*, action, email_pk):
-    with cache.lock(
-        _cache_key_from_method(send_bulk_email),
-        timeout=settings.CELERY_TASK_TIME_LIMIT,
-        blocking_timeout=1,
-    ):
-        _send_bulk_email(action=action, email_pk=email_pk)
-
-
-def _send_bulk_email(*, action, email_pk):
     try:
         email = Email.objects.filter(sent=False).get(pk=email_pk)
     except ObjectDoesNotExist:
@@ -124,21 +114,13 @@ def _send_bulk_email(*, action, email_pk):
     email.save()
 
 
-@acks_late_micro_short_task(ignore_result=True)
+@acks_late_micro_short_task(
+    ignore_result=True,
+    singleton=True,
+    # No need to retry here as the periodic task call this again
+    ignore_errors=(LockError, SoftTimeLimitExceeded, TimeLimitExceeded),
+)
 def send_raw_emails():
-    try:
-        with cache.lock(
-            _cache_key_from_method(send_raw_emails),
-            timeout=settings.CELERY_TASK_TIME_LIMIT,
-            blocking_timeout=1,
-        ):
-            _send_raw_emails()
-    except (LockError, SoftTimeLimitExceeded, TimeLimitExceeded) as error:
-        # No need to retry here as the periodic task call this again
-        logger.info(f"send_raw_emails failed with: {error}")
-
-
-def _send_raw_emails():
     if settings.DEBUG:
         client = None
         min_send_duration = timedelta(seconds=1)

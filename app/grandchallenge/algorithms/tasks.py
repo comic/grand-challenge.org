@@ -12,7 +12,6 @@ from django.db import transaction
 from django.db.models import Count, Q
 from django.db.transaction import on_commit
 from django.utils._os import safe_join
-from redis.exceptions import LockError
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
@@ -22,7 +21,6 @@ from grandchallenge.components.tasks import (
     add_file_to_component_interface_value,
     add_image_to_component_interface_value,
 )
-from grandchallenge.core.cache import _cache_key_from_method
 from grandchallenge.core.celery import (
     acks_late_2xlarge_task,
     acks_late_micro_short_task,
@@ -129,7 +127,7 @@ def execute_algorithm_job(*, job_pk):
         on_commit(job.execute)
 
 
-@acks_late_2xlarge_task(retry_on=(TooManyJobsScheduled, LockError))
+@acks_late_2xlarge_task(retry_on=(TooManyJobsScheduled,), singleton=True)
 def create_algorithm_jobs_for_archive(
     *,
     archive_pks,
@@ -160,25 +158,20 @@ def create_algorithm_jobs_for_archive(
 
         for algorithm in algorithms:
             if algorithm.active_image:
-                with cache.lock(
-                    _cache_key_from_method(create_algorithm_jobs),
-                    timeout=settings.CELERY_TASK_TIME_LIMIT,
-                    blocking_timeout=10,
-                ):
-                    create_algorithm_jobs(
-                        algorithm_image=algorithm.active_image,
-                        algorithm_model=algorithm.active_model,
-                        civ_sets=[
-                            {*ai.values.all()}
-                            for ai in archive_items.prefetch_related(
-                                "values__interface"
-                            )
-                        ],
-                        extra_viewer_groups=archive_groups,
-                        # NOTE: no emails in case the logs leak data
-                        # to the algorithm editors
-                        task_on_success=None,
-                    )
+                create_algorithm_jobs(
+                    algorithm_image=algorithm.active_image,
+                    algorithm_model=algorithm.active_model,
+                    civ_sets=[
+                        {*ai.values.all()}
+                        for ai in archive_items.prefetch_related(
+                            "values__interface"
+                        )
+                    ],
+                    extra_viewer_groups=archive_groups,
+                    # NOTE: no emails in case the logs leak data
+                    # to the algorithm editors
+                    task_on_success=None,
+                )
 
 
 def create_algorithm_jobs(

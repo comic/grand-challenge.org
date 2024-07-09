@@ -4,7 +4,9 @@ from functools import wraps
 from celery import shared_task  # noqa: I251 Usage allowed here
 from celery.exceptions import MaxRetriesExceededError
 from django.conf import settings
+from django.core.cache import cache
 from django.db.transaction import on_commit
+from redis.exceptions import LockError
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +41,10 @@ def _retry(*, task, signature_kwargs, retries):
         raise MaxRetriesExceededError
 
 
+def _cache_key_from_method(method):
+    return f"lock.{method.__module__}.{method.__name__}"
+
+
 class AcksLateTaskDecorator:
     def __init__(self, queue):
         if queue not in settings.CELERY_SOLO_QUEUES:
@@ -49,13 +55,22 @@ class AcksLateTaskDecorator:
 
         self.queue = queue
 
-    def __call__(self, func=None, ignore_result=False, retry_on=None):
+    def __call__(
+        self,
+        func=None,
+        ignore_result=False,
+        retry_on=(),
+        ignore_errors=(),
+        singleton=False,
+    ):
         if func is None:
             # Called as @decorator(**extra_kwargs)
             return lambda func: self._decorator(
                 func=func,
                 ignore_result=ignore_result,
                 retry_on=retry_on,
+                ignore_errors=ignore_errors,
+                singleton=singleton,
             )
         else:
             # Called as @decorator or @decorator(func)
@@ -63,31 +78,46 @@ class AcksLateTaskDecorator:
                 func=func,
                 ignore_result=ignore_result,
                 retry_on=retry_on,
+                ignore_errors=ignore_errors,
+                singleton=singleton,
             )
 
-    def _decorator(self, *, func, ignore_result, retry_on):
-
+    def _decorator(
+        self, *, func, ignore_result, retry_on, ignore_errors, singleton
+    ):
         @wraps(func)
         def wrapper(*args, _retries=0, **kwargs):
-            def _retry_this():
-                _retry(
-                    task=task_func,
-                    signature_kwargs={
-                        "args": args,
-                        "kwargs": kwargs,
-                        "immutable": True,
-                    },
-                    retries=_retries,
-                )
-
             try:
-                return func(*args, **kwargs)
+                if singleton:
+                    with cache.lock(
+                        _cache_key_from_method(func),
+                        timeout=settings.CELERY_TASK_TIME_LIMIT,
+                        blocking_timeout=5,
+                    ):
+                        return func(*args, **kwargs)
+                else:
+                    return func(*args, **kwargs)
             except Exception as error:
-                if retry_on and any(isinstance(error, e) for e in retry_on):
+                if any(isinstance(error, e) for e in ignore_errors):
+                    logger.info(
+                        f"Ignoring error in task {task_func.name}: {error}"
+                    )
+                    return
+                elif any(isinstance(error, e) for e in retry_on) or (
+                    singleton and isinstance(error, LockError)
+                ):
                     logger.info(
                         f"Retrying task {task_func.name} due to error: {error}, {_retries=}"
                     )
-                    return _retry_this()
+                    return _retry(
+                        task=task_func,
+                        signature_kwargs={
+                            "args": args,
+                            "kwargs": kwargs,
+                            "immutable": True,
+                        },
+                        retries=_retries,
+                    )
                 else:
                     raise error
 
