@@ -1,6 +1,6 @@
 from functools import wraps
 
-from celery import shared_task
+from celery import shared_task  # noqa: I251 Usage allowed here
 from django.conf import settings
 
 
