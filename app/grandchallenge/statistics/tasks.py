@@ -1,4 +1,3 @@
-from celery import shared_task
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -9,12 +8,13 @@ from grandchallenge.algorithms.models import Algorithm, Job
 from grandchallenge.archives.models import Archive
 from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.evaluation.models import Submission
 from grandchallenge.reader_studies.models import Answer, ReaderStudy
 from grandchallenge.workstations.models import Session
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task
 def update_site_statistics_cache():
     public_challenges = Challenge.objects.filter(hidden=False)
 

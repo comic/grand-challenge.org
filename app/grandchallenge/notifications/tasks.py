@@ -1,15 +1,14 @@
-from celery import shared_task
-from django.conf import settings
 from django.contrib.sites.models import Site
 from django.db.models import Count, F, Q
 
+from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.profiles.models import (
     NotificationEmailOptions,
     UserProfile,
 )
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task
 def send_unread_notification_emails():
     site = Site.objects.get_current()
 

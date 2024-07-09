@@ -13,8 +13,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
-from celery import shared_task
-from celery.exceptions import MaxRetriesExceededError
+from celery import shared_task  # noqa: I251 TODO needs to be refactored
 from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -36,6 +35,10 @@ from grandchallenge.components.backends.exceptions import (
 from grandchallenge.components.emails import send_invalid_dockerfile_email
 from grandchallenge.components.exceptions import PriorStepFailed
 from grandchallenge.components.registry import _get_registry_auth_config
+from grandchallenge.core.celery import (
+    acks_late_2xlarge_task,
+    acks_late_micro_short_task,
+)
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.utils.error_messages import (
     format_validation_error_message,
@@ -45,10 +48,8 @@ from grandchallenge.uploads.models import UserUpload
 
 logger = logging.getLogger(__name__)
 
-MAX_RETRIES = 60 * 24  # 1 day assuming 60 seconds delay
 
-
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 @transaction.atomic
 def update_all_container_image_shims():
     """Updates existing images to new versions of sagemaker shim"""
@@ -72,7 +73,7 @@ def update_all_container_image_shims():
             )
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def assign_docker_image_from_upload(
     *, pk: uuid.UUID, app_label: str, model_name: str
 ):
@@ -84,7 +85,7 @@ def assign_docker_image_from_upload(
         instance.user_upload.delete()
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def validate_docker_image(  # noqa C901
     *, pk: uuid.UUID, app_label: str, model_name: str, mark_as_desired: bool
 ):
@@ -120,7 +121,7 @@ def validate_docker_image(  # noqa C901
     )
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def upload_to_registry_and_sagemaker(
     *, pk: uuid.UUID, app_label: str, model_name: str, mark_as_desired: bool
 ):
@@ -157,7 +158,7 @@ def upload_to_registry_and_sagemaker(
         instance.mark_desired_version()
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def update_container_image_shim(
     *,
     pk: uuid.UUID,
@@ -185,7 +186,7 @@ def update_container_image_shim(
         instance.save()
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def remove_inactive_container_images():
     """Removes inactive container images from the registry"""
     for app_label, model_name, related_name in (
@@ -215,7 +216,7 @@ def remove_inactive_container_images():
                     )
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def remove_container_image_from_registry(
     *, pk: uuid.UUID, app_label: str, model_name: str
 ):
@@ -595,7 +596,7 @@ def get_model_instance(*, app_label, model_name, **kwargs):
     return model.objects.get(**kwargs)
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def provision_job(
     *, job_pk: uuid.UUID, job_app_label: str, job_model_name: str, backend: str
 ):
@@ -632,48 +633,13 @@ def provision_job(
         on_commit(execute_job.signature(**job.signature_kwargs).apply_async)
 
 
-def _delay(*, task, signature_kwargs):
-    """Create a task signature for the delay queue"""
-    step = task.signature(**signature_kwargs)
-    queue = step.options.get("queue", task.queue)
-    step.options["queue"] = f"{queue}-delay"
-    return step
-
-
-def _retry(*, task, signature_kwargs, retries):
-    """
-    Retry a task using the delay queue
-
-    We need to retry a task with a delay/countdown. There are several problems
-    with doing this in Celery (with SQS/Redis).
-
-    - If a countdown is used the delay features of SQS are not used
-      https://github.com/celery/kombu/issues/1074
-    - A countdown that needs to be done on the worker results backlogs
-      https://github.com/celery/celery/issues/2541
-    - The backlogs can still occur even if the countdown/eta is set to zero
-      https://github.com/celery/celery/issues/6929
-
-    This method is a workaround for these issues, that creates a new task
-    and places this on a queue which has DelaySeconds set. The downside
-    is that we need to track retries via the kwargs of the task.
-    """
-    if retries < MAX_RETRIES:
-        step = _delay(task=task, signature_kwargs=signature_kwargs)
-        step.kwargs["retries"] = retries + 1
-        on_commit(step.apply_async)
-    else:
-        raise MaxRetriesExceededError
-
-
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task(retry_on=(RetryStep,))
 def execute_job(  # noqa: C901
     *,
     job_pk: uuid.UUID,
     job_app_label: str,
     job_model_name: str,
     backend: str,
-    retries: int = 0,
 ):
     """
     Executes the component job, can block with some backends.
@@ -711,21 +677,7 @@ def execute_job(  # noqa: C901
         )
     except RetryStep:
         job.update_status(status=job.PROVISIONED)
-        try:
-            _retry(
-                task=execute_job,
-                signature_kwargs=job.signature_kwargs,
-                retries=retries,
-            )
-            return
-        except MaxRetriesExceededError:
-            job.update_status(
-                status=job.FAILURE,
-                stdout=executor.stdout,
-                stderr=executor.stderr,
-                error_message="Time limit exceeded",
-            )
-            raise
+        raise
     except ComponentException as e:
         job = get_model_instance(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name
@@ -785,9 +737,9 @@ def get_update_status_kwargs(*, executor=None):
         return {}
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task(retry_on=(RetryStep,))
 @transaction.atomic
-def handle_event(*, event, backend, retries=0):  # noqa: C901
+def handle_event(*, event, backend):  # noqa: C901
     """
     Receives events when tasks have stops and determines what to do next.
     In the case of transient failure the job could be scheduled again
@@ -813,30 +765,11 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
         attempt=job_params.attempt,
     ).select_for_update(nowait=True)
 
-    def retry_handle_event(*, _executor=None):
-        try:
-            _retry(
-                task=handle_event,
-                signature_kwargs={
-                    "kwargs": {"event": event, "backend": backend}
-                },
-                retries=retries,
-            )
-        except MaxRetriesExceededError:
-            job.update_status(
-                status=job.FAILURE,
-                error_message="An unexpected error occurred",
-                **get_update_status_kwargs(executor=_executor),
-            )
-            raise
-
     try:
         # Acquire the lock
         job = queryset.get()
-    except OperationalError:
-        # Could not acquire locks
-        retry_handle_event()
-        return
+    except OperationalError as e:
+        raise RetryStep from e
 
     executor = job.get_executor(backend=backend)
 
@@ -852,12 +785,10 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
         )
         return
     except RetryStep:
-        retry_handle_event(_executor=executor)
-        return
+        raise
     except RetryTask:
         job.update_status(status=job.PROVISIONED)
-        step = _delay(task=retry_task, signature_kwargs=job.signature_kwargs)
-        on_commit(step.apply_async)
+        on_commit(retry_task.apply_async(kwargs=job.signature_kwargs))
     except ComponentException as e:
         job.update_status(
             status=job.FAILURE,
@@ -882,7 +813,7 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
         )
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def parse_job_outputs(
     *, job_pk: uuid.UUID, job_app_label: str, job_model_name: str, backend: str
 ):
@@ -918,14 +849,13 @@ def parse_job_outputs(
         job.update_status(status=job.SUCCESS)
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task(retry_on=(RetryStep,))
 def retry_task(
     *,
     job_pk: uuid.UUID,
     job_app_label: str,
     job_model_name: str,
     backend: str,
-    retries: int = 0,
 ):
     """Retries an existing task that was previously provisioned"""
     job = get_model_instance(
@@ -936,14 +866,7 @@ def retry_task(
     if job.status != job.PROVISIONED:
         raise PriorStepFailed("Job is not provisioned")
 
-    try:
-        executor.deprovision()
-    except RetryStep:
-        _retry(
-            task=retry_task,
-            signature_kwargs=job.signature_kwargs,
-            retries=retries,
-        )
+    executor.deprovision()
 
     with transaction.atomic():
         if job.attempt < 99:
@@ -958,28 +881,20 @@ def retry_task(
             raise RuntimeError("Maximum attempts exceeded")
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task(retry_on=(RetryStep,))
 def deprovision_job(
     *,
     job_pk: uuid.UUID,
     job_app_label: str,
     job_model_name: str,
     backend: str,
-    retries: int = 0,
 ):
     job = get_model_instance(
         pk=job_pk, app_label=job_app_label, model_name=job_model_name
     )
-    executor = job.get_executor(backend=backend)
 
-    try:
-        executor.deprovision()
-    except RetryStep:
-        _retry(
-            task=deprovision_job,
-            signature_kwargs=job.signature_kwargs,
-            retries=retries,
-        )
+    executor = job.get_executor(backend=backend)
+    executor.deprovision()
 
 
 @shared_task
@@ -1019,9 +934,7 @@ def stop_expired_services(*, app_label: str, model_name: str, region: str):
     return [str(s) for s in services_to_stop]
 
 
-@shared_task(
-    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"],
-)
+@acks_late_micro_short_task
 def add_image_to_component_interface_value(
     *, component_interface_value_pk, upload_session_pk
 ):
@@ -1049,7 +962,8 @@ def add_image_to_component_interface_value(
         civ.image.update_viewer_groups_permissions()
 
 
-@shared_task
+@acks_late_micro_short_task
+@transaction.atomic
 def add_file_to_component_interface_value(
     *,
     component_interface_value_pk,
@@ -1070,17 +984,17 @@ def add_file_to_component_interface_value(
         model_name=target_model,
     )
     error = None
-    with transaction.atomic():
-        try:
-            civ.validate_user_upload(user_upload)
-            civ.full_clean()
-        except ValidationError as e:
-            civ.delete()
-            error = format_validation_error_message(error=e)
-        else:
-            user_upload.copy_object(to_field=civ.file)
-            civ.save()
-            user_upload.delete()
+
+    try:
+        civ.validate_user_upload(user_upload)
+        civ.full_clean()
+    except ValidationError as e:
+        civ.delete()
+        error = format_validation_error_message(error=e)
+    else:
+        user_upload.copy_object(to_field=civ.file)
+        civ.save()
+        user_upload.delete()
 
     if error is not None:
         Notification.send(
@@ -1094,7 +1008,7 @@ def add_file_to_component_interface_value(
         )
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def civ_value_to_file(*, civ_pk):
     with transaction.atomic():
         civ = get_model_instance(
@@ -1114,7 +1028,7 @@ def civ_value_to_file(*, civ_pk):
         civ.save()
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def validate_voxel_values(*, civ_pk):
     civ = get_model_instance(
         pk=civ_pk,
@@ -1141,9 +1055,7 @@ def validate_voxel_values(*, civ_pk):
     civ.interface._validate_voxel_values(civ.image)
 
 
-@shared_task(
-    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"],
-)
+@acks_late_micro_short_task
 @transaction.atomic
 def add_image_to_object(
     *,
@@ -1193,7 +1105,7 @@ def add_image_to_object(
     object.values.add(civ)
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task
 @transaction.atomic
 def add_file_to_object(
     *,
@@ -1244,10 +1156,10 @@ def add_file_to_object(
         )
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task(retry_on=(RetryStep,))
 @transaction.atomic
 def assign_tarball_from_upload(
-    *, app_label, model_name, tarball_pk, field_to_copy, retries=0
+    *, app_label, model_name, tarball_pk, field_to_copy
 ):
     from grandchallenge.components.models import ImportStatusChoices
 
@@ -1255,8 +1167,8 @@ def assign_tarball_from_upload(
         app_label=app_label, model_name=model_name
     )
 
+    # try to acquire lock
     try:
-        # try to acquire lock
         current_tarball = (
             TarballModel.objects.filter(pk=tarball_pk)
             .select_for_update(nowait=True)
@@ -1265,22 +1177,8 @@ def assign_tarball_from_upload(
         peer_tarballs = current_tarball.get_peer_tarballs().select_for_update(
             nowait=True
         )
-    except OperationalError:
-        # failed to acquire lock
-        _retry(
-            task=assign_tarball_from_upload,
-            signature_kwargs={
-                "kwargs": {
-                    "app_label": app_label,
-                    "model_name": model_name,
-                    "tarball_pk": tarball_pk,
-                    "field_to_copy": field_to_copy,
-                },
-                "immutable": True,
-            },
-            retries=retries,
-        )
-        return
+    except OperationalError as e:
+        raise RetryStep from e
 
     current_tarball.user_upload.copy_object(
         to_field=getattr(current_tarball, field_to_copy)

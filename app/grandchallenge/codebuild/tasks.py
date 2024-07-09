@@ -1,14 +1,16 @@
-from celery import shared_task
 from django.apps import apps
-from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.transaction import on_commit
 
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage
+from grandchallenge.core.celery import (
+    acks_late_2xlarge_task,
+    acks_late_micro_short_task,
+)
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task
 @transaction.atomic
 def create_codebuild_build(*, pk):
     GitHubWebhookMessage = apps.get_model(  # noqa: N806
@@ -40,7 +42,7 @@ def create_codebuild_build(*, pk):
     Build.objects.create(webhook_message=ghwm, algorithm_image=algorithm_image)
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task
 @transaction.atomic
 def handle_completed_build_event(*, build_arn, build_status):
     build_id = build_arn.split("/")[-1]
@@ -68,7 +70,7 @@ def handle_completed_build_event(*, build_arn, build_status):
         )
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def add_image_to_algorithm(*, build_pk):
     Build = apps.get_model(  # noqa: N806
         app_label="codebuild", model_name="Build"

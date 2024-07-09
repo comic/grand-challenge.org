@@ -1,9 +1,8 @@
-from celery import shared_task
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 from django.db.models import Count, F, Q
 
+from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.profiles.models import NotificationEmailOptions
 
 
@@ -48,7 +47,7 @@ def get_new_senders(*, user):
     return sorted(list(new_senders), key=lambda s: s.pk)
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task
 def send_new_unread_direct_messages_emails():
     site = Site.objects.get_current()
 

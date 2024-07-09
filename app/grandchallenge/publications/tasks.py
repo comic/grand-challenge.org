@@ -1,15 +1,14 @@
 import logging
 
-from celery import shared_task
-from django.conf import settings
 from requests.exceptions import RequestException
 
+from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.publications.models import Publication
 
 logger = logging.getLogger(__name__)
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def update_publication_metadata():
     pks_to_delete = []
 

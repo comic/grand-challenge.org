@@ -2,15 +2,12 @@ import logging
 import uuid
 from statistics import mean, median
 
-from celery import shared_task
 from django.apps import apps
 from django.conf import settings
-from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count, Q
 from django.db.transaction import on_commit
-from redis.exceptions import LockError
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 from grandchallenge.algorithms.models import Job
@@ -19,8 +16,10 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
-from grandchallenge.components.tasks import _retry
-from grandchallenge.core.cache import _cache_key_from_method
+from grandchallenge.core.celery import (
+    acks_late_2xlarge_task,
+    acks_late_micro_short_task,
+)
 from grandchallenge.core.validators import get_file_mimetype
 from grandchallenge.evaluation.utils import Metric, rank_results
 from grandchallenge.notifications.models import Notification, NotificationType
@@ -28,7 +27,7 @@ from grandchallenge.notifications.models import Notification, NotificationType
 logger = logging.getLogger(__name__)
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 @transaction.atomic
 def create_evaluation(*, submission_pk, max_initial_jobs=1):
     """
@@ -128,16 +127,8 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):
         raise RuntimeError("No algorithm or predictions file found")
 
 
-@shared_task(
-    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"],
-    throws=(
-        TooManyJobsScheduled,
-        LockError,
-    ),
-)
-def create_algorithm_jobs_for_evaluation(
-    *, evaluation_pk, max_jobs=1, retries=0
-):
+@acks_late_2xlarge_task(retry_on=(TooManyJobsScheduled,), singleton=True)
+def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
     """
     Creates the algorithm jobs for the evaluation
 
@@ -152,23 +143,7 @@ def create_algorithm_jobs_for_evaluation(
     max_jobs
         The maximum number of jobs to create
     """
-
-    def retry_with_delay():
-        _retry(
-            task=create_algorithm_jobs_for_evaluation,
-            signature_kwargs={
-                "kwargs": {
-                    "evaluation_pk": evaluation_pk,
-                    "max_jobs": max_jobs,
-                },
-                "immutable": True,
-            },
-            retries=retries,
-        )
-
     if Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
-        logger.info("Retrying task as too many jobs scheduled")
-        retry_with_delay()
         raise TooManyJobsScheduled
 
     Evaluation = apps.get_model(  # noqa: N806
@@ -218,33 +193,22 @@ def create_algorithm_jobs_for_evaluation(
 
     evaluation.update_status(status=Evaluation.EXECUTING_PREREQUISITES)
 
-    try:
-        # Method is expensive so only allow one process at a time
-        with cache.lock(
-            _cache_key_from_method(create_algorithm_jobs),
-            timeout=settings.CELERY_TASK_TIME_LIMIT,
-            blocking_timeout=10,
-        ):
-            jobs = create_algorithm_jobs(
-                algorithm_image=evaluation.submission.algorithm_image,
-                algorithm_model=evaluation.submission.algorithm_model,
-                civ_sets=[
-                    {*ai.values.all()}
-                    for ai in evaluation.submission.phase.archive.items.prefetch_related(
-                        "values__interface"
-                    )
-                ],
-                extra_viewer_groups=viewer_groups,
-                extra_logs_viewer_groups=viewer_groups,
-                task_on_success=task_on_success,
-                task_on_failure=task_on_failure,
-                max_jobs=max_jobs,
-                time_limit=evaluation.submission.phase.algorithm_time_limit,
+    jobs = create_algorithm_jobs(
+        algorithm_image=evaluation.submission.algorithm_image,
+        algorithm_model=evaluation.submission.algorithm_model,
+        civ_sets=[
+            {*ai.values.all()}
+            for ai in evaluation.submission.phase.archive.items.prefetch_related(
+                "values__interface"
             )
-    except (TooManyJobsScheduled, LockError) as error:
-        logger.info(f"Retrying task due to: {error}")
-        retry_with_delay()
-        raise
+        ],
+        extra_viewer_groups=viewer_groups,
+        extra_logs_viewer_groups=viewer_groups,
+        task_on_success=task_on_success,
+        task_on_failure=task_on_failure,
+        max_jobs=max_jobs,
+        time_limit=evaluation.submission.phase.algorithm_time_limit,
+    )
 
     if not jobs:
         # No more jobs created from this task, so everything must be
@@ -256,7 +220,7 @@ def create_algorithm_jobs_for_evaluation(
         ).apply_async()
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task
 @transaction.atomic
 def handle_failed_jobs(*, evaluation_pk):
     # Set the evaluation to failed
@@ -282,7 +246,7 @@ def handle_failed_jobs(*, evaluation_pk):
     ).update(status=Job.CANCELLED)
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def set_evaluation_inputs(*, evaluation_pk):
     """
     Sets the inputs to the Evaluation for an algorithm submission.
@@ -438,7 +402,7 @@ def filter_by_creators_best(*, evaluations, ranks):
 
 
 # Use 2xlarge for memory use
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 @transaction.atomic
 def calculate_ranks(*, phase_pk: uuid.UUID):
     Phase = apps.get_model(  # noqa: N806
@@ -540,7 +504,7 @@ def _update_evaluations(*, evaluations, final_positions):
     )
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 @transaction.atomic
 def update_combined_leaderboard(*, pk):
     CombinedLeaderboard = apps.get_model(  # noqa: N806
@@ -551,7 +515,7 @@ def update_combined_leaderboard(*, pk):
     leaderboard.update_combined_ranks_cache()
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 @transaction.atomic
 def assign_evaluation_permissions(*, phase_pks: uuid.UUID):
     Evaluation = apps.get_model(  # noqa: N806
@@ -565,7 +529,7 @@ def assign_evaluation_permissions(*, phase_pks: uuid.UUID):
         e.assign_permissions()
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 @transaction.atomic
 def assign_submission_permissions(*, phase_pk: uuid.UUID):
     Submission = apps.get_model(  # noqa: N806

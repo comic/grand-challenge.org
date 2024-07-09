@@ -3,7 +3,6 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
-from celery import shared_task
 from panimg.models import ImageType, PanImgFile, PostProcessorResult
 from panimg.post_processors import DEFAULT_POST_PROCESSORS
 
@@ -14,6 +13,7 @@ from grandchallenge.cases.tasks import (
     import_images,
     post_process_image,
 )
+from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.core.storage import protected_s3_storage
 from tests.cases_tests import RESOURCE_PATH
 from tests.factories import UploadSessionFactory
@@ -29,7 +29,7 @@ def test_linked_task_called_with_session_pk(
 
     called = {}
 
-    @shared_task
+    @acks_late_micro_short_task
     def local_linked_task(*_, **kwargs):
         called.update(**kwargs)
 
