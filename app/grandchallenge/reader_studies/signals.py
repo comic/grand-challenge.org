@@ -1,5 +1,4 @@
 from django.core.exceptions import ValidationError
-from django.db import transaction
 from django.db.models.signals import (
     m2m_changed,
     post_save,
@@ -77,24 +76,6 @@ def assert_modification_allowed(instance, action, reverse, model, pk_set, **_):
                 "This display set cannot be updated, because answers for it "
                 "already exist."
             )
-
-
-@receiver(m2m_changed, sender=DisplaySet.values.through)
-def update_reader_study_modification_time(
-    instance, action, reverse, model, pk_set, **_
-):
-    """Call save on corresponding reader study to update modified field."""
-    if "post" not in action or "clear" in action:
-        return
-
-    if reverse:
-        for ds in DisplaySet.objects.filter(pk__in=pk_set):
-            with transaction.atomic():
-                ds.reader_study.save()
-
-    else:
-        with transaction.atomic():
-            instance.reader_study.save()
 
 
 @receiver(pre_save, sender=DisplaySet)
