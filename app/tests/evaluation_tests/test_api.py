@@ -157,6 +157,32 @@ def test_claim_evaluation(client):
     assert "You can only claim pending evaluations." in str(response.json())
 
 
+@pytest.mark.django_db
+def test_evaluator_can_only_claim_one_eval_at_a_time(self, client):
+    evaluation = create_claimable_evaluation()
+    external_evaluator, challenge_admin, challenge_participant = (
+        get_user_groups(evaluation)
+    )
+    _ = EvaluationFactory.create_batch(
+        status=Evaluation.CLAIMED,
+        submission__phase=self.claimed_evaluation.submission.phase,
+        method=None,
+        claimed_by=external_evaluator,
+    )
+    response = get_view_for_user(
+        viewname="api:evaluation-claim",
+        client=client,
+        method=client.patch,
+        user=external_evaluator,
+        reverse_kwargs={"pk": evaluation.pk},
+        content_type="application/json",
+    )
+    assert response.status_code == 400
+    assert response.json() == {
+        "status": "You can only claim one evaluation at a time."
+    }
+
+
 @pytest.mark.usefixtures("client")
 class TestUpdateExternalEvaluation(TestCase):
     def setUp(self):

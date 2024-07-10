@@ -59,6 +59,12 @@ class EvaluationViewSet(ReadOnlyModelViewSet):
                 status=400,
             )
 
+        if request.user.claimed_evaluations.exists():
+            return Response(
+                {"status": "You can only claim one evaluation at a time."},
+                status=400,
+            )
+
         evaluation.status = Evaluation.CLAIMED
         evaluation.claimed_by = request.user
         evaluation.started_at = now()
