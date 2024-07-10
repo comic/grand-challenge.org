@@ -339,37 +339,37 @@ def _delete_session_files(*, upload_session):
 
 
 @acks_late_2xlarge_task
+@transaction.atomic
 def post_process_image(*, image_pk):
-    with transaction.atomic():
-        with TemporaryDirectory() as output_directory:
-            image_files = ImageFile.objects.filter(
-                image__pk=image_pk, post_processed=False
-            ).select_for_update(nowait=True)
+    with TemporaryDirectory() as output_directory:
+        image_files = ImageFile.objects.filter(
+            image__pk=image_pk, post_processed=False
+        ).select_for_update(nowait=True)
 
-            # Acquire the locks
-            image_files = list(image_files)
+        # Acquire the locks
+        image_files = list(image_files)
 
-            panimg_files = _download_image_files(
-                image_files=image_files, dir=output_directory
-            )
+        panimg_files = _download_image_files(
+            image_files=image_files, dir=output_directory
+        )
 
-            post_processor_result = post_process(
-                image_files=panimg_files, post_processors=POST_PROCESSORS
-            )
+        post_processor_result = post_process(
+            image_files=panimg_files, post_processors=POST_PROCESSORS
+        )
 
-            _check_post_processor_result(
-                post_processor_result=post_processor_result, image_pk=image_pk
-            )
+        _check_post_processor_result(
+            post_processor_result=post_processor_result, image_pk=image_pk
+        )
 
-            django_result = _convert_panimg_to_internal(
-                new_images=[],
-                new_image_files=post_processor_result.new_image_files,
-            )
+        django_result = _convert_panimg_to_internal(
+            new_images=[],
+            new_image_files=post_processor_result.new_image_files,
+        )
 
-            _store_post_processed_images(
-                image_files=image_files,
-                new_image_files=django_result.new_image_files,
-            )
+        _store_post_processed_images(
+            image_files=image_files,
+            new_image_files=django_result.new_image_files,
+        )
 
 
 def _download_image_files(*, image_files, dir):
