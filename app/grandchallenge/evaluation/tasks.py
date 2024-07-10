@@ -418,7 +418,10 @@ def calculate_ranks(*, phase_pk: uuid.UUID):
     try:
         # Acquire locks
         evaluations = list(
-            Evaluation.objects.filter(submission__phase=phase)
+            Evaluation.objects.filter(
+                submission__phase=phase,
+                status=Evaluation.SUCCESS,
+            )
             .select_for_update(nowait=True, of=("self",))
             .order_by("-created")
             .select_related("submission__creator")
