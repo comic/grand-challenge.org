@@ -739,7 +739,7 @@ def get_update_status_kwargs(*, executor=None):
         return {}
 
 
-@acks_late_micro_short_task(retry_on=(RetryStep,))
+@acks_late_micro_short_task(retry_on=(RetryStep, LockNotAcquiredException))
 @transaction.atomic
 def handle_event(*, event, backend):  # noqa: C901
     """
@@ -770,8 +770,8 @@ def handle_event(*, event, backend):  # noqa: C901
     try:
         # Acquire the lock
         job = queryset.get()
-    except OperationalError as e:
-        raise RetryStep from e
+    except OperationalError as error:
+        raise LockNotAcquiredException from error
 
     executor = job.get_executor(backend=backend)
 
