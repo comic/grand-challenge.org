@@ -550,7 +550,7 @@ def assign_submission_permissions(*, phase_pk: uuid.UUID):
         sub.assign_permissions()
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task
 def cancel_external_evaluations_past_timeout():
     Evaluation = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Evaluation"
