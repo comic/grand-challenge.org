@@ -247,7 +247,17 @@ class TestSetEvaluationInputs(TestCase):
             j = AlgorithmJobFactory(status=Job.SUCCESS, algorithm_image=alg)
             j.inputs.set([inpt])
             j.outputs.set([output])
+            j.creator = None
+            j.save()
             jobs.append(j)
+
+        # also create a job with the same input but a creator set, this job
+        # should be ignored
+        j_irrelevant = AlgorithmJobFactory(
+            status=Job.SUCCESS, algorithm_image=alg, creator=alg.creator
+        )
+        j_irrelevant.inputs.set([input_civs[0]])
+        j_irrelevant.outputs.set([output_civs[0]])
 
         self.evaluation = EvaluationFactory(
             submission=submission, status=Evaluation.EXECUTING_PREREQUISITES

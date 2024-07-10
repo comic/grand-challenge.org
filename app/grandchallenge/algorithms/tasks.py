@@ -4,7 +4,7 @@ from typing import NamedTuple
 
 import boto3
 from botocore.exceptions import ClientError
-from celery import chain, group, shared_task
+from celery import chain, group
 from django.conf import settings
 from django.core.cache import cache
 from django.core.files.base import File
@@ -12,18 +12,19 @@ from django.db import transaction
 from django.db.models import Count, Q
 from django.db.transaction import on_commit
 from django.utils._os import safe_join
-from redis.exceptions import LockError
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
 from grandchallenge.archives.models import Archive
 from grandchallenge.cases.tasks import build_images
 from grandchallenge.components.tasks import (
-    _retry,
     add_file_to_component_interface_value,
     add_image_to_component_interface_value,
 )
-from grandchallenge.core.cache import _cache_key_from_method
+from grandchallenge.core.celery import (
+    acks_late_2xlarge_task,
+    acks_late_micro_short_task,
+)
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.credits.models import Credit
 from grandchallenge.notifications.models import Notification, NotificationType
@@ -32,146 +33,108 @@ from grandchallenge.subdomains.utils import reverse
 logger = logging.getLogger(__name__)
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task
+@transaction.atomic
 def run_algorithm_job_for_inputs(
     *, job_pk, upload_session_pks, user_upload_pks
 ):
-    with transaction.atomic():
-        job = Job.objects.get(pk=job_pk)
+    job = Job.objects.get(pk=job_pk)
 
-        assignment_tasks = []
+    assignment_tasks = []
 
-        if upload_session_pks:
-            assignment_tasks.extend(
-                chain(
-                    build_images.signature(
-                        kwargs={"upload_session_pk": upload_session_pk},
-                        immutable=True,
-                    ),
-                    add_image_to_component_interface_value.signature(
-                        kwargs={
-                            "component_interface_value_pk": civ_pk,
-                            "upload_session_pk": upload_session_pk,
-                        },
-                        immutable=True,
-                    ),
-                )
-                for civ_pk, upload_session_pk in upload_session_pks.items()
-            )
-
-        if user_upload_pks:
-            assignment_tasks.extend(
-                add_file_to_component_interface_value.signature(
+    if upload_session_pks:
+        assignment_tasks.extend(
+            chain(
+                build_images.signature(
+                    kwargs={"upload_session_pk": upload_session_pk},
+                    immutable=True,
+                ),
+                add_image_to_component_interface_value.signature(
                     kwargs={
                         "component_interface_value_pk": civ_pk,
-                        "user_upload_pk": user_upload_pk,
-                        "target_pk": job.algorithm_image.algorithm.pk,
-                        "target_app": "algorithms",
-                        "target_model": "algorithm",
+                        "upload_session_pk": upload_session_pk,
                     },
                     immutable=True,
-                )
-                for civ_pk, user_upload_pk in user_upload_pks.items()
-            )
-
-        canvas = chain(
-            group(assignment_tasks),
-            execute_algorithm_job_for_inputs.signature(
-                kwargs={"job_pk": job_pk}, immutable=True
-            ),
-        )
-
-        on_commit(canvas.apply_async)
-
-
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
-def execute_algorithm_job_for_inputs(*, job_pk):
-    with transaction.atomic():
-        job = Job.objects.get(pk=job_pk)
-
-        # Notify the job creator on failure
-        linked_task = send_failed_job_notification.signature(
-            kwargs={"job_pk": str(job.pk)}, immutable=True
-        )
-
-        # check if all ComponentInterfaceValue's have a value.
-        missing_inputs = list(
-            civ for civ in job.inputs.all() if not civ.has_value
-        )
-
-        if missing_inputs:
-            job.update_status(
-                status=job.CANCELLED,
-                error_message=(
-                    f"Job can't be started, input is missing for "
-                    f"{oxford_comma([c.interface.title for c in missing_inputs])}"
                 ),
             )
-            on_commit(linked_task.apply_async)
-        else:
-            job.task_on_success = linked_task
-            job.save()
-            on_commit(
-                execute_algorithm_job.signature(
-                    kwargs={"job_pk": job_pk}, immutable=True
-                ).apply_async
-            )
-
-
-@shared_task(
-    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"],
-    throws=(TooManyJobsScheduled,),
-)
-def execute_algorithm_job(*, job_pk, retries=0):
-    def retry_with_delay():
-        _retry(
-            task=execute_algorithm_job,
-            signature_kwargs={
-                "kwargs": {
-                    "job_pk": job_pk,
-                },
-                "immutable": True,
-            },
-            retries=retries,
+            for civ_pk, upload_session_pk in upload_session_pks.items()
         )
 
-    with transaction.atomic():
-        if Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
-            logger.info("Retrying task as too many jobs scheduled")
-            retry_with_delay()
-            raise TooManyJobsScheduled
+    if user_upload_pks:
+        assignment_tasks.extend(
+            add_file_to_component_interface_value.signature(
+                kwargs={
+                    "component_interface_value_pk": civ_pk,
+                    "user_upload_pk": user_upload_pk,
+                    "target_pk": job.algorithm_image.algorithm.pk,
+                    "target_app": "algorithms",
+                    "target_model": "algorithm",
+                },
+                immutable=True,
+            )
+            for civ_pk, user_upload_pk in user_upload_pks.items()
+        )
 
+    canvas = chain(
+        group(assignment_tasks),
+        execute_algorithm_job_for_inputs.signature(
+            kwargs={"job_pk": job_pk}, immutable=True
+        ),
+    )
+
+    on_commit(canvas.apply_async)
+
+
+@acks_late_micro_short_task
+@transaction.atomic
+def execute_algorithm_job_for_inputs(*, job_pk):
+    job = Job.objects.get(pk=job_pk)
+
+    # Notify the job creator on failure
+    linked_task = send_failed_job_notification.signature(
+        kwargs={"job_pk": str(job.pk)}, immutable=True
+    )
+
+    # check if all ComponentInterfaceValue's have a value.
+    missing_inputs = list(civ for civ in job.inputs.all() if not civ.has_value)
+
+    if missing_inputs:
+        job.update_status(
+            status=job.CANCELLED,
+            error_message=(
+                f"Job can't be started, input is missing for "
+                f"{oxford_comma([c.interface.title for c in missing_inputs])}"
+            ),
+        )
+        on_commit(linked_task.apply_async)
+    else:
+        job.task_on_success = linked_task
+        job.save()
+        on_commit(
+            execute_algorithm_job.signature(
+                kwargs={"job_pk": job_pk}, immutable=True
+            ).apply_async
+        )
+
+
+@acks_late_micro_short_task(retry_on=(TooManyJobsScheduled,))
+@transaction.atomic
+def execute_algorithm_job(*, job_pk):
+    if Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
+        raise TooManyJobsScheduled
+    else:
         job = Job.objects.get(pk=job_pk)
         on_commit(job.execute)
 
 
-@shared_task(
-    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"],
-    throws=(
-        TooManyJobsScheduled,
-        LockError,
-    ),
-)
+@acks_late_2xlarge_task(retry_on=(TooManyJobsScheduled,), singleton=True)
 def create_algorithm_jobs_for_archive(
-    *, archive_pks, archive_item_pks=None, algorithm_pks=None, retries=0
+    *,
+    archive_pks,
+    archive_item_pks=None,
+    algorithm_pks=None,
 ):
-    def retry_with_delay():
-        _retry(
-            task=create_algorithm_jobs_for_archive,
-            signature_kwargs={
-                "kwargs": {
-                    "archive_pks": archive_pks,
-                    "archive_item_pks": archive_item_pks,
-                    "algorithm_pks": algorithm_pks,
-                },
-                "immutable": True,
-            },
-            retries=retries,
-        )
-
     if Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
-        logger.info("Retrying task as too many jobs scheduled")
-        retry_with_delay()
         raise TooManyJobsScheduled
 
     for archive in Archive.objects.filter(pk__in=archive_pks).all():
@@ -194,33 +157,21 @@ def create_algorithm_jobs_for_archive(
             archive_items = archive.items.all()
 
         for algorithm in algorithms:
-            try:
-                with cache.lock(
-                    _cache_key_from_method(create_algorithm_jobs),
-                    timeout=settings.CELERY_TASK_TIME_LIMIT,
-                    blocking_timeout=10,
-                ):
-                    create_algorithm_jobs(
-                        algorithm_image=algorithm.active_image,
-                        algorithm_model=algorithm.active_model,
-                        civ_sets=[
-                            {*ai.values.all()}
-                            for ai in archive_items.prefetch_related(
-                                "values__interface"
-                            )
-                        ],
-                        extra_viewer_groups=archive_groups,
-                        # NOTE: no emails in case the logs leak data
-                        # to the algorithm editors
-                        task_on_success=None,
-                    )
-            except (TooManyJobsScheduled, LockError) as error:
-                logger.info(f"Retrying task due to: {error}")
-                retry_with_delay()
-                raise
-            except RuntimeError:
-                # don't schedule jobs for algorithms without an active image
-                continue
+            if algorithm.active_image:
+                create_algorithm_jobs(
+                    algorithm_image=algorithm.active_image,
+                    algorithm_model=algorithm.active_model,
+                    civ_sets=[
+                        {*ai.values.all()}
+                        for ai in archive_items.prefetch_related(
+                            "values__interface"
+                        )
+                    ],
+                    extra_viewer_groups=archive_groups,
+                    # NOTE: no emails in case the logs leak data
+                    # to the algorithm editors
+                    task_on_success=None,
+                )
 
 
 def create_algorithm_jobs(
@@ -355,7 +306,8 @@ def filter_civs_for_algorithm(*, civ_sets, algorithm_image):
     return valid_job_inputs
 
 
-@shared_task
+@acks_late_micro_short_task
+@transaction.atomic
 def send_failed_job_notification(*, job_pk):
     job = Job.objects.get(pk=job_pk)
 
@@ -377,7 +329,7 @@ class ChallengeNameAndUrl(NamedTuple):
     get_absolute_url: str
 
 
-@shared_task
+@acks_late_2xlarge_task
 def update_associated_challenges():
     from grandchallenge.challenges.models import Challenge
 
@@ -392,10 +344,11 @@ def update_associated_challenges():
                 phase__submission__algorithm_image__algorithm=algorithm
             ).distinct()
         ]
+
     cache.set("challenges_for_algorithms", challenge_list, timeout=None)
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def import_remote_algorithm_image(*, remote_bucket_name, algorithm_image_pk):
     algorithm_image = AlgorithmImage.objects.get(pk=algorithm_image_pk)
 
@@ -449,7 +402,7 @@ def import_remote_algorithm_image(*, remote_bucket_name, algorithm_image_pk):
             algorithm_image.image.save(filename, File(f))
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def set_credits_per_job():
     default_credits_per_month = Credit._meta.get_field("credits").get_default()
     default_credits_per_job = Algorithm._meta.get_field(

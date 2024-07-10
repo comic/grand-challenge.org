@@ -1,5 +1,4 @@
 import boto3
-from celery import shared_task
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.management import call_command
@@ -8,17 +7,18 @@ from django.utils import timezone
 
 from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.evaluation.models import Evaluation, Method
 from grandchallenge.workstations.models import Session
 
 
-@shared_task
+@acks_late_micro_short_task
 def clear_sessions():
     """Clear the expired sessions stored in django_session."""
     call_command("clearsessions")
 
 
-@shared_task(ignore_result=True)
+@acks_late_micro_short_task(ignore_result=True)
 def put_cloudwatch_metrics():
     client = boto3.client(
         "cloudwatch", region_name=settings.AWS_CLOUDWATCH_REGION_NAME

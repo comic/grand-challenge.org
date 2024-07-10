@@ -16,7 +16,6 @@ from grandchallenge.components.models import (
 from grandchallenge.components.tasks import (
     _get_image_config_and_sha256,
     _repo_login_and_run,
-    _retry,
     add_file_to_object,
     add_image_to_object,
     assign_tarball_from_upload,
@@ -28,6 +27,7 @@ from grandchallenge.components.tasks import (
     upload_to_registry_and_sagemaker,
     validate_docker_image,
 )
+from grandchallenge.core.celery import _retry
 from grandchallenge.notifications.models import Notification
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
@@ -67,7 +67,7 @@ def test_retry_initial_options(django_capture_on_commit_callbacks):
     new_task = callbacks[0].__self__
 
     assert new_task.options["queue"] == "mine-delay"
-    assert new_task.kwargs == {"foo": "bar", "retries": 1}
+    assert new_task.kwargs == {"foo": "bar", "_retries": 1}
 
 
 @pytest.mark.django_db
@@ -81,7 +81,7 @@ def test_retry_initial(django_capture_on_commit_callbacks):
     new_task = callbacks[0].__self__
 
     assert new_task.options["queue"] == "acks-late-micro-short-delay"
-    assert new_task.kwargs == {"foo": "bar", "retries": 1}
+    assert new_task.kwargs == {"foo": "bar", "_retries": 1}
 
 
 @pytest.mark.django_db
@@ -95,7 +95,7 @@ def test_retry_many(django_capture_on_commit_callbacks):
     new_task = callbacks[0].__self__
 
     assert new_task.options["queue"] == "acks-late-micro-short-delay"
-    assert new_task.kwargs == {"foo": "bar", "retries": 11}
+    assert new_task.kwargs == {"foo": "bar", "_retries": 11}
 
 
 def test_retry_too_many():

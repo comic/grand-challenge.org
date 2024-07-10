@@ -1,14 +1,14 @@
 from datetime import timedelta
 
-from celery import shared_task
 from django.conf import settings
 from django.core.paginator import Paginator
 from django.utils.timezone import now
 
+from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.uploads.models import UserUpload
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task
 def delete_old_user_uploads():
     limit = now() - timedelta(days=settings.UPLOADS_TIMEOUT_DAYS)
     queryset = UserUpload.objects.filter(created__lt=limit).order_by(

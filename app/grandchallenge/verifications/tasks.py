@@ -1,12 +1,10 @@
-from celery import shared_task
 from django.apps import apps
-from django.conf import settings
 from django.contrib.auth import get_user_model
 
+from grandchallenge.core.celery import acks_late_micro_short_task
 
-@shared_task(
-    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"],
-)
+
+@acks_late_micro_short_task
 def update_verification_user_set(*, usernames):
     VerificationUserSet = apps.get_model(  # noqa: N806
         app_label="verifications", model_name="VerificationUserSet"

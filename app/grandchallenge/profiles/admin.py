@@ -47,6 +47,8 @@ class UserProfileAdmin(UserAdmin):
         "is_staff",
         "is_superuser",
         "is_active",
+        "user_profile__receive_newsletter",
+        "user_profile__notification_email_choice",
         "user_profile__country",
     )
     actions = (deactivate_users,)
