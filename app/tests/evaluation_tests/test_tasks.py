@@ -453,18 +453,23 @@ def test_cancel_external_evaluations_past_timeout(settings):
     )
     e2 = EvaluationFactory(
         status=Evaluation.CLAIMED,
-        started_at=datetime.now(),
+        started_at=datetime.now() - timedelta(days=2),
         submission__phase__external_evaluation=True,
     )
     e3 = EvaluationFactory(
-        status=Evaluation.SUCCESS,
+        status=Evaluation.CLAIMED,
+        started_at=datetime.now(),
         submission__phase__external_evaluation=True,
     )
     e4 = EvaluationFactory(
+        status=Evaluation.SUCCESS,
+        submission__phase__external_evaluation=True,
+    )
+    e5 = EvaluationFactory(
         status=Evaluation.FAILURE,
         submission__phase__external_evaluation=True,
     )
-    e5 = EvaluationFactory()
+    e6 = EvaluationFactory()
 
     cancel_external_evaluations_past_timeout()
 
@@ -473,9 +478,12 @@ def test_cancel_external_evaluations_past_timeout(settings):
     e3.refresh_from_db()
     e4.refresh_from_db()
     e5.refresh_from_db()
+    e6.refresh_from_db()
 
     assert e1.status == Evaluation.CANCELLED
+    assert e2.status == Evaluation.CANCELLED
     assert e1.error_message == "External evaluation timed out."
-    for e in [e2, e3, e4, e5]:
+    assert e2.error_message == "External evaluation timed out."
+    for e in [e3, e4, e5, e6]:
         assert e.status != Evaluation.CANCELLED
         assert e.error_message == ""

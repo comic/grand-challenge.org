@@ -158,14 +158,14 @@ def test_claim_evaluation(client):
 
 
 @pytest.mark.django_db
-def test_evaluator_can_only_claim_one_eval_at_a_time(self, client):
+def test_evaluator_can_only_claim_one_eval_at_a_time(client):
     evaluation = create_claimable_evaluation()
     external_evaluator, challenge_admin, challenge_participant = (
         get_user_groups(evaluation)
     )
-    _ = EvaluationFactory.create_batch(
+    _ = EvaluationFactory(
         status=Evaluation.CLAIMED,
-        submission__phase=self.claimed_evaluation.submission.phase,
+        submission__phase=evaluation.submission.phase,
         method=None,
         claimed_by=external_evaluator,
     )
