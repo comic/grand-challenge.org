@@ -136,6 +136,7 @@
     <span class="n">update_combined_leaderboard</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.evaluation.utils</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Metric</span><span class="p">,</span>
     <span class="n">StatusChoices</span><span class="p">,</span>
     <span class="n">SubmissionKindChoices</span><span class="p">,</span>
 <span class="p">)</span>
@@ -752,6 +753,38 @@
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">submissions_open_at</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">submissions_open_at</span>
         <span class="p">):</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="n">SUBMISSION_WINDOW_PARENT_VALIDATION_TEXT</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">scoring_method</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scoring_method_choice</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">ABSOLUTE</span><span class="p">:</span>
+
+            <span class="k">def</span> <span class="nf">scoring_method</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+                <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">scoring_method_choice</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">MEAN</span><span class="p">:</span>
+            <span class="n">scoring_method</span> <span class="o">=</span> <span class="n">mean</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">scoring_method_choice</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">MEDIAN</span><span class="p">:</span>
+            <span class="n">scoring_method</span> <span class="o">=</span> <span class="n">median</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+        <span class="k">return</span> <span class="n">scoring_method</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span> <span class="nf">valid_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">Metric</span><span class="p">(</span>
+                <span class="n">path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">score_jsonpath</span><span class="p">,</span>
+                <span class="n">reverse</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">score_default_sort</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">DESCENDING</span><span class="p">),</span>
+            <span class="p">),</span>
+            <span class="o">*</span><span class="p">[</span>
+                <span class="n">Metric</span><span class="p">(</span>
+                    <span class="n">path</span><span class="o">=</span><span class="n">col</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="n">col</span><span class="p">[</span><span class="s2">&quot;order&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">DESCENDING</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">extra_results_columns</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">col</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;exclude_from_ranking&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+            <span class="p">],</span>
+        <span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">read_only_fields_for_dependent_phases</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>

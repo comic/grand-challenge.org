@@ -2355,6 +2355,8 @@
 <div class="viewcode-block" id="Tarball">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.Tarball">[docs]</a>
 <span class="k">class</span> <span class="nc">Tarball</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
+    <span class="n">ImportStatusChoices</span> <span class="o">=</span> <span class="n">ImportStatusChoices</span>
+
     <span class="n">creator</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="n">settings</span><span class="o">.</span><span class="n">AUTH_USER_MODEL</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span>
     <span class="p">)</span>
