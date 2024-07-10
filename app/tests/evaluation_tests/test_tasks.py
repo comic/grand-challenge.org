@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -16,7 +17,10 @@ from grandchallenge.components.tasks import (
     validate_docker_image,
 )
 from grandchallenge.evaluation.models import Evaluation, Method
-from grandchallenge.evaluation.tasks import set_evaluation_inputs
+from grandchallenge.evaluation.tasks import (
+    cancel_external_evaluations_past_timeout,
+    set_evaluation_inputs,
+)
 from grandchallenge.notifications.models import Notification
 from grandchallenge.profiles.templatetags.profiles import user_profile_link
 from tests.algorithms_tests.factories import (
@@ -424,3 +428,44 @@ def test_cache_lock():
                 raise RuntimeError("Test failed, shouldn't hit this line")
         except LockError:
             assert True
+
+
+@pytest.mark.django_db
+def test_cancel_external_evaluations_past_timeout(settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    e1 = EvaluationFactory(
+        status=Evaluation.CLAIMED,
+        started_at=datetime.now() - timedelta(days=2),
+        submission__phase__external_evaluation=True,
+    )
+    e2 = EvaluationFactory(
+        status=Evaluation.CLAIMED,
+        started_at=datetime.now(),
+        submission__phase__external_evaluation=True,
+    )
+    e3 = EvaluationFactory(
+        status=Evaluation.SUCCESS,
+        submission__phase__external_evaluation=True,
+    )
+    e4 = EvaluationFactory(
+        status=Evaluation.FAILURE,
+        submission__phase__external_evaluation=True,
+    )
+    e5 = EvaluationFactory()
+
+    cancel_external_evaluations_past_timeout()
+
+    e1.refresh_from_db()
+    e2.refresh_from_db()
+    e3.refresh_from_db()
+    e4.refresh_from_db()
+    e5.refresh_from_db()
+
+    assert e1.status == Evaluation.CANCELLED
+    assert e1.error_message == "External evaluation timed out."
+    for e in [e2, e3, e4, e5]:
+        assert e.status != Evaluation.CANCELLED
+        assert e.error_message == ""

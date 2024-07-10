@@ -149,6 +149,10 @@ CHALLENGE_NUM_SUPPORT_YEARS = int(
     os.environ.get("CHALLENGE_NUM_SUPPORT_YEARS", 5)
 )
 
+EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS = int(
+    os.environ.get("EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS", 86400)
+)
+
 ##############################################################################
 #
 # Storage
@@ -1234,6 +1238,10 @@ CELERY_BEAT_SCHEDULE = {
     "cleanup_sent_raw_emails": {
         "task": "grandchallenge.emails.tasks.cleanup_sent_raw_emails",
         "schedule": crontab(hour=6, minute=0),
+    },
+    "cancel_external_evaluations_past_timeout": {
+        "task": "grandchallenge.evaluation.tasks.cancel_external_evaluations_past_timeout",
+        "schedule": crontab(hour=6, minute=15),
     },
     "update_challenge_results_cache": {
         "task": "grandchallenge.challenges.tasks.update_challenge_results_cache",

@@ -1326,6 +1326,13 @@ class Evaluation(UUIDModel, ComponentJob):
     )
     rank_score = models.FloatField(default=0.0)
     rank_per_metric = models.JSONField(default=dict)
+    claimed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="claimed_evaluations",
+    )
 
     class Meta(UUIDModel.Meta, ComponentJob.Meta):
         unique_together = ("submission", "method", "ground_truth")

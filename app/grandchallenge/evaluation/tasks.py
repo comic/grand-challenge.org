@@ -1,5 +1,6 @@
 import logging
 import uuid
+from datetime import datetime, timedelta
 from statistics import mean, median
 
 from celery import shared_task
@@ -582,3 +583,21 @@ def assign_submission_permissions(*, phase_pk: uuid.UUID):
     )
     for sub in Submission.objects.filter(phase__id=phase_pk):
         sub.assign_permissions()
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+def cancel_external_evaluations_past_timeout():
+    Evaluation = apps.get_model(  # noqa: N806
+        app_label="evaluation", model_name="Evaluation"
+    )
+    timeout_threshold = datetime.now() - timedelta(
+        seconds=settings.EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS
+    )
+
+    Evaluation.objects.filter(
+        status=Evaluation.CLAIMED,
+        started_at__lt=timeout_threshold,
+    ).update(
+        status=Evaluation.CANCELLED,
+        error_message="External evaluation timed out.",
+    )

@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.timezone import now
 from django_filters.rest_framework import DjangoFilterBackend
@@ -59,6 +60,7 @@ class EvaluationViewSet(ReadOnlyModelViewSet):
             )
 
         evaluation.status = Evaluation.CLAIMED
+        evaluation.claimed_by = request.user
         evaluation.started_at = now()
         evaluation.save()
 
@@ -89,6 +91,27 @@ class EvaluationViewSet(ReadOnlyModelViewSet):
             return Response(
                 {
                     "status": "You need to claim an evaluation before you can update it."
+                },
+                status=400,
+            )
+
+        if request.user != evaluation.claimed_by:
+            return Response(
+                {
+                    "status": "You do not have permission to update this evaluation."
+                },
+                status=403,
+            )
+
+        if (
+            evaluation.started_at - now()
+        ).seconds > settings.EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS:
+            evaluation.status = Evaluation.CANCELLED
+            evaluation.error_message = "External evaluation timed out."
+            evaluation.save()
+            return Response(
+                {
+                    "status": "You can only update an evaluation within 24 hours."
                 },
                 status=400,
             )
