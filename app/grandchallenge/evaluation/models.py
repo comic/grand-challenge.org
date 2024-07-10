@@ -1326,7 +1326,6 @@ class Evaluation(UUIDModel, ComponentJob):
     )
     rank_score = models.FloatField(default=0.0)
     rank_per_metric = models.JSONField(default=dict)
-    token = models.CharField(max_length=128, blank=True)
 
     class Meta(UUIDModel.Meta, ComponentJob.Meta):
         unique_together = ("submission", "method", "ground_truth")
