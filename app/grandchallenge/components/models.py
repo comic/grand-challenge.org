@@ -2196,6 +2196,8 @@ class ValuesForInterfacesMixin:
 
 
 class Tarball(UUIDModel):
+    ImportStatusChoices = ImportStatusChoices
+
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
