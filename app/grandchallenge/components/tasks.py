@@ -36,6 +36,7 @@ from grandchallenge.components.emails import send_invalid_dockerfile_email
 from grandchallenge.components.exceptions import PriorStepFailed
 from grandchallenge.components.registry import _get_registry_auth_config
 from grandchallenge.core.celery import (
+    _retry,
     acks_late_2xlarge_task,
     acks_late_micro_short_task,
 )
@@ -788,7 +789,9 @@ def handle_event(*, event, backend):  # noqa: C901
         raise
     except RetryTask:
         job.update_status(status=job.PROVISIONED)
-        on_commit(retry_task.apply_async(kwargs=job.signature_kwargs))
+        _retry(
+            task=retry_task, signature_kwargs=job.signature_kwargs, retries=0
+        )
     except ComponentException as e:
         job.update_status(
             status=job.FAILURE,
