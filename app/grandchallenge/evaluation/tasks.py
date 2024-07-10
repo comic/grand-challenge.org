@@ -413,19 +413,17 @@ def calculate_ranks(*, phase_pk: uuid.UUID):
         app_label="evaluation", model_name="Evaluation"
     )
 
-    phase_qs = Phase.objects.filter(pk=phase_pk).select_for_update(nowait=True)
-    evaluations_qs = (
-        Evaluation.objects.filter(submission__phase__pk=phase_pk)
-        .select_for_update(nowait=True)
-        .order_by("-created")
-        .select_related("submission__creator")
-        .prefetch_related("outputs__interface")
-    )
+    phase = Phase.objects.get(pk=phase_pk)
 
     try:
         # Acquire locks
-        phase = phase_qs.get()
-        evaluations = list(evaluations_qs)
+        evaluations = list(
+            Evaluation.objects.filter(submission__phase=phase)
+            .select_for_update(nowait=True, of=("self",))
+            .order_by("-created")
+            .select_related("submission__creator")
+            .prefetch_related("outputs__interface")
+        )
     except OperationalError as error:
         raise LockNotAcquiredException from error
 
