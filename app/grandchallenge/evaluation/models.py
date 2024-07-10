@@ -57,6 +57,7 @@ from grandchallenge.evaluation.tasks import (
     update_combined_leaderboard,
 )
 from grandchallenge.evaluation.utils import (
+    Metric,
     StatusChoices,
     SubmissionKindChoices,
 )
@@ -665,6 +666,38 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             and self.submissions_open_at < self.parent.submissions_open_at
         ):
             raise ValidationError(SUBMISSION_WINDOW_PARENT_VALIDATION_TEXT)
+
+    @property
+    def scoring_method(self):
+        if self.scoring_method_choice == self.ABSOLUTE:
+
+            def scoring_method(x):
+                return list(x)[0]
+
+        elif self.scoring_method_choice == self.MEAN:
+            scoring_method = mean
+        elif self.scoring_method_choice == self.MEDIAN:
+            scoring_method = median
+        else:
+            raise NotImplementedError
+
+        return scoring_method
+
+    @cached_property
+    def valid_metrics(self):
+        return (
+            Metric(
+                path=self.score_jsonpath,
+                reverse=(self.score_default_sort == self.DESCENDING),
+            ),
+            *[
+                Metric(
+                    path=col["path"], reverse=col["order"] == self.DESCENDING
+                )
+                for col in self.extra_results_columns
+                if not col.get("exclude_from_ranking", False)
+            ],
+        )
 
     @property
     def read_only_fields_for_dependent_phases(self):
