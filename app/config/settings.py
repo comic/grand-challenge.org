@@ -291,6 +291,8 @@ ABSOLUTE_URL_OVERRIDES = {
     ),
 }
 
+SESSION_ENGINE = "grandchallenge.sessions.models"
+SESSION_PRIVILEGED_USER_TIMEOUT = timedelta(hours=8)
 SESSION_COOKIE_DOMAIN = os.environ.get(
     "SESSION_COOKIE_DOMAIN", ".gc.localhost"
 )
@@ -473,7 +475,6 @@ WSGI_APPLICATION = "config.wsgi.application"
 DJANGO_APPS = [
     "django.contrib.auth",
     "django.contrib.contenttypes",
-    "django.contrib.sessions",
     "django.contrib.sites",
     "django.contrib.messages",
     "whitenoise.runserver_nostatic",  # Keep whitenoise above staticfiles
@@ -579,6 +580,7 @@ LOCAL_APPS = [
     "grandchallenge.invoices",
     "grandchallenge.direct_messages",
     "grandchallenge.incentives",
+    "grandchallenge.sessions",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -1223,6 +1225,10 @@ CELERY_BEAT_SCHEDULE = {
     "cleanup_sent_raw_emails": {
         "task": "grandchallenge.emails.tasks.cleanup_sent_raw_emails",
         "schedule": crontab(hour=6, minute=0),
+    },
+    "logout_privileged_users": {
+        "task": "grandchallenge.sessions.tasks.logout_privileged_users",
+        "schedule": timedelta(hours=1),
     },
     "update_challenge_results_cache": {
         "task": "grandchallenge.challenges.tasks.update_challenge_results_cache",
