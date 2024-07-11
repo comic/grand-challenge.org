@@ -15,9 +15,9 @@ def test_logout_privileged_users(settings):
     # Unprivileged user, stays logged in
     u1 = UserFactory()
     # Privileged user, new session, stays logged in
-    u2 = UserFactory(is_superuser=True)
+    u2 = UserFactory(is_staff=True)
     # Privileged user, old session, should be logged out
-    u3 = UserFactory(is_superuser=True)
+    u3 = UserFactory(is_staff=True)
 
     # Create sessions for each user, note that
     # separate clients are used to simulate different users

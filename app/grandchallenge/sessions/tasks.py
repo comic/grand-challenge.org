@@ -10,6 +10,6 @@ from grandchallenge.sessions.models import BrowserSession
 @transaction.atomic
 def logout_privileged_users():
     BrowserSession.objects.filter(
-        user__is_superuser=True,
+        user__is_staff=True,
         created__lt=now() - settings.SESSION_PRIVILEGED_USER_TIMEOUT,
     ).delete()
