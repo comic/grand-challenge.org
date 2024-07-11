@@ -4,6 +4,7 @@ from datetime import timedelta
 
 import boto3
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
+from botocore.exceptions import BotoCoreError, ClientError
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
@@ -143,7 +144,7 @@ def send_raw_emails():
                 response = client.send_raw_email(
                     RawMessage={"Data": raw_email.message}
                 )
-        except Exception as error:
+        except (ClientError, BotoCoreError) as error:
             raw_email.errored = True
             raw_email.save()
             logger.error(f"Error sending raw email {raw_email.pk}: {error}")
