@@ -1,6 +1,7 @@
 import pytest
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
+from django.test import Client
 from guardian.utils import get_anonymous_user
 
 from grandchallenge.profiles.tasks import (
@@ -31,12 +32,17 @@ def test_delete_users_who_dont_login(settings, client):
 
 
 @pytest.mark.django_db
-def test_deactivate_user(client):
+def test_deactivate_user():
     u1, u2 = UserFactory.create_batch(2)
 
-    # Create sessions for each user
-    client.force_login(u1)
-    client.force_login(u2)
+    # Create sessions for each user, note that
+    # separate clients are used to simulate different users
+    # otherwise the session is deleted when the 2nd logs in
+    Client().force_login(u1)
+    Client().force_login(u2)
+
+    assert u1.browser_sessions.count() == 1
+    assert u2.browser_sessions.count() == 1
 
     # Create verifications
     VerificationFactory(user=u1, is_verified=True)
