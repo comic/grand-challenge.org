@@ -1,6 +1,6 @@
 import pytest
 
-from grandchallenge.sessions.models import BrowserSession
+from grandchallenge.browser_sessions.models import BrowserSession
 from tests.factories import UserFactory
 
 

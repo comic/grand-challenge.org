@@ -4,7 +4,7 @@ import pytest
 from django.test import Client
 from django.utils.timezone import now
 
-from grandchallenge.sessions.tasks import logout_privileged_users
+from grandchallenge.browser_sessions.tasks import logout_privileged_users
 from tests.factories import UserFactory
 
 

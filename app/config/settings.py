@@ -291,7 +291,7 @@ ABSOLUTE_URL_OVERRIDES = {
     ),
 }
 
-SESSION_ENGINE = "grandchallenge.sessions.models"
+SESSION_ENGINE = "grandchallenge.browser_sessions.models"
 SESSION_PRIVILEGED_USER_TIMEOUT = timedelta(hours=8)
 SESSION_COOKIE_DOMAIN = os.environ.get(
     "SESSION_COOKIE_DOMAIN", ".gc.localhost"
@@ -580,7 +580,7 @@ LOCAL_APPS = [
     "grandchallenge.invoices",
     "grandchallenge.direct_messages",
     "grandchallenge.incentives",
-    "grandchallenge.sessions",
+    "grandchallenge.browser_sessions",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -1227,7 +1227,7 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(hour=6, minute=0),
     },
     "logout_privileged_users": {
-        "task": "grandchallenge.sessions.tasks.logout_privileged_users",
+        "task": "grandchallenge.browser_sessions.tasks.logout_privileged_users",
         "schedule": timedelta(hours=1),
     },
     "update_challenge_results_cache": {

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from grandchallenge.sessions.models import BrowserSession
+from grandchallenge.browser_sessions.models import BrowserSession
 
 
 @admin.register(BrowserSession)
