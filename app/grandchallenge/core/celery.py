@@ -1,4 +1,6 @@
 import logging
+import random
+import time
 from functools import wraps
 
 from celery import shared_task  # noqa: I251 Usage allowed here
@@ -38,6 +40,9 @@ def _retry(*, task, signature_kwargs, retries, delayed=True):
         if delayed:
             queue = step.options.get("queue", task.queue)
             step.options["queue"] = f"{queue}-delay"
+        else:
+            # Add some jitter
+            time.sleep(random.uniform(0, 5))
 
         on_commit(step.apply_async)
     else:

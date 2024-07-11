@@ -969,7 +969,7 @@ ECS_ENABLE_CELERY_SCALE_IN_PROTECTION = strtobool(
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "django-db")
 CELERY_RESULT_PERSISTENT = True
 CELERY_RESULT_EXTENDED = True
-CELERY_RESULT_EXPIRES = timedelta(days=7)
+CELERY_RESULT_EXPIRES = 0  # We handle cleanup of results ourselves
 CELERY_TASK_ACKS_LATE = strtobool(
     os.environ.get("CELERY_TASK_ACKS_LATE", "False")
 )
@@ -1175,6 +1175,10 @@ CELERY_BEAT_SCHEDULE = {
     "cleanup_expired_tokens": {
         "task": "grandchallenge.github.tasks.cleanup_expired_tokens",
         "schedule": crontab(hour=0, minute=30),
+    },
+    "cleanup_celery_backend": {
+        "task": "grandchallenge.core.tasks.cleanup_celery_backend",
+        "schedule": crontab(hour=0, minute=45),
     },
     "clear_sessions": {
         "task": "grandchallenge.core.tasks.clear_sessions",
