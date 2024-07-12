@@ -5,7 +5,7 @@ import os
 import subprocess
 import tempfile
 import zipfile
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import jwt
 import requests
@@ -36,10 +36,10 @@ def get_repo_url(payload):
     private_key = serialization.load_pem_private_key(
         key_bytes, password=None, backend=default_backend()
     )
-    now = datetime.now()
+    current_time = now()
     msg = {
-        "iat": int(now.timestamp()) - 60,
-        "exp": int(now.timestamp()) + 60 * 5,
+        "iat": int(current_time.timestamp()) - 60,
+        "exp": int(current_time.timestamp()) + 60 * 5,
         "iss": settings.GITHUB_APP_ID,
     }
     token = jwt.encode(msg, private_key, algorithm="RS256")

@@ -1,7 +1,7 @@
 import os
 import re
 import socket
-from datetime import datetime, timedelta
+from datetime import timedelta
 from itertools import product
 from pathlib import Path
 from subprocess import CalledProcessError
@@ -12,6 +12,7 @@ from disposable_email_domains import blocklist
 from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
 from django.urls import reverse
+from django.utils.timezone import now
 from machina import MACHINA_MAIN_STATIC_DIR, MACHINA_MAIN_TEMPLATE_DIR
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -769,7 +770,7 @@ BLEACH_ALLOWED_PROTOCOLS = ["http", "https", "mailto"]
 BLEACH_STRIP = strtobool(os.environ.get("BLEACH_STRIP", "True"))
 
 # The markdown processor
-MARKDOWNX_MEDIA_PATH = datetime.now().strftime("i/%Y/%m/%d/")
+MARKDOWNX_MEDIA_PATH = now().strftime("i/%Y/%m/%d/")
 MARKDOWNX_MARKDOWN_EXTENSIONS = [
     "markdown.extensions.fenced_code",
     "markdown.extensions.tables",
