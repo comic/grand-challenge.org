@@ -1183,7 +1183,7 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(hour=0, minute=45),
     },
     "clear_sessions": {
-        "task": "grandchallenge.core.tasks.clear_sessions",
+        "task": "grandchallenge.browser_sessions.tasks.clear_sessions",
         "schedule": crontab(hour=1, minute=0),
     },
     "update_publication_metadata": {
