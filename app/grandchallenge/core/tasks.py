@@ -3,7 +3,6 @@ from datetime import timedelta
 import boto3
 from django.conf import settings
 from django.contrib.sites.models import Site
-from django.core.management import call_command
 from django.db import transaction
 from django.db.models import Count
 from django.utils import timezone
@@ -15,13 +14,6 @@ from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.evaluation.models import Evaluation, Method
 from grandchallenge.workstations.models import Session
-
-
-@acks_late_micro_short_task
-@transaction.atomic
-def clear_sessions():
-    """Clear the expired sessions stored in django_session."""
-    call_command("clearsessions")
 
 
 @acks_late_micro_short_task
