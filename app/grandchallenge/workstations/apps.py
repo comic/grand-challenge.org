@@ -11,7 +11,7 @@ def init_default_workstation(*_, **__):
 
     try:
         Workstation.objects.get(slug=settings.DEFAULT_WORKSTATION_SLUG)
-    except (ObjectDoesNotExist, Workstation.DoesNotExist):
+    except ObjectDoesNotExist:
         # get_or_create with defaults does not work here due to slug setting
         w = Workstation.objects.create(
             title=settings.DEFAULT_WORKSTATION_SLUG,

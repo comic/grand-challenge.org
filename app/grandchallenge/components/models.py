@@ -1127,7 +1127,7 @@ class ComponentInterface(OverlaySegmentsMixin):
         object_store_required = self.kind in {
             *InterfaceKind.interface_type_image(),
             *InterfaceKind.interface_type_file(),
-            # These values can beValidatio large, so for any new interfaces of this
+            # These values can be large, so for any new interfaces of this
             # type always add them to the object store
             InterfaceKind.InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
             InterfaceKind.InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
