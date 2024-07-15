@@ -40,6 +40,7 @@ from grandchallenge.core.celery import (
     acks_late_2xlarge_task,
     acks_late_micro_short_task,
 )
+from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.utils.error_messages import (
     format_validation_error_message,
@@ -738,7 +739,7 @@ def get_update_status_kwargs(*, executor=None):
         return {}
 
 
-@acks_late_micro_short_task(retry_on=(RetryStep,))
+@acks_late_micro_short_task(retry_on=(RetryStep, LockNotAcquiredException))
 @transaction.atomic
 def handle_event(*, event, backend):  # noqa: C901
     """
@@ -769,8 +770,8 @@ def handle_event(*, event, backend):  # noqa: C901
     try:
         # Acquire the lock
         job = queryset.get()
-    except OperationalError as e:
-        raise RetryStep from e
+    except OperationalError as error:
+        raise LockNotAcquiredException from error
 
     executor = job.get_executor(backend=backend)
 
@@ -1159,7 +1160,7 @@ def add_file_to_object(
         )
 
 
-@acks_late_2xlarge_task(retry_on=(RetryStep,))
+@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
 def assign_tarball_from_upload(
     *, app_label, model_name, tarball_pk, field_to_copy
@@ -1170,18 +1171,21 @@ def assign_tarball_from_upload(
         app_label=app_label, model_name=model_name
     )
 
-    # try to acquire lock
     try:
+        # Acquire locks
         current_tarball = (
-            TarballModel.objects.filter(pk=tarball_pk)
+            TarballModel.objects.filter(
+                pk=tarball_pk,
+                import_status=TarballModel.ImportStatusChoices.INITIALIZED,
+            )
             .select_for_update(nowait=True)
             .get()
         )
-        peer_tarballs = current_tarball.get_peer_tarballs().select_for_update(
-            nowait=True
+        peer_tarballs = list(
+            current_tarball.get_peer_tarballs().select_for_update(nowait=True)
         )
-    except OperationalError as e:
-        raise RetryStep from e
+    except OperationalError as error:
+        raise LockNotAcquiredException from error
 
     current_tarball.user_upload.copy_object(
         to_field=getattr(current_tarball, field_to_copy)

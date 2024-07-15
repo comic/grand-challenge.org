@@ -1,4 +1,6 @@
 import logging
+import random
+import time
 from functools import wraps
 
 from celery import shared_task  # noqa: I251 Usage allowed here
@@ -13,7 +15,7 @@ logger = logging.getLogger(__name__)
 MAX_RETRIES = 12 * 24  # 1 day assuming 5 minutes delay
 
 
-def _retry(*, task, signature_kwargs, retries):
+def _retry(*, task, signature_kwargs, retries, delayed=True):
     """
     Retry a task using the delay queue
 
@@ -33,9 +35,15 @@ def _retry(*, task, signature_kwargs, retries):
     """
     if retries < MAX_RETRIES:
         step = task.signature(**signature_kwargs)
-        queue = step.options.get("queue", task.queue)
-        step.options["queue"] = f"{queue}-delay"
         step.kwargs["_retries"] = retries + 1
+
+        if delayed:
+            queue = step.options.get("queue", task.queue)
+            step.options["queue"] = f"{queue}-delay"
+        else:
+            # Add some jitter
+            time.sleep(random.uniform(0, 5))
+
         on_commit(step.apply_async)
     else:
         raise MaxRetriesExceededError
@@ -61,6 +69,7 @@ class AcksLateTaskDecorator:
         *,
         ignore_result=False,
         retry_on=(),
+        delayed_retry=True,
         ignore_errors=(),
         singleton=False,
     ):
@@ -75,6 +84,7 @@ class AcksLateTaskDecorator:
         ------------
             ignore_result: If the task should ignore the result
             retry_on: A tuple of exceptions that should trigger a retry on the delay queue
+            delayed_retry: If the task should be retried after a delay
             ignore_errors: A tuple of exceptions that should be ignored
             singleton: If the task should be run as a singleton (only one concurrent execution at a time)
         """
@@ -84,6 +94,7 @@ class AcksLateTaskDecorator:
                 func=func,
                 ignore_result=ignore_result,
                 retry_on=retry_on,
+                delayed_retry=delayed_retry,
                 ignore_errors=ignore_errors,
                 singleton=singleton,
             )
@@ -93,12 +104,20 @@ class AcksLateTaskDecorator:
                 func=func,
                 ignore_result=ignore_result,
                 retry_on=retry_on,
+                delayed_retry=delayed_retry,
                 ignore_errors=ignore_errors,
                 singleton=singleton,
             )
 
     def _decorator(
-        self, *, func, ignore_result, retry_on, ignore_errors, singleton
+        self,
+        *,
+        func,
+        ignore_result,
+        retry_on,
+        delayed_retry,
+        ignore_errors,
+        singleton,
     ):
         @wraps(func)
         def wrapper(*args, _retries=0, **kwargs):
@@ -132,6 +151,7 @@ class AcksLateTaskDecorator:
                             "immutable": True,
                         },
                         retries=_retries,
+                        delayed=delayed_retry,
                     )
                 else:
                     raise error

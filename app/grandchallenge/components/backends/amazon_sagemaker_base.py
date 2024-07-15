@@ -740,7 +740,7 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
                     Key=self._result_key,
                 )
             except botocore.exceptions.ClientError as error:
-                if error.response["Error"]["Code"] == "NoSuchKey":
+                if error.response["Error"]["Code"] == "404":
                     raise UncleanExit(
                         "The invocation request did not return a result"
                     ) from error

@@ -1,7 +1,7 @@
 import os
 import re
 import socket
-from datetime import datetime, timedelta
+from datetime import timedelta
 from itertools import product
 from pathlib import Path
 from subprocess import CalledProcessError
@@ -12,6 +12,7 @@ from disposable_email_domains import blocklist
 from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
 from django.urls import reverse
+from django.utils.timezone import now
 from machina import MACHINA_MAIN_STATIC_DIR, MACHINA_MAIN_TEMPLATE_DIR
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -295,6 +296,8 @@ ABSOLUTE_URL_OVERRIDES = {
     ),
 }
 
+SESSION_ENGINE = "grandchallenge.browser_sessions.models"
+SESSION_PRIVILEGED_USER_TIMEOUT = timedelta(hours=8)
 SESSION_COOKIE_DOMAIN = os.environ.get(
     "SESSION_COOKIE_DOMAIN", ".gc.localhost"
 )
@@ -477,7 +480,6 @@ WSGI_APPLICATION = "config.wsgi.application"
 DJANGO_APPS = [
     "django.contrib.auth",
     "django.contrib.contenttypes",
-    "django.contrib.sessions",
     "django.contrib.sites",
     "django.contrib.messages",
     "whitenoise.runserver_nostatic",  # Keep whitenoise above staticfiles
@@ -583,6 +585,7 @@ LOCAL_APPS = [
     "grandchallenge.invoices",
     "grandchallenge.direct_messages",
     "grandchallenge.incentives",
+    "grandchallenge.browser_sessions",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -771,7 +774,7 @@ BLEACH_ALLOWED_PROTOCOLS = ["http", "https", "mailto"]
 BLEACH_STRIP = strtobool(os.environ.get("BLEACH_STRIP", "True"))
 
 # The markdown processor
-MARKDOWNX_MEDIA_PATH = datetime.now().strftime("i/%Y/%m/%d/")
+MARKDOWNX_MEDIA_PATH = now().strftime("i/%Y/%m/%d/")
 MARKDOWNX_MARKDOWN_EXTENSIONS = [
     "markdown.extensions.fenced_code",
     "markdown.extensions.tables",
@@ -973,7 +976,7 @@ ECS_ENABLE_CELERY_SCALE_IN_PROTECTION = strtobool(
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "django-db")
 CELERY_RESULT_PERSISTENT = True
 CELERY_RESULT_EXTENDED = True
-CELERY_RESULT_EXPIRES = timedelta(days=7)
+CELERY_RESULT_EXPIRES = 0  # We handle cleanup of results ourselves
 CELERY_TASK_ACKS_LATE = strtobool(
     os.environ.get("CELERY_TASK_ACKS_LATE", "False")
 )
@@ -1180,8 +1183,12 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.github.tasks.cleanup_expired_tokens",
         "schedule": crontab(hour=0, minute=30),
     },
+    "cleanup_celery_backend": {
+        "task": "grandchallenge.core.tasks.cleanup_celery_backend",
+        "schedule": crontab(hour=0, minute=45),
+    },
     "clear_sessions": {
-        "task": "grandchallenge.core.tasks.clear_sessions",
+        "task": "grandchallenge.browser_sessions.tasks.clear_sessions",
         "schedule": crontab(hour=1, minute=0),
     },
     "update_publication_metadata": {
@@ -1226,6 +1233,10 @@ CELERY_BEAT_SCHEDULE = {
     },
     "cancel_external_evaluations_past_timeout": {
         "task": "grandchallenge.evaluation.tasks.cancel_external_evaluations_past_timeout",
+        "schedule": timedelta(hours=1),
+    },
+    "logout_privileged_users": {
+        "task": "grandchallenge.browser_sessions.tasks.logout_privileged_users",
         "schedule": timedelta(hours=1),
     },
     "update_challenge_results_cache": {

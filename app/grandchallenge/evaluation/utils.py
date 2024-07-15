@@ -32,7 +32,7 @@ def get(inputs):
 
 
 def rank_results(
-    *, evaluations: tuple, metrics: tuple[Metric, ...], score_method: Callable
+    *, evaluations: list, metrics: tuple[Metric, ...], score_method: Callable
 ) -> Positions:
     """Determine the overall rank for each result."""
     evaluations = _filter_valid_results(
@@ -58,7 +58,7 @@ def rank_results(
 def _filter_valid_results(
     *, evaluations: Iterable, metrics: tuple[Metric, ...]
 ) -> list:
-    """Ensure that all of the metrics are in every result."""
+    """Ensure that all the metrics are in every result."""
     return [
         e
         for e in evaluations
