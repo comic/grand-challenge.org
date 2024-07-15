@@ -1,20 +1,15 @@
 from django.conf import settings
-from django.core.exceptions import ValidationError
 from django.utils.timezone import now
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
+from rest_framework.status import HTTP_400_BAD_REQUEST
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
-from grandchallenge.components.models import (
-    ComponentInterface,
-    ComponentInterfaceValue,
-)
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.evaluation.models import Evaluation
@@ -22,6 +17,9 @@ from grandchallenge.evaluation.serializers import (
     EvaluationSerializer,
     ExternalEvaluationSerializer,
     ExternalEvaluationUpdateSerializer,
+)
+from grandchallenge.evaluation.tasks import (
+    cancel_external_evaluations_past_timeout,
 )
 
 
@@ -48,7 +46,10 @@ class EvaluationViewSet(ReadOnlyModelViewSet):
     )
 
     @action(
-        detail=True, methods=["PATCH"], permission_classes=[CanClaimEvaluation]
+        detail=True,
+        methods=["PATCH"],
+        permission_classes=[CanClaimEvaluation],
+        serializer_class=ExternalEvaluationSerializer,
     )
     def claim(self, request, *args, **kwargs):
         evaluation = self.get_object()
@@ -65,15 +66,17 @@ class EvaluationViewSet(ReadOnlyModelViewSet):
                 status=400,
             )
 
-        evaluation.status = Evaluation.CLAIMED
-        evaluation.claimed_by = request.user
-        evaluation.started_at = now()
-        evaluation.save()
-
-        serializer = ExternalEvaluationSerializer(
-            instance=evaluation, context={"request": request}
+        serializer = self.get_serializer(
+            instance=evaluation, data=request.data, partial=True
         )
-        return Response(serializer.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(data=serializer.data)
+        else:
+            return Response(
+                data=serializer.errors, status=HTTP_400_BAD_REQUEST
+            )
 
     @action(detail=False, methods=["GET"])
     def claimable_evaluations(self, request, *args, **kwargs):
@@ -112,9 +115,7 @@ class EvaluationViewSet(ReadOnlyModelViewSet):
         if (
             evaluation.started_at - now()
         ).seconds > settings.EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS:
-            evaluation.status = Evaluation.CANCELLED
-            evaluation.error_message = "External evaluation timed out."
-            evaluation.save()
+            cancel_external_evaluations_past_timeout.apply_async()
             return Response(
                 {
                     "status": "You can only update an evaluation within 24 hours."
@@ -122,42 +123,14 @@ class EvaluationViewSet(ReadOnlyModelViewSet):
                 status=400,
             )
 
-        serialized_evaluation = ExternalEvaluationUpdateSerializer(
-            instance=evaluation,
-            data=request.data,
-            context={"request": request},
+        serializer = self.get_serializer(
+            instance=evaluation, data=request.data, partial=True
         )
-        if not serialized_evaluation.is_valid():
-            raise DRFValidationError(serialized_evaluation.errors)
 
-        status = request.data.get("status", None)
-
-        if status == Evaluation.SUCCESS:
-            metrics = request.data.pop("metrics", None)
-            interface = ComponentInterface.objects.get(
-                slug="metrics-json-file"
-            )
-
-            civ = ComponentInterfaceValue(interface=interface, value=metrics)
-            try:
-                civ.full_clean()
-                civ.save()
-                evaluation.outputs.add(civ)
-                evaluation.status = Evaluation.SUCCESS
-            except ValidationError as e:
-                evaluation.status = Evaluation.FAILURE
-                evaluation.error_message = str(e)
-                evaluation.save()
-                raise DRFValidationError(e)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(data=serializer.data)
         else:
-            evaluation.status = Evaluation.FAILURE
-            evaluation.error_message = request.data.get("error_message", None)
-
-        evaluation.completed_at = now()
-        evaluation.save()
-
-        return Response(
-            EvaluationSerializer(
-                instance=evaluation, context={"request": request}
-            ).data
-        )
+            return Response(
+                data=serializer.errors, status=HTTP_400_BAD_REQUEST
+            )

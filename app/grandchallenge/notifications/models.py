@@ -354,6 +354,27 @@ class Notification(UUIDModel):
             self.type
             == NotificationType.NotificationTypeChoices.EVALUATION_STATUS
             and self.actor != user
+            and self.message == "cancelled"
+        ):
+            return format_html(
+                "The {} from {} to {} was not updated in time and was cancelled {}.",
+                format_html(
+                    '<a href="{}">{}</a>',
+                    self.action_object.submission.get_absolute_url(),
+                    "submission",
+                ),
+                user_profile_link(self.action_object.submission.creator),
+                format_html(
+                    '<a href="{}">{}</a>',
+                    self.target.challenge.get_absolute_url(),
+                    self.target.challenge.short_name,
+                ),
+                naturaltime(self.created),
+            )
+        elif (
+            self.type
+            == NotificationType.NotificationTypeChoices.EVALUATION_STATUS
+            and self.actor != user
             and self.message == "failed"
         ):
             return format_html(

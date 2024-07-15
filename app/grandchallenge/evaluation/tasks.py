@@ -1,6 +1,6 @@
 import logging
 import uuid
-from datetime import datetime, timedelta
+from datetime import timedelta
 from statistics import mean, median
 
 from django.apps import apps
@@ -9,6 +9,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count, Q
 from django.db.transaction import on_commit
+from django.utils.timezone import now
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 from grandchallenge.algorithms.models import Job
@@ -551,18 +552,20 @@ def assign_submission_permissions(*, phase_pk: uuid.UUID):
 
 
 @acks_late_micro_short_task
+@transaction.atomic
 def cancel_external_evaluations_past_timeout():
     Evaluation = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Evaluation"
     )
-    timeout_threshold = datetime.now() - timedelta(
+    timeout_threshold = now() - timedelta(
         seconds=settings.EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS
     )
 
-    Evaluation.objects.filter(
+    for eval in Evaluation.objects.filter(
         status=Evaluation.CLAIMED,
         started_at__lt=timeout_threshold,
-    ).update(
-        status=Evaluation.CANCELLED,
-        error_message="External evaluation timed out.",
-    )
+    ).all():
+        eval.update_status(
+            status=Evaluation.CANCELLED,
+            error_message="External evaluation timed out.",
+        )

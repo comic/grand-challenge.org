@@ -1,4 +1,6 @@
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+from django.utils.timezone import now
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.fields import (
     CharField,
@@ -14,6 +16,10 @@ from grandchallenge.algorithms.serializers import (
     AlgorithmModelSerializer,
 )
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+)
 from grandchallenge.components.serializers import (
     ComponentInterfaceValueSerializer,
 )
@@ -96,6 +102,7 @@ class ExternalEvaluationSerializer(EvaluationSerializer):
             *EvaluationSerializer.Meta.fields,
             "algorithm_model",
             "algorithm_image",
+            "claimed_by",
         )
 
     def get_algorithm_model(self, obj):
@@ -110,8 +117,14 @@ class ExternalEvaluationSerializer(EvaluationSerializer):
             obj.submission.algorithm_image, context=self.context
         ).data
 
+    def update(self, instance, validated_data):
+        validated_data["claimed_by"] = self.context["request"].user
+        validated_data["started_at"] = now()
+        validated_data["status"] = Evaluation.CLAIMED
+        return super().update(instance, validated_data)
 
-class ExternalEvaluationUpdateSerializer(EvaluationSerializer):
+
+class ExternalEvaluationUpdateSerializer(ModelSerializer):
     metrics = JSONField(required=False)
     status = ChoiceField(choices=[Evaluation.SUCCESS, Evaluation.FAILURE])
 
@@ -132,3 +145,20 @@ class ExternalEvaluationUpdateSerializer(EvaluationSerializer):
                 "An error_message is required for failed evaluations."
             )
         return data
+
+    def update(self, instance, validated_data):
+        if validated_data["status"] == Evaluation.SUCCESS:
+            interface = ComponentInterface.objects.get(
+                slug="metrics-json-file"
+            )
+            civ = ComponentInterfaceValue(
+                interface=interface, value=validated_data["metrics"]
+            )
+            try:
+                civ.full_clean()
+                civ.save()
+                instance.outputs.add(civ)
+            except ValidationError as e:
+                raise DRFValidationError(e)
+        validated_data["completed_at"] = now()
+        return super().update(instance, validated_data)

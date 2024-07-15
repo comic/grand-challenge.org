@@ -1429,24 +1429,14 @@ class Evaluation(UUIDModel, ComponentJob):
     def update_status(self, *args, **kwargs):
         res = super().update_status(*args, **kwargs)
 
-        if self.status == self.FAILURE:
+        if self.status in [self.FAILURE, self.SUCCESS, self.CANCELLED]:
             Notification.send(
                 kind=NotificationType.NotificationTypeChoices.EVALUATION_STATUS,
                 actor=self.submission.creator,
-                message="failed",
+                message=self.get_status_display().lower(),
                 action_object=self,
                 target=self.submission.phase,
             )
-
-        if self.status == self.SUCCESS:
-            Notification.send(
-                kind=NotificationType.NotificationTypeChoices.EVALUATION_STATUS,
-                actor=self.submission.creator,
-                message="succeeded",
-                action_object=self,
-                target=self.submission.phase,
-            )
-
         return res
 
     def get_absolute_url(self):

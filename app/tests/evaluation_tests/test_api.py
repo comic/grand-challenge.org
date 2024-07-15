@@ -4,10 +4,7 @@ import pytest
 from django.test import TestCase, override_settings
 
 from grandchallenge.evaluation.models import Evaluation
-from grandchallenge.evaluation.serializers import (
-    EvaluationSerializer,
-    ExternalEvaluationSerializer,
-)
+from grandchallenge.evaluation.serializers import ExternalEvaluationSerializer
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
@@ -325,17 +322,19 @@ class TestUpdateExternalEvaluation(TestCase):
         assert self.claimed_evaluation.status == Evaluation.SUCCESS
         assert self.claimed_evaluation.completed_at is not None
         assert self.claimed_evaluation.outputs.count() == 1
-        assert (
-            response.json()
-            == EvaluationSerializer(
-                self.claimed_evaluation,
-                context={"request": response.wsgi_request},
-            ).data
-        )
+        assert response.json() == {
+            "metrics": "foo-bar",
+            "status": 4,
+            "error_message": "",
+        }
 
-    @override_settings(EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS=0)
+    @override_settings(
+        EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS=0,
+        task_eager_propagates=True,
+        task_always_eager=True,
+    )
     @pytest.mark.django_db
-    def test_token_timeout(self):
+    def test_timeout(self):
         time.sleep(1)
         response = get_view_for_user(
             viewname="api:evaluation-update-external-evaluation",
