@@ -105,14 +105,14 @@ class ExternalEvaluationSerializer(EvaluationSerializer):
             "claimed_by",
         )
 
-    def get_algorithm_model(self, obj):
+    def get_algorithm_model(self, obj) -> dict | None:
         if obj.submission.algorithm_model:
             return AlgorithmModelSerializer(
                 obj.submission.algorithm_model, context=self.context
             ).data
         return None
 
-    def get_algorithm_image(self, obj):
+    def get_algorithm_image(self, obj) -> dict:
         return AlgorithmImageSerializer(
             obj.submission.algorithm_image, context=self.context
         ).data
