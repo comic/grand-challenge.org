@@ -113,7 +113,6 @@ class InterfaceKindChoices(models.TextChoices):
     SEGMENTATION = "SEG", _("Segmentation")
     HEAT_MAP = "HMAP", _("Heat Map")
     DISPLACEMENT_FIELD = "DSPF", _("Displacement field")
-    DEFORMATION_FIELD = "DEFF", _("Deformation field")
 
     # Registration types
     AFFINE_TRANSFORM_REGISTRATION = "ATRG", _("Affine transform registration")
@@ -729,7 +728,6 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.HEAT_MAP,
             InterfaceKind.InterfaceKindChoices.SEGMENTATION,
             InterfaceKind.InterfaceKindChoices.DISPLACEMENT_FIELD,
-            InterfaceKind.InterfaceKindChoices.DEFORMATION_FIELD,
         }
 
     @staticmethod
@@ -1363,10 +1361,7 @@ class ComponentInterfaceValue(models.Model):
             self._validate_image_only()
             if self.interface.kind == InterfaceKindChoices.SEGMENTATION:
                 self.interface._validate_voxel_values(self.image)
-            if self.interface.kind in [
-                InterfaceKindChoices.DISPLACEMENT_FIELD,
-                InterfaceKindChoices.DEFORMATION_FIELD,
-            ]:
+            if self.interface.kind == InterfaceKindChoices.DISPLACEMENT_FIELD:
                 self.interface._validate_vector_field(self.image)
         elif self.interface.is_file_kind:
             self._validate_file_only()

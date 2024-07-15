@@ -142,7 +142,6 @@ def test_average_duration_filtering():
         (InterfaceKindChoices.HEAT_MAP, True, True),
         (InterfaceKindChoices.SEGMENTATION, True, True),
         (InterfaceKindChoices.DISPLACEMENT_FIELD, True, True),
-        (InterfaceKindChoices.DEFORMATION_FIELD, True, True),
         # File types
         (InterfaceKindChoices.CSV, True, False),
         (InterfaceKindChoices.ZIP, True, False),
