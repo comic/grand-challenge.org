@@ -22,7 +22,6 @@ from grandchallenge.components.models import (
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.tasks import (
     remove_container_image_from_registry,
-    add_image_to_component_interface_value,
 )
 from grandchallenge.core.storage import (
     private_s3_storage,
@@ -42,10 +41,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.evaluation_tests.factories import EvaluationFactory, MethodFactory
-from tests.factories import (
-    ImageFactory,
-    WorkstationImageFactory,
-)
+from tests.factories import ImageFactory, WorkstationImageFactory
 from tests.reader_studies_tests.factories import (
     DisplaySetFactory,
     QuestionFactory,
