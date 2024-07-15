@@ -5,9 +5,12 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.test import Client
 
+from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.subdomains.utils import reverse
-from tests.factories import SUPER_SECURE_TEST_PASSWORD
+from grandchallenge.uploads.models import UserUpload
+from tests.factories import SUPER_SECURE_TEST_PASSWORD, UserFactory
+from tests.uploads_tests.factories import create_upload_from_file
 
 
 def get_view_for_user(
@@ -230,3 +233,30 @@ def recurse_callbacks(callbacks, django_capture_on_commit_callbacks):
             callbacks=new_callbacks,
             django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
         )
+
+
+def create_raw_upload_image_session(
+    *,
+    django_capture_on_commit_callbacks,
+    image_paths: list[str],
+    delete_files: list[str] = None,
+    user=None,
+    linked_task=None,
+) -> tuple[RawImageUploadSession, dict[str, UserUpload]]:
+    creator = user or UserFactory(email="test@example.com")
+    upload_session = RawImageUploadSession.objects.create(creator=creator)
+
+    uploaded_images = {}
+    for image in image_paths:
+        upload = create_upload_from_file(file_path=image, creator=creator)
+        uploaded_images[upload.filename] = upload
+        upload_session.user_uploads.add(upload)
+
+    if delete_files:
+        for f in delete_files:
+            uploaded_images[f].delete()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        upload_session.process_images(linked_task=linked_task)
+
+    return upload_session, uploaded_images

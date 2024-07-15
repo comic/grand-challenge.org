@@ -10,6 +10,7 @@ from django.utils import timezone
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
 from grandchallenge.algorithms.models import AlgorithmImage, Job
+from grandchallenge.cases.models import Image
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -21,6 +22,7 @@ from grandchallenge.components.models import (
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.tasks import (
     remove_container_image_from_registry,
+    add_image_to_component_interface_value,
 )
 from grandchallenge.core.storage import (
     private_s3_storage,
@@ -34,17 +36,22 @@ from tests.algorithms_tests.factories import (
 )
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.cases_tests.factories import ImageFactoryWithImageFileTiff
+from tests.components_tests import RESOURCE_PATH
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
 from tests.evaluation_tests.factories import EvaluationFactory, MethodFactory
-from tests.factories import ImageFactory, WorkstationImageFactory
+from tests.factories import (
+    ImageFactory,
+    WorkstationImageFactory,
+)
 from tests.reader_studies_tests.factories import (
     DisplaySetFactory,
     QuestionFactory,
     ReaderStudyFactory,
 )
+from tests.utils import create_raw_upload_image_session
 
 
 @pytest.mark.django_db
@@ -1408,3 +1415,52 @@ def test_correct_storage_set(factory, expected_storage, download_context):
 
     with download_context:
         _ = instance.image.url
+
+
+@pytest.mark.parametrize(
+    "image,succeeds",
+    (
+        ("simple_2d_displacement_field_valid.mha", True),
+        ("simple_2d_displacement_field_invalid.mha", False),
+    ),
+)
+@pytest.mark.django_db
+def test_displacement_field_validation(
+    image, succeeds, settings, django_capture_on_commit_callbacks
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    image_paths = [RESOURCE_PATH / image]
+    session, uploaded_images = create_raw_upload_image_session(
+        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+        image_paths=image_paths,
+    )
+
+    session.refresh_from_db()
+
+    assert session.status == session.SUCCESS
+    assert session.error_message is None
+
+    images = Image.objects.filter(origin=session).all()
+    assert len(images) == 1
+    image = images[0]
+
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.DISPLACEMENT_FIELD
+    )
+    civ = ComponentInterfaceValueFactory(interface=ci, image=image)
+
+    if succeeds:
+        civ.full_clean()
+
+        assert len(image.shape) == 4
+        assert image.shape[0] == 3
+        assert image.shape == image.shape_without_color
+        assert image.color_space == Image.COLOR_SPACE_GRAY
+
+        assert [e for e in reversed(image.sitk_image.GetSize())] == image.shape
+    else:
+        with pytest.raises(ValidationError):
+            civ.full_clean()
