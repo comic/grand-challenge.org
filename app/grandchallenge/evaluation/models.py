@@ -622,10 +622,13 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                     "For phases that take an algorithm as submission input, "
                     "the creator_must_be_verified box needs to be checked."
                 )
-            if self.submissions_limit_per_user_per_period > 0 and (
-                not self.archive
-                or not self.algorithm_inputs
-                or not self.algorithm_outputs
+            if (
+                self.submissions_limit_per_user_per_period > 0
+                and not self.external_evaluation(
+                    not self.archive
+                    or not self.algorithm_inputs
+                    or not self.algorithm_outputs
+                )
             ):
                 raise ValidationError(
                     "To change the submission limit to above 0, you need to first link an archive containing the secret "
@@ -645,6 +648,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         if (
             self.submissions_limit_per_user_per_period > 0
             and not self.active_image
+            and not self.external_evaluation
         ):
             raise ValidationError(
                 "You need to first add a valid method for this phase before you "

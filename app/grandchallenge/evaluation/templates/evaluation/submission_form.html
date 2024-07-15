@@ -143,14 +143,14 @@
                 </div>
             {% endif %}
 
-            {% crispy form %}
-
-        {% endif %}
-
-        {% if phase.parent %}
+            {% if phase.parent %}
             <div class="alert alert-info">
                 This phase is dependent on phase "{{ phase.parent }}". This means that you can only submit active containers that have a successful submission to phase "{{ phase.parent }}".
             </div>
+        {% endif %}
+
+            {% crispy form %}
+
         {% endif %}
 
     {% endif %}
