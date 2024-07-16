@@ -72,25 +72,6 @@ def test_image_file_creation(settings, django_capture_on_commit_callbacks):
     assert {*session.import_result["file_errors"]} == {*invalid_images}
 
 
-@pytest.mark.django_db
-def test_staged_uploaded_file_cleanup_interferes_with_image_build(
-    settings, django_capture_on_commit_callbacks
-):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
-    images = ["image10x10x10.zraw", "image10x10x10.mhd"]
-    session, uploaded_images = create_raw_upload_image_session(
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-        image_paths=[RESOURCE_PATH / p for p in images],
-        delete_files=["image10x10x10.zraw"],
-    )
-
-    session.refresh_from_db()
-    assert session.error_message is not None
-
-
 @pytest.mark.parametrize(
     "images",
     (

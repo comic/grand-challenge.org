@@ -2,6 +2,7 @@ import json
 import uuid
 from contextlib import nullcontext
 from datetime import timedelta
+from pathlib import Path
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -35,7 +36,6 @@ from tests.algorithms_tests.factories import (
 )
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.cases_tests.factories import ImageFactoryWithImageFileTiff
-from tests.components_tests import RESOURCE_PATH
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -1427,7 +1427,7 @@ def test_displacement_field_validation(
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    image_paths = [RESOURCE_PATH / image]
+    image_paths = [Path(__file__).parent.absolute() / "resources" / image]
     session, uploaded_images = create_raw_upload_image_session(
         django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
         image_paths=image_paths,

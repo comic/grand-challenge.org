@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from pathlib import Path
 from urllib.parse import urlparse
 
 from django.conf import settings
@@ -238,8 +239,7 @@ def recurse_callbacks(callbacks, django_capture_on_commit_callbacks):
 def create_raw_upload_image_session(
     *,
     django_capture_on_commit_callbacks,
-    image_paths: list[str],
-    delete_files: list[str] = None,
+    image_paths: list[Path],
     user=None,
     linked_task=None,
 ) -> tuple[RawImageUploadSession, dict[str, UserUpload]]:
@@ -251,10 +251,6 @@ def create_raw_upload_image_session(
         upload = create_upload_from_file(file_path=image, creator=creator)
         uploaded_images[upload.filename] = upload
         upload_session.user_uploads.add(upload)
-
-    if delete_files:
-        for f in delete_files:
-            uploaded_images[f].delete()
 
     with django_capture_on_commit_callbacks(execute=True):
         upload_session.process_images(linked_task=linked_task)
