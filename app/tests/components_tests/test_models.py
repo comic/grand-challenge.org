@@ -1438,9 +1438,7 @@ def test_displacement_field_validation(
     assert session.status == session.SUCCESS
     assert session.error_message is None
 
-    images = Image.objects.filter(origin=session).all()
-    assert len(images) == 1
-    image = images[0]
+    image = Image.objects.filter(origin=session).get()
 
     ci = ComponentInterfaceFactory(
         kind=InterfaceKindChoices.DISPLACEMENT_FIELD
@@ -1450,12 +1448,21 @@ def test_displacement_field_validation(
     if succeeds:
         civ.full_clean()
 
+        expected_size = [3, 1, 6, 6]
+
         assert len(image.shape) == 4
         assert image.shape[0] == 3
-        assert image.shape == image.shape_without_color
+        assert image.shape == expected_size
         assert image.color_space == Image.COLOR_SPACE_GRAY
 
-        assert [e for e in reversed(image.sitk_image.GetSize())] == image.shape
+        assert [
+            e for e in reversed(image.sitk_image.GetSize())
+        ] == expected_size
     else:
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValidationError) as error:
             civ.full_clean()
+
+        assert (
+            str(error.value)
+            == "{'__all__': [\"Deformation and displacement field's 4th dimension must be a 3-component vector.\"]}"
+        )
