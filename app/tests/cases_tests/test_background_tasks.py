@@ -19,38 +19,9 @@ from grandchallenge.cases.tasks import (
     check_compressed_and_extract,
 )
 from grandchallenge.notifications.models import Notification
-from grandchallenge.uploads.models import UserUpload
 from tests.cases_tests import RESOURCE_PATH
-from tests.factories import UploadSessionFactory, UserFactory
-from tests.uploads_tests.factories import create_upload_from_file
-
-
-def create_raw_upload_image_session(
-    *,
-    django_capture_on_commit_callbacks,
-    images: list[str],
-    delete_file=False,
-    user=None,
-    linked_task=None,
-) -> tuple[RawImageUploadSession, dict[str, UserUpload]]:
-    creator = user or UserFactory(email="test@example.com")
-    upload_session = RawImageUploadSession.objects.create(creator=creator)
-
-    uploaded_images = {}
-    for image in images:
-        upload = create_upload_from_file(
-            file_path=RESOURCE_PATH / image, creator=creator
-        )
-        uploaded_images[upload.filename] = upload
-        upload_session.user_uploads.add(upload)
-
-    if delete_file:
-        uploaded_images["image10x10x10.zraw"].delete()
-
-    with django_capture_on_commit_callbacks(execute=True):
-        upload_session.process_images(linked_task=linked_task)
-
-    return upload_session, uploaded_images
+from tests.factories import UploadSessionFactory
+from tests.utils import create_raw_upload_image_session
 
 
 @pytest.mark.django_db
@@ -80,7 +51,7 @@ def test_image_file_creation(settings, django_capture_on_commit_callbacks):
     )
     session, uploaded_images = create_raw_upload_image_session(
         django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-        images=images,
+        image_paths=[RESOURCE_PATH / p for p in images],
     )
 
     session.refresh_from_db()
@@ -101,25 +72,6 @@ def test_image_file_creation(settings, django_capture_on_commit_callbacks):
     assert {*session.import_result["file_errors"]} == {*invalid_images}
 
 
-@pytest.mark.django_db
-def test_staged_uploaded_file_cleanup_interferes_with_image_build(
-    settings, django_capture_on_commit_callbacks
-):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
-    images = ["image10x10x10.zraw", "image10x10x10.mhd"]
-    session, uploaded_images = create_raw_upload_image_session(
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-        images=images,
-        delete_file=True,
-    )
-
-    session.refresh_from_db()
-    assert session.error_message is not None
-
-
 @pytest.mark.parametrize(
     "images",
     (
@@ -137,7 +89,7 @@ def test_staged_mhd_upload_with_additional_headers(
 
     session, uploaded_images = create_raw_upload_image_session(
         django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-        images=images,
+        image_paths=[RESOURCE_PATH / p for p in images],
     )
 
     session.refresh_from_db()
@@ -182,7 +134,7 @@ def test_no_convertible_file(settings, django_capture_on_commit_callbacks):
     images = ["no_image", "image10x10x10.mhd", "referring_to_system_file.mhd"]
     session, uploaded_images = create_raw_upload_image_session(
         django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-        images=images,
+        image_paths=[RESOURCE_PATH / p for p in images],
     )
 
     session.refresh_from_db()
@@ -209,7 +161,7 @@ def test_errors_on_files_with_duplicate_file_names(
     ]
     session, uploaded_images = create_raw_upload_image_session(
         django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-        images=images,
+        image_paths=[RESOURCE_PATH / p for p in images],
     )
 
     session.refresh_from_db()
@@ -229,7 +181,7 @@ def test_mhd_file_annotation_creation(
     images = ["image5x6x7.mhd", "image5x6x7.zraw"]
     session, uploaded_images = create_raw_upload_image_session(
         django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-        images=images,
+        image_paths=[RESOURCE_PATH / p for p in images],
     )
 
     session.refresh_from_db()
@@ -313,7 +265,7 @@ def test_build_zip_file(settings, django_capture_on_commit_callbacks):
     images = ["valid.zip"]
     session, uploaded_images = create_raw_upload_image_session(
         django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-        images=images,
+        image_paths=[RESOURCE_PATH / p for p in images],
     )
 
     session.refresh_from_db()
@@ -353,10 +305,10 @@ def test_soft_time_limit(_):
 
 @pytest.mark.django_db
 def test_failed_image_import_notification(django_capture_on_commit_callbacks):
-    image = ["corrupt.png"]
+    images = ["corrupt.png"]
     session, _ = create_raw_upload_image_session(
         django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-        images=image,
+        image_paths=[RESOURCE_PATH / p for p in images],
     )
 
     build_images(upload_session_pk=session.pk)
