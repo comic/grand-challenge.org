@@ -1261,7 +1261,14 @@
     <span class="p">)</span>
 
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
-        <span class="n">unique_together</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;phase&quot;</span><span class="p">,</span> <span class="s2">&quot;predictions_file&quot;</span><span class="p">,</span> <span class="s2">&quot;algorithm_image&quot;</span><span class="p">),)</span>
+        <span class="n">unique_together</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">(</span>
+                <span class="s2">&quot;phase&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;predictions_file&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;algorithm_image&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;algorithm_model&quot;</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span> <span class="nf">is_evaluated_with_active_image</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
