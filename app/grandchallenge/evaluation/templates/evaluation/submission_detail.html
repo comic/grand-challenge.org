@@ -155,12 +155,12 @@
                 </dl>
             </div>
 
-            {% if not object.is_evaluated_with_active_image %}
+            {% if not object.is_evaluated_with_active_image_and_ground_truth %}
                 <div class="card-body">
-                    <h4 class="card-title">Re-Evaluate Submission with Active Method</h4>
+                    <h4 class="card-title">Re-Evaluate Submission with Active Method and Active Ground Truth (if applicable)</h4>
 
                     <p>
-                        This submission has not been evaluated with the active evaluation method for this phase.
+                        This submission has not been evaluated with the active evaluation method and active ground truth for this phase.
                         {% if challenge.available_compute_euro_millicents <= 0 %}
                             However, an evaluation cannot be created as this challenge has exceeded its budget.
                         {% endif %}
@@ -172,7 +172,7 @@
                             {% csrf_token %}
                             <input type="hidden" name="submission" value="{{ object.pk }}">
                             <button type="submit" class="btn btn-xs btn-primary">
-                                Re-Evaluate with the Active Method
+                                Re-Evaluate with the Active Method and Active Ground Truth
                             </button>
                         </form>
                     {% endif %}

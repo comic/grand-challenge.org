@@ -897,3 +897,51 @@ def test_read_only_fields_for_dependent_phases():
         "algorithm_outputs",
     ]
     assert p2.read_only_fields_for_dependent_phases == ["submission_kind"]
+
+
+@pytest.mark.django_db
+def test_is_evaluated_with_active_image_and_ground_truth():
+    phase = PhaseFactory()
+    s = SubmissionFactory(phase=phase)
+    EvaluationFactory(submission=s)
+    assert s.is_evaluated_with_active_image_and_ground_truth
+
+    # add a method
+    MethodFactory(
+        phase=phase,
+        is_in_registry=True,
+        is_manifest_valid=True,
+        is_desired_version=True,
+    )
+    del phase.active_image
+    del s.is_evaluated_with_active_image_and_ground_truth
+    assert not s.is_evaluated_with_active_image_and_ground_truth
+
+    EvaluationFactory(submission=s, method=phase.active_image)
+    del s.is_evaluated_with_active_image_and_ground_truth
+    assert s.is_evaluated_with_active_image_and_ground_truth
+
+    # add a ground truth
+    gt = EvaluationGroundTruthFactory(phase=phase, is_desired_version=True)
+    del phase.active_ground_truth
+    del s.is_evaluated_with_active_image_and_ground_truth
+    assert not s.is_evaluated_with_active_image_and_ground_truth
+
+    EvaluationFactory(
+        submission=s,
+        method=phase.active_image,
+        ground_truth=phase.active_ground_truth,
+    )
+    del s.is_evaluated_with_active_image_and_ground_truth
+    assert s.is_evaluated_with_active_image_and_ground_truth
+
+    # remove ground truth and also add another evaluation with another ground truth
+    gt.is_desired_version = False
+    gt.save()
+    gt2 = EvaluationGroundTruthFactory(phase=phase, is_desired_version=False)
+    EvaluationFactory(
+        submission=s, method=phase.active_image, ground_truth=gt2
+    )
+    del phase.active_ground_truth
+    del s.is_evaluated_with_active_image_and_ground_truth
+    assert s.is_evaluated_with_active_image_and_ground_truth
