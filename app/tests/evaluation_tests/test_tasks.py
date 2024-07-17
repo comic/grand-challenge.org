@@ -22,6 +22,7 @@ from grandchallenge.profiles.templatetags.profiles import user_profile_link
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
+    AlgorithmModelFactory,
 )
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import ComponentInterfaceValueFactory
@@ -233,10 +234,18 @@ class TestSetEvaluationInputs(TestCase):
             ai.values.set([civ])
 
         alg = AlgorithmImageFactory()
+        am = AlgorithmModelFactory()
         submission = SubmissionFactory(algorithm_image=alg)
         submission.phase.archive = archive
         submission.phase.save()
         submission.phase.algorithm_inputs.set([interface])
+
+        submission_with_model = SubmissionFactory(
+            algorithm_image=alg, algorithm_model=am
+        )
+        submission_with_model.phase.archive = archive
+        submission_with_model.phase.save()
+        submission_with_model.phase.algorithm_inputs.set([interface])
 
         jobs = []
         for inpt, output in zip(input_civs, output_civs, strict=True):
@@ -258,6 +267,12 @@ class TestSetEvaluationInputs(TestCase):
         self.evaluation = EvaluationFactory(
             submission=submission, status=Evaluation.EXECUTING_PREREQUISITES
         )
+        self.evaluation_with_model = EvaluationFactory(
+            submission=submission_with_model,
+            status=Evaluation.EXECUTING_PREREQUISITES,
+        )
+        self.input_civs = input_civs
+        self.output_civs = output_civs
         self.jobs = jobs
         self.output_civs = output_civs
 
@@ -271,6 +286,83 @@ class TestSetEvaluationInputs(TestCase):
         assert self.evaluation.input_prefixes == {
             str(civ.pk): f"{alg.pk}/output/"
             for alg, civ in zip(self.jobs, self.output_civs, strict=True)
+        }
+
+    def test_has_pending_jobs(self):
+        AlgorithmJobFactory(
+            status=Job.PENDING,
+            creator=None,
+            algorithm_image=self.evaluation.submission.algorithm_image,
+        )
+        # nothing happens because there are pending jobs
+        set_evaluation_inputs(evaluation_pk=self.evaluation.pk)
+        self.evaluation.refresh_from_db()
+        assert (
+            self.evaluation.status == self.evaluation.EXECUTING_PREREQUISITES
+        )
+        assert self.evaluation.inputs.count() == 0
+        assert self.evaluation.input_prefixes == {}
+
+    def test_has_pending_jobs_with_image_and_model(self):
+        AlgorithmJobFactory(
+            status=Job.PENDING,
+            creator=None,
+            algorithm_image=self.evaluation_with_model.submission.algorithm_image,
+            algorithm_model=self.evaluation_with_model.submission.algorithm_model,
+        )
+        # nothing happens
+        set_evaluation_inputs(evaluation_pk=self.evaluation_with_model.pk)
+        self.evaluation_with_model.refresh_from_db()
+        assert (
+            self.evaluation_with_model.status
+            == self.evaluation_with_model.EXECUTING_PREREQUISITES
+        )
+        assert self.evaluation_with_model.inputs.count() == 0
+        assert self.evaluation_with_model.input_prefixes == {}
+
+    def test_has_pending_jobs_with_image_but_without_model(self):
+        # the pending job with only the image will be ignored, but task will still
+        # fail because there are no successful jobs with both the image and model yet
+        AlgorithmJobFactory(
+            status=Job.PENDING,
+            creator=None,
+            algorithm_image=self.evaluation_with_model.submission.algorithm_image,
+        )
+        set_evaluation_inputs(evaluation_pk=self.evaluation_with_model.pk)
+        self.evaluation_with_model.refresh_from_db()
+        assert (
+            self.evaluation_with_model.status
+            == self.evaluation_with_model.EXECUTING_PREREQUISITES
+        )
+        assert self.evaluation_with_model.inputs.count() == 0
+        assert self.evaluation_with_model.input_prefixes == {}
+
+        # add jobs
+        jobs = []
+        for inpt, output in zip(
+            self.input_civs, self.output_civs, strict=True
+        ):
+            j_with_model = AlgorithmJobFactory(
+                status=Job.SUCCESS,
+                algorithm_image=self.evaluation_with_model.submission.algorithm_image,
+                algorithm_model=self.evaluation_with_model.submission.algorithm_model,
+            )
+            j_with_model.inputs.set([inpt])
+            j_with_model.outputs.set([output])
+            j_with_model.creator = None
+            j_with_model.save()
+            jobs.append(j_with_model)
+
+        set_evaluation_inputs(evaluation_pk=self.evaluation_with_model.pk)
+        self.evaluation_with_model.refresh_from_db()
+        assert (
+            self.evaluation_with_model.status
+            == self.evaluation_with_model.PENDING
+        )
+        assert self.evaluation_with_model.inputs.count() == 3
+        assert self.evaluation_with_model.input_prefixes == {
+            str(civ.pk): f"{alg.pk}/output/"
+            for alg, civ in zip(jobs, self.output_civs, strict=True)
         }
 
 
