@@ -1170,7 +1170,14 @@ class Submission(UUIDModel):
     )
 
     class Meta:
-        unique_together = (("phase", "predictions_file", "algorithm_image"),)
+        unique_together = (
+            (
+                "phase",
+                "predictions_file",
+                "algorithm_image",
+                "algorithm_model",
+            ),
+        )
 
     @cached_property
     def is_evaluated_with_active_image(self):
