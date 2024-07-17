@@ -7,7 +7,6 @@ from shutil import rmtree
 from tempfile import TemporaryDirectory
 
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
-from celery import shared_task
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
@@ -21,6 +20,7 @@ from panimg.models import PanImgFile, PanImgResult
 
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.components.backends.utils import safe_extract
+from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.uploads.models import UserUpload
 
@@ -89,7 +89,7 @@ def extract_files(*, source_path: Path, checked_paths=None):
         )
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def build_images(*, upload_session_pk):
     """
     Task which analyzes an upload session and attempts to extract and store
@@ -338,38 +338,38 @@ def _delete_session_files(*, upload_session):
     upload_session.user_uploads.all().delete()
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
+@transaction.atomic
 def post_process_image(*, image_pk):
-    with transaction.atomic():
-        with TemporaryDirectory() as output_directory:
-            image_files = ImageFile.objects.filter(
-                image__pk=image_pk, post_processed=False
-            ).select_for_update(nowait=True)
+    with TemporaryDirectory() as output_directory:
+        image_files = ImageFile.objects.filter(
+            image__pk=image_pk, post_processed=False
+        ).select_for_update(nowait=True)
 
-            # Acquire the locks
-            image_files = list(image_files)
+        # Acquire the locks
+        image_files = list(image_files)
 
-            panimg_files = _download_image_files(
-                image_files=image_files, dir=output_directory
-            )
+        panimg_files = _download_image_files(
+            image_files=image_files, dir=output_directory
+        )
 
-            post_processor_result = post_process(
-                image_files=panimg_files, post_processors=POST_PROCESSORS
-            )
+        post_processor_result = post_process(
+            image_files=panimg_files, post_processors=POST_PROCESSORS
+        )
 
-            _check_post_processor_result(
-                post_processor_result=post_processor_result, image_pk=image_pk
-            )
+        _check_post_processor_result(
+            post_processor_result=post_processor_result, image_pk=image_pk
+        )
 
-            django_result = _convert_panimg_to_internal(
-                new_images=[],
-                new_image_files=post_processor_result.new_image_files,
-            )
+        django_result = _convert_panimg_to_internal(
+            new_images=[],
+            new_image_files=post_processor_result.new_image_files,
+        )
 
-            _store_post_processed_images(
-                image_files=image_files,
-                new_image_files=django_result.new_image_files,
-            )
+        _store_post_processed_images(
+            image_files=image_files,
+            new_image_files=django_result.new_image_files,
+        )
 
 
 def _download_image_files(*, image_files, dir):

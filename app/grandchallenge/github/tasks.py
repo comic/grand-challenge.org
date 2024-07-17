@@ -5,11 +5,10 @@ import os
 import subprocess
 import tempfile
 import zipfile
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import jwt
 import requests
-from celery import shared_task
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from django.apps import apps
@@ -20,6 +19,10 @@ from django.utils.timezone import now
 
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.codebuild.tasks import create_codebuild_build
+from grandchallenge.core.celery import (
+    acks_late_2xlarge_task,
+    acks_late_micro_short_task,
+)
 from grandchallenge.github.exceptions import GitHubBadRefreshTokenException
 
 logger = logging.getLogger(__name__)
@@ -33,10 +36,10 @@ def get_repo_url(payload):
     private_key = serialization.load_pem_private_key(
         key_bytes, password=None, backend=default_backend()
     )
-    now = datetime.now()
+    current_time = now()
     msg = {
-        "iat": int(now.timestamp()) - 60,
-        "exp": int(now.timestamp()) + 60 * 5,
+        "iat": int(current_time.timestamp()) - 60,
+        "exp": int(current_time.timestamp()) + 60 * 5,
         "iss": settings.GITHUB_APP_ID,
     }
     token = jwt.encode(msg, private_key, algorithm="RS256")
@@ -112,7 +115,7 @@ def build_repo(ghwm_pk):
     )
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def get_zipfile(*, pk):
     GitHubWebhookMessage = apps.get_model(  # noqa: N806
         app_label="github", model_name="GitHubWebhookMessage"
@@ -166,7 +169,7 @@ def get_zipfile(*, pk):
                 raise
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task
 def unlink_algorithm(*, pk):
     GitHubWebhookMessage = apps.get_model(  # noqa: N806
         app_label="github", model_name="GitHubWebhookMessage"
@@ -178,7 +181,7 @@ def unlink_algorithm(*, pk):
         )
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task
 def cleanup_expired_tokens():
     GitHubUserToken = apps.get_model(  # noqa: N806
         app_label="github", model_name="GitHubUserToken"
@@ -186,7 +189,7 @@ def cleanup_expired_tokens():
     GitHubUserToken.objects.filter(refresh_token_expires__lt=now()).delete()
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task
 def refresh_user_token(*, pk):
     GitHubUserToken = apps.get_model(  # noqa: N806
         app_label="github", model_name="GitHubUserToken"
@@ -203,7 +206,7 @@ def refresh_user_token(*, pk):
     token.save()
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task
 def refresh_expiring_user_tokens():
     """Refresh user tokens expiring in the next 1 to 28 days"""
     GitHubUserToken = apps.get_model(  # noqa: N806

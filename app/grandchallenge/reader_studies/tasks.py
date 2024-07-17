@@ -1,5 +1,3 @@
-from celery import shared_task
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
@@ -7,6 +5,10 @@ from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
+)
+from grandchallenge.core.celery import (
+    acks_late_2xlarge_task,
+    acks_late_micro_short_task,
 )
 from grandchallenge.core.utils.error_messages import (
     format_validation_error_message,
@@ -32,7 +34,7 @@ def add_image(obj, image):
     image.update_viewer_groups_permissions()
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task
 def add_scores_for_display_set(*, instance_pk, ds_pk):
     instance = Answer.objects.get(pk=instance_pk)
     display_set = DisplaySet.objects.get(pk=ds_pk)
@@ -52,7 +54,7 @@ def add_scores_for_display_set(*, instance_pk, ds_pk):
         add_score(instance, ground_truth.answer)
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def create_display_sets_for_upload_session(
     *, upload_session_pk, reader_study_pk, interface_pk
 ):
@@ -86,7 +88,7 @@ def create_display_sets_for_upload_session(
                 ds.values.add(civ)
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def add_image_to_answer(*, upload_session_pk, answer_pk):
     image = Image.objects.get(origin_id=upload_session_pk)
     answer = Answer.objects.get(pk=answer_pk)
@@ -113,7 +115,7 @@ def add_image_to_answer(*, upload_session_pk, answer_pk):
         raise ValueError("Upload session for answer does not match")
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 def copy_reader_study_display_sets(*, orig_pk, new_pk):
     orig = ReaderStudy.objects.get(pk=orig_pk)
     new = ReaderStudy.objects.get(pk=new_pk)

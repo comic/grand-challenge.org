@@ -3,17 +3,17 @@ import time
 from datetime import timedelta
 
 import boto3
-from celery import shared_task
+from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
+from botocore.exceptions import BotoCoreError, ClientError
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
-from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from django.utils.timezone import now
 from redis.exceptions import LockError
 
-from grandchallenge.core.cache import _cache_key_from_method
+from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.emails.emails import send_standard_email_batch
 from grandchallenge.emails.models import Email, RawEmail
 from grandchallenge.emails.utils import SendActionChoices
@@ -74,17 +74,11 @@ def get_receivers(action):
     return receivers
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task(
+    retry_on=(SoftTimeLimitExceeded, TimeLimitExceeded),
+    singleton=True,
+)
 def send_bulk_email(*, action, email_pk):
-    with cache.lock(
-        _cache_key_from_method(send_bulk_email),
-        timeout=settings.CELERY_TASK_TIME_LIMIT,
-        blocking_timeout=1,
-    ):
-        _send_bulk_email(action=action, email_pk=email_pk)
-
-
-def _send_bulk_email(*, action, email_pk):
     try:
         email = Email.objects.filter(sent=False).get(pk=email_pk)
     except ObjectDoesNotExist:
@@ -121,24 +115,13 @@ def _send_bulk_email(*, action, email_pk):
     email.save()
 
 
-@shared_task(
-    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"],
+@acks_late_micro_short_task(
     ignore_result=True,
+    singleton=True,
+    # No need to retry here as the periodic task call this again
+    ignore_errors=(LockError, SoftTimeLimitExceeded, TimeLimitExceeded),
 )
 def send_raw_emails():
-    try:
-        with cache.lock(
-            _cache_key_from_method(send_raw_emails),
-            timeout=settings.CELERY_TASK_TIME_LIMIT,
-            blocking_timeout=1,
-        ):
-            _send_raw_emails()
-    except LockError as error:
-        logger.info(f"Could not acquire lock: {error}")
-        return
-
-
-def _send_raw_emails():
     if settings.DEBUG:
         client = None
         min_send_duration = timedelta(seconds=1)
@@ -161,7 +144,7 @@ def _send_raw_emails():
                 response = client.send_raw_email(
                     RawMessage={"Data": raw_email.message}
                 )
-        except Exception as error:
+        except (ClientError, BotoCoreError) as error:
             raw_email.errored = True
             raw_email.save()
             logger.error(f"Error sending raw email {raw_email.pk}: {error}")
@@ -179,7 +162,7 @@ def _send_raw_emails():
             time.sleep((min_send_duration - elapsed).total_seconds())
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task
 def cleanup_sent_raw_emails():
     RawEmail.objects.filter(
         sent_at__isnull=False,

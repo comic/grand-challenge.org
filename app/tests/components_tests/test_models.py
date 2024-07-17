@@ -2,6 +2,7 @@ import json
 import uuid
 from contextlib import nullcontext
 from datetime import timedelta
+from pathlib import Path
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -10,6 +11,7 @@ from django.utils import timezone
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
 from grandchallenge.algorithms.models import AlgorithmImage, Job
+from grandchallenge.cases.models import Image
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -45,6 +47,7 @@ from tests.reader_studies_tests.factories import (
     QuestionFactory,
     ReaderStudyFactory,
 )
+from tests.utils import create_raw_upload_image_session
 
 
 @pytest.mark.django_db
@@ -138,6 +141,7 @@ def test_average_duration_filtering():
         (InterfaceKindChoices.IMAGE, True, True),
         (InterfaceKindChoices.HEAT_MAP, True, True),
         (InterfaceKindChoices.SEGMENTATION, True, True),
+        (InterfaceKindChoices.DISPLACEMENT_FIELD, True, True),
         # File types
         (InterfaceKindChoices.CSV, True, False),
         (InterfaceKindChoices.ZIP, True, False),
@@ -1406,3 +1410,59 @@ def test_correct_storage_set(factory, expected_storage, download_context):
 
     with download_context:
         _ = instance.image.url
+
+
+@pytest.mark.parametrize(
+    "image,succeeds",
+    (
+        ("simple_2d_displacement_field_valid.mha", True),
+        ("simple_2d_displacement_field_invalid.mha", False),
+    ),
+)
+@pytest.mark.django_db
+def test_displacement_field_validation(
+    image, succeeds, settings, django_capture_on_commit_callbacks
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    image_paths = [Path(__file__).parent.absolute() / "resources" / image]
+    session, uploaded_images = create_raw_upload_image_session(
+        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+        image_paths=image_paths,
+    )
+
+    session.refresh_from_db()
+
+    assert session.status == session.SUCCESS
+    assert session.error_message is None
+
+    image = Image.objects.filter(origin=session).get()
+
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.DISPLACEMENT_FIELD
+    )
+    civ = ComponentInterfaceValueFactory(interface=ci, image=image)
+
+    if succeeds:
+        civ.full_clean()
+
+        expected_size = [3, 1, 6, 6]
+
+        assert len(image.shape) == 4
+        assert image.shape[0] == 3
+        assert image.shape == expected_size
+        assert image.color_space == Image.COLOR_SPACE_GRAY
+
+        assert [
+            e for e in reversed(image.sitk_image.GetSize())
+        ] == expected_size
+    else:
+        with pytest.raises(ValidationError) as error:
+            civ.full_clean()
+
+        assert (
+            str(error.value)
+            == "{'__all__': [\"Deformation and displacement field's 4th dimension must be a 3-component vector.\"]}"
+        )

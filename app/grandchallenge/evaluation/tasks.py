@@ -1,16 +1,12 @@
 import logging
 import uuid
-from statistics import mean, median
 
-from celery import shared_task
 from django.apps import apps
 from django.conf import settings
-from django.core.cache import cache
 from django.core.exceptions import ValidationError
-from django.db import transaction
+from django.db import OperationalError, transaction
 from django.db.models import Count, Q
 from django.db.transaction import on_commit
-from redis.exceptions import LockError
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 from grandchallenge.algorithms.models import Job
@@ -19,16 +15,19 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
-from grandchallenge.components.tasks import _retry
-from grandchallenge.core.cache import _cache_key_from_method
+from grandchallenge.core.celery import (
+    acks_late_2xlarge_task,
+    acks_late_micro_short_task,
+)
+from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.validators import get_file_mimetype
-from grandchallenge.evaluation.utils import Metric, rank_results
+from grandchallenge.evaluation.utils import rank_results
 from grandchallenge.notifications.models import Notification, NotificationType
 
 logger = logging.getLogger(__name__)
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 @transaction.atomic
 def create_evaluation(*, submission_pk, max_initial_jobs=1):
     """
@@ -128,16 +127,8 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):
         raise RuntimeError("No algorithm or predictions file found")
 
 
-@shared_task(
-    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"],
-    throws=(
-        TooManyJobsScheduled,
-        LockError,
-    ),
-)
-def create_algorithm_jobs_for_evaluation(
-    *, evaluation_pk, max_jobs=1, retries=0
-):
+@acks_late_2xlarge_task(retry_on=(TooManyJobsScheduled,), singleton=True)
+def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
     """
     Creates the algorithm jobs for the evaluation
 
@@ -152,23 +143,7 @@ def create_algorithm_jobs_for_evaluation(
     max_jobs
         The maximum number of jobs to create
     """
-
-    def retry_with_delay():
-        _retry(
-            task=create_algorithm_jobs_for_evaluation,
-            signature_kwargs={
-                "kwargs": {
-                    "evaluation_pk": evaluation_pk,
-                    "max_jobs": max_jobs,
-                },
-                "immutable": True,
-            },
-            retries=retries,
-        )
-
     if Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
-        logger.info("Retrying task as too many jobs scheduled")
-        retry_with_delay()
         raise TooManyJobsScheduled
 
     Evaluation = apps.get_model(  # noqa: N806
@@ -218,33 +193,22 @@ def create_algorithm_jobs_for_evaluation(
 
     evaluation.update_status(status=Evaluation.EXECUTING_PREREQUISITES)
 
-    try:
-        # Method is expensive so only allow one process at a time
-        with cache.lock(
-            _cache_key_from_method(create_algorithm_jobs),
-            timeout=settings.CELERY_TASK_TIME_LIMIT,
-            blocking_timeout=10,
-        ):
-            jobs = create_algorithm_jobs(
-                algorithm_image=evaluation.submission.algorithm_image,
-                algorithm_model=evaluation.submission.algorithm_model,
-                civ_sets=[
-                    {*ai.values.all()}
-                    for ai in evaluation.submission.phase.archive.items.prefetch_related(
-                        "values__interface"
-                    )
-                ],
-                extra_viewer_groups=viewer_groups,
-                extra_logs_viewer_groups=viewer_groups,
-                task_on_success=task_on_success,
-                task_on_failure=task_on_failure,
-                max_jobs=max_jobs,
-                time_limit=evaluation.submission.phase.algorithm_time_limit,
+    jobs = create_algorithm_jobs(
+        algorithm_image=evaluation.submission.algorithm_image,
+        algorithm_model=evaluation.submission.algorithm_model,
+        civ_sets=[
+            {*ai.values.all()}
+            for ai in evaluation.submission.phase.archive.items.prefetch_related(
+                "values__interface"
             )
-    except (TooManyJobsScheduled, LockError) as error:
-        logger.info(f"Retrying task due to: {error}")
-        retry_with_delay()
-        raise
+        ],
+        extra_viewer_groups=viewer_groups,
+        extra_logs_viewer_groups=viewer_groups,
+        task_on_success=task_on_success,
+        task_on_failure=task_on_failure,
+        max_jobs=max_jobs,
+        time_limit=evaluation.submission.phase.algorithm_time_limit,
+    )
 
     if not jobs:
         # No more jobs created from this task, so everything must be
@@ -256,7 +220,7 @@ def create_algorithm_jobs_for_evaluation(
         ).apply_async()
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@acks_late_micro_short_task
 @transaction.atomic
 def handle_failed_jobs(*, evaluation_pk):
     # Set the evaluation to failed
@@ -282,7 +246,8 @@ def handle_failed_jobs(*, evaluation_pk):
     ).update(status=Job.CANCELLED)
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@transaction.atomic
 def set_evaluation_inputs(*, evaluation_pk):
     """
     Sets the inputs to the Evaluation for an algorithm submission.
@@ -321,83 +286,82 @@ def set_evaluation_inputs(*, evaluation_pk):
 
     evaluation_queryset = Evaluation.objects.filter(
         pk=evaluation_pk
-    ).select_for_update()
+    ).select_for_update(nowait=True)
 
-    with transaction.atomic():
+    try:
         # Acquire lock
         evaluation = evaluation_queryset.get()
+    except OperationalError as error:
+        raise LockNotAcquiredException from error
 
-        if evaluation.status != evaluation.EXECUTING_PREREQUISITES:
-            logger.info(
-                f"Nothing to do: evaluation is {evaluation.get_status_display()}."
+    if evaluation.status != evaluation.EXECUTING_PREREQUISITES:
+        logger.info(
+            f"Nothing to do: evaluation is {evaluation.get_status_display()}."
+        )
+        return
+
+    algorithm_inputs = {*evaluation.submission.phase.algorithm_inputs.all()}
+
+    civ_sets = {
+        i.values.all()
+        for i in evaluation.submission.phase.archive.items.annotate(
+            interface_match_count=Count(
+                "values", filter=Q(values__interface__in=algorithm_inputs)
             )
-            return
+        )
+        .filter(interface_match_count=len(algorithm_inputs))
+        .prefetch_related("values")
+    }
 
-        algorithm_inputs = {
-            *evaluation.submission.phase.algorithm_inputs.all()
-        }
-
-        civ_sets = {
-            i.values.all()
-            for i in evaluation.submission.phase.archive.items.annotate(
-                interface_match_count=Count(
-                    "values", filter=Q(values__interface__in=algorithm_inputs)
-                )
-            )
-            .filter(interface_match_count=len(algorithm_inputs))
-            .prefetch_related("values")
-        }
-
-        successful_jobs = (
-            Job.objects.filter(
-                algorithm_image=evaluation.submission.algorithm_image,
-                status=Job.SUCCESS,
-            )
-            .annotate(
-                inputs_match_count=Count(
-                    "inputs",
-                    filter=Q(
-                        inputs__in={
-                            civ for civ_set in civ_sets for civ in civ_set
-                        }
-                    ),
+    successful_jobs = (
+        Job.objects.filter(
+            algorithm_image=evaluation.submission.algorithm_image,
+            status=Job.SUCCESS,
+        )
+        .annotate(
+            inputs_match_count=Count(
+                "inputs",
+                filter=Q(
+                    inputs__in={civ for civ_set in civ_sets for civ in civ_set}
                 ),
-            )
-            .filter(
-                inputs_match_count=evaluation.submission.phase.algorithm_inputs.count()
-            )
-            .distinct()
-            .prefetch_related("outputs__interface", "inputs__interface")
-            .select_related("algorithm_image__algorithm")
+            ),
+        )
+        .filter(
+            inputs_match_count=evaluation.submission.phase.algorithm_inputs.count(),
+            creator=None,
+        )
+        .distinct()
+        .prefetch_related("outputs__interface", "inputs__interface")
+        .select_related("algorithm_image__algorithm")
+    )
+
+    if successful_jobs.count() == len(civ_sets):
+        from grandchallenge.algorithms.serializers import JobSerializer
+        from grandchallenge.components.models import (
+            ComponentInterface,
+            ComponentInterfaceValue,
         )
 
-        if successful_jobs.count() == len(civ_sets):
-            from grandchallenge.algorithms.serializers import JobSerializer
-            from grandchallenge.components.models import (
-                ComponentInterface,
-                ComponentInterfaceValue,
-            )
+        serializer = JobSerializer(successful_jobs.all(), many=True)
+        interface = ComponentInterface.objects.get(
+            slug="predictions-json-file"
+        )
+        civ = ComponentInterfaceValue.objects.create(
+            interface=interface, value=serializer.data
+        )
 
-            serializer = JobSerializer(successful_jobs.all(), many=True)
-            interface = ComponentInterface.objects.get(
-                slug="predictions-json-file"
-            )
-            civ = ComponentInterfaceValue.objects.create(
-                interface=interface, value=serializer.data
-            )
+        output_to_job = {
+            o: j for j in successful_jobs.all() for o in j.outputs.all()
+        }
 
-            output_to_job = {
-                o: j for j in successful_jobs.all() for o in j.outputs.all()
-            }
+        evaluation.inputs.set([civ, *output_to_job.keys()])
+        evaluation.input_prefixes = {
+            str(o.pk): f"{j.pk}/output/" for o, j in output_to_job.items()
+        }
+        evaluation.status = Evaluation.PENDING
+        evaluation.save()
 
-            evaluation.inputs.set([civ, *output_to_job.keys()])
-            evaluation.input_prefixes = {
-                str(o.pk): f"{j.pk}/output/" for o, j in output_to_job.items()
-            }
-            evaluation.status = Evaluation.PENDING
-            evaluation.save()
-
-            on_commit(evaluation.execute)
+        on_commit(evaluation.execute)
 
 
 def filter_by_creators_most_recent(*, evaluations):
@@ -437,7 +401,9 @@ def filter_by_creators_best(*, evaluations, ranks):
 
 
 # Use 2xlarge for memory use
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task(
+    retry_on=(LockNotAcquiredException,), delayed_retry=False
+)
 @transaction.atomic
 def calculate_ranks(*, phase_pk: uuid.UUID):
     Phase = apps.get_model(  # noqa: N806
@@ -448,51 +414,37 @@ def calculate_ranks(*, phase_pk: uuid.UUID):
     )
 
     phase = Phase.objects.get(pk=phase_pk)
-    display_choice = phase.result_display_choice
-    score_method_choice = phase.scoring_method_choice
 
-    metrics = (
-        Metric(
-            path=phase.score_jsonpath,
-            reverse=(phase.score_default_sort == phase.DESCENDING),
-        ),
-        *[
-            Metric(path=col["path"], reverse=col["order"] == phase.DESCENDING)
-            for col in phase.extra_results_columns
-            if not col.get("exclude_from_ranking", False)
-        ],
-    )
-
-    if score_method_choice == phase.ABSOLUTE:
-
-        def score_method(x):
-            return list(x)[0]
-
-    elif score_method_choice == phase.MEAN:
-        score_method = mean
-    elif score_method_choice == phase.MEDIAN:
-        score_method = median
-    else:
-        raise NotImplementedError
-
-    valid_evaluations = (
-        Evaluation.objects.filter(
-            submission__phase=phase, published=True, status=Evaluation.SUCCESS
+    try:
+        # Acquire locks
+        evaluations = list(
+            Evaluation.objects.filter(
+                submission__phase=phase,
+                status=Evaluation.SUCCESS,
+            )
+            .select_for_update(nowait=True, of=("self",))
+            .order_by("-created")
+            .select_related("submission__creator")
+            .prefetch_related("outputs__interface")
         )
-        .order_by("-created")
-        .select_related("submission__creator")
-        .prefetch_related("outputs__interface")
-    )
+    except OperationalError as error:
+        raise LockNotAcquiredException from error
 
-    if display_choice == phase.MOST_RECENT:
+    valid_evaluations = [
+        e
+        for e in evaluations
+        if e.status == Evaluation.SUCCESS and e.published is True
+    ]
+
+    if phase.result_display_choice == phase.MOST_RECENT:
         valid_evaluations = filter_by_creators_most_recent(
             evaluations=valid_evaluations
         )
-    elif display_choice == phase.BEST:
+    elif phase.result_display_choice == phase.BEST:
         all_positions = rank_results(
             evaluations=valid_evaluations,
-            metrics=metrics,
-            score_method=score_method,
+            metrics=phase.valid_metrics,
+            score_method=phase.scoring_method,
         )
         valid_evaluations = filter_by_creators_best(
             evaluations=valid_evaluations, ranks=all_positions.ranks
@@ -500,23 +452,8 @@ def calculate_ranks(*, phase_pk: uuid.UUID):
 
     final_positions = rank_results(
         evaluations=valid_evaluations,
-        metrics=metrics,
-        score_method=score_method,
-    )
-
-    evaluations = Evaluation.objects.filter(submission__phase=phase)
-
-    _update_evaluations(
-        evaluations=evaluations, final_positions=final_positions
-    )
-
-    for leaderboard in phase.combinedleaderboard_set.all():
-        leaderboard.schedule_combined_ranks_update()
-
-
-def _update_evaluations(*, evaluations, final_positions):
-    Evaluation = apps.get_model(  # noqa: N806
-        app_label="evaluation", model_name="Evaluation"
+        metrics=phase.valid_metrics,
+        score_method=phase.scoring_method,
     )
 
     for e in evaluations:
@@ -538,8 +475,11 @@ def _update_evaluations(*, evaluations, final_positions):
         evaluations, ["rank", "rank_score", "rank_per_metric"]
     )
 
+    for leaderboard in phase.combinedleaderboard_set.all():
+        leaderboard.schedule_combined_ranks_update()
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+
+@acks_late_2xlarge_task
 @transaction.atomic
 def update_combined_leaderboard(*, pk):
     CombinedLeaderboard = apps.get_model(  # noqa: N806
@@ -550,7 +490,7 @@ def update_combined_leaderboard(*, pk):
     leaderboard.update_combined_ranks_cache()
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 @transaction.atomic
 def assign_evaluation_permissions(*, phase_pks: uuid.UUID):
     Evaluation = apps.get_model(  # noqa: N806
@@ -564,7 +504,7 @@ def assign_evaluation_permissions(*, phase_pks: uuid.UUID):
         e.assign_permissions()
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@acks_late_2xlarge_task
 @transaction.atomic
 def assign_submission_permissions(*, phase_pk: uuid.UUID):
     Submission = apps.get_model(  # noqa: N806
