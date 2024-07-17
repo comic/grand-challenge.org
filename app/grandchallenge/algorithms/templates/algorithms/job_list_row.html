@@ -118,14 +118,12 @@
 
 {% if object.status == object.SUCCESS %}
     {% with object.algorithm_image.algorithm as "algorithm" %}
-        {% if algorithm.workstation != "" %}
-            <button class="btn btn-primary btn-sm"
-                    title="View algorithm result in viewer"
-                    {% workstation_session_control_data workstation=algorithm.workstation context_object=algorithm algorithm_job=object config=algorithm.workstation_config %}
-            >
-                <i class="fa fa-eye"></i>
-            </button>
-        {% endif %}
+        <button class="btn btn-primary btn-sm"
+                title="View algorithm result in viewer"
+                {% workstation_session_control_data workstation=algorithm.workstation context_object=algorithm algorithm_job=object config=algorithm.workstation_config %}
+        >
+            <i class="fa fa-eye"></i>
+        </button>
     {% endwith %}
 {% endif %}
 <split></split>
