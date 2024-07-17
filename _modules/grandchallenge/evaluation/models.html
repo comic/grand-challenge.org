@@ -1271,11 +1271,14 @@
         <span class="p">)</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">is_evaluated_with_active_image</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">is_evaluated_with_active_image_and_ground_truth</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">active_image</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">active_image</span>
+        <span class="n">active_ground_truth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">active_ground_truth</span>
         <span class="k">if</span> <span class="n">active_image</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">Evaluation</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                <span class="n">submission</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">active_image</span>
+                <span class="n">submission</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+                <span class="n">method</span><span class="o">=</span><span class="n">active_image</span><span class="p">,</span>
+                <span class="n">ground_truth</span><span class="o">=</span><span class="n">active_ground_truth</span><span class="p">,</span>
             <span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># No active image, so nothing to do to evaluate with it</span>
