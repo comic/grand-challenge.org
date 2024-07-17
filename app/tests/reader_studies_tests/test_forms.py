@@ -251,14 +251,15 @@ def test_question_create(client):
                 "order": 1,
                 "image_port": "",
                 "direction": "H",
-                "options-TOTAL_FORMS": 2,
-                "options-INITIAL_FORMS": 1,
+                "options-TOTAL_FORMS": 0,
+                "options-INITIAL_FORMS": 0,
                 "options-MIN_NUM_FORMS": 0,
                 "options-MAX_NUM_FORMS": 1000,
             },
             reverse_kwargs={"slug": rs_set.rs1.slug},
             user=test[0],
         )
+
         assert response.status_code == test[2]
 
         qs = Question.objects.all()
@@ -515,8 +516,8 @@ def test_image_port_only_with_bounding_box(
             "order": 1,
             "image_port": port,
             "direction": "H",
-            "options-TOTAL_FORMS": 2,
-            "options-INITIAL_FORMS": 1,
+            "options-TOTAL_FORMS": 0,
+            "options-INITIAL_FORMS": 0,
             "options-MIN_NUM_FORMS": 0,
             "options-MAX_NUM_FORMS": 1000,
         },
@@ -1458,14 +1459,22 @@ def test_question_widget_choices_for_non_editable_instance():
 
 @pytest.mark.django_db
 def test_question_default_annotation_color():
+    default_options = {
+        "direction": Question.Direction.HORIZONTAL,
+        "order": 100,
+        "question_text": "gfda",
+        "options-TOTAL_FORMS": 0,
+        "options-INITIAL_FORMS": 0,
+        "options-MIN_NUM_FORMS": 0,
+        "options-MAX_NUM_FORMS": 1000,
+    }
+
     form = QuestionForm(
         reader_study=ReaderStudyFactory(),
         data={
             "answer_type": AnswerType.TEXT,
             "widget": QuestionWidgetKindChoices.TEXT_AREA,
-            "direction": Question.Direction.HORIZONTAL,
-            "order": 100,
-            "question_text": "gfda",
+            **default_options,
             "default_annotation_color": "#000000",
         },
     )
@@ -1482,9 +1491,7 @@ def test_question_default_annotation_color():
         data={
             "answer_type": AnswerType.MASK,
             "image_port": Question.ImagePort.MAIN,
-            "direction": Question.Direction.HORIZONTAL,
-            "order": 100,
-            "question_text": "gfda",
+            **default_options,
             "default_annotation_color": "#000000",
         },
     )
@@ -1495,9 +1502,7 @@ def test_question_default_annotation_color():
         data={
             "answer_type": AnswerType.TEXT,
             "widget": QuestionWidgetKindChoices.TEXT_AREA,
-            "direction": Question.Direction.HORIZONTAL,
-            "order": 100,
-            "question_text": "gfda",
+            **default_options,
             "default_annotation_color": "",
         },
     )
@@ -1508,9 +1513,7 @@ def test_question_default_annotation_color():
         data={
             "answer_type": AnswerType.TEXT,
             "widget": QuestionWidgetKindChoices.TEXT_AREA,
-            "direction": Question.Direction.HORIZONTAL,
-            "order": 100,
-            "question_text": "gfda",
+            **default_options,
             "default_annotation_color": None,
         },
     )
@@ -1521,9 +1524,7 @@ def test_question_default_annotation_color():
         data={
             "answer_type": AnswerType.TEXT,
             "widget": QuestionWidgetKindChoices.TEXT_AREA,
-            "direction": Question.Direction.HORIZONTAL,
-            "order": 100,
-            "question_text": "gfda",
+            **default_options,
         },
     )
     assert form.is_valid()
@@ -1533,9 +1534,7 @@ def test_question_default_annotation_color():
         data={
             "answer_type": AnswerType.MASK,
             "image_port": Question.ImagePort.MAIN,
-            "direction": Question.Direction.HORIZONTAL,
-            "order": 100,
-            "question_text": "gfda",
+            **default_options,
             "default_annotation_color": "#000",
         },
     )
@@ -1545,3 +1544,212 @@ def test_question_default_annotation_color():
             "This is an invalid color code. It must be an HTML hexadecimal color code e.g. #000000"
         ]
     }
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "formset_data,expected_errors",
+    (
+        (
+            {
+                "options-TOTAL_FORMS": 0,
+                "options-INITIAL_FORMS": 0,
+                "options-MIN_NUM_FORMS": 0,
+                "options-MAX_NUM_FORMS": 1000,
+            },
+            {
+                "__all__": [
+                    "At least one option should be supplied for (multiple) choice questions"
+                ],
+            },
+        ),
+        (
+            {
+                "options-TOTAL_FORMS": 1,
+                "options-INITIAL_FORMS": 0,
+                "options-MIN_NUM_FORMS": 0,
+                "options-MAX_NUM_FORMS": 1000,
+                "options-0-title": "",
+                "options-0-default": False,
+            },
+            {
+                "__all__": [
+                    "At least one option should be supplied for (multiple) choice questions"
+                ],
+            },
+        ),
+        (
+            {
+                "options-TOTAL_FORMS": 1,
+                "options-INITIAL_FORMS": 0,
+                "options-MIN_NUM_FORMS": 0,
+                "options-MAX_NUM_FORMS": 1000,
+                "options-0-title": "bar",
+                "options-0-default": False,
+            },
+            {},
+        ),
+        (
+            {
+                "options-TOTAL_FORMS": 2,
+                "options-INITIAL_FORMS": 0,
+                "options-MIN_NUM_FORMS": 0,
+                "options-MAX_NUM_FORMS": 1000,
+                "options-0-title": "bar",
+                "options-0-default": False,
+                "options-1-title": "",
+                "options-1-default": False,
+            },
+            {},
+        ),
+        (
+            {
+                "options-TOTAL_FORMS": 2,
+                "options-INITIAL_FORMS": 0,
+                "options-MIN_NUM_FORMS": 0,
+                "options-MAX_NUM_FORMS": 1000,
+                "options-0-title": "bar",
+                "options-0-default": True,
+                "options-1-title": "",
+                "options-1-default": True,
+            },
+            {},
+        ),
+        (
+            {
+                "options-TOTAL_FORMS": 2,
+                "options-INITIAL_FORMS": 0,
+                "options-MIN_NUM_FORMS": 0,
+                "options-MAX_NUM_FORMS": 1000,
+                "options-0-title": "bar",
+                "options-0-default": True,
+                "options-1-title": "baz",
+                "options-1-default": True,
+            },
+            {
+                "__all__": ["Only one option can be set as default"],
+            },
+        ),
+        (
+            {
+                "options-TOTAL_FORMS": 3,
+                "options-INITIAL_FORMS": 0,
+                "options-MIN_NUM_FORMS": 0,
+                "options-MAX_NUM_FORMS": 1000,
+                "options-0-title": "bar",
+                "options-0-default": True,
+                "options-1-title": "",
+                "options-1-default": True,
+                "options-2-title": "baz",
+                "options-2-default": False,
+            },
+            {},  # 2nd form is ignored as it is empty
+        ),
+        (
+            {
+                "options-TOTAL_FORMS": 2,
+                "options-INITIAL_FORMS": 0,
+                "options-MIN_NUM_FORMS": 0,
+                "options-MAX_NUM_FORMS": 1000,
+                "options-0-title": "bar",
+                "options-0-default": True,
+                "options-1-title": "baz",
+                "options-1-default": True,
+                "options-1-DELETE": True,
+            },
+            {},  # 2nd form is ignored as it is deleted
+        ),
+    ),
+)
+def test_question_create_options_validation(formset_data, expected_errors):
+    parent_data = {
+        "question_text": "foo",
+        "answer_type": AnswerType.CHOICE,
+        "direction": Question.Direction.HORIZONTAL,
+        "order": 10,
+        "widget": QuestionWidgetKindChoices.RADIO_SELECT,
+    }
+
+    form = QuestionForm(
+        data={**parent_data, **formset_data}, reader_study=ReaderStudyFactory()
+    )
+
+    form.is_valid()
+    assert form.errors == expected_errors
+
+
+@pytest.mark.django_db
+def test_question_choices_are_created():
+    form = QuestionForm(
+        data={
+            "question_text": "foo",
+            "answer_type": AnswerType.CHOICE,
+            "direction": Question.Direction.HORIZONTAL,
+            "order": 10,
+            "widget": QuestionWidgetKindChoices.RADIO_SELECT,
+            "options-TOTAL_FORMS": 3,
+            "options-INITIAL_FORMS": 0,
+            "options-MIN_NUM_FORMS": 0,
+            "options-MAX_NUM_FORMS": 1000,
+            "options-0-title": "bar",
+            "options-0-default": True,
+            "options-1-title": "",
+            "options-1-default": False,
+            "options-2-title": "baz",
+            "options-2-default": False,
+        },
+        reader_study=ReaderStudyFactory(),
+    )
+
+    form.is_valid()
+    form.save()
+
+    question = Question.objects.get()
+    options = question.options.all()
+
+    assert options.count() == 2
+    assert options[0].title == "bar"
+    assert options[0].default is True
+    assert options[1].title == "baz"
+    assert options[1].default is False
+
+
+@pytest.mark.django_db
+def test_option_cannot_be_deleted():
+    q = QuestionFactory(answer_type=AnswerType.CHOICE, question_text="foo")
+    c = CategoricalOptionFactory(question=q, title="old", default=False)
+    AnswerFactory(question=q, answer=c.pk)
+
+    form = QuestionForm(
+        reader_study=q.reader_study,
+        data={
+            "question_text": q.question_text,
+            "answer_type": AnswerType.CHOICE,
+            "direction": Question.Direction.HORIZONTAL,
+            "order": 10,
+            "widget": QuestionWidgetKindChoices.RADIO_SELECT,
+            "options-TOTAL_FORMS": 2,
+            "options-INITIAL_FORMS": 1,
+            "options-MIN_NUM_FORMS": 0,
+            "options-MAX_NUM_FORMS": 1000,
+            "options-0-title": "new",
+            "options-0-default": True,
+            "options-0-id": c.pk,
+            "options-0-DELETE": True,
+            "options-1-title": "bar",
+            "options-1-default": True,
+        },
+    )
+
+    form.is_valid()
+    assert form.errors == {}
+
+    form.save()
+
+    # Data should be unchanged
+    c.refresh_from_db()
+    assert c.title == "old"
+    assert c.default is False
+
+    # 2nd form should be ignored
+    assert q.options.count() == 1

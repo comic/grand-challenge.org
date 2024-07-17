@@ -285,6 +285,8 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
     def __init__(self, *args, reader_study, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self._is_fully_editable = self.instance.is_fully_editable
+
         for field_name in self.instance.read_only_fields:
             self.fields[field_name].required = False
             self.fields[field_name].disabled = True
@@ -311,7 +313,9 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
         ]
 
         self.options_form_set = CategoricalOptionFormSet(
-            instance=self.instance, data=kwargs.get("data")
+            instance=self.instance,
+            data=kwargs.get("data"),
+            form_kwargs={"is_editable": self._is_fully_editable},
         )
 
         self.helper = FormHelper()
@@ -422,46 +426,60 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                 field=None,
             )
 
-        if answer_type in Question.AnswerType.get_choice_types():
+        self.options_form_set.clean()
 
-            self.options_form_set.clean()
+        if self.options_form_set.is_valid():
+            # The user will first need to make each instance valid,
+            # then we can check the set of options
 
-            if self.options_form_set.is_valid():
-                # The user will first need to make each instance valid,
-                # then we can check the set of options
+            if (
+                not self._is_fully_editable
+                and self.options_form_set.deleted_forms
+            ):
+                self.add_error(
+                    error=ValidationError("Options cannot be deleted"),
+                    field=None,
+                )
 
-                desired_options = [
-                    option
-                    for option in self.options_form_set.cleaned_data
-                    if not option.get("DELETE", False) and option.get("title")
-                ]
+            new_forms = [
+                form
+                for form in self.options_form_set.extra_forms
+                if form.has_changed()
+                and not self.options_form_set._should_delete_form(form)
+            ]
+            existing_forms = [
+                form
+                for form in self.options_form_set.initial_forms
+                if form.instance.pk is not None
+                and form not in self.options_form_set.deleted_forms
+            ]
 
-                if len(desired_options) < 1:
-                    self.add_error(
-                        error=ValidationError(
-                            "At least one option should be supplied for (multiple) choice questions"
-                        ),
-                        field=None,
-                    )
+            final_forms = new_forms + existing_forms
 
-                if sum(o.get("default", False) for o in desired_options) > 1:
-                    self.add_error(
-                        error=ValidationError(
-                            "Only one option can be set as default"
-                        ),
-                        field=None,
-                    )
+            if (
+                len(final_forms) < 1
+                and answer_type in Question.AnswerType.get_choice_types()
+            ):
+                self.add_error(
+                    error=ValidationError(
+                        "At least one option should be supplied for (multiple) choice questions"
+                    ),
+                    field=None,
+                )
+
+            if sum(form.cleaned_data["default"] for form in final_forms) > 1:
+                self.add_error(
+                    error=ValidationError(
+                        "Only one option can be set as default"
+                    ),
+                    field=None,
+                )
 
         return super().clean()
 
     def save(self, *args, **kwargs):
         instance = super().save(*args, **kwargs)
-
-        if instance.answer_type in Question.AnswerType.get_choice_types():
-            self.options_form_set.save(*args, **kwargs)
-        else:
-            instance.options.all().delete()
-
+        self.options_form_set.save(*args, **kwargs)
         return instance
 
     class Meta:
@@ -552,11 +570,15 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
 
 
 class CategoricalOptionForm(ModelForm):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, is_editable, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.fields["title"].label = False
         self.fields["title"].required = True
+
+        if not is_editable:
+            for field_name in self.fields:
+                self.fields[field_name].disabled = True
 
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -571,7 +593,7 @@ CategoricalOptionFormSet = inlineformset_factory(
     CategoricalOption,
     form=CategoricalOptionForm,
     fields=["title", "default"],
-    extra=0,
+    extra=1,
     can_delete=True,
 )
 
