@@ -1177,16 +1177,11 @@ class Submission(UUIDModel):
         active_image = self.phase.active_image
         active_ground_truth = self.phase.active_ground_truth
         if active_image:
-            if active_ground_truth:
-                return Evaluation.objects.filter(
-                    submission=self,
-                    method=active_image,
-                    ground_truth=active_ground_truth,
-                ).exists()
-            else:
-                return Evaluation.objects.filter(
-                    submission=self, method=active_image
-                ).exists()
+            return Evaluation.objects.filter(
+                submission=self,
+                method=active_image,
+                ground_truth=active_ground_truth,
+            ).exists()
         else:
             # No active image, so nothing to do to evaluate with it
             return True
