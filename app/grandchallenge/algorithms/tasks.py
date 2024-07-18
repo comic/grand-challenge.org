@@ -215,7 +215,9 @@ def create_algorithm_jobs(
         raise RuntimeError("Algorithm image required to create jobs.")
 
     civ_sets = filter_civs_for_algorithm(
-        civ_sets=civ_sets, algorithm_image=algorithm_image
+        civ_sets=civ_sets,
+        algorithm_image=algorithm_image,
+        algorithm_model=algorithm_model,
     )
 
     if max_jobs is not None:
