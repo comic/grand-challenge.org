@@ -395,13 +395,36 @@ def test_publish_algorithm():
     form = AlgorithmPublishForm(instance=algorithm, data={"public": True})
     assert form.is_valid() is False
 
-    # add a public result
+    # add a public result with inactive model
     ai = AlgorithmImageFactory(
         algorithm=algorithm,
         is_manifest_valid=True,
         is_in_registry=True,
         is_desired_version=True,
     )
+    am = AlgorithmModelFactory(
+        algorithm=algorithm,
+    )
+    _ = AlgorithmJobFactory(
+        algorithm_image=ai, algorithm_model=am, status=Job.SUCCESS, public=True
+    )
+    del algorithm.public_test_case
+    del algorithm.active_image
+    form = AlgorithmPublishForm(instance=algorithm, data={"public": True})
+    assert not form.is_valid()
+
+    # activating the model works
+    am.is_desired_version = True
+    am.save()
+    del algorithm.public_test_case
+    del algorithm.active_image
+    del algorithm.active_model
+    form = AlgorithmPublishForm(instance=algorithm, data={"public": True})
+    assert form.is_valid()
+
+    # deactivate model again, add public result without model
+    am.is_desired_version = False
+    am.save()
     _ = AlgorithmJobFactory(
         algorithm_image=ai, status=Job.SUCCESS, public=True
     )

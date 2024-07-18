@@ -215,7 +215,9 @@ def create_algorithm_jobs(
         raise RuntimeError("Algorithm image required to create jobs.")
 
     civ_sets = filter_civs_for_algorithm(
-        civ_sets=civ_sets, algorithm_image=algorithm_image
+        civ_sets=civ_sets,
+        algorithm_image=algorithm_image,
+        algorithm_model=algorithm_model,
     )
 
     if max_jobs is not None:
@@ -250,7 +252,7 @@ def create_algorithm_jobs(
     return jobs
 
 
-def filter_civs_for_algorithm(*, civ_sets, algorithm_image):
+def filter_civs_for_algorithm(*, civ_sets, algorithm_image, algorithm_model):
     """
     Removes sets of civs that are invalid for new jobs
 
@@ -261,6 +263,8 @@ def filter_civs_for_algorithm(*, civ_sets, algorithm_image):
         new Jobs
     algorithm_image
         The algorithm image to use for new job
+    algorithm_model
+        The algorithm model to use for the new job or None
 
     Returns
     -------
@@ -270,7 +274,9 @@ def filter_civs_for_algorithm(*, civ_sets, algorithm_image):
 
     existing_jobs = {
         frozenset(j.inputs.all())
-        for j in Job.objects.filter(algorithm_image=algorithm_image)
+        for j in Job.objects.filter(
+            algorithm_image=algorithm_image, algorithm_model=algorithm_model
+        )
         .annotate(
             inputs_match_count=Count(
                 "inputs",
