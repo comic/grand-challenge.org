@@ -501,7 +501,9 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
     def public_test_case(self):
         try:
             return self.active_image.job_set.filter(
-                status=Job.SUCCESS, public=True
+                status=Job.SUCCESS,
+                public=True,
+                algorithm_model=self.active_model,
             ).exists()
         except AttributeError:
             return False
