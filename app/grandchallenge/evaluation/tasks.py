@@ -278,7 +278,7 @@ def set_evaluation_inputs(*, evaluation_pk):
             "algorithm_model__submission__evaluation": evaluation_pk
         }
     else:
-        pending_jobs_extra_filter = {}
+        pending_jobs_extra_filter = {"algorithm_model__isnull": True}
 
     has_pending_jobs = (
         Job.objects.active()
@@ -328,7 +328,7 @@ def set_evaluation_inputs(*, evaluation_pk):
             "algorithm_model": evaluation.submission.algorithm_model
         }
     else:
-        extra_filter = {}
+        extra_filter = {"algorithm_model__isnull": True}
 
     successful_jobs = (
         Job.objects.filter(

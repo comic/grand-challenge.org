@@ -365,6 +365,55 @@ class TestSetEvaluationInputs(TestCase):
             for alg, civ in zip(jobs, self.output_civs, strict=True)
         }
 
+    def test_has_pending_jobs_without_active_model(self):
+        AlgorithmJobFactory(
+            status=Job.PENDING,
+            creator=None,
+            algorithm_image=self.evaluation.submission.algorithm_image,
+            algorithm_model=AlgorithmModelFactory(
+                algorithm=self.evaluation.submission.algorithm_image.algorithm
+            ),
+        )
+        # pending job for image with model should be ignored,
+        # since active_model is None for the evaluation
+        set_evaluation_inputs(evaluation_pk=self.evaluation.pk)
+        self.evaluation.refresh_from_db()
+        assert self.evaluation.status == self.evaluation.PENDING
+        assert self.evaluation.inputs.count() == 3
+        assert self.evaluation.input_prefixes == {
+            str(civ.pk): f"{alg.pk}/output/"
+            for alg, civ in zip(self.jobs, self.output_civs, strict=True)
+        }
+
+    def test_successful_jobs_without_model(self):
+        # delete jobs created in setup(),
+        # create new ones with a model, these should not count
+        # towards successful jobs, and eval inputs should not be set
+        Job.objects.all().delete()
+        jobs = []
+        for inpt, output in zip(
+            self.input_civs, self.output_civs, strict=True
+        ):
+            j_with_model = AlgorithmJobFactory(
+                status=Job.SUCCESS,
+                algorithm_image=self.evaluation.submission.algorithm_image,
+                algorithm_model=AlgorithmModelFactory(
+                    algorithm=self.evaluation.submission.algorithm_image.algorithm
+                ),
+            )
+            j_with_model.inputs.set([inpt])
+            j_with_model.outputs.set([output])
+            j_with_model.creator = None
+            j_with_model.save()
+            jobs.append(j_with_model)
+        set_evaluation_inputs(evaluation_pk=self.evaluation.pk)
+        self.evaluation.refresh_from_db()
+        assert (
+            self.evaluation.status == self.evaluation.EXECUTING_PREREQUISITES
+        )
+        assert self.evaluation.inputs.count() == 0
+        assert self.evaluation.input_prefixes == {}
+
 
 @pytest.mark.django_db
 def test_non_zip_submission_failure(
