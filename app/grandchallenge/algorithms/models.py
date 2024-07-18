@@ -427,6 +427,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
                 n_editor_jobs = Job.objects.filter(
                     creator__in=self.editors_group.user_set.all(),
                     algorithm_image__image_sha256=self.active_image.image_sha256,
+                    algorithm_model=self.active_model,
                 ).count()
             else:
                 n_editor_jobs = 0

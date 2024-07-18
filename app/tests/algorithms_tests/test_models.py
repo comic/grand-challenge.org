@@ -16,6 +16,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
     AlgorithmJobFactory,
+    AlgorithmModelFactory,
 )
 from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import UserFactory
@@ -308,6 +309,12 @@ class TestJobLimits:
         assert alg2.get_jobs_limit(user=user1) == 14
         # user2 is not an editor of this algorithm, hence just default credits
         assert alg2.get_jobs_limit(user=user2) == 10
+
+        # uploading a model to the algorithm resets credits
+        AlgorithmModelFactory(algorithm=alg1, is_desired_version=True)
+        del alg1.active_model
+        assert alg1.get_jobs_limit(user=user1) == 15
+        assert alg1.get_jobs_limit(user=user2) == 15
 
     @pytest.mark.parametrize(
         "credits_per_job,user_credits,expected_jobs",
