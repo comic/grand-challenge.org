@@ -10,6 +10,8 @@ from django.utils import timezone
 from django.utils.text import slugify
 from guardian.shortcuts import assign_perm, remove_perm
 
+from django.template.loader import render_to_string
+
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
 from grandchallenge.algorithms.views import JobsList
 from grandchallenge.cases.widgets import WidgetChoices
@@ -1367,3 +1369,20 @@ def test_algorithm_model_version_management(settings, client):
     assert not m2.is_desired_version
     del alg.active_model
     assert not alg.active_model
+
+@pytest.mark.django_db
+def test_job_list_row_template_renders(
+    client, settings, django_capture_on_commit_callbacks
+):
+    job = AlgorithmJobFactory()
+
+    assert job.algorithm_image
+
+    job.status = Job.SUCCESS
+    
+    response = render_to_string(
+        template_name="algorithms/job_list_row.html",
+        context={"object": job},
+    )
+
+    assert response.find("View algorithm result") != -1
