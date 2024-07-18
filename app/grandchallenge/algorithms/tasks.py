@@ -252,9 +252,7 @@ def create_algorithm_jobs(
     return jobs
 
 
-def filter_civs_for_algorithm(
-    *, civ_sets, algorithm_image, algorithm_model
-):
+def filter_civs_for_algorithm(*, civ_sets, algorithm_image, algorithm_model):
     """
     Removes sets of civs that are invalid for new jobs
 
@@ -266,7 +264,7 @@ def filter_civs_for_algorithm(
     algorithm_image
         The algorithm image to use for new job
     algorithm_model
-        The algorithm model to use for the new job, or None
+        The algorithm model to use for the new job or None
 
     Returns
     -------
