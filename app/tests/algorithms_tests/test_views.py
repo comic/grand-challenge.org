@@ -6,11 +6,10 @@ from pathlib import Path
 import pytest
 from django.contrib.auth.models import Group
 from django.core.files.base import ContentFile
+from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.text import slugify
 from guardian.shortcuts import assign_perm, remove_perm
-
-from django.template.loader import render_to_string
 
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
 from grandchallenge.algorithms.views import JobsList
@@ -1370,6 +1369,7 @@ def test_algorithm_model_version_management(settings, client):
     del alg.active_model
     assert not alg.active_model
 
+
 @pytest.mark.django_db
 def test_job_list_row_template_renders(
     client, settings, django_capture_on_commit_callbacks
@@ -1379,7 +1379,7 @@ def test_job_list_row_template_renders(
     assert job.algorithm_image
 
     job.status = Job.SUCCESS
-    
+
     response = render_to_string(
         template_name="algorithms/job_list_row.html",
         context={"object": job},

@@ -3,11 +3,11 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from django.template.loader import render_to_string
 from guardian.shortcuts import assign_perm, remove_perm
 from requests import put
 
 from grandchallenge.algorithms.models import Job
-
 from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.archives.views import (
     ArchiveItemJobListView,
@@ -28,7 +28,6 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
-from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.factories import GroupFactory, ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.uploads_tests.factories import (
@@ -36,7 +35,6 @@ from tests.uploads_tests.factories import (
     create_upload_from_file,
 )
 from tests.utils import get_view_for_user, recurse_callbacks
-from django.template.loader import render_to_string
 
 
 @pytest.mark.django_db
@@ -1348,6 +1346,7 @@ def test_archive_item_list_database_hits(client, django_assert_num_queries):
         resp = make_request()
         assert len(resp.json()["data"]) == 4
 
+
 @pytest.mark.django_db
 def test_job_list_row_template_renders(
     client, settings, django_capture_on_commit_callbacks
@@ -1357,7 +1356,7 @@ def test_job_list_row_template_renders(
     assert job.algorithm_image
 
     job.status = Job.SUCCESS
-    
+
     response = render_to_string(
         template_name="archives/archive_item_job_list_row.html",
         context={"object": job},
