@@ -28,8 +28,10 @@ from grandchallenge.components.tasks import (
 )
 from grandchallenge.notifications.models import Notification
 from tests.algorithms_tests.factories import (
+    AlgorithmFactory,
     AlgorithmImageFactory,
     AlgorithmJobFactory,
+    AlgorithmModelFactory,
 )
 from tests.cases_tests.factories import RawImageUploadSessionFactory
 from tests.components_tests.factories import (
@@ -635,23 +637,33 @@ class TestJobCreation:
         assert {civ.interface for civ in filtered_civ_sets[0]} == {*cis}
 
     def test_existing_jobs(self):
-        ai = AlgorithmImageFactory()
+        alg = AlgorithmFactory()
+        ai = AlgorithmImageFactory(algorithm=alg)
+        am = AlgorithmModelFactory(algorithm=alg)
         cis = ComponentInterfaceFactory.create_batch(2)
         ai.algorithm.inputs.set(cis)
 
         civs1 = [ComponentInterfaceValueFactory(interface=c) for c in cis]
         civs2 = [ComponentInterfaceValueFactory(interface=c) for c in cis]
+        civs3 = [ComponentInterfaceValueFactory(interface=c) for c in cis]
 
         j1 = AlgorithmJobFactory(creator=None, algorithm_image=ai)
         j1.inputs.set(civs1)
         j2 = AlgorithmJobFactory(algorithm_image=ai)
         j2.inputs.set(civs2)
+        j3 = AlgorithmJobFactory(
+            creator=None, algorithm_image=ai, algorithm_model=am
+        )
+        j3.inputs.set(civs3)
 
         civ_sets = [
             {civ for civ in civs1},  # Job already exists (system job)
             {
                 civ for civ in civs2
             },  # Job already exists but with a creator set and hence should be ignored
+            {
+                civ for civ in civs3
+            },  # Job exists but with an algorithm model set and should be ignored
             {
                 # New values
                 ComponentInterfaceValueFactory(interface=cis[0]),
@@ -669,6 +681,37 @@ class TestJobCreation:
         )
 
         assert sorted(filtered_civ_sets) == sorted(civ_sets[1:])
+
+    def test_existing_jobs_with_algorithm_model(self):
+        alg = AlgorithmFactory()
+        ai = AlgorithmImageFactory(algorithm=alg)
+        am = AlgorithmModelFactory(algorithm=alg)
+        cis = ComponentInterfaceFactory.create_batch(2)
+        ai.algorithm.inputs.set(cis)
+
+        civs1 = [ComponentInterfaceValueFactory(interface=c) for c in cis]
+        civs2 = [ComponentInterfaceValueFactory(interface=c) for c in cis]
+
+        j1 = AlgorithmJobFactory(
+            creator=None, algorithm_image=ai, algorithm_model=am
+        )
+        j1.inputs.set(civs1)
+        j2 = AlgorithmJobFactory(creator=None, algorithm_image=ai)
+        j2.inputs.set(civs2)
+
+        civ_sets = [
+            {civ for civ in civs1},  # Job already exists with image and model
+            {
+                civ
+                for civ in civs2  # Job exists but only with image, so should be ignored
+            },
+        ]
+
+        filtered_civ_sets = filter_civs_for_algorithm(
+            civ_sets=civ_sets, algorithm_image=ai, algorithm_model=am
+        )
+
+        assert filtered_civ_sets == sorted(civ_sets[1:])
 
 
 @pytest.mark.django_db

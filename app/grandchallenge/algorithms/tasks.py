@@ -250,7 +250,9 @@ def create_algorithm_jobs(
     return jobs
 
 
-def filter_civs_for_algorithm(*, civ_sets, algorithm_image):
+def filter_civs_for_algorithm(
+    *, civ_sets, algorithm_image, algorithm_model=None
+):
     """
     Removes sets of civs that are invalid for new jobs
 
@@ -270,7 +272,9 @@ def filter_civs_for_algorithm(*, civ_sets, algorithm_image):
 
     existing_jobs = {
         frozenset(j.inputs.all())
-        for j in Job.objects.filter(algorithm_image=algorithm_image)
+        for j in Job.objects.filter(
+            algorithm_image=algorithm_image, algorithm_model=algorithm_model
+        )
         .annotate(
             inputs_match_count=Count(
                 "inputs",
