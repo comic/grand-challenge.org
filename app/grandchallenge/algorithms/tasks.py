@@ -265,6 +265,8 @@ def filter_civs_for_algorithm(
         new Jobs
     algorithm_image
         The algorithm image to use for new job
+    algorithm_model
+        The algorithm model to use for the new job, or None
 
     Returns
     -------

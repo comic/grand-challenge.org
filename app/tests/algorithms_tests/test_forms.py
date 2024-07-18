@@ -418,6 +418,7 @@ def test_publish_algorithm():
     am.save()
     del algorithm.public_test_case
     del algorithm.active_image
+    del algorithm.active_model
     form = AlgorithmPublishForm(instance=algorithm, data={"public": True})
     assert form.is_valid()
 
