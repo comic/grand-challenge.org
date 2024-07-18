@@ -48,7 +48,7 @@ services:
       COMPONENTS_REGISTRY_INSECURE: 'true'
       COMPONENTS_DEFAULT_BACKEND: 'tests.components_tests.resources.backends.InsecureDockerExecutor'
       COMPONENTS_DOCKER_KEEP_CAPS_UNSAFE: 'true'
-      COMPONENTS_STRIP_LEADING_PREFIX_SLASH: 'true'
+      USING_MINIO: 'true'
       DEBUG: 'true'
       COMPRESS_OFFLINE: 'false'
       PYTHONDONTWRITEBYTECODE: 1
@@ -111,7 +111,7 @@ services:
       COMPONENTS_REGISTRY_INSECURE: 'true'
       COMPONENTS_DEFAULT_BACKEND: 'tests.components_tests.resources.backends.InsecureDockerExecutor'
       COMPONENTS_DOCKER_KEEP_CAPS_UNSAFE: 'true'
-      COMPONENTS_STRIP_LEADING_PREFIX_SLASH: 'true'
+      USING_MINIO: 'true'
       DEBUG: 'true'
       PYTHONDONTWRITEBYTECODE: 1
     restart: always
@@ -141,7 +141,7 @@ services:
       COMPONENTS_REGISTRY_INSECURE: 'true'
       COMPONENTS_DEFAULT_BACKEND: 'tests.components_tests.resources.backends.InsecureDockerExecutor'
       COMPONENTS_DOCKER_KEEP_CAPS_UNSAFE: 'true'
-      COMPONENTS_STRIP_LEADING_PREFIX_SLASH: 'true'
+      USING_MINIO: 'true'
       DEBUG: 'true'
       PYTHONDONTWRITEBYTECODE: 1
     restart: always
@@ -243,7 +243,9 @@ services:
 networks:
   default:
   workstations:
+    name: "grand-challengeorg_workstations"
   components:
+    name: "grand-challengeorg_components"
     internal: true
 
 volumes:
