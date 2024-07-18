@@ -608,7 +608,7 @@ class TestJobCreation:
         ]
 
         filtered_civ_sets = filter_civs_for_algorithm(
-            civ_sets=civ_sets, algorithm_image=ai
+            civ_sets=civ_sets, algorithm_image=ai, algorithm_model=None
         )
 
         assert filtered_civ_sets == [civ_sets[2]]
@@ -630,7 +630,7 @@ class TestJobCreation:
         ]
 
         filtered_civ_sets = filter_civs_for_algorithm(
-            civ_sets=civ_sets, algorithm_image=ai
+            civ_sets=civ_sets, algorithm_image=ai, algorithm_model=None
         )
 
         assert len(filtered_civ_sets) == 1
@@ -677,7 +677,7 @@ class TestJobCreation:
         ]
 
         filtered_civ_sets = filter_civs_for_algorithm(
-            civ_sets=civ_sets, algorithm_image=ai
+            civ_sets=civ_sets, algorithm_image=ai, algorithm_model=None
         )
 
         assert sorted(filtered_civ_sets) == sorted(civ_sets[1:])
