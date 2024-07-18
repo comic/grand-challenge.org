@@ -639,6 +639,82 @@ class TestSubmissionForm:
             in form.errors["algorithm"]
         )
 
+    @pytest.mark.parametrize(
+        "model_active, submission_with_model_present, form_is_valid",
+        (
+            [True, True, False],
+            [True, False, True],
+            [False, True, True],
+            [False, False, False],
+        ),
+    )
+    def test_eval_exists_for_image_and_model(
+        self, model_active, submission_with_model_present, form_is_valid
+    ):
+        user = UserFactory()
+        alg = AlgorithmFactory()
+        alg.add_editor(user=user)
+        ci1 = ComponentInterfaceFactory()
+        ci2 = ComponentInterfaceFactory()
+        alg.inputs.set([ci1])
+        alg.outputs.set([ci2])
+        archive = ArchiveFactory()
+        p = PhaseFactory(
+            submission_kind=SubmissionKindChoices.ALGORITHM,
+            submissions_limit_per_user_per_period=10,
+            archive=archive,
+        )
+        p.algorithm_inputs.set([ci1])
+        p.algorithm_outputs.set([ci2])
+        civ = ComponentInterfaceValueFactory(interface=ci1)
+        i = ArchiveItemFactory(archive=p.archive)
+        i.values.add(civ)
+
+        InvoiceFactory(
+            challenge=p.challenge,
+            compute_costs_euros=10,
+            payment_status=PaymentStatusChoices.COMPLIMENTARY,
+        )
+
+        # Fetch from the db to get the cost annotations
+        # Maybe this is solved with GeneratedField (Django 5)?
+        p = Phase.objects.get(pk=p.pk)
+
+        ai = AlgorithmImageFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+            algorithm=alg,
+        )
+        am = AlgorithmModelFactory(
+            is_desired_version=model_active, algorithm=alg
+        )
+        # create submission
+        SubmissionFactory(
+            phase=p,
+            algorithm_image=ai,
+            algorithm_model=am if submission_with_model_present else None,
+        )
+        MethodFactory(
+            phase=p,
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+        )
+
+        form = SubmissionForm(
+            user=user,
+            phase=p,
+            data={"algorithm": alg, "creator": user, "phase": p},
+        )
+
+        assert form.is_valid() == form_is_valid
+        if not form_is_valid:
+            assert (
+                "A submission for this algorithm container image and model for this phase already exists."
+                in str(form.errors)
+            )
+
 
 @pytest.mark.django_db
 class TestSubmissionFormOptions:

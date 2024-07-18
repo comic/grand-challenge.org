@@ -9,7 +9,7 @@ from django.db.models import Count, Q
 from django.db.transaction import on_commit
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
-from grandchallenge.algorithms.models import Job
+from grandchallenge.algorithms.models import AlgorithmModel, Job
 from grandchallenge.algorithms.tasks import create_algorithm_jobs
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -271,11 +271,21 @@ def set_evaluation_inputs(*, evaluation_pk):
         app_label="evaluation", model_name="Evaluation"
     )
 
+    if AlgorithmModel.objects.filter(
+        submission__evaluation=evaluation_pk
+    ).exists():
+        pending_jobs_extra_filter = {
+            "algorithm_model__submission__evaluation": evaluation_pk
+        }
+    else:
+        pending_jobs_extra_filter = {"algorithm_model__isnull": True}
+
     has_pending_jobs = (
         Job.objects.active()
         .filter(
             algorithm_image__submission__evaluation=evaluation_pk,
             creator__isnull=True,  # Evaluation inference jobs have no creator
+            **pending_jobs_extra_filter,
         )
         .exists()
     )
@@ -313,10 +323,18 @@ def set_evaluation_inputs(*, evaluation_pk):
         .prefetch_related("values")
     }
 
+    if evaluation.submission.algorithm_model:
+        extra_filter = {
+            "algorithm_model": evaluation.submission.algorithm_model
+        }
+    else:
+        extra_filter = {"algorithm_model__isnull": True}
+
     successful_jobs = (
         Job.objects.filter(
             algorithm_image=evaluation.submission.algorithm_image,
             status=Job.SUCCESS,
+            **extra_filter,
         )
         .annotate(
             inputs_match_count=Count(
