@@ -285,8 +285,6 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
     def __init__(self, *args, reader_study, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self._is_fully_editable = self.instance.is_fully_editable
-
         for field_name in self.instance.read_only_fields:
             self.fields[field_name].required = False
             self.fields[field_name].disabled = True
@@ -312,10 +310,23 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
             *AnswerType.choices,
         ]
 
-        self.options_form_set = CategoricalOptionFormSet(
+        options_form_set_factory = inlineformset_factory(
+            Question,
+            CategoricalOption,
+            form=CategoricalOptionForm,
+            fields=["title", "default"],
+            extra=(
+                0
+                if Question.objects.filter(pk=self.instance.pk).exists()
+                else 1
+            ),
+            can_delete=self.instance.is_fully_editable,
+        )
+
+        self.options_form_set = options_form_set_factory(
             instance=self.instance,
             data=kwargs.get("data"),
-            form_kwargs={"is_editable": self._is_fully_editable},
+            form_kwargs={"is_editable": self.instance.is_fully_editable},
         )
 
         self.helper = FormHelper()
@@ -346,7 +357,10 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                 ),
                 Fieldset(
                     "Add options",
-                    Formset(self.options_form_set),
+                    Formset(
+                        formset=self.options_form_set,
+                        can_add_another=self.instance.is_fully_editable,
+                    ),
                     css_class="options-formset border rounded px-2 my-4",
                 ),
                 Field("required"),
@@ -431,15 +445,6 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
         if self.options_form_set.is_valid():
             # The user will first need to make each instance valid,
             # then we can check the set of options
-
-            if (
-                not self._is_fully_editable
-                and self.options_form_set.deleted_forms
-            ):
-                self.add_error(
-                    error=ValidationError("Options cannot be deleted"),
-                    field=None,
-                )
 
             new_forms = [
                 form
@@ -586,16 +591,6 @@ class CategoricalOptionForm(ModelForm):
     class Meta:
         model = CategoricalOption
         fields = ("title", "default")
-
-
-CategoricalOptionFormSet = inlineformset_factory(
-    Question,
-    CategoricalOption,
-    form=CategoricalOptionForm,
-    fields=["title", "default"],
-    extra=1,
-    can_delete=True,
-)
 
 
 class ReadersForm(UserGroupForm):
