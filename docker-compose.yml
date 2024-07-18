@@ -243,7 +243,9 @@ services:
 networks:
   default:
   workstations:
+    name: "grand-challengeorg_workstations"
   components:
+    name: "grand-challengeorg_components"
     internal: true
 
 volumes:
