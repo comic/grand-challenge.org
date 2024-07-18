@@ -15,7 +15,6 @@ SECURE_SSL_REDIRECT = False
 DEFAULT_SCHEME = "https"
 COMPONENTS_REGISTRY_PREFIX = "localhost"
 COMPONENTS_DOCKER_KEEP_CAPS_UNSAFE = True
-USING_MINIO = True
 
 TEMPLATES[0]["DIRS"].append(SITE_ROOT / "tests" / "templates")  # noqa 405
 
