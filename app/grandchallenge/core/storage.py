@@ -179,7 +179,7 @@ def copy_s3_object(
             "StorageClass"
         ]
 
-    if settings.USING_MINIO:
+    if not settings.USING_MINIO:
         # Minio does not handle the checksum correctly
         extra_args["ChecksumAlgorithm"] = "SHA256"
 
