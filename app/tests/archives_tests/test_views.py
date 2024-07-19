@@ -3,11 +3,9 @@ import tempfile
 from pathlib import Path
 
 import pytest
-from django.template.loader import render_to_string
 from guardian.shortcuts import assign_perm, remove_perm
 from requests import put
 
-from grandchallenge.algorithms.models import Job
 from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.archives.views import (
     ArchiveItemJobListView,
@@ -16,6 +14,9 @@ from grandchallenge.archives.views import (
 from grandchallenge.cases.widgets import WidgetChoices
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.workstations.templatetags.workstations import (
+    workstation_session_control_data,
+)
 from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.archives_tests.factories import (
     ArchiveFactory,
@@ -1348,18 +1349,111 @@ def test_archive_item_list_database_hits(client, django_assert_num_queries):
 
 
 @pytest.mark.django_db
-def test_job_list_row_template_renders(
-    client, settings, django_capture_on_commit_callbacks
-):
-    job = AlgorithmJobFactory()
+def test_job_list_row_template_ajax_renders(client):
+    archive = ArchiveFactory()
+    editor = UserFactory()
+    archive.add_editor(editor)
 
-    assert job.algorithm_image
+    archive_item = ArchiveItemFactory(archive=archive)
 
-    job.status = Job.SUCCESS
+    image = ImageFactory()
+    ci_img = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.IMAGE
+    )
+    civ = ComponentInterfaceValueFactory(interface=ci_img, image=image)
 
-    response = render_to_string(
-        template_name="archives/archive_item_job_list_row.html",
-        context={"object": job},
+    archive_item.values.set([civ])
+
+    job = AlgorithmJobFactory(creator=editor)
+    job.inputs.set([civ])
+
+    algorithm = job.algorithm_image.algorithm
+
+    ctrl_data = workstation_session_control_data(
+        workstation=algorithm.workstation,
+        context_object=algorithm,
+        algorithm_job=job,
+        config=algorithm.workstation_config,
     )
 
-    assert response.find("View algorithm result") != -1
+    headers = {"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"}
+
+    response = get_view_for_user(
+        viewname="archives:item-job-list",
+        client=client,
+        method=client.get,
+        reverse_kwargs={
+            "pk": archive_item.pk,
+            "slug": archive.slug,
+        },
+        user=editor,
+        data={
+            "draw": "1",
+            "columns[0][data]": "0",
+            "columns[0][name]": "",
+            "columns[0][searchable]": "false",
+            "columns[0][orderable]": "false",
+            "columns[0][search][value]": "",
+            "columns[0][search][regex]": "false",
+            "columns[1][data]": "1",
+            "columns[1][name]": "",
+            "columns[1][searchable]": "true",
+            "columns[1][orderable]": "true",
+            "columns[1][search][value]": "",
+            "columns[1][search][regex]": "false",
+            "columns[2][data]": "2",
+            "columns[2][name]": "",
+            "columns[2][searchable]": "true",
+            "columns[2][orderable]": "true",
+            "columns[2][search][value]": "",
+            "columns[2][search][regex]": "false",
+            "columns[3][data]": "3",
+            "columns[3][name]": "",
+            "columns[3][searchable]": "true",
+            "columns[3][orderable]": "true",
+            "columns[3][search][value]": "",
+            "columns[3][search][regex]": "false",
+            "columns[4][data]": "4",
+            "columns[4][name]": "",
+            "columns[4][searchable]": "true",
+            "columns[4][orderable]": "true",
+            "columns[4][search][value]": "",
+            "columns[4][search][regex]": "false",
+            "columns[5][data]": "5",
+            "columns[5][name]": "",
+            "columns[5][searchable]": "true",
+            "columns[5][orderable]": "true",
+            "columns[5][search][value]": "",
+            "columns[5][search][regex]": "false",
+            "columns[6][data]": "6",
+            "columns[6][name]": "",
+            "columns[6][searchable]": "false",
+            "columns[6][orderable]": "false",
+            "columns[6][search][value]": "",
+            "columns[6][search][regex]": "false",
+            "columns[7][data]": "7",
+            "columns[7][name]": "",
+            "columns[7][searchable]": "false",
+            "columns[7][orderable]": "false",
+            "columns[7][search][value]": "",
+            "columns[7][search][regex]": "false",
+            "order[0][column]": "1",
+            "order[0][dir]": "desc",
+            "start": "0",
+            "length": "25",
+            "search[value]": "",
+            "search[regex]": "false",
+            "_": "1721314668838",
+        },
+        **headers,
+    )
+
+    response_content = json.loads(response.content.decode("utf-8"))
+
+    assert response.status_code == 200
+
+    assert response_content["recordsTotal"] == 1
+
+    assert len(response_content["data"]) == 1
+
+    assert ctrl_data[7] in response_content["data"][0][0]
