@@ -3,6 +3,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from django.contrib.humanize.templatetags.humanize import naturaltime
 from guardian.shortcuts import assign_perm, remove_perm
 from requests import put
 
@@ -14,7 +15,10 @@ from grandchallenge.archives.views import (
 from grandchallenge.cases.widgets import WidgetChoices
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.subdomains.utils import reverse
-from tests.algorithms_tests.factories import AlgorithmJobFactory
+from grandchallenge.workstations.templatetags.workstations import (
+    workstation_session_control_data,
+)
+from tests.algorithms_tests.factories import AlgorithmJobFactory, Job
 from tests.archives_tests.factories import (
     ArchiveFactory,
     ArchiveItemFactory,
@@ -1343,3 +1347,83 @@ def test_archive_item_list_database_hits(client, django_assert_num_queries):
     with django_assert_num_queries(expected_queries):
         resp = make_request()
         assert len(resp.json()["data"]) == 4
+
+
+@pytest.mark.django_db
+def test_job_list_row_template_ajax_renders(client):
+    archive = ArchiveFactory()
+    editor = UserFactory()
+    archive.add_editor(editor)
+
+    archive_item = ArchiveItemFactory(archive=archive)
+
+    image = ImageFactory()
+    ci_img = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.IMAGE
+    )
+    civ = ComponentInterfaceValueFactory(interface=ci_img, image=image)
+
+    archive_item.values.set([civ])
+
+    job = AlgorithmJobFactory(creator=editor, status=Job.SUCCESS)
+    job.inputs.set([civ])
+
+    algorithm = job.algorithm_image.algorithm
+
+    ctrl_data = workstation_session_control_data(
+        workstation=algorithm.workstation,
+        context_object=algorithm,
+        algorithm_job=job,
+        config=algorithm.workstation_config,
+    )
+
+    headers = {"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"}
+
+    response = get_view_for_user(
+        viewname="archives:item-job-list",
+        client=client,
+        method=client.get,
+        reverse_kwargs={
+            "pk": archive_item.pk,
+            "slug": archive.slug,
+        },
+        user=editor,
+        data={
+            "draw": "1",
+            "order[0][column]": "1",
+            "order[0][dir]": "desc",
+            "start": "0",
+            "length": "25",
+        },
+        **headers,
+    )
+
+    job_details_url = reverse(
+        "algorithms:job-detail",
+        kwargs={"slug": job.algorithm_image.algorithm.slug, "pk": job.pk},
+    )
+    job_created = str(naturaltime(job.created))
+
+    response_content = json.loads(response.content.decode("utf-8"))
+
+    assert response.status_code == 200
+
+    assert response_content["recordsTotal"] == 1
+
+    assert len(response_content["data"]) == 1
+
+    assert job_details_url in response_content["data"][0][0]
+
+    assert job_created in response_content["data"][0][1]
+
+    assert algorithm.title in response_content["data"][0][2]
+
+    assert job.get_status_display() in response_content["data"][0][3]
+
+    assert "Result and images are private" in response_content["data"][0][4]
+
+    assert job.comment in response_content["data"][0][5]
+
+    assert "Empty" in response_content["data"][0][6]
+
+    assert ctrl_data in response_content["data"][0][7]
