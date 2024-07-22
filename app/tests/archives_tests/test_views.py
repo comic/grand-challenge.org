@@ -3,6 +3,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from django.contrib.humanize.templatetags.humanize import naturaltime
 from guardian.shortcuts import assign_perm, remove_perm
 from requests import put
 
@@ -17,7 +18,7 @@ from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.templatetags.workstations import (
     workstation_session_control_data,
 )
-from tests.algorithms_tests.factories import AlgorithmJobFactory
+from tests.algorithms_tests.factories import AlgorithmJobFactory, Job
 from tests.archives_tests.factories import (
     ArchiveFactory,
     ArchiveItemFactory,
@@ -1364,7 +1365,7 @@ def test_job_list_row_template_ajax_renders(client):
 
     archive_item.values.set([civ])
 
-    job = AlgorithmJobFactory(creator=editor)
+    job = AlgorithmJobFactory(creator=editor, status=Job.SUCCESS)
     job.inputs.set([civ])
 
     algorithm = job.algorithm_image.algorithm
@@ -1397,6 +1398,12 @@ def test_job_list_row_template_ajax_renders(client):
         **headers,
     )
 
+    job_details_url = reverse(
+        "algorithms:job-detail",
+        kwargs={"slug": job.algorithm_image.algorithm.slug, "pk": job.pk},
+    )
+    job_created = str(naturaltime(job.created))
+
     response_content = json.loads(response.content.decode("utf-8"))
 
     assert response.status_code == 200
@@ -1405,4 +1412,18 @@ def test_job_list_row_template_ajax_renders(client):
 
     assert len(response_content["data"]) == 1
 
-    assert ctrl_data[7] in response_content["data"][0][0]
+    assert job_details_url in response_content["data"][0][0]
+
+    assert job_created in response_content["data"][0][1]
+
+    assert algorithm.title in response_content["data"][0][2]
+
+    assert job.get_status_display() in response_content["data"][0][3]
+
+    assert "Result and images are private" in response_content["data"][0][4]
+
+    assert job.comment in response_content["data"][0][5]
+
+    assert "Empty" in response_content["data"][0][6]
+
+    assert ctrl_data in response_content["data"][0][7]

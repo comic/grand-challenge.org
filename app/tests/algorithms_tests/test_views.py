@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 from django.contrib.auth.models import Group
+from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.files.base import ContentFile
 from django.utils import timezone
 from django.utils.text import slugify
@@ -1382,7 +1383,9 @@ def test_job_list_row_template_ajax_renders(client):
 
     algorithm_image = AlgorithmImageFactory(algorithm=algorithm)
 
-    job = AlgorithmJobFactory(creator=editor, algorithm_image=algorithm_image)
+    job = AlgorithmJobFactory(
+        creator=editor, algorithm_image=algorithm_image, status=Job.SUCCESS
+    )
 
     ctrl_data = workstation_session_control_data(
         workstation=algorithm.workstation,
@@ -1411,6 +1414,12 @@ def test_job_list_row_template_ajax_renders(client):
         **headers,
     )
 
+    job_details_url = reverse(
+        "algorithms:job-detail",
+        kwargs={"slug": job.algorithm_image.algorithm.slug, "pk": job.pk},
+    )
+    job_created = str(naturaltime(job.created))
+
     response_content = json.loads(response.content.decode("utf-8"))
 
     assert response.status_code == 200
@@ -1419,4 +1428,18 @@ def test_job_list_row_template_ajax_renders(client):
 
     assert len(response_content["data"]) == 1
 
-    assert ctrl_data[7] in response_content["data"][0][0]
+    assert job_details_url in response_content["data"][0][0]
+
+    assert job_created in response_content["data"][0][1]
+
+    assert editor.username in response_content["data"][0][2]
+
+    assert job.get_status_display() in response_content["data"][0][3]
+
+    assert "Result and images are private" in response_content["data"][0][4]
+
+    assert job.comment in response_content["data"][0][5]
+
+    assert "Empty" in response_content["data"][0][6]
+
+    assert ctrl_data in response_content["data"][0][7]
