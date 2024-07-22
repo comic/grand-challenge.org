@@ -25,12 +25,10 @@ function handleJobStatus(job) {
 
     handleImageImports(jobStatus, imageInputs)
 
-    let estimatedRemainingTime = averageJobDuration;
-
     if (jobStatus === "succeeded") {
         setCardCompleteMessage(cards.job, "View Results");
     } else if (["started", "provisioning", "provisioned", "executing", "executed", "parsing outputs"].includes(jobStatus)) {
-        setCardActiveMessage(cards.job, `Started, ${moment.duration(estimatedRemainingTime).humanize()} remaining`);
+        setCardActiveMessage(cards.job, `Job queued for execution! <br> Average job duration: ${moment.duration(averageJobDuration).humanize()}`);
         setTimeout(function () {
             getJobStatus(job.api_url)
         }, Math.floor(Math.random() * timeout) + 100);
