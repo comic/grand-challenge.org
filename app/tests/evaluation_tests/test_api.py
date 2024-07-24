@@ -228,7 +228,7 @@ class TestUpdateExternalEvaluation(TestCase):
             reverse_kwargs={"pk": self.claimed_evaluation.pk},
             content_type="application/json",
             data={
-                "status": Evaluation.FAILURE,
+                "status": "Failed",
                 "error_message": "Error message",
             },
         )
@@ -259,7 +259,7 @@ class TestUpdateExternalEvaluation(TestCase):
             user=self.external_evaluator,
             reverse_kwargs={"pk": self.claimed_evaluation.pk},
             data={
-                "status": Evaluation.FAILURE,
+                "status": "Failed",
             },
             content_type="application/json",
         )
@@ -277,7 +277,7 @@ class TestUpdateExternalEvaluation(TestCase):
             user=self.external_evaluator,
             reverse_kwargs={"pk": self.claimed_evaluation.pk},
             data={
-                "status": Evaluation.FAILURE,
+                "status": "Failed",
                 "error_message": "Error message",
             },
             content_type="application/json",
@@ -286,6 +286,7 @@ class TestUpdateExternalEvaluation(TestCase):
         self.claimed_evaluation.refresh_from_db()
         assert self.claimed_evaluation.status == Evaluation.FAILURE
         assert self.claimed_evaluation.completed_at is not None
+        assert self.claimed_evaluation.compute_cost_euro_millicents == 0
         assert self.claimed_evaluation.outputs.count() == 0
 
     @pytest.mark.django_db
@@ -297,7 +298,7 @@ class TestUpdateExternalEvaluation(TestCase):
             user=self.external_evaluator,
             reverse_kwargs={"pk": self.claimed_evaluation.pk},
             data={
-                "status": Evaluation.SUCCESS,
+                "status": "Succeeded",
             },
             content_type="application/json",
         )
@@ -314,17 +315,18 @@ class TestUpdateExternalEvaluation(TestCase):
             method=self.client.patch,
             user=self.external_evaluator,
             reverse_kwargs={"pk": self.claimed_evaluation.pk},
-            data={"metrics": "foo-bar", "status": Evaluation.SUCCESS},
+            data={"metrics": "foo-bar", "status": "Succeeded"},
             content_type="application/json",
         )
         assert response.status_code == 200
         self.claimed_evaluation.refresh_from_db()
         assert self.claimed_evaluation.status == Evaluation.SUCCESS
         assert self.claimed_evaluation.completed_at is not None
+        assert self.claimed_evaluation.compute_cost_euro_millicents == 0
         assert self.claimed_evaluation.outputs.count() == 1
         assert response.json() == {
             "metrics": "foo-bar",
-            "status": 4,
+            "status": "Succeeded",
             "error_message": "",
         }
 
@@ -342,7 +344,7 @@ class TestUpdateExternalEvaluation(TestCase):
             method=self.client.patch,
             user=self.external_evaluator,
             reverse_kwargs={"pk": self.claimed_evaluation.pk},
-            data={"metrics": "foo-bar", "status": Evaluation.SUCCESS},
+            data={"metrics": "foo-bar", "status": "Succeeded"},
             content_type="application/json",
         )
         assert response.status_code == 400
@@ -351,6 +353,7 @@ class TestUpdateExternalEvaluation(TestCase):
         }
         self.claimed_evaluation.refresh_from_db()
         assert self.claimed_evaluation.status == Evaluation.CANCELLED
+        assert self.claimed_evaluation.compute_cost_euro_millicents == 0
         assert (
             self.claimed_evaluation.error_message
             == "External evaluation timed out."
@@ -368,7 +371,7 @@ class TestUpdateExternalEvaluation(TestCase):
             method=self.client.patch,
             user=another_external_evaluator,
             reverse_kwargs={"pk": self.claimed_evaluation.pk},
-            data={"metrics": "foo-bar", "status": Evaluation.SUCCESS},
+            data={"metrics": "foo-bar", "status": "Succeeded"},
             content_type="application/json",
         )
         assert response.status_code == 403
