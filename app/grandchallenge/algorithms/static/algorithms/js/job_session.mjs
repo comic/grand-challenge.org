@@ -28,12 +28,12 @@ function handleJobStatus(job) {
     if (jobStatus === "succeeded") {
         setCardCompleteMessage(cards.job, "View Results");
     } else if (["started", "provisioning", "provisioned"].includes(jobStatus)) {
-        setCardActiveMessage(cards.job, `Job is queued for execution!`);
+        setCardActiveMessage(cards.job, `Job is queued for execution`);
         setTimeout(function () {
             getJobStatus(job.api_url)
         }, Math.floor(Math.random() * timeout) + 100);
     } else if (["executing", "executed", "parsing outputs"].includes(jobStatus)) {
-        setCardActiveMessage(cards.job, `Job is being executed! <br> Average job duration: ${moment.duration(averageJobDuration).humanize()}`);
+        setCardActiveMessage(cards.job, `Job is being executed <br> Average job duration: ${moment.duration(averageJobDuration).humanize()}`);
         setTimeout(function () {
             getJobStatus(job.api_url)
         }, Math.floor(Math.random() * timeout) + 100);
