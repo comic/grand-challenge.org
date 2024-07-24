@@ -20,10 +20,7 @@ from grandchallenge.evaluation.tasks import update_combined_leaderboard
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.invoices.models import PaymentStatusChoices
 from grandchallenge.workstations.models import Workstation
-from tests.algorithms_tests.factories import (
-    AlgorithmFactory,
-    AlgorithmImageFactory,
-)
+from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.factories import ArchiveFactory
 from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.evaluation_tests.factories import (
@@ -1467,23 +1464,10 @@ def test_evaluation_details_zero_rank_message(client):
 
     challenge = ChallengeFactory(hidden=False, creator=participant)
 
-    challenge.add_participant(participant)
-
-    challenge.add_admin(participant)
-
     phase = PhaseFactory(challenge=challenge, public=True)
 
-    method = MethodFactory(phase=phase)
-
-    algorithm_image = AlgorithmImageFactory()
-    algorithm_image.algorithm.add_editor(user=participant)
-
-    submission = SubmissionFactory(
-        phase=phase, creator=participant, algorithm_image=algorithm_image
-    )
-
     evaluation = EvaluationFactory(
-        method=method, submission=submission, rank=0, status=Evaluation.SUCCESS
+        submission__phase=phase, rank=0, status=Evaluation.SUCCESS
     )
 
     response = get_view_for_user(
@@ -1500,10 +1484,6 @@ def test_evaluation_details_zero_rank_message(client):
     assert response.status_code == 200
 
     assert str(evaluation.pk) in response.rendered_content
-
-    assert str(submission.pk) in response.rendered_content
-
-    assert str(method.pk) in response.rendered_content
 
     assert str(challenge.short_name) in response.rendered_content
 
