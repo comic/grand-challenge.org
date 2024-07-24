@@ -1461,7 +1461,7 @@ def test_ground_truth_version_management(settings, client):
 
 
 @pytest.mark.django_db
-def test_evaluation_details(client):
+def test_evaluation_details_zero_rank_message(client):
 
     participant = UserFactory()
 
