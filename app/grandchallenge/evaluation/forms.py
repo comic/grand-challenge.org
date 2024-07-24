@@ -496,14 +496,17 @@ class SubmissionForm(
     def clean_algorithm(self):
         algorithm = self.cleaned_data["algorithm"]
 
-        extra_submission_filter = {}
-        extra_evaluation_filter = {}
         if algorithm.active_model:
             extra_submission_filter = {
                 "algorithm_model__sha256": algorithm.active_model.sha256
             }
             extra_evaluation_filter = {
                 "submission__algorithm_model__sha256": algorithm.active_model.sha256
+            }
+        else:
+            extra_submission_filter = {"algorithm_model__isnull": True}
+            extra_evaluation_filter = {
+                "submission__algorithm_model__isnull": True
             }
 
         if Submission.objects.filter(

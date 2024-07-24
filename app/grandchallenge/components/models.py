@@ -112,6 +112,7 @@ class InterfaceKindChoices(models.TextChoices):
     IMAGE = "IMG", _("Image")
     SEGMENTATION = "SEG", _("Segmentation")
     HEAT_MAP = "HMAP", _("Heat Map")
+    DISPLACEMENT_FIELD = "DSPF", _("Displacement field")
 
     # Registration types
     AFFINE_TRANSFORM_REGISTRATION = "ATRG", _("Affine transform registration")
@@ -726,6 +727,7 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.IMAGE,
             InterfaceKind.InterfaceKindChoices.HEAT_MAP,
             InterfaceKind.InterfaceKindChoices.SEGMENTATION,
+            InterfaceKind.InterfaceKindChoices.DISPLACEMENT_FIELD,
         }
 
     @staticmethod
@@ -828,6 +830,21 @@ class OverlaySegmentsMixin(models.Model):
                 f"The valid voxel values for this segmentation are: "
                 f"{self.overlay_segments_allowed_values}. This segmentation is "
                 f"invalid as it contains the voxel values: {invalid_values}."
+            )
+
+    def _validate_vector_field(self, image: Image):
+        if len(image.shape) != 4:
+            raise ValidationError(
+                "Deformation and displacement must be 4D images."
+            )
+        if image.shape_without_color != image.shape:
+            raise ValidationError(
+                "Deformation and displacement fields cannot have a color component."
+            )
+        if image.shape[0] != 3:
+            raise ValidationError(
+                "Deformation and displacement field's 4th dimension "
+                "must be a 3-component vector."
             )
 
     class Meta:
@@ -1344,6 +1361,8 @@ class ComponentInterfaceValue(models.Model):
             self._validate_image_only()
             if self.interface.kind == InterfaceKindChoices.SEGMENTATION:
                 self.interface._validate_voxel_values(self.image)
+            if self.interface.kind == InterfaceKindChoices.DISPLACEMENT_FIELD:
+                self.interface._validate_vector_field(self.image)
         elif self.interface.is_file_kind:
             self._validate_file_only()
         else:

@@ -173,6 +173,11 @@ IMAGE_FILES_SUBDIRECTORY = "images"
 EVALUATION_FILES_SUBDIRECTORY = "evaluation"
 COMPONENTS_FILES_SUBDIRECTORY = "components"
 
+# Minio differs from s3, we know:
+#  - Leading slashes are not respected in list_objects_v2
+#  - sha256 sums are not implemented
+USING_MINIO = strtobool(os.environ.get("USING_MINIO", "False"))
+
 AWS_S3_FILE_OVERWRITE = False
 # Note: deprecated in django storages 2.0
 AWS_BUCKET_ACL = "private"
@@ -1088,13 +1093,6 @@ COMPONENTS_NVIDIA_VISIBLE_DEVICES = os.environ.get(
     "COMPONENTS_NVIDIA_VISIBLE_DEVICES", "void"
 )
 COMPONENTS_CONTAINER_PLATFORM = "linux/amd64"
-COMPONENTS_STRIP_LEADING_PREFIX_SLASH = strtobool(
-    os.environ.get(
-        # Fix for MINIO which doesn't respect leading slashes in list_objects_v2
-        "COMPONENTS_STRIP_LEADING_PREFIX_SLASH",
-        "False",
-    )
-)
 
 # Set which template pack to use for forms
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"

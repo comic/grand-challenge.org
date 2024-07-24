@@ -1195,14 +1195,24 @@ class Submission(UUIDModel):
     )
 
     class Meta:
-        unique_together = (("phase", "predictions_file", "algorithm_image"),)
+        unique_together = (
+            (
+                "phase",
+                "predictions_file",
+                "algorithm_image",
+                "algorithm_model",
+            ),
+        )
 
     @cached_property
-    def is_evaluated_with_active_image(self):
+    def is_evaluated_with_active_image_and_ground_truth(self):
         active_image = self.phase.active_image
+        active_ground_truth = self.phase.active_ground_truth
         if active_image:
             return Evaluation.objects.filter(
-                submission=self, method=active_image
+                submission=self,
+                method=active_image,
+                ground_truth=active_ground_truth,
             ).exists()
         else:
             # No active image, so nothing to do to evaluate with it

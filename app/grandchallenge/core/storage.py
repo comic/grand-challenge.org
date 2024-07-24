@@ -165,7 +165,8 @@ def copy_s3_object(
     target_key = to_field.storage.get_available_name(
         name=target_key, max_length=to_field.field.max_length
     )
-    extra_args = {"ContentType": mimetype, "ChecksumAlgorithm": "SHA256"}
+
+    extra_args = {"ContentType": mimetype}
 
     if settings.AWS_S3_OBJECT_PARAMETERS[
         "StorageClass"
@@ -177,6 +178,10 @@ def copy_s3_object(
         extra_args["StorageClass"] = settings.AWS_S3_OBJECT_PARAMETERS[
             "StorageClass"
         ]
+
+    if not settings.USING_MINIO:
+        # Minio does not handle the checksum correctly
+        extra_args["ChecksumAlgorithm"] = "SHA256"
 
     target_client.copy(
         CopySource={"Bucket": src_bucket, "Key": src_key},

@@ -10,6 +10,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.utils.timezone import now
 from redis.exceptions import LockError
 
@@ -163,9 +164,10 @@ def send_raw_emails():
 
 
 @acks_late_micro_short_task
+@transaction.atomic
 def cleanup_sent_raw_emails():
     RawEmail.objects.filter(
         sent_at__isnull=False,
         errored=False,
         created__lt=now() - timedelta(days=7),
-    ).delete()
+    ).defer("message").delete()

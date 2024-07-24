@@ -283,11 +283,7 @@ class Executor(ABC):
 
         response = self._s3_client.list_objects_v2(
             Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-            Prefix=(
-                prefix.lstrip("/")
-                if settings.COMPONENTS_STRIP_LEADING_PREFIX_SLASH
-                else prefix
-            ),
+            Prefix=(prefix.lstrip("/") if settings.USING_MINIO else prefix),
         )
 
         if response.get("IsTruncated", False):
@@ -423,11 +419,7 @@ class Executor(ABC):
 
         objects_list = self._s3_client.list_objects_v2(
             Bucket=bucket,
-            Prefix=(
-                prefix.lstrip("/")
-                if settings.COMPONENTS_STRIP_LEADING_PREFIX_SLASH
-                else prefix
-            ),
+            Prefix=(prefix.lstrip("/") if settings.USING_MINIO else prefix),
         )
 
         if contents := objects_list.get("Contents"):
