@@ -178,8 +178,13 @@ ul.socialaccount_providers > li {
     border-radius: 0.9rem;
 }
 
-.gc-card:hover {
+.gc-card:hover, .gc-card:focus-within {
     box-shadow: 0 0 1rem 0 rgba(0, 0, 0, 0.2);
+}
+
+/* Reset card shadow when above-stretched-link elements are focused */
+.gc-card:has(.above-stretched-link:focus) {
+  box-shadow: none;
 }
 
 .gc-card .card-img-top{
