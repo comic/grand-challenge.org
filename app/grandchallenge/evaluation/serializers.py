@@ -95,6 +95,7 @@ class EvaluationSerializer(ModelSerializer):
 class ExternalEvaluationSerializer(EvaluationSerializer):
     algorithm_model = SerializerMethodField()
     algorithm_image = SerializerMethodField()
+    phase_pk = CharField(source="submission.phase.pk")
 
     class Meta:
         model = Evaluation
@@ -103,6 +104,7 @@ class ExternalEvaluationSerializer(EvaluationSerializer):
             "algorithm_model",
             "algorithm_image",
             "claimed_by",
+            "phase_pk",
         )
 
     def get_algorithm_model(self, obj) -> dict | None:
@@ -125,28 +127,28 @@ class ExternalEvaluationSerializer(EvaluationSerializer):
 
 
 class ExternalEvaluationStatusField(ChoiceField):
+    external_to_internal_status_mapping = {
+        "Succeeded": Evaluation.SUCCESS,
+        "Failed": Evaluation.FAILURE,
+    }
+
     def __init__(self, *args, **kwargs):
-        self.external_to_internal_status_mapping = {
-            "Succeeded": Evaluation.SUCCESS,
-            "Failed": Evaluation.FAILURE,
-        }
-        self.internal_to_external_status_mapping = {
-            v: k for k, v in self.external_to_internal_status_mapping.items()
-        }
         choices = list(self.external_to_internal_status_mapping.keys())
         super().__init__(*args, choices=choices, **kwargs)
 
     def to_internal_value(self, data):
-        # Convert the external value to the internal value
         if data in self.external_to_internal_status_mapping:
             return self.external_to_internal_status_mapping[data]
-        self.fail("invalid_choice", input=data)
+        raise DRFValidationError("Not a valid choice.")
 
     def to_representation(self, value):
-        # Convert the internal value to the external value for representation
-        if value in self.internal_to_external_status_mapping:
-            return self.internal_to_external_status_mapping[value]
-        self.fail("invalid_choice", input=value)
+        for (
+            external_value,
+            internal_value,
+        ) in self.external_to_internal_status_mapping.items():
+            if value == internal_value:
+                return external_value
+        raise DRFValidationError("Not a valid choice.")
 
 
 class ExternalEvaluationUpdateSerializer(ModelSerializer):

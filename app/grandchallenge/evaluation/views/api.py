@@ -3,6 +3,7 @@ from django.utils.timezone import now
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions
 from rest_framework.decorators import action
+from rest_framework.filters import BaseFilterBackend
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
@@ -28,6 +29,18 @@ class CanClaimEvaluation(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         return request.user.has_perm("evaluation.claim_evaluation", obj)
+
+
+class CanClaimEvaluationFilter(BaseFilterBackend):
+    """Returns only evaluations for which the user has 'claim_evaluation' permission and which are in pending state"""
+
+    def filter_queryset(self, request, queryset, view):
+        return get_objects_for_user(
+            request.user,
+            "evaluation.claim_evaluation",
+            queryset,
+            accept_global_perms=False,
+        ).filter(status=Evaluation.PENDING)
 
 
 class EvaluationViewSet(ReadOnlyModelViewSet):
@@ -78,13 +91,16 @@ class EvaluationViewSet(ReadOnlyModelViewSet):
                 data=serializer.errors, status=HTTP_400_BAD_REQUEST
             )
 
-    @action(detail=False, methods=["GET"])
+    @action(
+        detail=False,
+        methods=["GET"],
+        filter_backends=[CanClaimEvaluationFilter],
+        serializer_class=ExternalEvaluationSerializer,
+    )
     def claimable_evaluations(self, request, *args, **kwargs):
-        queryset = get_objects_for_user(
-            request.user, "evaluation.claim_evaluation"
-        ).filter(status=Evaluation.PENDING)
+        qs = self.filter_queryset(self.get_queryset())
         serializer = ExternalEvaluationSerializer(
-            queryset, many=True, context={"request": request}
+            qs, many=True, context={"request": request}
         )
         return Response(serializer.data)
 
