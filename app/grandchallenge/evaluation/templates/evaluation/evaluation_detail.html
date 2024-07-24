@@ -57,12 +57,6 @@
             </span>
         </dd>
 
-        {% if object.rank == 0 %}
-            <div class="alert alert-warning">Some metrics are missing from metrics.json <br>
-            Therefore, this submission is not visible in the leaderboard.</div>
-
-        {% endif %}
-
         <dt>User</dt>
         <dd>
             {{ object.submission.creator|user_profile_link }}
@@ -314,6 +308,12 @@
                                 Publish this result on the leaderboard(s)
                             </button>
                         </form>
+                    {% endif %}
+
+                    {% if object.rank == 0 %}
+                        <br>
+                        <div class="alert alert-warning">This submission has a rank 0 due to mising metric(s) from metrics.json <br>
+                        Therefore, it is not visible in the leaderboard.</div>
                     {% endif %}
                 </div>
             {% endif %}
