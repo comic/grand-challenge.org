@@ -7,7 +7,11 @@
 
 {% crispy formset %}
 
-<button type="button" class="btn btn-primary" id="add-form-row-{{ formset.prefix }}">
+<button type="button"
+        class="btn btn-primary"
+        id="add-form-row-{{ formset.prefix }}"
+        {% if not can_add_another %}disabled{% endif %}
+>
     Add another
 </button>
 
