@@ -56,10 +56,14 @@ from grandchallenge.evaluation.tasks import (
     create_evaluation,
     update_combined_leaderboard,
 )
+from grandchallenge.evaluation.templatetags.evaluation_extras import (
+    get_jsonpath,
+)
 from grandchallenge.evaluation.utils import (
     Metric,
     StatusChoices,
     SubmissionKindChoices,
+    get,
 )
 from grandchallenge.hanging_protocols.models import HangingProtocolMixin
 from grandchallenge.notifications.models import Notification, NotificationType
@@ -1402,6 +1406,35 @@ class Evaluation(UUIDModel, ComponentJob):
         for output in self.outputs.all():
             if output.interface.slug == "metrics-json-file":
                 return output.value
+
+    @property
+    def missing_metrics_json_file(self):
+        if self.status == self.SUCCESS:
+
+            output_values = [
+                o.value
+                for o in self.outputs.all()
+                if o.interface.slug == "metrics-json-file"
+            ]
+
+            if len(output_values) > 0:
+
+                if self.rank == 0:
+
+                    valid_metrics = self.submission.phase.valid_metrics
+                    missing_metrics = []
+
+                    for metric in valid_metrics:
+
+                        if get_jsonpath(get(output_values), metric.path) in [
+                            "",
+                            None,
+                        ]:
+                            missing_metrics.append(metric.path)
+
+                    return missing_metrics
+
+        return None
 
     def clean(self):
         if self.submission.phase != self.method.phase:
