@@ -310,10 +310,13 @@
                         </form>
                     {% endif %}
 
-                    {% if object.rank == 0 %}
+                    {% if object.missing_metrics_json_file %}
                         <br>
-                        <div class="alert alert-warning mb-0">This submission has a rank 0 due to missing metric(s) from metrics.json <br>
-                        Therefore, it is not visible in the leaderboard.</div>
+                        <div class="alert alert-warning mb-0">
+                            This submission has a rank 0 due to missing metric(s) from metrics.json {{ object.missing_metrics_json_file }}
+                            <br>
+                            Therefore, it is not visible in the leaderboard.
+                        </div>
                     {% endif %}
                 </div>
             {% endif %}
