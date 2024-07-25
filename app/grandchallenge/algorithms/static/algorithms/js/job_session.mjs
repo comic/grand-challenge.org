@@ -28,23 +28,21 @@ function handleJobStatus(job) {
     if (jobStatus === "succeeded") {
         setCardCompleteMessage(cards.job, "View Results");
     } else if (["started", "provisioning", "provisioned"].includes(jobStatus)) {
-        setCardActiveMessage(cards.job, `Job is queued for execution`);
-        setTimeout(function () {
-            getJobStatus(job.api_url)
-        }, Math.floor(Math.random() * timeout) + 100);
+        setCardActiveMessage(cards.job, `Job is being provisioned`);
     } else if (["executing", "executed", "parsing outputs"].includes(jobStatus)) {
         setCardActiveMessage(cards.job, `Job is being executed <br> Average job duration: ${moment.duration(averageJobDuration).humanize()}`);
-        setTimeout(function () {
-            getJobStatus(job.api_url)
-        }, Math.floor(Math.random() * timeout) + 100);
     } else if (jobStatus === "queued" || jobStatus === "re-queued") {
         setCardAwaitingMessage(cards.job, "Queued");
-        setTimeout(function () {
-            getJobStatus(job.api_url)
-        }, Math.floor(Math.random() * timeout) + 100);
     } else {
         setCardErrorMessage(cards.job, "Errored");
     }
+
+    if(["started", "provisioning", "provisioned", "executing", "executed", "parsing outputs", "queued", "re-queued"].includes(jobStatus)){
+        setTimeout(function () {
+            getJobStatus(job.api_url)
+        }, Math.floor(Math.random() * timeout) + 100);
+    }
+
 }
 
 function handleImageImports(jobStatus, imageInputs) {
