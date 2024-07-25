@@ -115,7 +115,7 @@ cost_fixtures:
 	docker compose run \
 		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
 		--rm \
-		web \
+		celery_worker_evaluation \
 		python manage.py runscript cost_fixtures
 
 component_interface_value_fixtures:
