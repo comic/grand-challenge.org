@@ -12,6 +12,7 @@ from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.components.models import (
+    ComponentInterface,
     ImportStatusChoices,
     InterfaceKindChoices,
 )
@@ -22,7 +23,10 @@ from grandchallenge.invoices.models import PaymentStatusChoices
 from grandchallenge.workstations.models import Workstation
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.factories import ArchiveFactory
-from tests.components_tests.factories import ComponentInterfaceFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.evaluation_tests.factories import (
     CombinedLeaderboardFactory,
     EvaluationFactory,
@@ -1464,11 +1468,26 @@ def test_evaluation_details_zero_rank_message(client):
 
     challenge = ChallengeFactory(hidden=False, creator=participant)
 
-    phase = PhaseFactory(challenge=challenge, public=True)
+    phase = PhaseFactory(
+        challenge__hidden=False,
+        public=True,
+        score_jsonpath="acc.mean",
+        score_title="Accuracy Mean",
+        extra_results_columns=[
+            {"path": "dice.mean", "order": "asc", "title": "Dice mean"}
+        ],
+    )
+
+    ci = ComponentInterface.objects.get(slug="metrics-json-file")
+    civ = ComponentInterfaceValueFactory(
+        interface=ci, value={"acc": {"std": 0.1, "mean": 0.0}}
+    )
 
     evaluation = EvaluationFactory(
         submission__phase=phase, rank=0, status=Evaluation.SUCCESS
     )
+
+    evaluation.outputs.set([civ])
 
     response = get_view_for_user(
         viewname="evaluation:detail",
@@ -1488,6 +1507,6 @@ def test_evaluation_details_zero_rank_message(client):
     assert str(challenge.short_name) in response.rendered_content
 
     assert (
-        "Some metrics are missing from metrics.json"
+        "This submission has a rank 0 due to missing metric"
         in response.rendered_content
     )
