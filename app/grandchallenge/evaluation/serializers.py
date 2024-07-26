@@ -191,7 +191,11 @@ class ExternalEvaluationUpdateSerializer(ModelSerializer):
         # calling update_status takes care of sending the notifications
         instance.update_status(
             status=validated_data["status"],
-            error_message=validated_data["error_message"],
+            error_message=(
+                validated_data["error_message"]
+                if "error_message" in validated_data.keys()
+                else None
+            ),
             compute_cost_euro_millicents=0,
         )
 
