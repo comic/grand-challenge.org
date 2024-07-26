@@ -1408,8 +1408,8 @@ class Evaluation(UUIDModel, ComponentJob):
                 return output.value
 
     @property
-    def missing_metrics_json_file(self):
-        if self.status == self.SUCCESS:
+    def missing_metrics(self):
+        if self.status == self.SUCCESS and self.rank == 0:
 
             output_values = [
                 o.value
@@ -1417,23 +1417,17 @@ class Evaluation(UUIDModel, ComponentJob):
                 if o.interface.slug == "metrics-json-file"
             ]
 
-            if len(output_values) > 0:
+            valid_metrics = self.submission.phase.valid_metrics
+            missing_metrics = []
 
-                if self.rank == 0:
+            for metric in valid_metrics:
+                if get_jsonpath(get(output_values), metric.path) in [
+                    "",
+                    None,
+                ]:
+                    missing_metrics.append(metric.path)
 
-                    valid_metrics = self.submission.phase.valid_metrics
-                    missing_metrics = []
-
-                    for metric in valid_metrics:
-
-                        if get_jsonpath(get(output_values), metric.path) in [
-                            "",
-                            None,
-                        ]:
-                            missing_metrics.append(metric.path)
-
-                    return missing_metrics
-
+            return missing_metrics
         return None
 
     def clean(self):
