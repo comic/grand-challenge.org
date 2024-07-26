@@ -282,10 +282,10 @@
                     <h3 class="card-title">Visibility</h3>
 
                     {% if object.missing_metrics %}
+
+                        <i class="fas fa-eye-slash text-danger"></i> This result is not
+                        visible on the leaderboard(s) <br> because the metrics.json output file for this evaluation is missing the following metrics: {{ object.missing_metrics }}
                         <br>
-                        <div class="alert alert-warning mb-0">
-                            The metrics.json output file for this evaluation is missing the following metrics: {{ object.missing_metrics }}
-                        </div>
 
                     {% else %}
 

@@ -1507,6 +1507,6 @@ def test_evaluation_details_zero_rank_message(client):
     assert str(challenge.short_name) in response.rendered_content
 
     assert (
-        "This submission has a rank 0 due to missing metric"
+        "metrics.json output file for this evaluation is missing"
         in response.rendered_content
     )
