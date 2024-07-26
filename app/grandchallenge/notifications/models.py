@@ -354,10 +354,18 @@ class Notification(UUIDModel):
             self.type
             == NotificationType.NotificationTypeChoices.EVALUATION_STATUS
             and self.actor != user
-            and self.message == "cancelled"
+            and self.message == "was cancelled"
         ):
+            if self.action_object.error_message:
+                error_message = format_html(
+                    '<span class ="text-truncate font-italic text-muted align-middle '
+                    'mx-2">| {}</span>',
+                    self.action_object.error_message,
+                )
+            else:
+                error_message = ""
             return format_html(
-                "The {} from {} to {} was not updated in time and was cancelled {}.",
+                "The {} from {} to {} was cancelled {}. | {}",
                 format_html(
                     '<a href="{}">{}</a>',
                     self.action_object.submission.get_absolute_url(),
@@ -370,6 +378,7 @@ class Notification(UUIDModel):
                     self.target.challenge.short_name,
                 ),
                 naturaltime(self.created),
+                error_message,
             )
         elif (
             self.type

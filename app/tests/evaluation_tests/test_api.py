@@ -6,6 +6,7 @@ from django.test import TestCase, override_settings
 from grandchallenge.evaluation.models import Evaluation
 from grandchallenge.evaluation.serializers import ExternalEvaluationSerializer
 from grandchallenge.evaluation.utils import SubmissionKindChoices
+from grandchallenge.notifications.models import Notification
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
@@ -43,15 +44,16 @@ def create_claimable_evaluation():
 
 
 def get_user_groups(evaluation):
-    external_evaluator, challenge_admin, challenge_participant = (
-        UserFactory.create_batch(3)
-    )
+    external_evaluator, challenge_participant = UserFactory.create_batch(2)
     challenge = evaluation.submission.phase.challenge
-    challenge.add_admin(user=challenge_admin)
     challenge.add_participant(user=challenge_participant)
     challenge.external_evaluators_group.user_set.add(external_evaluator)
 
-    return [external_evaluator, challenge_admin, challenge_participant]
+    return [
+        external_evaluator,
+        challenge.admins_group.user_set.get(),
+        challenge_participant,
+    ]
 
 
 @pytest.mark.django_db
@@ -59,14 +61,12 @@ def test_claimable_evaluations(client):
     e1 = create_claimable_evaluation()
     assert e1.status == Evaluation.PENDING
 
-    e2 = EvaluationFactory(
+    EvaluationFactory(
         submission__phase=e1.submission.phase,
         submission__algorithm_image=e1.submission.algorithm_image,
         method=None,
+        status=Evaluation.EXECUTING,
     )
-    e2.status = Evaluation.EXECUTING
-    e2.save()
-
     EvaluationFactory(submission__phase=e1.submission.phase.parent)
 
     external_evaluator, challenge_admin, challenge_participant = (
@@ -134,6 +134,7 @@ def test_claim_evaluation(client):
     eval.refresh_from_db()
     assert eval.status == Evaluation.CLAIMED
     assert eval.started_at is not None
+    assert eval.claimed_by == external_evaluator
     assert (
         response.json()
         == ExternalEvaluationSerializer(
@@ -189,11 +190,6 @@ class TestUpdateExternalEvaluation(TestCase):
             self.challenge_admin,
             self.challenge_participant,
         ) = get_user_groups(self.claimed_evaluation)
-        self.unclaimed_evaluation = EvaluationFactory(
-            submission__algorithm_image=self.claimed_evaluation.submission.algorithm_image,
-            submission__phase=self.claimed_evaluation.submission.phase,
-            method=None,
-        )
         _ = get_view_for_user(
             viewname="api:evaluation-claim",
             client=self.client,
@@ -203,6 +199,12 @@ class TestUpdateExternalEvaluation(TestCase):
             content_type="application/json",
         )
         self.claimed_evaluation.refresh_from_db()
+
+        self.unclaimed_evaluation = EvaluationFactory(
+            submission__algorithm_image=self.claimed_evaluation.submission.algorithm_image,
+            submission__phase=self.claimed_evaluation.submission.phase,
+            method=None,
+        )
 
     @pytest.mark.django_db
     def test_update_external_evaluation_permissions(self):
@@ -338,6 +340,8 @@ class TestUpdateExternalEvaluation(TestCase):
     @pytest.mark.django_db
     def test_timeout(self):
         time.sleep(1)
+        # reset notifications
+        Notification.objects.all().delete()
         response = get_view_for_user(
             viewname="api:evaluation-update-external-evaluation",
             client=self.client,
@@ -358,6 +362,14 @@ class TestUpdateExternalEvaluation(TestCase):
             self.claimed_evaluation.error_message
             == "External evaluation timed out."
         )
+
+        assert Notification.objects.count() == 2
+        receivers = [
+            notification.user for notification in Notification.objects.all()
+        ]
+        assert self.challenge_admin in receivers
+        assert self.challenge_participant in receivers
+        assert self.external_evaluator not in receivers
 
     @pytest.mark.django_db
     def test_claim_evaluation_by_different_evaluator(self):

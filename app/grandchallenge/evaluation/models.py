@@ -625,7 +625,8 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                 )
             if (
                 self.submissions_limit_per_user_per_period > 0
-                and not self.external_evaluation(
+                and not self.external_evaluation
+                and (
                     not self.archive
                     or not self.algorithm_inputs
                     or not self.algorithm_outputs
@@ -1476,7 +1477,7 @@ class Evaluation(UUIDModel, ComponentJob):
     def update_status(self, *args, **kwargs):
         res = super().update_status(*args, **kwargs)
 
-        if self.status in [self.FAILURE, self.SUCCESS, self.CANCELLED]:
+        if self.status in [self.FAILURE, self.SUCCESS]:
             Notification.send(
                 kind=NotificationType.NotificationTypeChoices.EVALUATION_STATUS,
                 actor=self.submission.creator,

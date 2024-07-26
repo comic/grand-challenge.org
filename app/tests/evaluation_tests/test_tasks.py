@@ -35,6 +35,7 @@ from tests.evaluation_tests.factories import (
     MethodFactory,
     SubmissionFactory,
 )
+from tests.factories import ChallengeFactory, UserFactory
 from tests.utils import recurse_callbacks
 
 
@@ -587,30 +588,50 @@ def test_cancel_external_evaluations_past_timeout(settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
+    challenge = ChallengeFactory()
+    participant = UserFactory()
+    admin = challenge.admins_group.user_set.get()
+    challenge.add_participant(participant)
+
     e1 = EvaluationFactory(
         status=Evaluation.CLAIMED,
         started_at=datetime.now() - timedelta(days=2),
         submission__phase__external_evaluation=True,
+        submission__phase__challenge=challenge,
+        submission__creator=participant,
     )
     e2 = EvaluationFactory(
         status=Evaluation.CLAIMED,
         started_at=datetime.now() - timedelta(days=2),
         submission__phase__external_evaluation=True,
+        submission__phase__challenge=challenge,
+        submission__creator=participant,
     )
     e3 = EvaluationFactory(
         status=Evaluation.CLAIMED,
         started_at=datetime.now(),
         submission__phase__external_evaluation=True,
+        submission__phase__challenge=challenge,
+        submission__creator=participant,
     )
     e4 = EvaluationFactory(
         status=Evaluation.SUCCESS,
         submission__phase__external_evaluation=True,
+        submission__phase__challenge=challenge,
+        submission__creator=participant,
     )
     e5 = EvaluationFactory(
         status=Evaluation.FAILURE,
         submission__phase__external_evaluation=True,
+        submission__phase__challenge=challenge,
+        submission__creator=participant,
     )
-    e6 = EvaluationFactory()
+    e6 = EvaluationFactory(
+        submission__phase__challenge=challenge, submission__creator=participant
+    )
+
+    # reset notifications
+    Notification.objects.all().delete()
 
     cancel_external_evaluations_past_timeout()
 
@@ -628,3 +649,14 @@ def test_cancel_external_evaluations_past_timeout(settings):
     for e in [e3, e4, e5, e6]:
         assert e.status != Evaluation.CANCELLED
         assert e.error_message == ""
+
+    assert Notification.objects.count() == 4
+    receivers = [
+        notification.user for notification in Notification.objects.all()
+    ]
+    assert {admin, participant} == set(receivers)
+    for notification in Notification.objects.all():
+        assert (
+            "External evaluation timed out."
+            in notification.print_notification(user=notification.user)
+        )
