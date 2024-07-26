@@ -368,7 +368,8 @@ class TestUpdateExternalEvaluation(TestCase):
             notification.user for notification in Notification.objects.all()
         ]
         assert self.challenge_admin in receivers
-        assert self.challenge_participant in receivers
+        assert self.claimed_evaluation.submission.creator in receivers
+        assert self.challenge_participant not in receivers
         assert self.external_evaluator not in receivers
 
     @pytest.mark.django_db

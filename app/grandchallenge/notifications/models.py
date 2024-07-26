@@ -354,7 +354,7 @@ class Notification(UUIDModel):
             self.type
             == NotificationType.NotificationTypeChoices.EVALUATION_STATUS
             and self.actor != user
-            and self.message == "was cancelled"
+            and self.message != "succeeded"
         ):
             if self.action_object.error_message:
                 error_message = format_html(
@@ -365,7 +365,7 @@ class Notification(UUIDModel):
             else:
                 error_message = ""
             return format_html(
-                "The {} from {} to {} was cancelled {}. | {}",
+                "The {} from {} to {} {} {}. {}",
                 format_html(
                     '<a href="{}">{}</a>',
                     self.action_object.submission.get_absolute_url(),
@@ -377,35 +377,9 @@ class Notification(UUIDModel):
                     self.target.challenge.get_absolute_url(),
                     self.target.challenge.short_name,
                 ),
-                naturaltime(self.created),
-                error_message,
-            )
-        elif (
-            self.type
-            == NotificationType.NotificationTypeChoices.EVALUATION_STATUS
-            and self.actor != user
-            and self.message == "failed"
-        ):
-            return format_html(
-                "The {} from {} to {} {} {}. | {}",
-                format_html(
-                    '<a href="{}">{}</a>',
-                    self.action_object.submission.get_absolute_url(),
-                    "submission",
-                ),
-                user_profile_link(self.actor),
-                format_html(
-                    '<a href="{}">{}</a>',
-                    self.target.challenge.get_absolute_url(),
-                    self.target.challenge.short_name,
-                ),
                 self.message,
                 naturaltime(self.created),
-                format_html(
-                    '<span class ="text-truncate font-italic text-muted align-middle '
-                    'mx-2">{}</span>',
-                    self.action_object.error_message,
-                ),
+                error_message,
             )
         elif (
             self.type
