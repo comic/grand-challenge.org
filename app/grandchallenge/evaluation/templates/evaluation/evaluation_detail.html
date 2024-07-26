@@ -281,44 +281,42 @@
                 <div class="card-body">
                     <h3 class="card-title">Visibility</h3>
 
-                    {% if object.published %}
-                        <i class="fas fa-eye text-success"></i> This result is published on the
-                        leaderboard(s)
-                        <form method="post"
-                              action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=object.pk %}">
-                            {% csrf_token %}
-                            <input type="hidden" name="published"
-                                   value="false">
-                            <button type="submit" class="btn btn-danger">
-                                <i class="fas fa-eye-slash mr-1"></i>
-                                    Exclude this result from the leaderboard(s)
-                            </button>
-                        </form>
-                    {% else %}
-                        <i class="fas fa-eye-slash text-danger"></i> This result is not
-                        published on the leaderboard(s)
-                        <br>
-                        <form method="post"
-                              action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=object.pk %}">
-                            {% csrf_token %}
-                            <input type="hidden" name="published"
-                                   value="true">
-                            <button type="submit" class="btn btn-success">
-                                <i class="fas fa-eye mr-1"></i>
-                                Publish this result on the leaderboard(s)
-                            </button>
-                        </form>
-                    {% endif %}
-
                     {% if object.missing_metrics %}
                         <br>
                         <div class="alert alert-warning mb-0">
-                            This evaluation has missing metric(s) from metrics.json {{ object.missing_metrics }}
-                            {% if object.published %}
-                                <br>
-                                Eventhough this evaluation is published, it is not visible in the leaderboard, due to the missing metrics and thus it has a rank 0
-                            {% endif %}
+                            The metrics.json output file for this evaluation is missing the following metrics: {{ object.missing_metrics }}
                         </div>
+
+                    {% else %}
+
+                        {% if object.published %}
+                            <i class="fas fa-eye text-success"></i> This result is published on the
+                            leaderboard(s)
+                            <form method="post"
+                                action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=object.pk %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="published"
+                                    value="false">
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-eye-slash mr-1"></i>
+                                        Exclude this result from the leaderboard(s)
+                                </button>
+                            </form>
+                        {% else %}
+                            <i class="fas fa-eye-slash text-danger"></i> This result is not
+                            published on the leaderboard(s)
+                            <br>
+                            <form method="post"
+                                action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=object.pk %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="published"
+                                    value="true">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-eye mr-1"></i>
+                                    Publish this result on the leaderboard(s)
+                                </button>
+                            </form>
+                        {% endif %}
                     {% endif %}
                 </div>
             {% endif %}
