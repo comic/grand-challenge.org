@@ -723,7 +723,7 @@ def test_combined_leaderboard_ranks(combined_ranks, expected_ranks):
     ),
 )
 @pytest.mark.django_db
-def test_evaluation_missing_metrics_json_file(
+def test_evaluation_missing_metrics(
     eval_status,
     eval_rank,
     eval_metrics_json_file_value,
@@ -753,7 +753,7 @@ def test_evaluation_missing_metrics_json_file(
 
         evaluation.outputs.set([civ])
 
-    arr = evaluation.missing_metrics_json_file
+    arr = evaluation.missing_metrics
 
     assert arr == expected_missing_metrics
 
