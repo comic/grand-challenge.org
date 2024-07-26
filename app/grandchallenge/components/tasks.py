@@ -180,7 +180,9 @@ def update_container_image_shim(
     ):
         existing_shimmed_repo_tag = instance.shimmed_repo_tag
 
-        remove_tag_from_registry(repo_tag=existing_shimmed_repo_tag)
+        remove_tag_from_registry(
+            repo_tag=existing_shimmed_repo_tag, remove_tag_only=False
+        )
         instance.latest_shimmed_version = ""
         instance.save()
 
@@ -226,13 +228,25 @@ def remove_container_image_from_registry(
     model = apps.get_model(app_label=app_label, model_name=model_name)
     instance = model.objects.get(pk=pk)
 
+    other_image_with_sha_exists = (
+        model.objects.exclude(pk=instance.pk)
+        .filter(image_sha256=instance.image_sha256)
+        .exists()
+    )
+
     if instance.latest_shimmed_version:
-        remove_tag_from_registry(repo_tag=instance.shimmed_repo_tag)
+        remove_tag_from_registry(
+            repo_tag=instance.shimmed_repo_tag,
+            remove_tag_only=other_image_with_sha_exists,
+        )
         instance.latest_shimmed_version = ""
         instance.save()
 
     if instance.is_in_registry:
-        remove_tag_from_registry(repo_tag=instance.original_repo_tag)
+        remove_tag_from_registry(
+            repo_tag=instance.original_repo_tag,
+            remove_tag_only=other_image_with_sha_exists,
+        )
         instance.is_in_registry = False
         instance.save()
 
@@ -257,34 +271,39 @@ def push_container_image(*, instance):
         )
 
 
-def remove_tag_from_registry(*, repo_tag):
-    try:
-        digest_cmd = _repo_login_and_run(command=["crane", "digest", repo_tag])
-    except subprocess.CalledProcessError as error:
-        if "MANIFEST_UNKNOWN: Requested image not found" in getattr(
-            error, "stderr", ""
-        ):
-            # The image has already been deleted
-            return
-        else:
-            raise error
-
-    digests = digest_cmd.stdout.splitlines()
-
-    for digest in digests:
+def remove_tag_from_registry(*, repo_tag, remove_tag_only):
+    if remove_tag_only:
+        _repo_login_and_run(command=["crane", "delete", f"{repo_tag}"])
+    else:
         try:
-            _repo_login_and_run(
-                command=["crane", "delete", f"{repo_tag}@{digest}"]
+            digest_cmd = _repo_login_and_run(
+                command=["crane", "digest", repo_tag]
             )
         except subprocess.CalledProcessError as error:
             if "MANIFEST_UNKNOWN: Requested image not found" in getattr(
                 error, "stderr", ""
             ):
-                # The digest has already been deleted, could be
-                # caused by parallel processes deleting the same image
-                continue
+                # The image has already been deleted
+                return
             else:
                 raise error
+
+        digests = digest_cmd.stdout.splitlines()
+
+        for digest in digests:
+            try:
+                _repo_login_and_run(
+                    command=["crane", "delete", f"{repo_tag}@{digest}"]
+                )
+            except subprocess.CalledProcessError as error:
+                if "MANIFEST_UNKNOWN: Requested image not found" in getattr(
+                    error, "stderr", ""
+                ):
+                    # The digest has already been deleted, could be
+                    # caused by parallel processes deleting the same image
+                    continue
+                else:
+                    raise error
 
 
 def _repo_login_and_run(*, command):

@@ -3,6 +3,7 @@ import uuid
 from contextlib import nullcontext
 from datetime import timedelta
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -1331,6 +1332,49 @@ def test_remove_container_image_from_registry(
     assert ai.is_manifest_valid is True
     assert ai.latest_shimmed_version == ""
     assert ai.is_in_registry is False
+
+
+@pytest.mark.parametrize(
+    "num_images, expected_value",
+    (
+        [1, False],
+        [2, True],
+    ),
+)
+@pytest.mark.django_db
+def test_remove_container_image_from_registry_calls(
+    algorithm_image,
+    settings,
+    django_capture_on_commit_callbacks,
+    num_images,
+    expected_value,
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    AlgorithmImageFactory(image_sha256="1234")  # image with different sha
+
+    with django_capture_on_commit_callbacks(execute=True):
+        AlgorithmImageFactory.create_batch(
+            num_images, image__from_path=algorithm_image
+        )
+
+    ai = AlgorithmImage.objects.first()
+
+    with django_capture_on_commit_callbacks():
+        with patch(
+            "grandchallenge.components.tasks.remove_tag_from_registry"
+        ) as mock_remove_tag_from_registry:
+            remove_container_image_from_registry(
+                pk=ai.pk,
+                app_label=ai._meta.app_label,
+                model_name=ai._meta.model_name,
+            )
+    assert (
+        mock_remove_tag_from_registry.call_args.kwargs["remove_tag_only"]
+        == expected_value
+    )
 
 
 @pytest.mark.django_db
