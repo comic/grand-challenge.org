@@ -187,6 +187,12 @@ class ExternalEvaluationUpdateSerializer(ModelSerializer):
                 instance.outputs.add(civ)
             except ValidationError as e:
                 raise DRFValidationError(e)
-        validated_data["completed_at"] = now()
-        validated_data["compute_cost_euro_millicents"] = 0
+
+        # calling update_status takes care of sending the notifications
+        instance.update_status(
+            status=validated_data["status"],
+            error_message=validated_data["error_message"],
+            compute_cost_euro_millicents=0,
+        )
+
         return super().update(instance, validated_data)

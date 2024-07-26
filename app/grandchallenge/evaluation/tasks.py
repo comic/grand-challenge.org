@@ -554,24 +554,12 @@ def cancel_external_evaluations_past_timeout():
         seconds=settings.EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS
     )
 
-    evaluations = Evaluation.objects.filter(
+    for eval in Evaluation.objects.filter(
         status=Evaluation.CLAIMED,
         started_at__lt=timeout_threshold,
-    ).all()
-
-    for eval in evaluations:
-        eval.status = Evaluation.CANCELLED
-        eval.error_message = "External evaluation timed out."
-        eval.compute_cost_euro_millicents = 0
-        Notification.send(
-            kind=NotificationType.NotificationTypeChoices.EVALUATION_STATUS,
-            actor=eval.submission.creator,
-            message="was cancelled",
-            action_object=eval,
-            target=eval.submission.phase,
+    ).all():
+        eval.update_status(
+            status=Evaluation.CANCELLED,
+            error_message="External evaluation timed out.",
+            compute_cost_euro_millicents=0,
         )
-
-    Evaluation.objects.bulk_update(
-        evaluations,
-        ["status", "error_message", "compute_cost_euro_millicents"],
-    )

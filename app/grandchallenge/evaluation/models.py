@@ -1477,11 +1477,15 @@ class Evaluation(UUIDModel, ComponentJob):
     def update_status(self, *args, **kwargs):
         res = super().update_status(*args, **kwargs)
 
-        if self.status in [self.FAILURE, self.SUCCESS]:
+        if self.status in [self.FAILURE, self.SUCCESS, self.CANCELLED]:
+            if self.status == self.CANCELLED:
+                message = "was cancelled"
+            else:
+                message = self.get_status_display().lower()
             Notification.send(
                 kind=NotificationType.NotificationTypeChoices.EVALUATION_STATUS,
                 actor=self.submission.creator,
-                message=self.get_status_display().lower(),
+                message=message,
                 action_object=self,
                 target=self.submission.phase,
             )
