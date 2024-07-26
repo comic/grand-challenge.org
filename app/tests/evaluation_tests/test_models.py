@@ -691,8 +691,7 @@ def test_combined_leaderboard_ranks(combined_ranks, expected_ranks):
 @pytest.mark.parametrize(
     "eval_status, eval_rank, eval_metrics_json_file_value, expected_missing_metrics",
     (
-        (Evaluation.FAILURE, 0, None, None),
-        (Evaluation.SUCCESS, 0, None, None),
+        (Evaluation.FAILURE, 0, {"acc": {"std": 0.1, "mean": 0.0}}, None),
         (
             Evaluation.SUCCESS,
             1,
