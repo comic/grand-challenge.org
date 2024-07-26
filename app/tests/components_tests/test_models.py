@@ -1360,7 +1360,10 @@ def test_remove_container_image_from_registry_calls(
             num_images, image__from_path=algorithm_image
         )
 
-    ai = AlgorithmImage.objects.first()
+    for ai in AlgorithmImage.objects.all():
+        ai.refresh_from_db()
+
+    ai = AlgorithmImage.objects.last()
 
     with django_capture_on_commit_callbacks():
         with patch(
