@@ -16,6 +16,7 @@ from grandchallenge.components.models import (
     ImportStatusChoices,
     InterfaceKindChoices,
 )
+from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.evaluation.models import CombinedLeaderboard, Evaluation
 from grandchallenge.evaluation.tasks import update_combined_leaderboard
 from grandchallenge.evaluation.utils import SubmissionKindChoices
@@ -1499,6 +1500,9 @@ def test_evaluation_details_zero_rank_message(client):
     assert str(evaluation.pk) in response.rendered_content
     assert str(phase.challenge.short_name) in response.rendered_content
     assert (
-        "metrics.json output file for this evaluation is missing"
+        """This result is not
+                        visible on the leaderboard(s) because the metrics.json output file for this evaluation is missing the following metrics: {}""".format(
+            oxford_comma(evaluation.missing_metrics)
+        )
         in response.rendered_content
     )
