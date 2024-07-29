@@ -1427,7 +1427,10 @@ class Evaluation(UUIDModel, ComponentJob):
                 ]:
                     missing_metrics.append(metric.path)
 
-            return missing_metrics
+            if len(missing_metrics) > 0:
+                return missing_metrics
+            else:
+                return None
         return None
 
     def clean(self):
