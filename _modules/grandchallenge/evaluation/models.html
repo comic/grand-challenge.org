@@ -135,10 +135,14 @@
     <span class="n">create_evaluation</span><span class="p">,</span>
     <span class="n">update_combined_leaderboard</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.evaluation.templatetags.evaluation_extras</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">get_jsonpath</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.evaluation.utils</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">Metric</span><span class="p">,</span>
     <span class="n">StatusChoices</span><span class="p">,</span>
     <span class="n">SubmissionKindChoices</span><span class="p">,</span>
+    <span class="n">get</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.hanging_protocols.models</span> <span class="kn">import</span> <span class="n">HangingProtocolMixin</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.notifications.models</span> <span class="kn">import</span> <span class="n">Notification</span><span class="p">,</span> <span class="n">NotificationType</span>
@@ -1493,6 +1497,32 @@
         <span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">output</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">slug</span> <span class="o">==</span> <span class="s2">&quot;metrics-json-file&quot;</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">value</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">missing_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">SUCCESS</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+
+            <span class="n">output_values</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">o</span><span class="o">.</span><span class="n">value</span>
+                <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">o</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">slug</span> <span class="o">==</span> <span class="s2">&quot;metrics-json-file&quot;</span>
+            <span class="p">]</span>
+
+            <span class="n">valid_metrics</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">valid_metrics</span>
+            <span class="n">missing_metrics</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">valid_metrics</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">get_jsonpath</span><span class="p">(</span><span class="n">get</span><span class="p">(</span><span class="n">output_values</span><span class="p">),</span> <span class="n">metric</span><span class="o">.</span><span class="n">path</span><span class="p">)</span> <span class="ow">in</span> <span class="p">[</span>
+                    <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                    <span class="kc">None</span><span class="p">,</span>
+                <span class="p">]:</span>
+                    <span class="n">missing_metrics</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">metric</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">missing_metrics</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">missing_metrics</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="kc">None</span>
 
     <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="o">.</span><span class="n">phase</span><span class="p">:</span>
