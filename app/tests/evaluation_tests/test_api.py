@@ -272,6 +272,8 @@ class TestUpdateExternalEvaluation(TestCase):
 
     @pytest.mark.django_db
     def test_update_failed_external_evaluation(self):
+        # reset notifications
+        Notification.objects.all().delete()
         response = get_view_for_user(
             viewname="api:evaluation-update-external-evaluation",
             client=self.client,
@@ -290,6 +292,16 @@ class TestUpdateExternalEvaluation(TestCase):
         assert self.claimed_evaluation.completed_at is not None
         assert self.claimed_evaluation.compute_cost_euro_millicents == 0
         assert self.claimed_evaluation.outputs.count() == 0
+
+        # notifications sent to challenge admin and submission creator
+        assert Notification.objects.count() == 2
+        recipients = [
+            notification.user for notification in Notification.objects.all()
+        ]
+        assert set(recipients) == {
+            self.challenge_admin,
+            self.claimed_evaluation.submission.creator,
+        }
 
     @pytest.mark.django_db
     def test_updated_successful_evaluation_without_metrics(self):
@@ -311,6 +323,8 @@ class TestUpdateExternalEvaluation(TestCase):
 
     @pytest.mark.django_db
     def test_update_successful_external_evaluation(self):
+        # reset notifications
+        Notification.objects.all().delete()
         response = get_view_for_user(
             viewname="api:evaluation-update-external-evaluation",
             client=self.client,
@@ -330,6 +344,15 @@ class TestUpdateExternalEvaluation(TestCase):
             "metrics": "foo-bar",
             "status": "Succeeded",
             "error_message": "",
+        }
+        # notifications sent to challenge admin and submission creator
+        assert Notification.objects.count() == 2
+        recipients = [
+            notification.user for notification in Notification.objects.all()
+        ]
+        assert set(recipients) == {
+            self.challenge_admin,
+            self.claimed_evaluation.submission.creator,
         }
 
     @override_settings(
