@@ -12,9 +12,11 @@ from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.components.models import (
+    ComponentInterface,
     ImportStatusChoices,
     InterfaceKindChoices,
 )
+from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.evaluation.models import CombinedLeaderboard, Evaluation
 from grandchallenge.evaluation.tasks import update_combined_leaderboard
 from grandchallenge.evaluation.utils import SubmissionKindChoices
@@ -22,7 +24,10 @@ from grandchallenge.invoices.models import PaymentStatusChoices
 from grandchallenge.workstations.models import Workstation
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.factories import ArchiveFactory
-from tests.components_tests.factories import ComponentInterfaceFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.evaluation_tests.factories import (
     CombinedLeaderboardFactory,
     EvaluationFactory,
@@ -1455,3 +1460,49 @@ def test_ground_truth_version_management(settings, client):
     assert not gt2.is_desired_version
     del phase.active_ground_truth
     assert not phase.active_ground_truth
+
+
+@pytest.mark.django_db
+def test_evaluation_details_zero_rank_message(client):
+
+    phase = PhaseFactory(
+        challenge__hidden=False,
+        score_jsonpath="acc.mean",
+        score_title="Accuracy Mean",
+        extra_results_columns=[
+            {"path": "dice.mean", "order": "asc", "title": "Dice mean"}
+        ],
+    )
+
+    ci = ComponentInterface.objects.get(slug="metrics-json-file")
+    civ = ComponentInterfaceValueFactory(
+        interface=ci, value={"acc": {"std": 0.1, "mean": 0.0}}
+    )
+
+    evaluation = EvaluationFactory(
+        submission__phase=phase, rank=0, status=Evaluation.SUCCESS
+    )
+
+    evaluation.outputs.set([civ])
+
+    response = get_view_for_user(
+        viewname="evaluation:detail",
+        client=client,
+        method=client.get,
+        reverse_kwargs={
+            "pk": evaluation.pk,
+        },
+        user=phase.challenge.creator,
+        challenge=phase.challenge,
+    )
+
+    assert response.status_code == 200
+    assert str(evaluation.pk) in response.rendered_content
+    assert str(phase.challenge.short_name) in response.rendered_content
+    assert (
+        """This result is not
+                        visible on the leaderboard(s) because the metrics.json output file for this evaluation is missing the following metrics: {}""".format(
+            oxford_comma(evaluation.missing_metrics)
+        )
+        in response.rendered_content
+    )

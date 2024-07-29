@@ -688,6 +688,84 @@ def test_combined_leaderboard_ranks(combined_ranks, expected_ranks):
     assert [cr["rank"] for cr in combined_ranks] == expected_ranks
 
 
+@pytest.mark.parametrize(
+    "eval_status, eval_rank, eval_metrics_json_file_value, expected_missing_metrics",
+    (
+        (Evaluation.FAILURE, 0, {"acc": {"std": 0.1, "mean": 0.0}}, None),
+        (
+            Evaluation.SUCCESS,
+            1,
+            {
+                "acc": {"std": 0.1, "mean": 0.0},
+                "dice": {"std": 0.2, "mean": 0.5},
+            },
+            None,
+        ),
+        (
+            Evaluation.SUCCESS,
+            0,
+            {
+                "acc": {"std": 0.1, "mean": 0.0},
+                "dice": {"std": 0.2, "mean": 0.5},
+            },
+            None,
+        ),
+        (
+            Evaluation.SUCCESS,
+            0,
+            {"acc": {"std": 0.1, "mean": 0.0}},
+            ["dice.mean"],
+        ),
+        (
+            Evaluation.SUCCESS,
+            0,
+            {"dice": {"std": 0.2, "mean": 0.5}},
+            ["acc.mean"],
+        ),
+        (
+            Evaluation.SUCCESS,
+            0,
+            {"cosine": {"std": 0.1, "mean": 0.0}},
+            ["acc.mean", "dice.mean"],
+        ),
+    ),
+)
+@pytest.mark.django_db
+def test_evaluation_missing_metrics(
+    eval_status,
+    eval_rank,
+    eval_metrics_json_file_value,
+    expected_missing_metrics,
+):
+
+    phase = PhaseFactory(
+        challenge__hidden=False,
+        public=True,
+        score_jsonpath="acc.mean",
+        score_title="Accuracy Mean",
+        extra_results_columns=[
+            {"path": "dice.mean", "order": "asc", "title": "Dice mean"}
+        ],
+    )
+
+    evaluation = EvaluationFactory(
+        submission__phase=phase, rank=eval_rank, status=eval_status
+    )
+
+    if eval_metrics_json_file_value is not None:
+
+        ci = ComponentInterface.objects.get(slug="metrics-json-file")
+        civ = ComponentInterfaceValueFactory(
+            interface=ci, value=eval_metrics_json_file_value
+        )
+
+        evaluation.outputs.set([civ])
+
+    arr = evaluation.missing_metrics
+
+    assert arr == expected_missing_metrics
+
+
 @pytest.mark.django_db
 def test_count_valid_archive_items():
     archive = ArchiveFactory()
