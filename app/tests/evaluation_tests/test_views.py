@@ -1464,13 +1464,8 @@ def test_ground_truth_version_management(settings, client):
 @pytest.mark.django_db
 def test_evaluation_details_zero_rank_message(client):
 
-    participant = UserFactory()
-
-    challenge = ChallengeFactory(hidden=False, creator=participant)
-
     phase = PhaseFactory(
         challenge__hidden=False,
-        public=True,
         score_jsonpath="acc.mean",
         score_title="Accuracy Mean",
         extra_results_columns=[
@@ -1496,16 +1491,13 @@ def test_evaluation_details_zero_rank_message(client):
         reverse_kwargs={
             "pk": evaluation.pk,
         },
-        user=challenge.creator,
-        challenge=challenge,
+        user=phase.challenge.creator,
+        challenge=phase.challenge,
     )
 
     assert response.status_code == 200
-
     assert str(evaluation.pk) in response.rendered_content
-
-    assert str(challenge.short_name) in response.rendered_content
-
+    assert str(phase.challenge.short_name) in response.rendered_content
     assert (
         "metrics.json output file for this evaluation is missing"
         in response.rendered_content

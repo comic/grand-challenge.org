@@ -704,6 +704,15 @@ def test_combined_leaderboard_ranks(combined_ranks, expected_ranks):
         (
             Evaluation.SUCCESS,
             0,
+            {
+                "acc": {"std": 0.1, "mean": 0.0},
+                "dice": {"std": 0.2, "mean": 0.5},
+            },
+            None,
+        ),
+        (
+            Evaluation.SUCCESS,
+            0,
             {"acc": {"std": 0.1, "mean": 0.0}},
             ["dice.mean"],
         ),
