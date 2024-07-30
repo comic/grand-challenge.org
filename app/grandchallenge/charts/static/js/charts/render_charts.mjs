@@ -1,7 +1,6 @@
 function renderVegaLiteChart(element) {
     const spec = JSON.parse(element.children[0].textContent);
     vegaEmbed(element, spec);
-    setTimeout(() => window.dispatchEvent(new Event("resize")), 1);
 }
 
 document.addEventListener("DOMContentLoaded", function(event) {
