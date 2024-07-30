@@ -1,4 +1,5 @@
 $(document).ready(function() {
+
     const tabSelectors = $('#v-pills-tab a');
 
     const allowedHashes = new Set(
@@ -43,4 +44,9 @@ $(document).ready(function() {
     });
 
     activateLocation();
+
+    for (const element of document.getElementsByClassName("vega-lite-chart")) {
+        const spec = JSON.parse(element.children[0].textContent);
+        vegaEmbed(element, spec);
+    }
 });

@@ -5,9 +5,15 @@ function renderVegaLiteChart(element) {
 }
 
 document.addEventListener("DOMContentLoaded", function(event) {
-    for (const element of document.getElementsByClassName("vega-lite-chart")) {
-        renderVegaLiteChart(element);
+
+    var tabsElement = document.getElementById("v-pills-tab");
+
+    if(tabsElement == null) {
+        for (const element of document.getElementsByClassName("vega-lite-chart")) {
+            renderVegaLiteChart(element);
+        }
     }
+
 });
 
 
