@@ -587,13 +587,25 @@ def test_hidden_phase_visible_for_admins_but_not_participants(client):
             reverse_kwargs={"challenge_short_name": ch.short_name, **kwargs},
             user=u,
         )
+
+        if view_name in [
+            "submission-list",
+            "submission-create",
+            "submission-detail",
+        ]:
+            icon = "upload"
+        else:
+            icon = "trophy"
+
         assert response.status_code == status
         if status == 200:
-            assert f"</i>&nbsp;&nbsp;{visible_phase.title}" in str(
-                response.content
+            assert (
+                f'<i class="fa fa-{icon} fa-fw mr-1"></i>{visible_phase.title}'
+                in str(response.content)
             )
-            assert f"</i>&nbsp;&nbsp;{hidden_phase.title}" not in str(
-                response.content
+            assert (
+                f'<i class="fa fa-{icon} fa-fw mr-1"></i>{hidden_phase.title}'
+                not in str(response.content)
             )
 
         # for the admin both phases are visible and they have access to submissions
@@ -605,10 +617,14 @@ def test_hidden_phase_visible_for_admins_but_not_participants(client):
             user=ch.admins_group.user_set.first(),
         )
         assert response.status_code == 200
-        assert f"</i>&nbsp;&nbsp;{visible_phase.title}" in str(
-            response.content
+        assert (
+            f'<i class="fa fa-{icon} fa-fw mr-1"></i>{visible_phase.title}'
+            in str(response.content)
         )
-        assert f"</i>&nbsp;&nbsp;{hidden_phase.title}" in str(response.content)
+        assert (
+            f'<i class="fa fa-{icon} fa-fw mr-1"></i>{hidden_phase.title}'
+            in str(response.content)
+        )
 
 
 @pytest.mark.django_db
