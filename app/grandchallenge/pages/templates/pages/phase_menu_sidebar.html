@@ -1,6 +1,7 @@
 <li class="nav-item">
     <a class="nav-link px-4 py-1 mb-1" data-toggle="collapse" data-target="#{{ phase.slug }}-collapse" aria-expanded={% if request.resolver_match.view_name in 'evaluation:phase-update,evaluation:method-list,evaluation:method-create,evaluation:evaluation-admin-list,evaluation:method-detail,evaluation:method-update,evaluation:ground-truth-list,evaluation:ground-truth-create,evaluation:ground-truth-update,evaluation:ground-truth-detail' and request.resolver_match.kwargs.slug == phase.slug %}"true"{% else %}"false"{% endif %}>
-        <i class="fas fa-chevron-right mr-1"></i> <i class="fas fa-chevron-down mr-1"></i> {{ phase.title }} <i class="fas {% if phase.public %}fa-eye text-success{% else %}fa-eye-slash text-danger{% endif%} ml-1" title="{% if not phase.public %}Not{% endif%} Public"></i>
+        <i class="fas fa-chevron-right mr-1"></i><i class="fas fa-chevron-down mr-1"></i>{{ phase.title }}<i class="fas {% if phase.public %}fa-eye text-success{% else %}fa-eye-slash text-danger{% endif%} ml-1" title="{% if not phase.public %}Not{% endif%} Public"></i>
+
 
     </a>
     <div class="collapse {% if request.resolver_match.view_name in 'evaluation:phase-update,evaluation:method-list,evaluation:method-create,evaluation:evaluation-admin-list,evaluation:method-detail,evaluation:method-update,evaluation:ground-truth-list,evaluation:ground-truth-create,evaluation:ground-truth-update,evaluation:ground-truth-detail' and request.resolver_match.kwargs.slug == phase.slug %}show{% endif %}" id="{{ phase.slug }}-collapse" style="">
