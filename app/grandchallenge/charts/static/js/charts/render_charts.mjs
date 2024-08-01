@@ -5,16 +5,18 @@ function renderVegaLiteChart(element) {
 
 document.addEventListener("DOMContentLoaded", function(event) {
 
-    var tabsElement = document.getElementById("v-pills-tab");
-
-    if(tabsElement == null) {
+    if(document.getElementById("v-pills-tab") === null) {
         for (const element of document.getElementsByClassName("vega-lite-chart")) {
             renderVegaLiteChart(element);
         }
     }
-
 });
 
+document.addEventListener("vega.render", function(event) {
+    for (const element of document.getElementsByClassName("vega-lite-chart")) {
+        renderVegaLiteChart(element);
+    }
+});
 
 // Lazy rendering
 // Tag the containers with the class 'vega-lite-chart-lazy' to only render

@@ -44,9 +44,5 @@ $(document).ready(function() {
     });
 
     activateLocation();
-
-    for (const element of document.getElementsByClassName("vega-lite-chart")) {
-        const spec = JSON.parse(element.children[0].textContent);
-        vegaEmbed(element, spec);
-    }
+    document.dispatchEvent(new Event("vega.render"));
 });
