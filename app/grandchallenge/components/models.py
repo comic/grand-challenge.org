@@ -517,7 +517,6 @@ class InterfaceKind:
 
         .. code-block:: json
 
-
             {
                 "name": "Multiple 3-point angles",
                 "type": "Multiple three-point angles",
@@ -541,91 +540,92 @@ class InterfaceKind:
         .. code-block:: json
 
             {
-               "$schema":"https://vega.github.io/schema/vega-lite/v5.json",
-               "width":300,
-               "height":300,
-               "data":{
-                  "values":[
+               "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+               "width": 300,
+               "height": 300,
+               "data": {
+                  "values": [
                      {
-                        "target":"Negative",
-                        "prediction":"Negative",
-                        "value":198
+                        "target": "Negative",
+                        "prediction": "Negative",
+                        "value": 198
                      },
                      {
-                        "target":"Negative",
-                        "prediction":"Positive",
-                        "value":9
+                        "target": "Negative",
+                        "prediction": "Positive",
+                        "value": 9
                      },
                      {
-                        "target":"Positive",
-                        "prediction":"Negative",
-                        "value":159
+                        "target": "Positive",
+                        "prediction": "Negative",
+                        "value": 159
                      },
                      {
-                        "target":"Positive",
-                        "prediction":"Positive",
-                        "value":376
+                        "target": "Positive",
+                        "prediction": "Positive",
+                        "value": 376
                      }
                   ],
-                  "format":{
-                     "type":"json"
+                  "format": {
+                     "type": "json"
                   }
                },
-               "layer":[
+               "layer": [
                   {
-                     "mark":"rect",
-                     "encoding":{
-                        "y":{
-                           "field":"target",
-                           "type":"ordinal"
+                     "mark": "rect",
+                     "encoding": {
+                        "y": {
+                           "field": "target",
+                           "type": "ordinal"
                         },
-                        "x":{
-                           "field":"prediction",
-                           "type":"ordinal"
+                        "x": {
+                           "field": "prediction",
+                           "type": "ordinal"
                         },
-                        "color":{
-                           "field":"value",
-                           "type":"quantitative",
-                           "title":"Count of Records",
-                           "legend":{
-                              "direction":"vertical",
-                              "gradientLength":300
+                        "color": {
+                           "field": "value",
+                           "type": "quantitative",
+                           "title": "Count of Records",
+                           "legend": {
+                              "direction": "vertical",
+                              "gradientLength": 300
                            }
                         }
                      }
                   },
                   {
-                     "mark":"text",
-                     "encoding":{
-                        "y":{
-                           "field":"target",
-                           "type":"ordinal"
+                     "mark": "text",
+                     "encoding": {
+                        "y": {
+                           "field": "target",
+                           "type": "ordinal"
                         },
-                        "x":{
-                           "field":"prediction",
-                           "type":"ordinal"
+                        "x": {
+                           "field": "prediction",
+                           "type": "ordinal"
                         },
-                        "text":{
-                           "field":"value",
-                           "type":"quantitative"
+                        "text": {
+                           "field": "value",
+                           "type": "quantitative"
                         },
-                        "color":{
-                           "condition":{
-                              "test":"datum['value'] < 40",
-                              "value":"black"
+                        "color": {
+                           "condition": {
+                              "test": "datum['value'] < 40",
+                              "value": "black"
                            },
-                           "value":"white"
+                           "value": "white"
                         }
                      }
                   }
                ],
-               "config":{
-                  "axis":{
-                     "grid":True,
-                     "tickBand":"extent"
+               "config": {
+                  "axis": {
+                     "grid": true,
+                     "tickBand": "extent"
                   }
                }
             }
+
         Example json for Ellipse annotation
             required: "type", "major_axis, "minor_axis" "version"
             optional: "name", "probability"
@@ -686,6 +686,7 @@ class InterfaceKind:
                     [0, 0, 0, 1]
                 ]
             }
+
         """
         return {
             InterfaceKind.InterfaceKindChoices.STRING,
