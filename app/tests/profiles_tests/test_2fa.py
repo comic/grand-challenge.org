@@ -1,6 +1,5 @@
 import pytest
 from allauth.account.models import EmailAddress
-from allauth.mfa.models import Authenticator
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core import mail
@@ -10,15 +9,12 @@ from django.utils.http import int_to_base36
 
 from grandchallenge.core.utils.list_url_names import list_url_names
 from grandchallenge.subdomains.utils import reverse
-from tests.factories import UserFactory, activate_2fa
+from tests.factories import (
+    UserFactory,
+    activate_2fa,
+    get_unused_recovery_codes,
+)
 from tests.utils import get_view_for_user
-
-
-def get_unused_recovery_token(user):
-    device = Authenticator.objects.get(
-        user=user, type=Authenticator.Type.RECOVERY_CODES
-    )
-    return device.wrap().get_unused_codes()[0]
 
 
 @pytest.mark.django_db
@@ -114,7 +110,7 @@ def test_email_after_2fa_login_for_staff(client):
     assert "/accounts/2fa/authenticate/" in response.url
 
     response = client.post(
-        response.url, {"code": get_unused_recovery_token(staff_user)}
+        response.url, {"code": get_unused_recovery_codes(user=staff_user)[0]}
     )
 
     assert response["location"] == settings.LOGIN_REDIRECT_URL
@@ -143,7 +139,7 @@ def test_no_email_after_2fa_login_for_non_staff(client):
     assert "/accounts/2fa/authenticate/" in response.url
 
     response = client.post(
-        response.url, {"code": get_unused_recovery_token(user)}
+        response.url, {"code": get_unused_recovery_codes(user=user)[0]}
     )
 
     assert response["location"] == settings.LOGIN_REDIRECT_URL
@@ -188,6 +184,8 @@ def test_allowed_urls():
 @override_settings(SOCIALACCOUNT_AUTO_SIGNUP=True)
 @pytest.mark.django_db
 def test_2fa_for_for_staff_users_with_social_login(client):
+    social_username = "dummy_user"
+
     resp = client.post(reverse("dummy_login"))
     resp = client.post(
         resp["location"],
@@ -195,17 +193,15 @@ def test_2fa_for_for_staff_users_with_social_login(client):
             "id": "2",
             "email": "a@b.com",
             "email_verified": True,
-            "username": "foo",
+            "username": social_username,
         },
     )
     assert resp.status_code == 302
     assert resp["location"] == settings.LOGIN_REDIRECT_URL
 
-    user_with_social_account = (
-        get_user_model().objects.filter(username="foo").get()
-    )
-    user_with_social_account.is_staff = True
-    user_with_social_account.save()
+    user = get_user_model().objects.filter(username=social_username).get()
+    user.is_staff = True
+    user.save()
 
     # User is now staff, should activate mfa
     resp = client.get("/")
@@ -213,7 +209,7 @@ def test_2fa_for_for_staff_users_with_social_login(client):
     assert "/accounts/2fa/totp/activate/" in resp.url
 
     # enable 2fa for the user
-    activate_2fa(user=user_with_social_account)
+    activate_2fa(user=user)
 
     # logout and login again, should be asked to MFA authenticate
     client.logout()
@@ -222,6 +218,7 @@ def test_2fa_for_for_staff_users_with_social_login(client):
     assert resp.status_code == 302
     assert "/accounts/2fa/authenticate/" in resp.url
 
-    token = get_unused_recovery_token(user_with_social_account)
-    resp = client.post(resp.url, {"code": token})
+    resp = client.post(
+        resp.url, {"code": get_unused_recovery_codes(user=user)[0]}
+    )
     assert resp["location"] == settings.LOGIN_REDIRECT_URL

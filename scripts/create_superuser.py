@@ -1,9 +1,8 @@
 from allauth.account.models import EmailAddress
-from allauth.mfa.models import Authenticator
 from django.contrib.auth import get_user_model
 
 from grandchallenge.verifications.models import Verification
-from tests.factories import activate_2fa
+from tests.factories import activate_2fa, get_unused_recovery_codes
 
 
 def run():
@@ -27,9 +26,5 @@ def run():
 
     activate_2fa(user=su)
 
-    device = Authenticator.objects.get(
-        user=su, type=Authenticator.Type.RECOVERY_CODES
-    )
-
-    for token in device.wrap().get_unused_codes():
+    for token in get_unused_recovery_codes(user=su):
         print(f"Added one time token: {token}")

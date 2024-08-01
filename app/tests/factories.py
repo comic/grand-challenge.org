@@ -1,12 +1,10 @@
 import datetime
 import hashlib
-from base64 import b64encode
 
 import factory
 from allauth.mfa.models import Authenticator
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.utils.crypto import get_random_string
 from factory import fuzzy
 
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
@@ -28,13 +26,22 @@ def activate_2fa(*, user):
     """Activate 2FA for a user including recovery codes."""
     totp_authenticator = Authenticator(type=Authenticator.Type.TOTP)
     totp_authenticator.wrap().activate(
-        user=user, secret=b64encode(get_random_string(32))
+        user=user,
+        # Setting a blank secret here, but this is only for use in tests
+        secret="",
     )
 
     recovery_codes_authenticator = Authenticator(
         type=Authenticator.Type.RECOVERY_CODES
     )
     recovery_codes_authenticator.wrap().activate(user=user)
+
+
+def get_unused_recovery_codes(*, user):
+    device = Authenticator.objects.get(
+        user=user, type=Authenticator.Type.RECOVERY_CODES
+    )
+    return device.wrap().get_unused_codes()
 
 
 def hash_sha256(s):
