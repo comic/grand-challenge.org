@@ -282,17 +282,15 @@
                 <div class="card-body">
                     <h3 class="card-title">Visibility</h3>
 
-                    {% if object.missing_metrics %}
-
-                        <i class="fas fa-eye-slash text-danger"></i> This result is not
-                        visible on the leaderboard(s) because the metrics.json output file for this evaluation is missing the following metrics: {{ object.missing_metrics|oxford_comma }}
-                        <br>
-
+                    {% if object.invalid_metrics %}
+                        <i class="fas fa-eye-slash text-danger"></i>
+                        This result cannot appear on the leaderboard(s) because the metrics.json output file contained
+                        invalid values for the following metrics: {{ object.invalid_metrics|oxford_comma }}
                     {% else %}
-
                         {% if object.published %}
                             <i class="fas fa-eye text-success"></i> This result is published on the
                             leaderboard(s)
+                            <br>
                             <form method="post"
                                 action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=object.pk %}">
                                 {% csrf_token %}

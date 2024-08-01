@@ -1500,9 +1500,5 @@ def test_evaluation_details_zero_rank_message(client):
     assert str(evaluation.pk) in response.rendered_content
     assert str(phase.challenge.short_name) in response.rendered_content
     assert (
-        """This result is not
-                        visible on the leaderboard(s) because the metrics.json output file for this evaluation is missing the following metrics: {}""".format(
-            oxford_comma(evaluation.missing_metrics)
-        )
-        in response.rendered_content
+        oxford_comma(evaluation.invalid_metrics) in response.rendered_content
     )
