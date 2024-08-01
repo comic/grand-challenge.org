@@ -498,7 +498,10 @@ class JobCreate(
         return context
 
     def form_valid(self, form):
-        self.object = form.cleaned_data["job"]
+        self.object = Job.objects.create_and_process_inputs(
+            data=form.cleaned_data,
+            extra_logs_viewer_groups=[self.algorithm.editors_group],
+        )
         return super().form_valid(form)
 
     def get_success_url(self):

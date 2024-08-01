@@ -10,7 +10,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.db.models import Count, Min, Q, Sum
+from django.db.models import Count, Min, Q, QuerySet, Sum
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.template.defaultfilters import truncatechars, truncatewords
@@ -25,11 +25,13 @@ from jinja2.exceptions import TemplateError
 from stdimage import JPEGField
 
 from grandchallenge.anatomy.models import BodyStructure
+from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.charts.specs import stacked_bar
 from grandchallenge.components.models import (
     CIVForObjectMixin,
     ComponentImage,
     ComponentInterface,
+    ComponentInterfaceValue,
     ComponentJob,
     ComponentJobManager,
     ImportStatusChoices,
@@ -57,6 +59,7 @@ from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
 from grandchallenge.reader_studies.models import DisplaySet
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.uploads.models import UserUpload
 from grandchallenge.workstations.models import Workstation
 
 logger = logging.getLogger(__name__)
@@ -635,13 +638,65 @@ class JobManager(ComponentJobManager):
 
     @property
     def non_interface_fields(self):
-        return ["algorithm_image", "algorithm_model"]
+        return ["algorithm_image", "algorithm_model", "creator", "time_limit"]
+
+    def retrieve_existing_civs(self, data):
+        existing_civs = []
+        for interface, value in data.items():
+            if isinstance(value, ComponentInterfaceValue):
+                existing_civs.append(value)
+            elif isinstance(value, Image):
+                ci = ComponentInterface.objects.get(slug=interface)
+                try:
+                    civ = ComponentInterfaceValue.objects.filter(
+                        interface=ci, image=value
+                    ).get()
+                    existing_civs.append(civ)
+                except ObjectDoesNotExist:
+                    continue
+            elif not isinstance(
+                value, (RawImageUploadSession, UserUpload, QuerySet)
+            ):
+                # values can be of different types
+                ci = ComponentInterface.objects.get(slug=interface)
+                try:
+                    civ = ComponentInterfaceValue.objects.filter(
+                        interface=ci, value=value
+                    ).get()
+                    existing_civs.append(civ)
+                except ObjectDoesNotExist:
+                    continue
+            else:
+                raise RuntimeError(f"Unknown interface value type for {value}")
+        return existing_civs
+
+    def get_jobs_with_same_inputs(
+        self, data, algorithm_image, algorithm_model
+    ):
+        civ_data = {
+            k: v for k, v in data.items() if k not in self.non_interface_fields
+        }
+        civs = self.retrieve_existing_civs(data=civ_data)
+        unique_kwargs = {
+            "algorithm_image": algorithm_image,
+        }
+        input_interface_count = algorithm_image.algorithm.inputs.count()
+        if algorithm_model:
+            unique_kwargs["algorithm_model"] = algorithm_model
+        else:
+            unique_kwargs["algorithm_model__isnull"] = True
+        existing_jobs = (
+            Job.objects.filter(**unique_kwargs)
+            .annotate(
+                inputs_match_count=Count("inputs", filter=Q(inputs__in=civs))
+            )
+            .filter(inputs_match_count=input_interface_count)
+        )
+        return existing_jobs
 
     def create_and_process_inputs(
         self,
         *,
-        user,
-        algorithm,
         data,
         extra_viewer_groups=None,
         extra_logs_viewer_groups=None,
@@ -654,10 +709,8 @@ class JobManager(ComponentJobManager):
         }
         job = Job.objects.create(
             **non_civ_data,
-            creator=user,
             extra_viewer_groups=extra_viewer_groups,
             extra_logs_viewer_groups=extra_logs_viewer_groups,
-            time_limit=algorithm.time_limit,
         )
 
         # local import to avoid circular dependency
@@ -673,7 +726,7 @@ class JobManager(ComponentJobManager):
             job.create_civ(
                 ci_slug=key,
                 new_value=value,
-                user=user,
+                user=data["creator"],
                 linked_task=linked_task,
             )
 
@@ -969,29 +1022,6 @@ class Job(UUIDModel, CIVForObjectMixin, ComponentJob):
             display_set.values.set(values)
 
         return display_set
-
-    def get_jobs_with_same_inputs(self):
-        civs = self.inputs.all()
-        logger.warning(civs)
-        unique_kwargs = {
-            "algorithm_image": self.algorithm_image,
-        }
-        input_interface_count = self.algorithm_image.algorithm.inputs.count()
-        logger.warning(input_interface_count)
-        if self.algorithm_model:
-            unique_kwargs["algorithm_model"] = self.algorithm_model
-        else:
-            unique_kwargs["algorithm_model__isnull"] = True
-        logger.warning(unique_kwargs)
-        existing_jobs = (
-            Job.objects.exclude(pk=self.pk)
-            .filter(**unique_kwargs)
-            .annotate(
-                inputs_match_count=Count("inputs", filter=Q(inputs__in=civs))
-            )
-            .filter(inputs_match_count=input_interface_count)
-        )
-        return existing_jobs
 
 
 class JobUserObjectPermission(UserObjectPermissionBase):

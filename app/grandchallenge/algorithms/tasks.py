@@ -47,9 +47,6 @@ def execute_algorithm_job_for_inputs(*, job_pk):
         if interface not in existing_input_interfaces
     ]
 
-    logger.warning("MISSING INPUTS")
-    logger.warning(missing_inputs)
-
     if missing_inputs:
         logger.info("Nothing to do: the inputs are still being provisioned.")
         return

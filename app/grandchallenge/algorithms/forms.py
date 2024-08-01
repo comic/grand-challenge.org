@@ -19,7 +19,6 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
 from django.core.validators import RegexValidator
-from django.db import transaction
 from django.db.models import Count, Exists, OuterRef, Q
 from django.db.transaction import on_commit
 from django.forms import (
@@ -98,12 +97,23 @@ class JobCreateForm(SaveFormInitMixin, Form):
     algorithm_model = ModelChoiceField(
         queryset=None, disabled=True, required=False, widget=HiddenInput
     )
+    creator = ModelChoiceField(
+        queryset=None, disabled=True, required=False, widget=HiddenInput
+    )
+    time_limit = IntegerField(
+        disabled=True, required=False, widget=HiddenInput
+    )
 
     def __init__(self, *args, algorithm, user, **kwargs):
         super().__init__(*args, **kwargs)
 
         self._algorithm = algorithm
         self._user = user
+        self.fields["creator"].queryset = get_user_model().objects.filter(
+            pk=self._user.pk
+        )
+        self.fields["creator"].initial = self._user
+        self.fields["time_limit"].initial = self._algorithm.time_limit
 
         self.helper = FormHelper()
 
@@ -135,12 +145,7 @@ class JobCreateForm(SaveFormInitMixin, Form):
     def jobs_limit(self):
         return self._algorithm.get_jobs_limit(user=self._user)
 
-    @transaction.atomic
     def clean(self):
-        # this is wrapped in an atomic block because we are creating the job object
-        # here (in create_job_and_process_inputs())
-        # and we don't want the job to persist if get_jobs_with_same_inputs()==True
-
         cleaned_data = super().clean()
 
         if self.jobs_limit is not None and self.jobs_limit < 1:
@@ -149,20 +154,15 @@ class JobCreateForm(SaveFormInitMixin, Form):
         if not cleaned_data.get("algorithm_image"):
             raise ValidationError("This algorithm is not ready to be used")
 
-        job = Job.objects.create_and_process_inputs(
-            user=self._user,
-            algorithm=self._algorithm,
+        if Job.objects.get_jobs_with_same_inputs(
             data=cleaned_data,
-            extra_logs_viewer_groups=[self._algorithm.editors_group],
-        )
-
-        if job.get_jobs_with_same_inputs():
+            algorithm_image=cleaned_data["algorithm_image"],
+            algorithm_model=cleaned_data["algorithm_model"],
+        ):
             raise ValidationError(
                 "A result for these inputs with the current image "
                 "and model already exists."
             )
-
-        cleaned_data["job"] = job
 
         return cleaned_data
 

@@ -1,4 +1,3 @@
-from django.db import transaction
 from rest_framework import serializers
 from rest_framework.fields import (
     CharField,
@@ -12,7 +11,10 @@ from rest_framework.relations import (
 )
 
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
-from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+)
 from grandchallenge.components.serializers import (
     ComponentInterfaceSerializer,
     ComponentInterfaceValuePostSerializer,
@@ -171,7 +173,6 @@ class JobPostSerializer(JobSerializer):
                 codename="execute_algorithm",
             )
 
-    @transaction.atomic
     def validate(self, data):
         self._algorithm = data.pop("algorithm")
         user = self.context["request"].user
@@ -183,6 +184,7 @@ class JobPostSerializer(JobSerializer):
         data["creator"] = user
         data["algorithm_image"] = self._algorithm.active_image
         data["algorithm_model"] = self._algorithm.active_model
+        data["time_limit"] = self._algorithm.time_limit
 
         jobs_limit = self._algorithm.active_image.algorithm.get_jobs_limit(
             user=data["creator"]
@@ -218,27 +220,41 @@ class JobPostSerializer(JobSerializer):
                 f"Interface(s) {titles} do not have a default value and should be provided."
             )
 
-        validated_data = super().validate()
-        job = Job.objects.create_and_process_inputs(
-            user=user,
-            algorithm=self._algorithm,
-            data=validated_data,
-            extra_logs_viewer_groups=[
-                validated_data["algorithm_image"].algorithm.editors_group
-            ],
-        )
+        inputs = data.pop("inputs")
+        data = self.reformat_inputs(inputs=inputs, data=data)
 
-        if job.get_jobs_with_same_inputs():
+        if Job.objects.get_jobs_with_same_inputs(
+            data=data,
+            algorithm_image=data["algorithm_image"],
+            algorithm_model=data["algorithm_model"],
+        ):
             raise serializers.ValidationError(
                 "A result for these inputs with the current image "
                 "and model already exists."
             )
 
-        data["job"] = job
+        return data
 
+    def reformat_inputs(self, inputs, data):
+        for input_data in inputs:
+            civ = ComponentInterfaceValue(**input_data)
+            if "image" in input_data:
+                data[civ.interface.slug] = input_data["image"]
+            elif "value" in input_data:
+                data[civ.interface.slug] = input_data["value"]
+            elif "file" in input_data:
+                data[civ.interface.slug] = input_data["file"]
+            elif "user_upload" in input_data:
+                data[civ.interface.slug] = input_data["user_upload"]
+            elif "upload_session" in input_data:
+                data[civ.interface.slug] = input_data["upload_session"]
         return data
 
     def create(self, validated_data):
-        # Job creation takes place during validation because we need the job there to
-        # check if the job has been run yet
-        return validated_data["job"]
+        job = Job.objects.create_and_process_inputs(
+            data=validated_data,
+            extra_logs_viewer_groups=[
+                validated_data["algorithm_image"].algorithm.editors_group
+            ],
+        )
+        return job
