@@ -1,209 +1,50 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" data-content_root="./">
-<head>
-  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Reader Studies &mdash; grand-challenge.org  documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="_static/jquery.js?v=5d32c60e"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="_static/documentation_options.js?v=5929fcd5"></script>
-        <script src="_static/doctools.js?v=9a2dae69"></script>
-        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="_static/js/theme.js"></script>
+    <title>Reader Studies &#8212; grand-challenge.org  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=def86cc0" />
+    
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Design decisions" href="design.html" />
     <link rel="prev" title="Workstations" href="workstations.html" /> 
-</head>
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="design.html" title="Design decisions"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="workstations.html" title="Workstations"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">grand-challenge.org  documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Reader Studies</a></li> 
+      </ul>
+    </div>  
 
-<body class="wy-body-for-nav"> 
-  <div class="wy-grid-for-nav">
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
-
-          
-          
-          <a href="index.html" class="icon icon-home">
-            grand-challenge.org
-          </a>
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
-</div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
-<li class="toctree-l1"><a class="reference internal" href="development.html">Development</a></li>
-<li class="toctree-l1"><a class="reference internal" href="evaluation.html">Evaluation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="components.html">Components</a></li>
-<li class="toctree-l1"><a class="reference internal" href="workstations.html">Workstations</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Reader Studies</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#creating-a-reader-study">Creating a Reader Study</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#cases">Cases</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#defining-the-hanging-list">Defining the Hanging List</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#questions">Questions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#adding-ground-truth">Adding Ground Truth</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.Answer"><code class="docutils literal notranslate"><span class="pre">Answer</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Answer.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">Answer.DoesNotExist</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Answer.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">Answer.MultipleObjectsReturned</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Answer.api_url"><code class="docutils literal notranslate"><span class="pre">Answer.api_url</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Answer.calculate_score"><code class="docutils literal notranslate"><span class="pre">Answer.calculate_score()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Answer.save"><code class="docutils literal notranslate"><span class="pre">Answer.save()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Answer.save_without_historical_record"><code class="docutils literal notranslate"><span class="pre">Answer.save_without_historical_record()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Answer.validate"><code class="docutils literal notranslate"><span class="pre">Answer.validate()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.AnswerGroupObjectPermission"><code class="docutils literal notranslate"><span class="pre">AnswerGroupObjectPermission</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.AnswerGroupObjectPermission.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">AnswerGroupObjectPermission.DoesNotExist</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.AnswerGroupObjectPermission.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">AnswerGroupObjectPermission.MultipleObjectsReturned</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.AnswerType"><code class="docutils literal notranslate"><span class="pre">AnswerType</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.AnswerUserObjectPermission"><code class="docutils literal notranslate"><span class="pre">AnswerUserObjectPermission</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.AnswerUserObjectPermission.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">AnswerUserObjectPermission.DoesNotExist</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.AnswerUserObjectPermission.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">AnswerUserObjectPermission.MultipleObjectsReturned</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.CategoricalOption"><code class="docutils literal notranslate"><span class="pre">CategoricalOption</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.CategoricalOption.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">CategoricalOption.DoesNotExist</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.CategoricalOption.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">CategoricalOption.MultipleObjectsReturned</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySet"><code class="docutils literal notranslate"><span class="pre">DisplaySet</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySet.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">DisplaySet.DoesNotExist</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySet.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">DisplaySet.MultipleObjectsReturned</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySet.api_url"><code class="docutils literal notranslate"><span class="pre">DisplaySet.api_url</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySet.workstation_url"><code class="docutils literal notranslate"><span class="pre">DisplaySet.workstation_url</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySetGroupObjectPermission"><code class="docutils literal notranslate"><span class="pre">DisplaySetGroupObjectPermission</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySetGroupObjectPermission.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">DisplaySetGroupObjectPermission.DoesNotExist</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySetGroupObjectPermission.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">DisplaySetGroupObjectPermission.MultipleObjectsReturned</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySetUserObjectPermission"><code class="docutils literal notranslate"><span class="pre">DisplaySetUserObjectPermission</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySetUserObjectPermission.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">DisplaySetUserObjectPermission.DoesNotExist</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySetUserObjectPermission.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">DisplaySetUserObjectPermission.MultipleObjectsReturned</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.ImagePort"><code class="docutils literal notranslate"><span class="pre">ImagePort</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.OptionalHangingProtocolReaderStudy"><code class="docutils literal notranslate"><span class="pre">OptionalHangingProtocolReaderStudy</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.OptionalHangingProtocolReaderStudy.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">OptionalHangingProtocolReaderStudy.DoesNotExist</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.OptionalHangingProtocolReaderStudy.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">OptionalHangingProtocolReaderStudy.MultipleObjectsReturned</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question"><code class="docutils literal notranslate"><span class="pre">Question</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.AnswerType"><code class="docutils literal notranslate"><span class="pre">Question.AnswerType</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.Direction"><code class="docutils literal notranslate"><span class="pre">Question.Direction</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">Question.DoesNotExist</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.ImagePort"><code class="docutils literal notranslate"><span class="pre">Question.ImagePort</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">Question.MultipleObjectsReturned</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.ScoringFunction"><code class="docutils literal notranslate"><span class="pre">Question.ScoringFunction</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.api_url"><code class="docutils literal notranslate"><span class="pre">Question.api_url</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.calculate_score"><code class="docutils literal notranslate"><span class="pre">Question.calculate_score()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.clean"><code class="docutils literal notranslate"><span class="pre">Question.clean()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.empty_answer_value"><code class="docutils literal notranslate"><span class="pre">Question.empty_answer_value</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.is_answer_valid"><code class="docutils literal notranslate"><span class="pre">Question.is_answer_valid()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.is_fully_editable"><code class="docutils literal notranslate"><span class="pre">Question.is_fully_editable</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.save"><code class="docutils literal notranslate"><span class="pre">Question.save()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.QuestionGroupObjectPermission"><code class="docutils literal notranslate"><span class="pre">QuestionGroupObjectPermission</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.QuestionGroupObjectPermission.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">QuestionGroupObjectPermission.DoesNotExist</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.QuestionGroupObjectPermission.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">QuestionGroupObjectPermission.MultipleObjectsReturned</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.QuestionUserObjectPermission"><code class="docutils literal notranslate"><span class="pre">QuestionUserObjectPermission</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.QuestionUserObjectPermission.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">QuestionUserObjectPermission.DoesNotExist</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.QuestionUserObjectPermission.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">QuestionUserObjectPermission.MultipleObjectsReturned</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.QuestionWidgetKindChoices"><code class="docutils literal notranslate"><span class="pre">QuestionWidgetKindChoices</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy"><code class="docutils literal notranslate"><span class="pre">ReaderStudy</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.DoesNotExist</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.MultipleObjectsReturned</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.add_editor"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.add_editor()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.add_reader"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.add_reader()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.answerable_question_count"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.answerable_question_count</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.answerable_questions"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.answerable_questions</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.clean"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.clean()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.get_progress_for_user"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.get_progress_for_user()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.help_text"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.help_text</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.image_groups"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.image_groups</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.is_editor"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.is_editor()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.is_reader"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.is_reader()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.leaderboard"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.leaderboard</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.remove_editor"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.remove_editor()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.remove_reader"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.remove_reader()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.save"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.save()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.score_for_user"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.score_for_user()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.scores_by_user"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.scores_by_user</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.statistics"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.statistics</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.study_image_names"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.study_image_names</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudyGroupObjectPermission"><code class="docutils literal notranslate"><span class="pre">ReaderStudyGroupObjectPermission</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudyGroupObjectPermission.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">ReaderStudyGroupObjectPermission.DoesNotExist</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudyGroupObjectPermission.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">ReaderStudyGroupObjectPermission.MultipleObjectsReturned</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudyPermissionRequest"><code class="docutils literal notranslate"><span class="pre">ReaderStudyPermissionRequest</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudyPermissionRequest.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">ReaderStudyPermissionRequest.DoesNotExist</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudyPermissionRequest.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">ReaderStudyPermissionRequest.MultipleObjectsReturned</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudyPermissionRequest.save"><code class="docutils literal notranslate"><span class="pre">ReaderStudyPermissionRequest.save()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudyUserObjectPermission"><code class="docutils literal notranslate"><span class="pre">ReaderStudyUserObjectPermission</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudyUserObjectPermission.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">ReaderStudyUserObjectPermission.DoesNotExist</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudyUserObjectPermission.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">ReaderStudyUserObjectPermission.MultipleObjectsReturned</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.delete_reader_study_groups_hook"><code class="docutils literal notranslate"><span class="pre">delete_reader_study_groups_hook()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="design.html">Design decisions</a></li>
-</ul>
-
-        </div>
-      </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">grand-challenge.org</a>
-      </nav>
-
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
-  <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Reader Studies</li>
-      <li class="wy-breadcrumbs-aside">
-            <a href="_sources/reader-studies.rst.txt" rel="nofollow"> View page source</a>
-      </li>
-  </ul>
-  <hr/>
-</div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-             
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
   <section id="module-grandchallenge.reader_studies.models">
-<span id="reader-studies"></span><h1>Reader Studies<a class="headerlink" href="#module-grandchallenge.reader_studies.models" title="Link to this heading"></a></h1>
+<span id="reader-studies"></span><h1>Reader Studies<a class="headerlink" href="#module-grandchallenge.reader_studies.models" title="Link to this heading">¶</a></h1>
 <p>A reader study enables you to have a set of readers answer a set of questions
 about a set of images.</p>
 <dl class="simple">
@@ -223,13 +64,13 @@ on another.</p>
 </dd>
 </dl>
 <section id="creating-a-reader-study">
-<h2>Creating a Reader Study<a class="headerlink" href="#creating-a-reader-study" title="Link to this heading"></a></h2>
+<h2>Creating a Reader Study<a class="headerlink" href="#creating-a-reader-study" title="Link to this heading">¶</a></h2>
 <p>A <code class="docutils literal notranslate"><span class="pre">ReaderStudy</span></code> can use any available <code class="docutils literal notranslate"><span class="pre">Workstation</span></code>.
 A <code class="docutils literal notranslate"><span class="pre">WorkstationConfig</span></code> can also be used for the study to customise the default
 appearance of the workstation.</p>
 </section>
 <section id="cases">
-<h2>Cases<a class="headerlink" href="#cases" title="Link to this heading"></a></h2>
+<h2>Cases<a class="headerlink" href="#cases" title="Link to this heading">¶</a></h2>
 <p>Cases can be added to a reader study by adding <code class="docutils literal notranslate"><span class="pre">Image</span></code> instances.
 Multiple image formats are supported:</p>
 <ul class="simple">
@@ -243,7 +84,7 @@ guaranteed to work on all <code class="docutils literal notranslate"><span class
 </ul>
 </section>
 <section id="defining-the-hanging-list">
-<h2>Defining the Hanging List<a class="headerlink" href="#defining-the-hanging-list" title="Link to this heading"></a></h2>
+<h2>Defining the Hanging List<a class="headerlink" href="#defining-the-hanging-list" title="Link to this heading">¶</a></h2>
 <p>When you upload a set of images you have the option to automatically generate
 the default hanging list.
 The default hanging list presents each reader with 1 image per protocol.</p>
@@ -264,7 +105,7 @@ Here, you are able to assign multiple images and overlays to each protocol.</p>
 the suffix ‘-overlay’ (e.g. <code class="docutils literal notranslate"><span class="pre">main-overlay</span></code>).</p>
 </section>
 <section id="questions">
-<h2>Questions<a class="headerlink" href="#questions" title="Link to this heading"></a></h2>
+<h2>Questions<a class="headerlink" href="#questions" title="Link to this heading">¶</a></h2>
 <p>A <code class="docutils literal notranslate"><span class="pre">Question</span></code> can be optional and the following <code class="docutils literal notranslate"><span class="pre">answer_type</span></code> options are
 available:</p>
 <ul class="simple">
@@ -283,7 +124,7 @@ available:</p>
 annotation will be made.</p>
 </section>
 <section id="adding-ground-truth">
-<h2>Adding Ground Truth<a class="headerlink" href="#adding-ground-truth" title="Link to this heading"></a></h2>
+<h2>Adding Ground Truth<a class="headerlink" href="#adding-ground-truth" title="Link to this heading">¶</a></h2>
 <p>To monitor the performance of the readers you are able add ground truth to a
 reader study by uploading a csv file.</p>
 <p>If ground truth has been added to a <code class="docutils literal notranslate"><span class="pre">ReaderStudy</span></code>, any <code class="docutils literal notranslate"><span class="pre">Answer</span></code> given by a
@@ -294,7 +135,7 @@ as for each case are displayed in the <code class="docutils literal notranslate"
 </section>
 <dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.Answer">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">Answer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Answer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Answer" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">Answer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Answer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Answer" title="Link to this definition">¶</a></dt>
 <dd><p>An <code class="docutils literal notranslate"><span class="pre">Answer</span></code> can be provided to a <code class="docutils literal notranslate"><span class="pre">Question</span></code> that is a part of a
 <code class="docutils literal notranslate"><span class="pre">ReaderStudy</span></code>.</p>
 <dl class="field-list simple">
@@ -334,29 +175,29 @@ as for each case are displayed in the <code class="docutils literal notranslate"
 </dl>
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.Answer.DoesNotExist">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.Answer.DoesNotExist" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.Answer.DoesNotExist" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.Answer.MultipleObjectsReturned">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.Answer.MultipleObjectsReturned" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.Answer.MultipleObjectsReturned" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.Answer.api_url">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">api_url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></em><a class="headerlink" href="#grandchallenge.reader_studies.models.Answer.api_url" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">api_url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></em><a class="headerlink" href="#grandchallenge.reader_studies.models.Answer.api_url" title="Link to this definition">¶</a></dt>
 <dd><p>API url for this <code class="docutils literal notranslate"><span class="pre">Answer</span></code>.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.Answer.calculate_score">
-<span class="sig-name descname"><span class="pre">calculate_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ground_truth</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Answer.calculate_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Answer.calculate_score" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">calculate_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ground_truth</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Answer.calculate_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Answer.calculate_score" title="Link to this definition">¶</a></dt>
 <dd><p>Calculate the score for this <code class="docutils literal notranslate"><span class="pre">Answer</span></code> based on <code class="docutils literal notranslate"><span class="pre">ground_truth</span></code>.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.Answer.save">
-<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Answer.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Answer.save" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Answer.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Answer.save" title="Link to this definition">¶</a></dt>
 <dd><p>Save the current instance. Override this in a subclass if you want to
 control the saving process.</p>
 <p>The ‘force_insert’ and ‘force_update’ parameters can be used to insist
@@ -366,14 +207,14 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.Answer.save_without_historical_record">
-<span class="sig-name descname"><span class="pre">save_without_historical_record</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandchallenge.reader_studies.models.Answer.save_without_historical_record" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">save_without_historical_record</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandchallenge.reader_studies.models.Answer.save_without_historical_record" title="Link to this definition">¶</a></dt>
 <dd><p>Save model without saving a historical record</p>
 <p>Make sure you know what you’re doing before you use this method.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.Answer.validate">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">creator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">question</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">answer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">display_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_ground_truth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Answer.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Answer.validate" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">creator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">question</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">answer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">display_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_ground_truth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Answer.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Answer.validate" title="Link to this definition">¶</a></dt>
 <dd><p>Validates all fields provided for <code class="docutils literal notranslate"><span class="pre">answer</span></code>.</p>
 </dd></dl>
 
@@ -381,7 +222,7 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.AnswerGroupObjectPermission">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">AnswerGroupObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#AnswerGroupObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.AnswerGroupObjectPermission" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">AnswerGroupObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#AnswerGroupObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.AnswerGroupObjectPermission" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.AutoField" title="(in Django v5.0)"><em>AutoField</em></a>) – Primary key: ID</p>
@@ -399,24 +240,24 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 </dl>
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.AnswerGroupObjectPermission.DoesNotExist">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.AnswerGroupObjectPermission.DoesNotExist" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.AnswerGroupObjectPermission.DoesNotExist" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.AnswerGroupObjectPermission.MultipleObjectsReturned">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.AnswerGroupObjectPermission.MultipleObjectsReturned" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.AnswerGroupObjectPermission.MultipleObjectsReturned" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.AnswerType">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">AnswerType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#AnswerType"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.AnswerType" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">AnswerType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#AnswerType"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.AnswerType" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.AnswerUserObjectPermission">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">AnswerUserObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#AnswerUserObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.AnswerUserObjectPermission" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">AnswerUserObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#AnswerUserObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.AnswerUserObjectPermission" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.AutoField" title="(in Django v5.0)"><em>AutoField</em></a>) – Primary key: ID</p>
@@ -434,19 +275,19 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 </dl>
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.AnswerUserObjectPermission.DoesNotExist">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.AnswerUserObjectPermission.DoesNotExist" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.AnswerUserObjectPermission.DoesNotExist" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.AnswerUserObjectPermission.MultipleObjectsReturned">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.AnswerUserObjectPermission.MultipleObjectsReturned" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.AnswerUserObjectPermission.MultipleObjectsReturned" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.CategoricalOption">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">CategoricalOption</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">question</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#CategoricalOption"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.CategoricalOption" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">CategoricalOption</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">question</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#CategoricalOption"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.CategoricalOption" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -464,19 +305,19 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 </dl>
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.CategoricalOption.DoesNotExist">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.CategoricalOption.DoesNotExist" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.CategoricalOption.DoesNotExist" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.CategoricalOption.MultipleObjectsReturned">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.CategoricalOption.MultipleObjectsReturned" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.CategoricalOption.MultipleObjectsReturned" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.DisplaySet">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">DisplaySet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">created</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modified</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reader_study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#DisplaySet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySet" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">DisplaySet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">created</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modified</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reader_study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#DisplaySet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySet" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -509,30 +350,30 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 </dl>
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.DisplaySet.DoesNotExist">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySet.DoesNotExist" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySet.DoesNotExist" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.DisplaySet.MultipleObjectsReturned">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySet.MultipleObjectsReturned" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySet.MultipleObjectsReturned" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.DisplaySet.api_url">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">api_url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></em><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySet.api_url" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">api_url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></em><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySet.api_url" title="Link to this definition">¶</a></dt>
 <dd><p>API url for this <code class="docutils literal notranslate"><span class="pre">DisplaySet</span></code>.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.DisplaySet.workstation_url">
-<span class="sig-name descname"><span class="pre">workstation_url</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySet.workstation_url" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">workstation_url</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySet.workstation_url" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.DisplaySetGroupObjectPermission">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">DisplaySetGroupObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#DisplaySetGroupObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySetGroupObjectPermission" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">DisplaySetGroupObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#DisplaySetGroupObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySetGroupObjectPermission" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.AutoField" title="(in Django v5.0)"><em>AutoField</em></a>) – Primary key: ID</p>
@@ -550,19 +391,19 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 </dl>
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.DisplaySetGroupObjectPermission.DoesNotExist">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySetGroupObjectPermission.DoesNotExist" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySetGroupObjectPermission.DoesNotExist" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.DisplaySetGroupObjectPermission.MultipleObjectsReturned">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySetGroupObjectPermission.MultipleObjectsReturned" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySetGroupObjectPermission.MultipleObjectsReturned" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.DisplaySetUserObjectPermission">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">DisplaySetUserObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#DisplaySetUserObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySetUserObjectPermission" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">DisplaySetUserObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#DisplaySetUserObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySetUserObjectPermission" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.AutoField" title="(in Django v5.0)"><em>AutoField</em></a>) – Primary key: ID</p>
@@ -580,24 +421,24 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 </dl>
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.DisplaySetUserObjectPermission.DoesNotExist">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySetUserObjectPermission.DoesNotExist" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySetUserObjectPermission.DoesNotExist" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.DisplaySetUserObjectPermission.MultipleObjectsReturned">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySetUserObjectPermission.MultipleObjectsReturned" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySetUserObjectPermission.MultipleObjectsReturned" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ImagePort">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">ImagePort</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ImagePort"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ImagePort" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">ImagePort</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ImagePort"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ImagePort" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.OptionalHangingProtocolReaderStudy">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">OptionalHangingProtocolReaderStudy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reader_study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hanging_protocol</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#OptionalHangingProtocolReaderStudy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.OptionalHangingProtocolReaderStudy" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">OptionalHangingProtocolReaderStudy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reader_study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hanging_protocol</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#OptionalHangingProtocolReaderStudy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.OptionalHangingProtocolReaderStudy" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.AutoField" title="(in Django v5.0)"><em>AutoField</em></a>) – Primary key: ID</p>
@@ -614,19 +455,19 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 </dl>
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.OptionalHangingProtocolReaderStudy.DoesNotExist">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.OptionalHangingProtocolReaderStudy.DoesNotExist" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.OptionalHangingProtocolReaderStudy.DoesNotExist" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.OptionalHangingProtocolReaderStudy.MultipleObjectsReturned">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.OptionalHangingProtocolReaderStudy.MultipleObjectsReturned" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.OptionalHangingProtocolReaderStudy.MultipleObjectsReturned" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.Question">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">Question</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">created</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modified</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlay_segments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">look_up_table</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reader_study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">question_text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">help_text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">answer_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_port</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_annotation_color</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">required</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scoring_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interface</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">widget</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">answer_max_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">answer_min_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">answer_step_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">answer_min_length</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">answer_max_length</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">answer_match_pattern</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">empty_answer_confirmation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">empty_answer_confirmation_label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Question"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Question" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">Question</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">created</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modified</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlay_segments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">look_up_table</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reader_study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">question_text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">help_text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">answer_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_port</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_annotation_color</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">required</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scoring_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interface</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">widget</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">answer_max_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">answer_min_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">answer_step_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">answer_min_length</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">answer_max_length</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">answer_match_pattern</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">empty_answer_confirmation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">empty_answer_confirmation_label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Question"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Question" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -678,50 +519,50 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 </dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.Question.AnswerType">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">AnswerType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.AnswerType" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">AnswerType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.AnswerType" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.Question.Direction">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Direction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Question.Direction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.Direction" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Direction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Question.Direction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.Direction" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.Question.DoesNotExist">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.DoesNotExist" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.DoesNotExist" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.Question.ImagePort">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ImagePort</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.ImagePort" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ImagePort</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.ImagePort" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.Question.MultipleObjectsReturned">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.MultipleObjectsReturned" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.MultipleObjectsReturned" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.Question.ScoringFunction">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ScoringFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Question.ScoringFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.ScoringFunction" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ScoringFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Question.ScoringFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.ScoringFunction" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.Question.api_url">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">api_url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></em><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.api_url" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">api_url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></em><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.api_url" title="Link to this definition">¶</a></dt>
 <dd><p>API url for this <code class="docutils literal notranslate"><span class="pre">Question</span></code>.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.Question.calculate_score">
-<span class="sig-name descname"><span class="pre">calculate_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">answer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ground_truth</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Question.calculate_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.calculate_score" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">calculate_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">answer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ground_truth</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Question.calculate_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.calculate_score" title="Link to this definition">¶</a></dt>
 <dd><p>Calculates the score for <code class="docutils literal notranslate"><span class="pre">answer</span></code> by applying <code class="docutils literal notranslate"><span class="pre">scoring_function</span></code>
 to <code class="docutils literal notranslate"><span class="pre">answer</span></code> and <code class="docutils literal notranslate"><span class="pre">ground_truth</span></code>.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.Question.clean">
-<span class="sig-name descname"><span class="pre">clean</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Question.clean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.clean" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">clean</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Question.clean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.clean" title="Link to this definition">¶</a></dt>
 <dd><p>Hook for doing any extra model-wide validation after clean() has been
 called on every field by self.clean_fields. Any ValidationError raised
 by this method will not be associated with a particular field; it will
@@ -730,25 +571,25 @@ have a special-case association with the field defined by NON_FIELD_ERRORS.</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.Question.empty_answer_value">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">empty_answer_value</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.empty_answer_value" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">empty_answer_value</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.empty_answer_value" title="Link to this definition">¶</a></dt>
 <dd><p>Returns the answer value which is considered to be empty</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.Question.is_answer_valid">
-<span class="sig-name descname"><span class="pre">is_answer_valid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">answer</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Question.is_answer_valid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.is_answer_valid" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">is_answer_valid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">answer</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Question.is_answer_valid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.is_answer_valid" title="Link to this definition">¶</a></dt>
 <dd><p>Validates <code class="docutils literal notranslate"><span class="pre">answer</span></code> against <code class="docutils literal notranslate"><span class="pre">ANSWER_TYPE_SCHEMA</span></code>.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.Question.is_fully_editable">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_fully_editable</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.is_fully_editable" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_fully_editable</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.is_fully_editable" title="Link to this definition">¶</a></dt>
 <dd><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if no <code class="docutils literal notranslate"><span class="pre">Answer</span></code> has been given for this <code class="docutils literal notranslate"><span class="pre">Question</span></code>.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.Question.save">
-<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Question.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.save" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Question.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.save" title="Link to this definition">¶</a></dt>
 <dd><p>Save the current instance. Override this in a subclass if you want to
 control the saving process.</p>
 <p>The ‘force_insert’ and ‘force_update’ parameters can be used to insist
@@ -760,7 +601,7 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.QuestionGroupObjectPermission">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">QuestionGroupObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#QuestionGroupObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.QuestionGroupObjectPermission" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">QuestionGroupObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#QuestionGroupObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.QuestionGroupObjectPermission" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.AutoField" title="(in Django v5.0)"><em>AutoField</em></a>) – Primary key: ID</p>
@@ -778,19 +619,19 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 </dl>
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.QuestionGroupObjectPermission.DoesNotExist">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.QuestionGroupObjectPermission.DoesNotExist" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.QuestionGroupObjectPermission.DoesNotExist" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.QuestionGroupObjectPermission.MultipleObjectsReturned">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.QuestionGroupObjectPermission.MultipleObjectsReturned" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.QuestionGroupObjectPermission.MultipleObjectsReturned" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.QuestionUserObjectPermission">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">QuestionUserObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#QuestionUserObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.QuestionUserObjectPermission" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">QuestionUserObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#QuestionUserObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.QuestionUserObjectPermission" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.AutoField" title="(in Django v5.0)"><em>AutoField</em></a>) – Primary key: ID</p>
@@ -808,24 +649,24 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 </dl>
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.QuestionUserObjectPermission.DoesNotExist">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.QuestionUserObjectPermission.DoesNotExist" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.QuestionUserObjectPermission.DoesNotExist" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.QuestionUserObjectPermission.MultipleObjectsReturned">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.QuestionUserObjectPermission.MultipleObjectsReturned" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.QuestionUserObjectPermission.MultipleObjectsReturned" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.QuestionWidgetKindChoices">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">QuestionWidgetKindChoices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#QuestionWidgetKindChoices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.QuestionWidgetKindChoices" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">QuestionWidgetKindChoices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#QuestionWidgetKindChoices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.QuestionWidgetKindChoices" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">ReaderStudy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">ReaderStudy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy" title="Link to this definition">¶</a></dt>
 <dd><p>Reader Study model.</p>
 <p>A reader study is a tool that allows users to have a set of readers answer
 a set of questions on a set of images (cases).</p>
@@ -890,40 +731,40 @@ a set of questions on a set of images (cases).</p>
 </dl>
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy.DoesNotExist">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.DoesNotExist" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.DoesNotExist" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy.MultipleObjectsReturned">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.MultipleObjectsReturned" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.MultipleObjectsReturned" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy.add_editor">
-<span class="sig-name descname"><span class="pre">add_editor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudy.add_editor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.add_editor" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">add_editor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudy.add_editor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.add_editor" title="Link to this definition">¶</a></dt>
 <dd><p>Adds <code class="docutils literal notranslate"><span class="pre">user</span></code> as an editor for this <code class="docutils literal notranslate"><span class="pre">ReaderStudy</span></code>.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy.add_reader">
-<span class="sig-name descname"><span class="pre">add_reader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudy.add_reader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.add_reader" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">add_reader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudy.add_reader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.add_reader" title="Link to this definition">¶</a></dt>
 <dd><p>Adds <code class="docutils literal notranslate"><span class="pre">user</span></code> as a reader for this <code class="docutils literal notranslate"><span class="pre">ReaderStudy</span></code>.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy.answerable_question_count">
-<span class="sig-name descname"><span class="pre">answerable_question_count</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.answerable_question_count" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">answerable_question_count</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.answerable_question_count" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy.answerable_questions">
-<span class="sig-name descname"><span class="pre">answerable_questions</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.answerable_questions" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">answerable_questions</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.answerable_questions" title="Link to this definition">¶</a></dt>
 <dd><p>All questions for this <code class="docutils literal notranslate"><span class="pre">ReaderStudy</span></code> except those with answer type</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy.clean">
-<span class="sig-name descname"><span class="pre">clean</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudy.clean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.clean" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">clean</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudy.clean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.clean" title="Link to this definition">¶</a></dt>
 <dd><p>Hook for doing any extra model-wide validation after clean() has been
 called on every field by self.clean_fields. Any ValidationError raised
 by this method will not be associated with a particular field; it will
@@ -932,54 +773,54 @@ have a special-case association with the field defined by NON_FIELD_ERRORS.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy.get_progress_for_user">
-<span class="sig-name descname"><span class="pre">get_progress_for_user</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudy.get_progress_for_user"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.get_progress_for_user" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_progress_for_user</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudy.get_progress_for_user"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.get_progress_for_user" title="Link to this definition">¶</a></dt>
 <dd><p>Returns the percentage of completed hangings and questions for <code class="docutils literal notranslate"><span class="pre">user</span></code>.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy.help_text">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">help_text</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></em><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.help_text" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">help_text</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></em><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.help_text" title="Link to this definition">¶</a></dt>
 <dd><p>The cleaned help text from the markdown sources</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy.image_groups">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">image_groups</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.image_groups" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">image_groups</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.image_groups" title="Link to this definition">¶</a></dt>
 <dd><p>Names of the images as they are grouped in the hanging list.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy.is_editor">
-<span class="sig-name descname"><span class="pre">is_editor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudy.is_editor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.is_editor" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">is_editor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudy.is_editor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.is_editor" title="Link to this definition">¶</a></dt>
 <dd><p>Checks if <code class="docutils literal notranslate"><span class="pre">user</span></code> is an editor for this <code class="docutils literal notranslate"><span class="pre">ReaderStudy</span></code>.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy.is_reader">
-<span class="sig-name descname"><span class="pre">is_reader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudy.is_reader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.is_reader" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">is_reader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudy.is_reader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.is_reader" title="Link to this definition">¶</a></dt>
 <dd><p>Checks if <code class="docutils literal notranslate"><span class="pre">user</span></code> is a reader for this <code class="docutils literal notranslate"><span class="pre">ReaderStudy</span></code>.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy.leaderboard">
-<span class="sig-name descname"><span class="pre">leaderboard</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.leaderboard" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">leaderboard</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.leaderboard" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy.remove_editor">
-<span class="sig-name descname"><span class="pre">remove_editor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudy.remove_editor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.remove_editor" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">remove_editor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudy.remove_editor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.remove_editor" title="Link to this definition">¶</a></dt>
 <dd><p>Removes <code class="docutils literal notranslate"><span class="pre">user</span></code> as an editor for this <code class="docutils literal notranslate"><span class="pre">ReaderStudy</span></code>.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy.remove_reader">
-<span class="sig-name descname"><span class="pre">remove_reader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudy.remove_reader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.remove_reader" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">remove_reader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudy.remove_reader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.remove_reader" title="Link to this definition">¶</a></dt>
 <dd><p>Removes <code class="docutils literal notranslate"><span class="pre">user</span></code> as a reader for this <code class="docutils literal notranslate"><span class="pre">ReaderStudy</span></code>.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy.save">
-<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudy.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.save" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudy.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.save" title="Link to this definition">¶</a></dt>
 <dd><p>Save the current instance. Override this in a subclass if you want to
 control the saving process.</p>
 <p>The ‘force_insert’ and ‘force_update’ parameters can be used to insist
@@ -989,30 +830,30 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy.score_for_user">
-<span class="sig-name descname"><span class="pre">score_for_user</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudy.score_for_user"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.score_for_user" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">score_for_user</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudy.score_for_user"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.score_for_user" title="Link to this definition">¶</a></dt>
 <dd><p>Returns the average and total score for answers given by <code class="docutils literal notranslate"><span class="pre">user</span></code>.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy.scores_by_user">
-<span class="sig-name descname"><span class="pre">scores_by_user</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.scores_by_user" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">scores_by_user</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.scores_by_user" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy.statistics">
-<span class="sig-name descname"><span class="pre">statistics</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.statistics" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">statistics</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.statistics" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy.study_image_names">
-<span class="sig-name descname"><span class="pre">study_image_names</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.study_image_names" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">study_image_names</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.study_image_names" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudyGroupObjectPermission">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">ReaderStudyGroupObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudyGroupObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyGroupObjectPermission" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">ReaderStudyGroupObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudyGroupObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyGroupObjectPermission" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.AutoField" title="(in Django v5.0)"><em>AutoField</em></a>) – Primary key: ID</p>
@@ -1030,19 +871,19 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 </dl>
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudyGroupObjectPermission.DoesNotExist">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyGroupObjectPermission.DoesNotExist" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyGroupObjectPermission.DoesNotExist" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudyGroupObjectPermission.MultipleObjectsReturned">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyGroupObjectPermission.MultipleObjectsReturned" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyGroupObjectPermission.MultipleObjectsReturned" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudyPermissionRequest">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">ReaderStudyPermissionRequest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudyPermissionRequest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyPermissionRequest" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">ReaderStudyPermissionRequest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudyPermissionRequest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyPermissionRequest" title="Link to this definition">¶</a></dt>
 <dd><p>When a user wants to read a reader study, editors have the option of
 reviewing each user before accepting or rejecting them. This class records
 the needed info for that.</p>
@@ -1071,17 +912,17 @@ the needed info for that.</p>
 </dl>
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudyPermissionRequest.DoesNotExist">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyPermissionRequest.DoesNotExist" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyPermissionRequest.DoesNotExist" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudyPermissionRequest.MultipleObjectsReturned">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyPermissionRequest.MultipleObjectsReturned" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyPermissionRequest.MultipleObjectsReturned" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudyPermissionRequest.save">
-<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudyPermissionRequest.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyPermissionRequest.save" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudyPermissionRequest.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyPermissionRequest.save" title="Link to this definition">¶</a></dt>
 <dd><p>Save the current instance. Override this in a subclass if you want to
 control the saving process.</p>
 <p>The ‘force_insert’ and ‘force_update’ parameters can be used to insist
@@ -1093,7 +934,7 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudyUserObjectPermission">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">ReaderStudyUserObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudyUserObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyUserObjectPermission" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">ReaderStudyUserObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudyUserObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyUserObjectPermission" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.AutoField" title="(in Django v5.0)"><em>AutoField</em></a>) – Primary key: ID</p>
@@ -1111,19 +952,19 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 </dl>
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudyUserObjectPermission.DoesNotExist">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyUserObjectPermission.DoesNotExist" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyUserObjectPermission.DoesNotExist" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudyUserObjectPermission.MultipleObjectsReturned">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyUserObjectPermission.MultipleObjectsReturned" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyUserObjectPermission.MultipleObjectsReturned" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.delete_reader_study_groups_hook">
-<span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">delete_reader_study_groups_hook</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">_</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">instance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">using</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">__</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#delete_reader_study_groups_hook"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.delete_reader_study_groups_hook" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">delete_reader_study_groups_hook</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">_</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">instance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">using</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">__</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#delete_reader_study_groups_hook"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.delete_reader_study_groups_hook" title="Link to this definition">¶</a></dt>
 <dd><p>Deletes the related groups.</p>
 <p>We use a signal rather than overriding delete() to catch usages of
 bulk_delete.</p>
@@ -1132,34 +973,58 @@ bulk_delete.</p>
 </section>
 
 
-           </div>
+            <div class="clearer"></div>
           </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="workstations.html" class="btn btn-neutral float-left" title="Workstations" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="design.html" class="btn btn-neutral float-right" title="Design decisions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-    </div>
-
-  <hr/>
-
-  <div role="contentinfo">
-    <p>&#169; Copyright 2018, James Meakin.</p>
-  </div>
-
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
-
-</footer>
         </div>
       </div>
-    </section>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="workstations.html"
+                          title="previous chapter">Workstations</a></p>
   </div>
-  <script>
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script> 
-
-</body>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="design.html"
+                          title="next chapter">Design decisions</a></p>
+  </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="design.html" title="Design decisions"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="workstations.html" title="Workstations"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">grand-challenge.org  documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Reader Studies</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2018, James Meakin.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.0.2.
+    </div>
+  </body>
 </html>

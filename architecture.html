@@ -1,106 +1,56 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" data-content_root="./">
-<head>
-  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Architecture &mdash; grand-challenge.org  documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="_static/jquery.js?v=5d32c60e"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="_static/documentation_options.js?v=5929fcd5"></script>
-        <script src="_static/doctools.js?v=9a2dae69"></script>
-        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="_static/js/theme.js"></script>
+    <title>Architecture &#8212; grand-challenge.org  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=def86cc0" />
+    
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Development" href="development.html" />
     <link rel="prev" title="Welcome to grand-challenge.org’s documentation!" href="index.html" /> 
-</head>
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="development.html" title="Development"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to grand-challenge.org’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">grand-challenge.org  documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Architecture</a></li> 
+      </ul>
+    </div>  
 
-<body class="wy-body-for-nav"> 
-  <div class="wy-grid-for-nav">
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
-
-          
-          
-          <a href="index.html" class="icon icon-home">
-            grand-challenge.org
-          </a>
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
-</div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Architecture</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#ubiquitous-language">Ubiquitous Language</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#users">Users</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#system-context">System Context</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#containers">Containers</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#components">Components</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#api">API</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#workstations">Workstations</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#image-evaluation-and-algorithm-workers">Image, Evaluation and Algorithm Workers</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="development.html">Development</a></li>
-<li class="toctree-l1"><a class="reference internal" href="evaluation.html">Evaluation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="components.html">Components</a></li>
-<li class="toctree-l1"><a class="reference internal" href="workstations.html">Workstations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reader-studies.html">Reader Studies</a></li>
-<li class="toctree-l1"><a class="reference internal" href="design.html">Design decisions</a></li>
-</ul>
-
-        </div>
-      </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">grand-challenge.org</a>
-      </nav>
-
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
-  <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Architecture</li>
-      <li class="wy-breadcrumbs-aside">
-            <a href="_sources/architecture.rst.txt" rel="nofollow"> View page source</a>
-      </li>
-  </ul>
-  <hr/>
-</div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-             
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
   <section id="architecture">
-<h1>Architecture<a class="headerlink" href="#architecture" title="Link to this heading"></a></h1>
+<h1>Architecture<a class="headerlink" href="#architecture" title="Link to this heading">¶</a></h1>
 <p>This document uses the <a class="reference external" href="https://c4model.com/">C4 Model</a> for visualising the architecture of grand-challenge.org.
 This covers <a class="reference internal" href="#system-context">System Context</a>, <a class="reference internal" href="#containers">Containers</a> (Applications/Data Stores), and <a class="reference internal" href="#components">Components</a> (Modules/Libraries).</p>
 <section id="ubiquitous-language">
-<h2>Ubiquitous Language<a class="headerlink" href="#ubiquitous-language" title="Link to this heading"></a></h2>
+<h2>Ubiquitous Language<a class="headerlink" href="#ubiquitous-language" title="Link to this heading">¶</a></h2>
 <section id="users">
-<h3>Users<a class="headerlink" href="#users" title="Link to this heading"></a></h3>
+<h3>Users<a class="headerlink" href="#users" title="Link to this heading">¶</a></h3>
 <p>Many different users and roles are supported on grand-challenge.org.</p>
 <dl class="simple">
 <dt>Researcher</dt><dd><p>A Researcher is a user who wants to manage medical imaging data and reports,
@@ -121,7 +71,7 @@ and uploads new medical imaging data for execution by algorithms.</p>
 </section>
 </section>
 <section id="system-context">
-<h2>System Context<a class="headerlink" href="#system-context" title="Link to this heading"></a></h2>
+<h2>System Context<a class="headerlink" href="#system-context" title="Link to this heading">¶</a></h2>
 <p>An overview of the grand-challenge.org system, its users, and its system dependencies.</p>
 <p class="plantuml">
 <img src="_images/plantuml-11561084767c276f43488f940b29c048a0dbedd7.svg" alt="&#64;startuml
@@ -160,7 +110,7 @@ Rel_Neighbor(monitoring, grand_challenge, &quot;Scrapes monitoring endpoints of&
 "/></p>
 </section>
 <section id="containers">
-<h2>Containers<a class="headerlink" href="#containers" title="Link to this heading"></a></h2>
+<h2>Containers<a class="headerlink" href="#containers" title="Link to this heading">¶</a></h2>
 <p>The overall shape of the architecture and technology choices.
 <em>Note: a container is a separately deployable application or data store, not necessarily a Docker container.</em></p>
 <p class="plantuml">
@@ -219,13 +169,13 @@ Rel_U(gc_algorithm_worker, protected_s3, &quot;Reads objects from&quot;, &quot;H
 "/></p>
 </section>
 <section id="components">
-<h2>Components<a class="headerlink" href="#components" title="Link to this heading"></a></h2>
+<h2>Components<a class="headerlink" href="#components" title="Link to this heading">¶</a></h2>
 <p>Logical modules and their interactions with containers.
 <em>Note: a component is a grouping of related functionality behind a well defined interface,
 not components in the sense of pipelines.</em>
 Grand-challenge.org is a Django monolith, but several components can be deployed and scaled independently.</p>
 <section id="api">
-<h3>API<a class="headerlink" href="#api" title="Link to this heading"></a></h3>
+<h3>API<a class="headerlink" href="#api" title="Link to this heading">¶</a></h3>
 <p>The API layer provides the HTML views and REST services to the user.</p>
 <p class="plantuml">
 <img src="_images/plantuml-7b5f3246c87d876e5e6ef05ce50099c4bb948cee.svg" alt="&#64;startuml
@@ -269,7 +219,7 @@ Rel(nginx, gc_web_app, &quot;Proxies&quot;, &quot;HTTP, HTML, JSON&quot;)
 "/></p>
 </section>
 <section id="workstations">
-<h3>Workstations<a class="headerlink" href="#workstations" title="Link to this heading"></a></h3>
+<h3>Workstations<a class="headerlink" href="#workstations" title="Link to this heading">¶</a></h3>
 <p>Grand Challenge is able to launch <a class="reference internal" href="workstations.html#workstations"><span class="std std-ref">workstations</span></a> for users.
 Workstations are container images that allow for interaction with medical data in the browser.
 One workstation container image is instantiated per user, which provides a single page application.
@@ -314,7 +264,7 @@ Rel(docker, gc_web_app, &quot;Fetches medical images, algorithm results, etc, fr
 "/></p>
 </section>
 <section id="image-evaluation-and-algorithm-workers">
-<h3>Image, Evaluation and Algorithm Workers<a class="headerlink" href="#image-evaluation-and-algorithm-workers" title="Link to this heading"></a></h3>
+<h3>Image, Evaluation and Algorithm Workers<a class="headerlink" href="#image-evaluation-and-algorithm-workers" title="Link to this heading">¶</a></h3>
 <p>There are several tasks that require asynchronous processing that require
 long compute times, high memory usage and potentially the docker api and/or a GPU.
 These tasks include medical image importing, challenge submission evaluation (requires docker), and
@@ -354,34 +304,58 @@ Rel(gc_algorithm_worker, docker, &quot;Provisions volumes, instantiates containe
 </section>
 
 
-           </div>
+            <div class="clearer"></div>
           </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to grand-challenge.org’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="development.html" class="btn btn-neutral float-right" title="Development" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-    </div>
-
-  <hr/>
-
-  <div role="contentinfo">
-    <p>&#169; Copyright 2018, James Meakin.</p>
-  </div>
-
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
-
-</footer>
         </div>
       </div>
-    </section>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="index.html"
+                          title="previous chapter">Welcome to grand-challenge.org’s documentation!</a></p>
   </div>
-  <script>
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script> 
-
-</body>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="development.html"
+                          title="next chapter">Development</a></p>
+  </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="development.html" title="Development"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to grand-challenge.org’s documentation!"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">grand-challenge.org  documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Architecture</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2018, James Meakin.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.0.2.
+    </div>
+  </body>
 </html>
