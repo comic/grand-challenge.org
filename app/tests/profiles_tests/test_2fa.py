@@ -1,35 +1,24 @@
 import pytest
-from allauth.mfa import recovery_codes, totp
-from allauth.mfa.models import Authenticator
+from allauth.account.models import EmailAddress
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core import mail
 from django.test import override_settings
+from django.utils.crypto import get_random_string
 from django.utils.http import int_to_base36
 
 from grandchallenge.core.utils.list_url_names import list_url_names
-from grandchallenge.subdomains.utils import reverse, reverse_lazy
-from tests.factories import SUPER_SECURE_TEST_PASSWORD, UserFactory
+from grandchallenge.subdomains.utils import reverse
+from tests.factories import (
+    UserFactory,
+    activate_2fa,
+    get_unused_recovery_codes,
+)
 from tests.utils import get_view_for_user
-
-
-def get_user_with_totp(is_staff=False):
-    user = UserFactory(is_staff=is_staff)
-    totp.TOTP.activate(user, totp.generate_totp_secret())
-    recovery_codes.RecoveryCodes.activate(user)
-    return user
-
-
-def get_totp_token(user):
-    device = Authenticator.objects.get(
-        user=user, type=Authenticator.Type.RECOVERY_CODES
-    )
-    return device.wrap().get_unused_codes()[0]
 
 
 @pytest.mark.django_db
 def test_2fa_required_for_staff(client):
-    admin = UserFactory(is_staff=True)
     user = UserFactory()
 
     response = get_view_for_user(
@@ -39,10 +28,14 @@ def test_2fa_required_for_staff(client):
     )
     assert response.status_code == 200
 
+    # Make the user staff, should then be asked to activate 2fa
+    user.is_staff = True
+    user.save()
+
     response = get_view_for_user(
         viewname="home",
         client=client,
-        user=admin,
+        user=user,
     )
     assert response.status_code == 302
     assert "/accounts/2fa/totp/activate/" in response.url
@@ -97,31 +90,59 @@ def test_require_mfa_not_on_allowed_urls(
         assert resp["location"] != reverse("mfa_activate_totp")
 
 
-@override_settings(ACCOUNT_EMAIL_VERIFICATION=None)
 @pytest.mark.django_db
 def test_email_after_2fa_login_for_staff(client):
-    staff = get_user_with_totp(is_staff=True)
-    client.post(
+    password = get_random_string(32)
+
+    staff_user = UserFactory(is_staff=True, password=password)
+
+    EmailAddress.objects.create(
+        user=staff_user, email=staff_user.email, verified=True
+    )
+
+    response = client.post(
         reverse("account_login"),
-        {"login": staff.username, "password": SUPER_SECURE_TEST_PASSWORD},
+        {"login": staff_user.username, "password": password},
     )
-    client.post(
-        reverse_lazy("mfa_authenticate"), {"code": get_totp_token(staff)}
+
+    # Should be redirected to 2fa authentication
+    assert response.status_code == 302
+    assert "/accounts/2fa/authenticate/" in response.url
+
+    response = client.post(
+        response.url, {"code": get_unused_recovery_codes(user=staff_user)[0]}
     )
+
+    assert response["location"] == settings.LOGIN_REDIRECT_URL
     assert len(mail.outbox) == 1
     assert "Security Alert" in mail.outbox[0].subject
     assert "We noticed a new login to your account." in mail.outbox[0].body
-    assert mail.outbox[0].to == [staff.email]
+    assert mail.outbox[0].to == [staff_user.email]
 
-    mail.outbox.clear()
-    user = get_user_with_totp()
-    client.post(
+
+@pytest.mark.django_db
+def test_no_email_after_2fa_login_for_non_staff(client):
+    password = get_random_string(32)
+
+    user = UserFactory(password=password)
+    activate_2fa(user=user)
+
+    EmailAddress.objects.create(user=user, email=user.email, verified=True)
+
+    response = client.post(
         reverse("account_login"),
-        {"login": user.username, "password": SUPER_SECURE_TEST_PASSWORD},
+        {"login": user.username, "password": password},
     )
-    client.post(
-        reverse_lazy("mfa_authenticate"), {"code": get_totp_token(user)}
+
+    # Should be redirected to 2fa authentication
+    assert response.status_code == 302
+    assert "/accounts/2fa/authenticate/" in response.url
+
+    response = client.post(
+        response.url, {"code": get_unused_recovery_codes(user=user)[0]}
     )
+
+    assert response["location"] == settings.LOGIN_REDIRECT_URL
     assert len(mail.outbox) == 0
 
 
@@ -163,6 +184,8 @@ def test_allowed_urls():
 @override_settings(SOCIALACCOUNT_AUTO_SIGNUP=True)
 @pytest.mark.django_db
 def test_2fa_for_for_staff_users_with_social_login(client):
+    social_username = "dummy_user"
+
     resp = client.post(reverse("dummy_login"))
     resp = client.post(
         resp["location"],
@@ -170,25 +193,23 @@ def test_2fa_for_for_staff_users_with_social_login(client):
             "id": "2",
             "email": "a@b.com",
             "email_verified": True,
-            "username": "foo",
+            "username": social_username,
         },
     )
     assert resp.status_code == 302
     assert resp["location"] == settings.LOGIN_REDIRECT_URL
 
-    user_with_social_account = (
-        get_user_model().objects.filter(username="foo").get()
-    )
-    user_with_social_account.is_staff = True
-    user_with_social_account.save()
+    user = get_user_model().objects.filter(username=social_username).get()
+    user.is_staff = True
+    user.save()
 
+    # User is now staff, should activate mfa
     resp = client.get("/")
     assert resp.status_code == 302
     assert "/accounts/2fa/totp/activate/" in resp.url
 
     # enable 2fa for the user
-    totp.TOTP.activate(user_with_social_account, totp.generate_totp_secret())
-    recovery_codes.RecoveryCodes.activate(user_with_social_account)
+    activate_2fa(user=user)
 
     # logout and login again, should be asked to MFA authenticate
     client.logout()
@@ -197,6 +218,7 @@ def test_2fa_for_for_staff_users_with_social_login(client):
     assert resp.status_code == 302
     assert "/accounts/2fa/authenticate/" in resp.url
 
-    token = get_totp_token(user_with_social_account)
-    resp = client.post(resp.url, {"code": token})
+    resp = client.post(
+        resp.url, {"code": get_unused_recovery_codes(user=user)[0]}
+    )
     assert resp["location"] == settings.LOGIN_REDIRECT_URL

@@ -6,6 +6,7 @@ from allauth.account.models import EmailAddress
 from django.contrib.auth import get_user_model
 from django.core import mail
 from django.test import TestCase
+from django.utils.crypto import get_random_string
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.pages.models import Page
@@ -52,7 +53,6 @@ class GrandChallengeFrameworkTestCase(TestCase):
             email="test@test.com",
             is_active=True,
             is_superuser=True,
-            password="testpassword",
         )
 
         EmailAddress.objects.create(
@@ -136,7 +136,10 @@ class GrandChallengeFrameworkTestCase(TestCase):
         return response
 
     def _view_url(self, user, url):
-        self._login(user)
+        self.client.logout()
+
+        if user is not None:
+            self.client.force_login(user)
 
         url, kwargs = get_http_host(url=url, kwargs={})
 
@@ -146,6 +149,7 @@ class GrandChallengeFrameworkTestCase(TestCase):
             username = "anonymous_user"
         else:
             username = user.username
+
         return response, username
 
     def _signup_user(self, override):
@@ -154,13 +158,15 @@ class GrandChallengeFrameworkTestCase(TestCase):
         For example, signup_user({'username':'user1'}) to creates a user called
         'user1' and fills the rest with default data.
         """
+        password = get_random_string(32)
+
         data = {
             "first_name": "test",
             "last_name": "test",
             "username": "test",
             "email": "test@test.com",
-            "password1": "testpassword",
-            "password2": "testpassword",
+            "password1": password,
+            "password2": password,
             "institution": "test",
             "department": "test",
             "country": "NL",
@@ -171,6 +177,7 @@ class GrandChallengeFrameworkTestCase(TestCase):
         data.update(override)
 
         self.client.logout()
+
         response = self.client.post(
             reverse("account_signup"), data, follow=True
         )
@@ -268,8 +275,10 @@ class GrandChallengeFrameworkTestCase(TestCase):
             "expected_number_of_teams": 10,
             "number_of_tasks": 1,
         }
-        self._login(user)
+
+        self.client.force_login(user)
         response = self.client.post(url, data)
+
         return response
 
     def _create_challenge_in_admin(
@@ -281,24 +290,6 @@ class GrandChallengeFrameworkTestCase(TestCase):
             creator=user, short_name=short_name, description=description
         )
         return challenge
-
-    def _login(self, user, password="testpassword"):
-        """
-        Log in user an assert whether it worked.
-
-        Passing None as user will log out.
-        """
-        self.client.logout()
-        if user is None:
-            return  # just log out
-
-        success = self.client.login(username=user.username, password=password)
-        self.assertTrue(
-            success,
-            "could not log in as user %s using password %s"
-            % (user.username, password),
-        )
-        return success
 
 
 class CreateChallengeRequestTest(GrandChallengeFrameworkTestCase):

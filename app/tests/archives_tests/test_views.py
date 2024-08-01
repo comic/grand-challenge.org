@@ -1309,7 +1309,9 @@ def test_archive_item_permissions_detail_and_list(viewname, client):
 
 
 @pytest.mark.django_db
-def test_archive_item_list_database_hits(client, django_assert_num_queries):
+def test_archive_item_list_database_hits(
+    client, django_assert_max_num_queries
+):
     archive = ArchiveFactory()
     editor = UserFactory()
     archive.add_editor(editor)
@@ -1337,14 +1339,14 @@ def test_archive_item_list_database_hits(client, django_assert_num_queries):
 
     make_request()  # set up caches
 
-    expected_queries = 33
-    with django_assert_num_queries(expected_queries):
+    expected_queries = 32
+    with django_assert_max_num_queries(expected_queries):
         resp = make_request()
         assert len(resp.json()["data"]) == 1
 
     # Add a few more
     ArchiveItemFactory.create_batch(3, archive=archive)
-    with django_assert_num_queries(expected_queries):
+    with django_assert_max_num_queries(expected_queries):
         resp = make_request()
         assert len(resp.json()["data"]) == 4
 
