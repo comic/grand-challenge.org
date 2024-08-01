@@ -13,10 +13,13 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
-from celery import shared_task  # noqa: I251 TODO needs to be refactored
+from celery import (  # noqa: I251 TODO needs to be refactored
+    shared_task,
+    signature,
+)
 from django.apps import apps
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
 from django.db import OperationalError, transaction
 from django.db.models import DateTimeField, ExpressionWrapper, F
@@ -1068,6 +1071,7 @@ def add_image_to_object(
     object_pk,
     interface_pk,
     upload_session_pk,
+    linked_task=None,
 ):
     from grandchallenge.components.models import (
         ComponentInterface,
@@ -1090,7 +1094,14 @@ def add_image_to_object(
         upload_session.save()
         return
 
-    object.values.remove(*object.values.filter(interface=interface))
+    try:
+        current_value = getattr(object, object.civ_set_lookup).get(
+            interface=interface
+        )
+    except ObjectDoesNotExist:
+        current_value = None
+
+    getattr(object, object.civ_set_lookup).remove(current_value)
     civ, created = ComponentInterfaceValue.objects.get_or_create(
         interface=interface, image=image
     )
@@ -1100,13 +1111,21 @@ def add_image_to_object(
             civ.full_clean()
         except ValidationError as e:
             # this should only happen for new uploads
+            formatted_error = format_validation_error_message(error=e)
             upload_session.status = RawImageUploadSession.FAILURE
-            upload_session.error_message = format_validation_error_message(
-                error=e
-            )
+            upload_session.error_message = formatted_error
             upload_session.save()
+            if hasattr(object, "error_message"):
+                object.status = object.CANCELLED
+                object.error_message = formatted_error
+                object.save()
+                raise e
             return
-    object.values.add(civ)
+
+    getattr(object, object.civ_set_lookup).add(civ)
+
+    if linked_task is not None:
+        on_commit(signature(linked_task).apply_async)
 
 
 @acks_late_micro_short_task
@@ -1119,6 +1138,7 @@ def add_file_to_object(
     object_pk,
     interface_pk,
     civ_pk=None,
+    linked_task=None,
 ):
     from grandchallenge.components.models import (
         ComponentInterface,
@@ -1133,31 +1153,39 @@ def add_file_to_object(
     )
     interface = ComponentInterface.objects.get(pk=interface_pk)
     error = None
-    civ = ComponentInterfaceValue(interface=interface)
+    civ = ComponentInterfaceValue.objects.create(interface=interface)
     try:
         civ.validate_user_upload(user_upload)
         civ.full_clean()
         civ.save()
         user_upload.copy_object(to_field=civ.file)
-        object.values.add(civ)
+        getattr(object, object.civ_set_lookup).add(civ)
         if civ_pk is not None:
             # Remove the previously assigned civ from the display set
             civ = ComponentInterfaceValue.objects.get(pk=civ_pk)
-            object.values.remove(civ)
+            getattr(object, object.civ_set_lookup).remove(civ)
     except ValidationError as e:
         error = format_validation_error_message(error=e)
 
     if error is not None:
-        Notification.send(
-            kind=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
-            actor=user_upload.creator,
-            message=f"File for interface {interface.title} failed validation.",
-            target=object.base_object,
-            description=(
-                f"File for interface {interface.title} "
-                f"failed validation:\n{error}."
-            ),
+        error_description = (
+            f"File for interface {interface.title} failed validation:{error}."
         )
+        if hasattr(object, "error_message"):
+            object.error_message = error_description
+            object.status = object.CANCELLED
+            object.save()
+        else:
+            Notification.send(
+                kind=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
+                actor=user_upload.creator,
+                message=f"File for interface {interface.title} failed validation.",
+                target=object.base_object,
+                description=error_description,
+            )
+
+    if linked_task is not None:
+        on_commit(signature(linked_task).apply_async)
 
 
 @acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))

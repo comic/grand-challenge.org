@@ -12,7 +12,6 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Count, Min, Q, Sum
 from django.db.models.signals import post_delete
-from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.template.defaultfilters import truncatechars, truncatewords
 from django.utils import timezone
@@ -28,6 +27,7 @@ from stdimage import JPEGField
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.charts.specs import stacked_bar
 from grandchallenge.components.models import (
+    CIVForObjectMixin,
     ComponentImage,
     ComponentInterface,
     ComponentJob,
@@ -717,7 +717,7 @@ class AlgorithmModelGroupObjectPermission(GroupObjectPermissionBase):
     )
 
 
-class Job(UUIDModel, ComponentJob):
+class Job(UUIDModel, CIVForObjectMixin, ComponentJob):
     objects = JobManager.as_manager()
 
     algorithm_image = models.ForeignKey(
@@ -873,24 +873,13 @@ class Job(UUIDModel, ComponentJob):
     def remove_viewer(self, user):
         return user.groups.remove(self.viewers)
 
-    def sort_inputs_and_execute(
-        self, upload_session_pks=None, user_upload_pks=None
-    ):
-        # Local import to avoid circular dependency
-        from grandchallenge.algorithms.tasks import (
-            run_algorithm_job_for_inputs,
-        )
+    @property
+    def civ_set_lookup(self):
+        return "inputs"
 
-        on_commit(
-            run_algorithm_job_for_inputs.signature(
-                kwargs={
-                    "job_pk": self.pk,
-                    "upload_session_pks": upload_session_pks,
-                    "user_upload_pks": user_upload_pks,
-                },
-                immutable=True,
-            ).apply_async
-        )
+    @property
+    def base_object(self):
+        return self.algorithm_image.algorithm
 
     @property
     def executor_kwargs(self):

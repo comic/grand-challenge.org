@@ -25,7 +25,6 @@ from grandchallenge.core.celery import (
     acks_late_2xlarge_task,
     acks_late_micro_short_task,
 )
-from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.credits.models import Credit
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
@@ -95,18 +94,23 @@ def execute_algorithm_job_for_inputs(*, job_pk):
         kwargs={"job_pk": str(job.pk)}, immutable=True
     )
 
-    # check if all ComponentInterfaceValue's have a value.
-    missing_inputs = list(civ for civ in job.inputs.all() if not civ.has_value)
+    # check if all inputs are present and if they all have a value
+    input_interfaces = job.algorithm_image.algorithm.inputs.all()
+    existing_input_interfaces = [
+        civ.interface for civ in job.inputs.all() if civ.has_value
+    ]
+    missing_inputs = [
+        interface
+        for interface in input_interfaces
+        if interface not in existing_input_interfaces
+    ]
+
+    logger.warning("MISSING INPUTS")
+    logger.warning(missing_inputs)
 
     if missing_inputs:
-        job.update_status(
-            status=job.CANCELLED,
-            error_message=(
-                f"Job can't be started, input is missing for "
-                f"{oxford_comma([c.interface.title for c in missing_inputs])}"
-            ),
-        )
-        on_commit(linked_task.apply_async)
+        logger.info("Nothing to do: the inputs are still being provisioned.")
+        return
     else:
         job.task_on_success = linked_task
         job.save()
