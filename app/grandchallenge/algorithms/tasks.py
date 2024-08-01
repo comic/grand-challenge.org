@@ -4,7 +4,6 @@ from typing import NamedTuple
 
 import boto3
 from botocore.exceptions import ClientError
-from celery import chain, group
 from django.conf import settings
 from django.core.cache import cache
 from django.core.files.base import File
@@ -16,11 +15,6 @@ from django.utils._os import safe_join
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
 from grandchallenge.archives.models import Archive
-from grandchallenge.cases.tasks import build_images
-from grandchallenge.components.tasks import (
-    add_file_to_component_interface_value,
-    add_image_to_component_interface_value,
-)
 from grandchallenge.core.celery import (
     acks_late_2xlarge_task,
     acks_late_micro_short_task,
@@ -30,58 +24,6 @@ from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
-
-
-@acks_late_micro_short_task
-@transaction.atomic
-def run_algorithm_job_for_inputs(
-    *, job_pk, upload_session_pks, user_upload_pks
-):
-    job = Job.objects.get(pk=job_pk)
-
-    assignment_tasks = []
-
-    if upload_session_pks:
-        assignment_tasks.extend(
-            chain(
-                build_images.signature(
-                    kwargs={"upload_session_pk": upload_session_pk},
-                    immutable=True,
-                ),
-                add_image_to_component_interface_value.signature(
-                    kwargs={
-                        "component_interface_value_pk": civ_pk,
-                        "upload_session_pk": upload_session_pk,
-                    },
-                    immutable=True,
-                ),
-            )
-            for civ_pk, upload_session_pk in upload_session_pks.items()
-        )
-
-    if user_upload_pks:
-        assignment_tasks.extend(
-            add_file_to_component_interface_value.signature(
-                kwargs={
-                    "component_interface_value_pk": civ_pk,
-                    "user_upload_pk": user_upload_pk,
-                    "target_pk": job.algorithm_image.algorithm.pk,
-                    "target_app": "algorithms",
-                    "target_model": "algorithm",
-                },
-                immutable=True,
-            )
-            for civ_pk, user_upload_pk in user_upload_pks.items()
-        )
-
-    canvas = chain(
-        group(assignment_tasks),
-        execute_algorithm_job_for_inputs.signature(
-            kwargs={"job_pk": job_pk}, immutable=True
-        ),
-    )
-
-    on_commit(canvas.apply_async)
 
 
 @acks_late_micro_short_task

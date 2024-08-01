@@ -969,52 +969,6 @@ def add_image_to_component_interface_value(
         civ.image.update_viewer_groups_permissions()
 
 
-@acks_late_micro_short_task
-@transaction.atomic
-def add_file_to_component_interface_value(
-    *,
-    component_interface_value_pk,
-    user_upload_pk,
-    target_pk,
-    target_app,
-    target_model,
-):
-    user_upload = UserUpload.objects.get(pk=user_upload_pk)
-    civ = get_model_instance(
-        pk=component_interface_value_pk,
-        app_label="components",
-        model_name="componentinterfacevalue",
-    )
-    target = get_model_instance(
-        pk=target_pk,
-        app_label=target_app,
-        model_name=target_model,
-    )
-    error = None
-
-    try:
-        civ.validate_user_upload(user_upload)
-        civ.full_clean()
-    except ValidationError as e:
-        civ.delete()
-        error = format_validation_error_message(error=e)
-    else:
-        user_upload.copy_object(to_field=civ.file)
-        civ.save()
-        user_upload.delete()
-
-    if error is not None:
-        Notification.send(
-            kind=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
-            actor=user_upload.creator,
-            message=f"File for interface {civ.interface.title} failed validation.",
-            target=target,
-            description=(
-                f"File for interface {civ.interface.title} failed validation:\n{error}."
-            ),
-        )
-
-
 @acks_late_2xlarge_task
 def civ_value_to_file(*, civ_pk):
     with transaction.atomic():
