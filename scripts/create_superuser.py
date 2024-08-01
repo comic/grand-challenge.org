@@ -1,8 +1,9 @@
 from allauth.account.models import EmailAddress
-from allauth.mfa import recovery_codes, totp
+from allauth.mfa.models import Authenticator
 from django.contrib.auth import get_user_model
 
 from grandchallenge.verifications.models import Verification
+from tests.factories import activate_2fa
 
 
 def run():
@@ -18,15 +19,17 @@ def run():
     su.user_profile.receive_newsletter = False
     su.user_profile.save()
 
-    EmailAddress.objects.filter(email=su.email).delete()
     EmailAddress.objects.create(
         user=su, email=su.email, verified=True, primary=True
     )
+
     Verification.objects.create(user=su, email=su.email, is_verified=True)
 
-    totp.TOTP.activate(su, totp.generate_totp_secret())
-    recovery_code_device = recovery_codes.RecoveryCodes.activate(su)
-    codes = recovery_code_device.generate_codes()
+    activate_2fa(user=su)
 
-    for token in codes:
+    device = Authenticator.objects.get(
+        user=su, type=Authenticator.Type.RECOVERY_CODES
+    )
+
+    for token in device.wrap().get_unused_codes():
         print(f"Added one time token: {token}")

@@ -6,10 +6,7 @@ from pathlib import Path
 from typing import NamedTuple
 
 import pytest
-from allauth.mfa import recovery_codes, totp
-from allauth.mfa.models import Authenticator
 from django.conf import settings
-from django.contrib.auth import authenticate
 from django.contrib.auth.models import Group
 from django.contrib.sites.models import Site
 
@@ -17,18 +14,12 @@ from grandchallenge.components.backends import docker_client
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.reader_studies.models import Question
-from grandchallenge.subdomains.utils import reverse_lazy
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
 from tests.evaluation_tests.factories import MethodFactory, PhaseFactory
-from tests.factories import (
-    SUPER_SECURE_TEST_PASSWORD,
-    ChallengeFactory,
-    ImageFactory,
-    UserFactory,
-)
+from tests.factories import ChallengeFactory, ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
     CategoricalOptionFactory,
@@ -446,37 +437,4 @@ def challenge_reviewer():
         name=settings.CHALLENGES_REVIEWERS_GROUP_NAME
     )
     reviewers.user_set.add(user)
-    return user
-
-
-AUTH_URL = reverse_lazy("mfa_authenticate")
-
-
-def do_totp_authentication(
-    client,
-    user,
-    *,
-    auth_url=AUTH_URL,
-):
-    device = Authenticator.objects.get(
-        user=user, type=Authenticator.Type.RECOVERY_CODES
-    )
-    client.post(
-        auth_url,
-        {"code": device.wrap().get_unused_codes()[0]},
-    )
-
-
-@pytest.fixture
-def authenticated_staff_user(client):
-    user = UserFactory(username="john", is_staff=True)
-    totp.TOTP.activate(user, totp.generate_totp_secret())
-    recovery_codes.RecoveryCodes.activate(user)
-    user = authenticate(
-        username=user.username, password=SUPER_SECURE_TEST_PASSWORD
-    )
-    do_totp_authentication(
-        client=client,
-        user=user,
-    )
     return user

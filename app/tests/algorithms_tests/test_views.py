@@ -610,21 +610,23 @@ def test_display_set_from_job(client):
 
 
 @pytest.mark.django_db
-def test_import_is_staff_only(client, authenticated_staff_user):
+def test_import_is_staff_only(client):
+    user = UserFactory(is_staff=True)
+
     response = get_view_for_user(
         viewname="algorithms:import",
-        user=authenticated_staff_user,
+        user=user,
         client=client,
     )
 
     assert response.status_code == 200
 
-    authenticated_staff_user.is_staff = False
-    authenticated_staff_user.save()
+    user.is_staff = False
+    user.save()
 
     response = get_view_for_user(
         viewname="algorithms:import",
-        user=authenticated_staff_user,
+        user=user,
         client=client,
     )
 
@@ -634,7 +636,6 @@ def test_import_is_staff_only(client, authenticated_staff_user):
 @pytest.mark.django_db
 def test_import_view(
     client,
-    authenticated_staff_user,
     mocker,
     django_capture_on_commit_callbacks,
 ):
@@ -793,10 +794,12 @@ def test_import_view(
         return_value=RemoteTestClient(),
     )
 
+    staff_user = UserFactory(is_staff=True)
+
     with django_capture_on_commit_callbacks() as callbacks:
         response = get_view_for_user(
             viewname="algorithms:import",
-            user=authenticated_staff_user,
+            user=staff_user,
             client=client,
             method=client.post,
             data={
@@ -821,7 +824,7 @@ def test_import_view(
     algorithm = Algorithm.objects.get(
         slug="the-pi-cai-challenge-baseline-nndetection"
     )
-    assert algorithm.is_editor(user=authenticated_staff_user)
+    assert algorithm.is_editor(user=staff_user)
     assert str(algorithm.pk) == "0d11fc7b-c63f-4fd7-b80b-51d2e21492c0"
     assert algorithm.logo.name.startswith(
         "logos/algorithm/0d11fc7b-c63f-4fd7-b80b-51d2e21492c0/square_logo"
@@ -848,7 +851,7 @@ def test_import_view(
         algorithm_image.import_status
         == algorithm_image.ImportStatusChoices.INITIALIZED
     )
-    assert algorithm_image.creator == authenticated_staff_user
+    assert algorithm_image.creator == staff_user
 
     interface = ComponentInterface.objects.get(
         slug="prostate-cancer-likelihood"

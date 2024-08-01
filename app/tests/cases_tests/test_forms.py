@@ -15,7 +15,6 @@ def test_upload_some_images(
     client: Client,
     challenge_set,
     settings,
-    authenticated_staff_user,
     django_capture_on_commit_callbacks,
 ):
     # Override the celery settings
@@ -69,6 +68,6 @@ def test_upload_some_images(
     response = get_view_for_user(
         url=sessions[0].get_absolute_url(),
         client=client,
-        user=authenticated_staff_user,
+        user=UserFactory(is_staff=True),
     )
     assert response.status_code == 403

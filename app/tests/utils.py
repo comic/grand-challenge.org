@@ -10,7 +10,7 @@ from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
-from tests.factories import SUPER_SECURE_TEST_PASSWORD, UserFactory
+from tests.factories import UserFactory
 from tests.uploads_tests.factories import create_upload_from_file
 
 
@@ -46,9 +46,7 @@ def get_view_for_user(
         )
 
     if user and not isinstance(user, AnonymousUser):
-        client.login(
-            username=user.username, password=SUPER_SECURE_TEST_PASSWORD
-        )
+        client.force_login(user)
 
     if method is None:
         method = client.get
