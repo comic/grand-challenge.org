@@ -689,55 +689,48 @@ def test_combined_leaderboard_ranks(combined_ranks, expected_ranks):
 
 
 @pytest.mark.parametrize(
-    "eval_status, eval_rank, eval_metrics_json_file_value, expected_missing_metrics",
+    "eval_metrics_json_file_value, expected_invalid_metrics",
     (
-        (Evaluation.FAILURE, 0, {"acc": {"std": 0.1, "mean": 0.0}}, None),
         (
-            Evaluation.SUCCESS,
-            1,
             {
                 "acc": {"std": 0.1, "mean": 0.0},
                 "dice": {"std": 0.2, "mean": 0.5},
             },
-            None,
+            set(),
         ),
         (
-            Evaluation.SUCCESS,
-            0,
             {
                 "acc": {"std": 0.1, "mean": 0.0},
                 "dice": {"std": 0.2, "mean": 0.5},
             },
-            None,
+            set(),
         ),
         (
-            Evaluation.SUCCESS,
-            0,
             {"acc": {"std": 0.1, "mean": 0.0}},
-            ["dice.mean"],
+            {"dice.mean"},
         ),
         (
-            Evaluation.SUCCESS,
-            0,
             {"dice": {"std": 0.2, "mean": 0.5}},
-            ["acc.mean"],
+            {"acc.mean"},
         ),
         (
-            Evaluation.SUCCESS,
-            0,
             {"cosine": {"std": 0.1, "mean": 0.0}},
-            ["acc.mean", "dice.mean"],
+            {"acc.mean", "dice.mean"},
+        ),
+        (
+            {
+                "acc": {"std": 0.1, "mean": 0.0},
+                "dice": {"std": 0.2, "mean": {"oops": "an object"}},
+            },
+            {"dice.mean"},
         ),
     ),
 )
 @pytest.mark.django_db
-def test_evaluation_missing_metrics(
-    eval_status,
-    eval_rank,
+def test_evaluation_invalid_metrics(
     eval_metrics_json_file_value,
-    expected_missing_metrics,
+    expected_invalid_metrics,
 ):
-
     phase = PhaseFactory(
         challenge__hidden=False,
         public=True,
@@ -748,22 +741,16 @@ def test_evaluation_missing_metrics(
         ],
     )
 
-    evaluation = EvaluationFactory(
-        submission__phase=phase, rank=eval_rank, status=eval_status
+    evaluation = EvaluationFactory(submission__phase=phase)
+
+    ci = ComponentInterface.objects.get(slug="metrics-json-file")
+    civ = ComponentInterfaceValueFactory(
+        interface=ci, value=eval_metrics_json_file_value
     )
 
-    if eval_metrics_json_file_value is not None:
+    evaluation.outputs.set([civ])
 
-        ci = ComponentInterface.objects.get(slug="metrics-json-file")
-        civ = ComponentInterfaceValueFactory(
-            interface=ci, value=eval_metrics_json_file_value
-        )
-
-        evaluation.outputs.set([civ])
-
-    arr = evaluation.missing_metrics
-
-    assert arr == expected_missing_metrics
+    assert evaluation.invalid_metrics == expected_invalid_metrics
 
 
 @pytest.mark.django_db

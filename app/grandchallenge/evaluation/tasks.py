@@ -442,7 +442,7 @@ def calculate_ranks(*, phase_pk: uuid.UUID):
             )
             .select_for_update(nowait=True, of=("self",))
             .order_by("-created")
-            .select_related("submission__creator")
+            .select_related("submission__creator", "submission__phase")
             .prefetch_related("outputs__interface")
         )
     except OperationalError as error:
