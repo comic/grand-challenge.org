@@ -1348,7 +1348,6 @@ class ComponentInterfaceValue(models.Model):
         super().save(*args, **kwargs)
 
     def clean(self):
-        logger.warning("Cleaning Civ")
         super().clean()
         attributes = [
             attribute
@@ -1381,7 +1380,6 @@ class ComponentInterfaceValue(models.Model):
             )
 
     def _validate_file_only(self):
-        logger.warning("Validating file only")
         if not self._user_upload_validated and not self.file:
             raise ValidationError("File must be set")
         if self.image or self.value is not None:
@@ -1414,16 +1412,12 @@ class ComponentInterfaceValue(models.Model):
         self.interface.validate_against_schema(value=value)
 
     def validate_user_upload(self, user_upload):
-        logger.warning("Validating user upload")
         if not user_upload.is_completed:
             raise ValidationError("User upload is not completed.")
         if self.interface.is_json_kind:
-            logger.warning("Json kind error")
             try:
                 value = json.loads(user_upload.read_object())
             except JSONDecodeError as e:
-                logger.warning("Raising error")
-                logger.warning(e)
                 raise ValidationError(e)
             self.interface.validate_against_schema(value=value)
         self._user_upload_validated = True
@@ -2169,7 +2163,7 @@ class CIVForObjectMixin:
                 )
                 upload_session.user_uploads.set(new_value)
 
-            return upload_session.process_images(
+            upload_session.process_images(
                 linked_task=add_image_to_object.signature(
                     kwargs={
                         "app_label": self._meta.app_label,
