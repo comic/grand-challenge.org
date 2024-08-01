@@ -1,3 +1,4 @@
+import logging
 import re
 from itertools import chain
 from urllib.parse import urlparse
@@ -51,10 +52,7 @@ from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
     AlgorithmSerializer,
 )
-from grandchallenge.algorithms.tasks import (
-    execute_algorithm_job_for_inputs,
-    import_remote_algorithm_image,
-)
+from grandchallenge.algorithms.tasks import import_remote_algorithm_image
 from grandchallenge.components.form_fields import InterfaceFormField
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.components.models import (
@@ -90,6 +88,9 @@ class ModelFactsTextField(Field):
     template = "algorithms/model_facts_field.html"
 
 
+logger = logging.getLogger(__name__)
+
+
 class JobCreateForm(SaveFormInitMixin, Form):
     algorithm_image = ModelChoiceField(
         queryset=None, disabled=True, required=True, widget=HiddenInput
@@ -97,9 +98,6 @@ class JobCreateForm(SaveFormInitMixin, Form):
     algorithm_model = ModelChoiceField(
         queryset=None, disabled=True, required=False, widget=HiddenInput
     )
-
-    class Meta:
-        non_interface_fields = ["algorithm_image", "algorithm_model"]
 
     def __init__(self, *args, algorithm, user, **kwargs):
         super().__init__(*args, **kwargs)
@@ -133,72 +131,6 @@ class JobCreateForm(SaveFormInitMixin, Form):
                 help_text=clean(inp.description) if inp.description else "",
             ).field
 
-    def create_job_and_process_inputs(self):
-        """
-        Creates the job instance, and creates and validates all input CIVs and
-        attaches them to the job.
-        This needs to happen in the form so that we can check for existing jobs
-        with the same inputs.
-        """
-        civ_data = {
-            k: v
-            for k, v in self.cleaned_data.items()
-            if k not in self.Meta.non_interface_fields
-        }
-        non_civ_data = {
-            k: v
-            for k, v in self.cleaned_data.items()
-            if k in self.Meta.non_interface_fields
-        }
-        job = Job.objects.create(
-            **non_civ_data,
-            creator=self._user,
-            extra_logs_viewer_groups=[self._algorithm.editors_group],
-            time_limit=self._algorithm.time_limit,
-        )
-
-        linked_task = execute_algorithm_job_for_inputs.signature(
-            kwargs={"job_pk": job.pk}, immutable=True
-        )
-
-        for key, value in civ_data.items():
-            job.create_civ(
-                ci_slug=key,
-                new_value=value,
-                user=self._user,
-                linked_task=linked_task,
-            )
-
-        return job
-
-    def get_jobs_with_same_inputs(self, job):
-        # at this point the asynchronous tasks for validating and assigning
-        # new images and files have not run yet,
-        # so here, inputs will only include CIVs with values or existing
-        # images or files, but that is ok for this check
-        civs = job.inputs.all()
-
-        unique_kwargs = {
-            "algorithm_image": self.cleaned_data["algorithm_image"],
-        }
-        input_interface_count = self._algorithm.inputs.count()
-        if self.cleaned_data["algorithm_model"]:
-            unique_kwargs["algorithm_model"] = self.cleaned_data[
-                "algorithm_model"
-            ]
-        else:
-            unique_kwargs["algorithm_model__isnull"] = True
-
-        existing_jobs = (
-            Job.objects.exclude(pk=job.pk)
-            .filter(**unique_kwargs)
-            .annotate(
-                inputs_match_count=Count("inputs", filter=Q(inputs__in=civs))
-            )
-            .filter(inputs_match_count=input_interface_count)
-        )
-        return existing_jobs
-
     @cached_property
     def jobs_limit(self):
         return self._algorithm.get_jobs_limit(user=self._user)
@@ -217,9 +149,14 @@ class JobCreateForm(SaveFormInitMixin, Form):
         if not cleaned_data.get("algorithm_image"):
             raise ValidationError("This algorithm is not ready to be used")
 
-        job = self.create_job_and_process_inputs()
+        job = Job.objects.create_and_process_inputs(
+            user=self._user,
+            algorithm=self._algorithm,
+            data=cleaned_data,
+            extra_logs_viewer_groups=[self._algorithm.editors_group],
+        )
 
-        if self.get_jobs_with_same_inputs(job=job):
+        if job.get_jobs_with_same_inputs():
             raise ValidationError(
                 "A result for these inputs with the current image "
                 "and model already exists."

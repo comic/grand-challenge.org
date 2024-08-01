@@ -633,6 +633,52 @@ class JobManager(ComponentJobManager):
 
         return obj
 
+    @property
+    def non_interface_fields(self):
+        return ["algorithm_image", "algorithm_model"]
+
+    def create_and_process_inputs(
+        self,
+        *,
+        user,
+        algorithm,
+        data,
+        extra_viewer_groups=None,
+        extra_logs_viewer_groups=None,
+    ):
+        civ_data = {
+            k: v for k, v in data.items() if k not in self.non_interface_fields
+        }
+        non_civ_data = {
+            k: v for k, v in data.items() if k in self.non_interface_fields
+        }
+        job = Job.objects.create(
+            **non_civ_data,
+            creator=user,
+            extra_viewer_groups=extra_viewer_groups,
+            extra_logs_viewer_groups=extra_logs_viewer_groups,
+            time_limit=algorithm.time_limit,
+        )
+
+        # local import to avoid circular dependency
+        from grandchallenge.algorithms.tasks import (
+            execute_algorithm_job_for_inputs,
+        )
+
+        linked_task = execute_algorithm_job_for_inputs.signature(
+            kwargs={"job_pk": job.pk}, immutable=True
+        )
+
+        for key, value in civ_data.items():
+            job.create_civ(
+                ci_slug=key,
+                new_value=value,
+                user=user,
+                linked_task=linked_task,
+            )
+
+        return job
+
     def spent_credits(self, user):
         now = timezone.now()
         period = timedelta(days=30)
@@ -923,6 +969,29 @@ class Job(UUIDModel, CIVForObjectMixin, ComponentJob):
             display_set.values.set(values)
 
         return display_set
+
+    def get_jobs_with_same_inputs(self):
+        civs = self.inputs.all()
+        logger.warning(civs)
+        unique_kwargs = {
+            "algorithm_image": self.algorithm_image,
+        }
+        input_interface_count = self.algorithm_image.algorithm.inputs.count()
+        logger.warning(input_interface_count)
+        if self.algorithm_model:
+            unique_kwargs["algorithm_model"] = self.algorithm_model
+        else:
+            unique_kwargs["algorithm_model__isnull"] = True
+        logger.warning(unique_kwargs)
+        existing_jobs = (
+            Job.objects.exclude(pk=self.pk)
+            .filter(**unique_kwargs)
+            .annotate(
+                inputs_match_count=Count("inputs", filter=Q(inputs__in=civs))
+            )
+            .filter(inputs_match_count=input_interface_count)
+        )
+        return existing_jobs
 
 
 class JobUserObjectPermission(UserObjectPermissionBase):
