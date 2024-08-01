@@ -45,7 +45,11 @@ def get_view_for_user(
             "You defined both a viewname and a url, only use one!"
         )
 
-    if user and not isinstance(user, AnonymousUser):
+    if (
+        user
+        and user.username != settings.ANONYMOUS_USER_NAME
+        and not isinstance(user, AnonymousUser)
+    ):
         client.force_login(user)
 
     if method is None:
@@ -56,8 +60,7 @@ def get_view_for_user(
     try:
         response = method(url, **kwargs)
     finally:
-        if user:
-            client.logout()
+        client.logout()
 
     return response
 

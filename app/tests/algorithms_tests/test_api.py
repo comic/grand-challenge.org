@@ -82,17 +82,17 @@ def test_job_time_limit(client):
 @pytest.mark.parametrize(
     "num_jobs",
     (
-        (1),
-        (3),
+        1,
+        3,
     ),
 )
 def test_job_list_view_num_queries(
-    client, django_assert_num_queries, num_jobs
+    client, num_jobs, django_assert_max_num_queries
 ):
     user = UserFactory()
     AlgorithmJobFactory.create_batch(num_jobs, creator=user)
 
-    with django_assert_num_queries(33) as _:
+    with django_assert_max_num_queries(32) as _:
         response = get_view_for_user(
             viewname="api:algorithms-job-list",
             client=client,
