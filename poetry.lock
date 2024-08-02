@@ -1410,15 +1410,17 @@ hiredis = ["redis[hiredis] (>=3,!=4.0.0,!=4.0.1)"]
 
 [[package]]
 name = "django-rest-knox"
-version = "5.0.1"
+version = "4.2.0"
 description = "Authentication for django rest framework"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "django-rest-knox-5.0.1.tar.gz", hash = "sha256:69833d348d95a2af09671ce5d1cf2fb40e6a3299aba6a204f5bbc95caa957fd4"},
+    {file = "django-rest-knox-4.2.0.tar.gz", hash = "sha256:4595f1dc23d6e41af7939e5f2d8fdaf6ade0a74a656218e7b56683db5566fcc9"},
+    {file = "django_rest_knox-4.2.0-py3-none-any.whl", hash = "sha256:62b8e374a44cd4e9617eaefe27c915b301bf224fa6550633d3013d3f9f415113"},
 ]
 
 [package.dependencies]
+cryptography = "*"
 django = ">=3.2"
 djangorestframework = "*"
 
@@ -4876,4 +4878,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.13"
-content-hash = "5faca1146f0cef63ef3b5d527a953ae20f231759fcdc45b6a8500c1d6816af90"
+content-hash = "a5f2230658724ef5fb834a6ba5ac9571fc0632849292b51a0118a956aad86382"
