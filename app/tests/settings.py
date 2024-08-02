@@ -19,7 +19,9 @@ COMPONENTS_DOCKER_KEEP_CAPS_UNSAFE = True
 TEMPLATES[0]["DIRS"].append(SITE_ROOT / "tests" / "templates")  # noqa 405
 
 # Speed up token generation in tests
-REST_KNOX["SECURE_HASH_ALGORITHM"] = "hashlib.md5"  # noqa F405
+REST_KNOX["SECURE_HASH_ALGORITHM"] = (  # noqa F405
+    "cryptography.hazmat.primitives.hashes.MD5"
+)
 
 WHITENOISE_AUTOREFRESH = True
 STORAGES["staticfiles"][  # noqa F405
