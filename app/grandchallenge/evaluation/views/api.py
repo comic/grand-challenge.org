@@ -94,10 +94,11 @@ class EvaluationViewSet(ReadOnlyModelViewSet):
     @action(
         detail=False,
         methods=["GET"],
-        filter_backends=[CanClaimEvaluationFilter],
+        filter_backends=[DjangoFilterBackend, CanClaimEvaluationFilter],
         serializer_class=ExternalEvaluationSerializer,
     )
     def claimable_evaluations(self, request, *args, **kwargs):
+
         qs = self.filter_queryset(self.get_queryset())
         serializer = ExternalEvaluationSerializer(
             qs, many=True, context={"request": request}
@@ -133,9 +134,7 @@ class EvaluationViewSet(ReadOnlyModelViewSet):
         ).seconds > settings.EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS:
             cancel_external_evaluations_past_timeout.apply_async()
             return Response(
-                {
-                    "status": "You can only update an evaluation within 24 hours."
-                },
+                {"status": "The evaluation was not updated in time."},
                 status=400,
             )
 

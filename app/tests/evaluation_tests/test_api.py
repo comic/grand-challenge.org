@@ -376,7 +376,7 @@ class TestUpdateExternalEvaluation(TestCase):
         )
         assert response.status_code == 400
         assert response.json() == {
-            "status": "You can only update an evaluation within 24 hours."
+            "status": "The evaluation was not updated in time."
         }
         self.claimed_evaluation.refresh_from_db()
         assert self.claimed_evaluation.status == Evaluation.CANCELLED

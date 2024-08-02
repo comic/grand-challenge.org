@@ -171,23 +171,24 @@ class ExternalEvaluationUpdateSerializer(ModelSerializer):
             raise DRFValidationError(
                 "An error_message is required for failed evaluations."
             )
-        return data
 
-    def update(self, instance, validated_data):
-        if validated_data["status"] == Evaluation.SUCCESS:
+        if data["status"] == Evaluation.SUCCESS:
             interface = ComponentInterface.objects.get(
                 slug="metrics-json-file"
             )
             civ = ComponentInterfaceValue(
-                interface=interface, value=validated_data["metrics"]
+                interface=interface, value=data["metrics"]
             )
             try:
                 civ.full_clean()
                 civ.save()
-                instance.outputs.add(civ)
+                self.instance.outputs.add(civ)
             except ValidationError as e:
                 raise DRFValidationError(e)
 
+        return data
+
+    def update(self, instance, validated_data):
         # calling update_status takes care of sending the notifications
         instance.update_status(
             status=validated_data["status"],
@@ -198,5 +199,4 @@ class ExternalEvaluationUpdateSerializer(ModelSerializer):
             ),
             compute_cost_euro_millicents=0,
         )
-
         return super().update(instance, validated_data)
