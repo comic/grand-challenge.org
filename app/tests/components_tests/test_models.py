@@ -1466,3 +1466,62 @@ def test_displacement_field_validation(
             str(error.value)
             == "{'__all__': [\"Deformation and displacement field's 4th dimension must be a 3-component vector.\"]}"
         )
+
+
+@pytest.mark.parametrize(
+    "example_value, error_value",
+    (
+        (
+            {"age": -23, "lastName": "Doe", "firstName": "John"},
+            "['JSON does not fulfill schema: instance is less than the minimum of 1']",
+        ),
+        (
+            {"age": 23, "lastName": 100, "firstName": "John"},
+            "[\"JSON does not fulfill schema: instance is not of type 'string'\"]",
+        ),
+        (
+            {"age": "23", "lastName": "Doe", "firstName": "John"},
+            "[\"JSON does not fulfill schema: instance '23' is not of type 'integer'\"]",
+        ),
+        (
+            {"age": 0, "lastName": "Doe", "firstName": 100},
+            "[\"JSON does not fulfill schema: instance is not of type 'string'\"]",
+        ),
+    ),
+)
+@pytest.mark.django_db
+def test_invalid_example_values(example_value, error_value):
+
+    sc = {
+        "$id": "https://example.com/person.schema.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "Person",
+        "type": "object",
+        "properties": {
+            "firstName": {
+                "type": "string",
+                "description": "The person's first name.",
+            },
+            "lastName": {
+                "type": "string",
+                "description": "The person's last name.",
+            },
+            "age": {
+                "description": "Age in years which must be equal to or greater than zero.",
+                "type": "integer",
+                "minimum": 1,
+            },
+        },
+    }
+
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.ANY,
+        schema=sc,
+        relative_path="example_value.json",
+        example_value=example_value,
+    )
+
+    with pytest.raises(ValidationError) as error:
+        ci.clean()
+
+    assert str(error.value) == error_value
