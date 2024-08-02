@@ -68,8 +68,8 @@ RUN mkdir -p /opt/mc \
 
 # Get the docker cli
 RUN mkdir -p /opt/docker \
-    && wget https://download.docker.com/linux/static/stable/x86_64/docker-25.0.1.tgz -O /opt/docker/docker.tgz \
-    && echo "efccce4502785a2a372f86afd5c62dd74aaae2534c03fa94d356cb94c9392f91  /opt/docker/docker.tgz" | shasum -c - || exit 1 \
+    && wget https://download.docker.com/linux/static/stable/x86_64/docker-27.1.1.tgz -O /opt/docker/docker.tgz \
+    && echo "118da6b8fc8e8b6c086ab0dd5e64ee549376c3a3f963723bbc9a46db475bf21f  /opt/docker/docker.tgz" | shasum -c - || exit 1 \
     && tar -C /opt/docker/ -xzvf /opt/docker/docker.tgz \
     && chmod a+x /opt/docker/docker/docker \
     && mv /opt/docker/docker/docker /usr/local/bin/ \
