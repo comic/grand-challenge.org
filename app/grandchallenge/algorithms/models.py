@@ -654,9 +654,12 @@ class JobManager(ComponentJobManager):
                     existing_civs.append(civ)
                 except ObjectDoesNotExist:
                     continue
-            elif not isinstance(
+            elif isinstance(
                 value, (RawImageUploadSession, UserUpload, QuerySet)
             ):
+                # uploads will create new CIVs, so ignore these here
+                continue
+            else:
                 # values can be of different types
                 ci = ComponentInterface.objects.get(slug=interface)
                 try:
@@ -666,8 +669,6 @@ class JobManager(ComponentJobManager):
                     existing_civs.append(civ)
                 except ObjectDoesNotExist:
                     continue
-            else:
-                raise RuntimeError(f"Unknown interface value type for {value}")
         return existing_civs
 
     def get_jobs_with_same_inputs(
@@ -712,7 +713,6 @@ class JobManager(ComponentJobManager):
             extra_viewer_groups=extra_viewer_groups,
             extra_logs_viewer_groups=extra_logs_viewer_groups,
         )
-
         # local import to avoid circular dependency
         from grandchallenge.algorithms.tasks import (
             execute_algorithm_job_for_inputs,

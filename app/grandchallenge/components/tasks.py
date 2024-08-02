@@ -1107,7 +1107,7 @@ def add_file_to_object(
     )
     interface = ComponentInterface.objects.get(pk=interface_pk)
     error = None
-    civ = ComponentInterfaceValue.objects.create(interface=interface)
+    civ = ComponentInterfaceValue(interface=interface)
     try:
         civ.validate_user_upload(user_upload)
         civ.full_clean()

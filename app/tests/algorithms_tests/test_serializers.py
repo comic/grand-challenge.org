@@ -148,17 +148,26 @@ def test_algorithm_job_post_serializer_validations(
 
 
 @pytest.mark.django_db
-def test_algorithm_job_post_serializer_create(rf):
+def test_algorithm_job_post_serializer_create(
+    rf, settings, django_capture_on_commit_callbacks
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
     # setup
     user = UserFactory()
     upload, upload_2 = (
         RawImageUploadSessionFactory(creator=user),
         RawImageUploadSessionFactory(creator=user),
     )
-    image = ImageFactory()
-    upload_2.image_set.set([image])
-    assign_perm("view_image", user, image)
-    assert user.has_perm("view_image", image)
+    image1, image2 = ImageFactory.create_batch(2)
+    upload.image_set.set([image1])
+    upload_2.image_set.set([image2])
+    for im in [image1, image2]:
+        assign_perm("view_image", user, im)
+        assert user.has_perm("view_image", im)
+
     algorithm_image = AlgorithmImageFactory(
         is_manifest_valid=True, is_in_registry=True, is_desired_version=True
     )
@@ -182,10 +191,10 @@ def test_algorithm_job_post_serializer_create(rf):
 
     job = {"algorithm": algorithm_image.algorithm.api_url, "inputs": []}
     job["inputs"].append(
-        {"interface": "testinterface-2", "upload_session": upload.api_url}
+        {"interface": "testinterface-2", "upload_session": upload_2.api_url}
     )
     job["inputs"].append(
-        {"interface": "testinterface-3", "image": image.api_url}
+        {"interface": "testinterface-3", "image": image1.api_url}
     )
 
     # test
@@ -195,7 +204,8 @@ def test_algorithm_job_post_serializer_create(rf):
 
     # verify
     assert serializer.is_valid()
-    serializer.create(serializer.validated_data)
+    with django_capture_on_commit_callbacks(execute=True):
+        serializer.create(serializer.validated_data)
     assert len(Job.objects.all()) == 1
     job = Job.objects.first()
     assert job.creator == user

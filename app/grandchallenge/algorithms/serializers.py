@@ -11,10 +11,7 @@ from rest_framework.relations import (
 )
 
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
-from grandchallenge.components.models import (
-    ComponentInterface,
-    ComponentInterfaceValue,
-)
+from grandchallenge.components.models import ComponentInterface
 from grandchallenge.components.serializers import (
     ComponentInterfaceSerializer,
     ComponentInterfaceValuePostSerializer,
@@ -221,6 +218,18 @@ class JobPostSerializer(JobSerializer):
             )
 
         inputs = data.pop("inputs")
+
+        default_inputs = self._algorithm.inputs.filter(
+            id__in=list(algorithm_input_pks - input_pks),
+            default_value__isnull=False,
+        )
+        # User default interface values if not present
+        for interface in default_inputs:
+            if interface.default_value:
+                inputs.append(
+                    {"interface": interface, "value": interface.default_value}
+                )
+
         data = self.reformat_inputs(inputs=inputs, data=data)
 
         if Job.objects.get_jobs_with_same_inputs(
@@ -237,17 +246,18 @@ class JobPostSerializer(JobSerializer):
 
     def reformat_inputs(self, inputs, data):
         for input_data in inputs:
-            civ = ComponentInterfaceValue(**input_data)
             if "image" in input_data:
-                data[civ.interface.slug] = input_data["image"]
+                data[input_data["interface"].slug] = input_data["image"]
             elif "value" in input_data:
-                data[civ.interface.slug] = input_data["value"]
+                data[input_data["interface"].slug] = input_data["value"]
             elif "file" in input_data:
-                data[civ.interface.slug] = input_data["file"]
+                data[input_data["interface"].slug] = input_data["file"]
             elif "user_upload" in input_data:
-                data[civ.interface.slug] = input_data["user_upload"]
+                data[input_data["interface"].slug] = input_data["user_upload"]
             elif "upload_session" in input_data:
-                data[civ.interface.slug] = input_data["upload_session"]
+                data[input_data["interface"].slug] = input_data[
+                    "upload_session"
+                ]
         return data
 
     def create(self, validated_data):

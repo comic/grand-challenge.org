@@ -2083,6 +2083,7 @@ class CIVForObjectMixin:
             current_civ = None
         except MultipleObjectsReturned as e:
             raise e
+
         if ci.is_json_kind and not ci.requires_file:
             return self.create_civ_for_value(
                 ci=ci,
@@ -2110,9 +2111,12 @@ class CIVForObjectMixin:
 
     def create_civ_for_value(self, *, ci, current_civ, new_value, linked_task):
         current_value = current_civ.value if current_civ else None
-        civ, created = ComponentInterfaceValue.objects.get_or_create(
-            interface=ci, value=new_value
-        )
+        if new_value is not None:
+            civ, created = ComponentInterfaceValue.objects.get_or_create(
+                interface=ci, value=new_value
+            )
+        else:
+            civ = ComponentInterfaceValue(interface=ci)
         if current_value != new_value or (
             current_civ is None and new_value is None
         ):
