@@ -67,7 +67,8 @@ def execute_algorithm_job(*, job_pk):
         raise TooManyJobsScheduled
     else:
         job = Job.objects.get(pk=job_pk)
-        on_commit(job.execute)
+        if job.status in [job.PENDING, job.RETRY]:
+            on_commit(job.execute)
 
 
 @acks_late_2xlarge_task(retry_on=(TooManyJobsScheduled,), singleton=True)

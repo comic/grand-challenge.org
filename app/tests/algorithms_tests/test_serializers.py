@@ -13,7 +13,10 @@ from tests.algorithms_tests.factories import (
     AlgorithmJobFactory,
 )
 from tests.cases_tests.factories import RawImageUploadSessionFactory
-from tests.components_tests.factories import ComponentInterfaceFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.factories import ImageFactory, UserFactory
 
 
@@ -36,7 +39,8 @@ def test_algorithm_relations_on_job_serializer(rf):
     "image_ready, "
     "algorithm_interface_titles, "
     "job_interface_slugs, "
-    "error_message",
+    "error_message, "
+    "existing_jobs",
     (
         (
             "algorithm1",
@@ -45,6 +49,7 @@ def test_algorithm_relations_on_job_serializer(rf):
             ("TestInterface 1",),
             ("testinterface-1",),
             "Invalid hyperlink - Object does not exist",
+            False,
         ),
         (
             "algorithm1",
@@ -53,6 +58,7 @@ def test_algorithm_relations_on_job_serializer(rf):
             ("TestInterface 1",),
             ("testinterface-1",),
             "Algorithm image is not ready to be used",
+            False,
         ),
         (
             "algorithm1",
@@ -61,6 +67,7 @@ def test_algorithm_relations_on_job_serializer(rf):
             ("TestInterface 1",),
             ("testinterface-3",),
             "Object with slug=testinterface-3 does not exist.",
+            False,
         ),
         (
             "algorithm1",
@@ -69,6 +76,7 @@ def test_algorithm_relations_on_job_serializer(rf):
             ("TestInterface 1", "TestInterface 2"),
             ("testinterface-1",),
             "Interface(s) TestInterface 2 do not have a default value and should be provided.",
+            False,
         ),
         (
             "algorithm1",
@@ -77,6 +85,16 @@ def test_algorithm_relations_on_job_serializer(rf):
             ("TestInterface 1",),
             ("testinterface-1", "testinterface-2"),
             "Provided inputs(s) TestInterface 2 are not defined for this algorithm",
+            False,
+        ),
+        (
+            "algorithm1",
+            True,
+            True,
+            ("TestInterface 1", "TestInterface 2"),
+            ("testinterface-1", "testinterface-2"),
+            "A result for these inputs with the current image and model already exists.",
+            True,
         ),
         (
             "algorithm1",
@@ -85,6 +103,7 @@ def test_algorithm_relations_on_job_serializer(rf):
             ("TestInterface 1", "TestInterface 2"),
             ("testinterface-1", "testinterface-2"),
             None,
+            False,
         ),
     ),
 )
@@ -95,6 +114,7 @@ def test_algorithm_job_post_serializer_validations(
     algorithm_interface_titles,
     job_interface_slugs,
     error_message,
+    existing_jobs,
     rf,
 ):
     # setup
@@ -120,6 +140,19 @@ def test_algorithm_job_post_serializer_validations(
         algorithm_image.algorithm.add_user(user)
 
     algorithm_image.algorithm.save()
+
+    if existing_jobs:
+        civs = []
+        for _, interface in interfaces.items():
+            civs.append(
+                ComponentInterfaceValueFactory(
+                    interface=interface, value="dummy"
+                )
+            )
+        existing_job = AlgorithmJobFactory(
+            algorithm_image=algorithm_image, status=Job.SUCCESS
+        )
+        existing_job.inputs.set(civs)
 
     job = {
         "algorithm": algorithm_image.algorithm.api_url,

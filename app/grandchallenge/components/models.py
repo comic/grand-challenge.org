@@ -2128,6 +2128,7 @@ class CIVForObjectMixin:
             except ValidationError as e:
                 if new_value:
                     if hasattr(self, "error_message"):
+                        self.status = self.CANCELLED
                         self.error_message = format_validation_error_message(e)
                         self.save()
                     else:

@@ -1,7 +1,9 @@
+import json
 from datetime import datetime, timedelta, timezone
 
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.files.base import ContentFile
 from django.db.models import ProtectedError
 from django.test import TestCase
 from django.utils.timezone import now
@@ -11,6 +13,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
+from grandchallenge.components.utils import retrieve_existing_civs
 from grandchallenge.credits.models import Credit
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
@@ -18,9 +21,15 @@ from tests.algorithms_tests.factories import (
     AlgorithmJobFactory,
     AlgorithmModelFactory,
 )
-from tests.components_tests.factories import ComponentInterfaceValueFactory
-from tests.factories import UserFactory
+from tests.cases_tests import RESOURCE_PATH
+from tests.cases_tests.factories import RawImageUploadSessionFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
+from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
+from tests.uploads_tests.factories import create_upload_from_file
 from tests.utils import get_view_for_user
 
 
@@ -480,3 +489,54 @@ def test_usage_statistics():
             },
         },
     }
+
+
+@pytest.mark.parametrize(
+    "string, bool, new_image, new_file, civs_in_output",
+    [
+        ("foo", True, True, True, [1, 0, 0, 0]),
+        ("foo1", False, True, True, [0, 1, 0, 0]),
+        ("foo1", True, False, True, [0, 0, 1, 0]),
+        ("foo1", True, True, False, [0, 0, 0, 1]),
+    ],
+)
+@pytest.mark.django_db
+def test_retrieve_existing_civs(
+    string, bool, new_image, new_file, civs_in_output
+):
+    ci_str = ComponentInterfaceFactory(kind=ComponentInterface.Kind.STRING)
+    ci_bool = ComponentInterfaceFactory(kind=ComponentInterface.Kind.BOOL)
+    ci_im = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
+    ci_file = ComponentInterfaceFactory(kind=ComponentInterface.Kind.PDF)
+
+    old_im = ImageFactory()
+    old_file = ContentFile(json.dumps(True).encode("utf-8"), name="test.json")
+
+    if new_file:
+        upload = create_upload_from_file(
+            creator=UserFactory(), file_path=RESOURCE_PATH / "test.pdf"
+        )
+    if new_image:
+        upload_session = RawImageUploadSessionFactory()
+
+    list_of_civs = [
+        ComponentInterfaceValueFactory(interface=ci_str, value="foo"),
+        ComponentInterfaceValueFactory(interface=ci_bool, value=False),
+        ComponentInterfaceValueFactory(interface=ci_im, image=old_im),
+        ComponentInterfaceValueFactory(interface=ci_file, file=old_file),
+    ]
+
+    data = {
+        ci_str.slug: string,
+        ci_bool.slug: bool,
+        ci_im.slug: upload_session.api_url if new_image else old_im,
+        ci_file.slug: upload.api_url if new_file else list_of_civs[3],
+    }
+
+    civs = retrieve_existing_civs(civ_data=data)
+
+    assert civs == [
+        item
+        for item, flag in zip(list_of_civs, civs_in_output, strict=True)
+        if flag == 1
+    ]

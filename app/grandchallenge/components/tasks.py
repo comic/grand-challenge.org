@@ -612,8 +612,12 @@ def provision_job(
 
     if job.status in [job.PENDING, job.RETRY]:
         job.update_status(status=job.PROVISIONING)
+    elif job.status in [job.PROVISIONING, job.PROVISIONED]:
+        logger.warning("Job has been provisioned already.")
+        return
     else:
-        raise PriorStepFailed("Job is not ready for provisioning")
+        logger.warning("Job is not ready for provisioning")
+        return
 
     try:
         executor.provision(
