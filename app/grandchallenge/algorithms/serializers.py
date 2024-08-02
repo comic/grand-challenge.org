@@ -18,6 +18,7 @@ from grandchallenge.components.serializers import (
     ComponentInterfaceValueSerializer,
     HyperlinkedComponentInterfaceValueSerializer,
 )
+from grandchallenge.components.utils import reformat_inputs
 from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.hanging_protocols.serializers import (
     HangingProtocolSerializer,
@@ -223,14 +224,15 @@ class JobPostSerializer(JobSerializer):
             id__in=list(algorithm_input_pks - input_pks),
             default_value__isnull=False,
         )
-        # User default interface values if not present
+        # Use default interface values if not present
         for interface in default_inputs:
             if interface.default_value:
                 inputs.append(
                     {"interface": interface, "value": interface.default_value}
                 )
 
-        data = self.reformat_inputs(inputs=inputs, data=data)
+        reformatted_inputs = reformat_inputs(serialized_civs=inputs)
+        data.update(reformatted_inputs)
 
         if Job.objects.get_jobs_with_same_inputs(
             data=data,
@@ -242,22 +244,6 @@ class JobPostSerializer(JobSerializer):
                 "and model already exists."
             )
 
-        return data
-
-    def reformat_inputs(self, inputs, data):
-        for input_data in inputs:
-            if "image" in input_data:
-                data[input_data["interface"].slug] = input_data["image"]
-            elif "value" in input_data:
-                data[input_data["interface"].slug] = input_data["value"]
-            elif "file" in input_data:
-                data[input_data["interface"].slug] = input_data["file"]
-            elif "user_upload" in input_data:
-                data[input_data["interface"].slug] = input_data["user_upload"]
-            elif "upload_session" in input_data:
-                data[input_data["interface"].slug] = input_data[
-                    "upload_session"
-                ]
         return data
 
     def create(self, validated_data):
