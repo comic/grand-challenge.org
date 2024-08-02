@@ -588,23 +588,11 @@ def test_hidden_phase_visible_for_admins_but_not_participants(client):
             user=u,
         )
 
-        if view_name in [
-            "submission-list",
-            "submission-create",
-            "submission-detail",
-        ]:
-            icon = "upload"
-        else:
-            icon = "trophy"
-
         assert response.status_code == status
         if status == 200:
+            assert f"</i>{visible_phase.title}</a>" in str(response.content)
             assert (
-                f'<i class="fa fa-{icon} fa-fw mr-1"></i>{visible_phase.title}'
-                in str(response.content)
-            )
-            assert (
-                f'<i class="fa fa-{icon} fa-fw mr-1"></i>{hidden_phase.title}'
+                f'</i>{hidden_phase.title}<i class="fa fa-eye-slash ml-1"></i></a>'
                 not in str(response.content)
             )
 
@@ -617,12 +605,9 @@ def test_hidden_phase_visible_for_admins_but_not_participants(client):
             user=ch.admins_group.user_set.first(),
         )
         assert response.status_code == 200
+        assert f"{visible_phase.title}</a>" in str(response.content)
         assert (
-            f'<i class="fa fa-{icon} fa-fw mr-1"></i>{visible_phase.title}'
-            in str(response.content)
-        )
-        assert (
-            f'<i class="fa fa-{icon} fa-fw mr-1"></i>{hidden_phase.title}'
+            f'{hidden_phase.title}<i class="fa fa-eye-slash ml-1"></i></a>'
             in str(response.content)
         )
 
