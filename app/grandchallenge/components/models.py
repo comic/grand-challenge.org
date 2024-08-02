@@ -881,6 +881,13 @@ class ComponentInterface(OverlaySegmentsMixin):
         ),
         validators=[JSONSchemaValidator()],
     )
+    example_value = models.JSONField(
+        blank=True,
+        null=True,
+        default=None,
+        help_text="Example JSON that complies with the additional JSON schema",
+        validators=[JSONSchemaValidator()],
+    )
     kind = models.CharField(
         blank=False,
         max_length=5,
@@ -1060,6 +1067,7 @@ class ComponentInterface(OverlaySegmentsMixin):
         self._clean_overlay_segments()
         self._clean_store_in_database()
         self._clean_relative_path()
+        self.validate_against_schema(value=self.example_value)
 
     def _clean_overlay_segments(self):
         if (
