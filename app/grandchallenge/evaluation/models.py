@@ -468,8 +468,12 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         default=20 * 60,
         help_text="Time limit for inference jobs in seconds",
         validators=[
-            MinValueValidator(limit_value=300),
-            MaxValueValidator(limit_value=18000),
+            MinValueValidator(
+                limit_value=settings.COMPONENTS_MINIMUM_JOB_DURATION
+            ),
+            MaxValueValidator(
+                limit_value=settings.COMPONENTS_MAXIMUM_JOB_DURATION
+            ),
         ],
     )
     give_algorithm_editors_job_view_permissions = models.BooleanField(
@@ -493,8 +497,12 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         default=60 * 60,
         help_text="Time limit for evaluation jobs in seconds",
         validators=[
-            MinValueValidator(limit_value=300),
-            MaxValueValidator(limit_value=43200),  # 12 hours
+            MinValueValidator(
+                limit_value=settings.COMPONENTS_MINIMUM_JOB_DURATION
+            ),
+            MaxValueValidator(
+                limit_value=settings.COMPONENTS_MAXIMUM_JOB_DURATION
+            ),
         ],
     )
     public = models.BooleanField(
