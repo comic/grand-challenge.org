@@ -169,7 +169,7 @@ def test_civ_file_download(client):
             assert response.status_code == test[0]
 
     # test algorithm
-    job = AlgorithmJobFactory(creator=user1)
+    job = AlgorithmJobFactory(creator=user1, time_limit=60)
     job.algorithm_image.algorithm.outputs.add(detection_interface)
     job.outputs.add(output_civ)
 
@@ -177,7 +177,7 @@ def test_civ_file_download(client):
     job.outputs.remove(output_civ)
 
     # test evaluation
-    evaluation = EvaluationFactory()
+    evaluation = EvaluationFactory(time_limit=60)
     evaluation.output_interfaces.add(detection_interface)
     evaluation.outputs.add(output_civ)
 

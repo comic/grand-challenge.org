@@ -1145,7 +1145,7 @@ def test_archive_item_job_list_filter(
     ]
     ai.values.set(civs)
 
-    job = AlgorithmJobFactory(public=True)
+    job = AlgorithmJobFactory(public=True, time_limit=60)
     job_civs = job_civs_generator(civs)
     job.inputs.set(job_civs)
 
@@ -1210,7 +1210,7 @@ def test_archive_item_job_list_permissions_filter(client):
     ]
     ai.values.set(civs)
 
-    jobs = AlgorithmJobFactory.create_batch(3)
+    jobs = AlgorithmJobFactory.create_batch(3, time_limit=60)
     for aj in jobs:
         aj.inputs.set(ai.values.all())
 
@@ -1367,7 +1367,9 @@ def test_job_list_row_template_ajax_renders(client):
 
     archive_item.values.set([civ])
 
-    job = AlgorithmJobFactory(creator=editor, status=Job.SUCCESS)
+    job = AlgorithmJobFactory(
+        creator=editor, status=Job.SUCCESS, time_limit=60
+    )
     job.inputs.set([civ])
 
     algorithm = job.algorithm_image.algorithm

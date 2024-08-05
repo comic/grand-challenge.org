@@ -1533,12 +1533,15 @@ class ComponentJob(models.Model):
         editable=False,
         help_text="Serialized task that is run on job failure",
     )
-    time_limit = models.PositiveSmallIntegerField(
-        default=3600,
+    time_limit = models.PositiveIntegerField(
         help_text="Time limit for the job in seconds",
         validators=[
-            MinValueValidator(limit_value=300),
-            MaxValueValidator(limit_value=7200),
+            MinValueValidator(
+                limit_value=settings.COMPONENTS_MINIMUM_JOB_DURATION
+            ),
+            MaxValueValidator(
+                limit_value=settings.COMPONENTS_MAXIMUM_JOB_DURATION
+            ),
         ],
     )
 

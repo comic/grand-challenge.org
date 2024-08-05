@@ -61,6 +61,7 @@ def test_hiding_phase_updates_perms(django_capture_on_commit_callbacks):
         submission__phase__public=True,
         submission__phase__challenge__hidden=False,
         submission__creator=UserFactory(),
+        time_limit=60,
     )
 
     all_users = Group.objects.get(
@@ -106,6 +107,7 @@ def test_unhiding_phase_updates_perms(django_capture_on_commit_callbacks):
         submission__phase__public=False,
         submission__phase__challenge__hidden=False,
         submission__creator=UserFactory(),
+        time_limit=60,
     )
 
     all_users = Group.objects.get(
@@ -183,6 +185,7 @@ def test_published_evaluation_permissions(hidden_challenge):
     e: Evaluation = EvaluationFactory(
         submission__phase__auto_publish_new_results=True,
         submission__phase__challenge__hidden=hidden_challenge,
+        time_limit=60,
     )
 
     if hidden_challenge:
@@ -210,6 +213,7 @@ def test_unpublished_evaluation_permissions(hidden_challenge):
     e: Evaluation = EvaluationFactory(
         submission__phase__auto_publish_new_results=False,
         submission__phase__challenge__hidden=hidden_challenge,
+        time_limit=60,
     )
 
     assert e.published is False
@@ -232,6 +236,7 @@ def test_unpublishing_results_removes_permissions(hidden_challenge):
     e: Evaluation = EvaluationFactory(
         submission__phase__auto_publish_new_results=True,
         submission__phase__challenge__hidden=hidden_challenge,
+        time_limit=60,
     )
 
     if hidden_challenge:
@@ -269,6 +274,7 @@ def test_hiding_challenge_updates_perms(
     e: Evaluation = EvaluationFactory(
         submission__phase__auto_publish_new_results=True,
         submission__phase__challenge__hidden=False,
+        time_limit=60,
     )
 
     participants = e.submission.phase.challenge.participants_group
@@ -309,6 +315,7 @@ def test_unhiding_challenge_updates_perms(
     e: Evaluation = EvaluationFactory(
         submission__phase__auto_publish_new_results=True,
         submission__phase__challenge__hidden=True,
+        time_limit=60,
     )
 
     participants = e.submission.phase.challenge.participants_group

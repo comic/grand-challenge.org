@@ -179,6 +179,7 @@ def _create_submission(algorithm, challenge, archive_items):
             started_at=now() - timedelta(minutes=random.randint(5, 120)),
             completed_at=now(),
             status=Job.SUCCESS,
+            time_limit=ai.algorithm.time_limit,
         )
         civ = ComponentInterfaceValue.objects.create(
             interface=ComponentInterface.objects.get(slug="results-json-file"),
@@ -194,6 +195,8 @@ def _create_submission(algorithm, challenge, archive_items):
         phase=phase,
     )
     e1 = Evaluation.objects.create(
-        submission=sub, method=phase.method_set.last()
+        submission=sub,
+        method=phase.method_set.last(),
+        time_limit=sub.phase.evaluation_time_limit,
     )
     e1.inputs.add(*eval_inputs)

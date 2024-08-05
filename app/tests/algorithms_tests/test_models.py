@@ -79,7 +79,7 @@ def test_rendered_result_text():
             )
             jb.outputs.add(output_civ)
 
-    job = AlgorithmJobFactory()
+    job = AlgorithmJobFactory(time_limit=60)
     job.algorithm_image.algorithm.result_template = (
         "foo score: {{results.foo}}"
     )
@@ -105,7 +105,9 @@ def test_average_duration():
 
     assert alg.average_duration is None
 
-    j = AlgorithmJobFactory(algorithm_image__algorithm=alg)
+    j = AlgorithmJobFactory(
+        algorithm_image__algorithm=alg, time_limit=alg.time_limit
+    )
 
     j.started_at = start - timedelta(minutes=5)
     j.completed_at = start
@@ -115,7 +117,9 @@ def test_average_duration():
     assert alg.average_duration == timedelta(minutes=5)
 
     # Unsuccessful jobs should not count
-    j = AlgorithmJobFactory(algorithm_image__algorithm=alg)
+    j = AlgorithmJobFactory(
+        algorithm_image__algorithm=alg, time_limit=alg.time_limit
+    )
     j.started_at = start - timedelta(minutes=10)
     j.completed_at = start
     j.status = j.FAILURE
@@ -124,7 +128,7 @@ def test_average_duration():
     assert alg.average_duration == timedelta(minutes=5)
 
     # Nor should jobs for other algorithms
-    j = AlgorithmJobFactory()
+    j = AlgorithmJobFactory(time_limit=60)
     j.started_at = start - timedelta(minutes=15)
     j.completed_at = start
     j.status = j.SUCCESS
@@ -135,13 +139,13 @@ def test_average_duration():
 
 class TestAlgorithmJobGroups(TestCase):
     def test_job_group_created(self):
-        j = AlgorithmJobFactory()
+        j = AlgorithmJobFactory(time_limit=60)
         assert j.viewers is not None
         assert j.viewers.name.startswith("algorithms_job_")
         assert j.viewers.name.endswith("_viewers")
 
     def test_job_group_deletion(self):
-        j = AlgorithmJobFactory()
+        j = AlgorithmJobFactory(time_limit=60)
         g = j.viewers
 
         Job.objects.filter(pk__in=[j.pk]).delete()
@@ -150,23 +154,23 @@ class TestAlgorithmJobGroups(TestCase):
             g.refresh_from_db()
 
     def test_group_deletion_reverse(self):
-        j = AlgorithmJobFactory()
+        j = AlgorithmJobFactory(time_limit=60)
         g = j.viewers
 
         with pytest.raises(ProtectedError):
             g.delete()
 
     def test_creator_in_viewers_group(self):
-        j = AlgorithmJobFactory()
+        j = AlgorithmJobFactory(time_limit=60)
         assert {*j.viewers.user_set.all()} == {j.creator}
 
     def test_viewer_group_in_m2m(self):
-        j = AlgorithmJobFactory()
+        j = AlgorithmJobFactory(time_limit=60)
         assert {*j.viewer_groups.all()} == {j.viewers}
 
 
 def test_get_or_create_display_set_unsuccessful_job():
-    j = AlgorithmJobFactory.build()
+    j = AlgorithmJobFactory.build(time_limit=60)
 
     with pytest.raises(RuntimeError) as error:
         j.get_or_create_display_set(reader_study=None)
@@ -179,7 +183,7 @@ def test_get_or_create_display_set_unsuccessful_job():
 @pytest.mark.django_db
 def test_get_or_create_display_set():
     rs1, rs2 = ReaderStudyFactory.create_batch(2)
-    j = AlgorithmJobFactory(status=Job.SUCCESS)
+    j = AlgorithmJobFactory(status=Job.SUCCESS, time_limit=60)
     civ1, civ2, civ3 = ComponentInterfaceValueFactory.create_batch(3)
     j.inputs.set([civ1])
     j.outputs.set([civ2, civ3])
@@ -201,7 +205,7 @@ def test_get_or_create_display_set():
 @pytest.mark.django_db
 def test_new_display_set_created_on_output_change():
     rs = ReaderStudyFactory()
-    j = AlgorithmJobFactory(status=Job.SUCCESS)
+    j = AlgorithmJobFactory(status=Job.SUCCESS, time_limit=60)
     civ1, civ2, civ3 = ComponentInterfaceValueFactory.create_batch(3)
     j.inputs.set([civ1])
     j.outputs.set([civ2])
@@ -224,7 +228,7 @@ def test_new_display_set_created_on_output_change():
 @pytest.mark.django_db
 def test_new_display_set_created_on_reader_study_change():
     rs1, rs2 = ReaderStudyFactory.create_batch(2)
-    j = AlgorithmJobFactory(status=Job.SUCCESS)
+    j = AlgorithmJobFactory(status=Job.SUCCESS, time_limit=60)
     civ1, civ2 = ComponentInterfaceValueFactory.create_batch(2)
     j.inputs.set([civ1])
     j.outputs.set([civ2])
@@ -266,7 +270,12 @@ class TestJobLimits:
         # normal user gets standard credits
         assert alg1.get_jobs_limit(user=user3) == 10
 
-        AlgorithmJobFactory.create_batch(4, creator=user1, algorithm_image=ai)
+        AlgorithmJobFactory.create_batch(
+            4,
+            creator=user1,
+            algorithm_image=ai,
+            time_limit=ai.algorithm.time_limit,
+        )
         # limits apply to both editors
         assert alg1.get_jobs_limit(user=user1) == 11
         assert alg1.get_jobs_limit(user=user2) == 11
@@ -293,7 +302,11 @@ class TestJobLimits:
         assert alg1.get_jobs_limit(user=user1) == 15
         assert alg1.get_jobs_limit(user=user2) == 15
 
-        AlgorithmJobFactory(creator=user1, algorithm_image=ai2)
+        AlgorithmJobFactory(
+            creator=user1,
+            algorithm_image=ai2,
+            time_limit=ai2.algorithm.time_limit,
+        )
         assert alg1.get_jobs_limit(user=user1) == 14
         assert alg1.get_jobs_limit(user=user2) == 14
 
@@ -365,10 +378,20 @@ class TestJobLimits:
 
         algorithm2 = AlgorithmFactory(credits_per_job=credits_per_job)
 
-        AlgorithmJobFactory(algorithm_image__algorithm=algorithm, creator=None)
-        AlgorithmJobFactory(algorithm_image__algorithm=algorithm, creator=user)
         AlgorithmJobFactory(
-            algorithm_image__algorithm=algorithm2, creator=user
+            algorithm_image__algorithm=algorithm,
+            creator=None,
+            time_limit=algorithm.time_limit,
+        )
+        AlgorithmJobFactory(
+            algorithm_image__algorithm=algorithm,
+            creator=user,
+            time_limit=algorithm.time_limit,
+        )
+        AlgorithmJobFactory(
+            algorithm_image__algorithm=algorithm2,
+            creator=user,
+            time_limit=algorithm2.time_limit,
         )
 
         user_credit = Credit.objects.get(user=user)
@@ -384,12 +407,28 @@ def test_user_statistics():
 
     u1, u2, _ = UserFactory.create_batch(3)
 
-    AlgorithmJobFactory()
-    AlgorithmJobFactory(algorithm_image=algorithm_image, creator=None)
-    AlgorithmJobFactory(algorithm_image=algorithm_image, creator=u1)
-    AlgorithmJobFactory(algorithm_image=algorithm_image, creator=u1)
-    AlgorithmJobFactory(creator=u1)
-    AlgorithmJobFactory(algorithm_image=algorithm_image, creator=u2)
+    AlgorithmJobFactory(time_limit=60)
+    AlgorithmJobFactory(
+        algorithm_image=algorithm_image,
+        creator=None,
+        time_limit=algorithm_image.algorithm.time_limit,
+    )
+    AlgorithmJobFactory(
+        algorithm_image=algorithm_image,
+        creator=u1,
+        time_limit=algorithm_image.algorithm.time_limit,
+    )
+    AlgorithmJobFactory(
+        algorithm_image=algorithm_image,
+        creator=u1,
+        time_limit=algorithm_image.algorithm.time_limit,
+    )
+    AlgorithmJobFactory(creator=u1, time_limit=60)
+    AlgorithmJobFactory(
+        algorithm_image=algorithm_image,
+        creator=u2,
+        time_limit=algorithm_image.algorithm.time_limit,
+    )
 
     assert {
         user.pk: user.job_count
@@ -401,7 +440,9 @@ def test_user_statistics():
 def test_usage_statistics():
     algorithm_image = AlgorithmImageFactory()
 
-    AlgorithmJobFactory()  # for another job, should not be included in stats
+    AlgorithmJobFactory(
+        time_limit=60
+    )  # for another job, should not be included in stats
 
     for year, month, status in (
         (2020, 1, Job.SUCCESS),
@@ -411,7 +452,10 @@ def test_usage_statistics():
         (2022, 1, Job.SUCCESS),
         (2022, 1, Job.SUCCESS),
     ):
-        job = AlgorithmJobFactory(algorithm_image=algorithm_image)
+        job = AlgorithmJobFactory(
+            algorithm_image=algorithm_image,
+            time_limit=algorithm_image.algorithm.time_limit,
+        )
         job.created = datetime(year, month, 1, tzinfo=timezone.utc)
         job.status = status
         job.save()

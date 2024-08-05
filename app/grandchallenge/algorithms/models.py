@@ -177,12 +177,16 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
             "The number of credits that are required for each execution of this algorithm."
         ),
     )
-    time_limit = models.PositiveSmallIntegerField(
-        default=3600,
+    time_limit = models.PositiveIntegerField(
+        default=60 * 60,
         help_text="Time limit for inference jobs in seconds",
         validators=[
-            MinValueValidator(limit_value=300),
-            MaxValueValidator(limit_value=7200),
+            MinValueValidator(
+                limit_value=settings.COMPONENTS_MINIMUM_JOB_DURATION
+            ),
+            MaxValueValidator(
+                limit_value=settings.COMPONENTS_MAXIMUM_JOB_DURATION
+            ),
         ],
     )
     average_duration = models.DurationField(

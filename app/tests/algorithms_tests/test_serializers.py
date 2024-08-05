@@ -19,7 +19,7 @@ from tests.factories import ImageFactory, UserFactory
 
 @pytest.mark.django_db
 def test_algorithm_relations_on_job_serializer(rf):
-    job = AlgorithmJobFactory()
+    job = AlgorithmJobFactory(time_limit=60)
     serializer = HyperlinkedJobSerializer(
         job, context={"request": rf.get("/foo", secure=True)}
     )
@@ -271,6 +271,7 @@ class TestJobCreateLimits:
             algorithm_image=algorithm_image,
             creator=user,
             status=Job.SUCCESS,
+            time_limit=algorithm_image.algorithm.time_limit,
         )
         serializer = JobPostSerializer(
             data={

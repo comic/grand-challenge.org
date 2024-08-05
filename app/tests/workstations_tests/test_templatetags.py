@@ -170,7 +170,7 @@ def test_workstation_query_for_archive_items(settings):
 
 
 def test_workstation_query_for_algorithms(settings):
-    algorithm_job = AlgorithmJobFactory.build()
+    algorithm_job = AlgorithmJobFactory.build(time_limit=60)
     config = WorkstationConfigFactory.build()
 
     pqs = get_workstation_path_and_query_string(algorithm_job=algorithm_job)

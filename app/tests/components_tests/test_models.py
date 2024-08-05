@@ -52,7 +52,7 @@ from tests.utils import create_raw_upload_image_session
 
 @pytest.mark.django_db
 def test_update_started_adds_time():
-    j = AlgorithmJobFactory()
+    j = AlgorithmJobFactory(time_limit=60)
     assert j.started_at is None
     assert j.completed_at is None
 
@@ -71,8 +71,8 @@ def test_update_started_adds_time():
 
 @pytest.mark.django_db
 def test_duration():
-    j = AlgorithmJobFactory()
-    _ = EvaluationFactory()
+    j = AlgorithmJobFactory(time_limit=60)
+    _ = EvaluationFactory(time_limit=60)
 
     jbs = Job.objects.with_duration()
     assert jbs[0].duration is None
@@ -87,7 +87,7 @@ def test_duration():
     assert jbs[0].duration == timedelta(minutes=5)
     assert Job.objects.average_duration() == timedelta(minutes=5)
 
-    _ = AlgorithmJobFactory()
+    _ = AlgorithmJobFactory(time_limit=60)
     assert Job.objects.average_duration() == timedelta(minutes=5)
 
 
@@ -98,10 +98,12 @@ def test_average_duration_filtering():
         AlgorithmJobFactory(
             completed_at=completed_at,
             started_at=completed_at - timedelta(minutes=5),
+            time_limit=60,
         ),
         AlgorithmJobFactory(
             completed_at=completed_at,
             started_at=completed_at - timedelta(minutes=10),
+            time_limit=60,
         ),
     )
     assert Job.objects.average_duration() == timedelta(minutes=7.5)

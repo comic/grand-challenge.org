@@ -230,7 +230,11 @@ def test_algorithm_jobs_list_view(client):
     im = AlgorithmImageFactory(algorithm=alg)
     for x in range(50):
         created = timezone.now() - datetime.timedelta(days=x + 365)
-        job = AlgorithmJobFactory(algorithm_image=im, status=Job.SUCCESS)
+        job = AlgorithmJobFactory(
+            algorithm_image=im,
+            status=Job.SUCCESS,
+            time_limit=im.algorithm.time_limit,
+        )
         job.created = created
         job.save()
         job.viewer_groups.add(alg.editors_group)
@@ -334,7 +338,11 @@ class TestObjectPermissionRequiredViews:
         ai = AlgorithmImageFactory(is_manifest_valid=True, is_in_registry=True)
         am = AlgorithmModelFactory()
         u = UserFactory()
-        j = AlgorithmJobFactory(algorithm_image=ai, status=Job.SUCCESS)
+        j = AlgorithmJobFactory(
+            algorithm_image=ai,
+            status=Job.SUCCESS,
+            time_limit=ai.algorithm.time_limit,
+        )
         p = AlgorithmPermissionRequestFactory(algorithm=ai.algorithm)
 
         VerificationFactory(user=u, is_verified=True)
@@ -497,7 +505,9 @@ class TestObjectPermissionRequiredViews:
     def test_permission_required_list_views(self, client):
         ai = AlgorithmImageFactory()
         u = UserFactory()
-        j = AlgorithmJobFactory(algorithm_image=ai)
+        j = AlgorithmJobFactory(
+            algorithm_image=ai, time_limit=ai.algorithm.time_limit
+        )
 
         for view_name, kwargs, permission, objs in [
             ("list", {}, "view_algorithm", {ai.algorithm}),
@@ -534,7 +544,7 @@ class TestObjectPermissionRequiredViews:
 @pytest.mark.django_db
 class TestJobDetailView:
     def test_guarded_content_visibility(self, client):
-        j = AlgorithmJobFactory()
+        j = AlgorithmJobFactory(time_limit=60)
         u = UserFactory()
         assign_perm("view_job", u, j)
 
@@ -568,7 +578,7 @@ class TestJobDetailView:
 def test_display_set_from_job(client):
     u = UserFactory()
     rs = ReaderStudyFactory()
-    j = AlgorithmJobFactory(status=Job.SUCCESS)
+    j = AlgorithmJobFactory(status=Job.SUCCESS, time_limit=60)
     civ1, civ2 = ComponentInterfaceValueFactory.create_batch(2)
     j.inputs.set([civ1])
     j.outputs.set([civ2])
@@ -1228,12 +1238,14 @@ def test_evaluations_are_filtered(client):
         submission__phase=public_phase_public_challenge,
         submission__algorithm_image=algorithm_image,
         rank=2,
+        time_limit=algorithm_image.algorithm.time_limit,
     )
     # Ignored as there is a better submission
     EvaluationFactory(
         submission__phase=public_phase_public_challenge,
         submission__algorithm_image=algorithm_image,
         rank=3,
+        time_limit=algorithm_image.algorithm.time_limit,
     )
     # Ignored as challenge is private
     EvaluationFactory.create_batch(
@@ -1241,6 +1253,7 @@ def test_evaluations_are_filtered(client):
         submission__phase=public_phase_private_challenge,
         submission__algorithm_image=algorithm_image,
         rank=1,
+        time_limit=algorithm_image.algorithm.time_limit,
     )
     # Ignored as phase is private
     EvaluationFactory.create_batch(
@@ -1248,6 +1261,7 @@ def test_evaluations_are_filtered(client):
         submission__phase=private_phase_private_challenge,
         submission__algorithm_image=algorithm_image,
         rank=1,
+        time_limit=algorithm_image.algorithm.time_limit,
     )
     # Ignored as phase is private
     EvaluationFactory.create_batch(
@@ -1255,12 +1269,14 @@ def test_evaluations_are_filtered(client):
         submission__phase=private_phase_public_challenge,
         submission__algorithm_image=algorithm_image,
         rank=1,
+        time_limit=algorithm_image.algorithm.time_limit,
     )
     e2, _ = EvaluationFactory.create_batch(
         2,
         submission__phase=public_phase_public_challenge_2,
         submission__algorithm_image=algorithm_image,
         rank=5,
+        time_limit=algorithm_image.algorithm.time_limit,
     )
 
     response = get_view_for_user(
@@ -1295,7 +1311,11 @@ def test_job_create_denied_for_same_input_model_and_image(client):
     im = ImageFactory()
     assign_perm("view_image", creator, im)
     civ = ComponentInterfaceValueFactory(interface=ci, image=im)
-    j = AlgorithmJobFactory(algorithm_image=ai, algorithm_model=am)
+    j = AlgorithmJobFactory(
+        algorithm_image=ai,
+        algorithm_model=am,
+        time_limit=ai.algorithm.time_limit,
+    )
     j.inputs.set([civ])
     response = get_view_for_user(
         viewname="algorithms:job-create",
@@ -1387,7 +1407,10 @@ def test_job_list_row_template_ajax_renders(client):
     algorithm_image = AlgorithmImageFactory(algorithm=algorithm)
 
     job = AlgorithmJobFactory(
-        creator=editor, algorithm_image=algorithm_image, status=Job.SUCCESS
+        creator=editor,
+        algorithm_image=algorithm_image,
+        status=Job.SUCCESS,
+        time_limit=algorithm.time_limit,
     )
 
     ctrl_data = workstation_session_control_data(

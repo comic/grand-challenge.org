@@ -56,17 +56,25 @@ class TestCreateAlgorithmJobs:
 
     def test_no_images_does_nothing(self):
         ai = AlgorithmImageFactory()
-        create_algorithm_jobs(algorithm_image=ai, civ_sets=[])
+        create_algorithm_jobs(
+            algorithm_image=ai, civ_sets=[], time_limit=ai.algorithm.time_limit
+        )
         assert Job.objects.count() == 0
 
     def test_no_algorithm_image_errors_out(self):
         with pytest.raises(RuntimeError):
-            create_algorithm_jobs(algorithm_image=None, civ_sets=[])
+            create_algorithm_jobs(
+                algorithm_image=None, civ_sets=[], time_limit=60
+            )
 
     def test_civ_existing_does_nothing(self):
         image = ImageFactory()
         ai = AlgorithmImageFactory()
-        j = AlgorithmJobFactory(creator=ai.creator, algorithm_image=ai)
+        j = AlgorithmJobFactory(
+            creator=ai.creator,
+            algorithm_image=ai,
+            time_limit=ai.algorithm.time_limit,
+        )
         civ = ComponentInterfaceValueFactory(
             interface=self.default_input_interface, image=image
         )
@@ -86,7 +94,11 @@ class TestCreateAlgorithmJobs:
         ai.algorithm.inputs.set([interface])
         civ = ComponentInterfaceValueFactory(image=image, interface=interface)
         assert Job.objects.count() == 0
-        jobs = create_algorithm_jobs(algorithm_image=ai, civ_sets=[{civ}])
+        jobs = create_algorithm_jobs(
+            algorithm_image=ai,
+            civ_sets=[{civ}],
+            time_limit=ai.algorithm.time_limit,
+        )
         assert Job.objects.count() == 1
         j = Job.objects.first()
         assert j.algorithm_image == ai
@@ -105,9 +117,17 @@ class TestCreateAlgorithmJobs:
         )
         civ = ComponentInterfaceValueFactory(image=image, interface=interface)
         assert Job.objects.count() == 0
-        create_algorithm_jobs(algorithm_image=ai, civ_sets=[{civ}])
+        create_algorithm_jobs(
+            algorithm_image=ai,
+            civ_sets=[{civ}],
+            time_limit=ai.algorithm.time_limit,
+        )
         assert Job.objects.count() == 1
-        jobs = create_algorithm_jobs(algorithm_image=ai, civ_sets=[{civ}])
+        jobs = create_algorithm_jobs(
+            algorithm_image=ai,
+            civ_sets=[{civ}],
+            time_limit=ai.algorithm.time_limit,
+        )
         assert Job.objects.count() == 1
         assert len(jobs) == 0
 
@@ -119,7 +139,10 @@ class TestCreateAlgorithmJobs:
         civ = ComponentInterfaceValueFactory(interface=interface)
         groups = (GroupFactory(), GroupFactory(), GroupFactory())
         jobs = create_algorithm_jobs(
-            algorithm_image=ai, civ_sets=[{civ}], extra_viewer_groups=groups
+            algorithm_image=ai,
+            civ_sets=[{civ}],
+            extra_viewer_groups=groups,
+            time_limit=ai.algorithm.time_limit,
         )
         for g in groups:
             assert jobs[0].viewer_groups.filter(pk=g.pk).exists()
@@ -129,7 +152,9 @@ class TestCreateAlgorithmJobs:
 def test_no_jobs_workflow(django_capture_on_commit_callbacks):
     ai = AlgorithmImageFactory()
     with django_capture_on_commit_callbacks() as callbacks:
-        create_algorithm_jobs(algorithm_image=ai, civ_sets=[])
+        create_algorithm_jobs(
+            algorithm_image=ai, civ_sets=[], time_limit=ai.algorithm.time_limit
+        )
     assert len(callbacks) == 0
 
 
@@ -143,7 +168,11 @@ def test_jobs_workflow(django_capture_on_commit_callbacks):
         for im in images
     ]
     with django_capture_on_commit_callbacks() as callbacks:
-        create_algorithm_jobs(algorithm_image=ai, civ_sets=civ_sets)
+        create_algorithm_jobs(
+            algorithm_image=ai,
+            civ_sets=civ_sets,
+            time_limit=ai.algorithm.time_limit,
+        )
     assert len(callbacks) == 2
 
 
@@ -160,16 +189,16 @@ def test_algorithm(
 
     # Create the algorithm image
     with django_capture_on_commit_callbacks() as callbacks:
-        alg = AlgorithmImageFactory(image=None)
+        ai = AlgorithmImageFactory(image=None)
 
         with open(algorithm_image, "rb") as f:
-            alg.image.save(algorithm_image, ContentFile(f.read()))
+            ai.image.save(algorithm_image, ContentFile(f.read()))
 
     recurse_callbacks(
         callbacks=callbacks,
         django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
     )
-    alg.refresh_from_db()
+    ai.refresh_from_db()
 
     # Run the algorithm, it will create a results.json and an output.tif
     image_file = ImageFileFactory(
@@ -183,22 +212,26 @@ def test_algorithm(
         slug="results-json-file"
     )
     heatmap_interface = ComponentInterface.objects.get(slug="generic-overlay")
-    alg.algorithm.inputs.set([input_interface])
-    alg.algorithm.outputs.set([json_result_interface, heatmap_interface])
+    ai.algorithm.inputs.set([input_interface])
+    ai.algorithm.outputs.set([json_result_interface, heatmap_interface])
 
     civ = ComponentInterfaceValueFactory(
         image=image_file.image, interface=input_interface, file=None
     )
 
     with django_capture_on_commit_callbacks() as callbacks:
-        create_algorithm_jobs(algorithm_image=alg, civ_sets=[{civ}])
+        create_algorithm_jobs(
+            algorithm_image=ai,
+            civ_sets=[{civ}],
+            time_limit=ai.algorithm.time_limit,
+        )
 
     recurse_callbacks(
         callbacks=callbacks,
         django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
     )
 
-    jobs = Job.objects.filter(algorithm_image=alg).all()
+    jobs = Job.objects.filter(algorithm_image=ai).all()
 
     # There should be a single, successful job
     assert len(jobs) == 1
@@ -231,8 +264,8 @@ def test_algorithm(
         slug="detection-json-file",
         kind=ComponentInterface.Kind.ANY,
     )
-    alg.algorithm.outputs.add(detection_interface)
-    alg.save()
+    ai.algorithm.outputs.add(detection_interface)
+    ai.save()
     image_file = ImageFileFactory(
         file__from_path=Path(__file__).parent / "resources" / "input_file.tif"
     )
@@ -241,7 +274,11 @@ def test_algorithm(
     )
 
     with django_capture_on_commit_callbacks() as callbacks:
-        create_algorithm_jobs(algorithm_image=alg, civ_sets=[{civ}])
+        create_algorithm_jobs(
+            algorithm_image=ai,
+            civ_sets=[{civ}],
+            time_limit=ai.algorithm.time_limit,
+        )
 
     recurse_callbacks(
         callbacks=callbacks,
@@ -249,7 +286,7 @@ def test_algorithm(
     )
 
     jobs = Job.objects.filter(
-        algorithm_image=alg, inputs__image=image_file.image
+        algorithm_image=ai, inputs__image=image_file.image
     ).all()
     # There should be a single, successful job
     assert len(jobs) == 1
@@ -274,16 +311,16 @@ def test_algorithm_with_invalid_output(
 
     # Create the algorithm image
     with django_capture_on_commit_callbacks() as callbacks:
-        alg = AlgorithmImageFactory(image=None)
+        ai = AlgorithmImageFactory(image=None)
 
         with open(algorithm_image, "rb") as f:
-            alg.image.save(algorithm_image, ContentFile(f.read()))
+            ai.image.save(algorithm_image, ContentFile(f.read()))
 
     recurse_callbacks(
         callbacks=callbacks,
         django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
     )
-    alg.refresh_from_db()
+    ai.refresh_from_db()
 
     # Make sure the job fails when trying to upload an invalid file
     input_interface = ComponentInterface.objects.get(
@@ -295,9 +332,9 @@ def test_algorithm_with_invalid_output(
         slug="detection-json-file",
         kind=ComponentInterface.Kind.ANY,
     )
-    alg.algorithm.inputs.add(input_interface)
-    alg.algorithm.outputs.add(detection_interface)
-    alg.save()
+    ai.algorithm.inputs.add(input_interface)
+    ai.algorithm.outputs.add(detection_interface)
+    ai.save()
 
     image_file = ImageFileFactory(
         file__from_path=Path(__file__).parent / "resources" / "input_file.tif"
@@ -308,14 +345,18 @@ def test_algorithm_with_invalid_output(
     )
 
     with django_capture_on_commit_callbacks() as callbacks:
-        create_algorithm_jobs(algorithm_image=alg, civ_sets=[{civ}])
+        create_algorithm_jobs(
+            algorithm_image=ai,
+            civ_sets=[{civ}],
+            time_limit=ai.algorithm.time_limit,
+        )
     recurse_callbacks(
         callbacks=callbacks,
         django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
     )
 
     jobs = Job.objects.filter(
-        algorithm_image=alg, inputs__image=image_file.image, status=Job.FAILURE
+        algorithm_image=ai, inputs__image=image_file.image, status=Job.FAILURE
     ).all()
     assert len(jobs) == 1
     assert (
@@ -385,7 +426,10 @@ def test_algorithm_multiple_inputs(
             expected.append("test")
 
     job = Job.objects.create(
-        creator=creator, algorithm_image=alg, input_civ_set=input_civ_set
+        creator=creator,
+        algorithm_image=alg,
+        input_civ_set=input_civ_set,
+        time_limit=alg.algorithm.time_limit,
     )
 
     with django_capture_on_commit_callbacks() as callbacks:
@@ -439,7 +483,10 @@ def test_algorithm_input_image_multiple_files(
     civ = ComponentInterfaceValue.objects.create(interface=ci)
 
     job = Job.objects.create(
-        creator=creator, algorithm_image=alg, input_civ_set=[civ]
+        creator=creator,
+        algorithm_image=alg,
+        input_civ_set=[civ],
+        time_limit=alg.algorithm.time_limit,
     )
 
     with django_capture_on_commit_callbacks(execute=True):
@@ -493,7 +540,10 @@ def test_algorithm_input_user_upload(
     civ = ComponentInterfaceValueFactory(interface=ci)
 
     job = Job.objects.create(
-        creator=creator, algorithm_image=alg, input_civ_set=[civ]
+        creator=creator,
+        algorithm_image=alg,
+        input_civ_set=[civ],
+        time_limit=alg.algorithm.time_limit,
     )
 
     with django_capture_on_commit_callbacks(execute=True):
@@ -572,7 +622,10 @@ def test_execute_algorithm_job_for_inputs(settings):
     ci = ComponentInterface.objects.get(slug="generic-medical-image")
     civ = ComponentInterfaceValue.objects.create(interface=ci)
     job = Job.objects.create(
-        creator=creator, algorithm_image=alg, input_civ_set=[civ]
+        creator=creator,
+        algorithm_image=alg,
+        input_civ_set=[civ],
+        time_limit=alg.algorithm.time_limit,
     )
     execute_algorithm_job_for_inputs(job_pk=job.pk)
 
@@ -647,12 +700,21 @@ class TestJobCreation:
         civs2 = [ComponentInterfaceValueFactory(interface=c) for c in cis]
         civs3 = [ComponentInterfaceValueFactory(interface=c) for c in cis]
 
-        j1 = AlgorithmJobFactory(creator=None, algorithm_image=ai)
+        j1 = AlgorithmJobFactory(
+            creator=None,
+            algorithm_image=ai,
+            time_limit=ai.algorithm.time_limit,
+        )
         j1.inputs.set(civs1)
-        j2 = AlgorithmJobFactory(algorithm_image=ai)
+        j2 = AlgorithmJobFactory(
+            algorithm_image=ai, time_limit=ai.algorithm.time_limit
+        )
         j2.inputs.set(civs2)
         j3 = AlgorithmJobFactory(
-            creator=None, algorithm_image=ai, algorithm_model=am
+            creator=None,
+            algorithm_image=ai,
+            algorithm_model=am,
+            time_limit=ai.algorithm.time_limit,
         )
         j3.inputs.set(civs3)
 
@@ -693,10 +755,17 @@ class TestJobCreation:
         civs2 = [ComponentInterfaceValueFactory(interface=c) for c in cis]
 
         j1 = AlgorithmJobFactory(
-            creator=None, algorithm_image=ai, algorithm_model=am
+            creator=None,
+            algorithm_image=ai,
+            algorithm_model=am,
+            time_limit=ai.algorithm.time_limit,
         )
         j1.inputs.set(civs1)
-        j2 = AlgorithmJobFactory(creator=None, algorithm_image=ai)
+        j2 = AlgorithmJobFactory(
+            creator=None,
+            algorithm_image=ai,
+            time_limit=ai.algorithm.time_limit,
+        )
         j2.inputs.set(civs2)
 
         civ_sets = [
@@ -730,7 +799,10 @@ def test_failed_job_notifications(
     alg.algorithm.add_editor(editor)
 
     job = Job.objects.create(
-        creator=creator, algorithm_image=alg, input_civ_set=[]
+        creator=creator,
+        algorithm_image=alg,
+        input_civ_set=[],
+        time_limit=alg.algorithm.time_limit,
     )
 
     # mark job as failed
@@ -766,7 +838,10 @@ def test_failed_job_notifications(
     )
 
     job = Job.objects.create(
-        creator=creator, algorithm_image=alg, input_civ_set=[]
+        creator=creator,
+        algorithm_image=alg,
+        input_civ_set=[],
+        time_limit=alg.algorithm.time_limit,
     )
 
     # mark job as failed

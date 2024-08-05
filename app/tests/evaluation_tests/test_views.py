@@ -53,7 +53,7 @@ from tests.verification_tests.factories import VerificationFactory
 @pytest.mark.django_db
 class TestLoginViews:
     def test_login_redirect(self, client):
-        e = EvaluationFactory()
+        e = EvaluationFactory(time_limit=60)
 
         for view_name, kwargs in [
             ("phase-create", {}),
@@ -90,7 +90,9 @@ class TestLoginViews:
             )
 
     def test_open_views(self, client):
-        e = EvaluationFactory(submission__phase__challenge__hidden=False)
+        e = EvaluationFactory(
+            submission__phase__challenge__hidden=False, time_limit=60
+        )
 
         for view_name, kwargs in [
             ("leaderboard", {"slug": e.submission.phase.slug}),
@@ -112,7 +114,7 @@ class TestLoginViews:
 @pytest.mark.django_db
 class TestObjectPermissionRequiredViews:
     def test_permission_required_views(self, client):
-        e = EvaluationFactory()
+        e = EvaluationFactory(time_limit=60)
         u = UserFactory()
         VerificationFactory(user=u, is_verified=True)
 
@@ -195,7 +197,7 @@ class TestObjectPermissionRequiredViews:
             remove_perm(permission, u, obj)
 
     def test_group_permission_required_views(self, client):
-        e = EvaluationFactory()
+        e = EvaluationFactory(time_limit=60)
         u = UserFactory()
         g = GroupFactory()
         g.user_set.add(u)
@@ -247,7 +249,11 @@ class TestObjectPermissionRequiredViews:
         m = MethodFactory(phase=p)
         s = SubmissionFactory(phase=p, creator=u)
         e = EvaluationFactory(
-            method=m, submission=s, rank=1, status=Evaluation.SUCCESS
+            method=m,
+            submission=s,
+            rank=1,
+            status=Evaluation.SUCCESS,
+            time_limit=s.phase.evaluation_time_limit,
         )
 
         for view_name, kwargs, permission, obj in [
@@ -296,7 +302,11 @@ class TestObjectPermissionRequiredViews:
         m = MethodFactory(phase=p)
         s = SubmissionFactory(phase=p, creator=u)
         e = EvaluationFactory(
-            method=m, submission=s, rank=1, status=Evaluation.SUCCESS
+            method=m,
+            submission=s,
+            rank=1,
+            status=Evaluation.SUCCESS,
+            time_limit=s.phase.evaluation_time_limit,
         )
         g = GroupFactory()
         g.user_set.add(u)
@@ -362,11 +372,13 @@ class TestViewFilters:
             method__phase=c1.phase_set.first(),
             submission__phase=c1.phase_set.first(),
             submission__creator=u,
+            time_limit=c1.phase_set.first().evaluation_time_limit,
         )
         e2 = EvaluationFactory(
             method__phase=c2.phase_set.first(),
             submission__phase=c2.phase_set.first(),
             submission__creator=u,
+            time_limit=c2.phase_set.first().evaluation_time_limit,
         )
 
         assign_perm("view_method", u, e1.method)
@@ -402,12 +414,14 @@ class TestViewFilters:
             submission__phase=p1,
             rank=1,
             status=Evaluation.SUCCESS,
+            time_limit=p1.evaluation_time_limit,
         )
         _ = EvaluationFactory(
             method__phase=p2,
             submission__phase=p2,
             rank=1,
             status=Evaluation.SUCCESS,
+            time_limit=p2.evaluation_time_limit,
         )
 
         response = get_view_for_user(
@@ -475,27 +489,32 @@ def test_evaluation_list(client, two_challenge_sets):
         method__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
         submission__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
         submission__creator=two_challenge_sets.challenge_set_1.participant,
+        time_limit=60,
     )
     e_p_s2 = EvaluationFactory(
         method__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
         submission__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
         submission__creator=two_challenge_sets.challenge_set_1.participant,
+        time_limit=60,
     )
     e_p1_s1 = EvaluationFactory(
         method__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
         submission__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
         submission__creator=two_challenge_sets.challenge_set_1.participant1,
+        time_limit=60,
     )
     # participant12, submission 1 to each challenge
     e_p12_s1_c1 = EvaluationFactory(
         method__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
         submission__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
         submission__creator=two_challenge_sets.participant12,
+        time_limit=60,
     )
     e_p12_s1_c2 = EvaluationFactory(
         method__phase=two_challenge_sets.challenge_set_2.challenge.phase_set.get(),
         submission__phase=two_challenge_sets.challenge_set_2.challenge.phase_set.get(),
         submission__creator=two_challenge_sets.participant12,
+        time_limit=60,
     )
     e_p_s3_p2 = EvaluationFactory(
         method__phase=two_challenge_sets.challenge_set_2.challenge.phase_set.get(),
@@ -503,6 +522,7 @@ def test_evaluation_list(client, two_challenge_sets):
             challenge=two_challenge_sets.challenge_set_2.challenge
         ),
         submission__creator=two_challenge_sets.challenge_set_1.participant,
+        time_limit=60,
     )
 
     # Participants should only be able to see their own evaluations from a phase
@@ -549,10 +569,14 @@ def test_hidden_phase_visible_for_admins_but_not_participants(client):
     visible_phase = ch.phase_set.first()
     hidden_phase = PhaseFactory(challenge=ch, public=False)
     e1 = EvaluationFactory(
-        submission__phase=visible_phase, submission__creator=u
+        submission__phase=visible_phase,
+        submission__creator=u,
+        time_limit=visible_phase.evaluation_time_limit,
     )
     e2 = EvaluationFactory(
-        submission__phase=hidden_phase, submission__creator=u
+        submission__phase=hidden_phase,
+        submission__creator=u,
+        time_limit=hidden_phase.evaluation_time_limit,
     )
 
     for view_name, kwargs, status in [
@@ -1052,7 +1076,11 @@ def test_evaluation_admin_list(client):
     m = MethodFactory(phase=ch.phase_set.get())
     s = SubmissionFactory(phase=ch.phase_set.get(), creator=u)
     e = EvaluationFactory(
-        method=m, submission=s, rank=1, status=Evaluation.SUCCESS
+        method=m,
+        submission=s,
+        rank=1,
+        status=Evaluation.SUCCESS,
+        time_limit=s.phase.evaluation_time_limit,
     )
 
     response = get_view_for_user(
@@ -1480,7 +1508,10 @@ def test_evaluation_details_zero_rank_message(client):
     )
 
     evaluation = EvaluationFactory(
-        submission__phase=phase, rank=0, status=Evaluation.SUCCESS
+        submission__phase=phase,
+        rank=0,
+        status=Evaluation.SUCCESS,
+        time_limit=phase.evaluation_time_limit,
     )
 
     evaluation.outputs.set([civ])
