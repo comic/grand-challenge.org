@@ -3,6 +3,7 @@ import uuid
 from contextlib import nullcontext
 from datetime import timedelta
 from pathlib import Path
+from unittest.mock import call
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -1299,11 +1300,19 @@ def test_cannot_change_image(algorithm_image):
 
 @pytest.mark.django_db
 def test_remove_container_image_from_registry(
-    algorithm_image, settings, django_capture_on_commit_callbacks
+    algorithm_image,
+    settings,
+    django_capture_on_commit_callbacks,
+    mocker,
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
+
+    mock_remove_tag_from_registry = mocker.patch(
+        # remove_tag_from_registry is only implemented for ECR
+        "grandchallenge.components.tasks.remove_tag_from_registry"
+    )
 
     with django_capture_on_commit_callbacks(execute=True):
         ai = AlgorithmImageFactory(image__from_path=algorithm_image)
@@ -1316,6 +1325,8 @@ def test_remove_container_image_from_registry(
         ai.latest_shimmed_version == settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
     )
     assert ai.is_in_registry is True
+
+    old_shimmed_repo_tag = ai.shimmed_repo_tag
 
     with django_capture_on_commit_callbacks() as callbacks:
         remove_container_image_from_registry(
@@ -1333,6 +1344,17 @@ def test_remove_container_image_from_registry(
     assert ai.is_manifest_valid is True
     assert ai.latest_shimmed_version == ""
     assert ai.is_in_registry is False
+
+    assert mock_remove_tag_from_registry.call_count == 2
+
+    expected_calls = [
+        call(repo_tag=old_shimmed_repo_tag),
+        call(repo_tag=ai.original_repo_tag),
+    ]
+
+    mock_remove_tag_from_registry.assert_has_calls(
+        expected_calls, any_order=False
+    )
 
 
 @pytest.mark.django_db
