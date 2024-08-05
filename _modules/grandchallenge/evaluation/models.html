@@ -504,12 +504,16 @@
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The output interfaces that the algorithms for this phase must use&quot;</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">algorithm_time_limit</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
+    <span class="n">algorithm_time_limit</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="mi">20</span> <span class="o">*</span> <span class="mi">60</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Time limit for inference jobs in seconds&quot;</span><span class="p">,</span>
         <span class="n">validators</span><span class="o">=</span><span class="p">[</span>
-            <span class="n">MinValueValidator</span><span class="p">(</span><span class="n">limit_value</span><span class="o">=</span><span class="mi">300</span><span class="p">),</span>
-            <span class="n">MaxValueValidator</span><span class="p">(</span><span class="n">limit_value</span><span class="o">=</span><span class="mi">18000</span><span class="p">),</span>
+            <span class="n">MinValueValidator</span><span class="p">(</span>
+                <span class="n">limit_value</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">COMPONENTS_MINIMUM_JOB_DURATION</span>
+            <span class="p">),</span>
+            <span class="n">MaxValueValidator</span><span class="p">(</span>
+                <span class="n">limit_value</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">COMPONENTS_MAXIMUM_JOB_DURATION</span>
+            <span class="p">),</span>
         <span class="p">],</span>
     <span class="p">)</span>
     <span class="n">give_algorithm_editors_job_view_permissions</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
@@ -528,6 +532,18 @@
             <span class="s2">&quot;logs and predictions, not the logs and predictions from &quot;</span>
             <span class="s2">&quot;other users. &quot;</span>
         <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">evaluation_time_limit</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">60</span> <span class="o">*</span> <span class="mi">60</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Time limit for evaluation jobs in seconds&quot;</span><span class="p">,</span>
+        <span class="n">validators</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">MinValueValidator</span><span class="p">(</span>
+                <span class="n">limit_value</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">COMPONENTS_MINIMUM_JOB_DURATION</span>
+            <span class="p">),</span>
+            <span class="n">MaxValueValidator</span><span class="p">(</span>
+                <span class="n">limit_value</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">COMPONENTS_MAXIMUM_JOB_DURATION</span>
+            <span class="p">),</span>
+        <span class="p">],</span>
     <span class="p">)</span>
     <span class="n">public</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
