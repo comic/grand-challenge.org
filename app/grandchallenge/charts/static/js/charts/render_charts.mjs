@@ -4,19 +4,11 @@ function renderVegaLiteChart(element) {
 }
 
 document.addEventListener("DOMContentLoaded", function(event) {
-
-    if(document.getElementById("v-pills-tab") === null) {
-        for (const element of document.getElementsByClassName("vega-lite-chart")) {
-            renderVegaLiteChart(element);
-        }
-    }
-});
-
-document.addEventListener("vega.render", function(event) {
     for (const element of document.getElementsByClassName("vega-lite-chart")) {
         renderVegaLiteChart(element);
     }
 });
+
 
 // Lazy rendering
 // Tag the containers with the class 'vega-lite-chart-lazy' to only render

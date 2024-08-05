@@ -1,5 +1,4 @@
 $(document).ready(function() {
-
     const tabSelectors = $('#v-pills-tab a');
 
     const allowedHashes = new Set(
@@ -44,5 +43,4 @@ $(document).ready(function() {
     });
 
     activateLocation();
-    document.dispatchEvent(new Event("vega.render"));
 });
