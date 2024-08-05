@@ -29,6 +29,7 @@ from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.evaluation_tests.factories import (
     EvaluationFactory,
     MethodFactory,
+    PhaseFactory,
     SubmissionFactory,
 )
 from tests.utils import recurse_callbacks
@@ -575,3 +576,30 @@ def test_cache_lock():
                 raise RuntimeError("Test failed, shouldn't hit this line")
         except LockError:
             assert True
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "evaluation_time_limit",
+    (300, 43200),
+)
+def test_evaluation_time_limit_set(
+    django_capture_on_commit_callbacks, evaluation_time_limit
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    phase = PhaseFactory(evaluation_time_limit=evaluation_time_limit)
+    MethodFactory(
+        phase=phase,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        submission = SubmissionFactory(phase=phase)
+
+    evaluation = submission.evaluation_set.get()
+    assert evaluation.time_limit == evaluation_time_limit

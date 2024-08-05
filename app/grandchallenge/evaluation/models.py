@@ -489,6 +489,14 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             "other users. "
         ),
     )
+    evaluation_time_limit = models.PositiveSmallIntegerField(
+        default=60 * 60,
+        help_text="Time limit for evaluation jobs in seconds",
+        validators=[
+            MinValueValidator(limit_value=300),
+            MaxValueValidator(limit_value=43200),  # 12 hours
+        ],
+    )
     public = models.BooleanField(
         default=True,
         help_text=(

@@ -68,16 +68,12 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):
         )
         return
 
-    evaluation, created = Evaluation.objects.get_or_create(
+    evaluation = Evaluation.objects.create(
         submission=submission,
         method=method,
         ground_truth=submission.phase.active_ground_truth,
+        time_limit=submission.phase.evaluation_time_limit,
     )
-    if not created:
-        logger.info(
-            "Evaluation already created for this submission, method and ground truth."
-        )
-        return
 
     if submission.algorithm_image:
         on_commit(
