@@ -480,7 +480,9 @@ def test_display_set_update(
             method=client.post,
         )
 
-    response = do_update()
+    with django_capture_on_commit_callbacks(execute=True):
+        response = do_update()
+
     assert response.status_code == 302
     assert response.headers["HX-Redirect"] == reverse(
         "reader-studies:display_sets", kwargs={"slug": rs.slug}
@@ -500,7 +502,9 @@ def test_display_set_update(
     n_civs_old = ComponentInterfaceValue.objects.count()
 
     # test saving without any changes
-    response = do_update()
+    with django_capture_on_commit_callbacks(execute=True):
+        response = do_update()
+
     assert response.status_code == 302
     assert response.headers["HX-Redirect"] == reverse(
         "reader-studies:display_sets", kwargs={"slug": rs.slug}
@@ -560,19 +564,20 @@ def test_display_set_update(
     n_civs_old = ComponentInterfaceValue.objects.count()
 
     # test removing json file and json value interface values
-    response = get_view_for_user(
-        viewname="reader-studies:display-set-update",
-        client=client,
-        reverse_kwargs={"pk": ds1.pk, "slug": rs.slug},
-        data={
-            ci_img.slug: str(im2.pk),
-            f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
-            "order": 12,
-            "title": "foobar_foobar",
-        },
-        user=user,
-        method=client.post,
-    )
+    with django_capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="reader-studies:display-set-update",
+            client=client,
+            reverse_kwargs={"pk": ds1.pk, "slug": rs.slug},
+            data={
+                ci_img.slug: str(im2.pk),
+                f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
+                "order": 12,
+                "title": "foobar_foobar",
+            },
+            user=user,
+            method=client.post,
+        )
     assert response.status_code == 302
     assert response.headers["HX-Redirect"] == reverse(
         "reader-studies:display_sets", kwargs={"slug": rs.slug}

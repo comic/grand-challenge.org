@@ -12,7 +12,6 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Count, Min, Q, Sum
 from django.db.models.signals import post_delete
-from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.template.defaultfilters import truncatechars, truncatewords
 from django.utils import timezone
@@ -27,14 +26,17 @@ from stdimage import JPEGField
 
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.charts.specs import stacked_bar
-from grandchallenge.components.models import (
+from grandchallenge.components.models import (  # noqa: F401
+    CIVForObjectMixin,
     ComponentImage,
     ComponentInterface,
+    ComponentInterfaceValue,
     ComponentJob,
     ComponentJobManager,
     ImportStatusChoices,
     Tarball,
 )
+from grandchallenge.components.utils import retrieve_existing_civs
 from grandchallenge.core.guardian import get_objects_for_group
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
@@ -633,6 +635,71 @@ class JobManager(ComponentJobManager):
 
         return obj
 
+    @property
+    def non_interface_fields(self):
+        return ["algorithm_image", "algorithm_model", "creator", "time_limit"]
+
+    def get_jobs_with_same_inputs(
+        self, data, algorithm_image, algorithm_model
+    ):
+        civ_data = {
+            k: v for k, v in data.items() if k not in self.non_interface_fields
+        }
+        civs = retrieve_existing_civs(civ_data=civ_data)
+        unique_kwargs = {
+            "algorithm_image": algorithm_image,
+        }
+        input_interface_count = algorithm_image.algorithm.inputs.count()
+        if algorithm_model:
+            unique_kwargs["algorithm_model"] = algorithm_model
+        else:
+            unique_kwargs["algorithm_model__isnull"] = True
+        existing_jobs = (
+            Job.objects.filter(**unique_kwargs)
+            .annotate(
+                inputs_match_count=Count("inputs", filter=Q(inputs__in=civs))
+            )
+            .filter(inputs_match_count=input_interface_count)
+        )
+        return existing_jobs
+
+    def create_and_process_inputs(
+        self,
+        *,
+        data,
+        extra_viewer_groups=None,
+        extra_logs_viewer_groups=None,
+    ):
+        civ_data = {
+            k: v for k, v in data.items() if k not in self.non_interface_fields
+        }
+        non_civ_data = {
+            k: v for k, v in data.items() if k in self.non_interface_fields
+        }
+        job = Job.objects.create(
+            **non_civ_data,
+            extra_viewer_groups=extra_viewer_groups,
+            extra_logs_viewer_groups=extra_logs_viewer_groups,
+        )
+        # local import to avoid circular dependency
+        from grandchallenge.algorithms.tasks import (
+            execute_algorithm_job_for_inputs,
+        )
+
+        linked_task = execute_algorithm_job_for_inputs.signature(
+            kwargs={"job_pk": job.pk}, immutable=True
+        )
+
+        for key, value in civ_data.items():
+            job.create_civ(
+                ci_slug=key,
+                new_value=value,
+                user=data["creator"],
+                linked_task=linked_task,
+            )
+
+        return job
+
     def spent_credits(self, user):
         now = timezone.now()
         period = timedelta(days=30)
@@ -717,7 +784,7 @@ class AlgorithmModelGroupObjectPermission(GroupObjectPermissionBase):
     )
 
 
-class Job(UUIDModel, ComponentJob):
+class Job(UUIDModel, CIVForObjectMixin, ComponentJob):
     objects = JobManager.as_manager()
 
     algorithm_image = models.ForeignKey(
@@ -873,24 +940,13 @@ class Job(UUIDModel, ComponentJob):
     def remove_viewer(self, user):
         return user.groups.remove(self.viewers)
 
-    def sort_inputs_and_execute(
-        self, upload_session_pks=None, user_upload_pks=None
-    ):
-        # Local import to avoid circular dependency
-        from grandchallenge.algorithms.tasks import (
-            run_algorithm_job_for_inputs,
-        )
+    @property
+    def civ_set_lookup(self):
+        return "inputs"
 
-        on_commit(
-            run_algorithm_job_for_inputs.signature(
-                kwargs={
-                    "job_pk": self.pk,
-                    "upload_session_pks": upload_session_pks,
-                    "user_upload_pks": user_upload_pks,
-                },
-                immutable=True,
-            ).apply_async
-        )
+    @property
+    def base_object(self):
+        return self.algorithm_image.algorithm
 
     @property
     def executor_kwargs(self):

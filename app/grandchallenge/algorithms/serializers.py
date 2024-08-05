@@ -11,16 +11,14 @@ from rest_framework.relations import (
 )
 
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
-from grandchallenge.components.models import (
-    ComponentInterface,
-    ComponentInterfaceValue,
-)
+from grandchallenge.components.models import ComponentInterface
 from grandchallenge.components.serializers import (
     ComponentInterfaceSerializer,
     ComponentInterfaceValuePostSerializer,
     ComponentInterfaceValueSerializer,
     HyperlinkedComponentInterfaceValueSerializer,
 )
+from grandchallenge.components.utils import reformat_inputs
 from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.hanging_protocols.serializers import (
     HangingProtocolSerializer,
@@ -174,18 +172,19 @@ class JobPostSerializer(JobSerializer):
             )
 
     def validate(self, data):
-        alg = data.pop("algorithm")
+        self._algorithm = data.pop("algorithm")
         user = self.context["request"].user
 
-        if not alg.active_image:
+        if not self._algorithm.active_image:
             raise serializers.ValidationError(
                 "Algorithm image is not ready to be used"
             )
         data["creator"] = user
-        data["algorithm_image"] = alg.active_image
-        data["algorithm_model"] = alg.active_model
+        data["algorithm_image"] = self._algorithm.active_image
+        data["algorithm_model"] = self._algorithm.active_model
+        data["time_limit"] = self._algorithm.time_limit
 
-        jobs_limit = alg.active_image.algorithm.get_jobs_limit(
+        jobs_limit = self._algorithm.active_image.algorithm.get_jobs_limit(
             user=data["creator"]
         )
         if jobs_limit is not None and jobs_limit < 1:
@@ -195,7 +194,7 @@ class JobPostSerializer(JobSerializer):
 
         # validate that no inputs are provided that are not configured for the
         # algorithm and that all interfaces without defaults are provided
-        algorithm_input_pks = {a.pk for a in alg.inputs.all()}
+        algorithm_input_pks = {a.pk for a in self._algorithm.inputs.all()}
         input_pks = {i["interface"].pk for i in data["inputs"]}
 
         # surplus inputs: provided but interfaces not configured for the algorithm
@@ -209,7 +208,7 @@ class JobPostSerializer(JobSerializer):
             )
 
         # missing inputs
-        missing = alg.inputs.filter(
+        missing = self._algorithm.inputs.filter(
             id__in=list(algorithm_input_pks - input_pks),
             default_value__isnull=True,
         )
@@ -219,63 +218,39 @@ class JobPostSerializer(JobSerializer):
                 f"Interface(s) {titles} do not have a default value and should be provided."
             )
 
-        return data
+        inputs = data.pop("inputs")
 
-    def create(self, validated_data):
-        inputs_data = validated_data.pop("inputs")
-
-        component_interface_values = []
-        upload_session_pks = {}
-        user_upload_pks = {}
-
-        for input_data in inputs_data:
-            # check for upload_session in input
-            upload_session = input_data.pop("upload_session", None)
-            user_upload = input_data.pop("user_upload", None)
-            civ = ComponentInterfaceValue(**input_data)
-            if upload_session:
-                # CIVs with upload sessions cannot be validated, done in
-                # run_algorithm_job_for_inputs
-                civ.save()
-                upload_session_pks[civ.pk] = upload_session.pk
-            elif civ.interface.requires_file and user_upload:
-                civ.save()
-                user_upload_pks[civ.pk] = user_upload.pk
-            else:
-                civ.full_clean()
-                civ.save()
-            component_interface_values.append(civ)
-
-        # use interface defaults if no value was provided
-        algorithm_input_pks = {
-            a.pk
-            for a in validated_data["algorithm_image"].algorithm.inputs.all()
-        }
-        input_pks = {i["interface"].pk for i in inputs_data}
-        defaults = validated_data["algorithm_image"].algorithm.inputs.filter(
+        default_inputs = self._algorithm.inputs.filter(
             id__in=list(algorithm_input_pks - input_pks),
             default_value__isnull=False,
         )
+        # Use default interface values if not present
+        for interface in default_inputs:
+            if interface.default_value:
+                inputs.append(
+                    {"interface": interface, "value": interface.default_value}
+                )
 
-        for d in defaults:
-            civ = ComponentInterfaceValue(
-                interface_id=d.id, value=d.default_value
+        reformatted_inputs = reformat_inputs(serialized_civs=inputs)
+        data.update(reformatted_inputs)
+
+        if Job.objects.get_jobs_with_same_inputs(
+            data=data,
+            algorithm_image=data["algorithm_image"],
+            algorithm_model=data["algorithm_model"],
+        ):
+            raise serializers.ValidationError(
+                "A result for these inputs with the current image "
+                "and model already exists."
             )
-            civ.full_clean()
-            civ.save()
-            component_interface_values.append(civ)
 
-        job = Job.objects.create(
-            **validated_data,
+        return data
+
+    def create(self, validated_data):
+        job = Job.objects.create_and_process_inputs(
+            data=validated_data,
             extra_logs_viewer_groups=[
                 validated_data["algorithm_image"].algorithm.editors_group
             ],
-            input_civ_set=component_interface_values,
-            time_limit=validated_data["algorithm_image"].algorithm.time_limit,
         )
-        job.sort_inputs_and_execute(
-            upload_session_pks=upload_session_pks,
-            user_upload_pks=user_upload_pks,
-        )
-
         return job

@@ -57,6 +57,9 @@ from grandchallenge.core.storage import (
     private_s3_storage,
     protected_s3_storage,
 )
+from grandchallenge.core.utils.error_messages import (
+    format_validation_error_message,
+)
 from grandchallenge.core.validators import (
     ExtensionValidator,
     JSONSchemaValidator,
@@ -2071,10 +2074,12 @@ class CIVSetObjectPermissionsMixin:
 
 
 class CIVForObjectMixin:
-    def create_civ(self, *, ci_slug, new_value, user=None):
+    def create_civ(self, *, ci_slug, new_value, user=None, linked_task=None):
         ci = ComponentInterface.objects.get(slug=ci_slug)
         try:
-            current_civ = self.values.filter(interface=ci).get()
+            current_civ = (
+                getattr(self, self.civ_set_lookup).filter(interface=ci).get()
+            )
         except ObjectDoesNotExist:
             current_civ = None
         except MultipleObjectsReturned as e:
@@ -2082,46 +2087,76 @@ class CIVForObjectMixin:
 
         if ci.is_json_kind and not ci.requires_file:
             return self.create_civ_for_value(
-                ci=ci, current_civ=current_civ, new_value=new_value
+                ci=ci,
+                current_civ=current_civ,
+                new_value=new_value,
+                linked_task=linked_task,
             )
         elif ci.is_image_kind:
             return self.create_civ_for_image(
-                ci=ci, current_civ=current_civ, new_value=new_value, user=user
+                ci=ci,
+                current_civ=current_civ,
+                new_value=new_value,
+                user=user,
+                linked_task=linked_task,
             )
         elif ci.requires_file:
             return self.create_civ_for_file(
-                ci=ci, current_civ=current_civ, new_value=new_value
+                ci=ci,
+                current_civ=current_civ,
+                new_value=new_value,
+                linked_task=linked_task,
             )
         else:
             NotImplementedError(f"CIV creation for {ci} not handled.")
 
-    def create_civ_for_value(self, *, ci, current_civ, new_value):
+    def create_civ_for_value(self, *, ci, current_civ, new_value, linked_task):
         current_value = current_civ.value if current_civ else None
-        civ = ComponentInterfaceValue(interface=ci, value=new_value)
+        if new_value is not None:
+            civ, created = ComponentInterfaceValue.objects.get_or_create(
+                interface=ci, value=new_value
+            )
+        else:
+            civ = ComponentInterfaceValue(interface=ci)
         if current_value != new_value or (
             current_civ is None and new_value is None
         ):
             try:
                 civ.full_clean()
                 civ.save()
-                self.values.remove(current_civ)
-                self.values.add(civ)
+                getattr(self, self.civ_set_lookup).remove(current_civ)
+                getattr(self, self.civ_set_lookup).add(civ)
             except ValidationError as e:
                 if new_value:
-                    raise e
+                    if hasattr(self, "error_message"):
+                        self.status = self.CANCELLED
+                        self.error_message = format_validation_error_message(e)
+                        self.save()
+                    else:
+                        raise e
                 else:
-                    self.values.remove(current_civ)
+                    getattr(self, self.civ_set_lookup).remove(current_civ)
 
-    def create_civ_for_image(self, *, ci, current_civ, new_value, user):
+            if linked_task is not None:
+                on_commit(signature(linked_task).apply_async)
+
+    def create_civ_for_image(
+        self, *, ci, current_civ, new_value, user, linked_task
+    ):
         current_image = current_civ.image if current_civ else None
         if isinstance(new_value, Image) and current_image != new_value:
-            self.values.remove(current_civ)
+            getattr(self, self.civ_set_lookup).remove(current_civ)
             civ, created = ComponentInterfaceValue.objects.get_or_create(
                 interface=ci, image=new_value
             )
+
             if created:
                 civ.full_clean()
-            self.values.add(civ)
+            getattr(self, self.civ_set_lookup).add(civ)
+
+            if linked_task is not None:
+                on_commit(signature(linked_task).apply_async)
+
         elif isinstance(new_value, (QuerySet, RawImageUploadSession)):
             # Local import to avoid circular dependency
             from grandchallenge.components.tasks import add_image_to_object
@@ -2141,18 +2176,23 @@ class CIVForObjectMixin:
                         "model_name": self._meta.model_name,
                         "object_pk": self.pk,
                         "interface_pk": str(ci.pk),
+                        "linked_task": linked_task,
                     },
                     immutable=True,
-                )
+                ),
             )
 
-    def create_civ_for_file(self, *, ci, current_civ, new_value):
+    def create_civ_for_file(self, *, ci, current_civ, new_value, linked_task):
         if (
             isinstance(new_value, ComponentInterfaceValue)
             and current_civ != new_value
         ):
-            self.values.remove(current_civ)
-            self.values.add(new_value)
+            getattr(self, self.civ_set_lookup).remove(current_civ)
+            getattr(self, self.civ_set_lookup).add(new_value)
+
+            if linked_task is not None:
+                on_commit(signature(linked_task).apply_async)
+
         elif isinstance(new_value, UserUpload):
             from grandchallenge.components.tasks import add_file_to_object
 
@@ -2165,13 +2205,14 @@ class CIVForObjectMixin:
                         "interface_pk": str(ci.pk),
                         "object_pk": self.pk,
                         "civ_pk": current_civ.pk if current_civ else None,
+                        "linked_task": linked_task,
                     }
                 ).apply_async
             )
         elif not new_value:
             # if no new value is provided (user selects '---' in dropdown)
             # delete old CIV
-            self.values.remove(current_civ)
+            getattr(self, self.civ_set_lookup).remove(current_civ)
 
 
 class InterfacesAndValues(NamedTuple):

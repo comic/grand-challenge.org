@@ -359,6 +359,10 @@ class ArchiveItem(
     def is_editable(self):
         return True
 
+    @property
+    def civ_set_lookup(self):
+        return "values"
+
 
 class ArchiveItemUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(ArchiveItem, on_delete=models.CASCADE)

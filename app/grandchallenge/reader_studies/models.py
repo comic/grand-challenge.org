@@ -908,6 +908,10 @@ class DisplaySet(
             kwargs={"slug": self.base_object.slug, "pk": self.pk},
         )
 
+    @property
+    def civ_set_lookup(self):
+        return "values"
+
 
 class DisplaySetUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(DisplaySet, on_delete=models.CASCADE)

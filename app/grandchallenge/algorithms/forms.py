@@ -1,3 +1,4 @@
+import logging
 import re
 from itertools import chain
 from urllib.parse import urlparse
@@ -86,6 +87,9 @@ class ModelFactsTextField(Field):
     template = "algorithms/model_facts_field.html"
 
 
+logger = logging.getLogger(__name__)
+
+
 class JobCreateForm(SaveFormInitMixin, Form):
     algorithm_image = ModelChoiceField(
         queryset=None, disabled=True, required=True, widget=HiddenInput
@@ -93,12 +97,23 @@ class JobCreateForm(SaveFormInitMixin, Form):
     algorithm_model = ModelChoiceField(
         queryset=None, disabled=True, required=False, widget=HiddenInput
     )
+    creator = ModelChoiceField(
+        queryset=None, disabled=True, required=False, widget=HiddenInput
+    )
+    time_limit = IntegerField(
+        disabled=True, required=False, widget=HiddenInput
+    )
 
     def __init__(self, *args, algorithm, user, **kwargs):
         super().__init__(*args, **kwargs)
 
         self._algorithm = algorithm
         self._user = user
+        self.fields["creator"].queryset = get_user_model().objects.filter(
+            pk=self._user.pk
+        )
+        self.fields["creator"].initial = self._user
+        self.fields["time_limit"].initial = self._algorithm.time_limit
 
         self.helper = FormHelper()
 
@@ -138,6 +153,16 @@ class JobCreateForm(SaveFormInitMixin, Form):
 
         if not cleaned_data.get("algorithm_image"):
             raise ValidationError("This algorithm is not ready to be used")
+
+        if Job.objects.get_jobs_with_same_inputs(
+            data=cleaned_data,
+            algorithm_image=cleaned_data["algorithm_image"],
+            algorithm_model=cleaned_data["algorithm_model"],
+        ):
+            raise ValidationError(
+                "A result for these inputs with the current image "
+                "and model already exists."
+            )
 
         return cleaned_data
 
