@@ -23,7 +23,9 @@ def test_notification_list_view_num_queries(client, django_assert_num_queries):
     user1 = UserFactory()
     phase = PhaseFactory()
     eval = EvaluationFactory(
-        submission__phase=phase, status=Evaluation.FAILURE
+        submission__phase=phase,
+        status=Evaluation.FAILURE,
+        time_limit=phase.evaluation_time_limit,
     )
 
     # delete all prior notifications for easier testing below

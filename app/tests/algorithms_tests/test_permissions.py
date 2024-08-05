@@ -141,10 +141,14 @@ def test_api_job_list_permissions(client):
     j1_creator, j2_creator = UserFactory(), UserFactory()
 
     alg1_job = AlgorithmJobFactory(
-        algorithm_image__algorithm=alg_set.alg1, creator=j1_creator
+        algorithm_image__algorithm=alg_set.alg1,
+        creator=j1_creator,
+        time_limit=alg_set.alg1.time_limit,
     )
     alg2_job = AlgorithmJobFactory(
-        algorithm_image__algorithm=alg_set.alg2, creator=j2_creator
+        algorithm_image__algorithm=alg_set.alg2,
+        creator=j2_creator,
+        time_limit=alg_set.alg2.time_limit,
     )
 
     alg1_job.viewer_groups.add(alg_set.alg1.editors_group)
@@ -253,7 +257,7 @@ def test_public_job_group_permissions():
         name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
     )
     g_reg = Group.objects.get(name=settings.REGISTERED_USERS_GROUP_NAME)
-    algorithm_job = AlgorithmJobFactory()
+    algorithm_job = AlgorithmJobFactory(time_limit=60)
 
     assert "view_job" not in get_perms(g_reg, algorithm_job)
     assert "view_job" not in get_perms(g_reg_anon, algorithm_job)
@@ -425,7 +429,9 @@ class TestJobPermissions:
         ai = AlgorithmImageFactory()
         archive = ArchiveFactory()
         evaluation = EvaluationFactory(
-            submission__phase__archive=archive, submission__algorithm_image=ai
+            submission__phase__archive=archive,
+            submission__algorithm_image=ai,
+            time_limit=ai.algorithm.time_limit,
         )
 
         # The default should be not to share the jobs
@@ -482,7 +488,9 @@ class TestJobPermissions:
         ai = AlgorithmImageFactory()
         archive = ArchiveFactory()
         evaluation = EvaluationFactory(
-            submission__phase__archive=archive, submission__algorithm_image=ai
+            submission__phase__archive=archive,
+            submission__algorithm_image=ai,
+            time_limit=ai.algorithm.time_limit,
         )
 
         evaluation.submission.phase.give_algorithm_editors_job_view_permissions = (

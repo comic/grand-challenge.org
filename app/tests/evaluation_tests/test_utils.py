@@ -126,7 +126,11 @@ def test_calculate_ranks(
     ]
 
     queryset = [
-        EvaluationFactory(submission__phase=phase, status=Evaluation.SUCCESS)
+        EvaluationFactory(
+            submission__phase=phase,
+            status=Evaluation.SUCCESS,
+            time_limit=phase.evaluation_time_limit,
+        )
         for _ in range(len(results))
     ]
 
@@ -280,7 +284,11 @@ def test_calculate_ranks_with_exclusion(
     ]
 
     queryset = [
-        EvaluationFactory(submission__phase=phase, status=Evaluation.SUCCESS)
+        EvaluationFactory(
+            submission__phase=phase,
+            status=Evaluation.SUCCESS,
+            time_limit=phase.evaluation_time_limit,
+        )
         for _ in range(len(results))
     ]
 
@@ -336,6 +344,7 @@ def test_results_display():
             submission__phase=phase,
             submission__creator=r[creator],
             status=Evaluation.SUCCESS,
+            time_limit=phase.evaluation_time_limit,
         )
         for r in results
     ]
@@ -400,7 +409,11 @@ def test_null_results():
     results = [{"a": 0.6}, {"a": None}]
 
     queryset = [
-        EvaluationFactory(submission__phase=phase, status=Evaluation.SUCCESS)
+        EvaluationFactory(
+            submission__phase=phase,
+            status=Evaluation.SUCCESS,
+            time_limit=phase.evaluation_time_limit,
+        )
         for _ in range(len(results))
     ]
 

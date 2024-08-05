@@ -20,7 +20,7 @@ def test_image_permission_with_public_job():
     )
     g_reg = Group.objects.get(name=settings.REGISTERED_USERS_GROUP_NAME)
 
-    job = AlgorithmJobFactory()
+    job = AlgorithmJobFactory(time_limit=60)
 
     output_image = ImageFactory()
     civ = ComponentInterfaceValueFactory(image=output_image)
@@ -55,7 +55,7 @@ def test_add_image_to_public_result():
     )
     g_reg = Group.objects.get(name=settings.REGISTERED_USERS_GROUP_NAME)
 
-    job = AlgorithmJobFactory(public=True)
+    job = AlgorithmJobFactory(public=True, time_limit=60)
     civ_images = (
         ComponentInterfaceValueFactory(image=ImageFactory()),
         ComponentInterfaceValueFactory(image=ImageFactory()),
@@ -92,8 +92,8 @@ def test_used_by_other_public_result_permissions():
     )
     g_reg = Group.objects.get(name=settings.REGISTERED_USERS_GROUP_NAME)
 
-    j1 = AlgorithmJobFactory(public=True)
-    j2 = AlgorithmJobFactory(public=True)
+    j1 = AlgorithmJobFactory(public=True, time_limit=60)
+    j2 = AlgorithmJobFactory(public=True, time_limit=60)
 
     shared_image = ImageFactory()
 
@@ -131,7 +131,7 @@ def test_change_job_image():
     )
     g_reg = Group.objects.get(name=settings.REGISTERED_USERS_GROUP_NAME)
 
-    job = AlgorithmJobFactory(public=True)
+    job = AlgorithmJobFactory(public=True, time_limit=60)
 
     assert "view_image" not in get_perms(g_reg, job.inputs.first().image)
     assert "view_image" in get_perms(g_reg_anon, job.inputs.first().image)
@@ -147,7 +147,7 @@ def test_view_permission_when_reused(
     """When an image is reused it should have view_image set correctly"""
     im = ImageFactory()
 
-    job = AlgorithmJobFactory()
+    job = AlgorithmJobFactory(time_limit=60)
     rs = ReaderStudyFactory()
     archive = ArchiveFactory()
     civ = ComponentInterfaceValueFactory(image=im)

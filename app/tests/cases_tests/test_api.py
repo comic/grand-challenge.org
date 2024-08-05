@@ -182,7 +182,9 @@ def test_filter_origin_images_api_view(client):
     user = UserFactory()
     alg.add_editor(user=user)
 
-    alg_job = AlgorithmJobFactory(algorithm_image__algorithm=alg, creator=user)
+    alg_job = AlgorithmJobFactory(
+        algorithm_image__algorithm=alg, creator=user, time_limit=60
+    )
 
     im = ImageFactory()
     civ = ComponentInterfaceValueFactory(image=im)
