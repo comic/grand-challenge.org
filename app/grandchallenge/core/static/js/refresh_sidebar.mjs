@@ -44,5 +44,5 @@ $(document).ready(function() {
     });
 
     activateLocation();
-    document.dispatchEvent(new Event("vega.render"));
+    window.dispatchEvent(new Event('resize'))
 });
