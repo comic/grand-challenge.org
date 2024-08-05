@@ -12,6 +12,7 @@ from lzma import LZMAError
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
+import boto3
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import shared_task  # noqa: I251 TODO needs to be refactored
 from django.apps import apps
@@ -258,33 +259,24 @@ def push_container_image(*, instance):
 
 
 def remove_tag_from_registry(*, repo_tag):
-    try:
-        digest_cmd = _repo_login_and_run(command=["crane", "digest", repo_tag])
-    except subprocess.CalledProcessError as error:
-        if "MANIFEST_UNKNOWN: Requested image not found" in getattr(
-            error, "stderr", ""
-        ):
-            # The image has already been deleted
-            return
-        else:
-            raise error
+    if settings.COMPONENTS_REGISTRY_INSECURE:
+        raise NotImplementedError
+    else:
+        client = boto3.client(
+            "ecr", region_name=settings.COMPONENTS_AMAZON_ECR_REGION
+        )
 
-    digests = digest_cmd.stdout.splitlines()
+        repo_name, image_tag = repo_tag.rsplit(":", 1)
+        repo_name = repo_name.replace(
+            f"{settings.COMPONENTS_REGISTRY_URL}/", "", 1
+        )
 
-    for digest in digests:
-        try:
-            _repo_login_and_run(
-                command=["crane", "delete", f"{repo_tag}@{digest}"]
-            )
-        except subprocess.CalledProcessError as error:
-            if "MANIFEST_UNKNOWN: Requested image not found" in getattr(
-                error, "stderr", ""
-            ):
-                # The digest has already been deleted, could be
-                # caused by parallel processes deleting the same image
-                continue
-            else:
-                raise error
+        client.batch_delete_image(
+            repositoryName=repo_name,
+            imageIds=[
+                {"imageTag": image_tag},
+            ],
+        )
 
 
 def _repo_login_and_run(*, command):
