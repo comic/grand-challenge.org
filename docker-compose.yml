@@ -104,35 +104,6 @@ services:
     command: redis-server --appendonly yes
     restart: always
 
-  celery_worker:
-    image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
-    environment:
-      <<: [*postgres-env, *minio-env]
-      COMPONENTS_REGISTRY_INSECURE: 'true'
-      COMPONENTS_DEFAULT_BACKEND: 'tests.components_tests.resources.backends.InsecureDockerExecutor'
-      COMPONENTS_DOCKER_KEEP_CAPS_UNSAFE: 'true'
-      USING_MINIO: 'true'
-      DEBUG: 'true'
-      PYTHONDONTWRITEBYTECODE: 1
-    restart: always
-    command: watchfiles --filter python "celery --app config worker --loglevel info --concurrency 1 --pool prefork --queues celery" /app
-    scale: 1
-    hostname: "celery-worker"
-    depends_on:
-      web:
-        condition: service_started
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_started
-      registry:
-        condition: service_started
-    volumes:
-      # Bind the app directory for live reloading in development
-      - type: bind
-        source: ./app
-        target: /app/
-
   celery_worker_evaluation:
     image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
     environment:
