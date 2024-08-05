@@ -76,13 +76,22 @@ class TestHangingProtocolSerializer:
         )
 
     def test_optional_hanging_protocol_serializer_field(
-        self, rf, factory, item_factory, relation, serializer
+        self,
+        rf,
+        factory,
+        item_factory,
+        item_factory_kwargs,
+        relation,
+        serializer,
     ):
         """Each item should get the optional hanging protocol from the parent"""
         hps = HangingProtocolFactory.create_batch(3)
         object = factory()
         object.optional_hanging_protocols.set(hps)
-        item = item_factory(**{relation: object})
+
+        item_factory_kwargs.update({relation: object})
+
+        item = item_factory(**item_factory_kwargs)
 
         request = rf.get("/foo")
         request.user = UserFactory()
@@ -96,12 +105,20 @@ class TestHangingProtocolSerializer:
             assert protocol["svg_icon"] == hp.svg_icon
 
     def test_no_optional_hanging_protocol_serializer_field(
-        self, rf, factory, item_factory, relation, serializer
+        self,
+        rf,
+        factory,
+        item_factory,
+        item_factory_kwargs,
+        relation,
+        serializer,
     ):
         """If no optional hanging protocols are present, none should be serialized"""
         object = factory()
 
-        item = item_factory(**{relation: object})
+        item_factory_kwargs.update({relation: object})
+
+        item = item_factory(**item_factory_kwargs)
 
         request = rf.get("/foo")
         request.user = UserFactory()
