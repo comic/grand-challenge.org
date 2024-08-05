@@ -81,12 +81,14 @@ class PhaseAdmin(admin.ModelAdmin):
         "submissions_close_at",
         "submissions_limit_per_user_per_period",
         "give_algorithm_editors_job_view_permissions",
+        "external_evaluation",
     )
     search_fields = ("pk", "title", "slug", "challenge__short_name")
     list_filter = (
         "submission_kind",
         "give_algorithm_editors_job_view_permissions",
         "challenge__short_name",
+        "external_evaluation",
     )
     autocomplete_fields = (
         "inputs",

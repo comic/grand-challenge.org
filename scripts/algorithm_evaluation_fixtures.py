@@ -138,6 +138,8 @@ def _create_challenge(
     with _gc_demo_algorithm() as container:
         m.image.save("algorithm_io.tar", container)
 
+    return c
+
 
 def _create_algorithm(*, creator, inputs, outputs, suffix):
     algorithm = Algorithm.objects.create(

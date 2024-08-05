@@ -555,6 +555,9 @@ class AlgorithmImage(UUIDModel, ComponentImage):
 
     class Meta(UUIDModel.Meta, ComponentImage.Meta):
         ordering = ("created", "creator")
+        permissions = [
+            ("download_algorithmimage", "Can download algorithm image")
+        ]
 
     def __str__(self):
         out = f"Algorithm image {self.pk} for {self.algorithm}"
@@ -676,6 +679,11 @@ class AlgorithmModel(Tarball):
         ),
         storage=protected_s3_storage,
     )
+
+    class Meta(Tarball.Meta):
+        permissions = [
+            ("download_algorithmmodel", "Can download algorithm model")
+        ]
 
     @property
     def linked_file(self):

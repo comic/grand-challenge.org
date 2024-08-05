@@ -2,6 +2,8 @@ from django.conf import settings
 from django.urls import path, register_converter
 
 from grandchallenge.serving.views import (
+    serve_algorithm_images,
+    serve_algorithm_models,
     serve_component_interface_value,
     serve_images,
     serve_session_feedback_screenshot,
@@ -63,6 +65,27 @@ urlpatterns = [
             "<path:path>"
         ),
         serve_structured_challenge_submission_form,
+    ),
+    path(
+        (
+            "docker/"
+            "images/"
+            "algorithms/"
+            "algorithmimage/"
+            "<uuid:algorithmimage_pk>/"
+            "<path:path>"
+        ),
+        serve_algorithm_images,
+    ),
+    path(
+        (
+            "models/"
+            "algorithms/"
+            "algorithmmodel/"
+            "<uuid:algorithmmodel_pk>/"
+            "<path:path>"
+        ),
+        serve_algorithm_models,
     ),
     path(
         "session-feedback/<uuid:feedback_pk>/<path:path>",

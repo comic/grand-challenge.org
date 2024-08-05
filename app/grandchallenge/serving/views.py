@@ -8,6 +8,7 @@ from guardian.utils import get_anonymous_user
 from knox.auth import TokenAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
+from grandchallenge.algorithms.models import AlgorithmImage, AlgorithmModel
 from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import ChallengeRequest
 from grandchallenge.components.models import ComponentInterfaceValue
@@ -45,6 +46,8 @@ def _create_download(
     component_interface_value=None,
     challenge_request=None,
     feedback=None,
+    algorithm_model=None,
+    algorithm_image=None,
 ):
     if creator.is_anonymous:
         creator = get_anonymous_user()
@@ -65,6 +68,12 @@ def _create_download(
 
     if feedback is not None:
         kwargs["feedback"] = feedback
+
+    if algorithm_model is not None:
+        kwargs["algorithm_model"] = algorithm_model
+
+    if algorithm_image is not None:
+        kwargs["algorithm_image"] = algorithm_image
 
     if len(kwargs) != 2:
         raise RuntimeError(
@@ -185,3 +194,45 @@ def serve_session_feedback_screenshot(request, *, feedback_pk, **_):
         )
     else:
         raise PermissionDenied
+
+
+def serve_algorithm_images(request, *, algorithmimage_pk, **_):
+    try:
+        image = AlgorithmImage.objects.get(pk=algorithmimage_pk)
+    except AlgorithmImage.DoesNotExist:
+        raise Http404("Algorithm image not found.")
+
+    try:
+        user, _ = TokenAuthentication().authenticate(request)
+    except (AuthenticationFailed, TypeError):
+        user = request.user
+
+    if user.has_perm("download_algorithmimage", image):
+        return protected_storage_redirect(
+            name=image.image.name,
+            creator=request.user,
+            algorithm_image=image,
+        )
+
+    raise PermissionDenied
+
+
+def serve_algorithm_models(request, *, algorithmmodel_pk, **_):
+    try:
+        model = AlgorithmModel.objects.get(pk=algorithmmodel_pk)
+    except AlgorithmModel.DoesNotExist:
+        raise Http404("Algorithm model not found.")
+
+    try:
+        user, _ = TokenAuthentication().authenticate(request)
+    except (AuthenticationFailed, TypeError):
+        user = request.user
+
+    if user.has_perm("download_algorithmmodel", model):
+        return protected_storage_redirect(
+            name=model.model.name,
+            creator=request.user,
+            algorithm_model=model,
+        )
+
+    raise PermissionDenied

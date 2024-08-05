@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -16,7 +17,10 @@ from grandchallenge.components.tasks import (
     validate_docker_image,
 )
 from grandchallenge.evaluation.models import Evaluation, Method
-from grandchallenge.evaluation.tasks import set_evaluation_inputs
+from grandchallenge.evaluation.tasks import (
+    cancel_external_evaluations_past_timeout,
+    set_evaluation_inputs,
+)
 from grandchallenge.notifications.models import Notification
 from grandchallenge.profiles.templatetags.profiles import user_profile_link
 from tests.algorithms_tests.factories import (
@@ -31,6 +35,7 @@ from tests.evaluation_tests.factories import (
     MethodFactory,
     SubmissionFactory,
 )
+from tests.factories import ChallengeFactory, UserFactory
 from tests.utils import recurse_callbacks
 
 
@@ -575,3 +580,83 @@ def test_cache_lock():
                 raise RuntimeError("Test failed, shouldn't hit this line")
         except LockError:
             assert True
+
+
+@pytest.mark.django_db
+def test_cancel_external_evaluations_past_timeout(settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    challenge = ChallengeFactory()
+    participant = UserFactory()
+    admin = challenge.admins_group.user_set.get()
+    challenge.add_participant(participant)
+
+    e1 = EvaluationFactory(
+        status=Evaluation.CLAIMED,
+        started_at=datetime.now() - timedelta(days=2),
+        submission__phase__external_evaluation=True,
+        submission__phase__challenge=challenge,
+        submission__creator=participant,
+    )
+    e2 = EvaluationFactory(
+        status=Evaluation.CLAIMED,
+        started_at=datetime.now() - timedelta(days=2),
+        submission__phase__external_evaluation=True,
+        submission__phase__challenge=challenge,
+        submission__creator=participant,
+    )
+    e3 = EvaluationFactory(
+        status=Evaluation.CLAIMED,
+        started_at=datetime.now(),
+        submission__phase__external_evaluation=True,
+        submission__phase__challenge=challenge,
+        submission__creator=participant,
+    )
+    e4 = EvaluationFactory(
+        status=Evaluation.SUCCESS,
+        submission__phase__external_evaluation=True,
+        submission__phase__challenge=challenge,
+        submission__creator=participant,
+    )
+    e5 = EvaluationFactory(
+        status=Evaluation.FAILURE,
+        submission__phase__external_evaluation=True,
+        submission__phase__challenge=challenge,
+        submission__creator=participant,
+    )
+    e6 = EvaluationFactory(
+        submission__phase__challenge=challenge, submission__creator=participant
+    )
+
+    # reset notifications
+    Notification.objects.all().delete()
+
+    cancel_external_evaluations_past_timeout()
+
+    e1.refresh_from_db()
+    e2.refresh_from_db()
+    e3.refresh_from_db()
+    e4.refresh_from_db()
+    e5.refresh_from_db()
+    e6.refresh_from_db()
+
+    assert e1.status == Evaluation.CANCELLED
+    assert e2.status == Evaluation.CANCELLED
+    assert e1.error_message == "External evaluation timed out."
+    assert e2.error_message == "External evaluation timed out."
+    for e in [e3, e4, e5, e6]:
+        assert e.status != Evaluation.CANCELLED
+        assert e.error_message == ""
+
+    assert Notification.objects.count() == 4
+    receivers = [
+        notification.user for notification in Notification.objects.all()
+    ]
+    assert {admin, participant} == set(receivers)
+    for notification in Notification.objects.all():
+        assert (
+            "External evaluation timed out."
+            in notification.print_notification(user=notification.user)
+        )

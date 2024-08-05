@@ -1,11 +1,17 @@
 import pytest
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.algorithms.models import Job
+from grandchallenge.algorithms.serializers import (
+    AlgorithmImageSerializer,
+    AlgorithmModelSerializer,
+)
 from grandchallenge.components.models import InterfaceKind
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
     AlgorithmJobFactory,
+    AlgorithmModelFactory,
 )
 from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.factories import UserFactory
@@ -104,3 +110,59 @@ def test_job_list_view_num_queries(
         # Sanity checks
         assert response.status_code == 200
         assert len(response.json()["results"]) == num_jobs
+
+
+@pytest.mark.django_db
+def test_algorithm_image_download_url(
+    client, django_capture_on_commit_callbacks, algorithm_io_image, rf
+):
+    user1, user2 = UserFactory.create_batch(2)
+    with django_capture_on_commit_callbacks():
+        ai = AlgorithmImageFactory(image__from_path=algorithm_io_image)
+    assign_perm("algorithms.download_algorithmimage", user1, ai)
+
+    serialized_ai = AlgorithmImageSerializer(
+        ai, context={"request": rf.get("/foo", secure=True)}
+    ).data
+
+    resp = get_view_for_user(
+        url=serialized_ai["image"], client=client, user=user2
+    )
+    assert resp.status_code == 403
+
+    resp = get_view_for_user(
+        url=serialized_ai["image"], client=client, user=user1
+    )
+    assert resp.status_code == 302
+    assert (
+        f"grand-challenge-protected/docker/images/algorithms/algorithmimage/{ai.pk}/algorithm-io-latest.tar"
+        in str(resp.url)
+    )
+
+
+@pytest.mark.django_db
+def test_algorithm_model_download_url(
+    client, django_capture_on_commit_callbacks, algorithm_io_image, rf
+):
+    user1, user2 = UserFactory.create_batch(2)
+    with django_capture_on_commit_callbacks():
+        model = AlgorithmModelFactory(model__from_path=algorithm_io_image)
+    assign_perm("algorithms.download_algorithmmodel", user1, model)
+
+    serialized_model = AlgorithmModelSerializer(
+        model, context={"request": rf.get("/foo", secure=True)}
+    ).data
+
+    resp = get_view_for_user(
+        url=serialized_model["model"], client=client, user=user2
+    )
+    assert resp.status_code == 403
+
+    resp = get_view_for_user(
+        url=serialized_model["model"], client=client, user=user1
+    )
+    assert resp.status_code == 302
+    assert (
+        f"grand-challenge-protected/models/algorithms/algorithmmodel/{model.pk}/algorithm-io-latest.tar"
+        in str(resp.url)
+    )

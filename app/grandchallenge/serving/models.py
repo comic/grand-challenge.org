@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 
+from grandchallenge.algorithms.models import AlgorithmImage, AlgorithmModel
 from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import ChallengeRequest
 from grandchallenge.components.models import ComponentInterfaceValue
@@ -35,4 +36,10 @@ class Download(models.Model):
     )
     feedback = models.ForeignKey(
         Feedback, null=True, on_delete=models.CASCADE, editable=False
+    )
+    algorithm_model = models.ForeignKey(
+        AlgorithmModel, null=True, on_delete=models.CASCADE, editable=False
+    )
+    algorithm_image = models.ForeignKey(
+        AlgorithmImage, null=True, on_delete=models.CASCADE, editable=False
     )

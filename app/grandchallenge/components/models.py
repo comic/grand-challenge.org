@@ -1456,6 +1456,7 @@ class ComponentJobManager(models.QuerySet):
                 ComponentJob.SUCCESS,
                 ComponentJob.CANCELLED,
                 ComponentJob.FAILURE,
+                ComponentJob.CLAIMED,
             ]
         )
 
@@ -1475,6 +1476,7 @@ class ComponentJob(models.Model):
     EXECUTED = 9
     PARSING = 10
     EXECUTING_PREREQUISITES = 11
+    CLAIMED = 12
 
     STATUS_CHOICES = (
         (PENDING, "Queued"),
@@ -1489,6 +1491,7 @@ class ComponentJob(models.Model):
         (EXECUTED, "Executed"),
         (PARSING, "Parsing Outputs"),
         (EXECUTING_PREREQUISITES, "Executing Algorithm"),
+        (CLAIMED, "External Execution In Progress"),
     )
 
     status = models.PositiveSmallIntegerField(

@@ -1,9 +1,25 @@
 from django.contrib.auth import get_user_model
-from rest_framework.fields import CharField
+from django.core.exceptions import ValidationError
+from django.utils.timezone import now
+from rest_framework.exceptions import ValidationError as DRFValidationError
+from rest_framework.fields import (
+    CharField,
+    ChoiceField,
+    JSONField,
+    SerializerMethodField,
+)
 from rest_framework.relations import HyperlinkedRelatedField
 from rest_framework.serializers import ModelSerializer
 
+from grandchallenge.algorithms.serializers import (
+    AlgorithmImageSerializer,
+    AlgorithmModelSerializer,
+)
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+)
 from grandchallenge.components.serializers import (
     ComponentInterfaceValueSerializer,
 )
@@ -74,3 +90,113 @@ class EvaluationSerializer(ModelSerializer):
             "status",
             "title",
         )
+
+
+class ExternalEvaluationSerializer(EvaluationSerializer):
+    algorithm_model = SerializerMethodField()
+    algorithm_image = SerializerMethodField()
+    phase_pk = CharField(source="submission.phase.pk")
+
+    class Meta:
+        model = Evaluation
+        fields = (
+            *EvaluationSerializer.Meta.fields,
+            "algorithm_model",
+            "algorithm_image",
+            "claimed_by",
+            "phase_pk",
+        )
+
+    def get_algorithm_model(self, obj) -> dict | None:
+        if obj.submission.algorithm_model:
+            return AlgorithmModelSerializer(
+                obj.submission.algorithm_model, context=self.context
+            ).data
+        return None
+
+    def get_algorithm_image(self, obj) -> dict:
+        return AlgorithmImageSerializer(
+            obj.submission.algorithm_image, context=self.context
+        ).data
+
+    def update(self, instance, validated_data):
+        validated_data["claimed_by"] = self.context["request"].user
+        validated_data["started_at"] = now()
+        validated_data["status"] = Evaluation.CLAIMED
+        return super().update(instance, validated_data)
+
+
+class ExternalEvaluationStatusField(ChoiceField):
+    external_to_internal_status_mapping = {
+        "Succeeded": Evaluation.SUCCESS,
+        "Failed": Evaluation.FAILURE,
+    }
+
+    def __init__(self, *args, **kwargs):
+        choices = list(self.external_to_internal_status_mapping.keys())
+        super().__init__(*args, choices=choices, **kwargs)
+
+    def to_internal_value(self, data):
+        if data in self.external_to_internal_status_mapping:
+            return self.external_to_internal_status_mapping[data]
+        raise DRFValidationError("Not a valid choice.")
+
+    def to_representation(self, value):
+        for (
+            external_value,
+            internal_value,
+        ) in self.external_to_internal_status_mapping.items():
+            if value == internal_value:
+                return external_value
+        raise DRFValidationError("Not a valid choice.")
+
+
+class ExternalEvaluationUpdateSerializer(ModelSerializer):
+    metrics = JSONField(required=False)
+    status = ExternalEvaluationStatusField()
+
+    class Meta:
+        model = Evaluation
+        fields = ("metrics", "status", "error_message")
+
+    def validate(self, data):
+        if data["status"] == Evaluation.SUCCESS and "metrics" not in data:
+            raise DRFValidationError(
+                "Metrics are required for successful evaluations."
+            )
+        if (
+            data["status"] == Evaluation.FAILURE
+            and "error_message" not in data
+        ):
+            raise DRFValidationError(
+                "An error_message is required for failed evaluations."
+            )
+
+        if data["status"] == Evaluation.SUCCESS:
+            interface = ComponentInterface.objects.get(
+                slug="metrics-json-file"
+            )
+            civ = ComponentInterfaceValue(
+                interface=interface, value=data["metrics"]
+            )
+            try:
+                civ.full_clean()
+                civ.save()
+                self.instance.outputs.add(civ)
+            except ValidationError as e:
+                raise DRFValidationError(e)
+
+        return data
+
+    def update(self, instance, validated_data):
+        # calling update_status takes care of sending the notifications
+        instance.update_status(
+            status=validated_data["status"],
+            error_message=(
+                validated_data["error_message"]
+                if "error_message" in validated_data.keys()
+                else None
+            ),
+            compute_cost_euro_millicents=0,
+        )
+        return super().update(instance, validated_data)
