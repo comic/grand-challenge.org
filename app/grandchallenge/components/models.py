@@ -1067,7 +1067,7 @@ class ComponentInterface(OverlaySegmentsMixin):
         self._clean_overlay_segments()
         self._clean_store_in_database()
         self._clean_relative_path()
-        self.validate_against_schema(value=self.example_value)
+        self._validate_example_value()
 
     def _clean_overlay_segments(self):
         if (
@@ -1150,6 +1150,15 @@ class ComponentInterface(OverlaySegmentsMixin):
             raise ValidationError(
                 f"Interface {self.kind} objects cannot be stored in the database"
             )
+
+    def _validate_example_value(self):
+        if self.example_value:
+            if self.schema:
+                JSONValidator(schema=self.schema)(value=self.example_value)
+            else:
+                raise ValidationError(
+                    "Schema is not provided to validate the example_value against"
+                )
 
     def validate_against_schema(self, *, value):
         """Validates values against both default and custom schemas"""
