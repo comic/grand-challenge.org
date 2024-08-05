@@ -7,16 +7,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("evaluation", "0057_alter_submission_unique_together"),
+        ("algorithms", "0052_alter_algorithm_time_limit_alter_job_time_limit"),
     ]
 
     operations = [
-        migrations.AddField(
-            model_name="phase",
-            name="evaluation_time_limit",
+        migrations.AlterField(
+            model_name="algorithm",
+            name="time_limit",
             field=models.PositiveIntegerField(
                 default=3600,
-                help_text="Time limit for evaluation jobs in seconds",
+                help_text="Time limit for inference jobs in seconds",
                 validators=[
                     django.core.validators.MinValueValidator(limit_value=300),
                     django.core.validators.MaxValueValidator(
@@ -26,24 +26,10 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AlterField(
-            model_name="evaluation",
+            model_name="job",
             name="time_limit",
             field=models.PositiveIntegerField(
                 help_text="Time limit for the job in seconds",
-                validators=[
-                    django.core.validators.MinValueValidator(limit_value=300),
-                    django.core.validators.MaxValueValidator(
-                        limit_value=43200
-                    ),
-                ],
-            ),
-        ),
-        migrations.AlterField(
-            model_name="phase",
-            name="algorithm_time_limit",
-            field=models.PositiveIntegerField(
-                default=1200,
-                help_text="Time limit for inference jobs in seconds",
                 validators=[
                     django.core.validators.MinValueValidator(limit_value=300),
                     django.core.validators.MaxValueValidator(

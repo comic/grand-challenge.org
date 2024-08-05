@@ -464,7 +464,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         blank=True,
         help_text="The output interfaces that the algorithms for this phase must use",
     )
-    algorithm_time_limit = models.PositiveSmallIntegerField(
+    algorithm_time_limit = models.PositiveIntegerField(
         default=20 * 60,
         help_text="Time limit for inference jobs in seconds",
         validators=[
@@ -493,7 +493,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             "other users. "
         ),
     )
-    evaluation_time_limit = models.PositiveSmallIntegerField(
+    evaluation_time_limit = models.PositiveIntegerField(
         default=60 * 60,
         help_text="Time limit for evaluation jobs in seconds",
         validators=[
