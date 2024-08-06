@@ -150,6 +150,15 @@ email_confirmed.connect(create_verification)
 class VerificationUserSet(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
+    auto_deactivate = models.BooleanField(
+        default=False,
+        help_text="Whether to automatically deactivate users added to this set",
+    )
+    is_false_positive = models.BooleanField(
+        default=False,
+        help_text="If this set was created in error",
+    )
+    comment = models.TextField(blank=True)
 
     users = models.ManyToManyField(
         get_user_model(), through="VerificationUserSetUser"

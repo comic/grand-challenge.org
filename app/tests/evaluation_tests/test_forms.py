@@ -16,7 +16,10 @@ from grandchallenge.evaluation.models import Evaluation, Phase, Submission
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.invoices.models import PaymentStatusChoices
 from grandchallenge.uploads.models import UserUpload
-from grandchallenge.verifications.models import Verification
+from grandchallenge.verifications.models import (
+    Verification,
+    VerificationUserSet,
+)
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
@@ -1031,3 +1034,31 @@ def test_ground_truth_version_management_form():
     assert "Ground truth updating already in progress" in str(
         form3.errors["ground_truth"]
     )
+
+
+@pytest.mark.django_db
+def test_submission_limit_avoidance_users():
+    phase = PhaseFactory(submissions_limit_per_user_per_period=1)
+    user = UserFactory()
+
+    o1, o2, o3, o4, ch_admin = UserFactory.create_batch(5)
+
+    phase.challenge.add_admin(user=ch_admin)
+
+    # Should be included but allow for challenge admins
+    VerificationUserSet.objects.create(is_false_positive=False).users.set(
+        [user, o1, ch_admin]
+    )
+
+    # These should be ignored
+    VerificationUserSet.objects.create(is_false_positive=True).users.set(
+        [user, o2]
+    )
+    VerificationUserSet.objects.create(is_false_positive=True).users.set([o3])
+    VerificationUserSet.objects.create(is_false_positive=False).users.set([o4])
+
+    form = SubmissionForm(user=user, phase=phase)
+
+    relevant_users = form._get_submission_relevant_users(creator=user)
+
+    assert {o1} == set(relevant_users)

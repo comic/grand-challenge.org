@@ -125,8 +125,12 @@ class VerificationUserSetAdmin(admin.ModelAdmin):
     list_display = (
         "pk",
         "created",
+        "modified",
+        "auto_deactivate",
+        "is_false_positive",
         "active_usernames",
         "inactive_usernames",
+        "comment",
     )
     list_prefetch_related = ("users",)
     search_fields = ("users__username",)
