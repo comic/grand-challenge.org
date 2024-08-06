@@ -8,6 +8,7 @@ from grandchallenge.core.admin import (
     UserObjectPermissionAdmin,
 )
 from grandchallenge.profiles.models import (
+    BannedEmailAddress,
     UserProfile,
     UserProfileGroupObjectPermission,
     UserProfileUserObjectPermission,
@@ -56,6 +57,12 @@ class UserProfileAdmin(UserAdmin):
     @admin.display(boolean=True, description="User has 2FA enabled")
     def has_2fa_enabled(self, obj):
         return is_mfa_enabled(obj)
+
+
+@admin.register(BannedEmailAddress)
+class BannedEmailAddressAdmin(admin.ModelAdmin):
+    list_display = ("email", "reason")
+    search_fields = "email"
 
 
 User = get_user_model()
