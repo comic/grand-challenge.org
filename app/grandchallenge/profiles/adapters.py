@@ -1,18 +1,25 @@
+import logging
+
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.account.utils import user_email, user_username
+from allauth.core.exceptions import ImmediateHttpResponse
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
-from django import forms
 from django.conf import settings
 from django.contrib.sites.models import Site
+from django.core.exceptions import ValidationError
+from django.http import HttpResponseForbidden
+from django.template import loader
 from django.utils.http import url_has_allowed_host_and_scheme
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.emails.emails import send_standard_email_batch
 from grandchallenge.profiles.models import EmailSubscriptionTypes
+from grandchallenge.verifications.models import clean_email
+
+logger = logging.getLogger(__name__)
 
 
 class AccountAdapter(DefaultAccountAdapter):
-
     def is_safe_url(self, url):
         challenge_domains = {
             f"{c.short_name.lower()}{settings.SESSION_COOKIE_DOMAIN}"
@@ -34,15 +41,7 @@ class AccountAdapter(DefaultAccountAdapter):
 
     def clean_email(self, email):
         email = super().clean_email(email=email)
-
-        domain = email.split("@")[1].lower()
-
-        if domain in settings.DISALLOWED_EMAIL_DOMAINS:
-            raise forms.ValidationError(
-                f"Email addresses hosted by {domain} cannot be used."
-            )
-
-        return email
+        return clean_email(email=email)
 
     def post_login(self, request, user, **kwargs):
         response = super().post_login(request, user, **kwargs)
@@ -59,6 +58,23 @@ class AccountAdapter(DefaultAccountAdapter):
 
 
 class SocialAccountAdapter(DefaultSocialAccountAdapter):
+    def is_open_for_signup(self, request, sociallogin):
+        email = sociallogin.account.extra_data.get("email")
+
+        try:
+            clean_email(email=email)
+        except ValidationError as error:
+            logger.error("Social signup disallowed.")
+            raise ImmediateHttpResponse(
+                HttpResponseForbidden(
+                    loader.get_template("403.html").render(
+                        request=request, context={"reason": str(error.message)}
+                    )
+                )
+            )
+
+        return super().is_open_for_signup(request, sociallogin)
+
     def populate_user(self, *args, **kwargs):
         user = super().populate_user(*args, **kwargs)
 
