@@ -135,6 +135,10 @@ class VerificationUserSetAdmin(admin.ModelAdmin):
     list_prefetch_related = ("users",)
     search_fields = ("users__username",)
     actions = (deactivate_vus_users,)
+    list_filter = (
+        "auto_deactivate",
+        "is_false_positive",
+    )
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
