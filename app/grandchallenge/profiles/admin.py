@@ -61,8 +61,8 @@ class UserProfileAdmin(UserAdmin):
 
 @admin.register(BannedEmailAddress)
 class BannedEmailAddressAdmin(admin.ModelAdmin):
-    list_display = ("email", "reason")
-    search_fields = "email"
+    list_display = ("pk", "email", "reason")
+    search_fields = ("email",)
 
 
 User = get_user_model()
