@@ -129,14 +129,14 @@ You can also run the tests locally by</p>
 <ol class="arabic simple" start="2">
 <li><p>Then in a second window run</p></li>
 </ol>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>celery_worker_evaluation<span class="w"> </span>pytest<span class="w"> </span>-n<span class="w"> </span><span class="m">2</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>celery_worker<span class="w"> </span>pytest<span class="w"> </span>-n<span class="w"> </span><span class="m">2</span>
 </pre></div>
 </div>
 <p>Replace 2 with the number of CPUs that you have on your system, this runs
 the tests in parallel.</p>
 <p>If you want to add a new test please add them to the <code class="docutils literal notranslate"><span class="pre">app/tests</span></code> folder.
 If you only want to run the tests for a particular app, eg. for <code class="docutils literal notranslate"><span class="pre">teams</span></code>, you can do</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>celery_worker_evaluation<span class="w"> </span>pytest<span class="w"> </span>-k<span class="w"> </span>teams_tests
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>celery_worker<span class="w"> </span>pytest<span class="w"> </span>-k<span class="w"> </span>teams_tests
 </pre></div>
 </div>
 </section>

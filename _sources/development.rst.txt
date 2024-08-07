@@ -103,7 +103,7 @@ You can also run the tests locally by
 
 .. code-block:: console
 
-    $ docker compose run --rm celery_worker_evaluation pytest -n 2
+    $ docker compose run --rm celery_worker pytest -n 2
 
 Replace 2 with the number of CPUs that you have on your system, this runs
 the tests in parallel.
@@ -113,7 +113,7 @@ If you only want to run the tests for a particular app, eg. for ``teams``, you c
 
 .. code-block:: console
 
-    $ docker compose run --rm celery_worker_evaluation pytest -k teams_tests
+    $ docker compose run --rm celery_worker pytest -k teams_tests
 
 Development
 -----------
