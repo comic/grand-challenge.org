@@ -1,5 +1,7 @@
 import logging
 import os
+import platform
+import resource
 from math import ceil
 
 import requests
@@ -41,6 +43,29 @@ def check_configuration(*, instance, **__):
     else:
         celery_app.is_solo_worker = False
         logger.info("Worker setup OK")
+
+
+@celeryd_after_setup.connect()
+def set_memory_limits(*_, **__) -> None:
+    if platform.system() == "Linux":
+        with open("/proc/meminfo") as meminfo:
+            for line in meminfo:
+                if line.startswith("MemTotal:"):
+                    total_memory_bytes = int(line.split()[1]) * 1024
+
+        limit = int(
+            total_memory_bytes
+            * settings.CELERY_WORKER_MAX_MEMORY_PERCENTAGE
+            / 100
+        )
+
+        if limit > total_memory_bytes or limit < 0:
+            raise ImproperlyConfigured("Invalid memory limit")
+
+        logger.info(f"Setting memory limit to {limit / settings.GIGABYTE} GB")
+        resource.setrlimit(resource.RLIMIT_DATA, (limit, limit))
+    else:
+        logger.warning("Memory limits are only supported on Linux")
 
 
 def get_scale_in_protection_url():
