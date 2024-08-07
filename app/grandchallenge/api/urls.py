@@ -70,6 +70,7 @@ router.register(
     ComponentInterfaceViewSet,
     basename="components-interface",
 )
+
 # Evaluations
 router.register(r"evaluations", EvaluationViewSet, basename="evaluation")
 
