@@ -104,7 +104,7 @@ services:
     command: redis-server --appendonly yes
     restart: always
 
-  celery_worker_evaluation:
+  celery_worker:
     image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
     environment:
       <<: [*postgres-env, *minio-env]
