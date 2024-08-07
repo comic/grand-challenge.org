@@ -1,6 +1,5 @@
 import logging
 import os
-import platform
 import resource
 from math import ceil
 
@@ -47,7 +46,7 @@ def check_configuration(*, instance, **__):
 
 @celeryd_after_setup.connect()
 def set_memory_limits(*_, **__) -> None:
-    if platform.system() == "Linux" and settings.CELERY_WORKER_MAX_MEMORY_MB:
+    if settings.CELERY_WORKER_MAX_MEMORY_MB:
         limit = settings.CELERY_WORKER_MAX_MEMORY_MB * settings.MEGABYTE
         logger.info(f"Setting memory limit to {limit / settings.GIGABYTE} GB")
         resource.setrlimit(resource.RLIMIT_DATA, (limit, limit))
