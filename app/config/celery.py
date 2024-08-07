@@ -59,7 +59,7 @@ def set_memory_limits(*_, **__) -> None:
             / 100
         )
 
-        if limit > total_memory_bytes or limit < 0:
+        if limit > total_memory_bytes or limit < 512 * settings.MEGABYTE:
             raise ImproperlyConfigured("Invalid memory limit")
 
         logger.info(f"Setting memory limit to {limit / settings.GIGABYTE} GB")
