@@ -47,25 +47,12 @@ def check_configuration(*, instance, **__):
 
 @celeryd_after_setup.connect()
 def set_memory_limits(*_, **__) -> None:
-    if platform.system() == "Linux":
-        with open("/proc/meminfo") as meminfo:
-            for line in meminfo:
-                if line.startswith("MemTotal:"):
-                    total_memory_bytes = int(line.split()[1]) * 1024
-
-        limit = int(
-            total_memory_bytes
-            * settings.CELERY_WORKER_MAX_MEMORY_PERCENTAGE
-            / 100
-        )
-
-        if limit > total_memory_bytes or limit < 512 * settings.MEGABYTE:
-            raise ImproperlyConfigured("Invalid memory limit")
-
+    if platform.system() == "Linux" and settings.CELERY_WORKER_MAX_MEMORY_MB:
+        limit = settings.CELERY_WORKER_MAX_MEMORY_MB * settings.MEGABYTE
         logger.info(f"Setting memory limit to {limit / settings.GIGABYTE} GB")
         resource.setrlimit(resource.RLIMIT_DATA, (limit, limit))
     else:
-        logger.warning("Memory limits are only supported on Linux")
+        logger.warning("Not setting a memory limit")
 
 
 def get_scale_in_protection_url():

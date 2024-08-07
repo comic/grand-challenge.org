@@ -970,8 +970,8 @@ CELERY_SOLO_QUEUES = {
     for queue in {"acks-late-2xlarge", "acks-late-micro-short"}
     for element in {queue, f"{queue}-delay"}
 }
-CELERY_WORKER_MAX_MEMORY_PERCENTAGE = int(
-    os.environ.get("CELERY_WORKER_MAX_MEMORY_PERCENTAGE", "95")
+CELERY_WORKER_MAX_MEMORY_MB = int(
+    os.environ.get("CELERY_WORKER_MAX_MEMORY_MB", "0")
 )
 ECS_ENABLE_CELERY_SCALE_IN_PROTECTION = strtobool(
     os.environ.get("ECS_ENABLE_CELERY_SCALE_IN_PROTECTION", "False"),
