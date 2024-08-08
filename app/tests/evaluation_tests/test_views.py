@@ -590,9 +590,9 @@ def test_hidden_phase_visible_for_admins_but_not_participants(client):
 
         assert response.status_code == status
         if status == 200:
-            assert f"</i>{visible_phase.title}</a>" in str(response.content)
+            assert f"{visible_phase.title}</a>" in str(response.content)
             assert (
-                f'</i>{hidden_phase.title}<i class="fa fa-eye-slash ml-1"></i></a>'
+                f'<i class="fa fa-lock fa-fw mr-1"></i>{hidden_phase.title}</a>'
                 not in str(response.content)
             )
 
@@ -607,7 +607,7 @@ def test_hidden_phase_visible_for_admins_but_not_participants(client):
         assert response.status_code == 200
         assert f"{visible_phase.title}</a>" in str(response.content)
         assert (
-            f'{hidden_phase.title}<i class="fa fa-eye-slash ml-1"></i></a>'
+            f'<i class="fa fa-lock fa-fw mr-1"></i>{hidden_phase.title}</a>'
             in str(response.content)
         )
 
