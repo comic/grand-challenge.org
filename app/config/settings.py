@@ -150,6 +150,8 @@ CHALLENGE_NUM_SUPPORT_YEARS = int(
     os.environ.get("CHALLENGE_NUM_SUPPORT_YEARS", 5)
 )
 
+GCAPI_LOWEST_SUPPORTED_VERSION = "0.12.0"
+
 ##############################################################################
 #
 # Storage
