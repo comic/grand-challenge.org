@@ -15,7 +15,7 @@
 
 {% block content %}
     <div class="row mb-3">
-        <div class="col-lg-8">
+        <div id="blogpost" class="col-lg-8">
             <h2>{{ object.title }}</h2>
             <p>Published {{ object.created|date:"j N Y" }}</p>
             {{ object.content|md2html }}
