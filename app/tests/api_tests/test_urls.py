@@ -40,5 +40,5 @@ def test_api_lowest_gcapi_version_check(client):
     )
     assert (
         str(response.content)
-        == f"b'{settings.GCAPI_LOWEST_SUPPORTED_VERSION!r}'"
+        == f"b{settings.GCAPI_LOWEST_SUPPORTED_VERSION!r}"
     )
