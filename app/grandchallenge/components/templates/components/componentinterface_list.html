@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load url %}
 {% load static %}
+{% load base64 %}
 
 {% block title %}
     {{ object_type|title }} {{ list_type|title }} Options - {{ block.super }}
@@ -67,6 +68,10 @@
                                 <code>/input/{{ interface.relative_path }}{% if interface.relative_path %}/{% endif %}&lt;uuid&gt;.tif</code>
                             {% else %}
                                 <code>/input/{{ interface.relative_path }}</code>
+                                {% if interface.example_value %}
+                                    <br>
+                                    <a download="json_schema_example.json" href="data:application/octet-stream;charset=utf-8;base64,{{ interface.example_value | b64encode_json }}">Download schema example</a>
+                                {% endif %}
                             {% endif %}
                         </td>
                     {% elif list_type == list_type_options.OUTPUT %}
@@ -77,6 +82,10 @@
                                 <code>/output/{{ interface.relative_path }}{% if interface.relative_path %}/{% endif %}&lt;uuid&gt;.tif</code>
                             {% else %}
                                 <code>/output/{{ interface.relative_path }}</code>
+                                {% if interface.example_value %}
+                                    <br>
+                                    <a download="json_schema_example.json" href="data:application/octet-stream;charset=utf-8;base64,{{ interface.example_value | b64encode_json }}">Download schema example</a>
+                                {% endif %}
                             {% endif %}
                         </td>
                     {% endif %}

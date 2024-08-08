@@ -4,6 +4,8 @@ import pytest
 from django.conf import settings
 
 from grandchallenge.archives.models import ArchiveItem
+from grandchallenge.components.models import InterfaceKindChoices
+from grandchallenge.components.templatetags.base64 import b64encode_json
 from grandchallenge.reader_studies.models import DisplaySet, ReaderStudy
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import (
@@ -442,3 +444,51 @@ def test_display_set_bulk_delete(
     assert base_obj.civ_sets_related_manager.count() == 3
     assert ob1 not in base_obj.civ_sets_related_manager.all()
     assert ob2 not in base_obj.civ_sets_related_manager.all()
+
+
+@pytest.mark.django_db
+def test_display_download_link_for_json_schema_example(client):
+
+    sc = {
+        "$id": "https://example.com/person.schema.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "Person",
+        "type": "object",
+        "properties": {
+            "firstName": {
+                "type": "string",
+                "description": "The person's first name.",
+            },
+            "lastName": {
+                "type": "string",
+                "description": "The person's last name.",
+            },
+            "age": {
+                "description": "Age in years which must be equal to or greater than zero.",
+                "type": "integer",
+                "minimum": 1,
+            },
+        },
+    }
+
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.ANY,
+        schema=sc,
+        relative_path="example_value.json",
+        example_value={"age": 23, "lastName": "Doe", "firstName": "John"},
+    )
+
+    user = UserFactory()
+
+    response = get_view_for_user(
+        viewname="components:component-interface-list-input",
+        client=client,
+        method=client.get,
+        user=user,
+    )
+
+    example_b64_json = b64encode_json(ci.example_value)
+    example_download_link = f'<a download="json_schema_example.json" href="data:application/octet-stream;charset=utf-8;base64,{example_b64_json}">Download schema example</a>'
+
+    assert response.status_code == 200
+    assert example_download_link in response.rendered_content
