@@ -317,7 +317,7 @@
 
                 {% if object.runtime_metrics %}
                     <h4>Runtime Metrics</h4>
-                    <div class="w-100 vega-lite-chart">
+                    <div class="w-100 vega-lite-chart-lazy">
                         {{ object.runtime_metrics_chart|json_script:"runtimeMetricsData" }}
                     </div>
                 {% endif %}
