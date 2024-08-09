@@ -1,6 +1,21 @@
 from django.conf import settings
-from django.http import HttpResponse
+from rest_framework.generics import GenericAPIView
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+
+from grandchallenge.api.serializers import GCAPIVersionSerializer
 
 
-def lowest_supported_gcapi_version(request):
-    return HttpResponse(settings.GCAPI_LOWEST_SUPPORTED_VERSION)
+class GCAPIView(GenericAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = GCAPIVersionSerializer
+
+    def get(self, request):
+        data = {
+            "lowest_supported_version": settings.GCAPI_LOWEST_SUPPORTED_VERSION
+        }
+        serializer = self.get_serializer(data)
+        return Response(serializer.data)
+
+    def get_serializer(self, *args, **kwargs):
+        return self.serializer_class(*args, **kwargs)
