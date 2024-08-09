@@ -353,7 +353,7 @@
                 {% endif %}
                 {% if object.usage_statistics %}
                     <h4>Algorithm Usage</h4>
-                    <div class="w-100 vega-lite-chart">
+                    <div class="w-100 vega-lite-chart-lazy">
                         {{ object.usage_chart.chart|json_script:"usage" }}
                     </div>
                     <h5>Total Jobs</h5>

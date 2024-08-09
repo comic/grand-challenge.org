@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% load meta_attr %}
 {% load workstations %}
 {% load civ %}
@@ -93,4 +94,9 @@
 {% block script %}
     {{ block.super }}
     {% include 'workstations/partials/session-control.html' %}
+
+    <script src="{% static 'vendored/vega/vega.min.js' %}"></script>
+    <script src="{% static 'vendored/vega-lite/vega-lite.min.js' %}"></script>
+    <script src="{% static 'vendored/vega-embed/vega-embed.min.js' %}"></script>
+    <script type="module" src="{% static "js/charts/render_charts.mjs" %}"></script>
 {% endblock %}

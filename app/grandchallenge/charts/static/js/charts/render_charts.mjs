@@ -9,7 +9,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
     }
 });
 
-
 // Lazy rendering
 // Tag the containers with the class 'vega-lite-chart-lazy' to only render
 const handledAttribute = "data-vega-chart-is-rendered";

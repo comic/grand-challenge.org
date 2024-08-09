@@ -12,8 +12,3 @@ $('#resultInfoModal').on('show.bs.modal', function (event) {
     modal.find('.modal-title').text(button.data('title'));
     modal.find('#resultDetailLink').attr("href", `${button.data("pk")}/`);
 })
-
-$('#v-pills-logs-tab').on('shown.bs.tab', function (event) {
-    // a resize is needed when switching to the logs tab to make the vega chart load correctly
-    window.dispatchEvent(new Event('resize'))
-})

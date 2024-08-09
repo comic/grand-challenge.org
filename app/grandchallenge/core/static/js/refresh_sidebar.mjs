@@ -1,4 +1,5 @@
 $(document).ready(function() {
+
     const tabSelectors = $('#v-pills-tab a');
 
     const allowedHashes = new Set(
