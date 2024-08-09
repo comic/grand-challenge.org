@@ -7,6 +7,7 @@ from grandchallenge.algorithms.views import (
     AlgorithmViewSet,
     JobViewSet,
 )
+from grandchallenge.api.views import GCAPIView
 from grandchallenge.archives.views import ArchiveItemViewSet, ArchiveViewSet
 from grandchallenge.cases.views import (
     ImageViewSet,
@@ -124,6 +125,11 @@ urlpatterns = [
     path("v1/", include(router.urls)),
     path("v1/github/", github_webhook, name="github-webhook"),
     path("v1/timezone/", TimezoneAPIView.as_view(), name="timezone"),
+    path(
+        "v1/gcapi/",
+        GCAPIView.as_view(),
+        name="gcapi",
+    ),
     path(
         "",
         SpectacularSwaggerView.as_view(url_name="api:schema"),
