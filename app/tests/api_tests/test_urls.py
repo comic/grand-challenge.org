@@ -35,10 +35,10 @@ def check_answer_type_schema_from_response(response):
 def test_api_lowest_gcapi_version_check(client):
     response = assert_viewname_status(
         code=200,
-        url=reverse("api:lowest-supported-gcapi-version"),
+        url=reverse("api:gcapi"),
         client=client,
     )
     assert (
-        str(response.content)
-        == f"b{settings.GCAPI_LOWEST_SUPPORTED_VERSION!r}"
+        response.data["lowest_supported_version"]
+        == settings.GCAPI_LOWEST_SUPPORTED_VERSION
     )
