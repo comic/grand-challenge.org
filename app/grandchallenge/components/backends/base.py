@@ -16,6 +16,7 @@ from django.conf import settings
 from django.core.exceptions import SuspiciousFileOperation, ValidationError
 from django.db import transaction
 from django.utils._os import safe_join
+from django.utils.functional import cached_property
 from panimg.image_builders import image_builder_mhd, image_builder_tiff
 
 from grandchallenge.cases.tasks import import_images
@@ -213,6 +214,32 @@ class Executor(ABC):
     @property
     def _ground_truth_key(self):
         return safe_join(self._auxiliary_data_prefix, "ground-truth.tar.gz")
+
+    @cached_property
+    def _input_size_bytes(self):
+        inputs_size_bytes = self._get_input_prefix_size_bytes(
+            prefix=self._io_prefix
+        )
+        auxiliary_size_bytes = self._get_input_prefix_size_bytes(
+            prefix=self._auxiliary_data_prefix
+        )
+
+        return inputs_size_bytes + auxiliary_size_bytes
+
+    def _get_input_prefix_size_bytes(self, *, prefix):
+        paginator = self._s3_client.get_paginator("list_objects_v2")
+        pages = paginator.paginate(
+            Bucket=settings.COMPONENTS_INPUT_BUCKET_NAME, Prefix=prefix
+        )
+
+        total_size = 0
+
+        for page in pages:
+            if "Contents" in page:
+                for obj in page["Contents"]:
+                    total_size += obj["Size"]
+
+        return total_size
 
     def _get_key_and_relative_path(self, *, civ, input_prefixes):
         if str(civ.pk) in input_prefixes:

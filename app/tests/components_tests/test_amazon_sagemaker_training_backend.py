@@ -187,7 +187,7 @@ def test_execute(settings):
                     "S3OutputPath": f"s3://grand-challenge-components-outputs//training-outputs/algorithms/job/{pk}"
                 },
                 "ResourceConfig": {
-                    "VolumeSizeInGB": 50,
+                    "VolumeSizeInGB": 30,
                     "InstanceType": "ml.m5.large",
                     "InstanceCount": 1,
                 },
