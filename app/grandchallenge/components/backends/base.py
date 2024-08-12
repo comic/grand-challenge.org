@@ -215,6 +215,15 @@ class Executor(ABC):
     def _ground_truth_key(self):
         return safe_join(self._auxiliary_data_prefix, "ground-truth.tar.gz")
 
+    @property
+    def _required_volume_size_gb(self):
+        return max(
+            # Factor 2 for decompression and making copies
+            ceil(2 * self._input_size_bytes / settings.GIGABYTE),
+            # Or match what was provided with Batch Inference
+            30,
+        )
+
     @cached_property
     def _input_size_bytes(self):
         inputs_size_bytes = self._get_input_prefix_size_bytes(

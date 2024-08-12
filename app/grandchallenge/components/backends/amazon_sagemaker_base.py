@@ -5,7 +5,6 @@ import re
 from abc import ABC, abstractmethod
 from datetime import timedelta
 from json import JSONDecodeError
-from math import ceil
 from typing import NamedTuple
 
 import boto3
@@ -572,12 +571,7 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
 
     @property
     def _required_volume_size_gb(self):
-        required_gb = max(
-            # Factor 2 for decompression and making copies
-            ceil(2 * self._input_size_bytes / settings.GIGABYTE),
-            # Or match what was provided with Batch Inference
-            30,
-        )
+        required_gb = super()._required_volume_size_gb
 
         if (
             self._instance_type.nvme_volume_size
