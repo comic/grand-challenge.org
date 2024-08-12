@@ -3,12 +3,6 @@ function renderVegaLiteChart(element) {
     vegaEmbed(element, spec);
 }
 
-document.addEventListener("DOMContentLoaded", function(event) {
-    for (const element of document.getElementsByClassName("vega-lite-chart")) {
-        renderVegaLiteChart(element);
-    }
-});
-
 // Lazy rendering
 // Tag the containers with the class 'vega-lite-chart-lazy' to only render
 const handledAttribute = "data-vega-chart-is-rendered";
@@ -40,9 +34,35 @@ const observer = new IntersectionObserver(handleInterSection, {
   threshold: 1.0,
 });
 
-
 document.addEventListener("DOMContentLoaded", function(event) {
-    for (const element of document.getElementsByClassName("vega-lite-chart-lazy")) {
+    for (const element of document.getElementsByClassName("vega-lite-chart")) {
         observer.observe(element, );
     }
 });
+
+
+function mutationObserverCallback(mutationList, observer) {
+
+    mutationList.forEach((mutation) => {
+
+        mutation.addedNodes.forEach((addedNode) => {
+
+            if (addedNode.nodeType !== Node.TEXT_NODE) {
+
+                for(const element of addedNode.getElementsByClassName("vega-lite-chart")){
+                    if (!element.getAttribute(handledAttribute)) {
+                        renderVegaLiteChart(element);
+                        element.setAttribute(handledAttribute, "");
+                    }
+                }
+            }
+        })
+    })
+}
+
+const mutationObserver = new MutationObserver(mutationObserverCallback);
+
+if(document.getElementById("ajaxDataTable")){
+    mutationObserver.observe(document.getElementById("ajaxDataTable"),
+                        {childList: true, subtree: true,});
+}
