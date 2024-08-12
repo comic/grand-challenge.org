@@ -1060,12 +1060,6 @@ COMPONENTS_AMAZON_SAGEMAKER_SECURITY_GROUP_ID = os.environ.get(
 COMPONENTS_AMAZON_SAGEMAKER_SUBNETS = os.environ.get(
     "COMPONENTS_AMAZON_SAGEMAKER_SUBNETS", ""
 ).split(",")
-# This was 30 to match SageMaker Batch Inference but more is
-# required for ground truths
-# TODO Make this dynamic https://github.com/DIAGNijmegen/rse-grand-challenge-admin/issues/309
-COMPONENTS_AMAZON_SAGEMAKER_VOLUME_SIZE_GB = int(
-    os.environ.get("COMPONENTS_AMAZON_SAGEMAKER_VOLUME_SIZE_GB", "50")
-)
 COMPONENTS_S3_ENDPOINT_URL = os.environ.get(
     "COMPONENTS_S3_ENDPOINT_URL", AWS_S3_ENDPOINT_URL
 )

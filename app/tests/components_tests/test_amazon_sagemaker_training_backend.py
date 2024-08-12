@@ -187,7 +187,7 @@ def test_execute(settings):
                     "S3OutputPath": f"s3://grand-challenge-components-outputs//training-outputs/algorithms/job/{pk}"
                 },
                 "ResourceConfig": {
-                    "VolumeSizeInGB": 50,
+                    "VolumeSizeInGB": 30,
                     "InstanceType": "ml.m5.large",
                     "InstanceCount": 1,
                 },
@@ -198,6 +198,7 @@ def test_execute(settings):
                     "no_proxy": "amazonaws.com",
                     "GRAND_CHALLENGE_COMPONENT_WRITABLE_DIRECTORIES": "/opt/ml/output/data:/opt/ml/model:/opt/ml/input/data/ground_truth/:opt/ml/checkpoints:/tmp",
                     "GRAND_CHALLENGE_COMPONENT_POST_CLEAN_DIRECTORIES": "/opt/ml/output/data:/opt/ml/model:/opt/ml/input/data/ground_truth/",
+                    "GRAND_CHALLENGE_COMPONENT_MAX_MEMORY_MB": "7168",
                 },
                 "VpcConfig": {
                     "SecurityGroupIds": [
