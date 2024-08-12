@@ -549,7 +549,7 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
         return self._instance_type.usd_cents_per_hour
 
     @property
-    def max_memory_mb(self):
+    def _max_memory_mb(self):
         # Reserve 1 GB for the system
         return (self._instance_type.memory - 1) * 1024
 
