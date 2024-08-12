@@ -148,6 +148,7 @@ class Executor(ABC):
             "no_proxy": "amazonaws.com",
             "GRAND_CHALLENGE_COMPONENT_WRITABLE_DIRECTORIES": "/opt/ml/output/data:/opt/ml/model:/opt/ml/input/data/ground_truth/:opt/ml/checkpoints:/tmp",
             "GRAND_CHALLENGE_COMPONENT_POST_CLEAN_DIRECTORIES": "/opt/ml/output/data:/opt/ml/model:/opt/ml/input/data/ground_truth/",
+            "GRAND_CHALLENGE_COMPONENT_MAX_MEMORY_MB": str(self.max_memory_mb),
         }
         if self._algorithm_model:
             env["GRAND_CHALLENGE_COMPONENT_MODEL"] = (
@@ -158,6 +159,10 @@ class Executor(ABC):
                 f"s3://{settings.COMPONENTS_INPUT_BUCKET_NAME}/{self._ground_truth_key}"
             )
         return env
+
+    @property
+    def max_memory_mb(self):
+        return self._memory_limit * 1024
 
     @property
     def compute_cost_euro_millicents(self):

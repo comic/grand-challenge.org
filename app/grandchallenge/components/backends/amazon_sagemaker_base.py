@@ -548,6 +548,11 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
     def usd_cents_per_hour(self):
         return self._instance_type.usd_cents_per_hour
 
+    @property
+    def max_memory_mb(self):
+        # Reserve 1 GB for the system
+        return (self._instance_type.memory - 1) * 1024
+
     def execute(self, *, input_civs, input_prefixes):
         self._create_invocation_json(
             input_civs=input_civs, input_prefixes=input_prefixes
