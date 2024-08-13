@@ -25,6 +25,7 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.components.tasks import (
     add_image_to_component_interface_value,
+    validate_docker_image,
 )
 from grandchallenge.notifications.models import Notification
 from tests.algorithms_tests.factories import (
@@ -886,3 +887,40 @@ def test_setting_credits_per_job(
 
         alg.refresh_from_db()
         assert alg.credits_per_job == test["credits"]
+
+
+@pytest.mark.django_db
+def test_importing_same_sha_fails(
+    settings, django_capture_on_commit_callbacks, algorithm_io_image
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    algorithm_io_sha = "sha256:8e1d2c18022e009ff7b6544407b855ad53840b1430e23a8b50115c94c5862a34"
+
+    alg = AlgorithmFactory()
+
+    AlgorithmImageFactory(image_sha256=algorithm_io_sha)
+
+    image = AlgorithmImageFactory(
+        algorithm=alg, image__from_path=algorithm_io_image
+    )
+    assert image.is_manifest_valid is None
+
+    with django_capture_on_commit_callbacks(execute=True):
+        validate_docker_image(
+            pk=image.pk,
+            app_label=image._meta.app_label,
+            model_name=image._meta.model_name,
+            mark_as_desired=False,
+        )
+
+    image.refresh_from_db()
+
+    assert image.image_sha256 == algorithm_io_sha
+    assert image.is_manifest_valid is False
+    assert image.status == (
+        "This container image has already been uploaded. "
+        "Please re-activate the existing container image or upload a new version."
+    )
