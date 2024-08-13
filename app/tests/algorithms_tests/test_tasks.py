@@ -897,30 +897,30 @@ def test_importing_same_sha_fails(
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    algorithm_io_sha = "sha256:8e1d2c18022e009ff7b6544407b855ad53840b1430e23a8b50115c94c5862a34"
-
     alg = AlgorithmFactory()
 
-    AlgorithmImageFactory(image_sha256=algorithm_io_sha)
-
-    image = AlgorithmImageFactory(
-        algorithm=alg, image__from_path=algorithm_io_image
+    im1, im2 = AlgorithmImageFactory.create_batch(
+        2, algorithm=alg, image__from_path=algorithm_io_image
     )
-    assert image.is_manifest_valid is None
 
-    with django_capture_on_commit_callbacks(execute=True):
-        validate_docker_image(
-            pk=image.pk,
-            app_label=image._meta.app_label,
-            model_name=image._meta.model_name,
-            mark_as_desired=False,
-        )
+    for im in [im1, im2]:
+        with django_capture_on_commit_callbacks(execute=True):
+            validate_docker_image(
+                pk=im.pk,
+                app_label=im._meta.app_label,
+                model_name=im._meta.model_name,
+                mark_as_desired=False,
+            )
 
-    image.refresh_from_db()
+    im1.refresh_from_db()
+    im2.refresh_from_db()
 
-    assert image.image_sha256 == algorithm_io_sha
-    assert image.is_manifest_valid is False
-    assert image.status == (
+    assert len(im1.image_sha256) == 71
+    assert im1.image_sha256 == im2.image_sha256
+    assert im1.is_manifest_valid is True
+    assert im1.status == ""
+    assert im2.is_manifest_valid is False
+    assert im2.status == (
         "This container image has already been uploaded. "
         "Please re-activate the existing container image or upload a new version."
     )
