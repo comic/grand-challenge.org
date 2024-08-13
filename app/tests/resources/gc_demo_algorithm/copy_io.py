@@ -55,6 +55,16 @@ def check_partitions():
         )
 
 
+def check_memory():
+    memory = psutil.virtual_memory()
+    print(f"MEMORY - Total: {memory.total / (1024 * 1024 * 1024):.2f} GB")
+    print(
+        f"MEMORY - Available: {memory.available / (1024 * 1024 * 1024):.2f} GB"
+    )
+    print(f"MEMORY - Used: {memory.used / (1024 * 1024 * 1024):.2f} GB")
+    print(f"MEMORY - Free: {memory.free / (1024 * 1024 * 1024):.2f} GB")
+
+
 def check_cuda():
     try:
         pynvml.nvmlInit()
@@ -150,6 +160,9 @@ if __name__ == "__main__":
     print("")
 
     check_partitions()
+    print("")
+
+    check_memory()
     print("")
 
     check_cuda()
