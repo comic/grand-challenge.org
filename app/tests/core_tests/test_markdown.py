@@ -1,3 +1,4 @@
+import pytest
 from django.conf import settings
 from markdown import markdown
 
@@ -53,3 +54,51 @@ def test_markdown_rendering():
     )
 
     assert output == EXPECTED_HTML
+
+
+@pytest.mark.parametrize(
+    "markdown_with_html, expected_output",
+    (
+        (
+            """<img src="https://rumc-gcorg-p-public.s3.amazonaws.com/i/2023/10/20/042179f0-ad8c-4c0b-af54-7e81ba389a90.jpeg"/>
+         [![](http://minio.localhost:9000/grand-challenge-public/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg)](https://google.com)""",
+            """<p><img class="img-fluid" src="https://rumc-gcorg-p-public.s3.amazonaws.com/i/2023/10/20/042179f0-ad8c-4c0b-af54-7e81ba389a90.jpeg"/>
+         <a href="https://google.com"><img alt="" class="img-fluid" src="http://minio.localhost:9000/grand-challenge-public/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg" /></a></p>""",
+        ),
+        (
+            """<img class="" src="https://rumc-gcorg-p-public.s3.amazonaws.com/i/2023/10/20/042179f0-ad8c-4c0b-af54-7e81ba389a90.jpeg"/>
+         [![](http://minio.localhost:9000/grand-challenge-public/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg)](https://google.com)""",
+            """<p><img class="img-fluid" src="https://rumc-gcorg-p-public.s3.amazonaws.com/i/2023/10/20/042179f0-ad8c-4c0b-af54-7e81ba389a90.jpeg"/>
+         <a href="https://google.com"><img alt="" class="img-fluid" src="http://minio.localhost:9000/grand-challenge-public/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg" /></a></p>""",
+        ),
+        (
+            """<img class="ml-2" src="https://rumc-gcorg-p-public.s3.amazonaws.com/i/2023/10/20/042179f0-ad8c-4c0b-af54-7e81ba389a90.jpeg"/>
+         [![](http://minio.localhost:9000/grand-challenge-public/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg)](https://google.com)""",
+            """<p><img class="ml-2 img-fluid" src="https://rumc-gcorg-p-public.s3.amazonaws.com/i/2023/10/20/042179f0-ad8c-4c0b-af54-7e81ba389a90.jpeg"/>
+         <a href="https://google.com"><img alt="" class="img-fluid" src="http://minio.localhost:9000/grand-challenge-public/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg" /></a></p>""",
+        ),
+        (
+            """<img class="img-fluid" src="https://rumc-gcorg-p-public.s3.amazonaws.com/i/2023/10/20/042179f0-ad8c-4c0b-af54-7e81ba389a90.jpeg"/>
+         [![](http://minio.localhost:9000/grand-challenge-public/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg)](https://google.com)""",
+            """<p><img class="img-fluid" src="https://rumc-gcorg-p-public.s3.amazonaws.com/i/2023/10/20/042179f0-ad8c-4c0b-af54-7e81ba389a90.jpeg"/>
+         <a href="https://google.com"><img alt="" class="img-fluid" src="http://minio.localhost:9000/grand-challenge-public/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg" /></a></p>""",
+        ),
+        (
+            """<img class="ml-2 img-fluid" src="https://rumc-gcorg-p-public.s3.amazonaws.com/i/2023/10/20/042179f0-ad8c-4c0b-af54-7e81ba389a90.jpeg"/>
+         [![](http://minio.localhost:9000/grand-challenge-public/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg)](https://google.com)""",
+            """<p><img class="ml-2 img-fluid" src="https://rumc-gcorg-p-public.s3.amazonaws.com/i/2023/10/20/042179f0-ad8c-4c0b-af54-7e81ba389a90.jpeg"/>
+         <a href="https://google.com"><img alt="" class="img-fluid" src="http://minio.localhost:9000/grand-challenge-public/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg" /></a></p>""",
+        ),
+    ),
+)
+def test_setting_class_to_html_img_within_markdown(
+    markdown_with_html, expected_output
+):
+
+    output = markdown(
+        text=markdown_with_html or "",
+        extensions=settings.MARKDOWNX_MARKDOWN_EXTENSIONS,
+        extension_configs=settings.MARKDOWNX_MARKDOWN_EXTENSION_CONFIGS,
+    )
+
+    assert output == expected_output
