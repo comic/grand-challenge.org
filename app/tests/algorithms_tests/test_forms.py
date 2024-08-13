@@ -312,8 +312,6 @@ def test_create_job_json_input_field_validation(
     )
     assert response.context["form"].errors == {
         slug: ["This field is required."],
-        "algorithm_image": ["This field is required."],
-        "__all__": ["This algorithm is not ready to be used"],
     }
 
 
@@ -355,6 +353,12 @@ def create_algorithm_with_input(slug):
     alg = AlgorithmFactory()
     alg.add_editor(user=creator)
     alg.inputs.set([ComponentInterface.objects.get(slug=slug)])
+    AlgorithmImageFactory(
+        algorithm=alg,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
     return alg, creator
 
 

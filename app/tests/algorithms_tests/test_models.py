@@ -16,7 +16,6 @@ from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
     AlgorithmJobFactory,
-    AlgorithmModelFactory,
 )
 from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import UserFactory
@@ -265,10 +264,10 @@ class TestJobLimits:
         )
 
         # no jobs run by any editor yet
-        assert alg1.get_jobs_limit(user=user1) == 15
-        assert alg1.get_jobs_limit(user=user2) == 15
+        assert ai.get_remaining_jobs(user=user1) == 15
+        assert ai.get_remaining_jobs(user=user2) == 15
         # normal user gets standard credits
-        assert alg1.get_jobs_limit(user=user3) == 10
+        assert ai.get_remaining_jobs(user=user3) == 10
 
         AlgorithmJobFactory.create_batch(
             4,
@@ -277,8 +276,8 @@ class TestJobLimits:
             time_limit=ai.algorithm.time_limit,
         )
         # limits apply to both editors
-        assert alg1.get_jobs_limit(user=user1) == 11
-        assert alg1.get_jobs_limit(user=user2) == 11
+        assert ai.get_remaining_jobs(user=user1) == 11
+        assert ai.get_remaining_jobs(user=user2) == 11
 
         # job limit is per algorithm image sha
         # uploading a new image resets editor credits
@@ -297,37 +296,17 @@ class TestJobLimits:
             follow=True,
         )
         ai2.refresh_from_db()
-        del alg1.active_image
 
-        assert alg1.get_jobs_limit(user=user1) == 15
-        assert alg1.get_jobs_limit(user=user2) == 15
+        assert ai2.get_remaining_jobs(user=user1) == 15
+        assert ai2.get_remaining_jobs(user=user2) == 15
 
         AlgorithmJobFactory(
             creator=user1,
             algorithm_image=ai2,
             time_limit=ai2.algorithm.time_limit,
         )
-        assert alg1.get_jobs_limit(user=user1) == 14
-        assert alg1.get_jobs_limit(user=user2) == 14
-
-        # attaching a used image to a new algorithm doesn't reset credits
-        ai3 = AlgorithmImageFactory(
-            algorithm=alg2,
-            is_manifest_valid=True,
-            is_in_registry=True,
-            is_desired_version=True,
-            image_sha256=ai2.image_sha256,
-        )
-        assert alg2.active_image == ai3
-        assert alg2.get_jobs_limit(user=user1) == 14
-        # user2 is not an editor of this algorithm, hence just default credits
-        assert alg2.get_jobs_limit(user=user2) == 10
-
-        # uploading a model to the algorithm resets credits
-        AlgorithmModelFactory(algorithm=alg1, is_desired_version=True)
-        del alg1.active_model
-        assert alg1.get_jobs_limit(user=user1) == 15
-        assert alg1.get_jobs_limit(user=user2) == 15
+        assert ai2.get_remaining_jobs(user=user1) == 14
+        assert ai2.get_remaining_jobs(user=user2) == 14
 
     @pytest.mark.parametrize(
         "credits_per_job,user_credits,expected_jobs",
@@ -341,7 +320,7 @@ class TestJobLimits:
     def test_limited_jobs(self, credits_per_job, user_credits, expected_jobs):
         algorithm = AlgorithmFactory(credits_per_job=credits_per_job)
         user = UserFactory()
-        AlgorithmImageFactory(
+        ai = AlgorithmImageFactory(
             algorithm=algorithm,
             is_manifest_valid=True,
             is_in_registry=True,
@@ -352,7 +331,7 @@ class TestJobLimits:
         user_credit.credits = user_credits
         user_credit.save()
 
-        assert algorithm.get_jobs_limit(user=user) == expected_jobs
+        assert ai.get_remaining_jobs(user=user) == expected_jobs
 
     @pytest.mark.parametrize(
         "credits_per_job,user_credits,expected_jobs",
@@ -369,7 +348,7 @@ class TestJobLimits:
     ):
         algorithm = AlgorithmFactory(credits_per_job=credits_per_job)
         user = UserFactory()
-        AlgorithmImageFactory(
+        ai = AlgorithmImageFactory(
             algorithm=algorithm,
             is_manifest_valid=True,
             is_in_registry=True,
@@ -398,7 +377,7 @@ class TestJobLimits:
         user_credit.credits = user_credits
         user_credit.save()
 
-        assert algorithm.get_jobs_limit(user=user) == expected_jobs
+        assert ai.get_remaining_jobs(user=user) == expected_jobs
 
 
 @pytest.mark.django_db()
@@ -580,7 +559,16 @@ def test_is_complimentary_limited_by_free_jobs(settings):
         algorithm_image=ai, creator=u3, time_limit=60
     )
 
+    assert ai.get_remaining_complimentary_jobs(user=u1) == 2
+    assert ai.get_remaining_complimentary_jobs(user=u2) == 2
+    assert ai.get_remaining_complimentary_jobs(user=u3) == 0
+
     j_u1 = AlgorithmJobFactory(algorithm_image=ai, creator=u1, time_limit=60)
+
+    assert ai.get_remaining_complimentary_jobs(user=u1) == 1
+    assert ai.get_remaining_complimentary_jobs(user=u2) == 1
+    assert ai.get_remaining_complimentary_jobs(user=u3) == 0
+
     j_u2 = AlgorithmJobFactory(algorithm_image=ai, creator=u2, time_limit=60)
     j2_u2 = AlgorithmJobFactory(algorithm_image=ai, creator=u2, time_limit=60)
 
@@ -610,3 +598,92 @@ def test_other_algorithm_images_not_considered(settings):
     assert ai1_j2.is_complimentary is False
     assert ai2_j1.is_complimentary is True
     assert ai2_j2.is_complimentary is False
+
+
+@pytest.mark.django_db
+def test_remaining_complimentary_jobs(settings):
+    u = UserFactory()
+    ai = AlgorithmImageFactory()
+
+    ai.algorithm.add_editor(user=u)
+
+    AlgorithmJobFactory(algorithm_image=ai, time_limit=60, creator=None)
+
+    assert (
+        ai.get_remaining_complimentary_jobs(user=u)
+        == settings.ALGORITHM_IMAGES_COMPLIMENTARY_EDITOR_JOBS
+    )
+
+    AlgorithmJobFactory.create_batch(
+        settings.ALGORITHM_IMAGES_COMPLIMENTARY_EDITOR_JOBS + 1,
+        algorithm_image=ai,
+        time_limit=60,
+        creator=u,
+    )
+
+    assert ai.get_remaining_complimentary_jobs(user=u) == 0
+
+
+@pytest.mark.django_db
+def test_get_remaining_non_complimentary_jobs(settings):
+    settings.ALGORITHM_IMAGES_COMPLIMENTARY_EDITOR_JOBS = 1
+
+    # Check the default, the rest are assuming this
+    assert Credit._meta.get_field("credits").get_default() == 1000
+
+    credits_per_job = 300
+
+    u = UserFactory()
+    ai = AlgorithmImageFactory(algorithm__credits_per_job=credits_per_job)
+
+    assert ai.get_remaining_non_complimentary_jobs(user=u) == 3
+    assert ai.get_remaining_complimentary_jobs(user=u) == 0
+    assert ai.get_remaining_jobs(user=u) == 3
+
+    AlgorithmJobFactory(algorithm_image=ai, creator=u, time_limit=60)
+
+    assert ai.get_remaining_non_complimentary_jobs(user=u) == 2
+    assert ai.get_remaining_complimentary_jobs(user=u) == 0
+    assert ai.get_remaining_jobs(user=u) == 2
+
+    ai.algorithm.add_editor(user=u)
+
+    AlgorithmJobFactory(algorithm_image=ai, creator=u, time_limit=60)
+
+    assert ai.get_remaining_non_complimentary_jobs(user=u) == 2
+    assert ai.get_remaining_complimentary_jobs(user=u) == 0
+    assert ai.get_remaining_jobs(user=u) == 2
+
+    AlgorithmJobFactory(algorithm_image=ai, creator=u, time_limit=60)
+
+    assert ai.get_remaining_non_complimentary_jobs(user=u) == 1
+    assert ai.get_remaining_complimentary_jobs(user=u) == 0
+    assert ai.get_remaining_jobs(user=u) == 1
+
+    # Overspend
+    AlgorithmJobFactory.create_batch(
+        2, algorithm_image=ai, creator=u, time_limit=60
+    )
+
+    assert ai.get_remaining_non_complimentary_jobs(user=u) == 0
+    assert ai.get_remaining_complimentary_jobs(user=u) == 0
+    assert ai.get_remaining_jobs(user=u) == 0
+
+
+@pytest.mark.django_db
+def test_non_editor_remaining_jobs():
+    # Check the default, the rest are assuming this
+    assert Credit._meta.get_field("credits").get_default() == 1000
+
+    credits_per_job = 300
+
+    u = UserFactory()
+    ai = AlgorithmImageFactory(algorithm__credits_per_job=credits_per_job)
+
+    AlgorithmJobFactory(algorithm_image=ai, creator=u, time_limit=60)
+
+    assert ai.get_remaining_jobs(user=u) == 2
+
+    ai.algorithm.add_editor(user=u)
+
+    assert ai.get_remaining_jobs(user=u) == 7
