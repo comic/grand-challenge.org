@@ -235,10 +235,3 @@ a[aria-expanded=false] .fa-chevron-down {
 .htmx-request.htmx-indicator {
     display: inline-block;
 }
-
-/* blogpost */
-
-#blogpost img {
-  max-width: 100%;
-  height: auto;
-}
