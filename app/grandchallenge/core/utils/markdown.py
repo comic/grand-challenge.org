@@ -1,4 +1,6 @@
+from bs4 import BeautifulSoup
 from markdown import Extension
+from markdown.postprocessors import Postprocessor
 from markdown.treeprocessors import Treeprocessor
 
 
@@ -41,3 +43,29 @@ class LinkBlankTargetTreeprocessor(Treeprocessor):
             if el.tag == "a":
                 el.set("target", "_blank")
                 el.set("rel", "noopener")
+
+
+class HtmlTagsExtension(Extension):
+    def extendMarkdown(self, md):  # noqa: N802
+        md.registerExtension(self)
+        md.postprocessors.register(
+            HtmlTagsPostprocessor(md), "htmltags_extension", 35
+        )
+
+
+class HtmlTagsPostprocessor(Postprocessor):
+    def run(self, lines):
+        for i in range(len(self.md.htmlStash.rawHtmlBlocks)):
+            bs4block = BeautifulSoup(
+                self.md.htmlStash.rawHtmlBlocks[i], "html.parser"
+            )
+
+            for img in bs4block.find_all("img"):
+                if "class" not in img.attrs:
+                    img.attrs["class"] = []
+
+                if "img-fluid" not in img.attrs["class"]:
+                    img["class"].append("img-fluid")
+
+            self.md.htmlStash.rawHtmlBlocks[i] = str(bs4block)
+        return lines
