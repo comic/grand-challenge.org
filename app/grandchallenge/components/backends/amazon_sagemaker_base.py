@@ -859,11 +859,8 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
                 users_process_exit_code = None
 
             if users_process_exit_code not in (-9, 1, 137):
-                logger.error(
-                    "The instance ran out of memory, "
-                    "but this may not have been caused by the users process. "
-                    f"{users_process_exit_code=}"
-                )
+                # Requires investigation
+                logger.error(f"SageMaker OOM {users_process_exit_code=}")
 
             raise ComponentException(
                 "The container was killed as it exceeded its memory limit"
