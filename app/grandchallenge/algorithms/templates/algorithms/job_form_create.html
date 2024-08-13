@@ -32,8 +32,17 @@
     <h2>Try-out Algorithm</h2>
 
     {{ algorithm.job_create_page_markdown|md2html }}
+
     {% get_obj_perms request.user for algorithm as "algorithm_perms" %}
-    {% if form.jobs_limit < 1 %}
+
+    {% if not algorithm.active_image %}
+        <p>
+            This algorithm is not ready to be used.
+            {% if 'change_algorithm' in algorithm_perms %}
+                Please upload a valid container image for this algorithm.
+            {% endif %}
+        </p>
+    {% elif form.jobs_limit < 1 %}
         <p>
             You have run out of credits to try this algorithm.
             You can request more credits by sending an e-mail to
@@ -46,12 +55,11 @@
         </p>
         <p>
             {% if 'change_algorithm' in algorithm_perms %}
-                <p>As an editor, you can test and debug your algorithm in total {{ editors_job_limit }} times per unique algorithm image.
-                    Failed runs do not count towards this limit.
-                    You share these credits with all other editors of this algorithm.
-                    Once you have reached the limit, any extra jobs will be deducted from your personal algorithm credits,
-                    of which you get {{ request.user.user_credit.credits }} per month.</p>
-            {% elif form.jobs_limit > 0 %}
+                As an editor for this algorithm you can test and debug your algorithm in total {{ editors_job_limit }} times per unique algorithm image.
+                You share these credits with all other editors of this algorithm.
+                Once you have reached the limit, any extra jobs will be deducted from your personal algorithm credits,
+                of which you get {{ request.user.user_credit.credits }} per month.
+            {% else %}
                 You receive {{ request.user.user_credit.credits }} credits per month.
             {% endif %}
             Using this algorithm requires {{ algorithm.credits_per_job }}
