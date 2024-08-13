@@ -59,13 +59,13 @@ class HtmlTagsPostprocessor(Postprocessor):
             bs4block = BeautifulSoup(
                 self.md.htmlStash.rawHtmlBlocks[i], "html.parser"
             )
-
-            for img in bs4block.find_all("img"):
+            img = bs4block.find("img")
+            if img:
                 if "class" not in img.attrs:
                     img.attrs["class"] = []
 
                 if "img-fluid" not in img.attrs["class"]:
                     img["class"].append("img-fluid")
 
-            self.md.htmlStash.rawHtmlBlocks[i] = str(bs4block)
+                self.md.htmlStash.rawHtmlBlocks[i] = str(bs4block)
         return lines
