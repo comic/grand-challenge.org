@@ -435,8 +435,10 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
                 ).count()
             else:
                 n_editor_jobs = 0
+
             n_free_jobs = max(
-                settings.ALGORITHMS_JOB_LIMIT_FOR_EDITORS - n_editor_jobs,
+                settings.ALGORITHM_IMAGES_COMPLIMENTARY_EDITOR_JOBS
+                - n_editor_jobs,
                 0,
             )
             user_credits += n_free_jobs * self.credits_per_job
@@ -743,6 +745,11 @@ class Job(UUIDModel, ComponentJob):
         ),
     )
     comment = models.TextField(blank=True, default="")
+    is_complimentary = models.BooleanField(
+        default=False,
+        editable=False,
+        help_text="If True, this job does not consume credits.",
+    )
 
     viewer_groups = models.ManyToManyField(
         Group,
@@ -814,6 +821,7 @@ class Job(UUIDModel, ComponentJob):
 
         if adding:
             self.init_viewers_group()
+            self.init_is_complimentary()
 
         super().save(*args, **kwargs)
 
@@ -831,6 +839,16 @@ class Job(UUIDModel, ComponentJob):
     def init_viewers_group(self):
         self.viewers = Group.objects.create(
             name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_viewers"
+        )
+
+    def init_is_complimentary(self):
+        self.is_complimentary = bool(
+            self.creator
+            and self.algorithm_image.algorithm.is_editor(user=self.creator)
+            and Job.objects.filter(
+                algorithm_image=self.algorithm_image, is_complimentary=True
+            ).count()
+            < settings.ALGORITHM_IMAGES_COMPLIMENTARY_EDITOR_JOBS
         )
 
     def init_permissions(self):

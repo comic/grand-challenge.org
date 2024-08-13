@@ -524,3 +524,89 @@ def test_usage_statistics():
             },
         },
     }
+
+
+@pytest.mark.django_db
+def test_is_complimentary_set_for_editors():
+    u = UserFactory()
+    a = AlgorithmFactory()
+
+    a.add_editor(user=u)
+    j = AlgorithmJobFactory(
+        algorithm_image__algorithm=a, creator=u, time_limit=60
+    )
+
+    assert j.is_complimentary is True
+
+
+@pytest.mark.django_db
+def test_is_complimentary_not_set_for_normal_user():
+    u = UserFactory()
+    a = AlgorithmFactory()
+
+    j = AlgorithmJobFactory(
+        algorithm_image__algorithm=a, creator=u, time_limit=60
+    )
+
+    assert j.is_complimentary is False
+
+
+@pytest.mark.django_db
+def test_is_complimentary_not_set_for_none_user():
+    a = AlgorithmFactory()
+
+    j = AlgorithmJobFactory(
+        algorithm_image__algorithm=a, creator=None, time_limit=60
+    )
+
+    assert j.is_complimentary is False
+
+
+@pytest.mark.django_db
+def test_is_complimentary_limited_by_free_jobs(settings):
+    settings.ALGORITHM_IMAGES_COMPLIMENTARY_EDITOR_JOBS = 2
+
+    u1, u2, u3 = UserFactory.create_batch(3)
+    ai = AlgorithmImageFactory()
+
+    ai.algorithm.add_editor(user=u1)
+    ai.algorithm.add_editor(user=u2)
+    ai.algorithm.add_user(user=u3)
+
+    j_none_user = AlgorithmJobFactory(
+        algorithm_image=ai, creator=None, time_limit=60
+    )
+    j_other_user = AlgorithmJobFactory(
+        algorithm_image=ai, creator=u3, time_limit=60
+    )
+
+    j_u1 = AlgorithmJobFactory(algorithm_image=ai, creator=u1, time_limit=60)
+    j_u2 = AlgorithmJobFactory(algorithm_image=ai, creator=u2, time_limit=60)
+    j2_u2 = AlgorithmJobFactory(algorithm_image=ai, creator=u2, time_limit=60)
+
+    assert j_none_user.is_complimentary is False
+    assert j_other_user.is_complimentary is False
+    assert j_u1.is_complimentary is True
+    assert j_u2.is_complimentary is True
+    assert j2_u2.is_complimentary is False
+
+
+@pytest.mark.django_db
+def test_other_algorithm_images_not_considered(settings):
+    settings.ALGORITHM_IMAGES_COMPLIMENTARY_EDITOR_JOBS = 1
+
+    u = UserFactory()
+    ai1, ai2 = AlgorithmImageFactory.create_batch(2)
+
+    ai1.algorithm.add_editor(user=u)
+    ai2.algorithm.add_editor(user=u)
+
+    ai1_j1 = AlgorithmJobFactory(algorithm_image=ai1, creator=u, time_limit=60)
+    ai1_j2 = AlgorithmJobFactory(algorithm_image=ai1, creator=u, time_limit=60)
+    ai2_j1 = AlgorithmJobFactory(algorithm_image=ai2, creator=u, time_limit=60)
+    ai2_j2 = AlgorithmJobFactory(algorithm_image=ai2, creator=u, time_limit=60)
+
+    assert ai1_j1.is_complimentary is True
+    assert ai1_j2.is_complimentary is False
+    assert ai2_j1.is_complimentary is True
+    assert ai2_j2.is_complimentary is False

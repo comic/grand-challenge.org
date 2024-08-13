@@ -498,7 +498,7 @@ class JobCreate(
         context.update(
             {
                 "algorithm": self.algorithm,
-                "editors_job_limit": settings.ALGORITHMS_JOB_LIMIT_FOR_EDITORS,
+                "editors_job_limit": settings.ALGORITHM_IMAGES_COMPLIMENTARY_EDITOR_JOBS,
             }
         )
         return context
