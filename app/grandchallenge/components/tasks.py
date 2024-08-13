@@ -99,13 +99,10 @@ def validate_docker_image(  # noqa C901
 
     if instance.is_manifest_valid is None:
         try:
-            instance.image_sha256 = _validate_docker_image_manifest(
-                instance=instance
-            )
+            _validate_docker_image_manifest(instance=instance)
             instance.is_manifest_valid = True
             instance.save()
         except ValidationError as error:
-            instance.image_sha256 = ""
             instance.is_manifest_valid = False
             instance.status = oxford_comma(error)
             instance.import_status = instance.ImportStatusChoices.FAILED
@@ -443,6 +440,8 @@ def _validate_docker_image_manifest(*, instance) -> str:
     config = config_and_sha256["config"]
     image_sha256 = config_and_sha256["image_sha256"]
 
+    instance.image_sha256 = f"sha256:{image_sha256}"
+
     user = str(config["config"].get("User", "")).lower()
     if (
         user in ["", "root", "0"]
@@ -465,7 +464,21 @@ def _validate_docker_image_manifest(*, instance) -> str:
             f"{desired_arch!r}."
         )
 
-    return f"sha256:{image_sha256}"
+    if instance._meta.model_name != "method":
+        # TODO Methods are currently allowed to be duplicated
+        model = apps.get_model(
+            app_label=instance._meta.app_label,
+            model_name=instance._meta.model_name,
+        )
+        if (
+            model.objects.filter(image_sha256=instance.image_sha256)
+            .exclude(pk=instance.pk)
+            .exists()
+        ):
+            raise ValidationError(
+                "This container image has already been uploaded. "
+                "Please re-activate the existing container image or upload a new version."
+            )
 
 
 def _get_image_config_and_sha256(*, instance):
