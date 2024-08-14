@@ -42,13 +42,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 
 function mutationObserverCallback(mutationList, observer) {
-
     mutationList.forEach((mutation) => {
-
         mutation.addedNodes.forEach((addedNode) => {
-
             if (addedNode.nodeType !== Node.TEXT_NODE) {
-
                 for(const element of addedNode.getElementsByClassName("vega-lite-chart")){
                     if (!element.getAttribute(handledAttribute)) {
                         renderVegaLiteChart(element);
@@ -63,6 +59,8 @@ function mutationObserverCallback(mutationList, observer) {
 const mutationObserver = new MutationObserver(mutationObserverCallback);
 
 if(document.getElementById("ajaxDataTable")){
-    mutationObserver.observe(document.getElementById("ajaxDataTable"),
-                        {childList: true, subtree: true,});
+    mutationObserver.observe(
+        document.getElementById("ajaxDataTable"),
+        {childList: true, subtree: true,}
+    );
 }
