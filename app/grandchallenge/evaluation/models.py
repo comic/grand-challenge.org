@@ -583,6 +583,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                     )
 
         if self.has_changed("public"):
+            self.assign_permissions()
             on_commit(
                 assign_evaluation_permissions.signature(
                     kwargs={"phase_pks": [self.pk]}
@@ -748,9 +749,19 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         assign_perm(
             "create_phase_submission", self.challenge.admins_group, self
         )
-        assign_perm(
-            "create_phase_submission", self.challenge.participants_group, self
-        )
+
+        if self.public:
+            assign_perm(
+                "create_phase_submission",
+                self.challenge.participants_group,
+                self,
+            )
+        else:
+            remove_perm(
+                "create_phase_submission",
+                self.challenge.participants_group,
+                self,
+            )
 
     def get_absolute_url(self):
         return reverse(

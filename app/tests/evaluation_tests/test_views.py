@@ -569,13 +569,13 @@ def test_hidden_phase_visible_for_admins_but_not_participants(client):
         ("leaderboard", {"slug": visible_phase.slug}, 200),
         # hidden phase
         ("detail", {"pk": e2.pk}, 403),
-        ("submission-create", {"slug": hidden_phase.slug}, 200),
+        ("submission-create", {"slug": hidden_phase.slug}, 403),
         (
             "submission-detail",
             {"pk": e2.submission.pk, "slug": e2.submission.phase.slug},
             403,
         ),
-        ("leaderboard", {"slug": hidden_phase.slug}, 200),
+        ("leaderboard", {"slug": hidden_phase.slug}, 403),
     ]:
         # for participants only the visible phase tab is visible
         # and they do not have access to the detail pages of their evals and
