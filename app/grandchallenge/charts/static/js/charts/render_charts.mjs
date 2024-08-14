@@ -45,7 +45,7 @@ function mutationObserverCallback(mutationList, observer) {
     mutationList.forEach((mutation) => {
         mutation.addedNodes.forEach((addedNode) => {
             if (addedNode.nodeType !== Node.TEXT_NODE) {
-                for(const element of addedNode.getElementsByClassName("vega-lite-chart")){
+                for (const element of addedNode.getElementsByClassName("vega-lite-chart")) {
                     if (!element.getAttribute(handledAttribute)) {
                         renderVegaLiteChart(element);
                         element.setAttribute(handledAttribute, "");
