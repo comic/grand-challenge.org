@@ -593,13 +593,13 @@ def test_hidden_phase_visible_for_admins_but_not_participants(client):
         ("leaderboard", {"slug": visible_phase.slug}, 200),
         # hidden phase
         ("detail", {"pk": e2.pk}, 403),
-        ("submission-create", {"slug": hidden_phase.slug}, 200),
+        ("submission-create", {"slug": hidden_phase.slug}, 403),
         (
             "submission-detail",
             {"pk": e2.submission.pk, "slug": e2.submission.phase.slug},
             403,
         ),
-        ("leaderboard", {"slug": hidden_phase.slug}, 200),
+        ("leaderboard", {"slug": hidden_phase.slug}, 403),
     ]:
         # for participants only the visible phase tab is visible
         # and they do not have access to the detail pages of their evals and
@@ -611,10 +611,11 @@ def test_hidden_phase_visible_for_admins_but_not_participants(client):
             reverse_kwargs={"challenge_short_name": ch.short_name, **kwargs},
             user=u,
         )
+
         assert response.status_code == status
         if status == 200:
-            assert f"{visible_phase.title}</a>" in str(response.content)
-            assert f"{hidden_phase.title}</a>" not in str(response.content)
+            assert visible_phase.title in str(response.content)
+            assert hidden_phase.title not in str(response.content)
 
         # for the admin both phases are visible and they have access to submissions
         # and evals from both phases
@@ -625,8 +626,8 @@ def test_hidden_phase_visible_for_admins_but_not_participants(client):
             user=ch.admins_group.user_set.first(),
         )
         assert response.status_code == 200
-        assert f"{visible_phase.title}</a>" in str(response.content)
-        assert f"{hidden_phase.title}</a>" in str(response.content)
+        assert visible_phase.title in str(response.content)
+        assert hidden_phase.title in str(response.content)
 
 
 @pytest.mark.django_db

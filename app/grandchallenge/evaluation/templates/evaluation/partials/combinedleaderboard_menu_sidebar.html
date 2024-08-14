@@ -4,18 +4,21 @@
        data-target="#{{ combined_leaderboard.slug }}-collapse"
        aria-expanded={% if request.resolver_match.view_name in 'evaluation:combined-leaderboard-update,evaluation:combined-leaderboard-delete' and request.resolver_match.kwargs.slug == combined_leaderboard.slug %}"true"{% else %}"false"{% endif %}
       >
-         <i class="fas fa-chevron-right mr-1"></i> <i class="fas fa-chevron-down mr-1"></i> {{ combined_leaderboard.title }}
+        <i class="fas fa-chevron-right fa-fw"></i>
+        <i class="fas fa-chevron-down fa-fw"></i>
+        {{ combined_leaderboard.title }}
     </a>
     <div class="collapse {% if request.resolver_match.view_name in 'evaluation:combined-leaderboard-update,evaluation:combined-leaderboard-delete' and request.resolver_match.kwargs.slug == combined_leaderboard.slug %}show{% endif %}"
          id="{{ combined_leaderboard.slug }}-collapse"
-         style=""
     >
         <ul class="nav nav-pills flex-column">
             <li class="nav-item pl-4">
-                <a href="{% url 'evaluation:combined-leaderboard-update' slug=combined_leaderboard.slug %}" class="nav-link py-1 pl-3 {% if request.resolver_match.view_name == 'evaluation:combined-leaderboard-update' and request.resolver_match.kwargs.slug == combined_leaderboard.slug %}active{% endif %}"><i class="fas fa-cog fa-fw"></i> Settings</a>
+                <a href="{% url 'evaluation:combined-leaderboard-update' slug=combined_leaderboard.slug %}" class="nav-link py-1 pl-3 {% if request.resolver_match.view_name == 'evaluation:combined-leaderboard-update' and request.resolver_match.kwargs.slug == combined_leaderboard.slug %}active{% endif %}">
+                    <i class="fas fa-cog fa-fw"></i> Settings</a>
             </li>
             <li class="nav-item pl-4">
-                <a href="{% url 'evaluation:combined-leaderboard-delete' slug=combined_leaderboard.slug %}" class="nav-link py-1 pl-3 {% if request.resolver_match.view_name == 'evaluation:combined-leaderboard-delete' and request.resolver_match.kwargs.slug == combined_leaderboard.slug %}active{% endif %}"><i class="fas fa-trash fa-fw"></i> Delete</a>
+                <a href="{% url 'evaluation:combined-leaderboard-delete' slug=combined_leaderboard.slug %}" class="nav-link py-1 pl-3 {% if request.resolver_match.view_name == 'evaluation:combined-leaderboard-delete' and request.resolver_match.kwargs.slug == combined_leaderboard.slug %}active{% endif %}">
+                    <i class="fas fa-trash fa-fw"></i> Delete</a>
             </li>
         </ul>
     </div>
