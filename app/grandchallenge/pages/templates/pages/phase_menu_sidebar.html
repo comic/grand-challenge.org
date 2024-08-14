@@ -6,7 +6,7 @@
     >
         <i class="fas fa-chevron-right fa-fw"></i>
         <i class="fas fa-chevron-down fa-fw"></i>
-        {% if not phase.public %}<i class="fas fa-lock" title="Not Public"></i>{% endif%}
+        {% if not phase.public %}<i class="fas fa-lock" title="Not Public"></i>{% endif %}
         {{ phase.title }}
     </a>
     <div class="collapse {% if request.resolver_match.view_name in 'evaluation:phase-update,evaluation:method-list,evaluation:method-create,evaluation:evaluation-admin-list,evaluation:method-detail,evaluation:method-update,evaluation:ground-truth-list,evaluation:ground-truth-create,evaluation:ground-truth-update,evaluation:ground-truth-detail' and request.resolver_match.kwargs.slug == phase.slug %}show{% endif %}"
