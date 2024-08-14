@@ -54,7 +54,7 @@ class HtmlTagsExtension(Extension):
 
 
 class HtmlTagsPostprocessor(Postprocessor):
-    def run(self, lines):
+    def run(self, text):
         for i in range(len(self.md.htmlStash.rawHtmlBlocks)):
             bs4block = BeautifulSoup(
                 self.md.htmlStash.rawHtmlBlocks[i], "html.parser"
@@ -68,4 +68,4 @@ class HtmlTagsPostprocessor(Postprocessor):
                     img["class"].append("img-fluid")
 
                 self.md.htmlStash.rawHtmlBlocks[i] = str(bs4block)
-        return lines
+        return text
