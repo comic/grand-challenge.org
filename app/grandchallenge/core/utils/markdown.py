@@ -49,7 +49,7 @@ class HtmlTagsExtension(Extension):
     def extendMarkdown(self, md):  # noqa: N802
         md.registerExtension(self)
         md.postprocessors.register(
-            HtmlTagsPostprocessor(md), "htmltags_extension", 35
+            HtmlTagsPostprocessor(md), "html_tags_extension", 35
         )
 
 
