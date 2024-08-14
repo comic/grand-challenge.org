@@ -1,0 +1,34 @@
+<a href="#ciModal-{{ interface.pk }}"
+    data-toggle="modal"
+    data-target="#ciModal-{{ interface.pk }}"
+    class="text-decoration-none"
+    role="button"
+    title="View {{ interface.title }}"
+>
+    <div class="badge badge-primary">
+        <i
+                class="fas fa-fw fa-eye"
+        ></i>
+        View Schema Example
+    </div>
+</a>
+
+<div class="modal" id="ciModal-{{ interface.pk }}" tabindex="-1" role="dialog"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    {{ interface.title }} schema example
+                </h5>
+                <button type="button" class="close" data-dismiss="modal"
+                        aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="text-left modal-body">
+                {{ interface.example_value }}
+            </div>
+        </div>
+    </div>
+</div>

@@ -73,6 +73,11 @@
                             {% endif %}
                         </td>
                     {% endwith %}
+                    <td>
+                        {% if interface.example_value %}
+                            {% include "components/partials/ci_example_value.html" %}
+                        {% endif %}
+                    </td>
                 </tr>
             {% endfor %}
             </tbody>
