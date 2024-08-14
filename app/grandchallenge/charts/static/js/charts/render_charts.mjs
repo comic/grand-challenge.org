@@ -58,7 +58,7 @@ function mutationObserverCallback(mutationList, observer) {
 
 const mutationObserver = new MutationObserver(mutationObserverCallback);
 
-if(document.getElementById("ajaxDataTable")){
+if (document.getElementById("ajaxDataTable")) {
     mutationObserver.observe(
         document.getElementById("ajaxDataTable"),
         {childList: true, subtree: true,}
