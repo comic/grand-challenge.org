@@ -39,9 +39,23 @@ class AccountAdapter(DefaultAccountAdapter):
             },
         )
 
+    @property
+    def _is_password_reset_request(self):
+        return (
+            self.request.resolver_match.namespace == ""
+            and self.request.resolver_match.url_name
+            == "account_reset_password"
+        )
+
     def clean_email(self, email):
         email = super().clean_email(email=email)
-        return clean_email(email=email)
+
+        if self._is_password_reset_request:
+            # Allauths cleaning is sufficient for password reset
+            return email
+        else:
+            # Checks for banned domains and existing emails across the site
+            return clean_email(email=email)
 
     def post_login(self, request, user, **kwargs):
         response = super().post_login(request, user, **kwargs)
