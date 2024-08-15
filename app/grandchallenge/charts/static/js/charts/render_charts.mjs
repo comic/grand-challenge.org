@@ -3,8 +3,8 @@ function renderVegaLiteChart(element) {
     vegaEmbed(element, spec);
 }
 
-// Lazy rendering
-// Tag the containers with the class 'vega-lite-chart-lazy' to only render
+// Elements with the class "vega-lite-chart" will only be rendered when they are in the viewport
+// The element will be tagged with the attribute "data-vega-chart-is-rendered" to prevent re-rendering
 const handledAttribute = "data-vega-chart-is-rendered";
 
 function handleInterSection(entries) {
