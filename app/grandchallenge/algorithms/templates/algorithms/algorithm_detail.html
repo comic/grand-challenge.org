@@ -527,7 +527,8 @@
                  aria-labelledby="v-pills-models">
 
                 <h2>Algorithm Models</h2>
-                <p>You can upload your algorithm's model separately from the container. If provided, the model will be extracted to <code>/opt/ml/model/</code> during inference.</p>
+
+                {% include "components/partials/how_to_create_tarball.html" with model_name="algorithmmodel" %}
 
                 {% if not object.active_model %}
                     <p>
