@@ -65,7 +65,6 @@ $('#ajaxDataTable').on( 'init.dt', function () {
     setTimeout($('#ajaxDataTable').DataTable().columns.adjust, 1000);
 });
 
-//
 $(window).resize(function () {
     $('#ajaxDataTable').DataTable().columns.adjust();
 })
