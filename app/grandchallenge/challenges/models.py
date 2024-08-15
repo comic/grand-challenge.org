@@ -658,7 +658,10 @@ class Challenge(ChallengeBase):
 
     @cached_property
     def status(self) -> str:
-        phase_status = {phase.status for phase in self.phase_set.all()}
+        phase_status = {
+            phase.status for phase in self.phase_set.filter(public=True)
+        }
+
         if StatusChoices.OPEN in phase_status:
             status = StatusChoices.OPEN
         elif {StatusChoices.COMPLETED} == phase_status:
@@ -667,6 +670,7 @@ class Challenge(ChallengeBase):
             status = StatusChoices.OPENING_SOON
         else:
             status = StatusChoices.CLOSED
+
         return status
 
     @cached_property
