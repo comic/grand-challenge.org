@@ -1,3 +1,5 @@
+{% load json%}
+
 <a href="#ciModal-{{ interface.pk }}"
     data-toggle="modal"
     data-target="#ciModal-{{ interface.pk }}"
@@ -27,7 +29,9 @@
                 </button>
             </div>
             <div class="text-left modal-body">
-                {{ interface.example_value }}
+                <pre>
+                    {{ interface.example_value|json_dumps:4 }}
+                </pre>
             </div>
         </div>
     </div>

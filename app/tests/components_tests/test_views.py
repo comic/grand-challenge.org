@@ -2,10 +2,10 @@ import json
 
 import pytest
 from django.conf import settings
+from django.utils.html import escape
 
 from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.components.models import InterfaceKindChoices
-from grandchallenge.components.templatetags.base64 import b64encode_json
 from grandchallenge.reader_studies.models import DisplaySet, ReaderStudy
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import (
@@ -487,8 +487,8 @@ def test_display_download_link_for_json_schema_example(client):
         user=user,
     )
 
-    example_b64_json = b64encode_json(ci.example_value)
-    example_download_link = f'<a download="json_schema_example.json" href="data:application/octet-stream;charset=utf-8;base64,{example_b64_json}">Download schema example</a>'
-
     assert response.status_code == 200
-    assert example_download_link in response.rendered_content
+    assert (
+        escape(json.dumps(ci.example_value, indent=4))
+        in response.rendered_content
+    )
