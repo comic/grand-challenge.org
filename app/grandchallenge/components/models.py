@@ -1871,10 +1871,12 @@ class ComponentImage(FieldChangeMixin, models.Model):
     is_desired_version = models.BooleanField(default=False, editable=False)
 
     def __str__(self):
-        out = f"{self._meta.verbose_name.title()} {self.pk}"
+        out = f"{self._meta.verbose_name.title()} {self.pk_display} (SHA256: {self.sha256_display}"
 
         if self.comment:
-            out += f" ({truncatewords(self.comment, 4)})"
+            out += f", comment: {truncatewords(self.comment, 4)}"
+
+        out += ")"
 
         return out
 
@@ -1889,6 +1891,17 @@ class ComponentImage(FieldChangeMixin, models.Model):
     @property
     def linked_file(self):
         return self.image
+
+    @property
+    def sha256_display(self):
+        if self.image_sha256:
+            return self.image_sha256.split(":")[1][:8]
+        else:
+            return "Unknown"
+
+    @property
+    def pk_display(self):
+        return str(self.pk).split("-")[0]
 
     def clear_can_execute_cache(self):
         try:

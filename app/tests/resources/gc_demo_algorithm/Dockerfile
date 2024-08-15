@@ -12,4 +12,6 @@ RUN python3 -m pip install pynvml psutil
 
 ADD copy_io.py .
 
+ENV BUILD_TIME=${BUILD_TIME}
+
 ENTRYPOINT ["python", "copy_io.py"]
