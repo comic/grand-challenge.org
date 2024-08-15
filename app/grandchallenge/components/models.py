@@ -1894,7 +1894,10 @@ class ComponentImage(FieldChangeMixin, models.Model):
 
     @property
     def sha256_display(self):
-        return self.image_sha256.split(":")[1][:8]
+        if self.image_sha256:
+            return self.image_sha256.split(":")[1][:8]
+        else:
+            return "Unknown"
 
     @property
     def pk_display(self):
