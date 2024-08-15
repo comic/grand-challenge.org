@@ -495,10 +495,12 @@
                                     {% endif %}
                                     Build {{ image.build.get_status_display }}
                                 </a>
-                                Container image from
+                            {% endif %}
+
+                            {{ image }}
+
+                            {% if image.build %}
                                 <a href="{{ image.build.webhook_message.tag_url }}">{{ image.build.webhook_message.repo_name }}:{{ image.build.webhook_message.tag }}</a>
-                            {% else %}
-                                Container image uploaded by {{ image.creator }} {{ image.created|naturaltime }} {% if image.comment %}({{ image.comment }}) {% endif %}
                             {% endif %}
 
                             <span class="badge badge-{{ image.import_status_context }}">

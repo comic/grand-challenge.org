@@ -14,7 +14,7 @@ from django.db.models import Count, Min, Q, Sum
 from django.db.models.signals import post_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
-from django.template.defaultfilters import truncatechars, truncatewords
+from django.template.defaultfilters import truncatechars
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
@@ -534,14 +534,6 @@ class AlgorithmImage(UUIDModel, ComponentImage):
 
     class Meta(UUIDModel.Meta, ComponentImage.Meta):
         ordering = ("created", "creator")
-
-    def __str__(self):
-        out = f"Algorithm image {self.pk} for {self.algorithm}"
-
-        if self.comment:
-            out += f" ({truncatewords(self.comment, 4)})"
-
-        return out
 
     def get_absolute_url(self):
         return reverse(
