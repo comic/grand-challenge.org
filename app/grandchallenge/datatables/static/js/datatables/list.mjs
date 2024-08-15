@@ -1,4 +1,4 @@
-import { mutationObserver } from '/static/js/charts/render_charts.mjs';
+import { renderVegaChartsObserver } from '/static/js/charts/render_charts.mjs';
 
 const defaultSortColumn = JSON.parse(document.getElementById("defaultSortColumn").textContent)
 const textAlign = JSON.parse(document.getElementById("textAlign").textContent)
@@ -6,7 +6,7 @@ const defaultSortOrder =  JSON.parse(document.getElementById("defaultSortOrder")
 
 $(document).ready(function () {
 
-    mutationObserver.observe(
+    renderVegaChartsObserver.observe(
         document.getElementById("ajaxDataTable"),
         {childList: true, subtree: true,}
     );

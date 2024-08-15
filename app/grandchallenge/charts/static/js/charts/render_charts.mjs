@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 });
 
 
-function mutationObserverCallback(mutationList, observer) {
+function renderVegaChartsInAddedNodes(mutationList, observer) {
     mutationList.forEach((mutation) => {
         mutation.addedNodes.forEach((addedNode) => {
             if (addedNode.nodeType !== Node.TEXT_NODE) {
@@ -56,6 +56,6 @@ function mutationObserverCallback(mutationList, observer) {
     })
 }
 
-const mutationObserver = new MutationObserver(mutationObserverCallback);
+const renderVegaChartsObserver = new MutationObserver(renderVegaChartsInAddedNodes);
 
-export { mutationObserver };
+export { renderVegaChartsObserver };
