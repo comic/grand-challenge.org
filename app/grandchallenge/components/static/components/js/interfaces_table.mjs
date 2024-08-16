@@ -1,5 +1,5 @@
 $(document).ready(function () {
-    $('#interfacesTable').DataTable({
-        "pageLength": 100,
-    });
+  $("#interfacesTable").DataTable({
+    pageLength: 100,
+  });
 });

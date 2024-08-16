@@ -1,39 +1,36 @@
 function renderVegaLiteChart(element) {
-    const spec = JSON.parse(element.children[0].textContent);
-    vegaEmbed(element, spec);
+  const spec = JSON.parse(element.children[0].textContent);
+  vegaEmbed(element, spec);
 }
 
-document.addEventListener("DOMContentLoaded", function(event) {
-    for (const element of document.getElementsByClassName("vega-lite-chart")) {
-        renderVegaLiteChart(element);
-    }
+document.addEventListener("DOMContentLoaded", function (event) {
+  for (const element of document.getElementsByClassName("vega-lite-chart")) {
+    renderVegaLiteChart(element);
+  }
 });
-
 
 // Lazy rendering
 // Tag the containers with the class 'vega-lite-chart-lazy' to only render
 const handledAttribute = "data-vega-chart-is-rendered";
 
 function handleInterSection(entries) {
-    entries.forEach((entry) => {
-        if (entry.intersectionRatio < 0.40) {
-            return;
-        }
+  entries.forEach((entry) => {
+    if (entry.intersectionRatio < 0.4) {
+      return;
+    }
 
-        const element = entry.target;
+    const element = entry.target;
 
+    if (element.getAttribute(handledAttribute)) {
+      return;
+    }
 
-        if (element.getAttribute(handledAttribute)) {
-            return;
-        }
+    renderVegaLiteChart(element);
 
-        renderVegaLiteChart(element);
-
-        // Tag the element as being handled
-        element.setAttribute(handledAttribute, "");
-        this.unobserve(element);
-        }
-    )
+    // Tag the element as being handled
+    element.setAttribute(handledAttribute, "");
+    this.unobserve(element);
+  });
 }
 
 const observer = new IntersectionObserver(handleInterSection, {
@@ -41,9 +38,10 @@ const observer = new IntersectionObserver(handleInterSection, {
   threshold: 1.0,
 });
 
-
-document.addEventListener("DOMContentLoaded", function(event) {
-    for (const element of document.getElementsByClassName("vega-lite-chart-lazy")) {
-        observer.observe(element, );
-    }
+document.addEventListener("DOMContentLoaded", function (event) {
+  for (const element of document.getElementsByClassName(
+    "vega-lite-chart-lazy",
+  )) {
+    observer.observe(element);
+  }
 });
