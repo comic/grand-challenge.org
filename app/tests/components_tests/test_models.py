@@ -1469,28 +1469,37 @@ def test_displacement_field_validation(
 
 
 @pytest.mark.parametrize(
-    "example_value, error_value",
+    "example_value, expected_value,context",
     (
         (
             {"age": -23, "lastName": "Doe", "firstName": "John"},
             "['JSON does not fulfill schema: instance is less than the minimum of 1']",
+            pytest.raises(ValidationError),
         ),
         (
             {"age": 23, "lastName": 100, "firstName": "John"},
             "[\"JSON does not fulfill schema: instance is not of type 'string'\"]",
+            pytest.raises(ValidationError),
         ),
         (
             {"age": "23", "lastName": "Doe", "firstName": "John"},
             "[\"JSON does not fulfill schema: instance '23' is not of type 'integer'\"]",
+            pytest.raises(ValidationError),
         ),
         (
             {"age": 0, "lastName": "Doe", "firstName": 100},
             "[\"JSON does not fulfill schema: instance is not of type 'string'\"]",
+            pytest.raises(ValidationError),
+        ),
+        (
+            {"age": 23, "lastName": "Doe", "firstName": "John"},
+            None,
+            nullcontext(),
         ),
     ),
 )
 @pytest.mark.django_db
-def test_invalid_example_values(example_value, error_value):
+def test_invalid_example_values(example_value, expected_value, context):
 
     sc = {
         "$id": "https://example.com/person.schema.json",
@@ -1521,7 +1530,6 @@ def test_invalid_example_values(example_value, error_value):
         example_value=example_value,
     )
 
-    with pytest.raises(ValidationError) as error:
+    with context as ctx:
         ci.clean()
-
-    assert str(error.value) == error_value
+        assert getattr(ctx, "value", None) == expected_value
