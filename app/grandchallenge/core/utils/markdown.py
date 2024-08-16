@@ -1,7 +1,37 @@
+from xml.etree import ElementTree
+
 from bs4 import BeautifulSoup
 from markdown import Extension
-from markdown.postprocessors import Postprocessor
 from markdown.treeprocessors import Treeprocessor
+
+
+class HtmlElementWrapper:
+    def __init__(self, element):
+        self.element = element
+
+    def set_css_class(self, class_name: str):
+
+        if isinstance(self.element, ElementTree.Element):
+
+            current_class = self.element.attrib.get("class", "")
+
+            if class_name not in current_class:
+                new_class = f"{current_class} {class_name}".strip()
+                self.element.set("class", new_class)
+
+        elif isinstance(self.element, BeautifulSoup().new_tag("").__class__):
+
+            if "class" not in self.element.attrs:
+                self.element.attrs["class"] = []
+
+            current_class = self.element["class"]
+
+            for name in class_name.split(" "):
+                if class_name not in current_class:
+                    current_class.append(name)
+
+    def get_element(self):
+        return self.element
 
 
 class BS4Extension(Extension):
@@ -12,21 +42,35 @@ class BS4Extension(Extension):
 
 class BS4Treeprocessor(Treeprocessor):
     def run(self, root):
+
+        el_class_dict = {
+            "img": "img-fluid",
+            "blockquote": "blockquote",
+            "table": "table table-hover table-borderless",
+            "thead": "thead-light",
+            "code": "codehilite",
+        }
+
         for el in root.iter():
-            if el.tag == "img":
-                el.set("class", "img-fluid")
 
-            elif el.tag == "blockquote":
-                el.set("class", "blockquote")
+            if el.tag in el_class_dict:
+                el_wrapper = HtmlElementWrapper(el)
+                el_wrapper.set_css_class(el_class_dict[el.tag])
+                el = el_wrapper.get_element()
 
-            elif el.tag == "table":
-                el.set("class", "table table-hover table-borderless")
+        for i in range(len(self.md.htmlStash.rawHtmlBlocks)):
 
-            elif el.tag == "thead":
-                el.set("class", "thead-light")
+            bs4block = BeautifulSoup(
+                self.md.htmlStash.rawHtmlBlocks[i], "html.parser"
+            )
 
-            elif el.tag == "code":
-                el.set("class", "codehilite")
+            el = bs4block.find()
+
+            if el and el.name in el_class_dict:
+                el_wrapper = HtmlElementWrapper(el)
+                el_wrapper.set_css_class(el_class_dict[el.name])
+                el = el_wrapper.get_element()
+                self.md.htmlStash.rawHtmlBlocks[i] = str(bs4block)
 
 
 class LinkBlankTargetExtension(Extension):
@@ -43,29 +87,3 @@ class LinkBlankTargetTreeprocessor(Treeprocessor):
             if el.tag == "a":
                 el.set("target", "_blank")
                 el.set("rel", "noopener")
-
-
-class HtmlTagsExtension(Extension):
-    def extendMarkdown(self, md):  # noqa: N802
-        md.registerExtension(self)
-        md.postprocessors.register(
-            HtmlTagsPostprocessor(md), "html_tags_extension", 35
-        )
-
-
-class HtmlTagsPostprocessor(Postprocessor):
-    def run(self, text):
-        for i in range(len(self.md.htmlStash.rawHtmlBlocks)):
-            bs4block = BeautifulSoup(
-                self.md.htmlStash.rawHtmlBlocks[i], "html.parser"
-            )
-            img = bs4block.find("img")
-            if img:
-                if "class" not in img.attrs:
-                    img.attrs["class"] = []
-
-                if "img-fluid" not in img.attrs["class"]:
-                    img["class"].append("img-fluid")
-
-                self.md.htmlStash.rawHtmlBlocks[i] = str(bs4block)
-        return text

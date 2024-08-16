@@ -21,7 +21,7 @@ from sentry_sdk.integrations.logging import ignore_logger
 from config.denylist import USERNAME_DENYLIST
 from grandchallenge.components.exceptions import PriorStepFailed
 from grandchallenge.core.utils import strtobool
-from grandchallenge.core.utils.markdown import BS4Extension, HtmlTagsExtension
+from grandchallenge.core.utils.markdown import BS4Extension
 
 MEGABYTE = 1024 * 1024
 GIGABYTE = 1024 * MEGABYTE
@@ -783,7 +783,6 @@ MARKDOWNX_MARKDOWN_EXTENSIONS = [
     "markdown.extensions.codehilite",
     "markdown.extensions.attr_list",
     BS4Extension(),
-    HtmlTagsExtension(),
 ]
 MARKDOWN_POST_PROCESSORS = []
 MARKDOWNX_MARKDOWNIFY_FUNCTION = (
