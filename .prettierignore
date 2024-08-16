@@ -1,0 +1,6 @@
+app/grandchallenge/core/static/vendored/*
+**/*.html
+**/*.md
+**/*.yaml
+**/*.yml
+**/*.cff
