@@ -1,4 +1,3 @@
-app/grandchallenge/core/static/css/select2-bootstrap4-theme/*
 app/grandchallenge/core/static/vendored/*
 **/*.html
 **/*.md
@@ -6,3 +5,5 @@ app/grandchallenge/core/static/vendored/*
 **/*.yml
 **/*.cff
 **/*.json
+**/*.css
+**/*.scss
