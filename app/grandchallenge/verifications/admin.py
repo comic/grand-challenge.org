@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.db.transaction import on_commit
 from django.utils.timezone import now
-from pyswot import is_academic
+from pyswot import find_school_names, is_academic
 
 from grandchallenge.profiles.tasks import deactivate_user
 from grandchallenge.verifications.models import (
@@ -46,11 +46,11 @@ class VerificationAdmin(admin.ModelAdmin):
         "user",
         "user_sets",
         "user_info",
-        "created",
-        "signup_email",
         "email",
         "email_is_academic",
+        "email_school_names",
         "email_is_verified",
+        "signup_email_if_different",
         "is_verified",
         "verified_at",
     )
@@ -75,15 +75,22 @@ class VerificationAdmin(admin.ModelAdmin):
         )
         return queryset
 
+    def email_school_names(self, obj):
+        return "\n".join(find_school_names(obj.email))
+
     def user_sets(self, obj):
         usernames = set()
+        comments = []
 
         for vus in obj.user.verificationuserset_set.all():
+            if vus.comment:
+                comments.append(vus.comment)
+
             for user in vus.users.all():
                 if user != obj.user:
                     usernames.add(user.username)
 
-        return ", ".join(usernames)
+        return f"{', '.join(usernames)}\n{'\n'.join(comments)}"
 
     def user_info(self, instance):
         return instance.user.user_profile.user_info
@@ -92,8 +99,13 @@ class VerificationAdmin(admin.ModelAdmin):
     def email_is_academic(self, instance):
         return is_academic(email=instance.email)
 
-    def signup_email(self, instance):
-        return instance.user.email
+    def signup_email_if_different(self, instance):
+        signup_email = instance.user.email
+
+        if signup_email == instance.email:
+            return ""
+        else:
+            return signup_email
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
