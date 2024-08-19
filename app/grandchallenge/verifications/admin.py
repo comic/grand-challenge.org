@@ -90,7 +90,10 @@ class VerificationAdmin(admin.ModelAdmin):
                 if user != obj.user:
                     usernames.add(user.username)
 
-        return f"{', '.join(usernames)}\n{'\n'.join(comments)}"
+        out_usernames = ", ".join(usernames)
+        out_comments = "\n".join(comments)
+
+        return f"{out_usernames}\n{out_comments}"
 
     def user_info(self, instance):
         return instance.user.user_profile.user_info
