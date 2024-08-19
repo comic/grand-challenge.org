@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.db.transaction import on_commit
+from django.template.defaultfilters import linebreaksbr
 from django.utils.timezone import now
 from pyswot import find_school_names, is_academic
 
@@ -76,7 +77,7 @@ class VerificationAdmin(admin.ModelAdmin):
         return queryset
 
     def email_school_names(self, obj):
-        return "\n".join(find_school_names(obj.email))
+        return linebreaksbr("\n".join(find_school_names(obj.email)))
 
     def user_sets(self, obj):
         usernames = set()
@@ -93,7 +94,7 @@ class VerificationAdmin(admin.ModelAdmin):
         out_usernames = ", ".join(usernames)
         out_comments = "\n".join(comments)
 
-        return f"{out_usernames}\n{out_comments}"
+        return linebreaksbr(f"{out_usernames}\n\n{out_comments}")
 
     def user_info(self, instance):
         return instance.user.user_profile.user_info
