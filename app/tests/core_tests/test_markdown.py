@@ -2,6 +2,8 @@ import pytest
 from django.conf import settings
 from markdown import markdown
 
+from grandchallenge.core.utils.markdown import BS4Treeprocessor
+
 TEST_MARKDOWN = """
 ![](whatever.png)
 
@@ -102,3 +104,8 @@ def test_setting_class_to_html_img_within_markdown(
     )
 
     assert output == expected_output
+
+
+def test_tree_processor_set_css_class_type_error():
+    with pytest.raises(TypeError):
+        BS4Treeprocessor.set_css_class("element", "img-fluid")
