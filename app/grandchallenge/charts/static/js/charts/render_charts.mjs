@@ -9,12 +9,11 @@ const handledAttribute = "data-vega-chart-is-rendered";
 
 function handleInterSection(entries) {
     entries.forEach((entry) => {
-        if (entry.intersectionRatio < 0.40) {
+        if (entry.intersectionRatio < 0.4) {
             return;
         }
 
         const element = entry.target;
-
 
         if (element.getAttribute(handledAttribute)) {
             return;
@@ -25,37 +24,39 @@ function handleInterSection(entries) {
         // Tag the element as being handled
         element.setAttribute(handledAttribute, "");
         this.unobserve(element);
-        }
-    )
+    });
 }
 
 const observer = new IntersectionObserver(handleInterSection, {
-  rootMargin: "0px",
-  threshold: 1.0,
+    rootMargin: "0px",
+    threshold: 1.0,
 });
 
-document.addEventListener("DOMContentLoaded", function(event) {
+document.addEventListener("DOMContentLoaded", function (event) {
     for (const element of document.getElementsByClassName("vega-lite-chart")) {
-        observer.observe(element, );
+        observer.observe(element);
     }
 });
-
 
 function renderVegaChartsInAddedNodes(mutationList, observer) {
     mutationList.forEach((mutation) => {
         mutation.addedNodes.forEach((addedNode) => {
             if (addedNode.nodeType !== Node.TEXT_NODE) {
-                for (const element of addedNode.getElementsByClassName("vega-lite-chart")) {
+                for (const element of addedNode.getElementsByClassName(
+                    "vega-lite-chart",
+                )) {
                     if (!element.getAttribute(handledAttribute)) {
                         renderVegaLiteChart(element);
                         element.setAttribute(handledAttribute, "");
                     }
                 }
             }
-        })
-    })
+        });
+    });
 }
 
-const renderVegaChartsObserver = new MutationObserver(renderVegaChartsInAddedNodes);
+const renderVegaChartsObserver = new MutationObserver(
+    renderVegaChartsInAddedNodes,
+);
 
 export { renderVegaChartsObserver };
