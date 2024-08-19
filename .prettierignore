@@ -1,8 +1,5 @@
 app/grandchallenge/core/static/vendored/*
 app/grandchallenge/core/static/js/markdownx.js
+app/grandchallenge/core/static/js/world-atlas/countries-110m.json
 **/*.html
 **/*.md
-**/*.yaml
-**/*.yml
-**/*.cff
-**/*.json
