@@ -47,11 +47,11 @@ class VerificationAdmin(admin.ModelAdmin):
         "user",
         "user_sets",
         "user_info",
+        "email_school_names",
+        "signup_email_if_different",
         "email",
         "email_is_academic",
-        "email_school_names",
         "email_is_verified",
-        "signup_email_if_different",
         "is_verified",
         "verified_at",
     )
@@ -109,7 +109,12 @@ class VerificationAdmin(admin.ModelAdmin):
         if signup_email == instance.email:
             return ""
         else:
-            return signup_email
+            signup_email_school_names = "\n".join(
+                find_school_names(signup_email)
+            )
+            return linebreaksbr(
+                f"{signup_email}\n\n{signup_email_school_names}"
+            )
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
