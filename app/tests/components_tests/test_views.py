@@ -447,7 +447,7 @@ def test_display_set_bulk_delete(
 
 
 @pytest.mark.django_db
-def test_display_download_link_for_json_schema_example(client):
+def test_display_ci_example_value(client):
 
     sc = {
         "$id": "https://example.com/person.schema.json",
