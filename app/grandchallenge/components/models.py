@@ -1151,13 +1151,12 @@ class ComponentInterface(OverlaySegmentsMixin):
             )
 
     def _clean_example_value(self):
+
         if self.example_value:
-            if self.schema:
-                JSONValidator(schema=self.schema)(value=self.example_value)
-            else:
-                raise ValidationError(
-                    "Schema is not provided to validate the example_value against"
-                )
+            civ = ComponentInterfaceValue(
+                interface=self, value=self.example_value
+            )
+            civ.clean()
 
     def validate_against_schema(self, *, value):
         """Validates values against both default and custom schemas"""
