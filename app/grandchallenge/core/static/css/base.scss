@@ -1,7 +1,7 @@
 // Defined in flatly/variables
 $gray-500: #b4bcc2 !default;
 $blue: #2c3e50 !default;
-$cyan: #3498DB !default;
+$cyan: #3498db !default;
 
 // Override flatly success colours
 $link-color: $cyan !default;
@@ -21,12 +21,12 @@ $pagination-disabled-bg: lighten($blue, 15%) !default;
 
 // Fix https://github.com/comic/grand-challenge.org/issues/1201
 .custom-select {
-  -webkit-appearance: none;
-  -moz-appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
 }
 
 .custom-select-sm {
-  padding-left: $custom-select-padding-x;
+    padding-left: $custom-select-padding-x;
 }
 
 // Show heading permalinks only on hover
@@ -40,5 +40,5 @@ $pagination-disabled-bg: lighten($blue, 15%) !default;
 
 // Reserve space for focus box-shadow
 .btn {
-  margin: $btn-focus-width;
+    margin: $btn-focus-width;
 }

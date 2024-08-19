@@ -25,7 +25,8 @@ p {
 }
 
 /* fix modal display with overflow-y: scroll on html */
-.modal, .modal-open {
+.modal,
+.modal-open {
     padding-right: 0 !important;
 }
 
@@ -52,12 +53,12 @@ p {
     flex-wrap: wrap;
 }
 
-.row.equal-height > [class*='col-'] {
+.row.equal-height > [class*="col-"] {
     display: flex;
     flex-direction: column;
 }
 
-.row.equal-height > [class*='col-'] .card {
+.row.equal-height > [class*="col-"] .card {
     flex: 1;
 }
 
@@ -69,7 +70,7 @@ dl.inline dd {
 
 dl.inline dd:after {
     display: block;
-    content: '';
+    content: "";
 }
 
 dl.inline dt {
@@ -104,7 +105,7 @@ dl.inline dt:after {
 .select2-container,
 .select2-container li:only-child,
 .select2-container input:placeholder-shown {
-  width: 100% !important;
+    width: 100% !important;
 }
 
 .console {
@@ -170,44 +171,47 @@ ul.socialaccount_providers > li {
     padding-bottom: 0.2rem;
 }
 
-.phaseButton:focus, .phaseButton:hover {
-    box-shadow:none !important;
+.phaseButton:focus,
+.phaseButton:hover {
+    box-shadow: none !important;
 }
 
 .gc-card {
     border-radius: 0.9rem;
 }
 
-.gc-card:hover, .gc-card:focus-within {
+.gc-card:hover,
+.gc-card:focus-within {
     box-shadow: 0 0 1rem 0 rgba(0, 0, 0, 0.2);
 }
 
 /* Reset card shadow when above-stretched-link elements are focused */
 .gc-card:has(.above-stretched-link:focus) {
-  box-shadow: none;
+    box-shadow: none;
 }
 
-.gc-card .card-img-top{
+.gc-card .card-img-top {
     border-top-left-radius: 0.9rem;
     border-top-right-radius: 0.9rem;
 }
 
-.carousel-control-next, .carousel-control-prev {
+.carousel-control-next,
+.carousel-control-prev {
     width: 3rem;
 }
 
 .documentation-sidebar {
-    top:5rem;
+    top: 5rem;
     z-index: 1;
 }
 
 .thumbnail {
-    max-height:90px;
-    max-width:90px;
+    max-height: 90px;
+    max-width: 90px;
 }
 
 .box-shadow {
-    box-shadow: 0 0 1rem 0 rgba(0, 0, 0, .1);
+    box-shadow: 0 0 1rem 0 rgba(0, 0, 0, 0.1);
 }
 
 .color-box {
@@ -217,17 +221,16 @@ ul.socialaccount_providers > li {
     min-height: 0.9375rem;
 }
 
-a[aria-expanded=true] .fa-chevron-right {
-   display: none;
+a[aria-expanded="true"] .fa-chevron-right {
+    display: none;
 }
-a[aria-expanded=false] .fa-chevron-down {
-   display: none;
+a[aria-expanded="false"] .fa-chevron-down {
+    display: none;
 }
-
 
 /* htmx */
 .htmx-indicator {
-    display:none;
+    display: none;
 }
 .htmx-request .htmx-indicator {
     display: inline-block;
