@@ -10,6 +10,10 @@ p {
     line-height: 1.6;
 }
 
+.child-p-mb-0 > p {
+    margin-bottom: 0;
+}
+
 .jumbotron {
     text-shadow: 0.1rem 0.1rem 0.2rem #000000;
 }
