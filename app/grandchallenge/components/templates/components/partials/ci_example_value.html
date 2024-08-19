@@ -11,7 +11,7 @@
         <i
                 class="fas fa-fw fa-eye"
         ></i>
-        View Schema Example
+        View Example
     </div>
 </a>
 
@@ -21,7 +21,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
-                    {{ interface.title }} schema example
+                    {{ interface.title }} example
                 </h5>
                 <button type="button" class="close" data-dismiss="modal"
                         aria-label="Close">
@@ -29,9 +29,7 @@
                 </button>
             </div>
             <div class="text-left modal-body">
-                <pre>
-                    {{ interface.example_value|json_dumps:4 }}
-                </pre>
+                <pre>{{ interface.example_value|json_dumps:4 }}</pre>
             </div>
         </div>
     </div>
