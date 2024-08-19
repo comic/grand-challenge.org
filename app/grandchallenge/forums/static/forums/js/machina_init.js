@@ -1,3 +1,3 @@
-$(function () {
-  machina.init();
+$(function() {
+    machina.init();
 });

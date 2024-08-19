@@ -1,3 +1,4 @@
+
 function handleNavTabDropdown() {
   if (window.innerWidth < 576) {
     // 576 px is the bootstrap breakpoint for sm
@@ -12,12 +13,8 @@ function handleNavTabDropdown() {
 
 function navsToDropdown(reverse = false, horizPagePills = false) {
   // Get all elements that need to change class
-  const containers = document.querySelectorAll(
-    ".nav-tab-dropdown-container,.nav-pill-dropdown-container",
-  );
-  const pageContainers = document.getElementsByClassName(
-    "nav-pill-pages-container",
-  );
+  const containers = document.querySelectorAll('.nav-tab-dropdown-container,.nav-pill-dropdown-container');
+  const pageContainers = document.getElementsByClassName("nav-pill-pages-container");
 
   const ulDropdownClasses = ["dropdown-menu", "dropdown-menu-left"];
   const ulTabClasses = ["nav", "nav-tabs", "border-0"];
@@ -28,7 +25,7 @@ function navsToDropdown(reverse = false, horizPagePills = false) {
   const ulVertPagePillClasses = ["flex-column"];
 
   for (const pageContainer of pageContainers) {
-    const ulPages = pageContainer.querySelector("ul");
+    const ulPages  = pageContainer.querySelector("ul");
 
     if (horizPagePills === true) {
       ulPages.classList.remove(...ulVertPagePillClasses);
@@ -41,7 +38,7 @@ function navsToDropdown(reverse = false, horizPagePills = false) {
 
   // Change the classes
   for (const container of containers) {
-    const ul = container.querySelector("ul");
+    const ul  = container.querySelector("ul");
 
     if (reverse === true) {
       container.classList.remove("dropdown");
@@ -77,6 +74,6 @@ function navsToDropdown(reverse = false, horizPagePills = false) {
   }
 }
 
-window.addEventListener("resize", handleNavTabDropdown);
+window.addEventListener('resize', handleNavTabDropdown);
 
 handleNavTabDropdown();
