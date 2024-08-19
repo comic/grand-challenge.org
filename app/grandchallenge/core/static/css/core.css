@@ -10,7 +10,7 @@ p {
     line-height: 1.6;
 }
 
-.child-mb-0>* {
+.child-p-mb-0 > p {
     margin-bottom: 0;
 }
 
