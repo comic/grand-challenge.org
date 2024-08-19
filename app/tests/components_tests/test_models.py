@@ -1472,59 +1472,122 @@ def test_displacement_field_validation(
     "example_value, expected_value,context",
     (
         (
-            {"age": -23, "lastName": "Doe", "firstName": "John"},
-            "['JSON does not fulfill schema: instance is less than the minimum of 1']",
+            {
+                "name": "test_name",
+                "type": "2D bounding box",
+                "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 10, 0]],
+                "version": {"major": "1", "minor": 0},
+                "probability": 0.2,
+            },
+            "[\"JSON does not fulfill schema: 1' is not of type 'number'\"]",
             pytest.raises(ValidationError),
         ),
         (
-            {"age": 23, "lastName": 100, "firstName": "John"},
-            "[\"JSON does not fulfill schema: instance is not of type 'string'\"]",
+            {
+                "name": "test_name",
+                "type": "2D bounding box",
+                "corners": [[10, 0, 0], [10, 10, 0], [0, 10, 0]],
+                "version": {"major": 1, "minor": 0},
+                "probability": 0.2,
+            },
+            '["JSON does not fulfill schema: instance is too short"]',
             pytest.raises(ValidationError),
         ),
         (
-            {"age": "23", "lastName": "Doe", "firstName": "John"},
-            "[\"JSON does not fulfill schema: instance '23' is not of type 'integer'\"]",
+            {
+                "name": "test_name",
+                "type": "2D bounding box",
+                "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 10, 0]],
+                "version": {"major": 1, "minor": 0},
+            },
+            "[\"JSON does not fulfill schema: instance 'probability' is a required property\"]",
             pytest.raises(ValidationError),
         ),
         (
-            {"age": 0, "lastName": "Doe", "firstName": 100},
-            "[\"JSON does not fulfill schema: instance is not of type 'string'\"]",
+            {
+                "name": "test_name",
+                "type": "bounding box",
+                "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 10, 0]],
+                "version": {"major": 1, "minor": 0},
+                "probability": 0.2,
+            },
+            "[\"JSON does not fulfill schema: instance 'bounding box' is not one of ['2D bounding box']\"]",
             pytest.raises(ValidationError),
         ),
         (
-            {"age": 23, "lastName": "Doe", "firstName": "John"},
+            {
+                "name": "test_name",
+                "type": "2D bounding box",
+                "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 10, 0]],
+                "version": {"major": 1, "minor": 0},
+                "probability": 0.2,
+            },
             None,
             nullcontext(),
         ),
     ),
 )
 @pytest.mark.django_db
-def test_invalid_example_values(example_value, expected_value, context):
+def test_ci_example_value(example_value, expected_value, context):
 
     sc = {
-        "$id": "https://example.com/person.schema.json",
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "title": "Person",
+        "$schema": "http://json-schema.org/draft-04/schema#",
         "type": "object",
         "properties": {
-            "firstName": {
-                "type": "string",
-                "description": "The person's first name.",
+            "version": {
+                "type": "object",
+                "properties": {
+                    "major": {"type": "integer"},
+                    "minor": {"type": "integer"},
+                },
+                "required": ["major", "minor"],
             },
-            "lastName": {
-                "type": "string",
-                "description": "The person's last name.",
+            "type": {"type": "string"},
+            "name": {"type": "string"},
+            "corners": {
+                "type": "array",
+                "items": [
+                    {
+                        "type": "array",
+                        "items": [
+                            {"type": "integer"},
+                            {"type": "integer"},
+                            {"type": "integer"},
+                        ],
+                    },
+                    {
+                        "type": "array",
+                        "items": [
+                            {"type": "integer"},
+                            {"type": "integer"},
+                            {"type": "integer"},
+                        ],
+                    },
+                    {
+                        "type": "array",
+                        "items": [
+                            {"type": "integer"},
+                            {"type": "integer"},
+                            {"type": "integer"},
+                        ],
+                    },
+                    {
+                        "type": "array",
+                        "items": [
+                            {"type": "integer"},
+                            {"type": "integer"},
+                            {"type": "integer"},
+                        ],
+                    },
+                ],
             },
-            "age": {
-                "description": "Age in years which must be equal to or greater than zero.",
-                "type": "integer",
-                "minimum": 1,
-            },
+            "probability": {"type": "number"},
         },
+        "required": ["version", "type", "name", "corners", "probability"],
     }
 
     ci = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.ANY,
+        kind=InterfaceKindChoices.TWO_D_BOUNDING_BOX,
         schema=sc,
         relative_path="example_value.json",
         example_value=example_value,
