@@ -1,4 +1,5 @@
 app/grandchallenge/core/static/vendored/*
+app/grandchallenge/core/static/js/markdownx.js
 **/*.html
 **/*.md
 **/*.yaml
