@@ -1,8 +1,16 @@
+import { renderVegaChartsObserver } from '/static/js/charts/render_charts.mjs';
+
 const defaultSortColumn = JSON.parse(document.getElementById("defaultSortColumn").textContent)
 const textAlign = JSON.parse(document.getElementById("textAlign").textContent)
 const defaultSortOrder =  JSON.parse(document.getElementById("defaultSortOrder").textContent)
 
 $(document).ready(function () {
+
+    renderVegaChartsObserver.observe(
+        document.getElementById("ajaxDataTable"),
+        {childList: true, subtree: true,}
+    );
+
     $('#ajaxDataTable').DataTable({
         order: [[defaultSortColumn, defaultSortOrder]],
         lengthChange: false,
@@ -57,7 +65,6 @@ $('#ajaxDataTable').on( 'init.dt', function () {
     setTimeout($('#ajaxDataTable').DataTable().columns.adjust, 1000);
 });
 
-//
 $(window).resize(function () {
     $('#ajaxDataTable').DataTable().columns.adjust();
 })
