@@ -1,14 +1,8 @@
-$(document).ready(function () {
-    const formsetPrefix = JSON.parse(
-        document.getElementById("formsetPrefix").textContent,
-    );
-    const emptyForm = document.getElementById(
-        `empty-form-${formsetPrefix}`,
-    ).innerHTML;
+$(document).ready(function() {
+    const formsetPrefix = JSON.parse(document.getElementById("formsetPrefix").textContent);
+    const emptyForm = document.getElementById(`empty-form-${formsetPrefix}`).innerHTML;
     const addButton = document.getElementById(`add-form-row-${formsetPrefix}`);
-    const totalForms = document.getElementById(
-        `id_${formsetPrefix}-TOTAL_FORMS`,
-    );
+    const totalForms = document.getElementById(`id_${formsetPrefix}-TOTAL_FORMS`);
 
     addButton.addEventListener("click", addFormRow);
 

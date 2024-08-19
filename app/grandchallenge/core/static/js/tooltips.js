@@ -4,5 +4,5 @@
 //   <div data-toggle="tooltip" title="Tooltip content"></div>
 
 $(document).ready(function () {
-    $('[data-toggle="tooltip"]').tooltip();
+  $('[data-toggle="tooltip"]').tooltip();
 });

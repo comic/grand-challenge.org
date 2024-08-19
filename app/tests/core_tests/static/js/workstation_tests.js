@@ -1,5 +1,5 @@
 function handleMessage(event, randomId) {
-    const eventString = JSON.stringify(event.data);
+    const eventString = JSON.stringify(event.data)
     const node = document.createElement("li");
     node.innerHTML = eventString;
     const messages = document.getElementById("messages");
@@ -9,10 +9,10 @@ function handleMessage(event, randomId) {
         sessionControl: {
             meta: {
                 acknowledge: {
-                    id: `${randomId ? randomId : event.data.sessionControl.meta.id}`,
-                },
-            },
-        },
+                    id: `${randomId ? randomId : event.data.sessionControl.meta.id}`
+                }
+            }
+        }
     };
     event.source.postMessage(msg, event.origin);
     const node2 = document.createElement("li");

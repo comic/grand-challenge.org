@@ -5,7 +5,7 @@ $(document).ready(function () {
         unsaved = true;
     });
 
-    $("#submit-id-save").click(function () {
+    $('#submit-id-save').click(function() {
         unsaved = false;
     });
 

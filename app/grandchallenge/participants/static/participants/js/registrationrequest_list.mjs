@@ -1,13 +1,11 @@
 $(document).ready(function () {
-    $("#participantsTable").DataTable({
+    $('#participantsTable').DataTable({
         order: [[0, "desc"]],
-        pageLength: 10,
-        columnDefs: [
-            {
-                targets: [-1],
-                searchable: false,
-                orderable: false,
-            },
-        ],
+        "pageLength": 10,
+        "columnDefs": [{
+            "targets": [-1],
+            "searchable": false,
+            "orderable": false
+        }]
     });
 });

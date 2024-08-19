@@ -9,10 +9,11 @@ function ping(url) {
         url: url,
         async: false,
         cache: false,
-        success: () => {},
+        success: () => {
+        },
         error: () => {
             errored = true;
-        },
+        }
     });
 
     if (errored === true) {
@@ -29,18 +30,16 @@ function ping(url) {
         success: () => {
             end = performance.now();
         },
-        error: () => {},
+        error: () => {
+        }
     });
 
     return end - start;
 }
 
 function ping_regions(regions, endpoint) {
-    return regions.map((region) => {
-        return {
-            id: region.value,
-            ping: ping(`https://${region.value}.${endpoint}`),
-        };
+    return regions.map(region => {
+        return {"id": region.value, "ping": ping(`https://${region.value}.${endpoint}`)};
     });
 }
 
@@ -48,9 +47,7 @@ $(document).ready(function () {
     const session_modal = $("#sessionModal");
 
     session_modal.on("shown.bs.modal", function () {
-        const ping_endpoint = JSON.parse(
-            document.getElementById("ping-endpoint-data").textContent,
-        );
+        const ping_endpoint = JSON.parse(document.getElementById("ping-endpoint-data").textContent);
         const region_selection = document.getElementById("id_region");
         const ping_widget = document.getElementById("id_ping_times");
         const regions = [...region_selection.options];
@@ -59,14 +56,12 @@ $(document).ready(function () {
 
         ping_widget.value = JSON.stringify(timings);
 
-        const server = timings.reduce((prev, current) =>
-            prev.ping < current.ping ? prev : current,
-        );
+        const server = timings.reduce((prev, current) => (prev.ping < current.ping) ? prev : current);
         region_selection.value = server.id;
 
         setModalLoadingMessage(`Connecting to ${region_selection.value}...`);
         region_selection.form.submit();
-    });
+    })
 
-    session_modal.modal({ show: true });
-});
+    session_modal.modal({show: true});
+})
