@@ -5,35 +5,6 @@ from markdown import Extension
 from markdown.treeprocessors import Treeprocessor
 
 
-class HtmlElementWrapper:
-    def __init__(self, element):
-        self.element = element
-
-    def set_css_class(self, class_name: str):
-
-        if isinstance(self.element, ElementTree.Element):
-
-            current_class = self.element.attrib.get("class", "")
-
-            if class_name not in current_class:
-                new_class = f"{current_class} {class_name}".strip()
-                self.element.set("class", new_class)
-
-        elif isinstance(self.element, BeautifulSoup().new_tag("").__class__):
-
-            if "class" not in self.element.attrs:
-                self.element.attrs["class"] = []
-
-            current_class = self.element["class"]
-
-            for name in class_name.split(" "):
-                if class_name not in current_class:
-                    current_class.append(name)
-
-    def get_element(self):
-        return self.element
-
-
 class BS4Extension(Extension):
     def extendMarkdown(self, md):  # noqa: N802
         md.registerExtension(self)
@@ -41,6 +12,7 @@ class BS4Extension(Extension):
 
 
 class BS4Treeprocessor(Treeprocessor):
+
     def run(self, root):
 
         el_class_dict = {
@@ -54,9 +26,7 @@ class BS4Treeprocessor(Treeprocessor):
         for el in root.iter():
 
             if el.tag in el_class_dict:
-                el_wrapper = HtmlElementWrapper(el)
-                el_wrapper.set_css_class(el_class_dict[el.tag])
-                el = el_wrapper.get_element()
+                BS4Treeprocessor.set_css_class(el, el_class_dict[el.tag])
 
         for i in range(len(self.md.htmlStash.rawHtmlBlocks)):
 
@@ -67,10 +37,39 @@ class BS4Treeprocessor(Treeprocessor):
             el = bs4block.find()
 
             if el and el.name in el_class_dict:
-                el_wrapper = HtmlElementWrapper(el)
-                el_wrapper.set_css_class(el_class_dict[el.name])
-                el = el_wrapper.get_element()
+                BS4Treeprocessor.set_css_class(el, el_class_dict[el.name])
                 self.md.htmlStash.rawHtmlBlocks[i] = str(bs4block)
+
+    @staticmethod
+    def set_css_class(element, class_name: str):
+
+        if isinstance(element, ElementTree.Element):
+
+            current_class = element.attrib.get("class", "")
+
+            if class_name not in current_class:
+                new_class = f"{current_class} {class_name}".strip()
+                element.set("class", new_class)
+
+        elif isinstance(element, BeautifulSoup().new_tag("").__class__):
+
+            if "class" not in element.attrs:
+                element.attrs["class"] = []
+
+            current_class = element["class"]
+
+            for name in class_name.split(" "):
+                if class_name not in current_class:
+                    current_class.append(name)
+        else:
+            raise TypeError(
+                "element can either be of type {}.{} or {}.{}".format(
+                    BeautifulSoup().new_tag("").__class__.__module__,
+                    BeautifulSoup().new_tag("").__class__.__qualname__,
+                    ElementTree.Element.__module__,
+                    ElementTree.Element.__qualname__,
+                )
+            )
 
 
 class LinkBlankTargetExtension(Extension):
