@@ -1652,12 +1652,24 @@ class ComponentInterface(OverlaySegmentsMixin):
             )
 
     def _clean_example_value(self):
-
         if self.example_value:
-            civ = ComponentInterfaceValue(
-                interface=self, value=self.example_value
-            )
-            civ.clean()
+            if self.is_json_kind:
+                civ = ComponentInterfaceValue(interface=self)
+
+                if self.requires_object_store:
+                    file = ContentFile(
+                        json.dumps(self.example_value).encode("utf-8"),
+                        name=f"{self.kind}.json",
+                    )
+                    civ.file = file
+                else:
+                    civ.value = self.example_value
+
+                civ.full_clean()
+            else:
+                raise ValidationError(
+                    "Example value can be set for interfaces of JSON kind only"
+                )
 
     def validate_against_schema(self, *, value):
         """Validates values against both default and custom schemas"""
