@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load url %}
 {% load static %}
+{% load json %}
 
 {% block title %}
     {{ object_type|title }} {{ list_type|title }} Options - {{ block.super }}
@@ -60,21 +61,61 @@
                     <td>{{ interface.description }}</td>
                     <td>{{ interface.get_kind_display }}</td>
                     <td><code>{{ interface.slug }}</code></td>
-
-                    {% with list_type|lower as url_segment %}
+                    {% if list_type == list_type_options.INPUT %}
                         <td>
                             {% if interface.is_image_kind %}
-                                <code>/{{ url_segment }}/{{ interface.relative_path }}{% if interface.relative_path %}/{% endif %}&lt;uuid&gt;.mha</code>
+                                <code>/input/{{ interface.relative_path }}{% if interface.relative_path %}/{% endif %}&lt;uuid&gt;.mha</code>
                                 or
-                                <code>/{{ url_segment }}/{{ interface.relative_path }}{% if interface.relative_path %}/{% endif %}&lt;uuid&gt;.tif</code>
+                                <code>/input/{{ interface.relative_path }}{% if interface.relative_path %}/{% endif %}&lt;uuid&gt;.tif</code>
                             {% else %}
-                                <code>/{{ url_segment }}/{{ interface.relative_path }}</code>
+                                <code>/input/{{ interface.relative_path }}</code>
                             {% endif %}
                         </td>
-                    {% endwith %}
+                    {% elif list_type == list_type_options.OUTPUT %}
+                        <td>
+                            {% if interface.is_image_kind %}
+                                <code>/output/{{ interface.relative_path }}{% if interface.relative_path %}/{% endif %}&lt;uuid&gt;.mha</code>
+                                or
+                                <code>/output/{{ interface.relative_path }}{% if interface.relative_path %}/{% endif %}&lt;uuid&gt;.tif</code>
+                            {% else %}
+                                <code>/output/{{ interface.relative_path }}</code>
+                            {% endif %}
+                        </td>
+                    {% endif %}
                     <td>
-                        {% if interface.example_value %}
-                            {% include "components/partials/ci_example_value.html" %}
+                        {% if interface.json_kind_example %}
+                            <a href="#example-value-modal-{{ interface.pk }}"
+                                data-toggle="modal"
+                                data-target="#example-value-modal-{{ interface.pk }}"
+                                class="text-decoration-none"
+                                role="button"
+                                title="View {{ interface.title }}">
+
+                                <div class="badge badge-primary">
+                                    <i class="fas fa-fw fa-eye"></i>
+                                    View Example
+                                </div>
+                            </a>
+
+                            <div class="modal" id="example-value-modal-{{ interface.pk }}"
+                                tabindex="-1" role="dialog" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">
+                                                {{ interface.title }} example
+                                            </h5>
+                                            <button type="button" class="close" data-dismiss="modal"
+                                                    aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="text-left modal-body">
+                                            <pre>{{ interface.json_kind_example|json_dumps:4 }}</pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         {% endif %}
                     </td>
                 </tr>
