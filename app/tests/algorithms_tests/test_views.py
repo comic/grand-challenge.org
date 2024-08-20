@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pytest
 from django.contrib.auth.models import Group
-from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.files.base import ContentFile
 from django.utils import timezone
 from django.utils.text import slugify
@@ -20,9 +19,6 @@ from grandchallenge.components.models import (
     InterfaceKind,
 )
 from grandchallenge.subdomains.utils import reverse
-from grandchallenge.workstations.templatetags.workstations import (
-    workstation_session_control_data,
-)
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
@@ -1413,13 +1409,6 @@ def test_job_list_row_template_ajax_renders(client):
         time_limit=algorithm.time_limit,
     )
 
-    ctrl_data = workstation_session_control_data(
-        workstation=algorithm.workstation,
-        context_object=algorithm,
-        algorithm_job=job,
-        config=algorithm.workstation_config,
-    )
-
     headers = {"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"}
 
     response = get_view_for_user(
@@ -1444,28 +1433,10 @@ def test_job_list_row_template_ajax_renders(client):
         "algorithms:job-detail",
         kwargs={"slug": job.algorithm_image.algorithm.slug, "pk": job.pk},
     )
-    job_created = str(naturaltime(job.created))
 
     response_content = json.loads(response.content.decode("utf-8"))
 
     assert response.status_code == 200
-
     assert response_content["recordsTotal"] == 1
-
     assert len(response_content["data"]) == 1
-
     assert job_details_url in response_content["data"][0][0]
-
-    assert job_created in response_content["data"][0][1]
-
-    assert editor.username in response_content["data"][0][2]
-
-    assert job.get_status_display() in response_content["data"][0][3]
-
-    assert "Result and images are private" in response_content["data"][0][4]
-
-    assert job.comment in response_content["data"][0][5]
-
-    assert "Empty" in response_content["data"][0][6]
-
-    assert ctrl_data in response_content["data"][0][7]

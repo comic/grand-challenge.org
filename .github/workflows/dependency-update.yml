@@ -1,64 +1,64 @@
 name: Dependency Update
 
 on:
-  schedule:
-    - cron: '27 6 * * 2'
-  workflow_dispatch:
+    schedule:
+        - cron: "27 6 * * 2"
+    workflow_dispatch:
 
 env:
-  PYTHON_VERSION: '3.11'
+    PYTHON_VERSION: "3.11"
 
 concurrency:
-  group: ${{ github.head_ref || github.run_id }}
-  cancel-in-progress: true
+    group: ${{ github.head_ref || github.run_id }}
+    cancel-in-progress: true
 
 jobs:
-  dependency-update:
-    name: Dependency Update
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
-      - name: Install Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-      - name: Install poetry and pre-commit
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install poetry pre-commit virtualenv!=20.0.6
-      - name: Update Depencencies
-        id: dependency-update
-        timeout-minutes: 5
-        run: |
-          poetry update --lock --no-interaction --no-ansi
-      - name: Set DOCKER_GID
-        run: |
-          echo DOCKER_GID=`getent group docker | cut -d: -f3` > .env
-      - name: Build the test container, make the docs and migrations
-        run: |
-          make build_web_test
-          make docs
-          make migrations
-      - name: Format the migrations
-        # pre-commit will exit with code 1 when the files change, this is OK
-        continue-on-error: true
-        run: |
-          git add .
-          pre-commit run --all-files
-      - name: Run the django tests
-        run: |
-          mkdir -p /tmp/coverage
-          chmod a+w /tmp/coverage
-          make minio
-          docker compose run --rm -v /tmp/coverage:/tmp/coverage celery_worker bash -c "COVERAGE_FILE=/tmp/coverage/.coverage pytest --cov-report term --cov=. --durations 10"
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v4
-        with:
-          commit-message: "Update dependencies"
-          branch-suffix: "short-commit-hash"
-          delete-branch: true
-          title: "Update dependencies"
-          body: "Automated dependency update, see changes to `poetry.lock`."
+    dependency-update:
+        name: Dependency Update
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  ref: ${{ github.head_ref }}
+            - name: Install Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: ${{ env.PYTHON_VERSION }}
+            - name: Install poetry and pre-commit
+              run: |
+                  python -m pip install --upgrade pip
+                  python -m pip install poetry pre-commit virtualenv!=20.0.6
+            - name: Update Depencencies
+              id: dependency-update
+              timeout-minutes: 5
+              run: |
+                  poetry update --lock --no-interaction --no-ansi
+            - name: Set DOCKER_GID
+              run: |
+                  echo DOCKER_GID=`getent group docker | cut -d: -f3` > .env
+            - name: Build the test container, make the docs and migrations
+              run: |
+                  make build_web_test
+                  make docs
+                  make migrations
+            - name: Format the migrations
+              # pre-commit will exit with code 1 when the files change, this is OK
+              continue-on-error: true
+              run: |
+                  git add .
+                  pre-commit run --all-files
+            - name: Run the django tests
+              run: |
+                  mkdir -p /tmp/coverage
+                  chmod a+w /tmp/coverage
+                  make minio
+                  docker compose run --rm -v /tmp/coverage:/tmp/coverage celery_worker bash -c "COVERAGE_FILE=/tmp/coverage/.coverage pytest --cov-report term --cov=. --durations 10"
+            - name: Create Pull Request
+              uses: peter-evans/create-pull-request@v4
+              with:
+                  commit-message: "Update dependencies"
+                  branch-suffix: "short-commit-hash"
+                  delete-branch: true
+                  title: "Update dependencies"
+                  body: "Automated dependency update, see changes to `poetry.lock`."
