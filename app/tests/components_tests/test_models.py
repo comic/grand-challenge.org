@@ -1596,3 +1596,27 @@ def test_ci_example_value(example_value, expected_value, context):
     with context as ctx:
         ci.clean()
         assert getattr(ctx, "value", None) == expected_value
+
+
+@pytest.mark.parametrize(
+    "kind, example",
+    [
+        (
+            kind,
+            example,
+        )
+        for kind, example in InterfaceKind.interface_type_json_example().items()
+    ],
+)
+@pytest.mark.django_db
+def test_interface_kind_json_type_examples(kind, example):
+
+    ci = ComponentInterfaceFactory(
+        kind=kind,
+        relative_path=f"{kind}.json",
+        example_value=example,
+    )
+
+    ci.store_in_database = not ci.requires_object_store
+
+    ci.full_clean()
