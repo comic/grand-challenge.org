@@ -1443,6 +1443,23 @@ class ComponentInterface(OverlaySegmentsMixin):
             return None
 
     @property
+    def requires_object_store(self):
+        return self.kind in {
+            *InterfaceKind.interface_type_image(),
+            *InterfaceKind.interface_type_file(),
+            # These values can be large, so for any new interfaces of this
+            # type always add them to the object store
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_POINTS,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_POLYGONS,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_LINES,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_ANGLES,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_ELLIPSES,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
+        }
+
+    @property
     def super_kind(self):
         if self.saved_in_object_store:
             if self.is_image_kind:
