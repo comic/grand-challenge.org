@@ -1631,22 +1631,7 @@ class ComponentInterface(OverlaySegmentsMixin):
                 )
 
     def _clean_store_in_database(self):
-        object_store_required = self.kind in {
-            *InterfaceKind.interface_type_image(),
-            *InterfaceKind.interface_type_file(),
-            # These values can be large, so for any new interfaces of this
-            # type always add them to the object store
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_POINTS,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_POLYGONS,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_LINES,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_ANGLES,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_ELLIPSES,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
-        }
-
-        if object_store_required and self.store_in_database:
+        if self.requires_object_store and self.store_in_database:
             raise ValidationError(
                 f"Interface {self.kind} objects cannot be stored in the database"
             )
