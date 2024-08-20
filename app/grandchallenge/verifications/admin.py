@@ -84,6 +84,9 @@ class VerificationAdmin(admin.ModelAdmin):
         comments = []
 
         for vus in obj.user.verificationuserset_set.all():
+            if vus.is_false_positive:
+                comments.append("False Positive VUS.")
+
             if vus.comment:
                 comments.append(vus.comment)
 
