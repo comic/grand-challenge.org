@@ -449,33 +449,10 @@ def test_display_set_bulk_delete(
 @pytest.mark.django_db
 def test_display_ci_example_value(client):
 
-    sc = {
-        "$id": "https://example.com/person.schema.json",
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "title": "Person",
-        "type": "object",
-        "properties": {
-            "firstName": {
-                "type": "string",
-                "description": "The person's first name.",
-            },
-            "lastName": {
-                "type": "string",
-                "description": "The person's last name.",
-            },
-            "age": {
-                "description": "Age in years which must be equal to or greater than zero.",
-                "type": "integer",
-                "minimum": 1,
-            },
-        },
-    }
-
     ci = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.ANY,
-        schema=sc,
+        kind=InterfaceKindChoices.INTEGER,
         relative_path="example_value.json",
-        example_value={"age": 23, "lastName": "Doe", "firstName": "John"},
+        example_value=999,
     )
 
     user = UserFactory()
