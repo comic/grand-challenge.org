@@ -46,3 +46,13 @@ repos:
     rev: v3.3.3
     hooks:
     - id: prettier
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v9.9.0
+    hooks:
+      - id: eslint
+        args: ['--max-warnings', '0', '--no-warn-ignored']#, '--fix']
+        additional_dependencies:
+          - eslint@9.9.0
+          - "@eslint/js@9.9.0"
+          - eslint-config-prettier@9.1.0
+          - globals@15.9.0
