@@ -717,6 +717,480 @@ class InterfaceKind:
         }
 
     @staticmethod
+    def interface_type_json_example():
+        return {
+            InterfaceKind.InterfaceKindChoices.STRING: "Any string",
+            InterfaceKind.InterfaceKindChoices.INTEGER: 1,
+            InterfaceKind.InterfaceKindChoices.FLOAT: 1.1,
+            InterfaceKind.InterfaceKindChoices.BOOL: False,
+            InterfaceKind.InterfaceKindChoices.TWO_D_BOUNDING_BOX: {
+                "name": "Region of interest",
+                "type": "2D bounding box",
+                "corners": [
+                    [
+                        130.80001831054688,
+                        148.86666870117188,
+                        0.5009999871253967,
+                    ],
+                    [
+                        69.73332977294922,
+                        148.86666870117188,
+                        0.5009999871253967,
+                    ],
+                    [69.73332977294922, 73.13333129882812, 0.5009999871253967],
+                    [
+                        130.80001831054688,
+                        73.13333129882812,
+                        0.5009999871253967,
+                    ],
+                ],
+                "probability": 0.95,
+                "version": {"major": 1, "minor": 0},
+            },
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES: {
+                "name": "Regions of interest",
+                "type": "Multiple 2D bounding boxes",
+                "boxes": [
+                    {
+                        "name": "ROI 1",
+                        "corners": [
+                            [
+                                92.66666412353516,
+                                136.06668090820312,
+                                0.5009999871253967,
+                            ],
+                            [
+                                54.79999923706055,
+                                136.06668090820312,
+                                0.5009999871253967,
+                            ],
+                            [
+                                54.79999923706055,
+                                95.53333282470703,
+                                0.5009999871253967,
+                            ],
+                            [
+                                92.66666412353516,
+                                95.53333282470703,
+                                0.5009999871253967,
+                            ],
+                        ],
+                        "probability": 0.95,
+                    },
+                    {
+                        "name": "ROI 2",
+                        "corners": [
+                            [
+                                92.66666412353516,
+                                136.06668090820312,
+                                0.5009999871253967,
+                            ],
+                            [
+                                54.79999923706055,
+                                136.06668090820312,
+                                0.5009999871253967,
+                            ],
+                            [
+                                54.79999923706055,
+                                95.53333282470703,
+                                0.5009999871253967,
+                            ],
+                            [
+                                92.66666412353516,
+                                95.53333282470703,
+                                0.5009999871253967,
+                            ],
+                        ],
+                        "probability": 0.92,
+                    },
+                ],
+                "version": {"major": 1, "minor": 0},
+            },
+            InterfaceKind.InterfaceKindChoices.DISTANCE_MEASUREMENT: {
+                "name": "Distance between areas",
+                "type": "Distance measurement",
+                "start": [
+                    59.79176712036133,
+                    78.76753997802734,
+                    0.5009999871253967,
+                ],
+                "end": [
+                    69.38014221191406,
+                    143.75546264648438,
+                    0.5009999871253967,
+                ],
+                "probability": 0.92,
+                "version": {"major": 1, "minor": 0},
+            },
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS: {
+                "name": "Distances between areas",
+                "type": "Multiple distance measurements",
+                "lines": [
+                    {
+                        "name": "Distance 1",
+                        "start": [
+                            49.733333587646484,
+                            103.26667022705078,
+                            0.5009999871253967,
+                        ],
+                        "end": [
+                            55.06666564941406,
+                            139.26666259765625,
+                            0.5009999871253967,
+                        ],
+                        "probability": 0.92,
+                    },
+                    {
+                        "name": "Distance 2",
+                        "start": [
+                            49.733333587646484,
+                            103.26667022705078,
+                            0.5009999871253967,
+                        ],
+                        "end": [
+                            55.06666564941406,
+                            139.26666259765625,
+                            0.5009999871253967,
+                        ],
+                        "probability": 0.92,
+                    },
+                ],
+                "version": {"major": 1, "minor": 0},
+            },
+            InterfaceKind.InterfaceKindChoices.POINT: {
+                "name": "Point of interest",
+                "type": "Point",
+                "point": [152.13333129882812, 111.0, 0.5009999871253967],
+                "probability": 0.92,
+                "version": {"major": 1, "minor": 0},
+            },
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_POINTS: {
+                "name": "Points of interest",
+                "type": "Multiple points",
+                "points": [
+                    {
+                        "name": "Point 1",
+                        "point": [
+                            96.0145263671875,
+                            79.83292388916016,
+                            0.5009999871253967,
+                        ],
+                        "probability": 0.92,
+                    },
+                    {
+                        "name": "Point 2",
+                        "point": [
+                            130.10653686523438,
+                            115.52300262451172,
+                            0.5009999871253967,
+                        ],
+                        "probability": 0.92,
+                    },
+                ],
+                "version": {"major": 1, "minor": 0},
+            },
+            InterfaceKind.InterfaceKindChoices.POLYGON: {
+                "name": "Area of interest",
+                "type": "Polygon",
+                "seed_point": [
+                    76.413756408691,
+                    124.014717102050,
+                    0.5009999871253967,
+                ],
+                "path_points": [
+                    [
+                        76.41375842260106,
+                        124.01471710205078,
+                        0.5009999871253967,
+                    ],
+                    [76.41694876387268, 124.0511828696491, 0.5009999871253967],
+                    [76.42642285078242, 124.0865406433515, 0.5009999871253967],
+                ],
+                "sub_type": "brush",
+                "groups": [],
+                "probability": 0.92,
+                "version": {"major": 1, "minor": 0},
+            },
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_POLYGONS: {
+                "name": "Areas of interest",
+                "type": "Multiple polygons",
+                "polygons": [
+                    {
+                        "name": "Area 1",
+                        "seed_point": [
+                            55.82666793823242,
+                            90.46666717529297,
+                            0.5009999871253967,
+                        ],
+                        "path_points": [
+                            [
+                                55.82667599387105,
+                                90.46666717529297,
+                                0.5009999871253967,
+                            ],
+                            [
+                                55.93921357544119,
+                                90.88666314747366,
+                                0.5009999871253967,
+                            ],
+                            [
+                                56.246671966051736,
+                                91.1941215380842,
+                                0.5009999871253967,
+                            ],
+                            [
+                                56.66666793823242,
+                                91.30665911965434,
+                                0.5009999871253967,
+                            ],
+                        ],
+                        "sub_type": "brush",
+                        "groups": ["manual"],
+                        "probability": 0.67,
+                    },
+                    {
+                        "name": "Area 2",
+                        "seed_point": [
+                            90.22666564941406,
+                            96.06666564941406,
+                            0.5009999871253967,
+                        ],
+                        "path_points": [
+                            [
+                                90.22667370505269,
+                                96.06666564941406,
+                                0.5009999871253967,
+                            ],
+                            [
+                                90.33921128662283,
+                                96.48666162159475,
+                                0.5009999871253967,
+                            ],
+                            [
+                                90.64666967723338,
+                                96.7941200122053,
+                                0.5009999871253967,
+                            ],
+                        ],
+                        "sub_type": "brush",
+                        "groups": [],
+                        "probability": 0.92,
+                    },
+                ],
+                "version": {"major": 1, "minor": 0},
+            },
+            InterfaceKind.InterfaceKindChoices.CHOICE: "2",
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_CHOICE: ["1", "2"],
+            InterfaceKind.InterfaceKindChoices.ANY: "Any valid JSON",
+            InterfaceKind.InterfaceKindChoices.CHART: {
+                "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+                "width": 300,
+                "height": 300,
+                "data": {
+                    "values": [
+                        {
+                            "target": "Negative",
+                            "prediction": "Negative",
+                            "value": 198,
+                        },
+                        {
+                            "target": "Negative",
+                            "prediction": "Positive",
+                            "value": 9,
+                        },
+                        {
+                            "target": "Positive",
+                            "prediction": "Negative",
+                            "value": 159,
+                        },
+                        {
+                            "target": "Positive",
+                            "prediction": "Positive",
+                            "value": 376,
+                        },
+                    ],
+                    "format": {"type": "json"},
+                },
+                "layer": [
+                    {
+                        "mark": "rect",
+                        "encoding": {
+                            "y": {"field": "target", "type": "ordinal"},
+                            "x": {"field": "prediction", "type": "ordinal"},
+                            "color": {
+                                "field": "value",
+                                "type": "quantitative",
+                                "title": "Count of Records",
+                                "legend": {
+                                    "direction": "vertical",
+                                    "gradientLength": 300,
+                                },
+                            },
+                        },
+                    },
+                    {
+                        "mark": "text",
+                        "encoding": {
+                            "y": {"field": "target", "type": "ordinal"},
+                            "x": {"field": "prediction", "type": "ordinal"},
+                            "text": {"field": "value", "type": "quantitative"},
+                            "color": {
+                                "condition": {
+                                    "test": "datum['value'] < 40",
+                                    "value": "black",
+                                },
+                                "value": "white",
+                            },
+                        },
+                    },
+                ],
+                "config": {"axis": {"grid": True, "tickBand": "extent"}},
+            },
+            InterfaceKind.InterfaceKindChoices.LINE: {
+                "name": "Some annotation",
+                "type": "Line",
+                "seed_points": [[1, 2, 3], [1, 2, 3]],
+                "path_point_lists": [
+                    [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
+                    [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
+                ],
+                "probability": 0.92,
+                "version": {"major": 1, "minor": 0},
+            },
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_LINES: {
+                "name": "Some annotations",
+                "type": "Multiple lines",
+                "lines": [
+                    {
+                        "name": "Annotation 1",
+                        "seed_points": [[1, 2, 3], [1, 2, 3]],
+                        "path_point_lists": [
+                            [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
+                            [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
+                        ],
+                        "probability": 0.78,
+                    },
+                    {
+                        "name": "Annotation 2",
+                        "seed_points": [[1, 2, 3], [1, 2, 3]],
+                        "path_point_lists": [
+                            [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
+                            [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
+                        ],
+                        "probability": 0.92,
+                    },
+                ],
+                "version": {"major": 1, "minor": 0},
+            },
+            InterfaceKind.InterfaceKindChoices.ANGLE: {
+                "name": "Some angle",
+                "type": "Angle",
+                "lines": [
+                    [[180, 10, 0.5], [190, 10, 0.5]],
+                    [[180, 25, 0.5], [190, 15, 0.5]],
+                ],
+                "probability": 0.92,
+                "version": {"major": 1, "minor": 0},
+            },
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_ANGLES: {
+                "name": "Some angles",
+                "type": "Multiple angles",
+                "angles": [
+                    {
+                        "name": "First angle",
+                        "lines": [
+                            [[110, 135, 0.5], [60, 165, 0.5]],
+                            [[70, 25, 0.5], [85, 65, 0.5]],
+                        ],
+                        "probability": 0.82,
+                    },
+                    {
+                        "name": "Second angle",
+                        "lines": [
+                            [[130, 210, 0.5], [160, 130, 0.5]],
+                            [[140, 40, 0.5], [180, 75, 0.5]],
+                        ],
+                        "probability": 0.52,
+                    },
+                    {
+                        "name": "Third angle",
+                        "lines": [
+                            [[20, 30, 0.5], [20, 100, 0.5]],
+                            [[180, 200, 0.5], [210, 200, 0.5]],
+                        ],
+                        "probability": 0.98,
+                    },
+                ],
+                "version": {"major": 1, "minor": 0},
+            },
+            InterfaceKind.InterfaceKindChoices.ELLIPSE: {
+                "name": "Some ellipse",
+                "type": "Ellipse",
+                "major_axis": [[-10, 606, 0.5], [39, 559, 0.5]],
+                "minor_axis": [[2, 570, 0.5], [26, 595, 0.5]],
+                "probability": 0.92,
+                "version": {"major": 1, "minor": 0},
+            },
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_ELLIPSES: {
+                "name": "Some ellipse",
+                "type": "Multiple ellipses",
+                "ellipses": [
+                    {
+                        "major_axis": [[-44, 535, 0.5], [-112, 494, 0.5]],
+                        "minor_axis": [[-88, 532, 0.5], [-68, 497, 0.5]],
+                        "probability": 0.69,
+                    },
+                    {
+                        "major_axis": [[-17, 459, 0.5], [-94, 436, 0.5]],
+                        "minor_axis": [[-61, 467, 0.5], [-50, 428, 0.5]],
+                        "probability": 0.92,
+                    },
+                ],
+                "version": {"major": 1, "minor": 0},
+            },
+            InterfaceKind.InterfaceKindChoices.THREE_POINT_ANGLE: {
+                "name": "Some 3-point angle",
+                "type": "Three-point angle",
+                "angle": [[177, 493, 0.5], [22, 489, 0.5], [112, 353, 0.5]],
+                "probability": 0.003,
+                "version": {"major": 1, "minor": 0},
+            },
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES: {
+                "name": "Multiple 3-point angles",
+                "type": "Multiple three-point angles",
+                "angles": [
+                    {
+                        "name": "first",
+                        "angle": [
+                            [300, 237, 0.5],
+                            [263, 282, 0.5],
+                            [334, 281, 0.5],
+                        ],
+                        "probability": 0.92,
+                    },
+                    {
+                        "name": "second",
+                        "angle": [
+                            [413, 237, 0.5],
+                            [35, 160, 0.5],
+                            [367, 293, 0.5],
+                        ],
+                        "probability": 0.69,
+                    },
+                ],
+                "version": {"major": 1, "minor": 0},
+            },
+            InterfaceKind.InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION: {
+                "3d_affine_transform": [
+                    [1, 0, 0, 0],
+                    [0, 1, 0, 0],
+                    [0, 0, 1, 0],
+                    [0, 0, 0, 1],
+                ]
+            },
+        }
+
+    @staticmethod
     def interface_type_image():
         """Interface kinds that are images:
 
@@ -957,6 +1431,16 @@ class ComponentInterface(OverlaySegmentsMixin):
             InterfaceKindChoices.INTEGER,
             InterfaceKindChoices.STRING,
         ]
+
+    @property
+    def json_kind_example(self):
+        if self.is_json_kind:
+            if self.example_value:
+                return self.example_value
+            else:
+                return InterfaceKind.interface_type_json_example()[self.kind]
+        else:
+            return None
 
     @property
     def super_kind(self):
