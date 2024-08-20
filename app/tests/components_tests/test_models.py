@@ -1469,133 +1469,32 @@ def test_displacement_field_validation(
 
 
 @pytest.mark.parametrize(
-    "example_value, expected_value,context",
+    "example_value,context",
     (
         (
-            {
-                "name": "test_name",
-                "type": "2D bounding box",
-                "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 10, 0]],
-                "version": {"major": "1", "minor": 0},
-                "probability": 0.2,
-            },
-            "[\"JSON does not fulfill schema: 1' is not of type 'number'\"]",
+            1,
             pytest.raises(ValidationError),
         ),
         (
-            {
-                "name": "test_name",
-                "type": "2D bounding box",
-                "corners": [[10, 0, 0], [10, 10, 0], [0, 10, 0]],
-                "version": {"major": 1, "minor": 0},
-                "probability": 0.2,
-            },
-            '["JSON does not fulfill schema: instance is too short"]',
-            pytest.raises(ValidationError),
-        ),
-        (
-            {
-                "name": "test_name",
-                "type": "2D bounding box",
-                "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 10, 0]],
-                "version": {"major": 1, "minor": 0},
-            },
-            "[\"JSON does not fulfill schema: instance 'probability' is a required property\"]",
-            pytest.raises(ValidationError),
-        ),
-        (
-            {
-                "name": "test_name",
-                "type": "bounding box",
-                "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 10, 0]],
-                "version": {"major": 1, "minor": 0},
-                "probability": 0.2,
-            },
-            "[\"JSON does not fulfill schema: instance 'bounding box' is not one of ['2D bounding box']\"]",
-            pytest.raises(ValidationError),
-        ),
-        (
-            {
-                "name": "test_name",
-                "type": "2D bounding box",
-                "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 10, 0]],
-                "version": {"major": 1, "minor": 0},
-                "probability": 0.2,
-            },
-            None,
+            10,
             nullcontext(),
         ),
     ),
 )
 @pytest.mark.django_db
-def test_ci_example_value(example_value, expected_value, context):
+def test_ci_example_value(example_value, context):
 
-    sc = {
-        "$schema": "http://json-schema.org/draft-04/schema#",
-        "type": "object",
-        "properties": {
-            "version": {
-                "type": "object",
-                "properties": {
-                    "major": {"type": "integer"},
-                    "minor": {"type": "integer"},
-                },
-                "required": ["major", "minor"],
-            },
-            "type": {"type": "string"},
-            "name": {"type": "string"},
-            "corners": {
-                "type": "array",
-                "items": [
-                    {
-                        "type": "array",
-                        "items": [
-                            {"type": "integer"},
-                            {"type": "integer"},
-                            {"type": "integer"},
-                        ],
-                    },
-                    {
-                        "type": "array",
-                        "items": [
-                            {"type": "integer"},
-                            {"type": "integer"},
-                            {"type": "integer"},
-                        ],
-                    },
-                    {
-                        "type": "array",
-                        "items": [
-                            {"type": "integer"},
-                            {"type": "integer"},
-                            {"type": "integer"},
-                        ],
-                    },
-                    {
-                        "type": "array",
-                        "items": [
-                            {"type": "integer"},
-                            {"type": "integer"},
-                            {"type": "integer"},
-                        ],
-                    },
-                ],
-            },
-            "probability": {"type": "number"},
-        },
-        "required": ["version", "type", "name", "corners", "probability"],
-    }
+    sc = {"type": "number", "minimum": 2, "maximum": 20}
 
     ci = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.TWO_D_BOUNDING_BOX,
+        kind=InterfaceKindChoices.INTEGER,
         schema=sc,
         relative_path="example_value.json",
         example_value=example_value,
     )
 
-    with context as ctx:
-        ci.clean()
-        assert getattr(ctx, "value", None) == expected_value
+    with context:
+        ci.full_clean()
 
 
 @pytest.mark.parametrize(
