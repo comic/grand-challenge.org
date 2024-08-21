@@ -1,6 +1,6 @@
 from xml.etree import ElementTree
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 from markdown import Extension
 from markdown.treeprocessors import Treeprocessor
 
@@ -26,22 +26,19 @@ class BS4Treeprocessor(Treeprocessor):
         for el in root.iter():
 
             if el.tag in el_class_dict:
-                BS4Treeprocessor.set_css_class(el, el_class_dict[el.tag])
+                self.set_css_class(el, el_class_dict[el.tag])
 
-        for i in range(len(self.md.htmlStash.rawHtmlBlocks)):
+        for i, html_block in enumerate(self.md.htmlStash.rawHtmlBlocks):
 
-            bs4block = BeautifulSoup(
-                self.md.htmlStash.rawHtmlBlocks[i], "html.parser"
-            )
+            bs4block = BeautifulSoup(html_block, "html.parser")
 
-            el = bs4block.find()
-
-            if el and el.name in el_class_dict:
-                BS4Treeprocessor.set_css_class(el, el_class_dict[el.name])
-                self.md.htmlStash.rawHtmlBlocks[i] = str(bs4block)
+            for tag, tag_class in el_class_dict.items():
+                for el in bs4block.find_all(tag):
+                    self.set_css_class(el, tag_class)
+                    self.md.htmlStash.rawHtmlBlocks[i] = str(bs4block)
 
     @staticmethod
-    def set_css_class(element, class_name: str):
+    def set_css_class(element, class_name):
 
         if isinstance(element, ElementTree.Element):
 
@@ -51,7 +48,7 @@ class BS4Treeprocessor(Treeprocessor):
                 new_class = f"{current_class} {class_name}".strip()
                 element.set("class", new_class)
 
-        elif isinstance(element, BeautifulSoup().new_tag("").__class__):
+        elif isinstance(element, Tag):
 
             if "class" not in element.attrs:
                 element.attrs["class"] = []
@@ -62,14 +59,7 @@ class BS4Treeprocessor(Treeprocessor):
                 if class_name not in current_class:
                     current_class.append(name)
         else:
-            raise TypeError(
-                "element can either be of type {}.{} or {}.{}".format(
-                    BeautifulSoup().new_tag("").__class__.__module__,
-                    BeautifulSoup().new_tag("").__class__.__qualname__,
-                    ElementTree.Element.__module__,
-                    ElementTree.Element.__qualname__,
-                )
-            )
+            raise TypeError("Unsupported element")
 
 
 class LinkBlankTargetExtension(Extension):
