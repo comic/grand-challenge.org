@@ -237,4 +237,6 @@ def test_setting_class_to_html_img_within_markdown(
 
 def test_tree_processor_set_css_class_type_error():
     with pytest.raises(TypeError):
-        BS4Treeprocessor.set_css_class("element", "img-fluid")
+        BS4Treeprocessor.set_css_class(
+            element="element", class_name="img-fluid"
+        )

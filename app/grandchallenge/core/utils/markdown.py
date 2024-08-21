@@ -26,7 +26,9 @@ class BS4Treeprocessor(Treeprocessor):
         for el in root.iter():
 
             if el.tag in el_class_dict:
-                self.set_css_class(el, el_class_dict[el.tag])
+                self.set_css_class(
+                    element=el, class_name=el_class_dict[el.tag]
+                )
 
         for i, html_block in enumerate(self.md.htmlStash.rawHtmlBlocks):
 
@@ -34,7 +36,7 @@ class BS4Treeprocessor(Treeprocessor):
 
             for tag, tag_class in el_class_dict.items():
                 for el in bs4block.find_all(tag):
-                    self.set_css_class(el, tag_class)
+                    self.set_css_class(element=el, class_name=tag_class)
                     self.md.htmlStash.rawHtmlBlocks[i] = str(bs4block)
 
     @staticmethod
