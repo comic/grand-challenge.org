@@ -42,17 +42,9 @@ repos:
       rev: v0.13.1
       hooks:
           - id: curlylint
-    - repo: https://github.com/rbubley/mirrors-prettier
-      rev: v3.3.3
+    - repo: https://github.com/biomejs/pre-commit
+      rev: v0.4.0
       hooks:
-          - id: prettier
-    - repo: https://github.com/pre-commit/mirrors-eslint
-      rev: v9.9.0
-      hooks:
-          - id: eslint
-            args: ["--max-warnings", "0", "--no-warn-ignored"] #, '--fix']
-            additional_dependencies:
-                - eslint@9.9.0
-                - "@eslint/js@9.9.0"
-                - eslint-config-prettier@9.1.0
-                - globals@15.9.0
+          - id: biome-check
+            exclude: '^app/grandchallenge/core/static/(vendored/|js/markdownx\.js|js/world-atlas/countries-110m\.json)'
+            additional_dependencies: ["@biomejs/biome@1.8.3"]
