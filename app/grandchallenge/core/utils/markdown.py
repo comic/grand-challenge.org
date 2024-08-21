@@ -38,7 +38,7 @@ class BS4Treeprocessor(Treeprocessor):
                     self.md.htmlStash.rawHtmlBlocks[i] = str(bs4block)
 
     @staticmethod
-    def set_css_class(element, class_name):
+    def set_css_class(*, element, class_name):
 
         if isinstance(element, ElementTree.Element):
 
