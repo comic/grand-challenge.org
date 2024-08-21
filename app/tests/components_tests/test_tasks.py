@@ -1,6 +1,6 @@
 import json
-import subprocess
 from pathlib import Path
+from unittest.mock import call
 
 import pytest
 from celery.exceptions import MaxRetriesExceededError
@@ -257,11 +257,20 @@ def test_upload_to_registry_and_sagemaker(
 
 @pytest.mark.django_db
 def test_update_sagemaker_shim(
-    algorithm_io_image, settings, django_capture_on_commit_callbacks, tmp_path
+    algorithm_io_image,
+    settings,
+    django_capture_on_commit_callbacks,
+    tmp_path,
+    mocker,
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
+
+    mock_remove_tag_from_registry = mocker.patch(
+        # remove_tag_from_registry is only implemented for ECR
+        "grandchallenge.components.tasks.remove_tag_from_registry"
+    )
 
     old_version = "alpha"
     new_version = "beta"
@@ -319,10 +328,15 @@ def test_update_sagemaker_shim(
     )
     assert output.stdout
 
-    with pytest.raises(subprocess.CalledProcessError) as error:
-        _repo_login_and_run(command=["crane", "manifest", old_repo_tag])
+    assert mock_remove_tag_from_registry.call_count == 1
 
-    assert "MANIFEST_UNKNOWN" in error.value.stderr
+    expected_calls = [
+        call(repo_tag=old_repo_tag),
+    ]
+
+    mock_remove_tag_from_registry.assert_has_calls(
+        expected_calls, any_order=False
+    )
 
 
 @pytest.mark.parametrize(

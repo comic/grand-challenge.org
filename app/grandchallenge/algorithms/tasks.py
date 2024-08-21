@@ -115,6 +115,7 @@ def create_algorithm_jobs_for_archive(
                     # NOTE: no emails in case the logs leak data
                     # to the algorithm editors
                     task_on_success=None,
+                    time_limit=algorithm.time_limit,
                 )
 
 
@@ -122,13 +123,13 @@ def create_algorithm_jobs(
     *,
     algorithm_image,
     civ_sets,
+    time_limit,
     algorithm_model=None,
     extra_viewer_groups=None,
     extra_logs_viewer_groups=None,
     max_jobs=None,
     task_on_success=None,
     task_on_failure=None,
-    time_limit=None,
 ):
     """
     Creates algorithm jobs for sets of component interface values
@@ -140,6 +141,10 @@ def create_algorithm_jobs(
     civ_sets
         The sets of component interface values that will be used as input
         for the algorithm image
+    time_limit
+        The time limit for the Job
+    algorithm_model
+        The algorithm model to use for the new job or None
     extra_viewer_groups
         The groups that will also get permission to view the jobs
     extra_logs_viewer_groups
@@ -152,8 +157,6 @@ def create_algorithm_jobs(
         to handle being called more than once, and in parallel.
     task_on_failure
         Celery task that is run on job failure
-    time_limit
-        The time limit for the Job
     """
     if not algorithm_image:
         raise RuntimeError("Algorithm image required to create jobs.")

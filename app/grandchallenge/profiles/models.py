@@ -18,6 +18,7 @@ from guardian.shortcuts import assign_perm
 from guardian.utils import get_anonymous_user
 from stdimage import JPEGField
 
+from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import get_mugshot_path
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.utils import disable_for_loaddata
@@ -259,3 +260,21 @@ def create_user_profile(instance, created, *_, **__):
 
 
 post_save.connect(create_user_profile, sender=settings.AUTH_USER_MODEL)
+
+
+class BannedEmailAddress(UUIDModel):
+    email = models.EmailField(
+        unique=True,
+        blank=False,
+        help_text="Email addresses that are banned from registering.",
+    )
+    reason = models.TextField(
+        blank=False, help_text="The reason why this email address is banned."
+    )
+
+    def __str__(self):
+        return self.email
+
+    def clean_fields(self, exclude=None):
+        super().clean_fields(exclude=exclude)
+        self.email = get_user_model().objects.normalize_email(self.email)

@@ -47,9 +47,7 @@
         <dd>{{ phase.title }}</dd>
     </dl>
 
-    <p>
-        Upload a ground truth that will be extracted to <code>/opt/ml/input/data/ground_truth/</code> during inference.
-    </p>
+    {% include "components/partials/how_to_create_tarball.html" with model_name="evaluationgroundtruth" %}
 
     {% crispy form %}
 

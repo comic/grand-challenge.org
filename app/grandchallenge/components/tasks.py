@@ -12,6 +12,7 @@ from lzma import LZMAError
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
+import boto3
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import (  # noqa: I251 TODO needs to be refactored
     shared_task,
@@ -101,13 +102,10 @@ def validate_docker_image(  # noqa C901
 
     if instance.is_manifest_valid is None:
         try:
-            instance.image_sha256 = _validate_docker_image_manifest(
-                instance=instance
-            )
+            _validate_docker_image_manifest(instance=instance)
             instance.is_manifest_valid = True
             instance.save()
         except ValidationError as error:
-            instance.image_sha256 = ""
             instance.is_manifest_valid = False
             instance.status = oxford_comma(error)
             instance.import_status = instance.ImportStatusChoices.FAILED
@@ -261,33 +259,24 @@ def push_container_image(*, instance):
 
 
 def remove_tag_from_registry(*, repo_tag):
-    try:
-        digest_cmd = _repo_login_and_run(command=["crane", "digest", repo_tag])
-    except subprocess.CalledProcessError as error:
-        if "MANIFEST_UNKNOWN: Requested image not found" in getattr(
-            error, "stderr", ""
-        ):
-            # The image has already been deleted
-            return
-        else:
-            raise error
+    if settings.COMPONENTS_REGISTRY_INSECURE:
+        raise NotImplementedError
+    else:
+        client = boto3.client(
+            "ecr", region_name=settings.COMPONENTS_AMAZON_ECR_REGION
+        )
 
-    digests = digest_cmd.stdout.splitlines()
+        repo_name, image_tag = repo_tag.rsplit(":", 1)
+        repo_name = repo_name.replace(
+            f"{settings.COMPONENTS_REGISTRY_URL}/", "", 1
+        )
 
-    for digest in digests:
-        try:
-            _repo_login_and_run(
-                command=["crane", "delete", f"{repo_tag}@{digest}"]
-            )
-        except subprocess.CalledProcessError as error:
-            if "MANIFEST_UNKNOWN: Requested image not found" in getattr(
-                error, "stderr", ""
-            ):
-                # The digest has already been deleted, could be
-                # caused by parallel processes deleting the same image
-                continue
-            else:
-                raise error
+        client.batch_delete_image(
+            repositoryName=repo_name,
+            imageIds=[
+                {"imageTag": image_tag},
+            ],
+        )
 
 
 def _repo_login_and_run(*, command):
@@ -454,6 +443,8 @@ def _validate_docker_image_manifest(*, instance) -> str:
     config = config_and_sha256["config"]
     image_sha256 = config_and_sha256["image_sha256"]
 
+    instance.image_sha256 = f"sha256:{image_sha256}"
+
     user = str(config["config"].get("User", "")).lower()
     if (
         user in ["", "root", "0"]
@@ -476,7 +467,21 @@ def _validate_docker_image_manifest(*, instance) -> str:
             f"{desired_arch!r}."
         )
 
-    return f"sha256:{image_sha256}"
+    if instance._meta.model_name != "method":
+        # TODO Methods are currently allowed to be duplicated
+        model = apps.get_model(
+            app_label=instance._meta.app_label,
+            model_name=instance._meta.model_name,
+        )
+        if (
+            model.objects.filter(image_sha256=instance.image_sha256)
+            .exclude(pk=instance.pk)
+            .exists()
+        ):
+            raise ValidationError(
+                "This container image has already been uploaded. "
+                "Please re-activate the existing container image or upload a new version."
+            )
 
 
 def _get_image_config_and_sha256(*, instance):

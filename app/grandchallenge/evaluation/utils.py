@@ -59,24 +59,7 @@ def _filter_valid_results(
     *, evaluations: Iterable, metrics: tuple[Metric, ...]
 ) -> list:
     """Ensure that all the metrics are in every result."""
-    return [
-        e
-        for e in evaluations
-        if all(
-            get_jsonpath(
-                get(
-                    [
-                        o.value
-                        for o in e.outputs.all()
-                        if o.interface.slug == "metrics-json-file"
-                    ]
-                ),
-                m.path,
-            )
-            not in ["", None]
-            for m in metrics
-        )
-    ]
+    return [e for e in evaluations if not e.invalid_metrics]
 
 
 def _get_rank_per_metric(
@@ -95,13 +78,7 @@ def _get_rank_per_metric(
         # value of the metric
         metric_scores = {
             e.pk: get_jsonpath(
-                get(
-                    [
-                        o.value
-                        for o in e.outputs.all()
-                        if o.interface.slug == "metrics-json-file"
-                    ]
-                ),
+                e.metrics_json_file,
                 metric.path,
             )
             for e in evaluations

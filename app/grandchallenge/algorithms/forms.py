@@ -107,7 +107,8 @@ class JobCreateForm(SaveFormInitMixin, Form):
     def __init__(self, *args, algorithm, user, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self._algorithm = algorithm
+        self.helper = FormHelper()
+
         self._user = user
         self.fields["creator"].queryset = get_user_model().objects.filter(
             pk=self._user.pk
@@ -115,16 +116,16 @@ class JobCreateForm(SaveFormInitMixin, Form):
         self.fields["creator"].initial = self._user
         self.fields["time_limit"].initial = self._algorithm.time_limit
 
-        self.helper = FormHelper()
+        self._algorithm = algorithm
+        self._algorithm_image = self._algorithm.active_image
 
-        active_image = self._algorithm.active_image
         active_model = self._algorithm.active_model
 
-        if active_image:
+        if self._algorithm_image:
             self.fields["algorithm_image"].queryset = (
-                AlgorithmImage.objects.filter(pk=active_image.pk)
+                AlgorithmImage.objects.filter(pk=self._algorithm_image.pk)
             )
-            self.fields["algorithm_image"].initial = active_image
+            self.fields["algorithm_image"].initial = self._algorithm_image
 
         if active_model:
             self.fields["algorithm_model"].queryset = (
@@ -143,16 +144,19 @@ class JobCreateForm(SaveFormInitMixin, Form):
 
     @cached_property
     def jobs_limit(self):
-        return self._algorithm.get_jobs_limit(user=self._user)
+        if self._algorithm_image:
+            return self._algorithm_image.get_remaining_jobs(user=self._user)
+        else:
+            return 0
 
     def clean(self):
         cleaned_data = super().clean()
 
-        if self.jobs_limit is not None and self.jobs_limit < 1:
-            raise ValidationError("You have run out of algorithm credits")
-
         if not cleaned_data.get("algorithm_image"):
             raise ValidationError("This algorithm is not ready to be used")
+
+        if self.jobs_limit < 1:
+            raise ValidationError("You have run out of algorithm credits")
 
         if Job.objects.get_jobs_with_same_inputs(
             data=cleaned_data,

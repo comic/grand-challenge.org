@@ -13,7 +13,7 @@ from django.db import models
 from django.db.models import Count, Min, Q, Sum
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
-from django.template.defaultfilters import truncatechars, truncatewords
+from django.template.defaultfilters import truncatechars
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
@@ -179,12 +179,16 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
             "The number of credits that are required for each execution of this algorithm."
         ),
     )
-    time_limit = models.PositiveSmallIntegerField(
-        default=3600,
+    time_limit = models.PositiveIntegerField(
+        default=60 * 60,
         help_text="Time limit for inference jobs in seconds",
         validators=[
-            MinValueValidator(limit_value=300),
-            MaxValueValidator(limit_value=7200),
+            MinValueValidator(
+                limit_value=settings.COMPONENTS_MINIMUM_JOB_DURATION
+            ),
+            MaxValueValidator(
+                limit_value=settings.COMPONENTS_MAXIMUM_JOB_DURATION
+            ),
         ],
     )
     average_duration = models.DurationField(
@@ -418,31 +422,6 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
     def remove_user(self, user):
         return user.groups.remove(self.users_group)
 
-    def get_jobs_limit(self, user):
-        """Get the maximum number of jobs a user can schedule now"""
-        user_credits = Credit.objects.get(user=user).credits
-        spent_credits = Job.objects.spent_credits(user=user)["total"]
-
-        if self.is_editor(user=user):
-            if self.active_image:
-                # Including all jobs here as failed jobs still use compute
-                n_editor_jobs = Job.objects.filter(
-                    creator__in=self.editors_group.user_set.all(),
-                    algorithm_image__image_sha256=self.active_image.image_sha256,
-                    algorithm_model=self.active_model,
-                ).count()
-            else:
-                n_editor_jobs = 0
-            n_free_jobs = max(
-                settings.ALGORITHMS_JOB_LIMIT_FOR_EDITORS - n_editor_jobs,
-                0,
-            )
-            user_credits += n_free_jobs * self.credits_per_job
-
-        credits_left = user_credits - spent_credits
-
-        return max(credits_left, 0) // max(self.credits_per_job, 1)
-
     @cached_property
     def user_statistics(self):
         return (
@@ -558,14 +537,6 @@ class AlgorithmImage(UUIDModel, ComponentImage):
     class Meta(UUIDModel.Meta, ComponentImage.Meta):
         ordering = ("created", "creator")
 
-    def __str__(self):
-        out = f"Algorithm image {self.pk} for {self.algorithm}"
-
-        if self.comment:
-            out += f" ({truncatewords(self.comment, 4)})"
-
-        return out
-
     def get_absolute_url(self):
         return reverse(
             "algorithms:image-detail",
@@ -575,6 +546,31 @@ class AlgorithmImage(UUIDModel, ComponentImage):
     @property
     def api_url(self) -> str:
         return reverse("api:algorithms-image-detail", kwargs={"pk": self.pk})
+
+    def get_remaining_complimentary_jobs(self, *, user):
+        if self.algorithm.is_editor(user=user):
+            return max(
+                settings.ALGORITHM_IMAGES_COMPLIMENTARY_EDITOR_JOBS
+                - Job.objects.filter(
+                    algorithm_image=self, is_complimentary=True
+                ).count(),
+                0,
+            )
+        else:
+            return 0
+
+    def get_remaining_non_complimentary_jobs(self, *, user):
+        user_credits = Credit.objects.get(user=user).credits
+        spent_credits = Job.objects.spent_credits(user=user)["total"]
+
+        credits_left = user_credits - spent_credits
+
+        return max(credits_left, 0) // max(self.algorithm.credits_per_job, 1)
+
+    def get_remaining_jobs(self, *, user):
+        return self.get_remaining_non_complimentary_jobs(
+            user=user
+        ) + self.get_remaining_complimentary_jobs(user=user)
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -703,14 +699,13 @@ class JobManager(ComponentJobManager):
     def spent_credits(self, user):
         now = timezone.now()
         period = timedelta(days=30)
-        user_groups = Group.objects.filter(user=user)
 
         return (
             self.filter(creator=user, created__range=[now - period, now])
             .distinct()
             .order_by("created")
             .select_related("algorithm_image__algorithm")
-            .exclude(algorithm_image__algorithm__editors_group__in=user_groups)
+            .exclude(is_complimentary=True)
             .aggregate(
                 total=Sum(
                     "algorithm_image__algorithm__credits_per_job", default=0
@@ -806,6 +801,11 @@ class Job(UUIDModel, CIVForObjectMixin, ComponentJob):
         ),
     )
     comment = models.TextField(blank=True, default="")
+    is_complimentary = models.BooleanField(
+        default=False,
+        editable=False,
+        help_text="If True, this job does not consume credits.",
+    )
 
     viewer_groups = models.ManyToManyField(
         Group,
@@ -877,6 +877,7 @@ class Job(UUIDModel, CIVForObjectMixin, ComponentJob):
 
         if adding:
             self.init_viewers_group()
+            self.init_is_complimentary()
 
         super().save(*args, **kwargs)
 
@@ -894,6 +895,15 @@ class Job(UUIDModel, CIVForObjectMixin, ComponentJob):
     def init_viewers_group(self):
         self.viewers = Group.objects.create(
             name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_viewers"
+        )
+
+    def init_is_complimentary(self):
+        self.is_complimentary = bool(
+            self.creator
+            and self.algorithm_image.get_remaining_complimentary_jobs(
+                user=self.creator
+            )
+            > 0
         )
 
     def init_permissions(self):

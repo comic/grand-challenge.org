@@ -60,7 +60,7 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
             },
             ResourceConfig={
                 # https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_ResourceConfig.html
-                "VolumeSizeInGB": 30,  # Matches SageMaker Batch Inference
+                "VolumeSizeInGB": self._required_volume_size_gb,
                 "InstanceType": self._instance_type.name,
                 "InstanceCount": 1,
             },

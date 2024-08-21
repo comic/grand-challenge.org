@@ -6,6 +6,10 @@
 {% block content %}
     <h2>Forbidden</h2>
     <p>
-        You do not have permission to access this content.
+        {% if reason %}
+            {{ reason }}
+        {% else %}
+            You do not have permission to access this content.
+        {% endif %}
     </p>
 {% endblock %}

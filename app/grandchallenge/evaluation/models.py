@@ -63,7 +63,6 @@ from grandchallenge.evaluation.utils import (
     Metric,
     StatusChoices,
     SubmissionKindChoices,
-    get,
 )
 from grandchallenge.hanging_protocols.models import HangingProtocolMixin
 from grandchallenge.notifications.models import Notification, NotificationType
@@ -465,12 +464,16 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         blank=True,
         help_text="The output interfaces that the algorithms for this phase must use",
     )
-    algorithm_time_limit = models.PositiveSmallIntegerField(
+    algorithm_time_limit = models.PositiveIntegerField(
         default=20 * 60,
         help_text="Time limit for inference jobs in seconds",
         validators=[
-            MinValueValidator(limit_value=300),
-            MaxValueValidator(limit_value=18000),
+            MinValueValidator(
+                limit_value=settings.COMPONENTS_MINIMUM_JOB_DURATION
+            ),
+            MaxValueValidator(
+                limit_value=settings.COMPONENTS_MAXIMUM_JOB_DURATION
+            ),
         ],
     )
     give_algorithm_editors_job_view_permissions = models.BooleanField(
@@ -489,6 +492,18 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             "logs and predictions, not the logs and predictions from "
             "other users. "
         ),
+    )
+    evaluation_time_limit = models.PositiveIntegerField(
+        default=60 * 60,
+        help_text="Time limit for evaluation jobs in seconds",
+        validators=[
+            MinValueValidator(
+                limit_value=settings.COMPONENTS_MINIMUM_JOB_DURATION
+            ),
+            MaxValueValidator(
+                limit_value=settings.COMPONENTS_MAXIMUM_JOB_DURATION
+            ),
+        ],
     )
     public = models.BooleanField(
         default=True,
@@ -583,6 +598,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                     )
 
         if self.has_changed("public"):
+            self.assign_permissions()
             on_commit(
                 assign_evaluation_permissions.signature(
                     kwargs={"phase_pks": [self.pk]}
@@ -748,9 +764,19 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         assign_perm(
             "create_phase_submission", self.challenge.admins_group, self
         )
-        assign_perm(
-            "create_phase_submission", self.challenge.participants_group, self
-        )
+
+        if self.public:
+            assign_perm(
+                "create_phase_submission",
+                self.challenge.participants_group,
+                self,
+            )
+        else:
+            remove_perm(
+                "create_phase_submission",
+                self.challenge.participants_group,
+                self,
+            )
 
     def get_absolute_url(self):
         return reverse(
@@ -1407,31 +1433,15 @@ class Evaluation(UUIDModel, ComponentJob):
             if output.interface.slug == "metrics-json-file":
                 return output.value
 
-    @property
-    def missing_metrics(self):
-        if self.status == self.SUCCESS and self.rank == 0:
-
-            output_values = [
-                o.value
-                for o in self.outputs.all()
-                if o.interface.slug == "metrics-json-file"
-            ]
-
-            valid_metrics = self.submission.phase.valid_metrics
-            missing_metrics = []
-
-            for metric in valid_metrics:
-                if get_jsonpath(get(output_values), metric.path) in [
-                    "",
-                    None,
-                ]:
-                    missing_metrics.append(metric.path)
-
-            if len(missing_metrics) > 0:
-                return missing_metrics
-            else:
-                return None
-        return None
+    @cached_property
+    def invalid_metrics(self):
+        return {
+            metric.path
+            for metric in self.submission.phase.valid_metrics
+            if not isinstance(
+                get_jsonpath(self.metrics_json_file, metric.path), (int, float)
+            )
+        }
 
     def clean(self):
         if self.submission.phase != self.method.phase:

@@ -20,7 +20,7 @@ class ComponentImageAdmin(GuardedModelAdmin):
         "is_manifest_valid",
         "is_in_registry",
         "import_status",
-        "image_sha256",
+        "sha256_display",
         "requires_gpu",
         "requires_memory_gb",
         "status",

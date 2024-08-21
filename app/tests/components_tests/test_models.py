@@ -3,6 +3,7 @@ import uuid
 from contextlib import nullcontext
 from datetime import timedelta
 from pathlib import Path
+from unittest.mock import call
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -52,7 +53,7 @@ from tests.utils import create_raw_upload_image_session
 
 @pytest.mark.django_db
 def test_update_started_adds_time():
-    j = AlgorithmJobFactory()
+    j = AlgorithmJobFactory(time_limit=60)
     assert j.started_at is None
     assert j.completed_at is None
 
@@ -71,8 +72,8 @@ def test_update_started_adds_time():
 
 @pytest.mark.django_db
 def test_duration():
-    j = AlgorithmJobFactory()
-    _ = EvaluationFactory()
+    j = AlgorithmJobFactory(time_limit=60)
+    _ = EvaluationFactory(time_limit=60)
 
     jbs = Job.objects.with_duration()
     assert jbs[0].duration is None
@@ -87,7 +88,7 @@ def test_duration():
     assert jbs[0].duration == timedelta(minutes=5)
     assert Job.objects.average_duration() == timedelta(minutes=5)
 
-    _ = AlgorithmJobFactory()
+    _ = AlgorithmJobFactory(time_limit=60)
     assert Job.objects.average_duration() == timedelta(minutes=5)
 
 
@@ -98,10 +99,12 @@ def test_average_duration_filtering():
         AlgorithmJobFactory(
             completed_at=completed_at,
             started_at=completed_at - timedelta(minutes=5),
+            time_limit=60,
         ),
         AlgorithmJobFactory(
             completed_at=completed_at,
             started_at=completed_at - timedelta(minutes=10),
+            time_limit=60,
         ),
     )
     assert Job.objects.average_duration() == timedelta(minutes=7.5)
@@ -1297,11 +1300,19 @@ def test_cannot_change_image(algorithm_image):
 
 @pytest.mark.django_db
 def test_remove_container_image_from_registry(
-    algorithm_image, settings, django_capture_on_commit_callbacks
+    algorithm_image,
+    settings,
+    django_capture_on_commit_callbacks,
+    mocker,
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
+
+    mock_remove_tag_from_registry = mocker.patch(
+        # remove_tag_from_registry is only implemented for ECR
+        "grandchallenge.components.tasks.remove_tag_from_registry"
+    )
 
     with django_capture_on_commit_callbacks(execute=True):
         ai = AlgorithmImageFactory(image__from_path=algorithm_image)
@@ -1314,6 +1325,8 @@ def test_remove_container_image_from_registry(
         ai.latest_shimmed_version == settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
     )
     assert ai.is_in_registry is True
+
+    old_shimmed_repo_tag = ai.shimmed_repo_tag
 
     with django_capture_on_commit_callbacks() as callbacks:
         remove_container_image_from_registry(
@@ -1331,6 +1344,17 @@ def test_remove_container_image_from_registry(
     assert ai.is_manifest_valid is True
     assert ai.latest_shimmed_version == ""
     assert ai.is_in_registry is False
+
+    assert mock_remove_tag_from_registry.call_count == 2
+
+    expected_calls = [
+        call(repo_tag=old_shimmed_repo_tag),
+        call(repo_tag=ai.original_repo_tag),
+    ]
+
+    mock_remove_tag_from_registry.assert_has_calls(
+        expected_calls, any_order=False
+    )
 
 
 @pytest.mark.django_db

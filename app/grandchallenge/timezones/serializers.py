@@ -6,5 +6,5 @@ from rest_framework.serializers import Serializer
 
 class TimezoneSerializer(Serializer):
     timezone = ChoiceField(
-        choices=zoneinfo.available_timezones(), required=True
+        choices=sorted(zoneinfo.available_timezones()), required=True
     )

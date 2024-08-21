@@ -5,14 +5,21 @@ from allauth.account.signals import email_confirmed
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 from django.utils.html import format_html
 from pyswot import is_academic
 
 from grandchallenge.emails.emails import send_standard_email_batch
-from grandchallenge.profiles.models import EmailSubscriptionTypes
+from grandchallenge.profiles.models import (
+    BannedEmailAddress,
+    EmailSubscriptionTypes,
+)
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.verifications.resources.free_email_domains import (
+    FREE_EMAIL_DOMAINS,
+)
 from grandchallenge.verifications.tokens import (
     email_verification_token_generator,
 )
@@ -37,6 +44,28 @@ class Verification(models.Model):
 
     def __str__(self):
         return f"Verification for {self.user}"
+
+    def clean(self, *args, **kwargs):
+        super().clean_fields(*args, **kwargs)
+
+        self.email = clean_email(email=self.email)
+
+        if self.email.split("@")[1].lower() in FREE_EMAIL_DOMAINS:
+            raise ValidationError(
+                "Email hosted on this domain cannot be used for verification, "
+                "please provide your work, corporate or institutional email."
+            )
+
+        if (
+            get_user_model()
+            .objects.filter(email__iexact=self.email)
+            .exclude(pk=self.user.pk)
+            .exists()
+            or EmailAddress.objects.filter(email__iexact=self.email)
+            .exclude(user=self.user)
+            .exists()
+        ):
+            raise ValidationError("This email is already in use.")
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -121,6 +150,15 @@ email_confirmed.connect(create_verification)
 class VerificationUserSet(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
+    auto_deactivate = models.BooleanField(
+        default=False,
+        help_text="Whether to automatically deactivate users added to this set",
+    )
+    is_false_positive = models.BooleanField(
+        default=False,
+        help_text="If this set was created in error",
+    )
+    comment = models.TextField(blank=True)
 
     users = models.ManyToManyField(
         get_user_model(), through="VerificationUserSetUser"
@@ -137,3 +175,28 @@ class VerificationUserSetUser(models.Model):
     # https://docs.djangoproject.com/en/4.2/topics/db/models/#intermediary-manytomany
     user_set = models.ForeignKey(VerificationUserSet, on_delete=models.CASCADE)
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+
+
+def clean_email(*, email):
+    """
+    Email addresses that cannot be used throughout the site
+
+    This includes sign-up, verification, and password reset. Here,
+    we want to allow free email domains.
+    """
+    email = get_user_model().objects.normalize_email(email)
+
+    domain = email.split("@")[1].lower()
+
+    if domain in settings.DISALLOWED_EMAIL_DOMAINS or "wecom" in domain:
+        raise ValidationError(
+            f"Email addresses hosted by {domain} cannot be used."
+        )
+
+    if Verification.objects.filter(email__iexact=email).exists():
+        raise ValidationError("This email address is already in use.")
+
+    if BannedEmailAddress.objects.filter(email__iexact=email).exists():
+        raise ValidationError("This email address is not allowed.")
+
+    return email

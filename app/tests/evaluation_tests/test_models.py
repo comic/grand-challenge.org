@@ -186,26 +186,30 @@ class TestPhaseLimits:
             "submission__creator": self.user,
             "submission__phase": self.phase,
             "status": Evaluation.SUCCESS,
+            "time_limit": self.phase.evaluation_time_limit,
         }
         now = timezone.now()
 
         # Failed evaluations don't count
-        e = EvaluationFactory(
+        EvaluationFactory(
             submission__creator=self.user,
             submission__phase=self.phase,
             status=Evaluation.FAILURE,
+            time_limit=self.phase.evaluation_time_limit,
         )
         # Other users evaluations don't count
         EvaluationFactory(
             submission__creator=UserFactory(),
             submission__phase=self.phase,
             status=Evaluation.SUCCESS,
+            time_limit=self.phase.evaluation_time_limit,
         )
         # Other phases don't count
         EvaluationFactory(
             submission__creator=self.user,
             submission__phase=PhaseFactory(),
             status=Evaluation.SUCCESS,
+            time_limit=self.phase.evaluation_time_limit,
         )
 
         # Evaluations 1, 2 and 7 days ago
@@ -437,6 +441,7 @@ def test_combined_leaderboards(
                     submission__phase=phase,
                     published=True,
                     status=Evaluation.SUCCESS,
+                    time_limit=phase.evaluation_time_limit,
                 )
 
                 output_civ, _ = evaluation.outputs.get_or_create(
@@ -522,6 +527,7 @@ def test_combined_leaderboards_with_non_public_components():
                     submission__phase=phase,
                     published=True,
                     status=Evaluation.SUCCESS,
+                    time_limit=phase.evaluation_time_limit,
                 )
 
                 output_civ, _ = evaluation.outputs.get_or_create(
@@ -689,55 +695,48 @@ def test_combined_leaderboard_ranks(combined_ranks, expected_ranks):
 
 
 @pytest.mark.parametrize(
-    "eval_status, eval_rank, eval_metrics_json_file_value, expected_missing_metrics",
+    "eval_metrics_json_file_value, expected_invalid_metrics",
     (
-        (Evaluation.FAILURE, 0, {"acc": {"std": 0.1, "mean": 0.0}}, None),
         (
-            Evaluation.SUCCESS,
-            1,
             {
                 "acc": {"std": 0.1, "mean": 0.0},
                 "dice": {"std": 0.2, "mean": 0.5},
             },
-            None,
+            set(),
         ),
         (
-            Evaluation.SUCCESS,
-            0,
             {
                 "acc": {"std": 0.1, "mean": 0.0},
                 "dice": {"std": 0.2, "mean": 0.5},
             },
-            None,
+            set(),
         ),
         (
-            Evaluation.SUCCESS,
-            0,
             {"acc": {"std": 0.1, "mean": 0.0}},
-            ["dice.mean"],
+            {"dice.mean"},
         ),
         (
-            Evaluation.SUCCESS,
-            0,
             {"dice": {"std": 0.2, "mean": 0.5}},
-            ["acc.mean"],
+            {"acc.mean"},
         ),
         (
-            Evaluation.SUCCESS,
-            0,
             {"cosine": {"std": 0.1, "mean": 0.0}},
-            ["acc.mean", "dice.mean"],
+            {"acc.mean", "dice.mean"},
+        ),
+        (
+            {
+                "acc": {"std": 0.1, "mean": 0.0},
+                "dice": {"std": 0.2, "mean": {"oops": "an object"}},
+            },
+            {"dice.mean"},
         ),
     ),
 )
 @pytest.mark.django_db
-def test_evaluation_missing_metrics(
-    eval_status,
-    eval_rank,
+def test_evaluation_invalid_metrics(
     eval_metrics_json_file_value,
-    expected_missing_metrics,
+    expected_invalid_metrics,
 ):
-
     phase = PhaseFactory(
         challenge__hidden=False,
         public=True,
@@ -749,21 +748,17 @@ def test_evaluation_missing_metrics(
     )
 
     evaluation = EvaluationFactory(
-        submission__phase=phase, rank=eval_rank, status=eval_status
+        submission__phase=phase, time_limit=phase.evaluation_time_limit
     )
 
-    if eval_metrics_json_file_value is not None:
+    ci = ComponentInterface.objects.get(slug="metrics-json-file")
+    civ = ComponentInterfaceValueFactory(
+        interface=ci, value=eval_metrics_json_file_value
+    )
 
-        ci = ComponentInterface.objects.get(slug="metrics-json-file")
-        civ = ComponentInterfaceValueFactory(
-            interface=ci, value=eval_metrics_json_file_value
-        )
+    evaluation.outputs.set([civ])
 
-        evaluation.outputs.set([civ])
-
-    arr = evaluation.missing_metrics
-
-    assert arr == expected_missing_metrics
+    assert evaluation.invalid_metrics == expected_invalid_metrics
 
 
 @pytest.mark.django_db
@@ -981,7 +976,7 @@ def test_read_only_fields_for_dependent_phases():
 def test_is_evaluated_with_active_image_and_ground_truth():
     phase = PhaseFactory()
     s = SubmissionFactory(phase=phase)
-    EvaluationFactory(submission=s)
+    EvaluationFactory(submission=s, time_limit=phase.evaluation_time_limit)
     assert s.is_evaluated_with_active_image_and_ground_truth
 
     # add a method
@@ -995,7 +990,11 @@ def test_is_evaluated_with_active_image_and_ground_truth():
     del s.is_evaluated_with_active_image_and_ground_truth
     assert not s.is_evaluated_with_active_image_and_ground_truth
 
-    EvaluationFactory(submission=s, method=phase.active_image)
+    EvaluationFactory(
+        submission=s,
+        method=phase.active_image,
+        time_limit=phase.evaluation_time_limit,
+    )
     del s.is_evaluated_with_active_image_and_ground_truth
     assert s.is_evaluated_with_active_image_and_ground_truth
 
@@ -1009,6 +1008,7 @@ def test_is_evaluated_with_active_image_and_ground_truth():
         submission=s,
         method=phase.active_image,
         ground_truth=phase.active_ground_truth,
+        time_limit=phase.evaluation_time_limit,
     )
     del s.is_evaluated_with_active_image_and_ground_truth
     assert s.is_evaluated_with_active_image_and_ground_truth
@@ -1018,7 +1018,10 @@ def test_is_evaluated_with_active_image_and_ground_truth():
     gt.save()
     gt2 = EvaluationGroundTruthFactory(phase=phase, is_desired_version=False)
     EvaluationFactory(
-        submission=s, method=phase.active_image, ground_truth=gt2
+        submission=s,
+        method=phase.active_image,
+        ground_truth=gt2,
+        time_limit=phase.evaluation_time_limit,
     )
     del phase.active_ground_truth
     del s.is_evaluated_with_active_image_and_ground_truth

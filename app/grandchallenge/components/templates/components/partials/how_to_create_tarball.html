@@ -1,0 +1,13 @@
+<p>
+    You can upload your
+    {% if model_name == "algorithmmodel" %}algorithm's model{% elif model_name == "evaluationgroundtruth" %}method's ground truth{% endif %}
+    separately from the container as a tarball (<code>.tar.gz</code>).
+    If provided, tarball will be extracted to
+    <code>{% if model_name == "algorithmmodel" %}/opt/ml/model/{% elif model_name == "evaluationgroundtruth" %}/opt/ml/input/data/ground_truth/{% endif %}</code>
+    at runtime.
+    Please note that any common directories present in the <code>.tar.gz</code> file will not be filtered out.
+</p>
+<p>
+    It is recommended to create your tarball with
+    <code>tar -czvf {{ model_name }}.tar.gz -C /path/to/{{ model_name }} .</code> (note the trailing <code>.</code>).
+</p>
