@@ -1483,7 +1483,6 @@ def test_displacement_field_validation(
 )
 @pytest.mark.django_db
 def test_ci_example_value(example_value, context):
-
     sc = {"type": "number", "minimum": 2, "maximum": 20}
 
     ci = ComponentInterfaceFactory(
@@ -1499,7 +1498,6 @@ def test_ci_example_value(example_value, context):
 
 @pytest.mark.django_db
 def test_ci_example_value_non_json_kind_fail():
-
     ci = ComponentInterfaceFactory(
         kind=InterfaceKindChoices.IMAGE,
         relative_path="images/test",
@@ -1526,7 +1524,6 @@ def test_ci_example_value_non_json_kind_fail():
 )
 @pytest.mark.django_db
 def test_interface_kind_json_type_examples(kind, example):
-
     ci = ComponentInterfaceFactory(
         kind=kind,
         relative_path=f"{kind}.json",
@@ -1534,5 +1531,4 @@ def test_interface_kind_json_type_examples(kind, example):
     )
 
     ci.store_in_database = not ci.requires_object_store
-
     ci.full_clean()
