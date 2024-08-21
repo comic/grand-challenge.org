@@ -618,7 +618,7 @@ def provision_job(
     if job.status in [job.PENDING, job.RETRY]:
         job.update_status(status=job.PROVISIONING)
     elif job.status in [job.PROVISIONING, job.PROVISIONED]:
-        logger.warning("Job has been provisioned already.")
+        logger.warning("Job has already been provisioned.")
         return
     else:
         logger.warning("Job is not ready for provisioning")

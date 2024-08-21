@@ -11,7 +11,7 @@ from grandchallenge.uploads.models import UserUpload
 
 def retrieve_existing_civs(*, civ_data):
     """
-    Checks if there are existing CIVs for the provided inputs and if so, returns those.
+    Checks if there are existing CIVs for the provided data and returns those.
 
     Parameters
     ----------
@@ -57,7 +57,7 @@ def reformat_inputs(*, serialized_civs):
     """
     Takes serialized CIV data and turns it into a dictionary:
     {
-        "interface_slug_1": "value",
+        "interface_slug_1": "value_1",
         "interface_slug_2": "value_2"
     }
     This representation of CIV data corresponds to how CIV data is stored in

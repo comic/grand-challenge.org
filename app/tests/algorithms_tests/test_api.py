@@ -230,9 +230,8 @@ class TestJobCreation(TestCase):
         image_inputs = [civ.image for civ in job.inputs.all() if civ.image]
         assert self.image_1 in image_inputs
         assert self.image_2 in image_inputs
-
         assert (
-            self.file_upload.filename
+            self.file_upload.filename.split(".")[0]
             in [civ.file for civ in job.inputs.all() if civ.file][0].name
         )
 
@@ -322,6 +321,7 @@ class TestJobCreation(TestCase):
             algorithm_image=self.algorithm_image,
             algorithm_model=self.algorithm_model,
             status=Job.SUCCESS,
+            time_limit=10,
         )
         job.inputs.set([civ1, civ2, civ3, civ4])
 

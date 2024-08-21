@@ -247,7 +247,7 @@ class JobPostSerializer(JobSerializer):
         return data
 
     def create(self, validated_data):
-        job = Job.objects.create_and_process_inputs(
+        job = Job.objects.create_job_and_process_inputs(
             data=validated_data,
             extra_logs_viewer_groups=[
                 validated_data["algorithm_image"].algorithm.editors_group

@@ -150,7 +150,7 @@ def test_algorithm_job_post_serializer_validations(
                 )
             )
         existing_job = AlgorithmJobFactory(
-            algorithm_image=algorithm_image, status=Job.SUCCESS
+            algorithm_image=algorithm_image, status=Job.SUCCESS, time_limit=10
         )
         existing_job.inputs.set(civs)
 

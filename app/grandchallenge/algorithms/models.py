@@ -636,12 +636,12 @@ class JobManager(ComponentJobManager):
         return ["algorithm_image", "algorithm_model", "creator", "time_limit"]
 
     def get_jobs_with_same_inputs(
-        self, data, algorithm_image, algorithm_model
+        self, *, data, algorithm_image, algorithm_model
     ):
         civ_data = {
             k: v for k, v in data.items() if k not in self.non_interface_fields
         }
-        civs = retrieve_existing_civs(civ_data=civ_data)
+        existing_civs = retrieve_existing_civs(civ_data=civ_data)
         unique_kwargs = {
             "algorithm_image": algorithm_image,
         }
@@ -653,13 +653,15 @@ class JobManager(ComponentJobManager):
         existing_jobs = (
             Job.objects.filter(**unique_kwargs)
             .annotate(
-                inputs_match_count=Count("inputs", filter=Q(inputs__in=civs))
+                inputs_match_count=Count(
+                    "inputs", filter=Q(inputs__in=existing_civs)
+                )
             )
             .filter(inputs_match_count=input_interface_count)
         )
         return existing_jobs
 
-    def create_and_process_inputs(
+    def create_job_and_process_inputs(
         self,
         *,
         data,

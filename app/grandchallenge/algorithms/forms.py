@@ -1,4 +1,3 @@
-import logging
 import re
 from itertools import chain
 from urllib.parse import urlparse
@@ -87,9 +86,6 @@ class ModelFactsTextField(Field):
     template = "algorithms/model_facts_field.html"
 
 
-logger = logging.getLogger(__name__)
-
-
 class JobCreateForm(SaveFormInitMixin, Form):
     algorithm_image = ModelChoiceField(
         queryset=None, disabled=True, required=True, widget=HiddenInput
@@ -114,10 +110,10 @@ class JobCreateForm(SaveFormInitMixin, Form):
             pk=self._user.pk
         )
         self.fields["creator"].initial = self._user
-        self.fields["time_limit"].initial = self._algorithm.time_limit
 
         self._algorithm = algorithm
         self._algorithm_image = self._algorithm.active_image
+        self.fields["time_limit"].initial = self._algorithm.time_limit
 
         active_model = self._algorithm.active_model
 

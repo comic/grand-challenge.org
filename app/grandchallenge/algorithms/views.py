@@ -498,7 +498,7 @@ class JobCreate(
         return context
 
     def form_valid(self, form):
-        self.object = Job.objects.create_and_process_inputs(
+        self.object = Job.objects.create_job_and_process_inputs(
             data=form.cleaned_data,
             extra_logs_viewer_groups=[self.algorithm.editors_group],
         )
