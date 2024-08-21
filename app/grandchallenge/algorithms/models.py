@@ -840,6 +840,20 @@ class Job(UUIDModel, CIVForObjectMixin, ComponentJob):
         return self.algorithm_image.algorithm.outputs
 
     @cached_property
+    def inputs_complete(self):
+        # check if all inputs are present and if they all have a value
+        input_interfaces = self.algorithm_image.algorithm.inputs.all()
+        existing_inputs = [
+            civ.interface for civ in self.inputs.all() if civ.has_value
+        ]
+        missing_inputs = [
+            interface
+            for interface in input_interfaces
+            if interface not in existing_inputs
+        ]
+        return not missing_inputs
+
+    @cached_property
     def rendered_result_text(self) -> str:
         try:
             results = get(

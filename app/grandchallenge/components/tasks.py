@@ -615,13 +615,12 @@ def provision_job(
     )
     executor = job.get_executor(backend=backend)
 
-    if job.status in [job.PENDING, job.RETRY]:
+    if job.status in [job.PENDING, job.RETRY] and job.inputs_complete:
         job.update_status(status=job.PROVISIONING)
-    elif job.status in [job.PROVISIONING, job.PROVISIONED]:
-        logger.warning("Job has already been provisioned.")
-        return
     else:
-        logger.warning("Job is not ready for provisioning")
+        logger.warning(
+            "Job is not ready for provisioning, or has already been provisioned."
+        )
         return
 
     try:
@@ -1025,6 +1024,19 @@ def validate_voxel_values(*, civ_pk):
     civ.interface._validate_voxel_values(civ.image)
 
 
+def update_uploadsession_and_object_status(
+    *, error_message, upload_session, object
+):
+    formatted_error = format_validation_error_message(error=error_message)
+    upload_session.status = RawImageUploadSession.FAILURE
+    upload_session.error_message = formatted_error
+    upload_session.save()
+    if hasattr(object, "error_message"):
+        object.status = object.CANCELLED
+        object.error_message = formatted_error
+        object.save()
+
+
 @acks_late_micro_short_task
 @transaction.atomic
 def add_image_to_object(
@@ -1048,13 +1060,15 @@ def add_image_to_object(
     )
     interface = ComponentInterface.objects.get(pk=interface_pk)
     upload_session = RawImageUploadSession.objects.get(pk=upload_session_pk)
+
     try:
         image = Image.objects.get(origin_id=upload_session_pk)
     except (Image.DoesNotExist, Image.MultipleObjectsReturned):
-        error_message = "Image imports should result in a single image"
-        upload_session.status = RawImageUploadSession.FAILURE
-        upload_session.error_message = error_message
-        upload_session.save()
+        update_uploadsession_and_object_status(
+            error_message="Image imports should result in a single image",
+            upload_session=upload_session,
+            object=object,
+        )
         return
 
     try:
@@ -1073,16 +1087,9 @@ def add_image_to_object(
         try:
             civ.full_clean()
         except ValidationError as e:
-            # this should only happen for new uploads
-            formatted_error = format_validation_error_message(error=e)
-            upload_session.status = RawImageUploadSession.FAILURE
-            upload_session.error_message = formatted_error
-            upload_session.save()
-            if hasattr(object, "error_message"):
-                object.status = object.CANCELLED
-                object.error_message = formatted_error
-                object.save()
-                raise e
+            update_uploadsession_and_object_status(
+                error_message=e, upload_session=upload_session, object=object
+            )
             return
 
     getattr(object, object.civ_set_lookup).add(civ)

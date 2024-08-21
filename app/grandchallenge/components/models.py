@@ -1645,6 +1645,10 @@ class ComponentJob(models.Model):
         """Returns an unevaluated QuerySet for the output interfaces"""
         raise NotImplementedError
 
+    @cached_property
+    def inputs_complete(self):
+        raise NotImplementedError
+
     @property
     def signature_kwargs(self):
         return {

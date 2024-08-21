@@ -36,21 +36,7 @@ def execute_algorithm_job_for_inputs(*, job_pk):
         kwargs={"job_pk": str(job.pk)}, immutable=True
     )
 
-    # check if all inputs are present and if they all have a value
-    input_interfaces = job.algorithm_image.algorithm.inputs.all()
-    existing_input_interfaces = [
-        civ.interface for civ in job.inputs.all() if civ.has_value
-    ]
-    missing_inputs = [
-        interface
-        for interface in input_interfaces
-        if interface not in existing_input_interfaces
-    ]
-
-    if missing_inputs:
-        logger.info("Nothing to do: the inputs are still being provisioned.")
-        return
-    else:
+    if job.inputs_complete:
         job.task_on_success = linked_task
         job.save()
         on_commit(
@@ -58,6 +44,9 @@ def execute_algorithm_job_for_inputs(*, job_pk):
                 kwargs={"job_pk": job_pk}, immutable=True
             ).apply_async
         )
+    else:
+        logger.info("Nothing to do: the inputs are still being provisioned.")
+        return
 
 
 @acks_late_micro_short_task(retry_on=(TooManyJobsScheduled,))
@@ -67,8 +56,7 @@ def execute_algorithm_job(*, job_pk):
         raise TooManyJobsScheduled
     else:
         job = Job.objects.get(pk=job_pk)
-        if job.status in [job.PENDING, job.RETRY]:
-            on_commit(job.execute)
+        on_commit(job.execute)
 
 
 @acks_late_2xlarge_task(retry_on=(TooManyJobsScheduled,), singleton=True)
@@ -174,7 +162,6 @@ def create_algorithm_jobs(
         time_limit = settings.ALGORITHMS_JOB_DEFAULT_TIME_LIMIT_SECONDS
 
     jobs = []
-
     for civ_set in civ_sets:
 
         if len(jobs) >= settings.ALGORITHMS_JOB_BATCH_LIMIT:
