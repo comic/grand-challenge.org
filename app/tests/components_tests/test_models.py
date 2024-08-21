@@ -1497,6 +1497,23 @@ def test_ci_example_value(example_value, context):
         ci.full_clean()
 
 
+@pytest.mark.django_db
+def test_ci_example_value_non_json_kind_fail():
+
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.IMAGE,
+        relative_path="images/test",
+        example_value={"length": 1},
+        store_in_database=False,
+    )
+
+    with pytest.raises(
+        ValidationError,
+        match=r"Example value can be set for interfaces of JSON kind only",
+    ):
+        ci.full_clean()
+
+
 @pytest.mark.parametrize(
     "kind, example",
     [
