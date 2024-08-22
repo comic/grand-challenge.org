@@ -38,7 +38,6 @@ class BS4Treeprocessor(Treeprocessor):
 
     @staticmethod
     def set_css_class(*, element, class_name):
-
         if isinstance(element, ElementTree.Element):
             current_class = element.attrib.get("class", "")
 
@@ -55,6 +54,7 @@ class BS4Treeprocessor(Treeprocessor):
             for name in class_name.split(" "):
                 if class_name not in current_class:
                     current_class.append(name)
+
         else:
             raise TypeError("Unsupported element")
 
