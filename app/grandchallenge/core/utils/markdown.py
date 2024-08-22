@@ -12,7 +12,6 @@ class BS4Extension(Extension):
 
 
 class BS4Treeprocessor(Treeprocessor):
-
     def run(self, root):
         el_class_dict = {
             "img": "img-fluid",
