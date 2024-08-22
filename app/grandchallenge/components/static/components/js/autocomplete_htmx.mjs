@@ -11,7 +11,7 @@ function processSelectElements() {
     const selectElements = document.querySelectorAll(
         'select[name^="interface"]',
     );
-    selectElements.forEach(elem => {
+    for (const elem of selectElements) {
         const observer = new MutationObserver((mutationsList, observer) => {
             for (const mutation of mutationsList) {
                 if (mutation.target === elem) {
@@ -24,7 +24,7 @@ function processSelectElements() {
             }
         });
         observer.observe(elem, { childList: true });
-    });
+    }
 }
 
 htmx.onLoad(elem => {
@@ -32,14 +32,16 @@ htmx.onLoad(elem => {
     const dalForwardConfScripts = document.querySelectorAll(
         ".dal-forward-conf script",
     );
-    dalForwardConfScripts.forEach(script => (script.textContent = ""));
+    for (const script of dalForwardConfScripts) {
+        script.textContent = "";
+    }
     let vals = [];
     const selectOptions = document.querySelectorAll(
         'select:disabled[name^="interface"] option:checked',
     );
-    selectOptions.forEach(option => {
+    for (const option of selectOptions) {
         vals.push(option.value);
-    });
+    }
 
     if (vals.length) {
         vals = vals.map(
@@ -55,9 +57,9 @@ htmx.onLoad(elem => {
         `{"type": "const", "dst": "model", "val": "${objectModel}"}`,
     );
 
-    dalForwardConfScripts.forEach(
-        script => (script.textContent = `[${vals.join(",")}]`),
-    );
+    for (const script of dalForwardConfScripts) {
+        script.textContent = `[${vals.join(", ")}]`;
+    }
 });
 
 processSelectElements();

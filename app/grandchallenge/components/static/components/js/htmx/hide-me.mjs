@@ -1,9 +1,9 @@
 function hideElements() {
     const elements = document.querySelectorAll("[hx-hide-me]");
-    elements.forEach(element => {
+    for (const element of elements) {
         element.classList.add("d-none");
         element.removeAttribute("hx-hide-me");
-    });
+    }
 }
 
 document.addEventListener("htmx:load", hideElements);

@@ -49,7 +49,7 @@ function handleSessionStatus(statusUrl, statusButton, status, workstationUrl) {
                 statusButton,
                 "Waiting for the workstation to respond...",
             );
-            redirectWhenReady(workstationUrl, statusButton);
+            redirectWhenReady(workstationUrl, statusButton, 0);
             break;
         case "failed":
         case "stopped":
@@ -66,8 +66,6 @@ function handleSessionStatus(statusUrl, statusButton, status, workstationUrl) {
 function redirectWhenReady(url, statusButton, attempts = 0) {
     // Redirects to the url if the status code is 200. Used to poll if the
     // workstation http server is up and running yet.
-
-    attempts = Number(attempts);
     if (attempts === max_attempts) {
         setButtonError(statusButton, "Could not connect to workstation");
         return;

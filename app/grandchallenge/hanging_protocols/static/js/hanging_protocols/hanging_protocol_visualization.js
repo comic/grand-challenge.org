@@ -98,9 +98,10 @@ function createViewportDiv(
     }
 }
 
-function updateHangingProtocolVisualization(parentDivId, jsonString) {
-    jsonString = jsonString || document.getElementById("id_json").value;
-    parentDivId = parentDivId || "hpVisualization";
+function updateHangingProtocolVisualization(
+    parentDivId = "hpVisualization",
+    jsonString = document.getElementById("id_json").value,
+) {
     showOrHideVisualizationDiv(parentDivId, jsonString);
     try {
         const jsonSpec = JSON.parse(jsonString);

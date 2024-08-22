@@ -61,14 +61,14 @@ function openWorkstationSession(element) {
                     removeSpinner(element);
                 }
 
-                potentialSessionOrigins.forEach(origin => {
+                for (const origin of potentialSessionOrigins) {
                     sendSessionControlMessage(
                         workstationWindow,
                         origin,
                         { loadPath: path, loadQuery: query },
                         onMessageIsSuccess,
                     );
-                });
+                }
             }
         } catch (err) {
             removeSpinner(element);
@@ -134,14 +134,14 @@ function setSpinner(element) {
 
 function removeSpinner(element) {
     const spinner = element.querySelector(".spinner-border");
-    if (spinner !== null) {
+    if (spinner != null) {
         element.removeChild(spinner);
     }
     element.querySelector("i").style.display = "inline-block";
     element.disabled = false;
 }
 
-function setUpOberserver() {
+function setUpObserver() {
     // MutationObserver to listen to DOM changes on the display set cards
     // this is necessary to initiate the session control hooks after a
     // display set update
@@ -150,9 +150,9 @@ function setUpOberserver() {
     const observer = new MutationObserver(mutations => {
         hookSessionControllers();
     });
-    [...targetNodes].forEach(target => {
+    for (const target of targetNodes) {
         observer.observe(target, config);
-    });
+    }
 }
 
 $(document).ready(() => {
@@ -164,7 +164,7 @@ $(document).ready(() => {
 
     // ajax-based tables
     $("#ajaxDataTable").on("init.dt", () => {
-        setUpOberserver();
+        setUpObserver();
     });
     $("#ajaxDataTable").on("draw.dt childRow.dt", () => {
         hookSessionControllers();
