@@ -225,9 +225,8 @@ def test_markdown_rendering(markdown_with_html, expected_output):
 def test_setting_class_to_html_img_within_markdown(
     markdown_with_html, expected_output
 ):
-
     output = markdown(
-        text=markdown_with_html or "",
+        text=markdown_with_html,
         extensions=settings.MARKDOWNX_MARKDOWN_EXTENSIONS,
         extension_configs=settings.MARKDOWNX_MARKDOWN_EXTENSION_CONFIGS,
     )

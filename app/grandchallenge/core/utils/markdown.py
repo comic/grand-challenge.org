@@ -14,7 +14,6 @@ class BS4Extension(Extension):
 class BS4Treeprocessor(Treeprocessor):
 
     def run(self, root):
-
         el_class_dict = {
             "img": "img-fluid",
             "blockquote": "blockquote",
@@ -24,26 +23,24 @@ class BS4Treeprocessor(Treeprocessor):
         }
 
         for el in root.iter():
-
             if el.tag in el_class_dict:
                 self.set_css_class(
                     element=el, class_name=el_class_dict[el.tag]
                 )
 
         for i, html_block in enumerate(self.md.htmlStash.rawHtmlBlocks):
-
             bs4block = BeautifulSoup(html_block, "html.parser")
 
             for tag, tag_class in el_class_dict.items():
                 for el in bs4block.find_all(tag):
                     self.set_css_class(element=el, class_name=tag_class)
-                    self.md.htmlStash.rawHtmlBlocks[i] = str(bs4block)
+
+            self.md.htmlStash.rawHtmlBlocks[i] = str(bs4block)
 
     @staticmethod
     def set_css_class(*, element, class_name):
 
         if isinstance(element, ElementTree.Element):
-
             current_class = element.attrib.get("class", "")
 
             if class_name not in current_class:
@@ -51,7 +48,6 @@ class BS4Treeprocessor(Treeprocessor):
                 element.set("class", new_class)
 
         elif isinstance(element, Tag):
-
             if "class" not in element.attrs:
                 element.attrs["class"] = []
 
