@@ -1,4 +1,4 @@
-$(document).ready(function () {
+$(document).ready(() => {
     $("#usersTable").DataTable({
         pageLength: 25,
     });

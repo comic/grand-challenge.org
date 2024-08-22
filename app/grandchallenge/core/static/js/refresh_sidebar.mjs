@@ -1,14 +1,14 @@
-$(document).ready(function () {
+$(document).ready(() => {
     const tabSelectors = $("#v-pills-tab a");
 
     const allowedHashes = new Set(
         tabSelectors
             .map(function () {
-                let href = this.getAttribute("href");
+                const href = this.getAttribute("href");
                 return href.startsWith("#") ? href : null;
             })
             .get()
-            .filter((hash) => hash !== null),
+            .filter(hash => hash !== null),
     );
 
     function isValidHash(hash) {
@@ -37,11 +37,11 @@ $(document).ready(function () {
         }
     });
 
-    window.addEventListener("popstate", function (event) {
+    window.addEventListener("popstate", event => {
         activateLocation();
     });
 
-    window.addEventListener("pageshow", function (event) {
+    window.addEventListener("pageshow", event => {
         activateLocation();
     });
 

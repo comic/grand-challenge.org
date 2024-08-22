@@ -7,18 +7,18 @@ function toggleCheckboxes(source) {
         this.checked = source.target.checked;
     });
     const nChecked = $('input[name="checkbox"]:checked').length;
-    if (nChecked == 0) {
+    if (nChecked === 0) {
         document.getElementById("LabelSelectAll").innerHTML = "Select all";
     } else {
         document.getElementById("LabelSelectAll").innerHTML =
-            nChecked + " selected";
+            `${nChecked} selected`;
     }
 }
 
 function sendAjaxCall(type, data) {
-    let arrayOfPromises = [];
+    const arrayOfPromises = [];
     $('input[name="checkbox"]:checked').each(function () {
-        if ($(this).data("flag") == "job-follow") {
+        if ($(this).data("flag") === "job-follow") {
             arrayOfPromises.push(
                 $.ajax({
                     type: "PATCH",
@@ -40,7 +40,7 @@ function sendAjaxCall(type, data) {
             );
         }
     });
-    Promise.all(arrayOfPromises).then(function () {
+    Promise.all(arrayOfPromises).then(() => {
         window.location.replace(window.location.href);
     });
 }

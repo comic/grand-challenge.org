@@ -34,19 +34,11 @@ function getGridDimensions(json) {
     const totalWidth =
         dims.x.length !== json.length || dims.w.length !== json.length
             ? json.length
-            : Math.max(
-                  ...dims.x.map(function (num, idx) {
-                      return num + dims.w[idx];
-                  }),
-              );
+            : Math.max(...dims.x.map((num, idx) => num + dims.w[idx]));
     const totalHeight =
         dims.y.length !== json.length || dims.h.length !== json.length
             ? 1
-            : Math.max(
-                  ...dims.y.map(function (num, idx) {
-                      return num + dims.h[idx];
-                  }),
-              );
+            : Math.max(...dims.y.map((num, idx) => num + dims.h[idx]));
 
     return [totalHeight, totalWidth];
 }
@@ -70,18 +62,18 @@ function createViewportDiv(
     viewportDiv.style.position = "absolute";
     viewportDiv.style.fontSize = "1.5em";
     viewportDiv.style.zIndex = (-(viewportSpec.order - maxOrder)).toFixed(0);
-    viewportDiv.style.width = isNaN(viewportSpec.w)
-        ? ((1 / parseFloat(totalWidth)) * 100).toFixed(2) + "%"
-        : ((viewportSpec.w / parseFloat(totalWidth)) * 100).toFixed(2) + "%";
-    viewportDiv.style.height = isNaN(viewportSpec.h)
+    viewportDiv.style.width = Number.isNaN(viewportSpec.w)
+        ? `${((1 / Number.parseFloat(totalWidth)) * 100).toFixed(2)}%`
+        : `${((viewportSpec.w / Number.parseFloat(totalWidth)) * 100).toFixed(2)}%`;
+    viewportDiv.style.height = Number.isNaN(viewportSpec.h)
         ? "100%"
-        : ((viewportSpec.h / parseFloat(totalHeight)) * 100).toFixed(2) + "%";
-    viewportDiv.style.left = isNaN(viewportSpec.x)
-        ? ((viewportNum / parseFloat(totalWidth)) * 100).toFixed(2) + "%"
-        : ((viewportSpec.x / parseFloat(totalWidth)) * 100).toFixed(2) + "%";
-    viewportDiv.style.top = isNaN(viewportSpec.y)
+        : `${((viewportSpec.h / Number.parseFloat(totalHeight)) * 100).toFixed(2)}%`;
+    viewportDiv.style.left = Number.isNaN(viewportSpec.x)
+        ? `${((viewportNum / Number.parseFloat(totalWidth)) * 100).toFixed(2)}%`
+        : `${((viewportSpec.x / Number.parseFloat(totalWidth)) * 100).toFixed(2)}%`;
+    viewportDiv.style.top = Number.isNaN(viewportSpec.y)
         ? "0%"
-        : ((viewportSpec.y / parseFloat(totalHeight)) * 100).toFixed(2) + "%";
+        : `${((viewportSpec.y / Number.parseFloat(totalHeight)) * 100).toFixed(2)}%`;
     document
         .getElementById(divId)
         .appendChild(viewportDiv)
@@ -99,25 +91,25 @@ function createViewportDiv(
         viewportDiv.innerHTML +=
             '<p class="mb-0" style="color: #fff">Invalid viewport name</p>';
     } else {
-        viewportDiv.innerHTML +=
-            '<p class="mb-0">' + viewportSpec.viewport_name + "</p>";
+        viewportDiv.innerHTML += `<p class="mb-0">${viewportSpec.viewport_name}</p>`;
         if (viewportSpec.fullsizable) {
             viewportDiv.innerHTML += '<i class="fas fa-expand"></i>';
         }
     }
 }
 
-function updateHangingProtocolVisualization(parentDivId, jsonString) {
-    jsonString = jsonString || document.getElementById("id_json").value;
-    parentDivId = parentDivId || "hpVisualization";
+function updateHangingProtocolVisualization(
+    parentDivId = "hpVisualization",
+    jsonString = document.getElementById("id_json").value,
+) {
     showOrHideVisualizationDiv(parentDivId, jsonString);
     try {
         const jsonSpec = JSON.parse(jsonString);
         const validJsonSpec = jsonSpec.filter(
-            (viewPort) => typeof viewPort.viewport_name !== "undefined",
+            viewPort => typeof viewPort.viewport_name !== "undefined",
         );
         const [totalHeight, totalWidth] = getGridDimensions(validJsonSpec);
-        const maxOrder = Math.max(...validJsonSpec.map((v) => v.order));
+        const maxOrder = Math.max(...validJsonSpec.map(v => v.order));
         removeAllChildNodes(document.getElementById(parentDivId));
         for (let i = 0; i < validJsonSpec.length; i++) {
             createViewportDiv(

@@ -1,7 +1,7 @@
 function updateRequestConfig(event) {
     for (const [key, val] of Object.entries(event.detail.parameters)) {
         if (key.startsWith("interface")) {
-            event.detail.parameters["interface"] = val;
+            event.detail.parameters.interface = val;
             delete event.detail.parameters[key];
         }
     }
@@ -11,12 +11,9 @@ function processSelectElements() {
     const selectElements = document.querySelectorAll(
         'select[name^="interface"]',
     );
-    selectElements.forEach((elem) => {
-        const observer = new MutationObserver(function (
-            mutationsList,
-            observer,
-        ) {
-            for (let mutation of mutationsList) {
+    for (const elem of selectElements) {
+        const observer = new MutationObserver((mutationsList, observer) => {
+            for (const mutation of mutationsList) {
                 if (mutation.target === elem) {
                     elem.addEventListener(
                         "htmx:configRequest",
@@ -27,26 +24,28 @@ function processSelectElements() {
             }
         });
         observer.observe(elem, { childList: true });
-    });
+    }
 }
 
-htmx.onLoad((elem) => {
+htmx.onLoad(elem => {
     processSelectElements();
     const dalForwardConfScripts = document.querySelectorAll(
         ".dal-forward-conf script",
     );
-    dalForwardConfScripts.forEach((script) => (script.textContent = ""));
+    for (const script of dalForwardConfScripts) {
+        script.textContent = "";
+    }
     let vals = [];
     const selectOptions = document.querySelectorAll(
         'select:disabled[name^="interface"] option:checked',
     );
-    selectOptions.forEach((option) => {
+    for (const option of selectOptions) {
         vals.push(option.value);
-    });
+    }
 
     if (vals.length) {
         vals = vals.map(
-            (val) =>
+            val =>
                 `{"type": "const", "dst": "interface-${val}", "val": "${val}"}`,
         );
     }
@@ -58,9 +57,9 @@ htmx.onLoad((elem) => {
         `{"type": "const", "dst": "model", "val": "${objectModel}"}`,
     );
 
-    dalForwardConfScripts.forEach(
-        (script) => (script.textContent = `[${vals.join(",")}]`),
-    );
+    for (const script of dalForwardConfScripts) {
+        script.textContent = `[${vals.join(", ")}]`;
+    }
 });
 
 processSelectElements();

@@ -1,5 +1,3 @@
-"use strict";
-
 {
     function initializeWidgets() {
         const widgets = document.getElementsByClassName("user-upload");
@@ -25,7 +23,7 @@
             document.getElementById(`${inputId}AllowedFileTypes`).textContent,
         );
 
-        let uppy = new Uppy.Core({
+        const uppy = new Uppy.Core({
             id: `${window.location.pathname}-${inputId}`,
             autoProceed: true,
             restrictions: { maxNumberOfFiles: 100, allowedFileTypes },
@@ -68,25 +66,25 @@
 
                 document.getElementById(inputId).value = uploadedPK;
             } else {
-                let noFilesWarning = document.getElementById(
+                const noFilesWarning = document.getElementById(
                     `${inputId}-no-files-warning`,
                 );
                 if (noFilesWarning !== null) {
                     noFilesWarning.outerHTML = "";
                 }
 
-                let input = document.createElement("input");
+                const input = document.createElement("input");
                 input.name = inputName;
                 input.type = "hidden";
                 input.value = uploadedPK;
                 widget.appendChild(input);
             }
 
-            let newIcon = document.createElement("i");
+            const newIcon = document.createElement("i");
             newIcon.classList.add("fas", "fa-check", "fa-fw", "text-success");
             newIcon.setAttribute("title", "File Successfully Uploaded");
 
-            let newFile = document.createElement("li");
+            const newFile = document.createElement("li");
             newFile.classList.add("list-group-item");
             newFile.appendChild(newIcon);
             newFile.insertAdjacentText(
@@ -104,7 +102,7 @@
             for (let i = 0; i < cookies.length; i++) {
                 const cookie = cookies[i].trim();
                 // Does this cookie string begin with the name we want?
-                if (cookie.substring(0, name.length + 1) === name + "=") {
+                if (cookie.substring(0, name.length + 1) === `${name}=`) {
                     cookieValue = decodeURIComponent(
                         cookie.substring(name.length + 1),
                     );
@@ -136,8 +134,8 @@
             },
             body: JSON.stringify({ filename: file.name }),
         })
-            .then((response) => response.json())
-            .then((upload) => ({
+            .then(response => response.json())
+            .then(upload => ({
                 uploadId: upload.s3_upload_id,
                 key: upload.key,
             }));
@@ -158,8 +156,8 @@
                 },
             },
         )
-            .then((response) => response.json())
-            .then((upload) => upload.parts);
+            .then(response => response.json())
+            .then(upload => upload.parts);
     }
 
     class FetchError extends Error {}
@@ -182,25 +180,26 @@
                 }),
             },
         )
-            .then((response) => {
+            .then(response => {
                 if (response.ok) {
                     return response.json();
-                } else {
-                    if (response.status === 403) {
-                        response.json().then((err) => window.alert(err.detail));
-                    }
-                    throw new FetchError(response.status.toString());
                 }
+                if (response.status === 403) {
+                    response.json().then(err => window.alert(err.detail));
+                }
+                throw new FetchError(response.status.toString());
             })
-            .then((upload) => ({ presignedUrls: upload.presigned_urls }))
-            .catch((e) => {
+            .then(upload => ({ presignedUrls: upload.presigned_urls }))
+            .catch(e => {
                 console.error(e);
                 if (e instanceof FetchError || e.name === "TypeError") {
                     // Catches FetchError defined above or TypeError (= network error thrown
                     // by fetch) and makes uppy retry. Will not catch SyntaxError caused by
                     // invalid JSON.
                     const status =
-                        e instanceof FetchError ? parseInt(e.message) : 0;
+                        e instanceof FetchError
+                            ? Number.parseInt(e.message)
+                            : 0;
                     return Promise.reject({ source: { status: status } });
                 }
                 throw e;

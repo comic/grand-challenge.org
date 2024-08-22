@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", () => {
     // Jump to targeted conversation
     const urlParams = new URLSearchParams(window.location.search);
     const conversationId = urlParams.get("conversation");
@@ -10,9 +10,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 });
 
-document.body.addEventListener("htmx:afterOnLoad", function (evt) {
+document.body.addEventListener("htmx:afterOnLoad", evt => {
     // Scroll to bottom of message panel
-    let conversationDetail = document.getElementById(
+    const conversationDetail = document.getElementById(
         "conversation-direct-messages-panel",
     );
     conversationDetail.scrollTop = conversationDetail.scrollHeight;
@@ -23,7 +23,7 @@ document.body.addEventListener("htmx:afterOnLoad", function (evt) {
         // Event was from switching the conversation detail
 
         // Mark this conversation select as active
-        for (let elm of document.getElementsByClassName(
+        for (const elm of document.getElementsByClassName(
             "conversation-detail-select",
         )) {
             elm.classList.remove("active");
@@ -34,7 +34,7 @@ document.body.addEventListener("htmx:afterOnLoad", function (evt) {
         url.searchParams.set("conversation", evt.target.dataset.conversationId);
         history.pushState({}, "", url);
 
-        let markReadForm = evt.target.querySelector(
+        const markReadForm = evt.target.querySelector(
             ".conversation-mark-read-form",
         );
         if (markReadForm !== null) {
@@ -45,7 +45,7 @@ document.body.addEventListener("htmx:afterOnLoad", function (evt) {
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
                 },
-            }).then((response) => {
+            }).then(response => {
                 // Update the conversation select button
                 htmx.ajax(
                     "GET",
@@ -58,7 +58,7 @@ document.body.addEventListener("htmx:afterOnLoad", function (evt) {
         // Event was from creating a new message in a conversation
 
         // Update the conversation select button
-        let directMessagePanel = evt.target.querySelector(
+        const directMessagePanel = evt.target.querySelector(
             "#conversation-direct-messages-panel",
         );
         htmx.ajax(

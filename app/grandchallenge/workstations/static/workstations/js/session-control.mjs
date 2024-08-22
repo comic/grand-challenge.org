@@ -1,5 +1,5 @@
 function openWorkstationSession(element) {
-    return (event) => {
+    return event => {
         const windowIdentifier = element.dataset.workstationWindowIdentifier;
         const url = element.dataset.createSessionUrl;
         const query = element.dataset.workstationQuery;
@@ -28,7 +28,7 @@ function openWorkstationSession(element) {
             const potentialSessionOrigins = JSON.parse(
                 document.getElementById("workstation-domains").textContent,
             );
-            let workstationWindow = window.open("", windowIdentifier);
+            const workstationWindow = window.open("", windowIdentifier);
 
             // check if we just opened a blank or existing context
             let isBlankContext = false;
@@ -61,14 +61,14 @@ function openWorkstationSession(element) {
                     removeSpinner(element);
                 }
 
-                potentialSessionOrigins.forEach((origin) => {
+                for (const origin of potentialSessionOrigins) {
                     sendSessionControlMessage(
                         workstationWindow,
                         origin,
                         { loadPath: path, loadQuery: query },
                         onMessageIsSuccess,
                     );
-                });
+                }
             }
         } catch (err) {
             removeSpinner(element);
@@ -119,7 +119,7 @@ function sendSessionControlMessage(targetWindow, origin, action, ackCallback) {
 function copyTextToClipboard(text) {
     const blob = new Blob([text], { type: "text/plain" });
     const data = [new ClipboardItem({ "text/plain": blob })];
-    navigator.clipboard.write(data).then(function () {
+    navigator.clipboard.write(data).then(() => {
         console.log("Copied to clipboard successfully!");
     });
 }
@@ -134,25 +134,25 @@ function setSpinner(element) {
 
 function removeSpinner(element) {
     const spinner = element.querySelector(".spinner-border");
-    if (spinner !== null) {
+    if (spinner != null) {
         element.removeChild(spinner);
     }
     element.querySelector("i").style.display = "inline-block";
     element.disabled = false;
 }
 
-function setUpOberserver() {
+function setUpObserver() {
     // MutationObserver to listen to DOM changes on the display set cards
     // this is necessary to initiate the session control hooks after a
     // display set update
     const targetNodes = document.querySelectorAll('[id^="collapse-"]');
     const config = { attributes: true, childList: true, subtree: true };
-    const observer = new MutationObserver(function (mutations) {
+    const observer = new MutationObserver(mutations => {
         hookSessionControllers();
     });
-    [...targetNodes].forEach((target) => {
+    for (const target of targetNodes) {
         observer.observe(target, config);
-    });
+    }
 }
 
 $(document).ready(() => {
@@ -164,14 +164,14 @@ $(document).ready(() => {
 
     // ajax-based tables
     $("#ajaxDataTable").on("init.dt", () => {
-        setUpOberserver();
+        setUpObserver();
     });
     $("#ajaxDataTable").on("draw.dt childRow.dt", () => {
         hookSessionControllers();
     });
 
     // htmx-based tables
-    htmx.onLoad(function () {
+    htmx.onLoad(() => {
         hookSessionControllers();
     });
 });
