@@ -1,3 +1,6 @@
+from xml.etree import ElementTree
+
+from bs4 import BeautifulSoup, Tag
 from markdown import Extension
 from markdown.treeprocessors import Treeprocessor
 
@@ -10,21 +13,50 @@ class BS4Extension(Extension):
 
 class BS4Treeprocessor(Treeprocessor):
     def run(self, root):
+        el_class_dict = {
+            "img": "img-fluid",
+            "blockquote": "blockquote",
+            "table": "table table-hover table-borderless",
+            "thead": "thead-light",
+            "code": "codehilite",
+        }
+
         for el in root.iter():
-            if el.tag == "img":
-                el.set("class", "img-fluid")
+            if el.tag in el_class_dict:
+                self.set_css_class(
+                    element=el, class_name=el_class_dict[el.tag]
+                )
 
-            elif el.tag == "blockquote":
-                el.set("class", "blockquote")
+        for i, html_block in enumerate(self.md.htmlStash.rawHtmlBlocks):
+            bs4block = BeautifulSoup(html_block, "html.parser")
 
-            elif el.tag == "table":
-                el.set("class", "table table-hover table-borderless")
+            for tag, tag_class in el_class_dict.items():
+                for el in bs4block.find_all(tag):
+                    self.set_css_class(element=el, class_name=tag_class)
 
-            elif el.tag == "thead":
-                el.set("class", "thead-light")
+            self.md.htmlStash.rawHtmlBlocks[i] = str(bs4block)
 
-            elif el.tag == "code":
-                el.set("class", "codehilite")
+    @staticmethod
+    def set_css_class(*, element, class_name):
+        if isinstance(element, ElementTree.Element):
+            current_class = element.attrib.get("class", "")
+
+            if class_name not in current_class:
+                new_class = f"{current_class} {class_name}".strip()
+                element.set("class", new_class)
+
+        elif isinstance(element, Tag):
+            if "class" not in element.attrs:
+                element.attrs["class"] = []
+
+            current_class = element["class"]
+
+            for name in class_name.split(" "):
+                if class_name not in current_class:
+                    current_class.append(name)
+
+        else:
+            raise TypeError("Unsupported element")
 
 
 class LinkBlankTargetExtension(Extension):
