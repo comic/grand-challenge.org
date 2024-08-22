@@ -13,8 +13,8 @@ function initialize_jsoneditor_widget(jsoneditorWidgetID) {
         const options = {
             mode: "tree",
             modes: ["code", "tree"],
-            onChangeText: function (jsonString) {
-                let widget = document.getElementById(jsoneditorWidgetID);
+            onChangeText: jsonString => {
+                const widget = document.getElementById(jsoneditorWidgetID);
                 try {
                     JSON.parse(jsonString);
                     widget.value = jsonString;
@@ -25,7 +25,7 @@ function initialize_jsoneditor_widget(jsoneditorWidgetID) {
             },
         };
 
-        let editor = new JSONEditor(container, options);
+        const editor = new JSONEditor(container, options);
 
         editor.set(
             JSON.parse(document.getElementById(jsoneditorWidgetID).value),
@@ -45,7 +45,7 @@ function search_for_jsoneditor_widgets(elem) {
     } else {
         jsoneditorWidgets = elem.getElementsByClassName("jsoneditorWidget");
     }
-    for (let jsoneditorWidget of jsoneditorWidgets) {
+    for (const jsoneditorWidget of jsoneditorWidgets) {
         if (jsoneditorWidget.querySelector(".jsoneditor-mode-tree") === null) {
             // only initialize the widget if it hasn't been initialized yet
             initialize_jsoneditor_widget(jsoneditorWidget.dataset.widgetId);
@@ -53,15 +53,15 @@ function search_for_jsoneditor_widgets(elem) {
     }
 }
 
-document.addEventListener("DOMContentLoaded", function (event) {
-    htmx.onLoad((elem) => {
+document.addEventListener("DOMContentLoaded", event => {
+    htmx.onLoad(elem => {
         search_for_jsoneditor_widgets(elem);
     });
 });
 
 // this is necessary for when an invalid form is returned through htmx (e.g. in display set views)
 if (typeof htmx !== "undefined") {
-    htmx.onLoad((elem) => {
+    htmx.onLoad(elem => {
         if (elem.tagName.toLowerCase() === "body") {
             search_for_jsoneditor_widgets(elem);
         }

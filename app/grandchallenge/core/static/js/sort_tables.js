@@ -1,4 +1,4 @@
-$(document).ready(function () {
+$(document).ready(() => {
     $("table.sortable").dataTable({
         bJQueryUI: false,
         sPaginationType: "full_numbers",

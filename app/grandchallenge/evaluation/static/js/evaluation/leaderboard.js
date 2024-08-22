@@ -5,10 +5,10 @@ const displayLeaderboardDateButton = JSON.parse(
     document.getElementById("displayLeaderboardDateButton").textContent,
 );
 
-let resultsTable = $("#ajaxDataTable");
+const resultsTable = $("#ajaxDataTable");
 
-$(document).ready(function () {
-    let table = resultsTable.DataTable({
+$(document).ready(() => {
+    const table = resultsTable.DataTable({
         // The column index of the default sort, must match the table set up.
         order: [[0, "asc"]],
         lengthChange: false,
@@ -36,11 +36,11 @@ $(document).ready(function () {
     });
 
     if (allowMetricsToggling === true) {
-        resultsTable.on("column-visibility.dt", function () {
-            let button = table.button(1).node();
-            let visibility_columns = table.columns(".toggleable").visible();
+        resultsTable.on("column-visibility.dt", () => {
+            const button = table.button(1).node();
+            const visibility_columns = table.columns(".toggleable").visible();
             let not_all_visible = false;
-            visibility_columns.each(function (value) {
+            visibility_columns.each(value => {
                 if (value === false) {
                     not_all_visible = true;
                     return false;
@@ -66,7 +66,7 @@ $(document).ready(function () {
     }
 });
 
-$(window).resize(function () {
+$(window).resize(() => {
     resultsTable.DataTable().columns.adjust();
 });
 
@@ -96,7 +96,7 @@ function getDataTablesButtons() {
             },
             {
                 text: "Show all metrics",
-                action: function (e, dt, node) {
+                action: (e, dt, node) => {
                     if ($(node).hasClass("metrics-hidden")) {
                         dt.columns(".toggleable").visible(false);
                         $(node).removeClass("metrics-hidden");
@@ -109,7 +109,6 @@ function getDataTablesButtons() {
                 },
             },
         ];
-    } else {
-        return [];
     }
+    return [];
 }

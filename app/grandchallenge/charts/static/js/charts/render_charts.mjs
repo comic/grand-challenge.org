@@ -8,7 +8,7 @@ function renderVegaLiteChart(element) {
 const handledAttribute = "data-vega-chart-is-rendered";
 
 function handleInterSection(entries) {
-    entries.forEach((entry) => {
+    entries.forEach(entry => {
         if (entry.intersectionRatio < 0.4) {
             return;
         }
@@ -32,15 +32,15 @@ const observer = new IntersectionObserver(handleInterSection, {
     threshold: 1.0,
 });
 
-document.addEventListener("DOMContentLoaded", function (event) {
+document.addEventListener("DOMContentLoaded", event => {
     for (const element of document.getElementsByClassName("vega-lite-chart")) {
         observer.observe(element);
     }
 });
 
 function renderVegaChartsInAddedNodes(mutationList, observer) {
-    mutationList.forEach((mutation) => {
-        mutation.addedNodes.forEach((addedNode) => {
+    mutationList.forEach(mutation => {
+        mutation.addedNodes.forEach(addedNode => {
             if (addedNode.nodeType !== Node.TEXT_NODE) {
                 for (const element of addedNode.getElementsByClassName(
                     "vega-lite-chart",

@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", function (event) {
+document.addEventListener("DOMContentLoaded", event => {
     $("#phaseCostsOverviewTable").DataTable({
         order: [[0, "asc"]],
         lengthChange: false,

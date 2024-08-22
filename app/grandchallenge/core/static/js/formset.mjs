@@ -1,4 +1,4 @@
-$(document).ready(function () {
+$(document).ready(() => {
     const formsetPrefix = JSON.parse(
         document.getElementById("formsetPrefix").textContent,
     );
@@ -15,7 +15,7 @@ $(document).ready(function () {
     function addFormRow(e) {
         e.preventDefault();
 
-        const formNum = parseInt(totalForms.value) + 1;
+        const formNum = Number.parseInt(totalForms.value) + 1;
         const newForm = emptyForm.replace(/__prefix__/g, totalForms.value);
         addButton.insertAdjacentHTML("beforebegin", newForm);
         totalForms.setAttribute("value", formNum);

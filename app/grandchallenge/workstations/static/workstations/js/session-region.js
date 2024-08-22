@@ -16,11 +16,11 @@ function ping(url) {
     });
 
     if (errored === true) {
-        return Infinity;
+        return Number.POSITIVE_INFINITY;
     }
 
     // Now measure the response time
-    let end = Infinity;
+    let end = Number.POSITIVE_INFINITY;
     const start = performance.now();
     $.ajax({
         url: url,
@@ -36,7 +36,7 @@ function ping(url) {
 }
 
 function ping_regions(regions, endpoint) {
-    return regions.map((region) => {
+    return regions.map(region => {
         return {
             id: region.value,
             ping: ping(`https://${region.value}.${endpoint}`),
@@ -44,10 +44,10 @@ function ping_regions(regions, endpoint) {
     });
 }
 
-$(document).ready(function () {
+$(document).ready(() => {
     const session_modal = $("#sessionModal");
 
-    session_modal.on("shown.bs.modal", function () {
+    session_modal.on("shown.bs.modal", () => {
         const ping_endpoint = JSON.parse(
             document.getElementById("ping-endpoint-data").textContent,
         );
@@ -55,7 +55,7 @@ $(document).ready(function () {
         const ping_widget = document.getElementById("id_ping_times");
         const regions = [...region_selection.options];
 
-        let timings = ping_regions(regions, ping_endpoint);
+        const timings = ping_regions(regions, ping_endpoint);
 
         ping_widget.value = JSON.stringify(timings);
 

@@ -8,7 +8,7 @@ const defaultSortOrder = JSON.parse(
     document.getElementById("defaultSortOrder").textContent,
 );
 
-$(document).ready(function () {
+$(document).ready(() => {
     renderVegaChartsObserver.observe(document.getElementById("ajaxDataTable"), {
         childList: true,
         subtree: true,
@@ -21,24 +21,12 @@ $(document).ready(function () {
         serverSide: true,
         responsive: {
             details: {
-                renderer: function (api, rowIdx, columns) {
-                    var data = $.map(columns, function (col, i) {
-                        return col.hidden
-                            ? '<tr data-dt-row="' +
-                                  col.rowIndex +
-                                  '" data-dt-column="' +
-                                  col.columnIndex +
-                                  '">' +
-                                  '<td class="font-weight-bold">' +
-                                  col.title +
-                                  ":" +
-                                  "</td> " +
-                                  "<td>" +
-                                  col.data +
-                                  "</td>" +
-                                  "</tr>"
-                            : "";
-                    }).join("");
+                renderer: (api, rowIdx, columns) => {
+                    const data = $.map(columns, (col, i) =>
+                        col.hidden
+                            ? `<tr data-dt-row="${col.rowIndex}" data-dt-column="${col.columnIndex}"><td class="font-weight-bold">${col.title}:</td> <td>${col.data}</td></tr>`
+                            : "",
+                    ).join("");
 
                     return data ? $("<table/>").append(data) : false;
                 },
@@ -57,7 +45,7 @@ $(document).ready(function () {
         ],
         ajax: {
             url: "",
-            dataSrc: function (json) {
+            dataSrc: json => {
                 const table = $("#ajaxDataTable").DataTable();
                 for (const [index, visible] of json.showColumns.entries()) {
                     table.column(index).visible(visible);
@@ -69,11 +57,11 @@ $(document).ready(function () {
     });
 });
 
-$("#ajaxDataTable").on("init.dt", function () {
+$("#ajaxDataTable").on("init.dt", () => {
     // This is a work-around to get the table to resize properly on extra-large Bootstrap viewport
     setTimeout($("#ajaxDataTable").DataTable().columns.adjust, 1000);
 });
 
-$(window).resize(function () {
+$(window).resize(() => {
     $("#ajaxDataTable").DataTable().columns.adjust();
 });

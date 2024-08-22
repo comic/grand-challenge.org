@@ -3,6 +3,6 @@
 // For example:
 //   <div data-toggle="tooltip" title="Tooltip content"></div>
 
-$(document).ready(function () {
+$(document).ready(() => {
     $('[data-toggle="tooltip"]').tooltip();
 });

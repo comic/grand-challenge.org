@@ -1,5 +1,5 @@
 function openWorkstationSession(element) {
-    return (event) => {
+    return event => {
         const windowIdentifier = element.dataset.workstationWindowIdentifier;
         const url = element.dataset.createSessionUrl;
         const query = element.dataset.workstationQuery;
@@ -28,7 +28,7 @@ function openWorkstationSession(element) {
             const potentialSessionOrigins = JSON.parse(
                 document.getElementById("workstation-domains").textContent,
             );
-            let workstationWindow = window.open("", windowIdentifier);
+            const workstationWindow = window.open("", windowIdentifier);
 
             // check if we just opened a blank or existing context
             let isBlankContext = false;
@@ -61,7 +61,7 @@ function openWorkstationSession(element) {
                     removeSpinner(element);
                 }
 
-                potentialSessionOrigins.forEach((origin) => {
+                potentialSessionOrigins.forEach(origin => {
                     sendSessionControlMessage(
                         workstationWindow,
                         origin,
@@ -119,7 +119,7 @@ function sendSessionControlMessage(targetWindow, origin, action, ackCallback) {
 function copyTextToClipboard(text) {
     const blob = new Blob([text], { type: "text/plain" });
     const data = [new ClipboardItem({ "text/plain": blob })];
-    navigator.clipboard.write(data).then(function () {
+    navigator.clipboard.write(data).then(() => {
         console.log("Copied to clipboard successfully!");
     });
 }
@@ -147,10 +147,10 @@ function setUpOberserver() {
     // display set update
     const targetNodes = document.querySelectorAll('[id^="collapse-"]');
     const config = { attributes: true, childList: true, subtree: true };
-    const observer = new MutationObserver(function (mutations) {
+    const observer = new MutationObserver(mutations => {
         hookSessionControllers();
     });
-    [...targetNodes].forEach((target) => {
+    [...targetNodes].forEach(target => {
         observer.observe(target, config);
     });
 }
@@ -171,7 +171,7 @@ $(document).ready(() => {
     });
 
     // htmx-based tables
-    htmx.onLoad(function () {
+    htmx.onLoad(() => {
         hookSessionControllers();
     });
 });
