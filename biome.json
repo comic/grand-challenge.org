@@ -8,13 +8,8 @@
         ]
     },
     "formatter": {
-        "enabled": true,
-        "formatWithErrors": false,
         "indentStyle": "space",
-        "indentWidth": 4,
-        "lineEnding": "lf",
-        "lineWidth": 80,
-        "attributePosition": "auto"
+        "indentWidth": 4
     },
     "organizeImports": { "enabled": true },
     "linter": { "enabled": true, "rules": { "recommended": true } },

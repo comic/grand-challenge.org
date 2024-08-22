@@ -46,5 +46,4 @@ repos:
       rev: v0.4.0
       hooks:
           - id: biome-check
-            exclude: '^app/grandchallenge/core/static/(vendored/|js/markdownx\.js|js/world-atlas/countries-110m\.json)'
             additional_dependencies: ["@biomejs/biome@1.8.3"]
