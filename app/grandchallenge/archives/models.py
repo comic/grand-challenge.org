@@ -264,6 +264,10 @@ class Archive(
         return self.items
 
     @property
+    def civ_set_lookup(self):
+        return "values"
+
+    @property
     def civ_set_model(self):
         return ArchiveItem
 
@@ -358,10 +362,6 @@ class ArchiveItem(
     @property
     def is_editable(self):
         return True
-
-    @property
-    def civ_set_lookup(self):
-        return "values"
 
 
 class ArchiveItemUserObjectPermission(UserObjectPermissionBase):

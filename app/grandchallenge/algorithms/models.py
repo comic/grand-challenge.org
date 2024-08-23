@@ -35,6 +35,7 @@ from grandchallenge.components.models import (  # noqa: F401
     ComponentJobManager,
     ImportStatusChoices,
     Tarball,
+    ValuesForInterfacesMixin,
 )
 from grandchallenge.components.utils import retrieve_existing_civs
 from grandchallenge.core.guardian import get_objects_for_group
@@ -66,7 +67,12 @@ logger = logging.getLogger(__name__)
 JINJA_ENGINE = sandbox.ImmutableSandboxedEnvironment()
 
 
-class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
+class Algorithm(
+    UUIDModel,
+    TitleSlugDescriptionModel,
+    ValuesForInterfacesMixin,
+    HangingProtocolMixin,
+):
     editors_group = models.OneToOneField(
         Group,
         on_delete=models.PROTECT,
@@ -421,6 +427,16 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
 
     def remove_user(self, user):
         return user.groups.remove(self.users_group)
+
+    @property
+    def civ_set_lookup(self):
+        return "inputs"
+
+    @property
+    def civ_sets_related_manager(self):
+        return Job.objects.filter(
+            algorithm_image__in=self.algorithm_container_images.all()
+        )
 
     @cached_property
     def user_statistics(self):
@@ -965,10 +981,6 @@ class Job(UUIDModel, CIVForObjectMixin, ComponentJob):
 
     def remove_viewer(self, user):
         return user.groups.remove(self.viewers)
-
-    @property
-    def civ_set_lookup(self):
-        return "inputs"
 
     @property
     def base_object(self):

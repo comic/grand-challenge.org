@@ -1072,13 +1072,13 @@ def add_image_to_object(
         return
 
     try:
-        current_value = getattr(object, object.civ_set_lookup).get(
+        current_value = getattr(object, object.base_object.civ_set_lookup).get(
             interface=interface
         )
     except ObjectDoesNotExist:
         current_value = None
 
-    getattr(object, object.civ_set_lookup).remove(current_value)
+    getattr(object, object.base_object.civ_set_lookup).remove(current_value)
     civ, created = ComponentInterfaceValue.objects.get_or_create(
         interface=interface, image=image
     )
@@ -1092,7 +1092,7 @@ def add_image_to_object(
             )
             return
 
-    getattr(object, object.civ_set_lookup).add(civ)
+    getattr(object, object.base_object.civ_set_lookup).add(civ)
 
     if linked_task is not None:
         on_commit(signature(linked_task).apply_async)
@@ -1129,11 +1129,11 @@ def add_file_to_object(
         civ.full_clean()
         civ.save()
         user_upload.copy_object(to_field=civ.file)
-        getattr(object, object.civ_set_lookup).add(civ)
+        getattr(object, object.base_object.civ_set_lookup).add(civ)
         if civ_pk is not None:
             # Remove the previously assigned civ from the display set
             civ = ComponentInterfaceValue.objects.get(pk=civ_pk)
-            getattr(object, object.civ_set_lookup).remove(civ)
+            getattr(object, object.base_object.civ_set_lookup).remove(civ)
     except ValidationError as e:
         error = format_validation_error_message(error=e)
 
@@ -1153,6 +1153,7 @@ def add_file_to_object(
                 target=object.base_object,
                 description=error_description,
             )
+        return
 
     if linked_task is not None:
         on_commit(signature(linked_task).apply_async)

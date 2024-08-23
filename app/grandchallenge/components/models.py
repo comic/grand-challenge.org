@@ -2098,7 +2098,9 @@ class CIVForObjectMixin:
         ci = ComponentInterface.objects.get(slug=ci_slug)
         try:
             current_civ = (
-                getattr(self, self.civ_set_lookup).filter(interface=ci).get()
+                getattr(self, self.base_object.civ_set_lookup)
+                .filter(interface=ci)
+                .get()
             )
         except ObjectDoesNotExist:
             current_civ = None
@@ -2144,8 +2146,10 @@ class CIVForObjectMixin:
             try:
                 civ.full_clean()
                 civ.save()
-                getattr(self, self.civ_set_lookup).remove(current_civ)
-                getattr(self, self.civ_set_lookup).add(civ)
+                getattr(self, self.base_object.civ_set_lookup).remove(
+                    current_civ
+                )
+                getattr(self, self.base_object.civ_set_lookup).add(civ)
             except ValidationError as e:
                 if new_value:
                     if hasattr(self, "error_message"):
@@ -2155,7 +2159,9 @@ class CIVForObjectMixin:
                     else:
                         raise e
                 else:
-                    getattr(self, self.civ_set_lookup).remove(current_civ)
+                    getattr(self, self.base_object.civ_set_lookup).remove(
+                        current_civ
+                    )
 
             if linked_task is not None:
                 on_commit(signature(linked_task).apply_async)
@@ -2165,14 +2171,14 @@ class CIVForObjectMixin:
     ):
         current_image = current_civ.image if current_civ else None
         if isinstance(new_value, Image) and current_image != new_value:
-            getattr(self, self.civ_set_lookup).remove(current_civ)
+            getattr(self, self.base_object.civ_set_lookup).remove(current_civ)
             civ, created = ComponentInterfaceValue.objects.get_or_create(
                 interface=ci, image=new_value
             )
 
             if created:
                 civ.full_clean()
-            getattr(self, self.civ_set_lookup).add(civ)
+            getattr(self, self.base_object.civ_set_lookup).add(civ)
 
             if linked_task is not None:
                 on_commit(signature(linked_task).apply_async)
@@ -2207,8 +2213,8 @@ class CIVForObjectMixin:
             isinstance(new_value, ComponentInterfaceValue)
             and current_civ != new_value
         ):
-            getattr(self, self.civ_set_lookup).remove(current_civ)
-            getattr(self, self.civ_set_lookup).add(new_value)
+            getattr(self, self.base_object.civ_set_lookup).remove(current_civ)
+            getattr(self, self.base_object.civ_set_lookup).add(new_value)
 
             if linked_task is not None:
                 on_commit(signature(linked_task).apply_async)
@@ -2232,7 +2238,7 @@ class CIVForObjectMixin:
         elif not new_value:
             # if no new value is provided (user selects '---' in dropdown)
             # delete old CIV
-            getattr(self, self.civ_set_lookup).remove(current_civ)
+            getattr(self, self.base_object.civ_set_lookup).remove(current_civ)
 
 
 class InterfacesAndValues(NamedTuple):
@@ -2242,24 +2248,35 @@ class InterfacesAndValues(NamedTuple):
 
 class ValuesForInterfacesMixin:
     @property
+    def civ_set_lookup(self):
+        raise NotImplementedError
+
+    @property
     def civ_sets_related_manager(self):
         raise NotImplementedError
 
     @cached_property
     def interfaces_and_values(self):
+        filter_kwargs = {
+            f"{self.civ_set_lookup}__interface__slug__isnull": False
+        }
         vals = list(
             self.civ_sets_related_manager.select_related(
-                "values", "values__interface", "values__image"
+                self.civ_set_lookup,
+                f"{self.civ_set_lookup}__interface",
+                f"{self.civ_set_lookup}__image",
             )
-            .filter(values__interface__slug__isnull=False)
+            .filter(**filter_kwargs)
             .values(
-                "values__interface__slug",
-                "values__id",
+                f"{self.civ_set_lookup}__interface__slug",
+                f"{self.civ_set_lookup}__id",
             )
-            .order_by("values__id")
+            .order_by(f"{self.civ_set_lookup}__id")
             .distinct()
         )
-        interfaces = [x["values__interface__slug"] for x in vals]
+        interfaces = [
+            x[f"{self.civ_set_lookup}__interface__slug"] for x in vals
+        ]
         return InterfacesAndValues(interfaces=set(interfaces), values=vals)
 
     @cached_property
@@ -2267,9 +2284,9 @@ class ValuesForInterfacesMixin:
         interfaces_and_values = self.interfaces_and_values
         values_for_interfaces = {
             interface: [
-                x["values__id"]
+                x[f"{self.civ_set_lookup}__id"]
                 for x in interfaces_and_values.values
-                if x["values__interface__slug"] == interface
+                if x[f"{self.civ_set_lookup}__interface__slug"] == interface
             ]
             for interface in interfaces_and_values.interfaces
         }

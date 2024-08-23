@@ -1,11 +1,18 @@
 from django import forms
+from django.core.exceptions import PermissionDenied
+from django.forms import ModelChoiceField
 
-from grandchallenge.cases.widgets import FlexibleImageWidget
+from grandchallenge.cases.widgets import (
+    FlexibleImageField,
+    FlexibleImageWidget,
+)
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
+from grandchallenge.components.widgets import SelectUploadWidget
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.core.widgets import JSONEditorWidget
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import (
     UserUploadMultipleWidget,
@@ -43,75 +50,142 @@ class InterfaceFormField:
         required=None,
         disabled=False,
         help_text="",
+        existing_civs=None,
+        form_data=None,
     ):
-        kwargs = {"required": required, "disabled": disabled}
+        self.instance = instance
+        self.initial = initial
+        self.user = user
+        self.required = required
+        self.disabled = disabled
+        self.help_text = help_text
+        self.existing_civs = existing_civs
+        self.form_data = form_data
 
-        if isinstance(initial, ComponentInterfaceValue) and initial.has_value:
-            if instance.is_image_kind:
-                kwargs["initial"] = initial.image.pk
-            elif instance.requires_file:
-                # for file interfaces, initial will either be None or
-                # the UUID of an upload, not an existing CIV, for the latter
-                # we use a different widget that is defined in MultipleCIVForm
-                kwargs["initial"] = initial
-            else:
-                kwargs["initial"] = initial.value
-        elif initial is not None:
-            # in the AlgorithmJobCreateForm,
-            # the initial value is the default_value for the interface,
-            # not an existing CIV
-            kwargs["initial"] = initial
-
-        field_type = instance.default_field
+        self.kwargs = {
+            "required": required,
+            "disabled": disabled,
+            "initial": self.get_initial_value(),
+        }
 
         if instance.is_image_kind:
-            kwargs["widget"] = FlexibleImageWidget(
-                help_text=help_text,
-                user=user,
-                current_value=initial,
-                # also passing the CIV as current value here so that we can
-                # show the image name to the user rather than its pk
-            )
-            upload_queryset = get_objects_for_user(
-                user,
-                "uploads.change_userupload",
-            ).filter(status=UserUpload.StatusChoices.COMPLETED)
-            image_queryset = get_objects_for_user(user, "cases.view_image")
-            self._field = field_type(
-                upload_queryset=upload_queryset,
-                image_queryset=image_queryset,
-                **kwargs,
-            )
-        elif instance.requires_file or instance.is_json_kind:
-            if instance.requires_file:
-                kwargs["widget"] = UserUploadSingleWidget(
-                    allowed_file_types=instance.file_mimetypes
-                )
-                kwargs["queryset"] = get_objects_for_user(
-                    user,
-                    "uploads.change_userupload",
-                ).filter(status=UserUpload.StatusChoices.COMPLETED)
-                ext = (
-                    "json" if instance.is_json_kind else instance.kind.lower()
-                )
-                extra_help = f"{file_upload_text} .{ext}"
-            elif instance.is_json_kind:
-                default_schema = {
-                    **INTERFACE_VALUE_SCHEMA,
-                    "anyOf": [{"$ref": f"#/definitions/{instance.kind}"}],
-                }
-                if field_type == forms.JSONField:
-                    kwargs["widget"] = JSONEditorWidget(schema=default_schema)
-                kwargs["validators"] = [
-                    JSONValidator(schema=default_schema),
-                    JSONValidator(schema=instance.schema),
-                ]
-                extra_help = ""
-            self._field = field_type(
-                help_text=_join_with_br(help_text, extra_help), **kwargs
-            )
+            self._field = self.get_image_field()
+        elif instance.requires_file:
+            self._field = self.get_file_field()
+        elif instance.is_json_kind:
+            self._field = self.get_json_field()
         else:
-            raise RuntimeError(f"Unknown widget for {instance}")
+            raise RuntimeError(f"Unknown interface kind: {instance}")
+
+    def get_initial_value(self):
+        if (
+            isinstance(self.initial, ComponentInterfaceValue)
+            and self.initial.has_value
+        ):
+            if self.instance.is_image_kind:
+                return self.initial.image.pk
+            elif self.instance.requires_file:
+                return self.initial.pk
+            else:
+                return self.initial.value
+        else:
+            return self.initial
+
+    def get_image_field(self):
+        self.kwargs["widget"] = FlexibleImageWidget(
+            help_text=self.help_text,
+            user=self.user,
+            current_value=self.initial,
+            # also passing the CIV as current value here so that we can
+            # show the image name to the user rather than its pk
+        )
+        upload_queryset = get_objects_for_user(
+            self.user,
+            "uploads.change_userupload",
+        ).filter(status=UserUpload.StatusChoices.COMPLETED)
+        image_queryset = get_objects_for_user(self.user, "cases.view_image")
+
+        return FlexibleImageField(
+            upload_queryset=upload_queryset,
+            image_queryset=image_queryset,
+            **self.kwargs,
+        )
+
+    def get_json_field(self):
+        field_type = self.instance.default_field
+        default_schema = {
+            **INTERFACE_VALUE_SCHEMA,
+            "anyOf": [{"$ref": f"#/definitions/{self.instance.kind}"}],
+        }
+        if field_type == forms.JSONField:
+            self.kwargs["widget"] = JSONEditorWidget(schema=default_schema)
+        self.kwargs["validators"] = [
+            JSONValidator(schema=default_schema),
+            JSONValidator(schema=self.instance.schema),
+        ]
+        extra_help = ""
+        return field_type(
+            help_text=_join_with_br(self.help_text, extra_help), **self.kwargs
+        )
+
+    def get_file_field(self):
+        key = f"value_type_{self.instance.slug}"
+        if key in self.form_data.keys():
+            type = self.form_data[key]
+        elif self.existing_civs:
+            type = "civ"
+        else:
+            type = "uuid"
+
+        if type == "uuid":
+            ext = (
+                "json"
+                if self.instance.is_json_kind
+                else self.instance.kind.lower()
+            )
+            extra_help = f"{file_upload_text} .{ext}"
+            return ModelChoiceField(
+                queryset=get_objects_for_user(
+                    self.user,
+                    "uploads.change_userupload",
+                ).filter(status=UserUpload.StatusChoices.COMPLETED),
+                widget=UserUploadSingleWidget(
+                    allowed_file_types=self.instance.file_mimetypes
+                ),
+                label=self.instance.slug.title(),
+                help_text=_join_with_br(self.help_text, extra_help),
+                **self.kwargs,
+            )
+        elif type == "civ":
+            if self.form_data:
+                try:
+                    civ_pk = int(self.form_data[self.instance.slug])
+                    self.kwargs["initial"] = (
+                        ComponentInterfaceValue.objects.get(pk=civ_pk)
+                    )
+                except ValueError:
+                    self.kwargs["initial"] = None
+
+                if (
+                    self.kwargs["initial"]
+                    and self.kwargs["initial"] not in self.existing_civs
+                ):
+                    # User does not have permission to use this CIV
+                    raise PermissionDenied
+
+            return ModelChoiceField(
+                queryset=self.existing_civs,
+                label=self.instance.slug.title(),
+                widget=SelectUploadWidget(
+                    attrs={
+                        "upload_link": reverse(
+                            "components:file-upload",
+                            kwargs={"interface_slug": self.instance.slug},
+                        )
+                    }
+                ),
+                **self.kwargs,
+            )
 
     @property
     def field(self):

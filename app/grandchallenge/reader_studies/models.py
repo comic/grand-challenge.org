@@ -734,6 +734,10 @@ class ReaderStudy(
         return self.display_sets
 
     @property
+    def civ_set_lookup(self):
+        return "values"
+
+    @property
     def civ_set_model(self):
         return DisplaySet
 
@@ -907,10 +911,6 @@ class DisplaySet(
             "reader-studies:display-set-delete",
             kwargs={"slug": self.base_object.slug, "pk": self.pk},
         )
-
-    @property
-    def civ_set_lookup(self):
-        return "values"
 
 
 class DisplaySetUserObjectPermission(UserObjectPermissionBase):

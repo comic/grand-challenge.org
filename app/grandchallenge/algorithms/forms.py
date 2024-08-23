@@ -55,6 +55,7 @@ from grandchallenge.components.form_fields import InterfaceFormField
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.components.models import (
     ComponentInterface,
+    ComponentInterfaceValue,
     ComponentJob,
     ImportStatusChoices,
     InterfaceKindChoices,
@@ -130,12 +131,33 @@ class JobCreateForm(SaveFormInitMixin, Form):
             self.fields["algorithm_model"].initial = active_model
 
         for inp in self._algorithm.inputs.all():
+            if (
+                inp.requires_file
+                and inp.slug in self._algorithm.values_for_interfaces.keys()
+            ):
+                existing_civs = ComponentInterfaceValue.objects.filter(
+                    id__in=self._algorithm.values_for_interfaces[inp.slug]
+                )
+            else:
+                # Images are handled separately in FlexibleImageWidget
+                # Values stored in the DB need to be re-entered,
+                # we re-use existing CIVs for values later as well,
+                # but on the form level it does not make sense to check for those
+                existing_civs = None
+
+            if inp.slug in self.data:
+                initial = self.data[inp.slug]
+            else:
+                initial = None
+
             self.fields[inp.slug] = InterfaceFormField(
                 instance=inp,
-                initial=inp.default_value,
+                initial=initial if initial else inp.default_value,
                 user=self._user,
-                required=inp.value_required,
+                required=True,
                 help_text=clean(inp.description) if inp.description else "",
+                existing_civs=existing_civs,
+                form_data=self.data,
             ).field
 
     @cached_property

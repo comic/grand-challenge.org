@@ -63,7 +63,6 @@ from grandchallenge.components.views import (
     CIVSetDetail,
     CIVSetFormMixin,
     CivSetListView,
-    FileUpdateBaseView,
     InterfacesCreateBaseView,
     MultipleCIVProcessingBaseView,
 )
@@ -1259,22 +1258,6 @@ class DisplaySetUpdateView(
         return reverse(
             "reader-studies:display-set-interfaces-create",
             kwargs={"slug": self.base_object.slug, "pk": self.object.pk},
-        )
-
-
-class DisplaySetFilesUpdate(FileUpdateBaseView):
-    permission_required = (
-        f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
-    )
-
-    @cached_property
-    def base_object(self):
-        return DisplaySet.objects.get(pk=self.kwargs["pk"])
-
-    def get_success_url(self):
-        return reverse(
-            "reader-studies:display_sets",
-            kwargs={"slug": self.kwargs["slug"]},
         )
 
 
