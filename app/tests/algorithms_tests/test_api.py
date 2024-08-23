@@ -19,14 +19,14 @@ from tests.algorithms_tests.factories import (
 )
 from tests.cases_tests import RESOURCE_PATH
 from tests.cases_tests.factories import (
-    ImageFactoryWithImageFile,
+    ImageFileFactoryWithMHDFile,
     RawImageUploadSessionFactory,
 )
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
-from tests.factories import UserFactory
+from tests.factories import ImageFactory, UserFactory
 from tests.uploads_tests.factories import (
     UserUploadFactory,
     create_upload_from_file,
@@ -89,7 +89,7 @@ def test_job_list_view_num_queries(
         assert len(response.json()["results"]) == num_jobs
 
 
-class TestJobCreation(TestCase):
+class TestJobCreationThroughAPI(TestCase):
 
     def setUp(self):
         self.algorithm = AlgorithmFactory(time_limit=600)
@@ -144,18 +144,17 @@ class TestJobCreation(TestCase):
             self.ci_existing_img,
             self.ci_img_upload,
         ]
-        self.algorithm.inputs.set(self.interfaces)
 
         # Create inputs
         self.im_upload = RawImageUploadSessionFactory(creator=self.user)
-        self.image_1 = ImageFactoryWithImageFile()
-        self.image_2 = ImageFactoryWithImageFile()
-        # couldn't figure out a way to just attach one file, so using the factory
-        # and deleting the second file
+        self.image_1, self.image_2 = ImageFactory.create_batch(2)
+        mhd1, mhd2 = ImageFileFactoryWithMHDFile.create_batch(2)
+        self.image_1.files.set([mhd1])
+        self.image_2.files.set([mhd2])
         for im in [self.image_1, self.image_2]:
-            im.files.set([self.image_2.files.all()[0]])
             assign_perm("cases.view_image", self.user, im)
         self.im_upload.image_set.set([self.image_1])
+
         self.file_upload = UserUploadFactory(
             filename="file.json", creator=self.user
         )
@@ -168,10 +167,7 @@ class TestJobCreation(TestCase):
         )
         self.file_upload.save()
 
-    @override_settings(task_eager_propagates=True, task_always_eager=True)
-    def test_create_job_with_new_inputs(self):
-        assert ComponentInterfaceValue.objects.count() == 0
-
+    def create_job(self, inputs):
         with patch(
             "grandchallenge.components.tasks.execute_job"
         ) as mocked_execute_job:
@@ -188,28 +184,56 @@ class TestJobCreation(TestCase):
                     content_type="application/json",
                     data={
                         "algorithm": self.algorithm.api_url,
-                        "inputs": [
-                            {"interface": self.ci_str.slug, "value": "Foo"},
-                            {"interface": self.ci_bool.slug, "value": True},
-                            {
-                                "interface": self.ci_img_upload.slug,
-                                "upload_session": self.im_upload.api_url,
-                            },
-                            {
-                                "interface": self.ci_existing_img.slug,
-                                "image": self.image_2.api_url,
-                            },
-                            {
-                                "interface": self.ci_json_file.slug,
-                                "user_upload": self.file_upload.api_url,
-                            },
-                            {
-                                "interface": self.ci_json_in_db_with_schema.slug,
-                                "value": json.loads('["Foo", "bar"]'),
-                            },
-                        ],
+                        "inputs": inputs,
                     },
                 )
+        return response
+
+    def create_existing_civs(self):
+        civ1 = ComponentInterfaceValueFactory(
+            interface=self.ci_bool, value=True
+        )
+        civ2 = ComponentInterfaceValueFactory(
+            interface=self.ci_str, value="Foo"
+        )
+        civ3 = ComponentInterfaceValueFactory(
+            interface=self.ci_existing_img, image=self.image_2
+        )
+        civ4 = ComponentInterfaceValueFactory(
+            interface=self.ci_json_in_db_with_schema,
+            value=["Foo", "bar"],
+        )
+        return [civ1, civ2, civ3, civ4]
+
+    @override_settings(task_eager_propagates=True, task_always_eager=True)
+    def test_create_job_with_multiple_new_inputs(self):
+        # configure multiple inputs
+        self.algorithm.inputs.set(self.interfaces)
+
+        assert ComponentInterfaceValue.objects.count() == 0
+
+        response = self.create_job(
+            inputs=[
+                {"interface": self.ci_str.slug, "value": "Foo"},
+                {"interface": self.ci_bool.slug, "value": True},
+                {
+                    "interface": self.ci_img_upload.slug,
+                    "upload_session": self.im_upload.api_url,
+                },
+                {
+                    "interface": self.ci_existing_img.slug,
+                    "image": self.image_2.api_url,
+                },
+                {
+                    "interface": self.ci_json_file.slug,
+                    "user_upload": self.file_upload.api_url,
+                },
+                {
+                    "interface": self.ci_json_in_db_with_schema.slug,
+                    "value": json.loads('["Foo", "bar"]'),
+                },
+            ],
+        )
 
         assert response.status_code == 201
         assert Job.objects.count() == 1
@@ -228,7 +252,7 @@ class TestJobCreation(TestCase):
         value_inputs = [civ.value for civ in job.inputs.all() if civ.value]
         assert "Foo" in value_inputs
         assert True in value_inputs
-        assert json.loads('["Foo", "bar"]') in value_inputs
+        assert ["Foo", "bar"] in value_inputs
 
         image_inputs = [civ.image for civ in job.inputs.all() if civ.image]
         assert self.image_1 in image_inputs
@@ -240,57 +264,34 @@ class TestJobCreation(TestCase):
 
     @override_settings(task_eager_propagates=True, task_always_eager=True)
     def test_create_job_with_existing_inputs(self):
-        civ1 = ComponentInterfaceValueFactory(
-            interface=self.ci_bool, value=True
+        # configure multiple inputs
+        self.algorithm.inputs.set(
+            [
+                self.ci_str,
+                self.ci_bool,
+                self.ci_existing_img,
+                self.ci_json_in_db_with_schema,
+            ]
         )
-        civ2 = ComponentInterfaceValueFactory(
-            interface=self.ci_str, value="Foo"
-        )
-        civ3 = ComponentInterfaceValueFactory(
-            interface=self.ci_existing_img, image=self.image_2
-        )
-        civ4 = ComponentInterfaceValueFactory(
-            interface=self.ci_json_in_db_with_schema,
-            value=json.loads('["Foo", "bar"]'),
-        )
-        # TODO test this for existing files, this is not implemented yet
 
+        civ1, civ2, civ3, civ4 = self.create_existing_civs()
+        # TODO test this for existing files, this is not implemented yet
         old_civ_count = ComponentInterfaceValue.objects.count()
 
-        # remove upload input interfaces from algorithm
-        self.algorithm.inputs.remove(self.ci_img_upload, self.ci_json_file)
-
-        with patch(
-            "grandchallenge.components.tasks.execute_job"
-        ) as mocked_execute_job:
-            # no need to actually execute the job,
-            # all other async tasks should run though
-            mocked_execute_job.return_value = None
-            with self.captureOnCommitCallbacks(execute=True):
-                response = get_view_for_user(
-                    viewname="api:algorithms-job-list",
-                    client=self.client,
-                    method=self.client.post,
-                    user=self.user,
-                    follow=True,
-                    content_type="application/json",
-                    data={
-                        "algorithm": self.algorithm.api_url,
-                        "inputs": [
-                            {"interface": self.ci_str.slug, "value": "Foo"},
-                            {"interface": self.ci_bool.slug, "value": True},
-                            {
-                                "interface": self.ci_existing_img.slug,
-                                "image": self.image_2.api_url,
-                            },
-                            {
-                                "interface": self.ci_json_in_db_with_schema.slug,
-                                "value": json.loads('["Foo", "bar"]'),
-                            },
-                        ],
-                    },
-                )
-
+        response = self.create_job(
+            inputs=[
+                {"interface": self.ci_str.slug, "value": "Foo"},
+                {"interface": self.ci_bool.slug, "value": True},
+                {
+                    "interface": self.ci_existing_img.slug,
+                    "image": self.image_2.api_url,
+                },
+                {
+                    "interface": self.ci_json_in_db_with_schema.slug,
+                    "value": json.loads('["Foo", "bar"]'),
+                },
+            ]
+        )
         assert response.status_code == 201
 
         # no new CIVs should have been created
@@ -302,23 +303,17 @@ class TestJobCreation(TestCase):
             assert civ in job.inputs.all()
 
     @override_settings(task_eager_propagates=True, task_always_eager=True)
-    def test_create_job_with_existing_inputs_is_idempotent(self):
-        civ1 = ComponentInterfaceValueFactory(
-            interface=self.ci_bool, value=True
+    def test_create_job_is_idempotent(self):
+        # configure multiple inputs
+        self.algorithm.inputs.set(
+            [
+                self.ci_str,
+                self.ci_bool,
+                self.ci_existing_img,
+                self.ci_json_in_db_with_schema,
+            ]
         )
-        civ2 = ComponentInterfaceValueFactory(
-            interface=self.ci_str, value="Foo"
-        )
-        civ3 = ComponentInterfaceValueFactory(
-            interface=self.ci_existing_img, image=self.image_2
-        )
-        civ4 = ComponentInterfaceValueFactory(
-            interface=self.ci_json_in_db_with_schema,
-            value=json.loads('["Foo", "bar"]'),
-        )
-
-        # remove upload interfaces from algorithm
-        self.algorithm.inputs.remove(self.ci_img_upload, self.ci_json_file)
+        civ1, civ2, civ3, civ4 = self.create_existing_civs()
 
         job = AlgorithmJobFactory(
             algorithm_image=self.algorithm_image,
@@ -327,46 +322,27 @@ class TestJobCreation(TestCase):
             time_limit=10,
         )
         job.inputs.set([civ1, civ2, civ3, civ4])
-
         old_civ_count = ComponentInterfaceValue.objects.count()
 
-        with patch(
-            "grandchallenge.components.tasks.execute_job"
-        ) as mocked_execute_job:
-            # no need to actually execute the job,
-            # all other async tasks should run though
-            mocked_execute_job.return_value = None
-            with self.captureOnCommitCallbacks(execute=True):
-                response = get_view_for_user(
-                    viewname="api:algorithms-job-list",
-                    client=self.client,
-                    method=self.client.post,
-                    user=self.user,
-                    follow=True,
-                    content_type="application/json",
-                    data={
-                        "algorithm": self.algorithm.api_url,
-                        "inputs": [
-                            {"interface": self.ci_str.slug, "value": "Foo"},
-                            {"interface": self.ci_bool.slug, "value": True},
-                            {
-                                "interface": self.ci_existing_img.slug,
-                                "image": self.image_2.api_url,
-                            },
-                            {
-                                "interface": self.ci_json_in_db_with_schema.slug,
-                                "value": json.loads('["Foo", "bar"]'),
-                            },
-                        ],
-                    },
-                )
-
+        response = self.create_job(
+            inputs=[
+                {"interface": self.ci_str.slug, "value": "Foo"},
+                {"interface": self.ci_bool.slug, "value": True},
+                {
+                    "interface": self.ci_existing_img.slug,
+                    "image": self.image_2.api_url,
+                },
+                {
+                    "interface": self.ci_json_in_db_with_schema.slug,
+                    "value": json.loads('["Foo", "bar"]'),
+                },
+            ]
+        )
         assert response.status_code == 400
         assert (
             "A result for these inputs with the current image and model already exists."
             in str(response.content)
         )
-
         # no new CIVs should have been created
         assert ComponentInterfaceValue.objects.count() == old_civ_count
         # and no new job because there already is a job with these inputs
@@ -374,21 +350,8 @@ class TestJobCreation(TestCase):
 
     @override_settings(task_eager_propagates=True, task_always_eager=True)
     def test_create_job_with_faulty_file_input(self):
-        # create a new algorithm with only 1 input
-        alg = AlgorithmFactory(time_limit=600)
-        AlgorithmImageFactory(
-            algorithm=alg,
-            is_desired_version=True,
-            is_manifest_valid=True,
-            is_in_registry=True,
-        )
-        AlgorithmModelFactory(
-            algorithm=alg,
-            is_desired_version=True,
-        )
-        alg.inputs.set([self.interfaces[2]])
-        alg.add_editor(user=self.user)
-
+        # configure file input
+        self.algorithm.inputs.set([self.ci_json_file])
         file_upload = UserUploadFactory(
             filename="file.json", creator=self.user
         )
@@ -399,29 +362,14 @@ class TestJobCreation(TestCase):
         )
         file_upload.save()
 
-        with patch(
-            "grandchallenge.components.tasks.execute_job"
-        ) as mocked_execute_job:
-            mocked_execute_job.return_value = None
-            with self.captureOnCommitCallbacks(execute=True):
-                response = get_view_for_user(
-                    viewname="api:algorithms-job-list",
-                    client=self.client,
-                    method=self.client.post,
-                    user=self.user,
-                    follow=True,
-                    content_type="application/json",
-                    data={
-                        "algorithm": alg.api_url,
-                        "inputs": [
-                            {
-                                "interface": self.ci_json_file.slug,
-                                "user_upload": file_upload.api_url,
-                            },
-                        ],
-                    },
-                )
-
+        response = self.create_job(
+            inputs=[
+                {
+                    "interface": self.ci_json_file.slug,
+                    "user_upload": file_upload.api_url,
+                },
+            ]
+        )
         assert response.status_code == 201
         # validation of files happens async, so job gets created
         assert Job.objects.count() == 1
@@ -437,44 +385,18 @@ class TestJobCreation(TestCase):
 
     @override_settings(task_eager_propagates=True, task_always_eager=True)
     def test_create_job_with_faulty_json_input(self):
-        # create a new algorithm with only 1 input
-        alg = AlgorithmFactory(time_limit=600)
-        AlgorithmImageFactory(
-            algorithm=alg,
-            is_desired_version=True,
-            is_manifest_valid=True,
-            is_in_registry=True,
+        self.algorithm.inputs.set([self.ci_json_in_db_with_schema])
+        response = self.create_job(
+            inputs=[
+                {
+                    "interface": self.ci_json_in_db_with_schema.slug,
+                    "value": '{"Foo": "bar"}',
+                },
+            ]
         )
-        AlgorithmModelFactory(
-            algorithm=alg,
-            is_desired_version=True,
-        )
-        alg.inputs.set([self.interfaces[0]])
-        alg.add_editor(user=self.user)
-
-        with patch(
-            "grandchallenge.components.tasks.execute_job"
-        ) as mocked_execute_job:
-            mocked_execute_job.return_value = None
-            with self.captureOnCommitCallbacks(execute=True):
-                response = get_view_for_user(
-                    viewname="api:algorithms-job-list",
-                    client=self.client,
-                    method=self.client.post,
-                    user=self.user,
-                    follow=True,
-                    content_type="application/json",
-                    data={
-                        "algorithm": self.algorithm.api_url,
-                        "inputs": [
-                            {"interface": self.ci_str.slug, "value": None},
-                        ],
-                    },
-                )
-
         # validation of values stored in DB happens synchronously,
         # so no job and no CIVs get created if validation fails
-        # error message is reported back to user directly
+        # error message is reported back to user directly in the form
         assert response.status_code == 400
         assert "JSON does not fulfill schema" in str(response.content)
         assert Job.objects.count() == 0
@@ -482,51 +404,21 @@ class TestJobCreation(TestCase):
 
     @override_settings(task_eager_propagates=True, task_always_eager=True)
     def test_create_job_with_faulty_image_input(self):
-        # create a new algorithm with only 1 input
-        alg = AlgorithmFactory(time_limit=600)
-        AlgorithmImageFactory(
-            algorithm=alg,
-            is_desired_version=True,
-            is_manifest_valid=True,
-            is_in_registry=True,
-        )
-        AlgorithmModelFactory(
-            algorithm=alg,
-            is_desired_version=True,
-        )
-        alg.inputs.set([self.interfaces[5]])
-        alg.add_editor(user=self.user)
-
+        self.algorithm.inputs.set([self.ci_img_upload])
         user_upload = create_upload_from_file(
             creator=self.user, file_path=RESOURCE_PATH / "corrupt.png"
         )
-
         upload_session = RawImageUploadSessionFactory(creator=self.user)
         upload_session.user_uploads.set([user_upload])
 
-        with patch(
-            "grandchallenge.components.tasks.execute_job"
-        ) as mocked_execute_job:
-            mocked_execute_job.return_value = None
-            with self.captureOnCommitCallbacks(execute=True):
-                response = get_view_for_user(
-                    viewname="api:algorithms-job-list",
-                    client=self.client,
-                    method=self.client.post,
-                    user=self.user,
-                    follow=True,
-                    content_type="application/json",
-                    data={
-                        "algorithm": alg.api_url,
-                        "inputs": [
-                            {
-                                "interface": self.ci_img_upload.slug,
-                                "upload_session": upload_session.api_url,
-                            },
-                        ],
-                    },
-                )
-
+        response = self.create_job(
+            inputs=[
+                {
+                    "interface": self.ci_img_upload.slug,
+                    "upload_session": upload_session.api_url,
+                },
+            ]
+        )
         assert response.status_code == 201
         # validation of images happens async, so job gets created
         assert Job.objects.count() == 1

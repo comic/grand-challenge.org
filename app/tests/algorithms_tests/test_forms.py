@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytest
 from actstream.actions import is_following
+from django.test import TestCase
 
 from grandchallenge.algorithms.forms import (
     AlgorithmForm,
@@ -34,7 +35,10 @@ from tests.algorithms_tests.factories import (
     AlgorithmPermissionRequestFactory,
 )
 from tests.algorithms_tests.utils import get_algorithm_creator
-from tests.components_tests.factories import ComponentInterfaceFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.factories import UserFactory, WorkstationFactory
 from tests.uploads_tests.factories import (
     UserUploadFactory,
@@ -661,3 +665,77 @@ def test_model_version_control_form():
     assert "Model updating already in progress." in str(
         form.errors["algorithm_model"]
     )
+
+
+@pytest.mark.django_db
+class TestJobCreateForm(TestCase):
+    def setUp(self):
+        self.alg = AlgorithmFactory(time_limit=123)
+        self.ai = AlgorithmImageFactory(
+            algorithm=self.alg,
+            is_desired_version=True,
+            is_manifest_valid=True,
+            is_in_registry=True,
+        )
+        self.am = AlgorithmModelFactory(
+            algorithm=self.alg, is_desired_version=True
+        )
+        self.editor = UserFactory()
+        self.alg.add_editor(self.editor)
+
+    def test_creator_queryset(self):
+        form = JobCreateForm(
+            algorithm=self.ai.algorithm, user=self.editor, data={}
+        )
+        assert list(form.fields["creator"].queryset.all()) == [self.editor]
+        assert form.fields["creator"].initial == self.editor
+
+    def test_time_limit_prepopulated(self):
+        form = JobCreateForm(
+            algorithm=self.ai.algorithm, user=self.editor, data={}
+        )
+        assert form.fields["time_limit"].initial == self.alg.time_limit
+
+    def test_algorithm_image_queryset(self):
+        # irrelevant Algorithm images
+        inactive_image = AlgorithmImageFactory(algorithm=self.alg)
+        image_for_different_alg = AlgorithmImageFactory(
+            is_desired_version=True,
+            is_manifest_valid=True,
+            is_in_registry=True,
+        )
+        form = JobCreateForm(
+            algorithm=self.ai.algorithm, user=self.editor, data={}
+        )
+        ai_qs = form.fields["algorithm_image"].queryset.all()
+        assert self.ai in ai_qs
+        assert inactive_image not in ai_qs
+        assert image_for_different_alg not in ai_qs
+        assert form.fields["algorithm_image"].initial == self.ai
+
+    def test_cannot_create_job_with_same_inputs_twice(self):
+        ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.STRING)
+        self.alg.inputs.set([ci])
+        civ = ComponentInterfaceValueFactory(interface=ci, value="foo")
+        job = AlgorithmJobFactory(
+            algorithm_image=self.ai,
+            algorithm_model=self.am,
+            status=Job.SUCCESS,
+            time_limit=123,
+        )
+        job.inputs.add(civ)
+
+        form = JobCreateForm(
+            algorithm=self.ai.algorithm,
+            user=self.editor,
+            data={
+                "algorithm_image": self.ai,
+                "algorithm_model": self.am,
+                ci.slug: "foo",
+            },
+        )
+        assert not form.is_valid()
+        assert (
+            "A result for these inputs with the current image and model already exists."
+            in str(form.errors)
+        )

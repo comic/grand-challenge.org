@@ -1479,9 +1479,13 @@ class Evaluation(UUIDModel, ComponentJob):
 
     @cached_property
     def inputs_complete(self):
-        return self.successful_jobs.count() == len(
-            self.valid_archive_item_values
-        )
+        if self.submission.algorithm_image:
+            return self.successful_jobs.count() == len(
+                self.valid_archive_item_values
+            )
+        else:
+            # no need to check for prediction submissions
+            return True
 
     @property
     def executor_kwargs(self):

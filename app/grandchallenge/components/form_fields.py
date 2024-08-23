@@ -163,7 +163,7 @@ class InterfaceFormField:
                     self.kwargs["initial"] = (
                         ComponentInterfaceValue.objects.get(pk=civ_pk)
                     )
-                except ValueError:
+                except KeyError:
                     self.kwargs["initial"] = None
 
                 if (

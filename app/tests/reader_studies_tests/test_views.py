@@ -9,7 +9,6 @@ from grandchallenge.cases.widgets import FlexibleImageField, WidgetChoices
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.reader_studies.models import Answer, DisplaySet, Question
 from grandchallenge.subdomains.utils import reverse
-from grandchallenge.uploads.widgets import UserUploadSingleWidget
 from tests.cases_tests import RESOURCE_PATH
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
@@ -684,46 +683,6 @@ def test_add_display_set_to_reader_study(
     assert ds.values.get(interface=ci_img_new) == civ_new_img
     assert ds.values.get(interface=ci_str_new).value == "new"
     assert ds.values.get(interface=ci_json).file.read() == b'{"foo": "bar"}'
-
-
-@pytest.mark.django_db
-def test_add_files_to_display_set(client):
-    u1, u2 = UserFactory.create_batch(2)
-    rs = ReaderStudyFactory()
-    ds = DisplaySetFactory(reader_study=rs)
-    rs.add_editor(u1)
-    ci_json = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
-
-    response = get_view_for_user(
-        viewname="reader-studies:display-set-files-update",
-        client=client,
-        reverse_kwargs={
-            "pk": ds.pk,
-            "interface_slug": ci_json.slug,
-            "slug": rs.slug,
-        },
-        user=u2,
-    )
-    assert response.status_code == 403
-
-    response = get_view_for_user(
-        viewname="reader-studies:display-set-files-update",
-        client=client,
-        reverse_kwargs={
-            "pk": ds.pk,
-            "interface_slug": ci_json.slug,
-            "slug": rs.slug,
-        },
-        user=u1,
-    )
-    assert response.status_code == 200
-    assert isinstance(
-        response.context["form"].fields[str(ci_json.slug)], ModelChoiceField
-    )
-    assert isinstance(
-        response.context["form"].fields[str(ci_json.slug)].widget,
-        UserUploadSingleWidget,
-    )
 
 
 @pytest.mark.parametrize(

@@ -1122,17 +1122,18 @@ def test_reader_study_add_ground_truth_ds(client, settings):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "form_class, file_widget",
+    "form_class",
     (
-        (DisplaySetCreateForm, UserUploadSingleWidget),
-        (DisplaySetUpdateForm, SelectUploadWidget),
+        DisplaySetCreateForm,
+        DisplaySetUpdateForm,
     ),
 )
-def test_display_set_update_form(form_class, file_widget):
+def test_display_set_update_form(form_class):
     rs = ReaderStudyFactory()
     user = UserFactory()
     rs.add_editor(user)
     ds = DisplaySetFactory(reader_study=rs)
+
     for slug, store_in_db in [("slug-1", False), ("slug-2", True)]:
         ci = ComponentInterfaceFactory(
             title=slug, kind="JSON", store_in_database=store_in_db
@@ -1143,7 +1144,7 @@ def test_display_set_update_form(form_class, file_widget):
     instance = None if form_class == DisplaySetCreateForm else ds
     form = form_class(user=user, instance=instance, base_obj=rs)
     assert sorted(form.fields.keys()) == ["order", "slug-1", "slug-2", "title"]
-    assert isinstance(form.fields["slug-1"].widget, file_widget)
+    assert isinstance(form.fields["slug-1"].widget, SelectUploadWidget)
     assert isinstance(form.fields["slug-2"].widget, JSONEditorWidget)
 
     ci = ComponentInterfaceFactory(kind="STR", title="slug-3")

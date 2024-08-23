@@ -272,6 +272,8 @@ class SingleCIVForm(Form):
                 instance=selected_interface,
                 user=user,
                 required=selected_interface.value_required,
+                existing_civs=None,
+                form_data=self.data,
             ).field
 
 

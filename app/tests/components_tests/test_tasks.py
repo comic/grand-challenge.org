@@ -27,11 +27,12 @@ from grandchallenge.components.tasks import (
     upload_to_registry_and_sagemaker,
     validate_docker_image,
 )
-from grandchallenge.core.celery import _retry
+from grandchallenge.core.celery import _retry, acks_late_micro_short_task
 from grandchallenge.notifications.models import Notification
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
+    AlgorithmJobFactory,
     AlgorithmModelFactory,
 )
 from tests.archives_tests.factories import ArchiveItemFactory
@@ -339,11 +340,62 @@ def test_update_sagemaker_shim(
     )
 
 
+@acks_late_micro_short_task
+def some_async_task(foo):
+    return foo
+
+
 @pytest.mark.parametrize(
-    "object_type", [DisplaySetFactory, ArchiveItemFactory]
+    "object_type, extra_object_kwargs",
+    [
+        (DisplaySetFactory, {}),
+        (ArchiveItemFactory, {}),
+        (AlgorithmJobFactory, {"time_limit": 10}),
+    ],
 )
 @pytest.mark.django_db
-def test_add_image_to_object(settings, object_type):
+def test_add_image_to_object(
+    settings,
+    django_capture_on_commit_callbacks,
+    object_type,
+    extra_object_kwargs,
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    obj = object_type(**extra_object_kwargs)
+    us = RawImageUploadSessionFactory()
+    ci = ComponentInterfaceFactory(kind="IMG")
+    ImageFactory(origin=us)
+
+    linked_task = some_async_task.signature(
+        kwargs={"foo": "bar"}, immutable=True
+    )
+
+    with django_capture_on_commit_callbacks(execute=True) as callbacks:
+        add_image_to_object(
+            app_label=obj._meta.app_label,
+            model_name=obj._meta.model_name,
+            upload_session_pk=us.pk,
+            object_pk=obj.pk,
+            interface_pk=ci.pk,
+            linked_task=linked_task,
+        )
+    assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 1
+    assert "some_async_task" in str(callbacks)
+
+
+@pytest.mark.parametrize(
+    "object_type",
+    [
+        DisplaySetFactory,
+        ArchiveItemFactory,
+    ],
+)
+@pytest.mark.django_db
+def test_add_image_to_object_updates_upload_session_on_validation_fail(
+    settings, django_capture_on_commit_callbacks, object_type
+):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -353,55 +405,140 @@ def test_add_image_to_object(settings, object_type):
 
     error_message = "Image imports should result in a single image"
 
-    add_image_to_object(
-        app_label=obj._meta.app_label,
-        model_name=obj._meta.model_name,
-        upload_session_pk=us.pk,
-        object_pk=obj.pk,
-        interface_pk=ci.pk,
+    linked_task = some_async_task.signature(
+        kwargs={"foo": "bar"}, immutable=True
     )
+
+    with django_capture_on_commit_callbacks(execute=True) as callbacks:
+        add_image_to_object(
+            app_label=obj._meta.app_label,
+            model_name=obj._meta.model_name,
+            upload_session_pk=us.pk,
+            object_pk=obj.pk,
+            interface_pk=ci.pk,
+            linked_task=linked_task,
+        )
 
     assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 0
     us.refresh_from_db()
     assert us.status == RawImageUploadSession.FAILURE
     assert us.error_message == error_message
+    assert "some_async_task" not in str(callbacks)
 
-    im1, im2 = ImageFactory.create_batch(2, origin=us)
 
-    add_image_to_object(
-        app_label=obj._meta.app_label,
-        model_name=obj._meta.model_name,
-        upload_session_pk=us.pk,
-        object_pk=obj.pk,
-        interface_pk=ci.pk,
+@pytest.mark.django_db
+def test_add_image_to_object_marks_job_as_failed_on_validation_fail(
+    settings,
+    django_capture_on_commit_callbacks,
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    obj = AlgorithmJobFactory(time_limit=10)
+    us = RawImageUploadSessionFactory()
+    ci = ComponentInterfaceFactory(kind="IMG")
+
+    error_message = "Image imports should result in a single image"
+
+    linked_task = some_async_task.signature(
+        kwargs={"foo": "bar"}, immutable=True
     )
+
+    with django_capture_on_commit_callbacks(execute=True) as callbacks:
+        add_image_to_object(
+            app_label=obj._meta.app_label,
+            model_name=obj._meta.model_name,
+            upload_session_pk=us.pk,
+            object_pk=obj.pk,
+            interface_pk=ci.pk,
+            linked_task=linked_task,
+        )
+
     assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 0
     us.refresh_from_db()
     assert us.status == RawImageUploadSession.FAILURE
     assert us.error_message == error_message
-
-    im2.delete()
-
-    add_image_to_object(
-        app_label=obj._meta.app_label,
-        model_name=obj._meta.model_name,
-        upload_session_pk=us.pk,
-        object_pk=obj.pk,
-        interface_pk=ci.pk,
-    )
-    assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 1
+    obj.refresh_from_db()
+    assert obj.status == obj.CANCELLED
+    assert obj.error_message == error_message
+    assert "some_async_task" not in str(callbacks)
 
 
 @pytest.mark.parametrize(
-    "object_type", [DisplaySetFactory, ArchiveItemFactory]
+    "object_type, extra_object_kwargs",
+    [
+        (DisplaySetFactory, {}),
+        (ArchiveItemFactory, {}),
+        (AlgorithmJobFactory, {"time_limit": 10}),
+    ],
 )
 @pytest.mark.django_db
-def test_add_file_to_object(settings, object_type):
+def test_add_file_to_object(
+    settings,
+    django_capture_on_commit_callbacks,
+    object_type,
+    extra_object_kwargs,
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    creator = UserFactory()
+    obj = object_type(**extra_object_kwargs)
+    linked_task = some_async_task.signature(
+        kwargs={"foo": "bar"}, immutable=True
+    )
+
+    us = UserUploadFactory(filename="file.json", creator=creator)
+    presigned_urls = us.generate_presigned_urls(part_numbers=[1])
+    response = put(presigned_urls["1"], data=b'["foo", "bar"]')
+    us.complete_multipart_upload(
+        parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
+    )
+    us.save()
+    ci = ComponentInterfaceFactory(
+        kind="JSON",
+        store_in_database=False,
+        schema={
+            "$schema": "http://json-schema.org/draft-07/schema",
+            "type": "array",
+        },
+    )
+
+    with django_capture_on_commit_callbacks(execute=True) as callbacks:
+        add_file_to_object(
+            app_label=obj._meta.app_label,
+            model_name=obj._meta.model_name,
+            user_upload_pk=us.pk,
+            object_pk=obj.pk,
+            interface_pk=ci.pk,
+            linked_task=linked_task,
+        )
+
+    assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 1
+    assert "some_async_task" in str(callbacks)
+
+
+@pytest.mark.parametrize(
+    "object_type",
+    [
+        DisplaySetFactory,
+        ArchiveItemFactory,
+    ],
+)
+@pytest.mark.django_db
+def test_add_file_to_object_sends_notification_on_validation_fail(
+    settings,
+    django_capture_on_commit_callbacks,
+    object_type,
+):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
     creator = UserFactory()
     obj = object_type()
+    linked_task = some_async_task.signature(
+        kwargs={"foo": "bar"}, immutable=True
+    )
 
     us = UserUploadFactory(filename="file.json", creator=creator)
     presigned_urls = us.generate_presigned_urls(part_numbers=[1])
@@ -419,13 +556,15 @@ def test_add_file_to_object(settings, object_type):
         },
     )
 
-    add_file_to_object(
-        app_label=obj._meta.app_label,
-        model_name=obj._meta.model_name,
-        object_pk=obj.pk,
-        user_upload_pk=us.pk,
-        interface_pk=ci.pk,
-    )
+    with django_capture_on_commit_callbacks(execute=True) as callbacks:
+        add_file_to_object(
+            app_label=obj._meta.app_label,
+            model_name=obj._meta.model_name,
+            object_pk=obj.pk,
+            user_upload_pk=us.pk,
+            interface_pk=ci.pk,
+            linked_task=linked_task,
+        )
 
     assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 0
     us.refresh_from_db()
@@ -434,23 +573,57 @@ def test_add_file_to_object(settings, object_type):
         Notification.objects.first().message
         == f"File for interface {ci.title} failed validation."
     )
+    assert "some_async_task" not in str(callbacks)
 
-    us2 = UserUploadFactory(filename="file.json", creator=creator)
-    presigned_urls = us2.generate_presigned_urls(part_numbers=[1])
-    response = put(presigned_urls["1"], data=b'["foo", "bar"]')
-    us2.complete_multipart_upload(
+
+@pytest.mark.django_db
+def test_add_file_to_object_updates_job_on_validation_fail(
+    settings,
+    django_capture_on_commit_callbacks,
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    creator = UserFactory()
+    obj = AlgorithmJobFactory(time_limit=10)
+    linked_task = some_async_task.signature(
+        kwargs={"foo": "bar"}, immutable=True
+    )
+
+    us = UserUploadFactory(filename="file.json", creator=creator)
+    presigned_urls = us.generate_presigned_urls(part_numbers=[1])
+    response = put(presigned_urls["1"], data=b'{"foo": "bar"}')
+    us.complete_multipart_upload(
         parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
     )
-    us2.save()
-
-    add_file_to_object(
-        app_label=obj._meta.app_label,
-        model_name=obj._meta.model_name,
-        user_upload_pk=us2.pk,
-        object_pk=obj.pk,
-        interface_pk=ci.pk,
+    us.save()
+    ci = ComponentInterfaceFactory(
+        kind="JSON",
+        store_in_database=False,
+        schema={
+            "$schema": "http://json-schema.org/draft-07/schema",
+            "type": "array",
+        },
     )
-    assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 1
+
+    with django_capture_on_commit_callbacks(execute=True) as callbacks:
+        add_file_to_object(
+            app_label=obj._meta.app_label,
+            model_name=obj._meta.model_name,
+            object_pk=obj.pk,
+            user_upload_pk=us.pk,
+            interface_pk=ci.pk,
+            linked_task=linked_task,
+        )
+
+    assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 0
+    obj.refresh_from_db()
+    assert obj.status == obj.CANCELLED
+    assert f"File for interface {ci.title} failed validation" in str(
+        obj.error_message
+    )
+    assert Notification.objects.count() == 0
+    assert "some_async_task" not in str(callbacks)
 
 
 @pytest.mark.parametrize(

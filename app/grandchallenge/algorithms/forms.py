@@ -146,7 +146,10 @@ class JobCreateForm(SaveFormInitMixin, Form):
                 existing_civs = None
 
             if inp.slug in self.data:
-                initial = self.data[inp.slug]
+                if inp.kind == ComponentInterface.Kind.ANY:
+                    initial = self.data.getlist(inp.slug)
+                else:
+                    initial = self.data[inp.slug]
             else:
                 initial = None
 

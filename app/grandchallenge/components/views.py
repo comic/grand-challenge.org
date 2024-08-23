@@ -430,7 +430,7 @@ class CIVSetBulkDelete(LoginRequiredMixin, FormView):
         return super().form_valid(form)
 
 
-class FileUploadFormFieldTemplateView(View):
+class FileUploadFormFieldTemplateView(LoginRequiredMixin, View):
 
     @property
     def interface(self):

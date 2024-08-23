@@ -442,3 +442,20 @@ def test_display_set_bulk_delete(
     assert base_obj.civ_sets_related_manager.count() == 3
     assert ob1 not in base_obj.civ_sets_related_manager.all()
     assert ob2 not in base_obj.civ_sets_related_manager.all()
+
+
+@pytest.mark.django_db
+def test_file_field_view(client):
+    user = UserFactory()
+    ci_json = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
+
+    response = get_view_for_user(
+        viewname="components:file-upload",
+        client=client,
+        reverse_kwargs={
+            "interface_slug": ci_json.slug,
+        },
+        user=user,
+    )
+    assert response.status_code == 200
+    assert "user-upload" in str(response.content)

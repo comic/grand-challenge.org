@@ -398,7 +398,7 @@ def test_execute_algorithm_job_for_missing_inputs(settings):
     # nothing happens since the input is missing
     job.refresh_from_db()
     assert job.status == Job.PENDING
-    assert "" in job.error_message
+    assert job.error_message == ""
 
 
 @pytest.mark.django_db

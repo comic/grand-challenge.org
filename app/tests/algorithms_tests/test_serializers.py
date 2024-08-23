@@ -8,6 +8,7 @@ from grandchallenge.algorithms.serializers import (
     JobPostSerializer,
 )
 from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.utils import reformat_inputs
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
@@ -18,6 +19,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.factories import ImageFactory, UserFactory
+from tests.uploads_tests.factories import UserUploadFactory
 
 
 @pytest.mark.django_db
@@ -190,13 +192,9 @@ def test_algorithm_job_post_serializer_create(
 
     # setup
     user = UserFactory()
-    upload, upload_2 = (
-        RawImageUploadSessionFactory(creator=user),
-        RawImageUploadSessionFactory(creator=user),
-    )
+    upload = RawImageUploadSessionFactory(creator=user)
     image1, image2 = ImageFactory.create_batch(2)
     upload.image_set.set([image1])
-    upload_2.image_set.set([image2])
     for im in [image1, image2]:
         assign_perm("view_image", user, im)
         assert user.has_perm("view_image", im)
@@ -204,31 +202,23 @@ def test_algorithm_job_post_serializer_create(
     algorithm_image = AlgorithmImageFactory(
         is_manifest_valid=True, is_in_registry=True, is_desired_version=True
     )
-    interfaces = {
-        ComponentInterfaceFactory(
-            kind=ComponentInterface.Kind.STRING,
-            title="TestInterface 1",
-            default_value="default",
-        ),
-        ComponentInterfaceFactory(
-            kind=ComponentInterface.Kind.IMAGE, title="TestInterface 2"
-        ),
-        ComponentInterfaceFactory(
-            kind=ComponentInterface.Kind.IMAGE, title="TestInterface 3"
-        ),
-    }
-    algorithm_image.algorithm.inputs.set(interfaces)
+    ci_string = ComponentInterfaceFactory(
+        kind=ComponentInterface.Kind.STRING,
+        default_value="default",
+    )
+    ci_img1 = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
+    ci_img2 = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
+
+    algorithm_image.algorithm.inputs.set([ci_string, ci_img2, ci_img1])
     algorithm_image.algorithm.add_editor(user)
 
-    algorithm_image.algorithm.save()
-
-    job = {"algorithm": algorithm_image.algorithm.api_url, "inputs": []}
-    job["inputs"].append(
-        {"interface": "testinterface-2", "upload_session": upload_2.api_url}
-    )
-    job["inputs"].append(
-        {"interface": "testinterface-3", "image": image1.api_url}
-    )
+    job = {
+        "algorithm": algorithm_image.algorithm.api_url,
+        "inputs": [
+            {"interface": ci_img1.slug, "upload_session": upload.api_url},
+            {"interface": ci_img2.slug, "image": image2.api_url},
+        ],
+    }
 
     # test
     request = rf.get("/foo")
@@ -349,3 +339,29 @@ class TestJobCreateLimits:
         )
 
         assert serializer.is_valid()
+
+
+@pytest.mark.django_db
+def test_reformat_inputs(rf):
+    ci_str = ComponentInterfaceFactory(kind=ComponentInterface.Kind.STRING)
+    ci_img = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
+    ci_img2 = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
+    ci_file = ComponentInterfaceFactory(kind=ComponentInterface.Kind.ANY)
+
+    us = RawImageUploadSessionFactory()
+    upl = UserUploadFactory()
+    im = ImageFactory()
+
+    data = [
+        {"interface": ci_str, "value": "foo"},
+        {"interface": ci_img, "image": im.pk},
+        {"interface": ci_img2, "upload_session": us.pk},
+        {"interface": ci_file, "user_upload": upl.pk},
+    ]
+
+    assert reformat_inputs(serialized_civs=data) == {
+        ci_str.slug: "foo",
+        ci_img.slug: im.pk,
+        ci_img2.slug: us.pk,
+        ci_file.slug: upl.pk,
+    }
