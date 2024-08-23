@@ -1107,7 +1107,6 @@ def add_file_to_object(
     user_upload_pk,
     object_pk,
     interface_pk,
-    civ_pk=None,
     linked_task=None,
 ):
     from grandchallenge.components.models import (
@@ -1122,6 +1121,16 @@ def add_file_to_object(
         model_name=model_name,
     )
     interface = ComponentInterface.objects.get(pk=interface_pk)
+
+    try:
+        current_value = getattr(object, object.base_object.civ_set_lookup).get(
+            interface=interface
+        )
+    except ObjectDoesNotExist:
+        current_value = None
+
+    getattr(object, object.base_object.civ_set_lookup).remove(current_value)
+
     error = None
     civ = ComponentInterfaceValue(interface=interface)
     try:
@@ -1130,10 +1139,6 @@ def add_file_to_object(
         civ.save()
         user_upload.copy_object(to_field=civ.file)
         getattr(object, object.base_object.civ_set_lookup).add(civ)
-        if civ_pk is not None:
-            # Remove the previously assigned civ from the display set
-            civ = ComponentInterfaceValue.objects.get(pk=civ_pk)
-            getattr(object, object.base_object.civ_set_lookup).remove(civ)
     except ValidationError as e:
         error = format_validation_error_message(error=e)
 

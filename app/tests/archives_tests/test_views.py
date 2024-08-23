@@ -3,6 +3,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from django.core.files.base import ContentFile
 from guardian.shortcuts import assign_perm, remove_perm
 from requests import put
 
@@ -919,13 +920,32 @@ def test_archive_item_add_json_file(
                         "slug": archive.slug,
                     },
                     user=editor,
-                    data={ci.slug: upload.pk},
+                    data={ci.slug: upload.pk, f"value_type_{ci.slug}": "uuid"},
                 )
         assert response.status_code == 302
-        assert (
-            file.name.split("/")[-1]
-            in ArchiveItem.objects.get().values.first().file.name
-        )
+        assert file.name.split("/")[-1] in item.values.first().file.name
+
+    item2 = ArchiveItemFactory(archive=archive)
+    civ = ComponentInterfaceValueFactory(
+        interface=ci, file=ContentFile(b'{"new":"bar"}', name="test.json")
+    )
+    item2.values.add(civ)
+
+    # selecting an existing file is also possible
+    with django_capture_on_commit_callbacks(execute=True):
+        with django_capture_on_commit_callbacks(execute=True):
+            response = get_view_for_user(
+                viewname="archives:item-edit",
+                client=client,
+                method=client.post,
+                reverse_kwargs={
+                    "pk": item.pk,
+                    "slug": archive.slug,
+                },
+                user=editor,
+                data={ci.slug: civ.pk, f"value_type_{ci.slug}": "civ"},
+            )
+    assert response.status_code == 302
 
 
 @pytest.mark.django_db

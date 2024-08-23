@@ -2230,7 +2230,6 @@ class CIVForObjectMixin:
                         "user_upload_pk": str(new_value.pk),
                         "interface_pk": str(ci.pk),
                         "object_pk": self.pk,
-                        "civ_pk": current_civ.pk if current_civ else None,
                         "linked_task": linked_task,
                     }
                 ).apply_async
