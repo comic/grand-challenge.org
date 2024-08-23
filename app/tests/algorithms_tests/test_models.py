@@ -842,3 +842,30 @@ def test_non_editor_remaining_jobs():
     ai.algorithm.add_editor(user=u)
 
     assert ai.get_remaining_jobs(user=u) == 7
+
+
+@pytest.mark.django_db
+def test_inputs_complete():
+    alg = AlgorithmFactory()
+    ci1, ci2, ci3 = ComponentInterfaceFactory.create_batch(
+        3, kind=ComponentInterface.Kind.STRING
+    )
+    alg.inputs.set([ci1, ci2, ci3])
+    job = AlgorithmJobFactory(algorithm_image__algorithm=alg, time_limit=10)
+    job.inputs.set(
+        [
+            ComponentInterfaceValueFactory(interface=ci1, value="Foo"),
+            ComponentInterfaceValueFactory(interface=ci2, value=None),
+        ]
+    )
+    assert not job.inputs_complete
+
+    job.inputs.set(
+        [
+            ComponentInterfaceValueFactory(interface=ci1, value="Foo"),
+            ComponentInterfaceValueFactory(interface=ci2, value="Bar"),
+            ComponentInterfaceValueFactory(interface=ci3, value="Test"),
+        ]
+    )
+    del job.inputs_complete
+    assert job.inputs_complete

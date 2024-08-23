@@ -1483,9 +1483,10 @@ class Evaluation(UUIDModel, ComponentJob):
             return self.successful_jobs.count() == len(
                 self.valid_archive_item_values
             )
-        else:
-            # no need to check for prediction submissions
+        elif self.submission.predictions_file:
             return True
+        else:
+            return False
 
     @property
     def executor_kwargs(self):
