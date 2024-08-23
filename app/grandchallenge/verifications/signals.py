@@ -5,14 +5,18 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.mail import mail_managers
 from django.core.signing import Signer
-from django.db.models.signals import m2m_changed
+from django.db.models.signals import m2m_changed, post_save
 from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.html import format_html
 
+from grandchallenge.algorithms.models import AlgorithmPermissionRequest
 from grandchallenge.profiles.tasks import deactivate_user
-from grandchallenge.verifications.models import VerificationUserSet
+from grandchallenge.verifications.models import (
+    Verification,
+    VerificationUserSet,
+)
 from grandchallenge.verifications.tasks import update_verification_user_set
 
 
@@ -93,3 +97,15 @@ def auto_disable_user_in_verification_user_set(
                         vus_link=verification_user_set.get_absolute_url(),
                     ),
                 )
+
+
+@receiver(post_save, sender=Verification)
+def accept_permission_requests(*, instance, **kwargs):
+    if instance.is_verified:
+        pending_requests = AlgorithmPermissionRequest.objects.filter(
+            user=instance.user, status=AlgorithmPermissionRequest.PENDING
+        )
+
+        for request in pending_requests:
+            request.status = AlgorithmPermissionRequest.ACCEPTED
+            request.save()
