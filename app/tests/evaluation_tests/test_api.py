@@ -414,3 +414,51 @@ class TestUpdateExternalEvaluation(TestCase):
         assert response.json() == {
             "status": "You do not have permission to update this evaluation."
         }
+
+
+@pytest.mark.django_db
+def test_claimable_evaluations_filter(client):
+    e1 = create_claimable_evaluation()
+    e2 = create_claimable_evaluation()
+    assert e1.status == Evaluation.PENDING
+    assert e2.status == Evaluation.PENDING
+
+    external_evaluator, challenge_admin, challenge_participant = (
+        get_user_groups(e1)
+    )
+    e2.submission.phase.challenge.external_evaluators_group.user_set.add(
+        external_evaluator
+    )
+
+    response = get_view_for_user(
+        viewname="api:evaluation-claimable-evaluations",
+        client=client,
+        user=external_evaluator,
+        content_type="application/json",
+    )
+    assert response.status_code == 200
+    # both are claimable
+    assert response.json() == [
+        ExternalEvaluationSerializer(
+            e1, context={"request": response.wsgi_request}
+        ).data,
+        ExternalEvaluationSerializer(
+            e2, context={"request": response.wsgi_request}
+        ).data,
+    ]
+
+    # filter by phase
+    response = get_view_for_user(
+        viewname="api:evaluation-claimable-evaluations",
+        client=client,
+        user=external_evaluator,
+        content_type="application/json",
+        data={"submission__phase": e1.submission.phase.pk},
+    )
+    assert response.status_code == 200
+    # only e1 is returned
+    assert response.json() == [
+        ExternalEvaluationSerializer(
+            e1, context={"request": response.wsgi_request}
+        ).data,
+    ]
