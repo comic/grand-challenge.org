@@ -18,7 +18,6 @@ from grandchallenge.components.serializers import (
     ComponentInterfaceValueSerializer,
     HyperlinkedComponentInterfaceValueSerializer,
 )
-from grandchallenge.components.utils import reformat_inputs
 from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.hanging_protocols.serializers import (
     HangingProtocolSerializer,
@@ -231,7 +230,7 @@ class JobPostSerializer(JobSerializer):
                     {"interface": interface, "value": interface.default_value}
                 )
 
-        reformatted_inputs = reformat_inputs(serialized_civs=inputs)
+        reformatted_inputs = self.reformat_inputs(serialized_civs=inputs)
         data.update(reformatted_inputs)
 
         if Job.objects.get_jobs_with_same_inputs(
@@ -254,3 +253,29 @@ class JobPostSerializer(JobSerializer):
             ],
         )
         return job
+
+    def reformat_inputs(self, *, serialized_civs):
+        """
+        Takes serialized CIV data and turns it into a dictionary:
+        {
+            "interface_slug_1": "value_1",
+            "interface_slug_2": "value_2"
+        }
+        This representation of CIV data corresponds to how CIV data is stored in
+        a form's cleaned_data.
+        """
+        possible_keys = [
+            "image",
+            "value",
+            "file",
+            "user_upload",
+            "upload_session",
+        ]
+        data = {}
+        for civ in serialized_civs:
+            interface_slug = civ["interface"].slug
+            for key in possible_keys:
+                if key in civ:
+                    data[interface_slug] = civ[key]
+                    break
+        return data

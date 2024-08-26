@@ -8,7 +8,6 @@ from grandchallenge.algorithms.serializers import (
     JobPostSerializer,
 )
 from grandchallenge.components.models import ComponentInterface
-from grandchallenge.components.utils import reformat_inputs
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
@@ -358,8 +357,13 @@ def test_reformat_inputs(rf):
         {"interface": ci_img2, "upload_session": us.pk},
         {"interface": ci_file, "user_upload": upl.pk},
     ]
+    request = rf.get("/foo")
+    request.user = UserFactory()
+    serializer = JobPostSerializer(
+        data=AlgorithmJobFactory(time_limit=10), context={"request": request}
+    )
 
-    assert reformat_inputs(serialized_civs=data) == {
+    assert serializer.reformat_inputs(serialized_civs=data) == {
         ci_str.slug: "foo",
         ci_img.slug: im.pk,
         ci_img2.slug: us.pk,

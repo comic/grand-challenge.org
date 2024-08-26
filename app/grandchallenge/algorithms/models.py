@@ -10,7 +10,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.db.models import Count, Min, Q, Sum
+from django.db.models import Count, Min, Q, QuerySet, Sum
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.template.defaultfilters import truncatechars
@@ -25,6 +25,7 @@ from jinja2.exceptions import TemplateError
 from stdimage import JPEGField
 
 from grandchallenge.anatomy.models import BodyStructure
+from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.charts.specs import stacked_bar
 from grandchallenge.components.models import (  # noqa: F401
     CIVForObjectMixin,
@@ -37,7 +38,6 @@ from grandchallenge.components.models import (  # noqa: F401
     Tarball,
     ValuesForInterfacesMixin,
 )
-from grandchallenge.components.utils import retrieve_existing_civs
 from grandchallenge.core.guardian import get_objects_for_group
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
@@ -60,6 +60,7 @@ from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
 from grandchallenge.reader_studies.models import DisplaySet
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.uploads.models import UserUpload
 from grandchallenge.workstations.models import Workstation
 
 logger = logging.getLogger(__name__)
@@ -651,13 +652,58 @@ class JobManager(ComponentJobManager):
     def non_interface_fields(self):
         return ["algorithm_image", "algorithm_model", "creator", "time_limit"]
 
+    def retrieve_existing_civs(self, *, civ_data):
+        """
+        Checks if there are existing CIVs for the provided data and returns those.
+
+        Parameters
+        ----------
+        civ_data
+            A dictionary with interface slugs as keys and CIV values as values.
+
+        Returns
+        -------
+        A list of ComponentInterfaceValues
+
+        """
+        existing_civs = []
+        for interface, value in civ_data.items():
+            if isinstance(value, ComponentInterfaceValue):
+                existing_civs.append(value)
+            elif isinstance(value, Image):
+                ci = ComponentInterface.objects.get(slug=interface)
+                try:
+                    civ = ComponentInterfaceValue.objects.filter(
+                        interface=ci, image=value
+                    ).get()
+                    existing_civs.append(civ)
+                except ObjectDoesNotExist:
+                    continue
+            elif isinstance(
+                value, (RawImageUploadSession, UserUpload, QuerySet)
+            ):
+                # uploads will create new CIVs, so ignore these
+                continue
+            else:
+                # values can be of different types
+                ci = ComponentInterface.objects.get(slug=interface)
+                try:
+                    civ = ComponentInterfaceValue.objects.filter(
+                        interface=ci, value=value
+                    ).get()
+                    existing_civs.append(civ)
+                except ObjectDoesNotExist:
+                    continue
+
+        return existing_civs
+
     def get_jobs_with_same_inputs(
         self, *, data, algorithm_image, algorithm_model
     ):
         civ_data = {
             k: v for k, v in data.items() if k not in self.non_interface_fields
         }
-        existing_civs = retrieve_existing_civs(civ_data=civ_data)
+        existing_civs = self.retrieve_existing_civs(civ_data=civ_data)
         unique_kwargs = {
             "algorithm_image": algorithm_image,
         }

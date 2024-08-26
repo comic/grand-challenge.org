@@ -13,7 +13,6 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
-from grandchallenge.components.utils import retrieve_existing_civs
 from grandchallenge.credits.models import Credit
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
@@ -557,7 +556,7 @@ def test_retrieve_existing_civs(
         ci_file.slug: upload.api_url if new_file else list_of_civs[3],
     }
 
-    civs = retrieve_existing_civs(civ_data=data)
+    civs = Job.objects.retrieve_existing_civs(civ_data=data)
 
     assert civs == [
         item
