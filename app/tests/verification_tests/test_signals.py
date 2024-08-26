@@ -1,9 +1,23 @@
 import pytest
 
-from grandchallenge.algorithms.models import AlgorithmPermissionRequest
+from grandchallenge.core.models import RequestBase
+from grandchallenge.core.utils.access_requests import (
+    AccessRequestHandlingOptions,
+)
 from grandchallenge.verifications.models import VerificationUserSet
-from tests.algorithms_tests.factories import AlgorithmPermissionRequestFactory
+from tests.algorithms_tests.factories import (
+    AlgorithmFactory,
+    AlgorithmPermissionRequestFactory,
+)
+from tests.archives_tests.factories import (
+    ArchiveFactory,
+    ArchivePermissionRequestFactory,
+)
 from tests.factories import UserFactory
+from tests.reader_studies_tests.factories import (
+    ReaderStudyFactory,
+    ReaderStudyPermissionRequestFactory,
+)
 from tests.verification_tests.factories import VerificationFactory
 
 
@@ -96,15 +110,60 @@ def test_auto_deactivate_reverse_set(
 
 
 @pytest.mark.django_db
-def test_auto_accept_permission_on_verification():
+@pytest.mark.parametrize(
+    "perm_request_factory, perm_request_entity_attr, entity_factory",
+    [
+        (AlgorithmPermissionRequestFactory, "algorithm", AlgorithmFactory),
+        (ArchivePermissionRequestFactory, "archive", ArchiveFactory),
+        (
+            ReaderStudyPermissionRequestFactory,
+            "reader_study",
+            ReaderStudyFactory,
+        ),
+    ],
+)
+@pytest.mark.parametrize(
+    "access_request_handling, verified_status, expected_status",
+    [
+        (AccessRequestHandlingOptions.ACCEPT_ALL, True, RequestBase.ACCEPTED),
+        (AccessRequestHandlingOptions.ACCEPT_ALL, False, RequestBase.ACCEPTED),
+        (
+            AccessRequestHandlingOptions.ACCEPT_VERIFIED_USERS,
+            True,
+            RequestBase.ACCEPTED,
+        ),
+        (
+            AccessRequestHandlingOptions.ACCEPT_VERIFIED_USERS,
+            False,
+            RequestBase.PENDING,
+        ),
+        (
+            AccessRequestHandlingOptions.MANUAL_REVIEW,
+            True,
+            RequestBase.PENDING,
+        ),
+    ],
+)
+def test_auto_accept_permission_requests_on_verification(
+    perm_request_factory,
+    perm_request_entity_attr,
+    entity_factory,
+    access_request_handling,
+    verified_status,
+    expected_status,
+):
     u = UserFactory()
-    alpr = AlgorithmPermissionRequestFactory(user=u)
+    t = entity_factory(access_request_handling=access_request_handling)
+    pr = perm_request_factory(user=u)
 
-    assert alpr.status == AlgorithmPermissionRequest.PENDING
+    setattr(pr, perm_request_entity_attr, t)
+    pr.save()
 
-    v = VerificationFactory(user=u, email_is_verified=True, is_verified=False)
-    v.is_verified = True
-    v.save()
-    alpr.refresh_from_db()
+    assert pr.status == RequestBase.PENDING
 
-    assert alpr.status == AlgorithmPermissionRequest.ACCEPTED
+    VerificationFactory(
+        user=u, email_is_verified=True, is_verified=verified_status
+    )
+    pr.refresh_from_db()
+
+    assert pr.status == expected_status
