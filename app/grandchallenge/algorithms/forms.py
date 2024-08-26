@@ -147,6 +147,8 @@ class JobCreateForm(SaveFormInitMixin, Form):
 
             if inp.slug in self.data:
                 if inp.kind == ComponentInterface.Kind.ANY:
+                    # interfaces for which the data can be a list need
+                    # to be retrieved with getlist() from the QueryDict
                     initial = self.data.getlist(inp.slug)
                 else:
                     initial = self.data[inp.slug]

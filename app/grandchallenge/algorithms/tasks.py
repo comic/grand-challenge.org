@@ -45,7 +45,9 @@ def execute_algorithm_job_for_inputs(*, job_pk):
             ).apply_async
         )
     else:
-        logger.info("Nothing to do: the inputs are still being provisioned.")
+        logger.info(
+            "Nothing to do: the inputs are still being created and validated."
+        )
         return
 
 

@@ -435,6 +435,7 @@ class Algorithm(
 
     @property
     def civ_sets_related_manager(self):
+        # should return all jobs for this algorithm (not just for the active image)
         return Job.objects.filter(
             algorithm_image__in=self.algorithm_container_images.all()
         )
