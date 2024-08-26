@@ -256,7 +256,10 @@ def _create_demo_challenge(users, algorithm):
         submission.save()
 
         e = Evaluation.objects.create(
-            submission=submission, method=method, status=Evaluation.SUCCESS
+            submission=submission,
+            method=method,
+            status=Evaluation.SUCCESS,
+            time_limit=submission.phase.evaluation_time_limit,
         )
 
         def create_result(evaluation, result: dict):
@@ -368,6 +371,7 @@ def _create_algorithm_demo(users):
             creator=users["algorithm"],
             algorithm_image=algorithm_image,
             status=Evaluation.SUCCESS,
+            time_limit=60,
         )
 
         algorithms_job.inputs.add(input_civ)

@@ -310,6 +310,25 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
             *AnswerType.choices,
         ]
 
+        options_form_set_factory = inlineformset_factory(
+            Question,
+            CategoricalOption,
+            form=CategoricalOptionForm,
+            fields=["title", "default"],
+            extra=(
+                0
+                if Question.objects.filter(pk=self.instance.pk).exists()
+                else 1
+            ),
+            can_delete=self.instance.is_fully_editable,
+        )
+
+        self.options_form_set = options_form_set_factory(
+            instance=self.instance,
+            data=kwargs.get("data"),
+            form_kwargs={"is_editable": self.instance.is_fully_editable},
+        )
+
         self.helper = FormHelper()
         self.helper.form_tag = True
         self.helper.layout = Layout(
@@ -338,8 +357,11 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                 ),
                 Fieldset(
                     "Add options",
-                    Formset("options"),
-                    css_class="options-formset",
+                    Formset(
+                        formset=self.options_form_set,
+                        can_add_another=self.instance.is_fully_editable,
+                    ),
+                    css_class="options-formset border rounded px-2 my-4",
                 ),
                 Field("required"),
                 Field("empty_answer_confirmation"),
@@ -393,6 +415,9 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
     def initial_widget(self):
         return self.instance.widget
 
+    def is_valid(self):
+        return super().is_valid() and self.options_form_set.is_valid()
+
     def clean(self):
         answer_type = self.cleaned_data.get("answer_type")
         interface = self.cleaned_data.get("interface")
@@ -414,7 +439,53 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                 ),
                 field=None,
             )
+
+        self.options_form_set.clean()
+
+        if self.options_form_set.is_valid():
+            # The user will first need to make each instance valid,
+            # then we can check the set of options
+
+            new_forms = [
+                form
+                for form in self.options_form_set.extra_forms
+                if form.has_changed()
+                and not self.options_form_set._should_delete_form(form)
+            ]
+            existing_forms = [
+                form
+                for form in self.options_form_set.initial_forms
+                if form.instance.pk is not None
+                and form not in self.options_form_set.deleted_forms
+            ]
+
+            final_forms = new_forms + existing_forms
+
+            if (
+                len(final_forms) < 1
+                and answer_type in Question.AnswerType.get_choice_types()
+            ):
+                self.add_error(
+                    error=ValidationError(
+                        "At least one option should be supplied for (multiple) choice questions"
+                    ),
+                    field=None,
+                )
+
+            if sum(form.cleaned_data["default"] for form in final_forms) > 1:
+                self.add_error(
+                    error=ValidationError(
+                        "Only one option can be set as default"
+                    ),
+                    field=None,
+                )
+
         return super().clean()
+
+    def save(self, *args, **kwargs):
+        instance = super().save(*args, **kwargs)
+        self.options_form_set.save(*args, **kwargs)
+        return instance
 
     class Meta:
         model = Question
@@ -504,23 +575,22 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
 
 
 class CategoricalOptionForm(ModelForm):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, is_editable, **kwargs):
         super().__init__(*args, **kwargs)
+
         self.fields["title"].label = False
+        self.fields["title"].required = True
+
+        if not is_editable:
+            for field_name in self.fields:
+                self.fields[field_name].disabled = True
+
+        self.helper = FormHelper()
+        self.helper.form_tag = False
 
     class Meta:
         model = CategoricalOption
         fields = ("title", "default")
-
-
-CategoricalOptionFormSet = inlineformset_factory(
-    Question,
-    CategoricalOption,
-    form=CategoricalOptionForm,
-    fields=["title", "default"],
-    extra=1,
-    can_delete=True,
-)
 
 
 class ReadersForm(UserGroupForm):

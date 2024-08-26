@@ -21,7 +21,7 @@ from tests.utils import get_view_for_user
 @pytest.mark.django_db
 def test_job_detail(client):
     user = UserFactory()
-    job = AlgorithmJobFactory(creator=user)
+    job = AlgorithmJobFactory(creator=user, time_limit=60)
     response = get_view_for_user(
         viewname="api:algorithms-job-detail",
         client=client,
@@ -37,7 +37,7 @@ def test_job_detail(client):
 @pytest.mark.django_db
 def test_inputs_are_serialized(client):
     u = UserFactory()
-    j = AlgorithmJobFactory(creator=u)
+    j = AlgorithmJobFactory(creator=u, time_limit=60)
 
     response = get_view_for_user(client=client, url=j.api_url, user=u)
     assert response.json()["inputs"][0]["image"] == str(
@@ -88,17 +88,17 @@ def test_job_time_limit(client):
 @pytest.mark.parametrize(
     "num_jobs",
     (
-        (1),
-        (3),
+        1,
+        3,
     ),
 )
 def test_job_list_view_num_queries(
-    client, django_assert_num_queries, num_jobs
+    client, num_jobs, django_assert_max_num_queries
 ):
     user = UserFactory()
-    AlgorithmJobFactory.create_batch(num_jobs, creator=user)
+    AlgorithmJobFactory.create_batch(num_jobs, creator=user, time_limit=60)
 
-    with django_assert_num_queries(33) as _:
+    with django_assert_max_num_queries(32) as _:
         response = get_view_for_user(
             viewname="api:algorithms-job-list",
             client=client,

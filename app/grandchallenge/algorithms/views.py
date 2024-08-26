@@ -498,7 +498,7 @@ class JobCreate(
         context.update(
             {
                 "algorithm": self.algorithm,
-                "editors_job_limit": settings.ALGORITHMS_JOB_LIMIT_FOR_EDITORS,
+                "editors_job_limit": settings.ALGORITHM_IMAGES_COMPLIMENTARY_EDITOR_JOBS,
             }
         )
         return context
@@ -652,6 +652,10 @@ class JobsList(PaginatedTableListView):
             title="Comment",
             sort_field="comment",
             optional_condition=lambda obj: bool(obj.comment),
+        ),
+        Column(
+            title="Result",
+            optional_condition=lambda obj: bool(obj.rendered_result_text),
         ),
         Column(title="Results"),
         Column(title="Viewer"),

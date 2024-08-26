@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load remove_whitespace %}
 {% load url %}
 {% load profiles %}
 {% load evaluation_extras %}
@@ -282,27 +283,36 @@
                     <h3 class="card-title">Visibility</h3>
 
                     {% if object.published %}
-                        <i class="fas fa-eye text-success"></i> This result is published on the
-                        leaderboard(s)
+                        {% if object.invalid_metrics %}
+                            <i class="fas fa-eye-slash text-danger"></i>
+                            This result has been published but cannot appear on the leaderboard(s) because the
+                            metrics.json output file contained invalid values for the following metrics:
+                            {{ object.invalid_metrics|oxford_comma }}. If you correct those paths in your phase
+                            settings this result will automatically appear on the leaderboard(s).
+                        {% else %}
+                            <i class="fas fa-eye text-success"></i>
+                            This result is published on the leaderboard(s)
+                        {% endif %}
+                        <br>
                         <form method="post"
-                              action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=object.pk %}">
+                            action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=object.pk %}">
                             {% csrf_token %}
                             <input type="hidden" name="published"
-                                   value="false">
+                                value="false">
                             <button type="submit" class="btn btn-danger">
                                 <i class="fas fa-eye-slash mr-1"></i>
                                     Exclude this result from the leaderboard(s)
                             </button>
                         </form>
                     {% else %}
-                        <i class="fas fa-eye-slash text-danger"></i> This result is not
-                        published on the leaderboard(s)
+                        <i class="fas fa-eye-slash text-danger"></i>
+                        This result is not published on the leaderboard(s)
                         <br>
                         <form method="post"
-                              action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=object.pk %}">
+                            action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=object.pk %}">
                             {% csrf_token %}
                             <input type="hidden" name="published"
-                                   value="true">
+                                value="true">
                             <button type="submit" class="btn btn-success">
                                 <i class="fas fa-eye mr-1"></i>
                                 Publish this result on the leaderboard(s)

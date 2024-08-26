@@ -16,7 +16,10 @@ from grandchallenge.evaluation.models import Evaluation, Phase, Submission
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.invoices.models import PaymentStatusChoices
 from grandchallenge.uploads.models import UserUpload
-from grandchallenge.verifications.models import Verification
+from grandchallenge.verifications.models import (
+    Verification,
+    VerificationUserSet,
+)
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
@@ -159,6 +162,7 @@ class TestSubmissionForm:
                 algorithm_image=alg.active_image,
                 algorithm_model=alg.active_model,
                 status=Job.SUCCESS,
+                time_limit=alg.time_limit,
             )
 
         p_parent, p_child = PhaseFactory.create_batch(
@@ -178,36 +182,43 @@ class TestSubmissionForm:
             submission__algorithm_image=alg1.active_image,
             submission__algorithm_model=alg1.active_model,
             status=Evaluation.SUCCESS,
+            time_limit=p_parent.evaluation_time_limit,
         )
         # successful eval to parent phase with active image, but not active model
         EvaluationFactory(
             submission__phase=p_parent,
             submission__algorithm_image=alg2.active_image,
             status=Evaluation.SUCCESS,
+            time_limit=p_parent.evaluation_time_limit,
         )
         # successful eval to other phase with active image
+        other_phase = PhaseFactory()
         EvaluationFactory(
-            submission__phase=PhaseFactory(),
+            submission__phase=other_phase,
             submission__algorithm_image=alg3.active_image,
             status=Evaluation.SUCCESS,
+            time_limit=other_phase.evaluation_time_limit,
         )
         # failed eval to parent phase with active image
         EvaluationFactory(
             submission__phase=p_parent,
             submission__algorithm_image=alg4.active_image,
             status=Evaluation.FAILURE,
+            time_limit=p_parent.evaluation_time_limit,
         )
         # successful eval to parent phase with active image, but no successful job
         EvaluationFactory(
             submission__phase=p_parent,
             submission__algorithm_image=alg5.active_image,
             status=Evaluation.SUCCESS,
+            time_limit=p_parent.evaluation_time_limit,
         )
         # successful eval to parent phase with active image, but not active model
         EvaluationFactory(
             submission__phase=p_parent,
             submission__algorithm_image=ai_inactive,
             status=Evaluation.SUCCESS,
+            time_limit=p_parent.evaluation_time_limit,
         )
         # successful eval to parent phase with active image but failed job
         EvaluationFactory(
@@ -215,11 +226,13 @@ class TestSubmissionForm:
             submission__algorithm_image=alg7.active_image,
             submission__algorithm_model=alg7.active_model,
             status=Evaluation.SUCCESS,
+            time_limit=p_parent.evaluation_time_limit,
         )
         AlgorithmJobFactory(
             algorithm_image=alg.active_image,
             algorithm_model=alg.active_model,
             status=Job.FAILURE,
+            time_limit=alg.time_limit,
         )
         # successful eval to parent phase with active image but successful job with different image
         EvaluationFactory(
@@ -227,11 +240,13 @@ class TestSubmissionForm:
             submission__algorithm_image=alg8.active_image,
             submission__algorithm_model=alg8.active_model,
             status=Evaluation.SUCCESS,
+            time_limit=p_parent.evaluation_time_limit,
         )
         AlgorithmJobFactory(
             algorithm_image=AlgorithmImageFactory(algorithm=alg8),
             algorithm_model=alg.active_model,
             status=Job.SUCCESS,
+            time_limit=alg.time_limit,
         )
         # successful eval to parent phase with active image but successful job with different model
         EvaluationFactory(
@@ -239,11 +254,13 @@ class TestSubmissionForm:
             submission__algorithm_image=alg9.active_image,
             submission__algorithm_model=alg9.active_model,
             status=Evaluation.SUCCESS,
+            time_limit=p_parent.evaluation_time_limit,
         )
         AlgorithmJobFactory(
             algorithm_image=alg9.active_image,
             algorithm_model=AlgorithmModelFactory(algorithm=alg9),
             status=Job.SUCCESS,
+            time_limit=alg9.time_limit,
         )
         # successful evaluation and job, no algorithm model, but that should not matter
         EvaluationFactory(
@@ -251,6 +268,7 @@ class TestSubmissionForm:
             submission__algorithm_image=alg10.active_image,
             submission__algorithm_model=alg10.active_model,
             status=Evaluation.SUCCESS,
+            time_limit=p_parent.evaluation_time_limit,
         )
 
         form = SubmissionForm(
@@ -397,7 +415,9 @@ class TestSubmissionForm:
             is_desired_version=True,
             algorithm=alg,
         )
-        AlgorithmJobFactory(algorithm_image=ai, status=4)
+        AlgorithmJobFactory(
+            algorithm_image=ai, status=4, time_limit=ai.algorithm.time_limit
+        )
         MethodFactory(
             is_manifest_valid=True,
             is_in_registry=True,
@@ -452,7 +472,11 @@ class TestSubmissionForm:
             algorithm=alg,
         )
         am = AlgorithmModelFactory(algorithm=alg, is_desired_version=True)
-        AlgorithmJobFactory(algorithm_image=ai, status=Job.SUCCESS)
+        AlgorithmJobFactory(
+            algorithm_image=ai,
+            status=Job.SUCCESS,
+            time_limit=ai.algorithm.time_limit,
+        )
         MethodFactory(
             is_manifest_valid=True,
             is_in_registry=True,
@@ -562,7 +586,9 @@ class TestSubmissionForm:
             is_desired_version=True,
             algorithm=alg,
         )
-        AlgorithmJobFactory(algorithm_image=ai, status=4)
+        AlgorithmJobFactory(
+            algorithm_image=ai, status=4, time_limit=ai.algorithm.time_limit
+        )
 
         upload = UserUploadFactory(creator=user)
         upload.status = UserUpload.StatusChoices.COMPLETED
@@ -653,7 +679,9 @@ class TestSubmissionForm:
             is_desired_version=True,
             algorithm=alg,
         )
-        AlgorithmJobFactory(algorithm_image=ai, status=4)
+        AlgorithmJobFactory(
+            algorithm_image=ai, status=4, time_limit=ai.algorithm.time_limit
+        )
         SubmissionFactory(
             phase=p,
             algorithm_image=ai,
@@ -679,7 +707,10 @@ class TestSubmissionForm:
 
         Submission.objects.all().delete()
 
-        EvaluationFactory(submission__algorithm_image=ai)
+        EvaluationFactory(
+            submission__algorithm_image=ai,
+            time_limit=p.evaluation_time_limit,
+        )
 
         form = SubmissionForm(
             user=user,
@@ -1089,3 +1120,31 @@ def test_ground_truth_version_management_form():
     assert "Ground truth updating already in progress" in str(
         form3.errors["ground_truth"]
     )
+
+
+@pytest.mark.django_db
+def test_submission_limit_avoidance_users():
+    phase = PhaseFactory(submissions_limit_per_user_per_period=1)
+    user = UserFactory()
+
+    o1, o2, o3, o4, ch_admin = UserFactory.create_batch(5)
+
+    phase.challenge.add_admin(user=ch_admin)
+
+    # Should be included but allow for challenge admins
+    VerificationUserSet.objects.create(is_false_positive=False).users.set(
+        [user, o1, ch_admin]
+    )
+
+    # These should be ignored
+    VerificationUserSet.objects.create(is_false_positive=True).users.set(
+        [user, o2]
+    )
+    VerificationUserSet.objects.create(is_false_positive=True).users.set([o3])
+    VerificationUserSet.objects.create(is_false_positive=False).users.set([o4])
+
+    form = SubmissionForm(user=user, phase=phase)
+
+    relevant_users = form._get_submission_relevant_users(creator=user)
+
+    assert {o1} == set(relevant_users)

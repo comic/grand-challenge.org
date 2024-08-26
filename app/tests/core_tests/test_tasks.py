@@ -17,13 +17,15 @@ def test_get_metrics():
         import_status=AlgorithmImage.ImportStatusChoices.COMPLETED
     )
 
-    a = AlgorithmJobFactory(algorithm_image=ai)
+    a = AlgorithmJobFactory(
+        algorithm_image=ai, time_limit=ai.algorithm.time_limit
+    )
     a.status = a.SUCCESS
     a.save()
 
     m = MethodFactory(import_status=Method.ImportStatusChoices.COMPLETED)
 
-    e = EvaluationFactory(method=m)
+    e = EvaluationFactory(method=m, time_limit=m.phase.evaluation_time_limit)
     e.status = e.SUCCESS
     e.save()
 

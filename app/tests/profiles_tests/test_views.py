@@ -3,6 +3,7 @@ import string
 
 import pytest
 from allauth.account.models import EmailAddress
+from django.utils.crypto import get_random_string
 from rest_framework import status
 from rest_framework.test import force_authenticate
 
@@ -18,7 +19,7 @@ from tests.utils import get_view_for_user
 @pytest.mark.django_db
 class TestSignInRedirect:
     def get_redirect_response(self, client, next=None):
-        password = "password"
+        password = get_random_string(32)
 
         self.user = UserFactory(password=password)
 

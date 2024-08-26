@@ -80,7 +80,8 @@ django-redis = "*"
 django-allauth = {version = "*", extras = ["mfa", "socialaccount"]}
 jinja2 = "*"
 requests = "*"
-django_rest_knox = "*"
+# Pin for now following token breakage, see https://github.com/jazzband/django-rest-knox/pull/358#issuecomment-2264696484
+django_rest_knox = "<5"
 Pillow = "*"
 panimg = ">=0.12.0"
 django-activity-stream = "*"
@@ -97,6 +98,7 @@ django-csp = "*"
 psycopg = {version = ">3.1.8", extras = ["c"]}
 pycurl = "!=7.45.3" # Import issue with 7.45.3 (https://github.com/comic/grand-challenge.org/issues/3252)
 pyjwt = "*"
+beautifulsoup4 = "*"
 
 [tool.poetry.group.dev.dependencies]
 pytest-django = "*"
@@ -109,7 +111,6 @@ sphinx = "*"
 pytest-xdist = "*"
 sphinx-autodoc-typehints = "*"
 werkzeug = "*"
-sphinx-rtd-theme = "*"
 sphinxcontrib-plantuml = "*"
 pytest-randomly = "*"
 sphinxcontrib-django = "*"

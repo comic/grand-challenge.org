@@ -600,17 +600,20 @@ class SubmissionForm(
         self.add_error(None, error_message)
         raise ValidationError(error_message)
 
-    def check_submission_limit_avoidance(self, *, creator):
-        related_users = (
+    def _get_submission_relevant_users(self, *, creator):
+        return (
             get_user_model()
             .objects.exclude(pk=creator.pk)
             .exclude(groups__admins_of_challenge__phase=self._phase)
             .filter(
                 verificationuserset__users=creator,
-                groups__participants_of_challenge__phase=self._phase,
+                verificationuserset__is_false_positive=False,
             )
             .distinct()
         )
+
+    def check_submission_limit_avoidance(self, *, creator):
+        related_users = self._get_submission_relevant_users(creator=creator)
 
         if related_users and (
             self._phase.has_pending_evaluations(

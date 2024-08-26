@@ -19,7 +19,7 @@ from tests.factories import ImageFactory, UserFactory
 
 @pytest.mark.django_db
 def test_algorithm_relations_on_job_serializer(rf):
-    job = AlgorithmJobFactory()
+    job = AlgorithmJobFactory(time_limit=60)
     serializer = HyperlinkedJobSerializer(
         job, context={"request": rf.get("/foo", secure=True)}
     )
@@ -264,13 +264,14 @@ class TestJobCreateLimits:
             context={"request": request},
         )
         assert serializer.is_valid()
-        assert algorithm_image.algorithm.get_jobs_limit(user=user) == 5
+        assert algorithm_image.get_remaining_jobs(user=user) == 5
 
         AlgorithmJobFactory.create_batch(
             5,
             algorithm_image=algorithm_image,
             creator=user,
             status=Job.SUCCESS,
+            time_limit=algorithm_image.algorithm.time_limit,
         )
         serializer = JobPostSerializer(
             data={
@@ -280,7 +281,7 @@ class TestJobCreateLimits:
             context={"request": request},
         )
         assert not serializer.is_valid()
-        assert algorithm_image.algorithm.get_jobs_limit(user=user) == 0
+        assert algorithm_image.get_remaining_jobs(user=user) == 0
 
     def test_form_valid_with_credits(self, rf):
         algorithm_image = AlgorithmImageFactory(

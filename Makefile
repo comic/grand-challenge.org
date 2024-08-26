@@ -101,14 +101,14 @@ development_fixtures:
 	docker compose run \
 		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
 		--rm \
-		celery_worker_evaluation \
+		celery_worker \
 		bash -c "python manage.py migrate && python manage.py runscript minio development_fixtures"
 
 algorithm_evaluation_fixtures:
 	docker compose run \
 		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
 		--rm \
-		celery_worker_evaluation \
+		celery_worker \
 		python manage.py runscript algorithm_evaluation_fixtures
 
 external_algorithm_evaluation_fixtures:
@@ -122,14 +122,14 @@ cost_fixtures:
 	docker compose run \
 		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
 		--rm \
-		web \
+		celery_worker \
 		python manage.py runscript cost_fixtures
 
 component_interface_value_fixtures:
 	docker compose run \
 		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
 		--rm \
-		celery_worker_evaluation \
+		celery_worker \
 		python manage.py runscript component_interface_value_fixtures
 
 superuser:

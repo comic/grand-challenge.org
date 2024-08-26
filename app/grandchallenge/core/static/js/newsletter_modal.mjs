@@ -1,3 +1,3 @@
-$(document).ready(function () {
-    $('#newsletterModal').modal('show');
+$(document).ready(() => {
+    $("#newsletterModal").modal("show");
 });

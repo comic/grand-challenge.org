@@ -204,10 +204,10 @@ class JobPostSerializer(JobSerializer):
         data["algorithm_image"] = alg.active_image
         data["algorithm_model"] = alg.active_model
 
-        jobs_limit = alg.active_image.algorithm.get_jobs_limit(
+        jobs_limit = data["algorithm_image"].get_remaining_jobs(
             user=data["creator"]
         )
-        if jobs_limit is not None and jobs_limit < 1:
+        if jobs_limit < 1:
             raise serializers.ValidationError(
                 "You have run out of algorithm credits"
             )

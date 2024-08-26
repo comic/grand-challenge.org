@@ -1,11 +1,14 @@
-$(document).ready(function() {
-    const tabSelectors = $('#v-pills-tab a');
+$(document).ready(() => {
+    const tabSelectors = $("#v-pills-tab a");
 
     const allowedHashes = new Set(
-        tabSelectors.map(function() {
-            let href = this.getAttribute('href');
-            return href.startsWith('#') ? href : null;
-        }).get().filter(hash => hash !== null)
+        tabSelectors
+            .map(function () {
+                const href = this.getAttribute("href");
+                return href.startsWith("#") ? href : null;
+            })
+            .get()
+            .filter(hash => hash !== null),
     );
 
     function isValidHash(hash) {
@@ -16,13 +19,13 @@ $(document).ready(function() {
         const hash = window.location.hash;
         if (isValidHash(hash)) {
             const tab = $(`#v-pills-tab a[href="${hash}"]`);
-            tab.siblings().removeClass('active');
-            tab.tab('show');
+            tab.siblings().removeClass("active");
+            tab.tab("show");
         } else {
             // Fallback to a default tab if the hash is not valid
             const defaultTab = $('#v-pills-tab a[href="#information"]');
-            defaultTab.siblings().removeClass('active');
-            defaultTab.tab('show');
+            defaultTab.siblings().removeClass("active");
+            defaultTab.tab("show");
         }
     }
 
@@ -34,11 +37,11 @@ $(document).ready(function() {
         }
     });
 
-    window.addEventListener('popstate', function (event) {
+    window.addEventListener("popstate", event => {
         activateLocation();
     });
 
-    window.addEventListener('pageshow', function(event) {
+    window.addEventListener("pageshow", event => {
         activateLocation();
     });
 

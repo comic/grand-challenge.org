@@ -12,10 +12,14 @@ def test_challenge_update(two_challenge_sets, django_assert_num_queries):
     c2 = two_challenge_sets.challenge_set_2.challenge
 
     _ = EvaluationFactory(
-        submission__phase__challenge=c1, method__phase__challenge=c1
+        submission__phase__challenge=c1,
+        method__phase__challenge=c1,
+        time_limit=60,
     )
     _ = EvaluationFactory(
-        submission__phase__challenge=c2, method__phase__challenge=c2
+        submission__phase__challenge=c2,
+        method__phase__challenge=c2,
+        time_limit=60,
     )
 
     with django_assert_num_queries(4) as _:
@@ -25,7 +29,9 @@ def test_challenge_update(two_challenge_sets, django_assert_num_queries):
 
     c3 = ChallengeFactory()
     _ = EvaluationFactory(
-        submission__phase__challenge=c3, method__phase__challenge=c3
+        submission__phase__challenge=c3,
+        method__phase__challenge=c3,
+        time_limit=60,
     )
     with django_assert_num_queries(4) as _:
         update_challenge_results_cache()

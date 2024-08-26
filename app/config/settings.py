@@ -153,6 +153,7 @@ CHALLENGE_NUM_SUPPORT_YEARS = int(
 EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS = int(
     os.environ.get("EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS", 86400)
 )
+GCAPI_LOWEST_SUPPORTED_VERSION = "0.13.0"
 
 ##############################################################################
 #
@@ -974,6 +975,9 @@ CELERY_SOLO_QUEUES = {
     for queue in {"acks-late-2xlarge", "acks-late-micro-short"}
     for element in {queue, f"{queue}-delay"}
 }
+CELERY_WORKER_MAX_MEMORY_MB = int(
+    os.environ.get("CELERY_WORKER_MAX_MEMORY_MB", "0")
+)
 ECS_ENABLE_CELERY_SCALE_IN_PROTECTION = strtobool(
     os.environ.get("ECS_ENABLE_CELERY_SCALE_IN_PROTECTION", "False"),
 )
@@ -1047,6 +1051,8 @@ COMPONENTS_OUTPUT_BUCKET_NAME = os.environ.get(
     "COMPONENTS_OUTPUT_BUCKET_NAME", "grand-challenge-components-outputs"
 )
 COMPONENTS_MAXIMUM_IMAGE_SIZE = 10 * GIGABYTE
+COMPONENTS_MINIMUM_JOB_DURATION = 5 * 60  # 5 minutes
+COMPONENTS_MAXIMUM_JOB_DURATION = 12 * 60 * 60  # 12 hours
 COMPONENTS_AMAZON_ECR_REGION = os.environ.get("COMPONENTS_AMAZON_ECR_REGION")
 COMPONENTS_AMAZON_SAGEMAKER_EXECUTION_ROLE_ARN = os.environ.get(
     "COMPONENTS_AMAZON_SAGEMAKER_EXECUTION_ROLE_ARN", ""
@@ -1292,8 +1298,8 @@ ALGORITHMS_MAX_DEFAULT_JOBS_PER_MONTH = int(
 ALGORITHMS_MAX_NUMBER_PER_USER_PER_PHASE = int(
     os.environ.get("ALGORITHMS_MAX_NUMBER_PER_USER_PER_PHASE", "3")
 )
-ALGORITHMS_JOB_LIMIT_FOR_EDITORS = int(
-    os.environ.get("ALGORITHMS_JOB_LIMIT_FOR_EDITORS", "5")
+ALGORITHM_IMAGES_COMPLIMENTARY_EDITOR_JOBS = int(
+    os.environ.get("ALGORITHM_IMAGES_COMPLIMENTARY_EDITOR_JOBS", "5")
 )
 
 # Disallow some challenge names due to subdomain or media folder clashes

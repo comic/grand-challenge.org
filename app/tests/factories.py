@@ -2,7 +2,7 @@ import datetime
 import hashlib
 
 import factory
-import factory.fuzzy
+from allauth.mfa.models import Authenticator
 from django.conf import settings
 from django.contrib.auth.models import Group
 from factory import fuzzy
@@ -21,7 +21,27 @@ from grandchallenge.workstations.models import (
     WorkstationImage,
 )
 
-SUPER_SECURE_TEST_PASSWORD = "testpasswd"
+
+def activate_2fa(*, user):
+    """Activate 2FA for a user including recovery codes."""
+    totp_authenticator = Authenticator(type=Authenticator.Type.TOTP)
+    totp_authenticator.wrap().activate(
+        user=user,
+        # Setting a blank secret here, but this is only for use in tests
+        secret="",
+    )
+
+    recovery_codes_authenticator = Authenticator(
+        type=Authenticator.Type.RECOVERY_CODES
+    )
+    recovery_codes_authenticator.wrap().activate(user=user)
+
+
+def get_unused_recovery_codes(*, user):
+    device = Authenticator.objects.get(
+        user=user, type=Authenticator.Type.RECOVERY_CODES
+    )
+    return device.wrap().get_unused_codes()
 
 
 def hash_sha256(s):
@@ -45,10 +65,15 @@ class UserFactory(factory.django.DjangoModelFactory):
 
     @factory.post_generation
     def password(self, create, extracted, **kwargs):
-        if not create:
-            return
-        self.set_password(extracted or SUPER_SECURE_TEST_PASSWORD)
-        self.save()
+        if create and extracted:
+            self.set_password(extracted)
+            self.save()
+
+    @factory.post_generation
+    def _generate_staff_totp(self, create, extracted, **kwargs):
+        if create and self.is_staff:
+            # 2FA is required for staff users
+            activate_2fa(user=self)
 
 
 class GroupFactory(factory.django.DjangoModelFactory):

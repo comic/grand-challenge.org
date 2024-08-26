@@ -50,7 +50,11 @@ def test_setting_display_all_metrics(client, challenge_set):
     metrics = {"public": 3245.235, "secret": 4328.432, "extra": 2144.312}
     phase = challenge_set.challenge.phase_set.get()
 
-    e = EvaluationFactory(submission__phase=phase, status=Evaluation.SUCCESS)
+    e = EvaluationFactory(
+        submission__phase=phase,
+        status=Evaluation.SUCCESS,
+        time_limit=phase.evaluation_time_limit,
+    )
 
     e.outputs.add(
         ComponentInterfaceValue.objects.create(

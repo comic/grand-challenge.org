@@ -495,10 +495,12 @@
                                     {% endif %}
                                     Build {{ image.build.get_status_display }}
                                 </a>
-                                Container image from
+                            {% endif %}
+
+                            {{ image }}
+
+                            {% if image.build %}
                                 <a href="{{ image.build.webhook_message.tag_url }}">{{ image.build.webhook_message.repo_name }}:{{ image.build.webhook_message.tag }}</a>
-                            {% else %}
-                                Container image uploaded by {{ image.creator }} {{ image.created|naturaltime }} {% if image.comment %}({{ image.comment }}) {% endif %}
                             {% endif %}
 
                             <span class="badge badge-{{ image.import_status_context }}">
@@ -527,7 +529,8 @@
                  aria-labelledby="v-pills-models">
 
                 <h2>Algorithm Models</h2>
-                <p>You can upload your algorithm's model separately from the container. If provided, the model will be extracted to <code>/opt/ml/model/</code> during inference.</p>
+
+                {% include "components/partials/how_to_create_tarball.html" with model_name="algorithmmodel" %}
 
                 {% if not object.active_model %}
                     <p>

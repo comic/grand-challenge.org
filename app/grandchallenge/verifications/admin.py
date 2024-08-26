@@ -1,8 +1,9 @@
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.db.transaction import on_commit
+from django.template.defaultfilters import linebreaksbr
 from django.utils.timezone import now
-from pyswot import is_academic
+from pyswot import find_school_names, is_academic
 
 from grandchallenge.profiles.tasks import deactivate_user
 from grandchallenge.verifications.models import (
@@ -46,8 +47,8 @@ class VerificationAdmin(admin.ModelAdmin):
         "user",
         "user_sets",
         "user_info",
-        "created",
-        "signup_email",
+        "email_school_names",
+        "signup_email_if_different",
         "email",
         "email_is_academic",
         "email_is_verified",
@@ -75,15 +76,28 @@ class VerificationAdmin(admin.ModelAdmin):
         )
         return queryset
 
+    def email_school_names(self, obj):
+        return linebreaksbr("\n".join(find_school_names(obj.email)))
+
     def user_sets(self, obj):
         usernames = set()
+        comments = []
 
         for vus in obj.user.verificationuserset_set.all():
+            if vus.is_false_positive:
+                comments.append("False Positive VUS.")
+
+            if vus.comment:
+                comments.append(vus.comment)
+
             for user in vus.users.all():
                 if user != obj.user:
                     usernames.add(user.username)
 
-        return ", ".join(usernames)
+        out_usernames = ", ".join(usernames)
+        out_comments = "\n".join(comments)
+
+        return linebreaksbr(f"{out_usernames}\n\n{out_comments}")
 
     def user_info(self, instance):
         return instance.user.user_profile.user_info
@@ -92,8 +106,18 @@ class VerificationAdmin(admin.ModelAdmin):
     def email_is_academic(self, instance):
         return is_academic(email=instance.email)
 
-    def signup_email(self, instance):
-        return instance.user.email
+    def signup_email_if_different(self, instance):
+        signup_email = instance.user.email
+
+        if signup_email == instance.email:
+            return ""
+        else:
+            signup_email_school_names = "\n".join(
+                find_school_names(signup_email)
+            )
+            return linebreaksbr(
+                f"{signup_email}\n\n{signup_email_school_names}"
+            )
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
@@ -125,12 +149,20 @@ class VerificationUserSetAdmin(admin.ModelAdmin):
     list_display = (
         "pk",
         "created",
+        "modified",
+        "auto_deactivate",
+        "is_false_positive",
         "active_usernames",
         "inactive_usernames",
+        "comment",
     )
     list_prefetch_related = ("users",)
     search_fields = ("users__username",)
     actions = (deactivate_vus_users,)
+    list_filter = (
+        "auto_deactivate",
+        "is_false_positive",
+    )
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)

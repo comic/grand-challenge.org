@@ -312,8 +312,6 @@ def test_create_job_json_input_field_validation(
     )
     assert response.context["form"].errors == {
         slug: ["This field is required."],
-        "algorithm_image": ["This field is required."],
-        "__all__": ["This algorithm is not ready to be used"],
     }
 
 
@@ -355,6 +353,12 @@ def create_algorithm_with_input(slug):
     alg = AlgorithmFactory()
     alg.add_editor(user=creator)
     alg.inputs.set([ComponentInterface.objects.get(slug=slug)])
+    AlgorithmImageFactory(
+        algorithm=alg,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
     return alg, creator
 
 
@@ -406,7 +410,11 @@ def test_publish_algorithm():
         algorithm=algorithm,
     )
     _ = AlgorithmJobFactory(
-        algorithm_image=ai, algorithm_model=am, status=Job.SUCCESS, public=True
+        algorithm_image=ai,
+        algorithm_model=am,
+        status=Job.SUCCESS,
+        public=True,
+        time_limit=algorithm.time_limit,
     )
     del algorithm.public_test_case
     del algorithm.active_image
@@ -426,7 +434,10 @@ def test_publish_algorithm():
     am.is_desired_version = False
     am.save()
     _ = AlgorithmJobFactory(
-        algorithm_image=ai, status=Job.SUCCESS, public=True
+        algorithm_image=ai,
+        status=Job.SUCCESS,
+        public=True,
+        time_limit=algorithm.time_limit,
     )
     del algorithm.public_test_case
     del algorithm.active_image
@@ -435,8 +446,12 @@ def test_publish_algorithm():
 
 
 def test_only_publish_successful_jobs():
-    job_success = AlgorithmJobFactory.build(status=ComponentJob.SUCCESS)
-    job_failure = AlgorithmJobFactory.build(status=ComponentJob.FAILURE)
+    job_success = AlgorithmJobFactory.build(
+        status=ComponentJob.SUCCESS, time_limit=60
+    )
+    job_failure = AlgorithmJobFactory.build(
+        status=ComponentJob.FAILURE, time_limit=60
+    )
 
     form = JobForm(instance=job_failure, data={"public": True})
     assert not form.is_valid()

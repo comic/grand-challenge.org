@@ -68,8 +68,8 @@ RUN mkdir -p /opt/mc \
 
 # Get the docker cli
 RUN mkdir -p /opt/docker \
-    && wget https://download.docker.com/linux/static/stable/x86_64/docker-25.0.1.tgz -O /opt/docker/docker.tgz \
-    && echo "efccce4502785a2a372f86afd5c62dd74aaae2534c03fa94d356cb94c9392f91  /opt/docker/docker.tgz" | shasum -c - || exit 1 \
+    && wget https://download.docker.com/linux/static/stable/x86_64/docker-27.1.1.tgz -O /opt/docker/docker.tgz \
+    && echo "118da6b8fc8e8b6c086ab0dd5e64ee549376c3a3f963723bbc9a46db475bf21f  /opt/docker/docker.tgz" | shasum -c - || exit 1 \
     && tar -C /opt/docker/ -xzvf /opt/docker/docker.tgz \
     && chmod a+x /opt/docker/docker/docker \
     && mv /opt/docker/docker/docker /usr/local/bin/ \
@@ -77,7 +77,7 @@ RUN mkdir -p /opt/docker \
 
 ENV PYTHONUNBUFFERED=1\
     AWS_XRAY_SDK_ENABLED=false\
-    COMPONENTS_SAGEMAKER_SHIM_VERSION=0.3.4\
+    COMPONENTS_SAGEMAKER_SHIM_VERSION=0.3.5\
     PATH="/opt/poetry/.venv/bin:/home/django/.local/bin:${PATH}"
 
 RUN mkdir -p /opt/poetry /app /static /opt/sagemaker-shim \
@@ -89,7 +89,7 @@ USER django:django
 # Fetch and install sagemaker shim for shimming containers
 RUN mkdir -p /opt/sagemaker-shim \
     && wget "https://github.com/DIAGNijmegen/rse-sagemaker-shim/releases/download/v${COMPONENTS_SAGEMAKER_SHIM_VERSION}/sagemaker-shim-${COMPONENTS_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" -P /opt/sagemaker-shim/ \
-    && echo "efc462a6efd75140da89cd9311b53ec99f228abe84703e31544972867f44e65d  /opt/sagemaker-shim/sagemaker-shim-${COMPONENTS_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" | shasum -c - || exit 1 \
+    && echo "a0f64b99ffea8faed65a23bf0f52ff1f2a20900ca8bc6a3d13a2ff7eff1d7eb7  /opt/sagemaker-shim/sagemaker-shim-${COMPONENTS_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" | shasum -c - || exit 1 \
     && tar -C /opt/sagemaker-shim/ -xzvf "/opt/sagemaker-shim/sagemaker-shim-${COMPONENTS_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" \
     && rm "/opt/sagemaker-shim/sagemaker-shim-${COMPONENTS_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz"
 
