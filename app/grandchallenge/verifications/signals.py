@@ -12,7 +12,12 @@ from django.utils import timezone
 from django.utils.html import format_html
 
 from grandchallenge.algorithms.models import AlgorithmPermissionRequest
+from grandchallenge.archives.models import ArchivePermissionRequest
+from grandchallenge.core.utils.access_requests import (
+    AccessRequestHandlingOptions,
+)
 from grandchallenge.profiles.tasks import deactivate_user
+from grandchallenge.reader_studies.models import ReaderStudyPermissionRequest
 from grandchallenge.verifications.models import (
     Verification,
     VerificationUserSet,
@@ -101,11 +106,36 @@ def auto_disable_user_in_verification_user_set(
 
 @receiver(post_save, sender=Verification)
 def accept_permission_requests(*, instance, **kwargs):
-    if instance.is_verified:
-        pending_requests = AlgorithmPermissionRequest.objects.filter(
-            user=instance.user, status=AlgorithmPermissionRequest.PENDING
+
+    permission_request_classes = {
+        "algorithm": AlgorithmPermissionRequest,
+        "archive": ArchivePermissionRequest,
+        "reader_study": ReaderStudyPermissionRequest,
+    }
+
+    for (
+        request_object_attr,
+        request_class,
+    ) in permission_request_classes.items():
+
+        pending_requests = request_class.objects.filter(
+            user=instance.user, status=request_class.PENDING
         )
 
         for request in pending_requests:
-            request.status = AlgorithmPermissionRequest.ACCEPTED
-            request.save()
+
+            access_request_handling = getattr(
+                request, request_object_attr
+            ).access_request_handling
+
+            if (
+                access_request_handling
+                == AccessRequestHandlingOptions.ACCEPT_ALL
+                or (
+                    access_request_handling
+                    == AccessRequestHandlingOptions.ACCEPT_VERIFIED_USERS
+                    and instance.is_verified
+                )
+            ):
+                request.status = request_class.ACCEPTED
+                request.save()
