@@ -851,20 +851,32 @@ def test_inputs_complete():
     )
     alg.inputs.set([ci1, ci2, ci3])
     job = AlgorithmJobFactory(algorithm_image__algorithm=alg, time_limit=10)
-    job.inputs.set(
-        [
-            ComponentInterfaceValueFactory(interface=ci1, value="Foo"),
-            ComponentInterfaceValueFactory(interface=ci2, value=None),
-        ]
+
+    civ_with_value_1 = ComponentInterfaceValueFactory(
+        interface=ci1, value="Foo"
     )
+    civ_with_value_2 = ComponentInterfaceValueFactory(
+        interface=ci2, value="Bar"
+    )
+    civ_with_value_3 = ComponentInterfaceValueFactory(
+        interface=ci3, value="Test"
+    )
+    civ_without_value = ComponentInterfaceValueFactory(
+        interface=ci3, value=None
+    )
+
+    job.inputs.set([civ_with_value_1, civ_with_value_2, civ_without_value])
     assert not job.inputs_complete
 
     job.inputs.set(
         [
-            ComponentInterfaceValueFactory(interface=ci1, value="Foo"),
-            ComponentInterfaceValueFactory(interface=ci2, value="Bar"),
-            ComponentInterfaceValueFactory(interface=ci3, value="Test"),
+            civ_with_value_1,
+            civ_with_value_2,
         ]
     )
+    del job.inputs_complete
+    assert not job.inputs_complete
+
+    job.inputs.set([civ_with_value_1, civ_with_value_2, civ_with_value_3])
     del job.inputs_complete
     assert job.inputs_complete
