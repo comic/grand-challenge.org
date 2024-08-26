@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.utils.timezone import now
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import permissions
 from rest_framework.decorators import action
 from rest_framework.filters import BaseFilterBackend
@@ -91,6 +93,16 @@ class EvaluationViewSet(ReadOnlyModelViewSet):
                 data=serializer.errors, status=HTTP_400_BAD_REQUEST
             )
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="submission__phase",
+                location=OpenApiParameter.QUERY,
+                description="Filter claimable evaluations by submission phase",
+                type=OpenApiTypes.UUID,
+            ),
+        ],
+    )
     @action(
         detail=False,
         methods=["GET"],
