@@ -123,47 +123,66 @@ def test_auto_deactivate_reverse_set(
     ],
 )
 @pytest.mark.parametrize(
-    "access_request_handling, verified_status, expected_status",
+    "access_request_handling, expected_status_without_verification_request, verified_status, expected_status_with_verification_request",
     [
-        (AccessRequestHandlingOptions.ACCEPT_ALL, True, RequestBase.ACCEPTED),
-        (AccessRequestHandlingOptions.ACCEPT_ALL, False, RequestBase.ACCEPTED),
+        (
+            AccessRequestHandlingOptions.ACCEPT_ALL,
+            RequestBase.ACCEPTED,
+            True,
+            RequestBase.ACCEPTED,
+        ),
+        (
+            AccessRequestHandlingOptions.ACCEPT_ALL,
+            RequestBase.ACCEPTED,
+            False,
+            RequestBase.ACCEPTED,
+        ),
         (
             AccessRequestHandlingOptions.ACCEPT_VERIFIED_USERS,
+            RequestBase.REJECTED,
             True,
             RequestBase.ACCEPTED,
         ),
         (
             AccessRequestHandlingOptions.ACCEPT_VERIFIED_USERS,
+            RequestBase.REJECTED,
             False,
+            RequestBase.REJECTED,
+        ),
+        (
+            AccessRequestHandlingOptions.MANUAL_REVIEW,
+            RequestBase.PENDING,
+            True,
             RequestBase.PENDING,
         ),
         (
             AccessRequestHandlingOptions.MANUAL_REVIEW,
-            True,
+            RequestBase.PENDING,
+            False,
             RequestBase.PENDING,
         ),
     ],
 )
-def test_auto_accept_permission_requests_on_verification(
+def test_auto_handle_permission_requests_on_verification(
     perm_request_factory,
     perm_request_entity_attr,
     entity_factory,
     access_request_handling,
     verified_status,
-    expected_status,
+    expected_status_without_verification_request,
+    expected_status_with_verification_request,
 ):
     u = UserFactory()
     t = entity_factory(access_request_handling=access_request_handling)
-    pr = perm_request_factory(user=u)
+    pr = perm_request_factory(**{"user": u, perm_request_entity_attr: t})
 
-    setattr(pr, perm_request_entity_attr, t)
-    pr.save()
-
-    assert pr.status == RequestBase.PENDING
+    assert pr.status == expected_status_without_verification_request
 
     VerificationFactory(
         user=u, email_is_verified=True, is_verified=verified_status
     )
-    pr.refresh_from_db()
 
-    assert pr.status == expected_status
+    t2 = entity_factory(access_request_handling=access_request_handling)
+    pr2 = perm_request_factory(**{"user": u, perm_request_entity_attr: t2})
+
+    assert pr2.status == expected_status_with_verification_request
