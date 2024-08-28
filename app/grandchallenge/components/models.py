@@ -2045,6 +2045,22 @@ class ComponentImage(FieldChangeMixin, models.Model):
             self.size_in_registry = self.calculate_size_in_registry()
 
 
+class CIVData(NamedTuple):
+    interface_slug: str
+    value: (
+        str
+        | bool
+        | int
+        | float
+        | dict
+        | RawImageUploadSession
+        | UserUpload
+        | QuerySet
+        | ComponentInterfaceValue
+        | Image
+    )
+
+
 class CIVSetStringRepresentationMixin:
     def __str__(self):
         result = [str(self.pk)]

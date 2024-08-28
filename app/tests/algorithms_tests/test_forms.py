@@ -196,75 +196,75 @@ def test_algorithm_create(client, uploaded_image):
             "generic-overlay",
             [
                 '<select class="custom-select"',
-                'name="WidgetChoice-generic-overlay"',
+                'name="WidgetChoice-_generic-overlay"',
             ],
         ),
         (
             "generic-medical-image",
             [
                 '<select class="custom-select"',
-                'name="WidgetChoice-generic-medical-image"',
+                'name="WidgetChoice-_generic-medical-image"',
             ],
         ),
-        ("boolean", ['<input type="checkbox"', 'name="boolean"']),
-        ("string", ['<input type="text" name="string"']),
-        ("integer", ['<input type="number"', 'name="integer"']),
-        ("float", ['<input type="number"', 'name="float"', 'step="any"']),
+        ("boolean", ['<input type="checkbox"', 'name="_boolean"']),
+        ("string", ['<input type="text" name="_string"']),
+        ("integer", ['<input type="number"', 'name="_integer"']),
+        ("float", ['<input type="number"', 'name="_float"', 'step="any"']),
         (
             "2d-bounding-box",
             [
                 'class="jsoneditorwidget ',
-                '<div id="jsoneditor_id_2d-bounding-box"',
+                '<div id="jsoneditor_id__2d-bounding-box"',
             ],
         ),
         (
             "multiple-2d-bounding-boxes",
             [
                 'class="jsoneditorwidget ',
-                '<div id="jsoneditor_id_multiple-2d-bounding-boxes"',
+                '<div id="jsoneditor_id__multiple-2d-bounding-boxes"',
             ],
         ),
         (
             "distance-measurement",
             [
                 'class="jsoneditorwidget ',
-                '<div id="jsoneditor_id_distance-measurement"',
+                '<div id="jsoneditor_id__distance-measurement"',
             ],
         ),
         (
             "multiple-distance-measurements",
             [
                 'class="jsoneditorwidget ',
-                '<div id="jsoneditor_id_multiple-distance-measurements"',
+                '<div id="jsoneditor_id__multiple-distance-measurements"',
             ],
         ),
         (
             "point",
-            ['class="jsoneditorwidget ', '<div id="jsoneditor_id_point"'],
+            ['class="jsoneditorwidget ', '<div id="jsoneditor_id__point"'],
         ),
         (
             "multiple-points",
             [
                 'class="jsoneditorwidget ',
-                '<div id="jsoneditor_id_multiple-points"',
+                '<div id="jsoneditor_id__multiple-points"',
             ],
         ),
         (
             "polygon",
-            ['class="jsoneditorwidget ', '<div id="jsoneditor_id_polygon"'],
+            ['class="jsoneditorwidget ', '<div id="jsoneditor_id__polygon"'],
         ),
         (
             "multiple-polygons",
             [
                 'class="jsoneditorwidget ',
-                '<div id="jsoneditor_id_multiple-polygons"',
+                '<div id="jsoneditor_id__multiple-polygons"',
             ],
         ),
         (
             "anything",
             [
                 'class="user-upload"',
-                '<div id="X_id_anything-drag-drop"',
+                '<div id="X_id__anything-drag-drop"',
             ],
         ),
     ),
@@ -315,7 +315,7 @@ def test_create_job_json_input_field_validation(
         user=creator,
     )
     assert response.context["form"].errors == {
-        slug: ["This field is required."],
+        f"_{slug}": ["This field is required."],
     }
 
 
@@ -696,6 +696,16 @@ class TestJobCreateForm(TestCase):
         )
         assert form.fields["time_limit"].initial == self.alg.time_limit
 
+    def test_timelimit_cannot_be_altered(self):
+        form = JobCreateForm(
+            algorithm=self.ai.algorithm,
+            user=self.editor,
+            data={"time_limit": 456},
+        )
+        assert form.is_valid()
+        assert form.cleaned_data["time_limit"] == self.alg.time_limit
+        assert form.cleaned_data["time_limit"] != 456
+
     def test_algorithm_image_queryset(self):
         # irrelevant Algorithm images
         inactive_image = AlgorithmImageFactory(algorithm=self.alg)
@@ -731,7 +741,7 @@ class TestJobCreateForm(TestCase):
             data={
                 "algorithm_image": self.ai,
                 "algorithm_model": self.am,
-                ci.slug: "foo",
+                f"_{ci.slug}": "foo",
             },
         )
         assert not form.is_valid()

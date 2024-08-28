@@ -1,5 +1,4 @@
 from django import forms
-from django.core.exceptions import PermissionDenied
 from django.forms import ModelChoiceField
 
 from grandchallenge.cases.widgets import (
@@ -130,8 +129,12 @@ class InterfaceFormField:
 
     def get_file_field(self):
         key = f"value_type_{self.instance.slug}"
+        # on JobCreateForm interfaces are prepended with underscore
+        alt_key = f"value_type__{self.instance.slug}"
         if key in self.form_data.keys():
             type = self.form_data[key]
+        elif alt_key in self.form_data.keys():
+            type = self.form_data[alt_key]
         elif self.existing_civs:
             type = "civ"
         else:
@@ -157,22 +160,6 @@ class InterfaceFormField:
                 **self.kwargs,
             )
         elif type == "civ":
-            if self.form_data:
-                try:
-                    civ_pk = int(self.form_data[self.instance.slug])
-                    self.kwargs["initial"] = (
-                        ComponentInterfaceValue.objects.get(pk=civ_pk)
-                    )
-                except KeyError:
-                    self.kwargs["initial"] = None
-
-                if (
-                    self.kwargs["initial"]
-                    and self.kwargs["initial"] not in self.existing_civs
-                ):
-                    # User does not have permission to use this CIV
-                    raise PermissionDenied
-
             return ModelChoiceField(
                 queryset=self.existing_civs,
                 label=self.instance.slug.title(),

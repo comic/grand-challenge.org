@@ -323,7 +323,7 @@ class TestJobPermissions:
             },
             user=user,
             follow=True,
-            data={ci.slug: '{"Foo": "bar"}'},
+            data={f"_{ci.slug}": '{"Foo": "bar"}'},
         )
         assert response.status_code == 200
 

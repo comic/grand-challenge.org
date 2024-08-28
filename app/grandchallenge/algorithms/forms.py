@@ -54,6 +54,7 @@ from grandchallenge.algorithms.tasks import import_remote_algorithm_image
 from grandchallenge.components.form_fields import InterfaceFormField
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.components.models import (
+    CIVData,
     ComponentInterface,
     ComponentInterfaceValue,
     ComponentJob,
@@ -101,6 +102,14 @@ class JobCreateForm(SaveFormInitMixin, Form):
         disabled=True, required=False, widget=HiddenInput
     )
 
+    class Meta:
+        non_interface_fields = [
+            "algorithm_image",
+            "algorithm_model",
+            "creator",
+            "time_limit",
+        ]
+
     def __init__(self, *args, algorithm, user, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -145,17 +154,17 @@ class JobCreateForm(SaveFormInitMixin, Form):
                 # but on the form level it does not make sense to check for those
                 existing_civs = None
 
-            if inp.slug in self.data:
+            if f"_{inp.slug}" in self.data:
                 if inp.kind == ComponentInterface.Kind.ANY:
                     # interfaces for which the data can be a list need
                     # to be retrieved with getlist() from the QueryDict
-                    initial = self.data.getlist(inp.slug)
+                    initial = self.data.getlist(f"_{inp.slug}")
                 else:
-                    initial = self.data[inp.slug]
+                    initial = self.data[f"_{inp.slug}"]
             else:
                 initial = None
 
-            self.fields[inp.slug] = InterfaceFormField(
+            self.fields[f"_{inp.slug}"] = InterfaceFormField(
                 instance=inp,
                 initial=initial if initial else inp.default_value,
                 user=self._user,
@@ -181,8 +190,10 @@ class JobCreateForm(SaveFormInitMixin, Form):
         if self.jobs_limit < 1:
             raise ValidationError("You have run out of algorithm credits")
 
+        cleaned_data = self.reformat_inputs(cleaned_data=cleaned_data)
+
         if Job.objects.get_jobs_with_same_inputs(
-            data=cleaned_data,
+            inputs=cleaned_data["inputs"],
             algorithm_image=cleaned_data["algorithm_image"],
             algorithm_model=cleaned_data["algorithm_model"],
         ):
@@ -190,6 +201,23 @@ class JobCreateForm(SaveFormInitMixin, Form):
                 "A result for these inputs with the current image "
                 "and model already exists."
             )
+
+        return cleaned_data
+
+    def reformat_inputs(self, *, cleaned_data):
+        keys_to_remove = []
+        inputs = []
+        for k, v in cleaned_data.items():
+            if k not in self.Meta.non_interface_fields:
+                keys_to_remove.append(k)
+                inputs.append(
+                    CIVData(interface_slug=k.replace("_", ""), value=v)
+                )
+
+        for key in keys_to_remove:
+            cleaned_data.pop(key)
+
+        cleaned_data["inputs"] = inputs
 
         return cleaned_data
 

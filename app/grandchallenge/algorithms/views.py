@@ -498,10 +498,28 @@ class JobCreate(
         return context
 
     def form_valid(self, form):
-        self.object = Job.objects.create_job_and_process_inputs(
-            data=form.cleaned_data,
+        inputs = form.cleaned_data.pop("inputs")
+        self.object = Job.objects.create(
+            **form.cleaned_data,
             extra_logs_viewer_groups=[self.algorithm.editors_group],
         )
+        # local import to avoid circular dependency
+        from grandchallenge.algorithms.tasks import (
+            execute_algorithm_job_for_inputs,
+        )
+
+        linked_task = execute_algorithm_job_for_inputs.signature(
+            kwargs={"job_pk": self.object.pk}, immutable=True
+        )
+
+        for civ_data in inputs:
+            self.object.create_civ(
+                ci_slug=civ_data.interface_slug,
+                new_value=civ_data.value,
+                user=form.cleaned_data["creator"],
+                linked_task=linked_task,
+            )
+
         return super().form_valid(form)
 
     def get_success_url(self):

@@ -922,7 +922,7 @@ def test_create_job_with_json_file(
                     },
                     user=editor,
                     follow=True,
-                    data={ci.slug: upload.pk},
+                    data={f"_{ci.slug}": upload.pk},
                 )
         assert response.status_code == 200
         assert (
@@ -970,8 +970,8 @@ def test_algorithm_job_create_with_image_input(
                 user=editor,
                 follow=True,
                 data={
-                    ci.slug: image1.pk,
-                    f"WidgetChoice-{ci.slug}": WidgetChoices.IMAGE_SEARCH.name,
+                    f"_{ci.slug}": image1.pk,
+                    f"WidgetChoice-_{ci.slug}": WidgetChoices.IMAGE_SEARCH.name,
                 },
             )
     assert response.status_code == 200
@@ -991,8 +991,8 @@ def test_algorithm_job_create_with_image_input(
                 user=editor,
                 follow=True,
                 data={
-                    ci.slug: image2.pk,
-                    f"WidgetChoice-{ci.slug}": WidgetChoices.IMAGE_SEARCH.name,
+                    f"_{ci.slug}": image2.pk,
+                    f"WidgetChoice-_{ci.slug}": WidgetChoices.IMAGE_SEARCH.name,
                 },
             )
     assert response.status_code == 200
@@ -1015,8 +1015,8 @@ def test_algorithm_job_create_with_image_input(
                 user=editor,
                 follow=True,
                 data={
-                    ci.slug: upload.pk,
-                    f"WidgetChoice-{ci.slug}": WidgetChoices.IMAGE_UPLOAD.name,
+                    f"_{ci.slug}": upload.pk,
+                    f"WidgetChoice-_{ci.slug}": WidgetChoices.IMAGE_UPLOAD.name,
                 },
             )
     assert response.status_code == 200
@@ -1156,14 +1156,14 @@ class TestJobCreateView(TestCase):
 
         response = self.create_job(
             inputs={
-                self.ci_str.slug: "Foo",
-                self.ci_bool.slug: True,
-                self.ci_img_upload.slug: self.im_upload.pk,
-                self.ci_existing_img.slug: self.image_1.pk,
-                self.ci_json_file.slug: self.file_upload.pk,
-                self.ci_json_in_db_with_schema.slug: '["Foo", "bar"]',
-                f"WidgetChoice-{self.ci_img_upload.slug}": WidgetChoices.IMAGE_UPLOAD.name,
-                f"WidgetChoice-{self.ci_existing_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
+                f"_{self.ci_str.slug}": "Foo",
+                f"_{self.ci_bool.slug}": True,
+                f"_{self.ci_img_upload.slug}": self.im_upload.pk,
+                f"_{self.ci_existing_img.slug}": self.image_1.pk,
+                f"_{self.ci_json_file.slug}": self.file_upload.pk,
+                f"_{self.ci_json_in_db_with_schema.slug}": '["Foo", "bar"]',
+                f"WidgetChoice-_{self.ci_img_upload.slug}": WidgetChoices.IMAGE_UPLOAD.name,
+                f"WidgetChoice-_{self.ci_existing_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
             },
         )
         assert response.status_code == 200
@@ -1223,13 +1223,13 @@ class TestJobCreateView(TestCase):
 
         response = self.create_job(
             inputs={
-                self.ci_str.slug: "Foo",
-                self.ci_bool.slug: True,
-                self.ci_existing_img.slug: self.image_1.pk,
-                self.ci_json_in_db_with_schema.slug: '["Foo", "bar"]',
-                self.ci_json_file.slug: civ5.pk,
+                f"_{self.ci_str.slug}": "Foo",
+                f"_{self.ci_bool.slug}": True,
+                f"_{self.ci_existing_img.slug}": self.image_1.pk,
+                f"_{self.ci_json_in_db_with_schema.slug}": '["Foo", "bar"]',
+                f"_{self.ci_json_file.slug}": civ5.pk,
                 f"value_type_{self.ci_json_file.slug}": "civ",
-                f"WidgetChoice-{self.ci_existing_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
+                f"WidgetChoice-_{self.ci_existing_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
             },
         )
         assert response.status_code == 200
@@ -1267,11 +1267,11 @@ class TestJobCreateView(TestCase):
 
         response = self.create_job(
             inputs={
-                self.ci_str.slug: "Foo",
-                self.ci_bool.slug: True,
-                self.ci_existing_img.slug: self.image_1.pk,
-                self.ci_json_in_db_with_schema.slug: '["Foo", "bar"]',
-                f"WidgetChoice-{self.ci_existing_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
+                f"_{self.ci_str.slug}": "Foo",
+                f"_{self.ci_bool.slug}": True,
+                f"_{self.ci_existing_img.slug}": self.image_1.pk,
+                f"_{self.ci_json_in_db_with_schema.slug}": '["Foo", "bar"]',
+                f"WidgetChoice-_{self.ci_existing_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
             },
         )
         assert response.status_code == 200
@@ -1300,7 +1300,7 @@ class TestJobCreateView(TestCase):
 
         response = self.create_job(
             inputs={
-                self.ci_json_file.slug: file_upload.pk,
+                f"_{self.ci_json_file.slug}": file_upload.pk,
             }
         )
         assert response.status_code == 200
@@ -1321,7 +1321,7 @@ class TestJobCreateView(TestCase):
         self.algorithm.inputs.set([self.ci_json_in_db_with_schema])
         response = self.create_job(
             inputs={
-                self.ci_json_in_db_with_schema.slug: '{"foo": "bar"}',
+                f"_{self.ci_json_in_db_with_schema.slug}": '{"foo": "bar"}',
             }
         )
         # validation of values stored in DB happens synchronously,
@@ -1341,8 +1341,8 @@ class TestJobCreateView(TestCase):
 
         response = self.create_job(
             inputs={
-                self.ci_img_upload.slug: user_upload.pk,
-                f"WidgetChoice-{self.ci_img_upload.slug}": WidgetChoices.IMAGE_UPLOAD.name,
+                f"_{self.ci_img_upload.slug}": user_upload.pk,
+                f"WidgetChoice-_{self.ci_img_upload.slug}": WidgetChoices.IMAGE_UPLOAD.name,
             }
         )
         assert response.status_code == 200
@@ -1508,7 +1508,7 @@ def test_job_time_limit(client):
         },
         user=user,
         follow=True,
-        data={ci.slug: '{"Foo": "bar"}'},
+        data={f"_{ci.slug}": '{"Foo": "bar"}'},
     )
 
     assert response.status_code == 200
@@ -1662,8 +1662,8 @@ def test_job_create_denied_for_same_input_model_and_image(client):
         },
         user=creator,
         data={
-            ci.slug: im.pk,
-            f"WidgetChoice-{ci.slug}": WidgetChoices.IMAGE_SEARCH.name,
+            f"_{ci.slug}": im.pk,
+            f"WidgetChoice-_{ci.slug}": WidgetChoices.IMAGE_SEARCH.name,
         },
     )
     assert not response.context["form"].is_valid()

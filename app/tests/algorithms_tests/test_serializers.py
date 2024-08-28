@@ -7,8 +7,9 @@ from grandchallenge.algorithms.serializers import (
     HyperlinkedJobSerializer,
     JobPostSerializer,
 )
-from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.models import CIVData, ComponentInterface
 from tests.algorithms_tests.factories import (
+    AlgorithmFactory,
     AlgorithmImageFactory,
     AlgorithmJobFactory,
 )
@@ -363,9 +364,43 @@ def test_reformat_inputs(rf):
         data=AlgorithmJobFactory(time_limit=10), context={"request": request}
     )
 
-    assert serializer.reformat_inputs(serialized_civs=data) == {
-        ci_str.slug: "foo",
-        ci_img.slug: im.pk,
-        ci_img2.slug: us.pk,
-        ci_file.slug: upl.pk,
-    }
+    assert serializer.reformat_inputs(serialized_civs=data) == [
+        CIVData(interface_slug=ci_str.slug, value="foo"),
+        CIVData(interface_slug=ci_img.slug, value=im.pk),
+        CIVData(interface_slug=ci_img2.slug, value=us.pk),
+        CIVData(interface_slug=ci_file.slug, value=upl.pk),
+    ]
+
+
+@pytest.mark.django_db
+def test_algorithm_post_serializer_image_and_time_limit_fixed(rf):
+    request = rf.get("/foo")
+    request.user = UserFactory()
+    alg = AlgorithmFactory(time_limit=10)
+    alg.add_editor(request.user)
+    ai = AlgorithmImageFactory(
+        algorithm=alg,
+        is_desired_version=True,
+        is_manifest_valid=True,
+        is_in_registry=True,
+    )
+    different_ai = AlgorithmImageFactory(algorithm=alg)
+    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.STRING)
+    alg.inputs.set([ci])
+    serializer = JobPostSerializer(
+        data={
+            "algorithm": alg.api_url,
+            "algorithm_image": different_ai.api_url,
+            "algorithm_model": "1234",  # try to provide a pk
+            "time_limit": 60,
+            "inputs": [{"interface": ci.slug, "value": "bar"}],
+        },
+        context={"request": request},
+    )
+    assert serializer.is_valid()
+    serializer.create(serializer.validated_data)
+    job = Job.objects.get()
+    assert job.algorithm_image == ai
+    assert job.algorithm_image != different_ai
+    assert not job.algorithm_model
+    assert job.time_limit == 10

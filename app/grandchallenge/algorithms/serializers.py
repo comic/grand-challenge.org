@@ -11,7 +11,7 @@ from rest_framework.relations import (
 )
 
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
-from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.models import CIVData, ComponentInterface
 from grandchallenge.components.serializers import (
     ComponentInterfaceSerializer,
     ComponentInterfaceValuePostSerializer,
@@ -154,6 +154,12 @@ class JobPostSerializer(JobSerializer):
     class Meta:
         model = Job
         fields = ["pk", "algorithm", "inputs", "status"]
+        non_interface_fields = [
+            "algorithm_image",
+            "algorithm_model",
+            "creator",
+            "time_limit",
+        ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -230,11 +236,10 @@ class JobPostSerializer(JobSerializer):
                     {"interface": interface, "value": interface.default_value}
                 )
 
-        reformatted_inputs = self.reformat_inputs(serialized_civs=inputs)
-        data.update(reformatted_inputs)
+        self.inputs = self.reformat_inputs(serialized_civs=inputs)
 
         if Job.objects.get_jobs_with_same_inputs(
-            data=data,
+            inputs=self.inputs,
             algorithm_image=data["algorithm_image"],
             algorithm_model=data["algorithm_model"],
         ):
@@ -246,24 +251,34 @@ class JobPostSerializer(JobSerializer):
         return data
 
     def create(self, validated_data):
-        job = Job.objects.create_job_and_process_inputs(
-            data=validated_data,
+        job = Job.objects.create(
+            **validated_data,
             extra_logs_viewer_groups=[
                 validated_data["algorithm_image"].algorithm.editors_group
             ],
         )
+        # local import to avoid circular dependency
+        from grandchallenge.algorithms.tasks import (
+            execute_algorithm_job_for_inputs,
+        )
+
+        linked_task = execute_algorithm_job_for_inputs.signature(
+            kwargs={"job_pk": job.pk}, immutable=True
+        )
+
+        for civ in self.inputs:
+            job.create_civ(
+                ci_slug=civ.interface_slug,
+                new_value=civ.value,
+                user=validated_data["creator"],
+                linked_task=linked_task,
+            )
+
         return job
 
-    def reformat_inputs(self, *, serialized_civs):
-        """
-        Takes serialized CIV data and turns it into a dictionary:
-        {
-            "interface_slug_1": "value_1",
-            "interface_slug_2": "value_2"
-        }
-        This representation of CIV data corresponds to how CIV data is stored in
-        a form's cleaned_data.
-        """
+    @staticmethod
+    def reformat_inputs(*, serialized_civs):
+        """Takes serialized CIV data and returns list of CIVData objects."""
         possible_keys = [
             "image",
             "value",
@@ -271,11 +286,15 @@ class JobPostSerializer(JobSerializer):
             "user_upload",
             "upload_session",
         ]
-        data = {}
+        data = []
         for civ in serialized_civs:
-            interface_slug = civ["interface"].slug
             for key in possible_keys:
                 if key in civ:
-                    data[interface_slug] = civ[key]
+                    data.append(
+                        CIVData(
+                            interface_slug=civ["interface"].slug,
+                            value=civ[key],
+                        )
+                    )
                     break
         return data
