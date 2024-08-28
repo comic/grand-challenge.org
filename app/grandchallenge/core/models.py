@@ -1,6 +1,7 @@
 import uuid
 
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.utils.timezone import localtime
 from django.utils.translation import gettext_lazy as _
@@ -72,6 +73,14 @@ class RequestBase(models.Model):
             status += ", was accepted at " + self.format_date(self.changed)
         elif self.status == self.REJECTED:
             status += ", was rejected at " + self.format_date(self.changed)
+
+            try:
+                user_is_verified = self.user.verification.is_verified
+            except ObjectDoesNotExist:
+                user_is_verified = False
+
+            if not user_is_verified:
+                status += ". You need to verify your account in order to request access permissions"
         return status
 
     @staticmethod
