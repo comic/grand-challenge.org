@@ -123,7 +123,7 @@ def test_auto_deactivate_reverse_set(
     ],
 )
 @pytest.mark.parametrize(
-    "access_request_handling, expected_status_without_verification_request, verified_status, expected_status_with_verification_request",
+    "access_request_handling, expected_request_status_without_verification, verified_status, expected_request_status_with_verification",
     [
         (
             AccessRequestHandlingOptions.ACCEPT_ALL,
@@ -169,14 +169,14 @@ def test_auto_handle_permission_requests_on_verification(
     entity_factory,
     access_request_handling,
     verified_status,
-    expected_status_without_verification_request,
-    expected_status_with_verification_request,
+    expected_request_status_without_verification,
+    expected_request_status_with_verification,
 ):
     u = UserFactory()
     t = entity_factory(access_request_handling=access_request_handling)
     pr = perm_request_factory(**{"user": u, perm_request_entity_attr: t})
 
-    assert pr.status == expected_status_without_verification_request
+    assert pr.status == expected_request_status_without_verification
 
     VerificationFactory(
         user=u, email_is_verified=True, is_verified=verified_status
@@ -185,4 +185,4 @@ def test_auto_handle_permission_requests_on_verification(
     t2 = entity_factory(access_request_handling=access_request_handling)
     pr2 = perm_request_factory(**{"user": u, perm_request_entity_attr: t2})
 
-    assert pr2.status == expected_status_with_verification_request
+    assert pr2.status == expected_request_status_with_verification

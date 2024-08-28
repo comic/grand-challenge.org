@@ -103,7 +103,7 @@ def auto_disable_user_in_verification_user_set(
 
 
 @receiver(post_save, sender=Verification)
-def accept_permission_requests(*, instance, **kwargs):
+def handle_permission_requests(*, instance, **kwargs):
 
     permission_request_classes = [
         AlgorithmPermissionRequest,
