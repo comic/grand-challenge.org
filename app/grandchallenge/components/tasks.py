@@ -606,21 +606,13 @@ def get_model_instance(*, app_label, model_name, **kwargs):
     return model.objects.get(**kwargs)
 
 
-@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
-@transaction.atomic
+@acks_late_2xlarge_task
 def provision_job(
     *, job_pk: uuid.UUID, job_app_label: str, job_model_name: str, backend: str
 ):
-    model = apps.get_model(app_label=job_app_label, model_name=job_model_name)
-    job_queryset = model.objects.filter(pk=job_pk).select_for_update(
-        nowait=True
+    job = get_model_instance(
+        pk=job_pk, app_label=job_app_label, model_name=job_model_name
     )
-
-    try:
-        job = job_queryset.get()
-    except OperationalError as error:
-        raise LockNotAcquiredException from error
-
     executor = job.get_executor(backend=backend)
 
     if job.status in [job.PENDING, job.RETRY] and job.inputs_complete:
@@ -654,8 +646,7 @@ def provision_job(
         on_commit(execute_job.signature(**job.signature_kwargs).apply_async)
 
 
-@acks_late_micro_short_task(retry_on=(RetryStep, LockNotAcquiredException))
-@transaction.atomic
+@acks_late_micro_short_task(retry_on=(RetryStep,))
 def execute_job(  # noqa: C901
     *,
     job_pk: uuid.UUID,
@@ -673,16 +664,9 @@ def execute_job(  # noqa: C901
 
     Once the job has executed it will be in the EXECUTING or FAILURE states.
     """
-    model = apps.get_model(app_label=job_app_label, model_name=job_model_name)
-    job_queryset = model.objects.filter(pk=job_pk).select_for_update(
-        nowait=True
+    job = get_model_instance(
+        pk=job_pk, app_label=job_app_label, model_name=job_model_name
     )
-
-    try:
-        job = job_queryset.get()
-    except OperationalError as error:
-        raise LockNotAcquiredException from error
-
     executor = job.get_executor(backend=backend)
 
     if job.status == job.PROVISIONED:
@@ -844,28 +828,17 @@ def handle_event(*, event, backend):  # noqa: C901
         )
 
 
-@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
-@transaction.atomic
+@acks_late_2xlarge_task
 def parse_job_outputs(
     *, job_pk: uuid.UUID, job_app_label: str, job_model_name: str, backend: str
 ):
-    model = apps.get_model(app_label=job_app_label, model_name=job_model_name)
-    job_queryset = model.objects.filter(pk=job_pk).select_for_update(
-        nowait=True
+    job = get_model_instance(
+        pk=job_pk, app_label=job_app_label, model_name=job_model_name
     )
-
-    try:
-        job = job_queryset.get()
-    except OperationalError as error:
-        raise LockNotAcquiredException from error
-
     executor = job.get_executor(backend=backend)
 
     if job.status == job.EXECUTED and not job.outputs.exists():
         job.update_status(status=job.PARSING)
-    elif job.status in (job.SUCCESS, job.FAILURE, job.CANCELLED):
-        deprovision_job.signature(**job.signature_kwargs).apply_async()
-        return
     else:
         deprovision_job.signature(**job.signature_kwargs).apply_async()
         raise PriorStepFailed("Job is not ready for output parsing")
@@ -880,7 +853,7 @@ def parse_job_outputs(
             error_message=str(e),
             detailed_error_message=e.message_details,
         )
-        return
+        raise PriorStepFailed("Could not parse outputs")
     except Exception:
         job.update_status(
             status=job.FAILURE, error_message="Could not parse outputs"
@@ -1064,9 +1037,9 @@ def update_uploadsession_and_object_status(
         object.save()
 
 
-@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
+@acks_late_micro_short_task
 @transaction.atomic
-def add_image_to_object(  # noqa: C901
+def add_image_to_object(
     *,
     app_label,
     model_name,
@@ -1080,20 +1053,13 @@ def add_image_to_object(  # noqa: C901
         ComponentInterfaceValue,
     )
 
-    interface = ComponentInterface.objects.get(pk=interface_pk)
-    model = apps.get_model(app_label=app_label, model_name=model_name)
-    object_queryset = model.objects.filter(pk=object_pk).select_for_update(
-        nowait=True
+    object = get_model_instance(
+        pk=object_pk,
+        app_label=app_label,
+        model_name=model_name,
     )
-    upload_queryset = RawImageUploadSession.objects.filter(
-        pk=upload_session_pk
-    ).select_for_update(nowait=True)
-
-    try:
-        object = object_queryset.get()
-        upload_session = upload_queryset.get()
-    except OperationalError as error:
-        raise LockNotAcquiredException from error
+    interface = ComponentInterface.objects.get(pk=interface_pk)
+    upload_session = RawImageUploadSession.objects.get(pk=upload_session_pk)
 
     try:
         image = Image.objects.get(origin_id=upload_session_pk)
@@ -1132,7 +1098,7 @@ def add_image_to_object(  # noqa: C901
         on_commit(signature(linked_task).apply_async)
 
 
-@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
+@acks_late_micro_short_task
 @transaction.atomic
 def add_file_to_object(
     *,
@@ -1149,16 +1115,12 @@ def add_file_to_object(
     )
 
     user_upload = UserUpload.objects.get(pk=user_upload_pk)
-    model = apps.get_model(app_label=app_label, model_name=model_name)
-    object_queryset = model.objects.filter(pk=object_pk).select_for_update(
-        nowait=True
+    object = get_model_instance(
+        pk=object_pk,
+        app_label=app_label,
+        model_name=model_name,
     )
     interface = ComponentInterface.objects.get(pk=interface_pk)
-
-    try:
-        object = object_queryset.get()
-    except OperationalError as error:
-        raise LockNotAcquiredException from error
 
     try:
         current_value = getattr(object, object.base_object.civ_set_lookup).get(
