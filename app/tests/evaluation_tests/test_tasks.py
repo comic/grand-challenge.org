@@ -616,6 +616,7 @@ def test_cancel_external_evaluations_past_timeout(settings):
         submission__phase__external_evaluation=True,
         submission__phase__challenge=challenge,
         submission__creator=participant,
+        time_limit=60,
     )
     e2 = EvaluationFactory(
         status=Evaluation.CLAIMED,
@@ -623,6 +624,7 @@ def test_cancel_external_evaluations_past_timeout(settings):
         submission__phase__external_evaluation=True,
         submission__phase__challenge=challenge,
         submission__creator=participant,
+        time_limit=60,
     )
     e3 = EvaluationFactory(
         status=Evaluation.CLAIMED,
@@ -630,21 +632,26 @@ def test_cancel_external_evaluations_past_timeout(settings):
         submission__phase__external_evaluation=True,
         submission__phase__challenge=challenge,
         submission__creator=participant,
+        time_limit=60,
     )
     e4 = EvaluationFactory(
         status=Evaluation.SUCCESS,
         submission__phase__external_evaluation=True,
         submission__phase__challenge=challenge,
         submission__creator=participant,
+        time_limit=60,
     )
     e5 = EvaluationFactory(
         status=Evaluation.FAILURE,
         submission__phase__external_evaluation=True,
         submission__phase__challenge=challenge,
         submission__creator=participant,
+        time_limit=60,
     )
     e6 = EvaluationFactory(
-        submission__phase__challenge=challenge, submission__creator=participant
+        submission__phase__challenge=challenge,
+        submission__creator=participant,
+        time_limit=60,
     )
 
     # reset notifications

@@ -39,7 +39,10 @@ def create_claimable_evaluation():
     ai.algorithm.inputs.set([ci2])
 
     return EvaluationFactory(
-        submission__algorithm_image=ai, submission__phase=p2, method=None
+        submission__algorithm_image=ai,
+        submission__phase=p2,
+        method=None,
+        time_limit=60,
     )
 
 
@@ -66,8 +69,11 @@ def test_claimable_evaluations(client):
         submission__algorithm_image=e1.submission.algorithm_image,
         method=None,
         status=Evaluation.EXECUTING,
+        time_limit=60,
     )
-    EvaluationFactory(submission__phase=e1.submission.phase.parent)
+    EvaluationFactory(
+        submission__phase=e1.submission.phase.parent, time_limit=10
+    )
 
     external_evaluator, challenge_admin, challenge_participant = (
         get_user_groups(e1)
@@ -166,6 +172,7 @@ def test_evaluator_can_only_claim_one_eval_at_a_time(client):
         submission__phase=evaluation.submission.phase,
         method=None,
         claimed_by=external_evaluator,
+        time_limit=60,
     )
     response = get_view_for_user(
         viewname="api:evaluation-claim",
@@ -204,6 +211,7 @@ class TestUpdateExternalEvaluation(TestCase):
             submission__algorithm_image=self.claimed_evaluation.submission.algorithm_image,
             submission__phase=self.claimed_evaluation.submission.phase,
             method=None,
+            time_limit=60,
         )
 
     @pytest.mark.django_db

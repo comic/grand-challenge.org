@@ -355,7 +355,7 @@ def test_unhiding_challenge_updates_perms(
 @pytest.mark.django_db
 def test_external_evaluations_perms():
     phase = PhaseFactory()
-    e = EvaluationFactory(submission__phase=phase)
+    e = EvaluationFactory(submission__phase=phase, time_limit=60)
 
     participants = phase.challenge.participants_group
     admins = phase.challenge.admins_group
@@ -381,6 +381,7 @@ def test_external_evaluations_perms():
         submission__phase=phase,
         submission__algorithm_image=AlgorithmImageFactory(),
         submission__algorithm_model=AlgorithmModelFactory(),
+        time_limit=60,
     )
 
     assert get_groups_with_set_perms(e2) == {
