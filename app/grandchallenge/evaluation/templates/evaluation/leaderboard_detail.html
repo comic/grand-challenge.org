@@ -90,5 +90,5 @@
     {{ allow_metrics_toggling|json_script:"allowMetricsToggling" }}
     {{ display_leaderboard_date_button|json_script:"displayLeaderboardDateButton" }}
 
-    <script type="text/javascript" src="{% static 'js/evaluation/leaderboard.js' %}"></script>
+    <script type="module" src="{% static 'js/evaluation/leaderboard.mjs' %}"></script>
 {% endblock %}

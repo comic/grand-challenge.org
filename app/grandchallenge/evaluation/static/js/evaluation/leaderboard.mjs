@@ -1,3 +1,5 @@
+import { getCookie } from "../../js/get_cookie.mjs";
+
 const allowMetricsToggling = JSON.parse(
     document.getElementById("allowMetricsToggling").textContent,
 );
@@ -16,6 +18,10 @@ $(document).ready(() => {
         serverSide: true,
         ajax: {
             url: "",
+            type: "POST",
+            headers: {
+                "X-CSRFToken": getCookie("_csrftoken"),
+            },
         },
         columnDefs: [
             {
