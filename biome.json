@@ -3,6 +3,7 @@
     "files": {
         "ignore": [
             "app/grandchallenge/core/static/vendored/**",
+            "app/grandchallenge/core/static/js/handy-scroll/**",
             "app/grandchallenge/core/static/js/markdownx.js",
             "app/grandchallenge/core/static/js/world-atlas/countries-110m.json"
         ]
@@ -11,8 +12,15 @@
         "indentStyle": "space",
         "indentWidth": 4
     },
-    "organizeImports": { "enabled": true },
-    "linter": { "enabled": true, "rules": { "recommended": true } },
+    "organizeImports": {
+        "enabled": true
+    },
+    "linter": {
+        "enabled": true,
+        "rules": {
+            "recommended": true
+        }
+    },
     "javascript": {
         "formatter": {
             "arrowParentheses": "asNeeded"
