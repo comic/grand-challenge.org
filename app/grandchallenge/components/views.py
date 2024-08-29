@@ -430,15 +430,27 @@ class CIVSetBulkDelete(LoginRequiredMixin, FormView):
         return super().form_valid(form)
 
 
-class FileUploadFormFieldTemplateView(LoginRequiredMixin, View):
+class FileUploadFormFieldBaseView(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, View
+):
+    permission_required = None
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
 
-    @property
+    @cached_property
     def interface(self):
         return get_object_or_404(
             ComponentInterface, slug=self.kwargs["interface_slug"]
         )
 
-    def get(self, request, interface_slug):
+    @cached_property
+    def base_object(self):
+        raise NotImplementedError
+
+    def get_permission_object(self):
+        return self.base_object
+
+    def get(self, request, *args, **kwargs):
         html_content = render_to_string(
             UserUploadMultipleWidget.template_name,
             {

@@ -72,6 +72,7 @@ from grandchallenge.algorithms.serializers import (
 )
 from grandchallenge.components.models import ImportStatusChoices
 from grandchallenge.components.tasks import upload_to_registry_and_sagemaker
+from grandchallenge.components.views import FileUploadFormFieldBaseView
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
@@ -1027,3 +1028,11 @@ class AlgorithmModelVersionControl(
 
     def get_success_url(self):
         return self.algorithm.get_absolute_url() + "#models"
+
+
+class AlgorithmFileUploadFieldView(FileUploadFormFieldBaseView):
+    permission_required = "algorithms.execute_algorithm"
+
+    @cached_property
+    def base_object(self):
+        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])

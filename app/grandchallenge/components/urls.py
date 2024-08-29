@@ -4,7 +4,6 @@ from grandchallenge.components.views import (
     ComponentInterfaceAutocomplete,
     ComponentInterfaceIOSwitch,
     ComponentInterfaceList,
-    FileUploadFormFieldTemplateView,
     InterfaceListTypeOptions,
     InterfaceObjectTypeOptions,
 )
@@ -53,10 +52,5 @@ urlpatterns = [
         "interfaces/autocomplete/",
         ComponentInterfaceAutocomplete.as_view(),
         name="component-interface-autocomplete",
-    ),
-    path(
-        "interfaces/<interface_slug>/file_upload/",
-        FileUploadFormFieldTemplateView.as_view(),
-        name="file-upload",
     ),
 ]

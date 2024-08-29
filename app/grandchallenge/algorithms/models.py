@@ -430,6 +430,10 @@ class Algorithm(
         return user.groups.remove(self.users_group)
 
     @property
+    def file_upload_field_url_path(self):
+        return "algorithms:file-upload"
+
+    @property
     def civ_set_lookup(self):
         return "inputs"
 

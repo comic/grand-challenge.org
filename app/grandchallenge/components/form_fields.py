@@ -11,7 +11,6 @@ from grandchallenge.components.widgets import SelectUploadWidget
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.core.widgets import JSONEditorWidget
-from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import (
     UserUploadMultipleWidget,
@@ -51,6 +50,7 @@ class InterfaceFormField:
         help_text="",
         existing_civs=None,
         form_data=None,
+        file_upload_link=None,
     ):
         self.instance = instance
         self.initial = initial
@@ -60,11 +60,13 @@ class InterfaceFormField:
         self.help_text = help_text
         self.existing_civs = existing_civs
         self.form_data = form_data
+        self.file_upload_link = file_upload_link
 
         self.kwargs = {
             "required": required,
             "disabled": disabled,
             "initial": self.get_initial_value(),
+            "label": instance.slug.title(),
         }
 
         if instance.is_image_kind:
@@ -154,21 +156,14 @@ class InterfaceFormField:
                 widget=UserUploadSingleWidget(
                     allowed_file_types=self.instance.file_mimetypes
                 ),
-                label=self.instance.slug.title(),
                 help_text=_join_with_br(self.help_text, extra_help),
                 **self.kwargs,
             )
         elif type == "civ":
             return ModelChoiceField(
                 queryset=self.existing_civs,
-                label=self.instance.slug.title(),
                 widget=SelectUploadWidget(
-                    attrs={
-                        "upload_link": reverse(
-                            "components:file-upload",
-                            kwargs={"interface_slug": self.instance.slug},
-                        )
-                    }
+                    attrs={"upload_link": self.file_upload_link}
                 ),
                 **self.kwargs,
             )

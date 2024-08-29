@@ -713,6 +713,10 @@ class ReaderStudy(
         return (highest + 10) // 10 * 10
 
     @property
+    def file_upload_field_url_path(self):
+        return "reader-studies:file-upload"
+
+    @property
     def civ_sets_list_url(self):
         return reverse(
             "reader-studies:display_sets", kwargs={"slug": self.slug}

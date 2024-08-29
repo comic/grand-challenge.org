@@ -4,6 +4,7 @@ from grandchallenge.archives.views import (
     ArchiveCreate,
     ArchiveDetail,
     ArchiveEditorsUpdate,
+    ArchiveFileUploadFieldView,
     ArchiveItemBulkDelete,
     ArchiveItemCreateView,
     ArchiveItemDelete,
@@ -34,6 +35,11 @@ urlpatterns = [
         "<slug>/editors/update/",
         ArchiveEditorsUpdate.as_view(),
         name="editors-update",
+    ),
+    path(
+        "<slug>/interfaces/<interface_slug>/file_upload/",
+        ArchiveFileUploadFieldView.as_view(),
+        name="file-upload",
     ),
     path(
         "<slug>/uploaders/update/",

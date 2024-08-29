@@ -23,6 +23,7 @@ from grandchallenge.reader_studies.views import (
     ReaderStudyDetail,
     ReaderStudyDisplaySetList,
     ReaderStudyExampleGroundTruth,
+    ReaderStudyFileUploadFieldView,
     ReaderStudyLeaderBoard,
     ReaderStudyList,
     ReaderStudyPermissionRequestCreate,
@@ -46,6 +47,11 @@ urlpatterns = [
         "<slug>/leaderboard/",
         ReaderStudyLeaderBoard.as_view(),
         name="leaderboard",
+    ),
+    path(
+        "<slug>/interfaces/<interface_slug>/file_upload/",
+        ReaderStudyFileUploadFieldView.as_view(),
+        name="file-upload",
     ),
     path(
         "<slug>/display-sets/",

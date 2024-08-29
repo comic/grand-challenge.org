@@ -5,6 +5,7 @@ from django.conf import settings
 
 from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.reader_studies.models import DisplaySet, ReaderStudy
+from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
@@ -445,17 +446,40 @@ def test_display_set_bulk_delete(
 
 
 @pytest.mark.django_db
-def test_file_field_view(client):
-    user = UserFactory()
+@pytest.mark.parametrize(
+    "object, view_name",
+    [
+        (ReaderStudyFactory, "reader-studies:file-upload"),
+        (ArchiveFactory, "archives:file-upload"),
+        (AlgorithmFactory, "algorithms:file-upload"),
+    ],
+)
+def test_file_upload_form_field_view(client, object, view_name):
+    object = object()
+    u, editor = UserFactory.create_batch(2)
+    object.add_editor(editor)
+
     ci_json = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
 
     response = get_view_for_user(
-        viewname="components:file-upload",
+        viewname=view_name,
         client=client,
         reverse_kwargs={
+            "slug": object.slug,
             "interface_slug": ci_json.slug,
         },
-        user=user,
+        user=u,
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname=view_name,
+        client=client,
+        reverse_kwargs={
+            "slug": object.slug,
+            "interface_slug": ci_json.slug,
+        },
+        user=editor,
     )
     assert response.status_code == 200
     assert "user-upload" in str(response.content)

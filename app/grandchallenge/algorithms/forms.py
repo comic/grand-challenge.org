@@ -172,6 +172,13 @@ class JobCreateForm(SaveFormInitMixin, Form):
                 help_text=clean(inp.description) if inp.description else "",
                 existing_civs=existing_civs,
                 form_data=self.data,
+                file_upload_link=reverse(
+                    algorithm.file_upload_field_url_path,
+                    kwargs={
+                        "slug": algorithm.slug,
+                        "interface_slug": inp.slug,
+                    },
+                ),
             ).field
 
     @cached_property

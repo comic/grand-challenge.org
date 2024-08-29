@@ -63,6 +63,7 @@ from grandchallenge.components.views import (
     CIVSetDetail,
     CIVSetFormMixin,
     CivSetListView,
+    FileUploadFormFieldBaseView,
     InterfacesCreateBaseView,
     MultipleCIVProcessingBaseView,
 )
@@ -1364,3 +1365,13 @@ class DisplaySetBulkDelete(CIVSetBulkDelete):
         return self.base_object.civ_sets_related_manager.filter(
             pk__in=[ds.pk for ds in qs if ds.is_editable]
         )
+
+
+class ReaderStudyFileUploadFieldView(FileUploadFormFieldBaseView):
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+    )
+
+    @cached_property
+    def base_object(self):
+        return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
