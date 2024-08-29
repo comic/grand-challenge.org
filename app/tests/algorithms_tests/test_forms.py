@@ -683,6 +683,17 @@ class TestJobCreateForm(TestCase):
         self.editor = UserFactory()
         self.alg.add_editor(self.editor)
 
+    def test_non_interface_fields(self):
+        form = JobCreateForm(
+            algorithm=self.ai.algorithm, user=self.editor, data={}
+        )
+        assert form.Meta.non_interface_fields == [
+            "algorithm_image",
+            "algorithm_model",
+            "creator",
+            "time_limit",
+        ]
+
     def test_creator_queryset(self):
         form = JobCreateForm(
             algorithm=self.ai.algorithm, user=self.editor, data={}

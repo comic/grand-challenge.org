@@ -2168,10 +2168,11 @@ class CIVForObjectMixin:
                 getattr(self, self.base_object.civ_set_lookup).add(civ)
             except ValidationError as e:
                 if new_value:
-                    if hasattr(self, "error_message"):
-                        self.status = self.CANCELLED
-                        self.error_message = format_validation_error_message(e)
-                        self.save()
+                    if hasattr(self, "update_status"):
+                        self.update_status(
+                            status=self.CANCELLED,
+                            error_message=format_validation_error_message(e),
+                        )
                     else:
                         raise e
                 else:
@@ -2212,6 +2213,7 @@ class CIVForObjectMixin:
                 upload_session.user_uploads.set(new_value)
 
             upload_session.process_images(
+                linked_algorithm_job_pk=self.pk,
                 linked_task=add_image_to_object.signature(
                     kwargs={
                         "app_label": self._meta.app_label,

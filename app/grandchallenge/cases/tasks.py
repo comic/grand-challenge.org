@@ -8,7 +8,7 @@ from tempfile import TemporaryDirectory
 
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files import File
 from django.db import OperationalError, transaction
 from django.db.transaction import on_commit
@@ -18,9 +18,11 @@ from django.utils.module_loading import import_string
 from panimg import convert, post_process
 from panimg.models import PanImgFile, PanImgResult
 
+from grandchallenge.algorithms.models import Job
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.components.backends.utils import safe_extract
 from grandchallenge.core.celery import acks_late_2xlarge_task
+from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.uploads.models import UserUpload
 
@@ -89,8 +91,10 @@ def extract_files(*, source_path: Path, checked_paths=None):
         )
 
 
-@acks_late_2xlarge_task
-def build_images(*, upload_session_pk):
+@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+def build_images(  # noqa:C901
+    *, upload_session_pk, linked_algorithm_job_pk=None
+):
     """
     Task which analyzes an upload session and attempts to extract and store
     detected images assembled from files uploaded in the image session.
@@ -113,16 +117,26 @@ def build_images(*, upload_session_pk):
     session_queryset = RawImageUploadSession.objects.filter(
         pk=upload_session_pk
     ).select_for_update(nowait=True)
+    if linked_algorithm_job_pk:
+        job_queryset = Job.objects.filter(
+            pk=linked_algorithm_job_pk
+        ).select_for_update(nowait=True)
+    else:
+        job_queryset = Job.objects.none()
 
-    with transaction.atomic():
+    try:
         upload_session = session_queryset.get()
-        upload_session.status = upload_session.STARTED
-        upload_session.save()
+        job = job_queryset.get()
+    except ObjectDoesNotExist:
+        # empty job queryset
+        job = None
+    except OperationalError as error:
+        raise LockNotAcquiredException from error
 
     try:
         with transaction.atomic():
-            # Acquire locks
-            upload_session = session_queryset.get()
+            upload_session.status = upload_session.STARTED
+            upload_session.save()
 
             with TemporaryDirectory() as tmp_dir:
                 tmp_dir = Path(tmp_dir).resolve()
@@ -131,23 +145,35 @@ def build_images(*, upload_session_pk):
 
             upload_session.status = upload_session.SUCCESS
             upload_session.save()
-    except OperationalError:
-        # Could not acquire locks
-        raise
     except DuplicateFilesException as e:
         _delete_session_files(upload_session=upload_session)
         upload_session.error_message = str(e)
         upload_session.status = upload_session.FAILURE
         upload_session.save()
+        if job:
+            job.update_status(
+                status=Job.CANCELLED,
+                error_message="Image building step failed. See upload session for details.",
+            )
     except (SoftTimeLimitExceeded, TimeLimitExceeded):
         upload_session.error_message = "Time limit exceeded."
         upload_session.status = upload_session.FAILURE
         upload_session.save()
+        if job:
+            job.update_status(
+                status=Job.CANCELLED,
+                error_message="Image building step failed. See upload session for details.",
+            )
     except Exception:
         _delete_session_files(upload_session=upload_session)
         upload_session.error_message = "An unexpected error occurred"
         upload_session.status = upload_session.FAILURE
         upload_session.save()
+        if job:
+            job.update_status(
+                status=Job.CANCELLED,
+                error_message="Image building step failed. See upload session for details.",
+            )
         raise
 
 

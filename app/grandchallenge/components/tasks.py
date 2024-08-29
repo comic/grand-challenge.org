@@ -606,13 +606,20 @@ def get_model_instance(*, app_label, model_name, **kwargs):
     return model.objects.get(**kwargs)
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
 def provision_job(
     *, job_pk: uuid.UUID, job_app_label: str, job_model_name: str, backend: str
 ):
-    job = get_model_instance(
-        pk=job_pk, app_label=job_app_label, model_name=job_model_name
-    )
+    model = apps.get_model(app_label=job_app_label, model_name=job_model_name)
+    queryset = model.objects.filter(
+        pk=job_pk,
+    ).select_for_update(nowait=True)
+
+    try:
+        job = queryset.get()
+    except OperationalError as error:
+        raise LockNotAcquiredException from error
+
     executor = job.get_executor(backend=backend)
 
     if job.status in [job.PENDING, job.RETRY] and job.inputs_complete:
@@ -1031,15 +1038,15 @@ def update_uploadsession_and_object_status(
     upload_session.status = RawImageUploadSession.FAILURE
     upload_session.error_message = formatted_error
     upload_session.save()
-    if hasattr(object, "error_message"):
-        object.status = object.CANCELLED
-        object.error_message = formatted_error
-        object.save()
+    if hasattr(object, "update_status"):
+        object.update_status(
+            status=object.CANCELLED, error_message=formatted_error
+        )
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
-def add_image_to_object(
+def add_image_to_object(  # noqa:C901
     *,
     app_label,
     model_name,
@@ -1053,13 +1060,21 @@ def add_image_to_object(
         ComponentInterfaceValue,
     )
 
-    object = get_model_instance(
-        pk=object_pk,
-        app_label=app_label,
-        model_name=model_name,
-    )
     interface = ComponentInterface.objects.get(pk=interface_pk)
-    upload_session = RawImageUploadSession.objects.get(pk=upload_session_pk)
+
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+    object_queryset = model.objects.filter(pk=object_pk).select_for_update(
+        nowait=True
+    )
+    upload_queryset = RawImageUploadSession.objects.filter(
+        pk=upload_session_pk
+    ).select_for_update(nowait=True)
+
+    try:
+        object = object_queryset.get()
+        upload_session = upload_queryset.get()
+    except OperationalError as error:
+        raise LockNotAcquiredException from error
 
     try:
         image = Image.objects.get(origin_id=upload_session_pk)
@@ -1146,10 +1161,10 @@ def add_file_to_object(
         error_description = (
             f"File for interface {interface.title} failed validation:{error}."
         )
-        if hasattr(object, "error_message"):
-            object.error_message = error_description
-            object.status = object.CANCELLED
-            object.save()
+        if hasattr(object, "update_status"):
+            object.update_status(
+                error_message=error_description, status=object.CANCELLED
+            )
         else:
             Notification.send(
                 kind=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,

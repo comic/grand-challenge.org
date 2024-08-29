@@ -7,7 +7,7 @@ from botocore.exceptions import ClientError
 from django.conf import settings
 from django.core.cache import cache
 from django.core.files.base import File
-from django.db import transaction
+from django.db import OperationalError, transaction
 from django.db.models import Count, Q
 from django.db.transaction import on_commit
 from django.utils._os import safe_join
@@ -19,6 +19,7 @@ from grandchallenge.core.celery import (
     acks_late_2xlarge_task,
     acks_late_micro_short_task,
 )
+from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.credits.models import Credit
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
@@ -26,10 +27,17 @@ from grandchallenge.subdomains.utils import reverse
 logger = logging.getLogger(__name__)
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
 def execute_algorithm_job_for_inputs(*, job_pk):
-    job = Job.objects.get(pk=job_pk)
+    queryset = Job.objects.filter(
+        pk=job_pk,
+    ).select_for_update(nowait=True)
+
+    try:
+        job = queryset.get()
+    except OperationalError as error:
+        raise LockNotAcquiredException from error
 
     # Notify the job creator on failure
     linked_task = send_failed_job_notification.signature(
