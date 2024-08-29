@@ -27,47 +27,70 @@
 
 <split></split>
 
-<span class="badge badge-{{ object.status_context }}">
-    {% if object.animate %}
-        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-    {% endif %}
-    {{ object.get_status_display }}{% if object.status == object.SUCCESS and object.stderr %},
-        with warnings{% endif %}
-</span>
-<split></split>
+<ul class="list-unstyled mb-0">
+    <li>
+        <span class="badge badge-{{ object.status_context }}">
+            {% if object.animate %}
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            {% endif %}
+            {{ object.get_status_display }}{% if object.status == object.SUCCESS and object.stderr %},
+                with warnings{% endif %}
+        </span>
+    </li>
 
-{% if object.public %}
-    <i class="fa fa-eye text-success"
-       title="Result and images are public"></i>
-{% else %}
-    {% if object.viewers.user_set.all|length > 1 %}
-        {# TODO: Hack, we need to exclude the creator rather than checking the length is > 1 #}
-        <i class="fa fa-eye text-warning"
-           title="Result and images are visible by {{ object.viewers.user_set.all|oxford_comma }}"></i>
-    {% else %}
-        <i class="fa fa-eye-slash text-danger"
-           title="Result and images are private"></i>
-    {% endif %}
+{% if object.rendered_result_text %}
+<li>
+    <div class="modal"
+        id="renderedResultModal-{{ object.pk }}"
+        tabindex="-1"
+        role="dialog"
+        aria-labelledby="statusfoModalTitle"
+        aria-hidden="true"
+    >
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        Result
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal"
+                            aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="text-left modal-body">
+                    {{ object.rendered_result_text }}
+                </div>
+                <div class="modal-footer">
+                    <a class="btn btn-primary" href="{{ object.get_absolute_url }}">
+                        <i class="fa fa-info-circle mr-1"></i>View Result Details
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <a href="#renderedResultModal-{{ object.pk }}"
+    data-toggle="modal"
+    data-target="#renderedResultModal-{{ object.pk }}"
+    class="text-decoration-none"
+    >
+        <span class="badge badge-info">
+            <i class="fa fa-fw fa-eye"></i>
+            Result
+        </span>
+    </a>
+</li>
 {% endif %}
-<split></split>
 
-{{ object.comment }}
-<split></split>
-
-<div class="child-p-mb-0 text-left">
-    {{ object.rendered_result_text }}
-</div>
-
-<split></split>
-<ul class="list-unstyled mb-0 text-left">
-    {% if object.error_message %}
-
+{% if object.error_message %}
+    <li>
         <div class="modal"
-             id="errorInfoModal-{{ object.pk }}"
-             tabindex="-1"
-             role="dialog"
-             aria-labelledby="statusfoModalTitle"
-             aria-hidden="true"
+            id="errorInfoModal-{{ object.pk }}"
+            tabindex="-1"
+            role="dialog"
+            aria-labelledby="statusfoModalTitle"
+            aria-hidden="true"
         >
             <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
                 <div class="modal-content">
@@ -92,22 +115,41 @@
             </div>
         </div>
 
-        <li>
-            <a href="#errorInfoModal-{{ object.pk }}"
-               data-toggle="modal"
-               data-target="#errorInfoModal-{{ object.pk }}"
-               class="text-decoration-none"
-            >
-                <div class="badge badge-danger">
-                    <i class="fa fa-fw fa-eye"></i>
-                    Error
-                </div>
-                <div class="badge badge-light">
-                    {{ object.error_message | truncatechars:16 }}
-                </div>
-            </a>
-        </li>
+        <a href="#errorInfoModal-{{ object.pk }}"
+        data-toggle="modal"
+        data-target="#errorInfoModal-{{ object.pk }}"
+        class="text-decoration-none"
+        >
+            <span class="badge badge-danger">
+                <i class="fa fa-fw fa-eye"></i>
+                Error
+            </span>
+        </a>
+    </li>
+{% endif %}
+
+</ul>
+<split></split>
+
+{% if object.public %}
+    <i class="fa fa-eye text-success"
+       title="Result and images are public"></i>
+{% else %}
+    {% if object.viewers.user_set.all|length > 1 %}
+        {# TODO: Hack, we need to exclude the creator rather than checking the length is > 1 #}
+        <i class="fa fa-eye text-warning"
+           title="Result and images are visible by {{ object.viewers.user_set.all|oxford_comma }}"></i>
+    {% else %}
+        <i class="fa fa-eye-slash text-danger"
+           title="Result and images are private"></i>
     {% endif %}
+{% endif %}
+<split></split>
+
+{{ object.comment }}
+
+<split></split>
+<ul class="list-unstyled mb-0 text-left">
 
     {% for civ in object.outputs.all|sort_civs %}
         <li>
