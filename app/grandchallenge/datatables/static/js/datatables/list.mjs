@@ -19,6 +19,7 @@ $(document).ready(() => {
         lengthChange: false,
         pageLength: 25,
         serverSide: true,
+        scrollX: true,
         responsive: false,
         columnDefs: [
             {
@@ -49,8 +50,8 @@ $("#ajaxDataTable").on("init.dt", () => {
     // This is a work-around to get the table to resize properly on extra-large Bootstrap viewport
     setTimeout($("#ajaxDataTable").DataTable().columns.adjust, 1000);
 
-    // Update any floating scrolls following the insertation of the datatable
-    handyScroll.update("[data-handy-scroll]");
+    // Set up floating scroll, note that the target class only shows up when scrollX is set to true
+    handyScroll.mount(".dataTables_scrollBody");
 });
 
 $(window).resize(() => {
