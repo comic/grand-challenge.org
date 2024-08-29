@@ -615,20 +615,21 @@ def provision_job(
         pk=job_pk,
     ).select_for_update(nowait=True)
 
-    try:
-        job = queryset.get()
-    except OperationalError as error:
-        raise LockNotAcquiredException from error
+    with transaction.atomic():
+        try:
+            job = queryset.get()
+        except OperationalError as error:
+            raise LockNotAcquiredException from error
 
-    executor = job.get_executor(backend=backend)
+        executor = job.get_executor(backend=backend)
 
-    if job.status in [job.PENDING, job.RETRY] and job.inputs_complete:
-        job.update_status(status=job.PROVISIONING)
-    else:
-        logger.warning(
-            "Job is not ready for provisioning, or has already been provisioned."
-        )
-        return
+        if job.status in [job.PENDING, job.RETRY] and job.inputs_complete:
+            job.update_status(status=job.PROVISIONING)
+        else:
+            logger.warning(
+                "Job is not ready for provisioning, or has already been provisioned."
+            )
+            return
 
     try:
         executor.provision(
