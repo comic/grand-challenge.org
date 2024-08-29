@@ -455,10 +455,10 @@ class FileUploadFormFieldBaseView(
             UserUploadMultipleWidget.template_name,
             {
                 "widget": UserUploadMultipleWidget().get_context(
-                    name=self.interface.slug,
+                    name=f"_{self.interface.slug}",
                     value=None,
                     attrs={
-                        "id": self.interface.slug,
+                        "id": f"_{self.interface.slug}",
                         "help_text": clean(self.interface.description),
                     },
                 )["widget"],
