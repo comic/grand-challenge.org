@@ -573,91 +573,139 @@ def test_retrieve_existing_civs(
 
 
 @pytest.mark.django_db
-class TestGetJobsWithSameInputs(TestCase):
-    def setUp(self):
-        self.alg = AlgorithmFactory()
-        self.ci1, self.ci2 = ComponentInterfaceFactory.create_batch(
-            2, kind=ComponentInterface.Kind.STRING
+class TestGetJobsWithSameInputs:
+
+    def get_civ_data(self, civs):
+        return [
+            CIVData(interface_slug=civ.interface.slug, value=civ.value)
+            for civ in civs
+        ]
+
+    def test_job_with_same_image_different_model(
+        self, algorithm_with_image_and_model_and_two_inputs
+    ):
+        alg = algorithm_with_image_and_model_and_two_inputs.algorithm
+        civs = algorithm_with_image_and_model_and_two_inputs.civs
+        data = self.get_civ_data(civs=civs)
+
+        j = AlgorithmJobFactory(
+            algorithm_image=alg.active_image, time_limit=10
         )
-        self.alg.inputs.set([self.ci1, self.ci2])
+        j.inputs.set(civs)
 
-        self.ai = AlgorithmImageFactory(algorithm=self.alg)
-        self.am = AlgorithmModelFactory(algorithm=self.alg)
-
-        self.data = [
-            CIVData(interface_slug=self.ci1.slug, value="foo"),
-            CIVData(interface_slug=self.ci2.slug, value="bar"),
-        ]
-
-        self.civs = [
-            ComponentInterfaceValueFactory(interface=self.ci1, value="foo"),
-            ComponentInterfaceValueFactory(interface=self.ci2, value="bar"),
-        ]
-
-    def test_job_with_same_image_different_model(self):
-        j = AlgorithmJobFactory(algorithm_image=self.ai, time_limit=10)
-        j.inputs.set(self.civs)
         jobs = Job.objects.get_jobs_with_same_inputs(
-            inputs=self.data, algorithm_image=self.ai, algorithm_model=self.am
+            inputs=data,
+            algorithm_image=alg.active_image,
+            algorithm_model=alg.active_model,
         )
         assert len(jobs) == 0
 
-    def test_job_with_same_model_different_image(self):
+    def test_job_with_same_model_different_image(
+        self, algorithm_with_image_and_model_and_two_inputs
+    ):
+        alg = algorithm_with_image_and_model_and_two_inputs.algorithm
+        civs = algorithm_with_image_and_model_and_two_inputs.civs
+        data = self.get_civ_data(civs=civs)
+
         j = AlgorithmJobFactory(
             algorithm_image=AlgorithmImageFactory(),
-            algorithm_model=self.am,
+            algorithm_model=alg.active_model,
             time_limit=10,
         )
-        j.inputs.set(self.civs)
+        j.inputs.set(civs)
         jobs = Job.objects.get_jobs_with_same_inputs(
-            inputs=self.data, algorithm_image=self.ai, algorithm_model=self.am
+            inputs=data,
+            algorithm_image=alg.active_image,
+            algorithm_model=alg.active_model,
         )
         assert len(jobs) == 0
 
-    def test_job_with_same_model_and_image(self):
+    def test_job_with_same_model_and_image(
+        self, algorithm_with_image_and_model_and_two_inputs
+    ):
+        alg = algorithm_with_image_and_model_and_two_inputs.algorithm
+        civs = algorithm_with_image_and_model_and_two_inputs.civs
+        data = self.get_civ_data(civs=civs)
+
         j = AlgorithmJobFactory(
-            algorithm_model=self.am, algorithm_image=self.ai, time_limit=10
+            algorithm_model=alg.active_model,
+            algorithm_image=alg.active_image,
+            time_limit=10,
         )
-        j.inputs.set(self.civs)
+        j.inputs.set(civs)
         jobs = Job.objects.get_jobs_with_same_inputs(
-            inputs=self.data, algorithm_image=self.ai, algorithm_model=self.am
+            inputs=data,
+            algorithm_image=alg.active_image,
+            algorithm_model=alg.active_model,
         )
         assert len(jobs) == 1
         assert j in jobs
 
-    def test_job_with_different_image_and_model(self):
+    def test_job_with_different_image_and_model(
+        self, algorithm_with_image_and_model_and_two_inputs
+    ):
+        alg = algorithm_with_image_and_model_and_two_inputs.algorithm
+        civs = algorithm_with_image_and_model_and_two_inputs.civs
+        data = self.get_civ_data(civs=civs)
+
         j = AlgorithmJobFactory(
             algorithm_model=AlgorithmModelFactory(),
             algorithm_image=AlgorithmImageFactory(),
             time_limit=10,
         )
-        j.inputs.set(self.civs)
+        j.inputs.set(civs)
         jobs = Job.objects.get_jobs_with_same_inputs(
-            inputs=self.data, algorithm_image=self.ai, algorithm_model=self.am
+            inputs=data,
+            algorithm_image=alg.active_image,
+            algorithm_model=alg.active_model,
         )
         assert len(jobs) == 0
 
-    def test_job_with_same_image_no_model_provided(self):
+    def test_job_with_same_image_no_model_provided(
+        self, algorithm_with_image_and_model_and_two_inputs
+    ):
+        alg = algorithm_with_image_and_model_and_two_inputs.algorithm
+        civs = algorithm_with_image_and_model_and_two_inputs.civs
+        data = self.get_civ_data(civs=civs)
+
         j = AlgorithmJobFactory(
-            algorithm_model=self.am, algorithm_image=self.ai, time_limit=10
+            algorithm_model=alg.active_model,
+            algorithm_image=alg.active_image,
+            time_limit=10,
         )
-        j.inputs.set(self.civs)
+        j.inputs.set(civs)
         jobs = Job.objects.get_jobs_with_same_inputs(
-            inputs=self.data, algorithm_image=self.ai, algorithm_model=None
+            inputs=data, algorithm_image=alg.active_image, algorithm_model=None
         )
         assert len(jobs) == 0
 
-    def test_job_with_same_image_and_without_model(self):
-        j = AlgorithmJobFactory(algorithm_image=self.ai, time_limit=10)
-        j.inputs.set(self.civs)
+    def test_job_with_same_image_and_without_model(
+        self, algorithm_with_image_and_model_and_two_inputs
+    ):
+        alg = algorithm_with_image_and_model_and_two_inputs.algorithm
+        civs = algorithm_with_image_and_model_and_two_inputs.civs
+        data = self.get_civ_data(civs=civs)
+
+        j = AlgorithmJobFactory(
+            algorithm_image=alg.active_image, time_limit=10
+        )
+        j.inputs.set(civs)
         jobs = Job.objects.get_jobs_with_same_inputs(
-            inputs=self.data, algorithm_image=self.ai, algorithm_model=None
+            inputs=data, algorithm_image=alg.active_image, algorithm_model=None
         )
         assert j in jobs
         assert len(jobs) == 1
 
-    def test_job_with_different_input(self):
-        j = AlgorithmJobFactory(algorithm_image=self.ai, time_limit=10)
+    def test_job_with_different_input(
+        self, algorithm_with_image_and_model_and_two_inputs
+    ):
+        alg = algorithm_with_image_and_model_and_two_inputs.algorithm
+        civs = algorithm_with_image_and_model_and_two_inputs.civs
+        data = self.get_civ_data(civs=civs)
+
+        j = AlgorithmJobFactory(
+            algorithm_image=alg.active_image, time_limit=10
+        )
         j.inputs.set(
             [
                 ComponentInterfaceValueFactory(),
@@ -665,7 +713,7 @@ class TestGetJobsWithSameInputs(TestCase):
             ]
         )
         jobs = Job.objects.get_jobs_with_same_inputs(
-            inputs=self.data, algorithm_image=self.ai, algorithm_model=None
+            inputs=data, algorithm_image=alg.active_image, algorithm_model=None
         )
         assert len(jobs) == 0
 

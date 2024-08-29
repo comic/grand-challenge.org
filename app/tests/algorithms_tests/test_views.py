@@ -7,7 +7,7 @@ from unittest.mock import patch
 import pytest
 from django.contrib.auth.models import Group
 from django.core.files.base import ContentFile
-from django.test import TestCase, override_settings
+from django.test import override_settings
 from django.utils import timezone
 from django.utils.text import slugify
 from guardian.shortcuts import assign_perm, remove_perm
@@ -31,7 +31,6 @@ from tests.algorithms_tests.factories import (
     AlgorithmPermissionRequestFactory,
 )
 from tests.cases_tests import RESOURCE_PATH
-from tests.cases_tests.factories import ImageFileFactoryWithMHDFile
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -1025,145 +1024,95 @@ def test_algorithm_job_create_with_image_input(
 
 
 @pytest.mark.django_db
-class TestJobCreateView(TestCase):
+class TestJobCreateView:
 
-    def setUp(self):
-        self.algorithm = AlgorithmFactory(time_limit=600)
-        self.algorithm_image = AlgorithmImageFactory(
-            algorithm=self.algorithm,
-            is_desired_version=True,
-            is_manifest_valid=True,
-            is_in_registry=True,
-        )
-        self.algorithm_model = AlgorithmModelFactory(
-            algorithm=self.algorithm,
-            is_desired_version=True,
-        )
-
-        self.user = UserFactory()
-        VerificationFactory(user=self.user, is_verified=True)
-        self.algorithm.add_editor(user=self.user)
-
-        # create interfaces of different kinds
-        self.ci_str = ComponentInterfaceFactory(
-            kind=InterfaceKind.InterfaceKindChoices.STRING
-        )
-        self.ci_bool = ComponentInterfaceFactory(
-            kind=InterfaceKind.InterfaceKindChoices.BOOL
-        )
-        self.ci_img_upload = ComponentInterfaceFactory(
-            kind=InterfaceKind.InterfaceKindChoices.IMAGE
-        )
-        self.ci_existing_img = ComponentInterfaceFactory(
-            kind=InterfaceKind.InterfaceKindChoices.IMAGE
-        )
-        self.ci_json_in_db_with_schema = ComponentInterfaceFactory(
-            kind=InterfaceKind.InterfaceKindChoices.ANY,
-            store_in_database=True,
-            schema={
-                "$schema": "http://json-schema.org/draft-07/schema",
-                "type": "array",
-            },
-        )
-        self.ci_json_file = ComponentInterfaceFactory(
-            kind=InterfaceKind.InterfaceKindChoices.ANY,
-            store_in_database=False,
-            schema={
-                "$schema": "http://json-schema.org/draft-07/schema",
-                "type": "array",
-            },
-        )
-        self.interfaces = [
-            self.ci_str,
-            self.ci_bool,
-            self.ci_json_file,
-            self.ci_json_in_db_with_schema,
-            self.ci_existing_img,
-            self.ci_img_upload,
-        ]
-
-        # Create inputs
-        self.im_upload = create_upload_from_file(
-            file_path=RESOURCE_PATH / "image10x10x10.mha",
-            creator=self.user,
-        )
-        self.image_1 = ImageFactory()
-        self.image_1.files.set([ImageFileFactoryWithMHDFile()])
-        assign_perm("cases.view_image", self.user, self.image_1)
-
-        self.file_upload = UserUploadFactory(
-            filename="file.json", creator=self.user
-        )
-        presigned_urls = self.file_upload.generate_presigned_urls(
-            part_numbers=[1]
-        )
-        response = put(presigned_urls["1"], data=b'["Foo", "bar"]')
-        self.file_upload.complete_multipart_upload(
-            parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
-        )
-        self.file_upload.save()
-
-    def create_job(self, inputs):
+    def create_job(
+        self,
+        client,
+        django_capture_on_commit_callbacks,
+        user,
+        inputs,
+        algorithm,
+    ):
         with patch(
             "grandchallenge.components.tasks.execute_job"
         ) as mocked_execute_job:
             # no need to actually execute the job,
             # all other async tasks should run though
             mocked_execute_job.return_value = None
-            with self.captureOnCommitCallbacks(execute=True):
+            with django_capture_on_commit_callbacks(execute=True):
                 response = get_view_for_user(
                     viewname="algorithms:job-create",
-                    client=self.client,
-                    method=self.client.post,
-                    user=self.user,
+                    client=client,
+                    method=client.post,
+                    user=user,
                     reverse_kwargs={
-                        "slug": self.algorithm.slug,
+                        "slug": algorithm.slug,
                     },
                     follow=True,
                     data=inputs,
                 )
         return response
 
-    def create_existing_civs(self):
+    def create_existing_civs(self, interface_data):
         civ1 = ComponentInterfaceValueFactory(
-            interface=self.ci_bool, value=True
+            interface=interface_data.ci_bool, value=True
         )
         civ2 = ComponentInterfaceValueFactory(
-            interface=self.ci_str, value="Foo"
+            interface=interface_data.ci_str, value="Foo"
         )
         civ3 = ComponentInterfaceValueFactory(
-            interface=self.ci_existing_img, image=self.image_1
+            interface=interface_data.ci_existing_img,
+            image=interface_data.image_1,
         )
         civ4 = ComponentInterfaceValueFactory(
-            interface=self.ci_json_in_db_with_schema,
+            interface=interface_data.ci_json_in_db_with_schema,
             value=["Foo", "bar"],
         )
         civ5 = ComponentInterfaceValueFactory(
-            interface=self.ci_json_file,
+            interface=interface_data.ci_json_file,
             file=ContentFile(
                 json.dumps(["Foo", "bar"]).encode("utf-8"),
-                name=Path(self.ci_json_file.relative_path).name,
+                name=Path(interface_data.ci_json_file.relative_path).name,
             ),
         )
         return [civ1, civ2, civ3, civ4, civ5]
 
     @override_settings(task_eager_propagates=True, task_always_eager=True)
-    def test_create_job_with_multiple_new_inputs(self):
+    def test_create_job_with_multiple_new_inputs(
+        self,
+        client,
+        django_capture_on_commit_callbacks,
+        algorithm_with_multiple_inputs,
+    ):
         # configure multiple inputs
-        self.algorithm.inputs.set(self.interfaces)
+        algorithm_with_multiple_inputs.algorithm.inputs.set(
+            [
+                algorithm_with_multiple_inputs.ci_json_in_db_with_schema,
+                algorithm_with_multiple_inputs.ci_existing_img,
+                algorithm_with_multiple_inputs.ci_str,
+                algorithm_with_multiple_inputs.ci_bool,
+                algorithm_with_multiple_inputs.ci_json_file,
+                algorithm_with_multiple_inputs.ci_img_upload,
+            ]
+        )
 
         assert ComponentInterfaceValue.objects.count() == 0
 
         response = self.create_job(
+            client=client,
+            django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+            algorithm=algorithm_with_multiple_inputs.algorithm,
+            user=algorithm_with_multiple_inputs.editor,
             inputs={
-                f"_{self.ci_str.slug}": "Foo",
-                f"_{self.ci_bool.slug}": True,
-                f"_{self.ci_img_upload.slug}": self.im_upload.pk,
-                f"_{self.ci_existing_img.slug}": self.image_1.pk,
-                f"_{self.ci_json_file.slug}": self.file_upload.pk,
-                f"_{self.ci_json_in_db_with_schema.slug}": '["Foo", "bar"]',
-                f"WidgetChoice-_{self.ci_img_upload.slug}": WidgetChoices.IMAGE_UPLOAD.name,
-                f"WidgetChoice-_{self.ci_existing_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
+                f"_{algorithm_with_multiple_inputs.ci_str.slug}": "Foo",
+                f"_{algorithm_with_multiple_inputs.ci_bool.slug}": True,
+                f"_{algorithm_with_multiple_inputs.ci_img_upload.slug}": algorithm_with_multiple_inputs.im_upload_through_ui.pk,
+                f"_{algorithm_with_multiple_inputs.ci_existing_img.slug}": algorithm_with_multiple_inputs.image_1.pk,
+                f"_{algorithm_with_multiple_inputs.ci_json_file.slug}": algorithm_with_multiple_inputs.file_upload.pk,
+                f"_{algorithm_with_multiple_inputs.ci_json_in_db_with_schema.slug}": '["Foo", "bar"]',
+                f"WidgetChoice-_{algorithm_with_multiple_inputs.ci_img_upload.slug}": WidgetChoices.IMAGE_UPLOAD.name,
+                f"WidgetChoice-_{algorithm_with_multiple_inputs.ci_existing_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
             },
         )
         assert response.status_code == 200
@@ -1171,13 +1120,22 @@ class TestJobCreateView(TestCase):
 
         job = Job.objects.get()
 
-        assert job.algorithm_image == self.algorithm_image
-        assert job.algorithm_model == self.algorithm_model
+        assert (
+            job.algorithm_image
+            == algorithm_with_multiple_inputs.algorithm.active_image
+        )
+        assert (
+            job.algorithm_model
+            == algorithm_with_multiple_inputs.algorithm.active_model
+        )
         assert job.time_limit == 600
         assert job.inputs.count() == 6
 
         assert sorted(
-            [int.pk for int in self.algorithm.inputs.all()]
+            [
+                int.pk
+                for int in algorithm_with_multiple_inputs.algorithm.inputs.all()
+            ]
         ) == sorted([civ.interface.pk for civ in job.inputs.all()])
 
         value_inputs = [civ.value for civ in job.inputs.all() if civ.value]
@@ -1188,31 +1146,38 @@ class TestJobCreateView(TestCase):
         image_inputs = [
             civ.image.name for civ in job.inputs.all() if civ.image
         ]
-        assert self.image_1.name in image_inputs
+        assert algorithm_with_multiple_inputs.image_1.name in image_inputs
         assert "image10x10x10.mha" in image_inputs
         assert (
-            self.file_upload.filename.split(".")[0]
+            algorithm_with_multiple_inputs.file_upload.filename.split(".")[0]
             in [civ.file for civ in job.inputs.all() if civ.file][0].name
         )
 
     @override_settings(task_eager_propagates=True, task_always_eager=True)
-    def test_create_job_with_existing_inputs(self):
+    def test_create_job_with_existing_inputs(
+        self,
+        client,
+        django_capture_on_commit_callbacks,
+        algorithm_with_multiple_inputs,
+    ):
         # configure multiple inputs
-        self.algorithm.inputs.set(
+        algorithm_with_multiple_inputs.algorithm.inputs.set(
             [
-                self.ci_str,
-                self.ci_bool,
-                self.ci_existing_img,
-                self.ci_json_in_db_with_schema,
-                self.ci_json_file,
+                algorithm_with_multiple_inputs.ci_json_in_db_with_schema,
+                algorithm_with_multiple_inputs.ci_existing_img,
+                algorithm_with_multiple_inputs.ci_str,
+                algorithm_with_multiple_inputs.ci_bool,
+                algorithm_with_multiple_inputs.ci_json_file,
             ]
         )
 
-        civ1, civ2, civ3, civ4, civ5 = self.create_existing_civs()
+        civ1, civ2, civ3, civ4, civ5 = self.create_existing_civs(
+            interface_data=algorithm_with_multiple_inputs
+        )
 
         old_job_with_only_file_input = AlgorithmJobFactory(
-            algorithm_image=self.algorithm_image,
-            algorithm_model=self.algorithm_model,
+            algorithm_image=algorithm_with_multiple_inputs.algorithm.active_image,
+            algorithm_model=algorithm_with_multiple_inputs.algorithm.active_model,
             status=Job.SUCCESS,
             time_limit=10,
         )
@@ -1222,14 +1187,18 @@ class TestJobCreateView(TestCase):
         old_civ_count = ComponentInterfaceValue.objects.count()
 
         response = self.create_job(
+            client=client,
+            django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+            algorithm=algorithm_with_multiple_inputs.algorithm,
+            user=algorithm_with_multiple_inputs.editor,
             inputs={
-                f"_{self.ci_str.slug}": "Foo",
-                f"_{self.ci_bool.slug}": True,
-                f"_{self.ci_existing_img.slug}": self.image_1.pk,
-                f"_{self.ci_json_in_db_with_schema.slug}": '["Foo", "bar"]',
-                f"_{self.ci_json_file.slug}": civ5.pk,
-                f"value_type_{self.ci_json_file.slug}": "civ",
-                f"WidgetChoice-_{self.ci_existing_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
+                f"_{algorithm_with_multiple_inputs.ci_str.slug}": "Foo",
+                f"_{algorithm_with_multiple_inputs.ci_bool.slug}": True,
+                f"_{algorithm_with_multiple_inputs.ci_existing_img.slug}": algorithm_with_multiple_inputs.image_1.pk,
+                f"_{algorithm_with_multiple_inputs.ci_json_in_db_with_schema.slug}": '["Foo", "bar"]',
+                f"_{algorithm_with_multiple_inputs.ci_json_file.slug}": civ5.pk,
+                f"value_type_{algorithm_with_multiple_inputs.ci_json_file.slug}": "civ",
+                f"WidgetChoice-_{algorithm_with_multiple_inputs.ci_existing_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
             },
         )
         assert response.status_code == 200
@@ -1244,21 +1213,28 @@ class TestJobCreateView(TestCase):
             assert civ in job.inputs.all()
 
     @override_settings(task_eager_propagates=True, task_always_eager=True)
-    def test_create_job_is_idempotent(self):
+    def test_create_job_is_idempotent(
+        self,
+        client,
+        django_capture_on_commit_callbacks,
+        algorithm_with_multiple_inputs,
+    ):
         # configure multiple inputs
-        self.algorithm.inputs.set(
+        algorithm_with_multiple_inputs.algorithm.inputs.set(
             [
-                self.ci_str,
-                self.ci_bool,
-                self.ci_existing_img,
-                self.ci_json_in_db_with_schema,
+                algorithm_with_multiple_inputs.ci_str,
+                algorithm_with_multiple_inputs.ci_bool,
+                algorithm_with_multiple_inputs.ci_existing_img,
+                algorithm_with_multiple_inputs.ci_json_in_db_with_schema,
             ]
         )
-        civ1, civ2, civ3, civ4, civ5 = self.create_existing_civs()
+        civ1, civ2, civ3, civ4, civ5 = self.create_existing_civs(
+            interface_data=algorithm_with_multiple_inputs
+        )
 
         job = AlgorithmJobFactory(
-            algorithm_image=self.algorithm_image,
-            algorithm_model=self.algorithm_model,
+            algorithm_image=algorithm_with_multiple_inputs.algorithm.active_image,
+            algorithm_model=algorithm_with_multiple_inputs.algorithm.active_model,
             status=Job.SUCCESS,
             time_limit=10,
         )
@@ -1266,12 +1242,16 @@ class TestJobCreateView(TestCase):
         old_civ_count = ComponentInterfaceValue.objects.count()
 
         response = self.create_job(
+            client=client,
+            django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+            algorithm=algorithm_with_multiple_inputs.algorithm,
+            user=algorithm_with_multiple_inputs.editor,
             inputs={
-                f"_{self.ci_str.slug}": "Foo",
-                f"_{self.ci_bool.slug}": True,
-                f"_{self.ci_existing_img.slug}": self.image_1.pk,
-                f"_{self.ci_json_in_db_with_schema.slug}": '["Foo", "bar"]',
-                f"WidgetChoice-_{self.ci_existing_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
+                f"_{algorithm_with_multiple_inputs.ci_str.slug}": "Foo",
+                f"_{algorithm_with_multiple_inputs.ci_bool.slug}": True,
+                f"_{algorithm_with_multiple_inputs.ci_existing_img.slug}": algorithm_with_multiple_inputs.image_1.pk,
+                f"_{algorithm_with_multiple_inputs.ci_json_in_db_with_schema.slug}": '["Foo", "bar"]',
+                f"WidgetChoice-_{algorithm_with_multiple_inputs.ci_existing_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
             },
         )
         assert response.status_code == 200
@@ -1285,11 +1265,18 @@ class TestJobCreateView(TestCase):
         assert Job.objects.count() == 1
 
     @override_settings(task_eager_propagates=True, task_always_eager=True)
-    def test_create_job_with_faulty_file_input(self):
+    def test_create_job_with_faulty_file_input(
+        self,
+        client,
+        django_capture_on_commit_callbacks,
+        algorithm_with_multiple_inputs,
+    ):
         # configure file input
-        self.algorithm.inputs.set([self.ci_json_file])
+        algorithm_with_multiple_inputs.algorithm.inputs.set(
+            [algorithm_with_multiple_inputs.ci_json_file]
+        )
         file_upload = UserUploadFactory(
-            filename="file.json", creator=self.user
+            filename="file.json", creator=algorithm_with_multiple_inputs.editor
         )
         presigned_urls = file_upload.generate_presigned_urls(part_numbers=[1])
         response = put(presigned_urls["1"], data=b'{"Foo": "bar"}')
@@ -1299,9 +1286,13 @@ class TestJobCreateView(TestCase):
         file_upload.save()
 
         response = self.create_job(
+            client=client,
+            django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+            algorithm=algorithm_with_multiple_inputs.algorithm,
+            user=algorithm_with_multiple_inputs.editor,
             inputs={
-                f"_{self.ci_json_file.slug}": file_upload.pk,
-            }
+                f"_{algorithm_with_multiple_inputs.ci_json_file.slug}": file_upload.pk,
+            },
         )
         assert response.status_code == 200
         # validation of files happens async, so job gets created
@@ -1317,12 +1308,23 @@ class TestJobCreateView(TestCase):
         assert ComponentInterfaceValue.objects.count() == 0
 
     @override_settings(task_eager_propagates=True, task_always_eager=True)
-    def test_create_job_with_faulty_json_input(self):
-        self.algorithm.inputs.set([self.ci_json_in_db_with_schema])
+    def test_create_job_with_faulty_json_input(
+        self,
+        client,
+        django_capture_on_commit_callbacks,
+        algorithm_with_multiple_inputs,
+    ):
+        algorithm_with_multiple_inputs.algorithm.inputs.set(
+            [algorithm_with_multiple_inputs.ci_json_in_db_with_schema]
+        )
         response = self.create_job(
+            client=client,
+            django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+            algorithm=algorithm_with_multiple_inputs.algorithm,
+            user=algorithm_with_multiple_inputs.editor,
             inputs={
-                f"_{self.ci_json_in_db_with_schema.slug}": '{"foo": "bar"}',
-            }
+                f"_{algorithm_with_multiple_inputs.ci_json_in_db_with_schema.slug}": '{"foo": "bar"}',
+            },
         )
         # validation of values stored in DB happens synchronously,
         # so no job and no CIVs get created if validation fails
@@ -1333,17 +1335,29 @@ class TestJobCreateView(TestCase):
         assert ComponentInterfaceValue.objects.count() == 0
 
     @override_settings(task_eager_propagates=True, task_always_eager=True)
-    def test_create_job_with_faulty_image_input(self):
-        self.algorithm.inputs.set([self.ci_img_upload])
+    def test_create_job_with_faulty_image_input(
+        self,
+        client,
+        django_capture_on_commit_callbacks,
+        algorithm_with_multiple_inputs,
+    ):
+        algorithm_with_multiple_inputs.algorithm.inputs.set(
+            [algorithm_with_multiple_inputs.ci_img_upload]
+        )
         user_upload = create_upload_from_file(
-            creator=self.user, file_path=RESOURCE_PATH / "corrupt.png"
+            creator=algorithm_with_multiple_inputs.editor,
+            file_path=RESOURCE_PATH / "corrupt.png",
         )
 
         response = self.create_job(
+            client=client,
+            django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+            algorithm=algorithm_with_multiple_inputs.algorithm,
+            user=algorithm_with_multiple_inputs.editor,
             inputs={
-                f"_{self.ci_img_upload.slug}": user_upload.pk,
-                f"WidgetChoice-_{self.ci_img_upload.slug}": WidgetChoices.IMAGE_UPLOAD.name,
-            }
+                f"_{algorithm_with_multiple_inputs.ci_img_upload.slug}": user_upload.pk,
+                f"WidgetChoice-_{algorithm_with_multiple_inputs.ci_img_upload.slug}": WidgetChoices.IMAGE_UPLOAD.name,
+            },
         )
         assert response.status_code == 200
         # validation of images happens async, so job gets created

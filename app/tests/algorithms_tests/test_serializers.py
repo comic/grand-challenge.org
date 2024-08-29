@@ -37,9 +37,9 @@ def test_algorithm_relations_on_job_serializer(rf):
 @pytest.mark.django_db
 def test_non_interface_fields(rf):
     job = AlgorithmJobFactory(time_limit=60)
-    serializer = JobPostSerializer(
-        job, context={"request": rf.get("/foo", secure=True)}
-    )
+    request = rf.get("/foo")
+    request.user = UserFactory()
+    serializer = JobPostSerializer(job, context={"request": request})
     assert serializer.Meta.non_interface_fields == [
         "algorithm_image",
         "algorithm_model",

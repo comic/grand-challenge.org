@@ -103,7 +103,6 @@ class InterfaceFormField:
             "uploads.change_userupload",
         ).filter(status=UserUpload.StatusChoices.COMPLETED)
         image_queryset = get_objects_for_user(self.user, "cases.view_image")
-
         return FlexibleImageField(
             upload_queryset=upload_queryset,
             image_queryset=image_queryset,
