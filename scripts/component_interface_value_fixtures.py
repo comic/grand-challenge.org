@@ -22,6 +22,7 @@ def run():
     interfaces = _get_or_create_component_interfaces()
 
     _create_civ_rich_algorithm_job(creator=user, interfaces=interfaces)
+    _create_failed_algorithm_job(creator=user)
 
 
 def _get_or_create_component_interfaces():
@@ -77,6 +78,18 @@ def _get_or_create_component_interfaces():
             for kwargs in interfaces
         ]
     }
+
+
+def _create_failed_algorithm_job(creator):
+    ai = AlgorithmImage.objects.filter(creator=creator).first()
+
+    Job.objects.create(
+        creator=creator,
+        algorithm_image=ai,
+        status=Evaluation.FAILURE,
+        time_limit=ai.algorithm.time_limit,
+        error_message="RuntimeError: something went terribly, terribly wrong",
+    )
 
 
 def _create_civ_rich_algorithm_job(creator, interfaces):
