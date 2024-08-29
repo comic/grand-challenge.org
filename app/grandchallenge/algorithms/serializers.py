@@ -286,15 +286,25 @@ class JobPostSerializer(JobSerializer):
             "user_upload",
             "upload_session",
         ]
+
         data = []
         for civ in serialized_civs:
-            for key in possible_keys:
-                if key in civ:
-                    data.append(
-                        CIVData(
-                            interface_slug=civ["interface"].slug,
-                            value=civ[key],
-                        )
-                    )
-                    break
+            found_keys = [key for key in possible_keys if key in civ]
+
+            if not found_keys:
+                raise serializers.ValidationError(
+                    f"You must provide at least one of {possible_keys}"
+                )
+
+            if len(found_keys) > 1:
+                raise serializers.ValidationError(
+                    f"You can only provide one of {possible_keys} for each interface."
+                )
+
+            data.append(
+                CIVData(
+                    interface_slug=civ["interface"].slug,
+                    value=civ[found_keys[0]],
+                )
+            )
         return data
