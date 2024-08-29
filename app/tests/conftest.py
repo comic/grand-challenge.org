@@ -470,11 +470,6 @@ def algorithm_with_image_and_model():
     editor = UserFactory()
     alg.add_editor(editor)
 
-    ci1, ci2 = ComponentInterfaceFactory.create_batch(
-        2, kind=ComponentInterface.Kind.STRING
-    )
-    alg.inputs.set([ci1, ci2])
-
     return alg
 
 
@@ -488,10 +483,13 @@ def algorithm_with_image_and_model_and_two_inputs(
     algorithm_with_image_and_model,
 ):
     alg = algorithm_with_image_and_model
-    interfaces = alg.inputs.all()
+    ci1, ci2 = ComponentInterfaceFactory.create_batch(
+        2, kind=ComponentInterface.Kind.STRING
+    )
+    alg.inputs.set([ci1, ci2])
     civs = [
-        ComponentInterfaceValueFactory(interface=interfaces[0], value="foo"),
-        ComponentInterfaceValueFactory(interface=interfaces[1], value="bar"),
+        ComponentInterfaceValueFactory(interface=ci1, value="foo"),
+        ComponentInterfaceValueFactory(interface=ci2, value="bar"),
     ]
 
     return AlgorithmWithInputsAndCIVs(
@@ -597,7 +595,7 @@ def algorithm_with_multiple_inputs():
         ci_json_in_db_with_schema=ci_json_in_db_with_schema,
         ci_json_file=ci_json_file,
         im_upload_through_api=im_upload_through_api,
-        im_upload_through_UI=im_upload_through_ui,
+        im_upload_through_ui=im_upload_through_ui,
         file_upload=file_upload,
         image_1=image_1,
         image_2=image_2,
