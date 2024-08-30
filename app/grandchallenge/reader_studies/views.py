@@ -1375,3 +1375,7 @@ class ReaderStudyFileUploadFieldView(FileUploadFormFieldBaseView):
     @cached_property
     def base_object(self):
         return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
+
+    @property
+    def widget_name(self):
+        return self.interface.slug

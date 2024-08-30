@@ -443,6 +443,10 @@ class FileUploadFormFieldBaseView(
             ComponentInterface, slug=self.kwargs["interface_slug"]
         )
 
+    @property
+    def widget_name(self):
+        raise NotImplementedError
+
     @cached_property
     def base_object(self):
         raise NotImplementedError
@@ -454,14 +458,18 @@ class FileUploadFormFieldBaseView(
         html_content = render_to_string(
             UserUploadMultipleWidget.template_name,
             {
-                "widget": UserUploadMultipleWidget().get_context(
-                    name=f"_{self.interface.slug}",
+                "widget": UserUploadMultipleWidget(
+                    allowed_file_types=self.interface.file_mimetypes
+                ).get_context(
+                    name=self.widget_name,
                     value=None,
                     attrs={
-                        "id": f"_{self.interface.slug}",
+                        "id": self.widget_name,
                         "help_text": clean(self.interface.description),
                     },
-                )["widget"],
+                )[
+                    "widget"
+                ],
             },
         )
         return HttpResponse(html_content)

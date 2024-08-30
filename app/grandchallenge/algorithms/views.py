@@ -1036,3 +1036,7 @@ class AlgorithmFileUploadFieldView(FileUploadFormFieldBaseView):
     @cached_property
     def base_object(self):
         return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
+
+    @property
+    def widget_name(self):
+        return f"_{self.interface.slug}"
