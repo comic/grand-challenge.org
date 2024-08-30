@@ -20,7 +20,11 @@ from celery import (  # noqa: I251 TODO needs to be refactored
 )
 from django.apps import apps
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import (
+    MultipleObjectsReturned,
+    ObjectDoesNotExist,
+    ValidationError,
+)
 from django.core.files.base import ContentFile
 from django.db import OperationalError, transaction
 from django.db.models import DateTimeField, ExpressionWrapper, F
@@ -1041,8 +1045,6 @@ def update_object_or_send_notification(
     user_upload=None,
     upload_session=None,
 ):
-    logger.warning("Exception caught, updating object")
-    logger.warning(object)
     if object and hasattr(object, "update_status"):
         object.update_status(
             error_message=detailed_error if detailed_error else error,
@@ -1088,22 +1090,49 @@ def update_object_or_send_notification(
         )
 
 
-def get_object_or_raise_error(*, object_queryset):
+def get_object_or_raise_error(*, model, object_pk):
     try:
-        object = object_queryset.get()
-        return object
-    except OperationalError as error:
-        raise LockNotAcquiredException from error
+        return model.objects.get(pk=object_pk)
     except ObjectDoesNotExist as e:
         from grandchallenge.archives.models import ArchiveItem
         from grandchallenge.reader_studies.models import DisplaySet
 
-        if object_queryset.model in (DisplaySet, ArchiveItem):
+        if model in (DisplaySet, ArchiveItem):
             # a user can delete display sets and archive items
             logger.warning("Nothing to do: object to modify no longer exists.")
             return
         else:
             raise e
+
+
+def get_current_value(
+    *, object, interface, user_upload=None, upload_session=None
+):
+    try:
+        return object.get_civ_for_interface(interface=interface)
+    except ObjectDoesNotExist:
+        return None
+    except MultipleObjectsReturned as e:
+
+        if user_upload:
+            extra_kwargs = {
+                "user_upload": user_upload,
+                "notification_type": NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
+            }
+        elif upload_session:
+            extra_kwargs = {
+                "upload_session": upload_session,
+                "notification_type": NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
+            }
+        else:
+            extra_kwargs = {}
+
+        update_object_or_send_notification(
+            object=object, error="An unexpected error occurred", **extra_kwargs
+        )
+        logger.error(e, exc_info=True)
+
+        raise e
 
 
 @acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
@@ -1123,16 +1152,10 @@ def add_image_to_object(  # noqa:C901
     )
 
     interface = ComponentInterface.objects.get(pk=interface_pk)
+    upload_session = RawImageUploadSession.objects.get(pk=upload_session_pk)
     model = apps.get_model(app_label=app_label, model_name=model_name)
-    object_queryset = model.objects.filter(pk=object_pk).select_for_update(
-        nowait=True
-    )
-    upload_queryset = RawImageUploadSession.objects.filter(
-        pk=upload_session_pk
-    ).select_for_update(nowait=True)
 
-    object = get_object_or_raise_error(object_queryset=object_queryset)
-    upload_session = get_object_or_raise_error(object_queryset=upload_queryset)
+    object = get_object_or_raise_error(model=model, object_pk=object_pk)
 
     try:
         image = Image.objects.get(origin_id=upload_session_pk)
@@ -1146,13 +1169,13 @@ def add_image_to_object(  # noqa:C901
         return
 
     try:
-        current_value = getattr(object, object.base_object.civ_set_lookup).get(
-            interface=interface
+        current_value = get_current_value(
+            object=object, interface=interface, upload_session=upload_session
         )
-    except ObjectDoesNotExist:
-        current_value = None
+    except MultipleObjectsReturned:
+        # handled already
+        return
 
-    getattr(object, object.base_object.civ_set_lookup).remove(current_value)
     civ, created = ComponentInterfaceValue.objects.get_or_create(
         interface=interface, image=image
     )
@@ -1168,8 +1191,18 @@ def add_image_to_object(  # noqa:C901
                 upload_session=upload_session,
             )
             return
+        except Exception as e:
+            update_object_or_send_notification(
+                object=object,
+                upload_session=upload_session,
+                notification_type=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
+                error="An unexpected error occurred",
+            )
+            logger.error(e, exc_info=True)
+            return
 
-    getattr(object, object.base_object.civ_set_lookup).add(civ)
+    object.remove_civ_set(current_value)
+    object.add_civ_set(civ)
 
     if linked_task is not None:
         on_commit(signature(linked_task).apply_async)
@@ -1192,27 +1225,18 @@ def add_file_to_object(
     )
 
     interface = ComponentInterface.objects.get(pk=interface_pk)
+    user_upload = UserUpload.objects.get(pk=user_upload_pk)
     model = apps.get_model(app_label=app_label, model_name=model_name)
-    object_queryset = model.objects.filter(pk=object_pk).select_for_update(
-        nowait=True
-    )
-    user_upload_queryset = UserUpload.objects.filter(
-        pk=user_upload_pk
-    ).select_for_update(nowait=True)
 
-    object = get_object_or_raise_error(object_queryset=object_queryset)
-    user_upload = get_object_or_raise_error(
-        object_queryset=user_upload_queryset
-    )
+    object = get_object_or_raise_error(model=model, object_pk=object_pk)
 
     try:
-        current_value = getattr(object, object.base_object.civ_set_lookup).get(
-            interface=interface
+        current_value = get_current_value(
+            object=object, interface=interface, user_upload=user_upload
         )
-    except ObjectDoesNotExist:
-        current_value = None
-
-    getattr(object, object.base_object.civ_set_lookup).remove(current_value)
+    except MultipleObjectsReturned:
+        # handled already
+        return
 
     civ = ComponentInterfaceValue(interface=interface)
     try:
@@ -1220,7 +1244,6 @@ def add_file_to_object(
         civ.full_clean()
         civ.save()
         user_upload.copy_object(to_field=civ.file)
-        getattr(object, object.base_object.civ_set_lookup).add(civ)
     except ValidationError as e:
         error = format_validation_error_message(error=e)
         update_object_or_send_notification(
@@ -1231,6 +1254,18 @@ def add_file_to_object(
             detailed_error=f"File for interface {interface.title} failed validation:{error}.",
         )
         return
+    except Exception as e:
+        update_object_or_send_notification(
+            object=object,
+            user_upload=user_upload,
+            notification_type=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
+            error="An unexpected error occurred",
+        )
+        logger.error(e, exc_info=True)
+        return
+
+    object.remove_civ_set(current_value)
+    object.add_civ_set(civ)
 
     if linked_task is not None:
         on_commit(signature(linked_task).apply_async)

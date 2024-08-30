@@ -367,6 +367,15 @@ class ArchiveItem(
     def is_editable(self):
         return True
 
+    def add_civ_set(self, civ):
+        return self.values.add(civ)
+
+    def remove_civ_set(self, civ):
+        return self.values.remove(civ)
+
+    def get_civ_for_interface(self, interface):
+        return self.values.get(interface=interface)
+
 
 class ArchiveItemUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(ArchiveItem, on_delete=models.CASCADE)
