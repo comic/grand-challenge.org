@@ -982,10 +982,10 @@ class Job(UUIDModel, CIVForObjectMixin, ComponentJob):
     def remove_viewer(self, user):
         return user.groups.remove(self.viewers)
 
-    def add_civ_set(self, civ):
+    def add_civ(self, civ):
         return self.inputs.add(civ)
 
-    def remove_civ_set(self, civ):
+    def remove_civ(self, civ):
         return self.inputs.remove(civ)
 
     def get_civ_for_interface(self, interface):

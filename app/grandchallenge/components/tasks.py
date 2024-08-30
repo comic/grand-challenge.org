@@ -1203,8 +1203,8 @@ def add_image_to_object(  # noqa:C901
             logger.error(e, exc_info=True)
             return
 
-    object.remove_civ_set(current_value)
-    object.add_civ_set(civ)
+    object.remove_civ(current_value)
+    object.add_civ(civ)
 
     if linked_task is not None:
         on_commit(signature(linked_task).apply_async)
@@ -1266,8 +1266,8 @@ def add_file_to_object(
         logger.error(e, exc_info=True)
         return
 
-    object.remove_civ_set(current_value)
-    object.add_civ_set(civ)
+    object.remove_civ(current_value)
+    object.add_civ(civ)
 
     if linked_task is not None:
         on_commit(signature(linked_task).apply_async)

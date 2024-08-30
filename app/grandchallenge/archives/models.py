@@ -367,10 +367,10 @@ class ArchiveItem(
     def is_editable(self):
         return True
 
-    def add_civ_set(self, civ):
+    def add_civ(self, civ):
         return self.values.add(civ)
 
-    def remove_civ_set(self, civ):
+    def remove_civ(self, civ):
         return self.values.remove(civ)
 
     def get_civ_for_interface(self, interface):

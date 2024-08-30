@@ -2113,11 +2113,7 @@ class CIVForObjectMixin:
     def create_civ(self, *, ci_slug, new_value, user=None, linked_task=None):
         ci = ComponentInterface.objects.get(slug=ci_slug)
         try:
-            current_civ = (
-                getattr(self, self.base_object.civ_set_lookup)
-                .filter(interface=ci)
-                .get()
-            )
+            current_civ = self.get_civ_for_interface(interface=ci)
         except ObjectDoesNotExist:
             current_civ = None
         except MultipleObjectsReturned as e:
@@ -2150,35 +2146,34 @@ class CIVForObjectMixin:
 
     def create_civ_for_value(self, *, ci, current_civ, new_value, linked_task):
         current_value = current_civ.value if current_civ else None
+
         if new_value is not None:
             civ, created = ComponentInterfaceValue.objects.get_or_create(
                 interface=ci, value=new_value
             )
         else:
             civ = ComponentInterfaceValue(interface=ci)
+
         if current_value != new_value or (
             current_civ is None and new_value is None
         ):
             try:
                 civ.full_clean()
                 civ.save()
-                getattr(self, self.base_object.civ_set_lookup).remove(
-                    current_civ
-                )
-                getattr(self, self.base_object.civ_set_lookup).add(civ)
+                self.remove_civ(current_civ)
+                self.add_civ(civ)
             except ValidationError as e:
+                # ValidationErrors will only occur for values submitted through
+                # the API, in the UI they are validated on the form directly
                 if new_value:
                     if hasattr(self, "update_status"):
                         self.update_status(
                             status=self.CANCELLED,
                             error_message=format_validation_error_message(e),
                         )
-                    else:
-                        raise e
+                    raise e
                 else:
-                    getattr(self, self.base_object.civ_set_lookup).remove(
-                        current_civ
-                    )
+                    self.remove_civ(current_civ)
 
             if linked_task is not None:
                 on_commit(signature(linked_task).apply_async)
@@ -2188,14 +2183,22 @@ class CIVForObjectMixin:
     ):
         current_image = current_civ.image if current_civ else None
         if isinstance(new_value, Image) and current_image != new_value:
-            getattr(self, self.base_object.civ_set_lookup).remove(current_civ)
             civ, created = ComponentInterfaceValue.objects.get_or_create(
                 interface=ci, image=new_value
             )
-
             if created:
-                civ.full_clean()
-            getattr(self, self.base_object.civ_set_lookup).add(civ)
+                try:
+                    civ.full_clean()
+                except ValidationError as e:
+                    if hasattr(self, "update_status"):
+                        self.update_status(
+                            status=self.CANCELLED,
+                            error_message=format_validation_error_message(e),
+                        )
+                    raise e
+
+            self.remove_civ(current_civ)
+            self.add_civ(civ)
 
             if linked_task is not None:
                 on_commit(signature(linked_task).apply_async)
@@ -2231,8 +2234,8 @@ class CIVForObjectMixin:
             isinstance(new_value, ComponentInterfaceValue)
             and current_civ != new_value
         ):
-            getattr(self, self.base_object.civ_set_lookup).remove(current_civ)
-            getattr(self, self.base_object.civ_set_lookup).add(new_value)
+            self.remove_civ(current_civ)
+            self.add_civ(new_value)
 
             if linked_task is not None:
                 on_commit(signature(linked_task).apply_async)
@@ -2255,7 +2258,7 @@ class CIVForObjectMixin:
         elif not new_value:
             # if no new value is provided (user selects '---' in dropdown)
             # delete old CIV
-            getattr(self, self.base_object.civ_set_lookup).remove(current_civ)
+            self.remove_civ(current_civ)
 
 
 class InterfacesAndValues(NamedTuple):

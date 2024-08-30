@@ -89,6 +89,11 @@ class InterfaceFormField:
                 return self.initial.pk
             else:
                 return self.initial.value
+        elif (
+            isinstance(self.initial, ComponentInterfaceValue)
+            and not self.initial.has_value
+        ):
+            return None
         else:
             return self.initial
 
