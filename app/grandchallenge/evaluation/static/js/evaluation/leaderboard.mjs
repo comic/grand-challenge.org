@@ -72,10 +72,6 @@ $(document).ready(() => {
     }
 });
 
-$(window).resize(() => {
-    resultsTable.DataTable().columns.adjust();
-});
-
 function getDataTablesDOMTemplate() {
     let DOM = "<'row'<'col-12'f>>";
 

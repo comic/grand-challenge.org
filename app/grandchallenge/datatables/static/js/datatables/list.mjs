@@ -19,8 +19,6 @@ $(document).ready(() => {
         lengthChange: false,
         pageLength: 25,
         serverSide: true,
-        scrollX: true,
-        responsive: false,
         columnDefs: [
             {
                 targets: "nonSortable",
@@ -44,16 +42,4 @@ $(document).ready(() => {
         },
         ordering: true,
     });
-});
-
-$("#ajaxDataTable").on("init.dt", () => {
-    // This is a work-around to get the table to resize properly on extra-large Bootstrap viewport
-    setTimeout($("#ajaxDataTable").DataTable().columns.adjust, 1000);
-
-    // Set up floating scroll, note that the target class only shows up when scrollX is set to true
-    handyScroll.mount(".dataTables_scrollBody");
-});
-
-$(window).resize(() => {
-    $("#ajaxDataTable").DataTable().columns.adjust();
 });
