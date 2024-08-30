@@ -571,7 +571,7 @@ def test_add_file_to_object_sends_notification_on_validation_fail(
     assert Notification.objects.count() == 1
     assert (
         Notification.objects.first().message
-        == f"File for interface {ci.title} failed validation."
+        == f"File for interface {ci.title} failed validation"
     )
     assert "some_async_task" not in str(callbacks)
 

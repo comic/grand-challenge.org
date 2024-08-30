@@ -1045,6 +1045,11 @@ def update_object_or_send_notification(
     user_upload=None,
     upload_session=None,
 ):
+    if upload_session:
+        upload_session.status = RawImageUploadSession.FAILURE
+        upload_session.error_message = error
+        upload_session.save()
+
     if object and hasattr(object, "update_status"):
         object.update_status(
             error_message=detailed_error if detailed_error else error,
@@ -1075,9 +1080,6 @@ def update_object_or_send_notification(
                 "For image import status notifications, you must provide an upload_session"
             )
         else:
-            upload_session.status = RawImageUploadSession.FAILURE
-            upload_session.error_message = error
-            upload_session.save()
             Notification.send(
                 kind=notification_type,
                 message=error,
@@ -1250,7 +1252,7 @@ def add_file_to_object(
             object=object,
             user_upload=user_upload,
             notification_type=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
-            error=error,
+            error=f"File for interface {interface.title} failed validation",
             detailed_error=f"File for interface {interface.title} failed validation:{error}.",
         )
         return
