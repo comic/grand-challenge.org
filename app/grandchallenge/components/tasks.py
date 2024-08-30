@@ -1032,17 +1032,78 @@ def validate_voxel_values(*, civ_pk):
     civ.interface._validate_voxel_values(civ.image)
 
 
-def update_uploadsession_and_object_status(
-    *, error_message, upload_session, object
+def update_object_or_send_notification(
+    *,
+    object,
+    notification_type,
+    error,
+    detailed_error=None,
+    user_upload=None,
+    upload_session=None,
 ):
-    formatted_error = format_validation_error_message(error=error_message)
-    upload_session.status = RawImageUploadSession.FAILURE
-    upload_session.error_message = formatted_error
-    upload_session.save()
-    if hasattr(object, "update_status"):
+    logger.warning("Exception caught, updating object")
+    logger.warning(object)
+    if object and hasattr(object, "update_status"):
         object.update_status(
-            status=object.CANCELLED, error_message=formatted_error
+            error_message=detailed_error if detailed_error else error,
+            status=object.CANCELLED,
         )
+    elif (
+        notification_type
+        == NotificationType.NotificationTypeChoices.FILE_COPY_STATUS
+    ):
+        if not user_upload:
+            raise RuntimeError(
+                "For file copy status notifications, you must provide a user_upload."
+            )
+        else:
+            Notification.send(
+                kind=notification_type,
+                actor=user_upload.creator,
+                message=error,
+                target=object.base_object,
+                description=detailed_error,
+            )
+    elif (
+        notification_type
+        == NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS
+    ):
+        if not upload_session:
+            raise RuntimeError(
+                "For image import status notifications, you must provide an upload_session"
+            )
+        else:
+            upload_session.status = RawImageUploadSession.FAILURE
+            upload_session.error_message = error
+            upload_session.save()
+            Notification.send(
+                kind=notification_type,
+                message=error,
+                action_object=upload_session,
+            )
+    else:
+        raise RuntimeError(
+            "Provide either an object with a update_status method "
+            "or a supported notification type."
+        )
+
+
+def get_object_or_raise_error(*, object_queryset):
+    try:
+        object = object_queryset.get()
+        return object
+    except OperationalError as error:
+        raise LockNotAcquiredException from error
+    except ObjectDoesNotExist as e:
+        from grandchallenge.archives.models import ArchiveItem
+        from grandchallenge.reader_studies.models import DisplaySet
+
+        if object_queryset.model in (DisplaySet, ArchiveItem):
+            # a user can delete display sets and archive items
+            logger.warning("Nothing to do: object to modify no longer exists.")
+            return
+        else:
+            raise e
 
 
 @acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
@@ -1062,7 +1123,6 @@ def add_image_to_object(  # noqa:C901
     )
 
     interface = ComponentInterface.objects.get(pk=interface_pk)
-
     model = apps.get_model(app_label=app_label, model_name=model_name)
     object_queryset = model.objects.filter(pk=object_pk).select_for_update(
         nowait=True
@@ -1071,19 +1131,17 @@ def add_image_to_object(  # noqa:C901
         pk=upload_session_pk
     ).select_for_update(nowait=True)
 
-    try:
-        object = object_queryset.get()
-        upload_session = upload_queryset.get()
-    except OperationalError as error:
-        raise LockNotAcquiredException from error
+    object = get_object_or_raise_error(object_queryset=object_queryset)
+    upload_session = get_object_or_raise_error(object_queryset=upload_queryset)
 
     try:
         image = Image.objects.get(origin_id=upload_session_pk)
     except (Image.DoesNotExist, Image.MultipleObjectsReturned):
-        update_uploadsession_and_object_status(
-            error_message="Image imports should result in a single image",
-            upload_session=upload_session,
+        update_object_or_send_notification(
+            error="Image imports should result in a single image",
             object=object,
+            notification_type=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
+            upload_session=upload_session,
         )
         return
 
@@ -1103,8 +1161,11 @@ def add_image_to_object(  # noqa:C901
         try:
             civ.full_clean()
         except ValidationError as e:
-            update_uploadsession_and_object_status(
-                error_message=e, upload_session=upload_session, object=object
+            update_object_or_send_notification(
+                object=object,
+                notification_type=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
+                error=format_validation_error_message(e),
+                upload_session=upload_session,
             )
             return
 
@@ -1114,7 +1175,7 @@ def add_image_to_object(  # noqa:C901
         on_commit(signature(linked_task).apply_async)
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
 def add_file_to_object(
     *,
@@ -1130,13 +1191,19 @@ def add_file_to_object(
         ComponentInterfaceValue,
     )
 
-    user_upload = UserUpload.objects.get(pk=user_upload_pk)
-    object = get_model_instance(
-        pk=object_pk,
-        app_label=app_label,
-        model_name=model_name,
-    )
     interface = ComponentInterface.objects.get(pk=interface_pk)
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+    object_queryset = model.objects.filter(pk=object_pk).select_for_update(
+        nowait=True
+    )
+    user_upload_queryset = UserUpload.objects.filter(
+        pk=user_upload_pk
+    ).select_for_update(nowait=True)
+
+    object = get_object_or_raise_error(object_queryset=object_queryset)
+    user_upload = get_object_or_raise_error(
+        object_queryset=user_upload_queryset
+    )
 
     try:
         current_value = getattr(object, object.base_object.civ_set_lookup).get(
@@ -1147,7 +1214,6 @@ def add_file_to_object(
 
     getattr(object, object.base_object.civ_set_lookup).remove(current_value)
 
-    error = None
     civ = ComponentInterfaceValue(interface=interface)
     try:
         civ.validate_user_upload(user_upload)
@@ -1157,23 +1223,13 @@ def add_file_to_object(
         getattr(object, object.base_object.civ_set_lookup).add(civ)
     except ValidationError as e:
         error = format_validation_error_message(error=e)
-
-    if error is not None:
-        error_description = (
-            f"File for interface {interface.title} failed validation:{error}."
+        update_object_or_send_notification(
+            object=object,
+            user_upload=user_upload,
+            notification_type=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
+            error=error,
+            detailed_error=f"File for interface {interface.title} failed validation:{error}.",
         )
-        if hasattr(object, "update_status"):
-            object.update_status(
-                error_message=error_description, status=object.CANCELLED
-            )
-        else:
-            Notification.send(
-                kind=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
-                actor=user_upload.creator,
-                message=f"File for interface {interface.title} failed validation.",
-                target=object.base_object,
-                description=error_description,
-            )
         return
 
     if linked_task is not None:

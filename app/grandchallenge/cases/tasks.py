@@ -127,11 +127,15 @@ def build_images(  # noqa:C901
     try:
         with transaction.atomic():
             try:
-                upload_session = session_queryset.get()
                 job = job_queryset.get()
             except ObjectDoesNotExist:
                 # empty job queryset
                 job = None
+            except OperationalError as error:
+                raise LockNotAcquiredException from error
+
+            try:
+                upload_session = session_queryset.get()
             except OperationalError as error:
                 raise LockNotAcquiredException from error
 
