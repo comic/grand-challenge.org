@@ -2,6 +2,7 @@ import io
 import json
 import logging
 import re
+import time
 from abc import ABC, abstractmethod
 from datetime import timedelta
 from json import JSONDecodeError
@@ -849,11 +850,15 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
                 raise ComponentException(
                     "Algorithm container image would not start"
                 )
-        elif failure_reason == (
+        elif failure_reason in (
             "ClientError: Please use an instance type with more memory, "
-            "or reduce the size of job data processed on an instance."
+            "or reduce the size of job data processed on an instance.",
+            "ClientError: Artifact upload failed:ClientError: "
+            "Out of Memory. Please use a larger instance",
         ):
             try:
+                # Allow time for the log file to be written
+                time.sleep(10)
                 users_process_exit_code = self._get_task_return_code()
             except UncleanExit:
                 users_process_exit_code = None
@@ -865,9 +870,11 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
             raise ComponentException(
                 "The container was killed as it exceeded its memory limit"
             )
+        else:
+            # Requires investigation
+            logger.error(f"SageMaker Job failed: {failure_reason}")
 
-        # Anything else needs investigation by a site administrator
-        raise RuntimeError(failure_reason)
+            raise ComponentException("An unexpected error occurred")
 
     def _stop_running_jobs(self):
         try:
