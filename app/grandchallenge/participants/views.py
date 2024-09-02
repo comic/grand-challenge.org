@@ -6,7 +6,10 @@ from django.views.generic import CreateView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
-from grandchallenge.participants.models import RegistrationRequest
+from grandchallenge.participants.models import (
+    RegistrationQuestion,
+    RegistrationRequest,
+)
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
@@ -107,3 +110,20 @@ class RegistrationRequestUpdate(
             "participants:registration-list",
             kwargs={"challenge_short_name": self.object.challenge.short_name},
         )
+
+
+class RegistrationQuestionList(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, ListView
+):
+    model = RegistrationQuestion
+    permission_required = "change_challenge"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_permission_object(self):
+        return self.request.challenge
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.filter(Q(challenge=self.request.challenge))
+        return queryset

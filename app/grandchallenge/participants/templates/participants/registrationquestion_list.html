@@ -1,0 +1,61 @@
+{% extends "pages/challenge_settings_base.html" %}
+{% load user_profile_link from profiles %}
+{% load url %}
+{% load static %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Sign-Up Form</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+
+    <h2>Registration Questions for {{ challenge.short_name }}</h2>
+
+    <p><a class="btn btn-primary"
+        href="{% url 'pages:create' challenge_short_name=challenge.short_name %}">
+      <i class="fa fa-plus"></i> Add a new question
+    </a></p>
+
+    <div class="table-responsive">
+        <table class="table table-hover table-borderless table-sm" id="registrationQuestionsTable">
+            <thead class="thead-light">
+            <tr>
+                <th>Created</th>
+                <th>Question Text</th>
+                <th>Required</th>
+            </tr>
+            </thead>
+            <tbody>
+
+            {% for question in object_list %}
+
+                <tr>
+                    <td data-order="{{ question.created|date:"U" }}">
+                        {{ question.created }}
+                    </td>
+                    <td>{{ question.question_text }} </td>
+                    <td>{{ question.required }} </td>
+                </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+    </div>
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+
+    <script type="module" src="{% static 'participants/js/registrationquestion_list.mjs' %}"></script>
+
+{% endblock %}

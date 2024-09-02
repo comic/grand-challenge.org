@@ -34,6 +34,11 @@
                     href="{% url 'pages:list' challenge_short_name=challenge.short_name %}">
                       <i class="far fa-file fa-fw"></i> Pages</a>
               </li>
+              <li class="nav-item">
+                <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'participants:registration-questions' %}active{% endif %}"
+                  href="{% url 'participants:registration-questions' challenge_short_name=challenge.short_name %}">
+                    <i class="fas fa-cog fa-fw"></i> Registration Questions </a>
+            </li>
               <li class="navbar-header rounded bg-light pl-3 py-1 mt-2 mb-1"><a>Users</a></li>
               <li class="nav-item">
                 <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'admins:list' or request.resolver_match.view_name == 'admins:update' %}active{% endif %}"

@@ -3,7 +3,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.core.models import RequestBase
+from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.utils.access_requests import process_access_request
 
 
@@ -54,3 +54,33 @@ class RegistrationRequest(RequestBase):
 
     class Meta:
         unique_together = (("challenge", "user"),)
+
+
+class RegistrationQuestion(UUIDModel):
+    challenge = models.ForeignKey(
+        Challenge,
+        on_delete=models.CASCADE,
+    )
+
+    question_text = models.TextField(blank=False)
+    question_help_text = models.TextField(blank=True)
+
+    schema = models.JSONField(
+        blank=True,
+        help_text="A JSON schema definition against which an answer is validated",
+    )
+
+    required = models.BooleanField(default=True)
+
+
+class RegistrationQuestionAnswer(models.Model):
+    registration_request = models.ForeignKey(
+        RegistrationRequest,
+        on_delete=models.CASCADE,
+    )
+    question = models.ForeignKey(
+        RegistrationQuestion,
+        on_delete=models.CASCADE,
+    )
+
+    answer = models.JSONField(blank=True, editable=False)
