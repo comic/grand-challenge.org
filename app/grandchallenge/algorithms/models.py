@@ -1038,6 +1038,24 @@ class Job(UUIDModel, CIVForObjectMixin, ComponentJob):
 
         return display_set
 
+    def handle_error(
+        self,
+        *,
+        error_message,
+        notification_type=None,
+        user_upload=None,
+        upload_session=None,
+    ):
+        if upload_session:
+            upload_session.status = RawImageUploadSession.FAILURE
+            upload_session.error_message = error_message
+            upload_session.save()
+
+        self.update_status(
+            error_message=error_message,
+            status=self.CANCELLED,
+        )
+
 
 class JobUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(Job, on_delete=models.CASCADE)

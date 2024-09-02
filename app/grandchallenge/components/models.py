@@ -66,6 +66,7 @@ from grandchallenge.core.validators import (
     JSONValidator,
     MimeTypeValidator,
 )
+from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.validators import validate_gzip_mimetype
 from grandchallenge.workstation_configs.models import (
@@ -2109,15 +2110,63 @@ class CIVSetObjectPermissionsMixin:
         raise NotImplementedError
 
 
+class CIVUpdateOnErrorMixin:
+
+    def handle_error(
+        self,
+        *,
+        error_message,
+        notification_type=None,
+        user_upload=None,
+        upload_session=None,
+    ):
+        if upload_session:
+            upload_session.status = RawImageUploadSession.FAILURE
+            upload_session.error_message = error_message
+            upload_session.save()
+
+        if (
+            notification_type
+            == NotificationType.NotificationTypeChoices.FILE_COPY_STATUS
+        ):
+            if not user_upload:
+                raise RuntimeError(
+                    "For file copy status notifications, "
+                    "you must provide a user_upload."
+                )
+            else:
+                Notification.send(
+                    kind=notification_type,
+                    actor=user_upload.creator,
+                    message=f"Your file upload failed with the following error: {error_message}",
+                    target=self.base_object,
+                    description=error_message,
+                )
+        elif (
+            notification_type
+            == NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS
+        ):
+            if not upload_session:
+                raise RuntimeError(
+                    "For image import status notifications, "
+                    "you must provide an upload_session"
+                )
+            else:
+                Notification.send(
+                    kind=notification_type,
+                    message=f"failed with the following error: {error_message}",
+                    action_object=upload_session,
+                )
+        else:
+            raise RuntimeError(
+                f"Notification type {notification_type} is not supported."
+            )
+
+
 class CIVForObjectMixin:
     def create_civ(self, *, ci_slug, new_value, user=None, linked_task=None):
         ci = ComponentInterface.objects.get(slug=ci_slug)
-        try:
-            current_civ = self.get_civ_for_interface(interface=ci)
-        except ObjectDoesNotExist:
-            current_civ = None
-        except MultipleObjectsReturned as e:
-            raise e
+        current_civ = self.get_current_value_for_interface(interface=ci)
 
         if ci.is_json_kind and not ci.requires_file:
             return self.create_civ_for_value(
@@ -2166,14 +2215,14 @@ class CIVForObjectMixin:
                 # ValidationErrors will only occur for values submitted through
                 # the API, in the UI they are validated on the form directly
                 if new_value:
-                    if hasattr(self, "update_status"):
-                        self.update_status(
-                            status=self.CANCELLED,
-                            error_message=format_validation_error_message(e),
-                        )
+                    self.handle_error(
+                        error_message=format_validation_error_message(e),
+                    )
                     raise e
-                else:
-                    self.remove_civ(current_civ)
+
+            self.remove_civ(current_civ)
+            if new_value:
+                self.add_civ(civ)
 
             if linked_task is not None:
                 on_commit(signature(linked_task).apply_async)
@@ -2190,11 +2239,9 @@ class CIVForObjectMixin:
                 try:
                     civ.full_clean()
                 except ValidationError as e:
-                    if hasattr(self, "update_status"):
-                        self.update_status(
-                            status=self.CANCELLED,
-                            error_message=format_validation_error_message(e),
-                        )
+                    self.handle_error(
+                        error_message=format_validation_error_message(e),
+                    )
                     raise e
 
             self.remove_civ(current_civ)
@@ -2259,6 +2306,35 @@ class CIVForObjectMixin:
             # if no new value is provided (user selects '---' in dropdown)
             # delete old CIV
             self.remove_civ(current_civ)
+
+    def get_civ_for_interface(self, interface):
+        raise NotImplementedError
+
+    def get_current_value_for_interface(
+        self, *, interface, user_upload=None, upload_session=None
+    ):
+        try:
+            return self.get_civ_for_interface(interface=interface)
+        except ObjectDoesNotExist:
+            return None
+        except MultipleObjectsReturned as e:
+            if user_upload:
+                extra_kwargs = {
+                    "user_upload": user_upload,
+                    "notification_type": NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
+                }
+            elif upload_session:
+                extra_kwargs = {
+                    "upload_session": upload_session,
+                    "notification_type": NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
+                }
+            else:
+                extra_kwargs = {}
+
+            self.handle_error(
+                error_message="An unexpected error occurred", **extra_kwargs
+            )
+            raise e
 
 
 class InterfacesAndValues(NamedTuple):

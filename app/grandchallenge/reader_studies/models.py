@@ -28,6 +28,7 @@ from grandchallenge.components.models import (
     CIVForObjectMixin,
     CIVSetObjectPermissionsMixin,
     CIVSetStringRepresentationMixin,
+    CIVUpdateOnErrorMixin,
     ComponentInterface,
     ComponentInterfaceValue,
     InterfaceKind,
@@ -803,6 +804,7 @@ def delete_reader_study_groups_hook(*_, instance: ReaderStudy, using, **__):
 class DisplaySet(
     CIVSetStringRepresentationMixin,
     CIVSetObjectPermissionsMixin,
+    CIVUpdateOnErrorMixin,
     CIVForObjectMixin,
     UUIDModel,
 ):

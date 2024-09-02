@@ -15,6 +15,7 @@ from grandchallenge.components.models import (
     CIVForObjectMixin,
     CIVSetObjectPermissionsMixin,
     CIVSetStringRepresentationMixin,
+    CIVUpdateOnErrorMixin,
     ComponentInterfaceValue,
     ValuesForInterfacesMixin,
 )
@@ -298,6 +299,7 @@ class ArchiveGroupObjectPermission(GroupObjectPermissionBase):
 class ArchiveItem(
     CIVSetStringRepresentationMixin,
     CIVSetObjectPermissionsMixin,
+    CIVUpdateOnErrorMixin,
     CIVForObjectMixin,
     UUIDModel,
 ):

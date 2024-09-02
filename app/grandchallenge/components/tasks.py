@@ -20,11 +20,7 @@ from celery import (  # noqa: I251 TODO needs to be refactored
 )
 from django.apps import apps
 from django.conf import settings
-from django.core.exceptions import (
-    MultipleObjectsReturned,
-    ObjectDoesNotExist,
-    ValidationError,
-)
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
 from django.db import OperationalError, transaction
 from django.db.models import DateTimeField, ExpressionWrapper, F
@@ -53,7 +49,7 @@ from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.utils.error_messages import (
     format_validation_error_message,
 )
-from grandchallenge.notifications.models import Notification, NotificationType
+from grandchallenge.notifications.models import NotificationType
 from grandchallenge.uploads.models import UserUpload
 
 logger = logging.getLogger(__name__)
@@ -1036,62 +1032,6 @@ def validate_voxel_values(*, civ_pk):
     civ.interface._validate_voxel_values(civ.image)
 
 
-def update_object_or_send_notification(
-    *,
-    object,
-    notification_type,
-    error,
-    detailed_error=None,
-    user_upload=None,
-    upload_session=None,
-):
-    if upload_session:
-        upload_session.status = RawImageUploadSession.FAILURE
-        upload_session.error_message = error
-        upload_session.save()
-
-    if object and hasattr(object, "update_status"):
-        object.update_status(
-            error_message=detailed_error if detailed_error else error,
-            status=object.CANCELLED,
-        )
-    elif (
-        notification_type
-        == NotificationType.NotificationTypeChoices.FILE_COPY_STATUS
-    ):
-        if not user_upload:
-            raise RuntimeError(
-                "For file copy status notifications, you must provide a user_upload."
-            )
-        else:
-            Notification.send(
-                kind=notification_type,
-                actor=user_upload.creator,
-                message=error,
-                target=object.base_object,
-                description=detailed_error,
-            )
-    elif (
-        notification_type
-        == NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS
-    ):
-        if not upload_session:
-            raise RuntimeError(
-                "For image import status notifications, you must provide an upload_session"
-            )
-        else:
-            Notification.send(
-                kind=notification_type,
-                message=error,
-                action_object=upload_session,
-            )
-    else:
-        raise RuntimeError(
-            "Provide either an object with a update_status method "
-            "or a supported notification type."
-        )
-
-
 def get_object_or_raise_error(*, model, object_pk):
     try:
         return model.objects.get(pk=object_pk)
@@ -1105,36 +1045,6 @@ def get_object_or_raise_error(*, model, object_pk):
             return
         else:
             raise e
-
-
-def get_current_value(
-    *, object, interface, user_upload=None, upload_session=None
-):
-    try:
-        return object.get_civ_for_interface(interface=interface)
-    except ObjectDoesNotExist:
-        return None
-    except MultipleObjectsReturned as e:
-
-        if user_upload:
-            extra_kwargs = {
-                "user_upload": user_upload,
-                "notification_type": NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
-            }
-        elif upload_session:
-            extra_kwargs = {
-                "upload_session": upload_session,
-                "notification_type": NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
-            }
-        else:
-            extra_kwargs = {}
-
-        update_object_or_send_notification(
-            object=object, error="An unexpected error occurred", **extra_kwargs
-        )
-        logger.error(e, exc_info=True)
-
-        raise e
 
 
 @acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
@@ -1162,21 +1072,16 @@ def add_image_to_object(  # noqa:C901
     try:
         image = Image.objects.get(origin_id=upload_session_pk)
     except (Image.DoesNotExist, Image.MultipleObjectsReturned):
-        update_object_or_send_notification(
-            error="Image imports should result in a single image",
-            object=object,
+        object.handle_error(
+            error_message="Image imports should result in a single image",
             notification_type=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
             upload_session=upload_session,
         )
         return
 
-    try:
-        current_value = get_current_value(
-            object=object, interface=interface, upload_session=upload_session
-        )
-    except MultipleObjectsReturned:
-        # handled already
-        return
+    current_value = object.get_current_value_for_interface(
+        interface=interface, upload_session=upload_session
+    )
 
     civ, created = ComponentInterfaceValue.objects.get_or_create(
         interface=interface, image=image
@@ -1186,19 +1091,17 @@ def add_image_to_object(  # noqa:C901
         try:
             civ.full_clean()
         except ValidationError as e:
-            update_object_or_send_notification(
-                object=object,
+            object.handle_error(
+                error_message=format_validation_error_message(e),
                 notification_type=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
-                error=format_validation_error_message(e),
                 upload_session=upload_session,
             )
             return
         except Exception as e:
-            update_object_or_send_notification(
-                object=object,
-                upload_session=upload_session,
+            object.handle_error(
+                error_message="An unexpected error occurred",
                 notification_type=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
-                error="An unexpected error occurred",
+                upload_session=upload_session,
             )
             logger.error(e, exc_info=True)
             return
@@ -1232,13 +1135,9 @@ def add_file_to_object(
 
     object = get_object_or_raise_error(model=model, object_pk=object_pk)
 
-    try:
-        current_value = get_current_value(
-            object=object, interface=interface, user_upload=user_upload
-        )
-    except MultipleObjectsReturned:
-        # handled already
-        return
+    current_value = object.get_current_value_for_interface(
+        interface=interface, user_upload=user_upload
+    )
 
     civ = ComponentInterfaceValue(interface=interface)
     try:
@@ -1248,20 +1147,17 @@ def add_file_to_object(
         user_upload.copy_object(to_field=civ.file)
     except ValidationError as e:
         error = format_validation_error_message(error=e)
-        update_object_or_send_notification(
-            object=object,
-            user_upload=user_upload,
+        object.handle_error(
+            error_message=f"File for interface {interface.title} failed validation:{error}.",
             notification_type=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
-            error=f"File for interface {interface.title} failed validation",
-            detailed_error=f"File for interface {interface.title} failed validation:{error}.",
+            user_upload=user_upload,
         )
         return
     except Exception as e:
-        update_object_or_send_notification(
-            object=object,
-            user_upload=user_upload,
+        object.handle_error(
+            error_message="An unexpected error occurred",
             notification_type=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
-            error="An unexpected error occurred",
+            user_upload=user_upload,
         )
         logger.error(e, exc_info=True)
         return
