@@ -11,7 +11,10 @@ from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.pages.models import Page
-from grandchallenge.participants.models import RegistrationRequest
+from grandchallenge.participants.models import (
+    RegistrationQuestion,
+    RegistrationRequest,
+)
 from grandchallenge.policies.models import Policy
 from grandchallenge.teams.models import Team, TeamMember
 from grandchallenge.workstation_configs.models import WorkstationConfig
@@ -129,6 +132,14 @@ class RegistrationRequestFactory(factory.django.DjangoModelFactory):
         model = RegistrationRequest
 
     user = factory.SubFactory(UserFactory)
+    challenge = factory.SubFactory(ChallengeFactory)
+
+
+class RegistrationQuestionFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = RegistrationQuestion
+
+    question_text = factory.Sequence(lambda n: f"Text {n}")
     challenge = factory.SubFactory(ChallengeFactory)
 
 

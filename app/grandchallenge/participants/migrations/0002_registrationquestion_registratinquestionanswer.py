@@ -5,6 +5,8 @@ import uuid
 import django.db.models.deletion
 from django.db import migrations, models
 
+import grandchallenge
+
 
 class Migration(migrations.Migration):
 
@@ -33,8 +35,11 @@ class Migration(migrations.Migration):
                 (
                     "schema",
                     models.JSONField(
-                        blank=True,
+                        default=grandchallenge.participants.models.string_type_schema,
                         help_text="A JSON schema definition against which an answer is validated",
+                        validators=[
+                            grandchallenge.core.validators.JSONSchemaValidator()
+                        ],
                     ),
                 ),
                 ("required", models.BooleanField(default=True)),
@@ -78,5 +83,19 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
+        ),
+        migrations.AddConstraint(
+            model_name="registrationquestion",
+            constraint=models.UniqueConstraint(
+                fields=("question_text", "challenge"),
+                name="unique_challenge_registration_question_text",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="registrationquestionanswer",
+            constraint=models.UniqueConstraint(
+                fields=("registration_request", "question"),
+                name="unique_answer_question_registration_request",
+            ),
         ),
     ]

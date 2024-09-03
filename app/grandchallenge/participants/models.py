@@ -1,10 +1,12 @@
 from actstream.models import Follow
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.utils.access_requests import process_access_request
+from grandchallenge.core.validators import JSONSchemaValidator, JSONValidator
 
 
 class RegistrationRequest(RequestBase):
@@ -56,6 +58,10 @@ class RegistrationRequest(RequestBase):
         unique_together = (("challenge", "user"),)
 
 
+def string_type_schema():
+    return {"type": "string"}
+
+
 class RegistrationQuestion(UUIDModel):
     challenge = models.ForeignKey(
         Challenge,
@@ -66,11 +72,20 @@ class RegistrationQuestion(UUIDModel):
     question_help_text = models.TextField(blank=True)
 
     schema = models.JSONField(
-        blank=True,
-        help_text="A JSON schema definition against which an answer is validated",
+        default=string_type_schema,
+        help_text="A JSON schema definition against which an answer is validated",  # See https://json-schema.org/. Only Draft 7, 6, 4 or 3 are supported.
+        validators=[JSONSchemaValidator()],
     )
 
     required = models.BooleanField(default=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["question_text", "challenge"],
+                name="unique_challenge_registration_question_text",
+            )
+        ]
 
 
 class RegistrationQuestionAnswer(models.Model):
@@ -84,3 +99,26 @@ class RegistrationQuestionAnswer(models.Model):
     )
 
     answer = models.JSONField(blank=True, editable=False)
+
+    @property
+    def answered(self):
+        return not (isinstance(self.answer, str) and len(self.answer) == 0)
+
+    def clean(self):
+        super().clean()
+
+        if not self.answered and self.question.required:
+            raise ValidationError(
+                f"The question {self.question.question_text!r} requires an answer"
+            )
+
+        if self.answered and self.question.schema:
+            JSONValidator(schema=self.question.schema)(value=self.answer)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["registration_request", "question"],
+                name="unique_answer_question_registration_request",
+            )
+        ]
