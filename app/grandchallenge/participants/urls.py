@@ -4,6 +4,7 @@ from grandchallenge.participants.views import (
     ParticipantsList,
     RegistrationQuestionCreate,
     RegistrationQuestionList,
+    RegistrationQuestionUpdate,
     RegistrationRequestCreate,
     RegistrationRequestList,
     RegistrationRequestUpdate,
@@ -37,5 +38,10 @@ urlpatterns = [
         "registration/questions/create",
         RegistrationQuestionCreate.as_view(),
         name="registration-question-create",
+    ),
+    path(
+        "registration/questions/<uuid:pk>/update",
+        RegistrationQuestionUpdate.as_view(),
+        name="registration-question-update",
     ),
 ]

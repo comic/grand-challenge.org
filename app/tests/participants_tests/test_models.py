@@ -78,6 +78,13 @@ def test_registration_question_validation(questions, context):
 
 
 @pytest.mark.django_db
+def test_registration_question_no_changes_update():
+    rq = RegistrationQuestionFactory()
+    rq.full_clean()
+    rq.save()
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     "question,answer,context",
     (
@@ -130,12 +137,12 @@ def test_registration_question_validation(questions, context):
     ),
 )
 def test_registration_question_answer_validation(question, answer, context):
-    q = RegistrationQuestionFactory(**question)
-    rr = RegistrationRequestFactory(challenge=q.challenge)
+    rq = RegistrationQuestionFactory(**question)
+    rr = RegistrationRequestFactory(challenge=rq.challenge)
 
     rqa = RegistrationQuestionAnswer(
         registration_request=rr,
-        question=q,
+        question=rq,
         answer=answer,
     )
 
@@ -145,16 +152,16 @@ def test_registration_question_answer_validation(question, answer, context):
 
 @pytest.mark.django_db
 def test_registration_question_double_answer():
-    q = RegistrationQuestionFactory()
-    rr = RegistrationRequestFactory(challenge=q.challenge)
+    rq = RegistrationQuestionFactory()
+    rr = RegistrationRequestFactory(challenge=rq.challenge)
 
     RegistrationQuestionAnswer.objects.create(
-        registration_request=rr, question=q, answer=""
+        registration_request=rr, question=rq, answer=""
     )
 
     with pytest.raises(IntegrityError):
         RegistrationQuestionAnswer.objects.create(
             registration_request=rr,
-            question=q,
+            question=rq,
             answer="Foo",
         )

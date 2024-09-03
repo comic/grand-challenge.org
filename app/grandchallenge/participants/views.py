@@ -130,11 +130,9 @@ class RegistrationQuestionList(
         return queryset
 
 
-class RegistrationQuestionCreate(
+class RegistrationQuestionMixin(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
-    SuccessMessageMixin,
-    CreateView,
 ):
     model = RegistrationQuestion
 
@@ -157,3 +155,17 @@ class RegistrationQuestionCreate(
         kwargs = super().get_form_kwargs()
         kwargs["challenge"] = self.request.challenge
         return kwargs
+
+
+class RegistrationQuestionCreate(
+    RegistrationQuestionMixin,
+    CreateView,
+):
+    pass
+
+
+class RegistrationQuestionUpdate(
+    RegistrationQuestionMixin,
+    UpdateView,
+):
+    pass

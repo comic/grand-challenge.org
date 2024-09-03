@@ -92,6 +92,7 @@ class RegistrationQuestion(UUIDModel):
                 challenge=self.challenge,
                 question_text=self.question_text,
             )
+            .exclude(pk=self.pk)
             .exists()
         ):
             raise ValidationError(
