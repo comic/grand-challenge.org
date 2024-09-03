@@ -603,19 +603,37 @@ def get_model_instance(*, app_label, model_name, **kwargs):
     return model.objects.get(**kwargs)
 
 
-@acks_late_2xlarge_task
+def lock_model_instance(*, app_label, model_name, **kwargs):
+    """
+    Locks a model instance for update.
+
+    This is useful when you want to update a model instance and want to make
+    sure that no other process is updating the same instance at the same time.
+    Must be used inside a transaction.
+
+    Raises `LockNotAcquiredException` if the lock could not be acquired.
+    """
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+    queryset = model.objects.filter(**kwargs).select_for_update(nowait=True)
+
+    try:
+        return queryset.get()
+    except OperationalError as error:
+        raise LockNotAcquiredException from error
+
+
+@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@transaction.atomic
 def provision_job(
     *, job_pk: uuid.UUID, job_app_label: str, job_model_name: str, backend: str
 ):
-    job = get_model_instance(
+    job = lock_model_instance(
         pk=job_pk, app_label=job_app_label, model_name=job_model_name
     )
     executor = job.get_executor(backend=backend)
 
-    if job.status in [job.PENDING, job.RETRY]:
-        job.update_status(status=job.PROVISIONING)
-    else:
-        raise PriorStepFailed("Job is not ready for provisioning")
+    if job.status not in [job.PENDING, job.RETRY]:
+        raise RuntimeError("Job is not ready for provisioning")
 
     try:
         executor.provision(
@@ -632,9 +650,9 @@ def provision_job(
         )
     except Exception:
         job.update_status(
-            status=job.FAILURE, error_message="Could not provision resources"
+            status=job.FAILURE, error_message="An unexpected error occurred"
         )
-        raise
+        logger.error("Could not provision job", exc_info=True)
     else:
         job.update_status(status=job.PROVISIONED)
         on_commit(execute_job.signature(**job.signature_kwargs).apply_async)
