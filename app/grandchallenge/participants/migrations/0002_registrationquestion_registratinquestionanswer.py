@@ -36,7 +36,7 @@ class Migration(migrations.Migration):
                     "schema",
                     models.JSONField(
                         default=grandchallenge.participants.models.string_type_schema,
-                        help_text="A JSON schema definition against which an answer is validated",
+                        help_text="A JSON schema definition against which an answer is validated. See https://json-schema.org/. Only Draft 7, 6, 4 or 3 are supported.",
                         validators=[
                             grandchallenge.core.validators.JSONSchemaValidator()
                         ],
@@ -84,18 +84,12 @@ class Migration(migrations.Migration):
                 ),
             ],
         ),
-        migrations.AddConstraint(
-            model_name="registrationquestion",
-            constraint=models.UniqueConstraint(
-                fields=("question_text", "challenge"),
-                name="unique_challenge_registration_question_text",
-            ),
+        migrations.AlterUniqueTogether(
+            name="registrationquestion",
+            unique_together={("question_text", "challenge")},
         ),
-        migrations.AddConstraint(
-            model_name="registrationquestionanswer",
-            constraint=models.UniqueConstraint(
-                fields=("registration_request", "question"),
-                name="unique_answer_question_registration_request",
-            ),
+        migrations.AlterUniqueTogether(
+            name="registrationquestionanswer",
+            unique_together={("registration_request", "question")},
         ),
     ]

@@ -2,6 +2,7 @@ from django.urls import path
 
 from grandchallenge.participants.views import (
     ParticipantsList,
+    RegistrationQuestionCreate,
     RegistrationQuestionList,
     RegistrationRequestCreate,
     RegistrationRequestList,
@@ -30,6 +31,11 @@ urlpatterns = [
     path(
         "registration/questions/",
         RegistrationQuestionList.as_view(),
-        name="registration-questions",
+        name="registration-question-list",
+    ),
+    path(
+        "registration/questions/create",
+        RegistrationQuestionCreate.as_view(),
+        name="registration-question-create",
     ),
 ]

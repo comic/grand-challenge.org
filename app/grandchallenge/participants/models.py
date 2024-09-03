@@ -73,19 +73,30 @@ class RegistrationQuestion(UUIDModel):
 
     schema = models.JSONField(
         default=string_type_schema,
-        help_text="A JSON schema definition against which an answer is validated",  # See https://json-schema.org/. Only Draft 7, 6, 4 or 3 are supported.
+        help_text="A JSON schema definition against which an answer is validated. See https://json-schema.org/."
+        "Only Draft 7, 6, 4 or 3 are supported.",
         validators=[JSONSchemaValidator()],
     )
 
     required = models.BooleanField(default=True)
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["question_text", "challenge"],
-                name="unique_challenge_registration_question_text",
+        unique_together = (("question_text", "challenge"),)
+
+    def clean(self):
+        super().clean()
+
+        if (
+            type(self)
+            .objects.filter(
+                challenge=self.challenge,
+                question_text=self.question_text,
             )
-        ]
+            .exists()
+        ):
+            raise ValidationError(
+                f"There is already an existing {self._meta.model._meta.verbose_name} with this question text"
+            )
 
 
 class RegistrationQuestionAnswer(models.Model):
@@ -116,9 +127,4 @@ class RegistrationQuestionAnswer(models.Model):
             JSONValidator(schema=self.question.schema)(value=self.answer)
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["registration_request", "question"],
-                name="unique_answer_question_registration_request",
-            )
-        ]
+        unique_together = (("registration_request", "question"),)
