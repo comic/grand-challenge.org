@@ -5,7 +5,7 @@ from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, OperationalError, transaction
-from django.db.models import Count, Q
+from django.db.models import Case, Count, IntegerField, Q, Value, When
 from django.db.transaction import on_commit
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
@@ -203,6 +203,14 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
             for ai in evaluation.submission.phase.archive.items.prefetch_related(
                 "values__interface"
             )
+            .annotate(
+                has_title=Case(
+                    When(title="", then=Value(1)),
+                    default=Value(0),
+                    output_field=IntegerField(),
+                )
+            )
+            .order_by("has_title", "title", "created")
         ],
         extra_viewer_groups=viewer_groups,
         extra_logs_viewer_groups=viewer_groups,
