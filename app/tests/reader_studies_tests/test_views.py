@@ -787,3 +787,52 @@ def test_display_set_bulk_delete_permissions(client):
         list(response.context["form"].fields["civ_sets_to_delete"].queryset)
         == []
     )
+
+
+@pytest.mark.django_db
+def test_display_set_delete_all_button_disabled(client):
+
+    editor = UserFactory()
+    rs = ReaderStudyFactory()
+    rs.add_editor(editor)
+
+    ds = DisplaySetFactory(reader_study=rs)
+
+    response = get_view_for_user(
+        client=client,
+        viewname="reader-studies:display_sets",
+        reverse_kwargs={"slug": rs.slug},
+        user=editor,
+    )
+
+    assert response.status_code == 200
+    assert (
+        "Cannot delete all display sets: first you need to delete all of the answers for this reader study"
+        not in str(response.rendered_content)
+    )
+
+    q = QuestionFactory(
+        reader_study=rs,
+        question_text="question_text",
+        answer_type=Question.AnswerType.TEXT,
+    )
+
+    AnswerFactory(
+        creator=editor,
+        question=q,
+        answer="question_answer",
+        display_set=ds,
+    )
+
+    response = get_view_for_user(
+        client=client,
+        viewname="reader-studies:display_sets",
+        reverse_kwargs={"slug": rs.slug},
+        user=editor,
+    )
+
+    assert response.status_code == 200
+    assert (
+        "Cannot delete all display sets: first you need to delete all of the answers for this reader study"
+        in str(response.rendered_content)
+    )
