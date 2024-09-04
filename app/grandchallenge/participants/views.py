@@ -2,7 +2,8 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Q
 from django.forms.utils import ErrorList
-from django.views.generic import CreateView, ListView, UpdateView
+from django.http import HttpResponseForbidden
+from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
@@ -132,11 +133,10 @@ class RegistrationQuestionList(
 
 class RegistrationQuestionMixin(
     LoginRequiredMixin,
+    SuccessMessageMixin,
     ObjectPermissionRequiredMixin,
 ):
     model = RegistrationQuestion
-
-    form_class = RegistrationQuestionForm
 
     permission_required = "change_challenge"
     raise_exception = True
@@ -151,6 +151,10 @@ class RegistrationQuestionMixin(
             kwargs={"challenge_short_name": self.object.challenge.short_name},
         )
 
+
+class RegistrationQuestionFormMixin:
+    form_class = RegistrationQuestionForm
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["challenge"] = self.request.challenge
@@ -159,13 +163,31 @@ class RegistrationQuestionMixin(
 
 class RegistrationQuestionCreate(
     RegistrationQuestionMixin,
+    RegistrationQuestionFormMixin,
     CreateView,
 ):
-    pass
+    success_message = "Question successfully created"
 
 
 class RegistrationQuestionUpdate(
     RegistrationQuestionMixin,
+    RegistrationQuestionFormMixin,
     UpdateView,
 ):
-    pass
+    success_message = "Question successfully updated"
+
+
+class RegistrationQuestionDelete(
+    RegistrationQuestionMixin,
+    DeleteView,
+):
+    success_message = "Question successfully deleted"
+    fields = ()
+
+    def form_valid(self, *args, **kwargs):
+        question = self.get_object()
+        if question.has_answers:
+            return HttpResponseForbidden(
+                reason="This question already has answers associated with it"
+            )
+        return super().form_valid(*args, **kwargs)

@@ -3,6 +3,7 @@ from django.urls import path
 from grandchallenge.participants.views import (
     ParticipantsList,
     RegistrationQuestionCreate,
+    RegistrationQuestionDelete,
     RegistrationQuestionList,
     RegistrationQuestionUpdate,
     RegistrationRequestCreate,
@@ -43,5 +44,10 @@ urlpatterns = [
         "registration/questions/<uuid:pk>/update",
         RegistrationQuestionUpdate.as_view(),
         name="registration-question-update",
+    ),
+    path(
+        "registration/questions/<uuid:pk>/delete",
+        RegistrationQuestionDelete.as_view(),
+        name="registration-question-delete",
     ),
 ]

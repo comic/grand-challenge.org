@@ -80,6 +80,12 @@ class RegistrationQuestion(UUIDModel):
 
     required = models.BooleanField(default=True)
 
+    @property
+    def has_answers(self):
+        return RegistrationQuestionAnswer.objects.filter(
+            question=self
+        ).exists()
+
     class Meta:
         unique_together = (("question_text", "challenge"),)
 
@@ -112,6 +118,9 @@ class RegistrationQuestionAnswer(models.Model):
 
     answer = models.JSONField(blank=True, editable=False)
 
+    class Meta:
+        unique_together = (("registration_request", "question"),)
+
     @property
     def answered(self):
         return not (isinstance(self.answer, str) and len(self.answer) == 0)
@@ -126,6 +135,3 @@ class RegistrationQuestionAnswer(models.Model):
 
         if self.answered and self.question.schema:
             JSONValidator(schema=self.question.schema)(value=self.answer)
-
-    class Meta:
-        unique_together = (("registration_request", "question"),)

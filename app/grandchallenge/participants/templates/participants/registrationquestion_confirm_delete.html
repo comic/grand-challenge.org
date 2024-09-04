@@ -1,0 +1,29 @@
+{% extends "pages/challenge_settings_base.html" %}
+{% load url %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Delete Registration Question</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h3>
+        Confirm deletion Registration Question for {% firstof challenge.title challenge.short_name %}
+    </h3>
+
+    <form action="" method="post">
+        {% csrf_token %}
+        <p>Are you sure that you want to delete the question "{{ object.question_text }}"?</p> <br/>
+        <input type="submit" value="I understand, delete the question '{{ object.question_text }}'"
+               class="btn btn-danger"/>
+    </form>
+
+
+{% endblock %}

@@ -1,11 +1,16 @@
 import json
+from functools import partial
 
 import pytest
 
-from grandchallenge.participants.models import RegistrationQuestion
+from grandchallenge.participants.models import (
+    RegistrationQuestion,
+    RegistrationQuestionAnswer,
+)
 from tests.factories import (
     ChallengeFactory,
     RegistrationQuestionFactory,
+    RegistrationRequestFactory,
     UserFactory,
 )
 from tests.utils import get_view_for_user
@@ -25,7 +30,7 @@ def test_registration_question_list_view(client):
             challenge=ch,
             user=usr,
         )
-        assert response.status_code == 403, "Non admin cannot view"
+        assert response.status_code == 403, "Non admin can question list"
 
     response = get_view_for_user(
         viewname="participants:registration-question-list",
@@ -38,6 +43,8 @@ def test_registration_question_list_view(client):
 
     RegistrationQuestionFactory(challenge=ch)
     RegistrationQuestionFactory(challenge=ch, required=True)
+
+    # TODO, add answered question
 
     response = get_view_for_user(
         viewname="participants:registration-question-list",
@@ -76,6 +83,8 @@ def test_registration_question_update_view(client):
             "reverse_kwargs": {"pk": question.pk},
         },
     )
+
+    # TODO, add answered question
 
     question.refresh_from_db()
     assert question.question_text != "foo"
@@ -128,7 +137,7 @@ def _test_registration_question_view(
 
     for usr in (participant, anom_user):
         response = post(user=usr)
-        assert response.status_code == 403, "Non admin cannot post view"
+        assert response.status_code == 403, "Non admin can post view"
 
     response = post(user=admin)
     assert response.status_code == 200
@@ -138,3 +147,52 @@ def _test_registration_question_view(
         if key == "schema":
             value = json.loads(value)
         assert getattr(question, key) == value
+
+
+@pytest.mark.django_db
+def test_registration_question_delete_view(client):
+    ch = ChallengeFactory()
+    admin, participant, anom_user = UserFactory.create_batch(3)
+    ch.add_admin(admin)
+    ch.add_participant(participant)
+
+    rq = RegistrationQuestionFactory(question_text="foo", challenge=ch)
+
+    get = partial(
+        get_view_for_user,
+        viewname="participants:registration-question-delete",
+        client=client,
+        challenge=ch,
+        reverse_kwargs={"pk": rq.pk},
+        follow=True,
+    )
+
+    def get_delete(user):
+        return get(user=user)
+
+    def post_delete(user):
+        return get(user=user, method=client.post)
+
+    for usr in (participant, anom_user):
+        for method in (get_delete, post_delete):
+            response = method(user=usr)
+            assert (
+                response.status_code == 403
+            ), f"Non admins can {method.__name__}"
+
+    rr = RegistrationRequestFactory()
+    rqa = RegistrationQuestionAnswer.objects.create(
+        question=rq, registration_request=rr, answer=""
+    )
+
+    response = get_delete(user=admin)
+    assert response.status_code == 200
+
+    response = post_delete(user=admin)
+    assert response.status_code == 403, "Admin can delete despite answers"
+
+    rqa.delete()
+    response = post_delete(user=admin)
+    assert response.status_code == 200, "Admin cannot delete without answers"
+
+    assert not RegistrationQuestion.objects.filter(pk=rq.pk).exists()

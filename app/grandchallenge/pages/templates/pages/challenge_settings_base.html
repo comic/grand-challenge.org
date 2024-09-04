@@ -30,7 +30,7 @@
                       <i class="fas fa-cog fa-fw"></i> General Settings</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'participants:registration-question-list' or request.resolver_match.view_name == 'participants:registration-question-create' %}active{% endif %}"
+                <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'participants:registration-question-list' or request.resolver_match.view_name == 'participants:registration-question-create' or request.resolver_match.view_name == 'participants:registration-question-delete'  %}active{% endif %}"
                   href="{% url 'participants:registration-question-list' challenge_short_name=challenge.short_name %}">
                     <i class="fas fa-question-circle fa-fw"></i> Registration Questions </a>
               </li>
