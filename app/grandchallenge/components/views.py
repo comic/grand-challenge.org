@@ -345,11 +345,7 @@ class CivSetListView(
         Column(title=""),
         Column(title="Detail"),
         Column(title="ID", sort_field="pk"),
-        Column(
-            title="Title",
-            sort_field="title",
-            optional_condition=lambda obj: bool(obj.title),
-        ),
+        Column(title="Title", sort_field="title"),
         Column(title="Values"),
         Column(title="Viewer"),
         Column(title="Edit"),

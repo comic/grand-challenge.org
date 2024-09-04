@@ -1,4 +1,3 @@
-from collections.abc import Callable
 from dataclasses import dataclass
 from functools import reduce
 from operator import or_
@@ -57,19 +56,12 @@ class PaginatedTableListView(ListView):
         paginator = self.get_paginator(queryset=data, per_page=page_size)
         objects = paginator.page(page)
 
-        show_columns = []
-        for c in self.columns:
-            show_columns.append(
-                c.optional_condition is None
-                or any(c.optional_condition(o) for o in objects)
-            )
         return JsonResponse(
             {
                 "draw": int(form_data.get("draw")),
                 "recordsTotal": self.object_list.count(),
                 "recordsFiltered": paginator.count,
                 "data": self.render_rows(object_list=objects),
-                "showColumns": show_columns,
             }
         )
 
@@ -102,11 +94,6 @@ class Column:
     sort_field: str = ""
     classes: tuple[str, ...] = ()
     identifier: str = ""
-
-    # A column will be hidden when the `optional_condition` evaluates to False
-    # for every object shown in the current list (page). `optional_condition`
-    # is a function that consumes the current object as argument
-    optional_condition: Callable | None = None
 
     def __post_init__(self):
         if not self.sort_field:

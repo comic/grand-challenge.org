@@ -41,7 +41,6 @@ def test_paginated_table_list_view_get():
         "recordsTotal": 0,
         "recordsFiltered": 0,
         "data": [],
-        "showColumns": [],
     }
 
 
@@ -62,7 +61,6 @@ def test_paginated_table_list_view_post():
         "recordsTotal": 0,
         "recordsFiltered": 0,
         "data": [],
-        "showColumns": [],
     }
 
 
