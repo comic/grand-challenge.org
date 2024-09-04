@@ -1,3 +1,4 @@
+import json
 import logging
 from datetime import datetime, timedelta
 from functools import cached_property
@@ -465,6 +466,9 @@ class Session(UUIDModel):
                 "WORKSTATION_SENTRY_DSN": settings.WORKSTATION_SENTRY_DSN,
                 "WORKSTATION_SESSION_ID": str(self.pk),
                 "CIRRUS_KEEP_ALIVE_METHOD": "old",
+                "INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS": json.dumps(
+                    settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS
+                ),
             }
         )
 

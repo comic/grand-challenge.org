@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import socket
@@ -1170,6 +1171,10 @@ WORKSTATIONS_GRACE_MINUTES = 5
 
 # Extra domains to broadcast workstation control messages to. Used in tests.
 WORKSTATIONS_EXTRA_BROADCAST_DOMAINS = []
+
+INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS = json.loads(
+    os.environ.get("INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS", "null")
+)
 
 CELERY_BEAT_SCHEDULE = {
     "delete_users_who_dont_login": {
