@@ -5,13 +5,13 @@ from grandchallenge.participants.models import RegistrationQuestion
 
 
 @admin.register(RegistrationQuestion)
-class RegistrationQuestion(GuardedModelAdmin):
+class RegistrationQuestionAdmin(GuardedModelAdmin):
     list_display = (
         "pk",
         "question_text",
         "challenge",
     )
     ordering = ("challenge",)
-    readonly_fields = ("question_text", "question_help_text", "required")
+    readonly_fields = ("challenge",)
 
     list_filter = ("challenge__short_name",)
