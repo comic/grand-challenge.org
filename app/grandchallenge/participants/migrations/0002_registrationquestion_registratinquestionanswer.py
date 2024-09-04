@@ -36,7 +36,7 @@ class Migration(migrations.Migration):
                     "schema",
                     models.JSONField(
                         default=grandchallenge.participants.models.string_type_schema,
-                        help_text="A JSON schema definition against which an answer is validated. See https://json-schema.org/. Only Draft 7, 6, 4 or 3 are supported.",
+                        help_text="A JSON schema definition against which an answer is validated. See https://json-schema.org/.Only Draft 7, 6, 4 or 3 are supported.",
                         validators=[
                             grandchallenge.core.validators.JSONSchemaValidator()
                         ],
