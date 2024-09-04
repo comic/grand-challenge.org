@@ -135,3 +135,9 @@ class RegistrationQuestionAnswer(models.Model):
 
         if self.answered and self.question.schema:
             JSONValidator(schema=self.question.schema)(value=self.answer)
+
+        # Cannot add a database-level constraint for this, so do it during cleaning:
+        if self.question.challenge != self.registration_request.challenge:
+            raise ValidationError(
+                "Cannot answer questions for a registration with different challenges"
+            )

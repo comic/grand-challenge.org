@@ -165,3 +165,21 @@ def test_registration_question_double_answer():
             question=rq,
             answer="Foo",
         )
+
+
+@pytest.mark.django_db
+def test_registration_question_answer_challenge_validation():
+    ch_a = ChallengeFactory()
+    ch_b = ChallengeFactory()
+
+    rq_ch_a = RegistrationQuestionFactory(challenge=ch_a)
+    rr_ch_b = RegistrationRequestFactory(challenge=ch_b)
+
+    rqa = RegistrationQuestionAnswer(
+        question=rq_ch_a,
+        registration_request=rr_ch_b,
+        answer="",
+    )
+
+    with pytest.raises(ValidationError):
+        rqa.full_clean()
