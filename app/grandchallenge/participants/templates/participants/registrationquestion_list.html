@@ -1,7 +1,7 @@
 {% extends "pages/challenge_settings_base.html" %}
-{% load user_profile_link from profiles %}
 {% load url %}
 {% load static %}
+{% load meta_attr %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -31,6 +31,8 @@
                 <th>Created</th>
                 <th>Question Text</th>
                 <th>Required</th>
+                <th>Edit</th>
+                <th>Delete</th>
             </tr>
             </thead>
             <tbody>
@@ -41,8 +43,32 @@
                     <td data-order="{{ question.created|date:"U" }}">
                         {{ question.created }}
                     </td>
-                    <td>{{ question.question_text }} </td>
-                    <td>{{ question.required }} </td>
+                    <td>
+                        {{ question.question_text }}
+                    </td>
+                    <td>
+                        {% if question.required %}
+                            <i class="fas fa-check text-success"></i>
+                        {% else %}
+                            <i class="fas fa-times text-danger"></i>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a class="btn btn-primary btn-sm"
+                            href="{% url 'participants:registration-question-update' challenge_short_name=challenge.short_name pk=question.pk %}"
+                            title = "Edit {{ question|verbose_name }}"
+                        >
+                            <i class="fas fa-fw fa-edit"></i>
+                        </a>
+                    </td>
+                    <td>
+                        <a class="btn btn-danger btn-sm"
+                            href="{% url 'participants:registration-question-delete' challenge_short_name=challenge.short_name pk=question.pk %}"
+                            title = "Delete {{ question|verbose_name }}"
+                        >
+                            <i class="fas fa-fw fa-trash"></i>
+                        </a>
+                    </td>
                 </tr>
 
             {% endfor %}
