@@ -466,6 +466,7 @@ class Session(UUIDModel):
                 "WORKSTATION_SENTRY_DSN": settings.WORKSTATION_SENTRY_DSN,
                 "WORKSTATION_SESSION_ID": str(self.pk),
                 "CIRRUS_KEEP_ALIVE_METHOD": "old",
+                "AWS_DEFAULT_REGION": str(self.region),
                 "INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS": json.dumps(
                     settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS
                 ),

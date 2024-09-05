@@ -362,4 +362,5 @@ def test_extra_env_vars():
         "WORKSTATION_SENTRY_DSN": "",
         "WORKSTATION_SESSION_ID": "9863c19d-879f-411e-91da-eb5bcdcc1e41",
         "INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS": "null",
+        "AWS_DEFAULT_REGION": "eu-nl-1",
     }
