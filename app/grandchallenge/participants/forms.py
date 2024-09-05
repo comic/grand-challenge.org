@@ -23,4 +23,13 @@ class RegistrationQuestionForm(SaveFormInitMixin, ModelForm):
 
     def __init__(self, *args, challenge, **kwargs):
         super().__init__(*args, **kwargs)
-        self.instance.challenge = challenge
+        if not self.instance.challenge:
+            self.instance.challenge = challenge
+
+
+class RegistrationQuestionFormUpdate(RegistrationQuestionForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        question = self.instance
+        for field_name in question.read_only_fields:
+            self.fields[field_name].disabled = True

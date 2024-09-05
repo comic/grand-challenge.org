@@ -97,10 +97,49 @@ def test_registration_question_update_view(client):
         },
     )
 
-    # TODO, add answered question
-
     question.refresh_from_db()
     assert question.question_text != "foo"
+
+    # Add an answer
+    rr = RegistrationRequestFactory(challenge=ch)
+    RegistrationQuestionAnswer.objects.create(
+        question=question,
+        registration_request=rr,
+        answer="Bar",
+    )
+
+    admin = UserFactory()
+    ch.add_admin(admin)
+
+    updated_data = {
+        "question_text": f"{question.question_text}_____updated",
+        "question_help_text": f"{question.question_help_text}______updated",
+        "schema": {**question.schema, "minLength": 2},
+    }
+    for field_name in updated_data:  # Sanity
+        assert (
+            getattr(question, field_name) != updated_data[field_name]
+        ), "Sanity: attempting to update with actual updated value"
+
+    response = get_view_for_user(
+        viewname="participants:registration-question-update",
+        client=client,
+        method=client.post,
+        challenge=ch,
+        user=admin,
+        data=updated_data,
+        follow=True,
+        reverse_kwargs={"pk": question.pk},
+    )
+
+    assert response.status_code == 200, "Sanity, POST processed correctly"
+
+    question.refresh_from_db()
+    post_update_question = RegistrationQuestion.objects.get(pk=question.pk)
+    for field_name in updated_data:
+        assert getattr(question, field_name) == getattr(
+            post_update_question, field_name
+        ), f"Answered questions should not allow updates to {field_name}"
 
 
 def _test_registration_question_view(

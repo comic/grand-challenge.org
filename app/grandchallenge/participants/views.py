@@ -7,7 +7,10 @@ from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
-from grandchallenge.participants.forms import RegistrationQuestionForm
+from grandchallenge.participants.forms import (
+    RegistrationQuestionForm,
+    RegistrationQuestionFormUpdate,
+)
 from grandchallenge.participants.models import (
     RegistrationQuestion,
     RegistrationRequest,
@@ -152,9 +155,7 @@ class RegistrationQuestionMixin(
         )
 
 
-class RegistrationQuestionFormMixin:
-    form_class = RegistrationQuestionForm
-
+class ChallengeFormKwargsMixin:
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["challenge"] = self.request.challenge
@@ -163,18 +164,20 @@ class RegistrationQuestionFormMixin:
 
 class RegistrationQuestionCreate(
     RegistrationQuestionMixin,
-    RegistrationQuestionFormMixin,
+    ChallengeFormKwargsMixin,
     CreateView,
 ):
     success_message = "Question successfully created"
+    form_class = RegistrationQuestionForm
 
 
 class RegistrationQuestionUpdate(
     RegistrationQuestionMixin,
-    RegistrationQuestionFormMixin,
+    ChallengeFormKwargsMixin,
     UpdateView,
 ):
     success_message = "Question successfully updated"
+    form_class = RegistrationQuestionFormUpdate
 
 
 class RegistrationQuestionDelete(
