@@ -1,13 +1,6 @@
 $(document).ready(() => {
     $("#registrationQuestionsTable").DataTable({
-        order: [[0, "desc"]],
+        order: [[0, "asc"]],
         pageLength: 10,
-        columnDefs: [
-            {
-                targets: [-1],
-                searchable: false,
-                orderable: false,
-            },
-        ],
     });
 });
