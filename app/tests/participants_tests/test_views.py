@@ -200,7 +200,7 @@ def test_registration_question_delete_view(client):
             ), f"Non admins should not be able to {method.__name__}"
 
     rr = RegistrationRequestFactory()
-    rqa = RegistrationQuestionAnswer.objects.create(
+    RegistrationQuestionAnswer.objects.create(
         question=rq, registration_request=rr, answer=""
     )
 
@@ -209,14 +209,8 @@ def test_registration_question_delete_view(client):
 
     response = post_delete(user=admin)
     assert (
-        response.status_code == 403
-    ), "Admin should not be able to delete question with answers"
-
-    rqa.delete()
-    response = post_delete(user=admin)
-    assert (
         response.status_code == 200
-    ), "Admin should be able to delete with answers removed"
+    ), "Admin should be able to delete question despite answers"
 
     assert not RegistrationQuestion.objects.filter(
         pk=rq.pk

@@ -7,6 +7,7 @@ from django.db import IntegrityError
 from grandchallenge.participants.models import (
     RegistrationQuestion,
     RegistrationQuestionAnswer,
+    RegistrationRequest,
 )
 from tests.factories import (
     ChallengeFactory,
@@ -117,7 +118,7 @@ def test_registration_question_no_changes_update():
         ),
         (
             {},
-            1,  # Only string by default
+            1,  # Only string by default schema
             pytest.raises(ValidationError),
         ),
         (
@@ -183,3 +184,38 @@ def test_registration_question_answer_challenge_validation():
 
     with pytest.raises(ValidationError):
         rqa.full_clean()
+
+
+@pytest.mark.django_db
+def test_registration_question_deletion():
+    rq = RegistrationQuestionFactory()
+    rq.delete()
+    assert not RegistrationQuestion.objects.filter(
+        pk=rq.pk
+    ).exists(), "Can delete question without any answers"  # Sanity
+
+    rq = RegistrationQuestionFactory()
+    rr = RegistrationRequestFactory(challenge=rq.challenge)
+    rqa = RegistrationQuestionAnswer.objects.create(
+        question=rq,
+        registration_request=rr,
+        answer="Foo",
+    )
+
+    assert RegistrationQuestionAnswer.objects.filter(
+        pk=rqa.pk
+    ).exists(), "Prior, the answer exists"  # Sanity
+
+    rq.delete()
+
+    assert not RegistrationQuestionAnswer.objects.filter(
+        pk=rqa.pk
+    ).exists(), "Deleting question -> deletes answer"
+
+    assert not RegistrationQuestion.objects.filter(
+        pk=rq.pk
+    ).exists(), "Answered question is indeed deleted"  # Sanity
+
+    assert RegistrationRequest.objects.filter(
+        pk=rr.pk
+    ).exists, "Registration requests still exists"

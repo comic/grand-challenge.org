@@ -2,7 +2,6 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Q
 from django.forms.utils import ErrorList
-from django.http import HttpResponseForbidden
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
 
@@ -183,11 +182,3 @@ class RegistrationQuestionDelete(
 ):
     success_message = "Question successfully deleted"
     fields = ()
-
-    def form_valid(self, *args, **kwargs):
-        question = self.get_object()
-        if question.has_answers:
-            return HttpResponseForbidden(
-                reason="This question already has answers associated with it"
-            )
-        return super().form_valid(*args, **kwargs)
