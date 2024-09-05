@@ -791,25 +791,11 @@ def test_display_set_bulk_delete_permissions(client):
 
 @pytest.mark.django_db
 def test_display_set_delete_all_button_disabled(client):
-
     editor = UserFactory()
     rs = ReaderStudyFactory()
     rs.add_editor(editor)
 
-    ds = DisplaySetFactory(reader_study=rs)
-
-    q = QuestionFactory(
-        reader_study=rs,
-        question_text="question_text",
-        answer_type=Question.AnswerType.TEXT,
-    )
-
-    AnswerFactory(
-        creator=editor,
-        question=q,
-        answer="question_answer",
-        display_set=ds,
-    )
+    AnswerFactory(question__reader_study=rs)
 
     response = get_view_for_user(
         client=client,
