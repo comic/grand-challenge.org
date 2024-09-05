@@ -84,7 +84,9 @@ class RegistrationQuestion(UUIDModel):
 
     @cached_property
     def has_answers(self):
-        return self.registration_question_answer_set.exists()
+        return RegistrationQuestionAnswer.objects.filter(
+            question=self
+        ).exists()
 
     @property
     def read_only_fields(self):
