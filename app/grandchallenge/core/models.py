@@ -69,10 +69,6 @@ class RequestBase(models.Model):
         )
         if self.status == self.PENDING:
             status += ", is awaiting review"
-        elif self.status == self.ACCEPTED:
-            status += ", was accepted at " + self.format_date(self.changed)
-        elif self.status == self.REJECTED:
-            status += ", was rejected at " + self.format_date(self.changed)
 
             try:
                 user_is_verified = self.user.verification.is_verified
@@ -81,6 +77,12 @@ class RequestBase(models.Model):
 
             if not user_is_verified:
                 status += ". You need to verify your account in order to request access permissions"
+
+        elif self.status == self.ACCEPTED:
+            status += ", was accepted at " + self.format_date(self.changed)
+        elif self.status == self.REJECTED:
+            status += ", was rejected at " + self.format_date(self.changed)
+
         return status
 
     @staticmethod

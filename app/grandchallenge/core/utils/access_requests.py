@@ -40,13 +40,10 @@ def process_access_request(request_object):
             if request_object.user.verification.is_verified:
                 # immediately allow access, no need for a notification
                 request_object.status = request_object.ACCEPTED
-            else:
-                request_object.status = request_object.REJECTED
-            request_object.save()
-            return
+                request_object.save()
+                return
         except ObjectDoesNotExist:
-            request_object.status = request_object.REJECTED
-            request_object.save()
+            pass
 
     follow(
         user=request_object.user,

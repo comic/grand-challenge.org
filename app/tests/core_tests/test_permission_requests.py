@@ -450,8 +450,7 @@ def test_permission_request_notifications_flow_for_accept_verified_users(
     assert Notification.objects.count() == 0
     pr.delete()
 
-    # for the not verified user, a follow is created,
-    # since the request handling option is ACCEPT_VERIFIED_USERS, the request is rejected
+    # for the not verified user, a follow is created, the request is pending and
     # the admin gets a notification
     _ = get_view_for_user(
         client=client,
@@ -460,7 +459,7 @@ def test_permission_request_notifications_flow_for_accept_verified_users(
         method=client.post,
     )
     pr = request_model.objects.get()
-    assert pr.status == request_model.REJECTED
+    assert pr.status == request_model.PENDING
     assert pr.user == not_verified_user
     assert is_following(user=not_verified_user, obj=pr)
     assert Notification.objects.count() == 1
