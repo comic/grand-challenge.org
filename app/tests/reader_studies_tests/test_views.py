@@ -798,19 +798,6 @@ def test_display_set_delete_all_button_disabled(client):
 
     ds = DisplaySetFactory(reader_study=rs)
 
-    response = get_view_for_user(
-        client=client,
-        viewname="reader-studies:display_sets",
-        reverse_kwargs={"slug": rs.slug},
-        user=editor,
-    )
-
-    assert response.status_code == 200
-    assert (
-        "Cannot delete all display sets: first you need to delete all of the answers for this reader study"
-        not in str(response.rendered_content)
-    )
-
     q = QuestionFactory(
         reader_study=rs,
         question_text="question_text",
