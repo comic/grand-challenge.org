@@ -1,5 +1,3 @@
-from functools import cached_property
-
 from actstream.models import Follow
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
@@ -82,18 +80,11 @@ class RegistrationQuestion(UUIDModel):
 
     required = models.BooleanField(default=True)
 
-    @cached_property
+    @property
     def has_answers(self):
         return RegistrationQuestionAnswer.objects.filter(
             question=self
         ).exists()
-
-    @property
-    def read_only_fields(self):
-        if self.has_answers:
-            return {"question_text", "question_help_text", "schema"}
-        else:
-            return set()
 
     class Meta:
         unique_together = (("question_text", "challenge"),)
