@@ -6,11 +6,10 @@ from django.shortcuts import get_object_or_404
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
 
-from grandchallenge.core.guardian import (
-    ObjectPermissionRequiredMixin,
-    PermissionListMixin,
-)
+
+from grandchallenge.core.guardian import ObjectPermissionRequiredMixin, PermissionListMixin
 from grandchallenge.participants.forms import (
+    RegistrationRequestForm,
     RegistrationQuestionCreateForm,
     RegistrationQuestionUpdateForm,
 )
@@ -43,7 +42,8 @@ class RegistrationRequestCreate(
     LoginRequiredMixin, SuccessMessageMixin, CreateView
 ):
     model = RegistrationRequest
-    fields = ()
+    form_class = RegistrationRequestForm
+
     raise_exception = True
     login_url = reverse_lazy("account_login")
 
@@ -53,6 +53,12 @@ class RegistrationRequestCreate(
 
     def get_success_message(self, cleaned_data):
         return self.object.status_to_string()
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["challenge"] = self.request.challenge
+        kwargs["user"] = self.request.user
+        return kwargs
 
     def form_valid(self, form):
         challenge = self.request.challenge
@@ -74,7 +80,14 @@ class RegistrationRequestCreate(
             ).status_to_string()
         except ObjectDoesNotExist:
             status = None
-        context.update({"existing_status": status})
+        context.update(
+            {
+                "existing_status": status,
+                "existing_questions": RegistrationQuestion.objects.filter(
+                    challenge=self.request.challenge
+                ).exists(),
+            }
+        )
         return context
 
 
