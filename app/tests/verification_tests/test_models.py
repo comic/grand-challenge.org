@@ -48,42 +48,21 @@ def test_email_sent_to_correct_email():
     ],
 )
 @pytest.mark.parametrize(
-    "access_request_handling, expected_request_status_without_verification, verified_status, expected_request_status_with_verification",
+    "access_request_handling, expected_request_status_without_verification, expected_request_status_with_verification",
     [
         (
             AccessRequestHandlingOptions.ACCEPT_ALL,
             RequestBase.ACCEPTED,
-            True,
-            RequestBase.ACCEPTED,
-        ),
-        (
-            AccessRequestHandlingOptions.ACCEPT_ALL,
-            RequestBase.ACCEPTED,
-            False,
             RequestBase.ACCEPTED,
         ),
         (
             AccessRequestHandlingOptions.ACCEPT_VERIFIED_USERS,
             RequestBase.PENDING,
-            True,
             RequestBase.ACCEPTED,
         ),
         (
-            AccessRequestHandlingOptions.ACCEPT_VERIFIED_USERS,
-            RequestBase.PENDING,
-            False,
-            RequestBase.PENDING,
-        ),
-        (
             AccessRequestHandlingOptions.MANUAL_REVIEW,
             RequestBase.PENDING,
-            True,
-            RequestBase.PENDING,
-        ),
-        (
-            AccessRequestHandlingOptions.MANUAL_REVIEW,
-            RequestBase.PENDING,
-            False,
             RequestBase.PENDING,
         ),
     ],
@@ -93,7 +72,6 @@ def test_handling_permission_requests_on_verification(
     perm_request_entity_attr,
     entity_factory,
     access_request_handling,
-    verified_status,
     expected_request_status_without_verification,
     expected_request_status_with_verification,
 ):
@@ -101,13 +79,12 @@ def test_handling_permission_requests_on_verification(
     t = entity_factory(access_request_handling=access_request_handling)
     pr = perm_request_factory(**{"user": u, perm_request_entity_attr: t})
 
+    v = VerificationFactory(user=u, email_is_verified=True, is_verified=False)
+
     assert pr.status == expected_request_status_without_verification
 
-    VerificationFactory(
-        user=u, email_is_verified=True, is_verified=verified_status
-    )
+    v.is_verified = True
+    v.save()
+    pr.refresh_from_db()
 
-    t2 = entity_factory(access_request_handling=access_request_handling)
-    pr2 = perm_request_factory(**{"user": u, perm_request_entity_attr: t2})
-
-    assert pr2.status == expected_request_status_with_verification
+    assert pr.status == expected_request_status_with_verification

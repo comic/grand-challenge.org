@@ -12,6 +12,7 @@ from django.db.models import Q
 from django.utils.html import format_html
 from pyswot import is_academic
 
+from grandchallenge.core.models import FieldChangeMixin
 from grandchallenge.core.utils.access_requests import process_access_request
 from grandchallenge.emails.emails import send_standard_email_batch
 from grandchallenge.profiles.models import (
@@ -27,7 +28,7 @@ from grandchallenge.verifications.tokens import (
 )
 
 
-class Verification(models.Model):
+class Verification(FieldChangeMixin, models.Model):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 
@@ -82,27 +83,29 @@ class Verification(models.Model):
 
         super().save(*args, **kwargs)
 
-        permission_request_classes = [
-            apps.get_model(
-                app_label="algorithms", model_name="AlgorithmPermissionRequest"
-            ),
-            apps.get_model(
-                app_label="archives", model_name="ArchivePermissionRequest"
-            ),
-            apps.get_model(
-                app_label="reader_studies",
-                model_name="ReaderStudyPermissionRequest",
-            ),
-        ]
+        if self.has_changed("is_verified") and self.is_verified:
+            permission_request_classes = [
+                apps.get_model(
+                    app_label="algorithms",
+                    model_name="AlgorithmPermissionRequest",
+                ),
+                apps.get_model(
+                    app_label="archives", model_name="ArchivePermissionRequest"
+                ),
+                apps.get_model(
+                    app_label="reader_studies",
+                    model_name="ReaderStudyPermissionRequest",
+                ),
+            ]
 
-        for request_class in permission_request_classes:
+            for request_class in permission_request_classes:
 
-            pending_requests = request_class.objects.filter(
-                user=self.user, status=request_class.PENDING
-            )
+                pending_requests = request_class.objects.filter(
+                    user=self.user, status=request_class.PENDING
+                )
 
-            for request in pending_requests:
-                process_access_request(request_object=request)
+                for request in pending_requests:
+                    process_access_request(request_object=request)
 
         if adding and not self.email_is_verified:
             self.send_verification_email()
