@@ -79,7 +79,7 @@ def test_registration_request_form_with_questions(
         )
         assert (
             rqa.answer == form_data[str(rq.pk)]
-        ), "Answer stored is the the answer posted"
+        ), "Answer stored is the answer that was posted"
 
 
 @pytest.mark.django_db
@@ -126,7 +126,7 @@ def test_registration_request_form_partial_data():
 
     assert (
         form.is_valid()
-    ), "Form should be valid with missing data of non-required answer"
+    ), "Form should be valid when only missing data of non-required answer"
 
 
 @pytest.mark.django_db
