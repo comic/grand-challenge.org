@@ -45,6 +45,7 @@ class UserAutocomplete(LoginRequiredMixin, autocomplete.Select2QuerySetView):
         qs = (
             get_user_model()
             .objects.order_by("username")
+            .filter(is_active=True)
             .exclude(username=settings.ANONYMOUS_USER_NAME)
             .annotate(
                 full_name=Concat(

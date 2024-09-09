@@ -151,3 +151,21 @@ class TestAutocompleteViews:
         )
         assert response.status_code == 200
         assert str(user.pk) in response.json()["results"][0]["id"]
+
+    def test_autocomplete_for_inactive_user(self, client):
+        archive = ArchiveFactory()
+        admin = UserFactory()
+        archive.add_editor(admin)
+
+        user = UserFactory(email="verification@email.com", is_active=False)
+
+        response = get_view_for_user(
+            client=client,
+            viewname="users-autocomplete",
+            user=admin,
+            data={"q": user.email},
+        )
+        assert response.status_code == 200
+        assert str(user.pk) not in {
+            r["id"] for r in response.json()["results"]
+        }
