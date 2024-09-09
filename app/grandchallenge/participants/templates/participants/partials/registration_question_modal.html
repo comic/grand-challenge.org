@@ -1,0 +1,51 @@
+{% load user_profile_link from profiles %}
+{% load dict_lookup %}
+{% load url %}
+
+
+<button class="btn btn-xa btn-primary"
+        data-toggle="modal"
+        data-target="#RegistrationQuestionModal-{{ regrequest.pk }}"
+        class="text-decoration-none"
+        role="button"
+        title="View Question Answers">
+    <i class="fas fa-fw fa-question-circle"></i>
+</button>
+
+<div class="modal"
+        id="RegistrationQuestionModal-{{ regrequest.pk }}"
+        tabindex="-1"
+        role="dialog"
+        aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-md" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    Participation Request from {{ regrequest.user|user_profile_link }}
+                </h5>
+                <button type="button" class="close" data-dismiss="modal"
+                        aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="text-left modal-body">
+                <dl>
+                    {% for question in questions %}
+                        {% get_dict_values answers question.pk as answer %}
+                        <dt class="text-muted">{{ question.question_text }}</dt>
+                        <dd class="pl-2">
+                            {% if answer.answer %}
+                                {{ answer.answer }}
+                            {% else %}
+                                ---
+                            {% endif %}
+                        </dd>
+                    {% endfor %}
+                </dl>
+            </div>
+            <div class="modal-footer">
+                {% include "participants/partials/request_accept_reject.html" %}
+            </div>
+        </div>
+    </div>
+</div>

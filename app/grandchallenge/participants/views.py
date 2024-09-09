@@ -1,3 +1,6 @@
+from collections import defaultdict
+from typing import Any
+
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Q
@@ -15,6 +18,7 @@ from grandchallenge.participants.forms import (
 )
 from grandchallenge.participants.models import (
     RegistrationQuestion,
+    RegistrationQuestionAnswer,
     RegistrationRequest,
 )
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
@@ -108,6 +112,32 @@ class RegistrationRequestList(
             Q(challenge=self.request.challenge)
         ).select_related("user__user_profile", "user__verification")
         return queryset
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context_data = super().get_context_data(**kwargs)
+        registration_questions = RegistrationQuestion.objects.filter(
+            challenge=self.request.challenge
+        ).order_by("created")
+        context_data["registration_questions"] = registration_questions
+
+        registration_questions_answers = (
+            RegistrationQuestionAnswer.objects.filter(
+                question__in=registration_questions
+            )
+            .select_related("registration_request")
+            .select_related("question")
+        )
+
+        registration_questions_lookup = defaultdict(dict)
+        for rqa in registration_questions_answers:
+            registration_questions_lookup[rqa.registration_request.pk][
+                rqa.question.pk
+            ] = rqa
+
+        context_data["registration_questions_answer_lookup"] = (
+            registration_questions_lookup
+        )
+        return context_data
 
 
 class RegistrationRequestUpdate(
