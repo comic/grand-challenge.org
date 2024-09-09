@@ -4,9 +4,16 @@ import pytest
 from django.http import HttpRequest
 
 from grandchallenge.algorithms.models import Algorithm
+from grandchallenge.core.utils.access_requests import (
+    AccessRequestHandlingOptions,
+)
 from grandchallenge.core.views import RedirectPath
 from grandchallenge.datatables.views import PaginatedTableListView
 from grandchallenge.subdomains.utils import reverse
+from tests.algorithms_tests.factories import AlgorithmFactory
+from tests.archives_tests.factories import ArchiveFactory
+from tests.factories import UserFactory
+from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.utils import get_view_for_user
 
 
@@ -96,3 +103,41 @@ def test_product_redirect(client):
         response.url
         == "https://radiology.healthairegister.com/product/airs-medical-swiftmr"
     )
+
+
+@pytest.mark.parametrize(
+    "entity_factory,namespace",
+    [
+        (AlgorithmFactory, "algorithms"),
+        (ArchiveFactory, "archives"),
+        (ReaderStudyFactory, "reader-studies"),
+    ],
+)
+@pytest.mark.parametrize(
+    "access_request_handling,expected_msg",
+    [
+        (
+            AccessRequestHandlingOptions.ACCEPT_VERIFIED_USERS,
+            "You need to verify your account in order to get access",
+        ),
+        (AccessRequestHandlingOptions.MANUAL_REVIEW, "is awaiting review"),
+    ],
+)
+@pytest.mark.django_db
+def test_permission_request_status_msg(
+    client, entity_factory, namespace, access_request_handling, expected_msg
+):
+
+    u = UserFactory()
+    t = entity_factory(access_request_handling=access_request_handling)
+
+    response = get_view_for_user(
+        client=client,
+        viewname=f"{namespace}:permission-request-create",
+        reverse_kwargs={"slug": t.slug},
+        user=u,
+        method=client.post,
+        follow=True,
+    )
+
+    assert expected_msg in response.rendered_content
