@@ -23,8 +23,5 @@ class RegistrationQuestionForm(SaveFormInitMixin, ModelForm):
 
     def __init__(self, *args, challenge, **kwargs):
         super().__init__(*args, **kwargs)
-        if (
-            not hasattr(self.instance, "challenge")
-            or not self.instance.challenge
-        ):
+        if self.instance._state.adding:
             self.instance.challenge = challenge
