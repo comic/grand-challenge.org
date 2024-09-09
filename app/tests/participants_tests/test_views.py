@@ -187,3 +187,36 @@ def test_registration_question_delete_view(client):
     assert not RegistrationQuestion.objects.filter(
         pk=rq.pk
     ).exists(), "Question should be removed after delete post"
+
+
+@pytest.mark.django_db
+def test_registration_request_list_view(client):
+    ch = ChallengeFactory()
+    admin, anom_user_0, anom_user_1 = UserFactory.create_batch(3)
+    ch.add_admin(admin)
+
+    rq = RegistrationQuestionFactory(question_text="foo", challenge=ch)
+
+    rr_0 = RegistrationRequestFactory(challenge=ch, user=anom_user_0)
+
+    answer = "A very unique line which should be findable anywhere"
+    RegistrationQuestionAnswer.objects.create(
+        registration_request=rr_0,
+        question=rq,
+        answer=answer,
+    )
+
+    # Note: this request has no answers associated with it
+    RegistrationRequestFactory(challenge=ch, user=anom_user_1)
+
+    response = get_view_for_user(
+        viewname="participants:registration-list",
+        client=client,
+        challenge=ch,
+        user=admin,
+    )
+    assert response.status_code == 200, "Registration list can be gotton OK"
+
+    assert (
+        str.encode(answer) in response.content
+    ), "The answer is rendered somewhere on the page"
