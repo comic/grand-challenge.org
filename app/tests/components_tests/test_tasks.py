@@ -2,7 +2,9 @@ import json
 from pathlib import Path
 from unittest.mock import call
 
+import botocore
 import pytest
+from botocore.stub import Stubber
 from celery.exceptions import MaxRetriesExceededError
 from django.core.files.base import ContentFile
 from requests import put
@@ -22,6 +24,7 @@ from grandchallenge.components.tasks import (
     civ_value_to_file,
     encode_b64j,
     execute_job,
+    preload_interactive_algorithms,
     remove_inactive_container_images,
     update_container_image_shim,
     upload_to_registry_and_sagemaker,
@@ -542,3 +545,39 @@ def test_assign_tarball_from_upload(
     assert not obj2.user_upload
     with pytest.raises(ValueError):
         getattr(obj2, field_to_copy).file
+
+
+def test_preload_interactive_algorithms(settings):
+    settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS = {
+        "io_bucket_name": "org-proj-e-some-bucket",
+        "lambda_functions": [
+            {
+                "arn": "arn:aws:lambda:us-east-1:1234567890:function:org-proj-e-uls23-baseline",
+                "internal_name": "uls23-baseline",
+                "minimum_duration": 1,
+                "timeout": 60,
+                "version": "1",
+            }
+        ],
+    }
+
+    client = botocore.session.get_session().create_client(
+        "lambda", region_name="us-east-1"
+    )
+
+    with Stubber(client) as stubber:
+        stubber.add_response(
+            method="invoke",
+            expected_params={
+                "FunctionName": "arn:aws:lambda:us-east-1:1234567890:function:org-proj-e-uls23-baseline",
+                "InvocationType": "Event",
+                "Payload": "{}",
+                "Qualifier": "1",
+            },
+            service_response={
+                "StatusCode": 202,
+                "Payload": "",
+            },
+        )
+
+        preload_interactive_algorithms(client=client)

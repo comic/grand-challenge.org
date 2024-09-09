@@ -961,6 +961,24 @@ def stop_expired_services(*, app_label: str, model_name: str, region: str):
     return [str(s) for s in services_to_stop]
 
 
+@shared_task
+def preload_interactive_algorithms(*, client):
+    if client is None:
+        session = boto3.Session()
+        client = session.client("lambda")
+
+    for (
+        interactive_algorithm
+    ) in settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS["lambda_functions"]:
+        # TODO only preload the algorithms that are going to be used
+        client.invoke(
+            FunctionName=interactive_algorithm["arn"],
+            InvocationType="Event",
+            Payload=json.dumps({}),
+            Qualifier=interactive_algorithm["version"],
+        )
+
+
 @acks_late_micro_short_task
 def add_image_to_component_interface_value(
     *, component_interface_value_pk, upload_session_pk

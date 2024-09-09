@@ -9,12 +9,20 @@ from django.utils.text import slugify
 
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Session, Workstation
+from grandchallenge.workstations.templatetags.workstations import (
+    get_workstation_path_and_query_string,
+)
 from grandchallenge.workstations.views import SessionCreate
 from tests.factories import (
+    ImageFactory,
     SessionFactory,
     UserFactory,
     WorkstationFactory,
     WorkstationImageFactory,
+)
+from tests.reader_studies_tests.factories import (
+    DisplaySetFactory,
+    ReaderStudyFactory,
 )
 from tests.uploads_tests.factories import UserUploadFactory
 from tests.utils import get_view_for_user
@@ -283,6 +291,114 @@ def test_session_create(client):
     assert sessions[0].extra_env_vars == []
     assert sessions[0].creator == user
     assert response.url == sessions[0].get_absolute_url() + "?path="
+
+
+@pytest.mark.django_db
+def test_session_create_reader_study(
+    client, django_capture_on_commit_callbacks
+):
+    user = UserFactory()
+    ws = WorkstationFactory()
+    WorkstationImageFactory(
+        workstation=ws,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+    reader_study = ReaderStudyFactory(workstation=ws)
+
+    reader_study.readers_group.user_set.add(user)
+
+    path, _ = get_workstation_path_and_query_string(reader_study=reader_study)
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        response = get_view_for_user(
+            client=client,
+            method=client.post,
+            viewname="workstations:workstation-session-create-nested",
+            reverse_kwargs={"slug": ws.slug, "workstation_path": path},
+            user=user,
+            data={"region": "eu-central-1"},
+        )
+
+    assert response.status_code == 302
+    assert [c.__self__.name for c in callbacks] == [
+        "grandchallenge.components.tasks.start_service",
+        "grandchallenge.components.tasks.preload_interactive_algorithms",
+        "grandchallenge.components.tasks.stop_service",
+    ]
+
+
+@pytest.mark.django_db
+def test_session_create_display_set(
+    client, django_capture_on_commit_callbacks
+):
+    user = UserFactory()
+    ws = WorkstationFactory()
+    WorkstationImageFactory(
+        workstation=ws,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+    reader_study = ReaderStudyFactory(workstation=ws)
+    display_set = DisplaySetFactory(reader_study=reader_study)
+
+    reader_study.readers_group.user_set.add(user)
+
+    path, _ = get_workstation_path_and_query_string(display_set=display_set)
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        response = get_view_for_user(
+            client=client,
+            method=client.post,
+            viewname="workstations:workstation-session-create-nested",
+            reverse_kwargs={"slug": ws.slug, "workstation_path": path},
+            user=user,
+            data={"region": "eu-central-1"},
+        )
+
+    assert response.status_code == 302
+    assert [c.__self__.name for c in callbacks] == [
+        "grandchallenge.components.tasks.start_service",
+        "grandchallenge.components.tasks.preload_interactive_algorithms",
+        "grandchallenge.components.tasks.stop_service",
+    ]
+
+
+@pytest.mark.django_db
+def test_session_create_image(client, django_capture_on_commit_callbacks):
+    user = UserFactory()
+    ws = WorkstationFactory()
+    WorkstationImageFactory(
+        workstation=ws,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+    reader_study = ReaderStudyFactory(workstation=ws)
+    image = ImageFactory()
+
+    reader_study.readers_group.user_set.add(user)
+
+    path, _ = get_workstation_path_and_query_string(image=image)
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        response = get_view_for_user(
+            client=client,
+            method=client.post,
+            viewname="workstations:workstation-session-create-nested",
+            reverse_kwargs={"slug": ws.slug, "workstation_path": path},
+            user=user,
+            data={"region": "eu-central-1"},
+        )
+
+    assert response.status_code == 302
+    # No callback to preload_interactive_algorithms should be done for non-reader studies
+    assert [c.__self__.name for c in callbacks] == [
+        "grandchallenge.components.tasks.start_service",
+        "grandchallenge.components.tasks.stop_service",
+    ]
 
 
 @pytest.mark.django_db

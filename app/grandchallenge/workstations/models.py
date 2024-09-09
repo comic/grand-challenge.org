@@ -620,17 +620,17 @@ class Session(UUIDModel):
         if created:
             self.assign_permissions()
             on_commit(
-                lambda: start_service.apply_async(
+                start_service.signature(
                     kwargs=self.task_kwargs,
                     queue=f"workstations-{self.region}",
-                )
+                ).apply_async
             )
         elif self.user_finished and self.status != self.STOPPED:
             on_commit(
-                lambda: stop_service.apply_async(
+                stop_service.signature(
                     kwargs=self.task_kwargs,
                     queue=f"workstations-{self.region}",
-                )
+                ).apply_async
             )
 
 
