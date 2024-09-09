@@ -118,7 +118,7 @@ def test_product_redirect(client):
     [
         (
             AccessRequestHandlingOptions.ACCEPT_VERIFIED_USERS,
-            "You need to verify your account in order to get access",
+            "Your request will be automatically accepted if you verify your account",
         ),
         (AccessRequestHandlingOptions.MANUAL_REVIEW, "is awaiting review"),
     ],
