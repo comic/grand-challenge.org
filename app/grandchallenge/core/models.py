@@ -81,9 +81,7 @@ class RequestBase(models.Model):
                 and self.base_object.access_request_handling
                 == utils.access_requests.AccessRequestHandlingOptions.ACCEPT_VERIFIED_USERS
             ):
-                status = (
-                    "You need to verify your account in order to get access"
-                )
+                status += ", is awaiting review. Your request will be automatically accepted if you verify your account."
             else:
                 status += ", is awaiting review"
 
