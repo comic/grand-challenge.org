@@ -3,51 +3,16 @@ from functools import cached_property
 
 from django.core.exceptions import ValidationError
 from django.db.transaction import on_commit
-from django.forms import HiddenInput, JSONField, ModelForm, TextInput
-from django.forms.fields import InvalidJSONInput
-from django.utils.html import escape
-
+from django.forms import HiddenInput, ModelForm, TextInput
 
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.widgets import JSONEditorWidget
+from grandchallenge.participants.form_fields import RegistrationQuestionField
 from grandchallenge.participants.models import (
     RegistrationQuestion,
     RegistrationQuestionAnswer,
     RegistrationRequest,
 )
-
-
-class RegistrationQuestionField(JSONField):
-    empty_value = InvalidJSONInput("")
-
-    def __init__(self, *, registration_question, **kwargs):
-        self.registration_question = registration_question
-
-        kwargs.update(
-            {
-                "label": registration_question.question_text,
-                "required": registration_question.required,
-                "help_text": escape(registration_question.question_help_text),
-                "widget": TextInput,
-            }
-        )
-
-        if "initial" not in kwargs:
-            kwargs["initial"] = self.empty_value
-        else:
-            if isinstance(str, kwargs["initial"]):
-                kwargs["initial"] = InvalidJSONInput(kwargs["initial"])
-
-        super().__init__(**kwargs)
-
-    def to_python(self, value):
-        if value is None or value == "":
-            return self.empty_value
-        try:
-            return super().to_python(value)
-        except ValidationError:
-            # We assume it is a string
-            return value
 
 
 class RegistrationRequestForm(ModelForm):

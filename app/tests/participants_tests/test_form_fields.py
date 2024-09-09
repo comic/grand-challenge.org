@@ -1,7 +1,7 @@
 import pytest
 from django.utils.safestring import SafeString
 
-from grandchallenge.participants.forms import RegistrationQuestionField
+from grandchallenge.participants.form_fields import RegistrationQuestionField
 from grandchallenge.participants.models import RegistrationQuestion
 
 
