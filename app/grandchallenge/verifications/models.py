@@ -99,7 +99,6 @@ class Verification(FieldChangeMixin, models.Model):
             ]
 
             for request_class in permission_request_classes:
-
                 pending_requests = request_class.objects.filter(
                     user=self.user, status=request_class.PENDING
                 )
