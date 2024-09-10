@@ -47,7 +47,6 @@ from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.utils.error_messages import (
     format_validation_error_message,
 )
-from grandchallenge.evaluation.utils import get
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.uploads.models import UserUpload
 
@@ -988,16 +987,15 @@ def preload_interactive_algorithms(*, client=None):
 
     preloaded_algorithms = set()
 
+    lambda_functions = {
+        f["internal_name"]: f
+        for f in settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS[
+            "lambda_functions"
+        ]
+    }
+
     for active_interactive_algorithm in active_interactive_algorithms:
-        lambda_function = get(
-            [
-                a
-                for a in settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS[
-                    "lambda_functions"
-                ]
-                if a["internal_name"] == active_interactive_algorithm
-            ]
-        )
+        lambda_function = lambda_functions[active_interactive_algorithm]
 
         function_arn = lambda_function["arn"]
         function_version = lambda_function["version"]
@@ -1012,12 +1010,14 @@ def preload_interactive_algorithms(*, client=None):
                 Payload=json.dumps({}),
                 Qualifier=function_version,
             )
+
             timeout = max(
                 settings.INTERACTIVE_ALGORITHMS_PRELOAD_REFRESH_TIMEDELTA.total_seconds()
                 - 60,
                 0,
             )
             cache.set(cache_key, True, timeout=timeout)
+
             preloaded_algorithms.add(active_interactive_algorithm)
 
     return preloaded_algorithms
