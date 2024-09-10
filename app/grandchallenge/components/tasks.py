@@ -970,7 +970,12 @@ def preload_interactive_algorithms(*, client=None):
 
     if client is None:
         session = boto3.Session()
-        client = session.client("lambda")
+        client = session.client(
+            "lambda",
+            region_name=settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS[
+                "region_name"
+            ],
+        )
 
     active_interactive_algorithms = (
         Question.objects.filter(
