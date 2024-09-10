@@ -1018,12 +1018,7 @@ def preload_interactive_algorithms(*, client=None):
                 Qualifier=function_version,
             )
 
-            timeout = max(
-                settings.INTERACTIVE_ALGORITHMS_PRELOAD_REFRESH_TIMEDELTA.total_seconds()
-                - 60,
-                0,
-            )
-            cache.set(cache_key, True, timeout=timeout)
+            cache.set(cache_key, True, timeout=120)
 
             preloaded_algorithms.add(active_interactive_algorithm)
 
