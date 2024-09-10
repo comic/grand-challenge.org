@@ -66,10 +66,17 @@ class RegistrationQuestion(UUIDModel):
     challenge = models.ForeignKey(
         Challenge,
         on_delete=models.CASCADE,
+        related_name="registration_questions",
     )
 
-    question_text = models.TextField(blank=False)
-    question_help_text = models.TextField(blank=True)
+    question_text = models.TextField(
+        blank=False,
+        help_text="Text that will be displayed as a label during registration.",
+    )
+    question_help_text = models.TextField(
+        blank=True,
+        help_text="Text that will be displayed as a helpful note during registration.",
+    )
 
     schema = models.JSONField(
         default=string_type_schema,
@@ -78,13 +85,10 @@ class RegistrationQuestion(UUIDModel):
         validators=[JSONSchemaValidator()],
     )
 
-    required = models.BooleanField(default=True)
-
-    @property
-    def has_answers(self):
-        return RegistrationQuestionAnswer.objects.filter(
-            question=self
-        ).exists()
+    required = models.BooleanField(
+        default=True,
+        help_text="Whether the question requires an answer or not.",
+    )
 
     class Meta:
         unique_together = (("question_text", "challenge"),)
@@ -94,30 +98,32 @@ class RegistrationQuestionAnswer(models.Model):
     registration_request = models.ForeignKey(
         RegistrationRequest,
         on_delete=models.CASCADE,
+        related_name="registration_question_answers",
     )
     question = models.ForeignKey(
         RegistrationQuestion,
         on_delete=models.CASCADE,
+        related_name="answers",
     )
 
-    answer = models.JSONField(blank=True, editable=False)
+    answer = models.JSONField(default=str, blank=True)
 
     class Meta:
         unique_together = (("registration_request", "question"),)
 
     @property
-    def answered(self):
-        return not (isinstance(self.answer, str) and len(self.answer) == 0)
+    def empty_answer(self):
+        return self.answer == self._meta.get_field("answer").get_default()
 
     def clean(self):
         super().clean()
 
-        if not self.answered and self.question.required:
+        if self.empty_answer and self.question.required:
             raise ValidationError(
                 f"The question {self.question.question_text!r} requires an answer"
             )
 
-        if self.answered and self.question.schema:
+        if not self.empty_answer and self.question.schema:
             JSONValidator(schema=self.question.schema)(value=self.answer)
 
         # Cannot add a database-level constraint for this, so do it during cleaning:

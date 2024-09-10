@@ -23,7 +23,7 @@
         <p>Are you sure you want to delete this question:</p>
         <h5 class="font-weight-bolder px-2">'{{ object.question_text }}'</h5>
 
-        {% if object.has_answers %}
+        {% if object.answers.exist %}
             <div class="py-2 alert alert-warning">
                 <i class="fas fa-exclamation-triangle"></i> <strong>Warning</strong>: Deleting this question will permanently erase all participant answers associated with it.
             </div>
@@ -35,7 +35,7 @@
 
         <button type="submit" class="mt-4 btn btn-danger">
             <i class="fas fa-fw fa-trash"></i>
-            Confirm deleting the question{% if object.has_answers %} <strong>and</strong> the participant answers{% endif %}
+            Confirm deleting the question{% if object.answers.exist %} <strong>and</strong> the participant answers{% endif %}
         </button>
     </form>
 
