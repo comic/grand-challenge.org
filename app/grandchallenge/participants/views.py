@@ -2,6 +2,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Q
 from django.forms.utils import ErrorList
+from django.shortcuts import get_object_or_404
 from django.views.generic import CreateView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
 
@@ -98,6 +99,13 @@ class RegistrationRequestUpdate(
     permission_required = "change_challenge"
     raise_exception = True
     login_url = reverse_lazy("account_login")
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(
+            self.model,
+            challenge=self.request.challenge,
+            pk=self.kwargs["pk"],
+        )
 
     def get_permission_object(self):
         return self.request.challenge
