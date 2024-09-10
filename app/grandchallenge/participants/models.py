@@ -2,6 +2,7 @@ from actstream.models import Follow
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.models import RequestBase, UUIDModel
@@ -92,6 +93,23 @@ class RegistrationQuestion(UUIDModel):
 
     class Meta:
         unique_together = (("question_text", "challenge"),)
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        result = super().save(*args, **kwargs)
+
+        if adding:
+            self.assign_permissions()
+        return result
+
+    def assign_permissions(self):
+        # Admins can view question
+        assign_perm(
+            "participants.view_registrationquestion",
+            self.challenge.admins_group,
+            self,
+        )
 
 
 class RegistrationQuestionAnswer(models.Model):

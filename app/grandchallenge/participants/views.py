@@ -1,11 +1,18 @@
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import (
+    ObjectDoesNotExist,
+    PermissionDenied,
+    ValidationError,
+)
 from django.db.models import Q
 from django.forms.utils import ErrorList
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
 
-from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
+from grandchallenge.core.guardian import (
+    ObjectPermissionRequiredMixin,
+    PermissionListMixin,
+)
 from grandchallenge.participants.forms import RegistrationQuestionForm
 from grandchallenge.participants.models import (
     RegistrationQuestion,
@@ -114,20 +121,28 @@ class RegistrationRequestUpdate(
 
 
 class RegistrationQuestionList(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, ListView
+    LoginRequiredMixin, PermissionListMixin, ListView
 ):
     model = RegistrationQuestion
-    permission_required = "change_challenge"
+    permission_required = "participants.view_registrationquestion"
     raise_exception = True
     login_url = reverse_lazy("account_login")
-
-    def get_permission_object(self):
-        return self.request.challenge
 
     def get_queryset(self):
         queryset = super().get_queryset()
         queryset = queryset.filter(challenge=self.request.challenge)
         return queryset
+
+    def dispatch(self, request, *args, **kwargs):
+
+        if not self.request.user.has_perm(
+            "challenges.change_challenge",
+            self.request.challenge,
+        ):
+            # View contains admin side-panel
+            raise PermissionDenied
+
+        return super().dispatch(request, *args, **kwargs)
 
 
 class RegistrationQuestionMixin(
@@ -166,6 +181,13 @@ class RegistrationQuestionCreate(
     CreateView,
 ):
     success_message = "Question successfully created"
+
+    form_class = RegistrationQuestionForm
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["challenge"] = self.request.challenge
+        return kwargs
 
 
 class RegistrationQuestionUpdate(

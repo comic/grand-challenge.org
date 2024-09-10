@@ -19,11 +19,11 @@ from tests.utils import get_view_for_user
 @pytest.mark.django_db
 def test_registration_question_list_view(client):
     ch = ChallengeFactory()
-    admin, participant, anom_user = UserFactory.create_batch(3)
+    admin, participant, user = UserFactory.create_batch(3)
     ch.add_admin(admin)
     ch.add_participant(participant)
 
-    for usr in (participant, anom_user):
+    for usr in (participant, user):
         response = get_view_for_user(
             viewname="participants:registration-question-list",
             client=client,
@@ -97,8 +97,6 @@ def test_registration_question_update_view(client):
         },
     )
 
-    # TODO, add answered question
-
     question.refresh_from_db()
     assert question.question_text != "foo"
 
@@ -108,7 +106,7 @@ def _test_registration_question_view(
 ):
     request_kwargs = request_kwargs or {}
 
-    admin, participant, anom_user = UserFactory.create_batch(3)
+    admin, participant, non_part_user = UserFactory.create_batch(3)
 
     challenge.add_admin(admin)
     challenge.add_participant(participant)
@@ -122,7 +120,7 @@ def _test_registration_question_view(
             **request_kwargs,
         )
 
-    for usr in (participant, anom_user):
+    for usr in (participant, non_part_user):
         response = get(user=usr)
         assert (
             response.status_code == 403
@@ -132,6 +130,7 @@ def _test_registration_question_view(
     assert response.status_code == 200, "Admin should be able to get"
 
     post_data = {
+        "challenge": "1",
         "question_text": "foo bar",
         "question_help_text": "bar foo",
         "required": False,
@@ -150,7 +149,7 @@ def _test_registration_question_view(
             **request_kwargs,
         )
 
-    for usr in (participant, anom_user):
+    for usr in (participant, non_part_user):
         response = post(user=usr)
         assert (
             response.status_code == 403
@@ -163,6 +162,8 @@ def _test_registration_question_view(
     for key, value in post_data.items():
         if key == "schema":
             value = json.loads(value)
+        if key == "challenge":
+            value = challenge
         assert (
             getattr(question, key) == value
         ), "Updated value should match posted data"
@@ -171,7 +172,7 @@ def _test_registration_question_view(
 @pytest.mark.django_db
 def test_registration_question_delete_view(client):
     ch = ChallengeFactory()
-    admin, participant, anom_user = UserFactory.create_batch(3)
+    admin, participant, non_part_user = UserFactory.create_batch(3)
     ch.add_admin(admin)
     ch.add_participant(participant)
 
@@ -192,7 +193,7 @@ def test_registration_question_delete_view(client):
     def post_delete(user):
         return get(user=user, method=client.post)
 
-    for usr in (participant, anom_user):
+    for usr in (participant, non_part_user):
         for method in (get_delete, post_delete):
             response = method(user=usr)
             assert (

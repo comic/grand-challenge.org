@@ -25,4 +25,5 @@ class RegistrationQuestionForm(SaveFormInitMixin, ModelForm):
 
     def __init__(self, *args, challenge, **kwargs):
         super().__init__(*args, **kwargs)
-        self.initial["challenge"] = challenge
+        self.fields["challenge"].initial = challenge
+        self.fields["challenge"].disabled = True
