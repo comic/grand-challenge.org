@@ -1175,6 +1175,7 @@ WORKSTATIONS_EXTRA_BROADCAST_DOMAINS = []
 INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS = json.loads(
     os.environ.get("INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS", "null")
 )
+INTERACTIVE_ALGORITHMS_PRELOAD_REFRESH_TIMEDELTA = timedelta(minutes=10)
 
 CELERY_BEAT_SCHEDULE = {
     "delete_users_who_dont_login": {
@@ -1259,6 +1260,14 @@ CELERY_BEAT_SCHEDULE = {
             },
             "options": {"queue": f"workstations-{region}"},
             "schedule": crontab(minute=f"*/{WORKSTATIONS_GRACE_MINUTES}"),
+        }
+        for region in WORKSTATIONS_ACTIVE_REGIONS
+    },
+    **{
+        f"preload_interactive_algorithms_{region}": {
+            "task": "grandchallenge.components.tasks.preload_interactive_algorithms",
+            "options": {"queue": f"workstations-{region}"},
+            "schedule": INTERACTIVE_ALGORITHMS_PRELOAD_REFRESH_TIMEDELTA,
         }
         for region in WORKSTATIONS_ACTIVE_REGIONS
     },

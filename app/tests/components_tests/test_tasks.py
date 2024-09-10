@@ -1,9 +1,13 @@
 import json
+import uuid
 from pathlib import Path
 from unittest.mock import call
 
+import botocore
 import pytest
+from botocore.stub import Stubber
 from celery.exceptions import MaxRetriesExceededError
+from django.core.cache import cache
 from django.core.files.base import ContentFile
 from requests import put
 
@@ -22,6 +26,7 @@ from grandchallenge.components.tasks import (
     civ_value_to_file,
     encode_b64j,
     execute_job,
+    preload_interactive_algorithms,
     remove_inactive_container_images,
     update_container_image_shim,
     upload_to_registry_and_sagemaker,
@@ -29,6 +34,7 @@ from grandchallenge.components.tasks import (
 )
 from grandchallenge.core.celery import _retry
 from grandchallenge.notifications.models import Notification
+from grandchallenge.reader_studies.models import InteractiveAlgorithmChoices
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
@@ -45,8 +51,17 @@ from tests.evaluation_tests.factories import (
     MethodFactory,
     PhaseFactory,
 )
-from tests.factories import ImageFactory, UserFactory, WorkstationImageFactory
-from tests.reader_studies_tests.factories import DisplaySetFactory
+from tests.factories import (
+    ImageFactory,
+    SessionFactory,
+    UserFactory,
+    WorkstationImageFactory,
+)
+from tests.reader_studies_tests.factories import (
+    DisplaySetFactory,
+    QuestionFactory,
+    ReaderStudyFactory,
+)
 from tests.uploads_tests.factories import (
     UserUploadFactory,
     create_upload_from_file,
@@ -542,3 +557,79 @@ def test_assign_tarball_from_upload(
     assert not obj2.user_upload
     with pytest.raises(ValueError):
         getattr(obj2, field_to_copy).file
+
+
+@pytest.mark.django_db
+def test_preload_interactive_algorithms(settings):
+    settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS = {
+        "io_bucket_name": "org-proj-e-some-bucket",
+        "lambda_functions": [
+            {
+                # Add a uuid to avoid cache key clashes in testing
+                "arn": f"arn:aws:lambda:us-east-1:1234567890:function:org-proj-e-uls23-baseline-{uuid.uuid4()}",
+                "internal_name": "uls23-baseline",
+                "minimum_duration": 1,
+                "timeout": 60,
+                "version": "1",
+            }
+        ],
+    }
+    cache_key = f"interactive_algorithms.lambda_functions.preloaded.{settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS['lambda_functions'][0]['arn']}:1"
+
+    client = botocore.session.get_session().create_client(
+        "lambda", region_name="us-east-1"
+    )
+
+    reader_study = ReaderStudyFactory()
+    QuestionFactory(
+        reader_study=reader_study,
+        interactive_algorithm=InteractiveAlgorithmChoices.ULS23_BASELINE,
+    )
+
+    session = SessionFactory()
+    session.reader_studies.add(reader_study)
+
+    session.status = session.STOPPED
+    session.save()
+
+    with Stubber(client) as stubber:
+        # Nothing should be done as no reader studies are active
+        assert preload_interactive_algorithms(client=client) == set()
+        stubber.assert_no_pending_responses()
+
+    assert cache.get(cache_key) is None
+
+    session.status = session.QUEUED
+    session.save()
+
+    with Stubber(client) as stubber:
+        stubber.add_response(
+            method="invoke",
+            expected_params={
+                "FunctionName": settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS[
+                    "lambda_functions"
+                ][
+                    0
+                ][
+                    "arn"
+                ],
+                "InvocationType": "Event",
+                "Payload": "{}",
+                "Qualifier": "1",
+            },
+            service_response={
+                "StatusCode": 202,
+                "Payload": "",
+            },
+        )
+
+        assert preload_interactive_algorithms(client=client) == {
+            InteractiveAlgorithmChoices.ULS23_BASELINE
+        }
+
+    assert cache.get(cache_key) is True
+
+    with Stubber(client) as stubber:
+        # Cache should be hit
+        assert preload_interactive_algorithms(client=client) == set()
+        stubber.assert_no_pending_responses()

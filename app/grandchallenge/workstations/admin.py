@@ -39,6 +39,7 @@ class SessionHistoryAdmin(SimpleHistoryAdmin):
         "region",
         "ping_times",
         "extra_env_vars",
+        "reader_studies",
     ]
     list_filter = ["status", "region", "workstation_image__workstation__slug"]
     readonly_fields = [

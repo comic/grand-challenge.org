@@ -17,6 +17,7 @@ from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import shared_task  # noqa: I251 TODO needs to be refactored
 from django.apps import apps
 from django.conf import settings
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.db import OperationalError, transaction
@@ -959,6 +960,67 @@ def stop_expired_services(*, app_label: str, model_name: str, region: str):
         service.stop()
 
     return [str(s) for s in services_to_stop]
+
+
+@shared_task
+@transaction.atomic
+def preload_interactive_algorithms(*, client=None):
+    from grandchallenge.reader_studies.models import Question
+    from grandchallenge.workstations.models import Session
+
+    if client is None:
+        session = boto3.Session()
+        client = session.client("lambda")
+
+    active_interactive_algorithms = (
+        Question.objects.filter(
+            reader_study__workstation_sessions__status__in=[
+                Session.QUEUED,
+                Session.STARTED,
+                Session.RUNNING,
+            ]
+        )
+        .exclude(interactive_algorithm="")
+        .values_list("interactive_algorithm", flat=True)
+        .distinct()
+    )
+
+    preloaded_algorithms = set()
+
+    lambda_functions = {
+        f["internal_name"]: f
+        for f in settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS[
+            "lambda_functions"
+        ]
+    }
+
+    for active_interactive_algorithm in active_interactive_algorithms:
+        lambda_function = lambda_functions[active_interactive_algorithm]
+
+        function_arn = lambda_function["arn"]
+        function_version = lambda_function["version"]
+        qualified_arn = f"{function_arn}:{function_version}"
+
+        cache_key = f"interactive_algorithms.lambda_functions.preloaded.{qualified_arn}"
+
+        if cache.get(cache_key) is None:
+            client.invoke(
+                FunctionName=function_arn,
+                InvocationType="Event",
+                Payload=json.dumps({}),
+                Qualifier=function_version,
+            )
+
+            timeout = max(
+                settings.INTERACTIVE_ALGORITHMS_PRELOAD_REFRESH_TIMEDELTA.total_seconds()
+                - 60,
+                0,
+            )
+            cache.set(cache_key, True, timeout=timeout)
+
+            preloaded_algorithms.add(active_interactive_algorithm)
+
+    return preloaded_algorithms
 
 
 @acks_late_micro_short_task

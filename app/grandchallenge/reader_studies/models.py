@@ -172,6 +172,10 @@ CASE_TEXT_SCHEMA = {
 }
 
 
+class InteractiveAlgorithmChoices(models.TextChoices):
+    ULS23_BASELINE = "uls23-baseline", "ULS23 Baseline"
+
+
 class ReaderStudy(
     UUIDModel,
     TitleSlugDescriptionModel,
@@ -200,6 +204,13 @@ class ReaderStudy(
 
     workstation = models.ForeignKey(
         "workstations.Workstation", on_delete=models.PROTECT
+    )
+    workstation_sessions = models.ManyToManyField(
+        "workstations.Session",
+        through="WorkstationSessionReaderStudy",
+        related_name="reader_studies",
+        blank=True,
+        editable=False,
     )
     workstation_config = models.ForeignKey(
         "workstation_configs.WorkstationConfig",
@@ -773,6 +784,15 @@ class ReaderStudyGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(ReaderStudy, on_delete=models.CASCADE)
 
 
+class WorkstationSessionReaderStudy(models.Model):
+    # Through table for optional hanging protocols
+    # https://docs.djangoproject.com/en/4.2/topics/db/models/#intermediary-manytomany
+    reader_study = models.ForeignKey(ReaderStudy, on_delete=models.CASCADE)
+    workstation_session = models.ForeignKey(
+        "workstations.Session", on_delete=models.CASCADE
+    )
+
+
 @receiver(post_delete, sender=ReaderStudy)
 def delete_reader_study_groups_hook(*_, instance: ReaderStudy, using, **__):
     """
@@ -1220,6 +1240,12 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     )
     widget = models.CharField(
         choices=QuestionWidgetKindChoices.choices, max_length=24, blank=True
+    )
+    interactive_algorithm = models.CharField(
+        choices=InteractiveAlgorithmChoices.choices,
+        max_length=32,
+        blank=True,
+        help_text="Which interactive algorithm should be used for this question?",
     )
     answer_max_value = models.SmallIntegerField(
         null=True,
