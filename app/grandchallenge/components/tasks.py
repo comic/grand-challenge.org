@@ -1020,7 +1020,8 @@ def preload_interactive_algorithms(*, client=None):
 
             preloaded_algorithms.add(active_interactive_algorithm)
 
-    return preloaded_algorithms
+    # Sets are not json serializable which is required by celery
+    return list(preloaded_algorithms)
 
 
 @acks_late_micro_short_task

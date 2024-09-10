@@ -594,7 +594,7 @@ def test_preload_interactive_algorithms(settings):
 
     with Stubber(client) as stubber:
         # Nothing should be done as no reader studies are active
-        assert preload_interactive_algorithms(client=client) == set()
+        assert preload_interactive_algorithms(client=client) == []
         stubber.assert_no_pending_responses()
 
     assert cache.get(cache_key) is None
@@ -623,13 +623,13 @@ def test_preload_interactive_algorithms(settings):
             },
         )
 
-        assert preload_interactive_algorithms(client=client) == {
+        assert preload_interactive_algorithms(client=client) == [
             InteractiveAlgorithmChoices.ULS23_BASELINE
-        }
+        ]
 
     assert cache.get(cache_key) is True
 
     with Stubber(client) as stubber:
         # Cache should be hit
-        assert preload_interactive_algorithms(client=client) == set()
+        assert preload_interactive_algorithms(client=client) == []
         stubber.assert_no_pending_responses()
