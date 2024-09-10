@@ -969,8 +969,7 @@ def preload_interactive_algorithms(*, client=None):
     from grandchallenge.workstations.models import Session
 
     if client is None:
-        session = boto3.Session()
-        client = session.client(
+        client = boto3.client(
             "lambda",
             region_name=settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS[
                 "region_name"
