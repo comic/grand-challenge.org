@@ -176,11 +176,28 @@ class RegistrationQuestionFormMixin:
 
 
 class RegistrationQuestionCreate(
-    RegistrationQuestionMixin,
-    RegistrationQuestionFormMixin,
+    LoginRequiredMixin,
+    SuccessMessageMixin,
+    ObjectPermissionRequiredMixin,
     CreateView,
 ):
+    model = RegistrationQuestion
+
     success_message = "Question successfully created"
+
+    permission_required = "challenges.add_registration_question"
+
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_permission_object(self):
+        return self.request.challenge
+
+    def get_success_url(self):
+        return reverse(
+            "participants:registration-question-list",
+            kwargs={"challenge_short_name": self.object.challenge.short_name},
+        )
 
     form_class = RegistrationQuestionForm
 
