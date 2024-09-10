@@ -36,17 +36,17 @@ urlpatterns = [
         name="registration-question-list",
     ),
     path(
-        "registration/questions/create",
+        "registration/questions/create/",
         RegistrationQuestionCreate.as_view(),
         name="registration-question-create",
     ),
     path(
-        "registration/questions/<uuid:pk>/update",
+        "registration/questions/<uuid:pk>/update/",
         RegistrationQuestionUpdate.as_view(),
         name="registration-question-update",
     ),
     path(
-        "registration/questions/<uuid:pk>/delete",
+        "registration/questions/<uuid:pk>/delete/",
         RegistrationQuestionDelete.as_view(),
         name="registration-question-delete",
     ),
