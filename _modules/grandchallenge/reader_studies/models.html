@@ -210,6 +210,13 @@
 <span class="p">}</span>
 
 
+<div class="viewcode-block" id="InteractiveAlgorithmChoices">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.InteractiveAlgorithmChoices">[docs]</a>
+<span class="k">class</span> <span class="nc">InteractiveAlgorithmChoices</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
+    <span class="n">ULS23_BASELINE</span> <span class="o">=</span> <span class="s2">&quot;uls23-baseline&quot;</span><span class="p">,</span> <span class="s2">&quot;ULS23 Baseline&quot;</span></div>
+
+
+
 <div class="viewcode-block" id="ReaderStudy">
 <a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy">[docs]</a>
 <span class="k">class</span> <span class="nc">ReaderStudy</span><span class="p">(</span>
@@ -240,6 +247,13 @@
 
     <span class="n">workstation</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="s2">&quot;workstations.Workstation&quot;</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span>
+    <span class="p">)</span>
+    <span class="n">workstation_sessions</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>
+        <span class="s2">&quot;workstations.Session&quot;</span><span class="p">,</span>
+        <span class="n">through</span><span class="o">=</span><span class="s2">&quot;WorkstationSessionReaderStudy&quot;</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;reader_studies&quot;</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">workstation_config</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="s2">&quot;workstation_configs.WorkstationConfig&quot;</span><span class="p">,</span>
@@ -850,6 +864,18 @@
 
 
 
+<div class="viewcode-block" id="WorkstationSessionReaderStudy">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.WorkstationSessionReaderStudy">[docs]</a>
+<span class="k">class</span> <span class="nc">WorkstationSessionReaderStudy</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="c1"># Through table for optional hanging protocols</span>
+    <span class="c1"># https://docs.djangoproject.com/en/4.2/topics/db/models/#intermediary-manytomany</span>
+    <span class="n">reader_study</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">ReaderStudy</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+    <span class="n">workstation_session</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="s2">&quot;workstations.Session&quot;</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span>
+    <span class="p">)</span></div>
+
+
+
 <div class="viewcode-block" id="delete_reader_study_groups_hook">
 <a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.delete_reader_study_groups_hook">[docs]</a>
 <span class="nd">@receiver</span><span class="p">(</span><span class="n">post_delete</span><span class="p">,</span> <span class="n">sender</span><span class="o">=</span><span class="n">ReaderStudy</span><span class="p">)</span>
@@ -1326,6 +1352,12 @@
     <span class="p">)</span>
     <span class="n">widget</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
         <span class="n">choices</span><span class="o">=</span><span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+    <span class="n">interactive_algorithm</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">choices</span><span class="o">=</span><span class="n">InteractiveAlgorithmChoices</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Which interactive algorithm should be used for this question?&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">answer_max_value</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">SmallIntegerField</span><span class="p">(</span>
         <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
