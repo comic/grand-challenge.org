@@ -2,6 +2,7 @@ from actstream.models import Follow
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
+from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.challenges.models import Challenge
@@ -104,12 +105,28 @@ class RegistrationQuestion(UUIDModel):
         return result
 
     def assign_permissions(self):
-        # Admins can view question
+        # Admins can view, change, and delete a question
         assign_perm(
-            "participants.view_registrationquestion",
-            self.challenge.admins_group,
-            self,
+            "view_registrationquestion", self.challenge.admins_group, self
         )
+        assign_perm(
+            "change_registrationquestion", self.challenge.admins_group, self
+        )
+        assign_perm(
+            "delete_registrationquestion", self.challenge.admins_group, self
+        )
+
+
+class RegistrationQuestionUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(
+        RegistrationQuestion, on_delete=models.CASCADE
+    )
+
+
+class RegistrationQuestionGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(
+        RegistrationQuestion, on_delete=models.CASCADE
+    )
 
 
 class RegistrationQuestionAnswer(models.Model):

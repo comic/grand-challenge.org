@@ -145,36 +145,6 @@ class RegistrationQuestionList(
         return super().dispatch(request, *args, **kwargs)
 
 
-class RegistrationQuestionMixin(
-    LoginRequiredMixin,
-    SuccessMessageMixin,
-    ObjectPermissionRequiredMixin,
-):
-    model = RegistrationQuestion
-
-    permission_required = "change_challenge"
-    raise_exception = True
-    login_url = reverse_lazy("account_login")
-
-    def get_permission_object(self):
-        return self.request.challenge
-
-    def get_success_url(self):
-        return reverse(
-            "participants:registration-question-list",
-            kwargs={"challenge_short_name": self.object.challenge.short_name},
-        )
-
-
-class RegistrationQuestionFormMixin:
-    form_class = RegistrationQuestionForm
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["challenge"] = self.request.challenge
-        return kwargs
-
-
 class RegistrationQuestionCreate(
     LoginRequiredMixin,
     SuccessMessageMixin,
@@ -182,6 +152,7 @@ class RegistrationQuestionCreate(
     CreateView,
 ):
     model = RegistrationQuestion
+    form_class = RegistrationQuestionForm
 
     success_message = "Question successfully created"
 
@@ -193,31 +164,57 @@ class RegistrationQuestionCreate(
     def get_permission_object(self):
         return self.request.challenge
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["challenge"] = self.request.challenge
+        return kwargs
+
     def get_success_url(self):
         return reverse(
             "participants:registration-question-list",
             kwargs={"challenge_short_name": self.object.challenge.short_name},
         )
 
-    form_class = RegistrationQuestionForm
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["challenge"] = self.request.challenge
-        return kwargs
-
 
 class RegistrationQuestionUpdate(
-    RegistrationQuestionMixin,
-    RegistrationQuestionFormMixin,
+    LoginRequiredMixin,
+    SuccessMessageMixin,
+    ObjectPermissionRequiredMixin,
     UpdateView,
 ):
+    model = RegistrationQuestion
+    form_class = RegistrationQuestionForm
+
+    permission_required = "participants.change_registrationquestion"
+
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
     success_message = "Question successfully updated"
+
+    def get_success_url(self):
+        return reverse(
+            "participants:registration-question-list",
+            kwargs={"challenge_short_name": self.object.challenge.short_name},
+        )
 
 
 class RegistrationQuestionDelete(
-    RegistrationQuestionMixin,
+    LoginRequiredMixin,
+    SuccessMessageMixin,
+    ObjectPermissionRequiredMixin,
     DeleteView,
 ):
-    success_message = "Question successfully deleted"
+    model = RegistrationQuestion
     fields = ()
+
+    permission_required = "participants.delete_registrationquestion"
+
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+    success_message = "Question successfully deleted"
+
+    def get_success_url(self):
+        return reverse(
+            "participants:registration-question-list",
+            kwargs={"challenge_short_name": self.object.challenge.short_name},
+        )

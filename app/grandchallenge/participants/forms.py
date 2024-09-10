@@ -23,7 +23,8 @@ class RegistrationQuestionForm(SaveFormInitMixin, ModelForm):
             "schema": JSONEditorWidget(),
         }
 
-    def __init__(self, *args, challenge, **kwargs):
+    def __init__(self, *args, challenge=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["challenge"].initial = challenge
-        self.fields["challenge"].disabled = True
+
+        if challenge:
+            self.fields["challenge"].initial = challenge
