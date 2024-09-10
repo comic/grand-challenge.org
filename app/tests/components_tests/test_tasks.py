@@ -34,6 +34,7 @@ from grandchallenge.components.tasks import (
 )
 from grandchallenge.core.celery import _retry
 from grandchallenge.notifications.models import Notification
+from grandchallenge.reader_studies.models import InteractiveAlgorithmChoices
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
@@ -58,6 +59,7 @@ from tests.factories import (
 )
 from tests.reader_studies_tests.factories import (
     DisplaySetFactory,
+    QuestionFactory,
     ReaderStudyFactory,
 )
 from tests.uploads_tests.factories import (
@@ -579,6 +581,11 @@ def test_preload_interactive_algorithms(settings):
     )
 
     reader_study = ReaderStudyFactory()
+    QuestionFactory(
+        reader_study=reader_study,
+        interactive_algorithm=InteractiveAlgorithmChoices.ULS23_BASELINE,
+    )
+
     session = SessionFactory()
     session.reader_studies.add(reader_study)
 
@@ -587,7 +594,7 @@ def test_preload_interactive_algorithms(settings):
 
     with Stubber(client) as stubber:
         # Nothing should be done as no reader studies are active
-        assert preload_interactive_algorithms(client=client) is False
+        assert preload_interactive_algorithms(client=client) == set()
         stubber.assert_no_pending_responses()
 
     assert cache.get(cache_key) is None
@@ -616,11 +623,13 @@ def test_preload_interactive_algorithms(settings):
             },
         )
 
-        assert preload_interactive_algorithms(client=client) is True
+        assert preload_interactive_algorithms(client=client) == {
+            InteractiveAlgorithmChoices.ULS23_BASELINE
+        }
 
     assert cache.get(cache_key) is True
 
     with Stubber(client) as stubber:
         # Cache should be hit
-        assert preload_interactive_algorithms(client=client) is True
+        assert preload_interactive_algorithms(client=client) == set()
         stubber.assert_no_pending_responses()

@@ -38,7 +38,7 @@ from grandchallenge.core.storage import (
     public_s3_storage,
 )
 from grandchallenge.core.validators import JSONValidator
-from grandchallenge.reader_studies.models import ReaderStudy
+from grandchallenge.reader_studies.models import Question, ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.emails import send_new_feedback_email_to_staff
 
@@ -660,7 +660,11 @@ class Session(UUIDModel):
         reader_study = ReaderStudy.objects.get(lookup)
         reader_study.workstation_sessions.add(self)
 
-        if reader_study.selected_interactive_algorithms:
+        if (
+            Question.objects.filter(reader_study=reader_study)
+            .exclude(interactive_algorithm="")
+            .exists()
+        ):
             on_commit(
                 preload_interactive_algorithms.signature(
                     queue=f"workstations-{self.region}"

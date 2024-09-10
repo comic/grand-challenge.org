@@ -7,6 +7,7 @@ from django.contrib.auth.models import Group
 from django.http import Http404
 from django.utils.text import slugify
 
+from grandchallenge.reader_studies.models import InteractiveAlgorithmChoices
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Session, Workstation
 from grandchallenge.workstations.templatetags.workstations import (
@@ -22,6 +23,7 @@ from tests.factories import (
 )
 from tests.reader_studies_tests.factories import (
     DisplaySetFactory,
+    QuestionFactory,
     ReaderStudyFactory,
 )
 from tests.uploads_tests.factories import UserUploadFactory
@@ -306,6 +308,10 @@ def test_session_create_reader_study(
         is_desired_version=True,
     )
     reader_study = ReaderStudyFactory(workstation=ws)
+    QuestionFactory(
+        reader_study=reader_study,
+        interactive_algorithm=InteractiveAlgorithmChoices.ULS23_BASELINE,
+    )
 
     reader_study.readers_group.user_set.add(user)
 
@@ -331,6 +337,43 @@ def test_session_create_reader_study(
 
 
 @pytest.mark.django_db
+def test_session_create_reader_study_no_algorithm(
+    client, django_capture_on_commit_callbacks
+):
+    user = UserFactory()
+    ws = WorkstationFactory()
+    WorkstationImageFactory(
+        workstation=ws,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+    reader_study = ReaderStudyFactory(workstation=ws)
+    QuestionFactory(reader_study=reader_study)
+
+    reader_study.readers_group.user_set.add(user)
+
+    path, _ = get_workstation_path_and_query_string(reader_study=reader_study)
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        response = get_view_for_user(
+            client=client,
+            method=client.post,
+            viewname="workstations:workstation-session-create-nested",
+            reverse_kwargs={"slug": ws.slug, "workstation_path": path},
+            user=user,
+            data={"region": "eu-central-1"},
+        )
+
+    assert response.status_code == 302
+    assert [c.__self__.name for c in callbacks] == [
+        "grandchallenge.components.tasks.start_service",
+        "grandchallenge.components.tasks.stop_service",
+    ]
+    assert reader_study.workstation_sessions.count() == 1
+
+
+@pytest.mark.django_db
 def test_session_create_display_set(
     client, django_capture_on_commit_callbacks
 ):
@@ -343,6 +386,10 @@ def test_session_create_display_set(
         is_desired_version=True,
     )
     reader_study = ReaderStudyFactory(workstation=ws)
+    QuestionFactory(
+        reader_study=reader_study,
+        interactive_algorithm=InteractiveAlgorithmChoices.ULS23_BASELINE,
+    )
     display_set = DisplaySetFactory(reader_study=reader_study)
 
     reader_study.readers_group.user_set.add(user)

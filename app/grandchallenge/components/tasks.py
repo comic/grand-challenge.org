@@ -966,29 +966,27 @@ def stop_expired_services(*, app_label: str, model_name: str, region: str):
 @shared_task
 @transaction.atomic
 def preload_interactive_algorithms(*, client=None):
-    from grandchallenge.reader_studies.models import ReaderStudy
+    from grandchallenge.reader_studies.models import Question
     from grandchallenge.workstations.models import Session
 
     if client is None:
         session = boto3.Session()
         client = session.client("lambda")
 
-    # TODO this should be a single query from the questions
-    active_reader_studies = ReaderStudy.objects.filter(
-        workstation_sessions__status__in=[
-            Session.QUEUED,
-            Session.STARTED,
-            Session.RUNNING,
-        ]
+    active_interactive_algorithms = (
+        Question.objects.filter(
+            reader_study__workstation_sessions__status__in=[
+                Session.QUEUED,
+                Session.STARTED,
+                Session.RUNNING,
+            ]
+        )
+        .exclude(interactive_algorithm="")
+        .values_list("interactive_algorithm", flat=True)
+        .distinct()
     )
-    active_interactive_algorithms = {
-        algorithm
-        for reader_study in active_reader_studies
-        for algorithm in reader_study.selected_interactive_algorithms
-    }
 
-    if not active_interactive_algorithms:
-        return False
+    preloaded_algorithms = set()
 
     for active_interactive_algorithm in active_interactive_algorithms:
         lambda_function = get(
@@ -1020,8 +1018,9 @@ def preload_interactive_algorithms(*, client=None):
                 0,
             )
             cache.set(cache_key, True, timeout=timeout)
+            preloaded_algorithms.add(active_interactive_algorithm)
 
-    return True
+    return preloaded_algorithms
 
 
 @acks_late_micro_short_task

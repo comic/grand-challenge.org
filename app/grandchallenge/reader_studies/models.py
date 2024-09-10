@@ -554,12 +554,6 @@ class ReaderStudy(
         """The number of answerable questions for this ``ReaderStudy``."""
         return self.answerable_questions.count()
 
-    @cached_property
-    def selected_interactive_algorithms(self):
-        """The selected interactive algorithms for this ``ReaderStudy``."""
-        # TODO should be found from the questions
-        return {InteractiveAlgorithmChoices.ULS23_BASELINE}
-
     def get_progress_for_user(self, user):
         """Returns the percentage of completed hangings and questions for ``user``."""
         if self.display_sets.count() == 0:
@@ -1246,6 +1240,12 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     )
     widget = models.CharField(
         choices=QuestionWidgetKindChoices.choices, max_length=24, blank=True
+    )
+    interactive_algorithm = models.CharField(
+        choices=InteractiveAlgorithmChoices.choices,
+        max_length=32,
+        blank=True,
+        help_text="Which interactive algorithm should be used for this question?",
     )
     answer_max_value = models.SmallIntegerField(
         null=True,
