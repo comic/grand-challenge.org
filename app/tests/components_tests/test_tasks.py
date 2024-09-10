@@ -563,10 +563,11 @@ def test_assign_tarball_from_upload(
 def test_preload_interactive_algorithms(settings):
     settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS = {
         "io_bucket_name": "org-proj-e-some-bucket",
+        "region_name": "eu-central-1",
         "lambda_functions": [
             {
                 # Add a uuid to avoid cache key clashes in testing
-                "arn": f"arn:aws:lambda:us-east-1:1234567890:function:org-proj-e-uls23-baseline-{uuid.uuid4()}",
+                "arn": f"arn:aws:lambda:eu-central-1:1234567890:function:org-proj-e-uls23-baseline-{uuid.uuid4()}",
                 "internal_name": "uls23-baseline",
                 "minimum_duration": 1,
                 "timeout": 60,
@@ -577,7 +578,7 @@ def test_preload_interactive_algorithms(settings):
     cache_key = f"interactive_algorithms.lambda_functions.preloaded.{settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS['lambda_functions'][0]['arn']}:1"
 
     client = botocore.session.get_session().create_client(
-        "lambda", region_name="us-east-1"
+        "lambda", region_name="eu-central-1"
     )
 
     reader_study = ReaderStudyFactory()
@@ -586,7 +587,10 @@ def test_preload_interactive_algorithms(settings):
         interactive_algorithm=InteractiveAlgorithmChoices.ULS23_BASELINE,
     )
 
-    session = SessionFactory()
+    other_session = SessionFactory(region="other")
+    other_session.reader_studies.add(reader_study)
+
+    session = SessionFactory(region="eu-central-1")
     session.reader_studies.add(reader_study)
 
     session.status = session.STOPPED
@@ -594,6 +598,7 @@ def test_preload_interactive_algorithms(settings):
 
     with Stubber(client) as stubber:
         # Nothing should be done as no reader studies are active
+        # in this region
         assert preload_interactive_algorithms(client=client) == []
         stubber.assert_no_pending_responses()
 

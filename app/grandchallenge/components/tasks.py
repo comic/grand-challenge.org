@@ -968,12 +968,14 @@ def preload_interactive_algorithms(*, client=None):
     from grandchallenge.reader_studies.models import Question
     from grandchallenge.workstations.models import Session
 
+    region_name = settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS[
+        "region_name"
+    ]
+
     if client is None:
         client = boto3.client(
             "lambda",
-            region_name=settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS[
-                "region_name"
-            ],
+            region_name=region_name,
         )
 
     active_interactive_algorithms = (
@@ -982,7 +984,8 @@ def preload_interactive_algorithms(*, client=None):
                 Session.QUEUED,
                 Session.STARTED,
                 Session.RUNNING,
-            ]
+            ],
+            reader_study__workstation_sessions__region=region_name,
         )
         .exclude(interactive_algorithm="")
         .values_list("interactive_algorithm", flat=True)
