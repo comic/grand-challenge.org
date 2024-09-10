@@ -89,22 +89,6 @@ class RegistrationQuestion(UUIDModel):
     class Meta:
         unique_together = (("question_text", "challenge"),)
 
-    def clean(self):
-        super().clean()
-
-        if (
-            type(self)
-            .objects.filter(
-                challenge=self.challenge,
-                question_text=self.question_text,
-            )
-            .exclude(pk=self.pk)
-            .exists()
-        ):
-            raise ValidationError(
-                f"There is already an existing {self._meta.model._meta.verbose_name} with this question text"
-            )
-
 
 class RegistrationQuestionAnswer(models.Model):
     registration_request = models.ForeignKey(

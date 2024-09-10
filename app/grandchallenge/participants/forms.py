@@ -1,4 +1,4 @@
-from django.forms import ModelForm, TextInput
+from django.forms import HiddenInput, ModelForm, TextInput
 
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.widgets import JSONEditorWidget
@@ -10,12 +10,14 @@ class RegistrationQuestionForm(SaveFormInitMixin, ModelForm):
     class Meta:
         model = RegistrationQuestion
         fields = (
+            "challenge",
             "question_text",
             "question_help_text",
             "required",
             "schema",
         )
         widgets = {
+            "challenge": HiddenInput(),
             "question_text": TextInput,
             "question_help_text": TextInput,
             "schema": JSONEditorWidget(),
@@ -23,5 +25,4 @@ class RegistrationQuestionForm(SaveFormInitMixin, ModelForm):
 
     def __init__(self, *args, challenge, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.instance._state.adding:
-            self.instance.challenge = challenge
+        self.initial["challenge"] = challenge
