@@ -43,7 +43,6 @@ class SessionHistoryAdmin(SimpleHistoryAdmin):
         "get_reader_studies",
     ]
     list_filter = ["status", "region", "workstation_image__workstation__slug"]
-    list_select_related = ("reader_studies",)
     readonly_fields = [
         "creator",
         "workstation_image",
@@ -57,6 +56,9 @@ class SessionHistoryAdmin(SimpleHistoryAdmin):
     search_fields = [
         "creator__username",
     ]
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).prefetch_related("reader_studies")
 
     @admin.display(description="Reader Studies")
     def get_reader_studies(self, obj):
