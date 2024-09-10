@@ -1,4 +1,5 @@
 import json
+import uuid
 from pathlib import Path
 from unittest.mock import call
 
@@ -6,6 +7,7 @@ import botocore
 import pytest
 from botocore.stub import Stubber
 from celery.exceptions import MaxRetriesExceededError
+from django.core.cache import cache
 from django.core.files.base import ContentFile
 from requests import put
 
@@ -48,8 +50,16 @@ from tests.evaluation_tests.factories import (
     MethodFactory,
     PhaseFactory,
 )
-from tests.factories import ImageFactory, UserFactory, WorkstationImageFactory
-from tests.reader_studies_tests.factories import DisplaySetFactory
+from tests.factories import (
+    ImageFactory,
+    SessionFactory,
+    UserFactory,
+    WorkstationImageFactory,
+)
+from tests.reader_studies_tests.factories import (
+    DisplaySetFactory,
+    ReaderStudyFactory,
+)
 from tests.uploads_tests.factories import (
     UserUploadFactory,
     create_upload_from_file,
@@ -547,12 +557,14 @@ def test_assign_tarball_from_upload(
         getattr(obj2, field_to_copy).file
 
 
+@pytest.mark.django_db
 def test_preload_interactive_algorithms(settings):
     settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS = {
         "io_bucket_name": "org-proj-e-some-bucket",
         "lambda_functions": [
             {
-                "arn": "arn:aws:lambda:us-east-1:1234567890:function:org-proj-e-uls23-baseline",
+                # Add a uuid to avoid cache key clashes in testing
+                "arn": f"arn:aws:lambda:us-east-1:1234567890:function:org-proj-e-uls23-baseline-{uuid.uuid4()}",
                 "internal_name": "uls23-baseline",
                 "minimum_duration": 1,
                 "timeout": 60,
@@ -560,16 +572,40 @@ def test_preload_interactive_algorithms(settings):
             }
         ],
     }
+    cache_key = f"interactive_algorithms.lambda_functions.preloaded.{settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS['lambda_functions'][0]['arn']}:1"
 
     client = botocore.session.get_session().create_client(
         "lambda", region_name="us-east-1"
     )
 
+    reader_study = ReaderStudyFactory()
+    session = SessionFactory()
+    session.reader_studies.add(reader_study)
+
+    session.status = session.STOPPED
+    session.save()
+
+    with Stubber(client) as stubber:
+        # Nothing should be done as no reader studies are active
+        assert preload_interactive_algorithms(client=client) is False
+        stubber.assert_no_pending_responses()
+
+    assert cache.get(cache_key) is None
+
+    session.status = session.QUEUED
+    session.save()
+
     with Stubber(client) as stubber:
         stubber.add_response(
             method="invoke",
             expected_params={
-                "FunctionName": "arn:aws:lambda:us-east-1:1234567890:function:org-proj-e-uls23-baseline",
+                "FunctionName": settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS[
+                    "lambda_functions"
+                ][
+                    0
+                ][
+                    "arn"
+                ],
                 "InvocationType": "Event",
                 "Payload": "{}",
                 "Qualifier": "1",
@@ -580,4 +616,11 @@ def test_preload_interactive_algorithms(settings):
             },
         )
 
-        preload_interactive_algorithms(client=client)
+        assert preload_interactive_algorithms(client=client) is True
+
+    assert cache.get(cache_key) is True
+
+    with Stubber(client) as stubber:
+        # Cache should be hit
+        assert preload_interactive_algorithms(client=client) is True
+        stubber.assert_no_pending_responses()

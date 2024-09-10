@@ -327,6 +327,7 @@ def test_session_create_reader_study(
         "grandchallenge.components.tasks.preload_interactive_algorithms",
         "grandchallenge.components.tasks.stop_service",
     ]
+    assert reader_study.workstation_sessions.count() == 1
 
 
 @pytest.mark.django_db
@@ -364,6 +365,7 @@ def test_session_create_display_set(
         "grandchallenge.components.tasks.preload_interactive_algorithms",
         "grandchallenge.components.tasks.stop_service",
     ]
+    assert reader_study.workstation_sessions.count() == 1
 
 
 @pytest.mark.django_db
@@ -399,6 +401,7 @@ def test_session_create_image(client, django_capture_on_commit_callbacks):
         "grandchallenge.components.tasks.start_service",
         "grandchallenge.components.tasks.stop_service",
     ]
+    assert reader_study.workstation_sessions.count() == 0
 
 
 @pytest.mark.django_db

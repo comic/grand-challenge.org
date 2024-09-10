@@ -1,15 +1,11 @@
-import re
 from datetime import timedelta
 from urllib.parse import quote_plus
 
 from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
-from django.db.models import Q
-from django.db.transaction import on_commit
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django.urls.resolvers import RoutePattern
 from django.utils._os import safe_join
 from django.utils.functional import cached_property
 from django.utils.timezone import now
@@ -31,7 +27,6 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 from ua_parser.user_agent_parser import ParseUserAgent
 
-from grandchallenge.components.tasks import preload_interactive_algorithms
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
@@ -39,7 +34,6 @@ from grandchallenge.core.guardian import (
 )
 from grandchallenge.groups.forms import EditorsForm, UsersForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
-from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.views import VerificationRequiredMixin
 from grandchallenge.workstations.forms import (
@@ -364,8 +358,8 @@ class SessionCreate(
         )
 
         workstation_path = self.kwargs.get("workstation_path", "")
-        self.handle_reader_study_switching(
-            workstation_path=workstation_path, region=session.region
+        session.handle_reader_study_switching(
+            workstation_path=workstation_path
         )
 
         url = session.get_absolute_url()
@@ -375,30 +369,6 @@ class SessionCreate(
             url = f"{url}&qs={quote_plus(qs)}"
 
         return HttpResponseRedirect(url)
-
-    def handle_reader_study_switching(self, *, workstation_path, region):
-        reader_study_pattern = RoutePattern(
-            f"{settings.WORKSTATIONS_READY_STUDY_PATH_PARAM}/<uuid:pk>"
-        )
-        display_set_pattern = RoutePattern(
-            f"{settings.WORKSTATIONS_DISPLAY_SET_PATH_PARAM}/<uuid:pk>"
-        )
-
-        if match := re.match(reader_study_pattern.regex, workstation_path):
-            lookup = Q(pk=match.groupdict()["pk"])
-        elif match := re.match(display_set_pattern.regex, workstation_path):
-            lookup = Q(display_sets__pk=match.groupdict()["pk"])
-        else:
-            return
-
-        # TODO only preload algorithms for reader studies that are using them
-        _ = ReaderStudy.objects.get(lookup)
-
-        on_commit(
-            preload_interactive_algorithms.signature(
-                queue=f"workstations-{region}"
-            ).apply_async
-        )
 
 
 class DebugSessionCreate(SessionCreate):

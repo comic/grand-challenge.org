@@ -17,6 +17,7 @@ from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import shared_task  # noqa: I251 TODO needs to be refactored
 from django.apps import apps
 from django.conf import settings
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.db import OperationalError, transaction
@@ -46,6 +47,7 @@ from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.utils.error_messages import (
     format_validation_error_message,
 )
+from grandchallenge.evaluation.utils import get
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.uploads.models import UserUpload
 
@@ -962,21 +964,64 @@ def stop_expired_services(*, app_label: str, model_name: str, region: str):
 
 
 @shared_task
-def preload_interactive_algorithms(*, client):
+@transaction.atomic
+def preload_interactive_algorithms(*, client=None):
+    from grandchallenge.reader_studies.models import ReaderStudy
+    from grandchallenge.workstations.models import Session
+
     if client is None:
         session = boto3.Session()
         client = session.client("lambda")
 
-    for (
-        interactive_algorithm
-    ) in settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS["lambda_functions"]:
-        # TODO only preload the algorithms that are going to be used
-        client.invoke(
-            FunctionName=interactive_algorithm["arn"],
-            InvocationType="Event",
-            Payload=json.dumps({}),
-            Qualifier=interactive_algorithm["version"],
+    # TODO this should be a single query from the questions
+    active_reader_studies = ReaderStudy.objects.filter(
+        workstation_sessions__status__in=[
+            Session.QUEUED,
+            Session.STARTED,
+            Session.RUNNING,
+        ]
+    )
+    active_interactive_algorithms = {
+        algorithm
+        for reader_study in active_reader_studies
+        for algorithm in reader_study.selected_interactive_algorithms
+    }
+
+    if not active_interactive_algorithms:
+        return False
+
+    for active_interactive_algorithm in active_interactive_algorithms:
+        lambda_function = get(
+            [
+                a
+                for a in settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS[
+                    "lambda_functions"
+                ]
+                if a["internal_name"] == active_interactive_algorithm
+            ]
         )
+
+        function_arn = lambda_function["arn"]
+        function_version = lambda_function["version"]
+        qualified_arn = f"{function_arn}:{function_version}"
+
+        cache_key = f"interactive_algorithms.lambda_functions.preloaded.{qualified_arn}"
+
+        if cache.get(cache_key) is None:
+            client.invoke(
+                FunctionName=function_arn,
+                InvocationType="Event",
+                Payload=json.dumps({}),
+                Qualifier=function_version,
+            )
+            timeout = max(
+                settings.INTERACTIVE_ALGORITHMS_PRELOAD_REFRESH_TIMEDELTA.total_seconds()
+                - 60,
+                0,
+            )
+            cache.set(cache_key, True, timeout=timeout)
+
+    return True
 
 
 @acks_late_micro_short_task
