@@ -995,6 +995,7 @@ CELERY_TASK_TIME_LIMIT = int(os.environ.get("CELERY_TASK_TIME_LIMIT", "7200"))
 # The soft time limit must always be shorter than the hard time limit
 # https://github.com/celery/celery/issues/9125
 CELERY_TASK_SOFT_TIME_LIMIT = int(0.9 * CELERY_TASK_TIME_LIMIT)
+CELERY_TASK_TRACK_STARTED = True
 CELERY_BROKER_TRANSPORT_OPTIONS = {
     "visibility_timeout": int(1.1 * CELERY_TASK_TIME_LIMIT)
 }
