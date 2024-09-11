@@ -19,7 +19,7 @@ def test_registration_question_list_view(client):
     ch.add_admin(admin)
     ch.add_participant(participant)
 
-    for usr in (participant, user):
+    for usr in (participant, user, admin):
         response = get_view_for_user(
             viewname="participants:registration-question-list",
             client=client,
@@ -27,33 +27,26 @@ def test_registration_question_list_view(client):
             user=usr,
         )
         assert (
-            response.status_code == 403
-        ), "Non admin should not be able to view the question list"
-
-    response = get_view_for_user(
-        viewname="participants:registration-question-list",
-        client=client,
-        challenge=ch,
-        user=admin,
-    )
-    assert (
-        response.status_code == 200
-    ), "Admin should be able to view the question list"
-    assert len(response.context_data["object_list"]) == 0  # Sanity
+            response.status_code == 200
+        ), f"{usr} should be able to view the question list"
+        assert len(response.context_data["object_list"]) == 0  # Sanity
 
     RegistrationQuestionFactory(challenge=ch, required=False)
     RegistrationQuestionFactory(challenge=ch)
 
-    response = get_view_for_user(
-        viewname="participants:registration-question-list",
-        client=client,
-        challenge=ch,
-        user=admin,
-    )
-    assert response.status_code == 200
-    assert (
-        len(response.context_data["object_list"]) == 2
-    ), "Question list shows the correct number of questions"
+    for usr, num_questions in ((participant, 0), (user, 0), (admin, 2)):
+        response = get_view_for_user(
+            viewname="participants:registration-question-list",
+            client=client,
+            challenge=ch,
+            user=usr,
+        )
+        assert (
+            response.status_code == 200
+        ), f"{usr} should still be able to view the question list"
+        assert (
+            len(response.context_data["object_list"]) == num_questions
+        ), f"{usr} should see the correct number of questions"
 
 
 @pytest.mark.django_db
