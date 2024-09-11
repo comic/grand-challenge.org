@@ -156,7 +156,6 @@ class VerificationUserSetAdmin(admin.ModelAdmin):
         "inactive_usernames",
         "comment",
     )
-    list_prefetch_related = ("users",)
     search_fields = ("users__username",)
     actions = (deactivate_vus_users,)
     list_filter = (
@@ -165,9 +164,7 @@ class VerificationUserSetAdmin(admin.ModelAdmin):
     )
 
     def get_queryset(self, request):
-        queryset = super().get_queryset(request)
-        queryset.prefetch_related("users")
-        return queryset
+        return super().get_queryset(request).prefetch_related("users")
 
     def active_usernames(self, obj):
         return ", ".join(

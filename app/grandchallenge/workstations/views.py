@@ -357,8 +357,13 @@ class SessionCreate(
             extra_env_vars=form.cleaned_data.get("extra_env_vars"),
         )
 
+        workstation_path = self.kwargs.get("workstation_path", "")
+        session.handle_reader_study_switching(
+            workstation_path=workstation_path
+        )
+
         url = session.get_absolute_url()
-        url += f"?path={quote_plus(self.kwargs.get('workstation_path', ''))}"
+        url += f"?path={quote_plus(workstation_path)}"
         qs = self.request.META.get("QUERY_STRING", "")
         if qs:
             url = f"{url}&qs={quote_plus(qs)}"

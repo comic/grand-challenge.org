@@ -404,6 +404,18 @@ class ReaderStudyDisplaySetList(CivSetListView):
     def base_object(self):
         return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        if Answer.objects.filter(
+            question__reader_study=self.base_object
+        ).exists():
+            context["delete_all_disabled_message"] = (
+                "Cannot delete all display sets: first you need to delete all of the answers for this reader study"
+            )
+
+        return context
+
     def get_queryset(self):
         queryset = super().get_queryset()
         return (

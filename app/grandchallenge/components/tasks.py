@@ -603,19 +603,37 @@ def get_model_instance(*, app_label, model_name, **kwargs):
     return model.objects.get(**kwargs)
 
 
-@acks_late_2xlarge_task
+def lock_model_instance(*, app_label, model_name, **kwargs):
+    """
+    Locks a model instance for update.
+
+    This is useful when you want to update a model instance and want to make
+    sure that no other process is updating the same instance at the same time.
+    Must be used inside a transaction.
+
+    Raises `LockNotAcquiredException` if the lock could not be acquired.
+    """
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+    queryset = model.objects.filter(**kwargs).select_for_update(nowait=True)
+
+    try:
+        return queryset.get()
+    except OperationalError as error:
+        raise LockNotAcquiredException from error
+
+
+@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@transaction.atomic
 def provision_job(
     *, job_pk: uuid.UUID, job_app_label: str, job_model_name: str, backend: str
 ):
-    job = get_model_instance(
+    job = lock_model_instance(
         pk=job_pk, app_label=job_app_label, model_name=job_model_name
     )
     executor = job.get_executor(backend=backend)
 
-    if job.status in [job.PENDING, job.RETRY]:
-        job.update_status(status=job.PROVISIONING)
-    else:
-        raise PriorStepFailed("Job is not ready for provisioning")
+    if job.status not in [job.PENDING, job.RETRY]:
+        raise RuntimeError("Job is not ready for provisioning")
 
     try:
         executor.provision(
@@ -632,9 +650,9 @@ def provision_job(
         )
     except Exception:
         job.update_status(
-            status=job.FAILURE, error_message="Could not provision resources"
+            status=job.FAILURE, error_message="An unexpected error occurred"
         )
-        raise
+        logger.error("Could not provision job", exc_info=True)
     else:
         job.update_status(status=job.PROVISIONED)
         on_commit(execute_job.signature(**job.signature_kwargs).apply_async)
@@ -941,6 +959,127 @@ def stop_expired_services(*, app_label: str, model_name: str, region: str):
         service.stop()
 
     return [str(s) for s in services_to_stop]
+
+
+class InteractiveAlgorithm:
+    def __init__(self, *, arn, qualifier, should_be_active):
+        self._arn = arn
+        self._qualifier = str(qualifier)
+        self._should_be_active = bool(should_be_active)
+
+        self._lambda_client = None
+
+    @property
+    def lambda_client(self):
+        if self._lambda_client is None:
+            self._lambda_client = boto3.client("lambda")
+        return self._lambda_client
+
+    def consolidate(self):
+        active_status = self.set_active_provisioned_concurrency_config()
+        deleted = self.delete_stale_provisioned_concurrency_configs()
+        return {"active_status": active_status, "deleted": deleted}
+
+    @property
+    def provisioned_concurrency_qualifiers(self):
+        provisioned_concurrency_qualifiers = set()
+
+        paginator = self.lambda_client.get_paginator(
+            "list_provisioned_concurrency_configs"
+        )
+
+        for page in paginator.paginate(FunctionName=self._arn):
+            for config in page.get("ProvisionedConcurrencyConfigs", []):
+                qualifier = config["FunctionArn"].rsplit(":", 1)[-1]
+                provisioned_concurrency_qualifiers.add(qualifier)
+
+        return provisioned_concurrency_qualifiers
+
+    def set_active_provisioned_concurrency_config(self):
+        if self._should_be_active:
+            invoked = False
+
+            try:
+                config = self.lambda_client.get_provisioned_concurrency_config(
+                    FunctionName=self._arn,
+                    Qualifier=self._qualifier,
+                )
+            except (
+                self.lambda_client.exceptions.ProvisionedConcurrencyConfigNotFoundException
+            ):
+                config = self.lambda_client.put_provisioned_concurrency_config(
+                    FunctionName=self._arn,
+                    ProvisionedConcurrentExecutions=1,
+                    Qualifier=self._qualifier,
+                )
+                self.lambda_client.invoke(
+                    FunctionName=self._arn,
+                    InvocationType="Event",
+                    Payload=json.dumps({}),
+                    Qualifier=self._qualifier,
+                )
+                invoked = True
+
+            return {
+                "qualifier": self._qualifier,
+                "status": config["Status"],
+                "invoked": invoked,
+            }
+        else:
+            return {}
+
+    def delete_stale_provisioned_concurrency_configs(self):
+        deleted = []
+
+        for qualifier in self.provisioned_concurrency_qualifiers:
+            if qualifier != self._qualifier or self._should_be_active is False:
+                self.lambda_client.delete_provisioned_concurrency_config(
+                    FunctionName=self._arn,
+                    Qualifier=qualifier,
+                )
+                deleted.append(qualifier)
+
+        return deleted
+
+
+@shared_task
+@transaction.atomic
+def preload_interactive_algorithms():
+    from grandchallenge.reader_studies.models import Question
+    from grandchallenge.workstations.models import Session
+
+    active_interactive_algorithms = (
+        Question.objects.filter(
+            reader_study__workstation_sessions__status__in=[
+                Session.QUEUED,
+                Session.STARTED,
+                Session.RUNNING,
+            ],
+            reader_study__workstation_sessions__region=settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS[
+                "region_name"
+            ],
+        )
+        .exclude(interactive_algorithm="")
+        .values_list("interactive_algorithm", flat=True)
+        .distinct()
+    )
+
+    consolidation_results = {}
+
+    for lamba_function in settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS[
+        "lambda_functions"
+    ]:
+        interactive_algorithm = InteractiveAlgorithm(
+            arn=lamba_function["arn"],
+            qualifier=lamba_function["version"],
+            should_be_active=lamba_function["internal_name"]
+            in active_interactive_algorithms,
+        )
+        consolidation_results[lamba_function["internal_name"]] = (
+            interactive_algorithm.consolidate()
+        )
+
+    return consolidation_results
 
 
 @acks_late_micro_short_task
