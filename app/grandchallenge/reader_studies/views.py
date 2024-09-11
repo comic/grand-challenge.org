@@ -3,7 +3,10 @@ import csv
 from django.contrib import messages
 from django.contrib.admin.utils import NestedObjects
 from django.contrib.auth import get_user_model
-from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.auth.mixins import (
+    PermissionRequiredMixin,
+    UserPassesTestMixin,
+)
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
@@ -447,7 +450,9 @@ class QuestionUpdate(
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({"reader_study": self.reader_study})
+        kwargs.update(
+            {"reader_study": self.reader_study, "user": self.request.user}
+        )
         return kwargs
 
     def get_context_data(self, **kwargs):
@@ -647,7 +652,9 @@ class AddQuestionToReaderStudy(BaseAddObjectToReaderStudyMixin, CreateView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({"reader_study": self.reader_study})
+        kwargs.update(
+            {"reader_study": self.reader_study, "user": self.request.user}
+        )
         return kwargs
 
 
@@ -1206,14 +1213,33 @@ class QuestionDelete(
 
 class QuestionInterfacesView(BaseAddObjectToReaderStudyMixin, View):
     def get(self, request, slug):
-        form = QuestionForm(request.GET, reader_study=self.reader_study)
+        form = QuestionForm(
+            request.GET, reader_study=self.reader_study, user=self.request.user
+        )
         return HttpResponse(form["interface"])
 
 
 class QuestionWidgetsView(BaseAddObjectToReaderStudyMixin, View):
     def get(self, request, slug):
-        form = QuestionForm(request.GET, reader_study=self.reader_study)
+        form = QuestionForm(
+            request.GET, reader_study=self.reader_study, user=self.request.user
+        )
         return HttpResponse(form["widget"])
+
+
+class QuestionInteractiveAlgorithmsView(
+    UserPassesTestMixin, BaseAddObjectToReaderStudyMixin, View
+):
+    def test_func(self):
+        return self.request.user.has_perm(
+            "reader_studies.add_interactive_algorithm_to_question"
+        )
+
+    def get(self, request, slug):
+        form = QuestionForm(
+            request.GET, reader_study=self.reader_study, user=self.request.user
+        )
+        return HttpResponse(form["interactive_algorithm"])
 
 
 class DisplaySetDetailView(CIVSetDetail):
