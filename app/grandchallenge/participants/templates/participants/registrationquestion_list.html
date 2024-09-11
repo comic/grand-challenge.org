@@ -1,4 +1,5 @@
 {% extends "pages/challenge_settings_base.html" %}
+{% load guardian_tags %}
 {% load url %}
 {% load static %}
 {% load meta_attr %}
@@ -19,10 +20,14 @@
 
     <h2>Registration Questions for {{ challenge.short_name }}</h2>
 
-    <p><a class="btn btn-primary"
-        href="{% url 'participants:registration-question-create' challenge_short_name=challenge.short_name %}">
-      <i class="fa fa-plus"></i> Add a new question
-    </a></p>
+    {% get_obj_perms request.user for challenge as "challenge_perms" %}
+
+    {% if "add_registration_question" in challenge_perms %}
+        <p><a class="btn btn-primary"
+            href="{% url 'participants:registration-question-create' challenge_short_name=challenge.short_name %}">
+        <i class="fa fa-plus"></i> Add a new question
+        </a></p>
+    {% endif %}
 
     <div class="table-responsive">
         <table class="table table-hover table-borderless table-sm" id="registrationQuestionsTable">

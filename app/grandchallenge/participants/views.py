@@ -1,9 +1,5 @@
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core.exceptions import (
-    ObjectDoesNotExist,
-    PermissionDenied,
-    ValidationError,
-)
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Q
 from django.forms.utils import ErrorList
 from django.shortcuts import get_object_or_404
@@ -143,17 +139,6 @@ class RegistrationQuestionList(
         queryset = super().get_queryset()
         queryset = queryset.filter(challenge=self.request.challenge)
         return queryset
-
-    def dispatch(self, request, *args, **kwargs):
-
-        if not self.request.user.has_perm(
-            "challenges.change_challenge",
-            self.request.challenge,
-        ):
-            # View contains admin side-panel
-            raise PermissionDenied
-
-        return super().dispatch(request, *args, **kwargs)
 
 
 class RegistrationQuestionCreate(
