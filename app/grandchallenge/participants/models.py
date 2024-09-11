@@ -1,6 +1,5 @@
 from actstream.models import Follow
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ValidationError
 from django.db import models
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
@@ -8,7 +7,7 @@ from guardian.shortcuts import assign_perm
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.utils.access_requests import process_access_request
-from grandchallenge.core.validators import JSONSchemaValidator, JSONValidator
+from grandchallenge.core.validators import JSONSchemaValidator
 
 
 class RegistrationRequest(RequestBase):
@@ -127,42 +126,3 @@ class RegistrationQuestionGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(
         RegistrationQuestion, on_delete=models.CASCADE
     )
-
-
-class RegistrationQuestionAnswer(models.Model):
-    registration_request = models.ForeignKey(
-        RegistrationRequest,
-        on_delete=models.CASCADE,
-        related_name="registration_question_answers",
-    )
-    question = models.ForeignKey(
-        RegistrationQuestion,
-        on_delete=models.CASCADE,
-        related_name="answers",
-    )
-
-    answer = models.JSONField(default=str, blank=True)
-
-    class Meta:
-        unique_together = (("registration_request", "question"),)
-
-    @property
-    def empty_answer(self):
-        return self.answer == self._meta.get_field("answer").get_default()
-
-    def clean(self):
-        super().clean()
-
-        if self.empty_answer and self.question.required:
-            raise ValidationError(
-                f"The question {self.question.question_text!r} requires an answer"
-            )
-
-        if not self.empty_answer and self.question.schema:
-            JSONValidator(schema=self.question.schema)(value=self.answer)
-
-        # Cannot add a database-level constraint for this, so do it during cleaning:
-        if self.question.challenge != self.registration_request.challenge:
-            raise ValidationError(
-                "Cannot answer questions for a registration with different challenges"
-            )

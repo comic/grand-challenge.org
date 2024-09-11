@@ -3,14 +3,10 @@ from functools import partial
 
 import pytest
 
-from grandchallenge.participants.models import (
-    RegistrationQuestion,
-    RegistrationQuestionAnswer,
-)
+from grandchallenge.participants.models import RegistrationQuestion
 from tests.factories import (
     ChallengeFactory,
     RegistrationQuestionFactory,
-    RegistrationRequestFactory,
     UserFactory,
 )
 from tests.utils import get_view_for_user
@@ -48,15 +44,6 @@ def test_registration_question_list_view(client):
     RegistrationQuestionFactory(challenge=ch, required=False)
     RegistrationQuestionFactory(challenge=ch)
 
-    # Include an answered one
-    rq = RegistrationQuestionFactory(challenge=ch, required=False)
-    rr = RegistrationRequestFactory(challenge=ch)
-    rq = RegistrationQuestionAnswer(
-        registration_request=rr, question=rq, answer=""
-    )
-    rq.full_clean()
-    rq.save()
-
     response = get_view_for_user(
         viewname="participants:registration-question-list",
         client=client,
@@ -65,7 +52,7 @@ def test_registration_question_list_view(client):
     )
     assert response.status_code == 200
     assert (
-        len(response.context_data["object_list"]) == 3
+        len(response.context_data["object_list"]) == 2
     ), "Question list shows the correct number of questions"
 
 
@@ -200,18 +187,11 @@ def test_registration_question_delete_view(client):
                 response.status_code == 403
             ), f"Non admins should not be able to {method.__name__}"
 
-    rr = RegistrationRequestFactory()
-    RegistrationQuestionAnswer.objects.create(
-        question=rq, registration_request=rr, answer=""
-    )
-
     response = get_delete(user=admin)
     assert response.status_code == 200, "Admin should be able to get delete"
 
     response = post_delete(user=admin)
-    assert (
-        response.status_code == 200
-    ), "Admin should be able to delete question despite answers"
+    assert response.status_code == 200, "Admin should be able to post delete"
 
     assert not RegistrationQuestion.objects.filter(
         pk=rq.pk
