@@ -1135,6 +1135,37 @@ EMPTY_ANSWER_VALUES = {
     AnswerType.MULTIPLE_THREE_POINT_ANGLES: None,
 }
 
+ANSWER_TYPE_TO_INTERACTIVE_ALGORITHM = {
+    AnswerType.HEADING: [],
+    AnswerType.TEXT: [],
+    AnswerType.NUMBER: [],
+    AnswerType.CHOICE: [],
+    AnswerType.BOOL: [],
+    AnswerType.BOUNDING_BOX_2D: [],
+    AnswerType.MULTIPLE_2D_BOUNDING_BOXES: [],
+    AnswerType.DISTANCE_MEASUREMENT: [],
+    AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS: [],
+    AnswerType.POINT: [],
+    AnswerType.MULTIPLE_POINTS: [],
+    AnswerType.POLYGON: [],
+    AnswerType.MULTIPLE_POLYGONS: [],
+    AnswerType.LINE: [],
+    AnswerType.MULTIPLE_LINES: [],
+    AnswerType.MASK: [InteractiveAlgorithmChoices.ULS23_BASELINE],
+    AnswerType.ANGLE: [],
+    AnswerType.MULTIPLE_ANGLES: [],
+    AnswerType.ELLIPSE: [],
+    AnswerType.MULTIPLE_ELLIPSES: [],
+    AnswerType.MULTIPLE_CHOICE: [],
+    AnswerType.THREE_POINT_ANGLE: [],
+    AnswerType.MULTIPLE_THREE_POINT_ANGLES: [],
+}
+
+ANSWER_TYPE_TO_INTERACTIVE_ALGORITHM_CHOICES = {
+    answer_type: [(option.value, option.label) for option in options]
+    for answer_type, options in ANSWER_TYPE_TO_INTERACTIVE_ALGORITHM.items()
+}
+
 
 class ImagePort(models.TextChoices):
     MAIN = "M", "Main"
@@ -1295,6 +1326,12 @@ class Question(UUIDModel, OverlaySegmentsMixin):
 
     class Meta:
         ordering = ("order", "created")
+        permissions = [
+            (
+                "add_interactive_algorithm_to_question",
+                "Can add interactive algorithm to question",
+            )
+        ]
 
     def __str__(self):
         return (
@@ -1401,6 +1438,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         self._clean_image_port()
         self._clean_widget()
         self._clean_widget_options()
+        self._clean_interactive_algorithm()
 
     def _clean_answer_type(self):
         # Make sure that the image port is only set when using drawn
@@ -1580,6 +1618,16 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         ):
             raise ValidationError(
                 "Answer max length needs to be bigger than answer min length."
+            )
+
+    def _clean_interactive_algorithm(self):
+        if (
+            self.interactive_algorithm
+            and self.interactive_algorithm
+            not in ANSWER_TYPE_TO_INTERACTIVE_ALGORITHM[self.answer_type]
+        ):
+            raise ValidationError(
+                f"{self.interactive_algorithm} is not a valid option for answer type {self.answer_type}."
             )
 
     @property

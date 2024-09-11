@@ -21,6 +21,7 @@ from django.forms import (
     ChoiceField,
     FileField,
     Form,
+    HiddenInput,
     IntegerField,
     ModelChoiceField,
     ModelForm,
@@ -29,6 +30,7 @@ from django.forms import (
     TextInput,
 )
 from django.forms.models import inlineformset_factory
+from django.utils.functional import cached_property
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 from dynamic_forms import DynamicField, DynamicFormMixin
@@ -55,6 +57,7 @@ from grandchallenge.core.widgets import (
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.hanging_protocols.models import VIEW_CONTENT_SCHEMA
 from grandchallenge.reader_studies.models import (
+    ANSWER_TYPE_TO_INTERACTIVE_ALGORITHM_CHOICES,
     ANSWER_TYPE_TO_INTERFACE_KIND_MAP,
     ANSWER_TYPE_TO_QUESTION_WIDGET_CHOICES,
     CASE_TEXT_SCHEMA,
@@ -282,7 +285,9 @@ class ReaderStudyCopyForm(Form):
 
 
 class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
-    def __init__(self, *args, reader_study, **kwargs):
+    def __init__(self, *args, user, reader_study, **kwargs):
+        self._user = user
+
         super().__init__(*args, **kwargs)
 
         for field_name in self.instance.read_only_fields:
@@ -309,6 +314,10 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
             *BLANK_CHOICE_DASH,
             *AnswerType.choices,
         ]
+
+        if not self.user_can_add_interactive_algorithm:
+            self.fields["interactive_algorithm"].widget = HiddenInput()
+            self.fields["interactive_algorithm"].disabled = True
 
         options_form_set_factory = inlineformset_factory(
             Question,
@@ -345,6 +354,14 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                     f"hx-include='[id=id_answer_type]'>"
                     f"</div>"
                 ),
+                HTML(
+                    f"<div "
+                    f"hx-get={reverse_lazy('reader-studies:question-interactive-algorithms', kwargs={'slug': reader_study.slug})!r} "
+                    f"hx-trigger='change from:#id_answer_type' "
+                    f"hx-target='#id_interactive_algorithm' "
+                    f"hx-include='[id=id_answer_type]'>"
+                    f"</div>"
+                ),
                 Fieldset(
                     "Answer validation and widget options",
                     "answer_min_value",
@@ -373,9 +390,16 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                 Field("interface"),
                 Field("overlay_segments"),
                 Field("look_up_table"),
+                Field("interactive_algorithm"),
                 HTML("<br>"),
                 ButtonHolder(Submit("save", "Save")),
             )
+        )
+
+    @cached_property
+    def user_can_add_interactive_algorithm(self):
+        return self._user.has_perm(
+            "reader_studies.add_interactive_algorithm_to_question"
         )
 
     def __get_answer_type(self):
@@ -412,8 +436,32 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
             ) from error
         return choices
 
+    def interactive_algorithm_choices(self):
+        answer_type = self.__get_answer_type()
+        choices = [*BLANK_CHOICE_DASH]
+
+        if not self.user_can_add_interactive_algorithm:
+            return choices
+
+        if not answer_type:
+            return choices
+
+        try:
+            choices += ANSWER_TYPE_TO_INTERACTIVE_ALGORITHM_CHOICES[
+                answer_type
+            ]
+        except KeyError as error:
+            raise RuntimeError(
+                f"{answer_type} is not defined in ANSWER_TYPE_TO_QUESTION_WIDGET_CHOICES."
+            ) from error
+
+        return choices
+
     def initial_widget(self):
         return self.instance.widget
+
+    def initial_interactive_algorithm(self):
+        return self.instance.interactive_algorithm
 
     def is_valid(self):
         return super().is_valid() and self.options_form_set.is_valid()
@@ -511,6 +559,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
             "answer_max_length",
             "answer_match_pattern",
             "reader_study",
+            "interactive_algorithm",
         )
         help_texts = {
             "question_text": (
@@ -571,6 +620,14 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
         required=False,
         help_text="Select the input method that will be presented to the user. "
         "Which widgets are available depends on the answer type selected.",
+    )
+
+    interactive_algorithm = DynamicField(
+        ChoiceField,
+        initial=initial_interactive_algorithm,
+        choices=interactive_algorithm_choices,
+        required=False,
+        help_text="Select an interactive algorithm for this question.",
     )
 
 
