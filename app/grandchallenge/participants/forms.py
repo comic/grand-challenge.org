@@ -5,7 +5,7 @@ from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.participants.models import RegistrationQuestion
 
 
-class RegistrationQuestionForm(SaveFormInitMixin, ModelForm):
+class RegistrationQuestionUpdateForm(SaveFormInitMixin, ModelForm):
 
     class Meta:
         model = RegistrationQuestion
@@ -23,9 +23,13 @@ class RegistrationQuestionForm(SaveFormInitMixin, ModelForm):
             "schema": JSONEditorWidget(),
         }
 
-    def __init__(self, *args, challenge=None, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        if challenge:
-            self.fields["challenge"].initial = challenge
         self.fields["challenge"].disabled = True
+
+
+class RegistrationQuestionCreateForm(RegistrationQuestionUpdateForm):
+
+    def __init__(self, *args, challenge, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["challenge"].initial = challenge

@@ -14,7 +14,10 @@ from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
 )
-from grandchallenge.participants.forms import RegistrationQuestionForm
+from grandchallenge.participants.forms import (
+    RegistrationQuestionCreateForm,
+    RegistrationQuestionUpdateForm,
+)
 from grandchallenge.participants.models import (
     RegistrationQuestion,
     RegistrationRequest,
@@ -160,7 +163,7 @@ class RegistrationQuestionCreate(
     CreateView,
 ):
     model = RegistrationQuestion
-    form_class = RegistrationQuestionForm
+    form_class = RegistrationQuestionCreateForm
 
     success_message = "Question successfully created"
 
@@ -191,7 +194,7 @@ class RegistrationQuestionUpdate(
     UpdateView,
 ):
     model = RegistrationQuestion
-    form_class = RegistrationQuestionForm
+    form_class = RegistrationQuestionUpdateForm
 
     permission_required = "participants.change_registrationquestion"
 
