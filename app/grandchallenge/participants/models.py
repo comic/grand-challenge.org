@@ -96,12 +96,9 @@ class RegistrationQuestion(UUIDModel):
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
-
-        result = super().save(*args, **kwargs)
-
+        super().save(*args, **kwargs)
         if adding:
             self.assign_permissions()
-        return result
 
     def assign_permissions(self):
         # Admins can view, change, and delete a question
