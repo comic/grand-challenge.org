@@ -117,7 +117,6 @@ def _test_registration_question_view(
     assert response.status_code == 200, "Admin should be able to get"
 
     post_data = {
-        "challenge": "1",
         "question_text": "foo bar",
         "question_help_text": "bar foo",
         "required": False,
@@ -132,7 +131,6 @@ def _test_registration_question_view(
             challenge=challenge,
             user=user,
             data=post_data,
-            follow=True,
             **request_kwargs,
         )
 
@@ -143,7 +141,8 @@ def _test_registration_question_view(
         ), "Non admin should not be able to post"
 
     response = post(user=admin)
-    assert response.status_code == 200, "Admin should be able to post"
+
+    assert response.status_code == 302, "Valid form redirects for an admin"
 
     question = RegistrationQuestion.objects.get(challenge=challenge)
     for key, value in post_data.items():
@@ -171,7 +170,6 @@ def test_registration_question_delete_view(client):
         client=client,
         challenge=ch,
         reverse_kwargs={"pk": rq.pk},
-        follow=True,
     )
 
     def get_delete(user):
@@ -191,7 +189,7 @@ def test_registration_question_delete_view(client):
     assert response.status_code == 200, "Admin should be able to get delete"
 
     response = post_delete(user=admin)
-    assert response.status_code == 200, "Admin should be able to post delete"
+    assert response.status_code == 302, "Admin should be able to post delete"
 
     assert not RegistrationQuestion.objects.filter(
         pk=rq.pk

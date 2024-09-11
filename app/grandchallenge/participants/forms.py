@@ -28,3 +28,4 @@ class RegistrationQuestionForm(SaveFormInitMixin, ModelForm):
 
         if challenge:
             self.fields["challenge"].initial = challenge
+        self.fields["challenge"].disabled = True
