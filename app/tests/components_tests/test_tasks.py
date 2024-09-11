@@ -601,6 +601,7 @@ def test_preload_interactive_algorithms(settings):
         }
 
         mock_interactive_algorithm.assert_any_call(
+            region_name="eu-central-1",
             arn=arn,
             qualifier="1",
             # Nothing should be done as no reader studies are active in this region
@@ -623,7 +624,10 @@ def test_preload_interactive_algorithms(settings):
         }
 
         mock_interactive_algorithm.assert_any_call(
-            arn=arn, qualifier="1", should_be_active=True
+            region_name="eu-central-1",
+            arn=arn,
+            qualifier="1",
+            should_be_active=True,
         )
 
         assert mock_instance.consolidate.call_count == 1

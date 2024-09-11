@@ -962,7 +962,8 @@ def stop_expired_services(*, app_label: str, model_name: str, region: str):
 
 
 class InteractiveAlgorithm:
-    def __init__(self, *, arn, qualifier, should_be_active):
+    def __init__(self, *, region_name, arn, qualifier, should_be_active):
+        self._region_name = region_name
         self._arn = arn
         self._qualifier = str(qualifier)
         self._should_be_active = bool(should_be_active)
@@ -972,7 +973,9 @@ class InteractiveAlgorithm:
     @property
     def lambda_client(self):
         if self._lambda_client is None:
-            self._lambda_client = boto3.client("lambda")
+            self._lambda_client = boto3.client(
+                "lambda", region_name=self._region_name
+            )
         return self._lambda_client
 
     def consolidate(self):
@@ -1048,6 +1051,10 @@ def preload_interactive_algorithms():
     from grandchallenge.reader_studies.models import Question
     from grandchallenge.workstations.models import Session
 
+    region_name = settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS[
+        "region_name"
+    ]
+
     active_interactive_algorithms = (
         Question.objects.filter(
             reader_study__workstation_sessions__status__in=[
@@ -1055,9 +1062,7 @@ def preload_interactive_algorithms():
                 Session.STARTED,
                 Session.RUNNING,
             ],
-            reader_study__workstation_sessions__region=settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS[
-                "region_name"
-            ],
+            reader_study__workstation_sessions__region=region_name,
         )
         .exclude(interactive_algorithm="")
         .values_list("interactive_algorithm", flat=True)
@@ -1070,6 +1075,7 @@ def preload_interactive_algorithms():
         "lambda_functions"
     ]:
         interactive_algorithm = InteractiveAlgorithm(
+            region_name=region_name,
             arn=lamba_function["arn"],
             qualifier=lamba_function["version"],
             should_be_active=lamba_function["internal_name"]
