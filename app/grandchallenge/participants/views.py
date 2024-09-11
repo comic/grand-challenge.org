@@ -164,11 +164,8 @@ class RegistrationQuestionCreate(
 ):
     model = RegistrationQuestion
     form_class = RegistrationQuestionCreateForm
-
-    success_message = "Question successfully created"
-
     permission_required = "challenges.add_registration_question"
-
+    success_message = "Question successfully created"
     raise_exception = True
     login_url = reverse_lazy("account_login")
 
@@ -195,12 +192,10 @@ class RegistrationQuestionUpdate(
 ):
     model = RegistrationQuestion
     form_class = RegistrationQuestionUpdateForm
-
     permission_required = "participants.change_registrationquestion"
-
+    success_message = "Question successfully updated"
     raise_exception = True
     login_url = reverse_lazy("account_login")
-    success_message = "Question successfully updated"
 
     def get_success_url(self):
         return reverse(
@@ -216,13 +211,10 @@ class RegistrationQuestionDelete(
     DeleteView,
 ):
     model = RegistrationQuestion
-    fields = ()
-
     permission_required = "participants.delete_registrationquestion"
-
+    success_message = "Question successfully deleted"
     raise_exception = True
     login_url = reverse_lazy("account_login")
-    success_message = "Question successfully deleted"
 
     def get_success_url(self):
         return reverse(
