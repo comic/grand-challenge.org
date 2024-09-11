@@ -1236,6 +1236,37 @@
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_THREE_POINT_ANGLES</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">}</span>
 
+<span class="n">ANSWER_TYPE_TO_INTERACTIVE_ALGORITHM</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">HEADING</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">NUMBER</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">BOOL</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">BOUNDING_BOX_2D</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_2D_BOUNDING_BOXES</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">DISTANCE_MEASUREMENT</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_DISTANCE_MEASUREMENTS</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">POINT</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_POINTS</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">POLYGON</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_POLYGONS</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">LINE</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_LINES</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MASK</span><span class="p">:</span> <span class="p">[</span><span class="n">InteractiveAlgorithmChoices</span><span class="o">.</span><span class="n">ULS23_BASELINE</span><span class="p">],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">ANGLE</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_ANGLES</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">ELLIPSE</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_ELLIPSES</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">THREE_POINT_ANGLE</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_THREE_POINT_ANGLES</span><span class="p">:</span> <span class="p">[],</span>
+<span class="p">}</span>
+
+<span class="n">ANSWER_TYPE_TO_INTERACTIVE_ALGORITHM_CHOICES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">answer_type</span><span class="p">:</span> <span class="p">[(</span><span class="n">option</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">option</span><span class="o">.</span><span class="n">label</span><span class="p">)</span> <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="n">options</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">answer_type</span><span class="p">,</span> <span class="n">options</span> <span class="ow">in</span> <span class="n">ANSWER_TYPE_TO_INTERACTIVE_ALGORITHM</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+<span class="p">}</span>
+
 
 <div class="viewcode-block" id="ImagePort">
 <a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ImagePort">[docs]</a>
@@ -1407,6 +1438,12 @@
 
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
         <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;order&quot;</span><span class="p">,</span> <span class="s2">&quot;created&quot;</span><span class="p">)</span>
+        <span class="n">permissions</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span>
+                <span class="s2">&quot;add_interactive_algorithm_to_question&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Can add interactive algorithm to question&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
@@ -1520,7 +1557,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_interface</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_image_port</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_widget</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_clean_widget_options</span><span class="p">()</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clean_widget_options</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clean_interactive_algorithm</span><span class="p">()</span></div>
 
 
     <span class="k">def</span> <span class="nf">_clean_answer_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1701,6 +1739,16 @@
         <span class="p">):</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="s2">&quot;Answer max length needs to be bigger than answer min length.&quot;</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_clean_interactive_algorithm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">interactive_algorithm</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">interactive_algorithm</span>
+            <span class="ow">not</span> <span class="ow">in</span> <span class="n">ANSWER_TYPE_TO_INTERACTIVE_ALGORITHM</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span><span class="p">]</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">interactive_algorithm</span><span class="si">}</span><span class="s2"> is not a valid option for answer type </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span><span class="si">}</span><span class="s2">.&quot;</span>
             <span class="p">)</span>
 
     <span class="nd">@property</span>
