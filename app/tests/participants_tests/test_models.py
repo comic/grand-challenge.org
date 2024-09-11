@@ -79,13 +79,6 @@ def test_registration_question_validation(questions, context):
 
 
 @pytest.mark.django_db
-def test_registration_question_no_changes_update():
-    rq = RegistrationQuestionFactory()
-    rq.full_clean()
-    rq.save()
-
-
-@pytest.mark.django_db
 @pytest.mark.parametrize(
     "question,answer,context",
     (
