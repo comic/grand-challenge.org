@@ -840,20 +840,21 @@ def handle_event(*, event, backend):  # noqa: C901
         )
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@transaction.atomic
 def parse_job_outputs(
     *, job_pk: uuid.UUID, job_app_label: str, job_model_name: str, backend: str
 ):
-    job = get_model_instance(
+    job = lock_model_instance(
         pk=job_pk, app_label=job_app_label, model_name=job_model_name
     )
     executor = job.get_executor(backend=backend)
 
-    if job.status == job.EXECUTED and not job.outputs.exists():
-        job.update_status(status=job.PARSING)
-    else:
-        deprovision_job.signature(**job.signature_kwargs).apply_async()
-        raise PriorStepFailed("Job is not ready for output parsing")
+    if job.status != job.EXECUTED:
+        raise RuntimeError("Job is not ready for output parsing")
+
+    if job.outputs.exists():
+        raise RuntimeError("Job already has outputs")
 
     try:
         outputs = executor.get_outputs(
@@ -865,12 +866,11 @@ def parse_job_outputs(
             error_message=str(e),
             detailed_error_message=e.message_details,
         )
-        raise PriorStepFailed("Could not parse outputs")
     except Exception:
         job.update_status(
-            status=job.FAILURE, error_message="Could not parse outputs"
+            status=job.FAILURE, error_message="An unexpected error occurred"
         )
-        raise
+        logger.error("Could not parse outputs", exc_info=True)
     else:
         job.outputs.add(*outputs)
         job.update_status(status=job.SUCCESS)
