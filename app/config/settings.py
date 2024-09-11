@@ -1175,7 +1175,6 @@ WORKSTATIONS_EXTRA_BROADCAST_DOMAINS = []
 INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS = json.loads(
     os.environ.get("INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS", "null")
 )
-INTERACTIVE_ALGORITHMS_PRELOAD_REFRESH_TIMEDELTA = timedelta(minutes=5)
 
 CELERY_BEAT_SCHEDULE = {
     "delete_users_who_dont_login": {
@@ -1226,10 +1225,6 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.algorithms.tasks.set_credits_per_job",
         "schedule": crontab(hour=4, minute=30),
     },
-    "update_compute_costs_and_storage_size": {
-        "task": "grandchallenge.challenges.tasks.update_compute_costs_and_storage_size",
-        "schedule": crontab(hour="5,11,17,23", minute=0),
-    },
     "update_site_statistics": {
         "task": "grandchallenge.statistics.tasks.update_site_statistics_cache",
         "schedule": crontab(hour=5, minute=30),
@@ -1238,13 +1233,17 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.emails.tasks.cleanup_sent_raw_emails",
         "schedule": crontab(hour=6, minute=0),
     },
+    "update_compute_costs_and_storage_size": {
+        "task": "grandchallenge.challenges.tasks.update_compute_costs_and_storage_size",
+        "schedule": timedelta(hours=1),
+    },
     "logout_privileged_users": {
         "task": "grandchallenge.browser_sessions.tasks.logout_privileged_users",
         "schedule": timedelta(hours=1),
     },
     "update_challenge_results_cache": {
         "task": "grandchallenge.challenges.tasks.update_challenge_results_cache",
-        "schedule": crontab(minute="*/5"),
+        "schedule": timedelta(minutes=5),
     },
     "send_raw_emails": {
         "task": "grandchallenge.emails.tasks.send_raw_emails",
@@ -1259,7 +1258,7 @@ CELERY_BEAT_SCHEDULE = {
                 "region": region,
             },
             "options": {"queue": f"workstations-{region}"},
-            "schedule": crontab(minute=f"*/{WORKSTATIONS_GRACE_MINUTES}"),
+            "schedule": timedelta(minutes=WORKSTATIONS_GRACE_MINUTES),
         }
         for region in WORKSTATIONS_ACTIVE_REGIONS
     },
@@ -1267,7 +1266,7 @@ CELERY_BEAT_SCHEDULE = {
         f"preload_interactive_algorithms_{region}": {
             "task": "grandchallenge.components.tasks.preload_interactive_algorithms",
             "options": {"queue": f"workstations-{region}"},
-            "schedule": INTERACTIVE_ALGORITHMS_PRELOAD_REFRESH_TIMEDELTA,
+            "schedule": timedelta(minutes=WORKSTATIONS_GRACE_MINUTES),
         }
         for region in WORKSTATIONS_ACTIVE_REGIONS
     },

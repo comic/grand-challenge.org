@@ -1,13 +1,10 @@
 import json
 import uuid
 from pathlib import Path
-from unittest.mock import call
+from unittest.mock import call, patch
 
-import botocore
 import pytest
-from botocore.stub import Stubber
 from celery.exceptions import MaxRetriesExceededError
-from django.core.cache import cache
 from django.core.files.base import ContentFile
 from requests import put
 
@@ -561,13 +558,15 @@ def test_assign_tarball_from_upload(
 
 @pytest.mark.django_db
 def test_preload_interactive_algorithms(settings):
+    arn = f"arn:aws:lambda:eu-central-1:1234567890:function:org-proj-e-uls23-baseline-{uuid.uuid4()}"
+
     settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS = {
         "io_bucket_name": "org-proj-e-some-bucket",
         "region_name": "eu-central-1",
         "lambda_functions": [
             {
                 # Add a uuid to avoid cache key clashes in testing
-                "arn": f"arn:aws:lambda:eu-central-1:1234567890:function:org-proj-e-uls23-baseline-{uuid.uuid4()}",
+                "arn": arn,
                 "internal_name": "uls23-baseline",
                 "minimum_duration": 1,
                 "timeout": 60,
@@ -575,11 +574,6 @@ def test_preload_interactive_algorithms(settings):
             }
         ],
     }
-    cache_key = f"interactive_algorithms.lambda_functions.preloaded.{settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS['lambda_functions'][0]['arn']}:1"
-
-    client = botocore.session.get_session().create_client(
-        "lambda", region_name="eu-central-1"
-    )
 
     reader_study = ReaderStudyFactory()
     QuestionFactory(
@@ -596,45 +590,40 @@ def test_preload_interactive_algorithms(settings):
     session.status = session.STOPPED
     session.save()
 
-    with Stubber(client) as stubber:
-        # Nothing should be done as no reader studies are active
-        # in this region
-        assert preload_interactive_algorithms(client=client) == []
-        stubber.assert_no_pending_responses()
+    with patch(
+        "grandchallenge.components.tasks.InteractiveAlgorithm"
+    ) as mock_interactive_algorithm:
+        mock_instance = mock_interactive_algorithm.return_value
+        mock_instance.consolidate.return_value = "mocked_consolidation_result"
 
-    assert cache.get(cache_key) is None
+        assert preload_interactive_algorithms() == {
+            "uls23-baseline": "mocked_consolidation_result"
+        }
+
+        mock_interactive_algorithm.assert_any_call(
+            arn=arn,
+            qualifier="1",
+            # Nothing should be done as no reader studies are active in this region
+            should_be_active=False,
+        )
+
+        assert mock_instance.consolidate.call_count == 1
 
     session.status = session.QUEUED
     session.save()
 
-    with Stubber(client) as stubber:
-        stubber.add_response(
-            method="invoke",
-            expected_params={
-                "FunctionName": settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS[
-                    "lambda_functions"
-                ][
-                    0
-                ][
-                    "arn"
-                ],
-                "InvocationType": "Event",
-                "Payload": "{}",
-                "Qualifier": "1",
-            },
-            service_response={
-                "StatusCode": 202,
-                "Payload": "",
-            },
+    with patch(
+        "grandchallenge.components.tasks.InteractiveAlgorithm"
+    ) as mock_interactive_algorithm:
+        mock_instance = mock_interactive_algorithm.return_value
+        mock_instance.consolidate.return_value = "mocked_consolidation_result"
+
+        assert preload_interactive_algorithms() == {
+            "uls23-baseline": "mocked_consolidation_result"
+        }
+
+        mock_interactive_algorithm.assert_any_call(
+            arn=arn, qualifier="1", should_be_active=True
         )
 
-        assert preload_interactive_algorithms(client=client) == [
-            InteractiveAlgorithmChoices.ULS23_BASELINE
-        ]
-
-    assert cache.get(cache_key) is True
-
-    with Stubber(client) as stubber:
-        # Cache should be hit
-        assert preload_interactive_algorithms(client=client) == []
-        stubber.assert_no_pending_responses()
+        assert mock_instance.consolidate.call_count == 1

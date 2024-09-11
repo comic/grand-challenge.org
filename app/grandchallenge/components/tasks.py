@@ -17,7 +17,6 @@ from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import shared_task  # noqa: I251 TODO needs to be refactored
 from django.apps import apps
 from django.conf import settings
-from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.db import OperationalError, transaction
@@ -962,21 +961,92 @@ def stop_expired_services(*, app_label: str, model_name: str, region: str):
     return [str(s) for s in services_to_stop]
 
 
+class InteractiveAlgorithm:
+    def __init__(self, *, arn, qualifier, should_be_active):
+        self._arn = arn
+        self._qualifier = str(qualifier)
+        self._should_be_active = bool(should_be_active)
+
+        self._lambda_client = None
+
+    @property
+    def lambda_client(self):
+        if self._lambda_client is None:
+            self._lambda_client = boto3.client("lambda")
+        return self._lambda_client
+
+    def consolidate(self):
+        active_status = self.set_active_provisioned_concurrency_config()
+        deleted = self.delete_stale_provisioned_concurrency_configs()
+        return {"active_status": active_status, "deleted": deleted}
+
+    @property
+    def provisioned_concurrency_qualifiers(self):
+        provisioned_concurrency_qualifiers = set()
+
+        paginator = self.lambda_client.get_paginator(
+            "list_provisioned_concurrency_configs"
+        )
+
+        for page in paginator.paginate(FunctionName=self._arn):
+            for config in page.get("ProvisionedConcurrencyConfigs", []):
+                qualifier = config["FunctionArn"].rsplit(":", 1)[-1]
+                provisioned_concurrency_qualifiers.add(qualifier)
+
+        return provisioned_concurrency_qualifiers
+
+    def set_active_provisioned_concurrency_config(self):
+        if self._should_be_active:
+            invoked = False
+
+            try:
+                config = self.lambda_client.get_provisioned_concurrency_config(
+                    FunctionName=self._arn,
+                    Qualifier=self._qualifier,
+                )
+            except (
+                self.lambda_client.exceptions.ProvisionedConcurrencyConfigNotFoundException
+            ):
+                config = self.lambda_client.put_provisioned_concurrency_config(
+                    FunctionName=self._arn,
+                    ProvisionedConcurrentExecutions=1,
+                    Qualifier=self._qualifier,
+                )
+                self.lambda_client.invoke(
+                    FunctionName=self._arn,
+                    InvocationType="Event",
+                    Payload=json.dumps({}),
+                    Qualifier=self._qualifier,
+                )
+                invoked = True
+
+            return {
+                "qualifier": self._qualifier,
+                "status": config["Status"],
+                "invoked": invoked,
+            }
+        else:
+            return {}
+
+    def delete_stale_provisioned_concurrency_configs(self):
+        deleted = []
+
+        for qualifier in self.provisioned_concurrency_qualifiers:
+            if qualifier != self._qualifier or self._should_be_active is False:
+                self.lambda_client.delete_provisioned_concurrency_config(
+                    FunctionName=self._arn,
+                    Qualifier=qualifier,
+                )
+                deleted.append(qualifier)
+
+        return deleted
+
+
 @shared_task
 @transaction.atomic
-def preload_interactive_algorithms(*, client=None):
+def preload_interactive_algorithms():
     from grandchallenge.reader_studies.models import Question
     from grandchallenge.workstations.models import Session
-
-    region_name = settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS[
-        "region_name"
-    ]
-
-    if client is None:
-        client = boto3.client(
-            "lambda",
-            region_name=region_name,
-        )
 
     active_interactive_algorithms = (
         Question.objects.filter(
@@ -985,45 +1055,31 @@ def preload_interactive_algorithms(*, client=None):
                 Session.STARTED,
                 Session.RUNNING,
             ],
-            reader_study__workstation_sessions__region=region_name,
+            reader_study__workstation_sessions__region=settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS[
+                "region_name"
+            ],
         )
         .exclude(interactive_algorithm="")
         .values_list("interactive_algorithm", flat=True)
         .distinct()
     )
 
-    preloaded_algorithms = set()
+    consolidation_results = {}
 
-    lambda_functions = {
-        f["internal_name"]: f
-        for f in settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS[
-            "lambda_functions"
-        ]
-    }
+    for lamba_function in settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS[
+        "lambda_functions"
+    ]:
+        interactive_algorithm = InteractiveAlgorithm(
+            arn=lamba_function["arn"],
+            qualifier=lamba_function["version"],
+            should_be_active=lamba_function["internal_name"]
+            in active_interactive_algorithms,
+        )
+        consolidation_results[lamba_function["internal_name"]] = (
+            interactive_algorithm.consolidate()
+        )
 
-    for active_interactive_algorithm in active_interactive_algorithms:
-        lambda_function = lambda_functions[active_interactive_algorithm]
-
-        function_arn = lambda_function["arn"]
-        function_version = lambda_function["version"]
-        qualified_arn = f"{function_arn}:{function_version}"
-
-        cache_key = f"interactive_algorithms.lambda_functions.preloaded.{qualified_arn}"
-
-        if cache.get(cache_key) is None:
-            client.invoke(
-                FunctionName=function_arn,
-                InvocationType="Event",
-                Payload=json.dumps({}),
-                Qualifier=function_version,
-            )
-
-            cache.set(cache_key, True, timeout=120)
-
-            preloaded_algorithms.add(active_interactive_algorithm)
-
-    # Sets are not json serializable which is required by celery
-    return list(preloaded_algorithms)
+    return consolidation_results
 
 
 @acks_late_micro_short_task
