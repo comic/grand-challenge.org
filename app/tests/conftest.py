@@ -13,12 +13,21 @@ from django.contrib.sites.models import Site
 from grandchallenge.components.backends import docker_client
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.fixtures import create_uploaded_image
+from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.reader_studies.models import Question
+from tests.algorithms_tests.factories import (
+    AlgorithmFactory,
+    AlgorithmImageFactory,
+)
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
-from tests.evaluation_tests.factories import MethodFactory, PhaseFactory
+from tests.evaluation_tests.factories import (
+    EvaluationFactory,
+    MethodFactory,
+    PhaseFactory,
+)
 from tests.factories import ChallengeFactory, ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
@@ -27,6 +36,7 @@ from tests.reader_studies_tests.factories import (
     QuestionFactory,
     ReaderStudyFactory,
 )
+from tests.utils import get_view_for_user
 from tests.workstations_tests.fixtures import (
     TwoWorkstationSets,
     workstation_set,
@@ -438,3 +448,80 @@ def challenge_reviewer():
     )
     reviewers.user_set.add(user)
     return user
+
+
+class ExternalEvaluationSet(NamedTuple):
+    evaluation: EvaluationFactory
+    admin: UserFactory
+    participant: UserFactory
+    external_evaluator: UserFactory
+
+
+def generate_claimable_evaluation():
+    external_evaluator, admin, participant = UserFactory.create_batch(3)
+    challenge = ChallengeFactory(creator=admin)
+    challenge.add_admin(admin)
+    challenge.add_participant(participant)
+    challenge.external_evaluators_group.user_set.add(external_evaluator)
+
+    p1, p2 = PhaseFactory.create_batch(
+        2, challenge=challenge, submission_kind=SubmissionKindChoices.ALGORITHM
+    )
+    ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
+    for phase in [p1, p2]:
+        phase.algorithm_outputs.set([ci1])
+        phase.algorithm_inputs.set([ci2])
+    p2.external_evaluation = True
+    p2.parent = p1
+    p2.save()
+    ai = AlgorithmImageFactory(
+        algorithm=AlgorithmFactory(),
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+    ai.algorithm.inputs.set([ci1])
+    ai.algorithm.inputs.set([ci2])
+
+    eval = EvaluationFactory(
+        submission__algorithm_image=ai,
+        submission__phase=p2,
+        method=None,
+        time_limit=60,
+    )
+
+    return ExternalEvaluationSet(
+        evaluation=eval,
+        admin=admin,
+        participant=participant,
+        external_evaluator=external_evaluator,
+    )
+
+
+@pytest.fixture
+def claimable_external_evaluation():
+    return generate_claimable_evaluation()
+
+
+@pytest.fixture
+def two_claimable_external_evaluations():
+    return [generate_claimable_evaluation(), generate_claimable_evaluation()]
+
+
+@pytest.fixture
+def claimed_external_evaluation(client, claimable_external_evaluation):
+    _ = get_view_for_user(
+        viewname="api:evaluation-claim",
+        client=client,
+        method=client.patch,
+        user=claimable_external_evaluation.external_evaluator,
+        reverse_kwargs={"pk": claimable_external_evaluation.evaluation.pk},
+        content_type="application/json",
+    )
+    claimable_external_evaluation.evaluation.refresh_from_db()
+    return ExternalEvaluationSet(
+        evaluation=claimable_external_evaluation.evaluation,
+        admin=claimable_external_evaluation.admin,
+        participant=claimable_external_evaluation.participant,
+        external_evaluator=claimable_external_evaluation.external_evaluator,
+    )
