@@ -144,6 +144,9 @@
     <span class="n">THREE_POINT_ANGLE</span> <span class="o">=</span> <span class="s2">&quot;3ANG&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Three-point angle&quot;</span><span class="p">)</span>
     <span class="n">MULTIPLE_THREE_POINT_ANGLES</span> <span class="o">=</span> <span class="s2">&quot;M3AN&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Multiple three-point angles&quot;</span><span class="p">)</span>
 
+    <span class="c1"># Registration types</span>
+    <span class="n">AFFINE_TRANSFORM_REGISTRATION</span> <span class="o">=</span> <span class="s2">&quot;ATRG&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Affine transform registration&quot;</span><span class="p">)</span>
+
     <span class="c1"># Choice Types</span>
     <span class="n">CHOICE</span> <span class="o">=</span> <span class="s2">&quot;CHOI&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Choice&quot;</span><span class="p">)</span>
     <span class="n">MULTIPLE_CHOICE</span> <span class="o">=</span> <span class="s2">&quot;MCHO&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Multiple choice&quot;</span><span class="p">)</span>
@@ -153,9 +156,6 @@
     <span class="n">SEGMENTATION</span> <span class="o">=</span> <span class="s2">&quot;SEG&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Segmentation&quot;</span><span class="p">)</span>
     <span class="n">HEAT_MAP</span> <span class="o">=</span> <span class="s2">&quot;HMAP&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Heat Map&quot;</span><span class="p">)</span>
     <span class="n">DISPLACEMENT_FIELD</span> <span class="o">=</span> <span class="s2">&quot;DSPF&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Displacement field&quot;</span><span class="p">)</span>
-
-    <span class="c1"># Registration types</span>
-    <span class="n">AFFINE_TRANSFORM_REGISTRATION</span> <span class="o">=</span> <span class="s2">&quot;ATRG&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Affine transform registration&quot;</span><span class="p">)</span>
 
     <span class="c1"># File types</span>
     <span class="n">PDF</span> <span class="o">=</span> <span class="s2">&quot;PDF&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;PDF file&quot;</span><span class="p">)</span>
@@ -183,7 +183,7 @@
 <div class="viewcode-block" id="InterfaceKind">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind">[docs]</a>
 <span class="k">class</span> <span class="nc">InterfaceKind</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Interface kind.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Interface kind choices.&quot;&quot;&quot;</span>
 
     <span class="n">InterfaceKindChoices</span> <span class="o">=</span> <span class="n">InterfaceKindChoices</span>
 
@@ -198,6 +198,7 @@
 <span class="sd">        * Float</span>
 <span class="sd">        * Bool</span>
 <span class="sd">        * Anything that is JSON serializable (any object)</span>
+<span class="sd">        * Chart</span>
 <span class="sd">        * 2D bounding box</span>
 <span class="sd">        * Multiple 2D bounding boxes</span>
 <span class="sd">        * Distance measurement</span>
@@ -210,530 +211,34 @@
 <span class="sd">        * Multiple lines</span>
 <span class="sd">        * Angle</span>
 <span class="sd">        * Multiple angles</span>
-<span class="sd">        * Choice (string)</span>
-<span class="sd">        * Multiple choice (array of strings)</span>
-<span class="sd">        * Chart</span>
 <span class="sd">        * Ellipse</span>
 <span class="sd">        * Multiple ellipses</span>
 <span class="sd">        * Affine transform registration</span>
+<span class="sd">        * Choice (string)</span>
+<span class="sd">        * Multiple choice (array of strings)</span>
 
-<span class="sd">        Example json for 2D bounding box annotation</span>
-<span class="sd">            required: &quot;type&quot;, &quot;corners&quot;, &quot;version&quot;</span>
-<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
+<span class="sd">        .. exec_code::</span>
+<span class="sd">            :hide_code:</span>
 
-<span class="sd">        .. code-block:: json</span>
+<span class="sd">            import json</span>
+<span class="sd">            import os</span>
 
-<span class="sd">            {</span>
-<span class="sd">                &quot;name&quot;: &quot;Region of interest&quot;,</span>
-<span class="sd">                &quot;type&quot;: &quot;2D bounding box&quot;,</span>
-<span class="sd">                &quot;corners&quot;: [</span>
-<span class="sd">                    [ 130.80001831054688, 148.86666870117188, 0.5009999871253967],</span>
-<span class="sd">                    [ 69.73332977294922, 148.86666870117188, 0.5009999871253967],</span>
-<span class="sd">                    [ 69.73332977294922, 73.13333129882812, 0.5009999871253967],</span>
-<span class="sd">                    [ 130.80001831054688, 73.13333129882812, 0.5009999871253967]</span>
-<span class="sd">                ],</span>
-<span class="sd">                &quot;probability&quot;: 0.95,</span>
-<span class="sd">                &quot;version&quot;: { &quot;major&quot;: 1, &quot;minor&quot;: 0 }</span>
-<span class="sd">            }</span>
+<span class="sd">            import django</span>
 
-<span class="sd">        Example json for Multiple 2D bounding boxes annotation</span>
-<span class="sd">            required: &quot;type&quot;, &quot;boxes&quot;, &quot;version&quot;</span>
-<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
+<span class="sd">            os.environ.setdefault(&#39;DJANGO_SETTINGS_MODULE&#39;, &#39;config.settings&#39;)</span>
+<span class="sd">            django.setup()</span>
 
-<span class="sd">        .. code-block:: json</span>
+<span class="sd">            from grandchallenge.components.models import INTERFACE_TYPE_JSON_EXAMPLES</span>
 
-<span class="sd">            {</span>
-<span class="sd">                &quot;name&quot;: &quot;Regions of interest&quot;,</span>
-<span class="sd">                &quot;type&quot;: &quot;Multiple 2D bounding boxes&quot;,</span>
-<span class="sd">                &quot;boxes&quot;: [</span>
-<span class="sd">                    {</span>
-<span class="sd">                        &quot;name&quot;: &quot;ROI 1&quot;,</span>
-<span class="sd">                        &quot;corners&quot;: [</span>
-<span class="sd">                            [ 92.66666412353516, 136.06668090820312, 0.5009999871253967],</span>
-<span class="sd">                            [ 54.79999923706055, 136.06668090820312, 0.5009999871253967],</span>
-<span class="sd">                            [ 54.79999923706055, 95.53333282470703, 0.5009999871253967],</span>
-<span class="sd">                            [ 92.66666412353516, 95.53333282470703, 0.5009999871253967]</span>
-<span class="sd">                        ],</span>
-<span class="sd">                        &quot;probability&quot;: 0.95</span>
-<span class="sd">                    },</span>
-<span class="sd">                    {</span>
-<span class="sd">                        &quot;name&quot;: &quot;ROI 2&quot;,</span>
-<span class="sd">                        &quot;corners&quot;: [</span>
-<span class="sd">                            [ 92.66666412353516, 136.06668090820312, 0.5009999871253967],</span>
-<span class="sd">                            [ 54.79999923706055, 136.06668090820312, 0.5009999871253967],</span>
-<span class="sd">                            [ 54.79999923706055, 95.53333282470703, 0.5009999871253967],</span>
-<span class="sd">                            [ 92.66666412353516, 95.53333282470703, 0.5009999871253967]</span>
-<span class="sd">                        ],</span>
-<span class="sd">                        &quot;probability&quot;: 0.92</span>
-<span class="sd">                    }</span>
-<span class="sd">                ],</span>
-<span class="sd">                &quot;version&quot;: { &quot;major&quot;: 1, &quot;minor&quot;: 0 }</span>
-<span class="sd">            }</span>
+<span class="sd">            for key, example in INTERFACE_TYPE_JSON_EXAMPLES.items():</span>
+<span class="sd">                title = f&quot;Example JSON file contents for {key.label}&quot;</span>
 
-<span class="sd">        Example json for Distance measurement annotation</span>
-<span class="sd">            required: &quot;type&quot;, &quot;start&quot;, &quot;end&quot;, &quot;version&quot;</span>
-<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
+<span class="sd">                if example.extra_info:</span>
+<span class="sd">                    title += f&quot; ({example.extra_info})&quot;</span>
 
-<span class="sd">        .. code-block:: json</span>
-
-<span class="sd">            {</span>
-<span class="sd">                &quot;name&quot;: &quot;Distance between areas&quot;,</span>
-<span class="sd">                &quot;type&quot;: &quot;Distance measurement&quot;,</span>
-<span class="sd">                &quot;start&quot;: [ 59.79176712036133, 78.76753997802734, 0.5009999871253967 ],</span>
-<span class="sd">                &quot;end&quot;: [ 69.38014221191406, 143.75546264648438, 0.5009999871253967 ],</span>
-<span class="sd">                &quot;probability&quot;: 0.92,</span>
-<span class="sd">                &quot;version&quot;: { &quot;major&quot;: 1, &quot;minor&quot;: 0 }</span>
-<span class="sd">            }</span>
-
-<span class="sd">        Example json for Multiple distance measurement annotation</span>
-<span class="sd">            required: &quot;type&quot;, &quot;lines&quot;, &quot;version&quot;</span>
-<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
-
-<span class="sd">        .. code-block:: json</span>
-
-<span class="sd">            {</span>
-<span class="sd">                &quot;name&quot;: &quot;Distances between areas&quot;,</span>
-<span class="sd">                &quot;type&quot;: &quot;Multiple distance measurements&quot;,</span>
-<span class="sd">                &quot;lines&quot;: [</span>
-<span class="sd">                    {</span>
-<span class="sd">                        &quot;name&quot;: &quot;Distance 1&quot;,</span>
-<span class="sd">                        &quot;start&quot;: [ 49.733333587646484, 103.26667022705078, 0.5009999871253967 ],</span>
-<span class="sd">                        &quot;end&quot;: [ 55.06666564941406, 139.26666259765625, 0.5009999871253967 ],</span>
-<span class="sd">                        &quot;probability&quot;: 0.92</span>
-<span class="sd">                    },</span>
-<span class="sd">                    {</span>
-<span class="sd">                        &quot;name&quot;: &quot;Distance 2&quot;,</span>
-<span class="sd">                        &quot;start&quot;: [ 49.733333587646484, 103.26667022705078, 0.5009999871253967 ],</span>
-<span class="sd">                        &quot;end&quot;: [ 55.06666564941406, 139.26666259765625, 0.5009999871253967 ],</span>
-<span class="sd">                        &quot;probability&quot;: 0.92</span>
-<span class="sd">                    }</span>
-<span class="sd">                ],</span>
-<span class="sd">                &quot;version&quot;: { &quot;major&quot;: 1, &quot;minor&quot;: 0 }</span>
-<span class="sd">            }</span>
-
-<span class="sd">        Example json for Point annotation</span>
-<span class="sd">            required: &quot;type&quot;, &quot;point&quot;, &quot;version&quot;</span>
-<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
-
-<span class="sd">        .. code-block:: json</span>
-
-<span class="sd">            {</span>
-<span class="sd">                &quot;name&quot;: &quot;Point of interest&quot;,</span>
-<span class="sd">                &quot;type&quot;: &quot;Point&quot;,</span>
-<span class="sd">                &quot;point&quot;: [ 152.13333129882812, 111.0, 0.5009999871253967 ],</span>
-<span class="sd">                &quot;probability&quot;: 0.92,</span>
-<span class="sd">                &quot;version&quot;: { &quot;major&quot;: 1, &quot;minor&quot;: 0 }</span>
-<span class="sd">            }</span>
-
-<span class="sd">        Example json for Multiple points annotation</span>
-<span class="sd">            required: &quot;type&quot;, &quot;points&quot;, &quot;version&quot;</span>
-<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
-
-<span class="sd">        .. code-block:: json</span>
-
-<span class="sd">            {</span>
-<span class="sd">                &quot;name&quot;: &quot;Points of interest&quot;,</span>
-<span class="sd">                &quot;type&quot;: &quot;Multiple points&quot;,</span>
-<span class="sd">                &quot;points&quot;: [</span>
-<span class="sd">                    {</span>
-<span class="sd">                        &quot;name&quot;: &quot;Point 1&quot;,</span>
-<span class="sd">                        &quot;point&quot;: [</span>
-<span class="sd">                            96.0145263671875, 79.83292388916016, 0.5009999871253967</span>
-<span class="sd">                        ],</span>
-<span class="sd">                        &quot;probability&quot;: 0.92</span>
-<span class="sd">                    },</span>
-<span class="sd">                    {</span>
-<span class="sd">                        &quot;name&quot;: &quot;Point 2&quot;,</span>
-<span class="sd">                        &quot;point&quot;: [</span>
-<span class="sd">                            130.10653686523438, 115.52300262451172, 0.5009999871253967</span>
-<span class="sd">                        ],</span>
-<span class="sd">                        &quot;probability&quot;: 0.92</span>
-<span class="sd">                    }</span>
-<span class="sd">                ],</span>
-<span class="sd">                &quot;version&quot;: { &quot;major&quot;: 1, &quot;minor&quot;: 0 }</span>
-<span class="sd">            }</span>
-
-<span class="sd">        Example json for Polygon annotation</span>
-<span class="sd">            required: &quot;type&quot;, &quot;seed_point&quot;, &quot;path_points&quot;, &quot;sub_type&quot;, &quot;groups&quot;, &quot;version&quot;</span>
-<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
-
-<span class="sd">        .. code-block:: json</span>
-
-<span class="sd">            {</span>
-<span class="sd">                &quot;name&quot;: &quot;Area of interest&quot;,</span>
-<span class="sd">                &quot;type&quot;: &quot;Polygon&quot;,</span>
-<span class="sd">                &quot;seed_point&quot;: [ 76.413756408691, 124.014717102050, 0.5009999871253967 ],</span>
-<span class="sd">                &quot;path_points&quot;: [</span>
-<span class="sd">                    [ 76.41375842260106, 124.01471710205078, 0.5009999871253967 ],</span>
-<span class="sd">                    [ 76.41694876387268, 124.0511828696491, 0.5009999871253967 ],</span>
-<span class="sd">                    [ 76.42642285078242, 124.0865406433515, 0.5009999871253967 ]</span>
-<span class="sd">                ],</span>
-<span class="sd">                &quot;sub_type&quot;: &quot;brush&quot;,</span>
-<span class="sd">                &quot;groups&quot;: [],</span>
-<span class="sd">                &quot;probability&quot;: 0.92,</span>
-<span class="sd">                &quot;version&quot;: { &quot;major&quot;: 1, &quot;minor&quot;: 0 }</span>
-<span class="sd">            }</span>
-
-<span class="sd">        Example json for Multiple polygon annotation</span>
-<span class="sd">            required: &quot;type&quot;, &quot;polygons&quot;, &quot;version&quot;</span>
-<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
-
-<span class="sd">        .. code-block:: json</span>
-
-<span class="sd">            {</span>
-<span class="sd">                &quot;name&quot;: &quot;Areas of interest&quot;,</span>
-<span class="sd">                &quot;type&quot;: &quot;Multiple polygons&quot;,</span>
-<span class="sd">                &quot;polygons&quot;: [</span>
-<span class="sd">                    {</span>
-<span class="sd">                        &quot;name&quot;: &quot;Area 1&quot;,</span>
-<span class="sd">                        &quot;seed_point&quot;: [ 55.82666793823242, 90.46666717529297, 0.5009999871253967 ],</span>
-<span class="sd">                        &quot;path_points&quot;: [</span>
-<span class="sd">                            [ 55.82667599387105, 90.46666717529297, 0.5009999871253967 ],</span>
-<span class="sd">                            [ 55.93921357544119, 90.88666314747366, 0.5009999871253967 ],</span>
-<span class="sd">                            [ 56.246671966051736, 91.1941215380842, 0.5009999871253967 ],</span>
-<span class="sd">                            [ 56.66666793823242, 91.30665911965434, 0.5009999871253967 ]</span>
-<span class="sd">                        ],</span>
-<span class="sd">                        &quot;sub_type&quot;: &quot;brush&quot;,</span>
-<span class="sd">                        &quot;groups&quot;: [ &quot;manual&quot;],</span>
-<span class="sd">                        &quot;probability&quot;: 0.67</span>
-<span class="sd">                    },</span>
-<span class="sd">                    {</span>
-<span class="sd">                        &quot;name&quot;: &quot;Area 2&quot;,</span>
-<span class="sd">                        &quot;seed_point&quot;: [ 90.22666564941406, 96.06666564941406, 0.5009999871253967 ],</span>
-<span class="sd">                        &quot;path_points&quot;: [</span>
-<span class="sd">                            [ 90.22667370505269, 96.06666564941406, 0.5009999871253967 ],</span>
-<span class="sd">                            [ 90.33921128662283, 96.48666162159475, 0.5009999871253967 ],</span>
-<span class="sd">                            [ 90.64666967723338, 96.7941200122053, 0.5009999871253967 ]</span>
-<span class="sd">                        ],</span>
-<span class="sd">                        &quot;sub_type&quot;: &quot;brush&quot;,</span>
-<span class="sd">                        &quot;groups&quot;: [],</span>
-<span class="sd">                        &quot;probability&quot;: 0.92</span>
-<span class="sd">                    }</span>
-<span class="sd">                ],</span>
-<span class="sd">                &quot;version&quot;: { &quot;major&quot;: 1, &quot;minor&quot;: 0 }</span>
-<span class="sd">            }</span>
-
-<span class="sd">        Example json for Line annotation</span>
-<span class="sd">            required: &quot;type&quot;, &quot;seed_points&quot;, &quot;path_point_lists&quot;, &quot;version&quot;</span>
-<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
-
-<span class="sd">        .. code-block:: json</span>
-
-<span class="sd">            {</span>
-<span class="sd">                &quot;name&quot;: &quot;Some annotation&quot;,</span>
-<span class="sd">                &quot;type&quot;: &quot;Line&quot;,</span>
-<span class="sd">                &quot;seed_points&quot;: [[1, 2, 3], [1, 2, 3]],</span>
-<span class="sd">                &quot;path_point_lists&quot;: [</span>
-<span class="sd">                    [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],</span>
-<span class="sd">                    [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]]</span>
-<span class="sd">                ],</span>
-<span class="sd">                &quot;probability&quot;: 0.92</span>
-<span class="sd">                &quot;version&quot;: { &quot;major&quot;: 1, &quot;minor&quot;: 0 }</span>
-<span class="sd">            }</span>
-
-<span class="sd">        Example json for Multiple lines annotation</span>
-<span class="sd">            required: &quot;type&quot;, &quot;lines&quot;, &quot;version&quot;</span>
-<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
-
-<span class="sd">        .. code-block:: json</span>
-
-<span class="sd">            {</span>
-<span class="sd">                &quot;name&quot;: &quot;Some annotations&quot;,</span>
-<span class="sd">                &quot;type&quot;: &quot;Multiple lines&quot;,</span>
-<span class="sd">                &quot;lines&quot;: [</span>
-<span class="sd">                    {</span>
-<span class="sd">                        &quot;name&quot;: &quot;Annotation 1&quot;,</span>
-<span class="sd">                        &quot;seed_points&quot;: [[1, 2, 3], [1, 2, 3]],</span>
-<span class="sd">                        &quot;path_point_lists&quot;: [</span>
-<span class="sd">                            [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],</span>
-<span class="sd">                            [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],</span>
-<span class="sd">                        ],</span>
-<span class="sd">                        &quot;probability&quot;: 0.78</span>
-<span class="sd">                    },</span>
-<span class="sd">                    {</span>
-<span class="sd">                        &quot;name&quot;: &quot;Annotation 2&quot;,</span>
-<span class="sd">                        &quot;seed_points&quot;: [[1, 2, 3], [1, 2, 3]],</span>
-<span class="sd">                        &quot;path_point_lists&quot;: [</span>
-<span class="sd">                            [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],</span>
-<span class="sd">                            [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],</span>
-<span class="sd">                        ],</span>
-<span class="sd">                        &quot;probability&quot;: 0.92</span>
-<span class="sd">                    }</span>
-<span class="sd">                ],</span>
-<span class="sd">                &quot;version&quot;: { &quot;major&quot;: 1, &quot;minor&quot;: 0 }</span>
-<span class="sd">            }</span>
-
-<span class="sd">        Example json for Angle annotation</span>
-<span class="sd">            required: &quot;type&quot;, &quot;lines&quot;, &quot;version&quot;</span>
-<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
-
-<span class="sd">        .. code-block:: json</span>
-
-<span class="sd">            {</span>
-<span class="sd">                &quot;name&quot;: &quot;Some angle&quot;,</span>
-<span class="sd">                &quot;type&quot;: &quot;Angle&quot;,</span>
-<span class="sd">                &quot;lines&quot;: [[[180, 10, 0.5], [190, 10, 0.5]],[[180, 25, 0.5], [190, 15, 0.5]]],</span>
-<span class="sd">                &quot;probability&quot;: 0.92,</span>
-<span class="sd">                &quot;version&quot;: {&quot;major&quot;: 1, &quot;minor&quot;: 0}</span>
-<span class="sd">            }</span>
-
-<span class="sd">        Example json for Multiple angles annotation</span>
-<span class="sd">            required: &quot;type&quot;, &quot;angles&quot;, &quot;version&quot;</span>
-<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
-
-<span class="sd">        .. code-block:: json</span>
-
-<span class="sd">            {</span>
-<span class="sd">                &quot;name&quot;: &quot;Some angles&quot;,</span>
-<span class="sd">                &quot;type&quot;: &quot;Multiple angles&quot;,</span>
-<span class="sd">                &quot;angles&quot;: [</span>
-<span class="sd">                    {</span>
-<span class="sd">                        &quot;name&quot;: &quot;First angle&quot;,</span>
-<span class="sd">                        &quot;lines&quot;: [[[110, 135, 0.5], [60, 165, 0.5]],[[70, 25, 0.5], [85, 65, 0.5]]],</span>
-<span class="sd">                        &quot;probability&quot;: 0.82</span>
-<span class="sd">                    },</span>
-<span class="sd">                    {</span>
-<span class="sd">                        &quot;name&quot;: &quot;Second angle&quot;,</span>
-<span class="sd">                        &quot;lines&quot;: [[[130, 210, 0.5], [160, 130, 0.5]], [[140, 40, 0.5], [180, 75, 0.5]]],</span>
-<span class="sd">                        &quot;probability&quot;: 0.52</span>
-<span class="sd">                    },</span>
-<span class="sd">                    {</span>
-<span class="sd">                        &quot;name&quot;: &quot;Third angle&quot;,</span>
-<span class="sd">                        &quot;lines&quot;: [[[20, 30, 0.5], [20, 100, 0.5]], [[180, 200, 0.5], [210, 200, 0.5]]],</span>
-<span class="sd">                        &quot;probability&quot;: 0.98</span>
-<span class="sd">                    }</span>
-<span class="sd">                ],</span>
-<span class="sd">                &quot;version&quot;: {&quot;major&quot;: 1, &quot;minor&quot;: 0}</span>
-<span class="sd">            }</span>
-
-<span class="sd">        Example json for Ellipse annotation</span>
-<span class="sd">            required: &quot;type&quot;, &quot;major_axis&quot;, &quot;minor_axis&quot;, &quot;version&quot;</span>
-<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
-
-<span class="sd">        .. code-block:: json</span>
-
-<span class="sd">            {</span>
-<span class="sd">                &quot;name&quot;: &quot;Some ellipse&quot;,</span>
-<span class="sd">                &quot;type&quot;: &quot;Ellipse&quot;,</span>
-<span class="sd">                &quot;major_axis&quot;: [[-10, 606, 0.5], [39, 559, 0.5]],</span>
-<span class="sd">                &quot;minor_axis&quot;: [[2, 570, 0.5], [26, 595, 0.5]],</span>
-<span class="sd">                &quot;probability&quot;: 0.92,</span>
-<span class="sd">                &quot;version&quot;: {&quot;major&quot;: 1, &quot;minor&quot;: 0}</span>
-<span class="sd">            }</span>
-
-<span class="sd">        Example json for Multiple ellipse annotation</span>
-<span class="sd">            required: &quot;type&quot;, &quot;ellipses&quot;, &quot;version&quot;</span>
-<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
-
-<span class="sd">        .. code-block:: json</span>
-
-<span class="sd">            {</span>
-<span class="sd">                &quot;name&quot;: &quot;Some ellipse&quot;,</span>
-<span class="sd">                &quot;type&quot;: &quot;Multiple ellipses&quot;,</span>
-<span class="sd">                &quot;ellipses&quot;: [</span>
-<span class="sd">                    {</span>
-<span class="sd">                        &quot;major_axis&quot;: [[-44, 535, 0.5], [-112, 494, 0.5]],</span>
-<span class="sd">                        &quot;minor_axis&quot;: [[-88, 532, 0.5], [-68, 497, 0.5]],</span>
-<span class="sd">                        &quot;probability&quot;: 0.69</span>
-<span class="sd">                    },</span>
-<span class="sd">                    {</span>
-<span class="sd">                        &quot;major_axis&quot;: [[-17, 459, 0.5], [-94, 436, 0.5]],</span>
-<span class="sd">                        &quot;minor_axis&quot;: [[-61, 467, 0.5], [-50, 428, 0.5]],</span>
-<span class="sd">                        &quot;probability&quot;: 0.92</span>
-<span class="sd">                    }</span>
-<span class="sd">                ],</span>
-<span class="sd">                &quot;version&quot;: {&quot;major&quot;: 1, &quot;minor&quot;: 0}</span>
-<span class="sd">            }</span>
-
-<span class="sd">        Example json for Three-point angle annotation</span>
-<span class="sd">            required: &quot;type&quot;, &quot;angle&quot;, &quot;version&quot;</span>
-<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
-
-<span class="sd">        .. code-block:: json</span>
-
-<span class="sd">            {</span>
-<span class="sd">                &quot;name&quot;: &quot;Some 3-point angle&quot;,</span>
-<span class="sd">                &quot;type&quot;: &quot;Three-point angle&quot;,</span>
-<span class="sd">                &quot;angle&quot;: [[177, 493, 0.5], [22, 489, 0.5], [112, 353, 0.5]],</span>
-<span class="sd">                &quot;probability&quot;: 0.003,</span>
-<span class="sd">                &quot;version&quot;: {&quot;major&quot;: 1, &quot;minor&quot;: 0}</span>
-<span class="sd">            }</span>
-
-<span class="sd">        Example json for Three-point angle annotation</span>
-<span class="sd">            required: &quot;type&quot;, &quot;angles&quot;, &quot;version&quot;</span>
-<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
-
-<span class="sd">        .. code-block:: json</span>
-
-<span class="sd">            {</span>
-<span class="sd">                &quot;name&quot;: &quot;Multiple 3-point angles&quot;,</span>
-<span class="sd">                &quot;type&quot;: &quot;Multiple three-point angles&quot;,</span>
-<span class="sd">                &quot;angles&quot;: [</span>
-<span class="sd">                    {</span>
-<span class="sd">                        &quot;name&quot;: &quot;first&quot;,</span>
-<span class="sd">                        &quot;angle&quot;: [[300, 237, 0.5], [263, 282, 0.5], [334, 281, 0.5]],</span>
-<span class="sd">                        &quot;probability&quot;: 0.92</span>
-<span class="sd">                    },</span>
-<span class="sd">                    {</span>
-<span class="sd">                        &quot;name&quot;: &quot;second&quot;,</span>
-<span class="sd">                        &quot;angle&quot;: [[413, 237, 0.5], [35, 160, 0.5], [367, 293, 0.5]],</span>
-<span class="sd">                        &quot;probability&quot;: 0.69</span>
-<span class="sd">                    }</span>
-<span class="sd">                ],</span>
-<span class="sd">                &quot;version&quot;: {&quot;major&quot;: 1, &quot;minor&quot;: 0}</span>
-<span class="sd">            }</span>
-
-<span class="sd">        Example json for Chart (for more examples, see `here&lt;https://vega.github.io/vega-lite/examples/&gt;` and `here&lt;https://grand-challenge.org/blogs/visualisations-for-challenges/&gt;`)</span>
-
-<span class="sd">        .. code-block:: json</span>
-
-<span class="sd">            {</span>
-<span class="sd">               &quot;$schema&quot;: &quot;https://vega.github.io/schema/vega-lite/v5.json&quot;,</span>
-<span class="sd">               &quot;width&quot;: 300,</span>
-<span class="sd">               &quot;height&quot;: 300,</span>
-<span class="sd">               &quot;data&quot;: {</span>
-<span class="sd">                  &quot;values&quot;: [</span>
-<span class="sd">                     {</span>
-<span class="sd">                        &quot;target&quot;: &quot;Negative&quot;,</span>
-<span class="sd">                        &quot;prediction&quot;: &quot;Negative&quot;,</span>
-<span class="sd">                        &quot;value&quot;: 198</span>
-<span class="sd">                     },</span>
-<span class="sd">                     {</span>
-<span class="sd">                        &quot;target&quot;: &quot;Negative&quot;,</span>
-<span class="sd">                        &quot;prediction&quot;: &quot;Positive&quot;,</span>
-<span class="sd">                        &quot;value&quot;: 9</span>
-<span class="sd">                     },</span>
-<span class="sd">                     {</span>
-<span class="sd">                        &quot;target&quot;: &quot;Positive&quot;,</span>
-<span class="sd">                        &quot;prediction&quot;: &quot;Negative&quot;,</span>
-<span class="sd">                        &quot;value&quot;: 159</span>
-<span class="sd">                     },</span>
-<span class="sd">                     {</span>
-<span class="sd">                        &quot;target&quot;: &quot;Positive&quot;,</span>
-<span class="sd">                        &quot;prediction&quot;: &quot;Positive&quot;,</span>
-<span class="sd">                        &quot;value&quot;: 376</span>
-<span class="sd">                     }</span>
-<span class="sd">                  ],</span>
-<span class="sd">                  &quot;format&quot;: {</span>
-<span class="sd">                     &quot;type&quot;: &quot;json&quot;</span>
-<span class="sd">                  }</span>
-<span class="sd">               },</span>
-<span class="sd">               &quot;layer&quot;: [</span>
-<span class="sd">                  {</span>
-<span class="sd">                     &quot;mark&quot;: &quot;rect&quot;,</span>
-<span class="sd">                     &quot;encoding&quot;: {</span>
-<span class="sd">                        &quot;y&quot;: {</span>
-<span class="sd">                           &quot;field&quot;: &quot;target&quot;,</span>
-<span class="sd">                           &quot;type&quot;: &quot;ordinal&quot;</span>
-<span class="sd">                        },</span>
-<span class="sd">                        &quot;x&quot;: {</span>
-<span class="sd">                           &quot;field&quot;: &quot;prediction&quot;,</span>
-<span class="sd">                           &quot;type&quot;: &quot;ordinal&quot;</span>
-<span class="sd">                        },</span>
-<span class="sd">                        &quot;color&quot;: {</span>
-<span class="sd">                           &quot;field&quot;: &quot;value&quot;,</span>
-<span class="sd">                           &quot;type&quot;: &quot;quantitative&quot;,</span>
-<span class="sd">                           &quot;title&quot;: &quot;Count of Records&quot;,</span>
-<span class="sd">                           &quot;legend&quot;: {</span>
-<span class="sd">                              &quot;direction&quot;: &quot;vertical&quot;,</span>
-<span class="sd">                              &quot;gradientLength&quot;: 300</span>
-<span class="sd">                           }</span>
-<span class="sd">                        }</span>
-<span class="sd">                     }</span>
-<span class="sd">                  },</span>
-<span class="sd">                  {</span>
-<span class="sd">                     &quot;mark&quot;: &quot;text&quot;,</span>
-<span class="sd">                     &quot;encoding&quot;: {</span>
-<span class="sd">                        &quot;y&quot;: {</span>
-<span class="sd">                           &quot;field&quot;: &quot;target&quot;,</span>
-<span class="sd">                           &quot;type&quot;: &quot;ordinal&quot;</span>
-<span class="sd">                        },</span>
-<span class="sd">                        &quot;x&quot;: {</span>
-<span class="sd">                           &quot;field&quot;: &quot;prediction&quot;,</span>
-<span class="sd">                           &quot;type&quot;: &quot;ordinal&quot;</span>
-<span class="sd">                        },</span>
-<span class="sd">                        &quot;text&quot;: {</span>
-<span class="sd">                           &quot;field&quot;: &quot;value&quot;,</span>
-<span class="sd">                           &quot;type&quot;: &quot;quantitative&quot;</span>
-<span class="sd">                        },</span>
-<span class="sd">                        &quot;color&quot;: {</span>
-<span class="sd">                           &quot;condition&quot;: {</span>
-<span class="sd">                              &quot;test&quot;: &quot;datum[&#39;value&#39;] &lt; 40&quot;,</span>
-<span class="sd">                              &quot;value&quot;: &quot;black&quot;</span>
-<span class="sd">                           },</span>
-<span class="sd">                           &quot;value&quot;: &quot;white&quot;</span>
-<span class="sd">                        }</span>
-<span class="sd">                     }</span>
-<span class="sd">                  }</span>
-<span class="sd">               ],</span>
-<span class="sd">               &quot;config&quot;: {</span>
-<span class="sd">                  &quot;axis&quot;: {</span>
-<span class="sd">                     &quot;grid&quot;: true,</span>
-<span class="sd">                     &quot;tickBand&quot;: &quot;extent&quot;</span>
-<span class="sd">                  }</span>
-<span class="sd">               }</span>
-<span class="sd">            }</span>
-
-<span class="sd">        Example json for Ellipse annotation</span>
-<span class="sd">            required: &quot;type&quot;, &quot;major_axis, &quot;minor_axis&quot; &quot;version&quot;</span>
-<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
-
-<span class="sd">        .. code-block:: json</span>
-
-<span class="sd">            {</span>
-<span class="sd">                &quot;name&quot;: &quot;an Ellipse&quot;,</span>
-<span class="sd">                &quot;type&quot;: &quot;Ellipse&quot;,</span>
-<span class="sd">                &quot;major_axis&quot;: [[ 130, 148.86, 0.50], [10, 10, 0]],</span>
-<span class="sd">                &quot;minor_axis&quot;: [[ 69.73, 148.86, 0.50], [10, 0, 0]],</span>
-<span class="sd">                &quot;probability&quot;: 0.95,</span>
-<span class="sd">                &quot;version&quot;: { &quot;major&quot;: 1, &quot;minor&quot;: 0 }</span>
-<span class="sd">            }</span>
-
-<span class="sd">        Example json for Multiple ellipses annotation</span>
-<span class="sd">            required: &quot;type&quot;, &quot;ellipses&quot;, &quot;version&quot;</span>
-<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
-
-<span class="sd">        .. code-block:: json</span>
-
-<span class="sd">            {</span>
-<span class="sd">                &quot;name&quot;: &quot;Some Ellipses&quot;,</span>
-<span class="sd">                &quot;type&quot;: &quot;Multiple ellipses&quot;,</span>
-<span class="sd">                &quot;ellipses&quot;: [</span>
-<span class="sd">                    {</span>
-<span class="sd">                        &quot;name&quot;: &quot;First Ellipse&quot;,</span>
-<span class="sd">                        &quot;major axis&quot;: [[10, 10, 0.5], [10, 20, 0]],</span>
-<span class="sd">                        &quot;minor_axis&quot;: [[10, 20, 0.5], [10.6, 0, 0]],</span>
-<span class="sd">                        &quot;probability&quot;: 0.82</span>
-<span class="sd">                    },</span>
-<span class="sd">                    {</span>
-<span class="sd">                        &quot;name&quot;: &quot;Second Ellipse&quot;,</span>
-<span class="sd">                        &quot;major axis&quot;: [[10, 10, 0.5], [10, 20, 0]],</span>
-<span class="sd">                        &quot;minor_axis&quot;: [[10, 20, 0.5], [10.6, 0, 0]],</span>
-<span class="sd">                        &quot;probability&quot;: 0.52</span>
-<span class="sd">                    },</span>
-<span class="sd">                    {</span>
-<span class="sd">                        &quot;name&quot;: &quot;Third Ellipse&quot;,</span>
-<span class="sd">                        &quot;major axis&quot;: [[10, 10, 0.5], [10, 20, 0]],</span>
-<span class="sd">                        &quot;minor_axis&quot;: [[10, 20, 0.5], [10.6, 0, 0]],</span>
-<span class="sd">                        &quot;probability&quot;: 0.98</span>
-<span class="sd">                    }</span>
-<span class="sd">                ],</span>
-<span class="sd">                &quot;version&quot;: {&quot;major&quot;: 1, &quot;minor&quot;: 0}</span>
-<span class="sd">            }</span>
-
-<span class="sd">        Example json for an Affine Transform Registration</span>
-<span class="sd">            required: &quot;3d_affine_transform&quot;</span>
-
-<span class="sd">        .. code-block:: json</span>
-
-<span class="sd">            {</span>
-<span class="sd">                &quot;3d_affine_transform&quot;: [</span>
-<span class="sd">                    [1, 0, 0, 0],</span>
-<span class="sd">                    [0, 1, 0, 0],</span>
-<span class="sd">                    [0, 0, 1, 0],</span>
-<span class="sd">                    [0, 0, 0, 1]</span>
-<span class="sd">                ]</span>
-<span class="sd">            }</span>
+<span class="sd">                print(f&quot;{title}:&quot;)</span>
+<span class="sd">                print(json.dumps(example.value, indent=2))</span>
+<span class="sd">                print(&quot;&quot;)</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">{</span>
@@ -774,6 +279,7 @@
 <span class="sd">        * Image</span>
 <span class="sd">        * Heat Map</span>
 <span class="sd">        * Segmentation</span>
+<span class="sd">        * Displacement Field</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
@@ -1023,6 +529,13 @@
         <span class="p">]</span>
 
     <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">json_kind_example</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">example_value</span>
+        <span class="k">except</span> <span class="n">ObjectDoesNotExist</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">INTERFACE_TYPE_JSON_EXAMPLES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">super_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">saved_in_object_store</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_image_kind</span><span class="p">:</span>
@@ -1131,7 +644,8 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_overlay_segments</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_store_in_database</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_clean_relative_path</span><span class="p">()</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clean_relative_path</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clean_example_value</span><span class="p">()</span></div>
 
 
     <span class="k">def</span> <span class="nf">_clean_overlay_segments</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1216,6 +730,16 @@
                 <span class="sa">f</span><span class="s2">&quot;Interface </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="si">}</span><span class="s2"> objects cannot be stored in the database&quot;</span>
             <span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">_clean_example_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">example_value</span><span class="o">.</span><span class="n">full_clean</span><span class="p">()</span>
+        <span class="k">except</span> <span class="n">ObjectDoesNotExist</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">except</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;The example value for this interface is not valid: </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
 <div class="viewcode-block" id="ComponentInterface.validate_against_schema">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterface.validate_against_schema">[docs]</a>
     <span class="k">def</span> <span class="nf">validate_against_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
@@ -1247,6 +771,464 @@
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
         <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">,)</span></div>
 
+
+
+<div class="viewcode-block" id="ComponentInterfaceExampleValue">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterfaceExampleValue">[docs]</a>
+<span class="k">class</span> <span class="nc">ComponentInterfaceExampleValue</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
+    <span class="n">interface</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">OneToOneField</span><span class="p">(</span>
+        <span class="n">to</span><span class="o">=</span><span class="n">ComponentInterface</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;example_value&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">JSONField</span><span class="p">(</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Example value for an interface&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">extra_info</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Extra information about the example value&quot;</span>
+    <span class="p">)</span>
+
+<div class="viewcode-block" id="ComponentInterfaceExampleValue.clean">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterfaceExampleValue.clean">[docs]</a>
+    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">is_json_kind</span><span class="p">:</span>
+            <span class="n">civ</span> <span class="o">=</span> <span class="n">ComponentInterfaceValue</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">store_in_database</span><span class="p">:</span>
+                <span class="n">civ</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">file</span> <span class="o">=</span> <span class="n">ContentFile</span><span class="p">(</span>
+                    <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">),</span>
+                    <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">kind</span><span class="si">}</span><span class="s2">.json&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">civ</span><span class="o">.</span><span class="n">file</span> <span class="o">=</span> <span class="n">file</span>
+
+            <span class="n">civ</span><span class="o">.</span><span class="n">full_clean</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;Example value can be set for interfaces of JSON kind only&quot;</span>
+            <span class="p">)</span></div>
+</div>
+
+
+
+<span class="n">INTERFACE_TYPE_JSON_EXAMPLES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">STRING</span><span class="p">:</span> <span class="n">ComponentInterfaceExampleValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="s2">&quot;Example String&quot;</span>
+    <span class="p">),</span>
+    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">INTEGER</span><span class="p">:</span> <span class="n">ComponentInterfaceExampleValue</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">42</span><span class="p">),</span>
+    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">FLOAT</span><span class="p">:</span> <span class="n">ComponentInterfaceExampleValue</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mf">42.0</span><span class="p">),</span>
+    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">BOOL</span><span class="p">:</span> <span class="n">ComponentInterfaceExampleValue</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">ANY</span><span class="p">:</span> <span class="n">ComponentInterfaceExampleValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;key&quot;</span><span class="p">:</span> <span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="s2">&quot;None&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+    <span class="p">),</span>
+    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CHART</span><span class="p">:</span> <span class="n">ComponentInterfaceExampleValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;$schema&quot;</span><span class="p">:</span> <span class="s2">&quot;https://vega.github.io/schema/vega-lite/v5.json&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;width&quot;</span><span class="p">:</span> <span class="mi">300</span><span class="p">,</span>
+            <span class="s2">&quot;height&quot;</span><span class="p">:</span> <span class="mi">300</span><span class="p">,</span>
+            <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;values&quot;</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;target&quot;</span><span class="p">:</span> <span class="s2">&quot;Negative&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;prediction&quot;</span><span class="p">:</span> <span class="s2">&quot;Negative&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">198</span><span class="p">,</span>
+                    <span class="p">},</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;target&quot;</span><span class="p">:</span> <span class="s2">&quot;Negative&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;prediction&quot;</span><span class="p">:</span> <span class="s2">&quot;Positive&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">9</span><span class="p">,</span>
+                    <span class="p">},</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;target&quot;</span><span class="p">:</span> <span class="s2">&quot;Positive&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;prediction&quot;</span><span class="p">:</span> <span class="s2">&quot;Negative&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">159</span><span class="p">,</span>
+                    <span class="p">},</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;target&quot;</span><span class="p">:</span> <span class="s2">&quot;Positive&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;prediction&quot;</span><span class="p">:</span> <span class="s2">&quot;Positive&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">376</span><span class="p">,</span>
+                    <span class="p">},</span>
+                <span class="p">],</span>
+                <span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;json&quot;</span><span class="p">},</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;layer&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;mark&quot;</span><span class="p">:</span> <span class="s2">&quot;rect&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;encoding&quot;</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;field&quot;</span><span class="p">:</span> <span class="s2">&quot;target&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;ordinal&quot;</span><span class="p">},</span>
+                        <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;field&quot;</span><span class="p">:</span> <span class="s2">&quot;prediction&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;ordinal&quot;</span><span class="p">},</span>
+                        <span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="p">{</span>
+                            <span class="s2">&quot;field&quot;</span><span class="p">:</span> <span class="s2">&quot;value&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;quantitative&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Count of Records&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;legend&quot;</span><span class="p">:</span> <span class="p">{</span>
+                                <span class="s2">&quot;direction&quot;</span><span class="p">:</span> <span class="s2">&quot;vertical&quot;</span><span class="p">,</span>
+                                <span class="s2">&quot;gradientLength&quot;</span><span class="p">:</span> <span class="mi">300</span><span class="p">,</span>
+                            <span class="p">},</span>
+                        <span class="p">},</span>
+                    <span class="p">},</span>
+                <span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;mark&quot;</span><span class="p">:</span> <span class="s2">&quot;text&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;encoding&quot;</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;field&quot;</span><span class="p">:</span> <span class="s2">&quot;target&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;ordinal&quot;</span><span class="p">},</span>
+                        <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;field&quot;</span><span class="p">:</span> <span class="s2">&quot;prediction&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;ordinal&quot;</span><span class="p">},</span>
+                        <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;field&quot;</span><span class="p">:</span> <span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;quantitative&quot;</span><span class="p">},</span>
+                        <span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="p">{</span>
+                            <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="p">{</span>
+                                <span class="s2">&quot;test&quot;</span><span class="p">:</span> <span class="s2">&quot;datum[&#39;value&#39;] &lt; 40&quot;</span><span class="p">,</span>
+                                <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;black&quot;</span><span class="p">,</span>
+                            <span class="p">},</span>
+                            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;white&quot;</span><span class="p">,</span>
+                        <span class="p">},</span>
+                    <span class="p">},</span>
+                <span class="p">},</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;config&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;axis&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;grid&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;tickBand&quot;</span><span class="p">:</span> <span class="s2">&quot;extent&quot;</span><span class="p">}},</span>
+        <span class="p">},</span>
+        <span class="n">extra_info</span><span class="o">=</span><span class="s2">&quot;For more examples, see https://vega.github.io/vega-lite/examples/ and https://grand-challenge.org/blogs/visualisations-for-challenges/&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">TWO_D_BOUNDING_BOX</span><span class="p">:</span> <span class="n">ComponentInterfaceExampleValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Region of interest&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;2D bounding box&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;corners&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[</span><span class="mf">130.8</span><span class="p">,</span> <span class="mf">148.8</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                <span class="p">[</span><span class="mf">69.7</span><span class="p">,</span> <span class="mf">148.8</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                <span class="p">[</span><span class="mf">69.7</span><span class="p">,</span> <span class="mf">73.1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                <span class="p">[</span><span class="mf">130.8</span><span class="p">,</span> <span class="mf">73.1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;probability&quot;</span><span class="p">:</span> <span class="mf">0.95</span><span class="p">,</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;major&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;minor&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+        <span class="p">},</span>
+        <span class="n">extra_info</span><span class="o">=</span><span class="s1">&#39;Optional fields: &quot;name&quot; and &quot;probability&quot;&#39;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_TWO_D_BOUNDING_BOXES</span><span class="p">:</span> <span class="n">ComponentInterfaceExampleValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Regions of interest&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Multiple 2D bounding boxes&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;boxes&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;ROI 1&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;corners&quot;</span><span class="p">:</span> <span class="p">[</span>
+                        <span class="p">[</span><span class="mf">92.6</span><span class="p">,</span> <span class="mf">136.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">54.8</span><span class="p">,</span> <span class="mf">136.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">54.8</span><span class="p">,</span> <span class="mf">95.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">92.6</span><span class="p">,</span> <span class="mf">95.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                    <span class="p">],</span>
+                    <span class="s2">&quot;probability&quot;</span><span class="p">:</span> <span class="mf">0.95</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;ROI 2&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;corners&quot;</span><span class="p">:</span> <span class="p">[</span>
+                        <span class="p">[</span><span class="mf">92.6</span><span class="p">,</span> <span class="mf">136.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">54.8</span><span class="p">,</span> <span class="mf">136.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">54.8</span><span class="p">,</span> <span class="mf">95.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">92.6</span><span class="p">,</span> <span class="mf">95.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                    <span class="p">],</span>
+                    <span class="s2">&quot;probability&quot;</span><span class="p">:</span> <span class="mf">0.92</span><span class="p">,</span>
+                <span class="p">},</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;major&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;minor&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+        <span class="p">},</span>
+        <span class="n">extra_info</span><span class="o">=</span><span class="s1">&#39;Optional fields: &quot;name&quot; and &quot;probability&quot;&#39;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">DISTANCE_MEASUREMENT</span><span class="p">:</span> <span class="n">ComponentInterfaceExampleValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Distance between areas&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Distance measurement&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">59.8</span><span class="p">,</span> <span class="mf">78.8</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+            <span class="s2">&quot;end&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">69.4</span><span class="p">,</span> <span class="mf">143.8</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+            <span class="s2">&quot;probability&quot;</span><span class="p">:</span> <span class="mf">0.92</span><span class="p">,</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;major&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;minor&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+        <span class="p">},</span>
+        <span class="n">extra_info</span><span class="o">=</span><span class="s1">&#39;Optional fields: &quot;name&quot; and &quot;probability&quot;&#39;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_DISTANCE_MEASUREMENTS</span><span class="p">:</span> <span class="n">ComponentInterfaceExampleValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Distances between areas&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Multiple distance measurements&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;lines&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Distance 1&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">49.7</span><span class="p">,</span> <span class="mf">103.3</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                    <span class="s2">&quot;end&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">55.1</span><span class="p">,</span> <span class="mf">139.3</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                    <span class="s2">&quot;probability&quot;</span><span class="p">:</span> <span class="mf">0.92</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Distance 2&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">49.7</span><span class="p">,</span> <span class="mf">103.3</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                    <span class="s2">&quot;end&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">55.1</span><span class="p">,</span> <span class="mf">139.3</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                    <span class="s2">&quot;probability&quot;</span><span class="p">:</span> <span class="mf">0.92</span><span class="p">,</span>
+                <span class="p">},</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;major&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;minor&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+        <span class="p">},</span>
+        <span class="n">extra_info</span><span class="o">=</span><span class="s1">&#39;Optional fields: &quot;name&quot; and &quot;probability&quot;&#39;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">POINT</span><span class="p">:</span> <span class="n">ComponentInterfaceExampleValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Point of interest&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Point&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;point&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">152.1</span><span class="p">,</span> <span class="mf">111.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+            <span class="s2">&quot;probability&quot;</span><span class="p">:</span> <span class="mf">0.92</span><span class="p">,</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;major&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;minor&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+        <span class="p">},</span>
+        <span class="n">extra_info</span><span class="o">=</span><span class="s1">&#39;Optional fields: &quot;name&quot; and &quot;probability&quot;&#39;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_POINTS</span><span class="p">:</span> <span class="n">ComponentInterfaceExampleValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Points of interest&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Multiple points&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;points&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Point 1&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;point&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">96.0</span><span class="p">,</span> <span class="mf">79.8</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                    <span class="s2">&quot;probability&quot;</span><span class="p">:</span> <span class="mf">0.92</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Point 2&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;point&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">130.1</span><span class="p">,</span> <span class="mf">115.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                    <span class="s2">&quot;probability&quot;</span><span class="p">:</span> <span class="mf">0.92</span><span class="p">,</span>
+                <span class="p">},</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;major&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;minor&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+        <span class="p">},</span>
+        <span class="n">extra_info</span><span class="o">=</span><span class="s1">&#39;Optional fields: &quot;name&quot; and &quot;probability&quot;&#39;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">POLYGON</span><span class="p">:</span> <span class="n">ComponentInterfaceExampleValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Area of interest&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Polygon&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;seed_point&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">76.4</span><span class="p">,</span> <span class="mf">124.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+            <span class="s2">&quot;path_points&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[</span><span class="mf">76.41</span><span class="p">,</span> <span class="mf">124.01</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                <span class="p">[</span><span class="mf">76.41</span><span class="p">,</span> <span class="mf">124.05</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                <span class="p">[</span><span class="mf">76.42</span><span class="p">,</span> <span class="mf">124.08</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;sub_type&quot;</span><span class="p">:</span> <span class="s2">&quot;brush&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;groups&quot;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s2">&quot;probability&quot;</span><span class="p">:</span> <span class="mf">0.92</span><span class="p">,</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;major&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;minor&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+        <span class="p">},</span>
+        <span class="n">extra_info</span><span class="o">=</span><span class="s1">&#39;Optional fields: &quot;name&quot; and &quot;probability&quot;&#39;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_POLYGONS</span><span class="p">:</span> <span class="n">ComponentInterfaceExampleValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Areas of interest&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Multiple polygons&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;polygons&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Area 1&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;seed_point&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">55.82</span><span class="p">,</span> <span class="mf">90.46</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                    <span class="s2">&quot;path_points&quot;</span><span class="p">:</span> <span class="p">[</span>
+                        <span class="p">[</span><span class="mf">55.82</span><span class="p">,</span> <span class="mf">90.46</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">55.93</span><span class="p">,</span> <span class="mf">90.88</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">56.24</span><span class="p">,</span> <span class="mf">91.19</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">56.66</span><span class="p">,</span> <span class="mf">91.30</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                    <span class="p">],</span>
+                    <span class="s2">&quot;sub_type&quot;</span><span class="p">:</span> <span class="s2">&quot;brush&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;groups&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;manual&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;probability&quot;</span><span class="p">:</span> <span class="mf">0.67</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Area 2&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;seed_point&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">90.22</span><span class="p">,</span> <span class="mf">96.06</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                    <span class="s2">&quot;path_points&quot;</span><span class="p">:</span> <span class="p">[</span>
+                        <span class="p">[</span><span class="mf">90.22</span><span class="p">,</span> <span class="mf">96.06</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">90.33</span><span class="p">,</span> <span class="mf">96.48</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">90.64</span><span class="p">,</span> <span class="mf">96.79</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                    <span class="p">],</span>
+                    <span class="s2">&quot;sub_type&quot;</span><span class="p">:</span> <span class="s2">&quot;brush&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;groups&quot;</span><span class="p">:</span> <span class="p">[],</span>
+                    <span class="s2">&quot;probability&quot;</span><span class="p">:</span> <span class="mf">0.92</span><span class="p">,</span>
+                <span class="p">},</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;major&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;minor&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+        <span class="p">},</span>
+        <span class="n">extra_info</span><span class="o">=</span><span class="s1">&#39;Optional fields: &quot;name&quot; and &quot;probability&quot;&#39;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">LINE</span><span class="p">:</span> <span class="n">ComponentInterfaceExampleValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Some annotation&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Line&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;seed_points&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]],</span>
+            <span class="s2">&quot;path_point_lists&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">]],</span>
+                <span class="p">[[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">]],</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;probability&quot;</span><span class="p">:</span> <span class="mf">0.92</span><span class="p">,</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;major&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;minor&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+        <span class="p">},</span>
+        <span class="n">extra_info</span><span class="o">=</span><span class="s1">&#39;Optional fields: &quot;name&quot; and &quot;probability&quot;&#39;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_LINES</span><span class="p">:</span> <span class="n">ComponentInterfaceExampleValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Some annotations&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Multiple lines&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;lines&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Annotation 1&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;seed_points&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]],</span>
+                    <span class="s2">&quot;path_point_lists&quot;</span><span class="p">:</span> <span class="p">[</span>
+                        <span class="p">[[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">]],</span>
+                        <span class="p">[[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">]],</span>
+                    <span class="p">],</span>
+                    <span class="s2">&quot;probability&quot;</span><span class="p">:</span> <span class="mf">0.78</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Annotation 2&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;seed_points&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]],</span>
+                    <span class="s2">&quot;path_point_lists&quot;</span><span class="p">:</span> <span class="p">[</span>
+                        <span class="p">[[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">]],</span>
+                        <span class="p">[[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">]],</span>
+                    <span class="p">],</span>
+                    <span class="s2">&quot;probability&quot;</span><span class="p">:</span> <span class="mf">0.92</span><span class="p">,</span>
+                <span class="p">},</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;major&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;minor&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+        <span class="p">},</span>
+        <span class="n">extra_info</span><span class="o">=</span><span class="s1">&#39;Optional fields: &quot;name&quot; and &quot;probability&quot;&#39;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">ANGLE</span><span class="p">:</span> <span class="n">ComponentInterfaceExampleValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Some angle&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Angle&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;lines&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[[</span><span class="mi">180</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mi">190</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]],</span>
+                <span class="p">[[</span><span class="mi">180</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mi">190</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]],</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;probability&quot;</span><span class="p">:</span> <span class="mf">0.92</span><span class="p">,</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;major&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;minor&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+        <span class="p">},</span>
+        <span class="n">extra_info</span><span class="o">=</span><span class="s1">&#39;Optional fields: &quot;name&quot; and &quot;probability&quot;&#39;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_ANGLES</span><span class="p">:</span> <span class="n">ComponentInterfaceExampleValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Some angles&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Multiple angles&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;angles&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;First angle&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;lines&quot;</span><span class="p">:</span> <span class="p">[</span>
+                        <span class="p">[[</span><span class="mi">110</span><span class="p">,</span> <span class="mi">135</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mi">60</span><span class="p">,</span> <span class="mi">165</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]],</span>
+                        <span class="p">[[</span><span class="mi">70</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mi">85</span><span class="p">,</span> <span class="mi">65</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]],</span>
+                    <span class="p">],</span>
+                    <span class="s2">&quot;probability&quot;</span><span class="p">:</span> <span class="mf">0.82</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Second angle&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;lines&quot;</span><span class="p">:</span> <span class="p">[</span>
+                        <span class="p">[[</span><span class="mi">130</span><span class="p">,</span> <span class="mi">210</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mi">160</span><span class="p">,</span> <span class="mi">130</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]],</span>
+                        <span class="p">[[</span><span class="mi">140</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mi">180</span><span class="p">,</span> <span class="mi">75</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]],</span>
+                    <span class="p">],</span>
+                    <span class="s2">&quot;probability&quot;</span><span class="p">:</span> <span class="mf">0.52</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Third angle&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;lines&quot;</span><span class="p">:</span> <span class="p">[</span>
+                        <span class="p">[[</span><span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mi">20</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]],</span>
+                        <span class="p">[[</span><span class="mi">180</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mi">210</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]],</span>
+                    <span class="p">],</span>
+                    <span class="s2">&quot;probability&quot;</span><span class="p">:</span> <span class="mf">0.98</span><span class="p">,</span>
+                <span class="p">},</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;major&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;minor&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+        <span class="p">},</span>
+        <span class="n">extra_info</span><span class="o">=</span><span class="s1">&#39;Optional fields: &quot;name&quot; and &quot;probability&quot;&#39;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">ELLIPSE</span><span class="p">:</span> <span class="n">ComponentInterfaceExampleValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Some ellipse&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Ellipse&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;major_axis&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">606</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mi">39</span><span class="p">,</span> <span class="mi">559</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]],</span>
+            <span class="s2">&quot;minor_axis&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">570</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mi">26</span><span class="p">,</span> <span class="mi">595</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]],</span>
+            <span class="s2">&quot;probability&quot;</span><span class="p">:</span> <span class="mf">0.92</span><span class="p">,</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;major&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;minor&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+        <span class="p">},</span>
+        <span class="n">extra_info</span><span class="o">=</span><span class="s1">&#39;Optional fields: &quot;name&quot; and &quot;probability&quot;&#39;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_ELLIPSES</span><span class="p">:</span> <span class="n">ComponentInterfaceExampleValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Some ellipse&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Multiple ellipses&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;ellipses&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;major_axis&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="o">-</span><span class="mi">44</span><span class="p">,</span> <span class="mi">535</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">112</span><span class="p">,</span> <span class="mi">494</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]],</span>
+                    <span class="s2">&quot;minor_axis&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="o">-</span><span class="mi">88</span><span class="p">,</span> <span class="mi">532</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">68</span><span class="p">,</span> <span class="mi">497</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]],</span>
+                    <span class="s2">&quot;probability&quot;</span><span class="p">:</span> <span class="mf">0.69</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;major_axis&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="o">-</span><span class="mi">17</span><span class="p">,</span> <span class="mi">459</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">94</span><span class="p">,</span> <span class="mi">436</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]],</span>
+                    <span class="s2">&quot;minor_axis&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="o">-</span><span class="mi">61</span><span class="p">,</span> <span class="mi">467</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">50</span><span class="p">,</span> <span class="mi">428</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]],</span>
+                    <span class="s2">&quot;probability&quot;</span><span class="p">:</span> <span class="mf">0.92</span><span class="p">,</span>
+                <span class="p">},</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;major&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;minor&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+        <span class="p">},</span>
+        <span class="n">extra_info</span><span class="o">=</span><span class="s1">&#39;Optional fields: &quot;name&quot; and &quot;probability&quot;&#39;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">THREE_POINT_ANGLE</span><span class="p">:</span> <span class="n">ComponentInterfaceExampleValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Some 3-point angle&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Three-point angle&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;angle&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">177</span><span class="p">,</span> <span class="mi">493</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mi">22</span><span class="p">,</span> <span class="mi">489</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mi">112</span><span class="p">,</span> <span class="mi">353</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]],</span>
+            <span class="s2">&quot;probability&quot;</span><span class="p">:</span> <span class="mf">0.003</span><span class="p">,</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;major&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;minor&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+        <span class="p">},</span>
+        <span class="n">extra_info</span><span class="o">=</span><span class="s1">&#39;Optional fields: &quot;name&quot; and &quot;probability&quot;&#39;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_THREE_POINT_ANGLES</span><span class="p">:</span> <span class="n">ComponentInterfaceExampleValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Multiple 3-point angles&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Multiple three-point angles&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;angles&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;first&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;angle&quot;</span><span class="p">:</span> <span class="p">[</span>
+                        <span class="p">[</span><span class="mi">300</span><span class="p">,</span> <span class="mi">237</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mi">263</span><span class="p">,</span> <span class="mi">282</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mi">334</span><span class="p">,</span> <span class="mi">281</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                    <span class="p">],</span>
+                    <span class="s2">&quot;probability&quot;</span><span class="p">:</span> <span class="mf">0.92</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;second&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;angle&quot;</span><span class="p">:</span> <span class="p">[</span>
+                        <span class="p">[</span><span class="mi">413</span><span class="p">,</span> <span class="mi">237</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mi">35</span><span class="p">,</span> <span class="mi">160</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mi">367</span><span class="p">,</span> <span class="mi">293</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+                    <span class="p">],</span>
+                    <span class="s2">&quot;probability&quot;</span><span class="p">:</span> <span class="mf">0.69</span><span class="p">,</span>
+                <span class="p">},</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;major&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;minor&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+        <span class="p">},</span>
+        <span class="n">extra_info</span><span class="o">=</span><span class="s1">&#39;Optional fields: &quot;name&quot; and &quot;probability&quot;&#39;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">AFFINE_TRANSFORM_REGISTRATION</span><span class="p">:</span> <span class="n">ComponentInterfaceExampleValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;3d_affine_transform&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+            <span class="p">]</span>
+        <span class="p">},</span>
+    <span class="p">),</span>
+    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">:</span> <span class="n">ComponentInterfaceExampleValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="s2">&quot;Choice 1&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">:</span> <span class="n">ComponentInterfaceExampleValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Choice 1&quot;</span><span class="p">,</span> <span class="s2">&quot;Choice 2&quot;</span><span class="p">],</span>
+    <span class="p">),</span>
+<span class="p">}</span>
 
 
 <span class="k">def</span> <span class="nf">component_interface_value_path</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
