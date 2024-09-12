@@ -181,7 +181,6 @@ class InterfaceKind:
             django.setup()
 
             from grandchallenge.components.models import INTERFACE_TYPE_JSON_EXAMPLES
-            from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 
             for key, example in INTERFACE_TYPE_JSON_EXAMPLES.items():
                 title = f"Example JSON file contents for {key.label}"
@@ -260,23 +259,6 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
             InterfaceKind.InterfaceKindChoices.OBJ,
             InterfaceKind.InterfaceKindChoices.MP4,
-        }
-
-    @staticmethod
-    def interface_type_object_store_required():
-        return {
-            *InterfaceKind.interface_type_image(),
-            *InterfaceKind.interface_type_file(),
-            # These values can be large, so for any new interfaces of this
-            # type always add them to the object store
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_POINTS,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_POLYGONS,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_LINES,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_ANGLES,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_ELLIPSES,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
         }
 
     @staticmethod
