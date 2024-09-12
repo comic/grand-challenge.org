@@ -1,4 +1,6 @@
+import json
 import logging
+import re
 from datetime import datetime, timedelta
 from functools import cached_property
 from urllib.parse import unquote, urljoin
@@ -8,9 +10,11 @@ from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import MaxValueValidator, RegexValidator
 from django.db import models
+from django.db.models import Q
 from django.db.models.signals import post_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
+from django.urls.resolvers import RoutePattern
 from django.utils.text import get_valid_filename
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
@@ -22,7 +26,11 @@ from stdimage import JPEGField
 from grandchallenge.components.backends.docker import Service
 from grandchallenge.components.backends.exceptions import ComponentException
 from grandchallenge.components.models import ComponentImage
-from grandchallenge.components.tasks import start_service, stop_service
+from grandchallenge.components.tasks import (
+    preload_interactive_algorithms,
+    start_service,
+    stop_service,
+)
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import (
     get_logo_path,
@@ -30,6 +38,7 @@ from grandchallenge.core.storage import (
     public_s3_storage,
 )
 from grandchallenge.core.validators import JSONValidator
+from grandchallenge.reader_studies.models import Question, ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.emails import send_new_feedback_email_to_staff
 
@@ -465,6 +474,10 @@ class Session(UUIDModel):
                 "WORKSTATION_SENTRY_DSN": settings.WORKSTATION_SENTRY_DSN,
                 "WORKSTATION_SESSION_ID": str(self.pk),
                 "CIRRUS_KEEP_ALIVE_METHOD": "old",
+                "AWS_DEFAULT_REGION": str(self.region),
+                "INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS": json.dumps(
+                    settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS
+                ),
             }
         )
 
@@ -615,17 +628,47 @@ class Session(UUIDModel):
         if created:
             self.assign_permissions()
             on_commit(
-                lambda: start_service.apply_async(
+                start_service.signature(
                     kwargs=self.task_kwargs,
                     queue=f"workstations-{self.region}",
-                )
+                ).apply_async
             )
         elif self.user_finished and self.status != self.STOPPED:
             on_commit(
-                lambda: stop_service.apply_async(
+                stop_service.signature(
                     kwargs=self.task_kwargs,
                     queue=f"workstations-{self.region}",
-                )
+                ).apply_async
+            )
+
+    def handle_reader_study_switching(self, *, workstation_path):
+        reader_study_pattern = RoutePattern(
+            f"{settings.WORKSTATIONS_READY_STUDY_PATH_PARAM}/<uuid:pk>"
+        )
+        display_set_pattern = RoutePattern(
+            f"{settings.WORKSTATIONS_DISPLAY_SET_PATH_PARAM}/<uuid:pk>"
+        )
+
+        if match := re.match(reader_study_pattern.regex, workstation_path):
+            lookup = Q(pk=match.groupdict()["pk"])
+        elif match := re.match(display_set_pattern.regex, workstation_path):
+            lookup = Q(display_sets__pk=match.groupdict()["pk"])
+        else:
+            # Not a reader study path
+            return
+
+        reader_study = ReaderStudy.objects.get(lookup)
+        reader_study.workstation_sessions.add(self)
+
+        if (
+            Question.objects.filter(reader_study=reader_study)
+            .exclude(interactive_algorithm="")
+            .exists()
+        ):
+            on_commit(
+                preload_interactive_algorithms.signature(
+                    queue=f"workstations-{self.region}"
+                ).apply_async
             )
 
 

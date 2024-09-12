@@ -45,13 +45,6 @@ $(document).ready(() => {
         ],
         ajax: {
             url: "",
-            dataSrc: json => {
-                const table = $("#ajaxDataTable").DataTable();
-                for (const [index, visible] of json.showColumns.entries()) {
-                    table.column(index).visible(visible);
-                }
-                return json.data;
-            },
         },
         ordering: true,
     });

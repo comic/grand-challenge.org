@@ -2,6 +2,7 @@ from urllib.parse import urlencode
 
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
+from django.template.defaultfilters import linebreaksbr
 from django.utils.html import format_html
 from simple_history.admin import SimpleHistoryAdmin
 
@@ -39,6 +40,7 @@ class SessionHistoryAdmin(SimpleHistoryAdmin):
         "region",
         "ping_times",
         "extra_env_vars",
+        "get_reader_studies",
     ]
     list_filter = ["status", "region", "workstation_image__workstation__slug"]
     readonly_fields = [
@@ -54,6 +56,15 @@ class SessionHistoryAdmin(SimpleHistoryAdmin):
     search_fields = [
         "creator__username",
     ]
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).prefetch_related("reader_studies")
+
+    @admin.display(description="Reader Studies")
+    def get_reader_studies(self, obj):
+        return linebreaksbr(
+            "\n".join(r.slug for r in obj.reader_studies.all())
+        )
 
 
 @admin.register(Feedback)

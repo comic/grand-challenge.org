@@ -79,7 +79,7 @@ def _create_archive(*, creator, interfaces, suffix, items=5):
     a.add_editor(creator)
 
     for n in range(items):
-        ai = ArchiveItem.objects.create(archive=a)
+        ai = ArchiveItem.objects.create(archive=a, title=f"Test Item {n}")
         for interface in interfaces:
             v = ComponentInterfaceValue.objects.create(interface=interface)
 
