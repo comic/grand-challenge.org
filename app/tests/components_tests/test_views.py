@@ -2,13 +2,13 @@ import json
 
 import pytest
 from django.conf import settings
-from django.utils.html import escape
 
 from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.components.models import InterfaceKindChoices
 from grandchallenge.reader_studies.models import DisplaySet, ReaderStudy
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import (
+    ComponentInterfaceExampleValueFactory,
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
@@ -448,21 +448,19 @@ def test_display_set_bulk_delete(
 
 @pytest.mark.django_db
 def test_display_ci_example_value(client):
-
-    ci = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.STRING,
-        relative_path="example_value.json",
-        example_value="EXAMPLE-VALUE-TEST-STRING",
+    v = ComponentInterfaceExampleValueFactory(
+        interface__kind=InterfaceKindChoices.STRING,
+        value="EXAMPLE-VALUE-TEST-STRING",
+        extra_info="EXAMPLE-EXTRA-INFO-TEST-STRING",
     )
-
-    user = UserFactory()
 
     response = get_view_for_user(
         viewname="components:component-interface-list-input",
         client=client,
         method=client.get,
-        user=user,
+        user=UserFactory(),
     )
 
     assert response.status_code == 200
-    assert escape(ci.example_value) in response.rendered_content
+    assert v.value in response.rendered_content
+    assert v.extra_info in response.rendered_content

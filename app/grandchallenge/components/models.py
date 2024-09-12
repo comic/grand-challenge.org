@@ -818,12 +818,6 @@ class ComponentInterface(OverlaySegmentsMixin):
         ),
         validators=[JSONSchemaValidator()],
     )
-    example_value = models.JSONField(
-        blank=True,
-        null=True,
-        default=None,
-        help_text="Example JSON that complies with the additional JSON schema",
-    )
     kind = models.CharField(
         blank=False,
         max_length=5,
@@ -897,19 +891,13 @@ class ComponentInterface(OverlaySegmentsMixin):
 
     @property
     def json_kind_example(self):
-        if self.is_json_kind:
-            if self.example_value is not None:
-                return {"example": self.example_value}
-            else:
-                return INTERFACE_TYPE_JSON_EXAMPLES[self.kind]
-        else:
-            return None
-
-    @property
-    def requires_object_store(self):
-        return (
-            self.kind in InterfaceKind.interface_type_object_store_required()
-        )
+        try:
+            return {
+                "example": self.example_value.value,
+                "extra_info": self.example_value.extra_info,
+            }
+        except ObjectDoesNotExist:
+            return INTERFACE_TYPE_JSON_EXAMPLES.get(self.kind)
 
     @property
     def super_kind(self):
@@ -1083,29 +1071,35 @@ class ComponentInterface(OverlaySegmentsMixin):
                 )
 
     def _clean_store_in_database(self):
-        if self.requires_object_store and self.store_in_database:
+        object_store_required = self.kind in {
+            *InterfaceKind.interface_type_image(),
+            *InterfaceKind.interface_type_file(),
+            # These values can be large, so for any new interfaces of this
+            # type always add them to the object store
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_POINTS,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_POLYGONS,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_LINES,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_ANGLES,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_ELLIPSES,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
+        }
+
+        if object_store_required and self.store_in_database:
             raise ValidationError(
                 f"Interface {self.kind} objects cannot be stored in the database"
             )
 
     def _clean_example_value(self):
-        if self.example_value is not None:
-            if self.is_json_kind:
-                civ = ComponentInterfaceValue(interface=self)
-
-                if self.requires_object_store:
-                    civ.file = ContentFile(
-                        json.dumps(self.example_value).encode("utf-8"),
-                        name=f"{self.kind}.json",
-                    )
-                else:
-                    civ.value = self.example_value
-
-                civ.full_clean()
-            else:
-                raise ValidationError(
-                    "Example value can be set for interfaces of JSON kind only"
-                )
+        try:
+            self.example_value.full_clean()
+        except ObjectDoesNotExist:
+            pass
+        except ValidationError as error:
+            raise ValidationError(
+                f"The example value for this interface is not valid: {error}"
+            )
 
     def validate_against_schema(self, *, value):
         """Validates values against both default and custom schemas"""
@@ -1134,6 +1128,44 @@ class ComponentInterface(OverlaySegmentsMixin):
 
     class Meta:
         ordering = ("pk",)
+
+
+class ComponentInterfaceExampleValue(UUIDModel):
+    interface = models.OneToOneField(
+        to=ComponentInterface,
+        on_delete=models.CASCADE,
+        related_name="example_value",
+    )
+    value = models.JSONField(
+        null=True,
+        blank=True,
+        default=None,
+        help_text="Example value for an interface",
+    )
+    extra_info = models.TextField(
+        blank=True, help_text="Extra information about the example value"
+    )
+
+    def clean(self):
+        super().clean()
+
+        if self.interface.is_json_kind:
+            civ = ComponentInterfaceValue(interface=self.interface)
+
+            if self.interface.store_in_database:
+                civ.value = self.value
+            else:
+                file = ContentFile(
+                    json.dumps(self.value).encode("utf-8"),
+                    name=f"{self.interface.kind}.json",
+                )
+                civ.file = file
+
+            civ.full_clean()
+        else:
+            raise ValidationError(
+                "Example value can be set for interfaces of JSON kind only"
+            )
 
 
 def component_interface_value_path(instance, filename):

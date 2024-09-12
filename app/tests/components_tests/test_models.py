@@ -39,6 +39,7 @@ from tests.algorithms_tests.factories import (
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.cases_tests.factories import ImageFactoryWithImageFileTiff
 from tests.components_tests.factories import (
+    ComponentInterfaceExampleValueFactory,
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
@@ -1508,13 +1509,10 @@ def test_displacement_field_validation(
 )
 @pytest.mark.django_db
 def test_ci_example_value(example_value, context):
-    sc = {"type": "number", "minimum": 2, "maximum": 20}
-
-    ci = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.INTEGER,
-        schema=sc,
-        relative_path="example_value.json",
-        example_value=example_value,
+    ci = ComponentInterfaceExampleValueFactory(
+        interface__kind=InterfaceKindChoices.INTEGER,
+        interface__schema={"type": "number", "minimum": 2, "maximum": 20},
+        value=example_value,
     )
 
     with context:
@@ -1523,16 +1521,32 @@ def test_ci_example_value(example_value, context):
 
 @pytest.mark.django_db
 def test_ci_example_value_non_json_kind_fail():
-    ci = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.IMAGE,
-        relative_path="images/test",
-        example_value={"length": 1},
-        store_in_database=False,
+    v = ComponentInterfaceExampleValueFactory(
+        interface__kind=InterfaceKindChoices.IMAGE,
     )
 
     with pytest.raises(
         ValidationError,
         match=r"Example value can be set for interfaces of JSON kind only",
+    ):
+        v.full_clean()
+
+
+@pytest.mark.django_db
+def test_schema_must_be_valid_for_example_value():
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.INTEGER, relative_path="test.json"
+    )
+    ComponentInterfaceExampleValueFactory(
+        interface=ci,
+        value=1,
+    )
+
+    ci.schema = {"type": "number", "minimum": 2, "maximum": 20}
+
+    with pytest.raises(
+        ValidationError,
+        match=r".*The example value for this interface is not valid:.*instance is less than the minimum of 2.*",
     ):
         ci.full_clean()
 
@@ -1549,14 +1563,12 @@ def test_ci_example_value_non_json_kind_fail():
 )
 @pytest.mark.django_db
 def test_interface_kind_json_type_examples(kind, example):
-    ci = ComponentInterfaceFactory(
-        kind=kind,
-        relative_path=f"{kind}.json",
-        example_value=example["example"],
+    v = ComponentInterfaceExampleValueFactory(
+        interface__kind=kind,
+        interface__store_in_database=False,
+        value=example["example"],
     )
-
-    ci.store_in_database = not ci.requires_object_store
-    ci.full_clean()
+    v.full_clean()
 
 
 def test_all_examples_present():
