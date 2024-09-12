@@ -1,5 +1,4 @@
 import re
-from datetime import timedelta
 from io import BytesIO
 from pathlib import Path
 
@@ -16,7 +15,6 @@ from grandchallenge.algorithms.tasks import (
     filter_civs_for_algorithm,
     run_algorithm_job_for_inputs,
     send_failed_job_notification,
-    set_credits_per_job,
 )
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -876,16 +874,14 @@ def test_setting_credits_per_job(
     alg = ai.algorithm
 
     for test in (
-        {"duration": 20, "credits": 30},
-        {"duration": 1, "credits": 20},
-        {"duration": 120, "credits": 200},
+        {"time_limit": 20, "credits": 30},
+        {"time_limit": 1, "credits": 25},  # minimum credits
+        {"time_limit": 120, "credits": 200},
     ):
-        alg.average_duration = timedelta(minutes=test["duration"])
+        alg.minimum_credits_per_job = 25
+        alg.time_limit = test["time_limit"] * 60
         alg.save()
 
-        set_credits_per_job()
-
-        alg.refresh_from_db()
         assert alg.credits_per_job == test["credits"]
 
 

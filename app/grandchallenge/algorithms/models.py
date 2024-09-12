@@ -36,7 +36,7 @@ from grandchallenge.components.models import (
     Tarball,
 )
 from grandchallenge.core.guardian import get_objects_for_group
-from grandchallenge.core.models import RequestBase, UUIDModel
+from grandchallenge.core.models import FieldChangeMixin, RequestBase, UUIDModel
 from grandchallenge.core.storage import (
     get_logo_path,
     get_social_image_path,
@@ -64,7 +64,12 @@ logger = logging.getLogger(__name__)
 JINJA_ENGINE = sandbox.ImmutableSandboxedEnvironment()
 
 
-class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
+class Algorithm(
+    FieldChangeMixin,
+    TitleSlugDescriptionModel,
+    HangingProtocolMixin,
+    UUIDModel,
+):
     editors_group = models.OneToOneField(
         Group,
         on_delete=models.PROTECT,
@@ -177,6 +182,18 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
             "The number of credits that are required for each execution of this algorithm."
         ),
     )
+    minimum_credits_per_job = models.PositiveIntegerField(
+        default=100,
+        help_text=(
+            "The minimum number of credits that are required for each execution of this algorithm. "
+            "The actual number of credits required may be higher than this depending on the "
+            "algorithms configuration."
+        ),
+        validators=[
+            MinValueValidator(limit_value=20),
+            MaxValueValidator(limit_value=1000),
+        ],
+    )
     time_limit = models.PositiveIntegerField(
         default=60 * 60,
         help_text="Time limit for inference jobs in seconds",
@@ -274,6 +291,13 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
             self.workstation_id = (
                 self.workstation_id or self.default_workstation.pk
             )
+
+        if (
+            adding
+            or self.has_changed("time_limit")
+            or self.has_changed("minimum_credits_per_job")
+        ):
+            self.set_credits_per_job()
 
         super().save(*args, **kwargs)
 
@@ -401,6 +425,45 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
             algorithm_image__algorithm=self, status=Job.SUCCESS
         ).average_duration()
         self.save(update_fields=("average_duration",))
+
+    def set_credits_per_job(self):
+        default_credits_per_month = Credit._meta.get_field(
+            "credits"
+        ).get_default()
+        default_credits_per_job = self._meta.get_field(
+            "credits_per_job"
+        ).get_default()
+        overall_min_credits_per_job = (
+            default_credits_per_month
+            / settings.ALGORITHMS_MAX_DEFAULT_JOBS_PER_MONTH
+        )
+
+        if self.active_image:
+            executor = Job(algorithm_image=self.active_image).get_executor(
+                backend=settings.COMPONENTS_DEFAULT_BACKEND
+            )
+
+            maximum_cents_per_job = (
+                executor.usd_cents_per_hour * self.time_limit / 3600
+            )
+
+            credits_per_job = max(
+                int(
+                    round(
+                        maximum_cents_per_job
+                        * default_credits_per_month
+                        / settings.ALGORITHMS_USER_CENTS_PER_MONTH,
+                        -1,
+                    )
+                ),
+                overall_min_credits_per_job,
+            )
+        else:
+            credits_per_job = default_credits_per_job
+
+        self.credits_per_job = max(
+            self.minimum_credits_per_job, credits_per_job
+        )
 
     def is_editor(self, user):
         return user.groups.filter(pk=self.editors_group.pk).exists()
@@ -589,6 +652,12 @@ class AlgorithmImage(UUIDModel, ComponentImage):
             self.algorithm.editors_group,
             self,
         )
+
+    def mark_desired_version(self):
+        super().mark_desired_version()
+
+        self.algorithm.set_credits_per_job()
+        self.algorithm.save()
 
     def get_peer_images(self):
         return AlgorithmImage.objects.filter(algorithm=self.algorithm)
