@@ -136,416 +136,6 @@ class InterfaceSuperKindChoices(models.TextChoices):
     VALUE = "V", "Value"
 
 
-INTERFACE_TYPE_JSON_EXAMPLES = {
-    InterfaceKindChoices.STRING: {"value": "Example String"},
-    InterfaceKindChoices.INTEGER: {"value": 42},
-    InterfaceKindChoices.FLOAT: {"value": 42.0},
-    InterfaceKindChoices.BOOL: {"value": True},
-    InterfaceKindChoices.ANY: {"value": {"key": "value", "None": None}},
-    InterfaceKindChoices.CHART: {
-        "value": {
-            "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-            "width": 300,
-            "height": 300,
-            "data": {
-                "values": [
-                    {
-                        "target": "Negative",
-                        "prediction": "Negative",
-                        "value": 198,
-                    },
-                    {
-                        "target": "Negative",
-                        "prediction": "Positive",
-                        "value": 9,
-                    },
-                    {
-                        "target": "Positive",
-                        "prediction": "Negative",
-                        "value": 159,
-                    },
-                    {
-                        "target": "Positive",
-                        "prediction": "Positive",
-                        "value": 376,
-                    },
-                ],
-                "format": {"type": "json"},
-            },
-            "layer": [
-                {
-                    "mark": "rect",
-                    "encoding": {
-                        "y": {"field": "target", "type": "ordinal"},
-                        "x": {"field": "prediction", "type": "ordinal"},
-                        "color": {
-                            "field": "value",
-                            "type": "quantitative",
-                            "title": "Count of Records",
-                            "legend": {
-                                "direction": "vertical",
-                                "gradientLength": 300,
-                            },
-                        },
-                    },
-                },
-                {
-                    "mark": "text",
-                    "encoding": {
-                        "y": {"field": "target", "type": "ordinal"},
-                        "x": {"field": "prediction", "type": "ordinal"},
-                        "text": {"field": "value", "type": "quantitative"},
-                        "color": {
-                            "condition": {
-                                "test": "datum['value'] < 40",
-                                "value": "black",
-                            },
-                            "value": "white",
-                        },
-                    },
-                },
-            ],
-            "config": {"axis": {"grid": True, "tickBand": "extent"}},
-        },
-        "extra_info": "For more examples, see https://vega.github.io/vega-lite/examples/ and https://grand-challenge.org/blogs/visualisations-for-challenges/",
-    },
-    InterfaceKindChoices.TWO_D_BOUNDING_BOX: {
-        "value": {
-            "name": "Region of interest",
-            "type": "2D bounding box",
-            "corners": [
-                [130.8, 148.8, 0.5],
-                [69.7, 148.8, 0.5],
-                [69.7, 73.1, 0.5],
-                [130.8, 73.1, 0.5],
-            ],
-            "probability": 0.95,
-            "version": {"major": 1, "minor": 0},
-        },
-        "optional_fields": ["name", "probability"],
-    },
-    InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES: {
-        "value": {
-            "name": "Regions of interest",
-            "type": "Multiple 2D bounding boxes",
-            "boxes": [
-                {
-                    "name": "ROI 1",
-                    "corners": [
-                        [92.6, 136.0, 0.5],
-                        [54.8, 136.0, 0.5],
-                        [54.8, 95.5, 0.5],
-                        [92.6, 95.5, 0.5],
-                    ],
-                    "probability": 0.95,
-                },
-                {
-                    "name": "ROI 2",
-                    "corners": [
-                        [92.6, 136.0, 0.5],
-                        [54.8, 136.0, 0.5],
-                        [54.8, 95.5, 0.5],
-                        [92.6, 95.5, 0.5],
-                    ],
-                    "probability": 0.92,
-                },
-            ],
-            "version": {"major": 1, "minor": 0},
-        },
-        "optional_fields": ["name", "probability"],
-    },
-    InterfaceKindChoices.DISTANCE_MEASUREMENT: {
-        "value": {
-            "name": "Distance between areas",
-            "type": "Distance measurement",
-            "start": [59.8, 78.8, 0.5],
-            "end": [69.4, 143.8, 0.5],
-            "probability": 0.92,
-            "version": {"major": 1, "minor": 0},
-        },
-        "optional_fields": ["name", "probability"],
-    },
-    InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS: {
-        "value": {
-            "name": "Distances between areas",
-            "type": "Multiple distance measurements",
-            "lines": [
-                {
-                    "name": "Distance 1",
-                    "start": [49.7, 103.3, 0.5],
-                    "end": [55.1, 139.3, 0.5],
-                    "probability": 0.92,
-                },
-                {
-                    "name": "Distance 2",
-                    "start": [49.7, 103.3, 0.5],
-                    "end": [55.1, 139.3, 0.5],
-                    "probability": 0.92,
-                },
-            ],
-            "version": {"major": 1, "minor": 0},
-        },
-        "optional_fields": ["name", "probability"],
-    },
-    InterfaceKindChoices.POINT: {
-        "value": {
-            "name": "Point of interest",
-            "type": "Point",
-            "point": [152.1, 111.0, 0.5],
-            "probability": 0.92,
-            "version": {"major": 1, "minor": 0},
-        },
-        "optional_fields": ["name", "probability"],
-    },
-    InterfaceKindChoices.MULTIPLE_POINTS: {
-        "value": {
-            "name": "Points of interest",
-            "type": "Multiple points",
-            "points": [
-                {
-                    "name": "Point 1",
-                    "point": [96.0, 79.8, 0.5],
-                    "probability": 0.92,
-                },
-                {
-                    "name": "Point 2",
-                    "point": [130.1, 115.5, 0.5],
-                    "probability": 0.92,
-                },
-            ],
-            "version": {"major": 1, "minor": 0},
-        },
-        "optional_fields": ["name", "probability"],
-    },
-    InterfaceKindChoices.POLYGON: {
-        "value": {
-            "name": "Area of interest",
-            "type": "Polygon",
-            "seed_point": [76.4, 124.0, 0.5],
-            "path_points": [
-                [76.41, 124.01, 0.5],
-                [76.41, 124.05, 0.5],
-                [76.42, 124.08, 0.5],
-            ],
-            "sub_type": "brush",
-            "groups": [],
-            "probability": 0.92,
-            "version": {"major": 1, "minor": 0},
-        },
-        "optional_fields": ["name", "probability"],
-    },
-    InterfaceKindChoices.MULTIPLE_POLYGONS: {
-        "value": {
-            "name": "Areas of interest",
-            "type": "Multiple polygons",
-            "polygons": [
-                {
-                    "name": "Area 1",
-                    "seed_point": [55.82, 90.46, 0.5],
-                    "path_points": [
-                        [55.82, 90.46, 0.5],
-                        [55.93, 90.88, 0.5],
-                        [56.24, 91.19, 0.5],
-                        [56.66, 91.30, 0.5],
-                    ],
-                    "sub_type": "brush",
-                    "groups": ["manual"],
-                    "probability": 0.67,
-                },
-                {
-                    "name": "Area 2",
-                    "seed_point": [90.22, 96.06, 0.5],
-                    "path_points": [
-                        [90.22, 96.06, 0.5],
-                        [90.33, 96.48, 0.5],
-                        [90.64, 96.79, 0.5],
-                    ],
-                    "sub_type": "brush",
-                    "groups": [],
-                    "probability": 0.92,
-                },
-            ],
-            "version": {"major": 1, "minor": 0},
-        },
-        "optional_fields": ["name", "probability"],
-    },
-    InterfaceKindChoices.LINE: {
-        "value": {
-            "name": "Some annotation",
-            "type": "Line",
-            "seed_points": [[1, 2, 3], [1, 2, 3]],
-            "path_point_lists": [
-                [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
-                [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
-            ],
-            "probability": 0.92,
-            "version": {"major": 1, "minor": 0},
-        },
-        "optional_fields": ["name", "probability"],
-    },
-    InterfaceKindChoices.MULTIPLE_LINES: {
-        "value": {
-            "name": "Some annotations",
-            "type": "Multiple lines",
-            "lines": [
-                {
-                    "name": "Annotation 1",
-                    "seed_points": [[1, 2, 3], [1, 2, 3]],
-                    "path_point_lists": [
-                        [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
-                        [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
-                    ],
-                    "probability": 0.78,
-                },
-                {
-                    "name": "Annotation 2",
-                    "seed_points": [[1, 2, 3], [1, 2, 3]],
-                    "path_point_lists": [
-                        [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
-                        [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
-                    ],
-                    "probability": 0.92,
-                },
-            ],
-            "version": {"major": 1, "minor": 0},
-        },
-        "optional_fields": ["name", "probability"],
-    },
-    InterfaceKindChoices.ANGLE: {
-        "value": {
-            "name": "Some angle",
-            "type": "Angle",
-            "lines": [
-                [[180, 10, 0.5], [190, 10, 0.5]],
-                [[180, 25, 0.5], [190, 15, 0.5]],
-            ],
-            "probability": 0.92,
-            "version": {"major": 1, "minor": 0},
-        },
-        "optional_fields": ["name", "probability"],
-    },
-    InterfaceKindChoices.MULTIPLE_ANGLES: {
-        "value": {
-            "name": "Some angles",
-            "type": "Multiple angles",
-            "angles": [
-                {
-                    "name": "First angle",
-                    "lines": [
-                        [[110, 135, 0.5], [60, 165, 0.5]],
-                        [[70, 25, 0.5], [85, 65, 0.5]],
-                    ],
-                    "probability": 0.82,
-                },
-                {
-                    "name": "Second angle",
-                    "lines": [
-                        [[130, 210, 0.5], [160, 130, 0.5]],
-                        [[140, 40, 0.5], [180, 75, 0.5]],
-                    ],
-                    "probability": 0.52,
-                },
-                {
-                    "name": "Third angle",
-                    "lines": [
-                        [[20, 30, 0.5], [20, 100, 0.5]],
-                        [[180, 200, 0.5], [210, 200, 0.5]],
-                    ],
-                    "probability": 0.98,
-                },
-            ],
-            "version": {"major": 1, "minor": 0},
-        },
-        "optional_fields": ["name", "probability"],
-    },
-    InterfaceKindChoices.ELLIPSE: {
-        "value": {
-            "name": "Some ellipse",
-            "type": "Ellipse",
-            "major_axis": [[-10, 606, 0.5], [39, 559, 0.5]],
-            "minor_axis": [[2, 570, 0.5], [26, 595, 0.5]],
-            "probability": 0.92,
-            "version": {"major": 1, "minor": 0},
-        },
-        "optional_fields": ["name", "probability"],
-    },
-    InterfaceKindChoices.MULTIPLE_ELLIPSES: {
-        "value": {
-            "name": "Some ellipse",
-            "type": "Multiple ellipses",
-            "ellipses": [
-                {
-                    "major_axis": [[-44, 535, 0.5], [-112, 494, 0.5]],
-                    "minor_axis": [[-88, 532, 0.5], [-68, 497, 0.5]],
-                    "probability": 0.69,
-                },
-                {
-                    "major_axis": [[-17, 459, 0.5], [-94, 436, 0.5]],
-                    "minor_axis": [[-61, 467, 0.5], [-50, 428, 0.5]],
-                    "probability": 0.92,
-                },
-            ],
-            "version": {"major": 1, "minor": 0},
-        },
-        "optional_fields": ["name", "probability"],
-    },
-    InterfaceKindChoices.THREE_POINT_ANGLE: {
-        "value": {
-            "name": "Some 3-point angle",
-            "type": "Three-point angle",
-            "angle": [[177, 493, 0.5], [22, 489, 0.5], [112, 353, 0.5]],
-            "probability": 0.003,
-            "version": {"major": 1, "minor": 0},
-        },
-        "optional_fields": ["name", "probability"],
-    },
-    InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES: {
-        "value": {
-            "name": "Multiple 3-point angles",
-            "type": "Multiple three-point angles",
-            "angles": [
-                {
-                    "name": "first",
-                    "angle": [
-                        [300, 237, 0.5],
-                        [263, 282, 0.5],
-                        [334, 281, 0.5],
-                    ],
-                    "probability": 0.92,
-                },
-                {
-                    "name": "second",
-                    "angle": [
-                        [413, 237, 0.5],
-                        [35, 160, 0.5],
-                        [367, 293, 0.5],
-                    ],
-                    "probability": 0.69,
-                },
-            ],
-            "version": {"major": 1, "minor": 0},
-        },
-        "optional_fields": ["name", "probability"],
-    },
-    InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION: {
-        "value": {
-            "3d_affine_transform": [
-                [1, 0, 0, 0],
-                [0, 1, 0, 0],
-                [0, 0, 1, 0],
-                [0, 0, 0, 1],
-            ]
-        },
-    },
-    InterfaceKindChoices.CHOICE: {
-        "value": "Choice 1",
-    },
-    InterfaceKindChoices.MULTIPLE_CHOICE: {
-        "value": ["Choice 1", "Choice 2"],
-    },
-}
-
-
 class InterfaceKind:
     """Interface kind choices."""
 
@@ -596,14 +186,11 @@ class InterfaceKind:
             for key, example in INTERFACE_TYPE_JSON_EXAMPLES.items():
                 title = f"Example JSON file contents for {key.label}"
 
-                if "optional_fields" in example:
-                    title += f" (Optional fields: {oxford_comma(example['optional_fields'])})"
-
-                if "extra_info" in example:
-                    title += f" ({example['extra_info']})"
+                if example.extra_info:
+                    title += f" ({example.extra_info})"
 
                 print(f"{title}:")
-                print(json.dumps(example["value"], indent=2))
+                print(json.dumps(example.value, indent=2))
                 print("")
 
         """
@@ -892,10 +479,7 @@ class ComponentInterface(OverlaySegmentsMixin):
     @property
     def json_kind_example(self):
         try:
-            return {
-                "value": self.example_value.value,
-                "extra_info": self.example_value.extra_info,
-            }
+            return self.example_value
         except ObjectDoesNotExist:
             return INTERFACE_TYPE_JSON_EXAMPLES.get(self.kind)
 
@@ -1166,6 +750,420 @@ class ComponentInterfaceExampleValue(UUIDModel):
             raise ValidationError(
                 "Example value can be set for interfaces of JSON kind only"
             )
+
+
+INTERFACE_TYPE_JSON_EXAMPLES = {
+    InterfaceKindChoices.STRING: ComponentInterfaceExampleValue(
+        value="Example String"
+    ),
+    InterfaceKindChoices.INTEGER: ComponentInterfaceExampleValue(value=42),
+    InterfaceKindChoices.FLOAT: ComponentInterfaceExampleValue(value=42.0),
+    InterfaceKindChoices.BOOL: ComponentInterfaceExampleValue(value=True),
+    InterfaceKindChoices.ANY: ComponentInterfaceExampleValue(
+        value={"key": "value", "None": None}
+    ),
+    InterfaceKindChoices.CHART: ComponentInterfaceExampleValue(
+        value={
+            "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+            "width": 300,
+            "height": 300,
+            "data": {
+                "values": [
+                    {
+                        "target": "Negative",
+                        "prediction": "Negative",
+                        "value": 198,
+                    },
+                    {
+                        "target": "Negative",
+                        "prediction": "Positive",
+                        "value": 9,
+                    },
+                    {
+                        "target": "Positive",
+                        "prediction": "Negative",
+                        "value": 159,
+                    },
+                    {
+                        "target": "Positive",
+                        "prediction": "Positive",
+                        "value": 376,
+                    },
+                ],
+                "format": {"type": "json"},
+            },
+            "layer": [
+                {
+                    "mark": "rect",
+                    "encoding": {
+                        "y": {"field": "target", "type": "ordinal"},
+                        "x": {"field": "prediction", "type": "ordinal"},
+                        "color": {
+                            "field": "value",
+                            "type": "quantitative",
+                            "title": "Count of Records",
+                            "legend": {
+                                "direction": "vertical",
+                                "gradientLength": 300,
+                            },
+                        },
+                    },
+                },
+                {
+                    "mark": "text",
+                    "encoding": {
+                        "y": {"field": "target", "type": "ordinal"},
+                        "x": {"field": "prediction", "type": "ordinal"},
+                        "text": {"field": "value", "type": "quantitative"},
+                        "color": {
+                            "condition": {
+                                "test": "datum['value'] < 40",
+                                "value": "black",
+                            },
+                            "value": "white",
+                        },
+                    },
+                },
+            ],
+            "config": {"axis": {"grid": True, "tickBand": "extent"}},
+        },
+        extra_info="For more examples, see https://vega.github.io/vega-lite/examples/ and https://grand-challenge.org/blogs/visualisations-for-challenges/",
+    ),
+    InterfaceKindChoices.TWO_D_BOUNDING_BOX: ComponentInterfaceExampleValue(
+        value={
+            "name": "Region of interest",
+            "type": "2D bounding box",
+            "corners": [
+                [130.8, 148.8, 0.5],
+                [69.7, 148.8, 0.5],
+                [69.7, 73.1, 0.5],
+                [130.8, 73.1, 0.5],
+            ],
+            "probability": 0.95,
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES: ComponentInterfaceExampleValue(
+        value={
+            "name": "Regions of interest",
+            "type": "Multiple 2D bounding boxes",
+            "boxes": [
+                {
+                    "name": "ROI 1",
+                    "corners": [
+                        [92.6, 136.0, 0.5],
+                        [54.8, 136.0, 0.5],
+                        [54.8, 95.5, 0.5],
+                        [92.6, 95.5, 0.5],
+                    ],
+                    "probability": 0.95,
+                },
+                {
+                    "name": "ROI 2",
+                    "corners": [
+                        [92.6, 136.0, 0.5],
+                        [54.8, 136.0, 0.5],
+                        [54.8, 95.5, 0.5],
+                        [92.6, 95.5, 0.5],
+                    ],
+                    "probability": 0.92,
+                },
+            ],
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.DISTANCE_MEASUREMENT: ComponentInterfaceExampleValue(
+        value={
+            "name": "Distance between areas",
+            "type": "Distance measurement",
+            "start": [59.8, 78.8, 0.5],
+            "end": [69.4, 143.8, 0.5],
+            "probability": 0.92,
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS: ComponentInterfaceExampleValue(
+        value={
+            "name": "Distances between areas",
+            "type": "Multiple distance measurements",
+            "lines": [
+                {
+                    "name": "Distance 1",
+                    "start": [49.7, 103.3, 0.5],
+                    "end": [55.1, 139.3, 0.5],
+                    "probability": 0.92,
+                },
+                {
+                    "name": "Distance 2",
+                    "start": [49.7, 103.3, 0.5],
+                    "end": [55.1, 139.3, 0.5],
+                    "probability": 0.92,
+                },
+            ],
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.POINT: ComponentInterfaceExampleValue(
+        value={
+            "name": "Point of interest",
+            "type": "Point",
+            "point": [152.1, 111.0, 0.5],
+            "probability": 0.92,
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.MULTIPLE_POINTS: ComponentInterfaceExampleValue(
+        value={
+            "name": "Points of interest",
+            "type": "Multiple points",
+            "points": [
+                {
+                    "name": "Point 1",
+                    "point": [96.0, 79.8, 0.5],
+                    "probability": 0.92,
+                },
+                {
+                    "name": "Point 2",
+                    "point": [130.1, 115.5, 0.5],
+                    "probability": 0.92,
+                },
+            ],
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.POLYGON: ComponentInterfaceExampleValue(
+        value={
+            "name": "Area of interest",
+            "type": "Polygon",
+            "seed_point": [76.4, 124.0, 0.5],
+            "path_points": [
+                [76.41, 124.01, 0.5],
+                [76.41, 124.05, 0.5],
+                [76.42, 124.08, 0.5],
+            ],
+            "sub_type": "brush",
+            "groups": [],
+            "probability": 0.92,
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.MULTIPLE_POLYGONS: ComponentInterfaceExampleValue(
+        value={
+            "name": "Areas of interest",
+            "type": "Multiple polygons",
+            "polygons": [
+                {
+                    "name": "Area 1",
+                    "seed_point": [55.82, 90.46, 0.5],
+                    "path_points": [
+                        [55.82, 90.46, 0.5],
+                        [55.93, 90.88, 0.5],
+                        [56.24, 91.19, 0.5],
+                        [56.66, 91.30, 0.5],
+                    ],
+                    "sub_type": "brush",
+                    "groups": ["manual"],
+                    "probability": 0.67,
+                },
+                {
+                    "name": "Area 2",
+                    "seed_point": [90.22, 96.06, 0.5],
+                    "path_points": [
+                        [90.22, 96.06, 0.5],
+                        [90.33, 96.48, 0.5],
+                        [90.64, 96.79, 0.5],
+                    ],
+                    "sub_type": "brush",
+                    "groups": [],
+                    "probability": 0.92,
+                },
+            ],
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.LINE: ComponentInterfaceExampleValue(
+        value={
+            "name": "Some annotation",
+            "type": "Line",
+            "seed_points": [[1, 2, 3], [1, 2, 3]],
+            "path_point_lists": [
+                [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
+                [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
+            ],
+            "probability": 0.92,
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.MULTIPLE_LINES: ComponentInterfaceExampleValue(
+        value={
+            "name": "Some annotations",
+            "type": "Multiple lines",
+            "lines": [
+                {
+                    "name": "Annotation 1",
+                    "seed_points": [[1, 2, 3], [1, 2, 3]],
+                    "path_point_lists": [
+                        [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
+                        [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
+                    ],
+                    "probability": 0.78,
+                },
+                {
+                    "name": "Annotation 2",
+                    "seed_points": [[1, 2, 3], [1, 2, 3]],
+                    "path_point_lists": [
+                        [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
+                        [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
+                    ],
+                    "probability": 0.92,
+                },
+            ],
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.ANGLE: ComponentInterfaceExampleValue(
+        value={
+            "name": "Some angle",
+            "type": "Angle",
+            "lines": [
+                [[180, 10, 0.5], [190, 10, 0.5]],
+                [[180, 25, 0.5], [190, 15, 0.5]],
+            ],
+            "probability": 0.92,
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.MULTIPLE_ANGLES: ComponentInterfaceExampleValue(
+        value={
+            "name": "Some angles",
+            "type": "Multiple angles",
+            "angles": [
+                {
+                    "name": "First angle",
+                    "lines": [
+                        [[110, 135, 0.5], [60, 165, 0.5]],
+                        [[70, 25, 0.5], [85, 65, 0.5]],
+                    ],
+                    "probability": 0.82,
+                },
+                {
+                    "name": "Second angle",
+                    "lines": [
+                        [[130, 210, 0.5], [160, 130, 0.5]],
+                        [[140, 40, 0.5], [180, 75, 0.5]],
+                    ],
+                    "probability": 0.52,
+                },
+                {
+                    "name": "Third angle",
+                    "lines": [
+                        [[20, 30, 0.5], [20, 100, 0.5]],
+                        [[180, 200, 0.5], [210, 200, 0.5]],
+                    ],
+                    "probability": 0.98,
+                },
+            ],
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.ELLIPSE: ComponentInterfaceExampleValue(
+        value={
+            "name": "Some ellipse",
+            "type": "Ellipse",
+            "major_axis": [[-10, 606, 0.5], [39, 559, 0.5]],
+            "minor_axis": [[2, 570, 0.5], [26, 595, 0.5]],
+            "probability": 0.92,
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.MULTIPLE_ELLIPSES: ComponentInterfaceExampleValue(
+        value={
+            "name": "Some ellipse",
+            "type": "Multiple ellipses",
+            "ellipses": [
+                {
+                    "major_axis": [[-44, 535, 0.5], [-112, 494, 0.5]],
+                    "minor_axis": [[-88, 532, 0.5], [-68, 497, 0.5]],
+                    "probability": 0.69,
+                },
+                {
+                    "major_axis": [[-17, 459, 0.5], [-94, 436, 0.5]],
+                    "minor_axis": [[-61, 467, 0.5], [-50, 428, 0.5]],
+                    "probability": 0.92,
+                },
+            ],
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.THREE_POINT_ANGLE: ComponentInterfaceExampleValue(
+        value={
+            "name": "Some 3-point angle",
+            "type": "Three-point angle",
+            "angle": [[177, 493, 0.5], [22, 489, 0.5], [112, 353, 0.5]],
+            "probability": 0.003,
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES: ComponentInterfaceExampleValue(
+        value={
+            "name": "Multiple 3-point angles",
+            "type": "Multiple three-point angles",
+            "angles": [
+                {
+                    "name": "first",
+                    "angle": [
+                        [300, 237, 0.5],
+                        [263, 282, 0.5],
+                        [334, 281, 0.5],
+                    ],
+                    "probability": 0.92,
+                },
+                {
+                    "name": "second",
+                    "angle": [
+                        [413, 237, 0.5],
+                        [35, 160, 0.5],
+                        [367, 293, 0.5],
+                    ],
+                    "probability": 0.69,
+                },
+            ],
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION: ComponentInterfaceExampleValue(
+        value={
+            "3d_affine_transform": [
+                [1, 0, 0, 0],
+                [0, 1, 0, 0],
+                [0, 0, 1, 0],
+                [0, 0, 0, 1],
+            ]
+        },
+    ),
+    InterfaceKindChoices.CHOICE: ComponentInterfaceExampleValue(
+        value="Choice 1",
+    ),
+    InterfaceKindChoices.MULTIPLE_CHOICE: ComponentInterfaceExampleValue(
+        value=["Choice 1", "Choice 2"],
+    ),
+}
 
 
 def component_interface_value_path(instance, filename):

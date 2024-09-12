@@ -16,6 +16,7 @@ from grandchallenge.cases.models import Image
 from grandchallenge.components.models import (
     INTERFACE_TYPE_JSON_EXAMPLES,
     ComponentInterface,
+    ComponentInterfaceExampleValue,
     ComponentInterfaceValue,
     ImportStatusChoices,
     InterfaceKind,
@@ -1563,12 +1564,17 @@ def test_schema_must_be_valid_for_example_value():
 )
 @pytest.mark.django_db
 def test_interface_kind_json_type_examples(kind, example):
-    v = ComponentInterfaceExampleValueFactory(
-        interface__kind=kind,
-        interface__store_in_database=False,
-        value=example["value"],
+    interface = ComponentInterfaceFactory(
+        kind=kind, store_in_database=False, relative_path="test.json"
     )
-    v.full_clean()
+
+    example.interface = interface
+    example.full_clean()
+    example.save()
+
+    interface.full_clean()
+
+    assert isinstance(example, ComponentInterfaceExampleValue)
 
 
 def test_all_examples_present():
