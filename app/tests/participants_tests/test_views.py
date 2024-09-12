@@ -3,10 +3,14 @@ from functools import partial
 
 import pytest
 
-from grandchallenge.participants.models import RegistrationQuestion
+from grandchallenge.participants.models import (
+    RegistrationQuestion,
+    RegistrationQuestionAnswer,
+)
 from tests.factories import (
     ChallengeFactory,
     RegistrationQuestionFactory,
+    RegistrationRequestFactory,
     UserFactory,
 )
 from tests.utils import get_view_for_user
@@ -156,6 +160,10 @@ def test_registration_question_delete_view(client):
     ch.add_participant(participant)
 
     rq = RegistrationQuestionFactory(question_text="foo", challenge=ch)
+    rr = RegistrationRequestFactory()
+    RegistrationQuestionAnswer.objects.create(
+        question=rq, registration_request=rr
+    )
 
     get = partial(
         get_view_for_user,
