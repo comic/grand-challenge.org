@@ -120,6 +120,7 @@ watchfiles = "*"
 playwright = "*"
 pytest-playwright = "*"
 pytest-rerunfailures = "*"
+sphinx-exec-code = "*"
 
 [tool.amass]
 output = "app/grandchallenge/core/static/vendored"

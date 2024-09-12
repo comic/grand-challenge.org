@@ -48,6 +48,7 @@ extensions = [
     "sphinx_autodoc_typehints",
     "sphinxcontrib.plantuml",
     "sphinxcontrib_django",
+    "sphinx_exec_code",
 ]
 
 napoleon_google_docstring = False

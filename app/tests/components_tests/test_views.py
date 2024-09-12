@@ -4,10 +4,12 @@ import pytest
 from django.conf import settings
 
 from grandchallenge.archives.models import ArchiveItem
+from grandchallenge.components.models import InterfaceKindChoices
 from grandchallenge.reader_studies.models import DisplaySet, ReaderStudy
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import (
+    ComponentInterfaceExampleValueFactory,
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
@@ -483,3 +485,23 @@ def test_file_upload_form_field_view(client, object, view_name):
     )
     assert response.status_code == 200
     assert "user-upload" in str(response.content)
+
+
+@pytest.mark.django_db
+def test_display_ci_example_value(client):
+    v = ComponentInterfaceExampleValueFactory(
+        interface__kind=InterfaceKindChoices.STRING,
+        value="EXAMPLE-VALUE-TEST-STRING",
+        extra_info="EXAMPLE-EXTRA-INFO-TEST-STRING",
+    )
+
+    response = get_view_for_user(
+        viewname="components:component-interface-list-input",
+        client=client,
+        method=client.get,
+        user=UserFactory(),
+    )
+
+    assert response.status_code == 200
+    assert v.value in response.rendered_content
+    assert v.extra_info in response.rendered_content
