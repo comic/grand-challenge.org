@@ -30,6 +30,8 @@ def test_registration_field():
     (
         ("", ""),
         ("Foo", "Foo"),
+        ('"Foo"', "Foo"),
+        ('"Foo', '"Foo'),
         ('{"foo": "bar"}', {"foo": "bar"}),
         ("1", 1),
         ("1.42", 1.42),

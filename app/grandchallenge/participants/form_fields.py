@@ -7,7 +7,7 @@ from django.utils.html import escape
 class RegistrationQuestionField(JSONField):
     empty_value = InvalidJSONInput("")
 
-    def __init__(self, *, registration_question, **kwargs):
+    def __init__(self, *, registration_question, widget=TextInput, **kwargs):
         self.registration_question = registration_question
 
         kwargs.update(
@@ -15,7 +15,6 @@ class RegistrationQuestionField(JSONField):
                 "label": registration_question.question_text,
                 "required": registration_question.required,
                 "help_text": escape(registration_question.question_help_text),
-                "widget": TextInput,
             }
         )
 
@@ -25,7 +24,7 @@ class RegistrationQuestionField(JSONField):
             if isinstance(str, kwargs["initial"]):
                 kwargs["initial"] = InvalidJSONInput(kwargs["initial"])
 
-        super().__init__(**kwargs)
+        super().__init__(widget=widget, **kwargs)
 
     def to_python(self, value):
         if value is None or value == "":
