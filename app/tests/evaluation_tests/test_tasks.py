@@ -10,13 +10,16 @@ from django.utils.html import format_html
 from redis.exceptions import LockError
 
 from grandchallenge.algorithms.models import Job
-from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.components.tasks import (
     push_container_image,
     validate_docker_image,
 )
 from grandchallenge.evaluation.models import Evaluation, Method
-from grandchallenge.evaluation.tasks import set_evaluation_inputs
+from grandchallenge.evaluation.tasks import (
+    create_algorithm_jobs_for_evaluation,
+    set_evaluation_inputs,
+)
 from grandchallenge.notifications.models import Notification
 from grandchallenge.profiles.templatetags.profiles import user_profile_link
 from tests.algorithms_tests.factories import (
@@ -25,7 +28,10 @@ from tests.algorithms_tests.factories import (
     AlgorithmModelFactory,
 )
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
-from tests.components_tests.factories import ComponentInterfaceValueFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.evaluation_tests.factories import (
     EvaluationFactory,
     MethodFactory,
@@ -37,7 +43,6 @@ from tests.utils import recurse_callbacks
 
 @pytest.mark.django_db
 def test_submission_evaluation(
-    client,
     evaluation_image,
     submission_file,
     settings,
@@ -619,3 +624,78 @@ def test_evaluation_time_limit_set(
 
     evaluation = submission.evaluation_set.get()
     assert evaluation.time_limit == evaluation_time_limit
+
+
+@pytest.mark.django_db
+def test_evaluation_order_with_title():
+    ai = AlgorithmImageFactory()
+    archive = ArchiveFactory()
+    evaluation = EvaluationFactory(
+        submission__phase__archive=archive,
+        submission__algorithm_image=ai,
+        time_limit=ai.algorithm.time_limit,
+    )
+
+    input_interface = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.BOOL
+    )
+
+    evaluation.submission.phase.algorithm_inputs.set([input_interface])
+    ai.algorithm.inputs.set([input_interface])
+
+    # Priority should be given to archive items with titles
+    archive_item = ArchiveItemFactory(archive=archive)
+    archive_item.values.add(
+        ComponentInterfaceValueFactory(interface=input_interface)
+    )
+
+    civs = ComponentInterfaceValueFactory.create_batch(
+        5, interface=input_interface
+    )
+
+    for idx, civ in enumerate(civs):
+        archive_item = ArchiveItemFactory(archive=archive, title=f"{5 - idx}")
+        archive_item.values.add(civ)
+
+    create_algorithm_jobs_for_evaluation(evaluation_pk=evaluation.pk)
+
+    job = Job.objects.get()
+
+    expected_civ = civs[-1]
+
+    assert expected_civ.archive_items.first().title == "1"
+    assert {*job.inputs.all()} == {expected_civ}
+
+
+@pytest.mark.django_db
+def test_evaluation_order_without_title():
+    ai = AlgorithmImageFactory()
+    archive = ArchiveFactory()
+    evaluation = EvaluationFactory(
+        submission__phase__archive=archive,
+        submission__algorithm_image=ai,
+        time_limit=ai.algorithm.time_limit,
+    )
+
+    input_interface = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.BOOL
+    )
+
+    evaluation.submission.phase.algorithm_inputs.set([input_interface])
+    ai.algorithm.inputs.set([input_interface])
+
+    civs = ComponentInterfaceValueFactory.create_batch(
+        5, interface=input_interface
+    )
+
+    for civ in civs:
+        archive_item = ArchiveItemFactory(archive=archive)
+        archive_item.values.add(civ)
+
+    create_algorithm_jobs_for_evaluation(evaluation_pk=evaluation.pk)
+
+    job = Job.objects.get()
+
+    expected_civ = civs[0]
+
+    assert {*job.inputs.all()} == {expected_civ}

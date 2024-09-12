@@ -9,7 +9,7 @@ $(document).ready(() => {
         $("#warningModalLabel").text(button.data("title"));
         user = button.data("user");
     });
-    $("#proceed").on("click", (e) => {
+    $("#proceed").on("click", e => {
         const target = $(e.currentTarget);
         htmx.ajax("POST", `${target.data("baseurl")}remove-answers/${user}/`, {
             values: { csrfmiddlewaretoken: target.data("csrf") },

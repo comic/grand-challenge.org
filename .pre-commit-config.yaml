@@ -42,7 +42,8 @@ repos:
       rev: v0.13.1
       hooks:
           - id: curlylint
-    - repo: https://github.com/rbubley/mirrors-prettier
-      rev: v3.3.3
+    - repo: https://github.com/biomejs/pre-commit
+      rev: v0.4.0
       hooks:
-          - id: prettier
+          - id: biome-check
+            additional_dependencies: ["@biomejs/biome@^1.8.3"]

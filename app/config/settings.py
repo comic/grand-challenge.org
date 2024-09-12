@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import socket
@@ -994,6 +995,7 @@ CELERY_TASK_TIME_LIMIT = int(os.environ.get("CELERY_TASK_TIME_LIMIT", "7200"))
 # The soft time limit must always be shorter than the hard time limit
 # https://github.com/celery/celery/issues/9125
 CELERY_TASK_SOFT_TIME_LIMIT = int(0.9 * CELERY_TASK_TIME_LIMIT)
+CELERY_TASK_TRACK_STARTED = True
 CELERY_BROKER_TRANSPORT_OPTIONS = {
     "visibility_timeout": int(1.1 * CELERY_TASK_TIME_LIMIT)
 }
@@ -1171,6 +1173,10 @@ WORKSTATIONS_GRACE_MINUTES = 5
 # Extra domains to broadcast workstation control messages to. Used in tests.
 WORKSTATIONS_EXTRA_BROADCAST_DOMAINS = []
 
+INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS = json.loads(
+    os.environ.get("INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS", "null")
+)
+
 CELERY_BEAT_SCHEDULE = {
     "delete_users_who_dont_login": {
         "task": "grandchallenge.profiles.tasks.delete_users_who_dont_login",
@@ -1220,10 +1226,6 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.algorithms.tasks.set_credits_per_job",
         "schedule": crontab(hour=4, minute=30),
     },
-    "update_compute_costs_and_storage_size": {
-        "task": "grandchallenge.challenges.tasks.update_compute_costs_and_storage_size",
-        "schedule": crontab(hour="5,11,17,23", minute=0),
-    },
     "update_site_statistics": {
         "task": "grandchallenge.statistics.tasks.update_site_statistics_cache",
         "schedule": crontab(hour=5, minute=30),
@@ -1232,13 +1234,17 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.emails.tasks.cleanup_sent_raw_emails",
         "schedule": crontab(hour=6, minute=0),
     },
+    "update_compute_costs_and_storage_size": {
+        "task": "grandchallenge.challenges.tasks.update_compute_costs_and_storage_size",
+        "schedule": timedelta(hours=1),
+    },
     "logout_privileged_users": {
         "task": "grandchallenge.browser_sessions.tasks.logout_privileged_users",
         "schedule": timedelta(hours=1),
     },
     "update_challenge_results_cache": {
         "task": "grandchallenge.challenges.tasks.update_challenge_results_cache",
-        "schedule": crontab(minute="*/5"),
+        "schedule": timedelta(minutes=5),
     },
     "send_raw_emails": {
         "task": "grandchallenge.emails.tasks.send_raw_emails",
@@ -1253,7 +1259,15 @@ CELERY_BEAT_SCHEDULE = {
                 "region": region,
             },
             "options": {"queue": f"workstations-{region}"},
-            "schedule": crontab(minute=f"*/{WORKSTATIONS_GRACE_MINUTES}"),
+            "schedule": timedelta(minutes=WORKSTATIONS_GRACE_MINUTES),
+        }
+        for region in WORKSTATIONS_ACTIVE_REGIONS
+    },
+    **{
+        f"preload_interactive_algorithms_{region}": {
+            "task": "grandchallenge.components.tasks.preload_interactive_algorithms",
+            "options": {"queue": f"workstations-{region}"},
+            "schedule": timedelta(minutes=WORKSTATIONS_GRACE_MINUTES),
         }
         for region in WORKSTATIONS_ACTIVE_REGIONS
     },
@@ -1329,28 +1343,6 @@ DISALLOWED_EMAIL_DOMAINS = {
     "mail.ru",
     "verizon.net",
     "comcast.net",
-    "nudt.edu.cn",
-    "ihpc.a-star.edu.sg",
-    "raysightmed.com",
-    "csu.edu.cn",
-    "cerist.dz",
-    "ciitvehari.edu.pk",
-    "mail.dcu.ie",
-    "snu.ac.kr",
-    "cau.ac.kr",
-    "deepnoid.com",
-    "knou.ac.kr",
-    "gm.gist.ac.kr",
-    "knu.ac.kr",
-    "korea.ac.kr",
-    "g.postech.edu",
-    "hanyang.ac.kr",
-    "dankook.ac.kr",
-    "postech.ac.kr",
-    "a.ut.ac.kr",
-    "office.bufs.ac.kr",
-    "ut.ac.kr",
-    "tesser.co.kr",
     *blocklist,
 }
 

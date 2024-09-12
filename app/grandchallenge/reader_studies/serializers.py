@@ -56,6 +56,7 @@ class QuestionSerializer(HyperlinkedModelSerializer):
     interface = ComponentInterfaceSerializer(read_only=True, allow_null=True)
     look_up_table = LookUpTableSerializer(read_only=True, allow_null=True)
     widget = CharField(source="get_widget_display", read_only=True)
+    interactive_algorithm = CharField(read_only=True)
 
     class Meta:
         model = Question
@@ -83,6 +84,7 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "answer_match_pattern",
             "empty_answer_confirmation",
             "empty_answer_confirmation_label",
+            "interactive_algorithm",
         )
 
 

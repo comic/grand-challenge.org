@@ -1,4 +1,4 @@
-$(document).ready(function () {
+$(document).ready(() => {
     $(".table").each(function () {
         $(this).DataTable({
             pageLength: 100,
@@ -7,7 +7,7 @@ $(document).ready(function () {
     });
 });
 
-$(window).resize(function () {
+$(window).resize(() => {
     $(".table").each(function () {
         $(this).DataTable().columns.adjust();
     });

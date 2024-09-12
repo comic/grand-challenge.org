@@ -218,8 +218,8 @@ class Executor(ABC):
     @property
     def _required_volume_size_gb(self):
         return max(
-            # Factor 2 for decompression and making copies
-            ceil(2 * self._input_size_bytes / settings.GIGABYTE),
+            # Factor 3 for decompression and making copies
+            ceil(3 * self._input_size_bytes / settings.GIGABYTE),
             # Or match what was provided with Batch Inference
             30,
         )

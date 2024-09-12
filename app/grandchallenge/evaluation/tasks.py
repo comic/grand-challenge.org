@@ -5,6 +5,7 @@ from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, OperationalError, transaction
+from django.db.models import Case, IntegerField, Value, When
 from django.db.transaction import on_commit
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
@@ -202,6 +203,14 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
             for ai in evaluation.submission.phase.archive.items.prefetch_related(
                 "values__interface"
             )
+            .annotate(
+                has_title=Case(
+                    When(title="", then=Value(1)),
+                    default=Value(0),
+                    output_field=IntegerField(),
+                )
+            )
+            .order_by("has_title", "title", "created")
         ],
         extra_viewer_groups=viewer_groups,
         extra_logs_viewer_groups=viewer_groups,
@@ -244,7 +253,7 @@ def handle_failed_jobs(*, evaluation_pk):
     Job.objects.filter(
         algorithm_image=evaluation.submission.algorithm_image,
         status__in=[Job.PENDING, Job.PROVISIONED, Job.RETRY],
-    ).update(status=Job.CANCELLED)
+    ).select_for_update(skip_locked=True).update(status=Job.CANCELLED)
 
 
 @acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))

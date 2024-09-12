@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", function (event) {
+document.addEventListener("DOMContentLoaded", event => {
     $("#challengeRequestsTable").DataTable({
         order: [[3, "desc"]],
         lengthChange: false,

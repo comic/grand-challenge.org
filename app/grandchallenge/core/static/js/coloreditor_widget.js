@@ -1,8 +1,8 @@
 /** global: django */
 
-window.addEventListener("load", function (event) {
+window.addEventListener("load", event => {
     if (typeof django !== "undefined" && typeof django.jQuery !== "undefined") {
-        (function ($) {
+        ($ => {
             // add colorpicker to inlines added dynamically
             $(document).on(
                 "formset:added",

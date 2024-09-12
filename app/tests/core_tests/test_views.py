@@ -25,7 +25,7 @@ def test_sitemap(client):
 
 
 @pytest.mark.django_db
-def test_paginated_table_list_view():
+def test_paginated_table_list_view_get():
     view = PaginatedTableListView()
     request = HttpRequest()
     request.META["HTTP_X_REQUESTED_WITH"] = "XMLHttpRequest"
@@ -41,7 +41,26 @@ def test_paginated_table_list_view():
         "recordsTotal": 0,
         "recordsFiltered": 0,
         "data": [],
-        "showColumns": [],
+    }
+
+
+@pytest.mark.django_db
+def test_paginated_table_list_view_post():
+    view = PaginatedTableListView()
+    request = HttpRequest()
+    request.META["HTTP_X_REQUESTED_WITH"] = "XMLHttpRequest"
+    request.POST["length"] = 50
+    request.POST["draw"] = 1
+    view.model = Algorithm
+    view.order_by = "created"
+    view.request = request
+    resp = view.post(request)
+
+    assert json.loads(resp.content) == {
+        "draw": 1,
+        "recordsTotal": 0,
+        "recordsFiltered": 0,
+        "data": [],
     }
 
 

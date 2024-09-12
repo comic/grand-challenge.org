@@ -7,7 +7,13 @@ from requests import put
 
 from grandchallenge.cases.widgets import FlexibleImageField, WidgetChoices
 from grandchallenge.components.models import ComponentInterfaceValue
-from grandchallenge.reader_studies.models import Answer, DisplaySet, Question
+from grandchallenge.reader_studies.models import (
+    Answer,
+    AnswerType,
+    DisplaySet,
+    InteractiveAlgorithmChoices,
+    Question,
+)
 from grandchallenge.subdomains.utils import reverse
 from tests.cases_tests import RESOURCE_PATH
 from tests.components_tests.factories import (
@@ -750,4 +756,71 @@ def test_display_set_bulk_delete_permissions(client):
     assert (
         list(response.context["form"].fields["civ_sets_to_delete"].queryset)
         == []
+    )
+
+
+@pytest.mark.django_db
+def test_display_set_delete_all_button_disabled(client):
+    editor = UserFactory()
+    rs = ReaderStudyFactory()
+    rs.add_editor(editor)
+
+    AnswerFactory(question__reader_study=rs)
+
+    response = get_view_for_user(
+        client=client,
+        viewname="reader-studies:display_sets",
+        reverse_kwargs={"slug": rs.slug},
+        user=editor,
+    )
+
+    assert response.status_code == 200
+    assert (
+        "Cannot delete all display sets: first you need to delete all of the answers for this reader study"
+        in str(response.rendered_content)
+    )
+
+
+@pytest.mark.django_db
+def test_question_interactive_algorithms_view_permissions(client):
+    editor, editor_with_permission, reader = UserFactory.create_batch(3)
+    rs = ReaderStudyFactory()
+
+    rs.add_editor(editor)
+    rs.add_editor(editor_with_permission)
+    rs.add_reader(reader)
+
+    assign_perm(
+        "reader_studies.add_interactive_algorithm_to_question",
+        editor_with_permission,
+    )
+
+    response = get_view_for_user(
+        client=client,
+        viewname="reader-studies:question-interactive-algorithms",
+        reverse_kwargs={"slug": rs.slug},
+        data={"answer_type": AnswerType.MASK},
+        user=editor,
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        client=client,
+        viewname="reader-studies:question-interactive-algorithms",
+        reverse_kwargs={"slug": rs.slug},
+        data={"answer_type": AnswerType.MASK},
+        user=reader,
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        client=client,
+        viewname="reader-studies:question-interactive-algorithms",
+        reverse_kwargs={"slug": rs.slug},
+        data={"answer_type": AnswerType.MASK},
+        user=editor_with_permission,
+    )
+    assert response.status_code == 200
+    assert InteractiveAlgorithmChoices.ULS23_BASELINE.value in str(
+        response.content
     )

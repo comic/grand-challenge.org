@@ -571,15 +571,8 @@ class JobsList(PaginatedTableListView):
         Column(title="Creator", sort_field="creator__username"),
         Column(title="Status", sort_field="status"),
         Column(title="Visibility", sort_field="public"),
-        Column(
-            title="Comment",
-            sort_field="comment",
-            optional_condition=lambda obj: bool(obj.comment),
-        ),
-        Column(
-            title="Result",
-            optional_condition=lambda obj: bool(obj.rendered_result_text),
-        ),
+        Column(title="Comment", sort_field="comment"),
+        Column(title="Result"),
         Column(title="Results"),
         Column(title="Viewer"),
     ]

@@ -399,6 +399,9 @@ class Challenge(ChallengeBase):
         verbose_name = "challenge"
         verbose_name_plural = "challenges"
         ordering = ("pk",)
+        permissions = [
+            ("add_registration_question", "Can add registration questions"),
+        ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -468,6 +471,9 @@ class Challenge(ChallengeBase):
 
         # Admins can change this challenge
         assign_perm("change_challenge", self.admins_group, self)
+
+        # Admin can add registration questions
+        assign_perm("add_registration_question", self.admins_group, self)
 
         reg_and_anon = Group.objects.get(
             name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME

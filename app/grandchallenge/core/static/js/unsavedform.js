@@ -1,11 +1,11 @@
-$(document).ready(function () {
-    var unsaved = false;
+$(document).ready(() => {
+    let unsaved = false;
 
-    $(":input").change(function () {
+    $(":input").change(() => {
         unsaved = true;
     });
 
-    $("#submit-id-save").click(function () {
+    $("#submit-id-save").click(() => {
         unsaved = false;
     });
 

@@ -13,12 +13,14 @@ class ConversationAdmin(admin.ModelAdmin):
         "pk",
         "participant_usernames",
     )
-    list_prefetch_related = ("participants",)
     readonly_fields = ("participant_usernames",)
     search_fields = (
         "pk",
         "participants__username",
     )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).prefetch_related("participants")
 
     def participant_usernames(self, obj):
         return ", ".join(user.username for user in obj.participants.all())
@@ -45,7 +47,6 @@ class DirectMessageAdmin(admin.ModelAdmin):
         "is_reported_as_spam",
         "is_deleted",
     )
-    list_prefetch_related = ("unread_by",)
     ordering = ("-created",)
     search_fields = (
         "pk",
@@ -53,6 +54,9 @@ class DirectMessageAdmin(admin.ModelAdmin):
         "conversation__pk",
         "unread_by__username",
     )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).prefetch_related("unread_by")
 
     def unread_by_usernames(self, obj):
         return ", ".join(user.username for user in obj.unread_by.all())

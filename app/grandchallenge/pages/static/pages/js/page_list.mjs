@@ -1,4 +1,4 @@
-$(document).ready(function () {
+$(document).ready(() => {
     $("#pagesTable").DataTable({
         pageLength: 10,
         columnDefs: [

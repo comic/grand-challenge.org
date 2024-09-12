@@ -6,6 +6,7 @@ import pytest
 from actstream.actions import is_following
 from django.contrib.auth.models import Permission
 from django.db.models import BLANK_CHOICE_DASH
+from django.forms import HiddenInput, Select
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.cases.widgets import FlexibleImageWidget
@@ -28,6 +29,7 @@ from grandchallenge.reader_studies.forms import (
 from grandchallenge.reader_studies.models import (
     Answer,
     AnswerType,
+    InteractiveAlgorithmChoices,
     Question,
     QuestionWidgetKindChoices,
     ReaderStudy,
@@ -325,6 +327,7 @@ def test_question_update(client):
     )
     form = QuestionForm(
         reader_study=question.reader_study,
+        user=editor,
         instance=question,
         data={
             "question_text": "bar",
@@ -356,6 +359,7 @@ def test_question_update(client):
 
     form = QuestionForm(
         reader_study=question.reader_study,
+        user=editor,
         instance=question,
         data={
             "question_text": "bar",
@@ -394,6 +398,7 @@ def test_question_update(client):
     # should no longer be possible
     form = QuestionForm(
         reader_study=question.reader_study,
+        user=editor,
         instance=question,
         data={
             "question_text": "foo",
@@ -464,7 +469,9 @@ def test_question_form_interface_field(answer_type, interface_kind):
     ).first()
     assert ci_img is not None
     form = QuestionForm(
-        reader_study=ReaderStudyFactory(), initial={"answer_type": answer_type}
+        reader_study=ReaderStudyFactory(),
+        user=UserFactory(),
+        initial={"answer_type": answer_type},
     )
     assert form.interface_choices().filter(pk=ci.pk).exists()
     assert not form.interface_choices().filter(pk=ci_img.pk).exists()
@@ -474,7 +481,9 @@ def test_question_form_interface_field(answer_type, interface_kind):
 def test_question_form_interface_field_no_answer_type():
     assert ComponentInterface.objects.count() > 0
     form = QuestionForm(
-        reader_study=ReaderStudyFactory(), initial={"answer_type": None}
+        reader_study=ReaderStudyFactory(),
+        user=UserFactory(),
+        initial={"answer_type": None},
     )
     # No answer_type provided, this happens for answers that already have
     # answers. The form shouldn't error and the interface_choices should
@@ -1423,6 +1432,7 @@ def test_display_set_add_interface_form():
 def test_question_form_answer_widget_choices(answer_type, choices):
     form = QuestionForm(
         reader_study=ReaderStudyFactory(),
+        user=UserFactory(),
         initial=(
             {"answer_type": answer_type} if answer_type is not None else {}
         ),
@@ -1433,11 +1443,15 @@ def test_question_form_answer_widget_choices(answer_type, choices):
 @pytest.mark.django_db
 def test_question_form_initial_widget():
     qu = QuestionFactory(answer_type=AnswerType.TEXT)
-    form = QuestionForm(reader_study=ReaderStudyFactory(), instance=qu)
+    form = QuestionForm(
+        reader_study=ReaderStudyFactory(), user=UserFactory(), instance=qu
+    )
     assert not form.initial_widget()
 
     qu.widget = QuestionWidgetKindChoices.ACCEPT_REJECT
-    form2 = QuestionForm(reader_study=ReaderStudyFactory(), instance=qu)
+    form2 = QuestionForm(
+        reader_study=ReaderStudyFactory(), user=UserFactory(), instance=qu
+    )
     assert form2.initial_widget() == QuestionWidgetKindChoices.ACCEPT_REJECT
 
 
@@ -1445,13 +1459,17 @@ def test_question_form_initial_widget():
 def test_question_widget_choices_for_non_editable_instance():
     # no matter whether the question is editable, widget choices should be the same
     qu = QuestionFactory(answer_type=AnswerType.TEXT)
-    form = QuestionForm(reader_study=ReaderStudyFactory(), instance=qu)
+    form = QuestionForm(
+        reader_study=ReaderStudyFactory(), user=UserFactory(), instance=qu
+    )
     assert form.widget_choices() == [
         ("TEXT_INPUT", "Text Input"),
         ("TEXT_AREA", "Text Area"),
     ]
     AnswerFactory(question=qu, answer="Foo")
-    form = QuestionForm(reader_study=ReaderStudyFactory(), instance=qu)
+    form = QuestionForm(
+        reader_study=ReaderStudyFactory(), user=UserFactory(), instance=qu
+    )
     assert form.widget_choices() == [
         ("TEXT_INPUT", "Text Input"),
         ("TEXT_AREA", "Text Area"),
@@ -1472,6 +1490,7 @@ def test_question_default_annotation_color():
 
     form = QuestionForm(
         reader_study=ReaderStudyFactory(),
+        user=UserFactory(),
         data={
             "answer_type": AnswerType.TEXT,
             "widget": QuestionWidgetKindChoices.TEXT_AREA,
@@ -1489,6 +1508,7 @@ def test_question_default_annotation_color():
 
     form = QuestionForm(
         reader_study=ReaderStudyFactory(),
+        user=UserFactory(),
         data={
             "answer_type": AnswerType.MASK,
             "image_port": Question.ImagePort.MAIN,
@@ -1500,6 +1520,7 @@ def test_question_default_annotation_color():
 
     form = QuestionForm(
         reader_study=ReaderStudyFactory(),
+        user=UserFactory(),
         data={
             "answer_type": AnswerType.TEXT,
             "widget": QuestionWidgetKindChoices.TEXT_AREA,
@@ -1511,6 +1532,7 @@ def test_question_default_annotation_color():
 
     form = QuestionForm(
         reader_study=ReaderStudyFactory(),
+        user=UserFactory(),
         data={
             "answer_type": AnswerType.TEXT,
             "widget": QuestionWidgetKindChoices.TEXT_AREA,
@@ -1522,6 +1544,7 @@ def test_question_default_annotation_color():
 
     form = QuestionForm(
         reader_study=ReaderStudyFactory(),
+        user=UserFactory(),
         data={
             "answer_type": AnswerType.TEXT,
             "widget": QuestionWidgetKindChoices.TEXT_AREA,
@@ -1532,6 +1555,7 @@ def test_question_default_annotation_color():
 
     form = QuestionForm(
         reader_study=ReaderStudyFactory(),
+        user=UserFactory(),
         data={
             "answer_type": AnswerType.MASK,
             "image_port": Question.ImagePort.MAIN,
@@ -1672,7 +1696,9 @@ def test_question_create_options_validation(formset_data, expected_errors):
     }
 
     form = QuestionForm(
-        data={**parent_data, **formset_data}, reader_study=ReaderStudyFactory()
+        data={**parent_data, **formset_data},
+        reader_study=ReaderStudyFactory(),
+        user=UserFactory(),
     )
 
     form.is_valid()
@@ -1700,6 +1726,7 @@ def test_question_choices_are_created():
             "options-2-default": False,
         },
         reader_study=ReaderStudyFactory(),
+        user=UserFactory(),
     )
 
     form.is_valid()
@@ -1723,6 +1750,7 @@ def test_option_cannot_be_deleted():
 
     form = QuestionForm(
         reader_study=q.reader_study,
+        user=UserFactory(),
         data={
             "question_text": q.question_text,
             "answer_type": AnswerType.CHOICE,
@@ -1754,3 +1782,93 @@ def test_option_cannot_be_deleted():
 
     # 2nd form should be ignored
     assert q.options.count() == 1
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "answer_type, choices",
+    (
+        (
+            AnswerType.MASK,
+            [
+                (
+                    InteractiveAlgorithmChoices.ULS23_BASELINE.value,
+                    InteractiveAlgorithmChoices.ULS23_BASELINE.label,
+                )
+            ],
+        ),
+        *[
+            (answer_type, [])
+            for answer_type in AnswerType.values
+            if answer_type != AnswerType.MASK
+        ],
+    ),
+)
+def test_question_form_interactive_algorithm_field(answer_type, choices):
+    user_with_permission, user_without_perm = UserFactory.create_batch(2)
+    assign_perm(
+        "reader_studies.add_interactive_algorithm_to_question",
+        user_with_permission,
+    )
+
+    form = QuestionForm(
+        reader_study=ReaderStudyFactory(),
+        user=user_without_perm,
+        initial={"answer_type": answer_type},
+    )
+    assert form.interactive_algorithm_choices() == [*BLANK_CHOICE_DASH]
+    assert form.fields["interactive_algorithm"].disabled
+    assert isinstance(form.fields["interactive_algorithm"].widget, HiddenInput)
+
+    form = QuestionForm(
+        reader_study=ReaderStudyFactory(),
+        user=user_with_permission,
+        initial={"answer_type": answer_type},
+    )
+    assert form.interactive_algorithm_choices() == [
+        *BLANK_CHOICE_DASH,
+        *choices,
+    ]
+    assert not form.fields["interactive_algorithm"].disabled
+    assert isinstance(form.fields["interactive_algorithm"].widget, Select)
+
+
+@pytest.mark.django_db
+def test_interactive_algorithm_field_permissions(client):
+    editor, editor_with_permission = UserFactory.create_batch(2)
+    rs = ReaderStudyFactory()
+
+    rs.add_editor(editor)
+    rs.add_editor(editor_with_permission)
+
+    assign_perm(
+        "reader_studies.add_interactive_algorithm_to_question",
+        editor_with_permission,
+    )
+
+    form = QuestionForm(
+        reader_study=rs,
+        user=editor,
+        data={
+            "question_text": "foo",
+            "answer_type": Question.AnswerType.MASK,
+            "interactive_algorithm": InteractiveAlgorithmChoices.ULS23_BASELINE,
+        },
+    )
+    form.is_valid()
+    assert form.cleaned_data["interactive_algorithm"] == ""
+
+    form = QuestionForm(
+        reader_study=rs,
+        user=editor_with_permission,
+        data={
+            "question_text": "foo",
+            "answer_type": Question.AnswerType.MASK,
+            "interactive_algorithm": InteractiveAlgorithmChoices.ULS23_BASELINE,
+        },
+    )
+    form.is_valid()
+    assert (
+        form.cleaned_data["interactive_algorithm"]
+        == InteractiveAlgorithmChoices.ULS23_BASELINE
+    )
