@@ -872,16 +872,19 @@ def test_setting_credits_per_job(
     )
     ai.refresh_from_db()
     alg = ai.algorithm
+    alg.minimum_credits_per_job = 25
 
     for test in (
         {"time_limit": 20, "credits": 30},
         {"time_limit": 1, "credits": 25},  # minimum credits
         {"time_limit": 120, "credits": 200},
     ):
-        alg.minimum_credits_per_job = 25
         alg.time_limit = test["time_limit"] * 60
-        alg.save()
 
+        with django_capture_on_commit_callbacks(execute=True):
+            alg.save()
+
+        alg.refresh_from_db()
         assert alg.credits_per_job == test["credits"]
 
 

@@ -820,9 +820,9 @@ def test_import_view(
         == "https://testserver/algorithms/the-pi-cai-challenge-baseline-nndetection/"
     )
 
-    assert len(callbacks) == 1
+    assert len(callbacks) == 2
     assert (
-        str(callbacks[0])
+        str(callbacks[1])
         == "<bound method Signature.apply_async of grandchallenge.algorithms.tasks.import_remote_algorithm_image(algorithm_image_pk='cad9106c-e3cb-45fa-bda0-068ddacafb59', remote_bucket_name='testbucketname')>"
     )
 

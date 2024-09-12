@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
             model_name="algorithm",
             name="minimum_credits_per_job",
             field=models.PositiveIntegerField(
-                default=100,
+                default=20,
                 help_text="The minimum number of credits that are required for each execution of this algorithm. The actual number of credits required may be higher than this depending on the algorithms configuration.",
                 validators=[
                     django.core.validators.MinValueValidator(limit_value=20),

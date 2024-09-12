@@ -25,6 +25,7 @@ from jinja2 import sandbox
 from jinja2.exceptions import TemplateError
 from stdimage import JPEGField
 
+from grandchallenge.algorithms.tasks import update_credits_per_job
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.charts.specs import stacked_bar
 from grandchallenge.components.models import (
@@ -183,7 +184,7 @@ class Algorithm(
         ),
     )
     minimum_credits_per_job = models.PositiveIntegerField(
-        default=100,
+        default=20,
         help_text=(
             "The minimum number of credits that are required for each execution of this algorithm. "
             "The actual number of credits required may be higher than this depending on the "
@@ -286,17 +287,21 @@ class Algorithm(
                 self.workstation_id or self.default_workstation.pk
             )
 
+        super().save(*args, **kwargs)
+
+        self.assign_permissions()
+        self.assign_workstation_permissions()
+
         if (
             adding
             or self.has_changed("time_limit")
             or self.has_changed("minimum_credits_per_job")
         ):
-            self.set_credits_per_job()
-
-        super().save(*args, **kwargs)
-
-        self.assign_permissions()
-        self.assign_workstation_permissions()
+            on_commit(
+                update_credits_per_job.signature(
+                    kwargs={"algorithm_pk": self.pk}
+                ).apply_async
+            )
 
     def delete(self, *args, **kwargs):
         ct = ContentType.objects.filter(
@@ -413,7 +418,7 @@ class Algorithm(
 
         return w
 
-    def set_credits_per_job(self):
+    def update_credits_per_job(self):
         default_credits_per_month = Credit._meta.get_field(
             "credits"
         ).get_default()
@@ -451,6 +456,7 @@ class Algorithm(
         self.credits_per_job = max(
             self.minimum_credits_per_job, credits_per_job
         )
+        self.save(update_fields=["credits_per_job"])
 
     def is_editor(self, user):
         return user.groups.filter(pk=self.editors_group.pk).exists()
@@ -642,9 +648,11 @@ class AlgorithmImage(UUIDModel, ComponentImage):
 
     def mark_desired_version(self):
         super().mark_desired_version()
-
-        self.algorithm.set_credits_per_job()
-        self.algorithm.save()
+        on_commit(
+            update_credits_per_job.signature(
+                kwargs={"algorithm_pk": self.pk}
+            ).apply_async
+        )
 
     def get_peer_images(self):
         return AlgorithmImage.objects.filter(algorithm=self.algorithm)
