@@ -1213,7 +1213,10 @@ def test_no_job_without_image(django_capture_on_commit_callbacks):
     with django_capture_on_commit_callbacks() as callbacks:
         ai = AlgorithmImageFactory(image=None)
 
-    assert len(callbacks) == 0
+    assert len(callbacks) == 1
+    assert "grandchallenge.components.tasks.validate_docker_image" not in str(
+        callbacks[0]
+    )
     assert ai.import_status == ImportStatusChoices.INITIALIZED
 
 
@@ -1224,9 +1227,9 @@ def test_one_job_with_image(
     with django_capture_on_commit_callbacks() as callbacks:
         ai = AlgorithmImageFactory(image__from_path=algorithm_image)
 
-    assert len(callbacks) == 1
+    assert len(callbacks) == 2
     assert "grandchallenge.components.tasks.validate_docker_image" in str(
-        callbacks[0]
+        callbacks[1]
     )
     assert ai.import_status == ImportStatusChoices.QUEUED
 
