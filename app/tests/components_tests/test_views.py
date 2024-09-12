@@ -450,9 +450,9 @@ def test_display_set_bulk_delete(
 def test_display_ci_example_value(client):
 
     ci = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.INTEGER,
+        kind=InterfaceKindChoices.STRING,
         relative_path="example_value.json",
-        example_value=999,
+        example_value="EXAMPLE-VALUE-TEST-STRING",
     )
 
     user = UserFactory()
@@ -465,7 +465,4 @@ def test_display_ci_example_value(client):
     )
 
     assert response.status_code == 200
-    assert (
-        escape(json.dumps(ci.example_value, indent=4))
-        in response.rendered_content
-    )
+    assert escape(ci.example_value) in response.rendered_content

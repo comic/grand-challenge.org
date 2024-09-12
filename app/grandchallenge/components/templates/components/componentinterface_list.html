@@ -103,7 +103,7 @@
                                     <div class="modal-content">
                                         <div class="modal-header">
                                             <h5 class="modal-title">
-                                                {{ interface.title }} example
+                                                {{ interface.title }} Example
                                             </h5>
                                             <button type="button" class="close" data-dismiss="modal"
                                                     aria-label="Close">
@@ -111,7 +111,21 @@
                                             </button>
                                         </div>
                                         <div class="text-left modal-body">
-                                            <pre>{{ interface.json_kind_example|json_dumps:4 }}</pre>
+                                            {% if interface.json_kind_example.optional_fields %}
+                                                <strong>Optional fields:</strong>
+                                                <ul>
+                                                    {% for field in interface.json_kind_example.optional_fields %}
+                                                        <li>{{ field }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            {% endif %}
+
+                                            {% if interface.json_kind_example.extra_info %}
+                                                <p>{{ interface.json_kind_example.extra_info }}</p>
+                                            {% endif %}
+
+                                            <strong>Example JSON file contents:</strong>
+                                            <pre>{{ interface.json_kind_example.example|json_dumps:2 }}</pre>
                                         </div>
                                     </div>
                                 </div>

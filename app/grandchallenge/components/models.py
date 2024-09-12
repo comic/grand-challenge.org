@@ -594,7 +594,7 @@ class InterfaceKind:
             from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 
             for key, example in INTERFACE_TYPE_JSON_EXAMPLES.items():
-                title = f"Example json file for {key.label}"
+                title = f"Example JSON file contents for {key.label}"
 
                 if "optional_fields" in example:
                     title += f" (Optional fields: {oxford_comma(example['optional_fields'])})"
@@ -673,6 +673,23 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
             InterfaceKind.InterfaceKindChoices.OBJ,
             InterfaceKind.InterfaceKindChoices.MP4,
+        }
+
+    @staticmethod
+    def interface_type_object_store_required():
+        return {
+            *InterfaceKind.interface_type_image(),
+            *InterfaceKind.interface_type_file(),
+            # These values can be large, so for any new interfaces of this
+            # type always add them to the object store
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_POINTS,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_POLYGONS,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_LINES,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_ANGLES,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_ELLIPSES,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
         }
 
     @staticmethod
@@ -881,29 +898,18 @@ class ComponentInterface(OverlaySegmentsMixin):
     @property
     def json_kind_example(self):
         if self.is_json_kind:
-            if self.example_value:
-                return self.example_value
+            if self.example_value is not None:
+                return {"example": self.example_value}
             else:
-                return INTERFACE_TYPE_JSON_EXAMPLES[self.kind]["example"]
+                return INTERFACE_TYPE_JSON_EXAMPLES[self.kind]
         else:
             return None
 
     @property
     def requires_object_store(self):
-        return self.kind in {
-            *InterfaceKind.interface_type_image(),
-            *InterfaceKind.interface_type_file(),
-            # These values can be large, so for any new interfaces of this
-            # type always add them to the object store
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_POINTS,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_POLYGONS,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_LINES,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_ANGLES,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_ELLIPSES,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
-        }
+        return (
+            self.kind in InterfaceKind.interface_type_object_store_required()
+        )
 
     @property
     def super_kind(self):
@@ -1083,16 +1089,15 @@ class ComponentInterface(OverlaySegmentsMixin):
             )
 
     def _clean_example_value(self):
-        if self.example_value:
+        if self.example_value is not None:
             if self.is_json_kind:
                 civ = ComponentInterfaceValue(interface=self)
 
                 if self.requires_object_store:
-                    file = ContentFile(
+                    civ.file = ContentFile(
                         json.dumps(self.example_value).encode("utf-8"),
                         name=f"{self.kind}.json",
                     )
-                    civ.file = file
                 else:
                     civ.value = self.example_value
 
