@@ -52,6 +52,7 @@ class ComponentInterfaceAdmin(admin.ModelAdmin):
     )
     search_fields = ("title", "slug")
     list_filter = ("kind",)
+    readonly_fields = ("example_value",)
 
     def get_readonly_fields(self, request, obj=None):
         if obj:

@@ -2,6 +2,7 @@
 {% load url %}
 {% load static %}
 {% load json %}
+{% load bleach %}
 
 {% block title %}
     {{ object_type|title }} {{ list_type|title }} Options - {{ block.super }}
@@ -121,11 +122,11 @@
                                             {% endif %}
 
                                             {% if interface.json_kind_example.extra_info %}
-                                                <p>{{ interface.json_kind_example.extra_info }}</p>
+                                                {{ interface.json_kind_example.extra_info|md2html }}
                                             {% endif %}
 
                                             <strong>Example JSON file contents:</strong>
-                                            <pre>{{ interface.json_kind_example.example|json_dumps:2 }}</pre>
+                                            <pre>{{ interface.json_kind_example.value|json_dumps:2 }}</pre>
                                         </div>
                                     </div>
                                 </div>

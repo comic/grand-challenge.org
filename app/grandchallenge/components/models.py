@@ -137,13 +137,13 @@ class InterfaceSuperKindChoices(models.TextChoices):
 
 
 INTERFACE_TYPE_JSON_EXAMPLES = {
-    InterfaceKindChoices.STRING: {"example": "Example String"},
-    InterfaceKindChoices.INTEGER: {"example": 42},
-    InterfaceKindChoices.FLOAT: {"example": 42.0},
-    InterfaceKindChoices.BOOL: {"example": True},
-    InterfaceKindChoices.ANY: {"example": {"key": "value", "None": None}},
+    InterfaceKindChoices.STRING: {"value": "Example String"},
+    InterfaceKindChoices.INTEGER: {"value": 42},
+    InterfaceKindChoices.FLOAT: {"value": 42.0},
+    InterfaceKindChoices.BOOL: {"value": True},
+    InterfaceKindChoices.ANY: {"value": {"key": "value", "None": None}},
     InterfaceKindChoices.CHART: {
-        "example": {
+        "value": {
             "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
             "width": 300,
             "height": 300,
@@ -210,7 +210,7 @@ INTERFACE_TYPE_JSON_EXAMPLES = {
         "extra_info": "For more examples, see https://vega.github.io/vega-lite/examples/ and https://grand-challenge.org/blogs/visualisations-for-challenges/",
     },
     InterfaceKindChoices.TWO_D_BOUNDING_BOX: {
-        "example": {
+        "value": {
             "name": "Region of interest",
             "type": "2D bounding box",
             "corners": [
@@ -225,7 +225,7 @@ INTERFACE_TYPE_JSON_EXAMPLES = {
         "optional_fields": ["name", "probability"],
     },
     InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES: {
-        "example": {
+        "value": {
             "name": "Regions of interest",
             "type": "Multiple 2D bounding boxes",
             "boxes": [
@@ -255,7 +255,7 @@ INTERFACE_TYPE_JSON_EXAMPLES = {
         "optional_fields": ["name", "probability"],
     },
     InterfaceKindChoices.DISTANCE_MEASUREMENT: {
-        "example": {
+        "value": {
             "name": "Distance between areas",
             "type": "Distance measurement",
             "start": [59.8, 78.8, 0.5],
@@ -266,7 +266,7 @@ INTERFACE_TYPE_JSON_EXAMPLES = {
         "optional_fields": ["name", "probability"],
     },
     InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS: {
-        "example": {
+        "value": {
             "name": "Distances between areas",
             "type": "Multiple distance measurements",
             "lines": [
@@ -288,7 +288,7 @@ INTERFACE_TYPE_JSON_EXAMPLES = {
         "optional_fields": ["name", "probability"],
     },
     InterfaceKindChoices.POINT: {
-        "example": {
+        "value": {
             "name": "Point of interest",
             "type": "Point",
             "point": [152.1, 111.0, 0.5],
@@ -298,7 +298,7 @@ INTERFACE_TYPE_JSON_EXAMPLES = {
         "optional_fields": ["name", "probability"],
     },
     InterfaceKindChoices.MULTIPLE_POINTS: {
-        "example": {
+        "value": {
             "name": "Points of interest",
             "type": "Multiple points",
             "points": [
@@ -318,7 +318,7 @@ INTERFACE_TYPE_JSON_EXAMPLES = {
         "optional_fields": ["name", "probability"],
     },
     InterfaceKindChoices.POLYGON: {
-        "example": {
+        "value": {
             "name": "Area of interest",
             "type": "Polygon",
             "seed_point": [76.4, 124.0, 0.5],
@@ -335,7 +335,7 @@ INTERFACE_TYPE_JSON_EXAMPLES = {
         "optional_fields": ["name", "probability"],
     },
     InterfaceKindChoices.MULTIPLE_POLYGONS: {
-        "example": {
+        "value": {
             "name": "Areas of interest",
             "type": "Multiple polygons",
             "polygons": [
@@ -370,7 +370,7 @@ INTERFACE_TYPE_JSON_EXAMPLES = {
         "optional_fields": ["name", "probability"],
     },
     InterfaceKindChoices.LINE: {
-        "example": {
+        "value": {
             "name": "Some annotation",
             "type": "Line",
             "seed_points": [[1, 2, 3], [1, 2, 3]],
@@ -384,7 +384,7 @@ INTERFACE_TYPE_JSON_EXAMPLES = {
         "optional_fields": ["name", "probability"],
     },
     InterfaceKindChoices.MULTIPLE_LINES: {
-        "example": {
+        "value": {
             "name": "Some annotations",
             "type": "Multiple lines",
             "lines": [
@@ -412,7 +412,7 @@ INTERFACE_TYPE_JSON_EXAMPLES = {
         "optional_fields": ["name", "probability"],
     },
     InterfaceKindChoices.ANGLE: {
-        "example": {
+        "value": {
             "name": "Some angle",
             "type": "Angle",
             "lines": [
@@ -425,7 +425,7 @@ INTERFACE_TYPE_JSON_EXAMPLES = {
         "optional_fields": ["name", "probability"],
     },
     InterfaceKindChoices.MULTIPLE_ANGLES: {
-        "example": {
+        "value": {
             "name": "Some angles",
             "type": "Multiple angles",
             "angles": [
@@ -459,7 +459,7 @@ INTERFACE_TYPE_JSON_EXAMPLES = {
         "optional_fields": ["name", "probability"],
     },
     InterfaceKindChoices.ELLIPSE: {
-        "example": {
+        "value": {
             "name": "Some ellipse",
             "type": "Ellipse",
             "major_axis": [[-10, 606, 0.5], [39, 559, 0.5]],
@@ -470,7 +470,7 @@ INTERFACE_TYPE_JSON_EXAMPLES = {
         "optional_fields": ["name", "probability"],
     },
     InterfaceKindChoices.MULTIPLE_ELLIPSES: {
-        "example": {
+        "value": {
             "name": "Some ellipse",
             "type": "Multiple ellipses",
             "ellipses": [
@@ -490,7 +490,7 @@ INTERFACE_TYPE_JSON_EXAMPLES = {
         "optional_fields": ["name", "probability"],
     },
     InterfaceKindChoices.THREE_POINT_ANGLE: {
-        "example": {
+        "value": {
             "name": "Some 3-point angle",
             "type": "Three-point angle",
             "angle": [[177, 493, 0.5], [22, 489, 0.5], [112, 353, 0.5]],
@@ -500,7 +500,7 @@ INTERFACE_TYPE_JSON_EXAMPLES = {
         "optional_fields": ["name", "probability"],
     },
     InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES: {
-        "example": {
+        "value": {
             "name": "Multiple 3-point angles",
             "type": "Multiple three-point angles",
             "angles": [
@@ -528,7 +528,7 @@ INTERFACE_TYPE_JSON_EXAMPLES = {
         "optional_fields": ["name", "probability"],
     },
     InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION: {
-        "example": {
+        "value": {
             "3d_affine_transform": [
                 [1, 0, 0, 0],
                 [0, 1, 0, 0],
@@ -538,10 +538,10 @@ INTERFACE_TYPE_JSON_EXAMPLES = {
         },
     },
     InterfaceKindChoices.CHOICE: {
-        "example": "Choice 1",
+        "value": "Choice 1",
     },
     InterfaceKindChoices.MULTIPLE_CHOICE: {
-        "example": ["Choice 1", "Choice 2"],
+        "value": ["Choice 1", "Choice 2"],
     },
 }
 
@@ -603,7 +603,7 @@ class InterfaceKind:
                     title += f" ({example['extra_info']})"
 
                 print(f"{title}:")
-                print(json.dumps(example["example"], indent=2))
+                print(json.dumps(example["value"], indent=2))
                 print("")
 
         """
@@ -893,7 +893,7 @@ class ComponentInterface(OverlaySegmentsMixin):
     def json_kind_example(self):
         try:
             return {
-                "example": self.example_value.value,
+                "value": self.example_value.value,
                 "extra_info": self.example_value.extra_info,
             }
         except ObjectDoesNotExist:

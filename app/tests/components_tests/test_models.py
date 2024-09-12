@@ -1566,7 +1566,7 @@ def test_interface_kind_json_type_examples(kind, example):
     v = ComponentInterfaceExampleValueFactory(
         interface__kind=kind,
         interface__store_in_database=False,
-        value=example["example"],
+        value=example["value"],
     )
     v.full_clean()
 
