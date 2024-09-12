@@ -1,10 +1,10 @@
 function displayElements() {
-    const elements = document.querySelectorAll('[hx-display-me]');
-    elements.forEach(function (element) {
-        element.classList.remove('d-none');
-        element.removeAttribute('hx-display-me');
-    });
+    const elements = document.querySelectorAll("[hx-display-me]");
+    for (const element of elements) {
+        element.classList.remove("d-none");
+        element.removeAttribute("hx-display-me");
+    }
 }
 
-document.addEventListener('htmx:load', displayElements);
-document.addEventListener('DOMContentLoaded', displayElements);
+document.addEventListener("htmx:load", displayElements);
+document.addEventListener("DOMContentLoaded", displayElements);

@@ -12,6 +12,7 @@ from grandchallenge.components.models import (
 from grandchallenge.reader_studies.models import (
     Answer,
     AnswerType,
+    InteractiveAlgorithmChoices,
     Question,
     QuestionWidgetKindChoices,
     ReaderStudy,
@@ -1116,3 +1117,40 @@ def test_empty_answer_confirmation_validation(
 
     if error_message:
         assert error_message in str(e.value)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "answer_type, interactive_algorithm, error",
+    (
+        (
+            AnswerType.MASK,
+            InteractiveAlgorithmChoices.ULS23_BASELINE,
+            nullcontext(),
+        ),
+        *[
+            (answer_type, "", nullcontext())
+            for answer_type in AnswerType.values
+        ],
+        *[
+            (
+                answer_type,
+                InteractiveAlgorithmChoices.ULS23_BASELINE,
+                pytest.raises(ValidationError),
+            )
+            for answer_type in AnswerType.values
+            if answer_type != AnswerType.MASK
+        ],
+    ),
+)
+def test_clean_question_interactive_algorithms(
+    answer_type, interactive_algorithm, error
+):
+    q = QuestionFactory(
+        question_text="foo",
+        answer_type=answer_type,
+        interactive_algorithm=interactive_algorithm,
+    )
+
+    with error:
+        q._clean_interactive_algorithm()

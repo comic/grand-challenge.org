@@ -4,8 +4,8 @@ import uuid
 from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import OperationalError, transaction
-from django.db.models import Count, Q
+from django.db import IntegrityError, OperationalError, transaction
+from django.db.models import Case, Count, IntegerField, Q, Value, When
 from django.db.transaction import on_commit
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 @acks_late_2xlarge_task
 @transaction.atomic
-def create_evaluation(*, submission_pk, max_initial_jobs=1):
+def create_evaluation(*, submission_pk, max_initial_jobs=1):  # noqa: C901
     """
     Creates an Evaluation for a Submission
 
@@ -58,7 +58,7 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):
     # TODO - move this to the forms and make it an input here
     method = submission.phase.active_image
     if not method:
-        logger.info("No method ready for this submission")
+        logger.error("No method ready for this submission")
         Notification.send(
             kind=NotificationType.NotificationTypeChoices.MISSING_METHOD,
             message="missing method",
@@ -68,13 +68,15 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):
         )
         return
 
-    evaluation, created = Evaluation.objects.get_or_create(
-        submission=submission,
-        method=method,
-        ground_truth=submission.phase.active_ground_truth,
-    )
-    if not created:
-        logger.info(
+    try:
+        evaluation = Evaluation.objects.create(
+            submission=submission,
+            method=method,
+            ground_truth=submission.phase.active_ground_truth,
+            time_limit=submission.phase.evaluation_time_limit,
+        )
+    except IntegrityError:
+        logger.error(
             "Evaluation already created for this submission, method and ground truth."
         )
         return
@@ -201,6 +203,14 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
             for ai in evaluation.submission.phase.archive.items.prefetch_related(
                 "values__interface"
             )
+            .annotate(
+                has_title=Case(
+                    When(title="", then=Value(1)),
+                    default=Value(0),
+                    output_field=IntegerField(),
+                )
+            )
+            .order_by("has_title", "title", "created")
         ],
         extra_viewer_groups=viewer_groups,
         extra_logs_viewer_groups=viewer_groups,
@@ -243,7 +253,7 @@ def handle_failed_jobs(*, evaluation_pk):
     Job.objects.filter(
         algorithm_image=evaluation.submission.algorithm_image,
         status__in=[Job.PENDING, Job.PROVISIONED, Job.RETRY],
-    ).update(status=Job.CANCELLED)
+    ).select_for_update(skip_locked=True).update(status=Job.CANCELLED)
 
 
 @acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))

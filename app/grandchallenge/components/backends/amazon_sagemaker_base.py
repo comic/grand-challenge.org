@@ -2,6 +2,7 @@ import io
 import json
 import logging
 import re
+import time
 from abc import ABC, abstractmethod
 from datetime import timedelta
 from json import JSONDecodeError
@@ -49,6 +50,7 @@ class InstanceType(NamedTuple):
     usd_cents_per_hour: int
     gpus: int = 0
     gpu_type: GPUTypeChoices | None = None
+    nvme_volume_size: int | None = None
 
 
 INSTANCE_OPTIONS = [
@@ -211,6 +213,7 @@ INSTANCE_OPTIONS = [
         usd_cents_per_hour=4071,
         gpus=8,
         gpu_type=GPUTypeChoices.A100,
+        nvme_volume_size=8 * 1000,
     ),
     InstanceType(
         name="ml.p3.2xlarge",
@@ -275,6 +278,7 @@ INSTANCE_OPTIONS = [
         usd_cents_per_hour=157,
         gpus=1,
         gpu_type=GPUTypeChoices.A10G,
+        nvme_volume_size=250,
     ),
     InstanceType(
         name="ml.g5.2xlarge",
@@ -283,6 +287,7 @@ INSTANCE_OPTIONS = [
         usd_cents_per_hour=169,
         gpus=1,
         gpu_type=GPUTypeChoices.A10G,
+        nvme_volume_size=450,
     ),
     InstanceType(
         name="ml.g5.4xlarge",
@@ -291,6 +296,7 @@ INSTANCE_OPTIONS = [
         usd_cents_per_hour=227,
         gpus=1,
         gpu_type=GPUTypeChoices.A10G,
+        nvme_volume_size=600,
     ),
     InstanceType(
         name="ml.g5.8xlarge",
@@ -299,6 +305,7 @@ INSTANCE_OPTIONS = [
         usd_cents_per_hour=342,
         gpus=1,
         gpu_type=GPUTypeChoices.A10G,
+        nvme_volume_size=900,
     ),
     InstanceType(
         name="ml.g5.12xlarge",
@@ -307,6 +314,7 @@ INSTANCE_OPTIONS = [
         usd_cents_per_hour=791,
         gpus=4,
         gpu_type=GPUTypeChoices.A10G,
+        nvme_volume_size=3800,
     ),
     InstanceType(
         name="ml.g5.16xlarge",
@@ -315,6 +323,7 @@ INSTANCE_OPTIONS = [
         usd_cents_per_hour=572,
         gpus=1,
         gpu_type=GPUTypeChoices.A10G,
+        nvme_volume_size=1900,
     ),
     InstanceType(
         name="ml.g5.24xlarge",
@@ -323,6 +332,7 @@ INSTANCE_OPTIONS = [
         usd_cents_per_hour=1136,
         gpus=4,
         gpu_type=GPUTypeChoices.A10G,
+        nvme_volume_size=3800,
     ),
     InstanceType(
         name="ml.g5.48xlarge",
@@ -331,6 +341,7 @@ INSTANCE_OPTIONS = [
         usd_cents_per_hour=2273,
         gpus=8,
         gpu_type=GPUTypeChoices.A10G,
+        nvme_volume_size=2 * 3800,
     ),
     InstanceType(
         name="ml.g4dn.xlarge",
@@ -339,6 +350,7 @@ INSTANCE_OPTIONS = [
         usd_cents_per_hour=83,
         gpus=1,
         gpu_type=GPUTypeChoices.T4,
+        nvme_volume_size=125,
     ),
     InstanceType(
         name="ml.g4dn.2xlarge",
@@ -347,6 +359,7 @@ INSTANCE_OPTIONS = [
         usd_cents_per_hour=105,
         gpus=1,
         gpu_type=GPUTypeChoices.T4,
+        nvme_volume_size=225,
     ),
     InstanceType(
         name="ml.g4dn.4xlarge",
@@ -355,6 +368,7 @@ INSTANCE_OPTIONS = [
         usd_cents_per_hour=168,
         gpus=1,
         gpu_type=GPUTypeChoices.T4,
+        nvme_volume_size=225,
     ),
     InstanceType(
         name="ml.g4dn.8xlarge",
@@ -363,6 +377,7 @@ INSTANCE_OPTIONS = [
         usd_cents_per_hour=304,
         gpus=1,
         gpu_type=GPUTypeChoices.T4,
+        nvme_volume_size=900,
     ),
     InstanceType(
         name="ml.g4dn.12xlarge",
@@ -371,6 +386,7 @@ INSTANCE_OPTIONS = [
         usd_cents_per_hour=546,
         gpus=4,
         gpu_type=GPUTypeChoices.T4,
+        nvme_volume_size=900,
     ),
     InstanceType(
         name="ml.g4dn.16xlarge",
@@ -379,6 +395,7 @@ INSTANCE_OPTIONS = [
         usd_cents_per_hour=607,
         gpus=1,
         gpu_type=GPUTypeChoices.T4,
+        nvme_volume_size=900,
     ),
 ]
 
@@ -547,6 +564,28 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
     @property
     def usd_cents_per_hour(self):
         return self._instance_type.usd_cents_per_hour
+
+    @property
+    def _max_memory_mb(self):
+        # Reserve 1 GB for the system
+        return (self._instance_type.memory - 1) * 1024
+
+    @property
+    def _required_volume_size_gb(self):
+        required_gb = super()._required_volume_size_gb
+
+        if (
+            self._instance_type.nvme_volume_size
+            and required_gb > self._instance_type.nvme_volume_size
+        ):
+            logger.error(
+                f"Job {self._job_id} likely needs {required_gb} GB but "
+                f"instance only has {self._instance_type.nvme_volume_size} GB. "
+                "Attempting to run the job anyway."
+            )
+            return self._instance_type.nvme_volume_size
+        else:
+            return required_gb
 
     def execute(self, *, input_civs, input_prefixes):
         self._create_invocation_json(
@@ -811,28 +850,31 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
                 raise ComponentException(
                     "Algorithm container image would not start"
                 )
-        elif failure_reason == (
+        elif failure_reason in (
             "ClientError: Please use an instance type with more memory, "
-            "or reduce the size of job data processed on an instance."
+            "or reduce the size of job data processed on an instance.",
+            "ClientError: Artifact upload failed:ClientError: "
+            "Out of Memory. Please use a larger instance",
         ):
             try:
+                # Allow time for the log file to be written
+                time.sleep(10)
                 users_process_exit_code = self._get_task_return_code()
             except UncleanExit:
                 users_process_exit_code = None
 
             if users_process_exit_code not in (-9, 1, 137):
-                logger.error(
-                    "The instance ran out of memory, "
-                    "but this may not have been caused by the users process. "
-                    f"{users_process_exit_code=}"
-                )
+                # Requires investigation
+                logger.error(f"SageMaker OOM {users_process_exit_code=}")
 
             raise ComponentException(
                 "The container was killed as it exceeded its memory limit"
             )
+        else:
+            # Requires investigation
+            logger.error(f"SageMaker Job failed: {failure_reason}")
 
-        # Anything else needs investigation by a site administrator
-        raise RuntimeError(failure_reason)
+            raise ComponentException("An unexpected error occurred")
 
     def _stop_running_jobs(self):
         try:

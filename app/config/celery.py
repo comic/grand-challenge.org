@@ -1,5 +1,6 @@
 import logging
 import os
+import resource
 from math import ceil
 
 import requests
@@ -41,6 +42,16 @@ def check_configuration(*, instance, **__):
     else:
         celery_app.is_solo_worker = False
         logger.info("Worker setup OK")
+
+
+@celeryd_after_setup.connect()
+def set_memory_limits(*_, **__) -> None:
+    if settings.CELERY_WORKER_MAX_MEMORY_MB:
+        limit = settings.CELERY_WORKER_MAX_MEMORY_MB * settings.MEGABYTE
+        logger.info(f"Setting memory limit to {limit / settings.GIGABYTE} GB")
+        resource.setrlimit(resource.RLIMIT_DATA, (limit, limit))
+    else:
+        logger.warning("Not setting a memory limit")
 
 
 def get_scale_in_protection_url():

@@ -1,0 +1,27 @@
+{
+    "$schema": "https://biomejs.dev/schemas/1.8.3/schema.json",
+    "files": {
+        "ignore": [
+            "app/grandchallenge/core/static/vendored/**",
+            "app/grandchallenge/core/static/js/markdownx.js",
+            "app/grandchallenge/core/static/js/world-atlas/countries-110m.json"
+        ]
+    },
+    "formatter": {
+        "indentStyle": "space",
+        "indentWidth": 4
+    },
+    "organizeImports": { "enabled": true },
+    "linter": { "enabled": true, "rules": { "recommended": true } },
+    "javascript": {
+        "formatter": {
+            "arrowParentheses": "asNeeded"
+        }
+    },
+    "vcs": {
+        "enabled": true,
+        "clientKind": "git",
+        "useIgnoreFile": true,
+        "defaultBranch": "main"
+    }
+}

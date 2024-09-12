@@ -399,6 +399,9 @@ class Challenge(ChallengeBase):
         verbose_name = "challenge"
         verbose_name_plural = "challenges"
         ordering = ("pk",)
+        permissions = [
+            ("add_registration_question", "Can add registration questions"),
+        ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -468,6 +471,9 @@ class Challenge(ChallengeBase):
 
         # Admins can change this challenge
         assign_perm("change_challenge", self.admins_group, self)
+
+        # Admin can add registration questions
+        assign_perm("add_registration_question", self.admins_group, self)
 
         reg_and_anon = Group.objects.get(
             name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
@@ -658,7 +664,8 @@ class Challenge(ChallengeBase):
 
     @cached_property
     def status(self) -> str:
-        phase_status = {phase.status for phase in self.phase_set.all()}
+        phase_status = {phase.status for phase in self.visible_phases}
+
         if StatusChoices.OPEN in phase_status:
             status = StatusChoices.OPEN
         elif {StatusChoices.COMPLETED} == phase_status:
@@ -667,6 +674,7 @@ class Challenge(ChallengeBase):
             status = StatusChoices.OPENING_SOON
         else:
             status = StatusChoices.CLOSED
+
         return status
 
     @cached_property
@@ -690,13 +698,15 @@ class Challenge(ChallengeBase):
 
     @cached_property
     def challenge_type(self):
-        phase_types = {phase.submission_kind for phase in self.phase_set.all()}
+        phase_types = {phase.submission_kind for phase in self.visible_phases}
+
         # as long as one of the phases is type 2,
         # the challenge is classified as type 2
         if SubmissionKindChoices.ALGORITHM in phase_types:
             challenge_type = ChallengeTypeChoices.T2
         else:
             challenge_type = ChallengeTypeChoices.T1
+
         return challenge_type
 
     @property
@@ -704,7 +714,7 @@ class Challenge(ChallengeBase):
         if self.status == StatusChoices.OPEN:
             detail = [
                 phase.submission_status_string
-                for phase in self.phase_set.all()
+                for phase in self.visible_phases
                 if phase.status == StatusChoices.OPEN
             ]
             if len(detail) > 1:
@@ -719,13 +729,16 @@ class Challenge(ChallengeBase):
             start_date = min(
                 (
                     phase.submissions_open_at
-                    for phase in self.phase_set.all()
+                    for phase in self.visible_phases
                     if phase.status == StatusChoices.OPENING_SOON
                 ),
                 default=None,
             )
             phase = (
-                self.phase_set.filter(submissions_open_at=start_date)
+                self.phase_set.filter(
+                    submissions_open_at=start_date,
+                    public=True,
+                )
                 .order_by("-created")
                 .first()
             )

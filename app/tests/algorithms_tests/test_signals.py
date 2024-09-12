@@ -16,10 +16,14 @@ def test_user_can_download_images(client, reverse):
     j1_creator, j2_creator = UserFactory(), UserFactory()
 
     alg1_job = AlgorithmJobFactory(
-        algorithm_image__algorithm=alg_set.alg1, creator=j1_creator
+        algorithm_image__algorithm=alg_set.alg1,
+        creator=j1_creator,
+        time_limit=alg_set.alg1.time_limit,
     )
     alg2_job = AlgorithmJobFactory(
-        algorithm_image__algorithm=alg_set.alg2, creator=j2_creator
+        algorithm_image__algorithm=alg_set.alg2,
+        creator=j2_creator,
+        time_limit=alg_set.alg2.time_limit,
     )
 
     alg1_job.viewer_groups.add(alg_set.alg1.editors_group)
@@ -112,10 +116,14 @@ def test_user_can_download_input_images(client, reverse):
     j1_creator, j2_creator = UserFactory(), UserFactory()
 
     alg1_job = AlgorithmJobFactory(
-        algorithm_image__algorithm=alg_set.alg1, creator=j1_creator
+        algorithm_image__algorithm=alg_set.alg1,
+        creator=j1_creator,
+        time_limit=alg_set.alg1.time_limit,
     )
     alg2_job = AlgorithmJobFactory(
-        algorithm_image__algorithm=alg_set.alg2, creator=j2_creator
+        algorithm_image__algorithm=alg_set.alg2,
+        creator=j2_creator,
+        time_limit=alg_set.alg2.time_limit,
     )
 
     alg1_job.viewer_groups.add(alg_set.alg1.editors_group)
@@ -198,7 +206,7 @@ def test_user_can_download_input_images(client, reverse):
 @pytest.mark.django_db
 class TestAlgorithmJobViewersGroup:
     def test_view_permissions_are_assigned(self):
-        job = AlgorithmJobFactory()
+        job = AlgorithmJobFactory(time_limit=60)
         viewer_groups = {*job.viewer_groups.all()}
 
         assert viewer_groups == {job.viewers}
@@ -207,7 +215,7 @@ class TestAlgorithmJobViewersGroup:
 
     @pytest.mark.parametrize("reverse", [True, False])
     def test_group_addition(self, reverse):
-        job = AlgorithmJobFactory()
+        job = AlgorithmJobFactory(time_limit=60)
         group = GroupFactory()
         civ_in, civ_out = (
             ComponentInterfaceValueFactory(image=ImageFactory()),
@@ -230,7 +238,7 @@ class TestAlgorithmJobViewersGroup:
 
     @pytest.mark.parametrize("reverse", [True, False])
     def test_group_removal(self, reverse):
-        job = AlgorithmJobFactory()
+        job = AlgorithmJobFactory(time_limit=60)
         civ_in, civ_out = (
             ComponentInterfaceValueFactory(image=ImageFactory()),
             ComponentInterfaceValueFactory(image=ImageFactory()),
@@ -254,7 +262,7 @@ class TestAlgorithmJobViewersGroup:
 
     @pytest.mark.parametrize("reverse", [True, False])
     def test_group_clearing(self, reverse):
-        job = AlgorithmJobFactory()
+        job = AlgorithmJobFactory(time_limit=60)
         civ_in, civ_out = (
             ComponentInterfaceValueFactory(image=ImageFactory()),
             ComponentInterfaceValueFactory(image=ImageFactory()),

@@ -172,6 +172,10 @@ CASE_TEXT_SCHEMA = {
 }
 
 
+class InteractiveAlgorithmChoices(models.TextChoices):
+    ULS23_BASELINE = "uls23-baseline", "ULS23 Baseline"
+
+
 class ReaderStudy(
     UUIDModel,
     TitleSlugDescriptionModel,
@@ -200,6 +204,13 @@ class ReaderStudy(
 
     workstation = models.ForeignKey(
         "workstations.Workstation", on_delete=models.PROTECT
+    )
+    workstation_sessions = models.ManyToManyField(
+        "workstations.Session",
+        through="WorkstationSessionReaderStudy",
+        related_name="reader_studies",
+        blank=True,
+        editable=False,
     )
     workstation_config = models.ForeignKey(
         "workstation_configs.WorkstationConfig",
@@ -773,6 +784,15 @@ class ReaderStudyGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(ReaderStudy, on_delete=models.CASCADE)
 
 
+class WorkstationSessionReaderStudy(models.Model):
+    # Through table for optional hanging protocols
+    # https://docs.djangoproject.com/en/4.2/topics/db/models/#intermediary-manytomany
+    reader_study = models.ForeignKey(ReaderStudy, on_delete=models.CASCADE)
+    workstation_session = models.ForeignKey(
+        "workstations.Session", on_delete=models.CASCADE
+    )
+
+
 @receiver(post_delete, sender=ReaderStudy)
 def delete_reader_study_groups_hook(*_, instance: ReaderStudy, using, **__):
     """
@@ -1115,6 +1135,37 @@ EMPTY_ANSWER_VALUES = {
     AnswerType.MULTIPLE_THREE_POINT_ANGLES: None,
 }
 
+ANSWER_TYPE_TO_INTERACTIVE_ALGORITHM = {
+    AnswerType.HEADING: [],
+    AnswerType.TEXT: [],
+    AnswerType.NUMBER: [],
+    AnswerType.CHOICE: [],
+    AnswerType.BOOL: [],
+    AnswerType.BOUNDING_BOX_2D: [],
+    AnswerType.MULTIPLE_2D_BOUNDING_BOXES: [],
+    AnswerType.DISTANCE_MEASUREMENT: [],
+    AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS: [],
+    AnswerType.POINT: [],
+    AnswerType.MULTIPLE_POINTS: [],
+    AnswerType.POLYGON: [],
+    AnswerType.MULTIPLE_POLYGONS: [],
+    AnswerType.LINE: [],
+    AnswerType.MULTIPLE_LINES: [],
+    AnswerType.MASK: [InteractiveAlgorithmChoices.ULS23_BASELINE],
+    AnswerType.ANGLE: [],
+    AnswerType.MULTIPLE_ANGLES: [],
+    AnswerType.ELLIPSE: [],
+    AnswerType.MULTIPLE_ELLIPSES: [],
+    AnswerType.MULTIPLE_CHOICE: [],
+    AnswerType.THREE_POINT_ANGLE: [],
+    AnswerType.MULTIPLE_THREE_POINT_ANGLES: [],
+}
+
+ANSWER_TYPE_TO_INTERACTIVE_ALGORITHM_CHOICES = {
+    answer_type: [(option.value, option.label) for option in options]
+    for answer_type, options in ANSWER_TYPE_TO_INTERACTIVE_ALGORITHM.items()
+}
+
 
 class ImagePort(models.TextChoices):
     MAIN = "M", "Main"
@@ -1221,6 +1272,12 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     widget = models.CharField(
         choices=QuestionWidgetKindChoices.choices, max_length=24, blank=True
     )
+    interactive_algorithm = models.CharField(
+        choices=InteractiveAlgorithmChoices.choices,
+        max_length=32,
+        blank=True,
+        help_text="Which interactive algorithm should be used for this question?",
+    )
     answer_max_value = models.SmallIntegerField(
         null=True,
         blank=True,
@@ -1269,6 +1326,12 @@ class Question(UUIDModel, OverlaySegmentsMixin):
 
     class Meta:
         ordering = ("order", "created")
+        permissions = [
+            (
+                "add_interactive_algorithm_to_question",
+                "Can add interactive algorithm to question",
+            )
+        ]
 
     def __str__(self):
         return (
@@ -1375,6 +1438,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         self._clean_image_port()
         self._clean_widget()
         self._clean_widget_options()
+        self._clean_interactive_algorithm()
 
     def _clean_answer_type(self):
         # Make sure that the image port is only set when using drawn
@@ -1554,6 +1618,16 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         ):
             raise ValidationError(
                 "Answer max length needs to be bigger than answer min length."
+            )
+
+    def _clean_interactive_algorithm(self):
+        if (
+            self.interactive_algorithm
+            and self.interactive_algorithm
+            not in ANSWER_TYPE_TO_INTERACTIVE_ALGORITHM[self.answer_type]
+        ):
+            raise ValidationError(
+                f"{self.interactive_algorithm} is not a valid option for answer type {self.answer_type}."
             )
 
     @property

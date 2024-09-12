@@ -1,0 +1,33 @@
+{% extends "pages/challenge_settings_base.html" %}
+{% load url %}
+{% load crispy_forms_tags %}
+{% load static %}
+{% load meta_attr %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">
+            {{ object|yesno:"Update,Add" }} Registration Question
+        </li>
+    </ol>
+{% endblock %}
+
+
+{% block content %}
+    <h3>
+        {{ object|yesno:"Update,Add" }} Registration Question {{ object|yesno:"in,to" }} {% firstof challenge.title challenge.short_name %}
+    </h3>
+
+    {% crispy form %}
+{% endblock %}
+
+
+{% block script %}
+    {{ block.super }}
+    <script type="text/javascript" src="{% static "js/unsavedform.js" %}"></script>
+{% endblock %}

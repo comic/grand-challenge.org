@@ -12,6 +12,7 @@ from lzma import LZMAError
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
+import boto3
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import shared_task  # noqa: I251 TODO needs to be refactored
 from django.apps import apps
@@ -98,13 +99,10 @@ def validate_docker_image(  # noqa C901
 
     if instance.is_manifest_valid is None:
         try:
-            instance.image_sha256 = _validate_docker_image_manifest(
-                instance=instance
-            )
+            _validate_docker_image_manifest(instance=instance)
             instance.is_manifest_valid = True
             instance.save()
         except ValidationError as error:
-            instance.image_sha256 = ""
             instance.is_manifest_valid = False
             instance.status = oxford_comma(error)
             instance.import_status = instance.ImportStatusChoices.FAILED
@@ -258,33 +256,24 @@ def push_container_image(*, instance):
 
 
 def remove_tag_from_registry(*, repo_tag):
-    try:
-        digest_cmd = _repo_login_and_run(command=["crane", "digest", repo_tag])
-    except subprocess.CalledProcessError as error:
-        if "MANIFEST_UNKNOWN: Requested image not found" in getattr(
-            error, "stderr", ""
-        ):
-            # The image has already been deleted
-            return
-        else:
-            raise error
+    if settings.COMPONENTS_REGISTRY_INSECURE:
+        raise NotImplementedError
+    else:
+        client = boto3.client(
+            "ecr", region_name=settings.COMPONENTS_AMAZON_ECR_REGION
+        )
 
-    digests = digest_cmd.stdout.splitlines()
+        repo_name, image_tag = repo_tag.rsplit(":", 1)
+        repo_name = repo_name.replace(
+            f"{settings.COMPONENTS_REGISTRY_URL}/", "", 1
+        )
 
-    for digest in digests:
-        try:
-            _repo_login_and_run(
-                command=["crane", "delete", f"{repo_tag}@{digest}"]
-            )
-        except subprocess.CalledProcessError as error:
-            if "MANIFEST_UNKNOWN: Requested image not found" in getattr(
-                error, "stderr", ""
-            ):
-                # The digest has already been deleted, could be
-                # caused by parallel processes deleting the same image
-                continue
-            else:
-                raise error
+        client.batch_delete_image(
+            repositoryName=repo_name,
+            imageIds=[
+                {"imageTag": image_tag},
+            ],
+        )
 
 
 def _repo_login_and_run(*, command):
@@ -451,6 +440,8 @@ def _validate_docker_image_manifest(*, instance) -> str:
     config = config_and_sha256["config"]
     image_sha256 = config_and_sha256["image_sha256"]
 
+    instance.image_sha256 = f"sha256:{image_sha256}"
+
     user = str(config["config"].get("User", "")).lower()
     if (
         user in ["", "root", "0"]
@@ -473,7 +464,21 @@ def _validate_docker_image_manifest(*, instance) -> str:
             f"{desired_arch!r}."
         )
 
-    return f"sha256:{image_sha256}"
+    if instance._meta.model_name != "method":
+        # TODO Methods are currently allowed to be duplicated
+        model = apps.get_model(
+            app_label=instance._meta.app_label,
+            model_name=instance._meta.model_name,
+        )
+        if (
+            model.objects.filter(image_sha256=instance.image_sha256)
+            .exclude(pk=instance.pk)
+            .exists()
+        ):
+            raise ValidationError(
+                "This container image has already been uploaded. "
+                "Please re-activate the existing container image or upload a new version."
+            )
 
 
 def _get_image_config_and_sha256(*, instance):
@@ -598,19 +603,37 @@ def get_model_instance(*, app_label, model_name, **kwargs):
     return model.objects.get(**kwargs)
 
 
-@acks_late_2xlarge_task
+def lock_model_instance(*, app_label, model_name, **kwargs):
+    """
+    Locks a model instance for update.
+
+    This is useful when you want to update a model instance and want to make
+    sure that no other process is updating the same instance at the same time.
+    Must be used inside a transaction.
+
+    Raises `LockNotAcquiredException` if the lock could not be acquired.
+    """
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+    queryset = model.objects.filter(**kwargs).select_for_update(nowait=True)
+
+    try:
+        return queryset.get()
+    except OperationalError as error:
+        raise LockNotAcquiredException from error
+
+
+@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@transaction.atomic
 def provision_job(
     *, job_pk: uuid.UUID, job_app_label: str, job_model_name: str, backend: str
 ):
-    job = get_model_instance(
+    job = lock_model_instance(
         pk=job_pk, app_label=job_app_label, model_name=job_model_name
     )
     executor = job.get_executor(backend=backend)
 
-    if job.status in [job.PENDING, job.RETRY]:
-        job.update_status(status=job.PROVISIONING)
-    else:
-        raise PriorStepFailed("Job is not ready for provisioning")
+    if job.status not in [job.PENDING, job.RETRY]:
+        raise RuntimeError("Job is not ready for provisioning")
 
     try:
         executor.provision(
@@ -627,9 +650,9 @@ def provision_job(
         )
     except Exception:
         job.update_status(
-            status=job.FAILURE, error_message="Could not provision resources"
+            status=job.FAILURE, error_message="An unexpected error occurred"
         )
-        raise
+        logger.error("Could not provision job", exc_info=True)
     else:
         job.update_status(status=job.PROVISIONED)
         on_commit(execute_job.signature(**job.signature_kwargs).apply_async)
@@ -817,20 +840,21 @@ def handle_event(*, event, backend):  # noqa: C901
         )
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@transaction.atomic
 def parse_job_outputs(
     *, job_pk: uuid.UUID, job_app_label: str, job_model_name: str, backend: str
 ):
-    job = get_model_instance(
+    job = lock_model_instance(
         pk=job_pk, app_label=job_app_label, model_name=job_model_name
     )
     executor = job.get_executor(backend=backend)
 
-    if job.status == job.EXECUTED and not job.outputs.exists():
-        job.update_status(status=job.PARSING)
-    else:
-        deprovision_job.signature(**job.signature_kwargs).apply_async()
-        raise PriorStepFailed("Job is not ready for output parsing")
+    if job.status != job.EXECUTED:
+        raise RuntimeError("Job is not ready for output parsing")
+
+    if job.outputs.exists():
+        raise RuntimeError("Job already has outputs")
 
     try:
         outputs = executor.get_outputs(
@@ -842,12 +866,11 @@ def parse_job_outputs(
             error_message=str(e),
             detailed_error_message=e.message_details,
         )
-        raise PriorStepFailed("Could not parse outputs")
     except Exception:
         job.update_status(
-            status=job.FAILURE, error_message="Could not parse outputs"
+            status=job.FAILURE, error_message="An unexpected error occurred"
         )
-        raise
+        logger.error("Could not parse outputs", exc_info=True)
     else:
         job.outputs.add(*outputs)
         job.update_status(status=job.SUCCESS)
@@ -936,6 +959,133 @@ def stop_expired_services(*, app_label: str, model_name: str, region: str):
         service.stop()
 
     return [str(s) for s in services_to_stop]
+
+
+class InteractiveAlgorithm:
+    def __init__(self, *, region_name, arn, qualifier, should_be_active):
+        self._region_name = region_name
+        self._arn = arn
+        self._qualifier = str(qualifier)
+        self._should_be_active = bool(should_be_active)
+
+        self._lambda_client = None
+
+    @property
+    def lambda_client(self):
+        if self._lambda_client is None:
+            self._lambda_client = boto3.client(
+                "lambda", region_name=self._region_name
+            )
+        return self._lambda_client
+
+    def consolidate(self):
+        active_status = self.set_active_provisioned_concurrency_config()
+        deleted = self.delete_stale_provisioned_concurrency_configs()
+        return {"active_status": active_status, "deleted": deleted}
+
+    @property
+    def provisioned_concurrency_qualifiers(self):
+        provisioned_concurrency_qualifiers = set()
+
+        paginator = self.lambda_client.get_paginator(
+            "list_provisioned_concurrency_configs"
+        )
+
+        for page in paginator.paginate(FunctionName=self._arn):
+            for config in page.get("ProvisionedConcurrencyConfigs", []):
+                qualifier = config["FunctionArn"].rsplit(":", 1)[-1]
+                provisioned_concurrency_qualifiers.add(qualifier)
+
+        return provisioned_concurrency_qualifiers
+
+    def set_active_provisioned_concurrency_config(self):
+        if self._should_be_active:
+            invoked = False
+
+            try:
+                config = self.lambda_client.get_provisioned_concurrency_config(
+                    FunctionName=self._arn,
+                    Qualifier=self._qualifier,
+                )
+            except (
+                self.lambda_client.exceptions.ProvisionedConcurrencyConfigNotFoundException
+            ):
+                config = self.lambda_client.put_provisioned_concurrency_config(
+                    FunctionName=self._arn,
+                    ProvisionedConcurrentExecutions=1,
+                    Qualifier=self._qualifier,
+                )
+                self.lambda_client.invoke(
+                    FunctionName=self._arn,
+                    InvocationType="Event",
+                    Payload=json.dumps({}),
+                    Qualifier=self._qualifier,
+                )
+                invoked = True
+
+            return {
+                "qualifier": self._qualifier,
+                "status": config["Status"],
+                "invoked": invoked,
+            }
+        else:
+            return {}
+
+    def delete_stale_provisioned_concurrency_configs(self):
+        deleted = []
+
+        for qualifier in self.provisioned_concurrency_qualifiers:
+            if qualifier != self._qualifier or self._should_be_active is False:
+                self.lambda_client.delete_provisioned_concurrency_config(
+                    FunctionName=self._arn,
+                    Qualifier=qualifier,
+                )
+                deleted.append(qualifier)
+
+        return deleted
+
+
+@shared_task
+@transaction.atomic
+def preload_interactive_algorithms():
+    from grandchallenge.reader_studies.models import Question
+    from grandchallenge.workstations.models import Session
+
+    region_name = settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS[
+        "region_name"
+    ]
+
+    active_interactive_algorithms = (
+        Question.objects.filter(
+            reader_study__workstation_sessions__status__in=[
+                Session.QUEUED,
+                Session.STARTED,
+                Session.RUNNING,
+            ],
+            reader_study__workstation_sessions__region=region_name,
+        )
+        .exclude(interactive_algorithm="")
+        .values_list("interactive_algorithm", flat=True)
+        .distinct()
+    )
+
+    consolidation_results = {}
+
+    for lamba_function in settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS[
+        "lambda_functions"
+    ]:
+        interactive_algorithm = InteractiveAlgorithm(
+            region_name=region_name,
+            arn=lamba_function["arn"],
+            qualifier=lamba_function["version"],
+            should_be_active=lamba_function["internal_name"]
+            in active_interactive_algorithms,
+        )
+        consolidation_results[lamba_function["internal_name"]] = (
+            interactive_algorithm.consolidate()
+        )
+
+    return consolidation_results
 
 
 @acks_late_micro_short_task

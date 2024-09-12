@@ -1,16 +1,20 @@
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", () => {
     // Jump to targeted conversation
     const urlParams = new URLSearchParams(window.location.search);
-    const conversationId = urlParams.get('conversation');
+    const conversationId = urlParams.get("conversation");
 
     if (conversationId !== null) {
-        document.getElementById(`conversation-select-button-${conversationId}`).click();
+        document
+            .getElementById(`conversation-select-button-${conversationId}`)
+            .click();
     }
 });
 
-document.body.addEventListener("htmx:afterOnLoad", function(evt) {
+document.body.addEventListener("htmx:afterOnLoad", evt => {
     // Scroll to bottom of message panel
-    let conversationDetail = document.getElementById("conversation-direct-messages-panel");
+    const conversationDetail = document.getElementById(
+        "conversation-direct-messages-panel",
+    );
     conversationDetail.scrollTop = conversationDetail.scrollHeight;
 
     document.getElementById("id_message").focus();
@@ -19,7 +23,9 @@ document.body.addEventListener("htmx:afterOnLoad", function(evt) {
         // Event was from switching the conversation detail
 
         // Mark this conversation select as active
-        for (let elm of document.getElementsByClassName("conversation-detail-select")) {
+        for (const elm of document.getElementsByClassName(
+            "conversation-detail-select",
+        )) {
             elm.classList.remove("active");
         }
         evt.target.classList.add("active");
@@ -28,27 +34,37 @@ document.body.addEventListener("htmx:afterOnLoad", function(evt) {
         url.searchParams.set("conversation", evt.target.dataset.conversationId);
         history.pushState({}, "", url);
 
-        let markReadForm = evt.target.querySelector('.conversation-mark-read-form');
+        const markReadForm = evt.target.querySelector(
+            ".conversation-mark-read-form",
+        );
         if (markReadForm !== null) {
             // Mark the form as read
             fetch(markReadForm.action, {
                 method: markReadForm.method,
                 body: new URLSearchParams(new FormData(markReadForm)),
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                }
-            }).then(
-                (response) => {
-                    // Update the conversation select button
-                    htmx.ajax('GET', evt.target.dataset.conversationSelectDetailUrl, evt.target);
-                }
-            );
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+            }).then(response => {
+                // Update the conversation select button
+                htmx.ajax(
+                    "GET",
+                    evt.target.dataset.conversationSelectDetailUrl,
+                    evt.target,
+                );
+            });
         }
     } else if (evt.target.id === "conversation-detail-panel") {
         // Event was from creating a new message in a conversation
 
         // Update the conversation select button
-        let directMessagePanel = evt.target.querySelector("#conversation-direct-messages-panel");
-        htmx.ajax('GET', directMessagePanel.dataset.conversationSelectDetailUrl, directMessagePanel.dataset.conversationSelectButtonSelector)
+        const directMessagePanel = evt.target.querySelector(
+            "#conversation-direct-messages-panel",
+        );
+        htmx.ajax(
+            "GET",
+            directMessagePanel.dataset.conversationSelectDetailUrl,
+            directMessagePanel.dataset.conversationSelectButtonSelector,
+        );
     }
 });

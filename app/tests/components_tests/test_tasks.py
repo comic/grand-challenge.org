@@ -1,6 +1,7 @@
 import json
-import subprocess
+import uuid
 from pathlib import Path
+from unittest.mock import call, patch
 
 import pytest
 from celery.exceptions import MaxRetriesExceededError
@@ -22,6 +23,7 @@ from grandchallenge.components.tasks import (
     civ_value_to_file,
     encode_b64j,
     execute_job,
+    preload_interactive_algorithms,
     remove_inactive_container_images,
     update_container_image_shim,
     upload_to_registry_and_sagemaker,
@@ -29,6 +31,7 @@ from grandchallenge.components.tasks import (
 )
 from grandchallenge.core.celery import _retry
 from grandchallenge.notifications.models import Notification
+from grandchallenge.reader_studies.models import InteractiveAlgorithmChoices
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
@@ -45,8 +48,17 @@ from tests.evaluation_tests.factories import (
     MethodFactory,
     PhaseFactory,
 )
-from tests.factories import ImageFactory, UserFactory, WorkstationImageFactory
-from tests.reader_studies_tests.factories import DisplaySetFactory
+from tests.factories import (
+    ImageFactory,
+    SessionFactory,
+    UserFactory,
+    WorkstationImageFactory,
+)
+from tests.reader_studies_tests.factories import (
+    DisplaySetFactory,
+    QuestionFactory,
+    ReaderStudyFactory,
+)
 from tests.uploads_tests.factories import (
     UserUploadFactory,
     create_upload_from_file,
@@ -257,11 +269,20 @@ def test_upload_to_registry_and_sagemaker(
 
 @pytest.mark.django_db
 def test_update_sagemaker_shim(
-    algorithm_io_image, settings, django_capture_on_commit_callbacks, tmp_path
+    algorithm_io_image,
+    settings,
+    django_capture_on_commit_callbacks,
+    tmp_path,
+    mocker,
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
+
+    mock_remove_tag_from_registry = mocker.patch(
+        # remove_tag_from_registry is only implemented for ECR
+        "grandchallenge.components.tasks.remove_tag_from_registry"
+    )
 
     old_version = "alpha"
     new_version = "beta"
@@ -319,10 +340,15 @@ def test_update_sagemaker_shim(
     )
     assert output.stdout
 
-    with pytest.raises(subprocess.CalledProcessError) as error:
-        _repo_login_and_run(command=["crane", "manifest", old_repo_tag])
+    assert mock_remove_tag_from_registry.call_count == 1
 
-    assert "MANIFEST_UNKNOWN" in error.value.stderr
+    expected_calls = [
+        call(repo_tag=old_repo_tag),
+    ]
+
+    mock_remove_tag_from_registry.assert_has_calls(
+        expected_calls, any_order=False
+    )
 
 
 @pytest.mark.parametrize(
@@ -528,3 +554,80 @@ def test_assign_tarball_from_upload(
     assert not obj2.user_upload
     with pytest.raises(ValueError):
         getattr(obj2, field_to_copy).file
+
+
+@pytest.mark.django_db
+def test_preload_interactive_algorithms(settings):
+    arn = f"arn:aws:lambda:eu-central-1:1234567890:function:org-proj-e-uls23-baseline-{uuid.uuid4()}"
+
+    settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS = {
+        "io_bucket_name": "org-proj-e-some-bucket",
+        "region_name": "eu-central-1",
+        "lambda_functions": [
+            {
+                # Add a uuid to avoid cache key clashes in testing
+                "arn": arn,
+                "internal_name": "uls23-baseline",
+                "minimum_duration": 1,
+                "timeout": 60,
+                "version": "1",
+            }
+        ],
+    }
+
+    reader_study = ReaderStudyFactory()
+    QuestionFactory(
+        reader_study=reader_study,
+        interactive_algorithm=InteractiveAlgorithmChoices.ULS23_BASELINE,
+    )
+
+    other_session = SessionFactory(region="other")
+    other_session.reader_studies.add(reader_study)
+
+    session = SessionFactory(region="eu-central-1")
+    session.reader_studies.add(reader_study)
+
+    session.status = session.STOPPED
+    session.save()
+
+    with patch(
+        "grandchallenge.components.tasks.InteractiveAlgorithm"
+    ) as mock_interactive_algorithm:
+        mock_instance = mock_interactive_algorithm.return_value
+        mock_instance.consolidate.return_value = "mocked_consolidation_result"
+
+        assert preload_interactive_algorithms() == {
+            "uls23-baseline": "mocked_consolidation_result"
+        }
+
+        mock_interactive_algorithm.assert_any_call(
+            region_name="eu-central-1",
+            arn=arn,
+            qualifier="1",
+            # Nothing should be done as no reader studies are active in this region
+            should_be_active=False,
+        )
+
+        assert mock_instance.consolidate.call_count == 1
+
+    session.status = session.QUEUED
+    session.save()
+
+    with patch(
+        "grandchallenge.components.tasks.InteractiveAlgorithm"
+    ) as mock_interactive_algorithm:
+        mock_instance = mock_interactive_algorithm.return_value
+        mock_instance.consolidate.return_value = "mocked_consolidation_result"
+
+        assert preload_interactive_algorithms() == {
+            "uls23-baseline": "mocked_consolidation_result"
+        }
+
+        mock_interactive_algorithm.assert_any_call(
+            region_name="eu-central-1",
+            arn=arn,
+            qualifier="1",
+            should_be_active=True,
+        )
+
+        assert mock_instance.consolidate.call_count == 1

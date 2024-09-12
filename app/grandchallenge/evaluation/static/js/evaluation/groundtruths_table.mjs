@@ -1,11 +1,11 @@
-$(document).ready(function () {
-            $('#groundtruthsTable').DataTable({
-                columnDefs: [
-                    {
-                        targets: 'nonSortable',
-                        searchable: false,
-                        orderable: false,
-                    },
-                ],
-            });
-        });
+$(document).ready(() => {
+    $("#groundtruthsTable").DataTable({
+        columnDefs: [
+            {
+                targets: "nonSortable",
+                searchable: false,
+                orderable: false,
+            },
+        ],
+    });
+});

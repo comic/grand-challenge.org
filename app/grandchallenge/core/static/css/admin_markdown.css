@@ -3,23 +3,23 @@ this adds additional styles to fix that */
 
 @media (prefers-color-scheme: dark) {
     body {
-        background-color: black
+        background-color: black;
     }
 
     .module {
-        background-color: black
+        background-color: black;
     }
 
     h2 {
-        color:white
+        color: white;
     }
 
     i {
-        color: white
+        color: white;
     }
 
     .nav-tabs {
-        border-bottom-color: black
+        border-bottom-color: black;
     }
 
     .markdownx-preview {

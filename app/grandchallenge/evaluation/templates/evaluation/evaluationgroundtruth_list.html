@@ -17,9 +17,10 @@
 {% block content %}
 
     <h2>Ground Truths for {{ phase.title }}</h2>
-    <p>You can upload your ground truth separately from the method container. If provided, the ground truth will be extracted to <code>/opt/ml/input/data/ground_truth/</code> during runtime.</p>
 
     {% include "evaluation/partials/phase_admin_warnings.html" with phase=phase %}
+
+    {% include "components/partials/how_to_create_tarball.html" with model_name="evaluationgroundtruth" %}
 
     <p>
         <a class="btn btn-primary"

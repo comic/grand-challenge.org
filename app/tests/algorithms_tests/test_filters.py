@@ -11,8 +11,8 @@ from tests.utils import get_view_for_user
 
 @pytest.mark.django_db
 def test_job_list_is_filtered_on_permissions(client):
-    j1 = AlgorithmJobFactory()
-    j2 = AlgorithmJobFactory()
+    j1 = AlgorithmJobFactory(time_limit=60)
+    j2 = AlgorithmJobFactory(time_limit=60)
     j1viewer = UserFactory()
     j2viewer = UserFactory()
     non_viewer = UserFactory()
@@ -42,12 +42,12 @@ def test_job_list_is_filtered_on_images(client, rf):
     im2 = ImageFactory()
     civ2 = ComponentInterfaceValueFactory(image=im2)
 
-    j1 = AlgorithmJobFactory()
+    j1 = AlgorithmJobFactory(time_limit=60)
     j1.inputs.add(civ1)
     j1.outputs.add(civ2)
-    j2 = AlgorithmJobFactory()
+    j2 = AlgorithmJobFactory(time_limit=60)
     j2.inputs.add(civ2)
-    j3 = AlgorithmJobFactory()
+    j3 = AlgorithmJobFactory(time_limit=60)
     j3.outputs.add(civ2)
     u = UserFactory()
     for j in (j1, j2, j3):

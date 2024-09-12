@@ -73,13 +73,14 @@ class JobAdmin(GuardedModelAdmin):
         "created",
         "algorithm",
         "creator",
+        "is_complimentary",
         "status",
         "public",
         "comment",
         "error_message",
     )
     list_select_related = ("algorithm_image__algorithm",)
-    list_filter = ("status", "public")
+    list_filter = ("status", "public", "is_complimentary")
     readonly_fields = (
         "creator",
         "algorithm_image",

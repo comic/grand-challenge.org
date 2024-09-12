@@ -10,13 +10,16 @@ from django.utils.html import format_html
 from redis.exceptions import LockError
 
 from grandchallenge.algorithms.models import Job
-from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.components.tasks import (
     push_container_image,
     validate_docker_image,
 )
 from grandchallenge.evaluation.models import Evaluation, Method
-from grandchallenge.evaluation.tasks import set_evaluation_inputs
+from grandchallenge.evaluation.tasks import (
+    create_algorithm_jobs_for_evaluation,
+    set_evaluation_inputs,
+)
 from grandchallenge.notifications.models import Notification
 from grandchallenge.profiles.templatetags.profiles import user_profile_link
 from tests.algorithms_tests.factories import (
@@ -25,10 +28,14 @@ from tests.algorithms_tests.factories import (
     AlgorithmModelFactory,
 )
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
-from tests.components_tests.factories import ComponentInterfaceValueFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.evaluation_tests.factories import (
     EvaluationFactory,
     MethodFactory,
+    PhaseFactory,
     SubmissionFactory,
 )
 from tests.utils import recurse_callbacks
@@ -36,7 +43,6 @@ from tests.utils import recurse_callbacks
 
 @pytest.mark.django_db
 def test_submission_evaluation(
-    client,
     evaluation_image,
     submission_file,
     settings,
@@ -220,8 +226,8 @@ class TestSetEvaluationInputs(TestCase):
         )
 
         archive = ArchiveFactory()
-        ais = ArchiveItemFactory.create_batch(2)
-        archive.items.set(ais)
+        archive_items = ArchiveItemFactory.create_batch(2)
+        archive.items.set(archive_items)
 
         input_civs = ComponentInterfaceValueFactory.create_batch(
             2, interface=interface
@@ -230,18 +236,18 @@ class TestSetEvaluationInputs(TestCase):
             2, interface=interface
         )
 
-        for ai, civ in zip(ais, input_civs, strict=True):
+        for ai, civ in zip(archive_items, input_civs, strict=True):
             ai.values.set([civ])
 
-        alg = AlgorithmImageFactory()
-        am = AlgorithmModelFactory()
-        submission = SubmissionFactory(algorithm_image=alg)
+        algorithm_image = AlgorithmImageFactory()
+        algorithm_model = AlgorithmModelFactory()
+        submission = SubmissionFactory(algorithm_image=algorithm_image)
         submission.phase.archive = archive
         submission.phase.save()
         submission.phase.algorithm_inputs.set([interface])
 
         submission_with_model = SubmissionFactory(
-            algorithm_image=alg, algorithm_model=am
+            algorithm_image=algorithm_image, algorithm_model=algorithm_model
         )
         submission_with_model.phase.archive = archive
         submission_with_model.phase.save()
@@ -249,7 +255,11 @@ class TestSetEvaluationInputs(TestCase):
 
         jobs = []
         for inpt, output in zip(input_civs, output_civs, strict=True):
-            j = AlgorithmJobFactory(status=Job.SUCCESS, algorithm_image=alg)
+            j = AlgorithmJobFactory(
+                status=Job.SUCCESS,
+                algorithm_image=algorithm_image,
+                time_limit=algorithm_image.algorithm.time_limit,
+            )
             j.inputs.set([inpt])
             j.outputs.set([output])
             j.creator = None
@@ -259,17 +269,23 @@ class TestSetEvaluationInputs(TestCase):
         # also create a job with the same input but a creator set, this job
         # should be ignored
         j_irrelevant = AlgorithmJobFactory(
-            status=Job.SUCCESS, algorithm_image=alg, creator=alg.creator
+            status=Job.SUCCESS,
+            algorithm_image=algorithm_image,
+            creator=algorithm_image.creator,
+            time_limit=algorithm_image.algorithm.time_limit,
         )
         j_irrelevant.inputs.set([input_civs[0]])
         j_irrelevant.outputs.set([output_civs[0]])
 
         self.evaluation = EvaluationFactory(
-            submission=submission, status=Evaluation.EXECUTING_PREREQUISITES
+            submission=submission,
+            status=Evaluation.EXECUTING_PREREQUISITES,
+            time_limit=submission.phase.evaluation_time_limit,
         )
         self.evaluation_with_model = EvaluationFactory(
             submission=submission_with_model,
             status=Evaluation.EXECUTING_PREREQUISITES,
+            time_limit=submission.phase.evaluation_time_limit,
         )
         self.input_civs = input_civs
         self.output_civs = output_civs
@@ -293,6 +309,7 @@ class TestSetEvaluationInputs(TestCase):
             status=Job.PENDING,
             creator=None,
             algorithm_image=self.evaluation.submission.algorithm_image,
+            time_limit=self.evaluation.submission.algorithm_image.algorithm.time_limit,
         )
         # nothing happens because there are pending jobs
         set_evaluation_inputs(evaluation_pk=self.evaluation.pk)
@@ -309,6 +326,7 @@ class TestSetEvaluationInputs(TestCase):
             creator=None,
             algorithm_image=self.evaluation_with_model.submission.algorithm_image,
             algorithm_model=self.evaluation_with_model.submission.algorithm_model,
+            time_limit=self.evaluation_with_model.submission.algorithm_image.algorithm.time_limit,
         )
         # nothing happens
         set_evaluation_inputs(evaluation_pk=self.evaluation_with_model.pk)
@@ -327,6 +345,7 @@ class TestSetEvaluationInputs(TestCase):
             status=Job.PENDING,
             creator=None,
             algorithm_image=self.evaluation_with_model.submission.algorithm_image,
+            time_limit=self.evaluation_with_model.submission.algorithm_image.algorithm.time_limit,
         )
         set_evaluation_inputs(evaluation_pk=self.evaluation_with_model.pk)
         self.evaluation_with_model.refresh_from_db()
@@ -346,6 +365,7 @@ class TestSetEvaluationInputs(TestCase):
                 status=Job.SUCCESS,
                 algorithm_image=self.evaluation_with_model.submission.algorithm_image,
                 algorithm_model=self.evaluation_with_model.submission.algorithm_model,
+                time_limit=self.evaluation_with_model.submission.algorithm_image.algorithm.time_limit,
             )
             j_with_model.inputs.set([inpt])
             j_with_model.outputs.set([output])
@@ -373,6 +393,7 @@ class TestSetEvaluationInputs(TestCase):
             algorithm_model=AlgorithmModelFactory(
                 algorithm=self.evaluation.submission.algorithm_image.algorithm
             ),
+            time_limit=self.evaluation.submission.algorithm_image.algorithm.time_limit,
         )
         # pending job for image with model should be ignored,
         # since active_model is None for the evaluation
@@ -400,6 +421,7 @@ class TestSetEvaluationInputs(TestCase):
                 algorithm_model=AlgorithmModelFactory(
                     algorithm=self.evaluation.submission.algorithm_image.algorithm
                 ),
+                time_limit=self.evaluation.submission.algorithm_image.algorithm.time_limit,
             )
             j_with_model.inputs.set([inpt])
             j_with_model.outputs.set([output])
@@ -575,3 +597,105 @@ def test_cache_lock():
                 raise RuntimeError("Test failed, shouldn't hit this line")
         except LockError:
             assert True
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "evaluation_time_limit",
+    (300, 43200),
+)
+def test_evaluation_time_limit_set(
+    django_capture_on_commit_callbacks, evaluation_time_limit
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    phase = PhaseFactory(evaluation_time_limit=evaluation_time_limit)
+    MethodFactory(
+        phase=phase,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        submission = SubmissionFactory(phase=phase)
+
+    evaluation = submission.evaluation_set.get()
+    assert evaluation.time_limit == evaluation_time_limit
+
+
+@pytest.mark.django_db
+def test_evaluation_order_with_title():
+    ai = AlgorithmImageFactory()
+    archive = ArchiveFactory()
+    evaluation = EvaluationFactory(
+        submission__phase__archive=archive,
+        submission__algorithm_image=ai,
+        time_limit=ai.algorithm.time_limit,
+    )
+
+    input_interface = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.BOOL
+    )
+
+    evaluation.submission.phase.algorithm_inputs.set([input_interface])
+    ai.algorithm.inputs.set([input_interface])
+
+    # Priority should be given to archive items with titles
+    archive_item = ArchiveItemFactory(archive=archive)
+    archive_item.values.add(
+        ComponentInterfaceValueFactory(interface=input_interface)
+    )
+
+    civs = ComponentInterfaceValueFactory.create_batch(
+        5, interface=input_interface
+    )
+
+    for idx, civ in enumerate(civs):
+        archive_item = ArchiveItemFactory(archive=archive, title=f"{5 - idx}")
+        archive_item.values.add(civ)
+
+    create_algorithm_jobs_for_evaluation(evaluation_pk=evaluation.pk)
+
+    job = Job.objects.get()
+
+    expected_civ = civs[-1]
+
+    assert expected_civ.archive_items.first().title == "1"
+    assert {*job.inputs.all()} == {expected_civ}
+
+
+@pytest.mark.django_db
+def test_evaluation_order_without_title():
+    ai = AlgorithmImageFactory()
+    archive = ArchiveFactory()
+    evaluation = EvaluationFactory(
+        submission__phase__archive=archive,
+        submission__algorithm_image=ai,
+        time_limit=ai.algorithm.time_limit,
+    )
+
+    input_interface = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.BOOL
+    )
+
+    evaluation.submission.phase.algorithm_inputs.set([input_interface])
+    ai.algorithm.inputs.set([input_interface])
+
+    civs = ComponentInterfaceValueFactory.create_batch(
+        5, interface=input_interface
+    )
+
+    for civ in civs:
+        archive_item = ArchiveItemFactory(archive=archive)
+        archive_item.values.add(civ)
+
+    create_algorithm_jobs_for_evaluation(evaluation_pk=evaluation.pk)
+
+    job = Job.objects.get()
+
+    expected_civ = civs[0]
+
+    assert {*job.inputs.all()} == {expected_civ}

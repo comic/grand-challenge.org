@@ -2,11 +2,22 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Q
 from django.forms.utils import ErrorList
-from django.views.generic import CreateView, ListView, UpdateView
+from django.shortcuts import get_object_or_404
+from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
 
-from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
-from grandchallenge.participants.models import RegistrationRequest
+from grandchallenge.core.guardian import (
+    ObjectPermissionRequiredMixin,
+    PermissionListMixin,
+)
+from grandchallenge.participants.forms import (
+    RegistrationQuestionCreateForm,
+    RegistrationQuestionUpdateForm,
+)
+from grandchallenge.participants.models import (
+    RegistrationQuestion,
+    RegistrationRequest,
+)
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
@@ -99,11 +110,99 @@ class RegistrationRequestUpdate(
     raise_exception = True
     login_url = reverse_lazy("account_login")
 
+    def get_object(self, queryset=None):
+        return get_object_or_404(
+            self.model,
+            challenge=self.request.challenge,
+            pk=self.kwargs["pk"],
+        )
+
     def get_permission_object(self):
         return self.request.challenge
 
     def get_success_url(self):
         return reverse(
             "participants:registration-list",
+            kwargs={"challenge_short_name": self.object.challenge.short_name},
+        )
+
+
+class RegistrationQuestionList(
+    LoginRequiredMixin, PermissionListMixin, ListView
+):
+    model = RegistrationQuestion
+    permission_required = "participants.view_registrationquestion"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.filter(challenge=self.request.challenge)
+        return queryset
+
+
+class RegistrationQuestionCreate(
+    LoginRequiredMixin,
+    SuccessMessageMixin,
+    ObjectPermissionRequiredMixin,
+    CreateView,
+):
+    model = RegistrationQuestion
+    form_class = RegistrationQuestionCreateForm
+    permission_required = "challenges.add_registration_question"
+    success_message = "Question successfully created"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_permission_object(self):
+        return self.request.challenge
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["challenge"] = self.request.challenge
+        return kwargs
+
+    def get_success_url(self):
+        return reverse(
+            "participants:registration-question-list",
+            kwargs={"challenge_short_name": self.object.challenge.short_name},
+        )
+
+
+class RegistrationQuestionUpdate(
+    LoginRequiredMixin,
+    SuccessMessageMixin,
+    ObjectPermissionRequiredMixin,
+    UpdateView,
+):
+    model = RegistrationQuestion
+    form_class = RegistrationQuestionUpdateForm
+    permission_required = "participants.change_registrationquestion"
+    success_message = "Question successfully updated"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_success_url(self):
+        return reverse(
+            "participants:registration-question-list",
+            kwargs={"challenge_short_name": self.object.challenge.short_name},
+        )
+
+
+class RegistrationQuestionDelete(
+    LoginRequiredMixin,
+    SuccessMessageMixin,
+    ObjectPermissionRequiredMixin,
+    DeleteView,
+):
+    model = RegistrationQuestion
+    permission_required = "participants.delete_registrationquestion"
+    success_message = "Question successfully deleted"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_success_url(self):
+        return reverse(
+            "participants:registration-question-list",
             kwargs={"challenge_short_name": self.object.challenge.short_name},
         )

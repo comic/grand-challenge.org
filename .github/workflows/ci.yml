@@ -3,101 +3,100 @@ name: CI
 on: [push, pull_request]
 
 env:
-  PYTHON_VERSION: '3.11'
+    PYTHON_VERSION: "3.11"
 
 concurrency:
-  group: ${{ github.head_ref || github.run_id }}
-  cancel-in-progress: true
+    group: ${{ github.head_ref || github.run_id }}
+    cancel-in-progress: true
 
 jobs:
+    precommit:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Install Python ${{ env.PYTHON_VERSION }}
+              uses: actions/setup-python@v5
+              with:
+                  python-version: ${{ env.PYTHON_VERSION }}
+            - uses: actions/checkout@v4
+            - name: Install pre-commit
+              run: |
+                  python -m pip install --upgrade pip
+                  python -m pip install pre-commit virtualenv!=20.0.6
+                  pre-commit install
+            - name: Run static code inspections
+              run: pre-commit run --all-files
 
-  precommit:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Install Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-      - uses: actions/checkout@v4
-      - name: Install pre-commit
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install pre-commit virtualenv!=20.0.6
-          pre-commit install
-      - name: Run static code inspections
-        run: pre-commit run --all-files
+    django-tests:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Set up Python ${{ env.PYTHON_VERSION }}
+              uses: actions/setup-python@v5
+              with:
+                  python-version: ${{ env.PYTHON_VERSION }}
+            - uses: actions/checkout@v4
+            - name: Build the test container
+              run: |
+                  make build_web_test
+            - name: Set DOCKER_GID
+              run: |
+                  echo DOCKER_GID=`getent group docker | cut -d: -f3` > .env
+            - name: Check migrations have been made
+              run: make check_migrations
+            - name: Run the django tests
+              run: |
+                  make minio
+                  docker compose run --rm celery_worker pytest --durations 10
 
-  django-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-      - uses: actions/checkout@v4
-      - name: Build the test container
-        run: |
-          make build_web_test
-      - name: Set DOCKER_GID
-        run: |
-          echo DOCKER_GID=`getent group docker | cut -d: -f3` > .env
-      - name: Check migrations have been made
-        run: make check_migrations
-      - name: Run the django tests
-        run: |
-          make minio
-          docker compose run --rm celery_worker_evaluation pytest --durations 10
+    docs:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - name: Build the test container
+              run: |
+                  make build_web_test
+            - name: Set DOCKER_GID
+              run: |
+                  echo DOCKER_GID=`getent group docker | cut -d: -f3` > .env
+            - name: Build the docs
+              run: |
+                  make docs
+            - name: Deploy the documentation on main
+              if: github.ref == 'refs/heads/main'
+              uses: peaceiris/actions-gh-pages@v3
+              with:
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  publish_dir: ./app/docs/_build/html
 
-  docs:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build the test container
-        run: |
-          make build_web_test
-      - name: Set DOCKER_GID
-        run: |
-          echo DOCKER_GID=`getent group docker | cut -d: -f3` > .env
-      - name: Build the docs
-        run: |
-          make docs
-      - name: Deploy the documentation on main
+    deploy:
+        needs: [django-tests]
+        runs-on: ubuntu-latest
+        permissions:
+            # These permissions are needed to interact with GitHub's OIDC Token endpoint.
+            id-token: write
+            contents: read
         if: github.ref == 'refs/heads/main'
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./app/docs/_build/html
-
-  deploy:
-    needs: [django-tests]
-    runs-on: ubuntu-latest
-    permissions:
-      # These permissions are needed to interact with GitHub's OIDC Token endpoint.
-      id-token: write
-      contents: read
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build the distributable containers
-        # The cache is required for compressing the files
-        run: |
-          echo DOCKER_GID=`getent group docker | cut -d: -f3` > .env
-          docker compose up -d redis
-          make build
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: us-east-1
-      - name: Push to ECR
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y retry
-          retry -t 5 -- /bin/bash -c 'aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/diag-nijmegen/grand-challenge/web-base'
-          retry -t 5 -- make push_web_base
-          retry -t 5 -- /bin/bash -c 'aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/diag-nijmegen/grand-challenge/web'
-          retry -t 5 -- make push_web
-          retry -t 5 -- /bin/bash -c 'aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/diag-nijmegen/grand-challenge/http'
-          retry -t 5 -- make push_http
-          retry -t 5 -- /bin/bash -c 'aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/diag-nijmegen/grand-challenge/web-test-base'
-          retry -t 5 -- make push_web_test_base
+        steps:
+            - uses: actions/checkout@v4
+            - name: Build the distributable containers
+              # The cache is required for compressing the files
+              run: |
+                  echo DOCKER_GID=`getent group docker | cut -d: -f3` > .env
+                  docker compose up -d redis
+                  make build
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+                  aws-region: us-east-1
+            - name: Push to ECR
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y retry
+                  retry -t 5 -- /bin/bash -c 'aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/diag-nijmegen/grand-challenge/web-base'
+                  retry -t 5 -- make push_web_base
+                  retry -t 5 -- /bin/bash -c 'aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/diag-nijmegen/grand-challenge/web'
+                  retry -t 5 -- make push_web
+                  retry -t 5 -- /bin/bash -c 'aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/diag-nijmegen/grand-challenge/http'
+                  retry -t 5 -- make push_http
+                  retry -t 5 -- /bin/bash -c 'aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/diag-nijmegen/grand-challenge/web-test-base'
+                  retry -t 5 -- make push_web_test_base

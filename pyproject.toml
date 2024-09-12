@@ -98,7 +98,7 @@ django-csp = "*"
 psycopg = {version = ">3.1.8", extras = ["c"]}
 pycurl = "!=7.45.3" # Import issue with 7.45.3 (https://github.com/comic/grand-challenge.org/issues/3252)
 pyjwt = "*"
-sphinx-exec-code = "*"
+beautifulsoup4 = "*"
 
 [tool.poetry.group.dev.dependencies]
 pytest-django = "*"

@@ -1,252 +1,221 @@
 x-postgres-env: &postgres-env
-  POSTGRES_PASSWORD: secretpassword
-  POSTGRES_USER: grandchallenge
-  POSTGRES_DB: grandchallenge
+    POSTGRES_PASSWORD: secretpassword
+    POSTGRES_USER: grandchallenge
+    POSTGRES_DB: grandchallenge
 
 x-minio-env: &minio-env
-  AWS_ACCESS_KEY_ID: minioadmin
-  AWS_SECRET_ACCESS_KEY: minioadmin
-  AWS_S3_ENDPOINT_URL: http://minio.localhost:9000
-
+    AWS_ACCESS_KEY_ID: minioadmin
+    AWS_SECRET_ACCESS_KEY: minioadmin
+    AWS_S3_ENDPOINT_URL: http://minio.localhost:9000
 
 services:
+    postgres:
+        image: postgres:16
+        ports:
+            - "127.0.0.1:5432:5432"
+        environment:
+            <<: [*postgres-env]
+        tmpfs:
+            - /var/lib/postgresql/data/
+        healthcheck:
+            test: ["CMD", "pg_isready", "-U", "grandchallenge"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        restart: always
 
-  postgres:
-    image: postgres:16
-    ports:
-      - "127.0.0.1:5432:5432"
-    environment:
-      <<: [*postgres-env]
-    tmpfs:
-      - /var/lib/postgresql/data/
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "grandchallenge"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: always
+    minio.localhost:
+        image: minio/minio
+        ports:
+            - "127.0.0.1:9000:9000"
+        entrypoint: "/bin/sh"
+        command: >-
+            -c "
+            mkdir -p /data/grand-challenge-private/ /data/grand-challenge-protected/ /data/grand-challenge-public/ /data/grand-challenge-uploads/ /data/grand-challenge-components-inputs/ /data/grand-challenge-components-outputs/
+            && minio --compat server /data
+            "
+        restart: always
+        networks:
+            - default
+            - components
 
-  minio.localhost:
-    image: minio/minio
-    ports:
-      - "127.0.0.1:9000:9000"
-    entrypoint: "/bin/sh"
-    command: >-
-      -c "
-      mkdir -p /data/grand-challenge-private/ /data/grand-challenge-protected/ /data/grand-challenge-public/ /data/grand-challenge-uploads/ /data/grand-challenge-components-inputs/ /data/grand-challenge-components-outputs/
-      && minio --compat server /data
-      "
-    restart: always
-    networks:
-      - default
-      - components
+    web:
+        image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
+        environment:
+            <<: [*postgres-env, *minio-env]
+            COMPONENTS_REGISTRY_INSECURE: "true"
+            COMPONENTS_DEFAULT_BACKEND: "tests.components_tests.resources.backends.InsecureDockerExecutor"
+            COMPONENTS_DOCKER_KEEP_CAPS_UNSAFE: "true"
+            USING_MINIO: "true"
+            DEBUG: "true"
+            COMPRESS_OFFLINE: "false"
+            PYTHONDONTWRITEBYTECODE: 1
+        # Use werkzeug debugger in dev, this should never be used in production!
+        # https://django-extensions.readthedocs.io/en/latest/runserver_plus.html
+        command: >-
+            python manage.py runserver_plus 0.0.0.0:8000
+        restart: always
+        depends_on:
+            postgres:
+                condition: service_healthy
+            minio.localhost:
+                condition: service_started
+            redis:
+                condition: service_started
+            registry:
+                condition: service_started
+        volumes:
+            # Bind the app directory for live reloading in development
+            - type: bind
+              source: ./app
+              target: /app/
 
-  web:
-    image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
-    environment:
-      <<: [*postgres-env, *minio-env]
-      COMPONENTS_REGISTRY_INSECURE: 'true'
-      COMPONENTS_DEFAULT_BACKEND: 'tests.components_tests.resources.backends.InsecureDockerExecutor'
-      COMPONENTS_DOCKER_KEEP_CAPS_UNSAFE: 'true'
-      USING_MINIO: 'true'
-      DEBUG: 'true'
-      COMPRESS_OFFLINE: 'false'
-      PYTHONDONTWRITEBYTECODE: 1
-    # Use werkzeug debugger in dev, this should never be used in production!
-    # https://django-extensions.readthedocs.io/en/latest/runserver_plus.html
-    command: >-
-      python manage.py runserver_plus 0.0.0.0:8000
-    restart: always
-    depends_on:
-      postgres:
-        condition: service_healthy
-      minio.localhost:
-        condition: service_started
-      redis:
-        condition: service_started
-      registry:
-        condition: service_started
-    volumes:
-      # Bind the app directory for live reloading in development
-      - type: bind
-        source: ./app
-        target: /app/
+    http:
+        image: public.ecr.aws/diag-nijmegen/grand-challenge/http:latest
+        environment:
+            APP_SERVER_HOST: "web"
+            SERVER_NAME: "gc.localhost"
+            SENDFILE_STATUS: "off"
+            WORKSTATION_PROXY_HOSTNAME: "workstation-proxy"
+            WORKSTATION_PROXY_HTTP_PORT: "8000"
+            WORKSTATION_PROXY_WEBSOCKET_PORT: "8001"
+            DATA_STORE_HOSTNAME: "minio.localhost"
+            DATA_STORE_PORT: "9000"
+        command: >-
+            bash -c "envsubst '$$APP_SERVER_HOST $$SERVER_NAME $$SENDFILE_STATUS $$DATA_STORE_HOSTNAME $$DATA_STORE_PORT $$WORKSTATION_PROXY_HOSTNAME $$WORKSTATION_PROXY_HTTP_PORT $$WORKSTATION_PROXY_WEBSOCKET_PORT' < /tmp/nginx.conf.template > /etc/nginx/nginx.conf
+            && openssl req -x509 -newkey rsa:4096 -keyout /etc/ssl/private/privkey.pem -out /etc/ssl/certs/fullchain.pem -days 365 -nodes -subj '/CN=$$SERVER_NAME'
+            && nginx -g 'daemon off;'"
+        restart: always
+        ports:
+            - "127.0.0.1:80:80"
+            - "127.0.0.1:443:443"
+        depends_on:
+            web:
+                condition: service_started
+            workstation-proxy:
+                condition: service_started
 
-  http:
-    image: public.ecr.aws/diag-nijmegen/grand-challenge/http:latest
-    environment:
-      APP_SERVER_HOST: 'web'
-      SERVER_NAME: 'gc.localhost'
-      SENDFILE_STATUS: 'off'
-      WORKSTATION_PROXY_HOSTNAME: 'workstation-proxy'
-      WORKSTATION_PROXY_HTTP_PORT: '8000'
-      WORKSTATION_PROXY_WEBSOCKET_PORT: '8001'
-      DATA_STORE_HOSTNAME: 'minio.localhost'
-      DATA_STORE_PORT: '9000'
-    command: >-
-        bash -c "envsubst '$$APP_SERVER_HOST $$SERVER_NAME $$SENDFILE_STATUS $$DATA_STORE_HOSTNAME $$DATA_STORE_PORT $$WORKSTATION_PROXY_HOSTNAME $$WORKSTATION_PROXY_HTTP_PORT $$WORKSTATION_PROXY_WEBSOCKET_PORT' < /tmp/nginx.conf.template > /etc/nginx/nginx.conf
-        && openssl req -x509 -newkey rsa:4096 -keyout /etc/ssl/private/privkey.pem -out /etc/ssl/certs/fullchain.pem -days 365 -nodes -subj '/CN=$$SERVER_NAME'
-        && nginx -g 'daemon off;'"
-    restart: always
-    ports:
-      - "127.0.0.1:80:80"
-      - "127.0.0.1:443:443"
-    depends_on:
-      web:
-        condition: service_started
-      workstation-proxy:
-        condition: service_started
+    redis:
+        image: redis:5.0
+        ports:
+            - "127.0.0.1:6379:6379"
+        command: redis-server --appendonly yes
+        restart: always
 
-  redis:
-    image: redis:5.0
-    ports:
-      - "127.0.0.1:6379:6379"
-    command: redis-server --appendonly yes
-    restart: always
+    celery_worker:
+        image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
+        environment:
+            <<: [*postgres-env, *minio-env]
+            REMAP_SIGTERM: "SIGQUIT"
+            COMPONENTS_REGISTRY_INSECURE: "true"
+            COMPONENTS_DEFAULT_BACKEND: "tests.components_tests.resources.backends.InsecureDockerExecutor"
+            COMPONENTS_DOCKER_KEEP_CAPS_UNSAFE: "true"
+            USING_MINIO: "true"
+            DEBUG: "true"
+            PYTHONDONTWRITEBYTECODE: 1
+        restart: always
+        command: watchfiles --filter python "celery --app config worker --loglevel info --concurrency 1 --pool prefork --queues workstations-eu-central-1,acks-late-2xlarge,acks-late-2xlarge-delay,acks-late-micro-short,acks-late-micro-short-delay" /app
+        scale: 1
+        hostname: "celery-worker-evaluation"
+        depends_on:
+            web:
+                condition: service_started
+            postgres:
+                condition: service_healthy
+            redis:
+                condition: service_started
+            registry:
+                condition: service_started
+        volumes:
+            # Bind the app directory for live reloading in development
+            - type: bind
+              source: ./app
+              target: /app/
+            # The docker socket and pytest_cache is only needed for testing
+            - type: bind
+              source: /var/run/docker.sock
+              target: /var/run/docker.sock
+            - type: volume
+              source: pytest-cache
+              target: /tmp/.pytest_cache
+        group_add:
+            - ${DOCKER_GID:?err}
+        networks:
+            - default
+            - components
 
-  celery_worker:
-    image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
-    environment:
-      <<: [*postgres-env, *minio-env]
-      COMPONENTS_REGISTRY_INSECURE: 'true'
-      COMPONENTS_DEFAULT_BACKEND: 'tests.components_tests.resources.backends.InsecureDockerExecutor'
-      COMPONENTS_DOCKER_KEEP_CAPS_UNSAFE: 'true'
-      USING_MINIO: 'true'
-      DEBUG: 'true'
-      PYTHONDONTWRITEBYTECODE: 1
-    restart: always
-    command: watchfiles --filter python "celery --app config worker --loglevel info --concurrency 1 --pool prefork --queues celery" /app
-    scale: 1
-    hostname: "celery-worker"
-    depends_on:
-      web:
-        condition: service_started
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_started
-      registry:
-        condition: service_started
-    volumes:
-      # Bind the app directory for live reloading in development
-      - type: bind
-        source: ./app
-        target: /app/
+    celery_beat:
+        image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
+        environment:
+            <<: [*postgres-env]
+            DEBUG: "true"
+        restart: always
+        command: >-
+            bash -c "
+            rm -f /tmp/celerybeat.pid
+            && celery --app config beat --scheduler django_celery_beat.schedulers:DatabaseScheduler --pidfile=\"/tmp/celerybeat.pid\"
+            "
+        depends_on:
+            web:
+                condition: service_started
+            postgres:
+                condition: service_healthy
+            redis:
+                condition: service_started
 
-  celery_worker_evaluation:
-    image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
-    environment:
-      <<: [*postgres-env, *minio-env]
-      REMAP_SIGTERM: 'SIGQUIT'
-      COMPONENTS_REGISTRY_INSECURE: 'true'
-      COMPONENTS_DEFAULT_BACKEND: 'tests.components_tests.resources.backends.InsecureDockerExecutor'
-      COMPONENTS_DOCKER_KEEP_CAPS_UNSAFE: 'true'
-      USING_MINIO: 'true'
-      DEBUG: 'true'
-      PYTHONDONTWRITEBYTECODE: 1
-    restart: always
-    command: watchfiles --filter python "celery --app config worker --loglevel info --concurrency 1 --pool prefork --queues workstations-eu-central-1,acks-late-2xlarge,acks-late-2xlarge-delay,acks-late-micro-short,acks-late-micro-short-delay" /app
-    scale: 1
-    hostname: "celery-worker-evaluation"
-    depends_on:
-      web:
-        condition: service_started
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_started
-      registry:
-        condition: service_started
-    volumes:
-      # Bind the app directory for live reloading in development
-      - type: bind
-        source: ./app
-        target: /app/
-      # The docker socket and pytest_cache is only needed for testing
-      - type: bind
-        source: /var/run/docker.sock
-        target: /var/run/docker.sock
-      - type: volume
-        source: pytest-cache
-        target: /tmp/.pytest_cache
-    group_add:
-      - ${DOCKER_GID:?err}
-    networks:
-      - default
-      - components
+    workstation-proxy:
+        image: traefik:2.1
+        ports:
+            - "127.0.0.1:8081:8081"
+            - "127.0.0.1:9101:9101"
+        command:
+            - "--entrypoints.traefik.address=:8081"
+            - "--entrypoints.metrics.address=:9101"
+            - "--entrypoints.workstation-http.address=:8000"
+            - "--entrypoints.workstation-websocket.address=:8001"
+            - "--api=true"
+            - "--api.insecure=true"
+            - "--ping=true"
+            - "--ping.entryPoint=traefik"
+            - "--accesslog=true"
+            - "--providers.docker=true"
+            - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+            - "--providers.docker.exposedByDefault=false"
+            - "--providers.docker.network=workstations"
+        volumes:
+            # So that Traefik can listen to the Docker events
+            - type: bind
+              source: /var/run/docker.sock
+              target: /var/run/docker.sock
+        networks:
+            - default
+            - workstations
 
-  celery_beat:
-    image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
-    environment:
-      <<: [*postgres-env]
-      DEBUG: 'true'
-    restart: always
-    command: >-
-        bash -c "
-        rm -f /tmp/celerybeat.pid
-        && celery --app config beat --scheduler django_celery_beat.schedulers:DatabaseScheduler --pidfile=\"/tmp/celerybeat.pid\"
-        "
-    depends_on:
-      web:
-        condition: service_started
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_started
+    registry:
+        image: registry:2
+        ports:
+            - "127.0.0.1:5000:5000"
+        environment:
+            REGISTRY_STORAGE_DELETE_ENABLED: "true"
 
-  workstation-proxy:
-    image: traefik:2.1
-    ports:
-      - "127.0.0.1:8081:8081"
-      - "127.0.0.1:9101:9101"
-    command:
-      - "--entrypoints.traefik.address=:8081"
-      - "--entrypoints.metrics.address=:9101"
-      - "--entrypoints.workstation-http.address=:8000"
-      - "--entrypoints.workstation-websocket.address=:8001"
-      - "--api=true"
-      - "--api.insecure=true"
-      - "--ping=true"
-      - "--ping.entryPoint=traefik"
-      - "--accesslog=true"
-      - "--providers.docker=true"
-      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
-      - "--providers.docker.exposedByDefault=false"
-      - "--providers.docker.network=workstations"
-    volumes:
-      # So that Traefik can listen to the Docker events
-      - type: bind
-        source: /var/run/docker.sock
-        target: /var/run/docker.sock
-    networks:
-      - default
-      - workstations
-
-  registry:
-    image: registry:2
-    ports:
-      - "127.0.0.1:5000:5000"
-    environment:
-      REGISTRY_STORAGE_DELETE_ENABLED: 'true'
-
-  flower:
-    image: mher/flower
-    environment:
-      CELERY_BROKER_URL: 'redis://redis:6379/1'
-    ports:
-      - "127.0.0.1:5555:5555"
-    depends_on:
-      redis:
-        condition: service_started
-    restart: always
+    flower:
+        image: mher/flower
+        environment:
+            CELERY_BROKER_URL: "redis://redis:6379/1"
+        ports:
+            - "127.0.0.1:5555:5555"
+        depends_on:
+            redis:
+                condition: service_started
+        restart: always
 
 networks:
-  default:
-  workstations:
-    name: "grand-challengeorg_workstations"
-  components:
-    name: "grand-challengeorg_components"
-    internal: true
+    default:
+    workstations:
+        name: "grand-challengeorg_workstations"
+    components:
+        name: "grand-challengeorg_components"
+        internal: true
 
 volumes:
-  pytest-cache:
+    pytest-cache:

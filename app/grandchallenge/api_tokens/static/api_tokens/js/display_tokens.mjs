@@ -1,8 +1,8 @@
-$(document).ready(function () {
-    $('.table').each(function () {
+$(document).ready(() => {
+    $(".table").each(function () {
         $(this).DataTable({
-            "order": [[1, "desc"]],
-            "paging": false,
+            order: [[1, "desc"]],
+            paging: false,
         });
     });
 });

@@ -15,6 +15,7 @@ from grandchallenge.reader_studies.views import (
     DisplaySetUpdateView,
     EditorsUpdate,
     QuestionDelete,
+    QuestionInteractiveAlgorithmsView,
     QuestionInterfacesView,
     QuestionUpdate,
     QuestionWidgetsView,
@@ -148,6 +149,11 @@ urlpatterns = [
         "<slug>/questions/widgets/",
         QuestionWidgetsView.as_view(),
         name="question-widgets",
+    ),
+    path(
+        "<slug>/questions/interactive-algorithms/",
+        QuestionInteractiveAlgorithmsView.as_view(),
+        name="question-interactive-algorithms",
     ),
     path(
         "<slug>/editors/update/",

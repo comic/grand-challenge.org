@@ -3,7 +3,6 @@ import tempfile
 from pathlib import Path
 
 import pytest
-from django.contrib.humanize.templatetags.humanize import naturaltime
 from guardian.shortcuts import assign_perm, remove_perm
 from requests import put
 
@@ -15,9 +14,6 @@ from grandchallenge.archives.views import (
 from grandchallenge.cases.widgets import WidgetChoices
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.subdomains.utils import reverse
-from grandchallenge.workstations.templatetags.workstations import (
-    workstation_session_control_data,
-)
 from tests.algorithms_tests.factories import AlgorithmJobFactory, Job
 from tests.archives_tests.factories import (
     ArchiveFactory,
@@ -1145,7 +1141,7 @@ def test_archive_item_job_list_filter(
     ]
     ai.values.set(civs)
 
-    job = AlgorithmJobFactory(public=True)
+    job = AlgorithmJobFactory(public=True, time_limit=60)
     job_civs = job_civs_generator(civs)
     job.inputs.set(job_civs)
 
@@ -1210,7 +1206,7 @@ def test_archive_item_job_list_permissions_filter(client):
     ]
     ai.values.set(civs)
 
-    jobs = AlgorithmJobFactory.create_batch(3)
+    jobs = AlgorithmJobFactory.create_batch(3, time_limit=60)
     for aj in jobs:
         aj.inputs.set(ai.values.all())
 
@@ -1352,7 +1348,7 @@ def test_archive_item_list_database_hits(
 
 
 @pytest.mark.django_db
-def test_job_list_row_template_ajax_renders(client):
+def test_item_job_list_row_template_ajax_renders(client):
     archive = ArchiveFactory()
     editor = UserFactory()
     archive.add_editor(editor)
@@ -1367,17 +1363,10 @@ def test_job_list_row_template_ajax_renders(client):
 
     archive_item.values.set([civ])
 
-    job = AlgorithmJobFactory(creator=editor, status=Job.SUCCESS)
-    job.inputs.set([civ])
-
-    algorithm = job.algorithm_image.algorithm
-
-    ctrl_data = workstation_session_control_data(
-        workstation=algorithm.workstation,
-        context_object=algorithm,
-        algorithm_job=job,
-        config=algorithm.workstation_config,
+    job = AlgorithmJobFactory(
+        creator=editor, status=Job.SUCCESS, time_limit=60
     )
+    job.inputs.set([civ])
 
     headers = {"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"}
 
@@ -1404,28 +1393,10 @@ def test_job_list_row_template_ajax_renders(client):
         "algorithms:job-detail",
         kwargs={"slug": job.algorithm_image.algorithm.slug, "pk": job.pk},
     )
-    job_created = str(naturaltime(job.created))
 
     response_content = json.loads(response.content.decode("utf-8"))
 
     assert response.status_code == 200
-
     assert response_content["recordsTotal"] == 1
-
     assert len(response_content["data"]) == 1
-
     assert job_details_url in response_content["data"][0][0]
-
-    assert job_created in response_content["data"][0][1]
-
-    assert algorithm.title in response_content["data"][0][2]
-
-    assert job.get_status_display() in response_content["data"][0][3]
-
-    assert "Result and images are private" in response_content["data"][0][4]
-
-    assert job.comment in response_content["data"][0][5]
-
-    assert "Empty" in response_content["data"][0][6]
-
-    assert ctrl_data in response_content["data"][0][7]

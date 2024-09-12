@@ -1,0 +1,37 @@
+{% extends "pages/challenge_settings_base.html" %}
+{% load url %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Delete Registration Question</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h3>
+        Confirm deletion Registration Question for {% firstof challenge.title challenge.short_name %}
+    </h3>
+
+    <form action="" method="post" disabled>
+        {% csrf_token %}
+        <p>Are you sure you want to delete this question:</p>
+
+        <h5 class="font-weight-bolder pb-4">'{{ object.question_text }}'</h5>
+
+        <p><b class="text-danger">WARNING:
+            You are not able to undo this action, once the page is deleted
+            it is deleted forever.</b></p>
+
+        <button type="submit" class="btn btn-danger">
+            I understand, delete the question '{{ object.question_text }}'
+        </button>
+    </form>
+
+
+{% endblock %}

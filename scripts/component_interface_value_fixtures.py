@@ -80,11 +80,13 @@ def _get_or_create_component_interfaces():
 
 
 def _create_civ_rich_algorithm_job(creator, interfaces):
+    ai = AlgorithmImage.objects.filter(creator=creator).first()
 
     algorithm_job = Job.objects.create(
         creator=creator,
-        algorithm_image=AlgorithmImage.objects.filter(creator=creator).first(),
+        algorithm_image=ai,
         status=Evaluation.SUCCESS,
+        time_limit=ai.algorithm.time_limit,
     )
 
     chart_spec = {

@@ -464,12 +464,16 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         blank=True,
         help_text="The output interfaces that the algorithms for this phase must use",
     )
-    algorithm_time_limit = models.PositiveSmallIntegerField(
+    algorithm_time_limit = models.PositiveIntegerField(
         default=20 * 60,
         help_text="Time limit for inference jobs in seconds",
         validators=[
-            MinValueValidator(limit_value=300),
-            MaxValueValidator(limit_value=18000),
+            MinValueValidator(
+                limit_value=settings.COMPONENTS_MINIMUM_JOB_DURATION
+            ),
+            MaxValueValidator(
+                limit_value=settings.COMPONENTS_MAXIMUM_JOB_DURATION
+            ),
         ],
     )
     give_algorithm_editors_job_view_permissions = models.BooleanField(
@@ -488,6 +492,18 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             "logs and predictions, not the logs and predictions from "
             "other users. "
         ),
+    )
+    evaluation_time_limit = models.PositiveIntegerField(
+        default=60 * 60,
+        help_text="Time limit for evaluation jobs in seconds",
+        validators=[
+            MinValueValidator(
+                limit_value=settings.COMPONENTS_MINIMUM_JOB_DURATION
+            ),
+            MaxValueValidator(
+                limit_value=settings.COMPONENTS_MAXIMUM_JOB_DURATION
+            ),
+        ],
     )
     public = models.BooleanField(
         default=True,
@@ -582,6 +598,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                     )
 
         if self.has_changed("public"):
+            self.assign_permissions()
             on_commit(
                 assign_evaluation_permissions.signature(
                     kwargs={"phase_pks": [self.pk]}
@@ -747,9 +764,19 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         assign_perm(
             "create_phase_submission", self.challenge.admins_group, self
         )
-        assign_perm(
-            "create_phase_submission", self.challenge.participants_group, self
-        )
+
+        if self.public:
+            assign_perm(
+                "create_phase_submission",
+                self.challenge.participants_group,
+                self,
+            )
+        else:
+            remove_perm(
+                "create_phase_submission",
+                self.challenge.participants_group,
+                self,
+            )
 
     def get_absolute_url(self):
         return reverse(

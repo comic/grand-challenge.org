@@ -5,6 +5,7 @@ from subprocess import CalledProcessError, run
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils import timezone
 
 from grandchallenge.components.registry import _get_registry_auth_config
 from grandchallenge.evaluation.utils import get
@@ -45,6 +46,8 @@ def pull_image(*, repo_tag, authenticate=False):
 def build_image(*, repo_tag, path):
     return _run_docker_command(
         "build",
+        "--build-arg",
+        f"BUILD_TIME={timezone.now().isoformat()}",
         "--platform",
         settings.COMPONENTS_CONTAINER_PLATFORM,
         "--tag",
