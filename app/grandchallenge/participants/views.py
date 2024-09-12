@@ -2,19 +2,20 @@ from collections import defaultdict
 from typing import Any
 
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
-from django.forms.utils import ErrorList
 from django.shortcuts import get_object_or_404
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
 
-
-from grandchallenge.core.guardian import ObjectPermissionRequiredMixin, PermissionListMixin
+from grandchallenge.core.guardian import (
+    ObjectPermissionRequiredMixin,
+    PermissionListMixin,
+)
 from grandchallenge.participants.forms import (
-    RegistrationRequestForm,
     RegistrationQuestionCreateForm,
     RegistrationQuestionUpdateForm,
+    RegistrationRequestForm,
 )
 from grandchallenge.participants.models import (
     RegistrationQuestion,
@@ -60,21 +61,13 @@ class RegistrationRequestCreate(
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs["challenge"] = self.request.challenge
-        kwargs["user"] = self.request.user
+        kwargs.update(
+            {
+                "challenge": self.request.challenge,
+                "user": self.request.user,
+            }
+        )
         return kwargs
-
-    def form_valid(self, form):
-        challenge = self.request.challenge
-        form.instance.user = self.request.user
-        form.instance.challenge = challenge
-        try:
-            redirect = super().form_valid(form)
-            return redirect
-
-        except ValidationError as e:
-            form.add_error(None, ErrorList(e.messages))
-            return super().form_invalid(form)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -87,9 +80,6 @@ class RegistrationRequestCreate(
         context.update(
             {
                 "existing_status": status,
-                "existing_questions": RegistrationQuestion.objects.filter(
-                    challenge=self.request.challenge
-                ).exists(),
             }
         )
         return context
