@@ -2,9 +2,18 @@ from contextlib import nullcontext
 
 import pytest
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 
-from grandchallenge.participants.models import RegistrationQuestion
-from tests.factories import ChallengeFactory
+from grandchallenge.participants.models import (
+    RegistrationQuestion,
+    RegistrationQuestionAnswer,
+    RegistrationRequest,
+)
+from tests.factories import (
+    ChallengeFactory,
+    RegistrationQuestionFactory,
+    RegistrationRequestFactory,
+)
 
 
 @pytest.mark.django_db
@@ -67,6 +76,7 @@ def test_registration_question_validation(questions, context):
             )
             rq.full_clean()
             rq.save()
+
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
