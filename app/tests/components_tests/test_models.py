@@ -13,6 +13,7 @@ from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.cases.models import Image
 from grandchallenge.components.models import (
+    INTERFACE_TYPE_JSON_EXAMPLES,
     ComponentInterface,
     ComponentInterfaceValue,
     ImportStatusChoices,
@@ -1519,7 +1520,7 @@ def test_ci_example_value_non_json_kind_fail():
             kind,
             example,
         )
-        for kind, example in InterfaceKind.interface_type_json_example().items()
+        for kind, example in INTERFACE_TYPE_JSON_EXAMPLES.items()
     ],
 )
 @pytest.mark.django_db
@@ -1527,8 +1528,14 @@ def test_interface_kind_json_type_examples(kind, example):
     ci = ComponentInterfaceFactory(
         kind=kind,
         relative_path=f"{kind}.json",
-        example_value=example,
+        example_value=example["example"],
     )
 
     ci.store_in_database = not ci.requires_object_store
     ci.full_clean()
+
+
+def test_all_examples_present():
+    assert set(INTERFACE_TYPE_JSON_EXAMPLES.keys()) == set(
+        InterfaceKind.interface_type_json()
+    )
