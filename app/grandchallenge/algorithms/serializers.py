@@ -1,10 +1,5 @@
 from rest_framework import serializers
-from rest_framework.fields import (
-    CharField,
-    JSONField,
-    SerializerMethodField,
-    URLField,
-)
+from rest_framework.fields import CharField, JSONField, URLField
 from rest_framework.relations import (
     HyperlinkedRelatedField,
     StringRelatedField,
@@ -28,7 +23,6 @@ from grandchallenge.hanging_protocols.serializers import (
 
 
 class AlgorithmSerializer(serializers.ModelSerializer):
-    average_duration = SerializerMethodField()
     inputs = ComponentInterfaceSerializer(many=True, read_only=True)
     outputs = ComponentInterfaceSerializer(many=True, read_only=True)
     logo = URLField(source="logo.x20.url", read_only=True)
@@ -44,17 +38,9 @@ class AlgorithmSerializer(serializers.ModelSerializer):
             "title",
             "logo",
             "slug",
-            "average_duration",
             "inputs",
             "outputs",
         ]
-
-    def get_average_duration(self, obj: Algorithm) -> float | None:
-        """The average duration of successful jobs in seconds"""
-        if obj.average_duration is None:
-            return None
-        else:
-            return obj.average_duration.total_seconds()
 
 
 class AlgorithmImageSerializer(serializers.ModelSerializer):

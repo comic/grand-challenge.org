@@ -206,12 +206,6 @@ class Algorithm(
             ),
         ],
     )
-    average_duration = models.DurationField(
-        null=True,
-        default=None,
-        editable=False,
-        help_text="The average duration of successful jobs.",
-    )
     repo_name = models.CharField(blank=True, max_length=512)
     image_requires_gpu = models.BooleanField(default=True)
     image_requires_memory_gb = models.PositiveIntegerField(default=15)
@@ -418,13 +412,6 @@ class Algorithm(
             w.save()
 
         return w
-
-    def update_average_duration(self):
-        """Store the duration of successful jobs for this algorithm"""
-        self.average_duration = Job.objects.filter(
-            algorithm_image__algorithm=self, status=Job.SUCCESS
-        ).average_duration()
-        self.save(update_fields=("average_duration",))
 
     def set_credits_per_job(self):
         default_credits_per_month = Credit._meta.get_field(
@@ -890,9 +877,6 @@ class Job(UUIDModel, ComponentJob):
         if adding or self._public_orig != self.public:
             self.update_viewer_groups_for_public()
             self._public_orig = self.public
-
-        if self._status_orig != self.status and self.status == self.SUCCESS:
-            self.algorithm_image.algorithm.update_average_duration()
 
     def init_viewers_group(self):
         self.viewers = Group.objects.create(

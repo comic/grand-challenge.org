@@ -660,7 +660,6 @@ def test_import_view(
                         "title": "PI-CAI: Baseline nnDetection (supervised)",
                         "logo": "https://rumc-gcorg-p-public.s3.amazonaws.com/logos/algorithm/0d11fc7b-c63f-4fd7-b80b-51d2e21492c0/square_logo.x20.jpeg",
                         "slug": "the-pi-cai-challenge-baseline-nndetection",
-                        "average_duration": 363.50596,
                         "inputs": [
                             {
                                 "title": "Coronal T2 Prostate MRI",

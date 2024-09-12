@@ -44,7 +44,6 @@ class AlgorithmAdmin(GuardedModelAdmin):
         "created",
         "public",
         "credits_per_job",
-        "average_duration",
         "container_count",
         "workstation",
     )

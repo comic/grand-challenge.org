@@ -1,10 +1,9 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import ProtectedError
 from django.test import TestCase
-from django.utils.timezone import now
 
 from grandchallenge.algorithms.models import Algorithm, Job
 from grandchallenge.components.models import (
@@ -95,45 +94,6 @@ def test_rendered_result_text():
     job.algorithm_image.algorithm.result_template = "{{ str.__add__('test')}}"
     del job.rendered_result_text
     assert job.rendered_result_text == "Jinja template is invalid"
-
-
-@pytest.mark.django_db
-def test_average_duration():
-    alg = AlgorithmFactory()
-    start = now()
-
-    assert alg.average_duration is None
-
-    j = AlgorithmJobFactory(
-        algorithm_image__algorithm=alg, time_limit=alg.time_limit
-    )
-
-    j.started_at = start - timedelta(minutes=5)
-    j.completed_at = start
-    j.status = j.SUCCESS
-    j.save()
-
-    assert alg.average_duration == timedelta(minutes=5)
-
-    # Unsuccessful jobs should not count
-    j = AlgorithmJobFactory(
-        algorithm_image__algorithm=alg, time_limit=alg.time_limit
-    )
-    j.started_at = start - timedelta(minutes=10)
-    j.completed_at = start
-    j.status = j.FAILURE
-    j.save()
-
-    assert alg.average_duration == timedelta(minutes=5)
-
-    # Nor should jobs for other algorithms
-    j = AlgorithmJobFactory(time_limit=60)
-    j.started_at = start - timedelta(minutes=15)
-    j.completed_at = start
-    j.status = j.SUCCESS
-    j.save()
-
-    assert alg.average_duration == timedelta(minutes=5)
 
 
 class TestAlgorithmJobGroups(TestCase):

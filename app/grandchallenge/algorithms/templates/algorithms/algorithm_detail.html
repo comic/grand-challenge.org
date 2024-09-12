@@ -341,12 +341,6 @@
                         with its default configuration.
                     {% endif %}
                 </p>
-                {% if object.average_duration %}
-                    <p>
-                        On average, successful jobs for this algorithm have
-                        taken {{ object.average_duration|naturaldelta }}.
-                    </p>
-                {% endif %}
                 {% if object.editor_notes %}
                     <h4>Notes</h4>
                     {{ object.editor_notes|md2html }}

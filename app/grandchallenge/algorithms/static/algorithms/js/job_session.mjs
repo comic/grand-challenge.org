@@ -6,9 +6,6 @@ const cards = {
     resultImport: document.getElementById("resultImportCard"),
 };
 
-const averageJobDuration = moment.duration(
-    JSON.parse(document.getElementById("averageJobDuration").textContent),
-);
 const jobDetailAPI = JSON.parse(
     document.getElementById("jobDetailAPI").textContent,
 );
@@ -38,10 +35,7 @@ function handleJobStatus(job) {
     } else if (
         ["executing", "executed", "parsing outputs"].includes(jobStatus)
     ) {
-        setCardActiveMessage(
-            cards.job,
-            `Job is being executed <br> Average job duration: ${moment.duration(averageJobDuration).humanize()}`,
-        );
+        setCardActiveMessage(cards.job, "Job is being executed");
     } else if (jobStatus === "queued" || jobStatus === "re-queued") {
         setCardAwaitingMessage(cards.job, "Queued");
     } else {

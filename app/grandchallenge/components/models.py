@@ -23,7 +23,7 @@ from django.core.validators import (
     RegexValidator,
 )
 from django.db import models, transaction
-from django.db.models import Avg, F, IntegerChoices, QuerySet, Sum, TextChoices
+from django.db.models import F, IntegerChoices, QuerySet, Sum, TextChoices
 from django.db.transaction import on_commit
 from django.forms import ModelChoiceField
 from django.forms.models import model_to_dict
@@ -1410,14 +1410,6 @@ class ComponentJobManager(models.QuerySet):
     def with_duration(self):
         """Annotate the queryset with the duration of completed jobs"""
         return self.annotate(duration=F("completed_at") - F("started_at"))
-
-    def average_duration(self):
-        """Calculate the average duration that completed jobs ran for"""
-        return (
-            self.with_duration()
-            .exclude(duration=None)
-            .aggregate(Avg("duration"))["duration__avg"]
-        )
 
     def total_duration(self):
         return (

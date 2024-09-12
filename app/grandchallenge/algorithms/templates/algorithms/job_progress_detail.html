@@ -73,7 +73,6 @@
 {% block script %}
     {{ block.super }}
 
-    {{ object.algorithm_image.algorithm.average_duration|json_script:"averageJobDuration" }}
     {{ job_detail_api|json_script:"jobDetailAPI" }}
     <script src="{% static 'vendored/moment.js/moment.min.js' %}"></script>
     <script type="module" src="{% static 'algorithms/js/job_session.mjs' %}"></script>
