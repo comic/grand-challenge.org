@@ -155,7 +155,12 @@ class RegistrationQuestionAnswer(models.Model):
             )
 
         if not self.empty_answer and self.question.schema:
-            JSONValidator(schema=self.question.schema)(value=self.answer)
+            try:
+                JSONValidator(schema=self.question.schema)(value=self.answer)
+            except ValidationError as e:
+                raise ValidationError(
+                    {"answer": f"Incorrect format: {e.__cause__}"}
+                )
 
         # Cannot add a database-level constraint for this, so do it during cleaning:
         if self.question.challenge != self.registration_request.challenge:
