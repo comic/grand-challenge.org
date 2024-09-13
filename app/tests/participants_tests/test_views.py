@@ -311,4 +311,4 @@ def test_registration_request_list_view_permissions(client):
     answers = data["registration_questions_answer_lookup"][rr.pk].values()
     assert (
         len(answers) == 0
-    ), "No answers are permittable"  # One is non viewable, one is hidden via non-viewable question (despite having an answer)
+    ), "No answers are permittable to view"  # One is non viewable, one is hidden via non-viewable question (despite having an answer)
