@@ -120,12 +120,8 @@ class RegistrationRequestList(
         return context_data
 
     def _get_registration_questions(self):
-        queryset = self.request.challenge.registration_questions.order_by(
-            "created"
-        )
-
         return filter_by_permission(
-            queryset=queryset,
+            queryset=self.request.challenge.registration_questions,
             user=self.request.user,
             codename="view_registrationquestion",
             accept_user_perms=False,
@@ -186,9 +182,7 @@ class RegistrationQuestionList(
     def get_queryset(self):
         queryset = super().get_queryset()
 
-        queryset = queryset.filter(
-            Q(challenge=self.request.challenge)
-        ).order_by("created")
+        queryset = queryset.filter(challenge=self.request.challenge)
 
         return queryset
 

@@ -93,6 +93,7 @@ class RegistrationQuestion(UUIDModel):
     )
 
     class Meta:
+        ordering = ("created",)
         unique_together = (("question_text", "challenge"),)
 
     def save(self, *args, **kwargs):
