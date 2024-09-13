@@ -13,7 +13,9 @@ from django.utils.html import format_html
 from pyswot import is_academic
 
 from grandchallenge.core.models import FieldChangeMixin
-from grandchallenge.core.utils.access_requests import process_access_request
+from grandchallenge.core.utils.access_requests import (
+    AccessRequestHandlingOptions,
+)
 from grandchallenge.emails.emails import send_standard_email_batch
 from grandchallenge.profiles.models import (
     BannedEmailAddress,
@@ -84,27 +86,7 @@ class Verification(FieldChangeMixin, models.Model):
         super().save(*args, **kwargs)
 
         if self.has_changed("is_verified") and self.is_verified:
-            permission_request_classes = [
-                apps.get_model(
-                    app_label="algorithms",
-                    model_name="AlgorithmPermissionRequest",
-                ),
-                apps.get_model(
-                    app_label="archives", model_name="ArchivePermissionRequest"
-                ),
-                apps.get_model(
-                    app_label="reader_studies",
-                    model_name="ReaderStudyPermissionRequest",
-                ),
-            ]
-
-            for request_class in permission_request_classes:
-                pending_requests = request_class.objects.filter(
-                    user=self.user, status=request_class.PENDING
-                )
-
-                for request in pending_requests:
-                    process_access_request(request_object=request)
+            self.handle_pending_requests()
 
         if adding and not self.email_is_verified:
             self.send_verification_email()
@@ -156,6 +138,30 @@ class Verification(FieldChangeMixin, models.Model):
             subscription_type=EmailSubscriptionTypes.SYSTEM,
             user_email_override={self.user: self.email},
         )
+
+    def handle_pending_requests(self):
+        permission_request_classes = {
+            "algorithm": apps.get_model(
+                app_label="algorithms",
+                model_name="AlgorithmPermissionRequest",
+            ),
+            "archive": apps.get_model(
+                app_label="archives", model_name="ArchivePermissionRequest"
+            ),
+            "reader_study": apps.get_model(
+                app_label="reader_studies",
+                model_name="ReaderStudyPermissionRequest",
+            ),
+        }
+
+        for object_name, request_class in permission_request_classes.items():
+            request_class.objects.filter(
+                **{
+                    "user": self.user,
+                    "status": request_class.PENDING,
+                    f"{object_name}__access_request_handling": AccessRequestHandlingOptions.ACCEPT_VERIFIED_USERS,
+                }
+            ).update(status=request_class.ACCEPTED)
 
 
 def create_verification(email_address, *_, **__):
