@@ -67,7 +67,7 @@ def test_email_sent_to_correct_email():
         ),
     ],
 )
-def test_handling_permission_requests_on_verification(
+def test_handling_pending_permission_requests_on_verification(
     perm_request_factory,
     perm_request_entity_attr,
     entity_factory,
@@ -76,15 +76,26 @@ def test_handling_permission_requests_on_verification(
     expected_request_status_with_verification,
 ):
     u = UserFactory()
+
+    t_manual = entity_factory(
+        access_request_handling=AccessRequestHandlingOptions.MANUAL_REVIEW
+    )
+    pr_manual = perm_request_factory(
+        **{"user": u, perm_request_entity_attr: t_manual}
+    )
+
     t = entity_factory(access_request_handling=access_request_handling)
     pr = perm_request_factory(**{"user": u, perm_request_entity_attr: t})
 
     v = VerificationFactory(user=u, email_is_verified=True, is_verified=False)
 
+    assert pr_manual.status == RequestBase.PENDING
     assert pr.status == expected_request_status_without_verification
 
     v.is_verified = True
     v.save()
+    pr_manual.refresh_from_db()
     pr.refresh_from_db()
 
+    assert pr_manual.status == RequestBase.PENDING
     assert pr.status == expected_request_status_with_verification
