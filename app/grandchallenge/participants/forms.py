@@ -68,7 +68,7 @@ class RegistrationRequestForm(ModelForm):
                 rqa.full_clean()
                 rqa.save()
         except Exception as e:
-            self.instance.delete()
+            self.instance.delete()  # Also deletes already created answers
             raise e
 
     def save(self, *args, **kwargs):
