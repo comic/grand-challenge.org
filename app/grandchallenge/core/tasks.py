@@ -11,12 +11,15 @@ from django_celery_results.models import TaskResult
 
 from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.cases.models import RawImageUploadSession
-from grandchallenge.core.celery import acks_late_micro_short_task
+from grandchallenge.core.celery import (
+    acks_late_2xlarge_task,
+    acks_late_micro_short_task,
+)
 from grandchallenge.evaluation.models import Evaluation, Method
 from grandchallenge.workstations.models import Session
 
 
-@acks_late_micro_short_task
+@acks_late_2xlarge_task
 @transaction.atomic
 def cleanup_celery_backend():
     """Cleanup the Celery backend."""
