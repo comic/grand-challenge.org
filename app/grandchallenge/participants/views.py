@@ -11,6 +11,7 @@ from guardian.mixins import LoginRequiredMixin
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
+    filter_by_permission,
 )
 from grandchallenge.participants.forms import (
     RegistrationQuestionCreateForm,
@@ -101,33 +102,51 @@ class RegistrationRequestList(
         queryset = queryset.filter(
             Q(challenge=self.request.challenge)
         ).select_related("user__user_profile", "user__verification")
+
         return queryset
 
-    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+    def get_context_data(self, **kwargs) -> dict[str, Any]:
         context_data = super().get_context_data(**kwargs)
-        registration_questions = RegistrationQuestion.objects.filter(
-            challenge=self.request.challenge
-        ).order_by("created")
-        context_data["registration_questions"] = registration_questions
 
-        registration_questions_answers = (
-            RegistrationQuestionAnswer.objects.filter(
-                question__in=registration_questions
-            )
-            .select_related("registration_request")
-            .select_related("question")
-        )
+        questions = self._get_registration_questions()
+        context_data["registration_questions"] = questions
 
-        registration_questions_lookup = defaultdict(dict)
-        for rqa in registration_questions_answers:
-            registration_questions_lookup[rqa.registration_request.pk][
-                rqa.question.pk
-            ] = rqa
+        answers = self._get_registration_questions_answers(questions=questions)
 
-        context_data["registration_questions_answer_lookup"] = (
-            registration_questions_lookup
-        )
+        answer_lookup = defaultdict(dict)
+        for answer in answers:
+            answer_lookup[answer.registration_request.pk][
+                answer.question.pk
+            ] = answer
+
+        context_data["registration_questions_answer_lookup"] = answer_lookup
+
         return context_data
+
+    def _get_registration_questions(self):
+        queryset = self.request.challenge.registration_questions.order_by(
+            "created"
+        )
+
+        return filter_by_permission(
+            queryset=queryset,
+            user=self.request.user,
+            codename="view_registrationquestion",
+            accept_user_perms=False,
+        )
+
+    def _get_registration_questions_answers(self, questions):
+        queryset = RegistrationQuestionAnswer.objects.filter(
+            registration_request__in=self.object_list,
+            question__in=questions,
+        ).select_related("registration_request", "question")
+
+        return filter_by_permission(
+            queryset=queryset,
+            user=self.request.user,
+            codename="view_registrationquestionanswer",
+            accept_user_perms=False,
+        )
 
 
 class RegistrationRequestUpdate(

@@ -2,6 +2,7 @@ import json
 from functools import partial
 
 import pytest
+from guardian.shortcuts import remove_perm
 
 from grandchallenge.participants.models import (
     RegistrationQuestion,
@@ -228,3 +229,86 @@ def test_registration_request_list_view(client):
     assert (
         str.encode(answer) in response.content
     ), "The answer is rendered somewhere on the page"
+
+
+@pytest.mark.django_db
+def test_registration_request_list_view_permissions(client):
+    ch = ChallengeFactory()
+    admin, participant, non_part_user = UserFactory.create_batch(3)
+    ch.add_admin(admin)
+    ch.add_participant(participant)
+
+    for usr in (participant, non_part_user):
+        response = get_view_for_user(
+            viewname="participants:registration-list",
+            client=client,
+            challenge=ch,
+            user=usr,
+        )
+        assert (
+            response.status_code == 403
+        ), "Only admins are allowed to see the list"
+
+    response = get_view_for_user(
+        viewname="participants:registration-list",
+        client=client,
+        challenge=ch,
+        user=admin,
+    )
+
+    assert response.status_code == 200, "Admin is allowed to see the list"
+    data = response.context_data
+
+    assert len(data["object_list"]) == 0, "Sanity: no requests"
+    assert len(data["registration_questions"]) == 0, "Sanity: no questions"
+    assert (
+        len(data["registration_questions_answer_lookup"]) == 0
+    ), "Sanity: no answers"
+
+    q0 = RegistrationQuestionFactory(challenge=ch)
+    q1 = RegistrationQuestionFactory(challenge=ch)
+
+    rr = RegistrationRequestFactory(challenge=ch, user=non_part_user)
+    RegistrationQuestionAnswer.objects.create(
+        question=q0, registration_request=rr
+    )
+    q1_a = RegistrationQuestionAnswer.objects.create(
+        question=q1, registration_request=rr
+    )
+
+    response = get_view_for_user(
+        viewname="participants:registration-list",
+        client=client,
+        challenge=ch,
+        user=admin,
+    )
+    data = response.context_data
+    assert len(data["object_list"]) == 1, "Request shows"
+
+    assert len(data["registration_questions"]) == 2, "Questions show"
+
+    assert (
+        len(data["registration_questions_answer_lookup"][rr.pk].values()) == 2
+    ), "Answers are available"
+
+    remove_perm("participants.view_registrationquestion", ch.admins_group, q0)
+    remove_perm(
+        "participants.view_registrationquestionanswer", ch.admins_group, q1_a
+    )
+
+    response = get_view_for_user(
+        viewname="participants:registration-list",
+        client=client,
+        challenge=ch,
+        user=admin,
+    )
+    data = response.context_data
+
+    assert len(data["registration_questions"]) == 1 and (
+        data["registration_questions"][0] == q1
+    ), "Only the question with permissions shows"
+
+    answers = data["registration_questions_answer_lookup"][rr.pk].values()
+    assert (
+        len(answers) == 0
+    ), "No answers are permittable"  # One is non viewable, one is hidden via non-viewable question (despite having an answer)

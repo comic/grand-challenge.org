@@ -1,4 +1,3 @@
-
 from functools import cached_property
 
 from django.core.exceptions import ValidationError
@@ -63,11 +62,12 @@ class RegistrationRequestForm(ModelForm):
         return result
 
     def _save_questions(self):
+        self.instance.refresh_from_db()
         try:
             for rqa in self._registration_question_answers:
                 rqa.full_clean()
                 rqa.save()
-        except ValidationError as e:
+        except Exception as e:
             self.instance.delete()
             raise e
 

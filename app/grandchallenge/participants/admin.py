@@ -7,6 +7,8 @@ from grandchallenge.core.admin import (
 )
 from grandchallenge.participants.models import (
     RegistrationQuestion,
+    RegistrationQuestionAnswerGroupObjectPermission,
+    RegistrationQuestionAnswerUserObjectPermission,
     RegistrationQuestionGroupObjectPermission,
     RegistrationQuestionUserObjectPermission,
 )
@@ -30,4 +32,11 @@ admin.site.register(
 )
 admin.site.register(
     RegistrationQuestionGroupObjectPermission, GroupObjectPermissionAdmin
+)
+
+admin.site.register(
+    RegistrationQuestionAnswerUserObjectPermission, UserObjectPermissionAdmin
+)
+admin.site.register(
+    RegistrationQuestionAnswerGroupObjectPermission, GroupObjectPermissionAdmin
 )
