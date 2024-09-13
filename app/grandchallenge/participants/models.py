@@ -162,11 +162,18 @@ class RegistrationQuestionAnswer(models.Model):
                     {"answer": f"Incorrect format: {e.__cause__}"}
                 )
 
-        # Cannot add a database-level constraint for this, so do it during cleaning:
-        if self.question.challenge != self.registration_request.challenge:
-            raise ValidationError(
-                "Cannot answer questions for a registration with different challenges"
-            )
+    def validate_constraints(self, exclude=None):
+        super().validate_constraints(exclude=exclude)
+
+        if not exclude or (
+            "registration_request" not in exclude
+            and "challenge" not in exclude
+        ):
+            # Cannot add a database-level constraint for this, so do it here:
+            if self.question.challenge != self.registration_request.challenge:
+                raise ValidationError(
+                    "Cannot answer questions for a registration with different challenges"
+                )
 
     def save(self, *args, **kwargs):
         adding = self._state.adding

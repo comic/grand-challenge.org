@@ -162,7 +162,7 @@ def test_registration_question_double_answer():
 
 
 @pytest.mark.django_db
-def test_registration_question_answer_challenge_validation():
+def test_registration_question_answer_challenge_contraint():
     ch_a = ChallengeFactory()
     ch_b = ChallengeFactory()
 
@@ -170,13 +170,15 @@ def test_registration_question_answer_challenge_validation():
     rr_ch_b = RegistrationRequestFactory(challenge=ch_b)
 
     rqa = RegistrationQuestionAnswer(
-        question=rq_ch_a,
-        registration_request=rr_ch_b,
-        answer="",
+        question=rq_ch_a, registration_request=rr_ch_b, answer="answer"
     )
 
     with pytest.raises(ValidationError):
         rqa.full_clean()
+
+    # Not a problem if we exclude the fields
+    rqa.full_clean(exclude=["challenge"])
+    rqa.full_clean(exclude=["registration_request"])
 
 
 @pytest.mark.django_db

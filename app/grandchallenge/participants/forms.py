@@ -1,5 +1,3 @@
-from functools import cached_property
-
 from django.core.exceptions import ValidationError
 from django.db.transaction import on_commit
 from django.forms import HiddenInput, ModelForm, TextInput
@@ -17,23 +15,31 @@ from grandchallenge.participants.models import (
 class RegistrationRequestForm(ModelForm):
     class Meta:
         model = RegistrationRequest
-        fields = ()
+        fields = (
+            "user",
+            "challenge",
+        )
+        widgets = {
+            "user": HiddenInput(),
+            "challenge": HiddenInput(),
+        }
 
     def __init__(self, *args, challenge, user, **kwargs):
         super().__init__(*args, **kwargs)
-        self.instance.challenge = challenge
-        self.instance.user = user
+
+        self.fields["user"].initial = user
+        self.fields["user"].disabled = True
+        self.fields["challenge"].initial = challenge
+        self.fields["challenge"].disabled = True
+
+        self._registration_questions = RegistrationQuestion.objects.filter(
+            challenge=challenge
+        )
 
         for q in self._registration_questions:
             self.fields[str(q.pk)] = RegistrationQuestionField(
                 registration_question=q
             )
-
-    @cached_property
-    def _registration_questions(self):
-        return RegistrationQuestion.objects.filter(
-            challenge=self.instance.challenge
-        )
 
     @property
     def _registration_question_answers(self):
@@ -46,9 +52,9 @@ class RegistrationRequestForm(ModelForm):
 
     def clean(self):
         result = super().clean()
-        for rqa in self._registration_question_answers:
+        for answer in self._registration_question_answers:
             try:
-                rqa.full_clean(
+                answer.full_clean(
                     exclude=[
                         "registration_request",  # Not saved at this point yet
                     ],
@@ -56,7 +62,7 @@ class RegistrationRequestForm(ModelForm):
             except ValidationError as e:
                 answer_error = e.error_dict.get("answer")
                 if answer_error:
-                    self.add_error(str(rqa.question.pk), answer_error)
+                    self.add_error(str(answer.question.pk), answer_error)
                 else:
                     raise e
         return result
@@ -64,9 +70,9 @@ class RegistrationRequestForm(ModelForm):
     def _save_questions(self):
         self.instance.refresh_from_db()
         try:
-            for rqa in self._registration_question_answers:
-                rqa.full_clean()
-                rqa.save()
+            for answer in self._registration_question_answers:
+                answer.full_clean()
+                answer.save()
         except Exception as e:
             self.instance.delete()  # Also deletes already created answers
             raise e
