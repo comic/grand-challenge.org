@@ -78,11 +78,7 @@ class RegistrationRequestCreate(
             ).status_to_string()
         except ObjectDoesNotExist:
             status = None
-        context.update(
-            {
-                "existing_status": status,
-            }
-        )
+        context.update({"existing_status": status})
         return context
 
 
