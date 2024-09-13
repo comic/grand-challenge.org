@@ -66,9 +66,9 @@ class InterfaceObjectTypeOptions(TextChoices):
 
 class ComponentInterfaceList(LoginRequiredMixin, ListView):
     model = ComponentInterface
-    queryset = ComponentInterface.objects.exclude(
-        slug__in=NON_ALGORITHM_INTERFACES
-    )
+    queryset = ComponentInterface.objects.select_related(
+        "example_value"
+    ).exclude(slug__in=NON_ALGORITHM_INTERFACES)
     list_type = None
     object_type = None
 

@@ -4119,6 +4119,17 @@ numpy = ["nptyping (>=2.5)"]
 testing = ["covdefaults (>=2.3)", "coverage (>=7.4.4)", "defusedxml (>=0.7.1)", "diff-cover (>=9)", "pytest (>=8.1.1)", "pytest-cov (>=5)", "sphobjinv (>=2.3.1)", "typing-extensions (>=4.11)"]
 
 [[package]]
+name = "sphinx-exec-code"
+version = "0.12"
+description = "Execute code blocks in Sphinx and display the output"
+optional = false
+python-versions = "*"
+files = [
+    {file = "sphinx-exec-code-0.12.tar.gz", hash = "sha256:6b964eaa3d170d8a44e4db698b25e64c03a65681392f45a8f4a51c09f0ee70c9"},
+    {file = "sphinx_exec_code-0.12-py3-none-any.whl", hash = "sha256:a4133e05147a2ef2d256bfb69872c3803aa566eacf88a28ae991f549527d3c72"},
+]
+
+[[package]]
 name = "sphinxcontrib-applehelp"
 version = "2.0.0"
 description = "sphinxcontrib-applehelp is a Sphinx extension which outputs Apple help books"
@@ -4959,4 +4970,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.13"
-content-hash = "814d2402e2aa85431e988eac91131a2a122efdba90f79ad6940af30c0e026f32"
+content-hash = "03d3491fc0d36a16324bceb6566863a98ddae6ab474790014ff5ed4ff9354a9e"
