@@ -20,8 +20,8 @@ from grandchallenge.workstations.models import Session
 @transaction.atomic
 def cleanup_celery_backend():
     """Cleanup the Celery backend."""
-    TaskResult.objects.filter(
-        date_created__lt=now() - timedelta(days=7)
+    TaskResult.objects.filter(date_created__lt=now() - timedelta(days=7)).only(
+        "pk"
     ).delete()
 
 
