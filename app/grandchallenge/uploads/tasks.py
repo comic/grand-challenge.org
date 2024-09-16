@@ -13,4 +13,4 @@ from grandchallenge.uploads.models import UserUpload
 def delete_old_user_uploads():
     UserUpload.objects.filter(
         created__lt=now() - timedelta(days=settings.UPLOADS_TIMEOUT_DAYS)
-    ).only("pk").delete()
+    ).only("pk", "status", "creator_id", "s3_upload_id").delete()
