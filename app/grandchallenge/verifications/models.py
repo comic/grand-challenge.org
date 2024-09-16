@@ -139,29 +139,34 @@ class Verification(FieldChangeMixin, models.Model):
             user_email_override={self.user: self.email},
         )
 
-    def handle_pending_requests(self):
-        permission_request_classes = {
-            "algorithm": apps.get_model(
-                app_label="algorithms",
-                model_name="AlgorithmPermissionRequest",
-            ),
-            "archive": apps.get_model(
-                app_label="archives", model_name="ArchivePermissionRequest"
-            ),
-            "reader_study": apps.get_model(
-                app_label="reader_studies",
-                model_name="ReaderStudyPermissionRequest",
-            ),
-        }
+    def accept_pending_requests_for_verified_users(self):
 
-        for object_name, request_class in permission_request_classes.items():
-            request_class.objects.filter(
-                **{
-                    "user": self.user,
-                    "status": request_class.PENDING,
-                    f"{object_name}__access_request_handling": AccessRequestHandlingOptions.ACCEPT_VERIFIED_USERS,
-                }
-            ).update(status=request_class.ACCEPTED)
+        if self.is_verified:
+            permission_request_classes = {
+                "algorithm": apps.get_model(
+                    app_label="algorithms",
+                    model_name="AlgorithmPermissionRequest",
+                ),
+                "archive": apps.get_model(
+                    app_label="archives", model_name="ArchivePermissionRequest"
+                ),
+                "reader_study": apps.get_model(
+                    app_label="reader_studies",
+                    model_name="ReaderStudyPermissionRequest",
+                ),
+            }
+
+            for (
+                object_name,
+                request_class,
+            ) in permission_request_classes.items():
+                request_class.objects.filter(
+                    **{
+                        "user": self.user,
+                        "status": request_class.PENDING,
+                        f"{object_name}__access_request_handling": AccessRequestHandlingOptions.ACCEPT_VERIFIED_USERS,
+                    }
+                ).update(status=request_class.ACCEPTED)
 
 
 def create_verification(email_address, *_, **__):
