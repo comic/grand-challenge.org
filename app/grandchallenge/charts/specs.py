@@ -204,9 +204,9 @@ def components_line(*, values, title, cpu_limit, tooltip):
                 ],
                 "encoding": {
                     "x": {
-                        "timeUnit": "hoursminutesseconds",
+                        "timeUnit": "yearmonthdatehoursminutesseconds",
                         "field": "Timestamp",
-                        "title": "Local Time / HH:MM:SS",
+                        "title": "Local Date/Time - MMM DD, YYYY HH:MM:SS",
                     },
                     "y": {
                         "field": "Percent100",
@@ -245,9 +245,9 @@ def components_line(*, values, title, cpu_limit, tooltip):
                     },
                     "tooltip": tooltip,
                     "x": {
-                        "timeUnit": "hoursminutesseconds",
+                        "timeUnit": "yearmonthdatehoursminutesseconds",
                         "field": "Timestamp",
-                        "title": "Local Time / HH:MM:SS",
+                        "title": "Local Date/Time - MMM DD, YYYY HH:MM:SS",
                     },
                 },
                 "params": [
