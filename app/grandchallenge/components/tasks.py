@@ -20,7 +20,7 @@ from celery import (  # noqa: I251 TODO needs to be refactored
 )
 from django.apps import apps
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.db import OperationalError, transaction
 from django.db.models import DateTimeField, ExpressionWrapper, F
@@ -635,10 +635,7 @@ def provision_job(
     )
     executor = job.get_executor(backend=backend)
 
-    if not job.inputs_complete:
-        raise RuntimeError("Job is not ready for provisioning")
-
-    if job.status not in [job.PENDING, job.RETRY]:
+    if not job.inputs_complete or job.status not in [job.PENDING, job.RETRY]:
         raise RuntimeError("Job is not ready for provisioning")
 
     try:
@@ -1169,21 +1166,6 @@ def validate_voxel_values(*, civ_pk):
     civ.interface._validate_voxel_values(civ.image)
 
 
-def get_object_or_raise_error(*, model, object_pk):
-    try:
-        return model.objects.get(pk=object_pk)
-    except ObjectDoesNotExist as e:
-        from grandchallenge.archives.models import ArchiveItem
-        from grandchallenge.reader_studies.models import DisplaySet
-
-        if model in (DisplaySet, ArchiveItem):
-            # a user can delete display sets and archive items
-            logger.warning("Nothing to do: object to modify no longer exists.")
-            return
-        else:
-            raise e
-
-
 @acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
 def add_image_to_object(  # noqa:C901
@@ -1202,9 +1184,9 @@ def add_image_to_object(  # noqa:C901
 
     interface = ComponentInterface.objects.get(pk=interface_pk)
     upload_session = RawImageUploadSession.objects.get(pk=upload_session_pk)
-    model = apps.get_model(app_label=app_label, model_name=model_name)
-
-    object = get_object_or_raise_error(model=model, object_pk=object_pk)
+    object = lock_model_instance(
+        app_label=app_label, model_name=model_name, pk=object_pk
+    )
 
     try:
         image = Image.objects.get(origin_id=upload_session_pk)
@@ -1268,9 +1250,9 @@ def add_file_to_object(
 
     interface = ComponentInterface.objects.get(pk=interface_pk)
     user_upload = UserUpload.objects.get(pk=user_upload_pk)
-    model = apps.get_model(app_label=app_label, model_name=model_name)
-
-    object = get_object_or_raise_error(model=model, object_pk=object_pk)
+    object = lock_model_instance(
+        app_label=app_label, model_name=model_name, pk=object_pk
+    )
 
     current_value = object.get_current_value_for_interface(
         interface=interface, user_upload=user_upload
