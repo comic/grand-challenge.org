@@ -1190,10 +1190,6 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.github.tasks.cleanup_expired_tokens",
         "schedule": crontab(hour=0, minute=30),
     },
-    "cleanup_celery_backend": {
-        "task": "grandchallenge.core.tasks.cleanup_celery_backend",
-        "schedule": crontab(hour=0, minute=45),
-    },
     "clear_sessions": {
         "task": "grandchallenge.browser_sessions.tasks.clear_sessions",
         "schedule": crontab(hour=1, minute=0),
@@ -1233,6 +1229,10 @@ CELERY_BEAT_SCHEDULE = {
     "cleanup_sent_raw_emails": {
         "task": "grandchallenge.emails.tasks.cleanup_sent_raw_emails",
         "schedule": crontab(hour=6, minute=0),
+    },
+    "cleanup_celery_backend": {
+        "task": "grandchallenge.core.tasks.cleanup_celery_backend",
+        "schedule": timedelta(hours=1),
     },
     "update_compute_costs_and_storage_size": {
         "task": "grandchallenge.challenges.tasks.update_compute_costs_and_storage_size",
