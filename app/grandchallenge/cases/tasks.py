@@ -12,6 +12,7 @@ from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import OperationalError, transaction
 from django.db.transaction import on_commit
+from django.template.defaultfilters import pluralize
 from django.utils._os import safe_join
 from django.utils.module_loading import import_string
 from panimg import convert, post_process
@@ -22,7 +23,7 @@ from grandchallenge.components.backends.utils import safe_extract
 from grandchallenge.components.tasks import lock_model_instance
 from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.core.exceptions import LockNotAcquiredException
-from grandchallenge.notifications.models import NotificationType
+from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.uploads.models import UserUpload
 
 logger = logging.getLogger(__name__)
@@ -143,7 +144,11 @@ def build_images(  # noqa:C901
             with TemporaryDirectory() as tmp_dir:
                 tmp_dir = Path(tmp_dir).resolve()
                 _populate_tmp_dir(tmp_dir, upload_session)
-                _handle_raw_image_files(tmp_dir, upload_session)
+                _handle_raw_image_files(
+                    tmp_dir=tmp_dir,
+                    upload_session=upload_session,
+                    send_notification_on_errors=False if object else True,
+                )
 
             upload_session.status = upload_session.SUCCESS
             upload_session.save()
@@ -155,6 +160,10 @@ def build_images(  # noqa:C901
                 notification_type=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
                 upload_session=upload_session,
             )
+        else:
+            upload_session.error_message = str(e)
+            upload_session.status = upload_session.FAILURE
+            upload_session.save()
     except (SoftTimeLimitExceeded, TimeLimitExceeded):
         if object:
             object.handle_error(
@@ -162,6 +171,10 @@ def build_images(  # noqa:C901
                 upload_session=upload_session,
                 error_message="Time limit exceeded",
             )
+        else:
+            upload_session.error_message = "Time limit exceeded"
+            upload_session.status = upload_session.FAILURE
+            upload_session.save()
     except Exception:
         _delete_session_files(upload_session=upload_session)
         if object:
@@ -170,10 +183,16 @@ def build_images(  # noqa:C901
                 upload_session=upload_session,
                 error_message="An unexpected error occurred",
             )
+        else:
+            upload_session.error_message = "An unexpected error occurred"
+            upload_session.status = upload_session.FAILURE
+            upload_session.save()
         raise
 
 
-def _handle_raw_image_files(tmp_dir, upload_session):
+def _handle_raw_image_files(
+    *, tmp_dir, upload_session, send_notification_on_errors=True
+):
     importer_result = import_images(
         input_directory=tmp_dir, origin=upload_session
     )
@@ -183,6 +202,7 @@ def _handle_raw_image_files(tmp_dir, upload_session):
         file_errors=importer_result.file_errors,
         base_directory=tmp_dir,
         upload_session=upload_session,
+        send_notification_on_errors=send_notification_on_errors,
     )
 
     _delete_session_files(upload_session=upload_session)
@@ -329,6 +349,7 @@ def _handle_raw_files(
     file_errors: dict[Path, list[str]],
     base_directory: Path,
     upload_session: RawImageUploadSession,
+    send_notification_on_errors: bool = True,
 ):
     upload_session.import_result = {
         "consumed_files": [
@@ -340,6 +361,23 @@ def _handle_raw_files(
             if k not in consumed_files
         },
     }
+
+    if (
+        send_notification_on_errors
+        and upload_session.import_result["file_errors"]
+    ):
+        n_errors = len(upload_session.import_result["file_errors"])
+
+        upload_session.error_message = (
+            f"{n_errors} file{pluralize(n_errors)} could not be imported"
+        )
+
+        if upload_session.creator:
+            Notification.send(
+                kind=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
+                message=f"failed with {n_errors} error{pluralize(n_errors)}",
+                action_object=upload_session,
+            )
 
 
 def _delete_session_files(*, upload_session):

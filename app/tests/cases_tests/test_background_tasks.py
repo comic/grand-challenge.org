@@ -300,7 +300,7 @@ def test_soft_time_limit(_):
     build_images(upload_session_pk=session.pk)
     session.refresh_from_db()
     assert session.status == session.FAILURE
-    assert session.error_message == "Time limit exceeded."
+    assert session.error_message == "Time limit exceeded"
 
 
 @pytest.mark.django_db
