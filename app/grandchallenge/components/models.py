@@ -2241,7 +2241,9 @@ class CIVForObjectMixin:
                 upload_session.user_uploads.set(new_value)
 
             upload_session.process_images(
-                linked_algorithm_job_pk=self.pk,
+                linked_app_label=self._meta.app_label,
+                linked_model_name=self._meta.model_name,
+                linked_object_pk=self.pk,
                 linked_task=add_image_to_object.signature(
                     kwargs={
                         "app_label": self._meta.app_label,

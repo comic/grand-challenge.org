@@ -8,22 +8,21 @@ from tempfile import TemporaryDirectory
 
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import OperationalError, transaction
 from django.db.transaction import on_commit
-from django.template.defaultfilters import pluralize
 from django.utils._os import safe_join
 from django.utils.module_loading import import_string
 from panimg import convert, post_process
 from panimg.models import PanImgFile, PanImgResult
 
-from grandchallenge.algorithms.models import Job
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.components.backends.utils import safe_extract
+from grandchallenge.components.tasks import lock_model_instance
 from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.core.exceptions import LockNotAcquiredException
-from grandchallenge.notifications.models import Notification, NotificationType
+from grandchallenge.notifications.models import NotificationType
 from grandchallenge.uploads.models import UserUpload
 
 logger = logging.getLogger(__name__)
@@ -93,7 +92,11 @@ def extract_files(*, source_path: Path, checked_paths=None):
 
 @acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
 def build_images(  # noqa:C901
-    *, upload_session_pk, linked_algorithm_job_pk=None
+    *,
+    upload_session_pk,
+    linked_app_label=None,
+    linked_model_name=None,
+    linked_object_pk=None,
 ):
     """
     Task which analyzes an upload session and attempts to extract and store
@@ -117,22 +120,17 @@ def build_images(  # noqa:C901
     session_queryset = RawImageUploadSession.objects.filter(
         pk=upload_session_pk
     ).select_for_update(nowait=True)
-    if linked_algorithm_job_pk:
-        job_queryset = Job.objects.filter(
-            pk=linked_algorithm_job_pk
-        ).select_for_update(nowait=True)
-    else:
-        job_queryset = Job.objects.none()
 
     try:
         with transaction.atomic():
-            try:
-                job = job_queryset.get()
-            except ObjectDoesNotExist:
-                # empty job queryset
-                job = None
-            except OperationalError as error:
-                raise LockNotAcquiredException from error
+            if linked_object_pk:
+                object = lock_model_instance(
+                    app_label=linked_app_label,
+                    model_name=linked_model_name,
+                    pk=linked_object_pk,
+                )
+            else:
+                object = None
 
             try:
                 upload_session = session_queryset.get()
@@ -151,32 +149,26 @@ def build_images(  # noqa:C901
             upload_session.save()
     except DuplicateFilesException as e:
         _delete_session_files(upload_session=upload_session)
-        upload_session.error_message = str(e)
-        upload_session.status = upload_session.FAILURE
-        upload_session.save()
-        if job:
-            job.update_status(
-                status=Job.CANCELLED,
-                error_message="Image building step failed. See upload session for details.",
+        if object:
+            object.handle_error(
+                error_message=str(e),
+                notification_type=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
+                upload_session=upload_session,
             )
     except (SoftTimeLimitExceeded, TimeLimitExceeded):
-        upload_session.error_message = "Time limit exceeded."
-        upload_session.status = upload_session.FAILURE
-        upload_session.save()
-        if job:
-            job.update_status(
-                status=Job.CANCELLED,
-                error_message="Image building step failed. See upload session for details.",
+        if object:
+            object.handle_error(
+                notification_type=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
+                upload_session=upload_session,
+                error_message="Time limit exceeded",
             )
     except Exception:
         _delete_session_files(upload_session=upload_session)
-        upload_session.error_message = "An unexpected error occurred"
-        upload_session.status = upload_session.FAILURE
-        upload_session.save()
-        if job:
-            job.update_status(
-                status=Job.CANCELLED,
-                error_message="Image building step failed. See upload session for details.",
+        if object:
+            object.handle_error(
+                notification_type=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
+                upload_session=upload_session,
+                error_message="An unexpected error occurred",
             )
         raise
 
@@ -348,20 +340,6 @@ def _handle_raw_files(
             if k not in consumed_files
         },
     }
-
-    if upload_session.import_result["file_errors"]:
-        n_errors = len(upload_session.import_result["file_errors"])
-
-        upload_session.error_message = (
-            f"{n_errors} file{pluralize(n_errors)} could not be imported"
-        )
-
-        if upload_session.creator:
-            Notification.send(
-                kind=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
-                message=f"failed with {n_errors} error{pluralize(n_errors)}",
-                action_object=upload_session,
-            )
 
 
 def _delete_session_files(*, upload_session):

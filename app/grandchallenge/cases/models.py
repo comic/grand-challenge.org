@@ -119,7 +119,13 @@ class RawImageUploadSession(UUIDModel):
                     actor_only=False,
                 )
 
-    def process_images(self, linked_algorithm_job_pk=None, linked_task=None):
+    def process_images(
+        self,
+        linked_app_label=None,
+        linked_model_name=None,
+        linked_object_pk=None,
+        linked_task=None,
+    ):
         """
         Starts the Celery task to import this RawImageUploadSession.
 
@@ -143,7 +149,9 @@ class RawImageUploadSession(UUIDModel):
         workflow = build_images.signature(
             kwargs={
                 "upload_session_pk": self.pk,
-                "linked_algorithm_job_pk": linked_algorithm_job_pk,
+                "linked_app_label": linked_app_label,
+                "linked_model_name": linked_model_name,
+                "linked_object_pk": linked_object_pk,
             }
         )
         if linked_task is not None:
