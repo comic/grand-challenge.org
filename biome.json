@@ -4,7 +4,9 @@
         "ignore": [
             "app/grandchallenge/core/static/vendored/**",
             "app/grandchallenge/core/static/js/markdownx.js",
-            "app/grandchallenge/core/static/js/world-atlas/countries-110m.json"
+            "app/grandchallenge/core/static/js/world-atlas/countries-110m.json",
+            "app/grandchallenge/core/static/css/select2-bootstrap4-theme/select2-bootstrap4.css",
+            "app/grandchallenge/core/static/css/select2-bootstrap4-theme/select2-bootstrap4.min.css"
         ]
     },
     "formatter": {

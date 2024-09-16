@@ -170,4 +170,4 @@ def cleanup_sent_raw_emails():
         sent_at__isnull=False,
         errored=False,
         created__lt=now() - timedelta(days=7),
-    ).defer("message").delete()
+    ).only("pk").delete()
