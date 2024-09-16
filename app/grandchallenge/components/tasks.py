@@ -636,14 +636,10 @@ def provision_job(
     executor = job.get_executor(backend=backend)
 
     if not job.inputs_complete:
-        logger.info("Nothing to do: inputs are not complete.")
-        return
+        raise RuntimeError("Job is not ready for provisioning")
 
     if job.status not in [job.PENDING, job.RETRY]:
-        logger.info(
-            "Job is not ready to be provisioned or has already been provisioned."
-        )
-        return
+        raise RuntimeError("Job is not ready for provisioning")
 
     try:
         executor.provision(

@@ -9,7 +9,7 @@ from django.db.models import Case, IntegerField, Value, When
 from django.db.transaction import on_commit
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
-from grandchallenge.algorithms.models import AlgorithmModel, Job
+from grandchallenge.algorithms.models import Job
 from grandchallenge.algorithms.tasks import create_algorithm_jobs
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -274,35 +274,9 @@ def set_evaluation_inputs(*, evaluation_pk):
     evaluation_pk
         The primary key of the evaluation.Evaluation object
     """
-    Job = apps.get_model(  # noqa: N806
-        app_label="algorithms", model_name="Job"
-    )
     Evaluation = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Evaluation"
     )
-
-    if AlgorithmModel.objects.filter(
-        submission__evaluation=evaluation_pk
-    ).exists():
-        pending_jobs_extra_filter = {
-            "algorithm_model__submission__evaluation": evaluation_pk
-        }
-    else:
-        pending_jobs_extra_filter = {"algorithm_model__isnull": True}
-
-    has_pending_jobs = (
-        Job.objects.active()
-        .filter(
-            algorithm_image__submission__evaluation=evaluation_pk,
-            creator__isnull=True,  # Evaluation inference jobs have no creator
-            **pending_jobs_extra_filter,
-        )
-        .exists()
-    )
-
-    if has_pending_jobs:
-        logger.info("Nothing to do: the algorithm has pending jobs.")
-        return
 
     evaluation_queryset = Evaluation.objects.filter(
         pk=evaluation_pk
@@ -349,6 +323,12 @@ def set_evaluation_inputs(*, evaluation_pk):
         evaluation.save()
 
         on_commit(evaluation.execute)
+
+    else:
+        logger.info(
+            "Nothing to do: prerequisite algorithm jobs are still executing."
+        )
+        return
 
 
 def filter_by_creators_most_recent(*, evaluations):

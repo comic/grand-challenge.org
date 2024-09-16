@@ -44,8 +44,9 @@ def execute_algorithm_job_for_inputs(*, job_pk):
         kwargs={"job_pk": str(job.pk)}, immutable=True
     )
 
-    if job.inputs_complete:
+    if job.inputs_complete and job.status == job.PENDING:
         job.task_on_success = linked_task
+        job.status = job.INPUTS_VALIDATED
         job.save()
         on_commit(
             execute_algorithm_job.signature(
@@ -54,7 +55,8 @@ def execute_algorithm_job_for_inputs(*, job_pk):
         )
     else:
         logger.info(
-            "Nothing to do: the inputs are still being created and validated."
+            "Nothing to do: the inputs are still being created and validated, "
+            "or the job is already being executed."
         )
         return
 
@@ -62,10 +64,14 @@ def execute_algorithm_job_for_inputs(*, job_pk):
 @acks_late_micro_short_task(retry_on=(TooManyJobsScheduled,))
 @transaction.atomic
 def execute_algorithm_job(*, job_pk):
-    if Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
+    job = Job.objects.get(pk=job_pk)
+    if not job.status == Job.INPUTS_VALIDATED:
+        raise RuntimeError("Job is not ready for execution")
+    elif Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
         raise TooManyJobsScheduled
     else:
-        job = Job.objects.get(pk=job_pk)
+        job.status = Job.PENDING
+        job.save()
         on_commit(job.execute)
 
 
