@@ -25,6 +25,7 @@ from jinja2 import sandbox
 from jinja2.exceptions import TemplateError
 from stdimage import JPEGField
 
+from grandchallenge.algorithms.tasks import update_algorithm_average_duration
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.charts.specs import stacked_bar
 from grandchallenge.components.models import (
@@ -394,13 +395,6 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
             w.save()
 
         return w
-
-    def update_average_duration(self):
-        """Store the duration of successful jobs for this algorithm"""
-        self.average_duration = Job.objects.filter(
-            algorithm_image__algorithm=self, status=Job.SUCCESS
-        ).average_duration()
-        self.save(update_fields=("average_duration",))
 
     def is_editor(self, user):
         return user.groups.filter(pk=self.editors_group.pk).exists()
@@ -823,7 +817,11 @@ class Job(UUIDModel, ComponentJob):
             self._public_orig = self.public
 
         if self._status_orig != self.status and self.status == self.SUCCESS:
-            self.algorithm_image.algorithm.update_average_duration()
+            on_commit(
+                update_algorithm_average_duration.signature(
+                    kwargs={"algorithm_pk": self.algorithm_image.algorithm.pk}
+                ).apply_async
+            )
 
     def init_viewers_group(self):
         self.viewers = Group.objects.create(
