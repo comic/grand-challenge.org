@@ -13,7 +13,11 @@ from tests.archives_tests.factories import (
     ArchiveFactory,
     ArchivePermissionRequestFactory,
 )
-from tests.factories import UserFactory
+from tests.factories import (
+    ChallengeFactory,
+    RegistrationRequestFactory,
+    UserFactory,
+)
 from tests.reader_studies_tests.factories import (
     ReaderStudyFactory,
     ReaderStudyPermissionRequestFactory,
@@ -45,6 +49,7 @@ def test_email_sent_to_correct_email():
             "reader_study",
             ReaderStudyFactory,
         ),
+        (RegistrationRequestFactory, "challenge", ChallengeFactory),
     ],
 )
 @pytest.mark.parametrize(
@@ -67,7 +72,7 @@ def test_email_sent_to_correct_email():
         ),
     ],
 )
-def test_handling_pending_permission_requests_on_verification(
+def test_accepting_pending_permission_requests_on_verification(
     perm_request_factory,
     perm_request_entity_attr,
     entity_factory,
