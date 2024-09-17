@@ -206,7 +206,7 @@ def components_line(*, values, title, cpu_limit, tooltip):
                     "x": {
                         "timeUnit": "yearmonthdatehoursminutesseconds",
                         "field": "Timestamp",
-                        "title": "Local Date/Time - MMM DD, YYYY HH:MM:SS",
+                        "title": "Local Time",
                     },
                     "y": {
                         "field": "Percent100",
@@ -247,7 +247,7 @@ def components_line(*, values, title, cpu_limit, tooltip):
                     "x": {
                         "timeUnit": "yearmonthdatehoursminutesseconds",
                         "field": "Timestamp",
-                        "title": "Local Date/Time - MMM DD, YYYY HH:MM:SS",
+                        "title": "Local Time",
                     },
                 },
                 "params": [
