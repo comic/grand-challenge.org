@@ -1,5 +1,4 @@
 from collections import defaultdict
-from typing import Any
 
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist
@@ -100,7 +99,7 @@ class RegistrationRequestList(
 
         return queryset
 
-    def get_context_data(self, **kwargs) -> dict[str, Any]:
+    def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
 
         questions = self._get_registration_questions()
