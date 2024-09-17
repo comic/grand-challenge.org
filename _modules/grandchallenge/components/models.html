@@ -1535,6 +1535,7 @@
                 <span class="n">ComponentJob</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">,</span>
                 <span class="n">ComponentJob</span><span class="o">.</span><span class="n">CANCELLED</span><span class="p">,</span>
                 <span class="n">ComponentJob</span><span class="o">.</span><span class="n">FAILURE</span><span class="p">,</span>
+                <span class="n">ComponentJob</span><span class="o">.</span><span class="n">CLAIMED</span><span class="p">,</span>
             <span class="p">]</span>
         <span class="p">)</span></div>
 
@@ -1557,6 +1558,7 @@
     <span class="n">EXECUTED</span> <span class="o">=</span> <span class="mi">9</span>
     <span class="n">PARSING</span> <span class="o">=</span> <span class="mi">10</span>
     <span class="n">EXECUTING_PREREQUISITES</span> <span class="o">=</span> <span class="mi">11</span>
+    <span class="n">CLAIMED</span> <span class="o">=</span> <span class="mi">12</span>
 
     <span class="n">STATUS_CHOICES</span> <span class="o">=</span> <span class="p">(</span>
         <span class="p">(</span><span class="n">PENDING</span><span class="p">,</span> <span class="s2">&quot;Queued&quot;</span><span class="p">),</span>
@@ -1571,6 +1573,7 @@
         <span class="p">(</span><span class="n">EXECUTED</span><span class="p">,</span> <span class="s2">&quot;Executed&quot;</span><span class="p">),</span>
         <span class="p">(</span><span class="n">PARSING</span><span class="p">,</span> <span class="s2">&quot;Parsing Outputs&quot;</span><span class="p">),</span>
         <span class="p">(</span><span class="n">EXECUTING_PREREQUISITES</span><span class="p">,</span> <span class="s2">&quot;Executing Algorithm&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">CLAIMED</span><span class="p">,</span> <span class="s2">&quot;External Execution In Progress&quot;</span><span class="p">),</span>
     <span class="p">)</span>
 
     <span class="n">status</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
