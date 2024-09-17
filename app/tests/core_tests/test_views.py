@@ -106,11 +106,27 @@ def test_product_redirect(client):
 
 
 @pytest.mark.parametrize(
-    "entity_factory,namespace",
+    "entity_factory,view_name,kwarg_name,kwarg_entity_attribute",
     [
-        (AlgorithmFactory, "algorithms"),
-        (ArchiveFactory, "archives"),
-        (ReaderStudyFactory, "reader-studies"),
+        (
+            AlgorithmFactory,
+            "algorithms:permission-request-create",
+            "slug",
+            "slug",
+        ),
+        (ArchiveFactory, "archives:permission-request-create", "slug", "slug"),
+        (
+            ReaderStudyFactory,
+            "reader-studies:permission-request-create",
+            "slug",
+            "slug",
+        ),
+        (
+            ChallengeFactory,
+            "participants:registration-create",
+            "challenge_short_name",
+            "short_name",
+        ),
     ],
 )
 @pytest.mark.parametrize(
@@ -125,7 +141,13 @@ def test_product_redirect(client):
 )
 @pytest.mark.django_db
 def test_permission_request_status_msg(
-    client, entity_factory, namespace, access_request_handling, expected_msg
+    client,
+    entity_factory,
+    view_name,
+    kwarg_name,
+    kwarg_entity_attribute,
+    access_request_handling,
+    expected_msg,
 ):
 
     u = UserFactory()
@@ -133,38 +155,8 @@ def test_permission_request_status_msg(
 
     response = get_view_for_user(
         client=client,
-        viewname=f"{namespace}:permission-request-create",
-        reverse_kwargs={"slug": t.slug},
-        user=u,
-        method=client.post,
-        follow=True,
-    )
-
-    assert expected_msg in response.rendered_content
-
-
-@pytest.mark.parametrize(
-    "access_request_handling,expected_msg",
-    [
-        (
-            AccessRequestHandlingOptions.ACCEPT_VERIFIED_USERS,
-            "Your request will be automatically accepted if you verify your account",
-        ),
-        (AccessRequestHandlingOptions.MANUAL_REVIEW, "is awaiting review"),
-    ],
-)
-@pytest.mark.django_db
-def test_registration_request_status_msg(
-    client, access_request_handling, expected_msg
-):
-
-    u = UserFactory()
-    t = ChallengeFactory(access_request_handling=access_request_handling)
-
-    response = get_view_for_user(
-        client=client,
-        viewname="participants:registration-create",
-        reverse_kwargs={"challenge_short_name": t.short_name},
+        viewname=view_name,
+        reverse_kwargs={kwarg_name: getattr(t, kwarg_entity_attribute)},
         user=u,
         method=client.post,
         follow=True,
