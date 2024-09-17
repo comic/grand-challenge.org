@@ -1177,6 +1177,10 @@ INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS = json.loads(
     os.environ.get("INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS", "null")
 )
 
+EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS = int(
+    os.environ.get("EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS", 86400)
+)
+
 CELERY_BEAT_SCHEDULE = {
     "refresh_expiring_user_tokens": {
         "task": "grandchallenge.github.tasks.refresh_expiring_user_tokens",
@@ -1249,6 +1253,10 @@ CELERY_BEAT_SCHEDULE = {
     "send_raw_emails": {
         "task": "grandchallenge.emails.tasks.send_raw_emails",
         "schedule": timedelta(seconds=30),
+    },
+    "cancel_external_evaluations_past_timeout": {
+        "task": "grandchallenge.evaluation.tasks.cancel_external_evaluations_past_timeout",
+        "schedule": timedelta(hours=1),
     },
     **{
         f"stop_expired_services_{region}": {

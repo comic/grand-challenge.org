@@ -343,7 +343,6 @@ class Challenge(ChallengeBase):
     external_evaluators_group = models.OneToOneField(
         Group,
         editable=False,
-        null=True,
         on_delete=models.PROTECT,
         related_name="external_evaluators_of_challenge",
     )
@@ -465,7 +464,7 @@ class Challenge(ChallengeBase):
             self.update_user_forum_permissions()
 
     def assign_permissions(self):
-        # Editors and users can view this algorithm
+        # Editors and users can view this challenge
         assign_perm("view_challenge", self.admins_group, self)
         assign_perm("view_challenge", self.participants_group, self)
 

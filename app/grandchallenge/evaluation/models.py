@@ -566,6 +566,15 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             "day if the sanity check submission takes a long time to execute. </b>"
         ),
     )
+    external_evaluation = models.BooleanField(
+        default=False,
+        help_text=(
+            "Are submissions to this phase evaluated externally? "
+            "If so, it is the responsibility of the external service to "
+            "claim and evaluate new submissions, download the submitted "
+            "algorithm models and images and return the results."
+        ),
+    )
 
     objects = PhaseManager()
 
@@ -625,6 +634,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         self._clean_algorithm_submission_settings()
         self._clean_submission_limits()
         self._clean_parent_phase()
+        self._clean_external_evaluation()
 
     def _clean_algorithm_submission_settings(self):
         if self.submission_kind == SubmissionKindChoices.ALGORITHM:
@@ -633,10 +643,14 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                     "For phases that take an algorithm as submission input, "
                     "the creator_must_be_verified box needs to be checked."
                 )
-            if self.submissions_limit_per_user_per_period > 0 and (
-                not self.archive
-                or not self.algorithm_inputs
-                or not self.algorithm_outputs
+            if (
+                self.submissions_limit_per_user_per_period > 0
+                and not self.external_evaluation
+                and (
+                    not self.archive
+                    or not self.algorithm_inputs
+                    or not self.algorithm_outputs
+                )
             ):
                 raise ValidationError(
                     "To change the submission limit to above 0, you need to first link an archive containing the secret "
@@ -656,6 +670,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         if (
             self.submissions_limit_per_user_per_period > 0
             and not self.active_image
+            and not self.external_evaluation
         ):
             raise ValidationError(
                 "You need to first add a valid method for this phase before you "
@@ -686,6 +701,17 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             and self.submissions_open_at < self.parent.submissions_open_at
         ):
             raise ValidationError(SUBMISSION_WINDOW_PARENT_VALIDATION_TEXT)
+
+    def _clean_external_evaluation(self):
+        if self.external_evaluation:
+            if not self.submission_kind == SubmissionKindChoices.ALGORITHM:
+                raise ValidationError(
+                    "External evaluation is only possible for algorithm submission phases."
+                )
+            if not self.parent:
+                raise ValidationError(
+                    "An external evaluation phase must have a parent phase."
+                )
 
     @property
     def scoring_method(self):
@@ -1237,6 +1263,7 @@ class Submission(UUIDModel):
                     actor_only=False,
                     send_action=False,
                 )
+
             e = create_evaluation.signature(
                 kwargs={"submission_pk": self.pk}, immutable=True
             )
@@ -1244,6 +1271,22 @@ class Submission(UUIDModel):
 
     def assign_permissions(self):
         assign_perm("view_submission", self.phase.challenge.admins_group, self)
+        if self.phase.external_evaluation:
+            external_evaluators_group = (
+                self.phase.challenge.external_evaluators_group
+            )
+            if self.algorithm_image:
+                assign_perm(
+                    "download_algorithmimage",
+                    external_evaluators_group,
+                    self.algorithm_image,
+                )
+            if self.algorithm_model:
+                assign_perm(
+                    "download_algorithmmodel",
+                    external_evaluators_group,
+                    self.algorithm_model,
+                )
 
         if self.phase.public:
             assign_perm("view_submission", self.creator, self)
@@ -1343,7 +1386,9 @@ class Evaluation(UUIDModel, ComponentJob):
     """Stores information about a evaluation for a given submission."""
 
     submission = models.ForeignKey("Submission", on_delete=models.PROTECT)
-    method = models.ForeignKey("Method", on_delete=models.PROTECT)
+    method = models.ForeignKey(
+        "Method", null=True, blank=True, on_delete=models.PROTECT
+    )
     ground_truth = models.ForeignKey(
         EvaluationGroundTruth, null=True, blank=True, on_delete=models.PROTECT
     )
@@ -1359,9 +1404,17 @@ class Evaluation(UUIDModel, ComponentJob):
     )
     rank_score = models.FloatField(default=0.0)
     rank_per_metric = models.JSONField(default=dict)
+    claimed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="claimed_evaluations",
+    )
 
     class Meta(UUIDModel.Meta, ComponentJob.Meta):
         unique_together = ("submission", "method", "ground_truth")
+        permissions = [("claim_evaluation", "Can claim evaluation")]
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -1387,6 +1440,13 @@ class Evaluation(UUIDModel, ComponentJob):
         admins_group = self.submission.phase.challenge.admins_group
         assign_perm("view_evaluation", admins_group, self)
         assign_perm("change_evaluation", admins_group, self)
+
+        if self.submission.phase.external_evaluation:
+            external_evaluators = (
+                self.submission.phase.challenge.external_evaluators_group
+            )
+            assign_perm("view_evaluation", external_evaluators, self)
+            assign_perm("claim_evaluation", external_evaluators, self)
 
         all_user_group = Group.objects.get(
             name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
@@ -1457,24 +1517,18 @@ class Evaluation(UUIDModel, ComponentJob):
     def update_status(self, *args, **kwargs):
         res = super().update_status(*args, **kwargs)
 
-        if self.status == self.FAILURE:
+        if self.status in [self.FAILURE, self.SUCCESS, self.CANCELLED]:
+            if self.status == self.CANCELLED:
+                message = "was cancelled"
+            else:
+                message = self.get_status_display().lower()
             Notification.send(
                 kind=NotificationType.NotificationTypeChoices.EVALUATION_STATUS,
                 actor=self.submission.creator,
-                message="failed",
+                message=message,
                 action_object=self,
                 target=self.submission.phase,
             )
-
-        if self.status == self.SUCCESS:
-            Notification.send(
-                kind=NotificationType.NotificationTypeChoices.EVALUATION_STATUS,
-                actor=self.submission.creator,
-                message="succeeded",
-                action_object=self,
-                target=self.submission.phase,
-            )
-
         return res
 
     def get_absolute_url(self):

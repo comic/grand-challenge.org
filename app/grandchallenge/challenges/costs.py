@@ -23,7 +23,7 @@ def annotate_job_duration_and_compute_costs(*, phase):
         .distinct()
     )
     evaluation_jobs = Evaluation.objects.filter(
-        submission__phase=phase
+        submission__phase=phase, submission__phase__external_evaluation=False
     ).distinct()
 
     update_average_algorithm_job_duration(
@@ -48,7 +48,8 @@ def annotate_compute_costs_and_storage_size(*, challenge):
     ).distinct()
 
     evaluation_jobs = Evaluation.objects.filter(
-        submission__phase__challenge=challenge
+        submission__phase__challenge=challenge,
+        submission__phase__external_evaluation=False,
     ).distinct()
 
     update_size_in_storage_and_registry(
