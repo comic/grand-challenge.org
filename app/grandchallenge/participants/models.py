@@ -159,9 +159,7 @@ class RegistrationQuestionAnswer(models.Model):
             try:
                 JSONValidator(schema=self.question.schema)(value=self.answer)
             except ValidationError as e:
-                raise ValidationError(
-                    {"answer": f"Incorrect format: {e.__cause__}"}
-                )
+                raise ValidationError({"answer": f"Incorrect format: {e}"})
 
     def validate_constraints(self, exclude=None):
         super().validate_constraints(exclude=exclude)
