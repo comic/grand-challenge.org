@@ -624,10 +624,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         super().clean()
         self._clean_algorithm_submission_settings()
         self._clean_submission_limits()
-        try:
-            self._clean_parent_phase()
-        except ValidationError as e:
-            raise ValidationError({"parent": e})
+        self._clean_parent_phase()
 
     def _clean_algorithm_submission_settings(self):
         if self.submission_kind == SubmissionKindChoices.ALGORITHM:
