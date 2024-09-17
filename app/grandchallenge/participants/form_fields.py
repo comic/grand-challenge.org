@@ -29,8 +29,20 @@ class RegistrationQuestionField(JSONField):
     def to_python(self, value):
         if value is None or value == "":
             return self.empty_value
+
+        # Handle present double quotes or the missing thereof
         try:
-            return super().to_python(value)
-        except ValidationError:
-            # We assume it is a string
-            return value
+            quoted = value.startswith('"') and value.endswith('"')
+            result = super().to_python(value)
+            if quoted:
+                return f'"{result}"'  # noqa: B907
+            else:
+                return result
+        except ValidationError as e:
+            if e.code == "invalid" and "Enter a valid JSON" in str(e):
+                # Try if a string interpretation would work
+                quote_escaped_value = value.replace('"', '\\"')
+                return super().to_python(
+                    f'"{quote_escaped_value}"'  # noqa: B907
+                )
+            raise e

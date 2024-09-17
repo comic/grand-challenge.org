@@ -29,12 +29,26 @@ def test_registration_field():
     "value, expected_python",
     (
         ("", ""),
+        (None, ""),
+        # Strings
         ("Foo", "Foo"),
-        ('"Foo"', "Foo"),
+        ('"Foo"', '"Foo"'),
+        ('Bar in a "Foo"', 'Bar in a "Foo"'),
         ('"Foo', '"Foo'),
+        ('"Foo""o"', '"Foo""o"'),
+        ("'Foo", "'Foo"),
+        # Object
         ('{"foo": "bar"}', {"foo": "bar"}),
+        ('{"foo: "bar"}', '{"foo: "bar"}'),  # Key not quoted
+        # Numbers
         ("1", 1),
         ("1.42", 1.42),
+        # Arrays
+        ("[1, 2,3]", [1, 2, 3]),
+        ("[1,2, 3", "[1,2, 3"),  # Not enclosed in brackets
+        # Booleans
+        ("true", True),
+        ("false", False),
     ),
 )
 def test_registration_field_to_python(value, expected_python):
