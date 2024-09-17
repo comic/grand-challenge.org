@@ -260,20 +260,19 @@ def test_registration_request_list_view_permissions(client):
     data = response.context_data
 
     assert len(data["object_list"]) == 0, "Sanity: no requests"
-    assert len(data["registration_questions"]) == 0, "Sanity: no questions"
-    assert (
-        len(data["registration_questions_answer_lookup"]) == 0
-    ), "Sanity: no answers"
 
-    q0 = RegistrationQuestionFactory(challenge=ch)
-    q1 = RegistrationQuestionFactory(challenge=ch)
-
+    rq = RegistrationQuestionFactory(challenge=ch)
     rr = RegistrationRequestFactory(challenge=ch, user=non_part_user)
+
+    # Create the answer
+    findable_answer = "A very unique line which should be findable anywhere"
+    assert (
+        str.encode(findable_answer) not in response.content
+    ), "Sanity: answer is not already findable"
     RegistrationQuestionAnswer.objects.create(
-        question=q0, registration_request=rr
-    )
-    q1_a = RegistrationQuestionAnswer.objects.create(
-        question=q1, registration_request=rr
+        question=rq,
+        registration_request=rr,
+        answer=findable_answer,
     )
 
     response = get_view_for_user(
@@ -283,19 +282,13 @@ def test_registration_request_list_view_permissions(client):
         user=admin,
     )
     data = response.context_data
+
     assert len(data["object_list"]) == 1, "Request shows"
-
-    assert len(data["registration_questions"]) == 2, "Questions show"
-
     assert (
-        len(data["registration_questions_answer_lookup"][rr.pk].values()) == 2
-    ), "Answers are available"
+        str.encode(findable_answer) in response.content
+    ), "Answer is findable"
 
-    remove_perm("participants.view_registrationquestion", ch.admins_group, q0)
-    remove_perm(
-        "participants.view_registrationquestionanswer", ch.admins_group, q1_a
-    )
-
+    remove_perm("participants.view_registrationquestion", ch.admins_group, rq)
     response = get_view_for_user(
         viewname="participants:registration-list",
         client=client,
@@ -304,11 +297,6 @@ def test_registration_request_list_view_permissions(client):
     )
     data = response.context_data
 
-    assert len(data["registration_questions"]) == 1 and (
-        data["registration_questions"][0] == q1
-    ), "Only the question with permissions shows"
-
-    answers = data["registration_questions_answer_lookup"][rr.pk].values()
     assert (
-        len(answers) == 0
-    ), "No answers are permittable to view"  # One is non viewable, one is hidden via non-viewable question (despite having an answer)
+        str.encode(findable_answer) not in response.content
+    ), "Without question view permissions, no answer is shown"

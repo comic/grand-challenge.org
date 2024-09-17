@@ -175,20 +175,6 @@ class RegistrationQuestionAnswer(models.Model):
                 )
         return result
 
-    def save(self, *args, **kwargs):
-        adding = self._state.adding
-        super().save(*args, **kwargs)
-        if adding:
-            self.assign_permissions()
-
-    def assign_permissions(self):
-        # Admins can view an answer
-        assign_perm(
-            "view_registrationquestionanswer",
-            self.registration_request.challenge.admins_group,
-            self,
-        )
-
 
 class RegistrationQuestionAnswerUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(

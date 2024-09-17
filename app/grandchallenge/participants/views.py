@@ -1,5 +1,3 @@
-from collections import defaultdict
-
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
@@ -19,7 +17,6 @@ from grandchallenge.participants.forms import (
 )
 from grandchallenge.participants.models import (
     RegistrationQuestion,
-    RegistrationQuestionAnswer,
     RegistrationRequest,
 )
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
@@ -93,28 +90,24 @@ class RegistrationRequestList(
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        queryset = queryset.filter(
-            Q(challenge=self.request.challenge)
-        ).select_related("user__user_profile", "user__verification")
+        queryset = (
+            queryset.filter(Q(challenge=self.request.challenge))
+            .select_related(
+                "user__user_profile",
+                "user__verification",
+            )
+            .prefetch_related("registration_question_answers__question")
+        )
 
         return queryset
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
-
-        questions = self._get_registration_questions()
-        context_data["registration_questions"] = questions
-
-        answers = self._get_registration_questions_answers(questions=questions)
-
-        answer_lookup = defaultdict(dict)
-        for answer in answers:
-            answer_lookup[answer.registration_request.pk][
-                answer.question.pk
-            ] = answer
-
-        context_data["registration_questions_answer_lookup"] = answer_lookup
-
+        context_data.update(
+            {
+                "viewable_registration_questions": self._get_registration_questions(),
+            }
+        )
         return context_data
 
     def _get_registration_questions(self):
@@ -122,19 +115,6 @@ class RegistrationRequestList(
             queryset=self.request.challenge.registration_questions,
             user=self.request.user,
             codename="view_registrationquestion",
-            accept_user_perms=False,
-        )
-
-    def _get_registration_questions_answers(self, questions):
-        queryset = RegistrationQuestionAnswer.objects.filter(
-            registration_request__in=self.object_list,
-            question__in=questions,
-        ).select_related("registration_request", "question")
-
-        return filter_by_permission(
-            queryset=queryset,
-            user=self.request.user,
-            codename="view_registrationquestionanswer",
             accept_user_perms=False,
         )
 
