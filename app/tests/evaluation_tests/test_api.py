@@ -1,13 +1,97 @@
 import time
+from typing import NamedTuple
 
 import pytest
 
 from grandchallenge.evaluation.models import Evaluation
 from grandchallenge.evaluation.serializers import ExternalEvaluationSerializer
+from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.notifications.models import Notification
-from tests.evaluation_tests.factories import EvaluationFactory
-from tests.factories import UserFactory
+from tests.algorithms_tests.factories import (
+    AlgorithmFactory,
+    AlgorithmImageFactory,
+)
+from tests.components_tests.factories import ComponentInterfaceFactory
+from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
+from tests.factories import ChallengeFactory, UserFactory
 from tests.utils import get_view_for_user
+
+
+class ExternalEvaluationSet(NamedTuple):
+    evaluation: EvaluationFactory
+    admin: UserFactory
+    participant: UserFactory
+    external_evaluator: UserFactory
+
+
+def generate_claimable_evaluation():
+    external_evaluator, admin, participant = UserFactory.create_batch(3)
+    challenge = ChallengeFactory(creator=admin)
+    challenge.add_admin(admin)
+    challenge.add_participant(participant)
+    challenge.external_evaluators_group.user_set.add(external_evaluator)
+
+    p1, p2 = PhaseFactory.create_batch(
+        2, challenge=challenge, submission_kind=SubmissionKindChoices.ALGORITHM
+    )
+    ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
+    for phase in [p1, p2]:
+        phase.algorithm_outputs.set([ci1])
+        phase.algorithm_inputs.set([ci2])
+    p2.external_evaluation = True
+    p2.parent = p1
+    p2.save()
+    ai = AlgorithmImageFactory(
+        algorithm=AlgorithmFactory(),
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+    ai.algorithm.inputs.set([ci1])
+    ai.algorithm.inputs.set([ci2])
+
+    eval = EvaluationFactory(
+        submission__algorithm_image=ai,
+        submission__phase=p2,
+        method=None,
+        time_limit=60,
+    )
+
+    return ExternalEvaluationSet(
+        evaluation=eval,
+        admin=admin,
+        participant=participant,
+        external_evaluator=external_evaluator,
+    )
+
+
+@pytest.fixture
+def claimable_external_evaluation():
+    return generate_claimable_evaluation()
+
+
+@pytest.fixture
+def two_claimable_external_evaluations():
+    return [generate_claimable_evaluation(), generate_claimable_evaluation()]
+
+
+@pytest.fixture
+def claimed_external_evaluation(client, claimable_external_evaluation):
+    _ = get_view_for_user(
+        viewname="api:evaluation-claim",
+        client=client,
+        method=client.patch,
+        user=claimable_external_evaluation.external_evaluator,
+        reverse_kwargs={"pk": claimable_external_evaluation.evaluation.pk},
+        content_type="application/json",
+    )
+    claimable_external_evaluation.evaluation.refresh_from_db()
+    return ExternalEvaluationSet(
+        evaluation=claimable_external_evaluation.evaluation,
+        admin=claimable_external_evaluation.admin,
+        participant=claimable_external_evaluation.participant,
+        external_evaluator=claimable_external_evaluation.external_evaluator,
+    )
 
 
 @pytest.mark.django_db
