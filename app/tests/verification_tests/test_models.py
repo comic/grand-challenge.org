@@ -1,7 +1,27 @@
 import pytest
 from django.core import mail
 
-from tests.factories import UserFactory
+from grandchallenge.core.models import RequestBase
+from grandchallenge.core.utils.access_requests import (
+    AccessRequestHandlingOptions,
+)
+from tests.algorithms_tests.factories import (
+    AlgorithmFactory,
+    AlgorithmPermissionRequestFactory,
+)
+from tests.archives_tests.factories import (
+    ArchiveFactory,
+    ArchivePermissionRequestFactory,
+)
+from tests.factories import (
+    ChallengeFactory,
+    RegistrationRequestFactory,
+    UserFactory,
+)
+from tests.reader_studies_tests.factories import (
+    ReaderStudyFactory,
+    ReaderStudyPermissionRequestFactory,
+)
 from tests.verification_tests.factories import VerificationFactory
 
 
@@ -16,3 +36,71 @@ def test_email_sent_to_correct_email():
         mail.outbox[0].subject
         == "[testserver] Please confirm your email address for account validation"
     )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "perm_request_factory, perm_request_entity_attr, entity_factory",
+    [
+        (AlgorithmPermissionRequestFactory, "algorithm", AlgorithmFactory),
+        (ArchivePermissionRequestFactory, "archive", ArchiveFactory),
+        (
+            ReaderStudyPermissionRequestFactory,
+            "reader_study",
+            ReaderStudyFactory,
+        ),
+        (RegistrationRequestFactory, "challenge", ChallengeFactory),
+    ],
+)
+@pytest.mark.parametrize(
+    "access_request_handling, expected_request_status_without_verification, expected_request_status_with_verification",
+    [
+        (
+            AccessRequestHandlingOptions.ACCEPT_ALL,
+            RequestBase.ACCEPTED,
+            RequestBase.ACCEPTED,
+        ),
+        (
+            AccessRequestHandlingOptions.ACCEPT_VERIFIED_USERS,
+            RequestBase.PENDING,
+            RequestBase.ACCEPTED,
+        ),
+        (
+            AccessRequestHandlingOptions.MANUAL_REVIEW,
+            RequestBase.PENDING,
+            RequestBase.PENDING,
+        ),
+    ],
+)
+def test_accepting_pending_permission_requests_on_verification(
+    perm_request_factory,
+    perm_request_entity_attr,
+    entity_factory,
+    access_request_handling,
+    expected_request_status_without_verification,
+    expected_request_status_with_verification,
+):
+    u = UserFactory()
+
+    t_manual = entity_factory(
+        access_request_handling=AccessRequestHandlingOptions.MANUAL_REVIEW
+    )
+    pr_manual = perm_request_factory(
+        **{"user": u, perm_request_entity_attr: t_manual}
+    )
+
+    t = entity_factory(access_request_handling=access_request_handling)
+    pr = perm_request_factory(**{"user": u, perm_request_entity_attr: t})
+
+    v = VerificationFactory(user=u, email_is_verified=True, is_verified=False)
+
+    assert pr_manual.status == RequestBase.PENDING
+    assert pr.status == expected_request_status_without_verification
+
+    v.is_verified = True
+    v.save()
+    pr_manual.refresh_from_db()
+    pr.refresh_from_db()
+
+    assert pr_manual.status == RequestBase.PENDING
+    assert pr.status == expected_request_status_with_verification

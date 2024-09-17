@@ -41,4 +41,6 @@ def delete_users_who_dont_login():
         date_joined__lt=(
             now() - timedelta(days=settings.USER_LOGIN_TIMEOUT_DAYS)
         ),
+    ).only(
+        "pk"
     ).delete()

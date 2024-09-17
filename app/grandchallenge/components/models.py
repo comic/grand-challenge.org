@@ -104,6 +104,9 @@ class InterfaceKindChoices(models.TextChoices):
     THREE_POINT_ANGLE = "3ANG", _("Three-point angle")
     MULTIPLE_THREE_POINT_ANGLES = "M3AN", _("Multiple three-point angles")
 
+    # Registration types
+    AFFINE_TRANSFORM_REGISTRATION = "ATRG", _("Affine transform registration")
+
     # Choice Types
     CHOICE = "CHOI", _("Choice")
     MULTIPLE_CHOICE = "MCHO", _("Multiple choice")
@@ -113,9 +116,6 @@ class InterfaceKindChoices(models.TextChoices):
     SEGMENTATION = "SEG", _("Segmentation")
     HEAT_MAP = "HMAP", _("Heat Map")
     DISPLACEMENT_FIELD = "DSPF", _("Displacement field")
-
-    # Registration types
-    AFFINE_TRANSFORM_REGISTRATION = "ATRG", _("Affine transform registration")
 
     # File types
     PDF = "PDF", _("PDF file")
@@ -137,7 +137,7 @@ class InterfaceSuperKindChoices(models.TextChoices):
 
 
 class InterfaceKind:
-    """Interface kind."""
+    """Interface kind choices."""
 
     InterfaceKindChoices = InterfaceKindChoices
 
@@ -150,6 +150,7 @@ class InterfaceKind:
         * Float
         * Bool
         * Anything that is JSON serializable (any object)
+        * Chart
         * 2D bounding box
         * Multiple 2D bounding boxes
         * Distance measurement
@@ -162,530 +163,34 @@ class InterfaceKind:
         * Multiple lines
         * Angle
         * Multiple angles
-        * Choice (string)
-        * Multiple choice (array of strings)
-        * Chart
         * Ellipse
         * Multiple ellipses
         * Affine transform registration
+        * Choice (string)
+        * Multiple choice (array of strings)
 
-        Example json for 2D bounding box annotation
-            required: "type", "corners", "version"
-            optional: "name", "probability"
+        .. exec_code::
+            :hide_code:
 
-        .. code-block:: json
+            import json
+            import os
 
-            {
-                "name": "Region of interest",
-                "type": "2D bounding box",
-                "corners": [
-                    [ 130.80001831054688, 148.86666870117188, 0.5009999871253967],
-                    [ 69.73332977294922, 148.86666870117188, 0.5009999871253967],
-                    [ 69.73332977294922, 73.13333129882812, 0.5009999871253967],
-                    [ 130.80001831054688, 73.13333129882812, 0.5009999871253967]
-                ],
-                "probability": 0.95,
-                "version": { "major": 1, "minor": 0 }
-            }
+            import django
 
-        Example json for Multiple 2D bounding boxes annotation
-            required: "type", "boxes", "version"
-            optional: "name", "probability"
+            os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+            django.setup()
 
-        .. code-block:: json
+            from grandchallenge.components.models import INTERFACE_TYPE_JSON_EXAMPLES
 
-            {
-                "name": "Regions of interest",
-                "type": "Multiple 2D bounding boxes",
-                "boxes": [
-                    {
-                        "name": "ROI 1",
-                        "corners": [
-                            [ 92.66666412353516, 136.06668090820312, 0.5009999871253967],
-                            [ 54.79999923706055, 136.06668090820312, 0.5009999871253967],
-                            [ 54.79999923706055, 95.53333282470703, 0.5009999871253967],
-                            [ 92.66666412353516, 95.53333282470703, 0.5009999871253967]
-                        ],
-                        "probability": 0.95
-                    },
-                    {
-                        "name": "ROI 2",
-                        "corners": [
-                            [ 92.66666412353516, 136.06668090820312, 0.5009999871253967],
-                            [ 54.79999923706055, 136.06668090820312, 0.5009999871253967],
-                            [ 54.79999923706055, 95.53333282470703, 0.5009999871253967],
-                            [ 92.66666412353516, 95.53333282470703, 0.5009999871253967]
-                        ],
-                        "probability": 0.92
-                    }
-                ],
-                "version": { "major": 1, "minor": 0 }
-            }
+            for key, example in INTERFACE_TYPE_JSON_EXAMPLES.items():
+                title = f"Example JSON file contents for {key.label}"
 
-        Example json for Distance measurement annotation
-            required: "type", "start", "end", "version"
-            optional: "name", "probability"
+                if example.extra_info:
+                    title += f" ({example.extra_info})"
 
-        .. code-block:: json
-
-            {
-                "name": "Distance between areas",
-                "type": "Distance measurement",
-                "start": [ 59.79176712036133, 78.76753997802734, 0.5009999871253967 ],
-                "end": [ 69.38014221191406, 143.75546264648438, 0.5009999871253967 ],
-                "probability": 0.92,
-                "version": { "major": 1, "minor": 0 }
-            }
-
-        Example json for Multiple distance measurement annotation
-            required: "type", "lines", "version"
-            optional: "name", "probability"
-
-        .. code-block:: json
-
-            {
-                "name": "Distances between areas",
-                "type": "Multiple distance measurements",
-                "lines": [
-                    {
-                        "name": "Distance 1",
-                        "start": [ 49.733333587646484, 103.26667022705078, 0.5009999871253967 ],
-                        "end": [ 55.06666564941406, 139.26666259765625, 0.5009999871253967 ],
-                        "probability": 0.92
-                    },
-                    {
-                        "name": "Distance 2",
-                        "start": [ 49.733333587646484, 103.26667022705078, 0.5009999871253967 ],
-                        "end": [ 55.06666564941406, 139.26666259765625, 0.5009999871253967 ],
-                        "probability": 0.92
-                    }
-                ],
-                "version": { "major": 1, "minor": 0 }
-            }
-
-        Example json for Point annotation
-            required: "type", "point", "version"
-            optional: "name", "probability"
-
-        .. code-block:: json
-
-            {
-                "name": "Point of interest",
-                "type": "Point",
-                "point": [ 152.13333129882812, 111.0, 0.5009999871253967 ],
-                "probability": 0.92,
-                "version": { "major": 1, "minor": 0 }
-            }
-
-        Example json for Multiple points annotation
-            required: "type", "points", "version"
-            optional: "name", "probability"
-
-        .. code-block:: json
-
-            {
-                "name": "Points of interest",
-                "type": "Multiple points",
-                "points": [
-                    {
-                        "name": "Point 1",
-                        "point": [
-                            96.0145263671875, 79.83292388916016, 0.5009999871253967
-                        ],
-                        "probability": 0.92
-                    },
-                    {
-                        "name": "Point 2",
-                        "point": [
-                            130.10653686523438, 115.52300262451172, 0.5009999871253967
-                        ],
-                        "probability": 0.92
-                    }
-                ],
-                "version": { "major": 1, "minor": 0 }
-            }
-
-        Example json for Polygon annotation
-            required: "type", "seed_point", "path_points", "sub_type", "groups", "version"
-            optional: "name", "probability"
-
-        .. code-block:: json
-
-            {
-                "name": "Area of interest",
-                "type": "Polygon",
-                "seed_point": [ 76.413756408691, 124.014717102050, 0.5009999871253967 ],
-                "path_points": [
-                    [ 76.41375842260106, 124.01471710205078, 0.5009999871253967 ],
-                    [ 76.41694876387268, 124.0511828696491, 0.5009999871253967 ],
-                    [ 76.42642285078242, 124.0865406433515, 0.5009999871253967 ]
-                ],
-                "sub_type": "brush",
-                "groups": [],
-                "probability": 0.92,
-                "version": { "major": 1, "minor": 0 }
-            }
-
-        Example json for Multiple polygon annotation
-            required: "type", "polygons", "version"
-            optional: "name", "probability"
-
-        .. code-block:: json
-
-            {
-                "name": "Areas of interest",
-                "type": "Multiple polygons",
-                "polygons": [
-                    {
-                        "name": "Area 1",
-                        "seed_point": [ 55.82666793823242, 90.46666717529297, 0.5009999871253967 ],
-                        "path_points": [
-                            [ 55.82667599387105, 90.46666717529297, 0.5009999871253967 ],
-                            [ 55.93921357544119, 90.88666314747366, 0.5009999871253967 ],
-                            [ 56.246671966051736, 91.1941215380842, 0.5009999871253967 ],
-                            [ 56.66666793823242, 91.30665911965434, 0.5009999871253967 ]
-                        ],
-                        "sub_type": "brush",
-                        "groups": [ "manual"],
-                        "probability": 0.67
-                    },
-                    {
-                        "name": "Area 2",
-                        "seed_point": [ 90.22666564941406, 96.06666564941406, 0.5009999871253967 ],
-                        "path_points": [
-                            [ 90.22667370505269, 96.06666564941406, 0.5009999871253967 ],
-                            [ 90.33921128662283, 96.48666162159475, 0.5009999871253967 ],
-                            [ 90.64666967723338, 96.7941200122053, 0.5009999871253967 ]
-                        ],
-                        "sub_type": "brush",
-                        "groups": [],
-                        "probability": 0.92
-                    }
-                ],
-                "version": { "major": 1, "minor": 0 }
-            }
-
-        Example json for Line annotation
-            required: "type", "seed_points", "path_point_lists", "version"
-            optional: "name", "probability"
-
-        .. code-block:: json
-
-            {
-                "name": "Some annotation",
-                "type": "Line",
-                "seed_points": [[1, 2, 3], [1, 2, 3]],
-                "path_point_lists": [
-                    [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
-                    [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]]
-                ],
-                "probability": 0.92
-                "version": { "major": 1, "minor": 0 }
-            }
-
-        Example json for Multiple lines annotation
-            required: "type", "lines", "version"
-            optional: "name", "probability"
-
-        .. code-block:: json
-
-            {
-                "name": "Some annotations",
-                "type": "Multiple lines",
-                "lines": [
-                    {
-                        "name": "Annotation 1",
-                        "seed_points": [[1, 2, 3], [1, 2, 3]],
-                        "path_point_lists": [
-                            [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
-                            [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
-                        ],
-                        "probability": 0.78
-                    },
-                    {
-                        "name": "Annotation 2",
-                        "seed_points": [[1, 2, 3], [1, 2, 3]],
-                        "path_point_lists": [
-                            [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
-                            [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
-                        ],
-                        "probability": 0.92
-                    }
-                ],
-                "version": { "major": 1, "minor": 0 }
-            }
-
-        Example json for Angle annotation
-            required: "type", "lines", "version"
-            optional: "name", "probability"
-
-        .. code-block:: json
-
-            {
-                "name": "Some angle",
-                "type": "Angle",
-                "lines": [[[180, 10, 0.5], [190, 10, 0.5]],[[180, 25, 0.5], [190, 15, 0.5]]],
-                "probability": 0.92,
-                "version": {"major": 1, "minor": 0}
-            }
-
-        Example json for Multiple angles annotation
-            required: "type", "angles", "version"
-            optional: "name", "probability"
-
-        .. code-block:: json
-
-            {
-                "name": "Some angles",
-                "type": "Multiple angles",
-                "angles": [
-                    {
-                        "name": "First angle",
-                        "lines": [[[110, 135, 0.5], [60, 165, 0.5]],[[70, 25, 0.5], [85, 65, 0.5]]],
-                        "probability": 0.82
-                    },
-                    {
-                        "name": "Second angle",
-                        "lines": [[[130, 210, 0.5], [160, 130, 0.5]], [[140, 40, 0.5], [180, 75, 0.5]]],
-                        "probability": 0.52
-                    },
-                    {
-                        "name": "Third angle",
-                        "lines": [[[20, 30, 0.5], [20, 100, 0.5]], [[180, 200, 0.5], [210, 200, 0.5]]],
-                        "probability": 0.98
-                    }
-                ],
-                "version": {"major": 1, "minor": 0}
-            }
-
-        Example json for Ellipse annotation
-            required: "type", "major_axis", "minor_axis", "version"
-            optional: "name", "probability"
-
-        .. code-block:: json
-
-            {
-                "name": "Some ellipse",
-                "type": "Ellipse",
-                "major_axis": [[-10, 606, 0.5], [39, 559, 0.5]],
-                "minor_axis": [[2, 570, 0.5], [26, 595, 0.5]],
-                "probability": 0.92,
-                "version": {"major": 1, "minor": 0}
-            }
-
-        Example json for Multiple ellipse annotation
-            required: "type", "ellipses", "version"
-            optional: "name", "probability"
-
-        .. code-block:: json
-
-            {
-                "name": "Some ellipse",
-                "type": "Multiple ellipses",
-                "ellipses": [
-                    {
-                        "major_axis": [[-44, 535, 0.5], [-112, 494, 0.5]],
-                        "minor_axis": [[-88, 532, 0.5], [-68, 497, 0.5]],
-                        "probability": 0.69
-                    },
-                    {
-                        "major_axis": [[-17, 459, 0.5], [-94, 436, 0.5]],
-                        "minor_axis": [[-61, 467, 0.5], [-50, 428, 0.5]],
-                        "probability": 0.92
-                    }
-                ],
-                "version": {"major": 1, "minor": 0}
-            }
-
-        Example json for Three-point angle annotation
-            required: "type", "angle", "version"
-            optional: "name", "probability"
-
-        .. code-block:: json
-
-            {
-                "name": "Some 3-point angle",
-                "type": "Three-point angle",
-                "angle": [[177, 493, 0.5], [22, 489, 0.5], [112, 353, 0.5]],
-                "probability": 0.003,
-                "version": {"major": 1, "minor": 0}
-            }
-
-        Example json for Three-point angle annotation
-            required: "type", "angles", "version"
-            optional: "name", "probability"
-
-        .. code-block:: json
-
-            {
-                "name": "Multiple 3-point angles",
-                "type": "Multiple three-point angles",
-                "angles": [
-                    {
-                        "name": "first",
-                        "angle": [[300, 237, 0.5], [263, 282, 0.5], [334, 281, 0.5]],
-                        "probability": 0.92
-                    },
-                    {
-                        "name": "second",
-                        "angle": [[413, 237, 0.5], [35, 160, 0.5], [367, 293, 0.5]],
-                        "probability": 0.69
-                    }
-                ],
-                "version": {"major": 1, "minor": 0}
-            }
-
-        Example json for Chart (for more examples, see `here<https://vega.github.io/vega-lite/examples/>` and `here<https://grand-challenge.org/blogs/visualisations-for-challenges/>`)
-
-        .. code-block:: json
-
-            {
-               "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-               "width": 300,
-               "height": 300,
-               "data": {
-                  "values": [
-                     {
-                        "target": "Negative",
-                        "prediction": "Negative",
-                        "value": 198
-                     },
-                     {
-                        "target": "Negative",
-                        "prediction": "Positive",
-                        "value": 9
-                     },
-                     {
-                        "target": "Positive",
-                        "prediction": "Negative",
-                        "value": 159
-                     },
-                     {
-                        "target": "Positive",
-                        "prediction": "Positive",
-                        "value": 376
-                     }
-                  ],
-                  "format": {
-                     "type": "json"
-                  }
-               },
-               "layer": [
-                  {
-                     "mark": "rect",
-                     "encoding": {
-                        "y": {
-                           "field": "target",
-                           "type": "ordinal"
-                        },
-                        "x": {
-                           "field": "prediction",
-                           "type": "ordinal"
-                        },
-                        "color": {
-                           "field": "value",
-                           "type": "quantitative",
-                           "title": "Count of Records",
-                           "legend": {
-                              "direction": "vertical",
-                              "gradientLength": 300
-                           }
-                        }
-                     }
-                  },
-                  {
-                     "mark": "text",
-                     "encoding": {
-                        "y": {
-                           "field": "target",
-                           "type": "ordinal"
-                        },
-                        "x": {
-                           "field": "prediction",
-                           "type": "ordinal"
-                        },
-                        "text": {
-                           "field": "value",
-                           "type": "quantitative"
-                        },
-                        "color": {
-                           "condition": {
-                              "test": "datum['value'] < 40",
-                              "value": "black"
-                           },
-                           "value": "white"
-                        }
-                     }
-                  }
-               ],
-               "config": {
-                  "axis": {
-                     "grid": true,
-                     "tickBand": "extent"
-                  }
-               }
-            }
-
-        Example json for Ellipse annotation
-            required: "type", "major_axis, "minor_axis" "version"
-            optional: "name", "probability"
-
-        .. code-block:: json
-
-            {
-                "name": "an Ellipse",
-                "type": "Ellipse",
-                "major_axis": [[ 130, 148.86, 0.50], [10, 10, 0]],
-                "minor_axis": [[ 69.73, 148.86, 0.50], [10, 0, 0]],
-                "probability": 0.95,
-                "version": { "major": 1, "minor": 0 }
-            }
-
-        Example json for Multiple ellipses annotation
-            required: "type", "ellipses", "version"
-            optional: "name", "probability"
-
-        .. code-block:: json
-
-            {
-                "name": "Some Ellipses",
-                "type": "Multiple ellipses",
-                "ellipses": [
-                    {
-                        "name": "First Ellipse",
-                        "major axis": [[10, 10, 0.5], [10, 20, 0]],
-                        "minor_axis": [[10, 20, 0.5], [10.6, 0, 0]],
-                        "probability": 0.82
-                    },
-                    {
-                        "name": "Second Ellipse",
-                        "major axis": [[10, 10, 0.5], [10, 20, 0]],
-                        "minor_axis": [[10, 20, 0.5], [10.6, 0, 0]],
-                        "probability": 0.52
-                    },
-                    {
-                        "name": "Third Ellipse",
-                        "major axis": [[10, 10, 0.5], [10, 20, 0]],
-                        "minor_axis": [[10, 20, 0.5], [10.6, 0, 0]],
-                        "probability": 0.98
-                    }
-                ],
-                "version": {"major": 1, "minor": 0}
-            }
-
-        Example json for an Affine Transform Registration
-            required: "3d_affine_transform"
-
-        .. code-block:: json
-
-            {
-                "3d_affine_transform": [
-                    [1, 0, 0, 0],
-                    [0, 1, 0, 0],
-                    [0, 0, 1, 0],
-                    [0, 0, 0, 1]
-                ]
-            }
+                print(f"{title}:")
+                print(json.dumps(example.value, indent=2))
+                print("")
 
         """
         return {
@@ -723,6 +228,7 @@ class InterfaceKind:
         * Image
         * Heat Map
         * Segmentation
+        * Displacement Field
         """
         return {
             InterfaceKind.InterfaceKindChoices.IMAGE,
@@ -953,6 +459,13 @@ class ComponentInterface(OverlaySegmentsMixin):
         ]
 
     @property
+    def json_kind_example(self):
+        try:
+            return self.example_value
+        except ObjectDoesNotExist:
+            return INTERFACE_TYPE_JSON_EXAMPLES.get(self.kind)
+
+    @property
     def super_kind(self):
         if self.saved_in_object_store:
             if self.is_image_kind:
@@ -1060,6 +573,7 @@ class ComponentInterface(OverlaySegmentsMixin):
         self._clean_overlay_segments()
         self._clean_store_in_database()
         self._clean_relative_path()
+        self._clean_example_value()
 
     def _clean_overlay_segments(self):
         if (
@@ -1143,6 +657,16 @@ class ComponentInterface(OverlaySegmentsMixin):
                 f"Interface {self.kind} objects cannot be stored in the database"
             )
 
+    def _clean_example_value(self):
+        try:
+            self.example_value.full_clean()
+        except ObjectDoesNotExist:
+            pass
+        except ValidationError as error:
+            raise ValidationError(
+                f"The example value for this interface is not valid: {error}"
+            )
+
     def validate_against_schema(self, *, value):
         """Validates values against both default and custom schemas"""
         JSONValidator(
@@ -1170,6 +694,458 @@ class ComponentInterface(OverlaySegmentsMixin):
 
     class Meta:
         ordering = ("pk",)
+
+
+class ComponentInterfaceExampleValue(UUIDModel):
+    interface = models.OneToOneField(
+        to=ComponentInterface,
+        on_delete=models.CASCADE,
+        related_name="example_value",
+    )
+    value = models.JSONField(
+        null=True,
+        blank=True,
+        default=None,
+        help_text="Example value for an interface",
+    )
+    extra_info = models.TextField(
+        blank=True, help_text="Extra information about the example value"
+    )
+
+    def clean(self):
+        super().clean()
+
+        if self.interface.is_json_kind:
+            civ = ComponentInterfaceValue(interface=self.interface)
+
+            if self.interface.store_in_database:
+                civ.value = self.value
+            else:
+                file = ContentFile(
+                    json.dumps(self.value).encode("utf-8"),
+                    name=f"{self.interface.kind}.json",
+                )
+                civ.file = file
+
+            civ.full_clean()
+        else:
+            raise ValidationError(
+                "Example value can be set for interfaces of JSON kind only"
+            )
+
+
+INTERFACE_TYPE_JSON_EXAMPLES = {
+    InterfaceKindChoices.STRING: ComponentInterfaceExampleValue(
+        value="Example String"
+    ),
+    InterfaceKindChoices.INTEGER: ComponentInterfaceExampleValue(value=42),
+    InterfaceKindChoices.FLOAT: ComponentInterfaceExampleValue(value=42.0),
+    InterfaceKindChoices.BOOL: ComponentInterfaceExampleValue(value=True),
+    InterfaceKindChoices.ANY: ComponentInterfaceExampleValue(
+        value={"key": "value", "None": None}
+    ),
+    InterfaceKindChoices.CHART: ComponentInterfaceExampleValue(
+        value={
+            "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+            "width": 300,
+            "height": 300,
+            "data": {
+                "values": [
+                    {
+                        "target": "Negative",
+                        "prediction": "Negative",
+                        "value": 198,
+                    },
+                    {
+                        "target": "Negative",
+                        "prediction": "Positive",
+                        "value": 9,
+                    },
+                    {
+                        "target": "Positive",
+                        "prediction": "Negative",
+                        "value": 159,
+                    },
+                    {
+                        "target": "Positive",
+                        "prediction": "Positive",
+                        "value": 376,
+                    },
+                ],
+                "format": {"type": "json"},
+            },
+            "layer": [
+                {
+                    "mark": "rect",
+                    "encoding": {
+                        "y": {"field": "target", "type": "ordinal"},
+                        "x": {"field": "prediction", "type": "ordinal"},
+                        "color": {
+                            "field": "value",
+                            "type": "quantitative",
+                            "title": "Count of Records",
+                            "legend": {
+                                "direction": "vertical",
+                                "gradientLength": 300,
+                            },
+                        },
+                    },
+                },
+                {
+                    "mark": "text",
+                    "encoding": {
+                        "y": {"field": "target", "type": "ordinal"},
+                        "x": {"field": "prediction", "type": "ordinal"},
+                        "text": {"field": "value", "type": "quantitative"},
+                        "color": {
+                            "condition": {
+                                "test": "datum['value'] < 40",
+                                "value": "black",
+                            },
+                            "value": "white",
+                        },
+                    },
+                },
+            ],
+            "config": {"axis": {"grid": True, "tickBand": "extent"}},
+        },
+        extra_info="For more examples, see https://vega.github.io/vega-lite/examples/ and https://grand-challenge.org/blogs/visualisations-for-challenges/",
+    ),
+    InterfaceKindChoices.TWO_D_BOUNDING_BOX: ComponentInterfaceExampleValue(
+        value={
+            "name": "Region of interest",
+            "type": "2D bounding box",
+            "corners": [
+                [130.8, 148.8, 0.5],
+                [69.7, 148.8, 0.5],
+                [69.7, 73.1, 0.5],
+                [130.8, 73.1, 0.5],
+            ],
+            "probability": 0.95,
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES: ComponentInterfaceExampleValue(
+        value={
+            "name": "Regions of interest",
+            "type": "Multiple 2D bounding boxes",
+            "boxes": [
+                {
+                    "name": "ROI 1",
+                    "corners": [
+                        [92.6, 136.0, 0.5],
+                        [54.8, 136.0, 0.5],
+                        [54.8, 95.5, 0.5],
+                        [92.6, 95.5, 0.5],
+                    ],
+                    "probability": 0.95,
+                },
+                {
+                    "name": "ROI 2",
+                    "corners": [
+                        [92.6, 136.0, 0.5],
+                        [54.8, 136.0, 0.5],
+                        [54.8, 95.5, 0.5],
+                        [92.6, 95.5, 0.5],
+                    ],
+                    "probability": 0.92,
+                },
+            ],
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.DISTANCE_MEASUREMENT: ComponentInterfaceExampleValue(
+        value={
+            "name": "Distance between areas",
+            "type": "Distance measurement",
+            "start": [59.8, 78.8, 0.5],
+            "end": [69.4, 143.8, 0.5],
+            "probability": 0.92,
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS: ComponentInterfaceExampleValue(
+        value={
+            "name": "Distances between areas",
+            "type": "Multiple distance measurements",
+            "lines": [
+                {
+                    "name": "Distance 1",
+                    "start": [49.7, 103.3, 0.5],
+                    "end": [55.1, 139.3, 0.5],
+                    "probability": 0.92,
+                },
+                {
+                    "name": "Distance 2",
+                    "start": [49.7, 103.3, 0.5],
+                    "end": [55.1, 139.3, 0.5],
+                    "probability": 0.92,
+                },
+            ],
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.POINT: ComponentInterfaceExampleValue(
+        value={
+            "name": "Point of interest",
+            "type": "Point",
+            "point": [152.1, 111.0, 0.5],
+            "probability": 0.92,
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.MULTIPLE_POINTS: ComponentInterfaceExampleValue(
+        value={
+            "name": "Points of interest",
+            "type": "Multiple points",
+            "points": [
+                {
+                    "name": "Point 1",
+                    "point": [96.0, 79.8, 0.5],
+                    "probability": 0.92,
+                },
+                {
+                    "name": "Point 2",
+                    "point": [130.1, 115.5, 0.5],
+                    "probability": 0.92,
+                },
+            ],
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.POLYGON: ComponentInterfaceExampleValue(
+        value={
+            "name": "Area of interest",
+            "type": "Polygon",
+            "seed_point": [76.4, 124.0, 0.5],
+            "path_points": [
+                [76.41, 124.01, 0.5],
+                [76.41, 124.05, 0.5],
+                [76.42, 124.08, 0.5],
+            ],
+            "sub_type": "brush",
+            "groups": [],
+            "probability": 0.92,
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.MULTIPLE_POLYGONS: ComponentInterfaceExampleValue(
+        value={
+            "name": "Areas of interest",
+            "type": "Multiple polygons",
+            "polygons": [
+                {
+                    "name": "Area 1",
+                    "seed_point": [55.82, 90.46, 0.5],
+                    "path_points": [
+                        [55.82, 90.46, 0.5],
+                        [55.93, 90.88, 0.5],
+                        [56.24, 91.19, 0.5],
+                        [56.66, 91.30, 0.5],
+                    ],
+                    "sub_type": "brush",
+                    "groups": ["manual"],
+                    "probability": 0.67,
+                },
+                {
+                    "name": "Area 2",
+                    "seed_point": [90.22, 96.06, 0.5],
+                    "path_points": [
+                        [90.22, 96.06, 0.5],
+                        [90.33, 96.48, 0.5],
+                        [90.64, 96.79, 0.5],
+                    ],
+                    "sub_type": "brush",
+                    "groups": [],
+                    "probability": 0.92,
+                },
+            ],
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.LINE: ComponentInterfaceExampleValue(
+        value={
+            "name": "Some annotation",
+            "type": "Line",
+            "seed_points": [[1, 2, 3], [1, 2, 3]],
+            "path_point_lists": [
+                [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
+                [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
+            ],
+            "probability": 0.92,
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.MULTIPLE_LINES: ComponentInterfaceExampleValue(
+        value={
+            "name": "Some annotations",
+            "type": "Multiple lines",
+            "lines": [
+                {
+                    "name": "Annotation 1",
+                    "seed_points": [[1, 2, 3], [1, 2, 3]],
+                    "path_point_lists": [
+                        [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
+                        [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
+                    ],
+                    "probability": 0.78,
+                },
+                {
+                    "name": "Annotation 2",
+                    "seed_points": [[1, 2, 3], [1, 2, 3]],
+                    "path_point_lists": [
+                        [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
+                        [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
+                    ],
+                    "probability": 0.92,
+                },
+            ],
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.ANGLE: ComponentInterfaceExampleValue(
+        value={
+            "name": "Some angle",
+            "type": "Angle",
+            "lines": [
+                [[180, 10, 0.5], [190, 10, 0.5]],
+                [[180, 25, 0.5], [190, 15, 0.5]],
+            ],
+            "probability": 0.92,
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.MULTIPLE_ANGLES: ComponentInterfaceExampleValue(
+        value={
+            "name": "Some angles",
+            "type": "Multiple angles",
+            "angles": [
+                {
+                    "name": "First angle",
+                    "lines": [
+                        [[110, 135, 0.5], [60, 165, 0.5]],
+                        [[70, 25, 0.5], [85, 65, 0.5]],
+                    ],
+                    "probability": 0.82,
+                },
+                {
+                    "name": "Second angle",
+                    "lines": [
+                        [[130, 210, 0.5], [160, 130, 0.5]],
+                        [[140, 40, 0.5], [180, 75, 0.5]],
+                    ],
+                    "probability": 0.52,
+                },
+                {
+                    "name": "Third angle",
+                    "lines": [
+                        [[20, 30, 0.5], [20, 100, 0.5]],
+                        [[180, 200, 0.5], [210, 200, 0.5]],
+                    ],
+                    "probability": 0.98,
+                },
+            ],
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.ELLIPSE: ComponentInterfaceExampleValue(
+        value={
+            "name": "Some ellipse",
+            "type": "Ellipse",
+            "major_axis": [[-10, 606, 0.5], [39, 559, 0.5]],
+            "minor_axis": [[2, 570, 0.5], [26, 595, 0.5]],
+            "probability": 0.92,
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.MULTIPLE_ELLIPSES: ComponentInterfaceExampleValue(
+        value={
+            "name": "Some ellipse",
+            "type": "Multiple ellipses",
+            "ellipses": [
+                {
+                    "major_axis": [[-44, 535, 0.5], [-112, 494, 0.5]],
+                    "minor_axis": [[-88, 532, 0.5], [-68, 497, 0.5]],
+                    "probability": 0.69,
+                },
+                {
+                    "major_axis": [[-17, 459, 0.5], [-94, 436, 0.5]],
+                    "minor_axis": [[-61, 467, 0.5], [-50, 428, 0.5]],
+                    "probability": 0.92,
+                },
+            ],
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.THREE_POINT_ANGLE: ComponentInterfaceExampleValue(
+        value={
+            "name": "Some 3-point angle",
+            "type": "Three-point angle",
+            "angle": [[177, 493, 0.5], [22, 489, 0.5], [112, 353, 0.5]],
+            "probability": 0.003,
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES: ComponentInterfaceExampleValue(
+        value={
+            "name": "Multiple 3-point angles",
+            "type": "Multiple three-point angles",
+            "angles": [
+                {
+                    "name": "first",
+                    "angle": [
+                        [300, 237, 0.5],
+                        [263, 282, 0.5],
+                        [334, 281, 0.5],
+                    ],
+                    "probability": 0.92,
+                },
+                {
+                    "name": "second",
+                    "angle": [
+                        [413, 237, 0.5],
+                        [35, 160, 0.5],
+                        [367, 293, 0.5],
+                    ],
+                    "probability": 0.69,
+                },
+            ],
+            "version": {"major": 1, "minor": 0},
+        },
+        extra_info='Optional fields: "name" and "probability"',
+    ),
+    InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION: ComponentInterfaceExampleValue(
+        value={
+            "3d_affine_transform": [
+                [1, 0, 0, 0],
+                [0, 1, 0, 0],
+                [0, 0, 1, 0],
+                [0, 0, 0, 1],
+            ]
+        },
+    ),
+    InterfaceKindChoices.CHOICE: ComponentInterfaceExampleValue(
+        value="Choice 1",
+    ),
+    InterfaceKindChoices.MULTIPLE_CHOICE: ComponentInterfaceExampleValue(
+        value=["Choice 1", "Choice 2"],
+    ),
+}
 
 
 def component_interface_value_path(instance, filename):

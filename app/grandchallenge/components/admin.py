@@ -4,6 +4,7 @@ from guardian.admin import GuardedModelAdmin
 
 from grandchallenge.components.models import (
     ComponentInterface,
+    ComponentInterfaceExampleValue,
     ComponentInterfaceValue,
     ComponentJob,
 )
@@ -51,12 +52,19 @@ class ComponentInterfaceAdmin(admin.ModelAdmin):
     )
     search_fields = ("title", "slug")
     list_filter = ("kind",)
+    readonly_fields = ("example_value",)
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
             return ("store_in_database", *self.readonly_fields)
         else:
             return self.readonly_fields
+
+
+@admin.register(ComponentInterfaceExampleValue)
+class ComponentInterfaceExampleValueAdmin(admin.ModelAdmin):
+    list_display = ("pk", "interface", "value", "extra_info")
+    search_fields = ("interface__slug",)
 
 
 @admin.register(ComponentInterfaceValue)

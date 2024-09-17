@@ -14,7 +14,9 @@ from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.cases.models import Image
 from grandchallenge.components.models import (
+    INTERFACE_TYPE_JSON_EXAMPLES,
     ComponentInterface,
+    ComponentInterfaceExampleValue,
     ComponentInterfaceValue,
     ImportStatusChoices,
     InterfaceKind,
@@ -38,6 +40,7 @@ from tests.algorithms_tests.factories import (
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.cases_tests.factories import ImageFactoryWithImageFileTiff
 from tests.components_tests.factories import (
+    ComponentInterfaceExampleValueFactory,
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
@@ -963,9 +966,9 @@ def test_runtime_metrics_chart():
                 ],
                 "encoding": {
                     "x": {
-                        "timeUnit": "hoursminutesseconds",
+                        "timeUnit": "yearmonthdatehoursminutesseconds",
                         "field": "Timestamp",
-                        "title": "Local Time / HH:MM:SS",
+                        "title": "Local Time",
                     },
                     "y": {
                         "field": "Percent100",
@@ -1015,9 +1018,9 @@ def test_runtime_metrics_chart():
                         },
                     ],
                     "x": {
-                        "timeUnit": "hoursminutesseconds",
+                        "timeUnit": "yearmonthdatehoursminutesseconds",
                         "field": "Timestamp",
-                        "title": "Local Time / HH:MM:SS",
+                        "title": "Local Time",
                     },
                 },
                 "params": [
@@ -1490,3 +1493,91 @@ def test_displacement_field_validation(
             str(error.value)
             == "{'__all__': [\"Deformation and displacement field's 4th dimension must be a 3-component vector.\"]}"
         )
+
+
+@pytest.mark.parametrize(
+    "example_value,context",
+    (
+        (
+            1,
+            pytest.raises(ValidationError),
+        ),
+        (
+            10,
+            nullcontext(),
+        ),
+    ),
+)
+@pytest.mark.django_db
+def test_ci_example_value(example_value, context):
+    ci = ComponentInterfaceExampleValueFactory(
+        interface__kind=InterfaceKindChoices.INTEGER,
+        interface__schema={"type": "number", "minimum": 2, "maximum": 20},
+        value=example_value,
+    )
+
+    with context:
+        ci.full_clean()
+
+
+@pytest.mark.django_db
+def test_ci_example_value_non_json_kind_fail():
+    v = ComponentInterfaceExampleValueFactory(
+        interface__kind=InterfaceKindChoices.IMAGE,
+    )
+
+    with pytest.raises(
+        ValidationError,
+        match=r"Example value can be set for interfaces of JSON kind only",
+    ):
+        v.full_clean()
+
+
+@pytest.mark.django_db
+def test_schema_must_be_valid_for_example_value():
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.INTEGER, relative_path="test.json"
+    )
+    ComponentInterfaceExampleValueFactory(
+        interface=ci,
+        value=1,
+    )
+
+    ci.schema = {"type": "number", "minimum": 2, "maximum": 20}
+
+    with pytest.raises(
+        ValidationError,
+        match=r".*The example value for this interface is not valid:.*instance is less than the minimum of 2.*",
+    ):
+        ci.full_clean()
+
+
+@pytest.mark.parametrize(
+    "kind, example",
+    [
+        (
+            kind,
+            example,
+        )
+        for kind, example in INTERFACE_TYPE_JSON_EXAMPLES.items()
+    ],
+)
+@pytest.mark.django_db
+def test_interface_kind_json_type_examples(kind, example):
+    interface = ComponentInterfaceFactory(
+        kind=kind, store_in_database=False, relative_path="test.json"
+    )
+
+    example.interface = interface
+    example.full_clean()
+    example.save()
+
+    interface.full_clean()
+
+    assert isinstance(example, ComponentInterfaceExampleValue)
+
+
+def test_all_examples_present():
+    assert set(INTERFACE_TYPE_JSON_EXAMPLES.keys()) == set(
+        InterfaceKind.interface_type_json()
+    )

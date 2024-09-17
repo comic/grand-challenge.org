@@ -1,12 +1,15 @@
 import uuid
 
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.utils.timezone import localtime
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import (
     TitleSlugDescriptionModel as BaseTitleSlugDescriptionModel,
 )
+
+from grandchallenge.core import utils
 
 
 class TitleSlugDescriptionModel(BaseTitleSlugDescriptionModel):
@@ -62,16 +65,31 @@ class RequestBase(models.Model):
         super().save(*args, **kwargs)
 
     def status_to_string(self):
+
         status = (
             f"Your request to join {self.object_name}, "
             f"sent {self.format_date(self.created)}"
         )
         if self.status == self.PENDING:
-            status += ", is awaiting review"
+            try:
+                user_is_verified = self.user.verification.is_verified
+            except ObjectDoesNotExist:
+                user_is_verified = False
+
+            if (
+                not user_is_verified
+                and self.base_object.access_request_handling
+                == utils.access_requests.AccessRequestHandlingOptions.ACCEPT_VERIFIED_USERS
+            ):
+                status += ", is awaiting review. Your request will be automatically accepted if you verify your account."
+            else:
+                status += ", is awaiting review"
+
         elif self.status == self.ACCEPTED:
             status += ", was accepted at " + self.format_date(self.changed)
         elif self.status == self.REJECTED:
             status += ", was rejected at " + self.format_date(self.changed)
+
         return status
 
     @staticmethod

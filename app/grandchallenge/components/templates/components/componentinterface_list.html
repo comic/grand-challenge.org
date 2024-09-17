@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% load url %}
 {% load static %}
+{% load json %}
+{% load bleach %}
 
 {% block title %}
     {{ object_type|title }} {{ list_type|title }} Options - {{ block.super }}
@@ -49,6 +51,7 @@
                 {% elif list_type == list_type_options.OUTPUT %}
                     <th>Your algorithm would write this to</th>
                 {% endif %}
+                <th>Example</th>
             </tr>
             </thead>
             <tbody>
@@ -80,6 +83,47 @@
                             {% endif %}
                         </td>
                     {% endif %}
+                    <td>
+                        {% if interface.json_kind_example %}
+                            <a href="#example-value-modal-{{ interface.pk }}"
+                                data-toggle="modal"
+                                data-target="#example-value-modal-{{ interface.pk }}"
+                                class="text-decoration-none"
+                                role="button"
+                                title="View {{ interface.title }}">
+
+                                <div class="badge badge-primary">
+                                    <i class="fas fa-fw fa-eye"></i>
+                                    View Example
+                                </div>
+                            </a>
+
+                            <div class="modal" id="example-value-modal-{{ interface.pk }}"
+                                tabindex="-1" role="dialog" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">
+                                                {{ interface.title }} Example
+                                            </h5>
+                                            <button type="button" class="close" data-dismiss="modal"
+                                                    aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="text-left modal-body">
+                                            {% if interface.json_kind_example.extra_info %}
+                                                {{ interface.json_kind_example.extra_info|md2html }}
+                                            {% endif %}
+
+                                            <strong>Example JSON file contents:</strong>
+                                            <pre>{{ interface.json_kind_example.value|json_dumps:2 }}</pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </td>
                 </tr>
             {% endfor %}
             </tbody>

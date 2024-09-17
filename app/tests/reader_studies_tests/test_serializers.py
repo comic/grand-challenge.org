@@ -26,14 +26,11 @@ def test_widget_on_question_serializer(rf):
 def test_interactive_algorithm_on_question_serializer(rf):
     qu = QuestionFactory()
     serializer = QuestionSerializer(qu, context={"request": rf.get("/foo")})
-    assert serializer.data["interactive_algorithm"] == ""
+    assert serializer.data["interactive_algorithms"] == []
     qu.interactive_algorithm = InteractiveAlgorithmChoices.ULS23_BASELINE
     qu.save()
     serializer2 = QuestionSerializer(qu, context={"request": rf.get("/foo")})
-    assert (
-        serializer2.data["interactive_algorithm"]
-        == InteractiveAlgorithmChoices.ULS23_BASELINE
-    )
+    assert serializer2.data["interactive_algorithms"] == ["uls23-baseline"]
 
 
 @pytest.mark.django_db
