@@ -1,5 +1,4 @@
 import pytest
-from django.utils.safestring import SafeString
 
 from grandchallenge.participants.form_fields import RegistrationQuestionField
 from grandchallenge.participants.models import RegistrationQuestion
@@ -8,13 +7,14 @@ from grandchallenge.participants.models import RegistrationQuestion
 def test_registration_field():
     rq = RegistrationQuestion(
         question_text="Foo",
-        question_help_text="<script></script>",
+        question_help_text='<div class="test">Hello & Welcome!</div>',
         required=False,
     )
     field = RegistrationQuestionField(registration_question=rq)
 
-    assert isinstance(
-        field.help_text, SafeString
+    assert (
+        field.help_text
+        == "&lt;div class=&quot;test&quot;&gt;Hello &amp; Welcome!&lt;/div&gt;"
     ), "Help text should be escaped"
 
     assert (field.label, field.required) == (
