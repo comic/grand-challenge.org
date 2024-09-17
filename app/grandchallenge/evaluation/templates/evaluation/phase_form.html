@@ -1,7 +1,6 @@
 {% extends "pages/challenge_settings_base.html" %}
 {% load crispy from crispy_forms_tags %}
 {% load url %}
-{% load negate %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -28,7 +27,7 @@
             For instance, you could have a training and test phase, or have a phase for each task.
         </p>
     {% else %}
-    {% include "evaluation/partials/phase_admin_warnings.html" with phase=object hide_phase_parent_info=form.initial.parent|negate %}
+    {% include "evaluation/partials/phase_admin_warnings.html" with phase=object show_phase_parent_info=form.initial.parent|default_if_none:False %}
     {% endif %}
 
     {% crispy form %}

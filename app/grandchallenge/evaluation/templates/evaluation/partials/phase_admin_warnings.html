@@ -22,7 +22,7 @@
     </div>
 {% endif %}
 
-{% if phase.parent and not hide_phase_parent_info %}
+{% if phase.parent and show_phase_parent_info|default_if_none:True %}
     <div class="alert alert-info" role="alert">
         <i class="fa fa-info-circle" aria-hidden="true"></i>
         This phase is dependent on another phase.
