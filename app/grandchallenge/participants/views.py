@@ -49,7 +49,6 @@ class RegistrationRequestCreate(
 ):
     model = RegistrationRequest
     form_class = RegistrationRequestForm
-
     raise_exception = True
     login_url = reverse_lazy("account_login")
 
