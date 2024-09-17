@@ -56,7 +56,7 @@ class QuestionSerializer(HyperlinkedModelSerializer):
     interface = ComponentInterfaceSerializer(read_only=True, allow_null=True)
     look_up_table = LookUpTableSerializer(read_only=True, allow_null=True)
     widget = CharField(source="get_widget_display", read_only=True)
-    interactive_algorithm = CharField(read_only=True)
+    interactive_algorithms = SerializerMethodField()
 
     class Meta:
         model = Question
@@ -84,8 +84,16 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "answer_match_pattern",
             "empty_answer_confirmation",
             "empty_answer_confirmation_label",
-            "interactive_algorithm",
+            "interactive_algorithms",
         )
+
+    def get_interactive_algorithms(self, obj) -> list[str]:
+        # In the future we may allow many interactive
+        # algorithms per question
+        if obj.interactive_algorithm:
+            return [obj.interactive_algorithm]
+        else:
+            return []
 
 
 class DisplaySetSerializer(HyperlinkedModelSerializer):
