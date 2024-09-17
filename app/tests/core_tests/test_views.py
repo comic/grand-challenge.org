@@ -12,7 +12,7 @@ from grandchallenge.datatables.views import PaginatedTableListView
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.factories import ArchiveFactory
-from tests.factories import UserFactory
+from tests.factories import ChallengeFactory, UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.utils import get_view_for_user
 
@@ -135,6 +135,36 @@ def test_permission_request_status_msg(
         client=client,
         viewname=f"{namespace}:permission-request-create",
         reverse_kwargs={"slug": t.slug},
+        user=u,
+        method=client.post,
+        follow=True,
+    )
+
+    assert expected_msg in response.rendered_content
+
+
+@pytest.mark.parametrize(
+    "access_request_handling,expected_msg",
+    [
+        (
+            AccessRequestHandlingOptions.ACCEPT_VERIFIED_USERS,
+            "Your request will be automatically accepted if you verify your account",
+        ),
+        (AccessRequestHandlingOptions.MANUAL_REVIEW, "is awaiting review"),
+    ],
+)
+@pytest.mark.django_db
+def test_registration_request_status_msg(
+    client, access_request_handling, expected_msg
+):
+
+    u = UserFactory()
+    t = ChallengeFactory(access_request_handling=access_request_handling)
+
+    response = get_view_for_user(
+        client=client,
+        viewname="participants:registration-create",
+        reverse_kwargs={"challenge_short_name": t.short_name},
         user=u,
         method=client.post,
         follow=True,
