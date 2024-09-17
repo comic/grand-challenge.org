@@ -86,7 +86,7 @@ class Verification(FieldChangeMixin, models.Model):
         super().save(*args, **kwargs)
 
         if self.has_changed("is_verified") and self.is_verified:
-            self.handle_pending_requests()
+            self.accept_pending_requests_for_verified_users()
 
         if adding and not self.email_is_verified:
             self.send_verification_email()
@@ -141,32 +141,39 @@ class Verification(FieldChangeMixin, models.Model):
 
     def accept_pending_requests_for_verified_users(self):
 
-        if self.is_verified:
-            permission_request_classes = {
-                "algorithm": apps.get_model(
-                    app_label="algorithms",
-                    model_name="AlgorithmPermissionRequest",
-                ),
-                "archive": apps.get_model(
-                    app_label="archives", model_name="ArchivePermissionRequest"
-                ),
-                "reader_study": apps.get_model(
-                    app_label="reader_studies",
-                    model_name="ReaderStudyPermissionRequest",
-                ),
-            }
+        if not self.is_verified:
+            raise RuntimeError(
+                "Refusing to accept verifications for unverified user"
+            )
 
-            for (
-                object_name,
-                request_class,
-            ) in permission_request_classes.items():
-                request_class.objects.filter(
-                    **{
-                        "user": self.user,
-                        "status": request_class.PENDING,
-                        f"{object_name}__access_request_handling": AccessRequestHandlingOptions.ACCEPT_VERIFIED_USERS,
-                    }
-                ).update(status=request_class.ACCEPTED)
+        permission_request_classes = {
+            "algorithm": apps.get_model(
+                app_label="algorithms",
+                model_name="AlgorithmPermissionRequest",
+            ),
+            "archive": apps.get_model(
+                app_label="archives", model_name="ArchivePermissionRequest"
+            ),
+            "reader_study": apps.get_model(
+                app_label="reader_studies",
+                model_name="ReaderStudyPermissionRequest",
+            ),
+            "challenge": apps.get_model(
+                app_label="participants", model_name="RegistrationRequest"
+            ),
+        }
+
+        for (
+            object_name,
+            request_class,
+        ) in permission_request_classes.items():
+            request_class.objects.filter(
+                **{
+                    "user": self.user,
+                    "status": request_class.PENDING,
+                    f"{object_name}__access_request_handling": AccessRequestHandlingOptions.ACCEPT_VERIFIED_USERS,
+                }
+            ).update(status=request_class.ACCEPTED)
 
 
 def create_verification(email_address, *_, **__):
