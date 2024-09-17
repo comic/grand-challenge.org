@@ -161,8 +161,8 @@ class RegistrationQuestionAnswer(models.Model):
             except ValidationError as e:
                 raise ValidationError({"answer": f"Incorrect format: {e}"})
 
-    def validate_constraints(self, exclude=None):
-        super().validate_constraints(exclude=exclude)
+    def validate_constraints(self, *args, exclude=None, **kwargs):
+        result = super().validate_constraints(*args, exclude=exclude, **kwargs)
 
         if not exclude or (
             "registration_request" not in exclude
@@ -173,6 +173,7 @@ class RegistrationQuestionAnswer(models.Model):
                 raise ValidationError(
                     "Cannot answer questions for a registration with different challenges"
                 )
+        return result
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
