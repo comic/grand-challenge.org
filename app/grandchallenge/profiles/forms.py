@@ -100,16 +100,29 @@ class SignupForm(UserProfileForm):
         user.save()
 
         user_profile = user.user_profile
-        user_profile.institution = self.cleaned_data["institution"]
-        user_profile.department = self.cleaned_data["department"]
-        user_profile.country = self.cleaned_data["country"]
-        user_profile.website = self.cleaned_data["website"]
-        user_profile.notification_email_choice = self.cleaned_data[
-            "notification_email_choice"
-        ]
-        user_profile.receive_newsletter = self.cleaned_data[
-            "receive_newsletter"
-        ]
+
+        user_profile_fields = {
+            field.name for field in UserProfile._meta.get_fields()
+        }
+
+        for field, value in self.cleaned_data.items():
+            if field in {
+                "first_name",
+                "last_name",
+                "email",
+                "username",
+                "accept_terms",
+                "password1",
+                "password2",
+                "phone_number",
+            }:
+                continue
+
+            if field in user_profile_fields:
+                setattr(user_profile, field, value)
+            else:
+                raise RuntimeError(f"Unknown profile field: {field}")
+
         user_profile.save()
 
 
