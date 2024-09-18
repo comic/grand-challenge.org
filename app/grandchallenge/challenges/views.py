@@ -1,5 +1,6 @@
 from django.conf import settings
-from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib import messages
+from django.contrib.auth.mixins import AccessMixin, PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import F, Prefetch, Q
 from django.http import HttpResponse
@@ -37,6 +38,17 @@ from grandchallenge.publications.models import Publication
 from grandchallenge.subdomains.mixins import ChallengeSubdomainObjectMixin
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.verifications.views import VerificationRequiredMixin
+
+
+class ActiveChallengeRequiredMixin(AccessMixin):
+    def dispatch(self, request, *args, **kwargs):
+        if not request.challenge.is_active:
+            messages.error(
+                request,
+                "This action cannot be performed as the challenge is inactive. Please contact support.",
+            )
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
 
 
 class ChallengeList(FilterMixin, ListView):

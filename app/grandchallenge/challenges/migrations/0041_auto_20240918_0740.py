@@ -8,7 +8,7 @@ def set_is_active_until(apps, schema_editor):
     Challenge = apps.get_model("challenges", "challenge")  # noqa: N806
 
     for challenge in Challenge.objects.all():
-        challenge.is_active_until = challenge.created + relativedelta(
+        challenge.is_active_until = challenge.created.date() + relativedelta(
             months=settings.CHALLENGES_DEFAULT_ACTIVE_MONTHS
         )
         challenge.save()

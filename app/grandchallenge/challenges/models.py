@@ -439,13 +439,17 @@ class Challenge(ChallengeBase):
     def api_url(self) -> str:
         return reverse("api:challenge-detail", kwargs={"slug": self.slug})
 
+    @cached_property
+    def is_active(self):
+        return today().date() < self.is_active_until
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
         if adding:
             self.create_groups()
             self.create_forum()
-            self.is_active_until = today() + relativedelta(
+            self.is_active_until = today().date() + relativedelta(
                 months=settings.CHALLENGES_DEFAULT_ACTIVE_MONTHS
             )
 
@@ -1017,7 +1021,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             creator=self.creator,
             hidden=True,
             contact_email=self.contact_email,
-            is_active_until=today()
+            is_active_until=today().date()
             + relativedelta(months=settings.CHALLENGES_DEFAULT_ACTIVE_MONTHS),
         )
         challenge.full_clean()

@@ -27,7 +27,15 @@
             <form method="post"
                   action="{% url 'direct_messages:conversation-create' username=user.username %}">
                 {% csrf_token %}
-                <button class="btn btn btn-primary" type="submit"><i class="far fa-comment"></i>&nbsp;Message User</button>
+                <button class="btn btn btn-primary"
+                        type="submit"
+                        {% if not challenge.is_active %}
+                            disabled
+                            title="This action cannot be performed as the challenge is inactive. Please contact support."
+                        {% endif %}
+                >
+                    <i class="far fa-comment"></i>&nbsp;Message User
+                </button>
             </form>
         {% endif %}
     </td>
