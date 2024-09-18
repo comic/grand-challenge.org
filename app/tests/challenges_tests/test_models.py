@@ -1,6 +1,8 @@
 import pytest
 from actstream.actions import is_following
 from actstream.models import Action
+from dateutil.relativedelta import relativedelta
+from dateutil.utils import today
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import ProtectedError
 from machina.apps.forum_conversation.models import Topic
@@ -91,3 +93,9 @@ def test_non_posters_notified(group):
 
     assert u.user_profile.has_unread_notifications is True
     assert p.user_profile.has_unread_notifications is False
+
+
+@pytest.mark.django_db
+def test_is_active_until_set():
+    c = ChallengeFactory()
+    assert c.is_active_until == today().date() + relativedelta(months=12)

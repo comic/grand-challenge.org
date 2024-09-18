@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 import pytest
+from dateutil.utils import today
 from django.core import mail
 from django.utils.timezone import now
 from guardian.shortcuts import assign_perm
@@ -16,6 +17,7 @@ from tests.factories import (
 )
 from tests.invoices_tests.factories import InvoiceFactory
 from tests.utils import get_view_for_user
+from tests.verification_tests.factories import VerificationFactory
 
 
 @pytest.mark.django_db
@@ -495,3 +497,43 @@ def test_challenge_cost_page_permissions(client):
         user=reviewer,
     )
     assert response.status_code == 200
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "viewname,add_phase",
+    (
+        ("pages:create", False),
+        ("evaluation:phase-create", False),
+        ("evaluation:method-create", True),
+        ("evaluation:ground-truth-create", True),
+    ),
+)
+def test_pages_inaccessible_when_inactive(client, viewname, add_phase):
+    challenge = ChallengeFactory()
+    phase = PhaseFactory(challenge=challenge)
+
+    admin = UserFactory()
+    challenge.add_admin(user=admin)
+
+    VerificationFactory(user=admin, is_verified=True)
+
+    def get():
+        reverse_kwargs = {"challenge_short_name": challenge.short_name}
+
+        if add_phase:
+            reverse_kwargs["slug"] = phase.slug
+
+        return get_view_for_user(
+            viewname=viewname,
+            client=client,
+            user=admin,
+            reverse_kwargs=reverse_kwargs,
+        )
+
+    assert get().status_code == 200
+
+    challenge.is_active_until = today().date()
+    challenge.save()
+
+    assert get().status_code == 403

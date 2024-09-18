@@ -5,6 +5,8 @@ from itertools import chain, product
 
 from actstream.actions import follow, unfollow
 from actstream.models import Follow
+from dateutil.relativedelta import relativedelta
+from dateutil.utils import today
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
@@ -235,6 +237,9 @@ class Challenge(ChallengeBase):
         default=False,
         help_text="Challenge is suspended and not accepting submissions",
     )
+    is_active_until = models.DateField(
+        help_text="The date at which the challenge becomes inactive",
+    )
     educational = models.BooleanField(
         default=False, help_text="It is an educational challenge"
     )
@@ -434,12 +439,19 @@ class Challenge(ChallengeBase):
     def api_url(self) -> str:
         return reverse("api:challenge-detail", kwargs={"slug": self.slug})
 
+    @cached_property
+    def is_active(self):
+        return today().date() < self.is_active_until
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
         if adding:
             self.create_groups()
             self.create_forum()
+            self.is_active_until = today().date() + relativedelta(
+                months=settings.CHALLENGES_DEFAULT_ACTIVE_MONTHS
+            )
 
         super().save(*args, **kwargs)
 
@@ -1016,6 +1028,12 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             creator=self.creator,
             hidden=True,
             contact_email=self.contact_email,
+            is_active_until=(
+                today().date()
+                + relativedelta(
+                    months=settings.CHALLENGES_DEFAULT_ACTIVE_MONTHS
+                )
+            ),
         )
         challenge.full_clean()
         challenge.save()
