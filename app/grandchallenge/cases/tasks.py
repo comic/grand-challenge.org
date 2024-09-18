@@ -10,7 +10,7 @@ from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
-from django.db import OperationalError, transaction
+from django.db import transaction
 from django.db.transaction import on_commit
 from django.template.defaultfilters import pluralize
 from django.utils._os import safe_join
@@ -20,7 +20,10 @@ from panimg.models import PanImgFile, PanImgResult
 
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.components.backends.utils import safe_extract
-from grandchallenge.components.tasks import lock_model_instance
+from grandchallenge.components.tasks import (
+    get_model_instance,
+    lock_model_instance,
+)
 from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.notifications.models import Notification, NotificationType
@@ -92,6 +95,7 @@ def extract_files(*, source_path: Path, checked_paths=None):
 
 
 @acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@transaction.atomic
 def build_images(  # noqa:C901
     *,
     upload_session_pk,
@@ -116,78 +120,58 @@ def build_images(  # noqa:C901
     ----------
     upload_session_uuid: UUID
         The uuid of the upload sessions that should be analyzed.
+    linked_object_pk: UUID
+        The pk of the object linked to the upload session, if any. This can be a Job,
+        ArchiveItem or DisplaySet.
+    linked_app_label:
+        The app_label of the linked object.
+    linked_model_name:
+        The model_name of the linked object.
     """
 
-    session_queryset = RawImageUploadSession.objects.filter(
-        pk=upload_session_pk
-    ).select_for_update(nowait=True)
+    upload_session = lock_model_instance(
+        pk=upload_session_pk,
+        app_label=RawImageUploadSession._meta.app_label,
+        model_name=RawImageUploadSession._meta.model_name,
+    )
+
+    if linked_object_pk:
+        linked_object = get_model_instance(
+            app_label=linked_app_label,
+            model_name=linked_model_name,
+            pk=linked_object_pk,
+        )
+    else:
+        linked_object = None
 
     try:
-        with transaction.atomic():
-            if linked_object_pk:
-                object = lock_model_instance(
-                    app_label=linked_app_label,
-                    model_name=linked_model_name,
-                    pk=linked_object_pk,
-                )
-            else:
-                object = None
+        with TemporaryDirectory() as tmp_dir:
+            tmp_dir = Path(tmp_dir).resolve()
+            _populate_tmp_dir(tmp_dir, upload_session)
+            _handle_raw_image_files(
+                tmp_dir=tmp_dir,
+                upload_session=upload_session,
+                send_notification_on_errors=False if linked_object else True,
+            )
+        upload_session.status = upload_session.SUCCESS
+        upload_session.save()
 
-            try:
-                upload_session = session_queryset.get()
-            except OperationalError as error:
-                raise LockNotAcquiredException from error
-
-            upload_session.status = upload_session.STARTED
-            upload_session.save()
-
-            with TemporaryDirectory() as tmp_dir:
-                tmp_dir = Path(tmp_dir).resolve()
-                _populate_tmp_dir(tmp_dir, upload_session)
-                _handle_raw_image_files(
-                    tmp_dir=tmp_dir,
-                    upload_session=upload_session,
-                    send_notification_on_errors=False if object else True,
-                )
-
-            upload_session.status = upload_session.SUCCESS
-            upload_session.save()
     except DuplicateFilesException as e:
         _delete_session_files(upload_session=upload_session)
-        if object:
-            object.handle_error(
-                error_message=str(e),
-                notification_type=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
-                upload_session=upload_session,
-            )
-        else:
-            upload_session.error_message = str(e)
-            upload_session.status = upload_session.FAILURE
-            upload_session.save()
+        upload_session.mark_as_failed(
+            error_message=str(e), linked_object=linked_object
+        )
     except (SoftTimeLimitExceeded, TimeLimitExceeded):
-        if object:
-            object.handle_error(
-                notification_type=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
-                upload_session=upload_session,
-                error_message="Time limit exceeded",
-            )
-        else:
-            upload_session.error_message = "Time limit exceeded"
-            upload_session.status = upload_session.FAILURE
-            upload_session.save()
+        upload_session.mark_as_failed(
+            error_message="Time limit exceeded", linked_object=linked_object
+        )
     except Exception:
         _delete_session_files(upload_session=upload_session)
-        if object:
-            object.handle_error(
-                notification_type=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
-                upload_session=upload_session,
-                error_message="An unexpected error occurred",
-            )
-        else:
-            upload_session.error_message = "An unexpected error occurred"
-            upload_session.status = upload_session.FAILURE
-            upload_session.save()
-        raise
+        upload_session.mark_as_failed(
+            error_message="An unexpected error occurred",
+            linked_object=linked_object,
+        )
+        logger.error("An unexpected error occurred", exc_info=True)
 
 
 def _handle_raw_image_files(

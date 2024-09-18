@@ -28,6 +28,7 @@ from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import protected_s3_storage
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.modalities.models import ImagingModality
+from grandchallenge.notifications.models import NotificationType
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
 
@@ -118,6 +119,18 @@ class RawImageUploadSession(UUIDModel):
                     send_action=False,
                     actor_only=False,
                 )
+
+    def mark_as_failed(self, *, error_message, linked_object):
+        self.error_message = str(error_message)
+        self.status = self.FAILURE
+        self.save()
+
+        if linked_object:
+            linked_object.handle_error(
+                error_message=error_message,
+                notification_type=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
+                upload_session=self,
+            )
 
     def process_images(
         self,
