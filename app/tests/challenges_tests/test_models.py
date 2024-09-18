@@ -98,4 +98,4 @@ def test_non_posters_notified(group):
 @pytest.mark.django_db
 def test_is_active_until_set():
     c = ChallengeFactory()
-    assert c.is_active_until == today() + relativedelta(months=12)
+    assert c.is_active_until == today().date() + relativedelta(months=12)
