@@ -72,10 +72,14 @@ class Page(FieldChangeMixin, models.Model):
             return self.slug
 
     def save(self, *args, **kwargs):
-        # when saving for the first time only, put this page last in order
-        if not self.id:
-            # get max value of order for current pages.
+        adding = self._state.adding
+
+        self.html = clean(self.html)
+
+        if adding:
+            # when saving for the first time only, put this page last in order
             try:
+                # get max value of order for current pages.
                 max_order = Page.objects.filter(
                     challenge=self.challenge
                 ).aggregate(Max("order"))
@@ -85,10 +89,7 @@ class Page(FieldChangeMixin, models.Model):
                 self.order = max_order["order__max"] + 1
             except TypeError:
                 self.order = 1
-
-        self.html = clean(self.html)
-
-        if not self.challenge.is_active and self.has_changed("html"):
+        elif not self.challenge.is_active and self.has_changed("html"):
             self.handle_change_html_for_inactive_challenge()
 
         super().save(*args, **kwargs)
