@@ -1,5 +1,6 @@
 import logging
 import uuid
+from datetime import timedelta
 
 from django.apps import apps
 from django.conf import settings
@@ -7,6 +8,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, OperationalError, transaction
 from django.db.models import Case, IntegerField, Value, When
 from django.db.transaction import on_commit
+from django.utils.timezone import now
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 from grandchallenge.algorithms.models import AlgorithmModel, Job
@@ -48,6 +50,16 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):  # noqa: C901
     )
 
     submission = Submission.objects.get(pk=submission_pk)
+
+    if submission.phase.external_evaluation:
+        external_evaluation, created = Evaluation.objects.get_or_create(
+            submission=submission
+        )
+        if not created:
+            logger.info(
+                "External evaluation already created for this submission."
+            )
+        return
 
     if not submission.predictions_file and submission.user_upload:
         submission.user_upload.copy_object(
@@ -499,3 +511,24 @@ def assign_submission_permissions(*, phase_pk: uuid.UUID):
     )
     for sub in Submission.objects.filter(phase__id=phase_pk):
         sub.assign_permissions()
+
+
+@acks_late_micro_short_task
+@transaction.atomic
+def cancel_external_evaluations_past_timeout():
+    Evaluation = apps.get_model(  # noqa: N806
+        app_label="evaluation", model_name="Evaluation"
+    )
+    timeout_threshold = now() - timedelta(
+        seconds=settings.EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS
+    )
+
+    for eval in Evaluation.objects.filter(
+        status=Evaluation.CLAIMED,
+        started_at__lt=timeout_threshold,
+    ).all():
+        eval.update_status(
+            status=Evaluation.CANCELLED,
+            error_message="External evaluation timed out.",
+            compute_cost_euro_millicents=0,
+        )

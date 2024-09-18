@@ -3,11 +3,20 @@ from unittest.mock import patch
 
 import pytest
 from django.test import override_settings
+from guardian.shortcuts import assign_perm
 from requests import put
 
 from grandchallenge.algorithms.models import Job
+from grandchallenge.algorithms.serializers import (
+    AlgorithmImageSerializer,
+    AlgorithmModelSerializer,
+)
 from grandchallenge.components.models import ComponentInterfaceValue
-from tests.algorithms_tests.factories import AlgorithmJobFactory
+from tests.algorithms_tests.factories import (
+    AlgorithmImageFactory,
+    AlgorithmJobFactory,
+    AlgorithmModelFactory,
+)
 from tests.cases_tests import RESOURCE_PATH
 from tests.cases_tests.factories import RawImageUploadSessionFactory
 from tests.components_tests.factories import ComponentInterfaceValueFactory
@@ -455,3 +464,58 @@ class TestJobCreationThroughAPI:
         )
         # and no CIVs should have been created
         assert ComponentInterfaceValue.objects.count() == 0
+
+
+def test_algorithm_image_download_url(
+    client, django_capture_on_commit_callbacks, algorithm_io_image, rf
+):
+    user1, user2 = UserFactory.create_batch(2)
+    with django_capture_on_commit_callbacks():
+        ai = AlgorithmImageFactory(image__from_path=algorithm_io_image)
+    assign_perm("algorithms.download_algorithmimage", user1, ai)
+
+    serialized_ai = AlgorithmImageSerializer(
+        ai, context={"request": rf.get("/foo", secure=True)}
+    ).data
+
+    resp = get_view_for_user(
+        url=serialized_ai["image"], client=client, user=user2
+    )
+    assert resp.status_code == 403
+
+    resp = get_view_for_user(
+        url=serialized_ai["image"], client=client, user=user1
+    )
+    assert resp.status_code == 302
+    assert (
+        f"grand-challenge-protected/docker/images/algorithms/algorithmimage/{ai.pk}/algorithm-io-latest.tar"
+        in str(resp.url)
+    )
+
+
+@pytest.mark.django_db
+def test_algorithm_model_download_url(
+    client, django_capture_on_commit_callbacks, algorithm_io_image, rf
+):
+    user1, user2 = UserFactory.create_batch(2)
+    with django_capture_on_commit_callbacks():
+        model = AlgorithmModelFactory(model__from_path=algorithm_io_image)
+    assign_perm("algorithms.download_algorithmmodel", user1, model)
+
+    serialized_model = AlgorithmModelSerializer(
+        model, context={"request": rf.get("/foo", secure=True)}
+    ).data
+
+    resp = get_view_for_user(
+        url=serialized_model["model"], client=client, user=user2
+    )
+    assert resp.status_code == 403
+
+    resp = get_view_for_user(
+        url=serialized_model["model"], client=client, user=user1
+    )
+    assert resp.status_code == 302
+    assert (
+        f"grand-challenge-protected/models/algorithms/algorithmmodel/{model.pk}/algorithm-io-latest.tar"
+        in str(resp.url)
+    )

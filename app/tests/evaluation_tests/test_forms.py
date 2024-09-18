@@ -64,6 +64,20 @@ class TestSubmissionForm:
         assert "algorithm_image" not in form.fields
         assert "user_upload" in form.fields
 
+    def test_confirmation_checkbox_for_external_phases(self):
+        form = SubmissionForm(
+            user=UserFactory(),
+            phase=PhaseFactory(external_evaluation=True),
+        )
+        assert "confirm_submission" in form.fields
+        assert form.fields["confirm_submission"].required
+
+        form2 = SubmissionForm(
+            user=UserFactory(),
+            phase=PhaseFactory(),
+        )
+        assert "confirm_submission" not in form2.fields
+
     def test_setting_algorithm(self):
         form = SubmissionForm(
             user=UserFactory(),
@@ -307,6 +321,24 @@ class TestSubmissionForm:
             "not have an active evaluation method yet." in str(form.errors)
         )
 
+        # for external eval phase, this check is skipped
+        phase.external_evaluation = True
+        phase.save()
+
+        form = SubmissionForm(
+            user=UserFactory(),
+            phase=phase,
+            data={"creator": UserFactory(), "phase": phase},
+        )
+        assert not form.is_valid()
+        if submission_kind == SubmissionKindChoices.ALGORITHM:
+            assert not form.fields[disabled_field_name].disabled
+        assert (
+            "You cannot submit to this phase because this phase does "
+            "not have an active evaluation method yet." not in str(form.errors)
+        )
+
+        # reset and add method
         MethodFactory(
             phase=phase,
             is_manifest_valid=True,
@@ -314,6 +346,8 @@ class TestSubmissionForm:
             is_desired_version=True,
         )
         del phase.active_image
+        phase.external_evaluation = False
+        phase.save()
 
         form = SubmissionForm(
             user=UserFactory(),
@@ -578,16 +612,36 @@ class TestSubmissionForm:
         )
         assert not form2.is_valid()
 
-        civ = ComponentInterfaceValueFactory(interface=ci1)
-        i = ArchiveItemFactory(archive=p_alg.archive)
-        i.values.add(civ)
+        # for external evaluation phases, this check is not done
+        p_alg.external_evaluation = True
+        p_alg.save()
 
         form3 = SubmissionForm(
             user=user,
             phase=p_alg,
-            data={"algorithm": alg, "creator": user, "phase": p_alg},
+            data={
+                "algorithm": alg,
+                "creator": user,
+                "phase": p_alg,
+                "confirm_submission": True,
+            },
         )
         assert form3.is_valid()
+
+        # reset
+        p_alg.external_evaluation = False
+        p_alg.save()
+
+        civ = ComponentInterfaceValueFactory(interface=ci1)
+        i = ArchiveItemFactory(archive=p_alg.archive)
+        i.values.add(civ)
+
+        form4 = SubmissionForm(
+            user=user,
+            phase=p_alg,
+            data={"algorithm": alg, "creator": user, "phase": p_alg},
+        )
+        assert form4.is_valid()
 
     def test_submission_or_eval_exists_for_image(self):
         user = UserFactory()
@@ -745,6 +799,38 @@ class TestSubmissionForm:
                 "A submission for this algorithm container image and model for this phase already exists."
                 in str(form.errors)
             )
+
+    def test_submission_to_external_phase_requires_confirmation(self):
+        user = UserFactory()
+        alg = AlgorithmFactory()
+        alg.add_editor(user=user)
+        ai = AlgorithmImageFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+            algorithm=alg,
+        )
+        phase = PhaseFactory(external_evaluation=True)
+        SubmissionFactory(
+            phase=phase,
+            algorithm_image=ai,
+        )
+        InvoiceFactory(
+            challenge=phase.challenge,
+            compute_costs_euros=10,
+            payment_status=PaymentStatusChoices.COMPLIMENTARY,
+        )
+        phase = Phase.objects.get(pk=phase.pk)
+        form = SubmissionForm(
+            user=user,
+            phase=phase,
+            data={"algorithm": alg, "creator": user, "phase": phase},
+        )
+        assert not form.is_valid()
+        assert (
+            "You must confirm that you want to submit to this phase."
+            in str(form.errors)
+        )
 
 
 @pytest.mark.django_db

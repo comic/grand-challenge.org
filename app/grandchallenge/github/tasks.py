@@ -11,9 +11,9 @@ import jwt
 import requests
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
-from django.apps import apps
 from django.conf import settings
 from django.core import files
+from django.db import transaction
 from django.db.transaction import on_commit
 from django.utils.timezone import now
 
@@ -117,9 +117,8 @@ def build_repo(ghwm_pk):
 
 @acks_late_2xlarge_task
 def get_zipfile(*, pk):
-    GitHubWebhookMessage = apps.get_model(  # noqa: N806
-        app_label="github", model_name="GitHubWebhookMessage"
-    )
+    from grandchallenge.github.models import GitHubWebhookMessage
+
     ghwm = GitHubWebhookMessage.objects.get(pk=pk)
 
     if ghwm.clone_status != GitHubWebhookMessage.CloneStatusChoices.PENDING:
@@ -171,9 +170,8 @@ def get_zipfile(*, pk):
 
 @acks_late_micro_short_task
 def unlink_algorithm(*, pk):
-    GitHubWebhookMessage = apps.get_model(  # noqa: N806
-        app_label="github", model_name="GitHubWebhookMessage"
-    )
+    from grandchallenge.github.models import GitHubWebhookMessage
+
     ghwm = GitHubWebhookMessage.objects.get(pk=pk)
     for repo in ghwm.payload["repositories"]:
         Algorithm.objects.filter(repo_name=repo["full_name"]).update(
@@ -182,18 +180,18 @@ def unlink_algorithm(*, pk):
 
 
 @acks_late_micro_short_task
+@transaction.atomic
 def cleanup_expired_tokens():
-    GitHubUserToken = apps.get_model(  # noqa: N806
-        app_label="github", model_name="GitHubUserToken"
-    )
-    GitHubUserToken.objects.filter(refresh_token_expires__lt=now()).delete()
+    from grandchallenge.github.models import GitHubUserToken
+
+    GitHubUserToken.objects.filter(refresh_token_expires__lt=now()).only(
+        "pk"
+    ).delete()
 
 
 @acks_late_micro_short_task
 def refresh_user_token(*, pk):
-    GitHubUserToken = apps.get_model(  # noqa: N806
-        app_label="github", model_name="GitHubUserToken"
-    )
+    from grandchallenge.github.models import GitHubUserToken
 
     token = GitHubUserToken.objects.get(pk=pk)
 
@@ -209,9 +207,8 @@ def refresh_user_token(*, pk):
 @acks_late_micro_short_task
 def refresh_expiring_user_tokens():
     """Refresh user tokens expiring in the next 1 to 28 days"""
-    GitHubUserToken = apps.get_model(  # noqa: N806
-        app_label="github", model_name="GitHubUserToken"
-    )
+    from grandchallenge.github.models import GitHubUserToken
+
     queryset = GitHubUserToken.objects.filter(
         refresh_token_expires__gt=now() + timedelta(days=1),
         refresh_token_expires__lt=now() + timedelta(days=28),

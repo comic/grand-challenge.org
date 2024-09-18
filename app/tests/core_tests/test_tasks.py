@@ -70,7 +70,7 @@ def test_get_metrics():
                     "Unit": "Count",
                 },
                 {
-                    "MetricName": "JobsFinishedvalidatinginputs",
+                    "MetricName": "JobsExternalExecutionInProgress",
                     "Value": 0,
                     "Unit": "Count",
                 },
@@ -140,7 +140,7 @@ def test_get_metrics():
                     "Unit": "Count",
                 },
                 {
-                    "MetricName": "EvaluationsFinishedvalidatinginputs",
+                    "MetricName": "EvaluationsExternalExecutionInProgress",
                     "Value": 0,
                     "Unit": "Count",
                 },

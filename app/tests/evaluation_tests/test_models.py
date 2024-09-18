@@ -978,6 +978,31 @@ def test_read_only_fields_for_dependent_phases():
 
 
 @pytest.mark.django_db
+def test_external_evaluation_validation():
+    phase = PhaseFactory(external_evaluation=True)
+    with pytest.raises(ValidationError) as e:
+        phase._clean_external_evaluation()
+    assert (
+        "External evaluation is only possible for algorithm submission phases."
+        in str(e)
+    )
+
+    phase.submission_kind = SubmissionKindChoices.ALGORITHM
+    phase.save()
+
+    with pytest.raises(ValidationError) as e:
+        phase._clean_external_evaluation()
+    assert "An external evaluation phase must have a parent phase." in str(e)
+
+    phase.parent = PhaseFactory(
+        submission_kind=SubmissionKindChoices.ALGORITHM
+    )
+    phase.save()
+
+    phase._clean_external_evaluation()
+
+
+@pytest.mark.django_db
 def test_is_evaluated_with_active_image_and_ground_truth():
     phase = PhaseFactory()
     s = SubmissionFactory(phase=phase)

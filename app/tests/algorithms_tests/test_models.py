@@ -108,7 +108,10 @@ def test_rendered_result_text():
 
 
 @pytest.mark.django_db
-def test_average_duration():
+def test_average_duration(settings, django_capture_on_commit_callbacks):
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
     alg = AlgorithmFactory()
     start = now()
 
@@ -121,8 +124,11 @@ def test_average_duration():
     j.started_at = start - timedelta(minutes=5)
     j.completed_at = start
     j.status = j.SUCCESS
-    j.save()
 
+    with django_capture_on_commit_callbacks(execute=True):
+        j.save()
+
+    alg.refresh_from_db()
     assert alg.average_duration == timedelta(minutes=5)
 
     # Unsuccessful jobs should not count
@@ -132,8 +138,11 @@ def test_average_duration():
     j.started_at = start - timedelta(minutes=10)
     j.completed_at = start
     j.status = j.FAILURE
-    j.save()
 
+    with django_capture_on_commit_callbacks(execute=True):
+        j.save()
+
+    alg.refresh_from_db()
     assert alg.average_duration == timedelta(minutes=5)
 
     # Nor should jobs for other algorithms
@@ -141,8 +150,11 @@ def test_average_duration():
     j.started_at = start - timedelta(minutes=15)
     j.completed_at = start
     j.status = j.SUCCESS
-    j.save()
 
+    with django_capture_on_commit_callbacks(execute=True):
+        j.save()
+
+    alg.refresh_from_db()
     assert alg.average_duration == timedelta(minutes=5)
 
 

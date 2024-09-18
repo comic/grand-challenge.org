@@ -1436,6 +1436,7 @@ class ComponentJobManager(models.QuerySet):
                 ComponentJob.SUCCESS,
                 ComponentJob.CANCELLED,
                 ComponentJob.FAILURE,
+                ComponentJob.CLAIMED,
             ]
         )
 
@@ -1455,6 +1456,7 @@ class ComponentJob(models.Model):
     EXECUTED = 9
     PARSING = 10
     EXECUTING_PREREQUISITES = 11
+    CLAIMED = 12
     INPUTS_VALIDATED = 13
 
     STATUS_CHOICES = (
@@ -1470,6 +1472,7 @@ class ComponentJob(models.Model):
         (EXECUTED, "Executed"),
         (PARSING, "Parsing Outputs"),
         (EXECUTING_PREREQUISITES, "Executing Algorithm"),
+        (CLAIMED, "External Execution In Progress"),
         (INPUTS_VALIDATED, "Finished validating inputs"),
     )
 

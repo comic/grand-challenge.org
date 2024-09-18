@@ -10,7 +10,12 @@ from rest_framework.relations import (
     StringRelatedField,
 )
 
-from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
+from grandchallenge.algorithms.models import (
+    Algorithm,
+    AlgorithmImage,
+    AlgorithmModel,
+    Job,
+)
 from grandchallenge.components.models import CIVData, ComponentInterface
 from grandchallenge.components.serializers import (
     ComponentInterfaceSerializer,
@@ -74,7 +79,21 @@ class AlgorithmImageSerializer(serializers.ModelSerializer):
             "requires_gpu",
             "requires_memory_gb",
             "import_status",
+            "image",
         ]
+
+
+class AlgorithmModelSerializer(serializers.ModelSerializer):
+    algorithm = HyperlinkedRelatedField(
+        read_only=True, view_name="api:algorithm-detail"
+    )
+    import_status = CharField(
+        source="get_import_status_display", read_only=True
+    )
+
+    class Meta:
+        model = AlgorithmModel
+        fields = ["pk", "algorithm", "created", "import_status", "model"]
 
 
 class JobSerializer(serializers.ModelSerializer):

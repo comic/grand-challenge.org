@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.contrib.auth.models import Permission
 from django.db.models import Count, Sum
 
 from grandchallenge.algorithms.models import (
@@ -22,7 +23,7 @@ def annotate_job_duration_and_compute_costs(*, phase):
         .distinct()
     )
     evaluation_jobs = Evaluation.objects.filter(
-        submission__phase=phase
+        submission__phase=phase, submission__phase__external_evaluation=False
     ).distinct()
 
     update_average_algorithm_job_duration(
@@ -36,12 +37,19 @@ def annotate_job_duration_and_compute_costs(*, phase):
 
 
 def annotate_compute_costs_and_storage_size(*, challenge):
+    permission = Permission.objects.get(
+        codename="view_job",
+        content_type__app_label="algorithms",
+        content_type__model="job",
+    )
     algorithm_jobs = Job.objects.filter(
-        inputs__archive_items__archive__phase__challenge=challenge,
-        algorithm_image__submission__phase__challenge=challenge,
+        jobgroupobjectpermission__group=challenge.admins_group,
+        jobgroupobjectpermission__permission=permission,
     ).distinct()
+
     evaluation_jobs = Evaluation.objects.filter(
-        submission__phase__challenge=challenge
+        submission__phase__challenge=challenge,
+        submission__phase__external_evaluation=False,
     ).distinct()
 
     update_size_in_storage_and_registry(
@@ -70,6 +78,25 @@ def update_size_in_storage_and_registry(
         ComponentInterfaceValue.objects.filter(
             archive_items__archive__phase__challenge=challenge
         )
+        .distinct()
+        .aggregate(Sum("size_in_storage"))
+    )
+
+    non_archive_input_image_storage = (
+        ImageFile.objects.filter(
+            image__componentinterfacevalue__algorithms_jobs_as_input__in=algorithm_jobs
+        )
+        .exclude(
+            image__componentinterfacevalue__archive_items__archive__phase__challenge=challenge
+        )
+        .distinct()
+        .aggregate(Sum("size_in_storage"))
+    )
+    non_archive_input_file_storage = (
+        ComponentInterfaceValue.objects.filter(
+            algorithms_jobs_as_input__in=algorithm_jobs
+        )
+        .exclude(archive_items__archive__phase__challenge=challenge)
         .distinct()
         .aggregate(Sum("size_in_storage"))
     )
@@ -110,6 +137,8 @@ def update_size_in_storage_and_registry(
     items = [
         archive_image_storage,
         archive_file_storage,
+        non_archive_input_image_storage,
+        non_archive_input_file_storage,
         output_image_storage,
         output_file_storage,
         algorithm_storage,

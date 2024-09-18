@@ -12,6 +12,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Count, Min, Q, QuerySet, Sum
 from django.db.models.signals import post_delete
+from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.template.defaultfilters import truncatechars
 from django.utils import timezone
@@ -24,6 +25,7 @@ from jinja2 import sandbox
 from jinja2.exceptions import TemplateError
 from stdimage import JPEGField
 
+from grandchallenge.algorithms.tasks import update_algorithm_average_duration
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.charts.specs import stacked_bar
@@ -404,13 +406,6 @@ class Algorithm(
 
         return w
 
-    def update_average_duration(self):
-        """Store the duration of successful jobs for this algorithm"""
-        self.average_duration = Job.objects.filter(
-            algorithm_image__algorithm=self, status=Job.SUCCESS
-        ).average_duration()
-        self.save(update_fields=("average_duration",))
-
     def is_editor(self, user):
         return user.groups.filter(pk=self.editors_group.pk).exists()
 
@@ -556,6 +551,9 @@ class AlgorithmImage(UUIDModel, ComponentImage):
 
     class Meta(UUIDModel.Meta, ComponentImage.Meta):
         ordering = ("created", "creator")
+        permissions = [
+            ("download_algorithmimage", "Can download algorithm image")
+        ]
 
     def get_absolute_url(self):
         return reverse(
@@ -764,6 +762,11 @@ class AlgorithmModel(Tarball):
         storage=protected_s3_storage,
     )
 
+    class Meta(Tarball.Meta):
+        permissions = [
+            ("download_algorithmmodel", "Can download algorithm model")
+        ]
+
     @property
     def linked_file(self):
         return self.model
@@ -922,7 +925,11 @@ class Job(UUIDModel, CIVForObjectMixin, ComponentJob):
             self._public_orig = self.public
 
         if self._status_orig != self.status and self.status == self.SUCCESS:
-            self.algorithm_image.algorithm.update_average_duration()
+            on_commit(
+                update_algorithm_average_duration.signature(
+                    kwargs={"algorithm_pk": self.algorithm_image.algorithm.pk}
+                ).apply_async
+            )
 
     def init_viewers_group(self):
         self.viewers = Group.objects.create(

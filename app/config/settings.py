@@ -1177,34 +1177,18 @@ INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS = json.loads(
     os.environ.get("INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS", "null")
 )
 
+EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS = int(
+    os.environ.get("EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS", 86400)
+)
+
 CELERY_BEAT_SCHEDULE = {
-    "delete_users_who_dont_login": {
-        "task": "grandchallenge.profiles.tasks.delete_users_who_dont_login",
-        "schedule": crontab(hour=0, minute=0),
-    },
     "refresh_expiring_user_tokens": {
         "task": "grandchallenge.github.tasks.refresh_expiring_user_tokens",
         "schedule": crontab(hour=0, minute=15),
     },
-    "cleanup_expired_tokens": {
-        "task": "grandchallenge.github.tasks.cleanup_expired_tokens",
-        "schedule": crontab(hour=0, minute=30),
-    },
-    "cleanup_celery_backend": {
-        "task": "grandchallenge.core.tasks.cleanup_celery_backend",
-        "schedule": crontab(hour=0, minute=45),
-    },
-    "clear_sessions": {
-        "task": "grandchallenge.browser_sessions.tasks.clear_sessions",
-        "schedule": crontab(hour=1, minute=0),
-    },
     "update_publication_metadata": {
         "task": "grandchallenge.publications.tasks.update_publication_metadata",
         "schedule": crontab(hour=1, minute=30),
-    },
-    "delete_old_user_uploads": {
-        "task": "grandchallenge.uploads.tasks.delete_old_user_uploads",
-        "schedule": crontab(hour=2, minute=0),
     },
     "remove_inactive_container_images": {
         "task": "grandchallenge.components.tasks.remove_inactive_container_images",
@@ -1230,9 +1214,29 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.statistics.tasks.update_site_statistics_cache",
         "schedule": crontab(hour=5, minute=30),
     },
+    "delete_users_who_dont_login": {
+        "task": "grandchallenge.profiles.tasks.delete_users_who_dont_login",
+        "schedule": timedelta(hours=1),
+    },
+    "delete_old_user_uploads": {
+        "task": "grandchallenge.uploads.tasks.delete_old_user_uploads",
+        "schedule": timedelta(hours=1),
+    },
+    "clear_sessions": {
+        "task": "grandchallenge.browser_sessions.tasks.clear_sessions",
+        "schedule": timedelta(hours=1),
+    },
+    "cleanup_expired_tokens": {
+        "task": "grandchallenge.github.tasks.cleanup_expired_tokens",
+        "schedule": timedelta(hours=1),
+    },
     "cleanup_sent_raw_emails": {
         "task": "grandchallenge.emails.tasks.cleanup_sent_raw_emails",
-        "schedule": crontab(hour=6, minute=0),
+        "schedule": timedelta(hours=1),
+    },
+    "cleanup_celery_backend": {
+        "task": "grandchallenge.core.tasks.cleanup_celery_backend",
+        "schedule": timedelta(hours=1),
     },
     "update_compute_costs_and_storage_size": {
         "task": "grandchallenge.challenges.tasks.update_compute_costs_and_storage_size",
@@ -1249,6 +1253,10 @@ CELERY_BEAT_SCHEDULE = {
     "send_raw_emails": {
         "task": "grandchallenge.emails.tasks.send_raw_emails",
         "schedule": timedelta(seconds=30),
+    },
+    "cancel_external_evaluations_past_timeout": {
+        "task": "grandchallenge.evaluation.tasks.cancel_external_evaluations_past_timeout",
+        "schedule": timedelta(hours=1),
     },
     **{
         f"stop_expired_services_{region}": {

@@ -12,10 +12,10 @@ def logout_privileged_users():
     BrowserSession.objects.filter(
         user__is_staff=True,
         created__lt=now() - settings.SESSION_PRIVILEGED_USER_TIMEOUT,
-    ).delete()
+    ).only("pk").delete()
 
 
 @acks_late_micro_short_task
 @transaction.atomic
 def clear_sessions():
-    BrowserSession.objects.filter(expire_date__lt=now()).delete()
+    BrowserSession.objects.filter(expire_date__lt=now()).only("pk").delete()

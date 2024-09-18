@@ -966,9 +966,9 @@ def test_runtime_metrics_chart():
                 ],
                 "encoding": {
                     "x": {
-                        "timeUnit": "hoursminutesseconds",
+                        "timeUnit": "yearmonthdatehoursminutesseconds",
                         "field": "Timestamp",
-                        "title": "Local Time / HH:MM:SS",
+                        "title": "Local Time",
                     },
                     "y": {
                         "field": "Percent100",
@@ -1018,9 +1018,9 @@ def test_runtime_metrics_chart():
                         },
                     ],
                     "x": {
-                        "timeUnit": "hoursminutesseconds",
+                        "timeUnit": "yearmonthdatehoursminutesseconds",
                         "field": "Timestamp",
-                        "title": "Local Time / HH:MM:SS",
+                        "title": "Local Time",
                     },
                 },
                 "params": [

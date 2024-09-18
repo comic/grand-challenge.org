@@ -13,8 +13,7 @@ from django.db.transaction import on_commit
 from django.utils._os import safe_join
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
-from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
-from grandchallenge.archives.models import Archive
+from grandchallenge.components.tasks import lock_model_instance
 from grandchallenge.core.celery import (
     acks_late_2xlarge_task,
     acks_late_micro_short_task,
@@ -30,6 +29,8 @@ logger = logging.getLogger(__name__)
 @acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
 def execute_algorithm_job_for_inputs(*, job_pk):
+    from grandchallenge.algorithms.models import Job
+
     queryset = Job.objects.filter(
         pk=job_pk,
     ).select_for_update(nowait=True)
@@ -64,6 +65,8 @@ def execute_algorithm_job_for_inputs(*, job_pk):
 @acks_late_micro_short_task(retry_on=(TooManyJobsScheduled,))
 @transaction.atomic
 def execute_algorithm_job(*, job_pk):
+    from grandchallenge.algorithms.models import Job
+
     job = Job.objects.get(pk=job_pk)
     if not job.status == Job.INPUTS_VALIDATED:
         raise RuntimeError("Job is not ready for execution")
@@ -82,6 +85,9 @@ def create_algorithm_jobs_for_archive(
     archive_item_pks=None,
     algorithm_pks=None,
 ):
+    from grandchallenge.algorithms.models import Algorithm, Job
+    from grandchallenge.archives.models import Archive
+
     if Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
         raise TooManyJobsScheduled
 
@@ -162,6 +168,8 @@ def create_algorithm_jobs(
     task_on_failure
         Celery task that is run on job failure
     """
+    from grandchallenge.algorithms.models import Job
+
     if not algorithm_image:
         raise RuntimeError("Algorithm image required to create jobs.")
 
@@ -220,6 +228,8 @@ def filter_civs_for_algorithm(*, civ_sets, algorithm_image, algorithm_model):
     -------
     Filtered set of ComponentInterfaceValues
     """
+    from grandchallenge.algorithms.models import Job
+
     input_interfaces = {*algorithm_image.algorithm.inputs.all()}
 
     existing_jobs = {
@@ -265,6 +275,8 @@ def filter_civs_for_algorithm(*, civ_sets, algorithm_image, algorithm_model):
 @acks_late_micro_short_task
 @transaction.atomic
 def send_failed_job_notification(*, job_pk):
+    from grandchallenge.algorithms.models import Job
+
     job = Job.objects.get(pk=job_pk)
 
     if job.status == Job.FAILURE and job.creator is not None:
@@ -287,6 +299,7 @@ class ChallengeNameAndUrl(NamedTuple):
 
 @acks_late_2xlarge_task
 def update_associated_challenges():
+    from grandchallenge.algorithms.models import Algorithm
     from grandchallenge.challenges.models import Challenge
 
     challenge_list = {}
@@ -306,6 +319,8 @@ def update_associated_challenges():
 
 @acks_late_2xlarge_task
 def import_remote_algorithm_image(*, remote_bucket_name, algorithm_image_pk):
+    from grandchallenge.algorithms.models import AlgorithmImage
+
     algorithm_image = AlgorithmImage.objects.get(pk=algorithm_image_pk)
 
     if (
@@ -360,6 +375,8 @@ def import_remote_algorithm_image(*, remote_bucket_name, algorithm_image_pk):
 
 @acks_late_2xlarge_task
 def set_credits_per_job():
+    from grandchallenge.algorithms.models import Algorithm, Job
+
     default_credits_per_month = Credit._meta.get_field("credits").get_default()
     default_credits_per_job = Algorithm._meta.get_field(
         "credits_per_job"
@@ -396,3 +413,18 @@ def set_credits_per_job():
             algorithm.credits_per_job = default_credits_per_job
 
         algorithm.save(update_fields=("credits_per_job",))
+
+
+@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
+@transaction.atomic
+def update_algorithm_average_duration(*, algorithm_pk):
+    from grandchallenge.algorithms.models import Job
+
+    algorithm = lock_model_instance(
+        app_label="algorithms", model_name="algorithm", pk=algorithm_pk
+    )
+
+    algorithm.average_duration = Job.objects.filter(
+        algorithm_image__algorithm=algorithm, status=Job.SUCCESS
+    ).average_duration()
+    algorithm.save(update_fields=("average_duration",))
