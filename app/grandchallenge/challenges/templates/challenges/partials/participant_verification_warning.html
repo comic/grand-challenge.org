@@ -1,0 +1,10 @@
+{% load url %}
+
+{% if not request.user.verification %}
+    <div class="alert alert-danger" role="alert">
+        <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+        You need to <a href={% url "verifications:create" %}>make a request to verify your account</a>
+        before you can make a submission to this challenge.
+        Please make this request well in advance of any challenge deadlines.
+    </div>
+{% endif %}

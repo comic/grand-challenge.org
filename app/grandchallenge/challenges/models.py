@@ -662,6 +662,13 @@ class Challenge(ChallengeBase):
         unfollow(user=user, obj=self.forum, send_action=False)
 
     @cached_property
+    def should_show_verification_warning(self):
+        for phase in self.visible_phases:
+            if phase.creator_must_be_verified:
+                return True
+        return False
+
+    @cached_property
     def status(self) -> str:
         phase_status = {phase.status for phase in self.visible_phases}
 
