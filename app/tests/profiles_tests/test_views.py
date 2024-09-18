@@ -7,6 +7,7 @@ from django.utils.crypto import get_random_string
 from rest_framework import status
 from rest_framework.test import force_authenticate
 
+from grandchallenge.profiles.admin import User
 from grandchallenge.profiles.models import NotificationEmailOptions
 from grandchallenge.profiles.views import UserProfileViewSet
 from grandchallenge.subdomains.utils import reverse
@@ -346,3 +347,33 @@ def test_one_click_unsubscribe_user_mismatch(
     user_set = VerificationUserSet.objects.get()
     assert user in user_set.users.all()
     assert other_user in user_set.users.all()
+
+
+@pytest.mark.django_db
+def test_notification_email_choice_after_user_signup(client):
+
+    response = get_view_for_user(
+        url="/accounts/signup/",
+        client=client,
+        method=client.post,
+        data={
+            "email": "user123@domain.com",
+            "username": "user123",
+            "first_name": "Firstname",
+            "last_name": "Lastname",
+            "institution": "Institution",
+            "department": "Department",
+            "country": "NL",
+            "receive_newsletter": False,
+            "accept_terms": True,
+            "password1": "ENwfuftURoZgFdq",
+            "password2": "ENwfuftURoZgFdq   ",
+            "notification_email_choice": NotificationEmailOptions.DISABLED,
+        },
+    )
+
+    assert response.status_code == 302
+    assert response.url == "/accounts/confirm-email/"
+
+    u = User.objects.get(username="user123")
+    assert u.user_profile.notification_email_choice == "DISABLED"
