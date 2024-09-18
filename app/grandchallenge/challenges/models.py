@@ -1021,8 +1021,12 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             creator=self.creator,
             hidden=True,
             contact_email=self.contact_email,
-            is_active_until=today().date()
-            + relativedelta(months=settings.CHALLENGES_DEFAULT_ACTIVE_MONTHS),
+            is_active_until=(
+                today().date()
+                + relativedelta(
+                    months=settings.CHALLENGES_DEFAULT_ACTIVE_MONTHS
+                )
+            ),
         )
         challenge.full_clean()
         challenge.save()
