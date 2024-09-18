@@ -466,6 +466,7 @@ class TestJobCreationThroughAPI:
         assert ComponentInterfaceValue.objects.count() == 0
 
 
+@pytest.mark.django_db
 def test_algorithm_image_download_url(
     client, django_capture_on_commit_callbacks, algorithm_io_image, rf
 ):

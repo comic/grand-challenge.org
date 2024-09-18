@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from rest_framework import serializers
 from rest_framework.fields import (
     CharField,
@@ -287,8 +288,7 @@ class JobPostSerializer(JobSerializer):
 
         for civ in self.inputs:
             job.create_civ(
-                ci_slug=civ.interface_slug,
-                new_value=civ.value,
+                civ_data=civ,
                 user=validated_data["creator"],
                 linked_task=linked_task,
             )
@@ -320,10 +320,14 @@ class JobPostSerializer(JobSerializer):
                     f"You can only provide one of {possible_keys} for each interface."
                 )
 
-            data.append(
-                CIVData(
-                    interface_slug=civ["interface"].slug,
-                    value=civ[found_keys[0]],
+            try:
+                data.append(
+                    CIVData.create(
+                        interface_slug=civ["interface"].slug,
+                        value=civ[found_keys[0]],
+                    )
                 )
-            )
+            except ValidationError as e:
+                raise serializers.ValidationError(e)
+
         return data

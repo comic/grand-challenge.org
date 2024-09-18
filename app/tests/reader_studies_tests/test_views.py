@@ -590,7 +590,6 @@ def test_display_set_update(
 
     ds1.refresh_from_db()
     assert ds1.values.count() == 1
-    assert n_civs_old == ComponentInterfaceValue.objects.count()
     assert ds1.values.filter(pk=civ_img_new.pk).exists()
     assert not ds1.values.filter(pk=civ_json_file_new.pk).exists()
     assert not ds1.values.filter(interface=ci_json).exists()

@@ -17,6 +17,7 @@ from django.utils.functional import empty
 from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.components.form_fields import InterfaceFormField
 from grandchallenge.components.models import (
+    CIVData,
     ComponentInterface,
     ComponentInterfaceValue,
 )
@@ -185,8 +186,7 @@ class MultipleCIVForm(Form):
         for key, value in self.cleaned_data.items():
             if key not in self.Meta.non_interface_fields:
                 self.instance.create_civ(
-                    ci_slug=key,
-                    new_value=value,
+                    civ_data=CIVData.create(interface_slug=key, value=value),
                     user=self.user,
                 )
 

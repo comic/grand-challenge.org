@@ -4,6 +4,7 @@ from rest_framework.fields import JSONField, ReadOnlyField, URLField
 from rest_framework.relations import HyperlinkedRelatedField
 
 from grandchallenge.archives.models import Archive, ArchiveItem
+from grandchallenge.components.models import CIVData
 from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
     HyperlinkedComponentInterfaceValueSerializer,
@@ -102,7 +103,9 @@ class ArchiveItemPostSerializer(ArchiveItemSerializer):
             image = value.get("image", None)
             value = value.get("value", None)
             instance.create_civ(
-                ci_slug=interface.slug,
-                new_value=upload_session or user_upload or image or value,
+                civ_data=CIVData.create(
+                    interface_slug=interface.slug,
+                    value=upload_session or user_upload or image or value,
+                ),
             )
         return instance

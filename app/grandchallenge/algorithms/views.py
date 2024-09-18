@@ -515,8 +515,7 @@ class JobCreate(
 
         for civ_data in inputs:
             self.object.create_civ(
-                ci_slug=civ_data.interface_slug,
-                new_value=civ_data.value,
+                civ_data=civ_data,
                 user=form.cleaned_data["creator"],
                 linked_task=linked_task,
             )

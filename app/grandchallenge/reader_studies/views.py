@@ -57,6 +57,7 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 from grandchallenge.archives.forms import AddCasesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.components.forms import NewFileUploadForm
+from grandchallenge.components.models import CIVData
 from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
 )
@@ -998,11 +999,12 @@ class DisplaySetViewSet(
                     image = value.get("image", None)
                     value = value.get("value", None)
                     instance.create_civ(
-                        ci_slug=interface.slug,
-                        new_value=user_upload
-                        or upload_session
-                        or image
-                        or value,
+                        civ_data=CIVData.create(
+                            interface_slug=interface.slug,
+                            value=(
+                                user_upload or upload_session or image or value
+                            ),
+                        ),
                     )
             else:
                 raise DRFValidationError(serialized_data.errors)
