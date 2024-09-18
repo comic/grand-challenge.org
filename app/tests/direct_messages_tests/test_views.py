@@ -1,4 +1,5 @@
 import pytest
+from dateutil.utils import today
 from guardian.shortcuts import remove_perm
 from guardian.utils import get_anonymous_user
 
@@ -71,6 +72,32 @@ def test_conversation_create_permissions(
     response = try_create_conversation(creator=anon, target=participant)
     assert response.status_code == 302
     assert response.url.startswith(settings.LOGIN_URL)
+
+
+@pytest.mark.django_db
+def test_only_active_challenge_can_create_conversation(client):
+    def try_create_conversation(creator, target):
+        return get_view_for_user(
+            client=client,
+            viewname="direct_messages:conversation-create",
+            reverse_kwargs={"username": target.username},
+            user=creator,
+        )
+
+    admin, participant = UserFactory.create_batch(2)
+    challenge = ChallengeFactory()
+
+    challenge.add_admin(user=admin)
+    challenge.add_participant(user=participant)
+
+    response = try_create_conversation(creator=admin, target=participant)
+    assert response.status_code == 200
+
+    challenge.is_active_until = today().date()
+    challenge.save()
+
+    response = try_create_conversation(creator=admin, target=participant)
+    assert response.status_code == 403
 
 
 @pytest.mark.django_db
