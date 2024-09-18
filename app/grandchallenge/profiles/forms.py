@@ -104,6 +104,9 @@ class SignupForm(UserProfileForm):
         user_profile.department = self.cleaned_data["department"]
         user_profile.country = self.cleaned_data["country"]
         user_profile.website = self.cleaned_data["website"]
+        user_profile.notification_email_choice = self.cleaned_data[
+            "notification_email_choice"
+        ]
         user_profile.receive_newsletter = self.cleaned_data[
             "receive_newsletter"
         ]
