@@ -2,6 +2,7 @@ import pytest
 
 from grandchallenge.participants.models import RegistrationRequest
 from tests.factories import RegistrationRequestFactory, UserFactory
+from tests.participants_tests.test_forms import answers_formset_data
 from tests.utils import get_view_for_user
 
 
@@ -17,6 +18,7 @@ def test_registration_request_create_post(client, two_challenge_sets):
         method=client.post,
         challenge=two_challenge_sets.challenge_set_1.challenge,
         user=user,
+        data=answers_formset_data(),
     )
     assert response.status_code == 302
     assert RegistrationRequest.objects.filter(
@@ -42,6 +44,7 @@ def test_duplicate_registration_denied(client, two_challenge_sets):
         method=client.post,
         challenge=two_challenge_sets.challenge_set_1.challenge,
         user=user,
+        data=answers_formset_data(),
     )
     assert response.status_code == 200
     assert rr.status_to_string() in response.rendered_content
@@ -55,6 +58,7 @@ def test_duplicate_registration_denied(client, two_challenge_sets):
         method=client.post,
         challenge=two_challenge_sets.challenge_set_2.challenge,
         user=user,
+        data=answers_formset_data(),
     )
     assert response.status_code == 302
     assert RegistrationRequest.objects.filter(

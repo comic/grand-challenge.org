@@ -1,6 +1,5 @@
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
@@ -91,7 +90,7 @@ class RegistrationRequestList(
     def get_queryset(self):
         queryset = super().get_queryset()
         queryset = (
-            queryset.filter(Q(challenge=self.request.challenge))
+            queryset.filter(challenge=self.request.challenge)
             .select_related(
                 "user__user_profile",
                 "user__verification",

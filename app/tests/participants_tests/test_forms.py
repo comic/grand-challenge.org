@@ -12,7 +12,7 @@ from tests.factories import (
 )
 
 
-def answers_form_data(*args, n=None):
+def answers_formset_data(*args, n=None):
     if n is None:
         n = len(args)
     return {
@@ -38,7 +38,7 @@ def test_registration_request_form_no_questions():
     form = RegistrationRequestForm(
         challenge=challenge,
         user=user,
-        data=answers_form_data(n=0),
+        data=answers_formset_data(n=0),
     )
     assert form.is_valid()
     form.save()
@@ -64,7 +64,7 @@ def test_registration_request_form_with_questions():
     form = RegistrationRequestForm(
         challenge=challenge,
         user=user,
-        data=answers_form_data(
+        data=answers_formset_data(
             "",
             "answer_1",
             "answer_2",
@@ -101,7 +101,7 @@ def test_registration_request_form_partial_data():
     form = RegistrationRequestForm(
         challenge=challenge,
         user=user,
-        data=answers_form_data("answer_0", n=3),
+        data=answers_formset_data("answer_0", n=3),
     )
 
     assert (
@@ -111,7 +111,7 @@ def test_registration_request_form_partial_data():
     form = RegistrationRequestForm(
         challenge=challenge,
         user=user,
-        data=answers_form_data(
+        data=answers_formset_data(
             "answer_0",
             "answer_1",
             # Note, missing non-required answer
@@ -142,7 +142,7 @@ def test_registration_request_form_incorrect_format():
     form = RegistrationRequestForm(
         challenge=challenge,
         user=user,
-        data=answers_form_data("answer"),
+        data=answers_formset_data("answer"),
     )
 
     assert (
@@ -161,7 +161,7 @@ def test_registration_request_form_incorrect_format():
     form = RegistrationRequestForm(
         challenge=challenge,
         user=user,
-        data=answers_form_data("1"),
+        data=answers_formset_data("1"),
     )
 
     assert form.is_valid(), "With correct format, form should be valid"
