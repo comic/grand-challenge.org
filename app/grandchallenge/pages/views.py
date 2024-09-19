@@ -1,7 +1,9 @@
 from datetime import datetime
 
+import pypandoc
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
+from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Q
 from django.http import Http404
 from django.views.generic import (
@@ -18,6 +20,7 @@ from guardian.mixins import LoginRequiredMixin
 from grandchallenge.challenges.views import ActiveChallengeRequiredMixin
 from grandchallenge.charts.specs import stacked_bar, world_map
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
+from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.evaluation.models import Evaluation, Submission
 from grandchallenge.pages.forms import PageCreateForm, PageUpdateForm
 from grandchallenge.pages.models import Page
@@ -27,7 +30,7 @@ from grandchallenge.subdomains.utils import reverse, reverse_lazy
 class ChallengeFilteredQuerysetMixin:
     def get_queryset(self):
         queryset = super().get_queryset()
-        return queryset.filter(Q(challenge=self.request.challenge))
+        return queryset.filter(challenge=self.request.challenge)
 
 
 class ChallengeFormKwargsMixin:
@@ -84,6 +87,46 @@ class PageDetail(
         user = self.request.user
         page = self.get_object()
         return page.can_be_viewed_by(user=user)
+
+
+class PagePandoc(
+    UserPassesTestMixin, ChallengeFilteredQuerysetMixin, DetailView
+):
+    model = Page
+    permission_required = "view_page"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    raw = None
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def get_object(self, *args, **kwargs):
+        if not self.kwargs["format"].startswith("markdown"):
+            raise PermissionDenied()
+        return super().get_object(*args, **kwargs)
+
+    def get_template_names(self):
+        if self.raw:
+            return ["pages/page_pandoc_detail.html"]
+        else:
+            return super().get_template_names()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        markdown = pypandoc.convert_text(
+            source=context["object"].html,
+            format="html",
+            to=self.kwargs["format"],
+            sandbox=True,
+        )
+
+        context["object"].html = md2html(markdown=markdown)
+        context["markdown"] = markdown
+
+        return context
 
 
 class ChallengeHome(PageDetail):
