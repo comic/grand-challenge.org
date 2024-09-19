@@ -30,7 +30,7 @@ class RegistrationQuestionAnswerField(JSONField):
         if value is None or value == "":
             return self.empty_value
 
-        # Handle present double quotes or the missing thereof
+        # Handle the presence or absence of double quotes
         try:
             quoted = value.startswith('"') and value.endswith('"')
             result = super().to_python(value)
