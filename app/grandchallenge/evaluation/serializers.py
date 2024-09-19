@@ -94,12 +94,19 @@ class FilteredMetricsJsonSerializer(ComponentInterfaceValueSerializer):
             for metric in self.valid_metrics:
                 value = get_jsonpath(obj.value, metric.path)
 
+                if not isinstance(value, (int, float)):
+                    continue
+
                 keys = str(metric.path).split(".")
 
-                for key in keys[:-1]:
-                    output = output.setdefault(key, {})
+                sub_output = output
 
-                output[keys[-1]] = value
+                for key in keys[:-1]:
+                    if key not in sub_output:
+                        sub_output[key] = {}
+                    sub_output = sub_output[key]
+
+                sub_output[keys[-1]] = value
 
             return output
         else:

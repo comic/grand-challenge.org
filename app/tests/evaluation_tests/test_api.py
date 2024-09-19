@@ -3,15 +3,22 @@ from typing import NamedTuple
 
 import pytest
 
+from grandchallenge.components.models import ComponentInterface
 from grandchallenge.evaluation.models import Evaluation
-from grandchallenge.evaluation.serializers import ExternalEvaluationSerializer
-from grandchallenge.evaluation.utils import SubmissionKindChoices
+from grandchallenge.evaluation.serializers import (
+    ExternalEvaluationSerializer,
+    FilteredMetricsJsonSerializer,
+)
+from grandchallenge.evaluation.utils import Metric, SubmissionKindChoices
 from grandchallenge.notifications.models import Notification
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
 )
-from tests.components_tests.factories import ComponentInterfaceFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
 from tests.factories import ChallengeFactory, UserFactory
 from tests.utils import get_view_for_user
@@ -498,3 +505,121 @@ def test_claimable_evaluations_filter(
             e1, context={"request": response.wsgi_request}
         ).data,
     ]
+
+
+@pytest.mark.django_db
+def test_metrics_json_filtering():
+    interface = ComponentInterface.objects.get(slug="metrics-json-file")
+    civ = ComponentInterfaceValueFactory(
+        value={
+            "l1": {"l2": {"l3a": 1, "l3b": 2}, "l2a": 3},
+            "l1v": "Sensitive",
+            "l1d": {},
+        },
+        interface=interface,
+    )
+    test_metrics = [
+        Metric(path="l1.l2.l3a", reverse=False),
+        Metric(path="l1.l2.l3b", reverse=False),
+        Metric(path="l1.l2a", reverse=False),
+        Metric(path="l1d", reverse=False),
+    ]
+
+    assert (
+        FilteredMetricsJsonSerializer(
+            instance=civ, filter_metrics_json=False, valid_metrics=[]
+        ).data["value"]
+        == civ.value
+    )
+    assert (
+        FilteredMetricsJsonSerializer(
+            instance=civ, filter_metrics_json=True, valid_metrics=[]
+        ).data["value"]
+        == {}
+    )
+    assert FilteredMetricsJsonSerializer(
+        instance=civ, filter_metrics_json=True, valid_metrics=test_metrics
+    ).data["value"] == {"l1": {"l2": {"l3a": 1, "l3b": 2}, "l2a": 3}}
+
+    civ.interface = ComponentInterfaceFactory()
+    civ.save()
+
+    # Non metrics-json interfaces should not be filtered
+    assert (
+        FilteredMetricsJsonSerializer(
+            instance=civ, filter_metrics_json=True, valid_metrics=test_metrics
+        ).data["value"]
+        == civ.value
+    )
+
+
+@pytest.mark.django_db
+def test_evaluation_metrics_filtering(client):
+    phase = PhaseFactory(
+        challenge__hidden=False,
+        display_all_metrics=False,
+        public=True,
+        score_jsonpath="l1.l2a",
+        score_title="Whatevs",
+    )
+    full_value = {
+        "l1": {"l2": {"l3a": 1, "l3b": 2}, "l2a": 3},
+        "l1v": "Sensitive",
+        "l1d": {},
+    }
+    filtered_value = {"l1": {"l2a": 3}}
+
+    user = UserFactory()
+
+    ci = ComponentInterface.objects.get(slug="metrics-json-file")
+    civ = ComponentInterfaceValueFactory(
+        interface=ci,
+        value={
+            "l1": {"l2": {"l3a": 1, "l3b": 2}, "l2a": 3},
+            "l1v": "Sensitive",
+            "l1d": {},
+        },
+    )
+    evaluation = EvaluationFactory(
+        submission__phase=phase,
+        time_limit=phase.evaluation_time_limit,
+        published=True,
+    )
+    evaluation.outputs.set([civ])
+
+    response = get_view_for_user(
+        client=client,
+        user=user,
+        viewname="api:evaluation-detail",
+        reverse_kwargs={"pk": evaluation.pk},
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200
+    assert response.json()["outputs"][0]["value"] == filtered_value
+
+    phase.challenge.add_admin(user=user)
+
+    response = get_view_for_user(
+        client=client,
+        user=user,
+        viewname="api:evaluation-detail",
+        reverse_kwargs={"pk": evaluation.pk},
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200
+    assert response.json()["outputs"][0]["value"] == full_value
+
+    phase.display_all_metrics = True
+    phase.save()
+
+    response = get_view_for_user(
+        client=client,
+        viewname="api:evaluation-detail",
+        reverse_kwargs={"pk": evaluation.pk},
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200
+    assert response.json()["outputs"][0]["value"] == full_value
