@@ -1494,6 +1494,22 @@ class Evaluation(UUIDModel, ComponentJob):
                 return output.value
 
     @cached_property
+    def filtered_metrics_json(self):
+        output = {}
+
+        for metric in self.submission.phase.valid_metrics:
+            value = get_jsonpath(self.metrics_json_file, metric.path)
+
+            keys = str(metric.path).split(".")
+
+            for key in keys[:-1]:
+                output = output.setdefault(key, {})
+
+            output[keys[-1]] = value
+
+        return output
+
+    @cached_property
     def invalid_metrics(self):
         return {
             metric.path

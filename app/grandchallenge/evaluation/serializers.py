@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.utils.timezone import now
+from guardian.core import ObjectPermissionChecker
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.fields import (
     CharField,
@@ -69,9 +70,23 @@ class SubmissionSerializer(ModelSerializer):
         )
 
 
+class FilteredMetricsJsonSerializer(ComponentInterfaceValueSerializer):
+    value = SerializerMethodField(method_name="filtered_metrics_json")
+
+    def __init__(self, *args, filtered_metrics_json, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.filtered_metrics_json = filtered_metrics_json
+
+    def filtered_metrics_json(self, obj):
+        if obj.interface.slug == "metrics-json-file":
+            return self.filtered_metrics_json
+        else:
+            return obj.value
+
+
 class EvaluationSerializer(ModelSerializer):
     submission = SubmissionSerializer()
-    outputs = ComponentInterfaceValueSerializer(many=True)
+    outputs = SerializerMethodField()
     status = CharField(source="get_status_display", read_only=True)
     title = CharField(read_only=True)
 
@@ -90,6 +105,37 @@ class EvaluationSerializer(ModelSerializer):
             "status",
             "title",
         )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        challenge_permission_checker = ObjectPermissionChecker(
+            user_or_group=self.context["request"].user
+        )
+        challenge_permission_checker.prefetch_perms(
+            objects=Challenge.objects.all()
+        )
+        self._challenge_permission_checker = challenge_permission_checker
+
+    def get_outputs(self, obj):
+        obj_perms = self._challenge_permission_checker.get_perms(
+            obj.submission.phase.challenge
+        )
+
+        if (
+            not obj.submission.phase.display_all_metrics
+            and "change_challenge" in obj_perms
+        ):
+            serializer = ComponentInterfaceValueSerializer
+        else:
+            serializer = FilteredMetricsJsonSerializer
+
+        return serializer(
+            obj.outputs.all(),
+            many=True,
+            context=self.context,
+            filtered_metrics_json=obj.filtered_metrics_json,
+        ).data
 
 
 class ExternalEvaluationSerializer(EvaluationSerializer):
