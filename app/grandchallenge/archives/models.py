@@ -265,10 +265,6 @@ class Archive(
         return self.items
 
     @property
-    def civ_set_lookup(self):
-        return "values"
-
-    @property
     def civ_set_model(self):
         return ArchiveItem
 

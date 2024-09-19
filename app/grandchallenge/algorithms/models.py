@@ -38,7 +38,6 @@ from grandchallenge.components.models import (  # noqa: F401
     ComponentJobManager,
     ImportStatusChoices,
     Tarball,
-    ValuesForInterfacesMixin,
 )
 from grandchallenge.core.guardian import get_objects_for_group
 from grandchallenge.core.models import RequestBase, UUIDModel
@@ -72,7 +71,6 @@ JINJA_ENGINE = sandbox.ImmutableSandboxedEnvironment()
 class Algorithm(
     UUIDModel,
     TitleSlugDescriptionModel,
-    ValuesForInterfacesMixin,
     HangingProtocolMixin,
 ):
     editors_group = models.OneToOneField(
@@ -422,14 +420,6 @@ class Algorithm(
 
     def remove_user(self, user):
         return user.groups.remove(self.users_group)
-
-    @property
-    def civ_set_lookup(self):
-        return "inputs"
-
-    @property
-    def civ_sets_related_manager(self):
-        return Job.objects.filter(algorithm_image__algorithm=self)
 
     @cached_property
     def user_statistics(self):

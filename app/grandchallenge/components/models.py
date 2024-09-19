@@ -2435,9 +2435,6 @@ class InterfacesAndValues(NamedTuple):
 
 
 class ValuesForInterfacesMixin:
-    @property
-    def civ_set_lookup(self):
-        raise NotImplementedError
 
     @property
     def civ_sets_related_manager(self):
@@ -2445,26 +2442,19 @@ class ValuesForInterfacesMixin:
 
     @cached_property
     def interfaces_and_values(self):
-        filter_kwargs = {
-            f"{self.civ_set_lookup}__interface__slug__isnull": False
-        }
         vals = list(
             self.civ_sets_related_manager.select_related(
-                self.civ_set_lookup,
-                f"{self.civ_set_lookup}__interface",
-                f"{self.civ_set_lookup}__image",
+                "values", "values__interface", "values__image"
             )
-            .filter(**filter_kwargs)
+            .filter(values__interface__slug__isnull=False)
             .values(
-                f"{self.civ_set_lookup}__interface__slug",
-                f"{self.civ_set_lookup}__id",
+                "values__interface__slug",
+                "values__id",
             )
-            .order_by(f"{self.civ_set_lookup}__id")
+            .order_by("values__id")
             .distinct()
         )
-        interfaces = [
-            x[f"{self.civ_set_lookup}__interface__slug"] for x in vals
-        ]
+        interfaces = [x["values__interface__slug"] for x in vals]
         return InterfacesAndValues(interfaces=set(interfaces), values=vals)
 
     @cached_property
@@ -2472,9 +2462,9 @@ class ValuesForInterfacesMixin:
         interfaces_and_values = self.interfaces_and_values
         values_for_interfaces = {
             interface: [
-                x[f"{self.civ_set_lookup}__id"]
+                x["values__id"]
                 for x in interfaces_and_values.values
-                if x[f"{self.civ_set_lookup}__interface__slug"] == interface
+                if x["values__interface__slug"] == interface
             ]
             for interface in interfaces_and_values.interfaces
         }
