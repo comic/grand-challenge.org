@@ -166,7 +166,7 @@ class MultipleCIVForm(Form):
         # tell them apart from the form fields initialized above. Hence
         # the check if they already have a corresponding field on the form or not.
         for slug in self.data.keys():
-            interface_slug = slug.replace(INTERFACE_FORM_FIELD_PREFIX, "")
+            interface_slug = slug[len(INTERFACE_FORM_FIELD_PREFIX) :]
             if (
                 ComponentInterface.objects.filter(slug=interface_slug).exists()
                 and slug not in self.fields.keys()
@@ -194,7 +194,7 @@ class MultipleCIVForm(Form):
         for key, value in self.cleaned_data.items():
             if key.startswith(INTERFACE_FORM_FIELD_PREFIX):
                 self.instance.create_civ(
-                    civ_data=CIVData.create(
+                    civ_data=CIVData(
                         interface_slug=key[len(INTERFACE_FORM_FIELD_PREFIX) :],
                         value=value,
                     ),

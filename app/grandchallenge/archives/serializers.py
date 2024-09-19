@@ -103,7 +103,7 @@ class ArchiveItemPostSerializer(ArchiveItemSerializer):
             image = value.get("image", None)
             value = value.get("value", None)
             instance.create_civ(
-                civ_data=CIVData.create(
+                civ_data=CIVData(
                     interface_slug=interface.slug,
                     value=upload_session or user_upload or image or value,
                 ),

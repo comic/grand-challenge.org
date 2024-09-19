@@ -322,7 +322,7 @@ class JobPostSerializer(JobSerializer):
 
             try:
                 data.append(
-                    CIVData.create(
+                    CIVData(
                         interface_slug=civ["interface"].slug,
                         value=civ[found_keys[0]],
                     )

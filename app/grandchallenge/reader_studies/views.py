@@ -998,7 +998,7 @@ class DisplaySetViewSet(
                     image = value.get("image", None)
                     value = value.get("value", None)
                     instance.create_civ(
-                        civ_data=CIVData.create(
+                        civ_data=CIVData(
                             interface_slug=interface.slug,
                             value=(
                                 user_upload or upload_session or image or value

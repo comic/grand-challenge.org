@@ -2027,77 +2027,96 @@ class ComponentImage(FieldChangeMixin, models.Model):
             self.size_in_registry = self.calculate_size_in_registry()
 
 
-class CIVData(NamedTuple):
-    interface_slug: str
-    value: str | bool | int | float | dict | None = None
-    user_upload: UserUpload | None = None
-    user_upload_queryset: QuerySet | None = None
-    upload_session: RawImageUploadSession | None = None
-    image: Image | None = None
-    file_civ: ComponentInterfaceValue | None = None
+class CIVData:
 
-    @classmethod
-    def create(cls, *, interface_slug, value):
+    @property
+    def interface_slug(self):
+        return self._interface_slug
+
+    @property
+    def value(self):
+        return self._json_value
+
+    @property
+    def image(self):
+        return self._image
+
+    @property
+    def upload_session(self):
+        return self._upload_session
+
+    @property
+    def user_upload(self):
+        return self._user_upload
+
+    @property
+    def user_upload_queryset(self):
+        return self._user_upload_queryset
+
+    @property
+    def file_civ(self):
+        return self._file_civ
+
+    def __init__(self, *, interface_slug, value):
+        self._interface_slug = interface_slug
+        self._initial_value = value
+        self._json_value = None
+        self._image = None
+        self._upload_session = None
+        self._user_upload = None
+        self._user_upload_queryset = None
+        self._file_civ = None
+
         ci = ComponentInterface.objects.get(slug=interface_slug)
 
         if ci.is_json_kind and not ci.requires_file:
-            instance = cls.create_json_civ_data(
-                interface_slug=interface_slug, value=value
-            )
+            self._init_json_civ_data()
         elif ci.is_image_kind:
-            instance = cls.create_image_civ_data(
-                interface_slug=interface_slug, value=value
-            )
-
+            self._init_image_civ_data()
         elif ci.requires_file:
-            instance = cls.create_file_civ_data(
-                interface_slug=interface_slug, value=value
-            )
+            self._init_file_civ_data()
 
-        instance.validate()
-        return instance
+        self.validate()
 
-    @classmethod
-    def create_json_civ_data(cls, *, interface_slug, value):
-        if isinstance(value, (str | bool | int | float | dict | None)):
-            return CIVData(interface_slug=interface_slug, value=value)
+    def _init_json_civ_data(self):
+        if isinstance(
+            self._initial_value,
+            (str | bool | int | float | dict | list | None),
+        ):
+            self._json_value = self._initial_value
         else:
             ValidationError(
-                f"Unknown data type {type(value)} for interface {interface_slug}"
+                f"Unknown data type {type(self._initial_value)} for interface {self._interface_slug}"
             )
 
-    @classmethod
-    def create_image_civ_data(cls, *, interface_slug, value):
-        if isinstance(value, QuerySet):
-            return CIVData(
-                interface_slug=interface_slug, user_upload_queryset=value
-            )
-        elif isinstance(value, RawImageUploadSession):
-            return CIVData(interface_slug=interface_slug, upload_session=value)
-        elif isinstance(value, Image):
-            return CIVData(interface_slug=interface_slug, image=value)
-        elif value is None:
-            return CIVData(interface_slug=interface_slug, image=None)
+    def _init_image_civ_data(self):
+        if isinstance(self._initial_value, QuerySet):
+            self._user_upload_queryset = self._initial_value
+        elif isinstance(self._initial_value, RawImageUploadSession):
+            self._upload_session = self._initial_value
+        elif isinstance(self._initial_value, Image):
+            self._image = self._initial_value
+        elif self._initial_value is None:
+            self._image = None
         else:
             raise ValidationError(
-                f"Unknown data type {type(value)} for interface {interface_slug}"
+                f"Unknown data type {type(self._initial_value)} for interface {self._interface_slug}"
             )
 
-    @classmethod
-    def create_file_civ_data(cls, *, interface_slug, value):
-        if isinstance(value, UserUpload):
-            return CIVData(interface_slug=interface_slug, user_upload=value)
-        elif isinstance(value, ComponentInterfaceValue):
-            return CIVData(interface_slug=interface_slug, file_civ=value)
-        elif value is None:
-            return CIVData(interface_slug=interface_slug, file_civ=None)
+    def _init_file_civ_data(self):
+        if isinstance(self._initial_value, UserUpload):
+            self._user_upload = self._initial_value
+        elif isinstance(self._initial_value, ComponentInterfaceValue):
+            self._file_civ = self._initial_value
+        elif self._initial_value is None:
+            self._file_civ = None
         else:
             return ValidationError(
-                f"Unknown data type {type(value)} for interface {interface_slug}"
+                f"Unknown data type {type(self._initial_value)} for interface {self._interface_slug}"
             )
 
     def validate(self):
-        unique_fields = [
+        unique_properties = [
             self.value,
             self.image,
             self.user_upload,
@@ -2106,12 +2125,13 @@ class CIVData(NamedTuple):
             self.file_civ,
         ]
 
-        # Ensure at most one of the concerned fields is set
-        # (None can be an acceptable value)
-        if sum(bool(field) for field in unique_fields) > 1:
+        # Ensure at most one of these properties is set
+        # None can be an acceptable value, so 0 is ok
+        if sum(bool(property) for property in unique_properties) > 1:
             raise ValidationError(
-                "You can only provide one of value, image, user_upload, "
-                "user_upload_queryset or file_civ."
+                "Only one of value, image, user_upload, upload_session, "
+                "user_upload_queryset or file_civ can be provided for a "
+                "single CIVData object."
             )
 
 
@@ -2351,7 +2371,7 @@ class CIVForObjectMixin:
         user_upload=None,
         linked_task=None,
     ):
-        if file_civ and current_civ != file_civ:
+        if file_civ:
             self.remove_civ(current_civ)
             self.add_civ(file_civ)
 

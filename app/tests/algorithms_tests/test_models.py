@@ -567,11 +567,11 @@ def test_retrieve_existing_civs(
         CIVData(interface_slug=ci_bool.slug, value=bool),
         CIVData(
             interface_slug=ci_im.slug,
-            value=upload_session.api_url if new_image else old_im,
+            value=upload_session if new_image else old_im,
         ),
         CIVData(
             interface_slug=ci_file.slug,
-            value=upload.api_url if new_file else list_of_civs[3],
+            value=upload if new_file else list_of_civs[3],
         ),
     }
 

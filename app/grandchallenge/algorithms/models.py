@@ -10,7 +10,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.db.models import Count, Min, Q, QuerySet, Sum
+from django.db.models import Count, Min, Q, Sum
 from django.db.models.signals import post_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
@@ -27,7 +27,7 @@ from stdimage import JPEGField
 
 from grandchallenge.algorithms.tasks import update_algorithm_average_duration
 from grandchallenge.anatomy.models import BodyStructure
-from grandchallenge.cases.models import Image, RawImageUploadSession
+from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.charts.specs import stacked_bar
 from grandchallenge.components.models import (  # noqa: F401
     CIVForObjectMixin,
@@ -62,7 +62,6 @@ from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
 from grandchallenge.reader_studies.models import DisplaySet
 from grandchallenge.subdomains.utils import reverse
-from grandchallenge.uploads.models import UserUpload
 from grandchallenge.workstations.models import Workstation
 
 logger = logging.getLogger(__name__)
@@ -666,22 +665,24 @@ class JobManager(ComponentJobManager):
         """
         existing_civs = []
         for civ in civ_data:
-            if isinstance(
-                civ.value, (RawImageUploadSession, UserUpload, QuerySet)
+            if (
+                civ.user_upload
+                or civ.upload_session
+                or civ.user_upload_queryset
             ):
                 # uploads will create new CIVs, so ignore these
                 continue
-            elif isinstance(civ.value, ComponentInterfaceValue):
-                existing_civs.append(civ.value)
-            elif isinstance(civ.value, Image):
+            elif civ.file_civ:
+                existing_civs.append(civ.file_civ)
+            elif civ.image:
                 try:
                     civ = ComponentInterfaceValue.objects.filter(
-                        interface__slug=civ.interface_slug, image=civ.value
+                        interface__slug=civ.interface_slug, image=civ.image
                     ).get()
                     existing_civs.append(civ)
                 except ObjectDoesNotExist:
                     continue
-            else:
+            elif civ.value is not None:
                 # values can be of different types
                 try:
                     civ = ComponentInterfaceValue.objects.filter(

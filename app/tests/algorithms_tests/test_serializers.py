@@ -7,7 +7,7 @@ from grandchallenge.algorithms.serializers import (
     HyperlinkedJobSerializer,
     JobPostSerializer,
 )
-from grandchallenge.components.models import CIVData, ComponentInterface
+from grandchallenge.components.models import ComponentInterface
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
@@ -360,7 +360,9 @@ def test_reformat_inputs(rf):
     ci_str = ComponentInterfaceFactory(kind=ComponentInterface.Kind.STRING)
     ci_img = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
     ci_img2 = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
-    ci_file = ComponentInterfaceFactory(kind=ComponentInterface.Kind.ANY)
+    ci_file = ComponentInterfaceFactory(
+        kind=ComponentInterface.Kind.ANY, store_in_database=False
+    )
 
     us = RawImageUploadSessionFactory()
     upl = UserUploadFactory()
@@ -368,9 +370,9 @@ def test_reformat_inputs(rf):
 
     data = [
         {"interface": ci_str, "value": "foo"},
-        {"interface": ci_img, "image": im.pk},
-        {"interface": ci_img2, "upload_session": us.pk},
-        {"interface": ci_file, "user_upload": upl.pk},
+        {"interface": ci_img, "image": im},
+        {"interface": ci_img2, "upload_session": us},
+        {"interface": ci_file, "user_upload": upl},
     ]
     request = rf.get("/foo")
     request.user = UserFactory()
@@ -378,12 +380,15 @@ def test_reformat_inputs(rf):
         data=AlgorithmJobFactory(time_limit=10), context={"request": request}
     )
 
-    assert serializer.reformat_inputs(serialized_civs=data) == [
-        CIVData(interface_slug=ci_str.slug, value="foo"),
-        CIVData(interface_slug=ci_img.slug, value=im.pk),
-        CIVData(interface_slug=ci_img2.slug, value=us.pk),
-        CIVData(interface_slug=ci_file.slug, value=upl.pk),
-    ]
+    assert serializer.reformat_inputs(serialized_civs=data)[0].value == "foo"
+    assert serializer.reformat_inputs(serialized_civs=data)[1].image == im
+    assert (
+        serializer.reformat_inputs(serialized_civs=data)[2].upload_session
+        == us
+    )
+    assert (
+        serializer.reformat_inputs(serialized_civs=data)[3].user_upload == upl
+    )
 
 
 @pytest.mark.django_db
