@@ -30,6 +30,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
+from tests.conftest import get_interface_form_data
 from tests.factories import ImageFactory, UserFactory, WorkstationFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.utils import get_view_for_user, recurse_callbacks
@@ -358,7 +359,9 @@ def test_archive_item_update_triggers_algorithm_jobs(
                 "slug": archive.slug,
                 "pk": ai.pk,
             },
-            data={ci.slug: False},
+            data={
+                **get_interface_form_data(interface_slug=ci.slug, data=False)
+            },
             user=editor,
         )
     recurse_callbacks(
@@ -383,7 +386,9 @@ def test_archive_item_update_triggers_algorithm_jobs(
                 "slug": archive.slug,
                 "pk": ai.pk,
             },
-            data={ci.slug: True},
+            data={
+                **get_interface_form_data(interface_slug=ci.slug, data=True)
+            },
             user=editor,
         )
     recurse_callbacks(

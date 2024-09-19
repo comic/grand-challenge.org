@@ -6,6 +6,7 @@ from guardian.shortcuts import assign_perm
 from requests import put
 
 from grandchallenge.cases.widgets import FlexibleImageField, WidgetChoices
+from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.reader_studies.models import (
     Answer,
@@ -20,6 +21,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
+from tests.conftest import get_interface_form_data
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
@@ -473,11 +475,19 @@ def test_display_set_update(
             client=client,
             reverse_kwargs={"pk": ds1.pk, "slug": rs.slug},
             data={
-                ci_json.slug: '{"foo": "new"}',
-                ci_img.slug: str(im2.pk),
-                f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
-                ci_json_file.slug: str(civ_json_file_new.pk),
-                f"value_type_{ci_json_file.slug}": "civ",
+                **get_interface_form_data(
+                    interface_slug=ci_json.slug, data='{"foo": "new"}'
+                ),
+                **get_interface_form_data(
+                    interface_slug=ci_img.slug,
+                    data=str(im2.pk),
+                    existing_data=True,
+                ),
+                **get_interface_form_data(
+                    interface_slug=ci_json_file.slug,
+                    data=str(civ_json_file_new.pk),
+                    existing_data=True,
+                ),
                 "order": 11,
                 "title": "foobar",
             },
@@ -541,11 +551,17 @@ def test_display_set_update(
             client=client,
             reverse_kwargs={"pk": ds1.pk, "slug": rs.slug},
             data={
-                ci_json.slug: '{"foo": "new"}',
-                ci_img.slug: str(im2.pk),
-                f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
-                ci_json_file.slug: str(upload.pk),
-                f"value_type_{ci_json_file.slug}": "uuid",
+                **get_interface_form_data(
+                    interface_slug=ci_json.slug, data='{"foo": "new"}'
+                ),
+                **get_interface_form_data(
+                    interface_slug=ci_img.slug,
+                    data=str(im2.pk),
+                    existing_data=True,
+                ),
+                **get_interface_form_data(
+                    interface_slug=ci_json_file.slug, data=str(upload.pk)
+                ),
                 "order": 12,
             },
             user=user,
@@ -665,14 +681,24 @@ def test_add_display_set_to_reader_study(
             client=client,
             reverse_kwargs={"slug": rs.slug},
             data={
-                ci_str.slug: "new-title",
-                ci_img.slug: str(im_upload.pk),
+                **get_interface_form_data(
+                    interface_slug=ci_str.slug, data="new-title"
+                ),
+                **get_interface_form_data(
+                    interface_slug=ci_img.slug, data=str(im_upload.pk)
+                ),
+                **get_interface_form_data(
+                    interface_slug=ci_img_new.slug,
+                    data=str(image.pk),
+                    existing_data=True,
+                ),
+                **get_interface_form_data(
+                    interface_slug=ci_str_new.slug, data="new"
+                ),
+                **get_interface_form_data(
+                    interface_slug=ci_json.slug, data=str(upload.pk)
+                ),
                 "order": 11,
-                f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_UPLOAD.name,
-                ci_img_new.slug: str(image.pk),
-                f"WidgetChoice-{ci_img_new.slug}": WidgetChoices.IMAGE_SEARCH.name,
-                ci_str_new.slug: "new",
-                ci_json.slug: str(upload.pk),
             },
             user=u1,
             method=client.post,
@@ -720,7 +746,10 @@ def test_display_set_interfaces_create(
     )
     assert not response.context["form"].is_bound
     assert isinstance(
-        response.context["form"].fields[str(ci.slug)], field_type
+        response.context["form"].fields[
+            f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"
+        ],
+        field_type,
     )
 
 

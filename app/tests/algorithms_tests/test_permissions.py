@@ -26,6 +26,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
+from tests.conftest import get_interface_form_data
 from tests.evaluation_tests.factories import EvaluationFactory
 from tests.evaluation_tests.test_permissions import (
     get_groups_with_set_perms,
@@ -323,7 +324,11 @@ class TestJobPermissions:
             },
             user=user,
             follow=True,
-            data={f"_{ci.slug}": '{"Foo": "bar"}'},
+            data={
+                **get_interface_form_data(
+                    interface_slug=ci.slug, data='{"Foo": "bar"}'
+                )
+            },
         )
         assert response.status_code == 200
 

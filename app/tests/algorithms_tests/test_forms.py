@@ -17,6 +17,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmPermissionRequest,
     Job,
 )
+from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentJob,
@@ -38,6 +39,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
+from tests.conftest import get_interface_form_data
 from tests.factories import UserFactory, WorkstationFactory
 from tests.uploads_tests.factories import (
     UserUploadFactory,
@@ -195,75 +197,106 @@ def test_algorithm_create(client, uploaded_image):
             "generic-overlay",
             [
                 '<select class="custom-select"',
-                'name="WidgetChoice-_generic-overlay"',
+                f'name="WidgetChoice-{INTERFACE_FORM_FIELD_PREFIX}generic-overlay"',
             ],
         ),
         (
             "generic-medical-image",
             [
                 '<select class="custom-select"',
-                'name="WidgetChoice-_generic-medical-image"',
+                f'name="WidgetChoice-{INTERFACE_FORM_FIELD_PREFIX}generic-medical-image"',
             ],
         ),
-        ("boolean", ['<input type="checkbox"', 'name="_boolean"']),
-        ("string", ['<input type="text" name="_string"']),
-        ("integer", ['<input type="number"', 'name="_integer"']),
-        ("float", ['<input type="number"', 'name="_float"', 'step="any"']),
+        (
+            "boolean",
+            [
+                '<input type="checkbox"',
+                f'name="{INTERFACE_FORM_FIELD_PREFIX}boolean"',
+            ],
+        ),
+        (
+            "string",
+            [
+                '<input type="text"',
+                f'name="{INTERFACE_FORM_FIELD_PREFIX}string"',
+            ],
+        ),
+        (
+            "integer",
+            [
+                '<input type="number"',
+                f'name="{INTERFACE_FORM_FIELD_PREFIX}integer"',
+            ],
+        ),
+        (
+            "float",
+            [
+                '<input type="number"',
+                f'name="{INTERFACE_FORM_FIELD_PREFIX}float"',
+                'step="any"',
+            ],
+        ),
         (
             "2d-bounding-box",
             [
                 'class="jsoneditorwidget ',
-                '<div id="jsoneditor_id__2d-bounding-box"',
+                f'<div id="jsoneditor_id_{INTERFACE_FORM_FIELD_PREFIX}2d-bounding-box"',
             ],
         ),
         (
             "multiple-2d-bounding-boxes",
             [
                 'class="jsoneditorwidget ',
-                '<div id="jsoneditor_id__multiple-2d-bounding-boxes"',
+                f'<div id="jsoneditor_id_{INTERFACE_FORM_FIELD_PREFIX}multiple-2d-bounding-boxes"',
             ],
         ),
         (
             "distance-measurement",
             [
                 'class="jsoneditorwidget ',
-                '<div id="jsoneditor_id__distance-measurement"',
+                f'<div id="jsoneditor_id_{INTERFACE_FORM_FIELD_PREFIX}distance-measurement"',
             ],
         ),
         (
             "multiple-distance-measurements",
             [
                 'class="jsoneditorwidget ',
-                '<div id="jsoneditor_id__multiple-distance-measurements"',
+                f'<div id="jsoneditor_id_{INTERFACE_FORM_FIELD_PREFIX}multiple-distance-measurements"',
             ],
         ),
         (
             "point",
-            ['class="jsoneditorwidget ', '<div id="jsoneditor_id__point"'],
+            [
+                'class="jsoneditorwidget ',
+                f'<div id="jsoneditor_id_{INTERFACE_FORM_FIELD_PREFIX}point"',
+            ],
         ),
         (
             "multiple-points",
             [
                 'class="jsoneditorwidget ',
-                '<div id="jsoneditor_id__multiple-points"',
+                f'<div id="jsoneditor_id_{INTERFACE_FORM_FIELD_PREFIX}multiple-points"',
             ],
         ),
         (
             "polygon",
-            ['class="jsoneditorwidget ', '<div id="jsoneditor_id__polygon"'],
+            [
+                'class="jsoneditorwidget ',
+                f'<div id="jsoneditor_id_{INTERFACE_FORM_FIELD_PREFIX}polygon"',
+            ],
         ),
         (
             "multiple-polygons",
             [
                 'class="jsoneditorwidget ',
-                '<div id="jsoneditor_id__multiple-polygons"',
+                f'<div id="jsoneditor_id_{INTERFACE_FORM_FIELD_PREFIX}multiple-polygons"',
             ],
         ),
         (
             "anything",
             [
                 'class="user-upload"',
-                '<div id="X_id__anything-drag-drop"',
+                f'<div id="X_id_{INTERFACE_FORM_FIELD_PREFIX}anything-drag-drop"',
             ],
         ),
     ),
@@ -314,7 +347,7 @@ def test_create_job_json_input_field_validation(
         user=creator,
     )
     assert response.context["form"].errors == {
-        f"_{slug}": ["This field is required."],
+        f"{INTERFACE_FORM_FIELD_PREFIX}{slug}": ["This field is required."],
     }
 
 
@@ -668,18 +701,6 @@ def test_model_version_control_form():
 
 @pytest.mark.django_db
 class TestJobCreateForm:
-    def test_non_interface_fields(self, algorithm_with_image_and_model):
-        editor = algorithm_with_image_and_model.editors_group.user_set.first()
-        form = JobCreateForm(
-            algorithm=algorithm_with_image_and_model, user=editor, data={}
-        )
-        assert form.Meta.non_interface_fields == [
-            "algorithm_image",
-            "algorithm_model",
-            "creator",
-            "time_limit",
-        ]
-
     def test_creator_queryset(self, algorithm_with_image_and_model):
         editor = algorithm_with_image_and_model.editors_group.user_set.first()
         form = JobCreateForm(
@@ -756,7 +777,7 @@ class TestJobCreateForm:
             data={
                 "algorithm_image": algorithm_with_image_and_model.active_image,
                 "algorithm_model": algorithm_with_image_and_model.active_model,
-                f"_{ci.slug}": "foo",
+                **get_interface_form_data(interface_slug=ci.slug, data="foo"),
             },
         )
         assert not form.is_valid()

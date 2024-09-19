@@ -12,7 +12,7 @@ from grandchallenge.archives.views import (
     ArchiveItemJobListView,
     ArchiveItemsList,
 )
-from grandchallenge.cases.widgets import WidgetChoices
+from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import AlgorithmJobFactory, Job
@@ -27,6 +27,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
+from tests.conftest import get_interface_form_data
 from tests.factories import GroupFactory, ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.uploads_tests.factories import (
@@ -805,8 +806,9 @@ def test_archive_item_add_image(
                 },
                 user=editor,
                 data={
-                    ci_img.slug: upload.pk,
-                    f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_UPLOAD.name,
+                    **get_interface_form_data(
+                        interface_slug=ci_img.slug, data=upload.pk
+                    ),
                 },
             )
     assert response.status_code == 302
@@ -826,8 +828,11 @@ def test_archive_item_add_image(
                 },
                 user=editor,
                 data={
-                    ci_img.slug: old_civ_img.image.pk,
-                    f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
+                    **get_interface_form_data(
+                        interface_slug=ci_img.slug,
+                        data=old_civ_img.image.pk,
+                        existing_data=True,
+                    ),
                 },
             )
     assert response.status_code == 302
@@ -848,8 +853,11 @@ def test_archive_item_add_image(
                 },
                 user=editor,
                 data={
-                    ci_img.slug: image.pk,
-                    f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
+                    **get_interface_form_data(
+                        interface_slug=ci_img.slug,
+                        data=image.pk,
+                        existing_data=True,
+                    ),
                 },
             )
     assert response.status_code == 302
@@ -883,7 +891,11 @@ def test_archive_item_add_file(
                     "slug": archive.slug,
                 },
                 user=editor,
-                data={ci.slug: upload.pk},
+                data={
+                    **get_interface_form_data(
+                        interface_slug=ci.slug, data=upload.pk
+                    )
+                },
             )
     assert response.status_code == 302
     assert "test" in ArchiveItem.objects.get().values.first().file.name
@@ -920,7 +932,11 @@ def test_archive_item_add_json_file(
                         "slug": archive.slug,
                     },
                     user=editor,
-                    data={ci.slug: upload.pk, f"value_type_{ci.slug}": "uuid"},
+                    data={
+                        **get_interface_form_data(
+                            interface_slug=ci.slug, data=upload.pk
+                        )
+                    },
                 )
         assert response.status_code == 302
         assert file.name.split("/")[-1] in item.values.first().file.name
@@ -943,7 +959,11 @@ def test_archive_item_add_json_file(
                     "slug": archive.slug,
                 },
                 user=editor,
-                data={ci.slug: civ.pk, f"value_type_{ci.slug}": "civ"},
+                data={
+                    **get_interface_form_data(
+                        interface_slug=ci.slug, data=civ.pk, existing_data=True
+                    )
+                },
             )
     assert response.status_code == 302
 
@@ -973,7 +993,11 @@ def test_archive_item_add_value(
                     "slug": archive.slug,
                 },
                 user=editor,
-                data={ci.slug: True},
+                data={
+                    **get_interface_form_data(
+                        interface_slug=ci.slug, data=True
+                    )
+                },
             )
     assert response.status_code == 302
     assert ArchiveItem.objects.get().values.first().value
@@ -1053,8 +1077,12 @@ def test_archive_item_create_view(
         user=editor,
     )
     assert len(response.context["form"].fields) == 3
-    assert response.context["form"].fields[ci_str.slug]
-    assert response.context["form"].fields[ci_img.slug]
+    assert response.context["form"].fields[
+        f"{INTERFACE_FORM_FIELD_PREFIX}{ci_str.slug}"
+    ]
+    assert response.context["form"].fields[
+        f"{INTERFACE_FORM_FIELD_PREFIX}{ci_img.slug}"
+    ]
     assert response.context["form"].fields["title"]
 
     im_upload = create_upload_from_file(
@@ -1077,13 +1105,23 @@ def test_archive_item_create_view(
             client=client,
             reverse_kwargs={"slug": archive.slug},
             data={
-                ci_str.slug: "new-title",
-                ci_img.slug: str(im_upload.pk),
-                f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_UPLOAD.name,
-                ci_img2.slug: str(image.pk),
-                f"WidgetChoice-{ci_img2.slug}": WidgetChoices.IMAGE_SEARCH.name,
-                ci_json.slug: str(upload.pk),
-                ci_json2.slug: '{"some": "content"}',
+                **get_interface_form_data(
+                    interface_slug=ci_str.slug, data="new-title"
+                ),
+                **get_interface_form_data(
+                    interface_slug=ci_img.slug, data=str(im_upload.pk)
+                ),
+                **get_interface_form_data(
+                    interface_slug=ci_img2.slug,
+                    data=str(image.pk),
+                    existing_data=True,
+                ),
+                **get_interface_form_data(
+                    interface_slug=ci_json.slug, data=str(upload.pk)
+                ),
+                **get_interface_form_data(
+                    interface_slug=ci_json2.slug, data='{"some": "content"}'
+                ),
                 "title": "archive-item title",
             },
             user=editor,

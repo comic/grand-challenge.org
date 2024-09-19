@@ -12,7 +12,9 @@ from django.contrib.sites.models import Site
 from guardian.shortcuts import assign_perm
 from requests import put
 
+from grandchallenge.cases.widgets import WidgetChoices
 from grandchallenge.components.backends import docker_client
+from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.reader_studies.models import Question
@@ -600,3 +602,28 @@ def algorithm_with_multiple_inputs():
         image_1=image_1,
         image_2=image_2,
     )
+
+
+def get_interface_form_data(*, interface_slug, data, existing_data=False):
+    ci = ComponentInterface.objects.get(slug=interface_slug)
+    form_data = {f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}": data}
+    if ci.is_image_kind:
+        if existing_data:
+            form_data[
+                f"WidgetChoice-{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
+            ] = WidgetChoices.IMAGE_SEARCH.name
+        else:
+            form_data[
+                f"WidgetChoice-{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
+            ] = WidgetChoices.IMAGE_UPLOAD.name
+    elif ci.requires_file:
+        if existing_data:
+            form_data[
+                f"value_type_{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
+            ] = "civ"
+        else:
+            form_data[
+                f"value_type_{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
+            ] = "uuid"
+
+    return form_data

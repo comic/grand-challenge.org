@@ -15,7 +15,6 @@ from requests import put
 
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
 from grandchallenge.algorithms.views import JobsList
-from grandchallenge.cases.widgets import WidgetChoices
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -35,6 +34,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
+from tests.conftest import get_interface_form_data
 from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
@@ -921,7 +921,11 @@ def test_create_job_with_json_file(
                     },
                     user=editor,
                     follow=True,
-                    data={f"_{ci.slug}": upload.pk},
+                    data={
+                        **get_interface_form_data(
+                            interface_slug=ci.slug, data=upload.pk
+                        )
+                    },
                 )
         assert response.status_code == 200
         assert (
@@ -969,12 +973,15 @@ def test_algorithm_job_create_with_image_input(
                 user=editor,
                 follow=True,
                 data={
-                    f"_{ci.slug}": image1.pk,
-                    f"WidgetChoice-_{ci.slug}": WidgetChoices.IMAGE_SEARCH.name,
+                    **get_interface_form_data(
+                        interface_slug=ci.slug,
+                        data=image1.pk,
+                        existing_data=True,
+                    )
                 },
             )
     assert response.status_code == 200
-    assert Job.objects.get().inputs.first().image.pk == image1.pk
+    assert str(Job.objects.get().inputs.first().image.pk) == str(image1.pk)
     # same civ reused
     assert Job.objects.get().inputs.first() == civ
 
@@ -990,12 +997,15 @@ def test_algorithm_job_create_with_image_input(
                 user=editor,
                 follow=True,
                 data={
-                    f"_{ci.slug}": image2.pk,
-                    f"WidgetChoice-_{ci.slug}": WidgetChoices.IMAGE_SEARCH.name,
+                    **get_interface_form_data(
+                        interface_slug=ci.slug,
+                        data=image2.pk,
+                        existing_data=True,
+                    )
                 },
             )
     assert response.status_code == 200
-    assert Job.objects.last().inputs.first().image.pk == image2.pk
+    assert str(Job.objects.last().inputs.first().image.pk) == str(image2.pk)
     assert Job.objects.last().inputs.first() != civ
 
     upload = create_upload_from_file(
@@ -1014,8 +1024,9 @@ def test_algorithm_job_create_with_image_input(
                 user=editor,
                 follow=True,
                 data={
-                    f"_{ci.slug}": upload.pk,
-                    f"WidgetChoice-_{ci.slug}": WidgetChoices.IMAGE_UPLOAD.name,
+                    **get_interface_form_data(
+                        interface_slug=ci.slug, data=upload.pk
+                    )
                 },
             )
     assert response.status_code == 200
@@ -1105,14 +1116,31 @@ class TestJobCreateView:
             algorithm=algorithm_with_multiple_inputs.algorithm,
             user=algorithm_with_multiple_inputs.editor,
             inputs={
-                f"_{algorithm_with_multiple_inputs.ci_str.slug}": "Foo",
-                f"_{algorithm_with_multiple_inputs.ci_bool.slug}": True,
-                f"_{algorithm_with_multiple_inputs.ci_img_upload.slug}": algorithm_with_multiple_inputs.im_upload_through_ui.pk,
-                f"_{algorithm_with_multiple_inputs.ci_existing_img.slug}": algorithm_with_multiple_inputs.image_1.pk,
-                f"_{algorithm_with_multiple_inputs.ci_json_file.slug}": algorithm_with_multiple_inputs.file_upload.pk,
-                f"_{algorithm_with_multiple_inputs.ci_json_in_db_with_schema.slug}": '["Foo", "bar"]',
-                f"WidgetChoice-_{algorithm_with_multiple_inputs.ci_img_upload.slug}": WidgetChoices.IMAGE_UPLOAD.name,
-                f"WidgetChoice-_{algorithm_with_multiple_inputs.ci_existing_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
+                **get_interface_form_data(
+                    interface_slug=algorithm_with_multiple_inputs.ci_str.slug,
+                    data="Foo",
+                ),
+                **get_interface_form_data(
+                    interface_slug=algorithm_with_multiple_inputs.ci_bool.slug,
+                    data=True,
+                ),
+                **get_interface_form_data(
+                    interface_slug=algorithm_with_multiple_inputs.ci_img_upload.slug,
+                    data=algorithm_with_multiple_inputs.im_upload_through_ui.pk,
+                ),
+                **get_interface_form_data(
+                    interface_slug=algorithm_with_multiple_inputs.ci_existing_img.slug,
+                    data=algorithm_with_multiple_inputs.image_1.pk,
+                    existing_data=True,
+                ),
+                **get_interface_form_data(
+                    interface_slug=algorithm_with_multiple_inputs.ci_json_file.slug,
+                    data=algorithm_with_multiple_inputs.file_upload.pk,
+                ),
+                **get_interface_form_data(
+                    interface_slug=algorithm_with_multiple_inputs.ci_json_in_db_with_schema.slug,
+                    data='["Foo", "bar"]',
+                ),
             },
         )
         assert response.status_code == 200
@@ -1192,20 +1220,35 @@ class TestJobCreateView:
             algorithm=algorithm_with_multiple_inputs.algorithm,
             user=algorithm_with_multiple_inputs.editor,
             inputs={
-                f"_{algorithm_with_multiple_inputs.ci_str.slug}": "Foo",
-                f"_{algorithm_with_multiple_inputs.ci_bool.slug}": True,
-                f"_{algorithm_with_multiple_inputs.ci_existing_img.slug}": algorithm_with_multiple_inputs.image_1.pk,
-                f"_{algorithm_with_multiple_inputs.ci_json_in_db_with_schema.slug}": '["Foo", "bar"]',
-                f"_{algorithm_with_multiple_inputs.ci_json_file.slug}": civ5.pk,
-                f"value_type_{algorithm_with_multiple_inputs.ci_json_file.slug}": "civ",
-                f"WidgetChoice-_{algorithm_with_multiple_inputs.ci_existing_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
+                **get_interface_form_data(
+                    interface_slug=algorithm_with_multiple_inputs.ci_str.slug,
+                    data="Foo",
+                ),
+                **get_interface_form_data(
+                    interface_slug=algorithm_with_multiple_inputs.ci_bool.slug,
+                    data=True,
+                ),
+                **get_interface_form_data(
+                    interface_slug=algorithm_with_multiple_inputs.ci_existing_img.slug,
+                    data=algorithm_with_multiple_inputs.image_1.pk,
+                    existing_data=True,
+                ),
+                **get_interface_form_data(
+                    interface_slug=algorithm_with_multiple_inputs.ci_json_file.slug,
+                    data=civ5.pk,
+                    existing_data=True,
+                ),
+                **get_interface_form_data(
+                    interface_slug=algorithm_with_multiple_inputs.ci_json_in_db_with_schema.slug,
+                    data='["Foo", "bar"]',
+                ),
             },
         )
         assert response.status_code == 200
 
         # no new CIVs should have been created
         assert ComponentInterfaceValue.objects.count() == old_civ_count
-        # but since there is no job with these inputs yet, a job was created:
+        # since there is no job with these inputs yet, a job was created:
         assert Job.objects.count() == old_job_count + 1
         job = Job.objects.last()
         assert job.inputs.count() == 5
@@ -1247,11 +1290,23 @@ class TestJobCreateView:
             algorithm=algorithm_with_multiple_inputs.algorithm,
             user=algorithm_with_multiple_inputs.editor,
             inputs={
-                f"_{algorithm_with_multiple_inputs.ci_str.slug}": "Foo",
-                f"_{algorithm_with_multiple_inputs.ci_bool.slug}": True,
-                f"_{algorithm_with_multiple_inputs.ci_existing_img.slug}": algorithm_with_multiple_inputs.image_1.pk,
-                f"_{algorithm_with_multiple_inputs.ci_json_in_db_with_schema.slug}": '["Foo", "bar"]',
-                f"WidgetChoice-_{algorithm_with_multiple_inputs.ci_existing_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
+                **get_interface_form_data(
+                    interface_slug=algorithm_with_multiple_inputs.ci_str.slug,
+                    data="Foo",
+                ),
+                **get_interface_form_data(
+                    interface_slug=algorithm_with_multiple_inputs.ci_bool.slug,
+                    data=True,
+                ),
+                **get_interface_form_data(
+                    interface_slug=algorithm_with_multiple_inputs.ci_existing_img.slug,
+                    data=algorithm_with_multiple_inputs.image_1.pk,
+                    existing_data=True,
+                ),
+                **get_interface_form_data(
+                    interface_slug=algorithm_with_multiple_inputs.ci_json_in_db_with_schema.slug,
+                    data='["Foo", "bar"]',
+                ),
             },
         )
         assert response.status_code == 200
@@ -1291,7 +1346,10 @@ class TestJobCreateView:
             algorithm=algorithm_with_multiple_inputs.algorithm,
             user=algorithm_with_multiple_inputs.editor,
             inputs={
-                f"_{algorithm_with_multiple_inputs.ci_json_file.slug}": file_upload.pk,
+                **get_interface_form_data(
+                    interface_slug=algorithm_with_multiple_inputs.ci_json_file.slug,
+                    data=file_upload.pk,
+                ),
             },
         )
         assert response.status_code == 200
@@ -1323,7 +1381,10 @@ class TestJobCreateView:
             algorithm=algorithm_with_multiple_inputs.algorithm,
             user=algorithm_with_multiple_inputs.editor,
             inputs={
-                f"_{algorithm_with_multiple_inputs.ci_json_in_db_with_schema.slug}": '{"foo": "bar"}',
+                **get_interface_form_data(
+                    interface_slug=algorithm_with_multiple_inputs.ci_json_in_db_with_schema.slug,
+                    data='{"foo": "bar"}',
+                ),
             },
         )
         # validation of values stored in DB happens synchronously,
@@ -1355,8 +1416,10 @@ class TestJobCreateView:
             algorithm=algorithm_with_multiple_inputs.algorithm,
             user=algorithm_with_multiple_inputs.editor,
             inputs={
-                f"_{algorithm_with_multiple_inputs.ci_img_upload.slug}": user_upload.pk,
-                f"WidgetChoice-_{algorithm_with_multiple_inputs.ci_img_upload.slug}": WidgetChoices.IMAGE_UPLOAD.name,
+                **get_interface_form_data(
+                    interface_slug=algorithm_with_multiple_inputs.ci_img_upload.slug,
+                    data=user_upload.pk,
+                ),
             },
         )
         assert response.status_code == 200
@@ -1522,7 +1585,11 @@ def test_job_time_limit(client):
         },
         user=user,
         follow=True,
-        data={f"_{ci.slug}": '{"Foo": "bar"}'},
+        data={
+            **get_interface_form_data(
+                interface_slug=ci.slug, data='{"Foo": "bar"}'
+            )
+        },
     )
 
     assert response.status_code == 200
@@ -1676,8 +1743,9 @@ def test_job_create_denied_for_same_input_model_and_image(client):
         },
         user=creator,
         data={
-            f"_{ci.slug}": im.pk,
-            f"WidgetChoice-_{ci.slug}": WidgetChoices.IMAGE_SEARCH.name,
+            **get_interface_form_data(
+                interface_slug=ci.slug, data=im.pk, existing_data=True
+            )
         },
     )
     assert not response.context["form"].is_valid()

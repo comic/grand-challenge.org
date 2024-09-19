@@ -214,7 +214,7 @@ class JobCreateForm(SaveFormInitMixin, Form):
         keys_to_remove = []
         inputs = []
         for k, v in cleaned_data.items():
-            if k not in self.Meta.non_interface_fields:
+            if k.startswith(INTERFACE_FORM_FIELD_PREFIX):
                 keys_to_remove.append(k)
                 inputs.append(
                     CIVData(

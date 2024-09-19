@@ -10,6 +10,7 @@ from django.forms import HiddenInput, Select
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.cases.widgets import FlexibleImageWidget
+from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.forms import SingleCIVForm
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -1152,9 +1153,20 @@ def test_display_set_update_form(form_class):
 
     instance = None if form_class == DisplaySetCreateForm else ds
     form = form_class(user=user, instance=instance, base_obj=rs)
-    assert sorted(form.fields.keys()) == ["order", "slug-1", "slug-2", "title"]
-    assert isinstance(form.fields["slug-1"].widget, SelectUploadWidget)
-    assert isinstance(form.fields["slug-2"].widget, JSONEditorWidget)
+    assert sorted(form.fields.keys()) == [
+        f"{INTERFACE_FORM_FIELD_PREFIX}slug-1",
+        f"{INTERFACE_FORM_FIELD_PREFIX}slug-2",
+        "order",
+        "title",
+    ]
+    assert isinstance(
+        form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}slug-1"].widget,
+        SelectUploadWidget,
+    )
+    assert isinstance(
+        form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}slug-2"].widget,
+        JSONEditorWidget,
+    )
 
     ci = ComponentInterfaceFactory(kind="STR", title="slug-3")
     QuestionFactory(reader_study=rs, answer_type=AnswerType.TEXT, interface=ci)
@@ -1162,10 +1174,10 @@ def test_display_set_update_form(form_class):
     del rs.values_for_interfaces
     form = form_class(user=user, instance=instance, base_obj=rs)
     assert sorted(form.fields.keys()) == [
+        f"{INTERFACE_FORM_FIELD_PREFIX}slug-1",
+        f"{INTERFACE_FORM_FIELD_PREFIX}slug-2",
+        f"{INTERFACE_FORM_FIELD_PREFIX}slug-3",
         "order",
-        "slug-1",
-        "slug-2",
-        "slug-3",
         "title",
     ]
 
@@ -1276,10 +1288,30 @@ def test_display_set_update_form_image_field_queryset_filters():
     ds = DisplaySetFactory(reader_study=rs)
     ds.values.add(civ_img)
     form = DisplaySetUpdateForm(user=user, instance=ds, base_obj=rs)
-    assert im1 in form.fields["image"].fields[0].queryset.all()
-    assert im2 not in form.fields["image"].fields[0].queryset.all()
-    assert upload1 in form.fields["image"].fields[1].queryset.all()
-    assert upload2 not in form.fields["image"].fields[1].queryset.all()
+    assert (
+        im1
+        in form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}image"]
+        .fields[0]
+        .queryset.all()
+    )
+    assert (
+        im2
+        not in form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}image"]
+        .fields[0]
+        .queryset.all()
+    )
+    assert (
+        upload1
+        in form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}image"]
+        .fields[1]
+        .queryset.all()
+    )
+    assert (
+        upload2
+        not in form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}image"]
+        .fields[1]
+        .queryset.all()
+    )
 
 
 @pytest.mark.django_db
@@ -1311,8 +1343,14 @@ def test_display_set_add_interface_form():
         htmx_url="foo",
         auto_id="1",
     )
-    assert sorted(form.fields.keys()) == [ci_file.slug, "interface"]
-    assert isinstance(form.fields[ci_file.slug].widget, UserUploadSingleWidget)
+    assert sorted(form.fields.keys()) == [
+        "interface",
+        f"{INTERFACE_FORM_FIELD_PREFIX}{ci_file.slug}",
+    ]
+    assert isinstance(
+        form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}{ci_file.slug}"].widget,
+        UserUploadSingleWidget,
+    )
 
     form = SingleCIVForm(
         pk=ds.pk,
@@ -1322,8 +1360,14 @@ def test_display_set_add_interface_form():
         htmx_url="foo",
         auto_id="1",
     )
-    assert sorted(form.fields.keys()) == [ci_value.slug, "interface"]
-    assert isinstance(form.fields[ci_value.slug].widget, JSONEditorWidget)
+    assert sorted(form.fields.keys()) == [
+        "interface",
+        f"{INTERFACE_FORM_FIELD_PREFIX}{ci_value.slug}",
+    ]
+    assert isinstance(
+        form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}{ci_value.slug}"].widget,
+        JSONEditorWidget,
+    )
 
     form = SingleCIVForm(
         pk=ds.pk,
@@ -1333,8 +1377,14 @@ def test_display_set_add_interface_form():
         htmx_url="foo",
         auto_id="1",
     )
-    assert sorted(form.fields.keys()) == [ci_image.slug, "interface"]
-    assert isinstance(form.fields[ci_image.slug].widget, FlexibleImageWidget)
+    assert sorted(form.fields.keys()) == [
+        "interface",
+        f"{INTERFACE_FORM_FIELD_PREFIX}{ci_image.slug}",
+    ]
+    assert isinstance(
+        form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}{ci_image.slug}"].widget,
+        FlexibleImageWidget,
+    )
 
 
 @pytest.mark.django_db
