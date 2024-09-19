@@ -15,6 +15,7 @@ from django.views.generic import (
 from django_countries import countries
 from guardian.mixins import LoginRequiredMixin
 
+from grandchallenge.challenges.views import ActiveChallengeRequiredMixin
 from grandchallenge.charts.specs import stacked_bar, world_map
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
 from grandchallenge.evaluation.models import Evaluation, Submission
@@ -39,6 +40,7 @@ class ChallengeFormKwargsMixin:
 class PageCreate(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
+    ActiveChallengeRequiredMixin,
     ChallengeFormKwargsMixin,
     CreateView,
 ):

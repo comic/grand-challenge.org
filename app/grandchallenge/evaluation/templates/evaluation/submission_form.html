@@ -28,6 +28,10 @@
 {% endblock %}
 
 {% block content %}
+    {% if phase.creator_must_be_verified %}
+        {% include "challenges/partials/participant_verification_warning.html" %}
+    {% endif %}
+
     <h2>{{ phase.title }} Submission</h2>
 
     {% if "change_challenge" in challenge_perms %}

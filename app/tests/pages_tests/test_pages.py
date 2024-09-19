@@ -6,6 +6,7 @@ from django.contrib.auth.models import Group
 from django.db.models import BLANK_CHOICE_DASH
 
 from grandchallenge.pages.models import Page
+from tests.evaluation_tests.factories import PhaseFactory
 from tests.factories import ChallengeFactory, PageFactory, UserFactory
 from tests.utils import get_view_for_user, validate_admin_only_view
 
@@ -335,3 +336,27 @@ def test_challenge_statistics_page_permissions(client):
     )
     assert response.status_code == 200
     assert "Challenge Costs" in response.rendered_content
+
+
+@pytest.mark.django_db
+def test_should_show_verification_warning():
+    challenge = ChallengeFactory()
+    PhaseFactory(
+        challenge=challenge,
+        creator_must_be_verified=False,
+    )
+    phase = PhaseFactory(
+        challenge=challenge,
+        creator_must_be_verified=True,
+        submissions_limit_per_user_per_period=1,
+    )
+
+    assert challenge.should_show_verification_warning is True
+
+    phase.creator_must_be_verified = False
+    phase.save()
+
+    del challenge.should_show_verification_warning
+    del challenge.visible_phases
+
+    assert challenge.should_show_verification_warning is False

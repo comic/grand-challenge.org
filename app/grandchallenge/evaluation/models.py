@@ -223,7 +223,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
     )
     slug = AutoSlugField(populate_from="title", max_length=64)
     score_title = models.CharField(
-        max_length=32,
+        max_length=64,
         blank=False,
         default="Score",
         help_text=(
