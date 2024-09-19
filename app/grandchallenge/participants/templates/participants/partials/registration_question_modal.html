@@ -45,7 +45,7 @@
                 </dl>
             </div>
             <div class="modal-footer">
-                {% include "participants/partials/request_accept_reject.html" %}
+                {% include "participants/partials/request_accept_reject.html" with challenge=challenge regrequest=regrequest csrf_token=csrf_token only %}
             </div>
         </div>
     </div>

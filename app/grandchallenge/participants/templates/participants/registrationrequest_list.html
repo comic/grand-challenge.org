@@ -55,7 +55,7 @@
 
                     {% if viewable_registration_questions %}
                     <td>
-                        {% include "participants/partials/registration_question_modal.html" with challenge=challenge regrequest=regrequest viewable_registration_questions=viewable_registration_questions only %}
+                        {% include "participants/partials/registration_question_modal.html" with challenge=challenge regrequest=regrequest viewable_registration_questions=viewable_registration_questions csrf_token=csrf_token only %}
                     </td>
                     {% endif %}
                     <td data-order="{{ regrequest.status }}">
@@ -70,7 +70,7 @@
                         {% endif %}
                     </td>
                     <td>
-                        {% include  "participants/partials/request_accept_reject.html" with challenge=challenge regrequest=regrequest only %}
+                        {% include  "participants/partials/request_accept_reject.html" with challenge=challenge regrequest=regrequest csrf_token=csrf_token only %}
                     </td>
                 </tr>
             {% endfor %}
