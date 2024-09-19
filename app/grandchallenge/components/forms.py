@@ -15,7 +15,10 @@ from django.forms import (
 from django.utils.functional import empty
 
 from grandchallenge.algorithms.models import AlgorithmImage
-from grandchallenge.components.form_fields import InterfaceFormField
+from grandchallenge.components.form_fields import (
+    INTERFACE_FORM_FIELD_PREFIX,
+    InterfaceFormField,
+)
 from grandchallenge.components.models import (
     CIVData,
     ComponentInterface,
@@ -107,9 +110,6 @@ class MultipleCIVForm(Form):
         SelectUploadWidget,
     }
 
-    class Meta:
-        non_interface_fields = tuple()
-
     def __init__(self, *args, instance, base_obj, user, **kwargs):
         super().__init__(*args, **kwargs)
         self.instance = instance
@@ -127,20 +127,25 @@ class MultipleCIVForm(Form):
                 ).first()
 
             interface = ComponentInterface.objects.filter(slug=slug).get()
+            prefixed_interface_slug = f"{INTERFACE_FORM_FIELD_PREFIX}{slug}"
 
-            if interface.requires_file and slug in self.data.keys():
+            if (
+                interface.requires_file
+                and prefixed_interface_slug in self.data.keys()
+            ):
                 # file interfaces are special because their widget can change from
                 # a select to an upload widget, so if there is data, we need to pass
                 # the value from the data dict to the init function rather than
                 # the existing CIV
-                type = f"value_type_{interface.slug}"
-                current_value = f"{self.data[type]}_{self.data[slug]}"
+                type_key = f"value_type_{prefixed_interface_slug}"
+                value = self.data[prefixed_interface_slug]
+                current_value = f"{self.data[type_key]}_{value}"
 
             existing_civs = ComponentInterfaceValue.objects.filter(
                 pk__in=values
             ).all()
 
-            self.fields[slug] = InterfaceFormField(
+            self.fields[prefixed_interface_slug] = InterfaceFormField(
                 instance=interface,
                 initial=current_value,
                 required=False,
@@ -161,11 +166,14 @@ class MultipleCIVForm(Form):
         # tell them apart from the form fields initialized above. Hence
         # the check if they already have a corresponding field on the form or not.
         for slug in self.data.keys():
+            interface_slug = slug.replace(INTERFACE_FORM_FIELD_PREFIX, "")
             if (
-                ComponentInterface.objects.filter(slug=slug).exists()
+                ComponentInterface.objects.filter(slug=interface_slug).exists()
                 and slug not in self.fields.keys()
             ):
-                interface = ComponentInterface.objects.filter(slug=slug).get()
+                interface = ComponentInterface.objects.filter(
+                    slug=interface_slug
+                ).get()
                 self.fields[slug] = InterfaceFormField(
                     instance=interface,
                     initial=None,
@@ -184,9 +192,12 @@ class MultipleCIVForm(Form):
 
     def process_object_data(self):
         for key, value in self.cleaned_data.items():
-            if key not in self.Meta.non_interface_fields:
+            if key.startswith(INTERFACE_FORM_FIELD_PREFIX):
                 self.instance.create_civ(
-                    civ_data=CIVData.create(interface_slug=key, value=value),
+                    civ_data=CIVData.create(
+                        interface_slug=key[len(INTERFACE_FORM_FIELD_PREFIX) :],
+                        value=value,
+                    ),
                     user=self.user,
                 )
 
@@ -198,7 +209,7 @@ class CIVSetCreateFormMixin:
         non_civ_data = {
             k: v
             for k, v in self.cleaned_data.items()
-            if k in self.Meta.non_interface_fields
+            if not k.startswith(INTERFACE_FORM_FIELD_PREFIX)
         }
         self.instance = self.base_obj.create_civ_set(data=non_civ_data)
         super().process_object_data()
@@ -209,11 +220,12 @@ class CIVSetUpdateFormMixin:
         instance = self.instance
 
         save = False
-        for key in self.Meta.non_interface_fields:
-            value = self.cleaned_data.get(key, empty)
-            if value is not empty and value != getattr(instance, key):
-                setattr(instance, key, value)
-                save = True
+        for key in self.cleaned_data.keys():
+            if not key.startswith(INTERFACE_FORM_FIELD_PREFIX):
+                value = self.cleaned_data.get(key, empty)
+                if value is not empty and value != getattr(instance, key):
+                    setattr(instance, key, value)
+                    save = True
         if save:
             instance.save()
 
@@ -283,7 +295,9 @@ class SingleCIVForm(Form):
         )
 
         if selected_interface is not None:
-            self.fields[selected_interface.slug] = InterfaceFormField(
+            self.fields[
+                f"{INTERFACE_FORM_FIELD_PREFIX}{selected_interface.slug}"
+            ] = InterfaceFormField(
                 instance=selected_interface,
                 user=user,
                 required=selected_interface.value_required,
@@ -297,24 +311,6 @@ class SingleCIVForm(Form):
                     },
                 ),
             ).field
-
-
-class NewFileUploadForm(Form):
-    _possible_widgets = {
-        UserUploadSingleWidget,
-    }
-
-    def __init__(self, *args, user, interface, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields[interface.slug] = ModelChoiceField(
-            queryset=get_objects_for_user(
-                user, "uploads.change_userupload"
-            ).filter(status=UserUpload.StatusChoices.COMPLETED)
-        )
-        self.fields[interface.slug].label = interface.title
-        self.fields[interface.slug].widget = UserUploadSingleWidget(
-            allowed_file_types=interface.file_mimetypes
-        )
 
 
 class CIVSetDeleteForm(Form):

@@ -51,7 +51,10 @@ from grandchallenge.algorithms.serializers import (
     AlgorithmSerializer,
 )
 from grandchallenge.algorithms.tasks import import_remote_algorithm_image
-from grandchallenge.components.form_fields import InterfaceFormField
+from grandchallenge.components.form_fields import (
+    INTERFACE_FORM_FIELD_PREFIX,
+    InterfaceFormField,
+)
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.components.models import (
     CIVData,
@@ -102,14 +105,6 @@ class JobCreateForm(SaveFormInitMixin, Form):
         disabled=True, required=False, widget=HiddenInput
     )
 
-    class Meta:
-        non_interface_fields = [
-            "algorithm_image",
-            "algorithm_model",
-            "creator",
-            "time_limit",
-        ]
-
     def __init__(self, *args, algorithm, user, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -154,17 +149,21 @@ class JobCreateForm(SaveFormInitMixin, Form):
                 # but on the form level it does not make sense to check for those
                 existing_civs = None
 
-            if f"_{inp.slug}" in self.data:
+            prefixed_interface_slug = (
+                f"{INTERFACE_FORM_FIELD_PREFIX}{inp.slug}"
+            )
+
+            if prefixed_interface_slug in self.data:
                 if inp.kind == ComponentInterface.Kind.ANY:
                     # interfaces for which the data can be a list need
                     # to be retrieved with getlist() from the QueryDict
-                    initial = self.data.getlist(f"_{inp.slug}")
+                    initial = self.data.getlist(prefixed_interface_slug)
                 else:
-                    initial = self.data[f"_{inp.slug}"]
+                    initial = self.data[prefixed_interface_slug]
             else:
                 initial = None
 
-            self.fields[f"_{inp.slug}"] = InterfaceFormField(
+            self.fields[prefixed_interface_slug] = InterfaceFormField(
                 instance=inp,
                 initial=initial if initial else inp.default_value,
                 user=self._user,
@@ -218,7 +217,10 @@ class JobCreateForm(SaveFormInitMixin, Form):
             if k not in self.Meta.non_interface_fields:
                 keys_to_remove.append(k)
                 inputs.append(
-                    CIVData.create(interface_slug=k.replace("_", ""), value=v)
+                    CIVData(
+                        interface_slug=k[len(INTERFACE_FORM_FIELD_PREFIX) :],
+                        value=v,
+                    )
                 )
 
         for key in keys_to_remove:

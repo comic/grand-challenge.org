@@ -56,7 +56,6 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.archives.forms import AddCasesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
-from grandchallenge.components.forms import NewFileUploadForm
 from grandchallenge.components.models import CIVData
 from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
@@ -1261,7 +1260,6 @@ class DisplaySetUpdateView(
     )
     included_form_classes = (
         DisplaySetUpdateForm,
-        NewFileUploadForm,
         *MultipleCIVProcessingBaseView.included_form_classes,
     )
     success_message = "Display set has been updated."
@@ -1415,7 +1413,3 @@ class ReaderStudyFileUploadFieldView(FileUploadFormFieldBaseView):
     @cached_property
     def base_object(self):
         return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
-
-    @property
-    def widget_name(self):
-        return self.interface.slug

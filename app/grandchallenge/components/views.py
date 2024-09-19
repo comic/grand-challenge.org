@@ -24,6 +24,7 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from grandchallenge.algorithms.forms import NON_ALGORITHM_INTERFACES
 from grandchallenge.api.permissions import IsAuthenticated
 from grandchallenge.archives.models import Archive
+from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.forms import CIVSetDeleteForm, SingleCIVForm
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.components.serializers import ComponentInterfaceSerializer
@@ -439,10 +440,6 @@ class FileUploadFormFieldBaseView(
             ComponentInterface, slug=self.kwargs["interface_slug"]
         )
 
-    @property
-    def widget_name(self):
-        raise NotImplementedError
-
     @cached_property
     def base_object(self):
         raise NotImplementedError
@@ -451,16 +448,17 @@ class FileUploadFormFieldBaseView(
         return self.base_object
 
     def get(self, request, *args, **kwargs):
+        widget_name = f"{INTERFACE_FORM_FIELD_PREFIX}{self.interface.slug}"
         html_content = render_to_string(
             UserUploadMultipleWidget.template_name,
             {
                 "widget": UserUploadMultipleWidget(
                     allowed_file_types=self.interface.file_mimetypes
                 ).get_context(
-                    name=self.widget_name,
+                    name=widget_name,
                     value=None,
                     attrs={
-                        "id": self.widget_name,
+                        "id": widget_name,
                         "help_text": clean(self.interface.description),
                     },
                 )[

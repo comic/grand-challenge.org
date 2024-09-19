@@ -2076,6 +2076,8 @@ class CIVData(NamedTuple):
             return CIVData(interface_slug=interface_slug, upload_session=value)
         elif isinstance(value, Image):
             return CIVData(interface_slug=interface_slug, image=value)
+        elif value is None:
+            return CIVData(interface_slug=interface_slug, image=None)
         else:
             raise ValidationError(
                 f"Unknown data type {type(value)} for interface {interface_slug}"
@@ -2103,7 +2105,6 @@ class CIVData(NamedTuple):
             self.user_upload_queryset,
             self.file_civ,
         ]
-        ci = ComponentInterface.objects.get(slug=self.interface_slug)
 
         # Ensure at most one of the concerned fields is set
         # (None can be an acceptable value)
@@ -2112,17 +2113,6 @@ class CIVData(NamedTuple):
                 "You can only provide one of value, image, user_upload, "
                 "user_upload_queryset or file_civ."
             )
-
-        # for image civs, None is not possible,
-        # so one of the following needs to be provided
-        if ci.is_image_kind:
-            if not (
-                self.image or self.upload_session or self.user_upload_queryset
-            ):
-                raise ValidationError(
-                    "For image interfaces you must provide one "
-                    "of image, upload_session or user_upload_queryset."
-                )
 
 
 class CIVSetStringRepresentationMixin:

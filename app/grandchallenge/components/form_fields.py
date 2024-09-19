@@ -31,6 +31,9 @@ def _join_with_br(a, b):
         return b
 
 
+INTERFACE_FORM_FIELD_PREFIX = "interface_field_"
+
+
 class InterfaceFormField:
     _possible_widgets = {
         UserUploadMultipleWidget,
@@ -134,13 +137,9 @@ class InterfaceFormField:
         )
 
     def get_file_field(self):
-        key = f"value_type_{self.instance.slug}"
-        # on JobCreateForm interfaces are prepended with underscore
-        alt_key = f"value_type__{self.instance.slug}"
+        key = f"value_type_{INTERFACE_FORM_FIELD_PREFIX}{self.instance.slug}"
         if key in self.form_data.keys():
             type = self.form_data[key]
-        elif alt_key in self.form_data.keys():
-            type = self.form_data[alt_key]
         elif self.existing_civs:
             type = "civ"
         else:
