@@ -555,6 +555,12 @@ def test_metrics_json_filtering():
 
 @pytest.mark.django_db
 def test_evaluation_metrics_filtering(client):
+    user = UserFactory()
+
+    # Ensure object based filtering is used
+    other_challenge = ChallengeFactory()
+    other_challenge.add_admin(user=user)
+
     phase = PhaseFactory(
         challenge__hidden=False,
         display_all_metrics=False,
@@ -568,8 +574,6 @@ def test_evaluation_metrics_filtering(client):
         "l1d": {},
     }
     filtered_value = {"l1": {"l2a": 3}}
-
-    user = UserFactory()
 
     ci = ComponentInterface.objects.get(slug="metrics-json-file")
     civ = ComponentInterfaceValueFactory(
