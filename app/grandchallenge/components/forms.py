@@ -19,11 +19,7 @@ from grandchallenge.components.form_fields import (
     INTERFACE_FORM_FIELD_PREFIX,
     InterfaceFormField,
 )
-from grandchallenge.components.models import (
-    CIVData,
-    ComponentInterface,
-    ComponentInterfaceValue,
-)
+from grandchallenge.components.models import CIVData, ComponentInterface
 from grandchallenge.components.widgets import SelectUploadWidget
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.guardian import get_objects_for_user
@@ -118,7 +114,7 @@ class MultipleCIVForm(Form):
 
         # add fields for all interfaces that already exist on
         # other display sets / archive items
-        for slug, values in base_obj.values_for_interfaces.items():
+        for slug, _ in base_obj.values_for_interfaces.items():
             current_value = None
 
             if instance:
@@ -141,21 +137,15 @@ class MultipleCIVForm(Form):
                 value = self.data[prefixed_interface_slug]
                 current_value = f"{self.data[type_key]}_{value}"
 
-            existing_civs = ComponentInterfaceValue.objects.filter(
-                pk__in=values
-            ).all()
-
             self.fields[prefixed_interface_slug] = InterfaceFormField(
                 instance=interface,
                 initial=current_value,
                 required=False,
                 user=self.user,
-                existing_civs=existing_civs,
                 form_data=self.data,
                 file_upload_link=reverse(
-                    base_obj.file_upload_field_url_path,
+                    "components:file-upload",
                     kwargs={
-                        "slug": base_obj.slug,
                         "interface_slug": interface.slug,
                     },
                 ),
@@ -179,12 +169,10 @@ class MultipleCIVForm(Form):
                     initial=None,
                     required=False,
                     user=self.user,
-                    existing_civs=[],
                     form_data=self.data,
                     file_upload_link=reverse(
-                        base_obj.file_upload_field_url_path,
+                        "components:file-upload",
                         kwargs={
-                            "slug": base_obj.slug,
                             "interface_slug": interface.slug,
                         },
                     ),
@@ -301,12 +289,10 @@ class SingleCIVForm(Form):
                 instance=selected_interface,
                 user=user,
                 required=selected_interface.value_required,
-                existing_civs=None,
                 form_data=self.data,
                 file_upload_link=reverse(
-                    base_obj.file_upload_field_url_path,
+                    "components:file-upload",
                     kwargs={
-                        "slug": base_obj.slug,
                         "interface_slug": selected_interface.slug,
                     },
                 ),

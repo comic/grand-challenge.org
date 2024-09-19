@@ -51,7 +51,6 @@ class InterfaceFormField:
         required=None,
         disabled=False,
         help_text="",
-        existing_civs=None,
         form_data=None,
         file_upload_link=None,
     ):
@@ -61,7 +60,6 @@ class InterfaceFormField:
         self.required = required
         self.disabled = disabled
         self.help_text = help_text
-        self.existing_civs = existing_civs
         self.form_data = form_data
         self.file_upload_link = file_upload_link
 
@@ -140,7 +138,9 @@ class InterfaceFormField:
         key = f"value_type_{INTERFACE_FORM_FIELD_PREFIX}{self.instance.slug}"
         if key in self.form_data.keys():
             type = self.form_data[key]
-        elif self.existing_civs:
+        elif (
+            self.user.user_profile.file_civs_user_has_permission_to_use.exists()
+        ):
             type = "civ"
         else:
             type = "uuid"
@@ -165,7 +165,7 @@ class InterfaceFormField:
             )
         elif type == "civ":
             return ModelChoiceField(
-                queryset=self.existing_civs,
+                queryset=self.user.user_profile.file_civs_user_has_permission_to_use,
                 widget=SelectUploadWidget(
                     attrs={"upload_link": self.file_upload_link}
                 ),

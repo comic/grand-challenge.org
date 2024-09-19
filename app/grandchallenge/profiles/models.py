@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.signing import Signer
 from django.db import models
-from django.db.models import TextChoices
+from django.db.models import Exists, OuterRef, Q, TextChoices
 from django.db.models.signals import post_save
 from django.template.defaultfilters import pluralize
 from django.utils.functional import cached_property
@@ -18,6 +18,7 @@ from guardian.shortcuts import assign_perm
 from guardian.utils import get_anonymous_user
 from stdimage import JPEGField
 
+from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import get_mugshot_path
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
@@ -242,6 +243,40 @@ class UserProfile(models.Model):
             markdown_message=msg,
             recipients=[self.user],
             subscription_type=EmailSubscriptionTypes.NOTIFICATION,
+        )
+
+    @cached_property
+    def file_civs_user_has_permission_to_use(self):
+        # local import to avoid circular dependency
+        from grandchallenge.components.models import (
+            ComponentInterface,
+            ComponentInterfaceValue,
+            InterfaceKind,
+        )
+
+        job_query = get_objects_for_user(
+            self.user, "algorithms.view_job"
+        ).filter(inputs__pk__in=OuterRef("pk"))
+        display_set_query = get_objects_for_user(
+            self.user, "reader_studies.change_displayset"
+        ).filter(values__pk__in=OuterRef("pk"))
+        archive_item_query = get_objects_for_user(
+            self.user, "archives.change_archiveitem"
+        ).filter(values__pk__in=OuterRef("pk"))
+        return (
+            ComponentInterfaceValue.objects.filter(
+                Q(interface__kind__in=InterfaceKind.interface_type_file())
+                | Q(interface__kind=ComponentInterface.Kind.ANY)
+                & Q(interface__store_in_database=False)
+            )
+            .annotate(has_view_job_perm=Exists(job_query))
+            .annotate(has_change_ds_perm=Exists(display_set_query))
+            .annotate(has_change_ai_perm=Exists(archive_item_query))
+            .filter(
+                Q(has_view_job_perm=True)
+                | Q(has_change_ds_perm=True)
+                | Q(has_change_ai_perm=True)
+            )
         )
 
 

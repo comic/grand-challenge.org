@@ -246,10 +246,6 @@ class Archive(
         return reverse("api:archive-detail", kwargs={"pk": self.pk})
 
     @property
-    def file_upload_field_url_path(self):
-        return "archives:file-upload"
-
-    @property
     def civ_sets_list_url(self):
         return reverse("archives:items-list", kwargs={"slug": self.slug})
 

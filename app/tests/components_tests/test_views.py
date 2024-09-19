@@ -449,14 +449,14 @@ def test_display_set_bulk_delete(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "object, view_name",
+    "object",
     [
-        (ReaderStudyFactory, "reader-studies:file-upload"),
-        (ArchiveFactory, "archives:file-upload"),
-        (AlgorithmFactory, "algorithms:file-upload"),
+        ReaderStudyFactory,
+        ArchiveFactory,
+        AlgorithmFactory,
     ],
 )
-def test_file_upload_form_field_view(client, object, view_name):
+def test_file_upload_form_field_view(client, object):
     object = object()
     u, editor = UserFactory.create_batch(2)
     object.add_editor(editor)
@@ -464,10 +464,9 @@ def test_file_upload_form_field_view(client, object, view_name):
     ci_json = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
 
     response = get_view_for_user(
-        viewname=view_name,
+        viewname="components:file-upload",
         client=client,
         reverse_kwargs={
-            "slug": object.slug,
             "interface_slug": ci_json.slug,
         },
         user=u,
@@ -475,10 +474,9 @@ def test_file_upload_form_field_view(client, object, view_name):
     assert response.status_code == 403
 
     response = get_view_for_user(
-        viewname=view_name,
+        viewname="components:file-upload",
         client=client,
         reverse_kwargs={
-            "slug": object.slug,
             "interface_slug": ci_json.slug,
         },
         user=editor,

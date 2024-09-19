@@ -59,7 +59,6 @@ from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.components.models import (
     CIVData,
     ComponentInterface,
-    ComponentInterfaceValue,
     ComponentJob,
     ImportStatusChoices,
     InterfaceKindChoices,
@@ -135,20 +134,6 @@ class JobCreateForm(SaveFormInitMixin, Form):
             self.fields["algorithm_model"].initial = active_model
 
         for inp in self._algorithm.inputs.all():
-            if (
-                inp.requires_file
-                and inp.slug in self._algorithm.values_for_interfaces.keys()
-            ):
-                existing_civs = ComponentInterfaceValue.objects.filter(
-                    id__in=self._algorithm.values_for_interfaces[inp.slug]
-                )
-            else:
-                # Images are handled separately in FlexibleImageWidget
-                # Values stored in the DB need to be re-entered,
-                # we re-use existing CIVs for values later as well,
-                # but on the form level it does not make sense to check for those
-                existing_civs = None
-
             prefixed_interface_slug = (
                 f"{INTERFACE_FORM_FIELD_PREFIX}{inp.slug}"
             )
@@ -169,12 +154,10 @@ class JobCreateForm(SaveFormInitMixin, Form):
                 user=self._user,
                 required=True,
                 help_text=clean(inp.description) if inp.description else "",
-                existing_civs=existing_civs,
                 form_data=self.data,
                 file_upload_link=reverse(
-                    algorithm.file_upload_field_url_path,
+                    "components:file-upload",
                     kwargs={
-                        "slug": algorithm.slug,
                         "interface_slug": inp.slug,
                     },
                 ),

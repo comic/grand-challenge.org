@@ -1,6 +1,7 @@
 import uuid
 
 from dal import autocomplete
+from django.contrib.auth.mixins import AccessMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q, TextChoices
 from django.forms import Media
@@ -427,25 +428,28 @@ class CIVSetBulkDelete(LoginRequiredMixin, FormView):
         return super().form_valid(form)
 
 
-class FileUploadFormFieldBaseView(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, View
-):
-    permission_required = None
-    raise_exception = True
-    login_url = reverse_lazy("account_login")
+class FileUploadFormFieldView(LoginRequiredMixin, AccessMixin, View):
+    def dispatch(self, request, *args, **kwargs):
+        algorithms = get_objects_for_user(
+            self.request.user, "algorithms.execute_algorithm"
+        )
+        reader_studies = get_objects_for_user(
+            self.request.user, "reader_studies.change_readerstudy"
+        )
+        archives = get_objects_for_user(
+            self.request.user, "archives.change_archive"
+        )
+
+        if algorithms.exists() or reader_studies.exists() or archives.exists():
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            return self.handle_no_permission()
 
     @cached_property
     def interface(self):
         return get_object_or_404(
             ComponentInterface, slug=self.kwargs["interface_slug"]
         )
-
-    @cached_property
-    def base_object(self):
-        raise NotImplementedError
-
-    def get_permission_object(self):
-        return self.base_object
 
     def get(self, request, *args, **kwargs):
         widget_name = f"{INTERFACE_FORM_FIELD_PREFIX}{self.interface.slug}"

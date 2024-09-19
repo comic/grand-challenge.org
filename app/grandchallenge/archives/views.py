@@ -59,7 +59,6 @@ from grandchallenge.components.views import (
     CIVSetDetail,
     CIVSetFormMixin,
     CivSetListView,
-    FileUploadFormFieldBaseView,
     InterfacesCreateBaseView,
     MultipleCIVProcessingBaseView,
 )
@@ -746,13 +745,3 @@ class ArchiveItemBulkDelete(CIVSetBulkDelete):
     @property
     def base_object(self):
         return Archive.objects.get(slug=self.kwargs["slug"])
-
-
-class ArchiveFileUploadFieldView(FileUploadFormFieldBaseView):
-    permission_required = (
-        f"{Archive._meta.app_label}.change_{Archive._meta.model_name}"
-    )
-
-    @cached_property
-    def base_object(self):
-        return get_object_or_404(Archive, slug=self.kwargs["slug"])

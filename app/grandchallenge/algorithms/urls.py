@@ -4,7 +4,6 @@ from grandchallenge.algorithms.views import (
     AlgorithmCreate,
     AlgorithmDescriptionUpdate,
     AlgorithmDetail,
-    AlgorithmFileUploadFieldView,
     AlgorithmImageActivate,
     AlgorithmImageCreate,
     AlgorithmImageDetail,
@@ -50,11 +49,6 @@ urlpatterns = [
         "<slug>/repository/",
         AlgorithmRepositoryUpdate.as_view(),
         name="repository-update",
-    ),
-    path(
-        "<slug>/interfaces/<interface_slug>/file_upload/",
-        AlgorithmFileUploadFieldView.as_view(),
-        name="file-upload",
     ),
     path(
         "<slug>/images/create/",
