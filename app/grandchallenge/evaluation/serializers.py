@@ -1,6 +1,9 @@
+from functools import partial
+
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.utils.timezone import now
+from drf_spectacular.utils import extend_schema_field
 from guardian.core import ObjectPermissionChecker
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.fields import (
@@ -25,6 +28,9 @@ from grandchallenge.components.serializers import (
     ComponentInterfaceValueSerializer,
 )
 from grandchallenge.evaluation.models import Evaluation, Phase, Submission
+from grandchallenge.evaluation.templatetags.evaluation_extras import (
+    get_jsonpath,
+)
 
 
 class UserSerializer(ModelSerializer):
@@ -73,13 +79,29 @@ class SubmissionSerializer(ModelSerializer):
 class FilteredMetricsJsonSerializer(ComponentInterfaceValueSerializer):
     value = SerializerMethodField(method_name="filtered_metrics_json")
 
-    def __init__(self, *args, filtered_metrics_json, **kwargs):
+    def __init__(self, *args, filter_metrics_json, valid_metrics, **kwargs):
         super().__init__(*args, **kwargs)
-        self.filtered_metrics_json = filtered_metrics_json
+        self.filter_metrics_json = filter_metrics_json
+        self.valid_metrics = valid_metrics
 
     def filtered_metrics_json(self, obj):
-        if obj.interface.slug == "metrics-json-file":
-            return self.filtered_metrics_json
+        if (
+            obj.interface.slug == "metrics-json-file"
+            and self.filter_metrics_json
+        ):
+            output = {}
+
+            for metric in self.valid_metrics:
+                value = get_jsonpath(obj.value, metric.path)
+
+                keys = str(metric.path).split(".")
+
+                for key in keys[:-1]:
+                    output = output.setdefault(key, {})
+
+                output[keys[-1]] = value
+
+            return output
         else:
             return obj.value
 
@@ -117,24 +139,29 @@ class EvaluationSerializer(ModelSerializer):
         )
         self._challenge_permission_checker = challenge_permission_checker
 
+    @extend_schema_field(ComponentInterfaceValueSerializer(many=True))
     def get_outputs(self, obj):
-        obj_perms = self._challenge_permission_checker.get_perms(
-            obj.submission.phase.challenge
+        return_all_metrics = (
+            obj.submission.phase.display_all_metrics
+            or "change_challenge"
+            in self._challenge_permission_checker.get_perms(
+                obj.submission.phase.challenge
+            )
         )
 
-        if (
-            not obj.submission.phase.display_all_metrics
-            and "change_challenge" in obj_perms
-        ):
+        if return_all_metrics:
             serializer = ComponentInterfaceValueSerializer
         else:
-            serializer = FilteredMetricsJsonSerializer
+            serializer = partial(
+                FilteredMetricsJsonSerializer,
+                filter_metrics_json=True,
+                valid_metrics=obj.submission.phase.valid_metrics,
+            )
 
         return serializer(
             obj.outputs.all(),
             many=True,
             context=self.context,
-            filtered_metrics_json=obj.filtered_metrics_json,
         ).data
 
 
