@@ -1,6 +1,8 @@
 import pytest
 
-from grandchallenge.participants.form_fields import RegistrationQuestionField
+from grandchallenge.participants.form_fields import (
+    RegistrationQuestionAnswerField,
+)
 from grandchallenge.participants.models import RegistrationQuestion
 
 
@@ -10,7 +12,7 @@ def test_registration_field():
         question_help_text='<div class="test">Hello & Welcome!</div>',
         required=False,
     )
-    field = RegistrationQuestionField(registration_question=rq)
+    field = RegistrationQuestionAnswerField(registration_question=rq)
 
     assert (
         field.help_text
@@ -52,7 +54,7 @@ def test_registration_field():
     ),
 )
 def test_registration_field_to_python(value, expected_python):
-    field = RegistrationQuestionField(
+    field = RegistrationQuestionAnswerField(
         registration_question=RegistrationQuestion(question_text="Foo")
     )
     generated_python = field.to_python(value)

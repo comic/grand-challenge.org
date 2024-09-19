@@ -1,10 +1,15 @@
-from django.core.exceptions import ValidationError
-from django.db.transaction import on_commit
-from django.forms import HiddenInput, ModelForm, TextInput
+from django.forms import (
+    HiddenInput,
+    ModelForm,
+    TextInput,
+    inlineformset_factory,
+)
 
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.widgets import JSONEditorWidget
-from grandchallenge.participants.form_fields import RegistrationQuestionField
+from grandchallenge.participants.form_fields import (
+    RegistrationQuestionAnswerField,
+)
 from grandchallenge.participants.models import (
     RegistrationQuestion,
     RegistrationQuestionAnswer,
@@ -13,6 +18,7 @@ from grandchallenge.participants.models import (
 
 
 class RegistrationRequestForm(ModelForm):
+
     class Meta:
         model = RegistrationRequest
         fields = (
@@ -32,55 +38,75 @@ class RegistrationRequestForm(ModelForm):
         self.fields["challenge"].initial = challenge
         self.fields["challenge"].disabled = True
 
-        self._registration_questions = RegistrationQuestion.objects.filter(
-            challenge=challenge
+        self.answer_formset = self._get_answer_formset(
+            challenge,
+            data=kwargs.get("data"),
         )
 
-        for q in self._registration_questions:
-            self.fields[str(q.pk)] = RegistrationQuestionField(
-                registration_question=q
-            )
+    def _get_answer_formset(self, challenge, data):
+        questions = challenge.registration_questions.all()
+        answer_formset_factory = inlineformset_factory(
+            parent_model=self._meta.model,
+            model=RegistrationQuestionAnswer,
+            form=RegistrationQuestionAnswerForm,
+            max_num=questions.count(),
+            min_num=questions.count(),
+            absolute_max=questions.count(),
+            extra=0,
+            can_delete=False,
+            can_delete_extra=False,
+        )
+        return answer_formset_factory(
+            instance=self.instance,
+            data=data,
+            initial=[{"question": q} for q in questions],
+        )
 
-    @property
-    def _registration_question_answers(self):
-        for q in self._registration_questions:
-            yield RegistrationQuestionAnswer(
-                question=q,
-                registration_request=self.instance,
-                answer=self.cleaned_data.get(str(q.pk), ""),
-            )
+    def is_valid(self):
+        return super().is_valid() and self.answer_formset.is_valid()
 
-    def clean(self):
-        result = super().clean()
-        for answer in self._registration_question_answers:
-            try:
-                answer.full_clean(
-                    exclude=[
-                        "registration_request",  # Not saved at this point yet
-                    ],
-                )
-            except ValidationError as e:
-                answer_error = e.error_dict.get("answer")
-                if answer_error:
-                    self.add_error(str(answer.question.pk), answer_error)
-                else:
-                    raise e
-        return result
+    def full_clean(self, *args, **kwargs):
+        super().full_clean(*args, **kwargs)
+        self.answer_formset.full_clean()
 
-    def _save_questions(self):
-        self.instance.refresh_from_db()
-        try:
-            for answer in self._registration_question_answers:
-                answer.full_clean()
-                answer.save()
-        except Exception as e:
-            self.instance.delete()  # Also deletes already created answers
-            raise e
+        if non_form_errors := self.answer_formset.non_form_errors():
+            for error in non_form_errors:
+                self.add_error(field=None, error=error)
 
     def save(self, *args, **kwargs):
-        result = super().save(self, *args, **kwargs)
-        on_commit(self._save_questions)
-        return result
+        registration_request = super().save(*args, **kwargs)
+        try:
+            # By default, formsets only save changed forms.
+            # Short-circuit saving to ensure it saves empty
+            # answers
+            for form in self.answer_formset.forms:
+                self.answer_formset.save_new(form)
+        except Exception as e:
+            registration_request.delete()
+            raise e
+        return registration_request
+
+
+class RegistrationQuestionAnswerForm(ModelForm):
+
+    class Meta:
+        model = RegistrationQuestionAnswer
+        fields = ("answer",)
+
+    def __init__(self, *args, initial, **kwargs):
+
+        # Formsets disabled the use of the attribute by default,
+        # since we don't allow for 'extra' forms
+        # we can forcefully allow it.
+        kwargs["use_required_attribute"] = True
+
+        super().__init__(*args, initial=initial, **kwargs)
+
+        self.instance.question = initial["question"]
+
+        self.fields["answer"] = RegistrationQuestionAnswerField(
+            registration_question=self.instance.question
+        )
 
 
 class RegistrationQuestionUpdateForm(SaveFormInitMixin, ModelForm):

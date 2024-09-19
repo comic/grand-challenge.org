@@ -1,7 +1,6 @@
 from unittest import mock
 
 import pytest
-from django.core.exceptions import ValidationError
 
 import grandchallenge
 from grandchallenge.participants.forms import RegistrationRequestForm
@@ -16,10 +15,23 @@ from tests.factories import (
 )
 
 
+def answers_form_data(*args, n=None):
+    if n is None:
+        n = len(args)
+    return {
+        "registration_question_answers-TOTAL_FORMS": str(n),
+        "registration_question_answers-INITIAL_FORMS": "0",
+        "registration_question_answers-MIN_NUM_FORMS": str(n),
+        "registration_question_answers-MAX_NUM_FORMS": str(n),
+        **{
+            f"registration_question_answers-{i}-answer": a
+            for i, a in enumerate(args)
+        },
+    }
+
+
 @pytest.mark.django_db
-def test_registration_request_form_no_questions(
-    django_capture_on_commit_callbacks,
-):
+def test_registration_request_form_no_questions():
     challenge = ChallengeFactory()
     user = UserFactory()
 
@@ -29,12 +41,10 @@ def test_registration_request_form_no_questions(
     form = RegistrationRequestForm(
         challenge=challenge,
         user=user,
-        data={},
+        data=answers_form_data(n=0),
     )
-    form.full_clean()
     assert form.is_valid()
-    with django_capture_on_commit_callbacks(execute=True):
-        form.save()
+    form.save()
 
     assert RegistrationRequest.objects.filter(
         user=user
@@ -42,9 +52,7 @@ def test_registration_request_form_no_questions(
 
 
 @pytest.mark.django_db
-def test_registration_request_form_with_questions(
-    django_capture_on_commit_callbacks,
-):
+def test_registration_request_form_with_questions():
     challenge = ChallengeFactory()
     user = UserFactory()
 
@@ -52,33 +60,31 @@ def test_registration_request_form_with_questions(
         user=user
     ).exists(), "Starts with no requests"  # Sanity
 
-    rq1, rq2, rq3 = RegistrationQuestionFactory.create_batch(
-        3,
-        challenge=challenge,
-    )
+    rq1 = RegistrationQuestionFactory(challenge=challenge, required=False)
+    rq2 = RegistrationQuestionFactory(challenge=challenge)
+    rq3 = RegistrationQuestionFactory(challenge=challenge)
 
-    form_data = {
-        str(rq1.pk): "answer_1",
-        str(rq2.pk): "answer_2",
-        str(rq3.pk): "answer_3",
-    }
     form = RegistrationRequestForm(
         challenge=challenge,
         user=user,
-        data=form_data,
+        data=answers_form_data(
+            "",
+            "answer_1",
+            "answer_2",
+        ),
     )
 
-    form.full_clean()
     assert form.is_valid()
-    with django_capture_on_commit_callbacks(execute=True):
-        rr = form.save()
+    rr = form.save()
 
-    for rq in (rq1, rq2, rq3):
-        rqa = RegistrationQuestionAnswer.objects.get(
-            registration_request=rr, question=rq
-        )
+    for rq, answer in zip(
+        (rq1, rq2, rq3), ("", "answer_1", "answer_2"), strict=True
+    ):
         assert (
-            rqa.answer == form_data[str(rq.pk)]
+            RegistrationQuestionAnswer.objects.filter(
+                registration_request=rr, question=rq, answer=answer
+            ).count()
+            == 1
         ), "Answer stored is the answer that was posted"
 
 
@@ -91,23 +97,16 @@ def test_registration_request_form_partial_data():
         user=user
     ).exists(), "Starts with no requests"  # Sanity
 
-    rq1 = RegistrationQuestionFactory(challenge=challenge)
-    rq2 = RegistrationQuestionFactory(challenge=challenge)
-    _ = RegistrationQuestionFactory(
-        challenge=challenge,
-        required=False,
-    )
+    RegistrationQuestionFactory(challenge=challenge)
+    RegistrationQuestionFactory(challenge=challenge)
+    RegistrationQuestionFactory(challenge=challenge, required=False)
 
     form = RegistrationRequestForm(
         challenge=challenge,
         user=user,
-        data={
-            str(rq1.pk): "answer_1",
-            # Note, missing two questions
-        },
+        data=answers_form_data("answer_0", n=3),
     )
 
-    form.full_clean()
     assert (
         not form.is_valid()
     ), "Form should not be valid with missing data of required answer"
@@ -115,61 +114,61 @@ def test_registration_request_form_partial_data():
     form = RegistrationRequestForm(
         challenge=challenge,
         user=user,
-        data={
-            str(rq1.pk): "answer_1",
-            str(rq2.pk): "answer_2",
-            # Note, missing a non required question
-        },
+        data=answers_form_data(
+            "answer_0",
+            "answer_1",
+            # Note, missing non-required answer
+            n=3,
+        ),
     )
-
-    form.full_clean()
 
     assert (
         form.is_valid()
     ), "Form should be valid when only missing data of non-required answer"
 
+    form.save()
+
+    assert (
+        RegistrationQuestionAnswer.objects.count() == 3
+    ), "All answers were created"
+
 
 @pytest.mark.django_db
-def test_registration_request_form_incorrect_format(
-    django_capture_on_commit_callbacks,
-):
+def test_registration_request_form_incorrect_format():
     challenge = ChallengeFactory()
     user = UserFactory()
 
     rq = RegistrationQuestionFactory(
         challenge=challenge, schema={"type": "integer"}
     )
+
     form = RegistrationRequestForm(
         challenge=challenge,
         user=user,
-        data={
-            str(rq.pk): "answer",
-        },
+        data=answers_form_data("answer"),
     )
-
-    form.full_clean()
 
     assert (
         not form.is_valid()
     ), "Form should not be valid with incorrect formated answer"
 
-    assert str(rq.pk) in form.errors, "Error should point towards the question"
     assert (
-        "incorrect format" in form.errors[str(rq.pk)][0].lower()
+        len(form.answer_formset.errors) == 1
+        and "answer" in form.answer_formset.errors[0]
+    ), "Only error should point towards the question"
+    assert (
+        "incorrect format"
+        in form.answer_formset.errors[0]["answer"][0].lower()
     ), "Should be correct error about incorrect format"
 
     form = RegistrationRequestForm(
         challenge=challenge,
         user=user,
-        data={
-            str(rq.pk): "1",
-        },
+        data=answers_form_data("1"),
     )
 
-    form.full_clean()
     assert form.is_valid(), "With correct format, form should be valid"
-    with django_capture_on_commit_callbacks(execute=True):
-        rr = form.save()
+    rr = form.save()
 
     rqa = RegistrationQuestionAnswer.objects.get(
         registration_request=rr, question=rq
@@ -184,29 +183,28 @@ def test_registration_request_form_question_failure_removes_registration(
     challenge = ChallengeFactory()
     user = UserFactory()
 
-    rq = RegistrationQuestionFactory(challenge=challenge)
+    RegistrationQuestionFactory(challenge=challenge)
     form = RegistrationRequestForm(
         challenge=challenge,
         user=user,
-        data={
-            str(rq.pk): "answer",
-        },
+        data=answers_form_data("foo"),
     )
 
-    form.full_clean()
     assert form.is_valid(), "Sanity: form is normally valid"
 
-    def clean_with_error():
-        raise ValidationError("Intentional Error")
+    class IntentionalError(Exception):
+        pass
+
+    def save_with_error(*_, **__):
+        raise IntentionalError("Intentional Error")
 
     with mock.patch.object(
-        grandchallenge.participants.forms.RegistrationQuestionAnswer,
-        "clean",
-        side_effect=clean_with_error,
+        grandchallenge.participants.forms.RegistrationQuestionAnswerForm,
+        "save",
+        side_effect=save_with_error,
     ):
-        with pytest.raises(ValidationError):
-            with django_capture_on_commit_callbacks(execute=True):
-                form.save()
+        with pytest.raises(IntentionalError):
+            form.save()
 
     assert (
         not RegistrationRequest.objects.exists()

@@ -4,7 +4,7 @@ from django.forms.fields import InvalidJSONInput
 from django.utils.html import escape
 
 
-class RegistrationQuestionField(JSONField):
+class RegistrationQuestionAnswerField(JSONField):
     empty_value = InvalidJSONInput("")
 
     def __init__(self, *, registration_question, widget=TextInput, **kwargs):
