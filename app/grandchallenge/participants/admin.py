@@ -8,8 +8,6 @@ from grandchallenge.core.admin import (
 from grandchallenge.participants.models import (
     RegistrationQuestion,
     RegistrationQuestionAnswer,
-    RegistrationQuestionAnswerGroupObjectPermission,
-    RegistrationQuestionAnswerUserObjectPermission,
     RegistrationQuestionGroupObjectPermission,
     RegistrationQuestionUserObjectPermission,
 )
@@ -59,11 +57,3 @@ class RegistrationQuestionAnswerAdmin(GuardedModelAdmin):
 
     def question_text(self, instance):
         return instance.question.question_text
-
-
-admin.site.register(
-    RegistrationQuestionAnswerUserObjectPermission, UserObjectPermissionAdmin
-)
-admin.site.register(
-    RegistrationQuestionAnswerGroupObjectPermission, GroupObjectPermissionAdmin
-)

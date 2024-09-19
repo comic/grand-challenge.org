@@ -174,17 +174,3 @@ class RegistrationQuestionAnswer(models.Model):
                     "Cannot answer questions for a registration with different challenges"
                 )
         return result
-
-
-class RegistrationQuestionAnswerUserObjectPermission(UserObjectPermissionBase):
-    content_object = models.ForeignKey(
-        RegistrationQuestionAnswer, on_delete=models.CASCADE
-    )
-
-
-class RegistrationQuestionAnswerGroupObjectPermission(
-    GroupObjectPermissionBase
-):
-    content_object = models.ForeignKey(
-        RegistrationQuestionAnswer, on_delete=models.CASCADE
-    )
