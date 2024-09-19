@@ -1,8 +1,5 @@
-from unittest import mock
-
 import pytest
 
-import grandchallenge
 from grandchallenge.participants.forms import RegistrationRequestForm
 from grandchallenge.participants.models import (
     RegistrationQuestionAnswer,
@@ -174,38 +171,3 @@ def test_registration_request_form_incorrect_format():
         registration_request=rr, question=rq
     )
     assert rqa.answer == 1, "Answer stored in correct format"
-
-
-@pytest.mark.django_db
-def test_registration_request_form_question_failure_removes_registration(
-    django_capture_on_commit_callbacks,
-):
-    challenge = ChallengeFactory()
-    user = UserFactory()
-
-    RegistrationQuestionFactory(challenge=challenge)
-    form = RegistrationRequestForm(
-        challenge=challenge,
-        user=user,
-        data=answers_form_data("foo"),
-    )
-
-    assert form.is_valid(), "Sanity: form is normally valid"
-
-    class IntentionalError(Exception):
-        pass
-
-    def save_with_error(*_, **__):
-        raise IntentionalError("Intentional Error")
-
-    with mock.patch.object(
-        grandchallenge.participants.forms.RegistrationQuestionAnswerForm,
-        "save",
-        side_effect=save_with_error,
-    ):
-        with pytest.raises(IntentionalError):
-            form.save()
-
-    assert (
-        not RegistrationRequest.objects.exists()
-    ), "No requests is made when saving questions goes wrong"

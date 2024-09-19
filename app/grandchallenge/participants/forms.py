@@ -75,15 +75,13 @@ class RegistrationRequestForm(ModelForm):
 
     def save(self, *args, **kwargs):
         registration_request = super().save(*args, **kwargs)
-        try:
-            # By default, formsets only save changed forms.
-            # Short-circuit saving to ensure it saves empty
-            # answers
-            for form in self.answer_formset.forms:
-                self.answer_formset.save_new(form)
-        except Exception as e:
-            registration_request.delete()
-            raise e
+
+        # By default, formsets only save changed or non-empty
+        # forms. Short-circuit saving to ensure it saves empty
+        # answers
+        for form in self.answer_formset.forms:
+            self.answer_formset.save_new(form)
+
         return registration_request
 
 
