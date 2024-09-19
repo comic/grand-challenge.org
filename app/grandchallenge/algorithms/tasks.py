@@ -7,7 +7,7 @@ from botocore.exceptions import ClientError
 from django.conf import settings
 from django.core.cache import cache
 from django.core.files.base import File
-from django.db import OperationalError, transaction
+from django.db import transaction
 from django.db.models import Count, Q
 from django.db.transaction import on_commit
 from django.utils._os import safe_join
@@ -29,16 +29,9 @@ logger = logging.getLogger(__name__)
 @acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
 def execute_algorithm_job_for_inputs(*, job_pk):
-    from grandchallenge.algorithms.models import Job
-
-    queryset = Job.objects.filter(
-        pk=job_pk,
-    ).select_for_update(nowait=True)
-
-    try:
-        job = queryset.get()
-    except OperationalError as error:
-        raise LockNotAcquiredException from error
+    job = lock_model_instance(
+        app_label="algorithms", model_name="job", pk=job_pk
+    )
 
     # Notify the job creator on failure
     linked_task = send_failed_job_notification.signature(
