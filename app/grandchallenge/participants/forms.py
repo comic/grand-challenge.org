@@ -69,9 +69,9 @@ class RegistrationRequestForm(ModelForm):
         super().full_clean(*args, **kwargs)
         self.answer_formset.full_clean()
 
-        if non_form_errors := self.answer_formset.non_form_errors():
-            for error in non_form_errors:
-                self.add_error(field=None, error=error)
+        # Show formset-level validation errors
+        for error in self.answer_formset.non_form_errors():
+            self.add_error(field=None, error=error)
 
     def save(self, *args, **kwargs):
         registration_request = super().save(*args, **kwargs)
