@@ -20,7 +20,6 @@ from guardian.mixins import LoginRequiredMixin
 from grandchallenge.challenges.views import ActiveChallengeRequiredMixin
 from grandchallenge.charts.specs import stacked_bar, world_map
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
-from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.evaluation.models import Evaluation, Submission
 from grandchallenge.pages.forms import PageCreateForm, PageUpdateForm
 from grandchallenge.pages.models import Page
@@ -116,15 +115,17 @@ class PagePandoc(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        markdown = pypandoc.convert_text(
-            source=context["object"].html,
-            format="html",
-            to=self.kwargs["format"],
-            sandbox=True,
+        context.update(
+            {
+                "converted_to_markdown": True,
+                "converted_markdown": pypandoc.convert_text(
+                    source=context["object"].html,
+                    format="html",
+                    to=self.kwargs["format"],
+                    sandbox=True,
+                ),
+            }
         )
-
-        context["object"].html = md2html(markdown=markdown)
-        context["markdown"] = markdown
 
         return context
 
