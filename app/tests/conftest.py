@@ -459,8 +459,13 @@ def challenge_reviewer():
     return user
 
 
+class AlgorithmWithInputsAndCIVs(NamedTuple):
+    algorithm: AlgorithmFactory
+    civs: [ComponentInterfaceValueFactory]
+
+
 @pytest.fixture
-def algorithm_with_image_and_model():
+def algorithm_with_image_and_model_and_two_inputs():
     alg = AlgorithmFactory(time_limit=123)
     AlgorithmImageFactory(
         algorithm=alg,
@@ -472,19 +477,6 @@ def algorithm_with_image_and_model():
     editor = UserFactory()
     alg.add_editor(editor)
 
-    return alg
-
-
-class AlgorithmWithInputsAndCIVs(NamedTuple):
-    algorithm: AlgorithmFactory
-    civs: [ComponentInterfaceValueFactory]
-
-
-@pytest.fixture
-def algorithm_with_image_and_model_and_two_inputs(
-    algorithm_with_image_and_model,
-):
-    alg = algorithm_with_image_and_model
     ci1, ci2 = ComponentInterfaceFactory.create_batch(
         2, kind=ComponentInterface.Kind.STRING
     )

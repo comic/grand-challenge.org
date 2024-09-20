@@ -35,10 +35,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmPermissionRequestFactory,
 )
 from tests.algorithms_tests.utils import get_algorithm_creator
-from tests.components_tests.factories import (
-    ComponentInterfaceFactory,
-    ComponentInterfaceValueFactory,
-)
+from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.conftest import get_interface_form_data
 from tests.factories import UserFactory, WorkstationFactory
 from tests.uploads_tests.factories import (
@@ -701,83 +698,92 @@ def test_model_version_control_form():
 
 @pytest.mark.django_db
 class TestJobCreateForm:
-    def test_creator_queryset(self, algorithm_with_image_and_model):
-        editor = algorithm_with_image_and_model.editors_group.user_set.first()
-        form = JobCreateForm(
-            algorithm=algorithm_with_image_and_model, user=editor, data={}
-        )
+    def test_creator_queryset(
+        self, algorithm_with_image_and_model_and_two_inputs
+    ):
+        algorithm = algorithm_with_image_and_model_and_two_inputs.algorithm
+        editor = algorithm.editors_group.user_set.first()
+        form = JobCreateForm(algorithm=algorithm, user=editor, data={})
         assert list(form.fields["creator"].queryset.all()) == [editor]
         assert form.fields["creator"].initial == editor
 
-    def test_time_limit_prepopulated(self, algorithm_with_image_and_model):
-        editor = algorithm_with_image_and_model.editors_group.user_set.first()
-        form = JobCreateForm(
-            algorithm=algorithm_with_image_and_model, user=editor, data={}
-        )
-        assert (
-            form.fields["time_limit"].initial
-            == algorithm_with_image_and_model.time_limit
-        )
+    def test_time_limit_prepopulated(
+        self, algorithm_with_image_and_model_and_two_inputs
+    ):
+        algorithm = algorithm_with_image_and_model_and_two_inputs.algorithm
+        editor = algorithm.editors_group.user_set.first()
+        form = JobCreateForm(algorithm=algorithm, user=editor, data={})
+        assert form.fields["time_limit"].initial == algorithm.time_limit
 
-    def test_timelimit_cannot_be_altered(self, algorithm_with_image_and_model):
-        editor = algorithm_with_image_and_model.editors_group.user_set.first()
+    def test_timelimit_cannot_be_altered(
+        self, algorithm_with_image_and_model_and_two_inputs
+    ):
+        algorithm = algorithm_with_image_and_model_and_two_inputs.algorithm
+        civs = algorithm_with_image_and_model_and_two_inputs.civs
+        editor = algorithm.editors_group.user_set.first()
         form = JobCreateForm(
-            algorithm=algorithm_with_image_and_model,
+            algorithm=algorithm,
             user=editor,
-            data={"time_limit": 456},
+            data={
+                "time_limit": 456,
+                **get_interface_form_data(
+                    interface_slug=civs[0].interface.slug, data=civs[0].value
+                ),
+                **get_interface_form_data(
+                    interface_slug=civs[1].interface.slug, data=civs[1].value
+                ),
+            },
         )
         assert form.is_valid()
-        assert (
-            form.cleaned_data["time_limit"]
-            == algorithm_with_image_and_model.time_limit
-        )
+        assert form.cleaned_data["time_limit"] == algorithm.time_limit
         assert form.cleaned_data["time_limit"] != 456
 
-    def test_algorithm_image_queryset(self, algorithm_with_image_and_model):
-        editor = algorithm_with_image_and_model.editors_group.user_set.first()
+    def test_algorithm_image_queryset(
+        self, algorithm_with_image_and_model_and_two_inputs
+    ):
+        algorithm = algorithm_with_image_and_model_and_two_inputs.algorithm
+        editor = algorithm.editors_group.user_set.first()
         # irrelevant Algorithm images
-        inactive_image = AlgorithmImageFactory(
-            algorithm=algorithm_with_image_and_model
-        )
+        inactive_image = AlgorithmImageFactory(algorithm=algorithm)
         image_for_different_alg = AlgorithmImageFactory(
             is_desired_version=True,
             is_manifest_valid=True,
             is_in_registry=True,
         )
-        form = JobCreateForm(
-            algorithm=algorithm_with_image_and_model, user=editor, data={}
-        )
+        form = JobCreateForm(algorithm=algorithm, user=editor, data={})
         ai_qs = form.fields["algorithm_image"].queryset.all()
-        assert algorithm_with_image_and_model.active_image in ai_qs
+        assert algorithm.active_image in ai_qs
         assert inactive_image not in ai_qs
         assert image_for_different_alg not in ai_qs
-        assert (
-            form.fields["algorithm_image"].initial
-            == algorithm_with_image_and_model.active_image
-        )
+        assert form.fields["algorithm_image"].initial == algorithm.active_image
 
     def test_cannot_create_job_with_same_inputs_twice(
-        self, algorithm_with_image_and_model
+        self, algorithm_with_image_and_model_and_two_inputs
     ):
-        editor = algorithm_with_image_and_model.editors_group.user_set.first()
-        ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.STRING)
-        algorithm_with_image_and_model.inputs.set([ci])
-        civ = ComponentInterfaceValueFactory(interface=ci, value="foo")
+        algorithm = algorithm_with_image_and_model_and_two_inputs.algorithm
+        editor = algorithm.editors_group.user_set.first()
+
+        civs = algorithm_with_image_and_model_and_two_inputs.civs
         job = AlgorithmJobFactory(
-            algorithm_image=algorithm_with_image_and_model.active_image,
-            algorithm_model=algorithm_with_image_and_model.active_model,
+            algorithm_image=algorithm.active_image,
+            algorithm_model=algorithm.active_model,
             status=Job.SUCCESS,
             time_limit=123,
         )
-        job.inputs.add(civ)
+        job.inputs.set(civs)
 
         form = JobCreateForm(
-            algorithm=algorithm_with_image_and_model,
+            algorithm=algorithm,
             user=editor,
             data={
-                "algorithm_image": algorithm_with_image_and_model.active_image,
-                "algorithm_model": algorithm_with_image_and_model.active_model,
-                **get_interface_form_data(interface_slug=ci.slug, data="foo"),
+                "algorithm_image": algorithm.active_image,
+                "algorithm_model": algorithm.active_model,
+                **get_interface_form_data(
+                    interface_slug=civs[0].interface.slug, data=civs[0].value
+                ),
+                **get_interface_form_data(
+                    interface_slug=civs[1].interface.slug, data=civs[1].value
+                ),
             },
         )
         assert not form.is_valid()

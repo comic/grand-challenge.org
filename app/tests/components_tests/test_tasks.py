@@ -8,7 +8,7 @@ from celery.exceptions import MaxRetriesExceededError
 from django.core.files.base import ContentFile
 from requests import put
 
-from grandchallenge.algorithms.models import AlgorithmImage
+from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.models import (
     ComponentInterfaceValue,
@@ -362,7 +362,10 @@ def some_async_task(foo):
     [
         (DisplaySetFactory, {}),
         (ArchiveItemFactory, {}),
-        (AlgorithmJobFactory, {"time_limit": 10}),
+        (
+            AlgorithmJobFactory,
+            {"time_limit": 10, "status": Job.VALIDATING_INPUTS},
+        ),
     ],
 )
 @pytest.mark.django_db
@@ -481,7 +484,10 @@ def test_add_image_to_object_marks_job_as_failed_on_validation_fail(
     [
         (DisplaySetFactory, {}),
         (ArchiveItemFactory, {}),
-        (AlgorithmJobFactory, {"time_limit": 10}),
+        (
+            AlgorithmJobFactory,
+            {"time_limit": 10, "status": Job.VALIDATING_INPUTS},
+        ),
     ],
 )
 @pytest.mark.django_db
@@ -634,7 +640,10 @@ def test_add_file_to_object_updates_job_on_validation_fail(
     assert f"File for interface {ci.title} failed validation" in str(
         obj.error_message
     )
-    assert Notification.objects.count() == 0
+    assert Notification.objects.count() == 1
+    notification = Notification.objects.first()
+    assert "Your file upload failed with the error" in notification.message
+    assert notification.user == creator
     assert "some_async_task" not in str(callbacks)
 
 
