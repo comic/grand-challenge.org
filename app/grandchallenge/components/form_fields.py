@@ -11,6 +11,7 @@ from grandchallenge.components.widgets import SelectUploadWidget
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.core.widgets import JSONEditorWidget
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import (
     UserUploadMultipleWidget,
@@ -52,7 +53,6 @@ class InterfaceFormField:
         disabled=False,
         help_text="",
         form_data=None,
-        file_upload_link=None,
     ):
         self.instance = instance
         self.initial = initial
@@ -61,7 +61,6 @@ class InterfaceFormField:
         self.disabled = disabled
         self.help_text = help_text
         self.form_data = form_data
-        self.file_upload_link = file_upload_link
 
         self.kwargs = {
             "required": required,
@@ -164,10 +163,18 @@ class InterfaceFormField:
                 **self.kwargs,
             )
         elif type == "civ":
+            file_upload_link = (
+                reverse(
+                    "components:file-upload",
+                    kwargs={
+                        "interface_slug": self.instance.slug,
+                    },
+                ),
+            )
             return ModelChoiceField(
                 queryset=self.user.user_profile.file_civs_user_has_permission_to_use,
                 widget=SelectUploadWidget(
-                    attrs={"upload_link": self.file_upload_link}
+                    attrs={"upload_link": file_upload_link}
                 ),
                 **self.kwargs,
             )

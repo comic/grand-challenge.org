@@ -35,20 +35,6 @@ def test_algorithm_relations_on_job_serializer(rf):
 
 
 @pytest.mark.django_db
-def test_non_interface_fields(rf):
-    job = AlgorithmJobFactory(time_limit=60)
-    request = rf.get("/foo")
-    request.user = UserFactory()
-    serializer = JobPostSerializer(job, context={"request": request})
-    assert serializer.Meta.non_interface_fields == [
-        "algorithm_image",
-        "algorithm_model",
-        "creator",
-        "time_limit",
-    ]
-
-
-@pytest.mark.django_db
 @pytest.mark.parametrize(
     "title, "
     "add_user, "
@@ -192,7 +178,7 @@ def test_algorithm_job_post_serializer_validations(
         serializer.create(serializer.validated_data)
         assert len(Job.objects.all()) == 1
         job = Job.objects.first()
-        assert job.status == job.PENDING
+        assert job.status == job.VALIDATING_INPUTS
         assert len(job.inputs.all()) == 2
 
 

@@ -152,15 +152,9 @@ class JobCreateForm(SaveFormInitMixin, Form):
                 instance=inp,
                 initial=initial if initial else inp.default_value,
                 user=self._user,
-                required=True,
+                required=inp.value_required,
                 help_text=clean(inp.description) if inp.description else "",
                 form_data=self.data,
-                file_upload_link=reverse(
-                    "components:file-upload",
-                    kwargs={
-                        "interface_slug": inp.slug,
-                    },
-                ),
             ).field
 
     @cached_property

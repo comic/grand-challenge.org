@@ -1168,7 +1168,7 @@ def validate_voxel_values(*, civ_pk):
 
 @acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
-def add_image_to_object(  # noqa:C901
+def add_image_to_object(
     *,
     app_label,
     model_name,

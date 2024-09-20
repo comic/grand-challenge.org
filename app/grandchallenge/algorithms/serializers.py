@@ -174,12 +174,6 @@ class JobPostSerializer(JobSerializer):
     class Meta:
         model = Job
         fields = ["pk", "algorithm", "inputs", "status"]
-        non_interface_fields = [
-            "algorithm_image",
-            "algorithm_model",
-            "creator",
-            "time_limit",
-        ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -278,7 +272,7 @@ class JobPostSerializer(JobSerializer):
             ],
             status=Job.VALIDATING_INPUTS,
         )
-        job.create_and_validate_inputs(inputs=self.inputs)
+        job.validate_inputs_and_execute(inputs=self.inputs)
         return job
 
     @staticmethod

@@ -24,7 +24,6 @@ from grandchallenge.components.widgets import SelectUploadWidget
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.evaluation.models import Method
-from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadSingleWidget
 from grandchallenge.workstations.models import WorkstationImage
@@ -143,12 +142,6 @@ class MultipleCIVForm(Form):
                 required=False,
                 user=self.user,
                 form_data=self.data,
-                file_upload_link=reverse(
-                    "components:file-upload",
-                    kwargs={
-                        "interface_slug": interface.slug,
-                    },
-                ),
             ).field
 
         # Add fields for dynamically added new interfaces:
@@ -170,12 +163,6 @@ class MultipleCIVForm(Form):
                     required=False,
                     user=self.user,
                     form_data=self.data,
-                    file_upload_link=reverse(
-                        "components:file-upload",
-                        kwargs={
-                            "interface_slug": interface.slug,
-                        },
-                    ),
                 ).field
 
     def process_object_data(self):
@@ -290,12 +277,6 @@ class SingleCIVForm(Form):
                 user=user,
                 required=selected_interface.value_required,
                 form_data=self.data,
-                file_upload_link=reverse(
-                    "components:file-upload",
-                    kwargs={
-                        "interface_slug": selected_interface.slug,
-                    },
-                ),
             ).field
 
 

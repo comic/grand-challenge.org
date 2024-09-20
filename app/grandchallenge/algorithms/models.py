@@ -68,11 +68,7 @@ logger = logging.getLogger(__name__)
 JINJA_ENGINE = sandbox.ImmutableSandboxedEnvironment()
 
 
-class Algorithm(
-    UUIDModel,
-    TitleSlugDescriptionModel,
-    HangingProtocolMixin,
-):
+class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
     editors_group = models.OneToOneField(
         Group,
         on_delete=models.PROTECT,
@@ -657,8 +653,6 @@ class JobManager(ComponentJobManager):
             ):
                 # uploads will create new CIVs, so ignore these
                 continue
-            elif civ.file_civ:
-                existing_civs.append(civ.file_civ)
             elif civ.image:
                 try:
                     civ = ComponentInterfaceValue.objects.filter(
@@ -667,8 +661,10 @@ class JobManager(ComponentJobManager):
                     existing_civs.append(civ)
                 except ObjectDoesNotExist:
                     continue
-            elif civ.value is not None:
-                # values can be of different types
+            elif civ.file_civ:
+                existing_civs.append(civ.file_civ)
+            else:
+                # values can be of different types, including None and False
                 try:
                     civ = ComponentInterfaceValue.objects.filter(
                         interface__slug=civ.interface_slug, value=civ.value
@@ -984,7 +980,7 @@ class Job(UUIDModel, CIVForObjectMixin, ComponentJob):
     def get_civ_for_interface(self, interface):
         return self.inputs.get(interface=interface)
 
-    def create_and_validate_inputs(self, *, inputs):
+    def validate_inputs_and_execute(self, *, inputs):
         from grandchallenge.algorithms.tasks import (
             execute_algorithm_job_for_inputs,
         )
@@ -1009,7 +1005,6 @@ class Job(UUIDModel, CIVForObjectMixin, ComponentJob):
     def is_editable(self):
         # staying with display set and archive item terminology here
         # since this property is checked in create_civ()
-        # for algorithms this checks whether inputs can be added or not
         if self.status == self.VALIDATING_INPUTS:
             return True
         else:

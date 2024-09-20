@@ -504,7 +504,7 @@ class JobCreate(
             extra_logs_viewer_groups=[self.algorithm.editors_group],
             status=Job.VALIDATING_INPUTS,
         )
-        self.object.create_and_validate_inputs(inputs=inputs)
+        self.object.validate_inputs_and_execute(inputs=inputs)
         return super().form_valid(form)
 
     def get_success_url(self):
