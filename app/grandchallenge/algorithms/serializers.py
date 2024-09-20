@@ -276,23 +276,9 @@ class JobPostSerializer(JobSerializer):
             extra_logs_viewer_groups=[
                 validated_data["algorithm_image"].algorithm.editors_group
             ],
+            status=Job.VALIDATING_INPUTS,
         )
-        # local import to avoid circular dependency
-        from grandchallenge.algorithms.tasks import (
-            execute_algorithm_job_for_inputs,
-        )
-
-        linked_task = execute_algorithm_job_for_inputs.signature(
-            kwargs={"job_pk": job.pk}, immutable=True
-        )
-
-        for civ in self.inputs:
-            job.create_civ(
-                civ_data=civ,
-                user=validated_data["creator"],
-                linked_task=linked_task,
-            )
-
+        job.create_and_validate_inputs(inputs=self.inputs)
         return job
 
     @staticmethod

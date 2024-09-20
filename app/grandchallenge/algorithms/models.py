@@ -984,6 +984,37 @@ class Job(UUIDModel, CIVForObjectMixin, ComponentJob):
     def get_civ_for_interface(self, interface):
         return self.inputs.get(interface=interface)
 
+    def create_and_validate_inputs(self, *, inputs):
+        from grandchallenge.algorithms.tasks import (
+            execute_algorithm_job_for_inputs,
+        )
+
+        linked_task = execute_algorithm_job_for_inputs.signature(
+            kwargs={"job_pk": self.pk}, immutable=True
+        )
+
+        if not self.is_editable:
+            raise RuntimeError(
+                "Job is not editable. No CIVs can be added or removed from it."
+            )
+        else:
+            for civ_data in inputs:
+                self.create_civ(
+                    civ_data=civ_data,
+                    user=self.creator,
+                    linked_task=linked_task,
+                )
+
+    @property
+    def is_editable(self):
+        # staying with display set and archive item terminology here
+        # since this property is checked in create_civ()
+        # for algorithms this checks whether inputs can be added or not
+        if self.status == self.VALIDATING_INPUTS:
+            return True
+        else:
+            return False
+
     @property
     def base_object(self):
         return self.algorithm_image.algorithm

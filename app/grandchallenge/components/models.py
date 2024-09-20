@@ -1457,7 +1457,7 @@ class ComponentJob(models.Model):
     PARSING = 10
     EXECUTING_PREREQUISITES = 11
     CLAIMED = 12
-    INPUTS_VALIDATED = 13
+    VALIDATING_INPUTS = 13
 
     STATUS_CHOICES = (
         (PENDING, "Queued"),
@@ -1473,7 +1473,7 @@ class ComponentJob(models.Model):
         (PARSING, "Parsing Outputs"),
         (EXECUTING_PREREQUISITES, "Executing Algorithm"),
         (CLAIMED, "External Execution In Progress"),
-        (INPUTS_VALIDATED, "Finished validating inputs"),
+        (VALIDATING_INPUTS, "Validating inputs"),
     )
 
     status = models.PositiveSmallIntegerField(
@@ -2239,6 +2239,11 @@ class CIVUpdateOnErrorMixin:
 class CIVForObjectMixin:
 
     def create_civ(self, *, civ_data, user=None, linked_task=None):
+        if not self.is_editable:
+            raise RuntimeError(
+                "Object is not editable. CIVs cannot be added or removed from it."
+            )
+
         ci = ComponentInterface.objects.get(slug=civ_data.interface_slug)
         current_civ = self.get_current_value_for_interface(interface=ci)
 

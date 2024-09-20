@@ -26,9 +26,13 @@ from grandchallenge.subdomains.utils import reverse
 logger = logging.getLogger(__name__)
 
 
-@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
+@acks_late_micro_short_task(
+    retry_on=(LockNotAcquiredException, TooManyJobsScheduled)
+)
 @transaction.atomic
 def execute_algorithm_job_for_inputs(*, job_pk):
+    from grandchallenge.algorithms.models import Job
+
     job = lock_model_instance(
         app_label="algorithms", model_name="job", pk=job_pk
     )
@@ -38,37 +42,23 @@ def execute_algorithm_job_for_inputs(*, job_pk):
         kwargs={"job_pk": str(job.pk)}, immutable=True
     )
 
-    if job.inputs_complete and job.status == job.PENDING:
-        job.task_on_success = linked_task
-        job.status = job.INPUTS_VALIDATED
-        job.save()
-        on_commit(
-            execute_algorithm_job.signature(
-                kwargs={"job_pk": job_pk}, immutable=True
-            ).apply_async
-        )
-    else:
-        logger.info(
-            "Nothing to do: the inputs are still being created and validated, "
-            "or the job is already being executed."
-        )
+    if not job.inputs_complete:
+        logger.info("Nothing to do, inputs are still being validated.")
         return
 
+    if not job.status == job.VALIDATING_INPUTS:
+        # this task can be called multiple times with complete inputs,
+        # and might have been queued for execution already, so ignore
+        logger.info("Job has already been scheduled for execution.")
+        return
 
-@acks_late_micro_short_task(retry_on=(TooManyJobsScheduled,))
-@transaction.atomic
-def execute_algorithm_job(*, job_pk):
-    from grandchallenge.algorithms.models import Job
-
-    job = Job.objects.get(pk=job_pk)
-    if not job.status == Job.INPUTS_VALIDATED:
-        raise RuntimeError("Job is not ready for execution")
-    elif Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
+    if Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
         raise TooManyJobsScheduled
-    else:
-        job.status = Job.PENDING
-        job.save()
-        on_commit(job.execute)
+
+    job.task_on_success = linked_task
+    job.status = job.PENDING
+    job.save()
+    on_commit(job.execute)
 
 
 @acks_late_2xlarge_task(retry_on=(TooManyJobsScheduled,), singleton=True)
