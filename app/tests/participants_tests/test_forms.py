@@ -12,21 +12,6 @@ from tests.factories import (
 )
 
 
-def answers_formset_data(*args, n=None):
-    if n is None:
-        n = len(args)
-    return {
-        "registration_question_answers-TOTAL_FORMS": str(n),
-        "registration_question_answers-INITIAL_FORMS": "0",
-        "registration_question_answers-MIN_NUM_FORMS": str(n),
-        "registration_question_answers-MAX_NUM_FORMS": str(n),
-        **{
-            f"registration_question_answers-{i}-answer": a
-            for i, a in enumerate(args)
-        },
-    }
-
-
 @pytest.mark.django_db
 def test_registration_request_form_no_questions():
     challenge = ChallengeFactory()
@@ -38,7 +23,12 @@ def test_registration_request_form_no_questions():
     form = RegistrationRequestForm(
         challenge=challenge,
         user=user,
-        data=answers_formset_data(n=0),
+        data={
+            "registration_question_answers-TOTAL_FORMS": "0",
+            "registration_question_answers-INITIAL_FORMS": "0",
+            "registration_question_answers-MIN_NUM_FORMS": "0",
+            "registration_question_answers-MAX_NUM_FORMS": "0",
+        },
     )
     assert form.is_valid()
     form.save()
@@ -64,11 +54,15 @@ def test_registration_request_form_with_questions():
     form = RegistrationRequestForm(
         challenge=challenge,
         user=user,
-        data=answers_formset_data(
-            "",
-            "answer_1",
-            "answer_2",
-        ),
+        data={
+            "registration_question_answers-TOTAL_FORMS": "3",
+            "registration_question_answers-INITIAL_FORMS": "0",
+            "registration_question_answers-MIN_NUM_FORMS": "3",
+            "registration_question_answers-MAX_NUM_FORMS": "3",
+            "registration_question_answers-0-answer": "",
+            "registration_question_answers-1-answer": "answer_1",
+            "registration_question_answers-2-answer": "answer_2",
+        },
     )
 
     assert form.is_valid()
@@ -101,7 +95,13 @@ def test_registration_request_form_partial_data():
     form = RegistrationRequestForm(
         challenge=challenge,
         user=user,
-        data=answers_formset_data("answer_0", n=3),
+        data={
+            "registration_question_answers-TOTAL_FORMS": "3",
+            "registration_question_answers-INITIAL_FORMS": "0",
+            "registration_question_answers-MIN_NUM_FORMS": "3",
+            "registration_question_answers-MAX_NUM_FORMS": "3",
+            "registration_question_answers-0-answer": "answer_0",
+        },
     )
 
     assert (
@@ -111,12 +111,14 @@ def test_registration_request_form_partial_data():
     form = RegistrationRequestForm(
         challenge=challenge,
         user=user,
-        data=answers_formset_data(
-            "answer_0",
-            "answer_1",
-            # Note, missing non-required answer
-            n=3,
-        ),
+        data={
+            "registration_question_answers-TOTAL_FORMS": "3",
+            "registration_question_answers-INITIAL_FORMS": "0",
+            "registration_question_answers-MIN_NUM_FORMS": "3",
+            "registration_question_answers-MAX_NUM_FORMS": "3",
+            "registration_question_answers-0-answer": "answer_0",
+            "registration_question_answers-1-answer": "answer_1",
+        },
     )
 
     assert (
@@ -142,7 +144,13 @@ def test_registration_request_form_incorrect_format():
     form = RegistrationRequestForm(
         challenge=challenge,
         user=user,
-        data=answers_formset_data("answer"),
+        data={
+            "registration_question_answers-TOTAL_FORMS": "1",
+            "registration_question_answers-INITIAL_FORMS": "0",
+            "registration_question_answers-MIN_NUM_FORMS": "1",
+            "registration_question_answers-MAX_NUM_FORMS": "1",
+            "registration_question_answers-0-answer": "answer",
+        },
     )
 
     assert (
@@ -161,7 +169,13 @@ def test_registration_request_form_incorrect_format():
     form = RegistrationRequestForm(
         challenge=challenge,
         user=user,
-        data=answers_formset_data("1"),
+        data={
+            "registration_question_answers-TOTAL_FORMS": "1",
+            "registration_question_answers-INITIAL_FORMS": "0",
+            "registration_question_answers-MIN_NUM_FORMS": "1",
+            "registration_question_answers-MAX_NUM_FORMS": "1",
+            "registration_question_answers-0-answer": "1",
+        },
     )
 
     assert form.is_valid(), "With correct format, form should be valid"

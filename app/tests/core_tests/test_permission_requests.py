@@ -379,6 +379,12 @@ def test_permission_request_notifications_flow_for_accept_all(
         user=user3,
         url=permission_create_url,
         method=client.post,
+        data={
+            "registration_question_answers-TOTAL_FORMS": "0",
+            "registration_question_answers-INITIAL_FORMS": "0",
+            "registration_question_answers-MIN_NUM_FORMS": "0",
+            "registration_question_answers-MAX_NUM_FORMS": "0",
+        },
     )
 
     pr = request_model.objects.get()
@@ -442,6 +448,12 @@ def test_permission_request_notifications_flow_for_accept_verified_users(
         user=verified_user,
         url=permission_create_url,
         method=client.post,
+        data={
+            "registration_question_answers-TOTAL_FORMS": "0",
+            "registration_question_answers-INITIAL_FORMS": "0",
+            "registration_question_answers-MIN_NUM_FORMS": "0",
+            "registration_question_answers-MAX_NUM_FORMS": "0",
+        },
     )
     pr = request_model.objects.get()
     assert pr.status == request_model.ACCEPTED
@@ -457,6 +469,12 @@ def test_permission_request_notifications_flow_for_accept_verified_users(
         user=not_verified_user,
         url=permission_create_url,
         method=client.post,
+        data={
+            "registration_question_answers-TOTAL_FORMS": "0",
+            "registration_question_answers-INITIAL_FORMS": "0",
+            "registration_question_answers-MIN_NUM_FORMS": "0",
+            "registration_question_answers-MAX_NUM_FORMS": "0",
+        },
     )
     pr = request_model.objects.get()
     assert pr.status == request_model.PENDING
@@ -485,7 +503,16 @@ def test_algorithm_permission_request_notification_for_admins_only(client):
 
     # Create the permission request
     _ = get_view_for_user(
-        client=client, user=user, url=permission_create_url, method=client.post
+        client=client,
+        user=user,
+        url=permission_create_url,
+        method=client.post,
+        data={
+            "registration_question_answers-TOTAL_FORMS": "0",
+            "registration_question_answers-INITIAL_FORMS": "0",
+            "registration_question_answers-MIN_NUM_FORMS": "0",
+            "registration_question_answers-MAX_NUM_FORMS": "0",
+        },
     )
 
     assert Notification.objects.count() == 1
@@ -505,7 +532,16 @@ def test_follows_deleted_when_request_deleted(client):
     )
     user = UserFactory()
     _ = get_view_for_user(
-        client=client, user=user, url=permission_create_url, method=client.post
+        client=client,
+        user=user,
+        url=permission_create_url,
+        method=client.post,
+        data={
+            "registration_question_answers-TOTAL_FORMS": "0",
+            "registration_question_answers-INITIAL_FORMS": "0",
+            "registration_question_answers-MIN_NUM_FORMS": "0",
+            "registration_question_answers-MAX_NUM_FORMS": "0",
+        },
     )
     pr = AlgorithmPermissionRequest.objects.get()
     assert is_following(user, pr)
@@ -526,7 +562,16 @@ def test_follows_deleted_when_base_obj_deleted(client):
     )
     user = UserFactory()
     _ = get_view_for_user(
-        client=client, user=user, url=permission_create_url, method=client.post
+        client=client,
+        user=user,
+        url=permission_create_url,
+        method=client.post,
+        data={
+            "registration_question_answers-TOTAL_FORMS": "0",
+            "registration_question_answers-INITIAL_FORMS": "0",
+            "registration_question_answers-MIN_NUM_FORMS": "0",
+            "registration_question_answers-MAX_NUM_FORMS": "0",
+        },
     )
     pr = AlgorithmPermissionRequest.objects.get()
     assert is_following(user, pr)
