@@ -74,6 +74,11 @@ def test_get_metrics():
                     "Value": 0,
                     "Unit": "Count",
                 },
+                {
+                    "MetricName": "JobsValidatinginputs",
+                    "Value": 0,
+                    "Unit": "Count",
+                },
             ],
         },
         {
@@ -141,6 +146,11 @@ def test_get_metrics():
                 },
                 {
                     "MetricName": "EvaluationsExternalExecutionInProgress",
+                    "Value": 0,
+                    "Unit": "Count",
+                },
+                {
+                    "MetricName": "EvaluationsValidatinginputs",
                     "Value": 0,
                     "Unit": "Count",
                 },
