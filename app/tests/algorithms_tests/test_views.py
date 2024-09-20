@@ -1208,6 +1208,7 @@ class TestJobCreateView:
             algorithm_model=algorithm_with_multiple_inputs.algorithm.active_model,
             status=Job.SUCCESS,
             time_limit=10,
+            creator=algorithm_with_multiple_inputs.editor,
         )
         old_job_with_only_file_input.inputs.set([civ5])
 
@@ -1245,7 +1246,6 @@ class TestJobCreateView:
             },
         )
         assert response.status_code == 200
-
         # no new CIVs should have been created
         assert ComponentInterfaceValue.objects.count() == old_civ_count
         # since there is no job with these inputs yet, a job was created:
