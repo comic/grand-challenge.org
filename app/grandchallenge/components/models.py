@@ -66,7 +66,7 @@ from grandchallenge.core.validators import (
     JSONValidator,
     MimeTypeValidator,
 )
-from grandchallenge.notifications.models import Notification, NotificationType
+from grandchallenge.notifications.models import NotificationType
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.validators import validate_gzip_mimetype
 from grandchallenge.workstation_configs.models import (
@@ -2183,65 +2183,20 @@ class CIVSetObjectPermissionsMixin:
         raise NotImplementedError
 
 
-class CIVUpdateOnErrorMixin:
-
-    def handle_error(
-        self,
-        *,
-        error_message,
-        notification_type=None,
-        user_upload=None,
-        upload_session=None,
-    ):
-        if upload_session:
-            upload_session.status = RawImageUploadSession.FAILURE
-            upload_session.error_message = error_message
-            upload_session.save()
-
-        if (
-            notification_type
-            == NotificationType.NotificationTypeChoices.FILE_COPY_STATUS
-        ):
-            if not user_upload:
-                raise RuntimeError(
-                    "For file copy status notifications, "
-                    "you must provide a user_upload."
-                )
-            else:
-                Notification.send(
-                    kind=notification_type,
-                    actor=user_upload.creator,
-                    message=f"Your file upload failed with the following error: {error_message}",
-                    target=self.base_object,
-                    description=error_message,
-                )
-        elif (
-            notification_type
-            == NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS
-        ):
-            if not upload_session:
-                raise RuntimeError(
-                    "For image import status notifications, "
-                    "you must provide an upload_session"
-                )
-            else:
-                Notification.send(
-                    kind=notification_type,
-                    message=f"failed with the following error: {error_message}",
-                    action_object=upload_session,
-                )
-        else:
-            raise RuntimeError(
-                f"Notification type {notification_type} is not supported."
-            )
-
-
 class CIVForObjectMixin:
+
+    def add_civ(self, *, civ):
+        if not self.is_editable:
+            raise RuntimeError(f"{self} is not editable.")
+
+    def remove_civ(self, *, civ):
+        if not self.is_editable:
+            raise RuntimeError(f"{self} is not editable.")
 
     def create_civ(self, *, civ_data, user=None, linked_task=None):
         if not self.is_editable:
             raise RuntimeError(
-                "Object is not editable. CIVs cannot be added or removed from it."
+                f"{self} is not editable. CIVs cannot be added or removed from it."
             )
 
         ci = ComponentInterface.objects.get(slug=civ_data.interface_slug)
@@ -2291,11 +2246,11 @@ class CIVForObjectMixin:
             try:
                 civ.full_clean()
                 civ.save()
-                self.add_civ(civ)
-                self.remove_civ(current_civ)
+                self.add_civ(civ=civ)
+                self.remove_civ(civ=current_civ)
             except ValidationError as e:
                 if new_value in ci.default_field.empty_values:
-                    self.remove_civ(current_civ)
+                    self.remove_civ(civ=current_civ)
                 else:
                     self.handle_error(
                         error_message=format_validation_error_message(e),
@@ -2330,8 +2285,8 @@ class CIVForObjectMixin:
                     )
                     raise e
 
-            self.remove_civ(current_civ)
-            self.add_civ(civ)
+            self.remove_civ(civ=current_civ)
+            self.add_civ(civ=civ)
 
             if linked_task is not None:
                 on_commit(signature(linked_task).apply_async)
@@ -2377,8 +2332,8 @@ class CIVForObjectMixin:
         linked_task=None,
     ):
         if file_civ:
-            self.remove_civ(current_civ)
-            self.add_civ(file_civ)
+            self.remove_civ(civ=current_civ)
+            self.add_civ(civ=file_civ)
 
             if linked_task is not None:
                 on_commit(signature(linked_task).apply_async)
@@ -2402,7 +2357,7 @@ class CIVForObjectMixin:
         else:
             # if no new value is provided (user selects '---' in dropdown)
             # delete old CIV
-            self.remove_civ(current_civ)
+            self.remove_civ(civ=current_civ)
 
     def get_civ_for_interface(self, interface):
         raise NotImplementedError

@@ -12,7 +12,6 @@ from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import transaction
 from django.db.transaction import on_commit
-from django.template.defaultfilters import pluralize
 from django.utils._os import safe_join
 from django.utils.module_loading import import_string
 from panimg import convert, post_process
@@ -26,7 +25,6 @@ from grandchallenge.components.tasks import (
 )
 from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.core.exceptions import LockNotAcquiredException
-from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.uploads.models import UserUpload
 
 logger = logging.getLogger(__name__)
@@ -151,32 +149,36 @@ def build_images(  # noqa:C901
             _handle_raw_image_files(
                 tmp_dir=tmp_dir,
                 upload_session=upload_session,
-                send_notification_on_errors=False if linked_object else True,
             )
-        upload_session.status = upload_session.SUCCESS
-        upload_session.save()
+
+        upload_session.update_status(
+            status=RawImageUploadSession.SUCCESS, linked_object=linked_object
+        )
 
     except DuplicateFilesException as e:
         _delete_session_files(upload_session=upload_session)
-        upload_session.mark_as_failed(
-            error_message=str(e), linked_object=linked_object
+        upload_session.update_status(
+            status=RawImageUploadSession.FAILURE,
+            error_message=str(e),
+            linked_object=linked_object,
         )
     except (SoftTimeLimitExceeded, TimeLimitExceeded):
-        upload_session.mark_as_failed(
-            error_message="Time limit exceeded", linked_object=linked_object
+        upload_session.update_status(
+            status=RawImageUploadSession.FAILURE,
+            error_message="Time limit exceeded",
+            linked_object=linked_object,
         )
     except Exception:
         _delete_session_files(upload_session=upload_session)
-        upload_session.mark_as_failed(
+        upload_session.update_status(
+            status=RawImageUploadSession.FAILURE,
             error_message="An unexpected error occurred",
             linked_object=linked_object,
         )
         logger.error("An unexpected error occurred", exc_info=True)
 
 
-def _handle_raw_image_files(
-    *, tmp_dir, upload_session, send_notification_on_errors=True
-):
+def _handle_raw_image_files(*, tmp_dir, upload_session):
     importer_result = import_images(
         input_directory=tmp_dir, origin=upload_session
     )
@@ -186,7 +188,6 @@ def _handle_raw_image_files(
         file_errors=importer_result.file_errors,
         base_directory=tmp_dir,
         upload_session=upload_session,
-        send_notification_on_errors=send_notification_on_errors,
     )
 
     _delete_session_files(upload_session=upload_session)
@@ -333,7 +334,6 @@ def _handle_raw_files(
     file_errors: dict[Path, list[str]],
     base_directory: Path,
     upload_session: RawImageUploadSession,
-    send_notification_on_errors: bool = True,
 ):
     upload_session.import_result = {
         "consumed_files": [
@@ -345,23 +345,6 @@ def _handle_raw_files(
             if k not in consumed_files
         },
     }
-
-    if (
-        send_notification_on_errors
-        and upload_session.import_result["file_errors"]
-    ):
-        n_errors = len(upload_session.import_result["file_errors"])
-
-        upload_session.error_message = (
-            f"{n_errors} file{pluralize(n_errors)} could not be imported"
-        )
-
-        if upload_session.creator:
-            Notification.send(
-                kind=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
-                message=f"failed with {n_errors} error{pluralize(n_errors)}",
-                action_object=upload_session,
-            )
 
 
 def _delete_session_files(*, upload_session):

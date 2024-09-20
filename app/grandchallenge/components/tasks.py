@@ -49,7 +49,6 @@ from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.utils.error_messages import (
     format_validation_error_message,
 )
-from grandchallenge.notifications.models import NotificationType
 from grandchallenge.uploads.models import UserUpload
 
 logger = logging.getLogger(__name__)
@@ -1191,10 +1190,9 @@ def add_image_to_object(
     try:
         image = Image.objects.get(origin_id=upload_session_pk)
     except (Image.DoesNotExist, Image.MultipleObjectsReturned):
-        object.handle_error(
+        upload_session.update_status(
             error_message="Image imports should result in a single image",
-            notification_type=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
-            upload_session=upload_session,
+            linked_object=object,
         )
         return
 
@@ -1210,23 +1208,21 @@ def add_image_to_object(
         try:
             civ.full_clean()
         except ValidationError as e:
-            object.handle_error(
+            upload_session.update_status(
                 error_message=format_validation_error_message(e),
-                notification_type=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
-                upload_session=upload_session,
+                linked_object=object,
             )
             return
         except Exception as e:
-            object.handle_error(
+            upload_session.update_status(
                 error_message="An unexpected error occurred",
-                notification_type=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
-                upload_session=upload_session,
+                linked_object=object,
             )
             logger.error(e, exc_info=True)
             return
 
-    object.remove_civ(current_value)
-    object.add_civ(civ)
+    object.remove_civ(civ=current_value)
+    object.add_civ(civ=civ)
 
     if linked_task is not None:
         on_commit(signature(linked_task).apply_async)
@@ -1265,24 +1261,20 @@ def add_file_to_object(
         civ.save()
         user_upload.copy_object(to_field=civ.file)
     except ValidationError as e:
-        error = format_validation_error_message(error=e)
-        object.handle_error(
-            error_message=f"File for interface {interface.title} failed validation:{error}.",
-            notification_type=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
-            user_upload=user_upload,
+        user_upload.handle_file_validation_failure(
+            error_message=f"File for interface {interface.title} failed validation:{format_validation_error_message(error=e)}.",
+            linked_object=object,
         )
         return
     except Exception as e:
-        object.handle_error(
-            error_message="An unexpected error occurred",
-            notification_type=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
-            user_upload=user_upload,
+        user_upload.handle_file_validation_failure(
+            error_message="An unexpected error occurred", linked_object=object
         )
         logger.error(e, exc_info=True)
         return
 
-    object.remove_civ(current_value)
-    object.add_civ(civ)
+    object.remove_civ(civ=current_value)
+    object.add_civ(civ=civ)
 
     if linked_task is not None:
         on_commit(signature(linked_task).apply_async)

@@ -11,6 +11,7 @@ from django.db import models
 from django.db.models.signals import post_delete, pre_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
+from django.template.defaultfilters import pluralize
 from django.utils._os import safe_join
 from django.utils.text import get_valid_filename
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
@@ -28,7 +29,7 @@ from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import protected_s3_storage
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.modalities.models import ImagingModality
-from grandchallenge.notifications.models import NotificationType
+from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
 
@@ -120,16 +121,31 @@ class RawImageUploadSession(UUIDModel):
                     actor_only=False,
                 )
 
-    def mark_as_failed(self, *, error_message, linked_object):
-        self.error_message = str(error_message)
-        self.status = self.FAILURE
+    @property
+    def default_error_message(self):
+        n_errors = len(self.import_result["file_errors"])
+        if n_errors:
+            return (
+                f"{n_errors} file{pluralize(n_errors)} could not be imported"
+            )
+
+    def update_status(self, *, status, error_message=None, linked_object=None):
+        self.status = status
+        self.error_message = (
+            error_message if error_message else self.default_error_message
+        )
         self.save()
 
-        if linked_object:
-            linked_object.handle_error(
-                error_message=error_message,
-                notification_type=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
-                upload_session=self,
+        if self.error_message and self.creator:
+            Notification.send(
+                kind=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
+                message=error_message,
+                action_object=self,
+            )
+
+        if linked_object and hasattr(linked_object, "update_status"):
+            linked_object.update_status(
+                status=linked_object.CANCELLED, error_message=error_message
             )
 
     def process_images(

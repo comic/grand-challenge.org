@@ -27,7 +27,6 @@ from stdimage import JPEGField
 
 from grandchallenge.algorithms.tasks import update_algorithm_average_duration
 from grandchallenge.anatomy.models import BodyStructure
-from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.charts.specs import stacked_bar
 from grandchallenge.components.models import (  # noqa: F401
     CIVForObjectMixin,
@@ -971,10 +970,12 @@ class Job(UUIDModel, CIVForObjectMixin, ComponentJob):
     def remove_viewer(self, user):
         return user.groups.remove(self.viewers)
 
-    def add_civ(self, civ):
+    def add_civ(self, *, civ):
+        super().add_civ(civ=civ)
         return self.inputs.add(civ)
 
-    def remove_civ(self, civ):
+    def remove_civ(self, *, civ):
+        super().remove_civ(civ=civ)
         return self.inputs.remove(civ)
 
     def get_civ_for_interface(self, interface):
@@ -1056,24 +1057,6 @@ class Job(UUIDModel, CIVForObjectMixin, ComponentJob):
             display_set.values.set(values)
 
         return display_set
-
-    def handle_error(
-        self,
-        *,
-        error_message,
-        notification_type=None,
-        user_upload=None,
-        upload_session=None,
-    ):
-        if upload_session:
-            upload_session.status = RawImageUploadSession.FAILURE
-            upload_session.error_message = error_message
-            upload_session.save()
-
-        self.update_status(
-            error_message=error_message,
-            status=self.CANCELLED,
-        )
 
 
 class JobUserObjectPermission(UserObjectPermissionBase):
