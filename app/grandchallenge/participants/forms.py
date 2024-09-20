@@ -60,6 +60,12 @@ class RegistrationRequestForm(ModelForm):
             instance=self.instance,
             data=data,
             initial=[{"question": q} for q in questions],
+            form_kwargs={
+                # Formsets disabled the use of the attribute by default,
+                # since we don't allow for 'extra' forms
+                # we can forcefully allow it.
+                "use_required_attribute": True,
+            },
         )
 
     def is_valid(self):
@@ -92,12 +98,6 @@ class RegistrationQuestionAnswerForm(ModelForm):
         fields = ("answer",)
 
     def __init__(self, *args, initial, **kwargs):
-
-        # Formsets disabled the use of the attribute by default,
-        # since we don't allow for 'extra' forms
-        # we can forcefully allow it.
-        kwargs["use_required_attribute"] = True
-
         super().__init__(*args, initial=initial, **kwargs)
 
         self.instance.question = initial["question"]
