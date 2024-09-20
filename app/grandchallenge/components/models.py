@@ -2256,11 +2256,14 @@ class CIVForObjectMixin:
                         error_message=format_validation_error_message(e),
                     )
                     raise e
+            except RuntimeError as e:
+                logger.error(e, exc_info=True)
+                return
 
             if linked_task is not None:
                 on_commit(signature(linked_task).apply_async)
 
-    def create_civ_for_image(
+    def create_civ_for_image(  # noqa: C901
         self,
         *,
         ci,
@@ -2284,9 +2287,12 @@ class CIVForObjectMixin:
                         error_message=format_validation_error_message(e),
                     )
                     raise e
-
-            self.remove_civ(civ=current_civ)
-            self.add_civ(civ=civ)
+            try:
+                self.remove_civ(civ=current_civ)
+                self.add_civ(civ=civ)
+            except RuntimeError as e:
+                logger.error(e, exc_info=True)
+                return
 
             if linked_task is not None:
                 on_commit(signature(linked_task).apply_async)
@@ -2332,8 +2338,12 @@ class CIVForObjectMixin:
         linked_task=None,
     ):
         if file_civ:
-            self.remove_civ(civ=current_civ)
-            self.add_civ(civ=file_civ)
+            try:
+                self.remove_civ(civ=current_civ)
+                self.add_civ(civ=file_civ)
+            except RuntimeError as e:
+                logger.error(e, exc_info=True)
+                return
 
             if linked_task is not None:
                 on_commit(signature(linked_task).apply_async)

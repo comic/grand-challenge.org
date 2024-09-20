@@ -1191,6 +1191,7 @@ def add_image_to_object(
         image = Image.objects.get(origin_id=upload_session_pk)
     except (Image.DoesNotExist, Image.MultipleObjectsReturned):
         upload_session.update_status(
+            status=RawImageUploadSession.FAILURE,
             error_message="Image imports should result in a single image",
             linked_object=object,
         )
@@ -1209,20 +1210,28 @@ def add_image_to_object(
             civ.full_clean()
         except ValidationError as e:
             upload_session.update_status(
+                status=RawImageUploadSession.FAILURE,
                 error_message=format_validation_error_message(e),
                 linked_object=object,
             )
             return
         except Exception as e:
             upload_session.update_status(
+                status=RawImageUploadSession.FAILURE,
                 error_message="An unexpected error occurred",
                 linked_object=object,
             )
             logger.error(e, exc_info=True)
             return
 
-    object.remove_civ(civ=current_value)
-    object.add_civ(civ=civ)
+    try:
+        object.remove_civ(civ=current_value)
+        object.add_civ(civ=civ)
+    except RuntimeError as e:
+        # for Jobs this happens when validation for another input failed
+        # and the job status was updated to CANCELLED
+        logger.error(e, exc_info=True)
+        return
 
     if linked_task is not None:
         on_commit(signature(linked_task).apply_async)
@@ -1273,8 +1282,14 @@ def add_file_to_object(
         logger.error(e, exc_info=True)
         return
 
-    object.remove_civ(civ=current_value)
-    object.add_civ(civ=civ)
+    try:
+        object.remove_civ(civ=current_value)
+        object.add_civ(civ=civ)
+    except RuntimeError as e:
+        # for Jobs this happens when validation for another input failed
+        # and the job status was updated to CANCELLED
+        logger.error(e, exc_info=True)
+        return
 
     if linked_task is not None:
         on_commit(signature(linked_task).apply_async)

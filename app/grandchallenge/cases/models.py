@@ -143,7 +143,11 @@ class RawImageUploadSession(UUIDModel):
                 action_object=self,
             )
 
-        if linked_object and hasattr(linked_object, "update_status"):
+        if (
+            self.error_message
+            and linked_object
+            and hasattr(linked_object, "update_status")
+        ):
             linked_object.update_status(
                 status=linked_object.CANCELLED, error_message=error_message
             )
