@@ -33,7 +33,14 @@ function handleJobStatus(job) {
 
     if (jobStatus === "succeeded") {
         setCardCompleteMessage(cards.job, "View Results");
-    } else if (["started", "provisioning", "provisioned"].includes(jobStatus)) {
+    } else if (
+        [
+            "validating inputs",
+            "started",
+            "provisioning",
+            "provisioned",
+        ].includes(jobStatus)
+    ) {
         setCardActiveMessage(cards.job, "Job is being provisioned");
     } else if (
         ["executing", "executed", "parsing outputs"].includes(jobStatus)
@@ -51,6 +58,7 @@ function handleJobStatus(job) {
     if (
         [
             "started",
+            "validating inputs",
             "provisioning",
             "provisioned",
             "executing",

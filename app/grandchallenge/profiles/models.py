@@ -249,7 +249,6 @@ class UserProfile(models.Model):
     def file_civs_user_has_permission_to_use(self):
         # local import to avoid circular dependency
         from grandchallenge.components.models import (
-            ComponentInterface,
             ComponentInterfaceValue,
             InterfaceKind,
         )
@@ -266,8 +265,10 @@ class UserProfile(models.Model):
         return (
             ComponentInterfaceValue.objects.filter(
                 Q(interface__kind__in=InterfaceKind.interface_type_file())
-                | Q(interface__kind=ComponentInterface.Kind.ANY)
-                & Q(interface__store_in_database=False)
+                | (
+                    Q(interface__kind__in=InterfaceKind.interface_type_json())
+                    & Q(interface__store_in_database=False)
+                )
             )
             .annotate(has_view_job_perm=Exists(job_query))
             .annotate(has_change_ds_perm=Exists(display_set_query))
