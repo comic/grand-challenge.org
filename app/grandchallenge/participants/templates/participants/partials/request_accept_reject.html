@@ -1,0 +1,27 @@
+{% load url %}
+
+{% if regrequest.status != regrequest.ACCEPTED %}
+    <form method="post"
+        action="{% url 'participants:registration-update' challenge_short_name=regrequest.challenge.short_name pk=regrequest.pk %}">
+        {% csrf_token %}
+        <input type="hidden" name="status"
+            value="{{ regrequest.ACCEPTED }}">
+        <button type="submit"
+                title="Accept"
+                class="btn btn-xs btn-success"><i class="fas fa-fw fa-check-circle"></i> Accept
+        </button>
+    </form>
+{% endif %}
+
+{% if regrequest.status != regrequest.REJECTED %}
+    <form method="post"
+        action="{% url 'participants:registration-update' challenge_short_name=challenge.short_name pk=regrequest.pk %}">
+        {% csrf_token %}
+        <input type="hidden" name="status"
+            value="{{ regrequest.REJECTED }}">
+        <button type="submit"
+                title="Reject"
+                class="btn btn-xs btn-danger"><i class="fas fa-fw fa-times-circle"></i> Reject
+        </button>
+    </form>
+{% endif %}

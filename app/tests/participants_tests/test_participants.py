@@ -17,6 +17,12 @@ def test_registration_request_create_post(client, two_challenge_sets):
         method=client.post,
         challenge=two_challenge_sets.challenge_set_1.challenge,
         user=user,
+        data={
+            "registration_question_answers-TOTAL_FORMS": "0",
+            "registration_question_answers-INITIAL_FORMS": "0",
+            "registration_question_answers-MIN_NUM_FORMS": "0",
+            "registration_question_answers-MAX_NUM_FORMS": "0",
+        },
     )
     assert response.status_code == 302
     assert RegistrationRequest.objects.filter(
@@ -42,6 +48,12 @@ def test_duplicate_registration_denied(client, two_challenge_sets):
         method=client.post,
         challenge=two_challenge_sets.challenge_set_1.challenge,
         user=user,
+        data={
+            "registration_question_answers-TOTAL_FORMS": "0",
+            "registration_question_answers-INITIAL_FORMS": "0",
+            "registration_question_answers-MIN_NUM_FORMS": "0",
+            "registration_question_answers-MAX_NUM_FORMS": "0",
+        },
     )
     assert response.status_code == 200
     assert rr.status_to_string() in response.rendered_content
@@ -55,6 +67,12 @@ def test_duplicate_registration_denied(client, two_challenge_sets):
         method=client.post,
         challenge=two_challenge_sets.challenge_set_2.challenge,
         user=user,
+        data={
+            "registration_question_answers-TOTAL_FORMS": "0",
+            "registration_question_answers-INITIAL_FORMS": "0",
+            "registration_question_answers-MIN_NUM_FORMS": "0",
+            "registration_question_answers-MAX_NUM_FORMS": "0",
+        },
     )
     assert response.status_code == 302
     assert RegistrationRequest.objects.filter(

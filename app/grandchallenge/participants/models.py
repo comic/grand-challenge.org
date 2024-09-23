@@ -1,5 +1,6 @@
 from actstream.models import Follow
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
 from django.db import models
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
@@ -7,7 +8,7 @@ from guardian.shortcuts import assign_perm
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.utils.access_requests import process_access_request
-from grandchallenge.core.validators import JSONSchemaValidator
+from grandchallenge.core.validators import JSONSchemaValidator, JSONValidator
 
 
 class RegistrationRequest(RequestBase):
@@ -92,6 +93,7 @@ class RegistrationQuestion(UUIDModel):
     )
 
     class Meta:
+        ordering = ("created",)
         unique_together = (("question_text", "challenge"),)
 
     def save(self, *args, **kwargs):
@@ -123,3 +125,52 @@ class RegistrationQuestionGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(
         RegistrationQuestion, on_delete=models.CASCADE
     )
+
+
+class RegistrationQuestionAnswer(models.Model):
+    registration_request = models.ForeignKey(
+        RegistrationRequest,
+        on_delete=models.CASCADE,
+        related_name="registration_question_answers",
+    )
+    question = models.ForeignKey(
+        RegistrationQuestion,
+        on_delete=models.CASCADE,
+        related_name="answers",
+    )
+    answer = models.JSONField(default=str, blank=True)
+
+    class Meta:
+        unique_together = (("registration_request", "question"),)
+
+    @property
+    def empty_answer(self):
+        return self.answer == self._meta.get_field("answer").get_default()
+
+    def clean(self):
+        super().clean()
+
+        if self.empty_answer and self.question.required:
+            raise ValidationError(
+                f"The question {self.question.question_text!r} requires an answer"
+            )
+
+        if not self.empty_answer and self.question.schema:
+            try:
+                JSONValidator(schema=self.question.schema)(value=self.answer)
+            except ValidationError as e:
+                raise ValidationError({"answer": f"Incorrect format: {e}"})
+
+    def validate_constraints(self, *args, exclude=None, **kwargs):
+        result = super().validate_constraints(*args, exclude=exclude, **kwargs)
+
+        if not exclude or (
+            "registration_request" not in exclude
+            and "challenge" not in exclude
+        ):
+            # Cannot add a database-level constraint for this, so do it here:
+            if self.question.challenge != self.registration_request.challenge:
+                raise ValidationError(
+                    "Cannot answer questions for a registration with different challenges"
+                )
+        return result

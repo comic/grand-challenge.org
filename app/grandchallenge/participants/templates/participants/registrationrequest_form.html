@@ -23,6 +23,7 @@
         {{ challenge.registration_page_text|clean }}
     </p>
 
+
     {% if existing_status %}
 
         <p><b>{{ existing_status }}.</b></p>
@@ -35,10 +36,24 @@
 
         <form action="" method="post">
             {% csrf_token %}
+
+            {% if challenge.registration_questions.exists %}
+                <h5> Registration Questions </h5>
+                <p class="text-muted">
+                    Your responses will be shared directly with the challenge organizers. Please avoid sharing any personal or sensitive information, like passwords.
+                </p>
+            {% endif %}
+
             {{ form | crispy }}
-            <input type="submit"
-                   value="Click here to join {{ challenge.short_name }}"
-                   class="btn btn-primary"/>
+
+            {{ form.answer_formset | crispy }}
+
+            <button type="submit"
+
+                   class="btn btn-primary">
+
+                   <i class="fas pr-1 fa-hand-point-right"></i> Click here to join {{ challenge.short_name }}
+            </button>
         </form>
 
     {% endif %}
