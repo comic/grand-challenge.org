@@ -165,14 +165,13 @@ class InterfaceFormField:
                 **self.kwargs,
             )
         elif type == "civ":
-            file_upload_link = (
-                reverse(
-                    "components:file-upload",
-                    kwargs={
-                        "interface_slug": self.instance.slug,
-                    },
-                ),
+            file_upload_link = reverse(
+                "components:file-upload",
+                kwargs={
+                    "interface_slug": self.instance.slug,
+                },
             )
+
             return ModelChoiceField(
                 queryset=self.user.user_profile.file_civs_user_has_permission_to_use.filter(
                     interface=self.instance

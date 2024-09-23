@@ -1192,7 +1192,7 @@ def add_image_to_object(
     except (Image.DoesNotExist, Image.MultipleObjectsReturned):
         upload_session.update_status(
             status=RawImageUploadSession.FAILURE,
-            error_message="Image imports should result in a single image",
+            error_message=f"File for interface {interface.title} failed validation: Image imports should result in a single image",
             linked_object=object,
         )
         return
@@ -1211,7 +1211,7 @@ def add_image_to_object(
         except ValidationError as e:
             upload_session.update_status(
                 status=RawImageUploadSession.FAILURE,
-                error_message=format_validation_error_message(e),
+                error_message=f"File for interface {interface.title} failed validation: {format_validation_error_message(e)}",
                 linked_object=object,
             )
             return
