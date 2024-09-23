@@ -482,7 +482,12 @@
     <span class="n">display_all_metrics</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
-            <span class="s2">&quot;Should all of the metrics be displayed on the Result detail page?&quot;</span>
+            <span class="s2">&quot;If True, the entire contents of metrics.json is available &quot;</span>
+            <span class="s2">&quot;on the results detail page and over the API. &quot;</span>
+            <span class="s2">&quot;If False, only the metrics used for ranking are available &quot;</span>
+            <span class="s2">&quot;on the results detail page and over the API. &quot;</span>
+            <span class="s2">&quot;Challenge administrators can always access the full &quot;</span>
+            <span class="s2">&quot;metrics.json over the API.&quot;</span>
         <span class="p">),</span>
     <span class="p">)</span>
 
