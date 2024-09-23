@@ -10,7 +10,13 @@ from grandchallenge.participants.models import (
     RegistrationQuestionAnswer,
     RegistrationQuestionGroupObjectPermission,
     RegistrationQuestionUserObjectPermission,
+    RegistrationRequest,
 )
+
+
+@admin.register(RegistrationRequest)
+class RegistrationRequestAdmin(GuardedModelAdmin):
+    readonly_fields = ("user", "challenge")
 
 
 @admin.register(RegistrationQuestion)
