@@ -95,15 +95,18 @@ class RegistrationQuestionAnswerForm(ModelForm):
 
     class Meta:
         model = RegistrationQuestionAnswer
-        fields = ("answer",)
+        fields = ("answer", "question")
+        widgets = {"question": HiddenInput()}
 
     def __init__(self, *args, initial, **kwargs):
         super().__init__(*args, initial=initial, **kwargs)
 
-        self.instance.question = initial["question"]
+        question = initial["question"]
 
+        self.fields["question"].initial = question
+        self.fields["question"].disabled = True
         self.fields["answer"] = RegistrationQuestionAnswerField(
-            registration_question=self.instance.question
+            registration_question=question
         )
 
 
