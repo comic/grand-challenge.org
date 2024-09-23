@@ -418,7 +418,7 @@ def test_add_image_to_object_updates_upload_session_on_validation_fail(
     us = RawImageUploadSessionFactory()
     ci = ComponentInterfaceFactory(kind="IMG")
 
-    error_message = "Image imports should result in a single image"
+    error_message = f"File for interface {ci} failed validation: Image imports should result in a single image"
 
     linked_task = some_async_task.signature(
         kwargs={"foo": "bar"}, immutable=True
@@ -453,7 +453,7 @@ def test_add_image_to_object_marks_job_as_failed_on_validation_fail(
     us = RawImageUploadSessionFactory()
     ci = ComponentInterfaceFactory(kind="IMG")
 
-    error_message = "Image imports should result in a single image"
+    error_message = f"File for interface {ci} failed validation: Image imports should result in a single image"
 
     linked_task = some_async_task.signature(
         kwargs={"foo": "bar"}, immutable=True
