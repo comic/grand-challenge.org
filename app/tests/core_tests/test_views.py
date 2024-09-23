@@ -125,26 +125,40 @@ def test_product_redirect(client):
 
 
 @pytest.mark.parametrize(
-    "entity_factory,view_name,kwarg_name,kwarg_entity_attribute",
+    "entity_factory,view_name,kwarg_name,kwarg_entity_attribute,post_data",
     [
         (
             AlgorithmFactory,
             "algorithms:permission-request-create",
             "slug",
             "slug",
+            None,
         ),
-        (ArchiveFactory, "archives:permission-request-create", "slug", "slug"),
+        (
+            ArchiveFactory,
+            "archives:permission-request-create",
+            "slug",
+            "slug",
+            None,
+        ),
         (
             ReaderStudyFactory,
             "reader-studies:permission-request-create",
             "slug",
             "slug",
+            None,
         ),
         (
             ChallengeFactory,
             "participants:registration-create",
             "challenge_short_name",
             "short_name",
+            {
+                "registration_question_answers-TOTAL_FORMS": "0",
+                "registration_question_answers-INITIAL_FORMS": "0",
+                "registration_question_answers-MIN_NUM_FORMS": "0",
+                "registration_question_answers-MAX_NUM_FORMS": "0",
+            },
         ),
     ],
 )
@@ -165,6 +179,7 @@ def test_permission_request_status_msg(
     view_name,
     kwarg_name,
     kwarg_entity_attribute,
+    post_data,
     access_request_handling,
     expected_msg,
 ):
@@ -179,6 +194,7 @@ def test_permission_request_status_msg(
         user=u,
         method=client.post,
         follow=True,
+        data=post_data,
     )
 
     assert expected_msg in response.rendered_content
