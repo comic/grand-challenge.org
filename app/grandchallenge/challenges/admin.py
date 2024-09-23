@@ -41,6 +41,7 @@ class ChallengeAdmin(ModelAdmin):
         "created",
         "hidden",
         "is_suspended",
+        "is_active_until",
         "compute_cost_euro_millicents",
         "size_in_storage",
         "size_in_registry",

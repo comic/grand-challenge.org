@@ -22,9 +22,9 @@
     </div>
 {% endif %}
 
-{% if phase.parent %}
-    <div class="alert alert-danger" role="alert">
-        <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+{% if phase.parent and show_phase_parent_info|default_if_none:True %}
+    <div class="alert alert-info" role="alert">
+        <i class="fa fa-info-circle" aria-hidden="true"></i>
         This phase is dependent on another phase.
         Submissions to this phase are only possible for algorithm images that have successfully been submitted to the parent phase "{{ phase.parent }}".
         You can update this setting in the
@@ -34,8 +34,8 @@
 
 {% with phase.children.count as child_count %}
     {% if child_count != 0 %}
-        <div class="alert alert-danger" role="alert">
-            <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+        <div class="alert alert-info" role="alert">
+            <i class="fa fa-info-circle" aria-hidden="true"></i>
             This phase serves as parent phase for {{ child_count }} phase{{ child_count|pluralize }}. Submissions to the child phase{{ child_count|pluralize }} are only possible for algorithm images that have been succesfully submitted to this phase.
             You can update this setting in the
             <a href="{% url 'evaluation:phase-update' challenge_short_name=challenge.short_name slug=phase.slug %}">Phase Settings</a>.
@@ -43,7 +43,7 @@
     {% endif %}
 {% endwith %}
 
-{% if not phase.active_image %}
+{% if not phase.active_image and not phase.external_evaluation %}
     <div class="alert alert-danger" role="alert">
         <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
         Nobody can submit to this phase as there is no valid evaluation method.
@@ -98,5 +98,16 @@
         Please fill out your scoring details in the <a
             href="{% url 'evaluation:phase-update' challenge_short_name=challenge.short_name slug=phase.slug %}">Phase
         Settings</a>.
+    </div>
+{% endif %}
+
+{% if phase.external_evaluation %}
+    <div class="alert alert-danger" role="alert">
+        <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+        This phase is marked for external evaluation.
+        Submissions to this phase need to be claimed by an external worker for inference and evaluation.
+        Evaluation results need to be returned to GC to appear on the leaderboard.
+        The external worker needs permission to claim evaluations.
+        Contact support@grand-challenge.org to configure this.
     </div>
 {% endif %}

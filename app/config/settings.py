@@ -1111,6 +1111,14 @@ READER_STUDY_CREATORS_GROUP_NAME = "reader_study_creators"
 
 ###############################################################################
 #
+# challenges
+#
+###############################################################################
+
+CHALLENGES_DEFAULT_ACTIVE_MONTHS = 12
+
+###############################################################################
+#
 # workstations
 #
 ###############################################################################
@@ -1175,6 +1183,10 @@ WORKSTATIONS_EXTRA_BROADCAST_DOMAINS = []
 
 INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS = json.loads(
     os.environ.get("INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS", "null")
+)
+
+EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS = int(
+    os.environ.get("EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS", 86400)
 )
 
 CELERY_BEAT_SCHEDULE = {
@@ -1249,6 +1261,10 @@ CELERY_BEAT_SCHEDULE = {
     "send_raw_emails": {
         "task": "grandchallenge.emails.tasks.send_raw_emails",
         "schedule": timedelta(seconds=30),
+    },
+    "cancel_external_evaluations_past_timeout": {
+        "task": "grandchallenge.evaluation.tasks.cancel_external_evaluations_past_timeout",
+        "schedule": timedelta(hours=1),
     },
     **{
         f"stop_expired_services_{region}": {

@@ -52,8 +52,12 @@
 
 {% block content %}
     <div class="mx-3">
+        {% if challenge.should_show_verification_warning and user_is_participant %}
+            {% include "challenges/partials/participant_verification_warning.html" %}
+        {% endif %}
+
         {% if challenge.disclaimer %}
-            <div class="disclaimer alert alert-warning" role="alert">
+            <div class="alert alert-warning" role="alert">
                 {{ challenge.disclaimer|clean }}
             </div>
         {% endif %}
@@ -65,7 +69,13 @@
             </div>
         {% endif %}
 
-        <div id=pageContainer>{{ object.html|clean }}</div>
+        <div id=pageContainer>
+            {% if converted_to_markdown is True %}
+                {{ converted_markdown|md2html }}
+            {% else %}
+                {{ object.html|clean }}
+            {% endif %}
+        </div>
 
         {% if object.pk %}
             {% if "change_challenge" in challenge_perms %}

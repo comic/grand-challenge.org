@@ -28,6 +28,10 @@
 {% endblock %}
 
 {% block content %}
+    {% if phase.creator_must_be_verified %}
+        {% include "challenges/partials/participant_verification_warning.html" %}
+    {% endif %}
+
     <h2>{{ phase.title }} Submission</h2>
 
     {% if "change_challenge" in challenge_perms %}
@@ -59,7 +63,7 @@
                 <a href="{% url 'evaluation:phase-update' challenge_short_name=challenge.short_name slug=phase.slug %}">
                     Phase Settings</a>.
             </p>
-            {% if phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM %}
+            {% if phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM and not phase.external_evaluation %}
                 <p>
                     For each submission, {{ phase.count_valid_archive_items }}
                     algorithm job{{ phase.count_valid_archive_items|pluralize }} will be created
@@ -131,7 +135,7 @@
                 {% endif %}
                 to this phase.
 
-                {% if phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM %}
+                {% if phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM and not phase.external_evaluation %}
                     Algorithm jobs created for this phase will have a time limit of
                     {{ phase.algorithm_time_limit|naturaldelta }} per case.
                 {% endif %}
@@ -143,14 +147,14 @@
                 </div>
             {% endif %}
 
-            {% crispy form %}
-
-        {% endif %}
-
-        {% if phase.parent %}
+            {% if phase.parent %}
             <div class="alert alert-info">
                 This phase is dependent on phase "{{ phase.parent }}". This means that you can only submit active containers that have a successful submission to phase "{{ phase.parent }}".
             </div>
+        {% endif %}
+
+            {% crispy form %}
+
         {% endif %}
 
     {% endif %}

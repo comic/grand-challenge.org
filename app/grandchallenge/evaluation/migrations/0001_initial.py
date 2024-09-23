@@ -322,7 +322,7 @@ class Migration(migrations.Migration):
                     "display_all_metrics",
                     models.BooleanField(
                         default=True,
-                        help_text="Should all of the metrics be displayed on the Result detail page?",
+                        help_text="If True, the entire contents of metrics.json is available on the results detail page and over the API. If False, only the metrics used for ranking are available on the results detail page and over the API. Challenge administrators can always access the full metrics.json over the API.",
                     ),
                 ),
                 (

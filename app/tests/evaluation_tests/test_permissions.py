@@ -9,6 +9,10 @@ from grandchallenge.evaluation.models import (
     Phase,
     Submission,
 )
+from tests.algorithms_tests.factories import (
+    AlgorithmImageFactory,
+    AlgorithmModelFactory,
+)
 from tests.evaluation_tests.factories import (
     EvaluationFactory,
     MethodFactory,
@@ -345,4 +349,69 @@ def test_unhiding_challenge_updates_perms(
             "view_evaluation",
         },
         all_users: {"view_evaluation"},
+    }
+
+
+@pytest.mark.django_db
+def test_external_evaluations_perms():
+    phase = PhaseFactory()
+    e = EvaluationFactory(submission__phase=phase, time_limit=60)
+
+    participants = phase.challenge.participants_group
+    admins = phase.challenge.admins_group
+    external_evaluators = phase.challenge.external_evaluators_group
+
+    assert get_groups_with_set_perms(e) == {
+        admins: {
+            "view_evaluation",
+            "change_evaluation",
+        },
+        participants: {"view_evaluation"},
+    }
+
+    assert get_groups_with_set_perms(e.submission) == {
+        admins: {
+            "view_submission",
+        },
+    }
+
+    phase.external_evaluation = True
+    phase.save()
+    e2 = EvaluationFactory(
+        submission__phase=phase,
+        submission__algorithm_image=AlgorithmImageFactory(),
+        submission__algorithm_model=AlgorithmModelFactory(),
+        time_limit=60,
+    )
+
+    assert get_groups_with_set_perms(e2) == {
+        admins: {
+            "view_evaluation",
+            "change_evaluation",
+        },
+        participants: {"view_evaluation"},
+        external_evaluators: {
+            "claim_evaluation",
+            "view_evaluation",
+        },
+    }
+
+    assert get_groups_with_set_perms(e2.submission) == {
+        admins: {"view_submission"},
+    }
+
+    assert get_groups_with_set_perms(e2.submission.algorithm_image) == {
+        e2.submission.algorithm_image.algorithm.editors_group: {
+            "view_algorithmimage",
+            "change_algorithmimage",
+        },
+        external_evaluators: {"download_algorithmimage"},
+    }
+
+    assert get_groups_with_set_perms(e2.submission.algorithm_model) == {
+        e2.submission.algorithm_model.algorithm.editors_group: {
+            "view_algorithmmodel",
+            "change_algorithmmodel",
+        },
+        external_evaluators: {"download_algorithmmodel"},
     }

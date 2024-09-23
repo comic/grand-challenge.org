@@ -30,6 +30,7 @@ from guardian.mixins import LoginRequiredMixin
 from grandchallenge.algorithms.forms import AlgorithmForPhaseForm
 from grandchallenge.algorithms.models import Algorithm, Job
 from grandchallenge.archives.models import Archive
+from grandchallenge.challenges.views import ActiveChallengeRequiredMixin
 from grandchallenge.components.models import ImportStatusChoices
 from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.core.forms import UserFormKwargsMixin
@@ -165,6 +166,7 @@ class UserCanSubmitAlgorithmToPhaseMixin(VerificationRequiredMixin):
 class PhaseCreate(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
+    ActiveChallengeRequiredMixin,
     SuccessMessageMixin,
     CreateView,
 ):
@@ -237,6 +239,7 @@ class MethodCreate(
     VerificationRequiredMixin,
     UserFormKwargsMixin,
     ObjectPermissionRequiredMixin,
+    ActiveChallengeRequiredMixin,
     CachedPhaseMixin,
     CreateView,
 ):
@@ -1031,6 +1034,7 @@ class EvaluationGroundTruthCreate(
     VerificationRequiredMixin,
     UserFormKwargsMixin,
     ObjectPermissionRequiredMixin,
+    ActiveChallengeRequiredMixin,
     CachedPhaseMixin,
     SuccessMessageMixin,
     CreateView,

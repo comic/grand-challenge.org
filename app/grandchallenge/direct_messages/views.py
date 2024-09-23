@@ -1,3 +1,4 @@
+from dateutil.utils import today
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import UserPassesTestMixin
@@ -48,6 +49,7 @@ class ConversationCreate(LoginRequiredMixin, UserPassesTestMixin, CreateView):
                 Challenge.objects.filter(
                     admins_group__user=self.request.user,
                     participants_group__user__username=self.kwargs["username"],
+                    is_active_until__gt=today().date(),
                 ).exists()
                 or ReaderStudy.objects.filter(
                     editors_group__user=self.request.user,

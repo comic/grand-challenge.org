@@ -1,17 +1,23 @@
+import difflib
+
+from bs4 import BeautifulSoup
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.mail import mail_managers
 from django.db import models
 from django.db.models import Max
+from django.utils.html import format_html
 from django_extensions.db.fields import AutoSlugField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
 from simple_history.models import HistoricalRecords
 
+from grandchallenge.core.models import FieldChangeMixin
 from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.utils.query import index
 from grandchallenge.subdomains.utils import reverse
 
 
-class Page(models.Model):
+class Page(FieldChangeMixin, models.Model):
     """Customisable content that belongs to a challenge."""
 
     UP = "UP"
@@ -66,10 +72,14 @@ class Page(models.Model):
             return self.slug
 
     def save(self, *args, **kwargs):
-        # when saving for the first time only, put this page last in order
-        if not self.id:
-            # get max value of order for current pages.
+        adding = self._state.adding
+
+        self.html = clean(self.html)
+
+        if adding:
+            # when saving for the first time only, put this page last in order
             try:
+                # get max value of order for current pages.
                 max_order = Page.objects.filter(
                     challenge=self.challenge
                 ).aggregate(Max("order"))
@@ -79,8 +89,8 @@ class Page(models.Model):
                 self.order = max_order["order__max"] + 1
             except TypeError:
                 self.order = 1
-
-        self.html = clean(self.html)
+        elif not self.challenge.is_active and self.has_changed("html"):
+            self.handle_change_html_for_inactive_challenge()
 
         super().save(*args, **kwargs)
 
@@ -168,6 +178,34 @@ class Page(models.Model):
             },
         )
         return url
+
+    @staticmethod
+    def get_visible_text(html):
+        return (
+            BeautifulSoup(html, "html.parser")
+            .get_text(separator="\n")
+            .strip()
+            .splitlines()
+        )
+
+    def handle_change_html_for_inactive_challenge(self):
+        old_html = self.get_visible_text(self.initial_value("html"))
+        new_html = self.get_visible_text(self.html)
+
+        diff = "\n".join(difflib.unified_diff(old_html, new_html, lineterm=""))
+
+        if diff:
+            mail_managers(
+                subject=f"[{self.challenge.slug}] Page updated for inactive challenge",
+                message=format_html(
+                    (
+                        "{page_url} was updated whilst the challenge is inactive. "
+                        "Here are the changes:\n\n{diff}"
+                    ),
+                    page_url=self.get_absolute_url(),
+                    diff=diff,
+                ),
+            )
 
     class Meta:
         # make sure a single site never has two pages with the same name

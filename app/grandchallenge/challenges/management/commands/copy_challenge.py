@@ -1,5 +1,8 @@
 import re
 
+from dateutil.relativedelta import relativedelta
+from dateutil.utils import today
+from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.management import BaseCommand, CommandError
 
@@ -92,6 +95,12 @@ class Command(BaseCommand):
     def _create_new_challenge(self, *, src_challenge, dest_name):
         new_challenge = Challenge(
             short_name=dest_name,
+            is_active_until=(
+                today().date()
+                + relativedelta(
+                    months=settings.CHALLENGES_DEFAULT_ACTIVE_MONTHS
+                )
+            ),
             **{f: getattr(src_challenge, f) for f in self.challenge_fields},
         )
         new_challenge.full_clean()
