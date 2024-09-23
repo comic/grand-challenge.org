@@ -578,11 +578,7 @@ def test_evaluation_metrics_filtering(client):
     ci = ComponentInterface.objects.get(slug="metrics-json-file")
     civ = ComponentInterfaceValueFactory(
         interface=ci,
-        value={
-            "l1": {"l2": {"l3a": 1, "l3b": 2}, "l2a": 3},
-            "l1v": "Sensitive",
-            "l1d": {},
-        },
+        value=full_value
     )
     evaluation = EvaluationFactory(
         submission__phase=phase,
