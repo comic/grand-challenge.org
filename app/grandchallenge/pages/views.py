@@ -102,7 +102,10 @@ class PagePandoc(
         return self.request.user.is_staff
 
     def get_object(self, *args, **kwargs):
-        if not self.kwargs["format"].startswith("markdown"):
+        if not any(
+            self.kwargs["format"].startswith(f)
+            for f in {"markdown", "gfm", "commonmark"}
+        ):
             raise PermissionDenied()
         return super().get_object(*args, **kwargs)
 
