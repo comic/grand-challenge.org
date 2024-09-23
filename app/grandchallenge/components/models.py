@@ -66,7 +66,6 @@ from grandchallenge.core.validators import (
     JSONValidator,
     MimeTypeValidator,
 )
-from grandchallenge.notifications.models import NotificationType
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.validators import validate_gzip_mimetype
 from grandchallenge.workstation_configs.models import (
@@ -2381,21 +2380,14 @@ class CIVForObjectMixin:
             return None
         except MultipleObjectsReturned as e:
             if user_upload:
-                extra_kwargs = {
-                    "user_upload": user_upload,
-                    "notification_type": NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
-                }
+                user_upload.handle_file_validation_failure(
+                    error_message="An unexpected error occurred"
+                )
             elif upload_session:
-                extra_kwargs = {
-                    "upload_session": upload_session,
-                    "notification_type": NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
-                }
-            else:
-                extra_kwargs = {}
-
-            self.handle_error(
-                error_message="An unexpected error occurred", **extra_kwargs
-            )
+                upload_session.update_status(
+                    error_message="An unexpected error occurred",
+                    status=RawImageUploadSession.FAILURE,
+                )
             raise e
 
 

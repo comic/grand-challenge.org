@@ -450,7 +450,8 @@ class Notification(UUIDModel):
             == NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS
         ):
             return format_html(
-                "Your {action_object} {time} {message}.",
+                "Your {action_object} from {time} failed "
+                "with the following error: {message}.",
                 action_object=format_html(
                     '<a href="{}">{}</a>',
                     self.action_object.get_absolute_url(),
