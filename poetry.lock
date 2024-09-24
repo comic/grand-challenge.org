@@ -3243,6 +3243,24 @@ files = [
 numpy = "*"
 
 [[package]]
+name = "pymdown-extensions"
+version = "10.10.1"
+description = "Extension pack for Python Markdown."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pymdown_extensions-10.10.1-py3-none-any.whl", hash = "sha256:6c74ea6c2e2285186a241417480fc2d3cc52941b3ec2dced4014c84dc78c5493"},
+    {file = "pymdown_extensions-10.10.1.tar.gz", hash = "sha256:ad277ee4739ced051c3b6328d22ce782358a3bec39bc6ca52815ccbf44f7acdc"},
+]
+
+[package.dependencies]
+markdown = ">=3.6"
+pyyaml = "*"
+
+[package.extras]
+extra = ["pygments (>=2.12)"]
+
+[[package]]
 name = "pypandoc-binary"
 version = "1.13"
 description = "Thin wrapper for pandoc."
@@ -4992,4 +5010,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.13"
-content-hash = "f4baaae344ef19ff3feff38b6b060a06fb27d4dc59dfdfb15b9dc6eb78aff840"
+content-hash = "22a07850cc916adacd1825bdd3e7b06423b64bf77362f577748ca4d4f2f1f97c"
