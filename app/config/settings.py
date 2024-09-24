@@ -787,7 +787,9 @@ MARKDOWNX_MARKDOWN_EXTENSIONS = [
     "markdown.extensions.fenced_code",
     "markdown.extensions.sane_lists",
     "markdown.extensions.tables",
+    "pymdownx.betterem",
     "pymdownx.magiclink",
+    "pymdownx.tasklist",
     "pymdownx.tilde",
     BS4Extension(),
 ]
