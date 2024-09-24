@@ -613,8 +613,8 @@ class Challenge(ChallengeBase):
     def create_default_pages(self):
         Page.objects.create(
             display_title=self.short_name,
-            html=render_to_string(
-                "pages/defaults/home.html", {"challenge": self}
+            content_markdown=render_to_string(
+                "pages/defaults/home.md", {"challenge": self}
             ),
             challenge=self,
             permission_level=Page.ALL,

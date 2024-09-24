@@ -10,7 +10,7 @@ from tests.factories import PageFactory
 def test_email_generated_on_change(settings):
     settings.MANAGERS = [("Manager", "manager@example.org")]
 
-    page = PageFactory(html="hello world!")
+    page = PageFactory(content_markdown="hello world!")
 
     def update_html(html):
         p = Page.objects.get(pk=page.pk)
