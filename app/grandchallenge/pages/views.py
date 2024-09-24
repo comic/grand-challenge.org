@@ -44,7 +44,6 @@ class PageCreate(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     ActiveChallengeRequiredMixin,
-    ChallengeFormKwargsMixin,
     CreateView,
 ):
     model = Page
@@ -161,7 +160,6 @@ class PageUpdate(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     ChallengeFilteredQuerysetMixin,
-    ChallengeFormKwargsMixin,
     UpdateView,
 ):
     model = Page
