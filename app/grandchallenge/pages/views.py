@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import pypandoc
+from bs4 import BeautifulSoup
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied
@@ -118,11 +119,24 @@ class PagePandoc(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
+        html = context["object"].html
+
+        soup = BeautifulSoup(html, "html.parser")
+
+        for span in soup.find_all("span"):
+            style_is_empty = (
+                not span.get("style") or span["style"].strip() == ""
+            )
+            class_is_empty = not span.get("class") or len(span["class"]) == 0
+
+            if style_is_empty and class_is_empty:
+                span.unwrap()
+
         context.update(
             {
                 "converted_to_markdown": True,
                 "converted_markdown": pypandoc.convert_text(
-                    source=context["object"].html,
+                    source=soup.prettify(),
                     format="html",
                     to=self.kwargs["format"],
                     sandbox=True,
