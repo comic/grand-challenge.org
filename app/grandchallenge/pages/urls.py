@@ -22,13 +22,18 @@ urlpatterns = [
     path("<slug>/update/", PageUpdate.as_view(), name="update"),
     path("<slug>/delete/", PageDelete.as_view(), name="delete"),
     path(
-        "<slug>/pandoc/<str:format>/",
+        "<slug>/pandoc/",
         PagePandoc.as_view(raw=False),
         name="detail-pandoc",
     ),
     path(
+        "<slug>/pandoc/<str:format>/",
+        PagePandoc.as_view(raw=False),
+        name="detail-pandoc-format",
+    ),
+    path(
         "<slug>/pandoc/<str:format>/raw/",
         PagePandoc.as_view(raw=True),
-        name="detail-pandoc-raw",
+        name="detail-pandoc-format-raw",
     ),
 ]

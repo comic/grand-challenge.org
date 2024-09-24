@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="historicalpage",
             name="uses_markdown",
-            field=models.BooleanField(default=False),
+            field=models.BooleanField(default=True),
         ),
         migrations.AddField(
             model_name="page",
@@ -31,6 +31,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="page",
             name="uses_markdown",
-            field=models.BooleanField(default=False),
+            field=models.BooleanField(default=True),
         ),
     ]

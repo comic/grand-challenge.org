@@ -88,6 +88,24 @@ class PageDetail(
         return page.can_be_viewed_by(user=user)
 
 
+def html2md(*, html, format):
+    soup = BeautifulSoup(html, "html.parser")
+
+    for span in soup.find_all("span"):
+        style_is_empty = not span.get("style") or span["style"].strip() == ""
+        class_is_empty = not span.get("class") or len(span["class"]) == 0
+
+        if style_is_empty and class_is_empty:
+            span.unwrap()
+
+    return pypandoc.convert_text(
+        source=soup.prettify(),
+        format="html",
+        to=format,
+        sandbox=True,
+    )
+
+
 class PagePandoc(
     UserPassesTestMixin, ChallengeFilteredQuerysetMixin, DetailView
 ):
@@ -102,7 +120,7 @@ class PagePandoc(
         return self.request.user.is_staff
 
     def get_object(self, *args, **kwargs):
-        if not any(
+        if "format" in self.kwargs and not any(
             self.kwargs["format"].startswith(f)
             for f in {"markdown", "gfm", "commonmark"}
         ):
@@ -118,30 +136,16 @@ class PagePandoc(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        html = context["object"].html
-
-        soup = BeautifulSoup(html, "html.parser")
-
-        for span in soup.find_all("span"):
-            style_is_empty = (
-                not span.get("style") or span["style"].strip() == ""
+        if "format" in self.kwargs:
+            context.update(
+                {
+                    "converted_to_markdown": True,
+                    "converted_markdown": html2md(
+                        html=context["object"].html,
+                        format=self.kwargs["format"],
+                    ),
+                }
             )
-            class_is_empty = not span.get("class") or len(span["class"]) == 0
-
-            if style_is_empty and class_is_empty:
-                span.unwrap()
-
-        context.update(
-            {
-                "converted_to_markdown": True,
-                "converted_markdown": pypandoc.convert_text(
-                    source=soup.prettify(),
-                    format="html",
-                    to=self.kwargs["format"],
-                    sandbox=True,
-                ),
-            }
-        )
 
         return context
 

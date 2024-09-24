@@ -370,7 +370,7 @@ def test_page_markdown_permissions(client):
     def get():
         return get_view_for_user(
             client=client,
-            viewname="pages:detail-pandoc",
+            viewname="pages:detail-pandoc-format",
             reverse_kwargs={
                 "challenge_short_name": page.challenge.short_name,
                 "slug": page.slug,

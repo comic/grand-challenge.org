@@ -60,7 +60,7 @@ class Page(FieldChangeMixin, models.Model):
     )
     html = models.TextField(blank=True, default="")
     content_markdown = models.TextField(blank=True)
-    uses_markdown = models.BooleanField(default=False)
+    uses_markdown = models.BooleanField(default=True)
     history = HistoricalRecords(
         excluded_fields=[
             "slug",
