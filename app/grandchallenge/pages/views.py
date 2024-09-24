@@ -98,6 +98,9 @@ def html2md(*, html, format):
         if style_is_empty and class_is_empty:
             span.unwrap()
 
+    for div in soup.find_all("div"):
+        div.unwrap()
+
     return pypandoc.convert_text(
         source=soup.prettify(),
         format="html",
