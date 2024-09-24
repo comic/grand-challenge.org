@@ -70,7 +70,9 @@
         {% endif %}
 
         <div id=pageContainer>
-            {% if converted_to_markdown is True %}
+            {% if object.uses_markdown %}
+                {{ object.markdown|md2html }}
+            {% elif converted_to_markdown is True %}
                 {{ converted_markdown|md2html }}
             {% else %}
                 {{ object.html|clean }}

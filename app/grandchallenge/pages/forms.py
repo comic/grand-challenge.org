@@ -4,13 +4,18 @@ from django.db.models import BLANK_CHOICE_DASH
 from django_summernote.widgets import SummernoteInplaceWidget
 
 from grandchallenge.core.forms import SaveFormInitMixin
+from grandchallenge.core.widgets import MarkdownEditorWidget
 from grandchallenge.pages.models import Page
 
 
 class PageCreateForm(SaveFormInitMixin, forms.ModelForm):
-    def __init__(self, *args, challenge, **kwargs):
-        self.challenge = challenge
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        if self.instance.uses_markdown:
+            del self.fields["html"]
+        else:
+            del self.fields["markdown"]
 
     class Meta:
         model = Page
@@ -19,8 +24,12 @@ class PageCreateForm(SaveFormInitMixin, forms.ModelForm):
             "permission_level",
             "hidden",
             "html",
+            "markdown",
         )
-        widgets = {"html": SummernoteInplaceWidget()}
+        widgets = {
+            "html": SummernoteInplaceWidget(),
+            "markdown": MarkdownEditorWidget,
+        }
         help_texts = {
             "html": (
                 "The content of your page. <b>Please note</b>: your html will "
