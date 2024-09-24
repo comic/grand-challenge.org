@@ -59,7 +59,7 @@ class Page(FieldChangeMixin, models.Model):
         default=False, help_text="Do not display this page in site menu"
     )
     html = models.TextField(blank=True, default="")
-    markdown = models.TextField(blank=True)
+    content_markdown = models.TextField(blank=True)
     uses_markdown = models.BooleanField(default=False)
     history = HistoricalRecords(
         excluded_fields=[

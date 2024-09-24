@@ -15,7 +15,7 @@ class PageCreateForm(SaveFormInitMixin, forms.ModelForm):
         if self.instance.uses_markdown:
             del self.fields["html"]
         else:
-            del self.fields["markdown"]
+            del self.fields["content_markdown"]
 
     class Meta:
         model = Page
@@ -24,11 +24,11 @@ class PageCreateForm(SaveFormInitMixin, forms.ModelForm):
             "permission_level",
             "hidden",
             "html",
-            "markdown",
+            "content_markdown",
         )
         widgets = {
             "html": SummernoteInplaceWidget(),
-            "markdown": MarkdownEditorWidget,
+            "content_markdown": MarkdownEditorWidget,
         }
         help_texts = {
             "html": (

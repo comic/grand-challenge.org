@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name="historicalpage",
-            name="markdown",
+            name="content_markdown",
             field=models.TextField(blank=True),
         ),
         migrations.AddField(
@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name="page",
-            name="markdown",
+            name="content_markdown",
             field=models.TextField(blank=True),
         ),
         migrations.AddField(
