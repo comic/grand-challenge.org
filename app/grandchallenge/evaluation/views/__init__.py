@@ -799,6 +799,21 @@ class EvaluationUpdate(
     raise_exception = True
     login_url = reverse_lazy("account_login")
 
+    def get_success_url(self):
+        next = self.request.GET.get("next")
+        admin_list_url = reverse(
+            "evaluation:evaluation-admin-list",
+            kwargs={
+                "slug": self.object.submission.phase.slug,
+                "challenge_short_name": self.object.submission.phase.challenge.short_name,
+            },
+        )
+
+        if next == admin_list_url:
+            return next
+        else:
+            return super().get_success_url()
+
 
 class PhaseAlgorithmCreate(
     LoginRequiredMixin,
