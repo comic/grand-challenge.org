@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 
 import pypandoc
@@ -98,15 +99,46 @@ def html2md(*, html, format):
         if style_is_empty and class_is_empty:
             span.unwrap()
 
+    # Remove empty divs, but allow alerts
     for div in soup.find_all("div"):
-        div.unwrap()
+        is_alert = div.get("class") and "alert" in div["class"]
 
-    return pypandoc.convert_text(
-        source=soup.prettify(),
+        if is_alert:
+            div["markdown"] = "1"
+        else:
+            div.unwrap()
+
+    # Remove empty headers
+    for header in soup.find_all(["h1", "h2", "h3", "h4", "h5", "h6"]):
+        if not header.get_text(strip=True) and not header.find("img"):
+            header.decompose()
+
+    markdown = pypandoc.convert_text(
+        source=str(soup),
         format="html",
         to=format,
         sandbox=True,
     )
+
+    # Replace image tags that span multiple lines
+    markdown = re.sub(
+        r"<img\s+([^>]+)>",
+        lambda match: "<img " + match.group(1).replace("\n", " ") + ">",
+        markdown,
+    )
+    markdown = re.sub(
+        r"<a\s+([^>]+)>",
+        lambda match: "<a " + match.group(1).replace("\n", " ") + ">",
+        markdown,
+    )
+
+    # Empty headers
+    markdown = re.sub(r"^\s*#+\s*$\n?", "", markdown, flags=re.MULTILINE)
+
+    # Nested list correction
+    markdown = re.sub(r"^\s*- - ", "  - ", markdown, flags=re.MULTILINE)
+
+    return markdown
 
 
 class PagePandoc(
