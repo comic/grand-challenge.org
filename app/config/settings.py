@@ -785,6 +785,7 @@ MARKDOWNX_MARKDOWN_EXTENSIONS = [
     "markdown.extensions.attr_list",
     "markdown.extensions.codehilite",
     "markdown.extensions.fenced_code",
+    "markdown.extensions.md_in_html",
     "markdown.extensions.sane_lists",
     "markdown.extensions.tables",
     "pymdownx.betterem",

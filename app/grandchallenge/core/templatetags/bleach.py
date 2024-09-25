@@ -79,6 +79,7 @@ def md2html(
         text=markdown or "",
         extensions=extensions,
         extension_configs=settings.MARKDOWNX_MARKDOWN_EXTENSION_CONFIGS,
+        tab_length=2,
     )
 
     cleaned_html = clean(html)
