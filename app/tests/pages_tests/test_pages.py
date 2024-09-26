@@ -377,7 +377,7 @@ def test_page_markdown_permissions(client):
             reverse_kwargs={
                 "challenge_short_name": page.challenge.short_name,
                 "slug": page.slug,
-                "format": "markdown",
+                "format": "gfm",
             },
             user=user,
         )
