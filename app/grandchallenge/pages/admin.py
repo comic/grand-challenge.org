@@ -29,9 +29,10 @@ class PageAdmin(SimpleHistoryAdmin):
         "display_title",
         "html",
     )
+    actions = ("convert_markdown",)
 
     @admin.action(description="Convert markdown", permissions=["change"])
-    def create_challenge(self, request, queryset):
+    def convert_markdown(self, request, queryset):
         for page in queryset.filter(uses_markdown=True):
             page.content_markdown = html2md(
                 html=md2html(markdown=page.content_markdown)
