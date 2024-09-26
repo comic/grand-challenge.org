@@ -79,10 +79,16 @@ def get_workstation_path_and_query_string(  # noqa: C901
 def workstation_session_control_data(
     *, workstation, context_object, timeout=False, **kwargs
 ):
-    create_session_url = reverse(
-        "workstations:workstation-session-create",
-        kwargs={"slug": workstation.slug},
-    )
+    if workstation:
+        create_session_url = reverse(
+            "workstations:workstation-session-create",
+            kwargs={"slug": workstation.slug},
+        )
+    else:
+        create_session_url = reverse(
+            "workstations:default-session-create",
+        )
+
     pqs = get_workstation_path_and_query_string(**kwargs)
     window_identifier = f"workstation-{context_object._meta.app_label}"
     data_attrs = {
