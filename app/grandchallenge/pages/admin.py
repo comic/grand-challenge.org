@@ -5,7 +5,6 @@ from grandchallenge.core.admin import (
     GroupObjectPermissionAdmin,
     UserObjectPermissionAdmin,
 )
-from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.pages.models import (
     Page,
     PageGroupObjectPermission,
@@ -34,9 +33,7 @@ class PageAdmin(SimpleHistoryAdmin):
     @admin.action(description="Convert markdown", permissions=["change"])
     def convert_markdown(self, request, queryset):
         for page in queryset.filter(uses_markdown=True):
-            page.content_markdown = html2md(
-                html=md2html(markdown=page.content_markdown)
-            )
+            page.content_markdown = html2md(html=page.html)
             page.save()
 
 
