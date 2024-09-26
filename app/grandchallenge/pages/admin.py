@@ -27,7 +27,7 @@ class PageAdmin(SimpleHistoryAdmin):
     search_fields = (
         "slug",
         "display_title",
-        "html",
+        "content_markdown",
     )
     actions = ("convert_markdown",)
 
