@@ -89,15 +89,11 @@ class PageDetail(
         return page.can_be_viewed_by(user=user)
 
 
-def html2md(*, html, format):
+def html2md(*, html):
     soup = BeautifulSoup(html, "html.parser")
 
     for span in soup.find_all("span"):
-        style_is_empty = not span.get("style") or span["style"].strip() == ""
-        class_is_empty = not span.get("class") or len(span["class"]) == 0
-
-        if style_is_empty and class_is_empty:
-            span.unwrap()
+        span.unwrap()
 
     # Remove empty divs, but allow alerts
     for div in soup.find_all("div"):
@@ -116,7 +112,7 @@ def html2md(*, html, format):
     markdown = pypandoc.convert_text(
         source=str(soup),
         format="html",
-        to=format,
+        to="gfm",
         sandbox=True,
     )
 
@@ -155,10 +151,7 @@ class PagePandoc(
         return self.request.user.is_staff
 
     def get_object(self, *args, **kwargs):
-        if "format" in self.kwargs and not any(
-            self.kwargs["format"].startswith(f)
-            for f in {"markdown", "gfm", "commonmark"}
-        ):
+        if "format" in self.kwargs and self.kwargs["format"] != "gfm":
             raise PermissionDenied()
         return super().get_object(*args, **kwargs)
 
@@ -177,7 +170,6 @@ class PagePandoc(
                     "converted_to_markdown": True,
                     "converted_markdown": html2md(
                         html=context["object"].html,
-                        format=self.kwargs["format"],
                     ),
                 }
             )
