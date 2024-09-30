@@ -3,7 +3,7 @@
 {% load url %}
 
 {% block title %}
-        {{ object|yesno:"Update,Create"}} Algorithm {% if request.resolver_match.view_name == 'algorithms:update' %} Settings {% elif request.resolver_match.view_name == 'algorithms:description-update' %} Description {% elif request.resolver_match.view_name == 'evaluation:phase-algorithm-create' %} for Challenge {% endif %}- {{ block.super }}
+    {{ object|yesno:"Update,Create"}} - {{ object }} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}

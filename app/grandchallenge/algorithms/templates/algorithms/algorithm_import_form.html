@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
 
+{% block title %}
+    Import Algorithm - {{ block.super }}
+{% endblock %}
+
 {% block content %}
     {% crispy form %}
 {% endblock %}

@@ -12,7 +12,7 @@
 {% load civ %}
 
 {% block title %}
-    Algorithm Result - {{ block.super }}
+    {{ object.pk }} - {{ object.algorithm_image.algorithm.title }} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
