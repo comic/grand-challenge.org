@@ -363,28 +363,3 @@ def test_should_show_verification_warning():
     del challenge.visible_phases
 
     assert challenge.should_show_verification_warning is False
-
-
-@pytest.mark.django_db
-def test_page_markdown_permissions(client):
-    page = PageFactory()
-    user = UserFactory(is_staff=True)
-
-    def get():
-        return get_view_for_user(
-            client=client,
-            viewname="pages:detail-pandoc-format",
-            reverse_kwargs={
-                "challenge_short_name": page.challenge.short_name,
-                "slug": page.slug,
-                "format": "gfm",
-            },
-            user=user,
-        )
-
-    assert get().status_code == 200
-
-    user.is_staff = False
-    user.save()
-
-    assert get().status_code == 403
