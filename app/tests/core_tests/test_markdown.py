@@ -4,6 +4,7 @@ import pytest
 from django.conf import settings
 from markdown import markdown
 
+from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.core.utils.markdown import BS4Treeprocessor
 
 
@@ -29,7 +30,7 @@ from grandchallenge.core.utils.markdown import BS4Treeprocessor
             ),
             textwrap.dedent(
                 """\
-                <p><img alt="" class="img-fluid" src="test.png" /></p>
+                <p><img class="img-fluid" src="test.png"></p>
                 <blockquote class="blockquote">
                 <p>Quote Me</p>
                 </blockquote>
@@ -61,7 +62,7 @@ from grandchallenge.core.utils.markdown import BS4Treeprocessor
         ),
         (
             textwrap.dedent(
-                """
+                r"""
                 ![](test.png)
 
                 <img src="test-no-class.png"/>
@@ -109,14 +110,23 @@ from grandchallenge.core.utils.markdown import BS4Treeprocessor
                     pass
                 ```
                 <div><pre><code>no class</code></pre></div>
-                <div class="ml-3"><pre><code class="ml-3">existing class</code></pre></div>"""
+                <div class="ml-3"><pre><code class="ml-3">existing class</code></pre></div>
+
+                ~~Delete me~~
+
+                CH~3~CH~2~OH
+                text~a\ subscript~
+
+                - Just paste links directly in the document like this: https://google.com.
+                - Or even an email address: fake.email@email.com.
+                """
             ),
             textwrap.dedent(
                 """\
-                <p><img alt="" class="img-fluid" src="test.png" /></p>
-                <p><img class="img-fluid" src="test-no-class.png"/></p>
-                <p><img class="img-fluid" src="test-empty-class.png"/></p>
-                <p><img class="ml-3 img-fluid" src="test-existing-class.png"/></p>
+                <p><img class="img-fluid" src="test.png"></p>
+                <p><img class="img-fluid" src="test-no-class.png"></p>
+                <p><img class="img-fluid" src="test-empty-class.png"></p>
+                <p><img class="ml-3 img-fluid" src="test-existing-class.png"></p>
                 <blockquote class="blockquote">
                 <p>Quote Me</p>
                 </blockquote>
@@ -173,17 +183,21 @@ from grandchallenge.core.utils.markdown import BS4Treeprocessor
                 </code></pre></div>
 
                 <div><pre><code class="codehilite">no class</code></pre></div>
-                <div class="ml-3"><pre><code class="ml-3 codehilite">existing class</code></pre></div>"""
+                <div class="ml-3"><pre><code class="ml-3 codehilite">existing class</code></pre></div>
+
+                <p><del>Delete me</del></p>
+                <p>CH<sub>3</sub>CH<sub>2</sub>OH
+                text<sub>a subscript</sub></p>
+                <ul>
+                <li>Just paste links directly in the document like this: <a href="https://google.com">https://google.com</a>.</li>
+                <li>Or even an email address: <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#102;&#97;&#107;&#101;&#46;&#101;&#109;&#97;&#105;&#108;&#64;&#101;&#109;&#97;&#105;&#108;&#46;&#99;&#111;&#109;">&#102;&#97;&#107;&#101;&#46;&#101;&#109;&#97;&#105;&#108;&#64;&#101;&#109;&#97;&#105;&#108;&#46;&#99;&#111;&#109;</a>.</li>
+                </ul>"""
             ),
         ),
     ),
 )
 def test_markdown_rendering(markdown_with_html, expected_output):
-    output = markdown(
-        text=markdown_with_html or "",
-        extensions=settings.MARKDOWNX_MARKDOWN_EXTENSIONS,
-        extension_configs=settings.MARKDOWNX_MARKDOWN_EXTENSION_CONFIGS,
-    )
+    output = md2html(markdown=markdown_with_html)
     assert output == expected_output
 
 

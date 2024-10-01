@@ -31,7 +31,7 @@ def create_page(
     return PageFactory(
         display_title=title,
         challenge=challenge,
-        html=content,
+        content_markdown=content,
         permission_level=permission_level,
     )
 

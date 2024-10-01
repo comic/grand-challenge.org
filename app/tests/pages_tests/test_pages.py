@@ -77,7 +77,7 @@ def test_page_list_filter(client, two_challenge_sets):
 
 @pytest.mark.django_db
 def test_page_create(client, two_challenge_sets):
-    page_html = "<h1>HELLO WORLD</h1>"
+    page_markdown = "# HELLO WORLD"
     page_title = "testpage1"
     response = get_view_for_user(
         viewname="pages:create",
@@ -87,14 +87,17 @@ def test_page_create(client, two_challenge_sets):
         user=two_challenge_sets.challenge_set_1.admin,
         data={
             "display_title": page_title,
-            "html": page_html,
+            "content_markdown": page_markdown,
             "permission_level": Page.ALL,
         },
     )
     assert response.status_code == 302
     response = get_view_for_user(url=response.url, client=client)
     assert response.status_code == 200
-    assert page_html in str(response.content)
+    assert (
+        '<h1 id="hello-world">HELLO WORLD<a class="headerlink text-muted small pl-1" href="#hello-world" title="Permanent link">&para;</a></h1>'
+        in str(response.content)
+    )
     # Check that it was created in the correct challenge
     response = get_view_for_user(
         viewname="pages:detail",
@@ -117,13 +120,13 @@ def test_page_update(client, two_challenge_sets):
     p1 = PageFactory(
         challenge=two_challenge_sets.challenge_set_1.challenge,
         display_title="page1updatetest",
-        html="oldhtml",
+        content_markdown="oldhtml",
     )
     # page with the same name in another challenge to check selection
     PageFactory(
         challenge=two_challenge_sets.challenge_set_2.challenge,
         display_title="page1updatetest",
-        html="oldhtml",
+        content_markdown="oldhtml",
     )
     response = get_view_for_user(
         viewname="pages:update",
@@ -144,7 +147,7 @@ def test_page_update(client, two_challenge_sets):
         data={
             "display_title": "editedtitle",
             "permission_level": Page.ALL,
-            "html": "newhtml",
+            "content_markdown": "newhtml",
         },
     )
     assert response.status_code == 302

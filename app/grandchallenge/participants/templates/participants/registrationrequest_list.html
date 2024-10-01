@@ -2,6 +2,7 @@
 {% load user_profile_link from profiles %}
 {% load url %}
 {% load static %}
+{% load dict_lookup %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -26,7 +27,10 @@
                 <th>Created</th>
                 <th>Updated</th>
                 <th>Username</th>
-                <th>Info</th>
+                <th>Profile Info</th>
+                {% if viewable_registration_questions %}
+                    <th>Answers to questions</th>
+                {% endif %}
                 <th>Status</th>
                 <th>Accept / Reject</th>
             </tr>
@@ -48,43 +52,27 @@
                     <td>
                         {{ regrequest.user.user_profile.user_info }}
                     </td>
+
+                    {% if viewable_registration_questions %}
+                    <td>
+                        {% include "participants/partials/registration_question_modal.html" with challenge=challenge regrequest=regrequest viewable_registration_questions=viewable_registration_questions csrf_token=csrf_token only %}
+                    </td>
+                    {% endif %}
                     <td data-order="{{ regrequest.status }}">
                         {% if regrequest.status == regrequest.PENDING %}
-                            <i class="far fa-hourglass" title="Pending"></i>
+                            <i class="far fa-hourglass text-muted" title="Pending"></i>
                         {% elif regrequest.status == regrequest.ACCEPTED %}
-                            <i class="fas fa-check text-success"
+                            <i class="fas fa-fw fa-check-circle text-success"
                                title="Accepted"></i>
                         {% elif regrequest.status == regrequest.REJECTED %}
-                            <i class="fas fa-times text-danger"
+                            <i class="fas fa-fw fa-times-circle text-danger"
                                title="Rejected"></i>
                         {% endif %}
                     </td>
                     <td>
-                        {% if regrequest.status != regrequest.ACCEPTED %}
-                            <form method="post"
-                                  action="{% url 'participants:registration-update' challenge_short_name=challenge.short_name pk=regrequest.pk %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="status"
-                                       value="{{ regrequest.ACCEPTED }}">
-                                <button type="submit"
-                                        class="btn btn-xs btn-success">Accept
-                                </button>
-                            </form>
-                        {% endif %}
-                        {% if regrequest.status != regrequest.REJECTED %}
-                            <form method="post"
-                                  action="{% url 'participants:registration-update' challenge_short_name=challenge.short_name pk=regrequest.pk %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="status"
-                                       value="{{ regrequest.REJECTED }}">
-                                <button type="submit"
-                                        class="btn btn-xs btn-danger">Reject
-                                </button>
-                            </form>
-                        {% endif %}
+                        {% include  "participants/partials/request_accept_reject.html" with challenge=challenge regrequest=regrequest csrf_token=csrf_token only %}
                     </td>
                 </tr>
-
             {% endfor %}
 
             </tbody>

@@ -270,6 +270,7 @@ class CIVSetDetail(
         context.update(
             {
                 "request": self.request,
+                "base_model_options": BaseModelOptions,
             }
         )
         return context

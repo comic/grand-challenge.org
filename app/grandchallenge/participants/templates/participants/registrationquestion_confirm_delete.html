@@ -24,6 +24,12 @@
 
         <h5 class="font-weight-bolder pb-4">'{{ object.question_text }}'</h5>
 
+        {% if object.answers.exists %}
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i> <strong>Warning</strong>: Deleting this question will permanently erase all participant answers ({{ object.answers.count }}) associated with it.
+            </div>
+        {% endif %}
+
         <p><b class="text-danger">WARNING:
             You are not able to undo this action, once the page is deleted
             it is deleted forever.</b></p>

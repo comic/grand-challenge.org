@@ -1,6 +1,6 @@
 $(document).ready(() => {
     $("#evaluationsTable").DataTable({
-        order: [[3, "desc"]],
+        order: [[2, "desc"]],
         responsive: {
             details: {
                 renderer: (api, rowIdx, columns) => {

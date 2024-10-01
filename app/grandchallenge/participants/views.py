@@ -1,7 +1,5 @@
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.db.models import Q
-from django.forms.utils import ErrorList
+from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
@@ -9,10 +7,12 @@ from guardian.mixins import LoginRequiredMixin
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
+    filter_by_permission,
 )
 from grandchallenge.participants.forms import (
     RegistrationQuestionCreateForm,
     RegistrationQuestionUpdateForm,
+    RegistrationRequestForm,
 )
 from grandchallenge.participants.models import (
     RegistrationQuestion,
@@ -43,7 +43,7 @@ class RegistrationRequestCreate(
     LoginRequiredMixin, SuccessMessageMixin, CreateView
 ):
     model = RegistrationRequest
-    fields = ()
+    form_class = RegistrationRequestForm
     raise_exception = True
     login_url = reverse_lazy("account_login")
 
@@ -54,17 +54,15 @@ class RegistrationRequestCreate(
     def get_success_message(self, cleaned_data):
         return self.object.status_to_string()
 
-    def form_valid(self, form):
-        challenge = self.request.challenge
-        form.instance.user = self.request.user
-        form.instance.challenge = challenge
-        try:
-            redirect = super().form_valid(form)
-            return redirect
-
-        except ValidationError as e:
-            form.add_error(None, ErrorList(e.messages))
-            return super().form_invalid(form)
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                "challenge": self.request.challenge,
+                "user": self.request.user,
+            }
+        )
+        return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -91,10 +89,33 @@ class RegistrationRequestList(
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        queryset = queryset.filter(
-            Q(challenge=self.request.challenge)
-        ).select_related("user__user_profile", "user__verification")
+        queryset = (
+            queryset.filter(challenge=self.request.challenge)
+            .select_related(
+                "user__user_profile",
+                "user__verification",
+            )
+            .prefetch_related("registration_question_answers__question")
+        )
+
         return queryset
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data.update(
+            {
+                "viewable_registration_questions": self._get_registration_questions(),
+            }
+        )
+        return context_data
+
+    def _get_registration_questions(self):
+        return filter_by_permission(
+            queryset=self.request.challenge.registration_questions.all(),
+            user=self.request.user,
+            codename="view_registrationquestion",
+            accept_user_perms=False,
+        )
 
 
 class RegistrationRequestUpdate(

@@ -51,7 +51,7 @@
                     <td>
                         {{ question.question_text }}
                     </td>
-                    <td>
+                    <td data-order="{{ question.required }}">
                         {% if question.required %}
                             <i class="fas fa-check text-success"></i>
                         {% else %}

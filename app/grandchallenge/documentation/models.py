@@ -6,7 +6,6 @@ from django.dispatch import receiver
 from django_extensions.db.fields import AutoSlugField
 from simple_history.models import HistoricalRecords
 
-from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -73,7 +72,6 @@ class DocPage(models.Model):
                     + 1
                 )
 
-        self.content = clean(self.content)
         super().save(*args, **kwargs)
 
     def position(self, position):

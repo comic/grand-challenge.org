@@ -734,6 +734,7 @@ BLEACH_ALLOWED_TAGS = [
     "br",
     "code",
     "col",
+    "del",
     "div",
     "em",
     "h1",
@@ -752,6 +753,7 @@ BLEACH_ALLOWED_TAGS = [
     "span",
     "strike",
     "strong",
+    "sub",
     "table",
     "tbody",
     "thead",
@@ -780,11 +782,16 @@ BLEACH_STRIP = strtobool(os.environ.get("BLEACH_STRIP", "True"))
 # The markdown processor
 MARKDOWNX_MEDIA_PATH = now().strftime("i/%Y/%m/%d/")
 MARKDOWNX_MARKDOWN_EXTENSIONS = [
-    "markdown.extensions.fenced_code",
-    "markdown.extensions.tables",
-    "markdown.extensions.sane_lists",
-    "markdown.extensions.codehilite",
     "markdown.extensions.attr_list",
+    "markdown.extensions.codehilite",
+    "markdown.extensions.fenced_code",
+    "markdown.extensions.md_in_html",
+    "markdown.extensions.sane_lists",
+    "markdown.extensions.tables",
+    "pymdownx.betterem",
+    "pymdownx.magiclink",
+    "pymdownx.tasklist",
+    "pymdownx.tilde",
     BS4Extension(),
 ]
 MARKDOWN_POST_PROCESSORS = []

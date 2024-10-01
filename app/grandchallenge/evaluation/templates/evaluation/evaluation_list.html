@@ -32,8 +32,7 @@
             <tr>
                 <th>Submission ID</th>
                 <th>Evaluation ID</th>
-                <th>Submission Created</th>
-                <th>Evaluation Updated</th>
+                <th>Evaluation Created</th>
                 {% if "change_challenge" in challenge_perms %}
                     <th>User</th>
                 {% endif %}
@@ -50,10 +49,9 @@
             <tbody>
             {% for evaluation in object_list %}
                 <tr>
-                    <td><a href="{{ evaluation.submission.get_absolute_url }}">{{ evaluation.submission.id }}</a></td>
-                    <td><a href="{{ evaluation.get_absolute_url }}">{{ evaluation.id }}</a></td>
-                    <td data-order="{{ evaluation.submission.created|date:"U" }}">{{ evaluation.submission.created }}</td>
-                    <td data-order="{{ evaluation.modified|date:"U" }}">{{ evaluation.modified }}</td>
+                    <td data-order="{{ evaluation.submission.id }}"><a href="{{ evaluation.submission.get_absolute_url }}">{{ evaluation.submission.id|split_first:"-" }}</a></td>
+                    <td data-order="{{ evaluation.id }}"><a href="{{ evaluation.get_absolute_url }}">{{ evaluation.id|split_first:"-" }}</a></td>
+                    <td data-order="{{ evaluation.created|date:"U" }}">{{ evaluation.created }}</td>
                     {% if "change_challenge" in challenge_perms %}
                         <td>
                             {{ evaluation.submission.creator|user_profile_link }}
@@ -81,7 +79,7 @@
                         <td>
                             {% if evaluation.status == evaluation.SUCCESS %}
                                 <form method="post"
-                                      action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=evaluation.pk %}">
+                                      action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=evaluation.pk %}?next={{ request.build_absolute_uri }}">
                                     {% csrf_token %}
                                     {% if evaluation.published %}
                                         <input type="hidden" name="published"

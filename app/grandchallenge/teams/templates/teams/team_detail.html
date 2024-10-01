@@ -81,7 +81,7 @@
         </form>
     {% endif %}
 
-    {% if user_team and "change_team" not in team_perms %}
+    {% if object == user_team.team and "change_team" not in team_perms %}
 
         <h3>Team Member Settings</h3>
 

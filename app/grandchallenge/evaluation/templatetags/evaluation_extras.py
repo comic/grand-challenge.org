@@ -33,3 +33,8 @@ def get_key(obj: dict, key):
         return obj[key]
     except (KeyError, TypeError):
         return ""
+
+
+@register.filter
+def split_first(object, character):
+    return str(object).split(character, 1)[0]
