@@ -7,7 +7,6 @@ from grandchallenge.pages.views import (
     PageDelete,
     PageDetail,
     PageList,
-    PagePandoc,
     PageUpdate,
 )
 
@@ -21,19 +20,4 @@ urlpatterns = [
     path("<slug>/", PageDetail.as_view(), name="detail"),
     path("<slug>/update/", PageUpdate.as_view(), name="update"),
     path("<slug>/delete/", PageDelete.as_view(), name="delete"),
-    path(
-        "<slug>/pandoc/",
-        PagePandoc.as_view(raw=False),
-        name="detail-pandoc",
-    ),
-    path(
-        "<slug>/pandoc/<str:format>/",
-        PagePandoc.as_view(raw=False),
-        name="detail-pandoc-format",
-    ),
-    path(
-        "<slug>/pandoc/<str:format>/raw/",
-        PagePandoc.as_view(raw=True),
-        name="detail-pandoc-format-raw",
-    ),
 ]

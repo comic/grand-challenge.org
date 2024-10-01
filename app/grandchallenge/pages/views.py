@@ -5,7 +5,6 @@ import pypandoc
 from bs4 import BeautifulSoup
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Q
 from django.http import Http404
 from django.views.generic import (
@@ -135,46 +134,6 @@ def html2md(*, html):
     markdown = re.sub(r"^\s*- - ", "  - ", markdown, flags=re.MULTILINE)
 
     return markdown
-
-
-class PagePandoc(
-    UserPassesTestMixin, ChallengeFilteredQuerysetMixin, DetailView
-):
-    model = Page
-    permission_required = "view_page"
-    raise_exception = True
-    login_url = reverse_lazy("account_login")
-
-    raw = None
-
-    def test_func(self):
-        return self.request.user.is_staff
-
-    def get_object(self, *args, **kwargs):
-        if "format" in self.kwargs and self.kwargs["format"] != "gfm":
-            raise PermissionDenied()
-        return super().get_object(*args, **kwargs)
-
-    def get_template_names(self):
-        if self.raw:
-            return ["pages/page_pandoc_detail.html"]
-        else:
-            return super().get_template_names()
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        if "format" in self.kwargs:
-            context.update(
-                {
-                    "converted_to_markdown": True,
-                    "converted_markdown": html2md(
-                        html=context["object"].html,
-                    ),
-                }
-            )
-
-        return context
 
 
 class ChallengeHome(PageDetail):
