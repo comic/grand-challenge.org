@@ -154,6 +154,7 @@ class RawImageUploadSession(UUIDModel):
 
     def process_images(
         self,
+        *,
         linked_app_label=None,
         linked_model_name=None,
         linked_object_pk=None,

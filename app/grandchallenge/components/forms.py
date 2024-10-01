@@ -113,7 +113,7 @@ class MultipleCIVForm(Form):
 
         # add fields for all interfaces that already exist on
         # other display sets / archive items
-        for slug, _ in base_obj.values_for_interfaces.items():
+        for slug in base_obj.values_for_interfaces.keys():
             current_value = None
 
             if instance:

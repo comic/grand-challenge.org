@@ -32,7 +32,7 @@ def _join_with_br(a, b):
         return b
 
 
-INTERFACE_FORM_FIELD_PREFIX = "interface_field_"
+INTERFACE_FORM_FIELD_PREFIX = "__INTERFACE_FIELD__"
 
 
 class InterfaceFormField:
