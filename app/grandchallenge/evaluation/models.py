@@ -425,12 +425,6 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             "timezone."
         ),
     )
-    submission_page_html = models.TextField(
-        help_text=(
-            "HTML to include on the submission page for this challenge."
-        ),
-        blank=True,
-    )
     submission_page_markdown = models.TextField(
         blank=True,
         help_text=(

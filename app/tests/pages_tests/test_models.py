@@ -10,15 +10,17 @@ from tests.factories import PageFactory
 def test_email_generated_on_change(settings):
     settings.MANAGERS = [("Manager", "manager@example.org")]
 
-    page = PageFactory(html="hello world!")
+    page = PageFactory(content_markdown="hello world!")
 
-    def update_html(html):
+    def update_content_markdown(content_markdown):
         p = Page.objects.get(pk=page.pk)
-        p.html = html
+        p.content_markdown = content_markdown
         p.save()
         return p
 
-    page = update_html(page.html + "Challenge still active.")
+    page = update_content_markdown(
+        page.content_markdown + "Challenge still active."
+    )
 
     # No emails should be generated if the challenge is active
     assert len(mail.outbox) == 0
@@ -26,7 +28,7 @@ def test_email_generated_on_change(settings):
     page.challenge.is_active_until = today().date()
     page.challenge.save()
 
-    page = update_html(page.html + "New Stuff!")
+    page = update_content_markdown(page.content_markdown + "New Stuff!")
 
     assert len(mail.outbox) == 1
 
@@ -36,7 +38,7 @@ def test_email_generated_on_change(settings):
         in report_email.body
     )
 
-    page = update_html(f"<b>{page.html}</b>")
+    page = update_content_markdown(f"**{page.content_markdown}**")
 
     # No emails should be generated without content change
     assert len(mail.outbox) == 0

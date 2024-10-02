@@ -12,7 +12,7 @@ from guardian.shortcuts import assign_perm, remove_perm
 from simple_history.models import HistoricalRecords
 
 from grandchallenge.core.models import FieldChangeMixin
-from grandchallenge.core.templatetags.bleach import clean
+from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.core.utils.query import index
 from grandchallenge.subdomains.utils import reverse
 
@@ -58,7 +58,6 @@ class Page(FieldChangeMixin, models.Model):
     hidden = models.BooleanField(
         default=False, help_text="Do not display this page in site menu"
     )
-    html = models.TextField(blank=True, default="")
     content_markdown = models.TextField(blank=True)
     uses_markdown = models.BooleanField(default=True)
     history = HistoricalRecords(
@@ -76,8 +75,6 @@ class Page(FieldChangeMixin, models.Model):
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
-        self.html = clean(self.html)
-
         if adding:
             # when saving for the first time only, put this page last in order
             try:
@@ -91,8 +88,10 @@ class Page(FieldChangeMixin, models.Model):
                 self.order = max_order["order__max"] + 1
             except TypeError:
                 self.order = 1
-        elif not self.challenge.is_active and self.has_changed("html"):
-            self.handle_change_html_for_inactive_challenge()
+        elif not self.challenge.is_active and self.has_changed(
+            "content_markdown"
+        ):
+            self.handle_changed_content_for_inactive_challenge()
 
         super().save(*args, **kwargs)
 
@@ -190,11 +189,15 @@ class Page(FieldChangeMixin, models.Model):
             .splitlines()
         )
 
-    def handle_change_html_for_inactive_challenge(self):
-        old_html = self.get_visible_text(self.initial_value("html"))
-        new_html = self.get_visible_text(self.html)
+    def handle_changed_content_for_inactive_challenge(self):
+        old_content = self.get_visible_text(
+            md2html(self.initial_value("content_markdown"))
+        )
+        new_content = self.get_visible_text(md2html(self.content_markdown))
 
-        diff = "\n".join(difflib.unified_diff(old_html, new_html, lineterm=""))
+        diff = "\n".join(
+            difflib.unified_diff(old_content, new_content, lineterm="")
+        )
 
         if diff:
             mail_managers(
