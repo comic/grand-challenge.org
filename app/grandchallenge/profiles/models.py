@@ -18,6 +18,10 @@ from guardian.shortcuts import assign_perm
 from guardian.utils import get_anonymous_user
 from stdimage import JPEGField
 
+from grandchallenge.components.models import (
+    ComponentInterfaceValue,
+    InterfaceKind,
+)
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import get_mugshot_path
@@ -246,22 +250,20 @@ class UserProfile(models.Model):
         )
 
     @cached_property
-    def file_civs_user_has_permission_to_use(self):
-        # local import to avoid circular dependency
-        from grandchallenge.components.models import (
-            ComponentInterfaceValue,
-            InterfaceKind,
-        )
-
-        job_query = get_objects_for_user(
-            self.user, "algorithms.view_job"
+    def file_civs_for_user(self):
+        job_inputs_query = get_objects_for_user(
+            user=self.user, perms="algorithms.view_job"
         ).filter(inputs__pk__in=OuterRef("pk"))
+        job_outputs_query = get_objects_for_user(
+            user=self.user, perms="algorithms.view_job"
+        ).filter(outputs__pk__in=OuterRef("pk"))
         display_set_query = get_objects_for_user(
-            self.user, "reader_studies.change_displayset"
+            user=self.user, perms="reader_studies.view_displayset"
         ).filter(values__pk__in=OuterRef("pk"))
         archive_item_query = get_objects_for_user(
-            self.user, "archives.change_archiveitem"
+            user=self.user, perms="archives.view_archiveitem"
         ).filter(values__pk__in=OuterRef("pk"))
+
         return (
             ComponentInterfaceValue.objects.filter(
                 Q(interface__kind__in=InterfaceKind.interface_type_file())
@@ -270,7 +272,8 @@ class UserProfile(models.Model):
                     & Q(interface__store_in_database=False)
                 )
             )
-            .annotate(has_view_job_perm=Exists(job_query))
+            .annotate(has_view_job_perm=Exists(job_inputs_query))
+            .annotate(has_view_job_perm=Exists(job_outputs_query))
             .annotate(has_change_ds_perm=Exists(display_set_query))
             .annotate(has_change_ai_perm=Exists(archive_item_query))
             .filter(

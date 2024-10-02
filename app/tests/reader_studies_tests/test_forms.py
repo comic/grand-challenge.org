@@ -1344,8 +1344,8 @@ def test_display_set_add_interface_form():
         auto_id="1",
     )
     assert sorted(form.fields.keys()) == [
-        "interface",
         f"{INTERFACE_FORM_FIELD_PREFIX}{ci_file.slug}",
+        "interface",
     ]
     assert isinstance(
         form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}{ci_file.slug}"].widget,
@@ -1361,8 +1361,8 @@ def test_display_set_add_interface_form():
         auto_id="1",
     )
     assert sorted(form.fields.keys()) == [
-        "interface",
         f"{INTERFACE_FORM_FIELD_PREFIX}{ci_value.slug}",
+        "interface",
     ]
     assert isinstance(
         form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}{ci_value.slug}"].widget,
@@ -1378,8 +1378,8 @@ def test_display_set_add_interface_form():
         auto_id="1",
     )
     assert sorted(form.fields.keys()) == [
-        "interface",
         f"{INTERFACE_FORM_FIELD_PREFIX}{ci_image.slug}",
+        "interface",
     ]
     assert isinstance(
         form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}{ci_image.slug}"].widget,

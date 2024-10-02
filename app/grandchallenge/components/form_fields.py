@@ -137,11 +137,9 @@ class InterfaceFormField:
         key = f"value_type_{INTERFACE_FORM_FIELD_PREFIX}{self.instance.slug}"
         if key in self.form_data.keys():
             type = self.form_data[key]
-        elif (
-            self.user.user_profile.file_civs_user_has_permission_to_use.filter(
-                interface=self.instance
-            ).exists()
-        ):
+        elif self.user.user_profile.file_civs_for_user.filter(
+            interface=self.instance
+        ).exists():
             type = "civ"
         else:
             type = "uuid"
@@ -173,7 +171,7 @@ class InterfaceFormField:
             )
 
             return ModelChoiceField(
-                queryset=self.user.user_profile.file_civs_user_has_permission_to_use.filter(
+                queryset=self.user.user_profile.file_civs_for_user.filter(
                     interface=self.instance
                 ),
                 widget=SelectUploadWidget(

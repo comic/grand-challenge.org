@@ -204,7 +204,7 @@ def test_unsubscribe_link(
 @pytest.mark.django_db
 def test_file_civs_user_has_permission_to_use():
     user = UserFactory()
-    assert list(user.user_profile.file_civs_user_has_permission_to_use) == []
+    assert list(user.user_profile.file_civs_for_user) == []
 
     ci_file = ComponentInterfaceFactory(
         kind=ComponentInterface.Kind.ANY, store_in_database=False
@@ -238,13 +238,11 @@ def test_file_civs_user_has_permission_to_use():
     ai_with_perm.values.set([civ5])
     ai_without_perm.values.set([civ6])
 
-    del user.user_profile.file_civs_user_has_permission_to_use
-    assert civ1 in user.user_profile.file_civs_user_has_permission_to_use
-    assert civ3 in user.user_profile.file_civs_user_has_permission_to_use
-    assert civ5 in user.user_profile.file_civs_user_has_permission_to_use
-    assert civ2 not in user.user_profile.file_civs_user_has_permission_to_use
-    assert civ4 not in user.user_profile.file_civs_user_has_permission_to_use
-    assert civ6 not in user.user_profile.file_civs_user_has_permission_to_use
-    assert (
-        civ_str not in user.user_profile.file_civs_user_has_permission_to_use
-    )
+    del user.user_profile.file_civs_for_user
+    assert civ1 in user.user_profile.file_civs_for_user
+    assert civ3 in user.user_profile.file_civs_for_user
+    assert civ5 in user.user_profile.file_civs_for_user
+    assert civ2 not in user.user_profile.file_civs_for_user
+    assert civ4 not in user.user_profile.file_civs_for_user
+    assert civ6 not in user.user_profile.file_civs_for_user
+    assert civ_str not in user.user_profile.file_civs_for_user
