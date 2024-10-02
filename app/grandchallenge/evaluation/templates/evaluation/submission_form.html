@@ -38,7 +38,7 @@
         {% include "evaluation/partials/phase_admin_warnings.html" with phase=phase %}
     {% endif %}
 
-    {{ phase.submission_page_html|clean }}
+    {{ phase.submission_page_markdown|md2html }}
 
     <h3>Create a new submission</h3>
 

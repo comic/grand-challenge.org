@@ -431,6 +431,13 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         ),
         blank=True,
     )
+    submission_page_markdown = models.TextField(
+        blank=True,
+        help_text=(
+            "Markdown to include on the submission page to provide "
+            "more context to users making a submission to the phase."
+        ),
+    )
     auto_publish_new_results = models.BooleanField(
         default=True,
         help_text=(

@@ -1,7 +1,10 @@
 {% load static %}
 {% load compress %}
 
-{# Bootstrap first, requires jquery from head_script #}
+{# jquery first #}
+<script type="text/javascript" src="{% static "vendored/jquery/jquery.min.js" %}"></script>
+
+{# Bootstrap next, requires jquery #}
 <script src="{% static 'vendored/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 
 {# DataTables with colvis #}

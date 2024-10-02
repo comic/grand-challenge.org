@@ -10,7 +10,6 @@ Disallow: /registrations/
 Disallow: /settings/
 Disallow: /socialauth/
 Disallow: /static/
-Disallow: /summernote/
 Disallow: /update/
 Disallow: /users/
 Disallow: /verifications/

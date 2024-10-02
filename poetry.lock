@@ -1553,23 +1553,6 @@ s3 = ["boto3 (>=1.4.4)"]
 sftp = ["paramiko (>=1.15)"]
 
 [[package]]
-name = "django-summernote"
-version = "0.8.20.0"
-description = "Summernote plugin for Django"
-optional = false
-python-versions = "*"
-files = [
-    {file = "django-summernote-0.8.20.0.tar.gz", hash = "sha256:52e9b12438ed9eac0d77729f758f2aae06e468b5cbce133e24100d58ae4e43a8"},
-]
-
-[package.dependencies]
-bleach = "*"
-django = "*"
-
-[package.extras]
-dev = ["django-dummy-plug", "pytest", "pytest-django"]
-
-[[package]]
 name = "django-timezone-field"
 version = "7.0"
 description = "A Django app providing DB, form, and REST framework fields for zoneinfo and pytz timezone objects."
@@ -5020,4 +5003,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.13"
-content-hash = "4ce3513becbf0521d691af86d41f29f95101eece8cffae3c7efc5bf2e2e72f21"
+content-hash = "5972faaae0f88c55b8af704d05b216b44734a0f37a6abc4d0a6b5833d8002fae"

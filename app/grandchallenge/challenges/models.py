@@ -326,6 +326,13 @@ class Challenge(ChallengeBase):
             "a data usage agreement here. You can use HTML markup here."
         ),
     )
+    registration_page_markdown = models.TextField(
+        blank=True,
+        help_text=(
+            "Markdown to include on the registration page to provide "
+            "more context to users registering for the challenge."
+        ),
+    )
     use_teams = models.BooleanField(
         default=False,
         help_text=(
