@@ -18,10 +18,6 @@ from guardian.shortcuts import assign_perm
 from guardian.utils import get_anonymous_user
 from stdimage import JPEGField
 
-from grandchallenge.components.models import (
-    ComponentInterfaceValue,
-    InterfaceKind,
-)
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import get_mugshot_path
@@ -251,6 +247,11 @@ class UserProfile(models.Model):
 
     @cached_property
     def file_civs_for_user(self):
+        from grandchallenge.components.models import (
+            ComponentInterfaceValue,
+            InterfaceKind,
+        )
+
         job_inputs_query = get_objects_for_user(
             user=self.user, perms="algorithms.view_job"
         ).filter(inputs__pk__in=OuterRef("pk"))
