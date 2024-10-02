@@ -124,7 +124,7 @@ class PageFactory(factory.django.DjangoModelFactory):
 
     challenge = factory.SubFactory(ChallengeFactory)
     display_title = factory.Sequence(lambda n: f"page_{n}")
-    html = factory.LazyAttribute(lambda t: f"<h2>{t.display_title}</h2>")
+    content_markdown = factory.LazyAttribute(lambda t: f"## {t.display_title}")
 
 
 class RegistrationRequestFactory(factory.django.DjangoModelFactory):

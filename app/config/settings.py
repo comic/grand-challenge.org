@@ -753,7 +753,7 @@ BLEACH_ALLOWED_ATTRIBUTES = {
     "td": ["colspan"],
     "video": ["src", "loop", "controls", "poster"],
 }
-BLEACH_ALLOWED_STYLES = ["height", "margin-left", "text-align", "width"]
+BLEACH_ALLOWED_STYLES = ["height", "width"]
 BLEACH_ALLOWED_PROTOCOLS = ["http", "https", "mailto"]
 BLEACH_STRIP = strtobool(os.environ.get("BLEACH_STRIP", "True"))
 
