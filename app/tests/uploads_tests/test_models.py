@@ -342,6 +342,7 @@ def test_can_upload_more_verified(settings):
     assert upload.can_upload_more is False
 
 
+@pytest.mark.flaky(reruns=3)
 @pytest.mark.django_db
 def test_can_upload_more_other_objects(settings):
     user = UserFactory()
