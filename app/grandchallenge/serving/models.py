@@ -1,10 +1,12 @@
 from django.conf import settings
 from django.db import models
+from django.db.models import Exists, OuterRef, Q
 
 from grandchallenge.algorithms.models import AlgorithmImage, AlgorithmModel
 from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import ChallengeRequest
 from grandchallenge.components.models import ComponentInterfaceValue
+from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.evaluation.models import Submission
 from grandchallenge.workstations.models import Feedback
 
@@ -42,4 +44,37 @@ class Download(models.Model):
     )
     algorithm_image = models.ForeignKey(
         AlgorithmImage, null=True, on_delete=models.CASCADE, editable=False
+    )
+
+
+def get_component_interface_values_for_user(*, user):
+    job_inputs_query = get_objects_for_user(
+        user=user, perms="algorithms.view_job"
+    ).filter(inputs__pk__in=OuterRef("pk"))
+
+    job_outputs_query = get_objects_for_user(
+        user=user, perms="algorithms.view_job"
+    ).filter(outputs__pk__in=OuterRef("pk"))
+
+    display_set_query = get_objects_for_user(
+        user=user, perms="reader_studies.view_displayset"
+    ).filter(values__pk__in=OuterRef("pk"))
+
+    archive_item_query = get_objects_for_user(
+        user=user, perms="archives.view_archiveitem"
+    ).filter(values__pk__in=OuterRef("pk"))
+
+    return (
+        ComponentInterfaceValue.objects.annotate(
+            has_view_job_inputs_perm=Exists(job_inputs_query)
+        )
+        .annotate(has_view_job_outputs_perm=Exists(job_outputs_query))
+        .annotate(has_view_ds_perm=Exists(display_set_query))
+        .annotate(has_view_ai_perm=Exists(archive_item_query))
+        .filter(
+            Q(has_view_job_inputs_perm=True)
+            | Q(has_view_job_outputs_perm=True)
+            | Q(has_view_ds_perm=True)
+            | Q(has_view_ai_perm=True)
+        )
     )

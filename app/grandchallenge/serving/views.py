@@ -14,7 +14,10 @@ from grandchallenge.challenges.models import ChallengeRequest
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.core.storage import internal_protected_s3_storage
 from grandchallenge.evaluation.models import Submission
-from grandchallenge.serving.models import Download
+from grandchallenge.serving.models import (
+    Download,
+    get_component_interface_values_for_user,
+)
 from grandchallenge.workstations.models import Feedback
 
 
@@ -136,7 +139,7 @@ def serve_component_interface_value(
     except (MultipleObjectsReturned, ComponentInterfaceValue.DoesNotExist):
         raise Http404("No ComponentInterfaceValue found.")
 
-    if civ in user.user_profile.file_civs_for_user:
+    if civ in get_component_interface_values_for_user(user=user):
         return protected_storage_redirect(
             name=civ.file.name, creator=user, component_interface_value=civ
         )

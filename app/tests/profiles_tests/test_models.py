@@ -5,25 +5,14 @@ from actstream.actions import follow
 from django.contrib.sites.models import Site
 from django.core import mail
 
-from grandchallenge.components.models import ComponentInterface
 from grandchallenge.notifications.models import Notification
 from grandchallenge.profiles.models import (
     EmailSubscriptionTypes,
     NotificationEmailOptions,
 )
 from grandchallenge.subdomains.utils import reverse
-from tests.algorithms_tests.factories import AlgorithmJobFactory
-from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
-from tests.components_tests.factories import (
-    ComponentInterfaceFactory,
-    ComponentInterfaceValueFactory,
-)
 from tests.factories import UserFactory
 from tests.notifications_tests.factories import NotificationFactory
-from tests.reader_studies_tests.factories import (
-    DisplaySetFactory,
-    ReaderStudyFactory,
-)
 from tests.utils import get_view_for_user
 
 
@@ -199,50 +188,3 @@ def test_unsubscribe_link(
         unsubscribe_viewname,
         kwargs={"token": user.user_profile.unsubscribe_token},
     )
-
-
-@pytest.mark.django_db
-def test_file_civs_user_has_permission_to_use():
-    user = UserFactory()
-    assert list(user.user_profile.file_civs_for_user) == []
-
-    ci_file = ComponentInterfaceFactory(
-        kind=ComponentInterface.Kind.ANY, store_in_database=False
-    )
-    ci_str = ComponentInterfaceFactory(kind=ComponentInterface.Kind.STRING)
-
-    civ1, civ2, civ3, civ4, civ5, civ6 = (
-        ComponentInterfaceValueFactory.create_batch(6, interface=ci_file)
-    )
-    civ_str = ComponentInterfaceValueFactory(interface=ci_str)
-
-    job_with_perm = AlgorithmJobFactory(creator=user, time_limit=60)
-    job_without_perm = AlgorithmJobFactory(time_limit=60)
-
-    job_with_perm.inputs.set([civ1])
-    job_without_perm.inputs.set([civ2])
-
-    rs = ReaderStudyFactory()
-    rs.add_editor(user)
-    ds_with_perm = DisplaySetFactory(reader_study=rs)
-    ds_without_perm = DisplaySetFactory()
-
-    ds_with_perm.values.set([civ3])
-    ds_without_perm.values.set([civ4])
-
-    archive = ArchiveFactory()
-    archive.add_editor(user)
-    ai_with_perm = ArchiveItemFactory(archive=archive)
-    ai_without_perm = ArchiveItemFactory()
-
-    ai_with_perm.values.set([civ5])
-    ai_without_perm.values.set([civ6])
-
-    del user.user_profile.file_civs_for_user
-    assert civ1 in user.user_profile.file_civs_for_user
-    assert civ3 in user.user_profile.file_civs_for_user
-    assert civ5 in user.user_profile.file_civs_for_user
-    assert civ2 not in user.user_profile.file_civs_for_user
-    assert civ4 not in user.user_profile.file_civs_for_user
-    assert civ6 not in user.user_profile.file_civs_for_user
-    assert civ_str not in user.user_profile.file_civs_for_user

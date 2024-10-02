@@ -1,5 +1,6 @@
 from django import forms
 from django.forms import ModelChoiceField
+from django.utils.functional import cached_property
 
 from grandchallenge.cases.widgets import (
     FlexibleImageField,
@@ -11,6 +12,9 @@ from grandchallenge.components.widgets import SelectUploadWidget
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.core.widgets import JSONEditorWidget
+from grandchallenge.serving.models import (
+    get_component_interface_values_for_user,
+)
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import (
@@ -137,9 +141,7 @@ class InterfaceFormField:
         key = f"value_type_{INTERFACE_FORM_FIELD_PREFIX}{self.instance.slug}"
         if key in self.form_data.keys():
             type = self.form_data[key]
-        elif self.user.user_profile.file_civs_for_user.filter(
-            interface=self.instance
-        ).exists():
+        elif self.civs_for_user_for_interface.exists():
             type = "civ"
         else:
             type = "uuid"
@@ -171,14 +173,18 @@ class InterfaceFormField:
             )
 
             return ModelChoiceField(
-                queryset=self.user.user_profile.file_civs_for_user.filter(
-                    interface=self.instance
-                ),
+                queryset=self.civs_for_user_for_interface,
                 widget=SelectUploadWidget(
                     attrs={"upload_link": file_upload_link}
                 ),
                 **self.kwargs,
             )
+
+    @cached_property
+    def civs_for_user_for_interface(self):
+        return get_component_interface_values_for_user(user=self.user).filter(
+            interface=self.instance
+        )
 
     @property
     def field(self):
