@@ -1,5 +1,7 @@
+import csv
 import json
 from functools import partial
+from io import StringIO
 
 import pytest
 from guardian.shortcuts import remove_perm
@@ -7,6 +9,7 @@ from guardian.shortcuts import remove_perm
 from grandchallenge.participants.models import (
     RegistrationQuestion,
     RegistrationQuestionAnswer,
+    RegistrationRequest,
 )
 from tests.factories import (
     ChallengeFactory,
@@ -300,3 +303,59 @@ def test_registration_request_list_view_permissions(client):
     assert (
         str.encode(findable_answer) not in response.content
     ), "Without question view permissions, no answer is shown"
+
+
+@pytest.mark.django_db
+def test_registration_question_answer_export(client):
+    ch = ChallengeFactory()
+    admin, participant, non_part_user = UserFactory.create_batch(3)
+    ch.add_admin(admin)
+    ch.add_participant(participant)
+
+    RegistrationRequestFactory(
+        challenge=ch, user=participant, status=RegistrationRequest.ACCEPTED
+    )  # Note: has no answer to the questions, should still show in the export
+
+    rq = RegistrationQuestionFactory(challenge=ch, question_text="Foo")
+
+    rr = RegistrationRequestFactory(challenge=ch, user=non_part_user)
+
+    RegistrationQuestionAnswer.objects.create(
+        question=rq,
+        registration_request=rr,
+        answer="bar",
+    )
+
+    for usr in (participant, non_part_user):
+        response = get_view_for_user(
+            viewname="participants:registration-question-answer-list-export",
+            client=client,
+            challenge=ch,
+            user=usr,
+        )
+        assert response.status_code == 200, "Sanity, an export should be made"
+
+        content = response.content.decode("utf-8")
+        csv_reader = csv.reader(StringIO(content))
+        csv_rows = list(csv_reader)
+
+        assert len(csv_rows) == 1 and csv_rows[0] == [
+            "Username",
+            "Registration Status",
+        ], "Only the header is shown "
+
+    response = get_view_for_user(
+        viewname="participants:registration-question-answer-list-export",
+        client=client,
+        challenge=ch,
+        user=admin,
+    )
+
+    content = response.content.decode("utf-8")
+    csv_reader = csv.reader(StringIO(content))
+    csv_rows = list(csv_reader)
+
+    assert len(csv_rows) == 3
+    assert csv_rows[0] == ["Username", "Registration Status", "Foo"]
+    assert csv_rows[1] == [participant.username, "Accepted", ""]
+    assert csv_rows[2] == [non_part_user.username, "Pending", "bar"]

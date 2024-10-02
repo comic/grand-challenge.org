@@ -1,5 +1,9 @@
+import csv
+from datetime import datetime
+
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
@@ -16,6 +20,7 @@ from grandchallenge.participants.forms import (
 )
 from grandchallenge.participants.models import (
     RegistrationQuestion,
+    RegistrationQuestionAnswer,
     RegistrationRequest,
 )
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
@@ -227,3 +232,63 @@ class RegistrationQuestionDelete(
             "participants:registration-question-list",
             kwargs={"challenge_short_name": self.object.challenge.short_name},
         )
+
+
+class RegistrationQuestionAnswerListExport(
+    LoginRequiredMixin, PermissionListMixin, ListView
+):
+    model = RegistrationQuestion
+    permission_required = "view_registrationquestion"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.filter(challenge=self.request.challenge)
+
+    def get(self, request, *_, **__):
+        questions = self.get_queryset()
+
+        answers = (
+            RegistrationQuestionAnswer.objects.filter(question__in=questions)
+            .select_related("question", "registration_request")
+            .all()
+        )
+
+        response = HttpResponse(content_type="text/csv")
+        now = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+        response["Content-Disposition"] = (
+            f'attachment; filename="{request.challenge.short_name}-registration-question-answers-{now}.csv"'
+        )
+
+        writer = csv.writer(response)
+
+        # Write header
+        header = ["Username", "Registration Status"]
+        for question in questions:
+            header.append(question.question_text)
+        writer.writerow(header)
+
+        if not request.user.has_perm(
+            perm="change_challenge",
+            obj=request.challenge,
+        ):
+            return response
+
+        for request in self.request.challenge.registrationrequest_set.all():
+            row = [
+                request.user.username,
+                request.get_status_display(),
+            ]
+            for question in questions:
+                matched_answer = answers.filter(
+                    question=question, registration_request=request
+                )
+                if matched_answer:
+                    # Should be only one, join as to not bug out
+                    row.append(" // ".join([a.answer for a in matched_answer]))
+                else:
+                    row.append("")
+            writer.writerow(row)
+
+        return response

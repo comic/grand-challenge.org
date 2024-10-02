@@ -20,6 +20,14 @@
 
     <h2>Participation Requests for {{ challenge.short_name }}</h2>
 
+    {% if viewable_registration_questions %}
+        <a class="btn btn-primary mb-4"
+            href="{% url 'participants:registration-question-answer-list-export' challenge_short_name=challenge.short_name %}"
+        >
+            <i class="fas fa-download pr-1"></i> Answers to questions
+        </a>
+    {% endif %}
+
     <div class="table-responsive">
         <table class="table table-hover table-borderless table-sm" id="participantsTable">
             <thead class="thead-light">
