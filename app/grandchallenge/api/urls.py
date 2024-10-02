@@ -1,5 +1,6 @@
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+from grandchallenge.participants.api import RegistrationQuestionAnswerViewSet
 from rest_framework import routers
 
 from grandchallenge.algorithms.views import (
@@ -64,6 +65,13 @@ router.register(
 
 # Challenges
 router.register(r"challenges", ChallengeViewSet, basename="challenge")
+
+# Participants
+router.register(
+    r"participants/registration-question-answers",
+    RegistrationQuestionAnswerViewSet,
+    basename="registration-question-answer",
+)
 
 # Component Interfaces
 router.register(
