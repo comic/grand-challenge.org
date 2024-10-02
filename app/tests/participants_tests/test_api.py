@@ -1,4 +1,5 @@
 import pytest
+
 from tests.factories import ChallengeFactory, UserFactory
 from tests.utils import get_view_for_user
 

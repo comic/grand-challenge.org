@@ -1,10 +1,7 @@
-from grandchallenge.participants.models import (
-    RegistrationQuestionAnswer,
-)
-from rest_framework.serializers import (
-    ModelSerializer,
-)
-from rest_framework.fields import SerializerMethodField, CharField
+from rest_framework.fields import CharField, SerializerMethodField
+from rest_framework.serializers import ModelSerializer
+
+from grandchallenge.participants.models import RegistrationQuestionAnswer
 
 
 class RegistrationQuestionAnswersSerializer(ModelSerializer):

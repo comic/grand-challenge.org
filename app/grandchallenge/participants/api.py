@@ -1,5 +1,15 @@
 import csv
+
 from django.http import HttpResponse
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import mixins, viewsets
+from rest_framework.filters import BaseFilterBackend
+from rest_framework.permissions import DjangoObjectPermissions
+from rest_framework.settings import api_settings
+from rest_framework.views import APIView
+from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
+from rest_framework_guardian.filters import ObjectPermissionsFilter
+
 from grandchallenge.api.permissions import IsAuthenticated
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.guardian import filter_by_permission
@@ -11,19 +21,9 @@ from grandchallenge.participants.models import (
     RegistrationQuestion,
     RegistrationQuestionAnswer,
 )
-
 from grandchallenge.participants.serializers import (
     RegistrationQuestionAnswersSerializer,
 )
-from rest_framework.permissions import DjangoObjectPermissions
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework_guardian.filters import ObjectPermissionsFilter
-from rest_framework.settings import api_settings
-from rest_framework import mixins, viewsets
-from rest_framework.views import APIView
-from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
-
-from rest_framework.filters import BaseFilterBackend
 
 
 class CanViewRegistrationQuestionFilter(BaseFilterBackend):

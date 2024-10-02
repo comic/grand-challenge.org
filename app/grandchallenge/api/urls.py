@@ -1,6 +1,5 @@
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
-from grandchallenge.participants.api import RegistrationQuestionAnswerViewSet
 from rest_framework import routers
 
 from grandchallenge.algorithms.views import (
@@ -22,6 +21,7 @@ from grandchallenge.notifications.views import (
     FollowViewSet,
     NotificationViewSet,
 )
+from grandchallenge.participants.api import RegistrationQuestionAnswerViewSet
 from grandchallenge.profiles.views import UserProfileViewSet
 from grandchallenge.reader_studies.views import (
     AnswerViewSet,
