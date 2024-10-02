@@ -7,3 +7,6 @@
     {{ COMMIT_ID|json_script:"commitID" }}
     <script type="module" src="{% static 'js/sentry.mjs' %}"></script>
 {% endif %}
+
+{# jquery must be loaded first (e.g. for django_select2) #}
+<script type="text/javascript" src="{% static "vendored/jquery/jquery.min.js" %}"></script>
