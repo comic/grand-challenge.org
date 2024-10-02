@@ -507,7 +507,6 @@ THIRD_PARTY_APPS = [
     "crispy_forms",  # bootstrap forms
     "crispy_bootstrap4",
     "django_select2",  # for multiple choice widgets
-    "django_summernote",  # for WYSIWYG page editing
     "dal",  # for autocompletion of selection fields
     "dal_select2",  # for autocompletion of selection fields
     "django_extensions",  # custom extensions
@@ -699,30 +698,9 @@ ACTSTREAM_SETTINGS = {
 
 ##############################################################################
 #
-# django-summernote
+# bleach
 #
 ##############################################################################
-
-# WYSIWYG editing with Summernote
-SUMMERNOTE_THEME = "bs4"
-SUMMERNOTE_CONFIG = {
-    "attachment_model": "uploads.SummernoteAttachment",
-    "attachment_require_authentication": True,
-    "summernote": {
-        "width": "100%",
-        "toolbar": [
-            ["style", ["style"]],
-            [
-                "font",
-                ["bold", "italic", "underline", "strikethrough", "clear"],
-            ],
-            ["para", ["ul", "ol", "paragraph"]],
-            ["insert", ["link", "picture", "hr"]],
-            ["view", ["fullscreen", "codeview"]],
-            ["help", ["help"]],
-        ],
-    },
-}
 
 # Settings for allowed HTML
 BLEACH_ALLOWED_TAGS = [

@@ -42,7 +42,7 @@ class Migration(migrations.Migration):
                     "file",
                     models.FileField(
                         storage=grandchallenge.core.storage.PublicS3Storage(),
-                        upload_to=grandchallenge.uploads.models.summernote_upload_filepath,
+                        upload_to=grandchallenge.uploads.models.public_media_filepath,
                     ),
                 ),
             ],

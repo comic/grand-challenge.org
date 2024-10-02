@@ -128,7 +128,6 @@ urlpatterns = [
             namespace="workstation-configs",
         ),
     ),
-    path("summernote/", include("django_summernote.urls")),
     path(
         "aiforradiology/",
         RedirectPath.as_view(

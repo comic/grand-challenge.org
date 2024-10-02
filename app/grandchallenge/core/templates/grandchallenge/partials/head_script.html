@@ -7,6 +7,3 @@
     {{ COMMIT_ID|json_script:"commitID" }}
     <script type="module" src="{% static 'js/sentry.mjs' %}"></script>
 {% endif %}
-
-{# Needs to be inline for some forms (summernote) #}
-<script type="text/javascript" src="{% static "vendored/jquery/jquery.min.js" %}"></script>
