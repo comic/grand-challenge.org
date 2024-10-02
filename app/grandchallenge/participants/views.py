@@ -20,7 +20,6 @@ from grandchallenge.participants.forms import (
 )
 from grandchallenge.participants.models import (
     RegistrationQuestion,
-    RegistrationQuestionAnswer,
     RegistrationRequest,
 )
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
@@ -109,18 +108,73 @@ class RegistrationRequestList(
         context_data = super().get_context_data(**kwargs)
         context_data.update(
             {
-                "viewable_registration_questions": self._get_registration_questions(),
+                "viewable_registration_questions": self._filter_registration_questions(),
             }
         )
         return context_data
 
-    def _get_registration_questions(self):
+    def _filter_registration_questions(self):
         return filter_by_permission(
             queryset=self.request.challenge.registration_questions.all(),
             user=self.request.user,
             codename="view_registrationquestion",
             accept_user_perms=False,
         )
+
+
+class RegistrationRequestListExport(RegistrationRequestList):
+    def get(self, request, *_, **__):
+        requests = self.get_queryset()
+        viewable_questions = self._filter_registration_questions()
+
+        response = HttpResponse(content_type="text/csv")
+        now = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+        response["Content-Disposition"] = (
+            f'attachment; filename="{request.challenge.short_name}-registration-requests-{now}.csv"'
+        )
+
+        writer = csv.writer(response)
+
+        # Write header
+        header = [
+            "Username",
+            "Created",
+            "Updated",
+            "Registration Status",
+            "Institution",
+            "Department",
+            "Country",
+        ]
+        for question in viewable_questions:
+            header.append(question.question_text)
+        writer.writerow(header)
+
+        if not request.user.has_perm(
+            perm="change_challenge",
+            obj=request.challenge,
+        ):
+            return response
+
+        for request in requests.all():
+            profile = request.user.user_profile
+            row = [
+                request.user.username,
+                request.created,
+                request.changed,
+                request.get_status_display(),
+                profile.institution,
+                profile.department,
+                profile.country.name,
+            ]
+            for question in viewable_questions:
+                last_answer = request.registration_question_answers.filter(
+                    question=question
+                ).last()  # should be only one, but select last to prevent export bugging out
+                row.append((last_answer and last_answer.answer) or "")
+
+            writer.writerow(row)
+
+        return response
 
 
 class RegistrationRequestUpdate(
@@ -163,7 +217,13 @@ class RegistrationQuestionList(
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        queryset = queryset.filter(challenge=self.request.challenge)
+        queryset = (
+            queryset.filter(challenge=self.request.challenge)
+            .select_related(
+                "user__user_profile",
+            )
+            .prefetch_related("registration_question_answers__question")
+        )
         return queryset
 
 
@@ -232,63 +292,3 @@ class RegistrationQuestionDelete(
             "participants:registration-question-list",
             kwargs={"challenge_short_name": self.object.challenge.short_name},
         )
-
-
-class RegistrationQuestionAnswerListExport(
-    LoginRequiredMixin, PermissionListMixin, ListView
-):
-    model = RegistrationQuestion
-    permission_required = "view_registrationquestion"
-    raise_exception = True
-    login_url = reverse_lazy("account_login")
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        return queryset.filter(challenge=self.request.challenge)
-
-    def get(self, request, *_, **__):
-        questions = self.get_queryset()
-
-        answers = (
-            RegistrationQuestionAnswer.objects.filter(question__in=questions)
-            .select_related("question", "registration_request")
-            .all()
-        )
-
-        response = HttpResponse(content_type="text/csv")
-        now = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-        response["Content-Disposition"] = (
-            f'attachment; filename="{request.challenge.short_name}-registration-question-answers-{now}.csv"'
-        )
-
-        writer = csv.writer(response)
-
-        # Write header
-        header = ["Username", "Registration Status"]
-        for question in questions:
-            header.append(question.question_text)
-        writer.writerow(header)
-
-        if not request.user.has_perm(
-            perm="change_challenge",
-            obj=request.challenge,
-        ):
-            return response
-
-        for request in self.request.challenge.registrationrequest_set.all():
-            row = [
-                request.user.username,
-                request.get_status_display(),
-            ]
-            for question in questions:
-                matched_answer = answers.filter(
-                    question=question, registration_request=request
-                )
-                if matched_answer:
-                    # Should be only one, join as to not bug out
-                    row.append(" // ".join([a.answer for a in matched_answer]))
-                else:
-                    row.append("")
-            writer.writerow(row)
-
-        return response

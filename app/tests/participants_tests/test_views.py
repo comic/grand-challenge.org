@@ -306,56 +306,80 @@ def test_registration_request_list_view_permissions(client):
 
 
 @pytest.mark.django_db
-def test_registration_question_answer_export(client):
+def test_registration_request_list_export(client):
     ch = ChallengeFactory()
     admin, participant, non_part_user = UserFactory.create_batch(3)
     ch.add_admin(admin)
     ch.add_participant(participant)
 
-    RegistrationRequestFactory(
+    rr_0 = RegistrationRequestFactory(
         challenge=ch, user=participant, status=RegistrationRequest.ACCEPTED
     )  # Note: has no answer to the questions, should still show in the export
 
     rq = RegistrationQuestionFactory(challenge=ch, question_text="Foo")
 
-    rr = RegistrationRequestFactory(challenge=ch, user=non_part_user)
+    rr_1 = RegistrationRequestFactory(challenge=ch, user=non_part_user)
 
     RegistrationQuestionAnswer.objects.create(
         question=rq,
-        registration_request=rr,
+        registration_request=rr_1,
         answer="bar",
     )
 
     for usr in (participant, non_part_user):
         response = get_view_for_user(
-            viewname="participants:registration-question-answer-list-export",
+            viewname="participants:registration-list-export",
             client=client,
             challenge=ch,
             user=usr,
         )
-        assert response.status_code == 200, "Sanity, an export should be made"
-
-        content = response.content.decode("utf-8")
-        csv_reader = csv.reader(StringIO(content))
-        csv_rows = list(csv_reader)
-
-        assert len(csv_rows) == 1 and csv_rows[0] == [
-            "Username",
-            "Registration Status",
-        ], "Only the header is shown "
+        assert response.status_code == 403, "Only admins are allowed to export"
 
     response = get_view_for_user(
-        viewname="participants:registration-question-answer-list-export",
+        viewname="participants:registration-list-export",
         client=client,
         challenge=ch,
         user=admin,
     )
+
+    assert response.status_code == 200, "Admin is allowed to export"
 
     content = response.content.decode("utf-8")
     csv_reader = csv.reader(StringIO(content))
     csv_rows = list(csv_reader)
 
     assert len(csv_rows) == 3
-    assert csv_rows[0] == ["Username", "Registration Status", "Foo"]
-    assert csv_rows[1] == [participant.username, "Accepted", ""]
-    assert csv_rows[2] == [non_part_user.username, "Pending", "bar"]
+    assert csv_rows[0] == [
+        "Username",
+        "Created",
+        "Updated",
+        "Registration Status",
+        "Institution",
+        "Department",
+        "Country",
+        "Foo",
+    ], "Has the correct header"
+    assert csv_rows[1] == [
+        participant.username,
+        rr_0.created,
+        rr_0.changed,
+        "Accepted",
+        # Profile
+        "",
+        "",
+        "",
+        # Answer
+        "",
+    ]
+    assert csv_rows[2] == [
+        non_part_user.username,
+        "Pending",
+        rr_1.created,
+        rr_1.changed,
+        # Profile
+        "",
+        "",
+        "",
+        # Answer
+        "bar",
+    ]

@@ -2,13 +2,13 @@ from django.urls import path
 
 from grandchallenge.participants.views import (
     ParticipantsList,
-    RegistrationQuestionAnswerListExport,
     RegistrationQuestionCreate,
     RegistrationQuestionDelete,
     RegistrationQuestionList,
     RegistrationQuestionUpdate,
     RegistrationRequestCreate,
     RegistrationRequestList,
+    RegistrationRequestListExport,
     RegistrationRequestUpdate,
 )
 
@@ -20,6 +20,11 @@ urlpatterns = [
         "registration/",
         RegistrationRequestList.as_view(),
         name="registration-list",
+    ),
+    path(
+        "registration/export/",
+        RegistrationRequestListExport.as_view(),
+        name="registration-list-export",
     ),
     path(
         "registration/create/",
@@ -50,10 +55,5 @@ urlpatterns = [
         "registration/questions/<uuid:pk>/delete/",
         RegistrationQuestionDelete.as_view(),
         name="registration-question-delete",
-    ),
-    path(
-        "registration/questions/answers/export/",
-        RegistrationQuestionAnswerListExport.as_view(),
-        name="registration-question-answer-list-export",
     ),
 ]
