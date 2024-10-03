@@ -174,6 +174,8 @@ class EvaluationAdmin(admin.ModelAdmin):
         "task_on_success",
         "task_on_failure",
         "runtime_metrics",
+        "claimed_by",
+        "ground_truth",
     )
     actions = (requeue_jobs, cancel_jobs, deprovision_jobs)
 
