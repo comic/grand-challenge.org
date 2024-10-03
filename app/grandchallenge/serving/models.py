@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.db import models
-from django.db.models import Exists, OuterRef, Q
+from django.db.models import Exists, OuterRef
 
 from grandchallenge.algorithms.models import AlgorithmImage, AlgorithmModel
 from grandchallenge.cases.models import Image
@@ -64,17 +64,9 @@ def get_component_interface_values_for_user(*, user):
         user=user, perms="archives.view_archiveitem"
     ).filter(values__pk__in=OuterRef("pk"))
 
-    return (
-        ComponentInterfaceValue.objects.annotate(
-            has_view_job_inputs_perm=Exists(job_inputs_query)
-        )
-        .annotate(has_view_job_outputs_perm=Exists(job_outputs_query))
-        .annotate(has_view_ds_perm=Exists(display_set_query))
-        .annotate(has_view_ai_perm=Exists(archive_item_query))
-        .filter(
-            Q(has_view_job_inputs_perm=True)
-            | Q(has_view_job_outputs_perm=True)
-            | Q(has_view_ds_perm=True)
-            | Q(has_view_ai_perm=True)
-        )
-    )
+    return ComponentInterfaceValue.objects.annotate(
+        user_has_view_permission=Exists(job_inputs_query)
+        | Exists(job_outputs_query)
+        | Exists(display_set_query)
+        | Exists(archive_item_query)
+    ).filter(user_has_view_permission=True)

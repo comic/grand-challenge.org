@@ -23,8 +23,8 @@ def test_get_component_interface_values_for_user():
 
     ci = ComponentInterfaceFactory()
 
-    civ1, civ2, civ3, civ4, civ5, civ6 = (
-        ComponentInterfaceValueFactory.create_batch(6, interface=ci)
+    civ1, civ2, civ3, civ4, civ5, civ6, civ7, civ8 = (
+        ComponentInterfaceValueFactory.create_batch(8, interface=ci)
     )
 
     job_with_perm = AlgorithmJobFactory(creator=user, time_limit=60)
@@ -32,26 +32,30 @@ def test_get_component_interface_values_for_user():
 
     job_with_perm.inputs.set([civ1])
     job_without_perm.inputs.set([civ2])
+    job_with_perm.outputs.set([civ3])
+    job_without_perm.outputs.set([civ4])
 
     rs = ReaderStudyFactory()
     rs.add_editor(user)
     ds_with_perm = DisplaySetFactory(reader_study=rs)
     ds_without_perm = DisplaySetFactory()
 
-    ds_with_perm.values.set([civ3])
-    ds_without_perm.values.set([civ4])
+    ds_with_perm.values.set([civ5])
+    ds_without_perm.values.set([civ6])
 
     archive = ArchiveFactory()
     archive.add_editor(user)
     ai_with_perm = ArchiveItemFactory(archive=archive)
     ai_without_perm = ArchiveItemFactory()
 
-    ai_with_perm.values.set([civ5])
-    ai_without_perm.values.set([civ6])
+    ai_with_perm.values.set([civ7])
+    ai_without_perm.values.set([civ8])
 
     assert civ1 in get_component_interface_values_for_user(user=user)
     assert civ3 in get_component_interface_values_for_user(user=user)
     assert civ5 in get_component_interface_values_for_user(user=user)
+    assert civ7 in get_component_interface_values_for_user(user=user)
     assert civ2 not in get_component_interface_values_for_user(user=user)
     assert civ4 not in get_component_interface_values_for_user(user=user)
     assert civ6 not in get_component_interface_values_for_user(user=user)
+    assert civ8 not in get_component_interface_values_for_user(user=user)
