@@ -1,8 +1,5 @@
-import re
 from datetime import datetime
 
-import pypandoc
-from bs4 import BeautifulSoup
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Count, Q
@@ -86,54 +83,6 @@ class PageDetail(
         user = self.request.user
         page = self.get_object()
         return page.can_be_viewed_by(user=user)
-
-
-def html2md(*, html):
-    soup = BeautifulSoup(html, "html.parser")
-
-    for span in soup.find_all("span"):
-        span.unwrap()
-
-    # Remove empty divs, but allow alerts
-    for div in soup.find_all("div"):
-        is_alert = div.get("class") and "alert" in div["class"]
-
-        if is_alert:
-            div["markdown"] = "1"
-        else:
-            div.unwrap()
-
-    # Remove empty headers
-    for header in soup.find_all(["h1", "h2", "h3", "h4", "h5", "h6"]):
-        if not header.get_text(strip=True) and not header.find("img"):
-            header.decompose()
-
-    markdown = pypandoc.convert_text(
-        source=str(soup),
-        format="html",
-        to="gfm",
-        sandbox=True,
-    )
-
-    # Replace image tags that span multiple lines
-    markdown = re.sub(
-        r"<img\s+([^>]+)>",
-        lambda match: "<img " + match.group(1).replace("\n", " ") + ">",
-        markdown,
-    )
-    markdown = re.sub(
-        r"<a\s+([^>]+)>",
-        lambda match: "<a " + match.group(1).replace("\n", " ") + ">",
-        markdown,
-    )
-
-    # Empty headers
-    markdown = re.sub(r"^\s*#+\s*$\n?", "", markdown, flags=re.MULTILINE)
-
-    # Nested list correction
-    markdown = re.sub(r"^\s*- - ", "  - ", markdown, flags=re.MULTILINE)
-
-    return markdown
 
 
 class ChallengeHome(PageDetail):

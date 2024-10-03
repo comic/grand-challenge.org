@@ -21,7 +21,6 @@ from django.forms import (
 from django.utils.html import format_html
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
-from django_summernote.widgets import SummernoteInplaceWidget
 
 from grandchallenge.algorithms.forms import UserAlgorithmsForPhaseMixin
 from grandchallenge.algorithms.models import Job
@@ -41,7 +40,7 @@ from grandchallenge.core.guardian import (
     get_objects_for_user,
 )
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
-from grandchallenge.core.widgets import JSONEditorWidget
+from grandchallenge.core.widgets import JSONEditorWidget, MarkdownEditorWidget
 from grandchallenge.evaluation.models import (
     EXTRA_RESULT_COLUMNS_SCHEMA,
     CombinedLeaderboard,
@@ -62,7 +61,7 @@ phase_options = ("title", "public", "parent")
 submission_options = (
     "submissions_open_at",
     "submissions_close_at",
-    "submission_page_html",
+    "submission_page_markdown",
     "creator_must_be_verified",
     "submissions_limit_per_user_per_period",
     "submission_limit_period",
@@ -190,7 +189,7 @@ class PhaseUpdateForm(
             *algorithm_setting_options,
         )
         widgets = {
-            "submission_page_html": SummernoteInplaceWidget(),
+            "submission_page_markdown": MarkdownEditorWidget,
             "extra_results_columns": JSONEditorWidget(
                 schema=EXTRA_RESULT_COLUMNS_SCHEMA
             ),

@@ -8,5 +8,5 @@
     <script type="module" src="{% static 'js/sentry.mjs' %}"></script>
 {% endif %}
 
-{# Needs to be inline for some forms (summernote) #}
+{# jquery must be loaded first (e.g. for django_select2) #}
 <script type="text/javascript" src="{% static "vendored/jquery/jquery.min.js" %}"></script>

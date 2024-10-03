@@ -14,9 +14,6 @@
     </ol>
 {% endblock %}
 
-{# Do not show the footer as this is broken with SummernoteInplaceWidget #}
-{% block footer %}{% endblock %}
-
 {% block content %}
 
     <h2>{% if object %}Update {{ object.title }} Phase{% else %}Add a New Phase{% endif %}</h2>

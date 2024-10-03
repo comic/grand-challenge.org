@@ -318,12 +318,11 @@ class Challenge(ChallengeBase):
         default=True,
         help_text="If true, show a registration page on the challenge site.",
     )
-    registration_page_text = models.TextField(
-        default="",
+    registration_page_markdown = models.TextField(
         blank=True,
         help_text=(
-            "The text to use on the registration page, you could include "
-            "a data usage agreement here. You can use HTML markup here."
+            "Markdown to include on the registration page to provide "
+            "more context to users registering for the challenge."
         ),
     )
     use_teams = models.BooleanField(

@@ -247,7 +247,7 @@ def test_page_move(
         data={
             "display_title": pages[page_to_move].display_title,
             "permission_level": pages[page_to_move].permission_level,
-            "html": pages[page_to_move].html,
+            "content_markdown": pages[page_to_move].content_markdown,
             "move": move_op,
         },
     )

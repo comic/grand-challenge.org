@@ -11,7 +11,7 @@ from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
-def test_setting_submission_page_html(client, challenge_set):
+def test_setting_submission_page_markdown(client, challenge_set):
     custom_html = "<p>My custom html</p>"
 
     response = get_view_for_user(
@@ -28,7 +28,7 @@ def test_setting_submission_page_html(client, challenge_set):
     assert custom_html not in response.rendered_content
 
     phase = challenge_set.challenge.phase_set.get()
-    phase.submission_page_html = custom_html
+    phase.submission_page_markdown = custom_html
     phase.save()
 
     response = get_view_for_user(

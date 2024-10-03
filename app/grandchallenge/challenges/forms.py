@@ -14,9 +14,9 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
-from django_summernote.widgets import SummernoteInplaceWidget
 
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
+from grandchallenge.core.widgets import MarkdownEditorWidget
 from grandchallenge.subdomains.utils import reverse_lazy
 
 information_items = (
@@ -42,7 +42,7 @@ event_items = ("event_url", "workshop_date")
 registration_items = (
     "use_registration_page",
     "access_request_handling",
-    "registration_page_text",
+    "registration_page_markdown",
 )
 
 
@@ -81,7 +81,7 @@ class ChallengeUpdateForm(forms.ModelForm):
             "organizations": Select2MultipleWidget,
             "series": Select2MultipleWidget,
             "publications": Select2MultipleWidget,
-            "registration_page_text": SummernoteInplaceWidget(),
+            "registration_page_markdown": MarkdownEditorWidget,
         }
         help_texts = {
             "publications": format_lazy(

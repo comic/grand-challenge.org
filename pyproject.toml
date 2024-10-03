@@ -51,7 +51,6 @@ gunicorn = "*"
 uvicorn = {version = "*", extras = ["standard"]}
 "django-select2" = "*"
 django-celery-results = "!=2.4.0"
-django-summernote = "*"
 bleach = {version = "*", extras = ["css"]}
 jsonschema = "*"
 django-autocomplete-light = "*"
@@ -99,7 +98,6 @@ psycopg = {version = ">3.1.8", extras = ["c"]}
 pycurl = "!=7.45.3" # Import issue with 7.45.3 (https://github.com/comic/grand-challenge.org/issues/3252)
 pyjwt = "*"
 beautifulsoup4 = "*"
-pypandoc-binary = "*"
 pymdown-extensions = "*"
 
 [tool.poetry.group.dev.dependencies]

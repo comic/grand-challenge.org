@@ -8,13 +8,11 @@ from django.db import models
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.text import get_valid_filename
-from django.utils.timezone import now
-from django_summernote.models import AbstractAttachment
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.models import UUIDModel
-from grandchallenge.core.storage import copy_s3_object, public_s3_storage
+from grandchallenge.core.storage import copy_s3_object
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.models import Verification
@@ -29,20 +27,6 @@ def public_media_filepath(instance, filename):
 
     return os.path.join(
         "f", subfolder, str(instance.pk), get_valid_filename(filename)
-    )
-
-
-def summernote_upload_filepath(instance, filename):
-    return os.path.join(
-        now().strftime("i/%Y/%m/%d"), get_valid_filename(filename)
-    )
-
-
-class SummernoteAttachment(AbstractAttachment):
-    """Workaround for custom upload locations from summernote."""
-
-    file = models.FileField(
-        upload_to=summernote_upload_filepath, storage=public_s3_storage
     )
 
 

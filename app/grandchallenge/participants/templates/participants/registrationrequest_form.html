@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
-{% load clean from bleach %}
+{% load bleach %}
 {% load url %}
 
 {% block breadcrumbs %}
@@ -20,7 +20,7 @@
     <h2>Join {{ challenge.short_name }}</h2>
 
     <p>
-        {{ challenge.registration_page_text|clean }}
+        {{ challenge.registration_page_markdown|md2html }}
     </p>
 
 
