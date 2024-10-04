@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}
-    Algorithm Job Progress - {{ block.super }}
+    Progress of Result {{ object.pk }} - {{ object.algorithm_image.algorithm.title }} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}

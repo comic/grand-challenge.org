@@ -4,7 +4,7 @@
 {% load guardian_tags %}
 
 {% block title %}
-    GitHub Repository Link - {{ block.super }}
+    {{ algorithm.repo_name|yesno:"Update,Add" }} GitHub Repository Link - {{ algorithm.title }} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}

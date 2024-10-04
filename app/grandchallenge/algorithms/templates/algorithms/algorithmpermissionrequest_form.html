@@ -3,6 +3,10 @@
 {% load clean from bleach %}
 {% load guardian_tags %}
 
+{% block title %}
+    {% get_obj_perms request.user for algorithm as "algorithm_perms" %}
+    {% if "change_algorithm" in algorithm_perms %}Review Access Request{% else %}Request Access{% endif %} - {{ algorithm.title }} - {{ block.super }}
+{% endblock %}
 
 {% block breadcrumbs %}
     {% get_obj_perms request.user for algorithm as "algorithm_perms" %}

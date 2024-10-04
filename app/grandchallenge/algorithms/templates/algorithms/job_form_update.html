@@ -3,7 +3,7 @@
 {% load url %}
 
 {% block title %}
-    Update Algorithm Result - {{ block.super }}
+    Update Result {{ object.pk }} - {{ object.algorithm_image.algorithm.title }} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}

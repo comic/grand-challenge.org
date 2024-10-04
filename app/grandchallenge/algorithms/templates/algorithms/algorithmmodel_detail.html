@@ -8,7 +8,7 @@
 {% load naturaldelta %}
 
 {% block title %}
-    Algorithm Model - {{ block.super }}
+    {{ object }} - {{ object.algorithm.title }} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
