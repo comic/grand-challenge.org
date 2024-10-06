@@ -4,7 +4,9 @@
 {% load bleach %}
 {% load guardian_tags %}
 
-{% block title %}{{ object.title }} - Blogs - {{ block.super }}{% endblock %}
+{% block title %}
+    {{ object.title }} - Blogs - {{ block.super }}
+{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">

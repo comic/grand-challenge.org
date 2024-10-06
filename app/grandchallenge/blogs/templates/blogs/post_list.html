@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 {% load url %}
 
-{% block title %}Blogs - {{ block.super }}{% endblock %}
+{% block title %}
+    {% if tag %}Tag: {{ tag }} -{% endif %} Blogs - {{ block.super }}
+{% endblock %}
 
 {% block breadcrumbs %}
     {% if tag %}
