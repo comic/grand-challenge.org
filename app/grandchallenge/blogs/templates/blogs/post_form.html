@@ -3,7 +3,7 @@
 {% load url %}
 
 {% block title %}
-    {{ object|yesno:"Update,Create Post" }} -{% if object %} {{ object }} -{% endif %} {{ block.super }}
+    {% if object %}Update{% else %}Create{% endif %} -{% if object %} {{ object }} -{% endif %} {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
