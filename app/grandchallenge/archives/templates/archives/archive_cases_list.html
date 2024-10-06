@@ -2,6 +2,10 @@
 {% load guardian_tags %}
 {% load static %}
 
+{% block title %}
+    Images - {{ archive.title }} - {{ block.super }}
+{% endblock %}
+
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'archives:list' %}">Archives</a></li>
