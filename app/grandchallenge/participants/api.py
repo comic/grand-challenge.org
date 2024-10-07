@@ -1,56 +1,48 @@
-import csv
-
-from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import mixins, viewsets
+from rest_framework import mixins
 from rest_framework.filters import BaseFilterBackend
-from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.settings import api_settings
-from rest_framework.views import APIView
-from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
-from rest_framework_guardian.filters import ObjectPermissionsFilter
+from rest_framework.viewsets import GenericViewSet
 
 from grandchallenge.api.permissions import IsAuthenticated
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.guardian import filter_by_permission
-from grandchallenge.core.renderers import PaginatedCSVRenderer
-from grandchallenge.participants.filters import (
-    RegistrationQuestionAnswerFilter,
-)
-from grandchallenge.participants.models import (
-    RegistrationQuestion,
-    RegistrationQuestionAnswer,
+from grandchallenge.participants.filters import RegistrationRequestFilter
+from grandchallenge.participants.models import RegistrationRequest
+from grandchallenge.participants.renderers import (
+    RegistrationRequestCSVRenderer,
 )
 from grandchallenge.participants.serializers import (
-    RegistrationQuestionAnswersSerializer,
+    RegistrationRequestSerializer,
 )
 
 
-class CanViewRegistrationQuestionFilter(BaseFilterBackend):
+class CanViewRegistrationRequestFilter(BaseFilterBackend):
 
     def filter_queryset(self, request, queryset, view):
-        return queryset.filter(
-            question__in=filter_by_permission(
-                queryset=RegistrationQuestion.objects.filter(
-                    answers__in=queryset
-                ),
-                user=request.user,
-                codename="view_registrationquestion",
-                accept_user_perms=False,
-            )
+        viewable_challenges = filter_by_permission(
+            queryset=Challenge.objects.all(),
+            user=request.user,
+            codename="change_challenge",
+            accept_user_perms=False,
         )
 
+        return queryset.filter(challenge__in=viewable_challenges)
 
-class RegistrationQuestionAnswerViewSet(mixins.ListModelMixin, GenericViewSet):
-    serializer_class = RegistrationQuestionAnswersSerializer
-    queryset = RegistrationQuestionAnswer.objects.all().select_related(
-        "question__challenge",
-        "registration_request",
+
+class RegistrationRequestViewSet(mixins.ListModelMixin, GenericViewSet):
+    serializer_class = RegistrationRequestSerializer
+    queryset = (
+        RegistrationRequest.objects.select_related(
+            "user__user_profile",
+        )
+        .prefetch_related("registration_question_answers__question")
+        .order_by("created")
     )
     permission_classes = [IsAuthenticated]
-    filter_backends = [DjangoFilterBackend, CanViewRegistrationQuestionFilter]
-    filterset_class = RegistrationQuestionAnswerFilter
+    filter_backends = [DjangoFilterBackend, CanViewRegistrationRequestFilter]
+    filterset_class = RegistrationRequestFilter
     renderer_classes = (
         *api_settings.DEFAULT_RENDERER_CLASSES,
-        PaginatedCSVRenderer,
+        RegistrationRequestCSVRenderer,
     )

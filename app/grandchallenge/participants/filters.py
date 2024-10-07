@@ -1,14 +1,9 @@
-from django_filters import CharFilter
 from django_filters.rest_framework import FilterSet
 
-from grandchallenge.participants.models import (
-    RegistrationQuestion,
-    RegistrationQuestionAnswer,
-)
-from grandchallenge.reader_studies.models import Answer, ReaderStudy
+from grandchallenge.participants.models import RegistrationRequest
 
 
-class RegistrationQuestionAnswerFilter(FilterSet):
+class RegistrationRequestFilter(FilterSet):
     class Meta:
-        model = RegistrationQuestionAnswer
-        fields = ("question__challenge__short_name",)
+        model = RegistrationRequest
+        fields = ("challenge__short_name",)
