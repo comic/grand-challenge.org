@@ -1,6 +1,10 @@
 {% extends "groups/groups_form_base.html" %}
 {% load url %}
 
+{% block title %}
+    Add author - {{ object.title }} - {{ block.super }}
+{% endblock %}
+
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'blogs:list' %}">Blogs</a></li>

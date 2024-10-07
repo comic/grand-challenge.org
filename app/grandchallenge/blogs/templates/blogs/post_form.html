@@ -2,7 +2,9 @@
 {% load crispy_forms_tags %}
 {% load url %}
 
-{% block title %}{% if object %}Update{% else %}Create{% endif %} Post - {{ block.super }}{% endblock %}
+{% block title %}
+    {% if object %}Update{% else %}Create{% endif %} -{% if object %} {{ object }} -{% endif %} {{ block.super }}
+{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
