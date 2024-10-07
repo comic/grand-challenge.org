@@ -1,4 +1,5 @@
 import pytest
+from guardian.shortcuts import remove_perm
 
 from grandchallenge.participants.models import (
     RegistrationQuestionAnswer,
@@ -20,17 +21,28 @@ def test_registration_request_api_list(client):
     ch.add_admin(admin)
     ch.add_participant(participant)
 
+    rq_0 = RegistrationQuestionFactory(challenge=ch, question_text="Foo")
+    rq_1 = RegistrationQuestionFactory(challenge=ch, question_text="No Foo")
+
+    remove_perm(
+        "view_registrationquestion", ch.admins_group, rq_1
+    )  # non-permitted viewable question
+
     RegistrationRequestFactory(
         challenge=ch, user=participant, status=RegistrationRequest.ACCEPTED
     )  # Note: has no answer to the questions, should still show in the export
 
-    rq = RegistrationQuestionFactory(challenge=ch, question_text="Foo")
     rr_1 = RegistrationRequestFactory(challenge=ch, user=non_part_user)
 
     RegistrationQuestionAnswer.objects.create(
-        question=rq,
+        question=rq_0,
         registration_request=rr_1,
         answer="bar",
+    )
+    RegistrationQuestionAnswer.objects.create(
+        question=rq_1,
+        registration_request=rr_1,
+        answer="no bar",
     )
 
     response = get_view_for_user(
