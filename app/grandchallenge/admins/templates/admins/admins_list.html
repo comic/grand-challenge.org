@@ -1,6 +1,10 @@
 {% extends 'auth/user_list.html' %}
 {% load url %}
 
+{% block title %}
+    Admins - {% firstof challenge.title challenge.short_name %} - {{ block.super }}
+{% endblock %}
+
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a
