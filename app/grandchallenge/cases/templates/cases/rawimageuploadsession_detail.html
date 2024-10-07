@@ -5,7 +5,9 @@
 {% load pathlib %}
 {% load static %}
 
-{% block title %}Upload Session {{ object.pk }} - {{ block.super }}{% endblock %}
+{% block title %}
+    {{ object.pk }} - Uplaods - {{ block.super }}
+{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
