@@ -3,6 +3,10 @@
 {% load url %}
 {% load meta_attr %}
 
+{% block title %}
+    {{ base_object.civ_set_model|verbose_name_plural|title }} - {{ base_object }} - {{ block.super }}
+{% endblock %}
+
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{{ base_object.list_url }}">{{ base_object|verbose_name_plural|title }}</a></li>

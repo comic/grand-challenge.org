@@ -5,7 +5,11 @@
 {% load bleach %}
 
 {% block title %}
-    {{ object_type|title }} {{ list_type|title }} Options - {{ block.super }}
+    {% if object_type == object_type_options.ALGORITHM %}
+        {{ list_type|title }} - Interface Options - {{ block.super }}
+    {% else %}
+        Interface Options - {{ block.super }}
+    {% endif %}
 {% endblock %}
 
 {% block breadcrumbs %}

@@ -5,9 +5,8 @@
 {% load civ %}
 {% load guardian_tags %}
 
-
 {% block title %}
-    {{ object.title }} - {{ block.super }}
+    {{ object.pk }} - {{ object.base_object.civ_set_model|verbose_name_plural|title }} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
