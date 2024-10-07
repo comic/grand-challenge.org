@@ -60,7 +60,11 @@
 <span class="kn">from</span> <span class="nn">guardian.models</span> <span class="kn">import</span> <span class="n">GroupObjectPermissionBase</span><span class="p">,</span> <span class="n">UserObjectPermissionBase</span>
 <span class="kn">from</span> <span class="nn">guardian.shortcuts</span> <span class="kn">import</span> <span class="n">assign_perm</span><span class="p">,</span> <span class="n">remove_perm</span>
 
-<span class="kn">from</span> <span class="nn">grandchallenge.algorithms.models</span> <span class="kn">import</span> <span class="n">AlgorithmImage</span><span class="p">,</span> <span class="n">AlgorithmModel</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.algorithms.models</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AlgorithmImage</span><span class="p">,</span>
+    <span class="n">AlgorithmModel</span><span class="p">,</span>
+    <span class="n">Job</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.archives.models</span> <span class="kn">import</span> <span class="n">Archive</span><span class="p">,</span> <span class="n">ArchiveItem</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.challenges.models</span> <span class="kn">import</span> <span class="n">Challenge</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.models</span> <span class="kn">import</span> <span class="p">(</span>
@@ -1535,6 +1539,70 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">output_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">outputs</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span> <span class="nf">algorithm_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">algorithm_inputs</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span> <span class="nf">valid_archive_item_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="n">i</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">archive</span><span class="o">.</span><span class="n">items</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+                <span class="n">interface_match_count</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span>
+                    <span class="s2">&quot;values&quot;</span><span class="p">,</span>
+                    <span class="nb">filter</span><span class="o">=</span><span class="n">Q</span><span class="p">(</span><span class="n">values__interface__in</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">algorithm_inputs</span><span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">interface_match_count</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">algorithm_inputs</span><span class="p">))</span>
+            <span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span><span class="s2">&quot;values&quot;</span><span class="p">)</span>
+        <span class="p">}</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span> <span class="nf">successful_jobs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">algorithm_model</span><span class="p">:</span>
+            <span class="n">extra_filter</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;algorithm_model&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">algorithm_model</span><span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">extra_filter</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;algorithm_model__isnull&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+
+        <span class="n">successful_jobs</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">Job</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">algorithm_image</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">algorithm_image</span><span class="p">,</span>
+                <span class="n">status</span><span class="o">=</span><span class="n">Job</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">extra_filter</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+                <span class="n">inputs_match_count</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span>
+                    <span class="s2">&quot;inputs&quot;</span><span class="p">,</span>
+                    <span class="nb">filter</span><span class="o">=</span><span class="n">Q</span><span class="p">(</span>
+                        <span class="n">inputs__in</span><span class="o">=</span><span class="p">{</span>
+                            <span class="n">civ</span>
+                            <span class="k">for</span> <span class="n">civ_set</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_archive_item_values</span>
+                            <span class="k">for</span> <span class="n">civ</span> <span class="ow">in</span> <span class="n">civ_set</span>
+                        <span class="p">}</span>
+                    <span class="p">),</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">inputs_match_count</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">algorithm_inputs</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+                <span class="n">creator</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">distinct</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span><span class="s2">&quot;outputs__interface&quot;</span><span class="p">,</span> <span class="s2">&quot;inputs__interface&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s2">&quot;algorithm_image__algorithm&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">successful_jobs</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span> <span class="nf">inputs_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">algorithm_image</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">successful_jobs</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">valid_archive_item_values</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">predictions_file</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">executor_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
