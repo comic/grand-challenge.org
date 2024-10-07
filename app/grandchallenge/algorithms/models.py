@@ -28,9 +28,11 @@ from stdimage import JPEGField
 from grandchallenge.algorithms.tasks import update_algorithm_average_duration
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.charts.specs import stacked_bar
-from grandchallenge.components.models import (
+from grandchallenge.components.models import (  # noqa: F401
+    CIVForObjectMixin,
     ComponentImage,
     ComponentInterface,
+    ComponentInterfaceValue,
     ComponentJob,
     ComponentJobManager,
     ImportStatusChoices,
@@ -626,6 +628,78 @@ class JobManager(ComponentJobManager):
 
         return obj
 
+    @staticmethod
+    def retrieve_existing_civs(*, civ_data):
+        """
+        Checks if there are existing CIVs for the provided data and returns those.
+
+        Parameters
+        ----------
+        civ_data
+            A list of CIVData objects.
+
+        Returns
+        -------
+        A list of ComponentInterfaceValues
+
+        """
+        existing_civs = []
+        for civ in civ_data:
+            if (
+                civ.user_upload
+                or civ.upload_session
+                or civ.user_upload_queryset
+            ):
+                # uploads will create new CIVs, so ignore these
+                continue
+            elif civ.image:
+                try:
+                    civ = ComponentInterfaceValue.objects.filter(
+                        interface__slug=civ.interface_slug, image=civ.image
+                    ).get()
+                    existing_civs.append(civ)
+                except ObjectDoesNotExist:
+                    continue
+            elif civ.file_civ:
+                existing_civs.append(civ.file_civ)
+            else:
+                # values can be of different types, including None and False
+                try:
+                    civ = ComponentInterfaceValue.objects.filter(
+                        interface__slug=civ.interface_slug, value=civ.value
+                    ).get()
+                    existing_civs.append(civ)
+                except ObjectDoesNotExist:
+                    continue
+
+        return existing_civs
+
+    def get_jobs_with_same_inputs(
+        self, *, inputs, algorithm_image, algorithm_model
+    ):
+        existing_civs = self.retrieve_existing_civs(civ_data=inputs)
+        unique_kwargs = {
+            "algorithm_image": algorithm_image,
+        }
+        input_interface_count = algorithm_image.algorithm.inputs.count()
+
+        if algorithm_model:
+            unique_kwargs["algorithm_model"] = algorithm_model
+        else:
+            unique_kwargs["algorithm_model__isnull"] = True
+
+        existing_jobs = (
+            Job.objects.filter(**unique_kwargs)
+            .annotate(
+                inputs_match_count=Count(
+                    "inputs", filter=Q(inputs__in=existing_civs)
+                )
+            )
+            .filter(inputs_match_count=input_interface_count)
+        )
+
+        return existing_jobs
+
     def spent_credits(self, user):
         now = timezone.now()
         period = timedelta(days=30)
@@ -714,7 +788,7 @@ class AlgorithmModelGroupObjectPermission(GroupObjectPermissionBase):
     )
 
 
-class Job(UUIDModel, ComponentJob):
+class Job(UUIDModel, CIVForObjectMixin, ComponentJob):
     objects = JobManager.as_manager()
 
     algorithm_image = models.ForeignKey(
@@ -771,6 +845,13 @@ class Job(UUIDModel, ComponentJob):
     @property
     def output_interfaces(self):
         return self.algorithm_image.algorithm.outputs
+
+    @cached_property
+    def inputs_complete(self):
+        # check if all inputs are present and if they all have a value
+        return {
+            civ.interface for civ in self.inputs.all() if civ.has_value
+        } == {*self.algorithm_image.algorithm.inputs.all()}
 
     @cached_property
     def rendered_result_text(self) -> str:
@@ -889,24 +970,50 @@ class Job(UUIDModel, ComponentJob):
     def remove_viewer(self, user):
         return user.groups.remove(self.viewers)
 
-    def sort_inputs_and_execute(
-        self, upload_session_pks=None, user_upload_pks=None
-    ):
-        # Local import to avoid circular dependency
+    def add_civ(self, *, civ):
+        super().add_civ(civ=civ)
+        return self.inputs.add(civ)
+
+    def remove_civ(self, *, civ):
+        super().remove_civ(civ=civ)
+        return self.inputs.remove(civ)
+
+    def get_civ_for_interface(self, interface):
+        return self.inputs.get(interface=interface)
+
+    def validate_inputs_and_execute(self, *, inputs):
         from grandchallenge.algorithms.tasks import (
-            run_algorithm_job_for_inputs,
+            execute_algorithm_job_for_inputs,
         )
 
-        on_commit(
-            run_algorithm_job_for_inputs.signature(
-                kwargs={
-                    "job_pk": self.pk,
-                    "upload_session_pks": upload_session_pks,
-                    "user_upload_pks": user_upload_pks,
-                },
-                immutable=True,
-            ).apply_async
+        linked_task = execute_algorithm_job_for_inputs.signature(
+            kwargs={"job_pk": self.pk}, immutable=True
         )
+
+        if not self.is_editable:
+            raise RuntimeError(
+                "Job is not editable. No CIVs can be added or removed from it."
+            )
+        else:
+            for civ_data in inputs:
+                self.create_civ(
+                    civ_data=civ_data,
+                    user=self.creator,
+                    linked_task=linked_task,
+                )
+
+    @property
+    def is_editable(self):
+        # staying with display set and archive item terminology here
+        # since this property is checked in create_civ()
+        if self.status == self.VALIDATING_INPUTS:
+            return True
+        else:
+            return False
+
+    @property
+    def base_object(self):
+        return self.algorithm_image.algorithm
 
     @property
     def executor_kwargs(self):

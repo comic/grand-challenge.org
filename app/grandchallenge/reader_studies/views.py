@@ -56,7 +56,7 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.archives.forms import AddCasesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
-from grandchallenge.components.forms import NewFileUploadForm
+from grandchallenge.components.models import CIVData
 from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
 )
@@ -66,7 +66,6 @@ from grandchallenge.components.views import (
     CIVSetDetail,
     CIVSetFormMixin,
     CivSetListView,
-    FileUpdateBaseView,
     InterfacesCreateBaseView,
     MultipleCIVProcessingBaseView,
 )
@@ -998,11 +997,12 @@ class DisplaySetViewSet(
                     image = value.get("image", None)
                     value = value.get("value", None)
                     instance.create_civ(
-                        ci_slug=interface.slug,
-                        new_value=user_upload
-                        or upload_session
-                        or image
-                        or value,
+                        civ_data=CIVData(
+                            interface_slug=interface.slug,
+                            value=(
+                                user_upload or upload_session or image or value
+                            ),
+                        ),
                     )
             else:
                 raise DRFValidationError(serialized_data.errors)
@@ -1259,7 +1259,6 @@ class DisplaySetUpdateView(
     )
     included_form_classes = (
         DisplaySetUpdateForm,
-        NewFileUploadForm,
         *MultipleCIVProcessingBaseView.included_form_classes,
     )
     success_message = "Display set has been updated."
@@ -1297,22 +1296,6 @@ class DisplaySetUpdateView(
         return reverse(
             "reader-studies:display-set-interfaces-create",
             kwargs={"slug": self.base_object.slug, "pk": self.object.pk},
-        )
-
-
-class DisplaySetFilesUpdate(FileUpdateBaseView):
-    permission_required = (
-        f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
-    )
-
-    @cached_property
-    def base_object(self):
-        return DisplaySet.objects.get(pk=self.kwargs["pk"])
-
-    def get_success_url(self):
-        return reverse(
-            "reader-studies:display_sets",
-            kwargs={"slug": self.kwargs["slug"]},
         )
 
 

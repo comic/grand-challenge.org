@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from rest_framework import serializers
 from rest_framework.fields import (
     CharField,
@@ -16,10 +17,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmModel,
     Job,
 )
-from grandchallenge.components.models import (
-    ComponentInterface,
-    ComponentInterfaceValue,
-)
+from grandchallenge.components.models import CIVData, ComponentInterface
 from grandchallenge.components.serializers import (
     ComponentInterfaceSerializer,
     ComponentInterfaceValuePostSerializer,
@@ -193,16 +191,17 @@ class JobPostSerializer(JobSerializer):
             )
 
     def validate(self, data):
-        alg = data.pop("algorithm")
+        self._algorithm = data.pop("algorithm")
         user = self.context["request"].user
 
-        if not alg.active_image:
+        if not self._algorithm.active_image:
             raise serializers.ValidationError(
                 "Algorithm image is not ready to be used"
             )
         data["creator"] = user
-        data["algorithm_image"] = alg.active_image
-        data["algorithm_model"] = alg.active_model
+        data["algorithm_image"] = self._algorithm.active_image
+        data["algorithm_model"] = self._algorithm.active_model
+        data["time_limit"] = self._algorithm.time_limit
 
         jobs_limit = data["algorithm_image"].get_remaining_jobs(
             user=data["creator"]
@@ -214,7 +213,7 @@ class JobPostSerializer(JobSerializer):
 
         # validate that no inputs are provided that are not configured for the
         # algorithm and that all interfaces without defaults are provided
-        algorithm_input_pks = {a.pk for a in alg.inputs.all()}
+        algorithm_input_pks = {a.pk for a in self._algorithm.inputs.all()}
         input_pks = {i["interface"].pk for i in data["inputs"]}
 
         # surplus inputs: provided but interfaces not configured for the algorithm
@@ -228,7 +227,7 @@ class JobPostSerializer(JobSerializer):
             )
 
         # missing inputs
-        missing = alg.inputs.filter(
+        missing = self._algorithm.inputs.filter(
             id__in=list(algorithm_input_pks - input_pks),
             default_value__isnull=True,
         )
@@ -238,63 +237,77 @@ class JobPostSerializer(JobSerializer):
                 f"Interface(s) {titles} do not have a default value and should be provided."
             )
 
-        return data
+        inputs = data.pop("inputs")
 
-    def create(self, validated_data):
-        inputs_data = validated_data.pop("inputs")
-
-        component_interface_values = []
-        upload_session_pks = {}
-        user_upload_pks = {}
-
-        for input_data in inputs_data:
-            # check for upload_session in input
-            upload_session = input_data.pop("upload_session", None)
-            user_upload = input_data.pop("user_upload", None)
-            civ = ComponentInterfaceValue(**input_data)
-            if upload_session:
-                # CIVs with upload sessions cannot be validated, done in
-                # run_algorithm_job_for_inputs
-                civ.save()
-                upload_session_pks[civ.pk] = upload_session.pk
-            elif civ.interface.requires_file and user_upload:
-                civ.save()
-                user_upload_pks[civ.pk] = user_upload.pk
-            else:
-                civ.full_clean()
-                civ.save()
-            component_interface_values.append(civ)
-
-        # use interface defaults if no value was provided
-        algorithm_input_pks = {
-            a.pk
-            for a in validated_data["algorithm_image"].algorithm.inputs.all()
-        }
-        input_pks = {i["interface"].pk for i in inputs_data}
-        defaults = validated_data["algorithm_image"].algorithm.inputs.filter(
+        default_inputs = self._algorithm.inputs.filter(
             id__in=list(algorithm_input_pks - input_pks),
             default_value__isnull=False,
         )
+        # Use default interface values if not present
+        for interface in default_inputs:
+            if interface.default_value:
+                inputs.append(
+                    {"interface": interface, "value": interface.default_value}
+                )
 
-        for d in defaults:
-            civ = ComponentInterfaceValue(
-                interface_id=d.id, value=d.default_value
+        self.inputs = self.reformat_inputs(serialized_civs=inputs)
+
+        if Job.objects.get_jobs_with_same_inputs(
+            inputs=self.inputs,
+            algorithm_image=data["algorithm_image"],
+            algorithm_model=data["algorithm_model"],
+        ):
+            raise serializers.ValidationError(
+                "A result for these inputs with the current image "
+                "and model already exists."
             )
-            civ.full_clean()
-            civ.save()
-            component_interface_values.append(civ)
 
+        return data
+
+    def create(self, validated_data):
         job = Job.objects.create(
             **validated_data,
             extra_logs_viewer_groups=[
                 validated_data["algorithm_image"].algorithm.editors_group
             ],
-            input_civ_set=component_interface_values,
-            time_limit=validated_data["algorithm_image"].algorithm.time_limit,
+            status=Job.VALIDATING_INPUTS,
         )
-        job.sort_inputs_and_execute(
-            upload_session_pks=upload_session_pks,
-            user_upload_pks=user_upload_pks,
-        )
-
+        job.validate_inputs_and_execute(inputs=self.inputs)
         return job
+
+    @staticmethod
+    def reformat_inputs(*, serialized_civs):
+        """Takes serialized CIV data and returns list of CIVData objects."""
+        possible_keys = [
+            "image",
+            "value",
+            "file",
+            "user_upload",
+            "upload_session",
+        ]
+
+        data = []
+        for civ in serialized_civs:
+            found_keys = [key for key in possible_keys if key in civ]
+
+            if not found_keys:
+                raise serializers.ValidationError(
+                    f"You must provide at least one of {possible_keys}"
+                )
+
+            if len(found_keys) > 1:
+                raise serializers.ValidationError(
+                    f"You can only provide one of {possible_keys} for each interface."
+                )
+
+            try:
+                data.append(
+                    CIVData(
+                        interface_slug=civ["interface"].slug,
+                        value=civ[found_keys[0]],
+                    )
+                )
+            except ValidationError as e:
+                raise serializers.ValidationError(e)
+
+        return data

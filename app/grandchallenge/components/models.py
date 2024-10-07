@@ -57,6 +57,9 @@ from grandchallenge.core.storage import (
     private_s3_storage,
     protected_s3_storage,
 )
+from grandchallenge.core.utils.error_messages import (
+    format_validation_error_message,
+)
 from grandchallenge.core.validators import (
     ExtensionValidator,
     JSONSchemaValidator,
@@ -682,14 +685,14 @@ class ComponentInterface(OverlaySegmentsMixin):
     @cached_property
     def value_required(self):
         value_required = True
-        if not self.is_image_kind and not self.requires_file:
+        if self.kind == InterfaceKindChoices.BOOL:
+            value_required = False
+        elif not self.is_image_kind and not self.requires_file:
             try:
                 self.validate_against_schema(value=None)
                 value_required = False
             except ValidationError:
                 pass
-        elif self.kind == InterfaceKindChoices.BOOL:
-            value_required = False
         return value_required
 
     class Meta:
@@ -1453,6 +1456,7 @@ class ComponentJob(models.Model):
     PARSING = 10
     EXECUTING_PREREQUISITES = 11
     CLAIMED = 12
+    VALIDATING_INPUTS = 13
 
     STATUS_CHOICES = (
         (PENDING, "Queued"),
@@ -1468,6 +1472,7 @@ class ComponentJob(models.Model):
         (PARSING, "Parsing Outputs"),
         (EXECUTING_PREREQUISITES, "Executing Algorithm"),
         (CLAIMED, "External Execution In Progress"),
+        (VALIDATING_INPUTS, "Validating inputs"),
     )
 
     status = models.PositiveSmallIntegerField(
@@ -1619,6 +1624,10 @@ class ComponentJob(models.Model):
     @property
     def output_interfaces(self) -> QuerySet:
         """Returns an unevaluated QuerySet for the output interfaces"""
+        raise NotImplementedError
+
+    @cached_property
+    def inputs_complete(self):
         raise NotImplementedError
 
     @property
@@ -2017,6 +2026,114 @@ class ComponentImage(FieldChangeMixin, models.Model):
             self.size_in_registry = self.calculate_size_in_registry()
 
 
+class CIVData:
+
+    @property
+    def interface_slug(self):
+        return self._interface_slug
+
+    @property
+    def value(self):
+        return self._json_value
+
+    @property
+    def image(self):
+        return self._image
+
+    @property
+    def upload_session(self):
+        return self._upload_session
+
+    @property
+    def user_upload(self):
+        return self._user_upload
+
+    @property
+    def user_upload_queryset(self):
+        return self._user_upload_queryset
+
+    @property
+    def file_civ(self):
+        return self._file_civ
+
+    def __init__(self, *, interface_slug, value):
+        self._interface_slug = interface_slug
+        self._initial_value = value
+        self._json_value = None
+        self._image = None
+        self._upload_session = None
+        self._user_upload = None
+        self._user_upload_queryset = None
+        self._file_civ = None
+
+        ci = ComponentInterface.objects.get(slug=interface_slug)
+
+        if ci.is_json_kind and not ci.requires_file:
+            self._init_json_civ_data()
+        elif ci.is_image_kind:
+            self._init_image_civ_data()
+        elif ci.requires_file:
+            self._init_file_civ_data()
+
+        self.validate()
+
+    def _init_json_civ_data(self):
+        if isinstance(
+            self._initial_value,
+            (str | bool | int | float | dict | list | None),
+        ):
+            self._json_value = self._initial_value
+        else:
+            ValidationError(
+                f"Unknown data type {type(self._initial_value)} for interface {self._interface_slug}"
+            )
+
+    def _init_image_civ_data(self):
+        if isinstance(self._initial_value, QuerySet):
+            self._user_upload_queryset = self._initial_value
+        elif isinstance(self._initial_value, RawImageUploadSession):
+            self._upload_session = self._initial_value
+        elif isinstance(self._initial_value, Image):
+            self._image = self._initial_value
+        elif self._initial_value is None:
+            self._image = None
+        else:
+            raise ValidationError(
+                f"Unknown data type {type(self._initial_value)} for interface {self._interface_slug}"
+            )
+
+    def _init_file_civ_data(self):
+        if isinstance(self._initial_value, UserUpload):
+            self._user_upload = self._initial_value
+        elif isinstance(self._initial_value, ComponentInterfaceValue):
+            self._file_civ = self._initial_value
+        elif self._initial_value is None:
+            self._file_civ = None
+        else:
+            return ValidationError(
+                f"Unknown data type {type(self._initial_value)} for interface {self._interface_slug}"
+            )
+
+    def validate(self):
+        unique_properties = [
+            self.value,
+            self.image,
+            self.user_upload,
+            self.upload_session,
+            self.user_upload_queryset,
+            self.file_civ,
+        ]
+
+        # Ensure at most one of these properties is set
+        # None can be an acceptable value, so 0 is ok
+        if sum(bool(property) for property in unique_properties) > 1:
+            raise ValidationError(
+                "Only one of value, image, user_upload, upload_session, "
+                "user_upload_queryset or file_civ can be provided for a "
+                "single CIVData object."
+            )
+
+
 class CIVSetStringRepresentationMixin:
     def __str__(self):
         result = [str(self.pk)]
@@ -2066,89 +2183,171 @@ class CIVSetObjectPermissionsMixin:
 
 
 class CIVForObjectMixin:
-    def create_civ(self, *, ci_slug, new_value, user=None):
-        ci = ComponentInterface.objects.get(slug=ci_slug)
-        try:
-            current_civ = self.values.filter(interface=ci).get()
-        except ObjectDoesNotExist:
-            current_civ = None
-        except MultipleObjectsReturned as e:
-            raise e
+
+    def add_civ(self, *, civ):
+        if not self.is_editable:
+            raise RuntimeError(f"{self} is not editable.")
+
+    def remove_civ(self, *, civ):
+        if not self.is_editable:
+            raise RuntimeError(f"{self} is not editable.")
+
+    def create_civ(self, *, civ_data, user=None, linked_task=None):
+        if not self.is_editable:
+            raise RuntimeError(
+                f"{self} is not editable. CIVs cannot be added or removed from it."
+            )
+
+        ci = ComponentInterface.objects.get(slug=civ_data.interface_slug)
+        current_civ = self.get_current_value_for_interface(interface=ci)
 
         if ci.is_json_kind and not ci.requires_file:
             return self.create_civ_for_value(
-                ci=ci, current_civ=current_civ, new_value=new_value
+                ci=ci,
+                current_civ=current_civ,
+                new_value=civ_data.value,
+                linked_task=linked_task,
             )
         elif ci.is_image_kind:
             return self.create_civ_for_image(
-                ci=ci, current_civ=current_civ, new_value=new_value, user=user
+                ci=ci,
+                current_civ=current_civ,
+                user=user,
+                image=civ_data.image,
+                upload_session=civ_data.upload_session,
+                user_upload_queryset=civ_data.user_upload_queryset,
+                linked_task=linked_task,
             )
         elif ci.requires_file:
             return self.create_civ_for_file(
-                ci=ci, current_civ=current_civ, new_value=new_value
+                ci=ci,
+                current_civ=current_civ,
+                file_civ=civ_data.file_civ,
+                user_upload=civ_data.user_upload,
+                linked_task=linked_task,
             )
         else:
             NotImplementedError(f"CIV creation for {ci} not handled.")
 
-    def create_civ_for_value(self, *, ci, current_civ, new_value):
+    def create_civ_for_value(
+        self, *, ci, current_civ, new_value, linked_task=None
+    ):
         current_value = current_civ.value if current_civ else None
-        civ = ComponentInterfaceValue(interface=ci, value=new_value)
+
+        civ, created = ComponentInterfaceValue.objects.get_or_create(
+            interface=ci, value=new_value
+        )
+
         if current_value != new_value or (
-            current_civ is None and new_value is None
+            current_value in ci.default_field.empty_values
+            and new_value in ci.default_field.empty_values
         ):
             try:
                 civ.full_clean()
                 civ.save()
-                self.values.remove(current_civ)
-                self.values.add(civ)
+                self.add_civ(civ=civ)
+                self.remove_civ(civ=current_civ)
             except ValidationError as e:
-                if new_value:
-                    raise e
+                if new_value in ci.default_field.empty_values:
+                    self.remove_civ(civ=current_civ)
                 else:
-                    self.values.remove(current_civ)
+                    self.handle_error(
+                        error_message=format_validation_error_message(e),
+                    )
+                    raise e
+            except RuntimeError as e:
+                logger.error(e, exc_info=True)
+                return
 
-    def create_civ_for_image(self, *, ci, current_civ, new_value, user):
+            if linked_task is not None:
+                on_commit(signature(linked_task).apply_async)
+
+    def create_civ_for_image(  # noqa: C901
+        self,
+        *,
+        ci,
+        current_civ,
+        user=None,
+        image=None,
+        upload_session=None,
+        user_upload_queryset=None,
+        linked_task=None,
+    ):
         current_image = current_civ.image if current_civ else None
-        if isinstance(new_value, Image) and current_image != new_value:
-            self.values.remove(current_civ)
+        if image and current_image != image:
             civ, created = ComponentInterfaceValue.objects.get_or_create(
-                interface=ci, image=new_value
+                interface=ci, image=image
             )
             if created:
-                civ.full_clean()
-            self.values.add(civ)
-        elif isinstance(new_value, (QuerySet, RawImageUploadSession)):
+                try:
+                    civ.full_clean()
+                except ValidationError as e:
+                    self.handle_error(
+                        error_message=format_validation_error_message(e),
+                    )
+                    raise e
+            try:
+                self.remove_civ(civ=current_civ)
+                self.add_civ(civ=civ)
+            except RuntimeError as e:
+                logger.error(e, exc_info=True)
+                return
+
+            if linked_task is not None:
+                on_commit(signature(linked_task).apply_async)
+
+        elif upload_session or user_upload_queryset:
             # Local import to avoid circular dependency
             from grandchallenge.components.tasks import add_image_to_object
 
-            if isinstance(new_value, RawImageUploadSession):
-                upload_session = new_value
-            else:
+            if user_upload_queryset:
+                if not user:
+                    raise RuntimeError(
+                        f"You need to provide a user along with the user upload "
+                        f"queryset for interface {ci}"
+                    )
                 upload_session = RawImageUploadSession.objects.create(
                     creator=user
                 )
-                upload_session.user_uploads.set(new_value)
+                upload_session.user_uploads.set(user_upload_queryset)
 
             upload_session.process_images(
+                linked_app_label=self._meta.app_label,
+                linked_model_name=self._meta.model_name,
+                linked_object_pk=self.pk,
                 linked_task=add_image_to_object.signature(
                     kwargs={
                         "app_label": self._meta.app_label,
                         "model_name": self._meta.model_name,
                         "object_pk": self.pk,
                         "interface_pk": str(ci.pk),
+                        "linked_task": linked_task,
                     },
                     immutable=True,
-                )
+                ),
             )
 
-    def create_civ_for_file(self, *, ci, current_civ, new_value):
-        if (
-            isinstance(new_value, ComponentInterfaceValue)
-            and current_civ != new_value
-        ):
-            self.values.remove(current_civ)
-            self.values.add(new_value)
-        elif isinstance(new_value, UserUpload):
+    def create_civ_for_file(
+        self,
+        *,
+        ci,
+        current_civ,
+        file_civ=None,
+        user_upload=None,
+        linked_task=None,
+    ):
+        if file_civ:
+            try:
+                self.remove_civ(civ=current_civ)
+                self.add_civ(civ=file_civ)
+            except RuntimeError as e:
+                logger.error(e, exc_info=True)
+                return
+
+            if linked_task is not None:
+                on_commit(signature(linked_task).apply_async)
+
+        elif user_upload:
             from grandchallenge.components.tasks import add_file_to_object
 
             transaction.on_commit(
@@ -2156,17 +2355,40 @@ class CIVForObjectMixin:
                     kwargs={
                         "app_label": self._meta.app_label,
                         "model_name": self._meta.model_name,
-                        "user_upload_pk": str(new_value.pk),
+                        "user_upload_pk": str(user_upload.pk),
                         "interface_pk": str(ci.pk),
                         "object_pk": self.pk,
-                        "civ_pk": current_civ.pk if current_civ else None,
+                        "linked_task": linked_task,
                     }
                 ).apply_async
             )
-        elif not new_value:
+
+        else:
             # if no new value is provided (user selects '---' in dropdown)
             # delete old CIV
-            self.values.remove(current_civ)
+            self.remove_civ(civ=current_civ)
+
+    def get_civ_for_interface(self, interface):
+        raise NotImplementedError
+
+    def get_current_value_for_interface(
+        self, *, interface, user_upload=None, upload_session=None
+    ):
+        try:
+            return self.get_civ_for_interface(interface=interface)
+        except ObjectDoesNotExist:
+            return None
+        except MultipleObjectsReturned as e:
+            if user_upload:
+                user_upload.handle_file_validation_failure(
+                    error_message="An unexpected error occurred"
+                )
+            elif upload_session:
+                upload_session.update_status(
+                    error_message="An unexpected error occurred",
+                    status=RawImageUploadSession.FAILURE,
+                )
+            raise e
 
 
 class InterfacesAndValues(NamedTuple):
@@ -2175,6 +2397,7 @@ class InterfacesAndValues(NamedTuple):
 
 
 class ValuesForInterfacesMixin:
+
     @property
     def civ_sets_related_manager(self):
         raise NotImplementedError

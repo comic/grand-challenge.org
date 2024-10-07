@@ -14,7 +14,10 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 import boto3
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
-from celery import shared_task  # noqa: I251 TODO needs to be refactored
+from celery import (  # noqa: I251 TODO needs to be refactored
+    shared_task,
+    signature,
+)
 from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -46,7 +49,6 @@ from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.utils.error_messages import (
     format_validation_error_message,
 )
-from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.uploads.models import UserUpload
 
 logger = logging.getLogger(__name__)
@@ -632,7 +634,7 @@ def provision_job(
     )
     executor = job.get_executor(backend=backend)
 
-    if job.status not in [job.PENDING, job.RETRY]:
+    if not job.inputs_complete or job.status not in [job.PENDING, job.RETRY]:
         raise RuntimeError("Job is not ready for provisioning")
 
     try:
@@ -1116,52 +1118,6 @@ def add_image_to_component_interface_value(
         civ.image.update_viewer_groups_permissions()
 
 
-@acks_late_micro_short_task
-@transaction.atomic
-def add_file_to_component_interface_value(
-    *,
-    component_interface_value_pk,
-    user_upload_pk,
-    target_pk,
-    target_app,
-    target_model,
-):
-    user_upload = UserUpload.objects.get(pk=user_upload_pk)
-    civ = get_model_instance(
-        pk=component_interface_value_pk,
-        app_label="components",
-        model_name="componentinterfacevalue",
-    )
-    target = get_model_instance(
-        pk=target_pk,
-        app_label=target_app,
-        model_name=target_model,
-    )
-    error = None
-
-    try:
-        civ.validate_user_upload(user_upload)
-        civ.full_clean()
-    except ValidationError as e:
-        civ.delete()
-        error = format_validation_error_message(error=e)
-    else:
-        user_upload.copy_object(to_field=civ.file)
-        civ.save()
-        user_upload.delete()
-
-    if error is not None:
-        Notification.send(
-            kind=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
-            actor=user_upload.creator,
-            message=f"File for interface {civ.interface.title} failed validation.",
-            target=target,
-            description=(
-                f"File for interface {civ.interface.title} failed validation:\n{error}."
-            ),
-        )
-
-
 @acks_late_2xlarge_task
 def civ_value_to_file(*, civ_pk):
     with transaction.atomic():
@@ -1209,7 +1165,9 @@ def validate_voxel_values(*, civ_pk):
     civ.interface._validate_voxel_values(civ.image)
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(
+    retry_on=(LockNotAcquiredException,), delayed_retry=False
+)
 @transaction.atomic
 def add_image_to_object(
     *,
@@ -1218,29 +1176,33 @@ def add_image_to_object(
     object_pk,
     interface_pk,
     upload_session_pk,
+    linked_task=None,
 ):
     from grandchallenge.components.models import (
         ComponentInterface,
         ComponentInterfaceValue,
     )
 
-    object = get_model_instance(
-        pk=object_pk,
-        app_label=app_label,
-        model_name=model_name,
-    )
     interface = ComponentInterface.objects.get(pk=interface_pk)
     upload_session = RawImageUploadSession.objects.get(pk=upload_session_pk)
+    object = lock_model_instance(
+        app_label=app_label, model_name=model_name, pk=object_pk
+    )
+
     try:
         image = Image.objects.get(origin_id=upload_session_pk)
     except (Image.DoesNotExist, Image.MultipleObjectsReturned):
-        error_message = "Image imports should result in a single image"
-        upload_session.status = RawImageUploadSession.FAILURE
-        upload_session.error_message = error_message
-        upload_session.save()
+        upload_session.update_status(
+            status=RawImageUploadSession.FAILURE,
+            error_message=f"File for interface {interface.title} failed validation: Image imports should result in a single image",
+            linked_object=object,
+        )
         return
 
-    object.values.remove(*object.values.filter(interface=interface))
+    current_value = object.get_current_value_for_interface(
+        interface=interface, upload_session=upload_session
+    )
+
     civ, created = ComponentInterfaceValue.objects.get_or_create(
         interface=interface, image=image
     )
@@ -1249,17 +1211,37 @@ def add_image_to_object(
         try:
             civ.full_clean()
         except ValidationError as e:
-            # this should only happen for new uploads
-            upload_session.status = RawImageUploadSession.FAILURE
-            upload_session.error_message = format_validation_error_message(
-                error=e
+            upload_session.update_status(
+                status=RawImageUploadSession.FAILURE,
+                error_message=f"File for interface {interface.title} failed validation: {format_validation_error_message(e)}",
+                linked_object=object,
             )
-            upload_session.save()
             return
-    object.values.add(civ)
+        except Exception as e:
+            upload_session.update_status(
+                status=RawImageUploadSession.FAILURE,
+                error_message="An unexpected error occurred",
+                linked_object=object,
+            )
+            logger.error(e, exc_info=True)
+            return
+
+    try:
+        object.remove_civ(civ=current_value)
+        object.add_civ(civ=civ)
+    except RuntimeError as e:
+        # for Jobs this happens when validation for another input failed
+        # and the job status was updated to CANCELLED
+        logger.error(e, exc_info=True)
+        return
+
+    if linked_task is not None:
+        on_commit(signature(linked_task).apply_async)
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(
+    retry_on=(LockNotAcquiredException,), delayed_retry=False
+)
 @transaction.atomic
 def add_file_to_object(
     *,
@@ -1268,46 +1250,53 @@ def add_file_to_object(
     user_upload_pk,
     object_pk,
     interface_pk,
-    civ_pk=None,
+    linked_task=None,
 ):
     from grandchallenge.components.models import (
         ComponentInterface,
         ComponentInterfaceValue,
     )
 
-    user_upload = UserUpload.objects.get(pk=user_upload_pk)
-    object = get_model_instance(
-        pk=object_pk,
-        app_label=app_label,
-        model_name=model_name,
-    )
     interface = ComponentInterface.objects.get(pk=interface_pk)
-    error = None
+    user_upload = UserUpload.objects.get(pk=user_upload_pk)
+    object = lock_model_instance(
+        app_label=app_label, model_name=model_name, pk=object_pk
+    )
+
+    current_value = object.get_current_value_for_interface(
+        interface=interface, user_upload=user_upload
+    )
+
     civ = ComponentInterfaceValue(interface=interface)
     try:
         civ.validate_user_upload(user_upload)
         civ.full_clean()
         civ.save()
         user_upload.copy_object(to_field=civ.file)
-        object.values.add(civ)
-        if civ_pk is not None:
-            # Remove the previously assigned civ from the display set
-            civ = ComponentInterfaceValue.objects.get(pk=civ_pk)
-            object.values.remove(civ)
     except ValidationError as e:
-        error = format_validation_error_message(error=e)
-
-    if error is not None:
-        Notification.send(
-            kind=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
-            actor=user_upload.creator,
-            message=f"File for interface {interface.title} failed validation.",
-            target=object.base_object,
-            description=(
-                f"File for interface {interface.title} "
-                f"failed validation:\n{error}."
-            ),
+        user_upload.handle_file_validation_failure(
+            error_message=f"File for interface {interface.title} failed validation:{format_validation_error_message(error=e)}.",
+            linked_object=object,
         )
+        return
+    except Exception as e:
+        user_upload.handle_file_validation_failure(
+            error_message="An unexpected error occurred", linked_object=object
+        )
+        logger.error(e, exc_info=True)
+        return
+
+    try:
+        object.remove_civ(civ=current_value)
+        object.add_civ(civ=civ)
+    except RuntimeError as e:
+        # for Jobs this happens when validation for another input failed
+        # and the job status was updated to CANCELLED
+        logger.error(e, exc_info=True)
+        return
+
+    if linked_task is not None:
+        on_commit(signature(linked_task).apply_async)
 
 
 @acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))

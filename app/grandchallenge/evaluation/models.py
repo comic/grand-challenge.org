@@ -22,7 +22,11 @@ from django_extensions.db.fields import AutoSlugField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
 
-from grandchallenge.algorithms.models import AlgorithmImage, AlgorithmModel
+from grandchallenge.algorithms.models import (
+    AlgorithmImage,
+    AlgorithmModel,
+    Job,
+)
 from grandchallenge.archives.models import Archive, ArchiveItem
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.models import (
@@ -1485,6 +1489,70 @@ class Evaluation(UUIDModel, ComponentJob):
     @property
     def output_interfaces(self):
         return self.submission.phase.outputs
+
+    @cached_property
+    def algorithm_inputs(self):
+        return self.submission.phase.algorithm_inputs.all()
+
+    @cached_property
+    def valid_archive_item_values(self):
+        return {
+            i.values.all()
+            for i in self.submission.phase.archive.items.annotate(
+                interface_match_count=Count(
+                    "values",
+                    filter=Q(values__interface__in=self.algorithm_inputs),
+                )
+            )
+            .filter(interface_match_count=len(self.algorithm_inputs))
+            .prefetch_related("values")
+        }
+
+    @cached_property
+    def successful_jobs(self):
+        if self.submission.algorithm_model:
+            extra_filter = {"algorithm_model": self.submission.algorithm_model}
+        else:
+            extra_filter = {"algorithm_model__isnull": True}
+
+        successful_jobs = (
+            Job.objects.filter(
+                algorithm_image=self.submission.algorithm_image,
+                status=Job.SUCCESS,
+                **extra_filter,
+            )
+            .annotate(
+                inputs_match_count=Count(
+                    "inputs",
+                    filter=Q(
+                        inputs__in={
+                            civ
+                            for civ_set in self.valid_archive_item_values
+                            for civ in civ_set
+                        }
+                    ),
+                ),
+            )
+            .filter(
+                inputs_match_count=self.algorithm_inputs.count(),
+                creator=None,
+            )
+            .distinct()
+            .prefetch_related("outputs__interface", "inputs__interface")
+            .select_related("algorithm_image__algorithm")
+        )
+        return successful_jobs
+
+    @cached_property
+    def inputs_complete(self):
+        if self.submission.algorithm_image:
+            return self.successful_jobs.count() == len(
+                self.valid_archive_item_values
+            )
+        elif self.submission.predictions_file:
+            return True
+        else:
+            return False
 
     @property
     def executor_kwargs(self):

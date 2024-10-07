@@ -30,6 +30,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
+from tests.conftest import get_interface_form_data
 from tests.factories import ImageFactory, UserFactory, WorkstationFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.utils import get_view_for_user, recurse_callbacks
@@ -358,7 +359,9 @@ def test_archive_item_update_triggers_algorithm_jobs(
                 "slug": archive.slug,
                 "pk": ai.pk,
             },
-            data={ci.slug: False},
+            data={
+                **get_interface_form_data(interface_slug=ci.slug, data=False)
+            },
             user=editor,
         )
     recurse_callbacks(
@@ -383,7 +386,9 @@ def test_archive_item_update_triggers_algorithm_jobs(
                 "slug": archive.slug,
                 "pk": ai.pk,
             },
-            data={ci.slug: True},
+            data={
+                **get_interface_form_data(interface_slug=ci.slug, data=True)
+            },
             user=editor,
         )
     recurse_callbacks(
@@ -391,14 +396,14 @@ def test_archive_item_update_triggers_algorithm_jobs(
         django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
     )
 
-    # New jobs should be created as there is a new CIV
-    assert Job.objects.count() == 3
-    assert ComponentInterfaceValue.objects.count() == civ_count + 2
+    # No new jobs should be created since no new CIV was created
+    assert Job.objects.count() == 2
+    assert ComponentInterfaceValue.objects.count() == civ_count + 1
 
     # A change to the title should not fire-off a new job
     ai.title = "A new title"
     ai.save()
-    assert Job.objects.count() == 3
+    assert Job.objects.count() == 2
 
 
 @pytest.mark.django_db

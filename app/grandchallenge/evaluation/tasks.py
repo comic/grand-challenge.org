@@ -6,7 +6,7 @@ from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, OperationalError, transaction
-from django.db.models import Case, Count, IntegerField, Q, Value, When
+from django.db.models import Case, IntegerField, Value, When
 from django.db.transaction import on_commit
 from django.utils.timezone import now
 
@@ -332,57 +332,14 @@ def set_evaluation_inputs(*, evaluation_pk):
         )
         return
 
-    algorithm_inputs = {*evaluation.submission.phase.algorithm_inputs.all()}
-
-    civ_sets = {
-        i.values.all()
-        for i in evaluation.submission.phase.archive.items.annotate(
-            interface_match_count=Count(
-                "values", filter=Q(values__interface__in=algorithm_inputs)
-            )
-        )
-        .filter(interface_match_count=len(algorithm_inputs))
-        .prefetch_related("values")
-    }
-
-    if evaluation.submission.algorithm_model:
-        extra_filter = {
-            "algorithm_model": evaluation.submission.algorithm_model
-        }
-    else:
-        extra_filter = {"algorithm_model__isnull": True}
-
-    successful_jobs = (
-        Job.objects.filter(
-            algorithm_image=evaluation.submission.algorithm_image,
-            status=Job.SUCCESS,
-            **extra_filter,
-        )
-        .annotate(
-            inputs_match_count=Count(
-                "inputs",
-                filter=Q(
-                    inputs__in={civ for civ_set in civ_sets for civ in civ_set}
-                ),
-            ),
-        )
-        .filter(
-            inputs_match_count=evaluation.submission.phase.algorithm_inputs.count(),
-            creator=None,
-        )
-        .distinct()
-        .prefetch_related("outputs__interface", "inputs__interface")
-        .select_related("algorithm_image__algorithm")
-    )
-
-    if successful_jobs.count() == len(civ_sets):
+    if evaluation.inputs_complete:
         from grandchallenge.algorithms.serializers import JobSerializer
         from grandchallenge.components.models import (
             ComponentInterface,
             ComponentInterfaceValue,
         )
 
-        serializer = JobSerializer(successful_jobs.all(), many=True)
+        serializer = JobSerializer(evaluation.successful_jobs.all(), many=True)
         interface = ComponentInterface.objects.get(
             slug="predictions-json-file"
         )
@@ -391,7 +348,9 @@ def set_evaluation_inputs(*, evaluation_pk):
         )
 
         output_to_job = {
-            o: j for j in successful_jobs.all() for o in j.outputs.all()
+            o: j
+            for j in evaluation.successful_jobs.all()
+            for o in j.outputs.all()
         }
 
         evaluation.inputs.set([civ, *output_to_job.keys()])

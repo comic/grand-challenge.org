@@ -11,6 +11,7 @@ from django.db import models
 from django.db.models.signals import post_delete, pre_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
+from django.template.defaultfilters import pluralize
 from django.utils._os import safe_join
 from django.utils.text import get_valid_filename
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
@@ -28,6 +29,7 @@ from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import protected_s3_storage
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.modalities.models import ImagingModality
+from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
 
@@ -119,7 +121,45 @@ class RawImageUploadSession(UUIDModel):
                     actor_only=False,
                 )
 
-    def process_images(self, linked_task=None):
+    @property
+    def default_error_message(self):
+        n_errors = len(self.import_result["file_errors"])
+        if n_errors:
+            return (
+                f"{n_errors} file{pluralize(n_errors)} could not be imported"
+            )
+
+    def update_status(self, *, status, error_message=None, linked_object=None):
+        self.status = status
+        self.error_message = (
+            error_message if error_message else self.default_error_message
+        )
+        self.save()
+
+        if self.error_message and self.creator:
+            Notification.send(
+                kind=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
+                message=error_message,
+                action_object=self,
+            )
+
+        if (
+            self.error_message
+            and linked_object
+            and hasattr(linked_object, "update_status")
+        ):
+            linked_object.update_status(
+                status=linked_object.CANCELLED, error_message=error_message
+            )
+
+    def process_images(
+        self,
+        *,
+        linked_app_label=None,
+        linked_model_name=None,
+        linked_object_pk=None,
+        linked_task=None,
+    ):
         """
         Starts the Celery task to import this RawImageUploadSession.
 
@@ -140,10 +180,16 @@ class RawImageUploadSession(UUIDModel):
             status=RawImageUploadSession.REQUEUED
         )
 
-        kwargs = {"upload_session_pk": self.pk}
-        workflow = build_images.signature(kwargs=kwargs)
+        workflow = build_images.signature(
+            kwargs={
+                "upload_session_pk": self.pk,
+                "linked_app_label": linked_app_label,
+                "linked_model_name": linked_model_name,
+                "linked_object_pk": linked_object_pk,
+            }
+        )
         if linked_task is not None:
-            linked_task.kwargs.update(kwargs)
+            linked_task.kwargs.update({"upload_session_pk": self.pk})
             workflow |= linked_task
 
         on_commit(workflow.apply_async)

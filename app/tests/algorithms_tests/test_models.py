@@ -1,13 +1,16 @@
+import json
 from datetime import datetime, timedelta, timezone
 
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.files.base import ContentFile
 from django.db.models import ProtectedError
 from django.test import TestCase
 from django.utils.timezone import now
 
 from grandchallenge.algorithms.models import Algorithm, Job
 from grandchallenge.components.models import (
+    CIVData,
     ComponentInterface,
     ComponentInterfaceValue,
 )
@@ -16,10 +19,17 @@ from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
     AlgorithmJobFactory,
+    AlgorithmModelFactory,
 )
-from tests.components_tests.factories import ComponentInterfaceValueFactory
-from tests.factories import UserFactory
+from tests.cases_tests import RESOURCE_PATH
+from tests.cases_tests.factories import RawImageUploadSessionFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
+from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
+from tests.uploads_tests.factories import create_upload_from_file
 from tests.utils import get_view_for_user
 
 
@@ -517,6 +527,209 @@ def test_usage_statistics():
     }
 
 
+@pytest.mark.parametrize(
+    "string, bool, new_image, new_file, civs_in_output",
+    [
+        ("foo", True, True, True, [1, 0, 0, 0]),
+        ("foo1", False, True, True, [0, 1, 0, 0]),
+        ("foo1", True, False, True, [0, 0, 1, 0]),
+        ("foo1", True, True, False, [0, 0, 0, 1]),
+    ],
+)
+@pytest.mark.django_db
+def test_retrieve_existing_civs(
+    string, bool, new_image, new_file, civs_in_output
+):
+    ci_str = ComponentInterfaceFactory(kind=ComponentInterface.Kind.STRING)
+    ci_bool = ComponentInterfaceFactory(kind=ComponentInterface.Kind.BOOL)
+    ci_im = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
+    ci_file = ComponentInterfaceFactory(kind=ComponentInterface.Kind.PDF)
+
+    old_im = ImageFactory()
+    old_file = ContentFile(json.dumps(True).encode("utf-8"), name="test.json")
+
+    if new_file:
+        upload = create_upload_from_file(
+            creator=UserFactory(), file_path=RESOURCE_PATH / "test.pdf"
+        )
+    if new_image:
+        upload_session = RawImageUploadSessionFactory()
+
+    list_of_civs = [
+        ComponentInterfaceValueFactory(interface=ci_str, value="foo"),
+        ComponentInterfaceValueFactory(interface=ci_bool, value=False),
+        ComponentInterfaceValueFactory(interface=ci_im, image=old_im),
+        ComponentInterfaceValueFactory(interface=ci_file, file=old_file),
+    ]
+
+    data = {
+        CIVData(interface_slug=ci_str.slug, value=string),
+        CIVData(interface_slug=ci_bool.slug, value=bool),
+        CIVData(
+            interface_slug=ci_im.slug,
+            value=upload_session if new_image else old_im,
+        ),
+        CIVData(
+            interface_slug=ci_file.slug,
+            value=upload if new_file else list_of_civs[3],
+        ),
+    }
+
+    civs = Job.objects.retrieve_existing_civs(civ_data=data)
+
+    assert civs == [
+        item
+        for item, flag in zip(list_of_civs, civs_in_output, strict=True)
+        if flag == 1
+    ]
+
+
+@pytest.mark.django_db
+class TestGetJobsWithSameInputs:
+
+    def get_civ_data(self, civs):
+        return [
+            CIVData(interface_slug=civ.interface.slug, value=civ.value)
+            for civ in civs
+        ]
+
+    def test_job_with_same_image_different_model(
+        self, algorithm_with_image_and_model_and_two_inputs
+    ):
+        alg = algorithm_with_image_and_model_and_two_inputs.algorithm
+        civs = algorithm_with_image_and_model_and_two_inputs.civs
+        data = self.get_civ_data(civs=civs)
+
+        j = AlgorithmJobFactory(
+            algorithm_image=alg.active_image, time_limit=10
+        )
+        j.inputs.set(civs)
+
+        jobs = Job.objects.get_jobs_with_same_inputs(
+            inputs=data,
+            algorithm_image=alg.active_image,
+            algorithm_model=alg.active_model,
+        )
+        assert len(jobs) == 0
+
+    def test_job_with_same_model_different_image(
+        self, algorithm_with_image_and_model_and_two_inputs
+    ):
+        alg = algorithm_with_image_and_model_and_two_inputs.algorithm
+        civs = algorithm_with_image_and_model_and_two_inputs.civs
+        data = self.get_civ_data(civs=civs)
+
+        j = AlgorithmJobFactory(
+            algorithm_image=AlgorithmImageFactory(),
+            algorithm_model=alg.active_model,
+            time_limit=10,
+        )
+        j.inputs.set(civs)
+        jobs = Job.objects.get_jobs_with_same_inputs(
+            inputs=data,
+            algorithm_image=alg.active_image,
+            algorithm_model=alg.active_model,
+        )
+        assert len(jobs) == 0
+
+    def test_job_with_same_model_and_image(
+        self, algorithm_with_image_and_model_and_two_inputs
+    ):
+        alg = algorithm_with_image_and_model_and_two_inputs.algorithm
+        civs = algorithm_with_image_and_model_and_two_inputs.civs
+        data = self.get_civ_data(civs=civs)
+
+        j = AlgorithmJobFactory(
+            algorithm_model=alg.active_model,
+            algorithm_image=alg.active_image,
+            time_limit=10,
+        )
+        j.inputs.set(civs)
+        jobs = Job.objects.get_jobs_with_same_inputs(
+            inputs=data,
+            algorithm_image=alg.active_image,
+            algorithm_model=alg.active_model,
+        )
+        assert len(jobs) == 1
+        assert j in jobs
+
+    def test_job_with_different_image_and_model(
+        self, algorithm_with_image_and_model_and_two_inputs
+    ):
+        alg = algorithm_with_image_and_model_and_two_inputs.algorithm
+        civs = algorithm_with_image_and_model_and_two_inputs.civs
+        data = self.get_civ_data(civs=civs)
+
+        j = AlgorithmJobFactory(
+            algorithm_model=AlgorithmModelFactory(),
+            algorithm_image=AlgorithmImageFactory(),
+            time_limit=10,
+        )
+        j.inputs.set(civs)
+        jobs = Job.objects.get_jobs_with_same_inputs(
+            inputs=data,
+            algorithm_image=alg.active_image,
+            algorithm_model=alg.active_model,
+        )
+        assert len(jobs) == 0
+
+    def test_job_with_same_image_no_model_provided(
+        self, algorithm_with_image_and_model_and_two_inputs
+    ):
+        alg = algorithm_with_image_and_model_and_two_inputs.algorithm
+        civs = algorithm_with_image_and_model_and_two_inputs.civs
+        data = self.get_civ_data(civs=civs)
+
+        j = AlgorithmJobFactory(
+            algorithm_model=alg.active_model,
+            algorithm_image=alg.active_image,
+            time_limit=10,
+        )
+        j.inputs.set(civs)
+        jobs = Job.objects.get_jobs_with_same_inputs(
+            inputs=data, algorithm_image=alg.active_image, algorithm_model=None
+        )
+        assert len(jobs) == 0
+
+    def test_job_with_same_image_and_without_model(
+        self, algorithm_with_image_and_model_and_two_inputs
+    ):
+        alg = algorithm_with_image_and_model_and_two_inputs.algorithm
+        civs = algorithm_with_image_and_model_and_two_inputs.civs
+        data = self.get_civ_data(civs=civs)
+
+        j = AlgorithmJobFactory(
+            algorithm_image=alg.active_image, time_limit=10
+        )
+        j.inputs.set(civs)
+        jobs = Job.objects.get_jobs_with_same_inputs(
+            inputs=data, algorithm_image=alg.active_image, algorithm_model=None
+        )
+        assert j in jobs
+        assert len(jobs) == 1
+
+    def test_job_with_different_input(
+        self, algorithm_with_image_and_model_and_two_inputs
+    ):
+        alg = algorithm_with_image_and_model_and_two_inputs.algorithm
+        civs = algorithm_with_image_and_model_and_two_inputs.civs
+        data = self.get_civ_data(civs=civs)
+
+        j = AlgorithmJobFactory(
+            algorithm_image=alg.active_image, time_limit=10
+        )
+        j.inputs.set(
+            [
+                ComponentInterfaceValueFactory(),
+                ComponentInterfaceValueFactory(),
+            ]
+        )
+        jobs = Job.objects.get_jobs_with_same_inputs(
+            inputs=data, algorithm_image=alg.active_image, algorithm_model=None
+        )
+        assert len(jobs) == 0
+
+
 @pytest.mark.django_db
 def test_is_complimentary_set_for_editors():
     u = UserFactory()
@@ -699,3 +912,36 @@ def test_non_editor_remaining_jobs():
     ai.algorithm.add_editor(user=u)
 
     assert ai.get_remaining_jobs(user=u) == 7
+
+
+@pytest.mark.django_db
+def test_inputs_complete():
+    alg = AlgorithmFactory()
+    ci1, ci2, ci3 = ComponentInterfaceFactory.create_batch(
+        3, kind=ComponentInterface.Kind.STRING
+    )
+    alg.inputs.set([ci1, ci2, ci3])
+    job = AlgorithmJobFactory(algorithm_image__algorithm=alg, time_limit=10)
+    civ_with_value_1 = ComponentInterfaceValueFactory(
+        interface=ci1, value="Foo"
+    )
+    civ_with_value_2 = ComponentInterfaceValueFactory(
+        interface=ci2, value="Bar"
+    )
+    civ_with_value_3 = ComponentInterfaceValueFactory(
+        interface=ci3, value="Test"
+    )
+    civ_without_value = ComponentInterfaceValueFactory(
+        interface=ci3, value=None
+    )
+
+    job.inputs.set([civ_with_value_1, civ_with_value_2, civ_without_value])
+    assert not job.inputs_complete
+
+    job.inputs.set([civ_with_value_1, civ_with_value_2])
+    del job.inputs_complete
+    assert not job.inputs_complete
+
+    job.inputs.set([civ_with_value_1, civ_with_value_2, civ_with_value_3])
+    del job.inputs_complete
+    assert job.inputs_complete

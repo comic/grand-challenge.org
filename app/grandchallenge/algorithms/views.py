@@ -9,7 +9,7 @@ from django.contrib.auth.mixins import (
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db.models import Count, Q, Window
+from django.db.models import Window
 from django.db.models.functions import Rank
 from django.forms.utils import ErrorList
 from django.http import HttpResponse, HttpResponseRedirect
@@ -70,12 +70,7 @@ from grandchallenge.algorithms.serializers import (
     HyperlinkedJobSerializer,
     JobPostSerializer,
 )
-from grandchallenge.cases.models import RawImageUploadSession
-from grandchallenge.cases.widgets import WidgetChoices
-from grandchallenge.components.models import (
-    ComponentInterfaceValue,
-    ImportStatusChoices,
-)
+from grandchallenge.components.models import ImportStatusChoices
 from grandchallenge.components.tasks import upload_to_registry_and_sagemaker
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
@@ -488,7 +483,6 @@ class JobCreate(
         return self.algorithm
 
     def get_form_kwargs(self):
-        """Return the keyword arguments for instantiating the form."""
         kwargs = super().get_form_kwargs()
         kwargs.update({"algorithm": self.algorithm})
         return kwargs
@@ -503,108 +497,21 @@ class JobCreate(
         )
         return context
 
-    def form_valid(self, form):  # noqa: C901
-        # TODO this should all be in the forms save method, not in the view
-        def create_upload_session(image_files):
-            upload_session = RawImageUploadSession.objects.create(
-                creator=self.request.user
-            )
-            upload_session.user_uploads.set(image_files)
-            return upload_session.pk
+    def form_valid(self, form):
+        inputs = form.cleaned_data.pop("inputs")
+        self.object = Job.objects.create(
+            **form.cleaned_data,
+            extra_logs_viewer_groups=[self.algorithm.editors_group],
+            status=Job.VALIDATING_INPUTS,
+        )
+        self.object.validate_inputs_and_execute(inputs=inputs)
+        return super().form_valid(form)
 
-        component_interface_values = []
-        upload_session_pks = {}
-
-        interfaces = {ci.slug: ci for ci in self.algorithm.inputs.all()}
-
-        for slug, value in form.cleaned_data.items():
-            if slug in ["algorithm_image", "algorithm_model"]:
-                continue
-
-            ci = interfaces[slug]
-
-            if ci.is_image_kind:
-                if value:
-                    widget = form.data[f"WidgetChoice-{ci.slug}"]
-                    if widget == WidgetChoices.IMAGE_SEARCH:
-                        (
-                            civ,
-                            created,
-                        ) = ComponentInterfaceValue.objects.get_or_create(
-                            interface=ci, image=value
-                        )
-                        if created:
-                            civ.full_clean()
-                            civ.save()
-                        component_interface_values.append(civ)
-                    elif widget == WidgetChoices.IMAGE_UPLOAD:
-                        # create civ without image, image will be added when import completes
-                        civ = ComponentInterfaceValue.objects.create(
-                            interface=ci
-                        )
-                        component_interface_values.append(civ)
-                        upload_session_pks[civ.pk] = create_upload_session(
-                            value
-                        )
-                    else:
-                        raise RuntimeError(
-                            f"{widget} is not a valid widget choice."
-                        )
-            elif ci.requires_file:
-                civ = ComponentInterfaceValue.objects.create(interface=ci)
-                value.copy_object(to_field=civ.file)
-                civ.full_clean()
-                civ.save()
-                value.delete()
-                component_interface_values.append(civ)
-            else:
-                civ = ci.create_instance(value=value)
-                component_interface_values.append(civ)
-
-        # check that this job hasn't been run yet:
-        unique_kwargs = {
-            "algorithm_image": form.cleaned_data["algorithm_image"],
-        }
-        input_interface_count = self.algorithm.inputs.count()
-        if form.cleaned_data["algorithm_model"]:
-            unique_kwargs["algorithm_model"] = form.cleaned_data[
-                "algorithm_model"
-            ]
-
-        if (
-            Job.objects.filter(**unique_kwargs)
-            .annotate(
-                inputs_match_count=Count(
-                    "inputs",
-                    filter=Q(inputs__in=component_interface_values),
-                )
-            )
-            .filter(inputs_match_count=input_interface_count)
-            .exists()
-        ):
-            form.add_error(
-                None,
-                "A result for these inputs with the current image "
-                "and model already exists.",
-            )
-            return self.form_invalid(form)
-        else:
-            job = Job.objects.create(
-                creator=self.request.user,
-                algorithm_image=form.cleaned_data["algorithm_image"],
-                algorithm_model=form.cleaned_data["algorithm_model"],
-                extra_logs_viewer_groups=[self.algorithm.editors_group],
-                input_civ_set=component_interface_values,
-                time_limit=self.algorithm.time_limit,
-            )
-            job.sort_inputs_and_execute(upload_session_pks=upload_session_pks)
-
-            return HttpResponseRedirect(
-                reverse(
-                    "algorithms:job-progress-detail",
-                    kwargs={"slug": self.kwargs["slug"], "pk": job.pk},
-                )
-            )
+    def get_success_url(self):
+        return reverse(
+            "algorithms:job-progress-detail",
+            kwargs={"slug": self.kwargs["slug"], "pk": self.object.pk},
+        )
 
 
 class JobProgressDetail(

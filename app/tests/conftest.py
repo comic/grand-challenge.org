@@ -9,11 +9,25 @@ import pytest
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.sites.models import Site
+from guardian.shortcuts import assign_perm
+from requests import put
 
+from grandchallenge.cases.widgets import WidgetChoices
 from grandchallenge.components.backends import docker_client
-from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
+from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.reader_studies.models import Question
+from tests.algorithms_tests.factories import (
+    AlgorithmFactory,
+    AlgorithmImageFactory,
+    AlgorithmModelFactory,
+)
+from tests.cases_tests import RESOURCE_PATH
+from tests.cases_tests.factories import (
+    ImageFileFactoryWithMHDFile,
+    RawImageUploadSessionFactory,
+)
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -27,6 +41,11 @@ from tests.reader_studies_tests.factories import (
     QuestionFactory,
     ReaderStudyFactory,
 )
+from tests.uploads_tests.factories import (
+    UserUploadFactory,
+    create_upload_from_file,
+)
+from tests.verification_tests.factories import VerificationFactory
 from tests.workstations_tests.fixtures import (
     TwoWorkstationSets,
     workstation_set,
@@ -438,3 +457,165 @@ def challenge_reviewer():
     )
     reviewers.user_set.add(user)
     return user
+
+
+class AlgorithmWithInputsAndCIVs(NamedTuple):
+    algorithm: AlgorithmFactory
+    civs: [ComponentInterfaceValueFactory]
+
+
+@pytest.fixture
+def algorithm_with_image_and_model_and_two_inputs():
+    alg = AlgorithmFactory(time_limit=123)
+    AlgorithmImageFactory(
+        algorithm=alg,
+        is_desired_version=True,
+        is_manifest_valid=True,
+        is_in_registry=True,
+    )
+    AlgorithmModelFactory(algorithm=alg, is_desired_version=True)
+    editor = UserFactory()
+    alg.add_editor(editor)
+
+    ci1, ci2 = ComponentInterfaceFactory.create_batch(
+        2, kind=ComponentInterface.Kind.STRING
+    )
+    alg.inputs.set([ci1, ci2])
+    civs = [
+        ComponentInterfaceValueFactory(interface=ci1, value="foo"),
+        ComponentInterfaceValueFactory(interface=ci2, value="bar"),
+    ]
+
+    return AlgorithmWithInputsAndCIVs(
+        algorithm=alg,
+        civs=civs,
+    )
+
+
+class AlgorithmWithInputs(NamedTuple):
+    algorithm: AlgorithmFactory
+    editor: UserFactory
+    ci_str: ComponentInterfaceFactory
+    ci_bool: ComponentInterfaceFactory
+    ci_img_upload: ComponentInterfaceFactory
+    ci_existing_img: ComponentInterfaceFactory
+    ci_json_in_db_with_schema: ComponentInterfaceFactory
+    ci_json_file: ComponentInterfaceFactory
+    im_upload_through_api: RawImageUploadSessionFactory
+    im_upload_through_ui: UserUploadFactory
+    file_upload: UserUploadFactory
+    image_1: ImageFactory
+    image_2: ImageFactory
+
+
+@pytest.fixture
+def algorithm_with_multiple_inputs():
+    algorithm = AlgorithmFactory(time_limit=600)
+    AlgorithmImageFactory(
+        algorithm=algorithm,
+        is_desired_version=True,
+        is_manifest_valid=True,
+        is_in_registry=True,
+    )
+    AlgorithmModelFactory(
+        algorithm=algorithm,
+        is_desired_version=True,
+    )
+
+    user = UserFactory()
+    VerificationFactory(user=user, is_verified=True)
+    algorithm.add_editor(user=user)
+
+    # create interfaces of different kinds
+    ci_str = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.STRING
+    )
+    ci_bool = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.BOOL
+    )
+    ci_img_upload = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.IMAGE
+    )
+    ci_existing_img = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.IMAGE
+    )
+    ci_json_in_db_with_schema = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.ANY,
+        store_in_database=True,
+        schema={
+            "$schema": "http://json-schema.org/draft-07/schema",
+            "type": "array",
+        },
+    )
+    ci_json_file = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.ANY,
+        store_in_database=False,
+        schema={
+            "$schema": "http://json-schema.org/draft-07/schema",
+            "type": "array",
+        },
+    )
+
+    # Create inputs
+    im_upload_through_api = RawImageUploadSessionFactory(creator=user)
+    image_1, image_2 = ImageFactory.create_batch(2)
+    mhd1, mhd2 = ImageFileFactoryWithMHDFile.create_batch(2)
+    image_1.files.set([mhd1])
+    image_2.files.set([mhd2])
+    for im in [image_1, image_2]:
+        assign_perm("cases.view_image", user, im)
+    im_upload_through_api.image_set.set([image_1])
+
+    im_upload_through_ui = create_upload_from_file(
+        file_path=RESOURCE_PATH / "image10x10x10.mha",
+        creator=user,
+    )
+
+    file_upload = UserUploadFactory(filename="file.json", creator=user)
+    presigned_urls = file_upload.generate_presigned_urls(part_numbers=[1])
+    response = put(presigned_urls["1"], data=b'["Foo", "bar"]')
+    file_upload.complete_multipart_upload(
+        parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
+    )
+    file_upload.save()
+
+    return AlgorithmWithInputs(
+        algorithm=algorithm,
+        editor=user,
+        ci_str=ci_str,
+        ci_bool=ci_bool,
+        ci_img_upload=ci_img_upload,
+        ci_existing_img=ci_existing_img,
+        ci_json_in_db_with_schema=ci_json_in_db_with_schema,
+        ci_json_file=ci_json_file,
+        im_upload_through_api=im_upload_through_api,
+        im_upload_through_ui=im_upload_through_ui,
+        file_upload=file_upload,
+        image_1=image_1,
+        image_2=image_2,
+    )
+
+
+def get_interface_form_data(*, interface_slug, data, existing_data=False):
+    ci = ComponentInterface.objects.get(slug=interface_slug)
+    form_data = {f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}": data}
+    if ci.is_image_kind:
+        if existing_data:
+            form_data[
+                f"WidgetChoice-{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
+            ] = WidgetChoices.IMAGE_SEARCH.name
+        else:
+            form_data[
+                f"WidgetChoice-{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
+            ] = WidgetChoices.IMAGE_UPLOAD.name
+    elif ci.requires_file:
+        if existing_data:
+            form_data[
+                f"value_type_{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
+            ] = "civ"
+        else:
+            form_data[
+                f"value_type_{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
+            ] = "uuid"
+
+    return form_data

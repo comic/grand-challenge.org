@@ -10,9 +10,8 @@ from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
-from django.db import OperationalError, transaction
+from django.db import transaction
 from django.db.transaction import on_commit
-from django.template.defaultfilters import pluralize
 from django.utils._os import safe_join
 from django.utils.module_loading import import_string
 from panimg import convert, post_process
@@ -20,8 +19,12 @@ from panimg.models import PanImgFile, PanImgResult
 
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.components.backends.utils import safe_extract
+from grandchallenge.components.tasks import (
+    get_model_instance,
+    lock_model_instance,
+)
 from grandchallenge.core.celery import acks_late_2xlarge_task
-from grandchallenge.notifications.models import Notification, NotificationType
+from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.uploads.models import UserUpload
 
 logger = logging.getLogger(__name__)
@@ -89,8 +92,15 @@ def extract_files(*, source_path: Path, checked_paths=None):
         )
 
 
-@acks_late_2xlarge_task
-def build_images(*, upload_session_pk):
+@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@transaction.atomic
+def build_images(  # noqa:C901
+    *,
+    upload_session_pk,
+    linked_app_label=None,
+    linked_model_name=None,
+    linked_object_pk=None,
+):
     """
     Task which analyzes an upload session and attempts to extract and store
     detected images assembled from files uploaded in the image session.
@@ -108,50 +118,67 @@ def build_images(*, upload_session_pk):
     ----------
     upload_session_uuid: UUID
         The uuid of the upload sessions that should be analyzed.
+    linked_object_pk: UUID
+        The pk of the object linked to the upload session, if any. This can be a Job,
+        ArchiveItem or DisplaySet.
+    linked_app_label:
+        The app_label of the linked object.
+    linked_model_name:
+        The model_name of the linked object.
     """
 
-    session_queryset = RawImageUploadSession.objects.filter(
-        pk=upload_session_pk
-    ).select_for_update(nowait=True)
+    upload_session = lock_model_instance(
+        pk=upload_session_pk,
+        app_label=RawImageUploadSession._meta.app_label,
+        model_name=RawImageUploadSession._meta.model_name,
+    )
 
-    with transaction.atomic():
-        upload_session = session_queryset.get()
-        upload_session.status = upload_session.STARTED
-        upload_session.save()
+    if linked_object_pk:
+        linked_object = get_model_instance(
+            app_label=linked_app_label,
+            model_name=linked_model_name,
+            pk=linked_object_pk,
+        )
+    else:
+        linked_object = None
 
     try:
-        with transaction.atomic():
-            # Acquire locks
-            upload_session = session_queryset.get()
+        with TemporaryDirectory() as tmp_dir:
+            tmp_dir = Path(tmp_dir).resolve()
+            _populate_tmp_dir(tmp_dir, upload_session)
+            _handle_raw_image_files(
+                tmp_dir=tmp_dir,
+                upload_session=upload_session,
+            )
 
-            with TemporaryDirectory() as tmp_dir:
-                tmp_dir = Path(tmp_dir).resolve()
-                _populate_tmp_dir(tmp_dir, upload_session)
-                _handle_raw_image_files(tmp_dir, upload_session)
+        upload_session.update_status(
+            status=RawImageUploadSession.SUCCESS, linked_object=linked_object
+        )
 
-            upload_session.status = upload_session.SUCCESS
-            upload_session.save()
-    except OperationalError:
-        # Could not acquire locks
-        raise
     except DuplicateFilesException as e:
         _delete_session_files(upload_session=upload_session)
-        upload_session.error_message = str(e)
-        upload_session.status = upload_session.FAILURE
-        upload_session.save()
+        upload_session.update_status(
+            status=RawImageUploadSession.FAILURE,
+            error_message=str(e),
+            linked_object=linked_object,
+        )
     except (SoftTimeLimitExceeded, TimeLimitExceeded):
-        upload_session.error_message = "Time limit exceeded."
-        upload_session.status = upload_session.FAILURE
-        upload_session.save()
+        upload_session.update_status(
+            status=RawImageUploadSession.FAILURE,
+            error_message="Time limit exceeded",
+            linked_object=linked_object,
+        )
     except Exception:
         _delete_session_files(upload_session=upload_session)
-        upload_session.error_message = "An unexpected error occurred"
-        upload_session.status = upload_session.FAILURE
-        upload_session.save()
-        raise
+        upload_session.update_status(
+            status=RawImageUploadSession.FAILURE,
+            error_message="An unexpected error occurred",
+            linked_object=linked_object,
+        )
+        logger.error("An unexpected error occurred", exc_info=True)
 
 
-def _handle_raw_image_files(tmp_dir, upload_session):
+def _handle_raw_image_files(*, tmp_dir, upload_session):
     importer_result = import_images(
         input_directory=tmp_dir, origin=upload_session
     )
@@ -318,20 +345,6 @@ def _handle_raw_files(
             if k not in consumed_files
         },
     }
-
-    if upload_session.import_result["file_errors"]:
-        n_errors = len(upload_session.import_result["file_errors"])
-
-        upload_session.error_message = (
-            f"{n_errors} file{pluralize(n_errors)} could not be imported"
-        )
-
-        if upload_session.creator:
-            Notification.send(
-                kind=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
-                message=f"failed with {n_errors} error{pluralize(n_errors)}",
-                action_object=upload_session,
-            )
 
 
 def _delete_session_files(*, upload_session):

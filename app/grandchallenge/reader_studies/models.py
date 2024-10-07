@@ -928,6 +928,17 @@ class DisplaySet(
             kwargs={"slug": self.base_object.slug, "pk": self.pk},
         )
 
+    def add_civ(self, *, civ):
+        super().add_civ(civ=civ)
+        return self.values.add(civ)
+
+    def remove_civ(self, *, civ):
+        super().remove_civ(civ=civ)
+        return self.values.remove(civ)
+
+    def get_civ_for_interface(self, interface):
+        return self.values.get(interface=interface)
+
 
 class DisplaySetUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(DisplaySet, on_delete=models.CASCADE)

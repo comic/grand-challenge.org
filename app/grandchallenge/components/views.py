@@ -1,12 +1,16 @@
 import uuid
 
 from dal import autocomplete
+from django.contrib.auth.mixins import AccessMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q, TextChoices
 from django.forms import Media
 from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from django.template.loader import render_to_string
 from django.utils.functional import cached_property
 from django.utils.html import format_html
+from django.views import View
 from django.views.generic import (
     DeleteView,
     DetailView,
@@ -21,11 +25,8 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from grandchallenge.algorithms.forms import NON_ALGORITHM_INTERFACES
 from grandchallenge.api.permissions import IsAuthenticated
 from grandchallenge.archives.models import Archive
-from grandchallenge.components.forms import (
-    CIVSetDeleteForm,
-    NewFileUploadForm,
-    SingleCIVForm,
-)
+from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
+from grandchallenge.components.forms import CIVSetDeleteForm, SingleCIVForm
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.components.serializers import ComponentInterfaceSerializer
 from grandchallenge.core.guardian import (
@@ -34,9 +35,11 @@ from grandchallenge.core.guardian import (
     PermissionListMixin,
     get_objects_for_user,
 )
+from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
+from grandchallenge.uploads.widgets import UserUploadMultipleWidget
 
 
 class ComponentInterfaceViewSet(ReadOnlyModelViewSet):
@@ -193,32 +196,6 @@ class MultipleCIVProcessingBaseView(
             success_message=self.success_message,
             url=reverse("notifications:list"),
         )
-
-
-class FileUpdateBaseView(ObjectPermissionRequiredMixin, TemplateView):
-    form_class = NewFileUploadForm
-    template_name = "components/object_files_update.html"
-    raise_exception = True
-
-    def get_permission_object(self):
-        return self.base_object
-
-    @cached_property
-    def interface(self):
-        return ComponentInterface.objects.get(
-            slug=self.kwargs["interface_slug"]
-        )
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context.update(
-            {
-                "form": self.form_class(
-                    user=self.request.user, interface=self.interface
-                ),
-            }
-        )
-        return context
 
 
 class CIVSetFormMixin:
@@ -450,3 +427,48 @@ class CIVSetBulkDelete(LoginRequiredMixin, FormView):
         for civ_set in form.cleaned_data["civ_sets_to_delete"]:
             civ_set.delete()
         return super().form_valid(form)
+
+
+class FileUploadFormFieldView(LoginRequiredMixin, AccessMixin, View):
+    def dispatch(self, request, *args, **kwargs):
+        algorithms = get_objects_for_user(
+            self.request.user, "algorithms.execute_algorithm"
+        )
+        reader_studies = get_objects_for_user(
+            self.request.user, "reader_studies.change_readerstudy"
+        )
+        archives = get_objects_for_user(
+            self.request.user, "archives.change_archive"
+        )
+
+        if algorithms.exists() or reader_studies.exists() or archives.exists():
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            return self.handle_no_permission()
+
+    @cached_property
+    def interface(self):
+        return get_object_or_404(
+            ComponentInterface, slug=self.kwargs["interface_slug"]
+        )
+
+    def get(self, request, *args, **kwargs):
+        widget_name = f"{INTERFACE_FORM_FIELD_PREFIX}{self.interface.slug}"
+        html_content = render_to_string(
+            UserUploadMultipleWidget.template_name,
+            {
+                "widget": UserUploadMultipleWidget(
+                    allowed_file_types=self.interface.file_mimetypes
+                ).get_context(
+                    name=widget_name,
+                    value=None,
+                    attrs={
+                        "id": widget_name,
+                        "help_text": clean(self.interface.description),
+                    },
+                )[
+                    "widget"
+                ],
+            },
+        )
+        return HttpResponse(html_content)

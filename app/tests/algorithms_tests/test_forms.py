@@ -17,6 +17,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmPermissionRequest,
     Job,
 )
+from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentJob,
@@ -35,6 +36,7 @@ from tests.algorithms_tests.factories import (
 )
 from tests.algorithms_tests.utils import get_algorithm_creator
 from tests.components_tests.factories import ComponentInterfaceFactory
+from tests.conftest import get_interface_form_data
 from tests.factories import UserFactory, WorkstationFactory
 from tests.uploads_tests.factories import (
     UserUploadFactory,
@@ -192,75 +194,106 @@ def test_algorithm_create(client, uploaded_image):
             "generic-overlay",
             [
                 '<select class="custom-select"',
-                'name="WidgetChoice-generic-overlay"',
+                f'name="WidgetChoice-{INTERFACE_FORM_FIELD_PREFIX}generic-overlay"',
             ],
         ),
         (
             "generic-medical-image",
             [
                 '<select class="custom-select"',
-                'name="WidgetChoice-generic-medical-image"',
+                f'name="WidgetChoice-{INTERFACE_FORM_FIELD_PREFIX}generic-medical-image"',
             ],
         ),
-        ("boolean", ['<input type="checkbox"', 'name="boolean"']),
-        ("string", ['<input type="text" name="string"']),
-        ("integer", ['<input type="number"', 'name="integer"']),
-        ("float", ['<input type="number"', 'name="float"', 'step="any"']),
+        (
+            "boolean",
+            [
+                '<input type="checkbox"',
+                f'name="{INTERFACE_FORM_FIELD_PREFIX}boolean"',
+            ],
+        ),
+        (
+            "string",
+            [
+                '<input type="text"',
+                f'name="{INTERFACE_FORM_FIELD_PREFIX}string"',
+            ],
+        ),
+        (
+            "integer",
+            [
+                '<input type="number"',
+                f'name="{INTERFACE_FORM_FIELD_PREFIX}integer"',
+            ],
+        ),
+        (
+            "float",
+            [
+                '<input type="number"',
+                f'name="{INTERFACE_FORM_FIELD_PREFIX}float"',
+                'step="any"',
+            ],
+        ),
         (
             "2d-bounding-box",
             [
                 'class="jsoneditorwidget ',
-                '<div id="jsoneditor_id_2d-bounding-box"',
+                f'<div id="jsoneditor_id_{INTERFACE_FORM_FIELD_PREFIX}2d-bounding-box"',
             ],
         ),
         (
             "multiple-2d-bounding-boxes",
             [
                 'class="jsoneditorwidget ',
-                '<div id="jsoneditor_id_multiple-2d-bounding-boxes"',
+                f'<div id="jsoneditor_id_{INTERFACE_FORM_FIELD_PREFIX}multiple-2d-bounding-boxes"',
             ],
         ),
         (
             "distance-measurement",
             [
                 'class="jsoneditorwidget ',
-                '<div id="jsoneditor_id_distance-measurement"',
+                f'<div id="jsoneditor_id_{INTERFACE_FORM_FIELD_PREFIX}distance-measurement"',
             ],
         ),
         (
             "multiple-distance-measurements",
             [
                 'class="jsoneditorwidget ',
-                '<div id="jsoneditor_id_multiple-distance-measurements"',
+                f'<div id="jsoneditor_id_{INTERFACE_FORM_FIELD_PREFIX}multiple-distance-measurements"',
             ],
         ),
         (
             "point",
-            ['class="jsoneditorwidget ', '<div id="jsoneditor_id_point"'],
+            [
+                'class="jsoneditorwidget ',
+                f'<div id="jsoneditor_id_{INTERFACE_FORM_FIELD_PREFIX}point"',
+            ],
         ),
         (
             "multiple-points",
             [
                 'class="jsoneditorwidget ',
-                '<div id="jsoneditor_id_multiple-points"',
+                f'<div id="jsoneditor_id_{INTERFACE_FORM_FIELD_PREFIX}multiple-points"',
             ],
         ),
         (
             "polygon",
-            ['class="jsoneditorwidget ', '<div id="jsoneditor_id_polygon"'],
+            [
+                'class="jsoneditorwidget ',
+                f'<div id="jsoneditor_id_{INTERFACE_FORM_FIELD_PREFIX}polygon"',
+            ],
         ),
         (
             "multiple-polygons",
             [
                 'class="jsoneditorwidget ',
-                '<div id="jsoneditor_id_multiple-polygons"',
+                f'<div id="jsoneditor_id_{INTERFACE_FORM_FIELD_PREFIX}multiple-polygons"',
             ],
         ),
         (
             "anything",
             [
                 'class="user-upload"',
-                '<div id="X_id_anything-drag-drop"',
+                f'<div id="X_id_{INTERFACE_FORM_FIELD_PREFIX}anything-drag-drop"',
             ],
         ),
     ),
@@ -311,7 +344,7 @@ def test_create_job_json_input_field_validation(
         user=creator,
     )
     assert response.context["form"].errors == {
-        slug: ["This field is required."],
+        f"{INTERFACE_FORM_FIELD_PREFIX}{slug}": ["This field is required."],
     }
 
 
@@ -661,3 +694,100 @@ def test_model_version_control_form():
     assert "Model updating already in progress." in str(
         form.errors["algorithm_model"]
     )
+
+
+@pytest.mark.django_db
+class TestJobCreateForm:
+    def test_creator_queryset(
+        self, algorithm_with_image_and_model_and_two_inputs
+    ):
+        algorithm = algorithm_with_image_and_model_and_two_inputs.algorithm
+        editor = algorithm.editors_group.user_set.first()
+        form = JobCreateForm(algorithm=algorithm, user=editor, data={})
+        assert list(form.fields["creator"].queryset.all()) == [editor]
+        assert form.fields["creator"].initial == editor
+
+    def test_time_limit_prepopulated(
+        self, algorithm_with_image_and_model_and_two_inputs
+    ):
+        algorithm = algorithm_with_image_and_model_and_two_inputs.algorithm
+        editor = algorithm.editors_group.user_set.first()
+        form = JobCreateForm(algorithm=algorithm, user=editor, data={})
+        assert form.fields["time_limit"].initial == algorithm.time_limit
+
+    def test_timelimit_cannot_be_altered(
+        self, algorithm_with_image_and_model_and_two_inputs
+    ):
+        algorithm = algorithm_with_image_and_model_and_two_inputs.algorithm
+        civs = algorithm_with_image_and_model_and_two_inputs.civs
+        editor = algorithm.editors_group.user_set.first()
+        form = JobCreateForm(
+            algorithm=algorithm,
+            user=editor,
+            data={
+                "time_limit": 456,
+                **get_interface_form_data(
+                    interface_slug=civs[0].interface.slug, data=civs[0].value
+                ),
+                **get_interface_form_data(
+                    interface_slug=civs[1].interface.slug, data=civs[1].value
+                ),
+            },
+        )
+        assert form.is_valid()
+        assert form.cleaned_data["time_limit"] == algorithm.time_limit
+        assert form.cleaned_data["time_limit"] != 456
+
+    def test_algorithm_image_queryset(
+        self, algorithm_with_image_and_model_and_two_inputs
+    ):
+        algorithm = algorithm_with_image_and_model_and_two_inputs.algorithm
+        editor = algorithm.editors_group.user_set.first()
+        # irrelevant Algorithm images
+        inactive_image = AlgorithmImageFactory(algorithm=algorithm)
+        image_for_different_alg = AlgorithmImageFactory(
+            is_desired_version=True,
+            is_manifest_valid=True,
+            is_in_registry=True,
+        )
+        form = JobCreateForm(algorithm=algorithm, user=editor, data={})
+        ai_qs = form.fields["algorithm_image"].queryset.all()
+        assert algorithm.active_image in ai_qs
+        assert inactive_image not in ai_qs
+        assert image_for_different_alg not in ai_qs
+        assert form.fields["algorithm_image"].initial == algorithm.active_image
+
+    def test_cannot_create_job_with_same_inputs_twice(
+        self, algorithm_with_image_and_model_and_two_inputs
+    ):
+        algorithm = algorithm_with_image_and_model_and_two_inputs.algorithm
+        editor = algorithm.editors_group.user_set.first()
+
+        civs = algorithm_with_image_and_model_and_two_inputs.civs
+        job = AlgorithmJobFactory(
+            algorithm_image=algorithm.active_image,
+            algorithm_model=algorithm.active_model,
+            status=Job.SUCCESS,
+            time_limit=123,
+        )
+        job.inputs.set(civs)
+
+        form = JobCreateForm(
+            algorithm=algorithm,
+            user=editor,
+            data={
+                "algorithm_image": algorithm.active_image,
+                "algorithm_model": algorithm.active_model,
+                **get_interface_form_data(
+                    interface_slug=civs[0].interface.slug, data=civs[0].value
+                ),
+                **get_interface_form_data(
+                    interface_slug=civs[1].interface.slug, data=civs[1].value
+                ),
+            },
+        )
+        assert not form.is_valid()
+        assert (
+            "A result for these inputs with the current image and model already exists."
+            in str(form.errors)
+        )

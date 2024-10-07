@@ -5,6 +5,7 @@ from itertools import chain
 import pytest
 from django.core import mail
 from django.core.exceptions import ValidationError
+from django.test import TestCase
 from django.utils import timezone
 from django.utils.timezone import now
 
@@ -23,7 +24,11 @@ from grandchallenge.evaluation.tasks import (
 )
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.invoices.models import PaymentStatusChoices
-from tests.algorithms_tests.factories import AlgorithmImageFactory
+from tests.algorithms_tests.factories import (
+    AlgorithmImageFactory,
+    AlgorithmJobFactory,
+    AlgorithmModelFactory,
+)
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
@@ -1051,3 +1056,290 @@ def test_is_evaluated_with_active_image_and_ground_truth():
     del phase.active_ground_truth
     del s.is_evaluated_with_active_image_and_ground_truth
     assert s.is_evaluated_with_active_image_and_ground_truth
+
+
+@pytest.mark.django_db
+class TestInputsComplete(TestCase):
+
+    def setUp(self):
+        self.interface = ComponentInterface.objects.get(
+            slug="generic-medical-image"
+        )
+
+        archive = ArchiveFactory()
+        self.archive_items = ArchiveItemFactory.create_batch(2)
+        archive.items.set(self.archive_items)
+
+        input_civs = ComponentInterfaceValueFactory.create_batch(
+            2, interface=self.interface
+        )
+        output_civs = ComponentInterfaceValueFactory.create_batch(
+            2, interface=self.interface
+        )
+
+        for ai, civ in zip(self.archive_items, input_civs, strict=True):
+            ai.values.set([civ])
+
+        self.algorithm_image = AlgorithmImageFactory()
+        self.algorithm_model = AlgorithmModelFactory()
+        submission = SubmissionFactory(algorithm_image=self.algorithm_image)
+        submission.phase.archive = archive
+        submission.phase.save()
+        submission.phase.algorithm_inputs.set([self.interface])
+
+        submission_with_model = SubmissionFactory(
+            algorithm_image=self.algorithm_image,
+            algorithm_model=self.algorithm_model,
+        )
+        submission_with_model.phase.archive = archive
+        submission_with_model.phase.save()
+        submission_with_model.phase.algorithm_inputs.set([self.interface])
+
+        self.submission = submission
+        self.submission_with_model = submission_with_model
+        self.input_civs = input_civs
+        self.output_civs = output_civs
+
+    def test_inputs_complete_for_prediction_submission(self):
+        eval_pred = EvaluationFactory(
+            submission__predictions_file=None, time_limit=10
+        )
+        assert not eval_pred.inputs_complete
+
+        eval_pred2 = EvaluationFactory(time_limit=10)
+        assert eval_pred2.inputs_complete
+
+    def test_inputs_complete_for_algorithm_submission_without_model(self):
+        eval_alg = EvaluationFactory(submission=self.submission, time_limit=10)
+        assert not eval_alg.inputs_complete
+
+        for inpt, output in zip(
+            self.input_civs, self.output_civs, strict=True
+        ):
+            j = AlgorithmJobFactory(
+                status=Job.SUCCESS,
+                algorithm_image=self.algorithm_image,
+                time_limit=self.algorithm_image.algorithm.time_limit,
+            )
+            j.inputs.set([inpt])
+            j.outputs.set([output])
+            j.creator = None
+            j.save()
+
+        del eval_alg.algorithm_inputs
+        del eval_alg.successful_jobs
+        del eval_alg.inputs_complete
+        assert eval_alg.inputs_complete
+
+    def test_inputs_complete_for_algorithm_submission_with_model(self):
+        eval_alg = EvaluationFactory(
+            submission=self.submission_with_model, time_limit=10
+        )
+        assert not eval_alg.inputs_complete
+
+        for inpt, output in zip(
+            self.input_civs, self.output_civs, strict=True
+        ):
+            j = AlgorithmJobFactory(
+                status=Job.SUCCESS,
+                algorithm_image=self.algorithm_image,
+                algorithm_model=self.algorithm_model,
+                time_limit=self.algorithm_image.algorithm.time_limit,
+            )
+            j.inputs.set([inpt])
+            j.outputs.set([output])
+            j.creator = None
+            j.save()
+        del eval_alg.algorithm_inputs
+        del eval_alg.successful_jobs
+        del eval_alg.inputs_complete
+        assert eval_alg.inputs_complete
+
+    def test_jobs_with_creator_ignored(self):
+        eval_alg = EvaluationFactory(submission=self.submission, time_limit=10)
+        assert not eval_alg.inputs_complete
+
+        for inpt, output in zip(
+            self.input_civs, self.output_civs, strict=True
+        ):
+            j_irrelevant = AlgorithmJobFactory(
+                status=Job.SUCCESS,
+                algorithm_image=self.algorithm_image,
+                creator=self.algorithm_image.creator,
+                time_limit=self.algorithm_image.algorithm.time_limit,
+            )
+            j_irrelevant.inputs.set([inpt])
+            j_irrelevant.outputs.set([output])
+        del eval_alg.algorithm_inputs
+        del eval_alg.successful_jobs
+        del eval_alg.inputs_complete
+        assert not eval_alg.inputs_complete
+
+    def test_failed_jobs_ignored(self):
+        eval_alg = EvaluationFactory(submission=self.submission, time_limit=10)
+        assert not eval_alg.inputs_complete
+
+        for inpt, output in zip(
+            self.input_civs, self.output_civs, strict=True
+        ):
+            j_irrelevant = AlgorithmJobFactory(
+                status=Job.FAILURE,
+                algorithm_image=self.algorithm_image,
+                time_limit=self.algorithm_image.algorithm.time_limit,
+            )
+            j_irrelevant.inputs.set([inpt])
+            j_irrelevant.outputs.set([output])
+        del eval_alg.algorithm_inputs
+        del eval_alg.successful_jobs
+        del eval_alg.inputs_complete
+        assert not eval_alg.inputs_complete
+
+    def test_jobs_with_other_inputs_ignored(self):
+        eval_alg = EvaluationFactory(submission=self.submission, time_limit=10)
+        assert not eval_alg.inputs_complete
+
+        other_input_civs = ComponentInterfaceValueFactory.create_batch(
+            2, interface=self.interface
+        )
+        other_output_civs = ComponentInterfaceValueFactory.create_batch(
+            2, interface=self.interface
+        )
+        for inpt, output in zip(
+            other_input_civs, other_output_civs, strict=True
+        ):
+            j_irrelevant = AlgorithmJobFactory(
+                status=Job.SUCCESS,
+                algorithm_image=self.algorithm_image,
+                time_limit=self.algorithm_image.algorithm.time_limit,
+            )
+            j_irrelevant.inputs.set([inpt])
+            j_irrelevant.outputs.set([output])
+        del eval_alg.algorithm_inputs
+        del eval_alg.successful_jobs
+        del eval_alg.inputs_complete
+        assert not eval_alg.inputs_complete
+
+    def test_jobs_with_partial_inputs_ignored(self):
+        eval_alg = EvaluationFactory(submission=self.submission, time_limit=10)
+        assert not eval_alg.inputs_complete
+
+        # add values to archive items
+        new_interface = ComponentInterface.objects.get(slug="generic-overlay")
+        self.submission.phase.algorithm_inputs.add(new_interface)
+        self.submission.phase.save()
+
+        new_input_civs = ComponentInterfaceValueFactory.create_batch(
+            2, interface=new_interface
+        )
+        for ai, civ in zip(self.archive_items, new_input_civs, strict=True):
+            ai.values.add(civ)
+
+        for inpt, output in zip(
+            self.input_civs, self.output_civs, strict=True
+        ):
+            j = AlgorithmJobFactory(
+                status=Job.SUCCESS,
+                algorithm_image=self.algorithm_image,
+                time_limit=self.algorithm_image.algorithm.time_limit,
+            )
+            j.inputs.set([inpt])
+            j.outputs.set([output])
+            j.creator = None
+            j.save()
+
+        del eval_alg.algorithm_inputs
+        del eval_alg.successful_jobs
+        del eval_alg.inputs_complete
+        assert not eval_alg.inputs_complete
+
+    def test_jobs_with_different_image_ignored_for_submission_without_model(
+        self,
+    ):
+        eval_alg = EvaluationFactory(submission=self.submission, time_limit=10)
+        assert not eval_alg.inputs_complete
+
+        for inpt, output in zip(
+            self.input_civs, self.output_civs, strict=True
+        ):
+            j_irrelevant = AlgorithmJobFactory(
+                status=Job.SUCCESS,
+                algorithm_image=AlgorithmImageFactory(),
+                time_limit=10,
+            )
+            j_irrelevant.inputs.set([inpt])
+            j_irrelevant.outputs.set([output])
+        del eval_alg.algorithm_inputs
+        del eval_alg.successful_jobs
+        del eval_alg.inputs_complete
+        assert not eval_alg.inputs_complete
+
+    def test_successful_job_with_model_ignored_for_submission_without_model(
+        self,
+    ):
+        eval_alg = EvaluationFactory(submission=self.submission, time_limit=10)
+        assert not eval_alg.inputs_complete
+
+        for inpt, output in zip(
+            self.input_civs, self.output_civs, strict=True
+        ):
+            j_irrelevant = AlgorithmJobFactory(
+                status=Job.SUCCESS,
+                algorithm_image=self.algorithm_image,
+                algorithm_model=AlgorithmModelFactory(),
+                time_limit=10,
+            )
+            j_irrelevant.inputs.set([inpt])
+            j_irrelevant.outputs.set([output])
+        del eval_alg.algorithm_inputs
+        del eval_alg.successful_jobs
+        del eval_alg.inputs_complete
+        assert not eval_alg.inputs_complete
+
+    def test_jobs_with_different_model_ignored_for_submission_with_model(self):
+        eval_alg = EvaluationFactory(
+            submission=self.submission_with_model, time_limit=10
+        )
+        assert not eval_alg.inputs_complete
+
+        for inpt, output in zip(
+            self.input_civs, self.output_civs, strict=True
+        ):
+            j_with_model = AlgorithmJobFactory(
+                status=Job.SUCCESS,
+                algorithm_image=eval_alg.submission.algorithm_image,
+                algorithm_model=AlgorithmModelFactory(
+                    algorithm=eval_alg.submission.algorithm_image.algorithm
+                ),
+                time_limit=10,
+            )
+            j_with_model.inputs.set([inpt])
+            j_with_model.outputs.set([output])
+            j_with_model.creator = None
+            j_with_model.save()
+        del eval_alg.algorithm_inputs
+        del eval_alg.successful_jobs
+        del eval_alg.inputs_complete
+        assert not eval_alg.inputs_complete
+
+    def test_jobs_without_model_ignored_for_submission_with_model(self):
+        eval_alg = EvaluationFactory(
+            submission=self.submission_with_model, time_limit=10
+        )
+        assert not eval_alg.inputs_complete
+
+        for inpt, output in zip(
+            self.input_civs, self.output_civs, strict=True
+        ):
+            j_with_model = AlgorithmJobFactory(
+                status=Job.SUCCESS,
+                algorithm_image=eval_alg.submission.algorithm_image,
+                time_limit=10,
+            )
+            j_with_model.inputs.set([inpt])
+            j_with_model.outputs.set([output])
+            j_with_model.creator = None
+            j_with_model.save()
+        del eval_alg.algorithm_inputs
+        del eval_alg.successful_jobs
+        del eval_alg.inputs_complete
+        assert not eval_alg.inputs_complete

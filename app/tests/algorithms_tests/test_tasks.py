@@ -1,27 +1,23 @@
 import re
 from datetime import timedelta
-from io import BytesIO
 from pathlib import Path
 
 import pytest
 from actstream.models import Follow
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.files.base import ContentFile, File
-from requests import put
+from django.core.files.base import ContentFile
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.algorithms.tasks import (
     create_algorithm_jobs,
     execute_algorithm_job_for_inputs,
     filter_civs_for_algorithm,
-    run_algorithm_job_for_inputs,
     send_failed_job_notification,
     set_credits_per_job,
 )
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
-    InterfaceKindChoices,
 )
 from grandchallenge.components.tasks import (
     add_image_to_component_interface_value,
@@ -45,7 +41,6 @@ from tests.factories import (
     ImageFileFactory,
     UserFactory,
 )
-from tests.uploads_tests.factories import UserUploadFactory
 from tests.utils import get_view_for_user, recurse_callbacks
 
 
@@ -67,24 +62,6 @@ class TestCreateAlgorithmJobs:
             create_algorithm_jobs(
                 algorithm_image=None, civ_sets=[], time_limit=60
             )
-
-    def test_civ_existing_does_nothing(self):
-        image = ImageFactory()
-        ai = AlgorithmImageFactory()
-        j = AlgorithmJobFactory(
-            creator=ai.creator,
-            algorithm_image=ai,
-            time_limit=ai.algorithm.time_limit,
-        )
-        civ = ComponentInterfaceValueFactory(
-            interface=self.default_input_interface, image=image
-        )
-        j.inputs.set([civ])
-        assert Job.objects.count() == 1
-        run_algorithm_job_for_inputs(
-            job_pk=j.pk, upload_session_pks=[], user_upload_pks=[]
-        )
-        assert Job.objects.count() == 1
 
     def test_creates_job_correctly(self):
         ai = AlgorithmImageFactory()
@@ -368,218 +345,6 @@ def test_algorithm_with_invalid_output(
 
 
 @pytest.mark.django_db
-def test_algorithm_multiple_inputs(
-    algorithm_io_image,
-    settings,
-    component_interfaces,
-    django_capture_on_commit_callbacks,
-):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
-    creator = UserFactory()
-
-    assert Job.objects.count() == 0
-
-    # Create the algorithm image
-    with django_capture_on_commit_callbacks() as callbacks:
-        alg = AlgorithmImageFactory(image__from_path=algorithm_io_image)
-    recurse_callbacks(
-        callbacks=callbacks,
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-    )
-
-    alg.algorithm.add_editor(creator)
-
-    alg.algorithm.inputs.set(ComponentInterface.objects.all())
-    alg.algorithm.outputs.set(
-        [ComponentInterface.objects.get(slug="results-json-file")]
-    )
-
-    input_civ_set = []
-    expected = []
-    for ci in ComponentInterface.objects.exclude(
-        kind=InterfaceKindChoices.ZIP
-    ):
-        if ci.is_image_kind:
-            image_file = ImageFileFactory(
-                file__from_path=Path(__file__).parent
-                / "resources"
-                / "input_file.tif"
-            )
-            input_civ_set.append(
-                ComponentInterfaceValueFactory(
-                    interface=ci, image=image_file.image
-                )
-            )
-            expected.append("file")
-        elif ci.requires_file:
-            civ = ComponentInterfaceValueFactory(interface=ci)
-            civ.file.save("test", File(BytesIO(b"")))
-            civ.save()
-            input_civ_set.append(civ)
-            expected.append("file")
-        else:
-            input_civ_set.append(
-                ComponentInterfaceValueFactory(interface=ci, value="test")
-            )
-            expected.append("test")
-
-    job = Job.objects.create(
-        creator=creator,
-        algorithm_image=alg,
-        input_civ_set=input_civ_set,
-        time_limit=alg.algorithm.time_limit,
-    )
-
-    with django_capture_on_commit_callbacks() as callbacks:
-        run_algorithm_job_for_inputs(
-            job_pk=job.pk, upload_session_pks=[], user_upload_pks=[]
-        )
-    recurse_callbacks(
-        callbacks=callbacks,
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-    )
-
-    job.refresh_from_db()
-    assert job.error_message == ""
-    assert job.status == job.SUCCESS
-
-    # Remove fake value for score
-    output_dict = job.outputs.first().value
-    output_dict.pop("score")
-
-    assert {f"/input/{x.relative_path}" for x in job.inputs.all()} == set(
-        output_dict.keys()
-    )
-    assert sorted(
-        map(lambda x: x if x != {} else "json", output_dict.values())
-    ) == sorted(expected)
-
-
-@pytest.mark.django_db
-def test_algorithm_input_image_multiple_files(
-    settings, component_interfaces, django_capture_on_commit_callbacks
-):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
-    creator = UserFactory()
-
-    assert Job.objects.count() == 0
-
-    # Create the algorithm image
-    alg = AlgorithmImageFactory()
-    alg.algorithm.add_editor(creator)
-
-    alg.algorithm.inputs.set(ComponentInterface.objects.all())
-    us = RawImageUploadSessionFactory()
-
-    ImageFactory(origin=us)
-    ImageFactory(origin=us)
-    ci = ComponentInterface.objects.get(slug="generic-medical-image")
-
-    civ = ComponentInterfaceValue.objects.create(interface=ci)
-
-    job = Job.objects.create(
-        creator=creator,
-        algorithm_image=alg,
-        input_civ_set=[civ],
-        time_limit=alg.algorithm.time_limit,
-    )
-
-    with django_capture_on_commit_callbacks(execute=True):
-        run_algorithm_job_for_inputs(
-            job_pk=job.pk,
-            upload_session_pks={civ.pk: us.pk},
-            user_upload_pks=[],
-        )
-
-    job = Job.objects.first()
-    assert job.status == job.CANCELLED
-    assert job.error_message == (
-        "Job can't be started, input is missing for Generic Medical Image"
-    )
-
-
-@pytest.mark.django_db
-def test_algorithm_input_user_upload(
-    settings, component_interfaces, django_capture_on_commit_callbacks
-):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
-    creator = UserFactory()
-
-    assert Job.objects.count() == 0
-
-    # Create the algorithm image
-    alg = AlgorithmImageFactory()
-    alg.algorithm.add_editor(creator)
-
-    ci = ComponentInterfaceFactory(
-        kind="JSON",
-        store_in_database=False,
-        schema={
-            "$schema": "http://json-schema.org/draft-07/schema",
-            "type": "array",
-        },
-    )
-    alg.algorithm.inputs.add(ci)
-
-    upload = UserUploadFactory(filename="file.json", creator=creator)
-    presigned_urls = upload.generate_presigned_urls(part_numbers=[1])
-    response = put(presigned_urls["1"], data=b'{"foo": "bar"}')
-    upload.complete_multipart_upload(
-        parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
-    )
-    upload.save()
-
-    civ = ComponentInterfaceValueFactory(interface=ci)
-
-    job = Job.objects.create(
-        creator=creator,
-        algorithm_image=alg,
-        input_civ_set=[civ],
-        time_limit=alg.algorithm.time_limit,
-    )
-
-    with django_capture_on_commit_callbacks(execute=True):
-        run_algorithm_job_for_inputs(
-            job_pk=job.pk,
-            upload_session_pks=[],
-            user_upload_pks={civ.pk: upload.pk},
-        )
-    assert Notification.objects.count() == 1
-    notification = Notification.objects.get()
-    assert "JSON does not fulfill schema" in notification.print_notification(
-        user=notification.user
-    )
-
-    upload2 = UserUploadFactory(filename="file.json", creator=creator)
-    presigned_urls2 = upload2.generate_presigned_urls(part_numbers=[1])
-    response2 = put(presigned_urls2["1"], data=b'["foo", "bar"]')
-    upload2.complete_multipart_upload(
-        parts=[{"ETag": response2.headers["ETag"], "PartNumber": 1}]
-    )
-    upload2.save()
-    civ2 = ComponentInterfaceValueFactory(interface=ci)
-
-    with django_capture_on_commit_callbacks(execute=True):
-        run_algorithm_job_for_inputs(
-            job_pk=job.pk,
-            upload_session_pks=[],
-            user_upload_pks={civ2.pk: upload2.pk},
-        )
-    civ2.refresh_from_db()
-    civ2.file.seek(0)
-    assert civ2.file.read() == b'["foo", "bar"]'
-
-
-@pytest.mark.django_db
 def test_add_image_to_component_interface_value():
     # Override the celery settings
     us = RawImageUploadSessionFactory()
@@ -608,7 +373,7 @@ def test_add_image_to_component_interface_value():
 
 
 @pytest.mark.django_db
-def test_execute_algorithm_job_for_inputs(settings):
+def test_execute_algorithm_job_for_missing_inputs(settings):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
@@ -621,18 +386,19 @@ def test_execute_algorithm_job_for_inputs(settings):
 
     # create the job without value for the ComponentInterfaceValues
     ci = ComponentInterface.objects.get(slug="generic-medical-image")
-    civ = ComponentInterfaceValue.objects.create(interface=ci)
-    job = Job.objects.create(
+    ComponentInterfaceValue.objects.create(interface=ci)
+    alg.algorithm.inputs.add(ci)
+    job = AlgorithmJobFactory(
         creator=creator,
         algorithm_image=alg,
-        input_civ_set=[civ],
         time_limit=alg.algorithm.time_limit,
     )
     execute_algorithm_job_for_inputs(job_pk=job.pk)
 
+    # nothing happens since the input is missing
     job.refresh_from_db()
-    assert job.status == Job.CANCELLED
-    assert "Job can't be started, input is missing for " in job.error_message
+    assert job.status == Job.PENDING
+    assert job.error_message == ""
 
 
 @pytest.mark.django_db

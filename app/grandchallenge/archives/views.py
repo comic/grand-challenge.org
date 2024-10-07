@@ -52,7 +52,7 @@ from grandchallenge.archives.serializers import (
 )
 from grandchallenge.archives.tasks import add_images_to_archive
 from grandchallenge.cases.models import Image, RawImageUploadSession
-from grandchallenge.components.forms import MultipleCIVForm, NewFileUploadForm
+from grandchallenge.components.forms import MultipleCIVForm
 from grandchallenge.components.views import (
     CIVSetBulkDelete,
     CIVSetDelete,
@@ -381,7 +381,6 @@ class ArchiveItemUpdate(
     )
     included_form_classes = (
         MultipleCIVForm,
-        NewFileUploadForm,
         *MultipleCIVProcessingBaseView.included_form_classes,
     )
     success_message = "Archive item has been updated."

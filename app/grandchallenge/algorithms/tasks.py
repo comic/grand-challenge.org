@@ -4,7 +4,6 @@ from typing import NamedTuple
 
 import boto3
 from botocore.exceptions import ClientError
-from celery import chain, group
 from django.conf import settings
 from django.core.cache import cache
 from django.core.files.base import File
@@ -14,18 +13,12 @@ from django.db.transaction import on_commit
 from django.utils._os import safe_join
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
-from grandchallenge.cases.tasks import build_images
-from grandchallenge.components.tasks import (
-    add_file_to_component_interface_value,
-    add_image_to_component_interface_value,
-    lock_model_instance,
-)
+from grandchallenge.components.tasks import lock_model_instance
 from grandchallenge.core.celery import (
     acks_late_2xlarge_task,
     acks_late_micro_short_task,
 )
 from grandchallenge.core.exceptions import LockNotAcquiredException
-from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.credits.models import Credit
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
@@ -33,104 +26,39 @@ from grandchallenge.subdomains.utils import reverse
 logger = logging.getLogger(__name__)
 
 
-@acks_late_micro_short_task
-@transaction.atomic
-def run_algorithm_job_for_inputs(
-    *, job_pk, upload_session_pks, user_upload_pks
-):
-    from grandchallenge.algorithms.models import Job
-
-    job = Job.objects.get(pk=job_pk)
-
-    assignment_tasks = []
-
-    if upload_session_pks:
-        assignment_tasks.extend(
-            chain(
-                build_images.signature(
-                    kwargs={"upload_session_pk": upload_session_pk},
-                    immutable=True,
-                ),
-                add_image_to_component_interface_value.signature(
-                    kwargs={
-                        "component_interface_value_pk": civ_pk,
-                        "upload_session_pk": upload_session_pk,
-                    },
-                    immutable=True,
-                ),
-            )
-            for civ_pk, upload_session_pk in upload_session_pks.items()
-        )
-
-    if user_upload_pks:
-        assignment_tasks.extend(
-            add_file_to_component_interface_value.signature(
-                kwargs={
-                    "component_interface_value_pk": civ_pk,
-                    "user_upload_pk": user_upload_pk,
-                    "target_pk": job.algorithm_image.algorithm.pk,
-                    "target_app": "algorithms",
-                    "target_model": "algorithm",
-                },
-                immutable=True,
-            )
-            for civ_pk, user_upload_pk in user_upload_pks.items()
-        )
-
-    canvas = chain(
-        group(assignment_tasks),
-        execute_algorithm_job_for_inputs.signature(
-            kwargs={"job_pk": job_pk}, immutable=True
-        ),
-    )
-
-    on_commit(canvas.apply_async)
-
-
-@acks_late_micro_short_task
+@acks_late_micro_short_task(
+    retry_on=(LockNotAcquiredException, TooManyJobsScheduled)
+)
 @transaction.atomic
 def execute_algorithm_job_for_inputs(*, job_pk):
     from grandchallenge.algorithms.models import Job
 
-    job = Job.objects.get(pk=job_pk)
+    job = lock_model_instance(
+        app_label="algorithms", model_name="job", pk=job_pk
+    )
 
     # Notify the job creator on failure
     linked_task = send_failed_job_notification.signature(
         kwargs={"job_pk": str(job.pk)}, immutable=True
     )
 
-    # check if all ComponentInterfaceValue's have a value.
-    missing_inputs = list(civ for civ in job.inputs.all() if not civ.has_value)
+    if not job.inputs_complete:
+        logger.info("Nothing to do, inputs are still being validated.")
+        return
 
-    if missing_inputs:
-        job.update_status(
-            status=job.CANCELLED,
-            error_message=(
-                f"Job can't be started, input is missing for "
-                f"{oxford_comma([c.interface.title for c in missing_inputs])}"
-            ),
-        )
-        on_commit(linked_task.apply_async)
-    else:
-        job.task_on_success = linked_task
-        job.save()
-        on_commit(
-            execute_algorithm_job.signature(
-                kwargs={"job_pk": job_pk}, immutable=True
-            ).apply_async
-        )
-
-
-@acks_late_micro_short_task(retry_on=(TooManyJobsScheduled,))
-@transaction.atomic
-def execute_algorithm_job(*, job_pk):
-    from grandchallenge.algorithms.models import Job
+    if not job.status == job.VALIDATING_INPUTS:
+        # this task can be called multiple times with complete inputs,
+        # and might have been queued for execution already, so ignore
+        logger.info("Job has already been scheduled for execution.")
+        return
 
     if Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
         raise TooManyJobsScheduled
-    else:
-        job = Job.objects.get(pk=job_pk)
-        on_commit(job.execute)
+
+    job.task_on_success = linked_task
+    job.status = job.PENDING
+    job.save()
+    on_commit(job.execute)
 
 
 @acks_late_2xlarge_task(retry_on=(TooManyJobsScheduled,), singleton=True)
@@ -241,7 +169,6 @@ def create_algorithm_jobs(
         time_limit = settings.ALGORITHMS_JOB_DEFAULT_TIME_LIMIT_SECONDS
 
     jobs = []
-
     for civ_set in civ_sets:
 
         if len(jobs) >= settings.ALGORITHMS_JOB_BATCH_LIMIT:

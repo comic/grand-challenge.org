@@ -6,6 +6,7 @@ from django.conf import settings
 from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.components.models import InterfaceKindChoices
 from grandchallenge.reader_studies.models import DisplaySet, ReaderStudy
+from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import (
     ComponentInterfaceExampleValueFactory,
@@ -444,6 +445,44 @@ def test_display_set_bulk_delete(
     assert base_obj.civ_sets_related_manager.count() == 3
     assert ob1 not in base_obj.civ_sets_related_manager.all()
     assert ob2 not in base_obj.civ_sets_related_manager.all()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "object",
+    [
+        ReaderStudyFactory,
+        ArchiveFactory,
+        AlgorithmFactory,
+    ],
+)
+def test_file_upload_form_field_view(client, object):
+    object = object()
+    u, editor = UserFactory.create_batch(2)
+    object.add_editor(editor)
+
+    ci_json = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
+
+    response = get_view_for_user(
+        viewname="components:file-upload",
+        client=client,
+        reverse_kwargs={
+            "interface_slug": ci_json.slug,
+        },
+        user=u,
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname="components:file-upload",
+        client=client,
+        reverse_kwargs={
+            "interface_slug": ci_json.slug,
+        },
+        user=editor,
+    )
+    assert response.status_code == 200
+    assert "user-upload" in str(response.content)
 
 
 @pytest.mark.django_db

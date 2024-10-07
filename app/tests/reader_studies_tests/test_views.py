@@ -6,6 +6,7 @@ from guardian.shortcuts import assign_perm
 from requests import put
 
 from grandchallenge.cases.widgets import FlexibleImageField, WidgetChoices
+from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.reader_studies.models import (
     Answer,
@@ -15,12 +16,12 @@ from grandchallenge.reader_studies.models import (
     Question,
 )
 from grandchallenge.subdomains.utils import reverse
-from grandchallenge.uploads.widgets import UserUploadSingleWidget
 from tests.cases_tests import RESOURCE_PATH
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
+from tests.conftest import get_interface_form_data
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
@@ -474,11 +475,19 @@ def test_display_set_update(
             client=client,
             reverse_kwargs={"pk": ds1.pk, "slug": rs.slug},
             data={
-                ci_json.slug: '{"foo": "new"}',
-                ci_img.slug: str(im2.pk),
-                f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
-                ci_json_file.slug: str(civ_json_file_new.pk),
-                f"value_type_{ci_json_file.slug}": "civ",
+                **get_interface_form_data(
+                    interface_slug=ci_json.slug, data='{"foo": "new"}'
+                ),
+                **get_interface_form_data(
+                    interface_slug=ci_img.slug,
+                    data=str(im2.pk),
+                    existing_data=True,
+                ),
+                **get_interface_form_data(
+                    interface_slug=ci_json_file.slug,
+                    data=str(civ_json_file_new.pk),
+                    existing_data=True,
+                ),
                 "order": 11,
                 "title": "foobar",
             },
@@ -486,7 +495,9 @@ def test_display_set_update(
             method=client.post,
         )
 
-    response = do_update()
+    with django_capture_on_commit_callbacks(execute=True):
+        response = do_update()
+
     assert response.status_code == 302
     assert response.headers["HX-Redirect"] == reverse(
         "reader-studies:display_sets", kwargs={"slug": rs.slug}
@@ -506,7 +517,9 @@ def test_display_set_update(
     n_civs_old = ComponentInterfaceValue.objects.count()
 
     # test saving without any changes
-    response = do_update()
+    with django_capture_on_commit_callbacks(execute=True):
+        response = do_update()
+
     assert response.status_code == 302
     assert response.headers["HX-Redirect"] == reverse(
         "reader-studies:display_sets", kwargs={"slug": rs.slug}
@@ -538,11 +551,17 @@ def test_display_set_update(
             client=client,
             reverse_kwargs={"pk": ds1.pk, "slug": rs.slug},
             data={
-                ci_json.slug: '{"foo": "new"}',
-                ci_img.slug: str(im2.pk),
-                f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
-                ci_json_file.slug: str(upload.pk),
-                f"value_type_{ci_json_file.slug}": "uuid",
+                **get_interface_form_data(
+                    interface_slug=ci_json.slug, data='{"foo": "new"}'
+                ),
+                **get_interface_form_data(
+                    interface_slug=ci_img.slug,
+                    data=str(im2.pk),
+                    existing_data=True,
+                ),
+                **get_interface_form_data(
+                    interface_slug=ci_json_file.slug, data=str(upload.pk)
+                ),
                 "order": 12,
             },
             user=user,
@@ -566,19 +585,20 @@ def test_display_set_update(
     n_civs_old = ComponentInterfaceValue.objects.count()
 
     # test removing json file and json value interface values
-    response = get_view_for_user(
-        viewname="reader-studies:display-set-update",
-        client=client,
-        reverse_kwargs={"pk": ds1.pk, "slug": rs.slug},
-        data={
-            ci_img.slug: str(im2.pk),
-            f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
-            "order": 12,
-            "title": "foobar_foobar",
-        },
-        user=user,
-        method=client.post,
-    )
+    with django_capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="reader-studies:display-set-update",
+            client=client,
+            reverse_kwargs={"pk": ds1.pk, "slug": rs.slug},
+            data={
+                ci_img.slug: str(im2.pk),
+                f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
+                "order": 12,
+                "title": "foobar_foobar",
+            },
+            user=user,
+            method=client.post,
+        )
     assert response.status_code == 302
     assert response.headers["HX-Redirect"] == reverse(
         "reader-studies:display_sets", kwargs={"slug": rs.slug}
@@ -586,7 +606,6 @@ def test_display_set_update(
 
     ds1.refresh_from_db()
     assert ds1.values.count() == 1
-    assert n_civs_old == ComponentInterfaceValue.objects.count()
     assert ds1.values.filter(pk=civ_img_new.pk).exists()
     assert not ds1.values.filter(pk=civ_json_file_new.pk).exists()
     assert not ds1.values.filter(interface=ci_json).exists()
@@ -662,14 +681,24 @@ def test_add_display_set_to_reader_study(
             client=client,
             reverse_kwargs={"slug": rs.slug},
             data={
-                ci_str.slug: "new-title",
-                ci_img.slug: str(im_upload.pk),
+                **get_interface_form_data(
+                    interface_slug=ci_str.slug, data="new-title"
+                ),
+                **get_interface_form_data(
+                    interface_slug=ci_img.slug, data=str(im_upload.pk)
+                ),
+                **get_interface_form_data(
+                    interface_slug=ci_img_new.slug,
+                    data=str(image.pk),
+                    existing_data=True,
+                ),
+                **get_interface_form_data(
+                    interface_slug=ci_str_new.slug, data="new"
+                ),
+                **get_interface_form_data(
+                    interface_slug=ci_json.slug, data=str(upload.pk)
+                ),
                 "order": 11,
-                f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_UPLOAD.name,
-                ci_img_new.slug: str(image.pk),
-                f"WidgetChoice-{ci_img_new.slug}": WidgetChoices.IMAGE_SEARCH.name,
-                ci_str_new.slug: "new",
-                ci_json.slug: str(upload.pk),
             },
             user=u1,
             method=client.post,
@@ -685,46 +714,6 @@ def test_add_display_set_to_reader_study(
     assert ds.values.get(interface=ci_img_new) == civ_new_img
     assert ds.values.get(interface=ci_str_new).value == "new"
     assert ds.values.get(interface=ci_json).file.read() == b'{"foo": "bar"}'
-
-
-@pytest.mark.django_db
-def test_add_files_to_display_set(client):
-    u1, u2 = UserFactory.create_batch(2)
-    rs = ReaderStudyFactory()
-    ds = DisplaySetFactory(reader_study=rs)
-    rs.add_editor(u1)
-    ci_json = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
-
-    response = get_view_for_user(
-        viewname="reader-studies:display-set-files-update",
-        client=client,
-        reverse_kwargs={
-            "pk": ds.pk,
-            "interface_slug": ci_json.slug,
-            "slug": rs.slug,
-        },
-        user=u2,
-    )
-    assert response.status_code == 403
-
-    response = get_view_for_user(
-        viewname="reader-studies:display-set-files-update",
-        client=client,
-        reverse_kwargs={
-            "pk": ds.pk,
-            "interface_slug": ci_json.slug,
-            "slug": rs.slug,
-        },
-        user=u1,
-    )
-    assert response.status_code == 200
-    assert isinstance(
-        response.context["form"].fields[str(ci_json.slug)], ModelChoiceField
-    )
-    assert isinstance(
-        response.context["form"].fields[str(ci_json.slug)].widget,
-        UserUploadSingleWidget,
-    )
 
 
 @pytest.mark.parametrize(
@@ -757,7 +746,10 @@ def test_display_set_interfaces_create(
     )
     assert not response.context["form"].is_bound
     assert isinstance(
-        response.context["form"].fields[str(ci.slug)], field_type
+        response.context["form"].fields[
+            f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"
+        ],
+        field_type,
     )
 
 

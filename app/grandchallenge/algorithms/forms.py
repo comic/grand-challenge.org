@@ -51,9 +51,13 @@ from grandchallenge.algorithms.serializers import (
     AlgorithmSerializer,
 )
 from grandchallenge.algorithms.tasks import import_remote_algorithm_image
-from grandchallenge.components.form_fields import InterfaceFormField
+from grandchallenge.components.form_fields import (
+    INTERFACE_FORM_FIELD_PREFIX,
+    InterfaceFormField,
+)
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.components.models import (
+    CIVData,
     ComponentInterface,
     ComponentJob,
     ImportStatusChoices,
@@ -93,6 +97,12 @@ class JobCreateForm(SaveFormInitMixin, Form):
     algorithm_model = ModelChoiceField(
         queryset=None, disabled=True, required=False, widget=HiddenInput
     )
+    creator = ModelChoiceField(
+        queryset=None, disabled=True, required=False, widget=HiddenInput
+    )
+    time_limit = IntegerField(
+        disabled=True, required=False, widget=HiddenInput
+    )
 
     def __init__(self, *args, algorithm, user, **kwargs):
         super().__init__(*args, **kwargs)
@@ -100,9 +110,14 @@ class JobCreateForm(SaveFormInitMixin, Form):
         self.helper = FormHelper()
 
         self._user = user
+        self.fields["creator"].queryset = get_user_model().objects.filter(
+            pk=self._user.pk
+        )
+        self.fields["creator"].initial = self._user
 
         self._algorithm = algorithm
         self._algorithm_image = self._algorithm.active_image
+        self.fields["time_limit"].initial = self._algorithm.time_limit
 
         active_model = self._algorithm.active_model
 
@@ -119,12 +134,27 @@ class JobCreateForm(SaveFormInitMixin, Form):
             self.fields["algorithm_model"].initial = active_model
 
         for inp in self._algorithm.inputs.all():
-            self.fields[inp.slug] = InterfaceFormField(
+            prefixed_interface_slug = (
+                f"{INTERFACE_FORM_FIELD_PREFIX}{inp.slug}"
+            )
+
+            if prefixed_interface_slug in self.data:
+                if inp.kind == ComponentInterface.Kind.ANY:
+                    # interfaces for which the data can be a list need
+                    # to be retrieved with getlist() from the QueryDict
+                    initial = self.data.getlist(prefixed_interface_slug)
+                else:
+                    initial = self.data[prefixed_interface_slug]
+            else:
+                initial = None
+
+            self.fields[prefixed_interface_slug] = InterfaceFormField(
                 instance=inp,
-                initial=inp.default_value,
+                initial=initial if initial else inp.default_value,
                 user=self._user,
                 required=inp.value_required,
                 help_text=clean(inp.description) if inp.description else "",
+                form_data=self.data,
             ).field
 
     @cached_property
@@ -142,6 +172,38 @@ class JobCreateForm(SaveFormInitMixin, Form):
 
         if self.jobs_limit < 1:
             raise ValidationError("You have run out of algorithm credits")
+
+        cleaned_data = self.reformat_inputs(cleaned_data=cleaned_data)
+
+        if Job.objects.get_jobs_with_same_inputs(
+            inputs=cleaned_data["inputs"],
+            algorithm_image=cleaned_data["algorithm_image"],
+            algorithm_model=cleaned_data["algorithm_model"],
+        ):
+            raise ValidationError(
+                "A result for these inputs with the current image "
+                "and model already exists."
+            )
+
+        return cleaned_data
+
+    def reformat_inputs(self, *, cleaned_data):
+        keys_to_remove = []
+        inputs = []
+        for k, v in cleaned_data.items():
+            if k.startswith(INTERFACE_FORM_FIELD_PREFIX):
+                keys_to_remove.append(k)
+                inputs.append(
+                    CIVData(
+                        interface_slug=k[len(INTERFACE_FORM_FIELD_PREFIX) :],
+                        value=v,
+                    )
+                )
+
+        for key in keys_to_remove:
+            cleaned_data.pop(key)
+
+        cleaned_data["inputs"] = inputs
 
         return cleaned_data
 

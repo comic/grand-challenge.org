@@ -12,10 +12,12 @@ from grandchallenge.algorithms.models import AlgorithmImage, AlgorithmModel
 from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import ChallengeRequest
 from grandchallenge.components.models import ComponentInterfaceValue
-from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.storage import internal_protected_s3_storage
 from grandchallenge.evaluation.models import Submission
-from grandchallenge.serving.models import Download
+from grandchallenge.serving.models import (
+    Download,
+    get_component_interface_values_for_user,
+)
 from grandchallenge.workstations.models import Feedback
 
 
@@ -137,25 +139,14 @@ def serve_component_interface_value(
     except (MultipleObjectsReturned, ComponentInterfaceValue.DoesNotExist):
         raise Http404("No ComponentInterfaceValue found.")
 
-    for perm, lookup in (
-        ("algorithms.view_job", "outputs"),
-        ("algorithms.view_job", "inputs"),
-        ("archives.view_archiveitem", "values"),
-        ("reader_studies.view_displayset", "values"),
+    if (
+        get_component_interface_values_for_user(user=user)
+        .filter(pk=civ.pk)
+        .exists()
     ):
-        # Q | Q filters are very slow, this potentially does several db calls
-        # but each is quite performant. Could be optimised later.
-        if (
-            get_objects_for_user(
-                user=user,
-                perms=perm,
-            )
-            .filter(**{lookup: civ})
-            .exists()
-        ):
-            return protected_storage_redirect(
-                name=civ.file.name, creator=user, component_interface_value=civ
-            )
+        return protected_storage_redirect(
+            name=civ.file.name, creator=user, component_interface_value=civ
+        )
 
     raise PermissionDenied
 
