@@ -3,7 +3,7 @@
 {% load url %}
 
 {% block title %}
-    {% if object %}Update{% else %}Create{% endif %} An Algorithm Model - {{ block.super }}
+    Create Model - {{ algorithm.title }} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
