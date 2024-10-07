@@ -3,6 +3,10 @@
 {% load static %}
 {% load url %}
 
+{% block title %}
+    Update - {% firstof challenge.title challenge.short_name %} - {{ block.super }}
+{% endblock %}
+
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a
@@ -14,8 +18,6 @@
             aria-current="page">Update</li>
     </ol>
 {% endblock %}
-
-{% block title %}Update {{ challenge.short_name }}{% endblock %}
 
 {% block content %}
     <h2>Update {{ challenge.short_name }}</h2>

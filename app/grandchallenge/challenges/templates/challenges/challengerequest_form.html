@@ -3,7 +3,9 @@
 {% load crispy_forms_tags %}
 {% load static %}
 
-{% block title %}Request A Challenge{% endblock %}
+{% block title %}
+    Request - Challenges - {{ block.super }}
+{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">

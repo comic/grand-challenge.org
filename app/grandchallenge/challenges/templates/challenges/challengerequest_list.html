@@ -5,7 +5,9 @@
 {% load naturaldelta %}
 {% load user_profile_link from profiles %}
 
-{% block title %}Challenge requests{% endblock %}
+{% block title %}
+    {% if not perms.challenges.change_challengerequest %}Your{% endif %} Challenge Requests - Challenges - {{ block.super }}
+{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
