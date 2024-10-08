@@ -13,6 +13,7 @@ from grandchallenge.components.models import (
     CIVData,
     ComponentInterface,
     ComponentInterfaceValue,
+    GPUTypeChoices,
 )
 from grandchallenge.credits.models import Credit
 from tests.algorithms_tests.factories import (
@@ -945,3 +946,58 @@ def test_inputs_complete():
     job.inputs.set([civ_with_value_1, civ_with_value_2, civ_with_value_3])
     del job.inputs_complete
     assert job.inputs_complete
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "requires_gpu_type,requires_memory_gb,time_limit,expected_credits",
+    (
+        ("", 4, 60, 20),
+        ("", 32, 3600, 60),
+        ("", 32, 1800, 30),
+        ("", 16, 3600, 30),
+        (GPUTypeChoices.V100, 32, 3600, 460),
+        (GPUTypeChoices.T4, 32, 3600, 120),
+        (GPUTypeChoices.T4, 32, 1800, 60),
+        (GPUTypeChoices.T4, 16, 3600, 90),
+    ),
+)
+def test_credits_consumed(
+    settings,
+    requires_gpu_type,
+    requires_memory_gb,
+    time_limit,
+    expected_credits,
+):
+    settings.COMPONENTS_DEFAULT_BACKEND = "grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor"
+
+    job = AlgorithmJobFactory(
+        requires_gpu_type=requires_gpu_type,
+        requires_memory_gb=requires_memory_gb,
+        time_limit=time_limit,
+    )
+
+    assert job.credits_consumed == expected_credits
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "min_credits,time_limit,expected_credits",
+    (
+        # Set below the system minimum
+        (10, 1, 20),
+        # Above the system minimum but job costs more
+        (50, 3600, 110),
+        # Ensure this minimum
+        (500, 3600, 500),
+    ),
+)
+def test_min_credits_per_job(min_credits, time_limit, expected_credits):
+    job = AlgorithmJobFactory(
+        algorithm_image__algorithm__minimum_credits_per_job=min_credits,
+        requires_gpu_type="",
+        requires_memory_gb=4,
+        time_limit=time_limit,
+    )
+
+    assert job.credits_consumed == expected_credits
