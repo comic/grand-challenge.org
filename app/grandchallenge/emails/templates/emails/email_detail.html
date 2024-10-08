@@ -2,7 +2,9 @@
 {% load url %}
 {% load bleach %}
 
-{% block title %}{{ object.subject }} - Emails - {{ block.super }}{% endblock %}
+{% block title %}
+    {{ object.subject }} - Emails - {{ block.super }}
+{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
