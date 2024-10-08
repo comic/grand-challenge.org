@@ -2,6 +2,11 @@
 {% load crispy from crispy_forms_tags %}
 {% load url %}
 
+{% block title %}
+    {% if object %}Update {{ object.title }} Phase{% else %}Add a New Phase{% endif %} -
+    {% firstof challenge.title challenge.short_name %} - {{ block.super }}
+{% endblock %}
+
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a

@@ -4,6 +4,10 @@
 {% load static %}
 {% load user_profile_link from profiles %}
 
+{% block title %}
+    {{ object.pk }} - Submissions - {{ block.super }}
+{% endblock %}
+
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a

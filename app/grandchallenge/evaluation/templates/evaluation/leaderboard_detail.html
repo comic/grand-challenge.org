@@ -3,7 +3,9 @@
 {% load static %}
 {% load to_range %}
 
-{% block title %}Leaderboard - {{ block.super }}{% endblock %}
+{% block title %}
+    {{ phase.title }} Leaderboard - Leaderboards - {{ block.super }}
+{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">

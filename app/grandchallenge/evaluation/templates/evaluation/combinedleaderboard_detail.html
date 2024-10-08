@@ -5,7 +5,9 @@
 {% load humanize %}
 {% load profiles %}
 
-{% block title %}{{ object.title|title}} Leaderboard - {{ block.super }}{% endblock %}
+{% block title %}
+    {{ object.title|title }} - Leaderboards - {{ block.super }}
+{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">

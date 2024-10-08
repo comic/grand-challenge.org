@@ -1,7 +1,9 @@
 {% extends "pages/challenge_settings_base.html" %}
 {% load url %}
 
-{% block title %}Delete {{ object.title|title}} Combined Leaderboard - {{ block.super }}{% endblock %}
+{% block title %}
+    Delete -{% if object %} {{ object.title|title}} -{% endif %} {{ block.super }}
+{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">

@@ -2,6 +2,10 @@
 {% load crispy_forms_tags %}
 {% load url %}
 
+{% block title %}
+    Configure algorithm phases - {% firstof challenge.title challenge.short_name %} - {{ block.super }}
+{% endblock %}
+
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a
