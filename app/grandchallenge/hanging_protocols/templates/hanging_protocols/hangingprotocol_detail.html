@@ -6,15 +6,15 @@
 {% load profiles %}
 {% load guardian_tags %}
 
+{% block title %}
+    {{ object.title }} - Hanging Protocols - {{ block.super }}
+{% endblock %}
+
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'hanging-protocols:list' %}">Hanging Protocols</a></li>
         <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object.title }}</a></li>
     </ol>
-{% endblock %}
-
-{% block title %}
-    Hanging Protocol - {{ object.title }} - {{ block.super }}
 {% endblock %}
 
 {% block content %}
