@@ -538,10 +538,10 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
     def _instance_type(self):
         """Find the cheapest instance that can run this job"""
 
-        if self._requires_gpu:
+        if self._requires_gpu_type:
             # For now only use a single gpu
             n_gpu = 1
-            gpu_type = self._desired_gpu_type
+            gpu_type = self._requires_gpu_type
         else:
             n_gpu = 0
             gpu_type = None

@@ -372,6 +372,8 @@ def _create_algorithm_demo(users):
             algorithm_image=algorithm_image,
             status=Evaluation.SUCCESS,
             time_limit=60,
+            requires_gpu_type=algorithm_image.requires_gpu_type,
+            requires_memory_gb=algorithm_image.requires_memory_gb,
         )
 
         algorithms_job.inputs.add(input_civ)

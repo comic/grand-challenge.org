@@ -201,7 +201,6 @@ class JobPostSerializer(JobSerializer):
         data["creator"] = user
         data["algorithm_image"] = self._algorithm.active_image
         data["algorithm_model"] = self._algorithm.active_model
-        data["time_limit"] = self._algorithm.time_limit
 
         jobs_limit = data["algorithm_image"].get_remaining_jobs(
             user=data["creator"]
@@ -267,6 +266,13 @@ class JobPostSerializer(JobSerializer):
     def create(self, validated_data):
         job = Job.objects.create(
             **validated_data,
+            time_limit=validated_data["algorithm_image"].algorithm.time_limit,
+            requires_gpu_type=validated_data[
+                "algorithm_image"
+            ].requires_gpu_type,
+            requires_memory_gb=validated_data[
+                "algorithm_image"
+            ].requires_memory_gb,
             extra_logs_viewer_groups=[
                 validated_data["algorithm_image"].algorithm.editors_group
             ],

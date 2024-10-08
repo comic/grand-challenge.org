@@ -33,6 +33,7 @@ from grandchallenge.components.models import (
     ComponentImage,
     ComponentInterface,
     ComponentJob,
+    GPUTypeChoices,
     ImportStatusChoices,
     Tarball,
 )
@@ -1190,6 +1191,17 @@ class Submission(UUIDModel):
     algorithm_model = models.ForeignKey(
         AlgorithmModel, null=True, blank=True, on_delete=models.PROTECT
     )
+    algorithm_requires_gpu_type = models.CharField(
+        editable=False,
+        max_length=4,
+        choices=GPUTypeChoices.choices,
+        help_text="What GPU, if any, is required by the algorithm jobs?",
+    )
+    algorithm_requires_memory_gb = models.PositiveSmallIntegerField(
+        editable=False,
+        help_text="How much memory is required by the algorithm jobs?",
+    )
+
     user_upload = models.ForeignKey(
         UserUpload, blank=True, null=True, on_delete=models.SET_NULL
     )
@@ -1392,7 +1404,7 @@ class EvaluationGroundTruthGroupObjectPermission(GroupObjectPermissionBase):
     )
 
 
-class Evaluation(UUIDModel, ComponentJob):
+class Evaluation(ComponentJob):
     """Stores information about a evaluation for a given submission."""
 
     submission = models.ForeignKey("Submission", on_delete=models.PROTECT)

@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.utils.timezone import now
 
 from grandchallenge.algorithms.models import Job
-from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.models import ComponentInterface, GPUTypeChoices
 from grandchallenge.evaluation.models import (
     SUBMISSION_WINDOW_PARENT_VALIDATION_TEXT,
     CombinedLeaderboard,
@@ -19,6 +19,7 @@ from grandchallenge.evaluation.models import (
 )
 from grandchallenge.evaluation.tasks import (
     calculate_ranks,
+    create_algorithm_jobs_for_evaluation,
     create_evaluation,
     update_combined_leaderboard,
 )
@@ -126,6 +127,86 @@ def test_create_evaluation_is_idempotent(
         c()
 
     assert Job.objects.count() == 2
+
+
+@pytest.mark.django_db
+def test_create_evaluation_sets_gpu_and_memory():
+    method = MethodFactory(
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+        requires_gpu=True,
+        desired_gpu_type=GPUTypeChoices.V100,
+        requires_memory_gb=1337,
+    )
+
+    submission = SubmissionFactory(phase=method.phase)
+
+    create_evaluation(submission_pk=submission.pk, max_initial_jobs=None)
+
+    evaluation = Evaluation.objects.get()
+
+    assert evaluation.requires_gpu_type == GPUTypeChoices.V100
+    assert evaluation.requires_memory_gb == 1337
+
+
+@pytest.mark.django_db
+def test_create_algorithm_jobs_for_evaluation_sets_gpu_and_memory():
+    inputs = [ComponentInterfaceFactory()]
+    outputs = [ComponentInterfaceFactory()]
+
+    algorithm_image = AlgorithmImageFactory(
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+    algorithm_image.algorithm.inputs.set(inputs)
+    algorithm_image.algorithm.outputs.set(outputs)
+
+    archive = ArchiveFactory()
+    archive_item = ArchiveItemFactory(archive=archive)
+    archive_item.values.set(
+        [
+            ComponentInterfaceValueFactory(interface=interface)
+            for interface in inputs
+        ]
+    )
+
+    phase = PhaseFactory(
+        archive=archive,
+        submission_kind=SubmissionKindChoices.ALGORITHM,
+        submissions_limit_per_user_per_period=1,
+    )
+    phase.algorithm_inputs.set(inputs)
+    phase.algorithm_outputs.set(outputs)
+
+    method = MethodFactory(
+        phase=phase,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+
+    evaluation = EvaluationFactory(
+        method=method,
+        time_limit=60,
+        requires_gpu_type=GPUTypeChoices.K80,
+        requires_memory_gb=123,
+        submission__phase=phase,
+        submission__algorithm_image=algorithm_image,
+        submission__algorithm_requires_gpu_type=GPUTypeChoices.V100,
+        submission__algorithm_requires_memory_gb=456,
+    )
+
+    create_algorithm_jobs_for_evaluation(
+        evaluation_pk=evaluation.pk,
+        max_jobs=None,
+    )
+
+    job = Job.objects.get()
+
+    assert job.requires_gpu_type == GPUTypeChoices.V100
+    assert job.requires_memory_gb == 456
 
 
 @pytest.mark.django_db

@@ -788,7 +788,7 @@ class AlgorithmModelGroupObjectPermission(GroupObjectPermissionBase):
     )
 
 
-class Job(UUIDModel, CIVForObjectMixin, ComponentJob):
+class Job(CIVForObjectMixin, ComponentJob):
     objects = JobManager.as_manager()
 
     algorithm_image = models.ForeignKey(
@@ -810,6 +810,10 @@ class Job(UUIDModel, CIVForObjectMixin, ComponentJob):
         ),
     )
     comment = models.TextField(blank=True, default="")
+    credits_consumed = models.PositiveSmallIntegerField(
+        editable=False,
+        help_text="The total credits consumed for this job",
+    )
     is_complimentary = models.BooleanField(
         default=False,
         editable=False,
@@ -894,6 +898,7 @@ class Job(UUIDModel, CIVForObjectMixin, ComponentJob):
         if adding:
             self.init_viewers_group()
             self.init_is_complimentary()
+            self.init_credits_consumed()
 
         super().save(*args, **kwargs)
 
@@ -925,6 +930,10 @@ class Job(UUIDModel, CIVForObjectMixin, ComponentJob):
             )
             > 0
         )
+
+    def init_credits_consumed(self):
+        # TODO implementation
+        self.credits_consumed = 0
 
     def init_permissions(self):
         # By default, only the viewers can view this job

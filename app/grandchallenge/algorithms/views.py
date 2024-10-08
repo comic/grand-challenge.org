@@ -501,6 +501,15 @@ class JobCreate(
         inputs = form.cleaned_data.pop("inputs")
         self.object = Job.objects.create(
             **form.cleaned_data,
+            time_limit=form.cleaned_data[
+                "algorithm_image"
+            ].algorithm.time_limit,
+            requires_gpu_type=form.cleaned_data[
+                "algorithm_image"
+            ].requires_gpu_type,
+            requires_memory_gb=form.cleaned_data[
+                "algorithm_image"
+            ].requires_memory_gb,
             extra_logs_viewer_groups=[self.algorithm.editors_group],
             status=Job.VALIDATING_INPUTS,
         )

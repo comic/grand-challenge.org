@@ -100,9 +100,6 @@ class JobCreateForm(SaveFormInitMixin, Form):
     creator = ModelChoiceField(
         queryset=None, disabled=True, required=False, widget=HiddenInput
     )
-    time_limit = IntegerField(
-        disabled=True, required=False, widget=HiddenInput
-    )
 
     def __init__(self, *args, algorithm, user, **kwargs):
         super().__init__(*args, **kwargs)
@@ -117,7 +114,6 @@ class JobCreateForm(SaveFormInitMixin, Form):
 
         self._algorithm = algorithm
         self._algorithm_image = self._algorithm.active_image
-        self.fields["time_limit"].initial = self._algorithm.time_limit
 
         active_model = self._algorithm.active_model
 

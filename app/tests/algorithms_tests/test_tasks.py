@@ -10,6 +10,7 @@ from django.core.files.base import ContentFile
 from grandchallenge.algorithms.models import Job
 from grandchallenge.algorithms.tasks import (
     create_algorithm_jobs,
+    create_algorithm_jobs_for_archive,
     execute_algorithm_job_for_inputs,
     filter_civs_for_algorithm,
     send_failed_job_notification,
@@ -18,6 +19,7 @@ from grandchallenge.algorithms.tasks import (
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
+    GPUTypeChoices,
 )
 from grandchallenge.components.tasks import (
     add_image_to_component_interface_value,
@@ -30,6 +32,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmJobFactory,
     AlgorithmModelFactory,
 )
+from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.cases_tests.factories import RawImageUploadSessionFactory
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
@@ -39,6 +42,7 @@ from tests.factories import (
     GroupFactory,
     ImageFactory,
     ImageFileFactory,
+    UploadSessionFactory,
     UserFactory,
 )
 from tests.utils import get_view_for_user, recurse_callbacks
@@ -53,14 +57,22 @@ class TestCreateAlgorithmJobs:
     def test_no_images_does_nothing(self):
         ai = AlgorithmImageFactory()
         create_algorithm_jobs(
-            algorithm_image=ai, civ_sets=[], time_limit=ai.algorithm.time_limit
+            algorithm_image=ai,
+            civ_sets=[],
+            time_limit=ai.algorithm.time_limit,
+            requires_gpu_type="",
+            requires_memory_gb=4,
         )
         assert Job.objects.count() == 0
 
     def test_no_algorithm_image_errors_out(self):
         with pytest.raises(RuntimeError):
             create_algorithm_jobs(
-                algorithm_image=None, civ_sets=[], time_limit=60
+                algorithm_image=None,
+                civ_sets=[],
+                time_limit=60,
+                requires_gpu_type="",
+                requires_memory_gb=4,
             )
 
     def test_creates_job_correctly(self):
@@ -76,6 +88,8 @@ class TestCreateAlgorithmJobs:
             algorithm_image=ai,
             civ_sets=[{civ}],
             time_limit=ai.algorithm.time_limit,
+            requires_gpu_type=ai.requires_gpu_type,
+            requires_memory_gb=ai.requires_memory_gb,
         )
         assert Job.objects.count() == 1
         j = Job.objects.first()
@@ -99,12 +113,16 @@ class TestCreateAlgorithmJobs:
             algorithm_image=ai,
             civ_sets=[{civ}],
             time_limit=ai.algorithm.time_limit,
+            requires_gpu_type=ai.requires_gpu_type,
+            requires_memory_gb=ai.requires_memory_gb,
         )
         assert Job.objects.count() == 1
         jobs = create_algorithm_jobs(
             algorithm_image=ai,
             civ_sets=[{civ}],
             time_limit=ai.algorithm.time_limit,
+            requires_gpu_type=ai.requires_gpu_type,
+            requires_memory_gb=ai.requires_memory_gb,
         )
         assert Job.objects.count() == 1
         assert len(jobs) == 0
@@ -121,6 +139,8 @@ class TestCreateAlgorithmJobs:
             civ_sets=[{civ}],
             extra_viewer_groups=groups,
             time_limit=ai.algorithm.time_limit,
+            requires_gpu_type=ai.requires_gpu_type,
+            requires_memory_gb=ai.requires_memory_gb,
         )
         for g in groups:
             assert jobs[0].viewer_groups.filter(pk=g.pk).exists()
@@ -131,7 +151,11 @@ def test_no_jobs_workflow(django_capture_on_commit_callbacks):
     ai = AlgorithmImageFactory()
     with django_capture_on_commit_callbacks() as callbacks:
         create_algorithm_jobs(
-            algorithm_image=ai, civ_sets=[], time_limit=ai.algorithm.time_limit
+            algorithm_image=ai,
+            civ_sets=[],
+            time_limit=ai.algorithm.time_limit,
+            requires_gpu_type=ai.requires_gpu_type,
+            requires_memory_gb=ai.requires_memory_gb,
         )
     assert len(callbacks) == 0
 
@@ -150,6 +174,8 @@ def test_jobs_workflow(django_capture_on_commit_callbacks):
             algorithm_image=ai,
             civ_sets=civ_sets,
             time_limit=ai.algorithm.time_limit,
+            requires_gpu_type=ai.requires_gpu_type,
+            requires_memory_gb=ai.requires_memory_gb,
         )
     assert len(callbacks) == 2
 
@@ -202,6 +228,8 @@ def test_algorithm(
             algorithm_image=ai,
             civ_sets=[{civ}],
             time_limit=ai.algorithm.time_limit,
+            requires_gpu_type=ai.requires_gpu_type,
+            requires_memory_gb=ai.requires_memory_gb,
         )
 
     recurse_callbacks(
@@ -256,6 +284,8 @@ def test_algorithm(
             algorithm_image=ai,
             civ_sets=[{civ}],
             time_limit=ai.algorithm.time_limit,
+            requires_gpu_type=ai.requires_gpu_type,
+            requires_memory_gb=ai.requires_memory_gb,
         )
 
     recurse_callbacks(
@@ -327,6 +357,8 @@ def test_algorithm_with_invalid_output(
             algorithm_image=ai,
             civ_sets=[{civ}],
             time_limit=ai.algorithm.time_limit,
+            requires_gpu_type=ai.requires_gpu_type,
+            requires_memory_gb=ai.requires_memory_gb,
         )
     recurse_callbacks(
         callbacks=callbacks,
@@ -562,14 +594,16 @@ def test_failed_job_notifications(
     editor = UserFactory()
 
     # Create the algorithm image
-    alg = AlgorithmImageFactory()
-    alg.algorithm.add_editor(editor)
+    ai = AlgorithmImageFactory()
+    ai.algorithm.add_editor(editor)
 
     job = Job.objects.create(
         creator=creator,
-        algorithm_image=alg,
+        algorithm_image=ai,
         input_civ_set=[],
-        time_limit=alg.algorithm.time_limit,
+        time_limit=ai.algorithm.time_limit,
+        requires_gpu_type=ai.requires_gpu_type,
+        requires_memory_gb=ai.requires_memory_gb,
     )
 
     # mark job as failed
@@ -583,7 +617,7 @@ def test_failed_job_notifications(
     notification = Notification.objects.get()
     assert notification.user == creator
     assert (
-        f"Unfortunately one of the jobs for algorithm {alg.algorithm.title} failed with an error"
+        f"Unfortunately one of the jobs for algorithm {ai.algorithm.title} failed with an error"
         in notification.print_notification(user=creator.username)
     )
 
@@ -606,9 +640,11 @@ def test_failed_job_notifications(
 
     job = Job.objects.create(
         creator=creator,
-        algorithm_image=alg,
+        algorithm_image=ai,
         input_civ_set=[],
-        time_limit=alg.algorithm.time_limit,
+        time_limit=ai.algorithm.time_limit,
+        requires_gpu_type=ai.requires_gpu_type,
+        requires_memory_gb=ai.requires_memory_gb,
     )
 
     # mark job as failed
@@ -690,3 +726,40 @@ def test_importing_same_sha_fails(
         "This container image has already been uploaded. "
         "Please re-activate the existing container image or upload a new version."
     )
+
+
+@pytest.mark.django_db
+def test_archive_job_gets_gpu_and_memory_set(
+    django_capture_on_commit_callbacks,
+):
+    algorithm_image = AlgorithmImageFactory(
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+        requires_gpu=True,
+        desired_gpu_type=GPUTypeChoices.V100,
+        requires_memory_gb=1337,
+    )
+    archive = ArchiveFactory()
+
+    session = UploadSessionFactory()
+    im = ImageFactory()
+    session.image_set.set([im])
+
+    input_interface = ComponentInterface.objects.get(
+        slug="generic-medical-image"
+    )
+    civ = ComponentInterfaceValueFactory(image=im, interface=input_interface)
+
+    archive_item = ArchiveItemFactory(archive=archive)
+    with django_capture_on_commit_callbacks(execute=True):
+        archive_item.values.add(civ)
+
+    archive.algorithms.set([algorithm_image.algorithm])
+
+    create_algorithm_jobs_for_archive(archive_pks=[archive.pk])
+
+    job = Job.objects.get()
+
+    assert job.requires_gpu_type == GPUTypeChoices.V100
+    assert job.requires_memory_gb == 1337

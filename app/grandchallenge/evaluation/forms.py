@@ -276,18 +276,6 @@ class AlgorithmChoiceField(ModelChoiceField):
         return obj.form_field_label()
 
 
-submission_fields = (
-    "creator",
-    "phase",
-    "comment",
-    "supplementary_file",
-    "supplementary_url",
-    "user_upload",
-    "algorithm_image",
-    "algorithm_model",
-)
-
-
 class SubmissionForm(
     UserAlgorithmsForPhaseMixin, SaveFormInitMixin, forms.ModelForm
 ):
@@ -629,9 +617,32 @@ class SubmissionForm(
             self._phase.handle_submission_limit_avoidance(user=creator)
             self.raise_submission_limit_error()
 
+    def save(self, *args, **kwargs):
+        if self._phase.submission_kind == SubmissionKindChoices.ALGORITHM:
+            self.instance.algorithm_requires_gpu_type = self.cleaned_data[
+                "algorithm_image"
+            ].requires_gpu_type
+            self.instance.algorithm_requires_memory_gb = self.cleaned_data[
+                "algorithm_image"
+            ].requires_memory_gb
+        else:
+            self.instance.algorithm_requires_gpu_type = ""
+            self.instance.algorithm_requires_memory_gb = 0
+
+        return super().save(*args, **kwargs)
+
     class Meta:
         model = Submission
-        fields = submission_fields
+        fields = (
+            "creator",
+            "phase",
+            "comment",
+            "supplementary_file",
+            "supplementary_url",
+            "user_upload",
+            "algorithm_image",
+            "algorithm_model",
+        )
         widgets = {"creator": forms.HiddenInput, "phase": forms.HiddenInput}
 
 

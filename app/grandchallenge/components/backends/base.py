@@ -48,8 +48,7 @@ class Executor(ABC):
         exec_image_repo_tag: str,
         memory_limit: int,
         time_limit: int,
-        requires_gpu: bool,
-        desired_gpu_type: GPUTypeChoices,
+        requires_gpu_type: GPUTypeChoices,
         algorithm_model=None,
         ground_truth=None,
         **kwargs,
@@ -59,8 +58,7 @@ class Executor(ABC):
         self._exec_image_repo_tag = exec_image_repo_tag
         self._memory_limit = memory_limit
         self._time_limit = time_limit
-        self._requires_gpu = requires_gpu
-        self._desired_gpu_type = desired_gpu_type
+        self._requires_gpu_type = requires_gpu_type
         self._stdout = []
         self._stderr = []
         self.__s3_client = None

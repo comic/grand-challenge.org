@@ -52,6 +52,8 @@ class AlgorithmJobFactory(factory.django.DjangoModelFactory):
 
     algorithm_image = factory.SubFactory(AlgorithmImageFactory)
     creator = factory.SubFactory(UserFactory)
+    requires_memory_gb = 4
+    requires_gpu_type = ""
 
     @factory.post_generation
     def files(self, create, extracted, **kwargs):

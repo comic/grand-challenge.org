@@ -76,6 +76,14 @@ from grandchallenge.workstation_configs.models import (
 logger = logging.getLogger(__name__)
 
 
+class GPUTypeChoices(TextChoices):
+    A100 = "A100"
+    A10G = "A10G"
+    V100 = "V100"
+    K80 = "K80"
+    T4 = "T4"
+
+
 class InterfaceKindChoices(models.TextChoices):
     """Interface kind choices."""
 
@@ -1440,7 +1448,7 @@ class ComponentJobManager(models.QuerySet):
         )
 
 
-class ComponentJob(models.Model):
+class ComponentJob(UUIDModel):
     # The job statuses come directly from celery.result.AsyncResult.status:
     # http://docs.celeryproject.org/en/latest/reference/celery.result.html
     PENDING = 0
@@ -1528,6 +1536,15 @@ class ComponentJob(models.Model):
             ),
         ],
     )
+    requires_gpu_type = models.CharField(
+        editable=False,
+        max_length=4,
+        choices=GPUTypeChoices.choices,
+        help_text="What GPU is required by this job?",
+    )
+    requires_memory_gb = models.PositiveSmallIntegerField(
+        editable=False, help_text="How much memory is required by this job?"
+    )
 
     inputs = models.ManyToManyField(
         to=ComponentInterfaceValue,
@@ -1602,10 +1619,9 @@ class ComponentJob(models.Model):
         return {
             "job_id": f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}-{self.attempt:02}",
             "exec_image_repo_tag": self.container.shimmed_repo_tag,
-            "memory_limit": self.container.requires_memory_gb,
             "time_limit": self.time_limit,
-            "requires_gpu": self.container.requires_gpu,
-            "desired_gpu_type": self.container.desired_gpu_type,
+            "requires_gpu_type": self.requires_gpu_type,
+            "memory_limit": self.requires_memory_gb,
         }
 
     def get_executor(self, *, backend):
@@ -1761,14 +1777,6 @@ class ComponentImageManager(models.Manager):
         return self.executable_images().filter(is_desired_version=True)
 
 
-class GPUTypeChoices(TextChoices):
-    A100 = "A100"
-    A10G = "A10G"
-    V100 = "V100"
-    K80 = "K80"
-    T4 = "T4"
-
-
 class ComponentImage(FieldChangeMixin, models.Model):
     SHIM_IMAGE = True
 
@@ -1875,6 +1883,13 @@ class ComponentImage(FieldChangeMixin, models.Model):
             .filter(pk=self.pk)
             .exists()
         )
+
+    @property
+    def requires_gpu_type(self):
+        if self.requires_gpu:
+            return self.desired_gpu_type
+        else:
+            return ""
 
     @property
     def linked_file(self):

@@ -36,6 +36,8 @@ class SubmissionFactory(factory.django.DjangoModelFactory):
     phase = factory.SubFactory(PhaseFactory)
     predictions_file = factory.django.FileField()
     creator = factory.SubFactory(UserFactory)
+    algorithm_requires_memory_gb = 4
+    algorithm_requires_gpu_type = ""
 
 
 class EvaluationFactory(factory.django.DjangoModelFactory):
@@ -44,6 +46,8 @@ class EvaluationFactory(factory.django.DjangoModelFactory):
 
     method = factory.SubFactory(MethodFactory)
     submission = factory.SubFactory(SubmissionFactory)
+    requires_memory_gb = 4
+    requires_gpu_type = ""
 
 
 class CombinedLeaderboardFactory(factory.django.DjangoModelFactory):
