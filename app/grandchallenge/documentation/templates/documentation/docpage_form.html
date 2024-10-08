@@ -4,7 +4,11 @@
 {% load url %}
 
 {% block title %}
-    Documentation - {{ block.super }}
+    {% if object %}Update{% else %}Create Page{% endif %} -
+    {% if object %}
+        {{ object.title }} -
+    {% endif %}
+    {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}

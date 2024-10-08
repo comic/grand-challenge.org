@@ -3,7 +3,11 @@
 {% load bleach %}
 
 {% block title %}
-    {{ currentdocpage.title }} - {{ block.super }}
+    {{ currentdocpage.title }} -
+    {% if currentdocpage.parent %}
+        {{ currentdocpage.parent.title }} -
+    {% endif %}
+    {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
