@@ -666,9 +666,11 @@ class JobManager(ComponentJobManager):
                 continue
             elif civ.image:
                 try:
-                    civ = ComponentInterfaceValue.objects.filter(
-                        interface__slug=civ.interface_slug, image=civ.image
-                    ).get()
+                    civ, _ = (
+                        ComponentInterfaceValue.objects.get_first_or_create(
+                            interface__slug=civ.interface_slug, image=civ.image
+                        ).get()
+                    )
                     existing_civs.append(civ)
                 except ObjectDoesNotExist:
                     continue
@@ -677,9 +679,11 @@ class JobManager(ComponentJobManager):
             else:
                 # values can be of different types, including None and False
                 try:
-                    civ = ComponentInterfaceValue.objects.filter(
-                        interface__slug=civ.interface_slug, value=civ.value
-                    ).get()
+                    civ, _ = (
+                        ComponentInterfaceValue.objects.get_first_or_create(
+                            interface__slug=civ.interface_slug, value=civ.value
+                        ).get()
+                    )
                     existing_civs.append(civ)
                 except ObjectDoesNotExist:
                     continue
