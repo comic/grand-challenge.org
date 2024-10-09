@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import BLANK_CHOICE_DASH
 
 from grandchallenge.core.forms import SaveFormInitMixin
-from grandchallenge.core.widgets import MarkdownEditorInlineWidget
+from grandchallenge.core.widgets import MarkdownEditorFullPageWidget
 from grandchallenge.pages.models import Page
 
 
@@ -17,7 +17,7 @@ class PageCreateForm(SaveFormInitMixin, forms.ModelForm):
             "content_markdown",
         )
         widgets = {
-            "content_markdown": MarkdownEditorInlineWidget,
+            "content_markdown": MarkdownEditorFullPageWidget,
         }
 
     def clean_display_title(self):

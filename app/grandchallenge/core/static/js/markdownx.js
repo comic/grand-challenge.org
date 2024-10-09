@@ -126,6 +126,10 @@
             if (editor.scrollTop) editor.style.height = editor.scrollTop + getHeight(editor) + "px";
             return editor;
         }
+        function syncPreviewHeight(preview, editor) {
+            preview.style.height = editor.clientHeight + "px";
+            return preview;
+        }
         var MarkdownX = function(parent, editor, preview) {
             var _this = this;
             var properties = {
@@ -196,6 +200,15 @@
                 properties._editorIsResizable = (properties.editor.getAttribute(RESIZABILITY_ATTRIBUTE).match(/true/i) || []).length > 0 && properties.editor.offsetHeight > 0 && properties.editor.offsetWidth > 0;
                 getMarkdown();
                 utils_1.triggerCustomEvent("markdownx.init");
+                properties.preview = syncPreviewHeight(properties.preview, properties.editor);
+                const resizeObserver = new ResizeObserver((entries) => {
+                  for (const entry of entries) {
+                    if (entry.contentBoxSize) {
+                      properties.preview = syncPreviewHeight(properties.preview, properties.editor);
+                    }
+                  }
+                });
+                resizeObserver.observe(properties.editor);
             };
             var _markdownify = function() {
                 clearTimeout(_this.timeout);

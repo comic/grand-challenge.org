@@ -94,3 +94,7 @@ class MarkdownEditorAdminWidget(AdminMarkdownxWidget):
                 "vendored/bootstrap/js/bootstrap.bundle.min.js",
             ],
         )
+
+
+class MarkdownEditorFullPageWidget(MarkdownEditorInlineWidget):
+    template_name = "markdownx/full_page_widget.html"
