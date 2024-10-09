@@ -2,6 +2,10 @@
 {% load crispy_forms_tags %}
 {% load static %}
 
+{% block title %}
+    {{ object|yesno:"Update,Create" }} -{% if object %} {{ object.title }} -{% endif %} {{ block.super }}
+{% endblock %}
+
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'workstation-configs:list' %}">Viewer Configurations</a></li>
@@ -12,10 +16,6 @@
         <li class="breadcrumb-item active"
             aria-current="page">{{ object|yesno:"Update,Create" }}</li>
     </ol>
-{% endblock %}
-
-{% block title %}
-    {{ object|yesno:"Update,Create" }} Viewer Configuration - {{ block.super }}
 {% endblock %}
 
 {% block content %}

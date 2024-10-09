@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 
+{% block title %}
+    Delete - {{ object.title }} - {{ block.super }}
+{% endblock %}
+
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'workstation-configs:list' %}">Viewer Configurations</a></li>
