@@ -1,6 +1,10 @@
 {% extends "pages/challenge_settings_base.html" %}
 {% load url %}
 
+{% block title %}
+    Delete - {{ object|title }} - {{ block.super }}
+{% endblock %}
+
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a
