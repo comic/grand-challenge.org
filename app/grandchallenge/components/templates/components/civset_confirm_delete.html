@@ -3,7 +3,7 @@
 {% load meta_attr %}
 
 {% block title %}
-    Delete {{ object|verbose_name|title }} - {{ block.super }}
+    Delete {{ object.pk }} - {{ object|verbose_name_plural|title }} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}

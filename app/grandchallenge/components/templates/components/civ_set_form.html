@@ -6,11 +6,12 @@
 
 {% block title %}
     {% if object %}
-        Update {{ base_object.civ_set_model|verbose_name|title }}
+        Update
     {% else %}
-        Add {{ base_object.civ_set_model|verbose_name|title }} to {{ base_object }}
+        Add
     {% endif %}
-    - {{ block.super }}
+    {{ base_object.civ_set_model|verbose_name|title }}
+    - {{ base_object.civ_set_model|verbose_name_plural|title }} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
