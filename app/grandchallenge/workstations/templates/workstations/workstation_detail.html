@@ -3,7 +3,9 @@
 {% load user_profile_link from profiles %}
 {% load guardian_tags %}
 
-{% block title %}{{ object.slug }} - {{ block.super }}{% endblock %}
+{% block title %}
+    {{ object.title }} - Viewers - {{ block.super }}
+{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">

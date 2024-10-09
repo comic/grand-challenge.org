@@ -2,8 +2,9 @@
 {% load url %}
 {% load static %}
 
-{% block title %}{{ object.workstation.slug }} Session -
-    {{ block.super }}{% endblock %}
+{% block title %}
+    {{ object }} - {{ object.workstation.slug }} - {{ block.super }}
+{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">

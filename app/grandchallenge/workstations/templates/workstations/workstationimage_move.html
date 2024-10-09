@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
 
-{% block title %}Move Viewer Image -
-    {{ block.super }}{% endblock %}
+{% block title %}
+    Move - {{ form.fields.workstation_image.initial }} - {{ block.super }}
+{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">

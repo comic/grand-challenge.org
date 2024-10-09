@@ -4,7 +4,9 @@
 {% load naturaldelta %}
 {% load guardian_tags %}
 
-{% block title %}Viewer Container Image - {{ block.super }}{% endblock %}
+{% block title %}
+    {{ object }} - {{ object.workstation.title }} - {{ block.super }}
+{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
