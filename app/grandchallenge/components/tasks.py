@@ -1203,7 +1203,7 @@ def add_image_to_object(
         interface=interface, upload_session=upload_session
     )
 
-    civ, created = ComponentInterfaceValue.objects.get_or_create(
+    civ, created = ComponentInterfaceValue.objects.get_first_or_create(
         interface=interface, image=image
     )
 

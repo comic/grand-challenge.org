@@ -1171,6 +1171,15 @@ def component_interface_value_path(instance, filename):
     )
 
 
+class ComponentInterfaceValueManager(models.Manager):
+
+    def get_first_or_create(self, **kwargs):
+        try:
+            return self.get_or_create(**kwargs)
+        except MultipleObjectsReturned:
+            return self.filter(**kwargs).first(), False
+
+
 class ComponentInterfaceValue(models.Model):
     """Encapsulates the value of an interface at a certain point in the graph."""
 
@@ -1237,6 +1246,8 @@ class ComponentInterfaceValue(models.Model):
     )
 
     _user_upload_validated = False
+
+    objects = ComponentInterfaceValueManager()
 
     @property
     def title(self):
@@ -2249,7 +2260,7 @@ class CIVForObjectMixin:
     ):
         current_value = current_civ.value if current_civ else None
 
-        civ, created = ComponentInterfaceValue.objects.get_or_create(
+        civ, created = ComponentInterfaceValue.objects.get_first_or_create(
             interface=ci, value=new_value
         )
 
@@ -2290,9 +2301,10 @@ class CIVForObjectMixin:
     ):
         current_image = current_civ.image if current_civ else None
         if image and current_image != image:
-            civ, created = ComponentInterfaceValue.objects.get_or_create(
+            civ, created = ComponentInterfaceValue.objects.get_first_or_create(
                 interface=ci, image=image
             )
+
             if created:
                 try:
                     civ.full_clean()
