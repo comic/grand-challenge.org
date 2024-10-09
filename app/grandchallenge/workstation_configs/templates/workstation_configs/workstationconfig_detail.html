@@ -5,6 +5,9 @@
 {% load json %}
 {% load crispy_forms_tags %}
 
+{% block title %}
+    {{ object.title }} - Viewer Configurations - {{ block.super }}
+{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
