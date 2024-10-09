@@ -3,6 +3,10 @@
 {% load bleach %}
 {% load url %}
 
+{% block title %}
+    Join - {% firstof challenge.title challenge.short_name %} - {{ block.super }}
+{% endblock %}
+
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a
