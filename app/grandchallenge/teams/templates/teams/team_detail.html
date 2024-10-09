@@ -3,6 +3,10 @@
 {% load url %}
 {% load user_profile_link from profiles %}
 
+{% block title %}
+    {{ object.name|title }} - Teams - {{ block.super }}
+{% endblock %}
+
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a
