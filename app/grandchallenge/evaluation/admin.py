@@ -133,8 +133,16 @@ def reevaluate_submissions(modeladmin, request, queryset):
 @admin.register(Submission)
 class SubmissionAdmin(admin.ModelAdmin):
     ordering = ("-created",)
-    list_display = ("pk", "created", "phase", "creator")
-    list_filter = ("phase__challenge__short_name",)
+    list_display = (
+        "pk",
+        "created",
+        "phase",
+        "creator",
+        "algorithm_image",
+        "algorithm_requires_gpu_type",
+        "algorithm_requires_memory_gb",
+    )
+    list_filter = ("phase__submission_kind", "phase__challenge__short_name")
     search_fields = ("pk", "creator__username", "phase__slug")
     readonly_fields = (
         "creator",
@@ -148,8 +156,24 @@ class SubmissionAdmin(admin.ModelAdmin):
 @admin.register(Evaluation)
 class EvaluationAdmin(admin.ModelAdmin):
     ordering = ("-created",)
-    list_display = ("pk", "created", "submission", "status", "error_message")
-    list_filter = ("status", "submission__phase__challenge__short_name")
+    list_display = (
+        "pk",
+        "created",
+        "submission",
+        "compute_cost_euro_millicents",
+        "requires_gpu_type",
+        "requires_memory_gb",
+        "status",
+        "published",
+        "error_message",
+    )
+    list_filter = (
+        "status",
+        "published",
+        "requires_gpu_type",
+        "submission__phase__submission_kind",
+        "submission__phase__challenge__short_name",
+    )
     list_select_related = (
         "submission__phase__challenge",
         "submission__creator",
