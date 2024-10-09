@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
 
-{% block title %}{% if object %}Update{% else %}Create{% endif %} Email - {{ block.super }}{% endblock %}
+{% block title %}
+    {% if object %}Update{% else %}Create{% endif %} -{% if object %} {{ object }} -{% endif %} {{ block.super }}
+{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
