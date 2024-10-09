@@ -74,13 +74,18 @@ class JobAdmin(GuardedModelAdmin):
         "algorithm",
         "creator",
         "is_complimentary",
+        "credits_consumed",
+        "compute_cost_euro_millicents",
+        "time_limit",
+        "requires_gpu_type",
+        "requires_memory_gb",
         "status",
         "public",
         "comment",
         "error_message",
     )
     list_select_related = ("algorithm_image__algorithm",)
-    list_filter = ("status", "public", "is_complimentary")
+    list_filter = ("status", "public", "is_complimentary", "requires_gpu_type")
     readonly_fields = (
         "creator",
         "algorithm_image",

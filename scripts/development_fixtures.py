@@ -244,14 +244,22 @@ def _create_demo_challenge(users, algorithm):
             method.image.save("algorithm_io.tar", container)
 
         if phase_num == 1:
-            submission = Submission(phase=phase, creator=users["demop"])
-            content = ContentFile(base64.b64decode(b""))
-            submission.predictions_file.save("test.csv", content)
-        else:
             submission = Submission(
                 phase=phase,
                 creator=users["demop"],
-                algorithm_image=algorithm.algorithm_container_images.first(),
+                algorithm_requires_gpu_type="",
+                algorithm_requires_memory_gb=0,
+            )
+            content = ContentFile(base64.b64decode(b""))
+            submission.predictions_file.save("test.csv", content)
+        else:
+            algorithm_image = algorithm.algorithm_container_images.first()
+            submission = Submission(
+                phase=phase,
+                creator=users["demop"],
+                algorithm_image=algorithm_image,
+                algorithm_requires_gpu_type=algorithm_image.requires_gpu_type,
+                algorithm_requires_memory_gb=algorithm_image.requires_memory_gb,
             )
         submission.save()
 
@@ -260,6 +268,8 @@ def _create_demo_challenge(users, algorithm):
             method=method,
             status=Evaluation.SUCCESS,
             time_limit=submission.phase.evaluation_time_limit,
+            requires_gpu_type=method.requires_gpu_type,
+            requires_memory_gb=method.requires_memory_gb,
         )
 
         def create_result(evaluation, result: dict):
@@ -372,6 +382,8 @@ def _create_algorithm_demo(users):
             algorithm_image=algorithm_image,
             status=Evaluation.SUCCESS,
             time_limit=60,
+            requires_gpu_type=algorithm_image.requires_gpu_type,
+            requires_memory_gb=algorithm_image.requires_memory_gb,
         )
 
         algorithms_job.inputs.add(input_civ)

@@ -87,6 +87,8 @@ def _create_civ_rich_algorithm_job(creator, interfaces):
         algorithm_image=ai,
         status=Evaluation.SUCCESS,
         time_limit=ai.algorithm.time_limit,
+        requires_gpu_type=ai.requires_gpu_type,
+        requires_memory_gb=ai.requires_memory_gb,
     )
 
     chart_spec = {

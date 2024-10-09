@@ -1155,8 +1155,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             # Assume these options picked by the participant
             memory_limit=32,
             time_limit=self.inference_time_limit_in_minutes,
-            requires_gpu=True,
-            desired_gpu_type=GPUTypeChoices.T4,
+            requires_gpu_type=GPUTypeChoices.T4,
         )
         return executor.usd_cents_per_hour * settings.COMPONENTS_USD_TO_EUR
 

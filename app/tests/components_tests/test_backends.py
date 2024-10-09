@@ -8,7 +8,6 @@ from grandchallenge.components.backends.utils import (
     _filter_members,
     user_error,
 )
-from grandchallenge.components.models import GPUTypeChoices
 from tests.components_tests.resources.backends import InsecureDockerExecutor
 
 
@@ -121,8 +120,7 @@ def test_internal_logs_filtered():
         exec_image_repo_tag="test",
         memory_limit=4,
         time_limit=100,
-        requires_gpu=False,
-        desired_gpu_type=GPUTypeChoices.T4,
+        requires_gpu_type="",
     )
     executor._parse_loglines(loglines=logs.splitlines())
 

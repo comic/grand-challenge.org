@@ -13,17 +13,25 @@ from guardian.shortcuts import assign_perm, remove_perm
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.components.models import (
     ComponentInterface,
+    GPUTypeChoices,
     ImportStatusChoices,
     InterfaceKindChoices,
 )
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
-from grandchallenge.evaluation.models import CombinedLeaderboard, Evaluation
+from grandchallenge.evaluation.models import (
+    CombinedLeaderboard,
+    Evaluation,
+    Submission,
+)
 from grandchallenge.evaluation.tasks import update_combined_leaderboard
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.invoices.models import PaymentStatusChoices
 from grandchallenge.workstations.models import Workstation
-from tests.algorithms_tests.factories import AlgorithmFactory
-from tests.archives_tests.factories import ArchiveFactory
+from tests.algorithms_tests.factories import (
+    AlgorithmFactory,
+    AlgorithmImageFactory,
+)
+from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -46,6 +54,7 @@ from tests.factories import (
 )
 from tests.hanging_protocols_tests.factories import HangingProtocolFactory
 from tests.invoices_tests.factories import InvoiceFactory
+from tests.uploads_tests.factories import UserUploadFactory
 from tests.utils import get_view_for_user
 from tests.verification_tests.factories import VerificationFactory
 
@@ -1534,3 +1543,128 @@ def test_evaluation_details_zero_rank_message(client):
     assert (
         oxford_comma(evaluation.invalid_metrics) in response.rendered_content
     )
+
+
+@pytest.mark.django_db
+def test_submission_create_sets_limits_correctly_with_algorithm(client):
+    inputs = [ComponentInterfaceFactory()]
+    outputs = [ComponentInterfaceFactory()]
+
+    algorithm_image = AlgorithmImageFactory(
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+        requires_gpu=True,
+        desired_gpu_type=GPUTypeChoices.V100,
+        requires_memory_gb=1337,
+    )
+    algorithm_image.algorithm.inputs.set(inputs)
+    algorithm_image.algorithm.outputs.set(outputs)
+
+    archive = ArchiveFactory()
+    archive_item = ArchiveItemFactory(archive=archive)
+    archive_item.values.set(
+        [
+            ComponentInterfaceValueFactory(interface=interface)
+            for interface in inputs
+        ]
+    )
+
+    phase = PhaseFactory(
+        archive=archive,
+        submission_kind=SubmissionKindChoices.ALGORITHM,
+        submissions_limit_per_user_per_period=1,
+    )
+    phase.algorithm_inputs.set(inputs)
+    phase.algorithm_outputs.set(outputs)
+
+    InvoiceFactory(
+        challenge=phase.challenge,
+        compute_costs_euros=10,
+        payment_status=PaymentStatusChoices.COMPLIMENTARY,
+    )
+
+    MethodFactory(
+        phase=phase,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+
+    participant = UserFactory()
+    phase.challenge.add_participant(user=participant)
+    algorithm_image.algorithm.add_editor(user=participant)
+
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        user=participant,
+        viewname="evaluation:submission-create",
+        reverse_kwargs={
+            "challenge_short_name": phase.challenge.short_name,
+            "slug": phase.slug,
+        },
+        data={
+            "algorithm": algorithm_image.algorithm.pk,
+            "creator": participant.pk,
+            "phase": phase.pk,
+        },
+    )
+
+    assert response.status_code == 302
+
+    submission = Submission.objects.get()
+
+    assert submission.algorithm_requires_gpu_type == GPUTypeChoices.V100
+    assert submission.algorithm_requires_memory_gb == 1337
+
+
+@pytest.mark.django_db
+def test_submission_create_sets_limits_correctly_with_predictions(client):
+    phase = PhaseFactory(
+        submission_kind=SubmissionKindChoices.CSV,
+        submissions_limit_per_user_per_period=1,
+    )
+
+    InvoiceFactory(
+        challenge=phase.challenge,
+        compute_costs_euros=10,
+        payment_status=PaymentStatusChoices.COMPLIMENTARY,
+    )
+
+    MethodFactory(
+        phase=phase,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+
+    participant = UserFactory()
+    phase.challenge.add_participant(user=participant)
+
+    user_upload = UserUploadFactory(creator=participant)
+    user_upload.status = user_upload.StatusChoices.COMPLETED
+    user_upload.save()
+
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        user=participant,
+        viewname="evaluation:submission-create",
+        reverse_kwargs={
+            "challenge_short_name": phase.challenge.short_name,
+            "slug": phase.slug,
+        },
+        data={
+            "creator": participant.pk,
+            "phase": phase.pk,
+            "user_upload": user_upload.pk,
+        },
+    )
+
+    assert response.status_code == 302
+
+    submission = Submission.objects.get()
+
+    assert submission.algorithm_requires_gpu_type == ""
+    assert submission.algorithm_requires_memory_gb == 0

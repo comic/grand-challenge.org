@@ -707,37 +707,6 @@ class TestJobCreateForm:
         assert list(form.fields["creator"].queryset.all()) == [editor]
         assert form.fields["creator"].initial == editor
 
-    def test_time_limit_prepopulated(
-        self, algorithm_with_image_and_model_and_two_inputs
-    ):
-        algorithm = algorithm_with_image_and_model_and_two_inputs.algorithm
-        editor = algorithm.editors_group.user_set.first()
-        form = JobCreateForm(algorithm=algorithm, user=editor, data={})
-        assert form.fields["time_limit"].initial == algorithm.time_limit
-
-    def test_timelimit_cannot_be_altered(
-        self, algorithm_with_image_and_model_and_two_inputs
-    ):
-        algorithm = algorithm_with_image_and_model_and_two_inputs.algorithm
-        civs = algorithm_with_image_and_model_and_two_inputs.civs
-        editor = algorithm.editors_group.user_set.first()
-        form = JobCreateForm(
-            algorithm=algorithm,
-            user=editor,
-            data={
-                "time_limit": 456,
-                **get_interface_form_data(
-                    interface_slug=civs[0].interface.slug, data=civs[0].value
-                ),
-                **get_interface_form_data(
-                    interface_slug=civs[1].interface.slug, data=civs[1].value
-                ),
-            },
-        )
-        assert form.is_valid()
-        assert form.cleaned_data["time_limit"] == algorithm.time_limit
-        assert form.cleaned_data["time_limit"] != 456
-
     def test_algorithm_image_queryset(
         self, algorithm_with_image_and_model_and_two_inputs
     ):

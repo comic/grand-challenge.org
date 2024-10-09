@@ -109,6 +109,8 @@ def create_algorithm_jobs_for_archive(
                     # to the algorithm editors
                     task_on_success=None,
                     time_limit=algorithm.time_limit,
+                    requires_gpu_type=algorithm.active_image.requires_gpu_type,
+                    requires_memory_gb=algorithm.active_image.requires_memory_gb,
                 )
 
 
@@ -117,6 +119,8 @@ def create_algorithm_jobs(
     algorithm_image,
     civ_sets,
     time_limit,
+    requires_gpu_type,
+    requires_memory_gb,
     algorithm_model=None,
     extra_viewer_groups=None,
     extra_logs_viewer_groups=None,
@@ -136,6 +140,10 @@ def create_algorithm_jobs(
         for the algorithm image
     time_limit
         The time limit for the Job
+    requires_gpu_type
+        The required GPU type for the Job
+    requires_memory_gb
+        How much memory is required for the Job
     algorithm_model
         The algorithm model to use for the new job or None
     extra_viewer_groups
@@ -182,6 +190,8 @@ def create_algorithm_jobs(
                 task_on_success=task_on_success,
                 task_on_failure=task_on_failure,
                 time_limit=time_limit,
+                requires_gpu_type=requires_gpu_type,
+                requires_memory_gb=requires_memory_gb,
                 extra_viewer_groups=extra_viewer_groups,
                 extra_logs_viewer_groups=extra_logs_viewer_groups,
                 input_civ_set=civ_set,

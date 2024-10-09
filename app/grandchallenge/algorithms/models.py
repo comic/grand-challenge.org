@@ -180,6 +180,18 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
             "The number of credits that are required for each execution of this algorithm."
         ),
     )
+    minimum_credits_per_job = models.PositiveIntegerField(
+        default=20,
+        help_text=(
+            "The minimum number of credits that are required for each execution of this algorithm. "
+            "The actual number of credits required may be higher than this depending on the "
+            "algorithms configuration."
+        ),
+        validators=[
+            MinValueValidator(limit_value=20),
+            MaxValueValidator(limit_value=1000),
+        ],
+    )
     time_limit = models.PositiveIntegerField(
         default=60 * 60,
         help_text="Time limit for inference jobs in seconds",
@@ -788,7 +800,7 @@ class AlgorithmModelGroupObjectPermission(GroupObjectPermissionBase):
     )
 
 
-class Job(UUIDModel, CIVForObjectMixin, ComponentJob):
+class Job(CIVForObjectMixin, ComponentJob):
     objects = JobManager.as_manager()
 
     algorithm_image = models.ForeignKey(
@@ -810,6 +822,10 @@ class Job(UUIDModel, CIVForObjectMixin, ComponentJob):
         ),
     )
     comment = models.TextField(blank=True, default="")
+    credits_consumed = models.PositiveSmallIntegerField(
+        editable=False,
+        help_text="The total credits consumed for this job",
+    )
     is_complimentary = models.BooleanField(
         default=False,
         editable=False,
@@ -894,6 +910,7 @@ class Job(UUIDModel, CIVForObjectMixin, ComponentJob):
         if adding:
             self.init_viewers_group()
             self.init_is_complimentary()
+            self.init_credits_consumed()
 
         super().save(*args, **kwargs)
 
@@ -924,6 +941,43 @@ class Job(UUIDModel, CIVForObjectMixin, ComponentJob):
                 user=self.creator
             )
             > 0
+        )
+
+    def init_credits_consumed(self):
+        default_credits_per_month = Credit._meta.get_field(
+            "credits"
+        ).get_default()
+        overall_min_credits_per_job = (
+            default_credits_per_month
+            / settings.ALGORITHMS_MAX_DEFAULT_JOBS_PER_MONTH
+        )
+
+        executor = self.get_executor(
+            backend=settings.COMPONENTS_DEFAULT_BACKEND
+        )
+
+        maximum_cents_per_job = (
+            (self.time_limit / 3600)
+            * executor.usd_cents_per_hour
+            * (1 + settings.COMPONENTS_TAX_RATE_PERCENT)
+            * settings.COMPONENTS_USD_TO_EUR
+        )
+
+        credits_per_job = max(
+            int(
+                round(
+                    maximum_cents_per_job
+                    * default_credits_per_month
+                    / settings.ALGORITHMS_USER_CENTS_PER_MONTH,
+                    -1,
+                )
+            ),
+            overall_min_credits_per_job,
+        )
+
+        self.credits_consumed = max(
+            self.algorithm_image.algorithm.minimum_credits_per_job,
+            credits_per_job,
         )
 
     def init_permissions(self):
