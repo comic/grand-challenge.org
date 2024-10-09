@@ -76,6 +76,7 @@ class JobAdmin(GuardedModelAdmin):
         "is_complimentary",
         "credits_consumed",
         "compute_cost_euro_millicents",
+        "time_limit",
         "requires_gpu_type",
         "requires_memory_gb",
         "status",

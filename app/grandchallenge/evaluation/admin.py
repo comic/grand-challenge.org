@@ -161,6 +161,7 @@ class EvaluationAdmin(admin.ModelAdmin):
         "created",
         "submission",
         "compute_cost_euro_millicents",
+        "time_limit",
         "requires_gpu_type",
         "requires_memory_gb",
         "status",
