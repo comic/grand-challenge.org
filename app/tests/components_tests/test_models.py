@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import call
 
 import pytest
-from django.core.exceptions import ValidationError
+from django.core.exceptions import MultipleObjectsReturned, ValidationError
 from django.core.files.base import ContentFile
 from django.utils import timezone
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH
@@ -1581,3 +1581,23 @@ def test_all_examples_present():
     assert set(INTERFACE_TYPE_JSON_EXAMPLES.keys()) == set(
         InterfaceKind.interface_type_json()
     )
+
+
+@pytest.mark.django_db
+def test_component_interface_value_manager():
+    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    civ1, civ2 = ComponentInterfaceValueFactory.create_batch(
+        2, interface=ci, value="Foo"
+    )
+
+    with pytest.raises(MultipleObjectsReturned):
+        ComponentInterfaceValue.objects.get_or_create(
+            interface=ci, value="Foo"
+        )
+
+    civ, created = ComponentInterfaceValue.objects.get_first_or_create(
+        interface=ci, value="Foo"
+    )
+
+    assert civ == civ1
+    assert not created
