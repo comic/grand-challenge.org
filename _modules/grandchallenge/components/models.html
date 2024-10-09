@@ -1257,6 +1257,15 @@
     <span class="p">)</span>
 
 
+<span class="k">class</span> <span class="nc">ComponentInterfaceValueManager</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Manager</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">get_first_or_create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_or_create</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">MultipleObjectsReturned</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">(),</span> <span class="kc">False</span>
+
+
 <div class="viewcode-block" id="ComponentInterfaceValue">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterfaceValue">[docs]</a>
 <span class="k">class</span> <span class="nc">ComponentInterfaceValue</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
@@ -1325,6 +1334,8 @@
     <span class="p">)</span>
 
     <span class="n">_user_upload_validated</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="n">objects</span> <span class="o">=</span> <span class="n">ComponentInterfaceValueManager</span><span class="p">()</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">title</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -2368,7 +2379,7 @@
     <span class="p">):</span>
         <span class="n">current_value</span> <span class="o">=</span> <span class="n">current_civ</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="n">current_civ</span> <span class="k">else</span> <span class="kc">None</span>
 
-        <span class="n">civ</span><span class="p">,</span> <span class="n">created</span> <span class="o">=</span> <span class="n">ComponentInterfaceValue</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_or_create</span><span class="p">(</span>
+        <span class="n">civ</span><span class="p">,</span> <span class="n">created</span> <span class="o">=</span> <span class="n">ComponentInterfaceValue</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_first_or_create</span><span class="p">(</span>
             <span class="n">interface</span><span class="o">=</span><span class="n">ci</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">new_value</span>
         <span class="p">)</span>
 
@@ -2409,9 +2420,10 @@
     <span class="p">):</span>
         <span class="n">current_image</span> <span class="o">=</span> <span class="n">current_civ</span><span class="o">.</span><span class="n">image</span> <span class="k">if</span> <span class="n">current_civ</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">image</span> <span class="ow">and</span> <span class="n">current_image</span> <span class="o">!=</span> <span class="n">image</span><span class="p">:</span>
-            <span class="n">civ</span><span class="p">,</span> <span class="n">created</span> <span class="o">=</span> <span class="n">ComponentInterfaceValue</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_or_create</span><span class="p">(</span>
+            <span class="n">civ</span><span class="p">,</span> <span class="n">created</span> <span class="o">=</span> <span class="n">ComponentInterfaceValue</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_first_or_create</span><span class="p">(</span>
                 <span class="n">interface</span><span class="o">=</span><span class="n">ci</span><span class="p">,</span> <span class="n">image</span><span class="o">=</span><span class="n">image</span>
             <span class="p">)</span>
+
             <span class="k">if</span> <span class="n">created</span><span class="p">:</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">civ</span><span class="o">.</span><span class="n">full_clean</span><span class="p">()</span>
