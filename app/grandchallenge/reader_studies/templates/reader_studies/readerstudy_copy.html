@@ -3,6 +3,10 @@
 {% load crispy_forms_tags %}
 {% load static %}
 
+{% block title %}
+    Copy -{% if object %} {{ object }} -{% endif %} {{ block.super }}
+{% endblock %}
+
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'reader-studies:list' %}">Reader
