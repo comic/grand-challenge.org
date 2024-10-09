@@ -669,7 +669,7 @@ class JobManager(ComponentJobManager):
                     civs = ComponentInterfaceValue.objects.filter(
                         interface__slug=civ.interface_slug, image=civ.image
                     ).all()
-                    existing_civs.append(civs)
+                    existing_civs.extend(civs)
                 except ObjectDoesNotExist:
                     continue
             elif civ.file_civ:
@@ -680,7 +680,7 @@ class JobManager(ComponentJobManager):
                     civs = ComponentInterfaceValue.objects.filter(
                         interface__slug=civ.interface_slug, value=civ.value
                     ).all()
-                    existing_civs.append(civs)
+                    existing_civs.extend(civs)
                 except ObjectDoesNotExist:
                     continue
 
