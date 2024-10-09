@@ -2,7 +2,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django import forms
 
-from grandchallenge.core.widgets import MarkdownEditorWidget
+from grandchallenge.core.widgets import MarkdownEditorInlineWidget
 from grandchallenge.documentation.models import DocPage
 
 
@@ -15,7 +15,7 @@ class DocPageCreateForm(forms.ModelForm):
     class Meta:
         model = DocPage
         fields = ("title", "content", "parent")
-        widgets = {"content": MarkdownEditorWidget}
+        widgets = {"content": MarkdownEditorInlineWidget}
 
 
 class DocPageUpdateForm(DocPageCreateForm):

@@ -63,7 +63,9 @@ class ColorEditorWidget(forms.TextInput):
         )
 
 
-class MarkdownEditorWidget(MarkdownxWidget):
+class MarkdownEditorInlineWidget(MarkdownxWidget):
+    template_name = "markdownx/inline_widget.html"
+
     @property
     def media(self):
         return forms.Media(

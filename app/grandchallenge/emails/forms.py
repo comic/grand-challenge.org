@@ -1,7 +1,7 @@
 from django import forms
 
 from grandchallenge.core.forms import SaveFormInitMixin
-from grandchallenge.core.widgets import MarkdownEditorWidget
+from grandchallenge.core.widgets import MarkdownEditorInlineWidget
 from grandchallenge.emails.models import Email
 
 
@@ -12,4 +12,4 @@ class EmailForm(SaveFormInitMixin, forms.ModelForm):
             "subject",
             "body",
         )
-        widgets = {"body": MarkdownEditorWidget}
+        widgets = {"body": MarkdownEditorInlineWidget}
