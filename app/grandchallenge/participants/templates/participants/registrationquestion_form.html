@@ -4,6 +4,10 @@
 {% load static %}
 {% load meta_attr %}
 
+{% block title %}
+    {{ object|yesno:"Update,Add" }} Registration Question - {% firstof challenge.title challenge.short_name %} - {{ block.super }}
+{% endblock %}
+
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a
