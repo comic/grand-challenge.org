@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 {% load url %}
 
-{% block title %}Delete a Token - {{ block.super }}{% endblock %}
+{% block title %}
+    Delete - {{ object.token_key }} - {{ block.super }}
+{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
