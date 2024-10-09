@@ -4,7 +4,9 @@
 {% load static %}
 {% load crispy_forms_tags %}
 
-{% block title %}{{ object|yesno:"Update,Create" }} {{ object.title|title}} Combined Leaderboard - {{ block.super }}{% endblock %}
+{% block title %}
+    {{ object|yesno:"Update,Create" }} -{% if object %} {{ object.title|title }} -{% endif %} {{ block.super }}
+{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">

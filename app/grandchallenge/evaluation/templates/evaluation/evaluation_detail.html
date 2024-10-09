@@ -8,6 +8,10 @@
 {% load crispy_forms_tags %}
 {% load civ %}
 
+{% block title %}
+    {{ object.pk }} - {{ object.submission.phase.title }} Leaderboard - {{ block.super }}
+{% endblock %}
+
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a

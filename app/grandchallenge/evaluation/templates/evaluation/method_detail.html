@@ -5,6 +5,10 @@
 {% load user_profile_link from profiles %}
 {% load naturaldelta %}
 
+{% block title %}
+    {{ object.pk }} - Evaluation Methods - {{ block.super }}
+{% endblock %}
+
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a
