@@ -7,7 +7,9 @@
 {% load naturaldelta %}
 {% load guardian_tags %}
 
-{% block title %}Challenge request: {{ object.title }}{% endblock %}
+{% block title %}
+    {{ object.title }} - {% if not perms.challenges.change_challengerequest %}Your{% endif %} Challenge Requests - {{ block.super }}
+{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">

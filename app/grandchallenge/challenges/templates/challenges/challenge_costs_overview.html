@@ -4,6 +4,10 @@
 {% load static %}
 {% load costs %}
 
+{% block title %}
+    Cost Overview - Challenges - {{ block.super }}
+{% endblock %}
+
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a
@@ -12,10 +16,6 @@
         <li class="breadcrumb-item active"
             aria-current="page">Cost Overview</li>
     </ol>
-{% endblock %}
-
-{% block title %}
-    Challenge Cost Overview - {{ block.super }}
 {% endblock %}
 
 {% block content %}

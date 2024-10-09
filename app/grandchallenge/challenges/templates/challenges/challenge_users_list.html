@@ -1,14 +1,16 @@
 {% extends 'datatables/list_base.html' %}
 {% load url %}
 
+{% block title %}
+    Your Challenges - Challenges - {{ block.super }}
+{% endblock %}
+
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'challenges:list' %}">Challenges</a></li>
         <li class="breadcrumb-item active" aria-current="page">Your Challenges</li>
     </ol>
 {% endblock %}
-
-{% block title %}Your Challenges - {{ block.super }}{% endblock %}
 
 {% block content %}
 
