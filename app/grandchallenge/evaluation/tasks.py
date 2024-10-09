@@ -405,7 +405,8 @@ def filter_by_creators_best(*, evaluations, ranks):
 
 # Use 2xlarge for memory use
 @acks_late_2xlarge_task(
-    retry_on=(LockNotAcquiredException,), delayed_retry=False
+    # TODO temporarily disable retries
+    # retry_on=(LockNotAcquiredException,), delayed_retry=False
 )
 @transaction.atomic
 def calculate_ranks(*, phase_pk: uuid.UUID):
@@ -431,6 +432,8 @@ def calculate_ranks(*, phase_pk: uuid.UUID):
             .prefetch_related("outputs__interface")
         )
     except OperationalError as error:
+        # TODO temporarily disable retries
+        return
         raise LockNotAcquiredException from error
 
     valid_evaluations = [
