@@ -1,8 +1,9 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from actstream.actions import follow, is_following
 from actstream.models import Follow
+from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -172,13 +173,6 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         blank=True,
         help_text="The organizations associated with this algorithm",
         related_name="algorithms",
-    )
-    credits_per_job = models.PositiveIntegerField(
-        default=100,
-        editable=False,
-        help_text=(
-            "The number of credits that are required for each execution of this algorithm."
-        ),
     )
     minimum_credits_per_job = models.PositiveIntegerField(
         default=20,
@@ -378,6 +372,11 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
             return self.algorithm_models.filter(is_desired_version=True).get()
         except ObjectDoesNotExist:
             return None
+
+    @cached_property
+    def credits_per_job(self):
+        # TODO
+        return 0
 
     @property
     def image_upload_in_progress(self):
@@ -713,19 +712,15 @@ class JobManager(ComponentJobManager):
         return existing_jobs
 
     def spent_credits(self, user):
-        now = timezone.now()
-        period = timedelta(days=30)
-
         return (
-            self.filter(creator=user, created__range=[now - period, now])
-            .distinct()
+            self.filter(
+                creator=user,
+                created__gt=timezone.now() - relativedelta(months=1),
+            )
             .order_by("created")
-            .select_related("algorithm_image__algorithm")
             .exclude(is_complimentary=True)
             .aggregate(
-                total=Sum(
-                    "algorithm_image__algorithm__credits_per_job", default=0
-                ),
+                total=Sum("consumed_credits"),
                 oldest=Min("created"),
             )
         )

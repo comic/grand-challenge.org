@@ -43,14 +43,12 @@ class AlgorithmAdmin(GuardedModelAdmin):
         "title",
         "created",
         "public",
-        "credits_per_job",
         "average_duration",
         "container_count",
         "workstation",
     )
     list_filter = ("public", "workstation__slug")
     search_fields = ("title", "slug")
-    readonly_fields = ("credits_per_job",)
     form = AlgorithmAdminForm
 
     def container_count(self, obj):

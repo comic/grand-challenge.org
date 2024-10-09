@@ -1199,10 +1199,6 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.notifications.tasks.send_unread_notification_emails",
         "schedule": crontab(hour=4, minute=0),
     },
-    "update_algorithm_credits": {
-        "task": "grandchallenge.algorithms.tasks.set_credits_per_job",
-        "schedule": crontab(hour=4, minute=30),
-    },
     "update_site_statistics": {
         "task": "grandchallenge.statistics.tasks.update_site_statistics_cache",
         "schedule": crontab(hour=5, minute=30),
