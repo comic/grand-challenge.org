@@ -3,6 +3,10 @@
 {% load static %}
 {% load url %}
 
+{% block title %}
+    Add Items to Reader Study - Items - {{ block.super }}
+{% endblock %}
+
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'archives:list' %}">Archives</a>
