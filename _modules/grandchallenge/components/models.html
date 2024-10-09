@@ -114,6 +114,17 @@
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
+<div class="viewcode-block" id="GPUTypeChoices">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.GPUTypeChoices">[docs]</a>
+<span class="k">class</span> <span class="nc">GPUTypeChoices</span><span class="p">(</span><span class="n">TextChoices</span><span class="p">):</span>
+    <span class="n">A100</span> <span class="o">=</span> <span class="s2">&quot;A100&quot;</span>
+    <span class="n">A10G</span> <span class="o">=</span> <span class="s2">&quot;A10G&quot;</span>
+    <span class="n">V100</span> <span class="o">=</span> <span class="s2">&quot;V100&quot;</span>
+    <span class="n">K80</span> <span class="o">=</span> <span class="s2">&quot;K80&quot;</span>
+    <span class="n">T4</span> <span class="o">=</span> <span class="s2">&quot;T4&quot;</span></div>
+
+
+
 <div class="viewcode-block" id="InterfaceKindChoices">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKindChoices">[docs]</a>
 <span class="k">class</span> <span class="nc">InterfaceKindChoices</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
@@ -1546,7 +1557,7 @@
 
 <div class="viewcode-block" id="ComponentJob">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentJob">[docs]</a>
-<span class="k">class</span> <span class="nc">ComponentJob</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">ComponentJob</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
     <span class="c1"># The job statuses come directly from celery.result.AsyncResult.status:</span>
     <span class="c1"># http://docs.celeryproject.org/en/latest/reference/celery.result.html</span>
     <span class="n">PENDING</span> <span class="o">=</span> <span class="mi">0</span>
@@ -1634,6 +1645,15 @@
             <span class="p">),</span>
         <span class="p">],</span>
     <span class="p">)</span>
+    <span class="n">requires_gpu_type</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="n">GPUTypeChoices</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;What GPU is required by this job?&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">requires_memory_gb</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
+        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;How much memory is required by this job?&quot;</span>
+    <span class="p">)</span>
 
     <span class="n">inputs</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>
         <span class="n">to</span><span class="o">=</span><span class="n">ComponentInterfaceValue</span><span class="p">,</span>
@@ -1708,10 +1728,9 @@
         <span class="k">return</span> <span class="p">{</span>
             <span class="s2">&quot;job_id&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">attempt</span><span class="si">:</span><span class="s2">02</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
             <span class="s2">&quot;exec_image_repo_tag&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="o">.</span><span class="n">shimmed_repo_tag</span><span class="p">,</span>
-            <span class="s2">&quot;memory_limit&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="o">.</span><span class="n">requires_memory_gb</span><span class="p">,</span>
             <span class="s2">&quot;time_limit&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_limit</span><span class="p">,</span>
-            <span class="s2">&quot;requires_gpu&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="o">.</span><span class="n">requires_gpu</span><span class="p">,</span>
-            <span class="s2">&quot;desired_gpu_type&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="o">.</span><span class="n">desired_gpu_type</span><span class="p">,</span>
+            <span class="s2">&quot;requires_gpu_type&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">requires_gpu_type</span><span class="p">,</span>
+            <span class="s2">&quot;memory_limit&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">requires_memory_gb</span><span class="p">,</span>
         <span class="p">}</span>
 
     <span class="k">def</span> <span class="nf">get_executor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">backend</span><span class="p">):</span>
@@ -1871,17 +1890,6 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">executable_images</span><span class="p">()</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_desired_version</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="GPUTypeChoices">
-<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.GPUTypeChoices">[docs]</a>
-<span class="k">class</span> <span class="nc">GPUTypeChoices</span><span class="p">(</span><span class="n">TextChoices</span><span class="p">):</span>
-    <span class="n">A100</span> <span class="o">=</span> <span class="s2">&quot;A100&quot;</span>
-    <span class="n">A10G</span> <span class="o">=</span> <span class="s2">&quot;A10G&quot;</span>
-    <span class="n">V100</span> <span class="o">=</span> <span class="s2">&quot;V100&quot;</span>
-    <span class="n">K80</span> <span class="o">=</span> <span class="s2">&quot;K80&quot;</span>
-    <span class="n">T4</span> <span class="o">=</span> <span class="s2">&quot;T4&quot;</span></div>
-
-
-
 <div class="viewcode-block" id="ComponentImage">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentImage">[docs]</a>
 <span class="k">class</span> <span class="nc">ComponentImage</span><span class="p">(</span><span class="n">FieldChangeMixin</span><span class="p">,</span> <span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
@@ -1990,6 +1998,13 @@
             <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
             <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
         <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">requires_gpu_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">requires_gpu</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">desired_gpu_type</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;&quot;</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">linked_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>

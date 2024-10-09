@@ -71,6 +71,7 @@
     <span class="n">ComponentImage</span><span class="p">,</span>
     <span class="n">ComponentInterface</span><span class="p">,</span>
     <span class="n">ComponentJob</span><span class="p">,</span>
+    <span class="n">GPUTypeChoices</span><span class="p">,</span>
     <span class="n">ImportStatusChoices</span><span class="p">,</span>
     <span class="n">Tarball</span><span class="p">,</span>
 <span class="p">)</span>
@@ -1240,6 +1241,17 @@
     <span class="n">algorithm_model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="n">AlgorithmModel</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span>
     <span class="p">)</span>
+    <span class="n">algorithm_requires_gpu_type</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="n">GPUTypeChoices</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;What GPU, if any, is required by the algorithm jobs?&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">algorithm_requires_memory_gb</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
+        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;How much memory is required by the algorithm jobs?&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
     <span class="n">user_upload</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="n">UserUpload</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span>
     <span class="p">)</span>
@@ -1442,7 +1454,7 @@
     <span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">Evaluation</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">ComponentJob</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">Evaluation</span><span class="p">(</span><span class="n">ComponentJob</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Stores information about a evaluation for a given submission.&quot;&quot;&quot;</span>
 
     <span class="n">submission</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="s2">&quot;Submission&quot;</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">)</span>

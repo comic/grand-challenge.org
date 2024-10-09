@@ -329,6 +329,9 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.UUIDField" title="(in Django v5.1)"><em>UUIDField</em></a>) – Primary key: Id</p></li>
+<li><p><strong>created</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v5.1)"><em>DateTimeField</em></a>) – Created</p></li>
+<li><p><strong>modified</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v5.1)"><em>DateTimeField</em></a>) – Modified</p></li>
 <li><p><strong>status</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.PositiveSmallIntegerField" title="(in Django v5.1)"><em>PositiveSmallIntegerField</em></a>) – Status</p></li>
 <li><p><strong>attempt</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.PositiveSmallIntegerField" title="(in Django v5.1)"><em>PositiveSmallIntegerField</em></a>) – Attempt</p></li>
 <li><p><strong>stdout</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.TextField" title="(in Django v5.1)"><em>TextField</em></a>) – Stdout</p></li>
@@ -343,6 +346,8 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <li><p><strong>task_on_success</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.JSONField" title="(in Django v5.1)"><em>JSONField</em></a>) – Task on success. Serialized task that is run on job success</p></li>
 <li><p><strong>task_on_failure</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.JSONField" title="(in Django v5.1)"><em>JSONField</em></a>) – Task on failure. Serialized task that is run on job failure</p></li>
 <li><p><strong>time_limit</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.PositiveIntegerField" title="(in Django v5.1)"><em>PositiveIntegerField</em></a>) – Time limit. Time limit for the job in seconds</p></li>
+<li><p><strong>requires_gpu_type</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.CharField" title="(in Django v5.1)"><em>CharField</em></a>) – Requires gpu type. What GPU is required by this job?</p></li>
+<li><p><strong>requires_memory_gb</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.PositiveSmallIntegerField" title="(in Django v5.1)"><em>PositiveSmallIntegerField</em></a>) – Requires memory gb. How much memory is required by this job?</p></li>
 </ul>
 </dd>
 </dl>
