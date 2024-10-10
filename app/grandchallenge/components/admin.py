@@ -22,14 +22,11 @@ class ComponentImageAdmin(GuardedModelAdmin):
         "is_in_registry",
         "import_status",
         "sha256_display",
-        "requires_gpu",
-        "requires_memory_gb",
         "status",
         "latest_shimmed_version",
         "is_desired_version",
     )
     list_filter = (
-        "requires_gpu",
         "is_manifest_valid",
         "is_in_registry",
         "import_status",

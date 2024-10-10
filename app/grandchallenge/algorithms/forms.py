@@ -432,18 +432,11 @@ class UserAlgorithmsForPhaseMixin:
 
 
 class AlgorithmForPhaseForm(UserAlgorithmsForPhaseMixin, ModelForm):
-    image_requires_memory_gb = IntegerField(
+    job_requires_memory_gb = IntegerField(
         min_value=settings.ALGORITHMS_MIN_MEMORY_GB,
         max_value=settings.ALGORITHMS_MAX_MEMORY_GB,
-        label="Default New Algorithm Image Memory Requirement GB",
-        help_text=(
-            "The maximum system (CPU) memory required by new algorithm images "
-            " in gigabytes. "
-            "This is only the default for new algorithm images, to update the "
-            "memory requirements of an existing algorithm image please do so "
-            "on the algorithm image update page."
-        ),
     )
+    # TODO limit the choices of job_requires_gpu_type
 
     class Meta:
         model = Algorithm
@@ -459,8 +452,8 @@ class AlgorithmForPhaseForm(UserAlgorithmsForPhaseMixin, ModelForm):
             "hanging_protocol",
             "optional_hanging_protocols",
             "view_content",
-            "image_requires_gpu",
-            "image_requires_memory_gb",
+            "job_requires_gpu_type",
+            "job_requires_memory_gb",
             "contact_email",
             "display_editors",
             "logo",
@@ -482,20 +475,10 @@ class AlgorithmForPhaseForm(UserAlgorithmsForPhaseMixin, ModelForm):
             "logo": HiddenInput(),
             "time_limit": HiddenInput(),
         }
-        labels = {
-            "image_requires_gpu": "Default New Algorithm Image GPU Supported",
-        }
         help_texts = {
             "description": (
                 "Short description of this algorithm, max 1024 characters. "
                 "This will appear in the info modal on the algorithm overview list."
-            ),
-            "image_requires_gpu": (
-                "If true, new algorithm images "
-                "will be marked as being able to use a GPU. "
-                "This is only the default for new algorithm images, to update "
-                "the GPU support of an existing algorithm image please do so "
-                "on the algorithm image update page."
             ),
         }
 
@@ -644,11 +627,6 @@ class AlgorithmUpdateForm(AlgorithmForm):
 
 
 class AlgorithmImageForm(ContainerImageForm):
-    requires_memory_gb = IntegerField(
-        min_value=settings.ALGORITHMS_MIN_MEMORY_GB,
-        max_value=settings.ALGORITHMS_MAX_MEMORY_GB,
-        help_text="The maximum system (CPU) memory required by this algorithm image in gigabytes.",
-    )
     algorithm = ModelChoiceField(widget=HiddenInput(), queryset=None)
 
     def __init__(self, *args, algorithm, **kwargs):
@@ -659,39 +637,18 @@ class AlgorithmImageForm(ContainerImageForm):
         )
         self.fields["algorithm"].initial = algorithm
 
-        self.fields["requires_gpu"].initial = algorithm.image_requires_gpu
-        self.fields["requires_memory_gb"].initial = (
-            algorithm.image_requires_memory_gb
-        )
-
     class Meta(ContainerImageForm.Meta):
         model = AlgorithmImage
         fields = (
-            "requires_gpu",
-            "requires_memory_gb",
             "algorithm",
             *ContainerImageForm.Meta.fields,
         )
-        labels = {"requires_gpu": "GPU Supported"}
-        help_texts = {
-            "requires_gpu": "If true, inference jobs for this algorithm image will be assigned a GPU"
-        }
 
 
 class AlgorithmImageUpdateForm(SaveFormInitMixin, ModelForm):
-    requires_memory_gb = IntegerField(
-        min_value=settings.ALGORITHMS_MIN_MEMORY_GB,
-        max_value=settings.ALGORITHMS_MAX_MEMORY_GB,
-        help_text="The maximum system (CPU) memory required by this algorithm image in gigabytes.",
-    )
-
     class Meta:
         model = AlgorithmImage
-        fields = ("requires_gpu", "requires_memory_gb", "comment")
-        labels = {"requires_gpu": "GPU Supported"}
-        help_texts = {
-            "requires_gpu": "If true, inference jobs for this algorithm image will be assigned a GPU"
-        }
+        fields = ("comment",)
 
 
 class ImageActivateForm(Form):
@@ -810,19 +767,11 @@ class AlgorithmRepoForm(SaveFormInitMixin, ModelForm):
             },
         ),
     )
-    image_requires_memory_gb = IntegerField(
+    job_requires_memory_gb = IntegerField(
         min_value=settings.ALGORITHMS_MIN_MEMORY_GB,
         max_value=settings.ALGORITHMS_MAX_MEMORY_GB,
-        initial=15,
-        label="Default Built Algorithm Image Memory Requirement GB",
-        help_text=(
-            "The maximum system (CPU) memory required by algorithm images built "
-            "from your GitHub repository in gigabytes. "
-            "This is only the default for new algorithm images, to update the "
-            "memory requirements of an existing algorithm image please do so "
-            "on the algorithm image update page."
-        ),
     )
+    # TODO limit the choices of job_requires_gpu_type
 
     def __init__(self, *args, github_app_install_url, **kwargs):
         super().__init__(*args, **kwargs)
@@ -877,23 +826,13 @@ class AlgorithmRepoForm(SaveFormInitMixin, ModelForm):
         fields = (
             "repo_name",
             "recurse_submodules",
-            "image_requires_gpu",
-            "image_requires_memory_gb",
+            "job_requires_gpu_type",
+            "job_requires_memory_gb",
         )
-        labels = {
-            "image_requires_gpu": "Default Built Algorithm Image GPU Supported",
-        }
         help_texts = {
             "recurse_submodules": (
                 "Whether to recurse the git submodules when cloning your "
                 "GitHub repository."
-            ),
-            "image_requires_gpu": (
-                "If true, algorithm images built from your GitHub repository "
-                "will be marked as being able to use a GPU. "
-                "This is only the default for new algorithm images, to update "
-                "the GPU support of an existing algorithm image please do so "
-                "on the algorithm image update page."
             ),
         }
 
