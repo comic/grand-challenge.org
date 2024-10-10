@@ -1568,7 +1568,7 @@
 
 <div class="viewcode-block" id="ComponentJob">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentJob">[docs]</a>
-<span class="k">class</span> <span class="nc">ComponentJob</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">ComponentJob</span><span class="p">(</span><span class="n">FieldChangeMixin</span><span class="p">,</span> <span class="n">UUIDModel</span><span class="p">):</span>
     <span class="c1"># The job statuses come directly from celery.result.AsyncResult.status:</span>
     <span class="c1"># http://docs.celeryproject.org/en/latest/reference/celery.result.html</span>
     <span class="n">PENDING</span> <span class="o">=</span> <span class="mi">0</span>
@@ -1676,6 +1676,23 @@
     <span class="p">)</span>
 
     <span class="n">objects</span> <span class="o">=</span> <span class="n">ComponentJobManager</span><span class="o">.</span><span class="n">as_manager</span><span class="p">()</span>
+
+<div class="viewcode-block" id="ComponentJob.save">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentJob.save">[docs]</a>
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">adding</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="p">(</span>
+                <span class="s2">&quot;requires_gpu_type&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;requires_memory_gb&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;time_limit&quot;</span><span class="p">,</span>
+            <span class="p">):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_changed</span><span class="p">(</span><span class="n">field</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2"> cannot be changed&quot;</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></div>
+
 
     <span class="k">def</span> <span class="nf">update_status</span><span class="p">(</span>  <span class="c1"># noqa: C901</span>
         <span class="bp">self</span><span class="p">,</span>
