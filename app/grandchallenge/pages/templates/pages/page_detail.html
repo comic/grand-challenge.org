@@ -6,7 +6,7 @@
 {% load random_encode %}
 
 {% block title %}
-    {{ object|title }} - {{ block.super }}
+    {{ object|title }} - {% firstof challenge.title challenge.short_name %} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}

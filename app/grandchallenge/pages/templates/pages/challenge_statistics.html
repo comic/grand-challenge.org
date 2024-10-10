@@ -7,7 +7,7 @@
 {% load divide_by %}
 
 {% block title %}
-    Statistics - {{ block.super }}
+    Statistics - {% firstof challenge.title challenge.short_name %} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}

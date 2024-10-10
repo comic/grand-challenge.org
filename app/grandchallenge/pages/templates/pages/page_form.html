@@ -3,6 +3,10 @@
 {% load static %}
 {% load url %}
 
+{% block title %}
+    {% if object %}Update{% else %}Create{% endif %} -{% if object %} {{ object|title }} -{% endif %} {{ block.super }}
+{% endblock %}
+
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a
