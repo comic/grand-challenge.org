@@ -11,7 +11,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.db.models import Count, Min, Q, Sum
+from django.db.models import Count, Q, Sum
 from django.db.models.signals import post_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
@@ -723,11 +723,9 @@ class JobManager(ComponentJobManager):
                 creator=user,
                 created__gt=timezone.now() - relativedelta(months=1),
             )
-            .order_by("created")
             .exclude(is_complimentary=True)
             .aggregate(
                 total=Sum("credits_consumed", default=0),
-                oldest=Min("created"),
             )
         )
 
