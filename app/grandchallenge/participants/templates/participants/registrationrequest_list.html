@@ -20,6 +20,14 @@
 
     <h2>Participation Requests for {{ challenge.short_name }}</h2>
 
+
+    <a class="btn btn-primary mb-4"
+        href="{% url 'api:registration-request-list' %}?format=csv&challenge__short_name={{ challenge.short_name}}"
+        download="{{ challenge.short_name }}_registration_question_answers_{{ now }}.csv"
+    >
+        <i class="fas fa-file-csv pr-1"></i> Export participation requests
+    </a>
+
     <div class="table-responsive">
         <table class="table table-hover table-borderless table-sm" id="participantsTable">
             <thead class="thead-light">
