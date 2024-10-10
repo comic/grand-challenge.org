@@ -4,6 +4,10 @@
 {% load user_profile_link_username from profiles %}
 {% load static %}
 
+{% block title %}
+    Leaderboard - {{ object }} - {{ block.super }}
+{% endblock %}
+
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'reader-studies:list' %}">Reader

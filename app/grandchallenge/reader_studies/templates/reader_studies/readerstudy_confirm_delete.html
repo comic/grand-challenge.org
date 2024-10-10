@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 
+{% block title %}
+    Delete - {{ object }} - {{ block.super }}
+{% endblock %}
+
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'reader-studies:list' %}">Reader

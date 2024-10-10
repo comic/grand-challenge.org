@@ -3,6 +3,10 @@
 {% load crispy_forms_tags %}
 {% load static %}
 
+{% block title %}
+    {{ object|yesno:"Update,Create" }} -{% if object %} {{ object }} -{% endif %} {{ block.super }}
+{% endblock %}
+
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'reader-studies:list' %}">Reader
@@ -14,10 +18,6 @@
         <li class="breadcrumb-item active"
             aria-current="page">{{ object|yesno:"Update,Create" }}</li>
     </ol>
-{% endblock %}
-
-{% block title %}
-    Reader Study {{ object|yesno:"Update,Create" }} - {{ block.super }}
 {% endblock %}
 
 {% block content %}
