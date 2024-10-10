@@ -1,8 +1,9 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from actstream.actions import follow, is_following
 from actstream.models import Follow
+from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -172,13 +173,6 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         blank=True,
         help_text="The organizations associated with this algorithm",
         related_name="algorithms",
-    )
-    credits_per_job = models.PositiveIntegerField(
-        default=100,
-        editable=False,
-        help_text=(
-            "The number of credits that are required for each execution of this algorithm."
-        ),
     )
     minimum_credits_per_job = models.PositiveIntegerField(
         default=20,
@@ -378,6 +372,17 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
             return self.algorithm_models.filter(is_desired_version=True).get()
         except ObjectDoesNotExist:
             return None
+
+    @cached_property
+    def credits_per_job(self):
+        job = Job(
+            algorithm_image=self.active_image,
+            time_limit=self.time_limit,
+            requires_gpu_type=self.active_image.requires_gpu_type,
+            requires_memory_gb=self.active_image.requires_memory_gb,
+        )
+        job.init_credits_consumed()
+        return job.credits_consumed
 
     @property
     def image_upload_in_progress(self):
@@ -713,19 +718,15 @@ class JobManager(ComponentJobManager):
         return existing_jobs
 
     def spent_credits(self, user):
-        now = timezone.now()
-        period = timedelta(days=30)
-
         return (
-            self.filter(creator=user, created__range=[now - period, now])
-            .distinct()
+            self.filter(
+                creator=user,
+                created__gt=timezone.now() - relativedelta(months=1),
+            )
             .order_by("created")
-            .select_related("algorithm_image__algorithm")
             .exclude(is_complimentary=True)
             .aggregate(
-                total=Sum(
-                    "algorithm_image__algorithm__credits_per_job", default=0
-                ),
+                total=Sum("credits_consumed", default=0),
                 oldest=Min("created"),
             )
         )
@@ -849,11 +850,6 @@ class Job(CIVForObjectMixin, ComponentJob):
     def __str__(self):
         return f"Job {self.pk}"
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._public_orig = self.public
-        self._status_orig = self.status
-
     @property
     def container(self):
         return self.algorithm_image
@@ -918,11 +914,9 @@ class Job(CIVForObjectMixin, ComponentJob):
             self.init_permissions()
             self.init_followers()
 
-        if adding or self._public_orig != self.public:
-            self.update_viewer_groups_for_public()
-            self._public_orig = self.public
+        self.update_viewer_groups_for_public()
 
-        if self._status_orig != self.status and self.status == self.SUCCESS:
+        if self.has_changed("status") and self.status == self.SUCCESS:
             on_commit(
                 update_algorithm_average_duration.signature(
                     kwargs={"algorithm_pk": self.algorithm_image.algorithm.pk}

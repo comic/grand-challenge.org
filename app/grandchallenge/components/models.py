@@ -1459,7 +1459,7 @@ class ComponentJobManager(models.QuerySet):
         )
 
 
-class ComponentJob(UUIDModel):
+class ComponentJob(FieldChangeMixin, UUIDModel):
     # The job statuses come directly from celery.result.AsyncResult.status:
     # http://docs.celeryproject.org/en/latest/reference/celery.result.html
     PENDING = 0
@@ -1567,6 +1567,20 @@ class ComponentJob(UUIDModel):
     )
 
     objects = ComponentJobManager.as_manager()
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        if not adding:
+            for field in (
+                "requires_gpu_type",
+                "requires_memory_gb",
+                "time_limit",
+            ):
+                if self.has_changed(field):
+                    raise ValueError(f"{field} cannot be changed")
+
+        super().save()
 
     def update_status(  # noqa: C901
         self,

@@ -19,7 +19,6 @@ from grandchallenge.core.celery import (
     acks_late_micro_short_task,
 )
 from grandchallenge.core.exceptions import LockNotAcquiredException
-from grandchallenge.credits.models import Credit
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
 
@@ -364,48 +363,6 @@ def import_remote_algorithm_image(*, remote_bucket_name, algorithm_image_pk):
 
         with open(dest, "rb") as f:
             algorithm_image.image.save(filename, File(f))
-
-
-@acks_late_2xlarge_task
-def set_credits_per_job():
-    from grandchallenge.algorithms.models import Algorithm, Job
-
-    default_credits_per_month = Credit._meta.get_field("credits").get_default()
-    default_credits_per_job = Algorithm._meta.get_field(
-        "credits_per_job"
-    ).get_default()
-    min_credits_per_job = (
-        default_credits_per_month
-        / settings.ALGORITHMS_MAX_DEFAULT_JOBS_PER_MONTH
-    )
-
-    for algorithm in Algorithm.objects.all().iterator():
-        if algorithm.average_duration and algorithm.active_image:
-            executor = Job(
-                algorithm_image=algorithm.active_image
-            ).get_executor(backend=settings.COMPONENTS_DEFAULT_BACKEND)
-
-            cents_per_job = (
-                executor.usd_cents_per_hour
-                * algorithm.average_duration.total_seconds()
-                / 3600
-            )
-
-            algorithm.credits_per_job = max(
-                int(
-                    round(
-                        cents_per_job
-                        * default_credits_per_month
-                        / settings.ALGORITHMS_USER_CENTS_PER_MONTH,
-                        -1,
-                    )
-                ),
-                min_credits_per_job,
-            )
-        else:
-            algorithm.credits_per_job = default_credits_per_job
-
-        algorithm.save(update_fields=("credits_per_job",))
 
 
 @acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))

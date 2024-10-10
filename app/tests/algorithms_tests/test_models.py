@@ -273,7 +273,9 @@ def test_new_display_set_created_on_reader_study_change():
 @pytest.mark.django_db
 class TestJobLimits:
     def test_limited_jobs_for_editors(self, client):
-        alg1, alg2 = AlgorithmFactory.create_batch(2, credits_per_job=100)
+        alg1, alg2 = AlgorithmFactory.create_batch(
+            2, minimum_credits_per_job=100, time_limit=60
+        )
         user1, user2, user3 = UserFactory.create_batch(3)
         alg1.add_editor(user=user1)
         alg1.add_editor(user=user2)
@@ -332,16 +334,21 @@ class TestJobLimits:
         assert ai2.get_remaining_jobs(user=user2) == 14
 
     @pytest.mark.parametrize(
-        "credits_per_job,user_credits,expected_jobs",
+        "minimum_credits_per_job,user_credits,expected_jobs",
         (
             (100, 0, 0),
             (100, 50, 0),
             (100, 200, 2),
-            (0, 100, 100),
+            # Uses system minumum credits per job (20)
+            (0, 100, 5),
         ),
     )
-    def test_limited_jobs(self, credits_per_job, user_credits, expected_jobs):
-        algorithm = AlgorithmFactory(credits_per_job=credits_per_job)
+    def test_limited_jobs(
+        self, minimum_credits_per_job, user_credits, expected_jobs
+    ):
+        algorithm = AlgorithmFactory(
+            minimum_credits_per_job=minimum_credits_per_job, time_limit=60
+        )
         user = UserFactory()
         ai = AlgorithmImageFactory(
             algorithm=algorithm,
@@ -357,19 +364,21 @@ class TestJobLimits:
         assert ai.get_remaining_jobs(user=user) == expected_jobs
 
     @pytest.mark.parametrize(
-        "credits_per_job,user_credits,expected_jobs",
+        "minimum_credits_per_job,user_credits,expected_jobs",
         (
             (100, 0, 0),
             (100, 50, 0),
             (100, 200, 0),
-            (0, 100, 100),
-            (1, 100, 98),
+            (0, 100, 3),
+            (30, 100, 1),
         ),
     )
     def test_limited_jobs_with_existing(
-        self, credits_per_job, user_credits, expected_jobs
+        self, minimum_credits_per_job, user_credits, expected_jobs
     ):
-        algorithm = AlgorithmFactory(credits_per_job=credits_per_job)
+        algorithm = AlgorithmFactory(
+            minimum_credits_per_job=minimum_credits_per_job, time_limit=60
+        )
         user = UserFactory()
         ai = AlgorithmImageFactory(
             algorithm=algorithm,
@@ -378,7 +387,9 @@ class TestJobLimits:
             is_desired_version=True,
         )
 
-        algorithm2 = AlgorithmFactory(credits_per_job=credits_per_job)
+        algorithm2 = AlgorithmFactory(
+            minimum_credits_per_job=minimum_credits_per_job, time_limit=60
+        )
 
         AlgorithmJobFactory(
             algorithm_image__algorithm=algorithm,
@@ -401,6 +412,27 @@ class TestJobLimits:
         user_credit.save()
 
         assert ai.get_remaining_jobs(user=user) == expected_jobs
+
+    @pytest.mark.parametrize(
+        "time_limit,expected_credits_per_job",
+        (
+            (100, 20),
+            (2000, 60),
+            (12000, 370),
+        ),
+    )
+    def test_credits_vary_with_time_limit(
+        self, time_limit, expected_credits_per_job
+    ):
+        algorithm = AlgorithmFactory(time_limit=time_limit)
+        AlgorithmImageFactory(
+            algorithm=algorithm,
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+        )
+
+        assert algorithm.credits_per_job == expected_credits_per_job
 
 
 @pytest.mark.django_db()
@@ -857,10 +889,15 @@ def test_get_remaining_non_complimentary_jobs(settings):
     # Check the default, the rest are assuming this
     assert Credit._meta.get_field("credits").get_default() == 1000
 
-    credits_per_job = 300
+    minimum_credits_per_job = 300
 
     u = UserFactory()
-    ai = AlgorithmImageFactory(algorithm__credits_per_job=credits_per_job)
+    ai = AlgorithmImageFactory(
+        algorithm__minimum_credits_per_job=minimum_credits_per_job,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
 
     assert ai.get_remaining_non_complimentary_jobs(user=u) == 3
     assert ai.get_remaining_complimentary_jobs(user=u) == 0
@@ -901,10 +938,15 @@ def test_non_editor_remaining_jobs():
     # Check the default, the rest are assuming this
     assert Credit._meta.get_field("credits").get_default() == 1000
 
-    credits_per_job = 300
+    minimum_credits_per_job = 300
 
     u = UserFactory()
-    ai = AlgorithmImageFactory(algorithm__credits_per_job=credits_per_job)
+    ai = AlgorithmImageFactory(
+        algorithm__minimum_credits_per_job=minimum_credits_per_job,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
 
     AlgorithmJobFactory(algorithm_image=ai, creator=u, time_limit=60)
 
@@ -971,13 +1013,25 @@ def test_credits_consumed(
 ):
     settings.COMPONENTS_DEFAULT_BACKEND = "grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor"
 
-    job = AlgorithmJobFactory(
-        requires_gpu_type=requires_gpu_type,
+    ai = AlgorithmImageFactory(
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+        algorithm__time_limit=time_limit,
+        requires_gpu=bool(requires_gpu_type),
+        desired_gpu_type=requires_gpu_type,
         requires_memory_gb=requires_memory_gb,
-        time_limit=time_limit,
+    )
+
+    job = AlgorithmJobFactory(
+        algorithm_image=ai,
+        requires_gpu_type=ai.requires_gpu_type,
+        requires_memory_gb=ai.requires_memory_gb,
+        time_limit=ai.algorithm.time_limit,
     )
 
     assert job.credits_consumed == expected_credits
+    assert job.algorithm_image.algorithm.credits_per_job == expected_credits
 
 
 @pytest.mark.django_db
@@ -993,11 +1047,64 @@ def test_credits_consumed(
     ),
 )
 def test_min_credits_per_job(min_credits, time_limit, expected_credits):
-    job = AlgorithmJobFactory(
-        algorithm_image__algorithm__minimum_credits_per_job=min_credits,
-        requires_gpu_type="",
+    ai = AlgorithmImageFactory(
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+        algorithm__time_limit=time_limit,
+        algorithm__minimum_credits_per_job=min_credits,
+        requires_gpu=False,
         requires_memory_gb=4,
-        time_limit=time_limit,
+    )
+
+    job = AlgorithmJobFactory(
+        algorithm_image=ai,
+        requires_gpu_type=ai.requires_gpu_type,
+        requires_memory_gb=ai.requires_memory_gb,
+        time_limit=ai.algorithm.time_limit,
     )
 
     assert job.credits_consumed == expected_credits
+    assert job.algorithm_image.algorithm.credits_per_job == expected_credits
+
+
+@pytest.mark.django_db
+def test_requires_gpu_unchangable():
+    job = AlgorithmJobFactory(
+        time_limit=60,
+    )
+
+    job.requires_gpu_type = GPUTypeChoices.T4
+
+    with pytest.raises(ValueError) as error:
+        job.save()
+
+    assert "requires_gpu_type cannot be changed" in str(error)
+
+
+@pytest.mark.django_db
+def test_requires_memory_unchangable():
+    job = AlgorithmJobFactory(
+        time_limit=60,
+    )
+
+    job.requires_memory_gb = 500
+
+    with pytest.raises(ValueError) as error:
+        job.save()
+
+    assert "requires_memory_gb cannot be changed" in str(error)
+
+
+@pytest.mark.django_db
+def test_time_limit_unchangable():
+    job = AlgorithmJobFactory(
+        time_limit=60,
+    )
+
+    job.time_limit = 500
+
+    with pytest.raises(ValueError) as error:
+        job.save()
+
+    assert "time_limit cannot be changed" in str(error)

@@ -1,5 +1,4 @@
 import re
-from datetime import timedelta
 from pathlib import Path
 
 import pytest
@@ -14,7 +13,6 @@ from grandchallenge.algorithms.tasks import (
     execute_algorithm_job_for_inputs,
     filter_civs_for_algorithm,
     send_failed_job_notification,
-    set_credits_per_job,
 )
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -656,39 +654,6 @@ def test_failed_job_notifications(
 
     with pytest.raises(ObjectDoesNotExist):
         Notification.objects.get()
-
-
-@pytest.mark.django_db
-def test_setting_credits_per_job(
-    algorithm_image, settings, django_capture_on_commit_callbacks
-):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
-    # Create the algorithm image
-    with django_capture_on_commit_callbacks() as callbacks:
-        ai = AlgorithmImageFactory(image__from_path=algorithm_image)
-
-    recurse_callbacks(
-        callbacks=callbacks,
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-    )
-    ai.refresh_from_db()
-    alg = ai.algorithm
-
-    for test in (
-        {"duration": 20, "credits": 30},
-        {"duration": 1, "credits": 20},
-        {"duration": 120, "credits": 200},
-    ):
-        alg.average_duration = timedelta(minutes=test["duration"])
-        alg.save()
-
-        set_credits_per_job()
-
-        alg.refresh_from_db()
-        assert alg.credits_per_job == test["credits"]
 
 
 @pytest.mark.django_db

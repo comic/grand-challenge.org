@@ -1602,7 +1602,9 @@ def test_job_time_limit(client):
 
 
 @pytest.mark.django_db
-def test_job_gpu_type_set(client):
+def test_job_gpu_type_set(client, settings):
+    settings.COMPONENTS_DEFAULT_BACKEND = "grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor"
+
     algorithm = AlgorithmFactory()
     algorithm_image = AlgorithmImageFactory(
         algorithm=algorithm,
@@ -1610,8 +1612,8 @@ def test_job_gpu_type_set(client):
         is_manifest_valid=True,
         is_in_registry=True,
         requires_gpu=True,
-        desired_gpu_type=GPUTypeChoices.V100,
-        requires_memory_gb=123,
+        desired_gpu_type=GPUTypeChoices.T4,
+        requires_memory_gb=64,
     )
     user = UserFactory()
     VerificationFactory(user=user, is_verified=True)
@@ -1643,12 +1645,16 @@ def test_job_gpu_type_set(client):
     job = Job.objects.get()
 
     assert job.algorithm_image == algorithm_image
-    assert job.requires_gpu_type == GPUTypeChoices.V100
-    assert job.requires_memory_gb == 123
+    assert job.requires_gpu_type == GPUTypeChoices.T4
+    assert job.requires_memory_gb == 64
+    assert job.credits_consumed == 190
+    assert algorithm.credits_per_job == 190
 
 
 @pytest.mark.django_db
-def test_job_gpu_type_set_with_api(client):
+def test_job_gpu_type_set_with_api(client, settings):
+    settings.COMPONENTS_DEFAULT_BACKEND = "grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor"
+
     algorithm = AlgorithmFactory()
     algorithm_image = AlgorithmImageFactory(
         algorithm=algorithm,
@@ -1656,8 +1662,8 @@ def test_job_gpu_type_set_with_api(client):
         is_manifest_valid=True,
         is_in_registry=True,
         requires_gpu=True,
-        desired_gpu_type=GPUTypeChoices.V100,
-        requires_memory_gb=123,
+        desired_gpu_type=GPUTypeChoices.A10G,
+        requires_memory_gb=64,
     )
     user = UserFactory()
     VerificationFactory(user=user, is_verified=True)
@@ -1693,8 +1699,10 @@ def test_job_gpu_type_set_with_api(client):
     job = Job.objects.get()
 
     assert job.algorithm_image == algorithm_image
-    assert job.requires_gpu_type == GPUTypeChoices.V100
-    assert job.requires_memory_gb == 123
+    assert job.requires_gpu_type == GPUTypeChoices.A10G
+    assert job.requires_memory_gb == 64
+    assert job.credits_consumed == 250
+    assert algorithm.credits_per_job == 250
 
 
 @pytest.mark.django_db
