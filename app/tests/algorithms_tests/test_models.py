@@ -1013,13 +1013,25 @@ def test_credits_consumed(
 ):
     settings.COMPONENTS_DEFAULT_BACKEND = "grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor"
 
-    job = AlgorithmJobFactory(
-        requires_gpu_type=requires_gpu_type,
+    ai = AlgorithmImageFactory(
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+        algorithm__time_limit=time_limit,
+        requires_gpu=bool(requires_gpu_type),
+        desired_gpu_type=requires_gpu_type,
         requires_memory_gb=requires_memory_gb,
-        time_limit=time_limit,
+    )
+
+    job = AlgorithmJobFactory(
+        algorithm_image=ai,
+        requires_gpu_type=ai.requires_gpu_type,
+        requires_memory_gb=ai.requires_memory_gb,
+        time_limit=ai.algorithm.time_limit,
     )
 
     assert job.credits_consumed == expected_credits
+    assert job.algorithm_image.algorithm.credits_per_job == expected_credits
 
 
 @pytest.mark.django_db
@@ -1035,11 +1047,22 @@ def test_credits_consumed(
     ),
 )
 def test_min_credits_per_job(min_credits, time_limit, expected_credits):
-    job = AlgorithmJobFactory(
-        algorithm_image__algorithm__minimum_credits_per_job=min_credits,
-        requires_gpu_type="",
+    ai = AlgorithmImageFactory(
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+        algorithm__time_limit=time_limit,
+        algorithm__minimum_credits_per_job=min_credits,
+        requires_gpu=False,
         requires_memory_gb=4,
-        time_limit=time_limit,
+    )
+
+    job = AlgorithmJobFactory(
+        algorithm_image=ai,
+        requires_gpu_type=ai.requires_gpu_type,
+        requires_memory_gb=ai.requires_memory_gb,
+        time_limit=ai.algorithm.time_limit,
     )
 
     assert job.credits_consumed == expected_credits
+    assert job.algorithm_image.algorithm.credits_per_job == expected_credits
