@@ -375,8 +375,14 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
 
     @cached_property
     def credits_per_job(self):
-        # TODO
-        return 0
+        job = Job(
+            algorithm_image=self.active_image,
+            time_limit=self.time_limit,
+            requires_gpu_type=self.active_image.requires_gpu_type,
+            requires_memory_gb=self.active_image.requires_memory_gb,
+        )
+        job.init_credits_consumed()
+        return job.credits_consumed
 
     @property
     def image_upload_in_progress(self):
@@ -720,7 +726,7 @@ class JobManager(ComponentJobManager):
             .order_by("created")
             .exclude(is_complimentary=True)
             .aggregate(
-                total=Sum("consumed_credits"),
+                total=Sum("credits_consumed", default=0),
                 oldest=Min("created"),
             )
         )

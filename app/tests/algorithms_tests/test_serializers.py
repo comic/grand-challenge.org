@@ -242,7 +242,7 @@ class TestJobCreateLimits:
             is_manifest_valid=True,
             is_in_registry=True,
             is_desired_version=True,
-            algorithm__credits_per_job=100,
+            algorithm__minimum_credits_per_job=100,
         )
         algorithm_image.algorithm.inputs.clear()
         user = UserFactory()
@@ -277,7 +277,7 @@ class TestJobCreateLimits:
             is_manifest_valid=True,
             is_in_registry=True,
             is_desired_version=True,
-            algorithm__credits_per_job=100,
+            algorithm__minimum_credits_per_job=100,
         )
         algorithm_image.algorithm.inputs.clear()
         user = UserFactory()
@@ -321,7 +321,7 @@ class TestJobCreateLimits:
             is_manifest_valid=True,
             is_in_registry=True,
             is_desired_version=True,
-            algorithm__credits_per_job=1,
+            algorithm__minimum_credits_per_job=1,
         )
         algorithm_image.algorithm.inputs.clear()
         user = UserFactory()
