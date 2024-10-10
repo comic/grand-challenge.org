@@ -575,7 +575,9 @@ class AlgorithmImage(UUIDModel, ComponentImage):
 
     def get_remaining_non_complimentary_jobs(self, *, user):
         user_credits = Credit.objects.get(user=user).credits
-        spent_credits = Job.objects.spent_credits(user=user)["total"]
+        spent_credits = Job.objects.credits_consumed_past_month(user=user)[
+            "total"
+        ]
 
         credits_left = user_credits - spent_credits
 
@@ -717,7 +719,7 @@ class JobManager(ComponentJobManager):
 
         return existing_jobs
 
-    def spent_credits(self, user):
+    def credits_consumed_past_month(self, user):
         return (
             self.filter(
                 creator=user,
