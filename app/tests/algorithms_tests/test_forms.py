@@ -159,6 +159,7 @@ def test_algorithm_create(client, uploaded_image):
                 "image_requires_memory_gb": 4,
                 "inputs": [ci.pk],
                 "outputs": [ComponentInterfaceFactory().pk],
+                "minimum_credits_per_job": 20,
                 "contact_email": creator.email,
                 "display_editors": True,
                 "access_request_handling": AccessRequestHandlingOptions.MANUAL_REVIEW,
