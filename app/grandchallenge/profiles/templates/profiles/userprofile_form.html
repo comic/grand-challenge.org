@@ -2,7 +2,9 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 
-{% block title %}Edit Profile{% endblock %}
+{% block title %}
+    Edit Profile - {{ profile.user.username }} - {{ block.super }}
+{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
