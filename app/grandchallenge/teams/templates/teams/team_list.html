@@ -4,6 +4,11 @@
 {% load user_profile_link from profiles %}
 {% load static %}
 
+{% block title %}
+    Teams - {% firstof challenge.title challenge.short_name %} - {{ block.super }}
+{% endblock %}
+
+
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a

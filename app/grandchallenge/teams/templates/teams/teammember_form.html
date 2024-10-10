@@ -2,6 +2,10 @@
 {% load crispy_forms_tags %}
 {% load url %}
 
+{% block title %}
+    Join - {{ object.name|title }} - {{ block.super }}
+{% endblock %}
+
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a
