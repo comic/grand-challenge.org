@@ -1424,3 +1424,27 @@ class TestInputsComplete(TestCase):
         del eval_alg.successful_jobs
         del eval_alg.inputs_complete
         assert not eval_alg.inputs_complete
+
+
+@pytest.mark.django_db
+def test_algorithm_requires_gpu_unchangable():
+    submission = SubmissionFactory()
+
+    submission.algorithm_requires_gpu_type = GPUTypeChoices.T4
+
+    with pytest.raises(ValueError) as error:
+        submission.save()
+
+    assert "requires_gpu_type cannot be changed" in str(error)
+
+
+@pytest.mark.django_db
+def test_algorithm_requires_memory_unchangable():
+    submission = SubmissionFactory()
+
+    submission.algorithm_requires_memory_gb = 500
+
+    with pytest.raises(ValueError) as error:
+        submission.save()
+
+    assert "algorithm_requires_memory_gb cannot be changed" in str(error)

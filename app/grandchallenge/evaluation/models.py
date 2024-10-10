@@ -1178,7 +1178,7 @@ def submission_supplementary_file_path(instance, filename):
     )
 
 
-class Submission(UUIDModel):
+class Submission(FieldChangeMixin, UUIDModel):
     """Store files for evaluation."""
 
     creator = models.ForeignKey(
@@ -1273,6 +1273,14 @@ class Submission(UUIDModel):
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
+
+        if not adding:
+            for field in (
+                "algorithm_requires_gpu_type",
+                "algorithm_requires_memory_gb",
+            ):
+                if self.has_changed(field):
+                    raise ValueError(f"{field} cannot be changed")
 
         super().save(*args, **kwargs)
 

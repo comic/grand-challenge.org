@@ -850,11 +850,6 @@ class Job(CIVForObjectMixin, ComponentJob):
     def __str__(self):
         return f"Job {self.pk}"
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._public_orig = self.public
-        self._status_orig = self.status
-
     @property
     def container(self):
         return self.algorithm_image
@@ -919,11 +914,9 @@ class Job(CIVForObjectMixin, ComponentJob):
             self.init_permissions()
             self.init_followers()
 
-        if adding or self._public_orig != self.public:
-            self.update_viewer_groups_for_public()
-            self._public_orig = self.public
+        self.update_viewer_groups_for_public()
 
-        if self._status_orig != self.status and self.status == self.SUCCESS:
+        if self.has_changed("status") and self.status == self.SUCCESS:
             on_commit(
                 update_algorithm_average_duration.signature(
                     kwargs={"algorithm_pk": self.algorithm_image.algorithm.pk}

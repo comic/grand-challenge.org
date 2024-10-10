@@ -1066,3 +1066,45 @@ def test_min_credits_per_job(min_credits, time_limit, expected_credits):
 
     assert job.credits_consumed == expected_credits
     assert job.algorithm_image.algorithm.credits_per_job == expected_credits
+
+
+@pytest.mark.django_db
+def test_requires_gpu_unchangable():
+    job = AlgorithmJobFactory(
+        time_limit=60,
+    )
+
+    job.requires_gpu_type = GPUTypeChoices.T4
+
+    with pytest.raises(ValueError) as error:
+        job.save()
+
+    assert "requires_gpu_type cannot be changed" in str(error)
+
+
+@pytest.mark.django_db
+def test_requires_memory_unchangable():
+    job = AlgorithmJobFactory(
+        time_limit=60,
+    )
+
+    job.requires_memory_gb = 500
+
+    with pytest.raises(ValueError) as error:
+        job.save()
+
+    assert "requires_memory_gb cannot be changed" in str(error)
+
+
+@pytest.mark.django_db
+def test_time_limit_unchangable():
+    job = AlgorithmJobFactory(
+        time_limit=60,
+    )
+
+    job.time_limit = 500
+
+    with pytest.raises(ValueError) as error:
+        job.save()
+
+    assert "time_limit cannot be changed" in str(error)
