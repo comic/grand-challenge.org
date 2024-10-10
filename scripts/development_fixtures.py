@@ -25,6 +25,7 @@ from grandchallenge.challenges.models import Challenge, ChallengeSeries
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
+    GPUTypeChoices,
 )
 from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.direct_messages.models import Conversation, DirectMessage
@@ -247,7 +248,7 @@ def _create_demo_challenge(users, algorithm):
             submission = Submission(
                 phase=phase,
                 creator=users["demop"],
-                algorithm_requires_gpu_type="",
+                algorithm_requires_gpu_type=GPUTypeChoices.NO_GPU,
                 algorithm_requires_memory_gb=0,
             )
             content = ContentFile(base64.b64decode(b""))

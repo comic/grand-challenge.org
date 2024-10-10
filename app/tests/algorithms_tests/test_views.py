@@ -856,8 +856,6 @@ def test_import_view(
 
     algorithm_image = algorithm.algorithm_container_images.get()
     assert str(algorithm_image.pk) == "cad9106c-e3cb-45fa-bda0-068ddacafb59"
-    assert algorithm_image.requires_gpu is True
-    assert algorithm_image.requires_memory_gb == 15
     assert (
         algorithm_image.import_status
         == algorithm_image.ImportStatusChoices.INITIALIZED
@@ -1605,15 +1603,15 @@ def test_job_time_limit(client):
 def test_job_gpu_type_set(client, settings):
     settings.COMPONENTS_DEFAULT_BACKEND = "grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor"
 
-    algorithm = AlgorithmFactory()
+    algorithm = AlgorithmFactory(
+        job_requires_gpu_type=GPUTypeChoices.T4,
+        job_requires_memory_gb=64,
+    )
     algorithm_image = AlgorithmImageFactory(
         algorithm=algorithm,
         is_desired_version=True,
         is_manifest_valid=True,
         is_in_registry=True,
-        requires_gpu=True,
-        desired_gpu_type=GPUTypeChoices.T4,
-        requires_memory_gb=64,
     )
     user = UserFactory()
     VerificationFactory(user=user, is_verified=True)
@@ -1655,15 +1653,15 @@ def test_job_gpu_type_set(client, settings):
 def test_job_gpu_type_set_with_api(client, settings):
     settings.COMPONENTS_DEFAULT_BACKEND = "grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor"
 
-    algorithm = AlgorithmFactory()
+    algorithm = AlgorithmFactory(
+        job_requires_gpu_type=GPUTypeChoices.A10G,
+        job_requires_memory_gb=64,
+    )
     algorithm_image = AlgorithmImageFactory(
         algorithm=algorithm,
         is_desired_version=True,
         is_manifest_valid=True,
         is_in_registry=True,
-        requires_gpu=True,
-        desired_gpu_type=GPUTypeChoices.A10G,
-        requires_memory_gb=64,
     )
     user = UserFactory()
     VerificationFactory(user=user, is_verified=True)

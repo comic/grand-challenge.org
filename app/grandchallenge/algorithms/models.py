@@ -36,6 +36,7 @@ from grandchallenge.components.models import (  # noqa: F401
     ComponentInterfaceValue,
     ComponentJob,
     ComponentJobManager,
+    GPUTypeChoices,
     ImportStatusChoices,
     Tarball,
 )
@@ -198,6 +199,17 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
             ),
         ],
     )
+    job_requires_gpu_type = models.CharField(
+        max_length=4,
+        blank=True,
+        default=GPUTypeChoices.NO_GPU,
+        choices=GPUTypeChoices.choices,
+        help_text="What GPU to attach to this algorithms inference jobs",
+    )
+    job_requires_memory_gb = models.PositiveSmallIntegerField(
+        default=16,
+        help_text="How much memory to assign to this algorithms inference jobs",
+    )
     average_duration = models.DurationField(
         null=True,
         default=None,
@@ -205,8 +217,6 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         help_text="The average duration of successful jobs.",
     )
     repo_name = models.CharField(blank=True, max_length=512)
-    image_requires_gpu = models.BooleanField(default=True)
-    image_requires_memory_gb = models.PositiveIntegerField(default=15)
     recurse_submodules = models.BooleanField(
         default=False,
         help_text="Do a recursive git pull when a GitHub repo is linked to this algorithm.",
@@ -378,8 +388,8 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         job = Job(
             algorithm_image=self.active_image,
             time_limit=self.time_limit,
-            requires_gpu_type=self.active_image.requires_gpu_type,
-            requires_memory_gb=self.active_image.requires_memory_gb,
+            requires_gpu_type=self.job_requires_gpu_type,
+            requires_memory_gb=self.job_requires_memory_gb,
         )
         job.init_credits_consumed()
         return job.credits_consumed

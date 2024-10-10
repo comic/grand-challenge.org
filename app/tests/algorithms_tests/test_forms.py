@@ -155,8 +155,6 @@ def test_algorithm_create(client, uploaded_image):
                 "title": "foo bar",
                 "logo": uploaded_image(),
                 "workstation": ws.pk,
-                "image_requires_gpu": False,
-                "image_requires_memory_gb": 4,
                 "inputs": [ci.pk],
                 "outputs": [ComponentInterfaceFactory().pk],
                 "minimum_credits_per_job": 20,

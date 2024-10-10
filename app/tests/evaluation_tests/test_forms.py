@@ -915,8 +915,8 @@ def test_algorithm_for_phase_form():
     assert form.fields["time_limit"].disabled
     assert not form.fields["title"].disabled
     assert not form.fields["description"].disabled
-    assert not form.fields["image_requires_gpu"].disabled
-    assert not form.fields["image_requires_memory_gb"].disabled
+    assert not form.fields["job_requires_gpu_type"].disabled
+    assert not form.fields["job_requires_memory_gb"].disabled
 
     assert {
         form.fields["inputs"],
@@ -937,8 +937,8 @@ def test_algorithm_for_phase_form():
     assert {
         form.fields["title"],
         form.fields["description"],
-        form.fields["image_requires_gpu"],
-        form.fields["image_requires_memory_gb"],
+        form.fields["job_requires_gpu_type"],
+        form.fields["job_requires_memory_gb"],
     } == {field.field for field in form.visible_fields()}
 
 
@@ -972,7 +972,6 @@ def test_algorithm_for_phase_form_validation():
         user=user,
         data={
             "title": "foo",
-            "image_requires_memory_gb": 10,
         },
     )
 
@@ -1002,7 +1001,6 @@ def test_algorithm_for_phase_form_validation():
         user=user,
         data={
             "title": "foo",
-            "image_requires_memory_gb": 10,
         },
     )
 

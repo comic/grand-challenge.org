@@ -28,6 +28,7 @@ from grandchallenge.challenges.models import Challenge, ChallengeRequest
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.components.models import (
     ComponentInterface,
+    GPUTypeChoices,
     ImportStatusChoices,
 )
 from grandchallenge.components.tasks import assign_tarball_from_upload
@@ -144,6 +145,7 @@ class PhaseUpdateForm(
     WorkstationUserFilterMixin,
     forms.ModelForm,
 ):
+    # TODO set the evaluation runtime properties with limits
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["parent"].queryset = self.instance.parent_phase_choices
@@ -257,18 +259,9 @@ class MethodForm(ContainerImageForm):
 
 
 class MethodUpdateForm(SaveFormInitMixin, forms.ModelForm):
-    requires_memory_gb = forms.IntegerField(
-        min_value=settings.ALGORITHMS_MIN_MEMORY_GB,
-        max_value=settings.ALGORITHMS_MAX_MEMORY_GB,
-        help_text="The maximum system memory required by the algorithm in gigabytes.",
-    )
-
     class Meta:
         model = Method
-        fields = (
-            "requires_memory_gb",
-            "comment",
-        )
+        fields = ("comment",)
 
 
 class AlgorithmChoiceField(ModelChoiceField):
@@ -621,12 +614,12 @@ class SubmissionForm(
         if self._phase.submission_kind == SubmissionKindChoices.ALGORITHM:
             self.instance.algorithm_requires_gpu_type = self.cleaned_data[
                 "algorithm_image"
-            ].requires_gpu_type
+            ].algorithm.job_requires_gpu_type
             self.instance.algorithm_requires_memory_gb = self.cleaned_data[
                 "algorithm_image"
-            ].requires_memory_gb
+            ].algorithm.job_requires_memory_gb
         else:
-            self.instance.algorithm_requires_gpu_type = ""
+            self.instance.algorithm_requires_gpu_type = GPUTypeChoices.NO_GPU
             self.instance.algorithm_requires_memory_gb = 0
 
         return super().save(*args, **kwargs)

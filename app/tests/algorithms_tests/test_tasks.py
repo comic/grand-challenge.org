@@ -58,7 +58,7 @@ class TestCreateAlgorithmJobs:
             algorithm_image=ai,
             civ_sets=[],
             time_limit=ai.algorithm.time_limit,
-            requires_gpu_type="",
+            requires_gpu_type=GPUTypeChoices.NO_GPU,
             requires_memory_gb=4,
         )
         assert Job.objects.count() == 0
@@ -69,7 +69,7 @@ class TestCreateAlgorithmJobs:
                 algorithm_image=None,
                 civ_sets=[],
                 time_limit=60,
-                requires_gpu_type="",
+                requires_gpu_type=GPUTypeChoices.NO_GPU,
                 requires_memory_gb=4,
             )
 
@@ -86,8 +86,8 @@ class TestCreateAlgorithmJobs:
             algorithm_image=ai,
             civ_sets=[{civ}],
             time_limit=ai.algorithm.time_limit,
-            requires_gpu_type=ai.requires_gpu_type,
-            requires_memory_gb=ai.requires_memory_gb,
+            requires_gpu_type=ai.algorithm.job_requires_gpu_type,
+            requires_memory_gb=ai.algorithm.job_requires_memory_gb,
         )
         assert Job.objects.count() == 1
         j = Job.objects.first()
@@ -106,22 +106,27 @@ class TestCreateAlgorithmJobs:
             slug="generic-medical-image"
         )
         civ = ComponentInterfaceValueFactory(image=image, interface=interface)
+
         assert Job.objects.count() == 0
+
         create_algorithm_jobs(
             algorithm_image=ai,
             civ_sets=[{civ}],
             time_limit=ai.algorithm.time_limit,
-            requires_gpu_type=ai.requires_gpu_type,
-            requires_memory_gb=ai.requires_memory_gb,
+            requires_gpu_type=ai.algorithm.job_requires_gpu_type,
+            requires_memory_gb=ai.algorithm.job_requires_memory_gb,
         )
+
         assert Job.objects.count() == 1
+
         jobs = create_algorithm_jobs(
             algorithm_image=ai,
             civ_sets=[{civ}],
             time_limit=ai.algorithm.time_limit,
-            requires_gpu_type=ai.requires_gpu_type,
-            requires_memory_gb=ai.requires_memory_gb,
+            requires_gpu_type=ai.algorithm.job_requires_gpu_type,
+            requires_memory_gb=ai.algorithm.job_requires_memory_gb,
         )
+
         assert Job.objects.count() == 1
         assert len(jobs) == 0
 
@@ -137,8 +142,8 @@ class TestCreateAlgorithmJobs:
             civ_sets=[{civ}],
             extra_viewer_groups=groups,
             time_limit=ai.algorithm.time_limit,
-            requires_gpu_type=ai.requires_gpu_type,
-            requires_memory_gb=ai.requires_memory_gb,
+            requires_gpu_type=ai.algorithm.job_requires_gpu_type,
+            requires_memory_gb=ai.algorithm.job_requires_memory_gb,
         )
         for g in groups:
             assert jobs[0].viewer_groups.filter(pk=g.pk).exists()
@@ -152,8 +157,8 @@ def test_no_jobs_workflow(django_capture_on_commit_callbacks):
             algorithm_image=ai,
             civ_sets=[],
             time_limit=ai.algorithm.time_limit,
-            requires_gpu_type=ai.requires_gpu_type,
-            requires_memory_gb=ai.requires_memory_gb,
+            requires_gpu_type=ai.algorithm.job_requires_gpu_type,
+            requires_memory_gb=ai.algorithm.job_requires_memory_gb,
         )
     assert len(callbacks) == 0
 
@@ -172,8 +177,8 @@ def test_jobs_workflow(django_capture_on_commit_callbacks):
             algorithm_image=ai,
             civ_sets=civ_sets,
             time_limit=ai.algorithm.time_limit,
-            requires_gpu_type=ai.requires_gpu_type,
-            requires_memory_gb=ai.requires_memory_gb,
+            requires_gpu_type=ai.algorithm.job_requires_gpu_type,
+            requires_memory_gb=ai.algorithm.job_requires_memory_gb,
         )
     assert len(callbacks) == 2
 
@@ -226,8 +231,8 @@ def test_algorithm(
             algorithm_image=ai,
             civ_sets=[{civ}],
             time_limit=ai.algorithm.time_limit,
-            requires_gpu_type=ai.requires_gpu_type,
-            requires_memory_gb=ai.requires_memory_gb,
+            requires_gpu_type=ai.algorithm.job_requires_gpu_type,
+            requires_memory_gb=ai.algorithm.job_requires_memory_gb,
         )
 
     recurse_callbacks(
@@ -282,8 +287,8 @@ def test_algorithm(
             algorithm_image=ai,
             civ_sets=[{civ}],
             time_limit=ai.algorithm.time_limit,
-            requires_gpu_type=ai.requires_gpu_type,
-            requires_memory_gb=ai.requires_memory_gb,
+            requires_gpu_type=ai.algorithm.job_requires_gpu_type,
+            requires_memory_gb=ai.algorithm.job_requires_memory_gb,
         )
 
     recurse_callbacks(
@@ -355,8 +360,8 @@ def test_algorithm_with_invalid_output(
             algorithm_image=ai,
             civ_sets=[{civ}],
             time_limit=ai.algorithm.time_limit,
-            requires_gpu_type=ai.requires_gpu_type,
-            requires_memory_gb=ai.requires_memory_gb,
+            requires_gpu_type=ai.algorithm.job_requires_gpu_type,
+            requires_memory_gb=ai.algorithm.job_requires_memory_gb,
         )
     recurse_callbacks(
         callbacks=callbacks,
@@ -600,8 +605,8 @@ def test_failed_job_notifications(
         algorithm_image=ai,
         input_civ_set=[],
         time_limit=ai.algorithm.time_limit,
-        requires_gpu_type=ai.requires_gpu_type,
-        requires_memory_gb=ai.requires_memory_gb,
+        requires_gpu_type=ai.algorithm.job_requires_gpu_type,
+        requires_memory_gb=ai.algorithm.job_requires_memory_gb,
     )
 
     # mark job as failed
@@ -641,8 +646,8 @@ def test_failed_job_notifications(
         algorithm_image=ai,
         input_civ_set=[],
         time_limit=ai.algorithm.time_limit,
-        requires_gpu_type=ai.requires_gpu_type,
-        requires_memory_gb=ai.requires_memory_gb,
+        requires_gpu_type=ai.algorithm.job_requires_gpu_type,
+        requires_memory_gb=ai.algorithm.job_requires_memory_gb,
     )
 
     # mark job as failed
@@ -701,9 +706,8 @@ def test_archive_job_gets_gpu_and_memory_set(
         is_manifest_valid=True,
         is_in_registry=True,
         is_desired_version=True,
-        requires_gpu=True,
-        desired_gpu_type=GPUTypeChoices.V100,
-        requires_memory_gb=1337,
+        algorithm__job_requires_gpu_type=GPUTypeChoices.V100,
+        algorithm__job_requires_memory_gb=1337,
     )
     archive = ArchiveFactory()
 
