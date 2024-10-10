@@ -233,6 +233,7 @@ class AlgorithmIOValidationMixin:
 class AlgorithmForm(
     AlgorithmIOValidationMixin,
     WorkstationUserFilterMixin,
+    SaveFormInitMixin,
     ModelForm,
 ):
     inputs = ModelMultipleChoiceField(
@@ -271,25 +272,26 @@ class AlgorithmForm(
         fields = (
             "title",
             "description",
+            "contact_email",
+            "display_editors",
+            "access_request_handling",
+            "organizations",
             "publications",
             "modalities",
             "structures",
-            "organizations",
             "logo",
             "social_image",
-            "inputs",
-            "outputs",
             "workstation",
             "workstation_config",
             "hanging_protocol",
             "optional_hanging_protocols",
             "view_content",
-            "job_create_page_markdown",
+            "inputs",
+            "outputs",
+            "minimum_credits_per_job",
             "additional_terms_markdown",
+            "job_create_page_markdown",
             "result_template",
-            "contact_email",
-            "display_editors",
-            "access_request_handling",
         )
         widgets = {
             "description": TextInput,
@@ -354,37 +356,10 @@ class AlgorithmForm(
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
-        self.helper.layout = Layout(
-            Fieldset(
-                "",
-                "title",
-                "description",
-                "contact_email",
-                "display_editors",
-                "access_request_handling",
-                "organizations",
-                "publications",
-                "modalities",
-                "structures",
-                "logo",
-                "social_image",
-                "workstation",
-                "workstation_config",
-                "hanging_protocol",
-                "optional_hanging_protocols",
-                "view_content",
-                "inputs",
-                "outputs",
-                "additional_terms_markdown",
-                "job_create_page_markdown",
-                "result_template",
-            ),
-            ButtonHolder(Submit("save", "Save")),
-        )
 
         self.fields["contact_email"].required = True
         self.fields["display_editors"].required = True
+
         if self.instance:
             interface_slugs = (
                 (self.instance.inputs.all() | self.instance.outputs.all())
