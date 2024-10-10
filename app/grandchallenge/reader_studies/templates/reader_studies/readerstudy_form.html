@@ -20,10 +20,6 @@
     </ol>
 {% endblock %}
 
-{% block title %}
-    Reader Study {{ object|yesno:"Update,Create" }} - {{ block.super }}
-{% endblock %}
-
 {% block content %}
     <h2>Reader Study {{ object|yesno:"Update,Create" }}</h2>
 
