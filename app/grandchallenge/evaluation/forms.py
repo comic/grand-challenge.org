@@ -40,7 +40,10 @@ from grandchallenge.core.guardian import (
     get_objects_for_user,
 )
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
-from grandchallenge.core.widgets import JSONEditorWidget, MarkdownEditorInlineWidget
+from grandchallenge.core.widgets import (
+    JSONEditorWidget,
+    MarkdownEditorInlineWidget,
+)
 from grandchallenge.evaluation.models import (
     EXTRA_RESULT_COLUMNS_SCHEMA,
     CombinedLeaderboard,

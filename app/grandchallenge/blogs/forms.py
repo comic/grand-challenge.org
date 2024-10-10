@@ -43,7 +43,10 @@ class PostForm(SaveFormInitMixin, forms.ModelForm):
 class PostUpdateForm(PostForm):
     class Meta(PostForm.Meta):
         fields = (*PostForm.Meta.fields, "published", "content")
-        widgets = {**PostForm.Meta.widgets, "content": MarkdownEditorInlineWidget}
+        widgets = {
+            **PostForm.Meta.widgets,
+            "content": MarkdownEditorInlineWidget,
+        }
 
 
 class AuthorsForm(UserGroupForm):

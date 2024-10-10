@@ -73,7 +73,10 @@ from grandchallenge.core.forms import (
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
-from grandchallenge.core.widgets import JSONEditorWidget, MarkdownEditorInlineWidget
+from grandchallenge.core.widgets import (
+    JSONEditorWidget,
+    MarkdownEditorInlineWidget,
+)
 from grandchallenge.evaluation.utils import get
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.hanging_protocols.models import VIEW_CONTENT_SCHEMA

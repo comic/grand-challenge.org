@@ -33,7 +33,10 @@ from grandchallenge.core.forms import (
     WorkstationUserFilterMixin,
 )
 from grandchallenge.core.guardian import get_objects_for_user
-from grandchallenge.core.widgets import JSONEditorWidget, MarkdownEditorInlineWidget
+from grandchallenge.core.widgets import (
+    JSONEditorWidget,
+    MarkdownEditorInlineWidget,
+)
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.hanging_protocols.models import VIEW_CONTENT_SCHEMA
 from grandchallenge.reader_studies.models import ReaderStudy

@@ -791,7 +791,9 @@ FORUMS_CHALLENGE_CATEGORY_NAME = "Challenges"
 MACHINA_BASE_TEMPLATE_NAME = "base.html"
 MACHINA_PROFILE_AVATARS_ENABLED = False
 MACHINA_FORUM_NAME = "Grand Challenge Forums"
-MACHINA_MARKUP_WIDGET = "grandchallenge.core.widgets.MarkdownEditorInlineWidget"
+MACHINA_MARKUP_WIDGET = (
+    "grandchallenge.core.widgets.MarkdownEditorInlineWidget"
+)
 MACHINA_MARKUP_LANGUAGE = (
     "grandchallenge.core.templatetags.bleach.md2html",
     {"link_blank_target": True},
