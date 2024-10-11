@@ -2,7 +2,9 @@
 {% load crispy_forms_tags %}
 {% load static %}
 
-{% block title %}Create Session - {{ block.super }}{% endblock %}
+{% block title %}
+    Create Session - {{ object }} - {{ block.super }}
+{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">

@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
 
-{% block title %}Viewer {{ object|yesno:"Update,Create" }} -
-    {{ block.super }}{% endblock %}
+{% block title %}
+    {{ object|yesno:"Update,Create" }} -{% if object %} {{ object.title }} -{% endif %} {{ block.super }}
+{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">

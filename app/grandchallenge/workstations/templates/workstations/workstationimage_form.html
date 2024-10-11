@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
 
-{% block title %}New Viewer Image - {{ block.super }}{% endblock %}
+{% block title %}
+    {% firstof object.title "New Workstation Image" %} - {{ workstation.title }} - {{ block.super }}
+{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
