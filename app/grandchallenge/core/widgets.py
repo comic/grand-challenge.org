@@ -98,3 +98,8 @@ class MarkdownEditorAdminWidget(AdminMarkdownxWidget):
 
 class MarkdownEditorFullPageWidget(MarkdownEditorInlineWidget):
     template_name = "markdownx/full_page_widget.html"
+
+    class Media:
+        js = [
+            "js/markdownx_full_page.js",
+        ]
