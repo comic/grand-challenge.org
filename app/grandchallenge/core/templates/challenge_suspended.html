@@ -6,6 +6,10 @@
     <meta name="robots" content="noindex">
 {% endblock %}
 
+{% block title %}
+    Challenge Suspended - Home - {{ block.super }}
+{% endblock %}
+
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
