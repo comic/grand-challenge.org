@@ -1,6 +1,10 @@
 {% extends 'auth/user_list.html' %}
 {% load url %}
 
+{% block title %}
+    Participants - {% firstof challenge.title challenge.short_name %} - {{ request.site.name }}
+{% endblock %}
+
 {% block content_title %}
     <h2>Participants for {{ challenge.short_name }}</h2>
 {% endblock %}
