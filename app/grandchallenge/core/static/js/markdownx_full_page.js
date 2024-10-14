@@ -1,5 +1,6 @@
-$("document").ready(() => {
-    // Sync the height of the preview element to the height of the editor element.
+// Sync the height of the preview element to the height of the editor element.
+// This lets the user adjust the height of both elements by resizing the editor.
+$(document).ready(() => {
     const ELEMENTS = document.getElementsByClassName("markdownx");
     Object.values(ELEMENTS).map(element => {
         const editor = element.querySelector(".markdownx-editor");

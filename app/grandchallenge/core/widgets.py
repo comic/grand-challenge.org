@@ -97,6 +97,8 @@ class MarkdownEditorAdminWidget(AdminMarkdownxWidget):
 
 
 class MarkdownEditorFullPageWidget(MarkdownEditorInlineWidget):
+    """Customized MarkdownX widget with side-by-side panes."""
+
     template_name = "markdownx/full_page_widget.html"
 
     class Media:
