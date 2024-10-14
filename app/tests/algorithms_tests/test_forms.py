@@ -22,6 +22,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentJob,
     ImportStatusChoices,
+    InterfaceKind,
 )
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
@@ -761,3 +762,24 @@ class TestJobCreateForm:
             "A result for these inputs with the current image and model already exists."
             in str(form.errors)
         )
+
+
+@pytest.mark.django_db
+def test_all_inputs_required_on_job_creation(algorithm_with_multiple_inputs):
+    ci_json_in_db_without_schema = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.ANY,
+        store_in_database=True,
+    )
+    algorithm_with_multiple_inputs.algorithm.inputs.add(
+        ci_json_in_db_without_schema
+    )
+
+    form = JobCreateForm(
+        algorithm=algorithm_with_multiple_inputs.algorithm,
+        user=algorithm_with_multiple_inputs.editor,
+        data={},
+    )
+
+    for name, field in form.fields.items():
+        if name not in ["algorithm_model", "creator"]:
+            assert field.required
