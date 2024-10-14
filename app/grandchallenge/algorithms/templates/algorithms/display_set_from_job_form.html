@@ -3,7 +3,7 @@
 {% load url %}
 
 {% block title %}
-    Create a Display Set - {{ object.pk }} - {{ block.super }}
+    Create a Display Set from Result {{ object.pk }} - {{ object.algorithm_image.algorithm.title }} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}

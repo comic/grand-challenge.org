@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}
-    Progress - {{ object.pk }} - {{ block.super }}
+    Job Progress {{ object.pk }} - {{ object.algorithm_image.algorithm.title }} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -17,7 +17,7 @@
             href="{% url 'algorithms:job-list' slug=object.algorithm_image.algorithm.slug %}">Results</a></li>
         <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object.pk }}</a></li>
         <li class="breadcrumb-item active"
-            aria-current="page">Progress
+            aria-current="page">Job Progress
         </li>
     </ol>
 {% endblock %}
