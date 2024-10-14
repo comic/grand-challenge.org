@@ -1673,14 +1673,12 @@ def test_job_gpu_type_set_with_api(client, settings):
     algorithm.inputs.set([ci])
 
     response = get_view_for_user(
-        viewname="algorithms:job-create",
+        viewname="api:algorithms-job-list",
         client=client,
         method=client.post,
-        reverse_kwargs={
-            "slug": algorithm.slug,
-        },
         user=user,
         follow=True,
+        content_type="application/json",
         data={
             "algorithm": algorithm.api_url,
             "inputs": [
@@ -1692,7 +1690,7 @@ def test_job_gpu_type_set_with_api(client, settings):
         },
     )
 
-    assert response.status_code == 200
+    assert response.status_code == 201
 
     job = Job.objects.get()
 
