@@ -2,6 +2,10 @@
 {% load get_obj_perms from guardian_tags %}
 {% load url %}
 
+{% block title %}
+    Remove Member - {{ object.name|title }} - {{ block.super }}
+{% endblock %}
+
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a

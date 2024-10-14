@@ -5,8 +5,7 @@
 {% load static %}
 
 {% block title %}
-        Admin
-    - {{ block.super }}
+    Challenge Admin - {% firstof challenge.title challenge.short_name %} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}

@@ -2,7 +2,7 @@
 {% load url %}
 
 {% block title %}
-    Delete Question - {{ block.super }}
+    Delete Question {{ object }} - {{ question.reader_study.title }} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}

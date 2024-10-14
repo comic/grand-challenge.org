@@ -2,7 +2,9 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 
-{% block title %}Add Publication{% endblock %}
+{% block title %}
+    Add Publication - Publications - {{ block.super }}
+{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
