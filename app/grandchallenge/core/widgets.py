@@ -63,7 +63,9 @@ class ColorEditorWidget(forms.TextInput):
         )
 
 
-class MarkdownEditorWidget(MarkdownxWidget):
+class MarkdownEditorInlineWidget(MarkdownxWidget):
+    template_name = "markdownx/inline_widget.html"
+
     @property
     def media(self):
         return forms.Media(
@@ -92,3 +94,17 @@ class MarkdownEditorAdminWidget(AdminMarkdownxWidget):
                 "vendored/bootstrap/js/bootstrap.bundle.min.js",
             ],
         )
+
+
+class MarkdownEditorFullPageWidget(MarkdownEditorInlineWidget):
+    """Customized MarkdownX widget with side-by-side panes."""
+
+    template_name = "markdownx/full_page_widget.html"
+
+    class Media:
+        css = {
+            "all": ["css/full_page_markdown.css"],
+        }
+        js = [
+            "js/markdownx_full_page.js",
+        ]

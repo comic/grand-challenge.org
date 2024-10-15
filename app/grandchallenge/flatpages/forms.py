@@ -5,7 +5,7 @@ from django.contrib.flatpages.forms import FlatpageForm
 from django.contrib.flatpages.models import FlatPage
 from django.contrib.sites.models import Site
 
-from grandchallenge.core.widgets import MarkdownEditorWidget
+from grandchallenge.core.widgets import MarkdownEditorInlineWidget
 
 
 class FlatPageForm(FlatpageForm):
@@ -30,4 +30,4 @@ class FlatPageUpdateForm(forms.ModelForm):
     class Meta:
         model = FlatPage
         fields = ("title", "registration_required", "content")
-        widgets = {"content": MarkdownEditorWidget}
+        widgets = {"content": MarkdownEditorInlineWidget}

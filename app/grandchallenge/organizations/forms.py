@@ -1,7 +1,7 @@
 from django.forms import ModelForm, TextInput
 
 from grandchallenge.core.forms import SaveFormInitMixin
-from grandchallenge.core.widgets import MarkdownEditorWidget
+from grandchallenge.core.widgets import MarkdownEditorInlineWidget
 from grandchallenge.organizations.models import Organization
 
 
@@ -17,6 +17,6 @@ class OrganizationForm(SaveFormInitMixin, ModelForm):
             "detail_page_markdown",
         )
         widgets = {
-            "detail_page_markdown": MarkdownEditorWidget,
+            "detail_page_markdown": MarkdownEditorInlineWidget,
             "description": TextInput,
         }

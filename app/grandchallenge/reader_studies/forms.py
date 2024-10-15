@@ -53,7 +53,7 @@ from grandchallenge.core.layout import Formset
 from grandchallenge.core.widgets import (
     ColorEditorWidget,
     JSONEditorWidget,
-    MarkdownEditorWidget,
+    MarkdownEditorInlineWidget,
 )
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.hanging_protocols.models import VIEW_CONTENT_SCHEMA
@@ -219,7 +219,7 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
         )
         widgets = {
             "case_text": JSONEditorWidget(schema=CASE_TEXT_SCHEMA),
-            "help_text_markdown": MarkdownEditorWidget,
+            "help_text_markdown": MarkdownEditorInlineWidget,
             "description": TextInput,
             "publications": Select2MultipleWidget,
             "modalities": Select2MultipleWidget,
