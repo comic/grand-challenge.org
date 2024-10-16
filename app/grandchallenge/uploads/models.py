@@ -85,10 +85,12 @@ class UserUpload(UUIDModel):
         self, *, error_message, detailed_error_message=None, linked_object=None
     ):
         if detailed_error_message:
-            notification_description = [
-                f"File validation for {key} failed with error: {val}. "
-                for key, val in detailed_error_message.items()
-            ]
+            notification_description = oxford_comma(
+                [
+                    f"File validation for {key} failed with error: {val}. "
+                    for key, val in detailed_error_message.items()
+                ]
+            )
         else:
             notification_description = error_message
 
@@ -97,7 +99,7 @@ class UserUpload(UUIDModel):
             actor=self.creator,
             message=error_message,
             target=linked_object.base_object,
-            description=oxford_comma(notification_description),
+            description=notification_description,
         )
         if linked_object and hasattr(linked_object, "update_status"):
             linked_object.update_status(

@@ -146,17 +146,19 @@ class RawImageUploadSession(UUIDModel):
 
         if self.error_message and self.creator:
             if detailed_error_message:
-                notification_description = [
-                    f"Image validation for {key} failed with error: {val}. "
-                    for key, val in detailed_error_message.items()
-                ]
+                notification_description = oxford_comma(
+                    [
+                        f"Image validation for {key} failed with error: {val}. "
+                        for key, val in detailed_error_message.items()
+                    ]
+                )
             else:
                 notification_description = error_message
 
             Notification.send(
                 kind=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
                 message=error_message,
-                description=oxford_comma(notification_description),
+                description=notification_description,
                 action_object=self,
             )
 
