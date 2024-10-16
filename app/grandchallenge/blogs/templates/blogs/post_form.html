@@ -3,7 +3,7 @@
 {% load url %}
 
 {% block title %}
-    {{ object|yesno:"Update,Create Post" }} {% if object %} {{ object }} {% endif %} - Blogs - {{ block.super }}
+    {{ object|yesno:"Update,Create Post" }} {% if object %} - {{ object }} {% else %} - Blogs {% endif %} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
