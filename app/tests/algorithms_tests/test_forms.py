@@ -169,6 +169,8 @@ def test_algorithm_create(client, uploaded_image):
                 "inputs": [ci.pk],
                 "outputs": [ComponentInterfaceFactory().pk],
                 "minimum_credits_per_job": 20,
+                "job_requires_gpu_type": GPUTypeChoices.NO_GPU,
+                "job_requires_memory_gb": 4,
                 "contact_email": creator.email,
                 "display_editors": True,
                 "access_request_handling": AccessRequestHandlingOptions.MANUAL_REVIEW,
