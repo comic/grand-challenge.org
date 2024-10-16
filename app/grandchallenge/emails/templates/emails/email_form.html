@@ -2,7 +2,7 @@
 {% load crispy_forms_tags %}
 
 {% block title %}
-    {{ object|yesno:"Update,Create Email" }} {% if object %} {{ object }} {% endif %} - Emails - {{ block.super }}
+    {{ object|yesno:"Update,Create Email" }} {% if object %} - {{ object }} {% else %} - Emails {% endif %} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
