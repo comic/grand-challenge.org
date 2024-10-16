@@ -1360,9 +1360,12 @@ class TestJobCreateView:
         # but in cancelled state and with an error message
         assert job.status == Job.CANCELLED
         assert (
-            "JSON does not fulfill schema: instance is not of type 'array'."
+            f"File for interface {algorithm_with_multiple_inputs.ci_json_file.title} failed validation."
             in job.error_message
         )
+        assert job.detailed_error_message == {
+            algorithm_with_multiple_inputs.ci_json_file.title: "JSON does not fulfill schema: instance is not of type 'array'"
+        }
         # and no CIVs should have been created
         assert ComponentInterfaceValue.objects.count() == 0
 

@@ -27,6 +27,7 @@ from storages.utils import clean_name
 
 from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import protected_s3_storage
+from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.notifications.models import Notification, NotificationType
@@ -144,14 +145,18 @@ class RawImageUploadSession(UUIDModel):
         self.save()
 
         if self.error_message and self.creator:
+            if detailed_error_message:
+                notification_description = [
+                    f"Image validation for {key} failed with error: {val}. "
+                    for key, val in detailed_error_message.items()
+                ]
+            else:
+                notification_description = error_message
+
             Notification.send(
                 kind=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
                 message=error_message,
-                description=(
-                    detailed_error_message
-                    if detailed_error_message
-                    else error_message
-                ),
+                description=oxford_comma(notification_description),
                 action_object=self,
             )
 

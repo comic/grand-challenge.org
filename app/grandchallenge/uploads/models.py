@@ -13,6 +13,7 @@ from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import copy_s3_object
+from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.models import Verification
@@ -83,16 +84,20 @@ class UserUpload(UUIDModel):
     def handle_file_validation_failure(
         self, *, error_message, detailed_error_message=None, linked_object=None
     ):
+        if detailed_error_message:
+            notification_description = [
+                f"File validation for {key} failed with error: {val}. "
+                for key, val in detailed_error_message.items()
+            ]
+        else:
+            notification_description = error_message
+
         Notification.send(
             kind=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
             actor=self.creator,
             message=error_message,
             target=linked_object.base_object,
-            description=(
-                detailed_error_message
-                if detailed_error_message
-                else error_message
-            ),
+            description=oxford_comma(notification_description),
         )
         if linked_object and hasattr(linked_object, "update_status"):
             linked_object.update_status(
