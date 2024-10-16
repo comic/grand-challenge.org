@@ -7,6 +7,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmPermissionRequest,
     Job,
 )
+from grandchallenge.components.models import GPUTypeChoices
 from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import (
     ImageFactory,
@@ -53,7 +54,7 @@ class AlgorithmJobFactory(factory.django.DjangoModelFactory):
     algorithm_image = factory.SubFactory(AlgorithmImageFactory)
     creator = factory.SubFactory(UserFactory)
     requires_memory_gb = 4
-    requires_gpu_type = ""
+    requires_gpu_type = GPUTypeChoices.NO_GPU
 
     @factory.post_generation
     def files(self, create, extracted, **kwargs):

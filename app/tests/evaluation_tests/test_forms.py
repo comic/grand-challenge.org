@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+from django.core.validators import MaxValueValidator, MinValueValidator
 from factory.django import ImageField
 
 from grandchallenge.algorithms.forms import AlgorithmForPhaseForm
@@ -10,6 +11,7 @@ from grandchallenge.evaluation.forms import (
     ConfigureAlgorithmPhasesForm,
     EvaluationGroundTruthForm,
     EvaluationGroundTruthVersionManagementForm,
+    PhaseUpdateForm,
     SubmissionForm,
 )
 from grandchallenge.evaluation.models import Evaluation, Phase, Submission
@@ -915,8 +917,8 @@ def test_algorithm_for_phase_form():
     assert form.fields["time_limit"].disabled
     assert not form.fields["title"].disabled
     assert not form.fields["description"].disabled
-    assert not form.fields["image_requires_gpu"].disabled
-    assert not form.fields["image_requires_memory_gb"].disabled
+    assert not form.fields["job_requires_gpu_type"].disabled
+    assert not form.fields["job_requires_memory_gb"].disabled
 
     assert {
         form.fields["inputs"],
@@ -937,8 +939,8 @@ def test_algorithm_for_phase_form():
     assert {
         form.fields["title"],
         form.fields["description"],
-        form.fields["image_requires_gpu"],
-        form.fields["image_requires_memory_gb"],
+        form.fields["job_requires_gpu_type"],
+        form.fields["job_requires_memory_gb"],
     } == {field.field for field in form.visible_fields()}
 
 
@@ -972,7 +974,6 @@ def test_algorithm_for_phase_form_validation():
         user=user,
         data={
             "title": "foo",
-            "image_requires_memory_gb": 10,
         },
     )
 
@@ -1002,7 +1003,6 @@ def test_algorithm_for_phase_form_validation():
         user=user,
         data={
             "title": "foo",
-            "image_requires_memory_gb": 10,
         },
     )
 
@@ -1148,3 +1148,25 @@ def test_submission_limit_avoidance_users():
     relevant_users = form._get_submission_relevant_users(creator=user)
 
     assert {o1} == set(relevant_users)
+
+
+@pytest.mark.django_db
+def test_phase_update_form_gpu_limited_choices():
+    phase = PhaseFactory()
+    form = PhaseUpdateForm(
+        instance=phase, challenge=phase.challenge, user=UserFactory.build()
+    )
+
+    validators = form.fields["evaluation_requires_memory_gb"].validators
+
+    min_validator = next(
+        (v for v in validators if isinstance(v, MinValueValidator)), None
+    )
+    assert min_validator is not None
+    assert min_validator.limit_value == 4
+
+    max_validator = next(
+        (v for v in validators if isinstance(v, MaxValueValidator)), None
+    )
+    assert max_validator is not None
+    assert max_validator.limit_value == 32

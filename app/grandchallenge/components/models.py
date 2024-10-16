@@ -77,11 +77,12 @@ logger = logging.getLogger(__name__)
 
 
 class GPUTypeChoices(TextChoices):
-    A100 = "A100"
-    A10G = "A10G"
-    V100 = "V100"
-    K80 = "K80"
-    T4 = "T4"
+    NO_GPU = "", _("No GPU")
+    A100 = "A100", _("NVIDIA A100 Tensor Core GPU")
+    A10G = "A10G", _("NVIDIA A10G Tensor Core GPU")
+    V100 = "V100", _("NVIDIA V100 Tensor Core GPU")
+    K80 = "K80", _("NVIDIA K80 GPU")
+    T4 = "T4", _("NVIDIA T4 Tensor Core GPU")
 
 
 class InterfaceKindChoices(models.TextChoices):
@@ -1875,15 +1876,6 @@ class ComponentImage(FieldChangeMixin, models.Model):
         help_text="The number of bytes stored in the registry",
     )
 
-    requires_gpu = models.BooleanField(default=False)
-    desired_gpu_type = models.CharField(
-        max_length=4,
-        choices=GPUTypeChoices.choices,
-        default=GPUTypeChoices.T4,
-        help_text="If this image requires a GPU, what GPU type would it like to use?",
-    )
-    requires_memory_gb = models.PositiveIntegerField(default=4)
-
     comment = models.TextField(
         blank=True,
         default="",
@@ -1908,13 +1900,6 @@ class ComponentImage(FieldChangeMixin, models.Model):
             .filter(pk=self.pk)
             .exists()
         )
-
-    @property
-    def requires_gpu_type(self):
-        if self.requires_gpu:
-            return self.desired_gpu_type
-        else:
-            return ""
 
     @property
     def linked_file(self):

@@ -2,9 +2,12 @@ from pathlib import Path
 
 import pytest
 from actstream.actions import is_following
+from django.core.validators import MaxValueValidator, MinValueValidator
+from factory.django import ImageField
 
 from grandchallenge.algorithms.forms import (
     AlgorithmForm,
+    AlgorithmForPhaseForm,
     AlgorithmModelForm,
     AlgorithmModelVersionControlForm,
     AlgorithmPublishForm,
@@ -21,6 +24,7 @@ from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentJob,
+    GPUTypeChoices,
     ImportStatusChoices,
     InterfaceKind,
 )
@@ -38,7 +42,13 @@ from tests.algorithms_tests.factories import (
 from tests.algorithms_tests.utils import get_algorithm_creator
 from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.conftest import get_interface_form_data
-from tests.factories import UserFactory, WorkstationFactory
+from tests.evaluation_tests.factories import PhaseFactory
+from tests.factories import (
+    UserFactory,
+    WorkstationConfigFactory,
+    WorkstationFactory,
+)
+from tests.hanging_protocols_tests.factories import HangingProtocolFactory
 from tests.uploads_tests.factories import (
     UserUploadFactory,
     create_upload_from_file,
@@ -156,11 +166,11 @@ def test_algorithm_create(client, uploaded_image):
                 "title": "foo bar",
                 "logo": uploaded_image(),
                 "workstation": ws.pk,
-                "image_requires_gpu": False,
-                "image_requires_memory_gb": 4,
                 "inputs": [ci.pk],
                 "outputs": [ComponentInterfaceFactory().pk],
                 "minimum_credits_per_job": 20,
+                "job_requires_gpu_type": GPUTypeChoices.NO_GPU,
+                "job_requires_memory_gb": 4,
                 "contact_email": creator.email,
                 "display_editors": True,
                 "access_request_handling": AccessRequestHandlingOptions.MANUAL_REVIEW,
@@ -783,3 +793,97 @@ def test_all_inputs_required_on_job_creation(algorithm_with_multiple_inputs):
     for name, field in form.fields.items():
         if name not in ["algorithm_model", "creator"]:
             assert field.required
+
+
+@pytest.mark.django_db
+def test_algorithm_form_gpu_limited_choices():
+    form = AlgorithmForm(user=UserFactory())
+
+    expected_choices = [
+        (GPUTypeChoices.NO_GPU, "No GPU"),
+        (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+    ]
+
+    actual_choices = form.fields["job_requires_gpu_type"].choices
+
+    assert actual_choices == expected_choices
+
+
+def test_algorithm_for_phase_form_gpu_limited_choices():
+    form = AlgorithmForPhaseForm(
+        workstation_config=WorkstationConfigFactory.build(),
+        hanging_protocol=HangingProtocolFactory.build(),
+        optional_hanging_protocols=[HangingProtocolFactory.build()],
+        view_content="{}",
+        display_editors=True,
+        contact_email="test@test.com",
+        workstation=WorkstationFactory.build(),
+        inputs=[ComponentInterfaceFactory.build()],
+        outputs=[ComponentInterfaceFactory.build()],
+        structures=[],
+        modalities=[],
+        logo=ImageField(filename="test.jpeg"),
+        phase=PhaseFactory.build(),
+        user=UserFactory.build(),
+    )
+
+    expected_choices = [
+        (GPUTypeChoices.NO_GPU, "No GPU"),
+        (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+    ]
+
+    actual_choices = form.fields["job_requires_gpu_type"].choices
+
+    assert actual_choices == expected_choices
+
+
+@pytest.mark.django_db
+def test_algorithm_form_memory_limited():
+    form = AlgorithmForm(user=UserFactory())
+
+    validators = form.fields["job_requires_memory_gb"].validators
+
+    min_validator = next(
+        (v for v in validators if isinstance(v, MinValueValidator)), None
+    )
+    assert min_validator is not None
+    assert min_validator.limit_value == 4
+
+    max_validator = next(
+        (v for v in validators if isinstance(v, MaxValueValidator)), None
+    )
+    assert max_validator is not None
+    assert max_validator.limit_value == 32
+
+
+def test_algorithm_for_phase_form_memory_limited():
+    form = AlgorithmForPhaseForm(
+        workstation_config=WorkstationConfigFactory.build(),
+        hanging_protocol=HangingProtocolFactory.build(),
+        optional_hanging_protocols=[HangingProtocolFactory.build()],
+        view_content="{}",
+        display_editors=True,
+        contact_email="test@test.com",
+        workstation=WorkstationFactory.build(),
+        inputs=[ComponentInterfaceFactory.build()],
+        outputs=[ComponentInterfaceFactory.build()],
+        structures=[],
+        modalities=[],
+        logo=ImageField(filename="test.jpeg"),
+        phase=PhaseFactory.build(),
+        user=UserFactory.build(),
+    )
+
+    validators = form.fields["job_requires_memory_gb"].validators
+
+    min_validator = next(
+        (v for v in validators if isinstance(v, MinValueValidator)), None
+    )
+    assert min_validator is not None
+    assert min_validator.limit_value == 4
+
+    max_validator = next(
+        (v for v in validators if isinstance(v, MaxValueValidator)), None
+    )
+    assert max_validator is not None
+    assert max_validator.limit_value == 32

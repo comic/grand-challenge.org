@@ -77,6 +77,9 @@ class PhaseAdmin(admin.ModelAdmin):
         "challenge",
         "parent",
         "submission_kind",
+        "evaluation_time_limit",
+        "evaluation_requires_gpu_type",
+        "evaluation_requires_memory_gb",
         "submissions_open_at",
         "submissions_close_at",
         "submissions_limit_per_user_per_period",
@@ -86,9 +89,10 @@ class PhaseAdmin(admin.ModelAdmin):
     search_fields = ("pk", "title", "slug", "challenge__short_name")
     list_filter = (
         "submission_kind",
+        "evaluation_requires_gpu_type",
         "give_algorithm_editors_job_view_permissions",
-        "challenge__short_name",
         "external_evaluation",
+        "challenge__short_name",
     )
     autocomplete_fields = (
         "inputs",

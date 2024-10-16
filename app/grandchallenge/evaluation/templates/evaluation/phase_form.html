@@ -1,6 +1,7 @@
 {% extends "pages/challenge_settings_base.html" %}
 {% load crispy from crispy_forms_tags %}
 {% load url %}
+{% load static %}
 
 {% block title %}
     {% if object %}Update {{ object.title }} Phase{% else %}Add a New Phase{% endif %} -
@@ -34,4 +35,10 @@
 
     {% crispy form %}
 
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="text/javascript"
+            src="{% static "js/unsavedform.js" %}"></script>
 {% endblock %}

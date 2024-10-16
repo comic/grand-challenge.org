@@ -1,5 +1,6 @@
 import factory
 
+from grandchallenge.components.models import GPUTypeChoices
 from grandchallenge.evaluation.models import (
     CombinedLeaderboard,
     Evaluation,
@@ -37,7 +38,7 @@ class SubmissionFactory(factory.django.DjangoModelFactory):
     predictions_file = factory.django.FileField()
     creator = factory.SubFactory(UserFactory)
     algorithm_requires_memory_gb = 4
-    algorithm_requires_gpu_type = ""
+    algorithm_requires_gpu_type = GPUTypeChoices.NO_GPU
 
 
 class EvaluationFactory(factory.django.DjangoModelFactory):
@@ -47,7 +48,7 @@ class EvaluationFactory(factory.django.DjangoModelFactory):
     method = factory.SubFactory(MethodFactory)
     submission = factory.SubFactory(SubmissionFactory)
     requires_memory_gb = 4
-    requires_gpu_type = ""
+    requires_gpu_type = GPUTypeChoices.NO_GPU
 
 
 class CombinedLeaderboardFactory(factory.django.DjangoModelFactory):

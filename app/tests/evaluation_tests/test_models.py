@@ -135,9 +135,8 @@ def test_create_evaluation_sets_gpu_and_memory():
         is_manifest_valid=True,
         is_in_registry=True,
         is_desired_version=True,
-        requires_gpu=True,
-        desired_gpu_type=GPUTypeChoices.V100,
-        requires_memory_gb=1337,
+        phase__evaluation_requires_gpu_type=GPUTypeChoices.V100,
+        phase__evaluation_requires_memory_gb=1337,
     )
 
     submission = SubmissionFactory(phase=method.phase)

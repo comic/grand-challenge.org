@@ -108,8 +108,8 @@ def create_algorithm_jobs_for_archive(
                     # to the algorithm editors
                     task_on_success=None,
                     time_limit=algorithm.time_limit,
-                    requires_gpu_type=algorithm.active_image.requires_gpu_type,
-                    requires_memory_gb=algorithm.active_image.requires_memory_gb,
+                    requires_gpu_type=algorithm.job_requires_gpu_type,
+                    requires_memory_gb=algorithm.job_requires_memory_gb,
                 )
 
 

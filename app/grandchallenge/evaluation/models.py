@@ -516,6 +516,25 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             ),
         ],
     )
+    evaluation_requires_gpu_type = models.CharField(
+        max_length=4,
+        blank=True,
+        default=GPUTypeChoices.NO_GPU,
+        choices=GPUTypeChoices.choices,
+        help_text=(
+            "What GPU to attach to this phases evaluations. "
+            "Note that the GPU attached to any algorithm inference jobs "
+            "is determined by the submitted algorithm."
+        ),
+    )
+    evaluation_requires_memory_gb = models.PositiveSmallIntegerField(
+        default=8,
+        help_text=(
+            "How much memory to assign to this phases evaluations. "
+            "Note that the memory assigned to any algorithm inference jobs "
+            "is determined by the submitted algorithm."
+        ),
+    )
     public = models.BooleanField(
         default=True,
         help_text=(

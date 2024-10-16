@@ -86,8 +86,8 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):  # noqa: C901
             method=method,
             ground_truth=submission.phase.active_ground_truth,
             time_limit=submission.phase.evaluation_time_limit,
-            requires_gpu_type=method.requires_gpu_type,
-            requires_memory_gb=method.requires_memory_gb,
+            requires_gpu_type=submission.phase.evaluation_requires_gpu_type,
+            requires_memory_gb=submission.phase.evaluation_requires_memory_gb,
         )
     except IntegrityError:
         logger.error(

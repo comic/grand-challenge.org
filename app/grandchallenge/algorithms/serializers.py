@@ -77,8 +77,6 @@ class AlgorithmImageSerializer(serializers.ModelSerializer):
             "api_url",
             "algorithm",
             "created",
-            "requires_gpu",
-            "requires_memory_gb",
             "import_status",
             "image",
         ]
@@ -264,21 +262,19 @@ class JobPostSerializer(JobSerializer):
         return data
 
     def create(self, validated_data):
+        algorithm = validated_data["algorithm_image"].algorithm
+
         job = Job.objects.create(
             **validated_data,
-            time_limit=validated_data["algorithm_image"].algorithm.time_limit,
-            requires_gpu_type=validated_data[
-                "algorithm_image"
-            ].requires_gpu_type,
-            requires_memory_gb=validated_data[
-                "algorithm_image"
-            ].requires_memory_gb,
-            extra_logs_viewer_groups=[
-                validated_data["algorithm_image"].algorithm.editors_group
-            ],
+            time_limit=algorithm.time_limit,
+            requires_gpu_type=algorithm.job_requires_gpu_type,
+            requires_memory_gb=algorithm.job_requires_memory_gb,
+            extra_logs_viewer_groups=[algorithm.editors_group],
             status=Job.VALIDATING_INPUTS,
         )
+
         job.validate_inputs_and_execute(inputs=self.inputs)
+
         return job
 
     @staticmethod
