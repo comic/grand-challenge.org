@@ -19,6 +19,7 @@ from django.template.defaultfilters import truncatechars
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
+from django.utils.timezone import now
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
@@ -53,7 +54,6 @@ from grandchallenge.core.utils.access_requests import (
     process_access_request,
 )
 from grandchallenge.core.validators import ExtensionValidator
-from grandchallenge.credits.models import Credit
 from grandchallenge.evaluation.utils import get
 from grandchallenge.hanging_protocols.models import HangingProtocolMixin
 from grandchallenge.modalities.models import ImagingModality
@@ -538,6 +538,39 @@ def delete_algorithm_groups_hook(*_, instance: Algorithm, using, **__):
         pass
 
 
+class AlgorithmUserCredit(UUIDModel):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        blank=False,
+        on_delete=models.CASCADE,
+        help_text="The user who these credits are applied to",
+    )
+    algorithm = models.ForeignKey(
+        Algorithm,
+        blank=False,
+        on_delete=models.CASCADE,
+        help_text="The algorithm that these credits can be used with",
+    )
+    credits = models.PositiveIntegerField(
+        blank=False,
+        help_text="The extra credits that a user can spend per month on running this algorithm.",
+    )
+    expires_on = models.DateField(
+        blank=False,
+        help_text="When these credits expire",
+    )
+    comment = models.TextField(
+        blank=False,
+        help_text="Who agreed to these credits have been assigned and where the costs are coming from",
+    )
+
+    class Meta:
+        unique_together = ("user", "algorithm")
+
+    def __str__(self):
+        return f"Credits for {self.user} for {self.algorithm}"
+
+
 class AlgorithmImage(UUIDModel, ComponentImage):
     algorithm = models.ForeignKey(
         Algorithm,
@@ -574,7 +607,20 @@ class AlgorithmImage(UUIDModel, ComponentImage):
             return 0
 
     def get_remaining_non_complimentary_jobs(self, *, user):
-        user_credits = Credit.objects.get(user=user).credits
+        if user.username == settings.ANONYMOUS_USER_NAME:
+            raise RuntimeError("Anonymous users cannot run jobs")
+        else:
+            user_credits = settings.ALGORITHMS_DEFAULT_USER_CREDITS
+
+        try:
+            user_credits += AlgorithmUserCredit.objects.get(
+                user=user,
+                algorithm=self.algorithm,
+                expires_on__gt=now().date(),
+            ).credits
+        except ObjectDoesNotExist:
+            pass
+
         spent_credits = Job.objects.credits_consumed_past_month(user=user)[
             "total"
         ]
@@ -940,11 +986,8 @@ class Job(CIVForObjectMixin, ComponentJob):
         )
 
     def init_credits_consumed(self):
-        default_credits_per_month = Credit._meta.get_field(
-            "credits"
-        ).get_default()
         overall_min_credits_per_job = (
-            default_credits_per_month
+            settings.ALGORITHMS_DEFAULT_USER_CREDITS
             / settings.ALGORITHMS_MAX_DEFAULT_JOBS_PER_MONTH
         )
 
@@ -963,7 +1006,7 @@ class Job(CIVForObjectMixin, ComponentJob):
             int(
                 round(
                     maximum_cents_per_job
-                    * default_credits_per_month
+                    * settings.ALGORITHMS_DEFAULT_USER_CREDITS
                     / settings.ALGORITHMS_USER_CENTS_PER_MONTH,
                     -1,
                 )
