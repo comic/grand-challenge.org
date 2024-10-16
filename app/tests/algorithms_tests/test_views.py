@@ -21,6 +21,7 @@ from grandchallenge.components.models import (
     GPUTypeChoices,
     ImportStatusChoices,
     InterfaceKind,
+    InterfaceKindChoices,
 )
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import (
@@ -1435,6 +1436,47 @@ class TestJobCreateView:
         assert (
             "Image imports should result in a single image"
             in job.error_message
+        )
+        # and no CIVs should have been created
+        assert ComponentInterfaceValue.objects.count() == 0
+
+    @override_settings(task_eager_propagates=True, task_always_eager=True)
+    def test_create_job_with_faulty_existing_image_input(
+        self,
+        client,
+        django_capture_on_commit_callbacks,
+        algorithm_with_multiple_inputs,
+    ):
+        ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.SEGMENTATION)
+        ci.overlay_segments = [
+            {"name": "s1", "visible": True, "voxel_value": 1}
+        ]
+        ci.save()
+        algorithm_with_multiple_inputs.algorithm.inputs.set([ci])
+
+        response = self.create_job(
+            client=client,
+            django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+            algorithm=algorithm_with_multiple_inputs.algorithm,
+            user=algorithm_with_multiple_inputs.editor,
+            inputs={
+                **get_interface_form_data(
+                    interface_slug=ci.slug,
+                    data=algorithm_with_multiple_inputs.image_2.pk,
+                ),
+            },
+        )
+        assert response.status_code == 200
+        assert Job.objects.count() == 1
+        job = Job.objects.get()
+        # but in cancelled state and with an error message
+        assert job.status == Job.CANCELLED
+        assert (
+            f"Validation for interface {ci.slug} failed." == job.error_message
+        )
+        assert (
+            "Image segments could not be determined, ensure the voxel values are integers and that it contains no more than 64 segments"
+            in str(job.detailed_error_message)
         )
         # and no CIVs should have been created
         assert ComponentInterfaceValue.objects.count() == 0
