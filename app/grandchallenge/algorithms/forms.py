@@ -17,14 +17,17 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
-from django.core.validators import RegexValidator
+from django.core.validators import (
+    MaxValueValidator,
+    MinValueValidator,
+    RegexValidator,
+)
 from django.db.models import Count, Exists, OuterRef, Q
 from django.db.transaction import on_commit
 from django.forms import (
     CharField,
     Form,
     HiddenInput,
-    IntegerField,
     ModelChoiceField,
     ModelForm,
     ModelMultipleChoiceField,
@@ -60,6 +63,7 @@ from grandchallenge.components.models import (
     CIVData,
     ComponentInterface,
     ComponentJob,
+    GPUTypeChoices,
     ImportStatusChoices,
     InterfaceKindChoices,
 )
@@ -289,6 +293,8 @@ class AlgorithmForm(
             "inputs",
             "outputs",
             "minimum_credits_per_job",
+            "job_requires_gpu_type",
+            "job_requires_memory_gb",
             "additional_terms_markdown",
             "job_create_page_markdown",
             "result_template",
@@ -359,6 +365,15 @@ class AlgorithmForm(
 
         self.fields["contact_email"].required = True
         self.fields["display_editors"].required = True
+
+        self.fields["job_requires_gpu_type"].choices = [
+            (choice.value, choice.label)
+            for choice in [GPUTypeChoices.NO_GPU, GPUTypeChoices.T4]
+        ]
+        self.fields["job_requires_memory_gb"].validators = [
+            MinValueValidator(settings.ALGORITHMS_MIN_MEMORY_GB),
+            MaxValueValidator(settings.ALGORITHMS_MAX_MEMORY_GB),
+        ]
 
         if self.instance:
             interface_slugs = (
@@ -431,13 +446,9 @@ class UserAlgorithmsForPhaseMixin:
         return self.user_algorithms_for_phase.count()
 
 
-class AlgorithmForPhaseForm(UserAlgorithmsForPhaseMixin, ModelForm):
-    job_requires_memory_gb = IntegerField(
-        min_value=settings.ALGORITHMS_MIN_MEMORY_GB,
-        max_value=settings.ALGORITHMS_MAX_MEMORY_GB,
-    )
-    # TODO limit the choices of job_requires_gpu_type
-
+class AlgorithmForPhaseForm(
+    UserAlgorithmsForPhaseMixin, SaveFormInitMixin, ModelForm
+):
     class Meta:
         model = Algorithm
         fields = (
@@ -536,8 +547,15 @@ class AlgorithmForPhaseForm(UserAlgorithmsForPhaseMixin, ModelForm):
         self.fields["logo"].disabled = True
         self.fields["time_limit"].initial = phase.algorithm_time_limit
         self.fields["time_limit"].disabled = True
-        self.helper = FormHelper(self)
-        self.helper.layout.append(Submit("save", "Save"))
+
+        self.fields["job_requires_gpu_type"].choices = [
+            (choice.value, choice.label)
+            for choice in [GPUTypeChoices.NO_GPU, GPUTypeChoices.T4]
+        ]
+        self.fields["job_requires_memory_gb"].validators = [
+            MinValueValidator(settings.ALGORITHMS_MIN_MEMORY_GB),
+            MaxValueValidator(settings.ALGORITHMS_MAX_MEMORY_GB),
+        ]
 
     def clean(self):
         cleaned_data = super().clean()
@@ -767,11 +785,6 @@ class AlgorithmRepoForm(SaveFormInitMixin, ModelForm):
             },
         ),
     )
-    job_requires_memory_gb = IntegerField(
-        min_value=settings.ALGORITHMS_MIN_MEMORY_GB,
-        max_value=settings.ALGORITHMS_MAX_MEMORY_GB,
-    )
-    # TODO limit the choices of job_requires_gpu_type
 
     def __init__(self, *args, github_app_install_url, **kwargs):
         super().__init__(*args, **kwargs)
@@ -826,8 +839,6 @@ class AlgorithmRepoForm(SaveFormInitMixin, ModelForm):
         fields = (
             "repo_name",
             "recurse_submodules",
-            "job_requires_gpu_type",
-            "job_requires_memory_gb",
         )
         help_texts = {
             "recurse_submodules": (

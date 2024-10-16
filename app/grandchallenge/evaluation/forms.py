@@ -6,6 +6,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models import BooleanField, Case, Exists, OuterRef, When
 from django.db.transaction import on_commit
 from django.forms import (
@@ -76,6 +77,7 @@ submission_options = (
 )
 
 scoring_options = (
+    "evaluation_requires_memory_gb",
     "score_title",
     "score_jsonpath",
     "score_error_jsonpath",
@@ -143,13 +145,18 @@ class PhaseCreateForm(PhaseTitleMixin, SaveFormInitMixin, forms.ModelForm):
 class PhaseUpdateForm(
     PhaseTitleMixin,
     WorkstationUserFilterMixin,
+    SaveFormInitMixin,
     forms.ModelForm,
 ):
-    # TODO set the evaluation runtime properties with limits
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
         self.fields["parent"].queryset = self.instance.parent_phase_choices
-        self.helper = FormHelper(self)
+        self.fields["evaluation_requires_memory_gb"].validators = [
+            MinValueValidator(settings.ALGORITHMS_MIN_MEMORY_GB),
+            MaxValueValidator(settings.ALGORITHMS_MAX_MEMORY_GB),
+        ]
+
         self.helper.layout = Layout(
             TabHolder(
                 Tab("Phase", *phase_options),
@@ -160,6 +167,7 @@ class PhaseUpdateForm(
             ),
             ButtonHolder(Submit("save", "Save")),
         )
+
         if self.instance.submission_kind == SubmissionKindChoices.ALGORITHM:
             self.helper.layout[0].append(
                 Tab(
