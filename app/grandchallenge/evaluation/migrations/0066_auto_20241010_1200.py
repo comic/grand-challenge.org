@@ -3,6 +3,25 @@
 from django.db import migrations
 
 
+def set_requirements_from_active_method(apps, schema_editor):
+    Phase = apps.get_model("evaluation", "Phase")  # noqa: N806
+
+    for phase in Phase.objects.all():
+        if phase.active_image:
+            phase.evaluation_requires_memory_gb = (
+                phase.active_image.requires_memory_gb
+            )
+
+            if phase.active_image.requires_gpu:
+                phase.evaluation_requires_gpu_type = (
+                    phase.active_image.desired_gpu_type
+                )
+            else:
+                phase.evaluation_requires_gpu_type = ""
+
+            phase.save()
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -10,5 +29,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # TODO migrate deleted fields
+        migrations.RunPython(
+            set_requirements_from_active_method, elidable=True
+        ),
     ]

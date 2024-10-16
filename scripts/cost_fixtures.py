@@ -180,8 +180,8 @@ def _create_submission(algorithm, challenge, archive_items):
             completed_at=now(),
             status=Job.SUCCESS,
             time_limit=ai.algorithm.time_limit,
-            requires_gpu_type=ai.algorithm.requires_gpu_type,
-            requires_memory_gb=ai.algorithm.requires_memory_gb,
+            requires_gpu_type=ai.algorithm.job_requires_gpu_type,
+            requires_memory_gb=ai.algorithm.job_requires_memory_gb,
         )
         civ = ComponentInterfaceValue.objects.create(
             interface=ComponentInterface.objects.get(slug="results-json-file"),
