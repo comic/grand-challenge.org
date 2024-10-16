@@ -2300,7 +2300,11 @@ class CIVForObjectMixin:
                         self.update_status(
                             status=self.CANCELLED,
                             error_message=f"Validation for interface {ci.slug} failed.",
-                            detailed_error_message=f"Validation for interface {ci.slug} failed: {format_validation_error_message(error=e)}",
+                            detailed_error_message={
+                                ci.title: format_validation_error_message(
+                                    error=e
+                                )
+                            },
                         )
                     else:
                         Notification.send(
@@ -2345,7 +2349,11 @@ class CIVForObjectMixin:
                         self.update_status(
                             status=self.CANCELLED,
                             error_message=f"Validation for interface {ci.slug} failed.",
-                            detailed_error_message=f"Validation for interface {ci.slug} failed: {format_validation_error_message(error=e)}",
+                            detailed_error_message={
+                                ci.title: format_validation_error_message(
+                                    error=e
+                                )
+                            },
                         )
                     else:
                         Notification.send(

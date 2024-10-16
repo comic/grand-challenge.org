@@ -1214,7 +1214,9 @@ def add_image_to_object(
             upload_session.update_status(
                 status=RawImageUploadSession.FAILURE,
                 error_message=f"File for interface {interface.title} failed validation.",
-                detailed_error_message=f"File for interface {interface.title} failed validation: {format_validation_error_message(e)}",
+                detailed_error_message={
+                    interface.title: format_validation_error_message(error=e)
+                },
                 linked_object=object,
             )
             return
@@ -1277,7 +1279,9 @@ def add_file_to_object(
     except ValidationError as e:
         user_upload.handle_file_validation_failure(
             error_message=f"File for interface {interface.title} failed validation.",
-            detailed_error_message=f"File for interface {interface.title} failed validation: {format_validation_error_message(error=e)}.",
+            detailed_error_message={
+                interface.title: format_validation_error_message(error=e)
+            },
             linked_object=object,
         )
         return
