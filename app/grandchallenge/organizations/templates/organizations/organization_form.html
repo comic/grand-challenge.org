@@ -3,7 +3,7 @@
 {% load crispy_forms_tags %}
 
 {% block title %}
-    {{ object|yesno:"Update,Create Organization" }} {% if object %} {{ object.title }} {% endif %} - Organizations - {{ block.super }}
+    {{ object|yesno:"Update,Create Organization" }} {% if object %} - {{ object.title }} {% else %} - Organizations {% endif %} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
