@@ -4,7 +4,7 @@
 {% load static %}
 
 {% block title %}
-    {{ object|yesno:"Update,Create" }} -{% if object %} {{ object.title }} -{% endif %} {{ block.super }}
+    {{ object|yesno:"Update,Create Hanging Protocol" }} {% if object %} - {{ object.title }} {% else %} - Hanging Protocols {% endif %} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -15,7 +15,7 @@
                     href="{{ object.get_absolute_url }}">{{ object.title }}</a></li>
         {% endif %}
         <li class="breadcrumb-item active"
-            aria-current="page">{{ object|yesno:"Update,Create" }}</li>
+            aria-current="page">{{ object|yesno:"Update,Create Hanging Protocol" }}</li>
     </ol>
 {% endblock %}
 
