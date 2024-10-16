@@ -4,12 +4,10 @@
 {% load guardian_tags %}
 
 {% block title %}
-    {% get_obj_perms request.user for algorithm as "algorithm_perms" %}
-    {% if "change_algorithm" in algorithm_perms %}Review Access Request{% else %}Request Access{% endif %} - {{ algorithm.title }} - {{ block.super }}
+    {{ permission_request|yesno:"Access Request,Request Access" }} - {{ algorithm.title }} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
-    {% get_obj_perms request.user for algorithm as "algorithm_perms" %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a>
         </li>
@@ -18,11 +16,7 @@
         </a></li>
         <li class="breadcrumb-item active"
             aria-current="page">
-            {% if "change_algorithm" in algorithm_perms %}
-                Review access request
-            {% else %}
-                Request access
-            {% endif %}
+            {{ permission_request|yesno:"Access Request,Request Access" }}
         </li>
     </ol>
 {% endblock %}

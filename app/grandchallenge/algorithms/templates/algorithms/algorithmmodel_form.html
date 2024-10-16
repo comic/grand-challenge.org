@@ -3,7 +3,7 @@
 {% load url %}
 
 {% block title %}
-    Create Model - {{ algorithm.title }} - {{ block.super }}
+    {{ object|yesno:"Update,Create Model" }} {% if object %} - {{ object }} {% else %} - {{ algorithm.title }} {% endif %} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -13,8 +13,12 @@
         <li class="breadcrumb-item"><a
                 href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}
         </a></li>
+        {% if object %}
+            <li class="breadcrumb-item"><a
+                    href="{{ object.get_absolute_url }}">{{ object }}</a></li>
+        {% endif %}
         <li class="breadcrumb-item active"
-            aria-current="page">Create model
+            aria-current="page">{{ object|yesno:"Update,Create Model" }}
         </li>
     </ol>
 {% endblock %}

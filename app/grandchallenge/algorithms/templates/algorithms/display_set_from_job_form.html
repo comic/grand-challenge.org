@@ -3,7 +3,7 @@
 {% load url %}
 
 {% block title %}
-    Create a Display Set - {{ object.pk }} - {{ block.super }}
+    Create a Display Set from Result - {{ object.pk }} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -17,7 +17,7 @@
         <li class="breadcrumb-item"><a
                 href="{% url 'algorithms:job-list' slug=object.algorithm_image.algorithm.slug %}">Results</a></li>
         <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object.pk }}</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Create a Display Set</li>
+        <li class="breadcrumb-item active" aria-current="page">Create a Display Set from Result</li>
     </ol>
 {% endblock %}
 
