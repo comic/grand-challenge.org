@@ -66,6 +66,7 @@ from grandchallenge.core.validators import (
     JSONValidator,
     MimeTypeValidator,
 )
+from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.validators import validate_gzip_mimetype
 from grandchallenge.workstation_configs.models import (
@@ -2246,6 +2247,7 @@ class CIVForObjectMixin:
                 ci=ci,
                 current_civ=current_civ,
                 new_value=civ_data.value,
+                user=user,
                 linked_task=linked_task,
             )
         elif ci.is_image_kind:
@@ -2270,7 +2272,7 @@ class CIVForObjectMixin:
             NotImplementedError(f"CIV creation for {ci} not handled.")
 
     def create_civ_for_value(
-        self, *, ci, current_civ, new_value, linked_task=None
+        self, *, ci, current_civ, new_value, user, linked_task=None
     ):
         current_value = current_civ.value if current_civ else None
 
@@ -2288,13 +2290,27 @@ class CIVForObjectMixin:
                 self.add_civ(civ=civ)
                 self.remove_civ(civ=current_civ)
             except ValidationError as e:
+                if created:
+                    civ.delete()
+
                 if new_value in ci.default_field.empty_values:
                     self.remove_civ(civ=current_civ)
                 else:
-                    self.handle_error(
-                        error_message=format_validation_error_message(e),
-                    )
-                    raise e
+                    if hasattr(self, "update_status"):
+                        self.update_status(
+                            status=self.CANCELLED,
+                            error_message=f"Validation for interface {ci.slug} failed.",
+                            detailed_error_message=f"Validation for interface {ci.slug} failed: {format_validation_error_message(error=e)}",
+                        )
+                    else:
+                        Notification.send(
+                            kind=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
+                            message=f"Validation for interface {ci.slug} failed.",
+                            description=f"Validation for interface {ci.slug} failed: {format_validation_error_message(error=e)}",
+                            actor=user,
+                        )
+                    return
+
             except RuntimeError as e:
                 logger.error(e, exc_info=True)
                 return
@@ -2323,10 +2339,25 @@ class CIVForObjectMixin:
                 try:
                     civ.full_clean()
                 except ValidationError as e:
-                    self.handle_error(
-                        error_message=format_validation_error_message(e),
-                    )
-                    raise e
+                    civ.delete()
+
+                    if hasattr(self, "update_status"):
+                        self.update_status(
+                            status=self.CANCELLED,
+                            error_message=f"Validation for interface {ci.slug} failed.",
+                            detailed_error_message=f"Validation for interface {ci.slug} failed: {format_validation_error_message(error=e)}",
+                        )
+                    else:
+                        Notification.send(
+                            kind=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
+                            message=f"Validation for interface {ci.slug} failed.",
+                            description=f"Validation for interface {ci.slug} failed: {format_validation_error_message(error=e)}",
+                            actor=user,
+                        )
+                        logger.warning("Sending notification")
+
+                    return
+
             try:
                 self.remove_civ(civ=current_civ)
                 self.add_civ(civ=civ)

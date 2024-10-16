@@ -129,7 +129,14 @@ class RawImageUploadSession(UUIDModel):
                 f"{n_errors} file{pluralize(n_errors)} could not be imported"
             )
 
-    def update_status(self, *, status, error_message=None, linked_object=None):
+    def update_status(
+        self,
+        *,
+        status,
+        error_message=None,
+        detailed_error_message=None,
+        linked_object=None,
+    ):
         self.status = status
         self.error_message = (
             error_message if error_message else self.default_error_message
@@ -140,6 +147,11 @@ class RawImageUploadSession(UUIDModel):
             Notification.send(
                 kind=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
                 message=error_message,
+                description=(
+                    detailed_error_message
+                    if detailed_error_message
+                    else error_message
+                ),
                 action_object=self,
             )
 
@@ -149,7 +161,9 @@ class RawImageUploadSession(UUIDModel):
             and hasattr(linked_object, "update_status")
         ):
             linked_object.update_status(
-                status=linked_object.CANCELLED, error_message=error_message
+                status=linked_object.CANCELLED,
+                error_message=error_message,
+                detailed_error_message=detailed_error_message,
             )
 
     def process_images(

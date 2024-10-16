@@ -80,17 +80,25 @@ class UserUpload(UUIDModel):
         if adding:
             self.assign_permissions()
 
-    def handle_file_validation_failure(self, *, error_message, linked_object):
+    def handle_file_validation_failure(
+        self, *, error_message, detailed_error_message=None, linked_object=None
+    ):
         Notification.send(
             kind=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
             actor=self.creator,
-            message=f"Your file upload failed with the error: {error_message}",
+            message=error_message,
             target=linked_object.base_object,
-            description=error_message,
+            description=(
+                detailed_error_message
+                if detailed_error_message
+                else error_message
+            ),
         )
         if linked_object and hasattr(linked_object, "update_status"):
             linked_object.update_status(
-                status=linked_object.CANCELLED, error_message=error_message
+                status=linked_object.CANCELLED,
+                error_message=error_message,
+                detailed_error_message=detailed_error_message,
             )
 
     @property
