@@ -4,22 +4,23 @@ from django.db import migrations
 
 
 def set_requirements_from_active_image(apps, schema_editor):
-    Algorithm = apps.get_model("algorithms", "Algorithm")  # noqa: N806
+    AlgorithmImage = apps.get_model(  # noqa: N806
+        "algorithms", "AlgorithmImage"
+    )
 
-    for algorithm in Algorithm.objects.all():
-        if algorithm.active_image:
-            algorithm.job_requires_memory_gb = (
-                algorithm.active_image.requires_memory_gb
-            )
+    for algorithm_image in AlgorithmImage.objects.filter(
+        is_desired_version=True
+    ):
+        algorithm = algorithm_image.algorithm
 
-            if algorithm.active_image.requires_gpu:
-                algorithm.job_requires_gpu_type = (
-                    algorithm.active_image.desired_gpu_type
-                )
-            else:
-                algorithm.job_requires_gpu_type = ""
+        algorithm.job_requires_memory_gb = algorithm_image.requires_memory_gb
 
-            algorithm.save()
+        if algorithm_image.requires_gpu:
+            algorithm.job_requires_gpu_type = algorithm_image.desired_gpu_type
+        else:
+            algorithm.job_requires_gpu_type = ""
+
+        algorithm.save()
 
 
 class Migration(migrations.Migration):
