@@ -3,7 +3,7 @@
 {% load url %}
 
 {% block title %}
-    {{ object|yesno:"Update,Create Model" }} {% if object %} {{ object }} {% endif %} - {{ algorithm.title }} - {{ block.super }}
+    {{ object|yesno:"Update,Create Model" }} {% if object %} - {{ object }} {% else %} - {{ algorithm.title }} {% endif %} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
