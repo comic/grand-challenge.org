@@ -3,7 +3,7 @@
 {% load url %}
 
 {% block title %}
-    {{ object|yesno:"Update,Create Evaluation Method" }} {% if object %} {{ object.pk }} {% endif %} - Evaluation Methods - {{ block.super }}
+    {{ object|yesno:"Update,Create Evaluation Method" }} {% if object %} - {{ object.pk }} {% else %} - Evaluation Methods {% endif %} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}

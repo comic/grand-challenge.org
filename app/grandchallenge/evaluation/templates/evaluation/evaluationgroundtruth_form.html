@@ -3,7 +3,7 @@
 {% load url %}
 
 {% block title %}
-    {{ object|yesno:"Update,Create Ground Truth" }} {% if object %} {{ object.pk }} {% endif %} - Ground Truths - {{ block.super }}
+    {{ object|yesno:"Update,Create Ground Truth" }} {% if object %} - {{ object.pk }} {% else %} - Ground Truths {% endif %} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
