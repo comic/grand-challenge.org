@@ -1293,6 +1293,9 @@ ALGORITHMS_JOB_DEFAULT_TIME_LIMIT_SECONDS = os.environ.get(
     "ALGORITHMS_JOB_DEFAULT_TIME_LIMIT_SECONDS", "3600"
 )
 # How many cents per month each user receives by default
+ALGORITHMS_DEFAULT_USER_CREDITS = int(
+    os.environ.get("ALGORITHMS_DEFAULT_USER_CREDITS", "1000")
+)
 ALGORITHMS_USER_CENTS_PER_MONTH = int(
     os.environ.get("ALGORITHMS_USER_CENTS_PER_MONTH", "1000")
 )

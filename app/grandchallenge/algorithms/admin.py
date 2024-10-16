@@ -1,6 +1,9 @@
+from dateutil.relativedelta import relativedelta
 from django.contrib import admin
-from django.db.models import Count
+from django.contrib.admin import ModelAdmin
+from django.db.models import Count, Sum
 from django.forms import ModelForm
+from django.utils.timezone import now
 from guardian.admin import GuardedModelAdmin
 
 from grandchallenge.algorithms.forms import AlgorithmIOValidationMixin
@@ -14,6 +17,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmModelGroupObjectPermission,
     AlgorithmModelUserObjectPermission,
     AlgorithmPermissionRequest,
+    AlgorithmUserCredit,
     AlgorithmUserObjectPermission,
     Job,
     JobGroupObjectPermission,
@@ -29,6 +33,7 @@ from grandchallenge.core.admin import (
     GroupObjectPermissionAdmin,
     UserObjectPermissionAdmin,
 )
+from grandchallenge.core.templatetags.costs import millicents_to_euro
 
 
 class AlgorithmAdminForm(AlgorithmIOValidationMixin, ModelForm):
@@ -60,6 +65,62 @@ class AlgorithmAdmin(GuardedModelAdmin):
             container_count=Count("algorithm_container_images")
         )
         return queryset
+
+
+@admin.register(AlgorithmUserCredit)
+class AlgorithmUserCreditAdmin(ModelAdmin):
+    list_display = ("user", "algorithm", "credits", "expires_on", "comment")
+    autocomplete_fields = ("user", "algorithm")
+    search_fields = ("user__username", "user__email", "algorithm__slug")
+    fields = (
+        "user",
+        "credits",
+        "expires_on",
+        "comment",
+        "total_credits_consumed_past_month",
+        "credits_consumed_past_month",
+        "total_compute_costs_past_month",
+        "compute_costs_past_month",
+    )
+    readonly_fields = (
+        "total_credits_consumed_past_month",
+        "credits_consumed_past_month",
+        "total_compute_costs_past_month",
+        "compute_costs_past_month",
+    )
+
+    def total_credits_consumed_past_month(self, obj):
+        return Job.objects.credits_consumed_past_month(user=obj.user)["total"]
+
+    def credits_consumed_past_month(self, obj):
+        return Job.objects.filter(
+            algorithm_image__algorithm=obj.algorithm
+        ).credits_consumed_past_month(user=obj.user)["total"]
+
+    def total_compute_costs_past_month(self, obj):
+        return millicents_to_euro(
+            Job.objects.filter(
+                creator=obj.user,
+                created__gt=now() - relativedelta(months=1),
+            ).aggregate(
+                total=Sum("compute_cost_euro_millicents", default=0),
+            )[
+                "total"
+            ]
+        )
+
+    def compute_costs_past_month(self, obj):
+        return millicents_to_euro(
+            Job.objects.filter(
+                algorithm_image__algorithm=obj.algorithm,
+                creator=obj.user,
+                created__gt=now() - relativedelta(months=1),
+            ).aggregate(
+                total=Sum("compute_cost_euro_millicents", default=0),
+            )[
+                "total"
+            ]
+        )
 
 
 @admin.register(Job)
