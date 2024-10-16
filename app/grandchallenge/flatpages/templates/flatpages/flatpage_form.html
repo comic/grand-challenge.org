@@ -4,7 +4,7 @@
 {% load static %}
 
 {% block title %}
-    {{ object|yesno:"Update,Create Flatpage" }} {% if flatpage %} {{ flatpage.title }} {% endif %} - {{ block.super }}
+    {{ object|yesno:"Update,Create Flatpage" }} {% if flatpage %} - {{ flatpage.title }} {% endif %} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
