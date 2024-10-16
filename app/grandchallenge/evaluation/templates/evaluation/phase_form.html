@@ -3,7 +3,7 @@
 {% load url %}
 
 {% block title %}
-    {% if object %}Update {{ object.title }} Phase{% else %}Add a New Phase{% endif %} -
+    {{ object|yesno:"Update,Create Phase" }} {% if object %} {{ object.title }} {% endif %} -
     {% firstof challenge.title challenge.short_name %} - {{ block.super }}
 {% endblock %}
 
@@ -15,7 +15,7 @@
         <li class="breadcrumb-item"><a
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
         <li class="breadcrumb-item active"
-            aria-current="page">{% if object %}Update {{ object.title }} Phase{% else %}Add a New Phase{% endif %}</li>
+            aria-current="page">{{ object|yesno:"Update,Create Phase" }} {% if object %} {{ object.title }} {% endif %}</li>
     </ol>
 {% endblock %}
 
