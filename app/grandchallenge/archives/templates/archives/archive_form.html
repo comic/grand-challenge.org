@@ -3,7 +3,7 @@
 {% load url %}
 
 {% block title %}
-    {% if object %}Update{% else %}New{% endif %} Archive -{% if object %} {{ object.title }} -{% endif %} {{ block.super }}
+    {{ object|yesno:"Update,Create Archive" }} {% if object %} - {{ object.title }} {% else %} - Archives {% endif %} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -14,7 +14,7 @@
             <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object.title }}</a></li>
         {% endif %}
         <li class="breadcrumb-item active"
-            aria-current="page">{% if object %}Update{% else %}New{% endif %} Archive
+            aria-current="page">{{ object|yesno:"Update,Create Archive" }}
         </li>
     </ol>
 {% endblock %}

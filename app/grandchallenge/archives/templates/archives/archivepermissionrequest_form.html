@@ -4,12 +4,10 @@
 {% load guardian_tags %}
 
 {% block title %}
-    {% get_obj_perms request.user for archive as "archive_perms" %}
-    {% if "change_archive" in archive_perms %}Review access request{% else %}Request access{% endif %} - {{ archive.title }} - {{ block.super }}
+    {{ permission_request|yesno:"Access Request,Request Access" }} - {{ archive.title }} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
-    {% get_obj_perms request.user for archive as "archive_perms" %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'archives:list' %}">Archives</a>
         </li>
@@ -18,11 +16,7 @@
         </a></li>
         <li class="breadcrumb-item active"
             aria-current="page">
-            {% if "change_archive" in archive_perms %}
-                Review access request
-            {% else %}
-                Request access
-            {% endif %}
+            {{ permission_request|yesno:"Access Request,Request Access" }}
         </li>
     </ol>
 {% endblock %}
