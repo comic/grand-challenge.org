@@ -3,7 +3,7 @@
 {% load url %}
 
 {% block title %}
-    {% if object %}Update{% else %}Create{% endif %} -{% if object %} {{ object }} -{% endif %} {{ block.super }}
+    {{ object|yesno:"Update,Create Post" }} {% if object %} {{ object }} {% endif %} - Blogs - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -12,7 +12,7 @@
         {% if object %}
             <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object }}</a></li>
         {% endif %}
-        <li class="breadcrumb-item active">{% if object %}Update{% else %}Create{% endif %}</li>
+        <li class="breadcrumb-item active">{{ object|yesno:"Update,Create Post" }}</li>
     </ol>
 {% endblock %}
 
