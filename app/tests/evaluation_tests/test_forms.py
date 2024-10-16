@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+from django.core.validators import MaxValueValidator, MinValueValidator
 from factory.django import ImageField
 
 from grandchallenge.algorithms.forms import AlgorithmForPhaseForm
@@ -10,6 +11,7 @@ from grandchallenge.evaluation.forms import (
     ConfigureAlgorithmPhasesForm,
     EvaluationGroundTruthForm,
     EvaluationGroundTruthVersionManagementForm,
+    PhaseUpdateForm,
     SubmissionForm,
 )
 from grandchallenge.evaluation.models import Evaluation, Phase, Submission
@@ -1146,3 +1148,25 @@ def test_submission_limit_avoidance_users():
     relevant_users = form._get_submission_relevant_users(creator=user)
 
     assert {o1} == set(relevant_users)
+
+
+@pytest.mark.django_db
+def test_phase_update_form_gpu_limited_choices():
+    phase = PhaseFactory()
+    form = PhaseUpdateForm(
+        instance=phase, challenge=phase.challenge, user=UserFactory.build()
+    )
+
+    validators = form.fields["evaluation_requires_memory_gb"].validators
+
+    min_validator = next(
+        (v for v in validators if isinstance(v, MinValueValidator)), None
+    )
+    assert min_validator is not None
+    assert min_validator.limit_value == 4
+
+    max_validator = next(
+        (v for v in validators if isinstance(v, MaxValueValidator)), None
+    )
+    assert max_validator is not None
+    assert max_validator.limit_value == 32
