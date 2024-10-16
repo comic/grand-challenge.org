@@ -7,7 +7,7 @@
 {% load crispy_forms_tags %}
 
 {% block title %}
-    {{ object.pk }} - Ground truths - {{ block.super }}
+    {{ object.pk }} - Ground Truths - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -19,7 +19,7 @@
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
         <li class="breadcrumb-item">
             <a href="{% url 'evaluation:ground-truth-list' challenge_short_name=challenge.short_name slug=object.phase.slug %}">
-                Ground truths</a>
+                Ground Truths</a>
         </li>
         <li class="breadcrumb-item active"
             aria-current="page">{{ object.pk }}</li>
