@@ -3,7 +3,7 @@
 {% load url %}
 
 {% block title %}
-    {{ object|yesno:"Update,Create Archive" }} {% if object %} {{ object.title }} {% endif %} - Archives - {{ block.super }}
+    {{ object|yesno:"Update,Create Archive" }} {% if object %} - {{ object.title }} {% else %} - Archives {% endif %} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
