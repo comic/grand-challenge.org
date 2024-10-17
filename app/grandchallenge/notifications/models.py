@@ -458,7 +458,7 @@ class Notification(UUIDModel):
                     "upload",
                 ),
                 time=naturaltime(self.created),
-                message=self.message,
+                message=self.description,
             )
         elif (
             self.type

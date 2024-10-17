@@ -642,7 +642,14 @@ def test_add_file_to_object_updates_job_on_validation_fail(
     )
     assert Notification.objects.count() == 1
     notification = Notification.objects.first()
-    assert "Your file upload failed with the error" in notification.message
+    assert (
+        f"File for interface {ci.title} failed validation."
+        == notification.message
+    )
+    assert (
+        "JSON does not fulfill schema: instance is not of type 'array'"
+        in str(notification.description)
+    )
     assert notification.user == creator
     assert "some_async_task" not in str(callbacks)
 
