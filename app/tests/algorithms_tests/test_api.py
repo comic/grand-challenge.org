@@ -11,16 +11,25 @@ from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
     AlgorithmModelSerializer,
 )
-from grandchallenge.components.models import ComponentInterfaceValue
+from grandchallenge.components.models import (
+    ComponentInterfaceValue,
+    InterfaceKindChoices,
+)
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
     AlgorithmModelFactory,
 )
 from tests.cases_tests import RESOURCE_PATH
-from tests.cases_tests.factories import RawImageUploadSessionFactory
-from tests.components_tests.factories import ComponentInterfaceValueFactory
-from tests.factories import UserFactory
+from tests.cases_tests.factories import (
+    ImageFileFactoryWithMHDFile,
+    RawImageUploadSessionFactory,
+)
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
+from tests.factories import ImageFactory, UserFactory
 from tests.uploads_tests.factories import (
     UserUploadFactory,
     create_upload_from_file,
@@ -464,6 +473,49 @@ class TestJobCreationThroughAPI:
         assert (
             "Image imports should result in a single image"
             in job.error_message
+        )
+        # and no CIVs should have been created
+        assert ComponentInterfaceValue.objects.count() == 0
+
+    @override_settings(task_eager_propagates=True, task_always_eager=True)
+    def test_create_job_with_faulty_existing_image_input(
+        self,
+        client,
+        django_capture_on_commit_callbacks,
+        algorithm_with_multiple_inputs,
+    ):
+        ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.SEGMENTATION)
+        ci.overlay_segments = [
+            {"name": "s1", "visible": True, "voxel_value": 1}
+        ]
+        ci.save()
+        algorithm_with_multiple_inputs.algorithm.inputs.set([ci])
+
+        im = ImageFactory()
+        im.files.set([ImageFileFactoryWithMHDFile()])
+        assign_perm(
+            "cases.view_image", algorithm_with_multiple_inputs.editor, im
+        )
+
+        response = self.create_job(
+            client=client,
+            django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+            algorithm=algorithm_with_multiple_inputs.algorithm,
+            user=algorithm_with_multiple_inputs.editor,
+            inputs=[
+                {
+                    "interface": ci.slug,
+                    "image": im.api_url,
+                },
+            ],
+        )
+
+        assert response.status_code == 400
+        # no job is created, because validation of existing images happens on the serializer
+        assert Job.objects.count() == 0
+        assert (
+            "Image segments could not be determined, ensure the voxel values are integers and that it contains no more than 64 segments"
+            in str(response.content)
         )
         # and no CIVs should have been created
         assert ComponentInterfaceValue.objects.count() == 0
