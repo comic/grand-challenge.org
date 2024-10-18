@@ -1,26 +1,39 @@
 import pytest
 
+from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.utils.grand_challenge_forge import (
-    get_forge_json_description,
+    get_forge_algorithm_template_context,
+    get_forge_challenge_pack_context,
 )
 from grandchallenge.evaluation.utils import SubmissionKindChoices
+from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.factories import ArchiveFactory
-from tests.components_tests.factories import ComponentInterfaceFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceExampleValueFactory,
+    ComponentInterfaceFactory,
+)
 from tests.evaluation_tests.factories import PhaseFactory
 from tests.factories import ChallengeFactory
 
 
 @pytest.mark.django_db
-def test_get_forge_json_description():
+def test_get_challenge_pack_context():
     challenge = ChallengeFactory()
     inputs = [
-        ComponentInterfaceFactory(),
+        ComponentInterfaceFactory(kind=ComponentInterface.Kind.INTEGER),
         ComponentInterfaceFactory(),
     ]
     outputs = [
         ComponentInterfaceFactory(),
         ComponentInterfaceFactory(),
     ]
+
+    # Add an example
+    ComponentInterfaceExampleValueFactory(
+        interface=inputs[0],
+        value=87,
+    )
+
     archive = ArchiveFactory()
     phase_1 = PhaseFactory(
         challenge=challenge,
@@ -47,15 +60,15 @@ def test_get_forge_json_description():
         submission_kind=SubmissionKindChoices.CSV,  # Hence should not be included
     )
 
-    description = get_forge_json_description(challenge)
-    assert description["challenge"]["slug"] == challenge.slug
+    context = get_forge_challenge_pack_context(challenge)
+    assert context["challenge"]["slug"] == challenge.slug
 
-    assert len(description["challenge"]["archives"]) == 1
+    assert len(context["challenge"]["archives"]) == 1
     for key in ["slug", "url"]:
-        assert key in description["challenge"]["archives"][0]
+        assert key in context["challenge"]["archives"][0]
 
-    assert len(description["challenge"]["phases"]) == 2
-    for phase in description["challenge"]["phases"]:
+    assert len(context["challenge"]["phases"]) == 2
+    for phase in context["challenge"]["phases"]:
         for phase_key in [
             "slug",
             "archive",
@@ -63,7 +76,13 @@ def test_get_forge_json_description():
             "algorithm_outputs",
         ]:
             assert phase_key in phase
-            for ci_key in ["slug", "kind", "super_kind", "relative_path"]:
+            for ci_key in [
+                "slug",
+                "kind",
+                "super_kind",
+                "relative_path",
+                "example_value",
+            ]:
                 for component_interface in [
                     *phase["algorithm_inputs"],
                     *phase["algorithm_outputs"],
@@ -72,17 +91,59 @@ def test_get_forge_json_description():
 
     # Quick check on CI input and outputs
     for index, ci in enumerate(
-        description["challenge"]["phases"][0]["algorithm_inputs"]
+        context["challenge"]["phases"][0]["algorithm_inputs"]
     ):
         assert inputs[index].slug == ci["slug"]
 
+    # Test assigned example value
+    assert (
+        context["challenge"]["phases"][0]["algorithm_inputs"][0][
+            "example_value"
+        ]
+        == 87
+    )
+
     for index, ci in enumerate(
-        description["challenge"]["phases"][0]["algorithm_outputs"]
+        context["challenge"]["phases"][0]["algorithm_outputs"]
     ):
         assert outputs[index].slug == ci["slug"]
 
-    description = get_forge_json_description(challenge, phase_pks=[phase_1.pk])
-    assert len(description["challenge"]["phases"]) == 1
+    context = get_forge_challenge_pack_context(
+        challenge, phase_pks=[phase_1.pk]
+    )
+    assert len(context["challenge"]["phases"]) == 1
 
-    description = get_forge_json_description(challenge, phase_pks=[phase_3.pk])
-    assert len(description["challenge"]["phases"]) == 0
+    context = get_forge_challenge_pack_context(
+        challenge, phase_pks=[phase_3.pk]
+    )
+    assert len(context["challenge"]["phases"]) == 0
+
+
+@pytest.mark.django_db
+def test_get_algorithm_template_context():
+    algorithm = AlgorithmFactory()
+
+    inputs = [
+        ComponentInterfaceFactory(kind=ComponentInterface.Kind.INTEGER),
+    ]
+    algorithm.inputs.set(inputs)
+
+    outputs = [
+        ComponentInterfaceFactory(),
+        ComponentInterfaceFactory(),
+    ]
+    algorithm.outputs.set(outputs)
+
+    context = get_forge_algorithm_template_context(algorithm=algorithm)
+
+    for key in ["title", "url", "inputs", "outputs"]:
+        assert key in context["algorithm"]
+
+    for index, ci in enumerate(context["algorithm"]["inputs"]):
+        assert inputs[index].slug == ci["slug"]
+
+    for index, ci in enumerate(context["algorithm"]["outputs"]):
+        assert outputs[index].slug == ci["slug"]
+
+    # Test adding default examples
+    assert context["algorithm"]["inputs"][0]["example_value"] == 42

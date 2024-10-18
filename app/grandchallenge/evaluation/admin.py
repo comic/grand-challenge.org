@@ -17,7 +17,7 @@ from grandchallenge.core.admin import (
 )
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.utils.grand_challenge_forge import (
-    get_forge_json_description,
+    get_forge_challenge_pack_context,
 )
 from grandchallenge.evaluation.models import (
     CombinedLeaderboard,
@@ -109,7 +109,7 @@ class PhaseAdmin(admin.ModelAdmin):
 
     @staticmethod
     def challenge_forge_json(obj):
-        json_desc = get_forge_json_description(
+        json_desc = get_forge_challenge_pack_context(
             challenge=obj.challenge,
             phase_pks=[obj.pk],
         )
