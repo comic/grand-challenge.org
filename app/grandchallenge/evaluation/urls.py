@@ -23,6 +23,7 @@ from grandchallenge.evaluation.views import (
     MethodList,
     MethodUpdate,
     PhaseAlgorithmCreate,
+    PhaseArchiveInfo,
     PhaseCreate,
     PhaseUpdate,
     SubmissionCreate,
@@ -73,6 +74,11 @@ urlpatterns = [
         "<slug>/algorithms/create/",
         PhaseAlgorithmCreate.as_view(),
         name="phase-algorithm-create",
+    ),
+    path(
+        "<slug>/linked-archive/",
+        PhaseArchiveInfo.as_view(),
+        name="phase-archive-info",
     ),
     path(
         "<slug>/ground-truths/",
