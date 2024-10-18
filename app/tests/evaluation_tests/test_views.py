@@ -1672,16 +1672,16 @@ def test_submission_create_sets_limits_correctly_with_predictions(client):
 
 @pytest.mark.django_db
 def test_phase_archive_info_permissions(client):
-    phase = PhaseFactory()
+    phase1, phase2 = PhaseFactory.create_batch(2, title="Test")
     editor, user = UserFactory.create_batch(2)
-    phase.challenge.add_admin(editor)
+    phase1.challenge.add_admin(editor)
 
     response = get_view_for_user(
         client=client,
         viewname="evaluation:phase-archive-info",
         reverse_kwargs={
-            "slug": phase.slug,
-            "challenge_short_name": phase.challenge.short_name,
+            "slug": phase2.slug,
+            "challenge_short_name": phase2.challenge.short_name,
         },
         user=user,
     )
@@ -1691,8 +1691,30 @@ def test_phase_archive_info_permissions(client):
         client=client,
         viewname="evaluation:phase-archive-info",
         reverse_kwargs={
-            "slug": phase.slug,
-            "challenge_short_name": phase.challenge.short_name,
+            "slug": phase2.slug,
+            "challenge_short_name": phase2.challenge.short_name,
+        },
+        user=editor,
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        client=client,
+        viewname="evaluation:phase-archive-info",
+        reverse_kwargs={
+            "slug": phase1.slug,
+            "challenge_short_name": phase1.challenge.short_name,
+        },
+        user=user,
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        client=client,
+        viewname="evaluation:phase-archive-info",
+        reverse_kwargs={
+            "slug": phase1.slug,
+            "challenge_short_name": phase1.challenge.short_name,
         },
         user=editor,
     )
