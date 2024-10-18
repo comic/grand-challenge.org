@@ -2362,7 +2362,6 @@ class CIVForObjectMixin:
                             description=f"Validation for interface {ci.slug} failed: {format_validation_error_message(error=e)}",
                             actor=user,
                         )
-                        logger.warning("Sending notification")
 
                     return
 
