@@ -27,6 +27,7 @@ from storages.utils import clean_name
 
 from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import protected_s3_storage
+from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.notifications.models import Notification, NotificationType
@@ -129,7 +130,14 @@ class RawImageUploadSession(UUIDModel):
                 f"{n_errors} file{pluralize(n_errors)} could not be imported"
             )
 
-    def update_status(self, *, status, error_message=None, linked_object=None):
+    def update_status(
+        self,
+        *,
+        status,
+        error_message=None,
+        detailed_error_message=None,
+        linked_object=None,
+    ):
         self.status = status
         self.error_message = (
             error_message if error_message else self.default_error_message
@@ -137,9 +145,20 @@ class RawImageUploadSession(UUIDModel):
         self.save()
 
         if self.error_message and self.creator:
+            if detailed_error_message:
+                notification_description = oxford_comma(
+                    [
+                        f"Image validation for {key} failed with error: {val}. "
+                        for key, val in detailed_error_message.items()
+                    ]
+                )
+            else:
+                notification_description = error_message
+
             Notification.send(
                 kind=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
                 message=error_message,
+                description=notification_description,
                 action_object=self,
             )
 
@@ -149,7 +168,9 @@ class RawImageUploadSession(UUIDModel):
             and hasattr(linked_object, "update_status")
         ):
             linked_object.update_status(
-                status=linked_object.CANCELLED, error_message=error_message
+                status=linked_object.CANCELLED,
+                error_message=error_message,
+                detailed_error_message=detailed_error_message,
             )
 
     def process_images(
