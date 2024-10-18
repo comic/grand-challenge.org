@@ -1,0 +1,53 @@
+{% extends "pages/challenge_settings_base.html" %}
+{% load url %}
+
+{% block title %}
+    Linked archive for {{ phase.title }} - {% firstof challenge.title challenge.short_name %} - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Linked archive for {{ phase.title }}</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+
+    <h2 class="mb-3">Linked archive for {{ phase.title }}</h2>
+
+    <p>The (hidden) input data for this phase needs to be uploaded to an archive on Grand Challenge.</p>
+
+    {% if phase.archive and phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM and not phase.external_evaluation %}
+        <p>This phase is linked to archive <a href="{{ phase.archive.get_absolute_url }}">{{ phase.archive }}</a>.</p>
+
+        {% if phase.algorithm_inputs.all %}
+            <p> Each item in the archive needs to contain data for the following interfaces, which are defined as algorithm inputs:</p>
+            <ul>
+                {% for input in phase.algorithm_inputs.all %}
+                    <li>{{ input }}</li>
+                {% endfor %}
+            </ul>
+            <p>
+                For each submission, {{ phase.count_valid_archive_items }}
+                algorithm job{{ phase.count_valid_archive_items|pluralize }} will be created
+                from the {{ phase.count_valid_archive_items }} valid item{{ phase.count_valid_archive_items|pluralize }}.
+            </p>
+            <a class="btn btn-primary" href="{% url 'archives:items-list' slug=phase.archive.slug %}"> <i class="fa fa-upload mr-1"></i> Upload data to {{ phase.archive }}</a>
+        {% else %}
+            <p> Before you can upload data to your archive, <b>you need to define the algorithm inputs and outputs</b>. Contact <a href="mailto:support@grand-challenge.org"> Grand Challenge Support</a> for help with getting this set up.</p>
+        {% endif %}
+
+    {% elif phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM and not phase.external_evaluation and not phase.archive %}
+        <p>This phase <b>does not have an archive</b> linked to it yet.</p>
+        <p>Contact <a href="mailto:support@grand-challenge.org"> Grand Challenge Support</a> for help with getting this set up.</p>
+    {% else %}
+        <p>This phase does not require a linked archive.</p>
+    {% endif %}
+
+{% endblock %}

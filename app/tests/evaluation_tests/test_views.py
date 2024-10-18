@@ -1668,3 +1668,32 @@ def test_submission_create_sets_limits_correctly_with_predictions(client):
 
     assert submission.algorithm_requires_gpu_type == ""
     assert submission.algorithm_requires_memory_gb == 0
+
+
+@pytest.mark.django_db
+def test_phase_archive_info_permissions(client):
+    phase = PhaseFactory()
+    editor, user = UserFactory.create_batch(2)
+    phase.challenge.add_admin(editor)
+
+    response = get_view_for_user(
+        client=client,
+        viewname="evaluation:phase-archive-info",
+        reverse_kwargs={
+            "slug": phase.slug,
+            "challenge_short_name": phase.challenge.short_name,
+        },
+        user=user,
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        client=client,
+        viewname="evaluation:phase-archive-info",
+        reverse_kwargs={
+            "slug": phase.slug,
+            "challenge_short_name": phase.challenge.short_name,
+        },
+        user=editor,
+    )
+    assert response.status_code == 200
