@@ -5,7 +5,6 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import (
-    AccessMixin,
     PermissionRequiredMixin,
     UserPassesTestMixin,
 )
@@ -24,7 +23,6 @@ from django.views.generic import (
     FormView,
     ListView,
     RedirectView,
-    TemplateView,
     UpdateView,
 )
 from guardian.mixins import LoginRequiredMixin
@@ -1178,12 +1176,16 @@ class EvaluationGroundTruthVersionManagement(
 
 
 class PhaseArchiveInfo(
-    LoginRequiredMixin, CachedPhaseMixin, AccessMixin, TemplateView
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
 ):
-    template_name = "evaluation/phase-archive-info.html"
+    model = Phase
+    permission_required = "evaluation.change_phase"
+    raise_exception = True
+    template_name = "evaluation/phase_archive_info.html"
 
-    def dispatch(self, request, *args, **kwargs):
-        if request.user.has_perm("evaluation.change_phase", self.phase):
-            return super().dispatch(request, *args, **kwargs)
-        else:
-            return self.handle_no_permission()
+    def get_object(self, queryset=None):
+        return get_object_or_404(
+            Phase,
+            challenge=self.request.challenge,
+            slug=self.kwargs["slug"],
+        )
