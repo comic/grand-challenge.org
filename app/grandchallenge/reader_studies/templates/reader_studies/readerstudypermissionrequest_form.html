@@ -4,13 +4,10 @@
 {% load guardian_tags %}
 
 {% block title %}
-    {% get_obj_perms request.user for reader_study as "reader_study_perms" %}
-    {% if "change_readerstudy" in reader_study_perms %}Review access request{% else %}Request access{% endif %}
-    - {{ reader_study.title }} - {{ block.super }}
+    {{ permission_request|yesno:"Access Request,Request Access" }} - {{ reader_study.title }} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
-    {% get_obj_perms request.user for reader_study as "reader_study_perms" %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'reader-studies:list' %}">Reader Studies</a>
         </li>
@@ -19,11 +16,7 @@
         </a></li>
         <li class="breadcrumb-item active"
             aria-current="page">
-            {% if "change_readerstudy" in reader_study_perms %}
-                Review access request
-            {% else %}
-                Request access
-            {% endif %}
+            {{ permission_request|yesno:"Access Request,Request Access" }}
         </li>
     </ol>
 {% endblock %}

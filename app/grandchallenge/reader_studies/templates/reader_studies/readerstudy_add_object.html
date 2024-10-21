@@ -3,7 +3,7 @@
 {% load static %}
 
 {% block title %}
-    Add {{ type_to_add }} - {{ object }} - {{ block.super }}
+    Add {{ type_to_add|title }} - {{ object }} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -11,7 +11,7 @@
         <li class="breadcrumb-item"><a href="{% url 'reader-studies:list' %}">Reader
             Studies</a></li>
         <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object }}</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Add {{ type_to_add }}
+        <li class="breadcrumb-item active" aria-current="page">Add {{ type_to_add|title }}
         </li>
     </ol>
 {% endblock %}
