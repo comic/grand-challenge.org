@@ -101,6 +101,12 @@ class MarkdownEditorFullPageWidget(MarkdownEditorInlineWidget):
 
     template_name = "markdownx/full_page_widget.html"
 
+    def __init__(self, attrs=None):
+        default_attrs = {"rows": "40"}
+        if attrs:
+            default_attrs.update(attrs)
+        super().__init__(default_attrs)
+
     class Media:
         js = [
             "js/markdownx_full_page.js",
