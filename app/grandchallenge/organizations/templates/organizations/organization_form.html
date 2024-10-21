@@ -3,7 +3,7 @@
 {% load crispy_forms_tags %}
 
 {% block title %}
-    {{ object|yesno:"Update,Create" }} -{% if object %} {{ object.title }} -{% endif %} {{ block.super }}
+    {{ object|yesno:"Update,Create Organization" }} {% if object %} - {{ object.title }} {% else %} - Organizations {% endif %} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -12,7 +12,7 @@
         {% if object %}
             <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object.title }}</a></li>
         {% endif %}
-        <li class="breadcrumb-item active" aria-current="page">{{ object|yesno:"Update,Create" }}</li>
+        <li class="breadcrumb-item active" aria-current="page">{{ object|yesno:"Update,Create Organization" }}</li>
     </ol>
 {% endblock %}
 
