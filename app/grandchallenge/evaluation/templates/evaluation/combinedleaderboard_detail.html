@@ -6,7 +6,7 @@
 {% load profiles %}
 
 {% block title %}
-    {{ object.title|title }} - Combined Leaderboards - {{ block.super }}
+    {{ object.title|title }} - Leaderboards - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -17,7 +17,7 @@
         <li class="breadcrumb-item"><a
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
         <li class="breadcrumb-item"><a
-                href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">Combined Leaderboards</a></li>
+                href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">Leaderboards</a></li>
         <li class="breadcrumb-item active"
             aria-current="page">{{ object.title|title }}</li>
     </ol>
