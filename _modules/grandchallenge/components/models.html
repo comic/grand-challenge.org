@@ -117,11 +117,12 @@
 <div class="viewcode-block" id="GPUTypeChoices">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.GPUTypeChoices">[docs]</a>
 <span class="k">class</span> <span class="nc">GPUTypeChoices</span><span class="p">(</span><span class="n">TextChoices</span><span class="p">):</span>
-    <span class="n">A100</span> <span class="o">=</span> <span class="s2">&quot;A100&quot;</span>
-    <span class="n">A10G</span> <span class="o">=</span> <span class="s2">&quot;A10G&quot;</span>
-    <span class="n">V100</span> <span class="o">=</span> <span class="s2">&quot;V100&quot;</span>
-    <span class="n">K80</span> <span class="o">=</span> <span class="s2">&quot;K80&quot;</span>
-    <span class="n">T4</span> <span class="o">=</span> <span class="s2">&quot;T4&quot;</span></div>
+    <span class="n">NO_GPU</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;No GPU&quot;</span><span class="p">)</span>
+    <span class="n">A100</span> <span class="o">=</span> <span class="s2">&quot;A100&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;NVIDIA A100 Tensor Core GPU&quot;</span><span class="p">)</span>
+    <span class="n">A10G</span> <span class="o">=</span> <span class="s2">&quot;A10G&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;NVIDIA A10G Tensor Core GPU&quot;</span><span class="p">)</span>
+    <span class="n">V100</span> <span class="o">=</span> <span class="s2">&quot;V100&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;NVIDIA V100 Tensor Core GPU&quot;</span><span class="p">)</span>
+    <span class="n">K80</span> <span class="o">=</span> <span class="s2">&quot;K80&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;NVIDIA K80 GPU&quot;</span><span class="p">)</span>
+    <span class="n">T4</span> <span class="o">=</span> <span class="s2">&quot;T4&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;NVIDIA T4 Tensor Core GPU&quot;</span><span class="p">)</span></div>
 
 
 
@@ -1993,15 +1994,6 @@
         <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The number of bytes stored in the registry&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">requires_gpu</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="n">desired_gpu_type</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
-        <span class="n">max_length</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
-        <span class="n">choices</span><span class="o">=</span><span class="n">GPUTypeChoices</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="n">GPUTypeChoices</span><span class="o">.</span><span class="n">T4</span><span class="p">,</span>
-        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;If this image requires a GPU, what GPU type would it like to use?&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">requires_memory_gb</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
-
     <span class="n">comment</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span>
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
@@ -2026,13 +2018,6 @@
             <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
             <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
         <span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">requires_gpu_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">requires_gpu</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">desired_gpu_type</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;&quot;</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">linked_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>

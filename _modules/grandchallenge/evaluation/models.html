@@ -556,6 +556,25 @@
             <span class="p">),</span>
         <span class="p">],</span>
     <span class="p">)</span>
+    <span class="n">evaluation_requires_gpu_type</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">GPUTypeChoices</span><span class="o">.</span><span class="n">NO_GPU</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="n">GPUTypeChoices</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;What GPU to attach to this phases evaluations. &quot;</span>
+            <span class="s2">&quot;Note that the GPU attached to any algorithm inference jobs &quot;</span>
+            <span class="s2">&quot;is determined by the submitted algorithm.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">evaluation_requires_memory_gb</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;How much memory to assign to this phases evaluations. &quot;</span>
+            <span class="s2">&quot;Note that the memory assigned to any algorithm inference jobs &quot;</span>
+            <span class="s2">&quot;is determined by the submitted algorithm.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
     <span class="n">public</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
