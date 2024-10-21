@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
             model_name="algorithm",
             name="job_requires_memory_gb",
             field=models.PositiveSmallIntegerField(
-                default=16,
+                default=8,
                 help_text="How much memory to assign to this algorithms inference jobs",
             ),
         ),
