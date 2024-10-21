@@ -207,7 +207,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         help_text="What GPU to attach to this algorithms inference jobs",
     )
     job_requires_memory_gb = models.PositiveSmallIntegerField(
-        default=16,
+        default=8,
         help_text="How much memory to assign to this algorithms inference jobs",
     )
     average_duration = models.DurationField(
