@@ -15,11 +15,12 @@ class Migration(migrations.Migration):
             name="desired_gpu_type",
             field=models.CharField(
                 choices=[
-                    ("A100", "A100"),
-                    ("A10G", "A10G"),
-                    ("V100", "V100"),
-                    ("K80", "K80"),
-                    ("T4", "T4"),
+                    ("", "No GPU"),
+                    ("A100", "NVIDIA A100 Tensor Core GPU"),
+                    ("A10G", "NVIDIA A10G Tensor Core GPU"),
+                    ("V100", "NVIDIA V100 Tensor Core GPU"),
+                    ("K80", "NVIDIA K80 GPU"),
+                    ("T4", "NVIDIA T4 Tensor Core GPU"),
                 ],
                 default="T4",
                 help_text="If this image requires a GPU, what GPU type would it like to use?",
