@@ -2,7 +2,7 @@
 {% load meta_attr %}
 
 {% block title %}
-    Jobs - {{ object.pk }} - {{ block.super }}
+    Results - {{ object.pk }} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -11,7 +11,7 @@
         <li class="breadcrumb-item"><a href="{{ object.base_object.get_absolute_url }}">{{ object.base_object }}</a></li>
         <li class="breadcrumb-item"><a href="{{ object.base_object.civ_sets_list_url }}">{{ object.base_object.civ_set_model|verbose_name_plural|title }}</a></li>
         <li class="breadcrumb-item"><a href="{{ object.get_absolute_url}}">{{ object.pk }}</a></li>
-         <li class="breadcrumb-item active" aria-current="page">Jobs</li>
+         <li class="breadcrumb-item active" aria-current="page">Results</li>
     </ol>
 {% endblock %}
 
