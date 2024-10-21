@@ -19,6 +19,7 @@ from panimg.models import PanImgFile, PanImgResult
 
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.components.backends.utils import safe_extract
+from grandchallenge.components.models import ComponentInterface
 from grandchallenge.components.tasks import (
     get_model_instance,
     lock_model_instance,
@@ -100,6 +101,7 @@ def build_images(  # noqa:C901
     linked_app_label=None,
     linked_model_name=None,
     linked_object_pk=None,
+    linked_interface_slug=None,
 ):
     """
     Task which analyzes an upload session and attempts to extract and store
@@ -125,6 +127,8 @@ def build_images(  # noqa:C901
         The app_label of the linked object.
     linked_model_name:
         The model_name of the linked object.
+    linked_interface_slug:
+        The slug of the linked interface.
     """
 
     upload_session = lock_model_instance(
@@ -132,6 +136,8 @@ def build_images(  # noqa:C901
         app_label=RawImageUploadSession._meta.app_label,
         model_name=RawImageUploadSession._meta.model_name,
     )
+    if linked_interface_slug:
+        ci = ComponentInterface.objects.get(slug=linked_interface_slug)
 
     if linked_object_pk:
         linked_object = get_model_instance(
@@ -159,20 +165,43 @@ def build_images(  # noqa:C901
         _delete_session_files(upload_session=upload_session)
         upload_session.update_status(
             status=RawImageUploadSession.FAILURE,
-            error_message=str(e),
+            error_message=(
+                "One or more of the inputs failed validation."
+                if linked_object
+                else str(e)
+            ),
+            detailed_error_message=(
+                {ci.title: str(e)} if linked_object else None
+            ),
             linked_object=linked_object,
         )
     except (SoftTimeLimitExceeded, TimeLimitExceeded):
         upload_session.update_status(
             status=RawImageUploadSession.FAILURE,
-            error_message="Time limit exceeded",
+            error_message=(
+                "One or more of the inputs failed validation."
+                if linked_object
+                else "Time limit exceeded"
+            ),
+            detailed_error_message=(
+                {ci.title: "Time limit exceeded"} if linked_object else None
+            ),
             linked_object=linked_object,
         )
     except Exception:
         _delete_session_files(upload_session=upload_session)
         upload_session.update_status(
             status=RawImageUploadSession.FAILURE,
-            error_message="An unexpected error occurred",
+            error_message=(
+                "One or more of the inputs failed validation."
+                if linked_object
+                else "An unexpected error occurred"
+            ),
+            detailed_error_message=(
+                {ci.title: "An unexpected error occurred"}
+                if linked_object
+                else None
+            ),
             linked_object=linked_object,
         )
         logger.error("An unexpected error occurred", exc_info=True)

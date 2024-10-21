@@ -1361,8 +1361,7 @@ class TestJobCreateView:
         # but in cancelled state and with an error message
         assert job.status == Job.CANCELLED
         assert (
-            f"File for interface {algorithm_with_multiple_inputs.ci_json_file.title} failed validation."
-            in job.error_message
+            "One or more of the inputs failed validation." == job.error_message
         )
         assert job.detailed_error_message == {
             algorithm_with_multiple_inputs.ci_json_file.title: "JSON does not fulfill schema: instance is not of type 'array'"
@@ -1434,8 +1433,10 @@ class TestJobCreateView:
         # but in cancelled state and with an error message
         assert job.status == Job.CANCELLED
         assert (
-            "Image imports should result in a single image"
-            in job.error_message
+            "One or more of the inputs failed validation." == job.error_message
+        )
+        assert "Image imports should result in a single image" in str(
+            job.detailed_error_message
         )
         # and no CIVs should have been created
         assert ComponentInterfaceValue.objects.count() == 0
@@ -1472,7 +1473,7 @@ class TestJobCreateView:
         # but in cancelled state and with an error message
         assert job.status == Job.CANCELLED
         assert (
-            f"Validation for interface {ci.slug} failed." == job.error_message
+            "One or more of the inputs failed validation." == job.error_message
         )
         assert (
             "Image segments could not be determined, ensure the voxel values are integers and that it contains no more than 64 segments"

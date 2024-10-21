@@ -66,7 +66,6 @@ from grandchallenge.core.validators import (
     JSONValidator,
     MimeTypeValidator,
 )
-from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.validators import validate_gzip_mimetype
 from grandchallenge.workstation_configs.models import (
@@ -1504,7 +1503,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
     runtime_metrics = models.JSONField(default=dict, editable=False)
     error_message = models.CharField(max_length=1024, default="")
     detailed_error_message = models.JSONField(
-        blank=True, null=True, default=None
+        blank=True, null=True, default=dict
     )
     started_at = models.DateTimeField(null=True)
     completed_at = models.DateTimeField(null=True)
@@ -2296,23 +2295,11 @@ class CIVForObjectMixin:
                 if new_value in ci.default_field.empty_values:
                     self.remove_civ(civ=current_civ)
                 else:
-                    if hasattr(self, "update_status"):
-                        self.update_status(
-                            status=self.CANCELLED,
-                            error_message=f"Validation for interface {ci.slug} failed.",
-                            detailed_error_message={
-                                ci.title: format_validation_error_message(
-                                    error=e
-                                )
-                            },
-                        )
-                    else:
-                        Notification.send(
-                            kind=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
-                            message=f"Validation for interface {ci.slug} failed.",
-                            description=f"Validation for interface {ci.slug} failed: {format_validation_error_message(error=e)}",
-                            actor=user,
-                        )
+                    self.handle_civ_validation_error(
+                        interface=ci,
+                        error_message=format_validation_error_message(error=e),
+                        user=user,
+                    )
                     return
 
             except RuntimeError as e:
@@ -2344,25 +2331,11 @@ class CIVForObjectMixin:
                     civ.full_clean()
                 except ValidationError as e:
                     civ.delete()
-
-                    if hasattr(self, "update_status"):
-                        self.update_status(
-                            status=self.CANCELLED,
-                            error_message=f"Validation for interface {ci.slug} failed.",
-                            detailed_error_message={
-                                ci.title: format_validation_error_message(
-                                    error=e
-                                )
-                            },
-                        )
-                    else:
-                        Notification.send(
-                            kind=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
-                            message=f"Validation for interface {ci.slug} failed.",
-                            description=f"Validation for interface {ci.slug} failed: {format_validation_error_message(error=e)}",
-                            actor=user,
-                        )
-
+                    self.handle_civ_validation_error(
+                        interface=ci,
+                        error_message=format_validation_error_message(error=e),
+                        user=user,
+                    )
                     return
 
             try:
@@ -2394,6 +2367,7 @@ class CIVForObjectMixin:
                 linked_app_label=self._meta.app_label,
                 linked_model_name=self._meta.model_name,
                 linked_object_pk=self.pk,
+                linked_interface_slug=ci.slug,
                 linked_task=add_image_to_object.signature(
                     kwargs={
                         "app_label": self._meta.app_label,
@@ -2458,16 +2432,28 @@ class CIVForObjectMixin:
         except ObjectDoesNotExist:
             return None
         except MultipleObjectsReturned as e:
-            if user_upload:
-                user_upload.handle_file_validation_failure(
-                    error_message="An unexpected error occurred"
-                )
-            elif upload_session:
-                upload_session.update_status(
-                    error_message="An unexpected error occurred",
-                    status=RawImageUploadSession.FAILURE,
-                )
+            self.handle_civ_validation_error(
+                interface=interface,
+                error_message="An unexpected error occurred",
+                user=user_upload.creator if user_upload else None,
+                upload_session=upload_session,
+            )
             raise e
+
+    def handle_civ_validation_error(
+        self, *, interface, error_message, user=None, upload_session=None
+    ):
+        if upload_session:
+            upload_session.update_status(
+                error_message="One or more of the inputs failed validation.",
+                detailed_error_message={interface.title: error_message},
+                status=RawImageUploadSession.FAILURE,
+                linked_object=self,
+            )
+        else:
+            self.handle_civ_error(
+                interface=interface, error_message=error_message, user=user
+            )
 
 
 class InterfacesAndValues(NamedTuple):

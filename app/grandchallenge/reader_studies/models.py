@@ -57,6 +57,7 @@ from grandchallenge.hanging_protocols.models import (
     ViewportNames,
 )
 from grandchallenge.modalities.models import ImagingModality
+from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
 from grandchallenge.reader_studies.metrics import accuracy_score
@@ -938,6 +939,14 @@ class DisplaySet(
 
     def get_civ_for_interface(self, interface):
         return self.values.get(interface=interface)
+
+    def handle_civ_error(self, interface, error_message, user=None):
+        Notification.send(
+            kind=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
+            message=f"Validation for interface {interface.title} failed.",
+            description=f"Validation for interface {interface.title} failed: {error_message}",
+            actor=user,
+        )
 
 
 class DisplaySetUserObjectPermission(UserObjectPermissionBase):

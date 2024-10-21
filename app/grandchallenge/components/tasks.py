@@ -1192,10 +1192,10 @@ def add_image_to_object(
     try:
         image = Image.objects.get(origin_id=upload_session_pk)
     except (Image.DoesNotExist, Image.MultipleObjectsReturned):
-        upload_session.update_status(
-            status=RawImageUploadSession.FAILURE,
-            error_message=f"File for interface {interface.title} failed validation: Image imports should result in a single image",
-            linked_object=object,
+        object.handle_civ_validation_error(
+            interface=interface,
+            error_message="Image imports should result in a single image",
+            upload_session=upload_session,
         )
         return
 
@@ -1211,20 +1211,17 @@ def add_image_to_object(
         try:
             civ.full_clean()
         except ValidationError as e:
-            upload_session.update_status(
-                status=RawImageUploadSession.FAILURE,
-                error_message=f"File for interface {interface.title} failed validation.",
-                detailed_error_message={
-                    interface.title: format_validation_error_message(error=e)
-                },
-                linked_object=object,
+            object.handle_civ_validation_error(
+                interface=interface,
+                error_message=format_validation_error_message(error=e),
+                upload_session=upload_session,
             )
             return
         except Exception as e:
-            upload_session.update_status(
-                status=RawImageUploadSession.FAILURE,
+            object.handle_civ_validation_error(
+                interface=interface,
                 error_message="An unexpected error occurred",
-                linked_object=object,
+                upload_session=upload_session,
             )
             logger.error(e, exc_info=True)
             return
@@ -1277,17 +1274,17 @@ def add_file_to_object(
         civ.save()
         user_upload.copy_object(to_field=civ.file)
     except ValidationError as e:
-        user_upload.handle_file_validation_failure(
-            error_message=f"File for interface {interface.title} failed validation.",
-            detailed_error_message={
-                interface.title: format_validation_error_message(error=e)
-            },
-            linked_object=object,
+        object.handle_civ_validation_error(
+            interface=interface,
+            error_message=format_validation_error_message(e),
+            user=user_upload.creator,
         )
         return
     except Exception as e:
-        user_upload.handle_file_validation_failure(
-            error_message="An unexpected error occurred", linked_object=object
+        object.handle_civ_validation_error(
+            interface=interface,
+            error_message="An unexpected error occurred",
+            user=user_upload.creator,
         )
         logger.error(e, exc_info=True)
         return

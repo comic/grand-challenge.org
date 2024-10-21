@@ -1052,6 +1052,15 @@ class Job(CIVForObjectMixin, ComponentJob):
                     linked_task=linked_task,
                 )
 
+    def handle_civ_error(self, interface, error_message, user=None):
+        detailed_error_message = self.detailed_error_message
+        detailed_error_message[interface.title] = error_message
+        self.update_status(
+            status=self.CANCELLED,
+            error_message="One or more of the inputs failed validation.",
+            detailed_error_message=detailed_error_message,
+        )
+
     @property
     def is_editable(self):
         # staying with display set and archive item terminology here

@@ -139,22 +139,25 @@ class RawImageUploadSession(UUIDModel):
         linked_object=None,
     ):
         self.status = status
+
+        if detailed_error_message:
+            notification_description = oxford_comma(
+                [
+                    f"Image validation for interface {key} failed with error: {val}. "
+                    for key, val in detailed_error_message.items()
+                ]
+            )
+        else:
+            notification_description = error_message
+
         self.error_message = (
-            error_message if error_message else self.default_error_message
+            notification_description
+            if notification_description
+            else self.default_error_message
         )
         self.save()
 
         if self.error_message and self.creator:
-            if detailed_error_message:
-                notification_description = oxford_comma(
-                    [
-                        f"Image validation for {key} failed with error: {val}. "
-                        for key, val in detailed_error_message.items()
-                    ]
-                )
-            else:
-                notification_description = error_message
-
             Notification.send(
                 kind=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
                 message=error_message,
@@ -167,10 +170,14 @@ class RawImageUploadSession(UUIDModel):
             and linked_object
             and hasattr(linked_object, "update_status")
         ):
+            detailed_error_message_dict = linked_object.detailed_error_message
+            for key, val in detailed_error_message.items():
+                detailed_error_message_dict[key] = val
+
             linked_object.update_status(
                 status=linked_object.CANCELLED,
                 error_message=error_message,
-                detailed_error_message=detailed_error_message,
+                detailed_error_message=detailed_error_message_dict,
             )
 
     def process_images(
@@ -179,6 +186,7 @@ class RawImageUploadSession(UUIDModel):
         linked_app_label=None,
         linked_model_name=None,
         linked_object_pk=None,
+        linked_interface_slug=None,
         linked_task=None,
     ):
         """
@@ -207,6 +215,7 @@ class RawImageUploadSession(UUIDModel):
                 "linked_app_label": linked_app_label,
                 "linked_model_name": linked_model_name,
                 "linked_object_pk": linked_object_pk,
+                "linked_interface_slug": linked_interface_slug,
             }
         )
         if linked_task is not None:
