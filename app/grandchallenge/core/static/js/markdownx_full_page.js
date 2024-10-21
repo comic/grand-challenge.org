@@ -1,7 +1,7 @@
 // Sync the height of the preview element to the height of the editor element.
 // This lets the user adjust the height of both elements by resizing the editor.
 document.addEventListener("DOMContentLoaded", function() {
-    const elements = document.getElementsByClassName("markdownx");
+    const elements = document.getElementsByClassName("markdownx-full-page");
     for (const element of elements) {
         const editor = element.querySelector(".markdownx-editor");
         const preview = element.querySelector(".markdownx-preview");
