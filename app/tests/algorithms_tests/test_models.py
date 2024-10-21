@@ -1000,10 +1000,10 @@ def test_inputs_complete():
 @pytest.mark.parametrize(
     "requires_gpu_type,requires_memory_gb,time_limit,expected_credits",
     (
-        ("", 4, 60, 20),
-        ("", 32, 3600, 60),
-        ("", 32, 1800, 30),
-        ("", 16, 3600, 30),
+        (GPUTypeChoices.NO_GPU, 4, 60, 20),
+        (GPUTypeChoices.NO_GPU, 32, 3600, 60),
+        (GPUTypeChoices.NO_GPU, 32, 1800, 30),
+        (GPUTypeChoices.NO_GPU, 16, 3600, 30),
         (GPUTypeChoices.V100, 32, 3600, 460),
         (GPUTypeChoices.T4, 32, 3600, 120),
         (GPUTypeChoices.T4, 32, 1800, 60),
@@ -1024,15 +1024,14 @@ def test_credits_consumed(
         is_in_registry=True,
         is_desired_version=True,
         algorithm__time_limit=time_limit,
-        requires_gpu=bool(requires_gpu_type),
-        desired_gpu_type=requires_gpu_type,
-        requires_memory_gb=requires_memory_gb,
+        algorithm__job_requires_gpu_type=requires_gpu_type,
+        algorithm__job_requires_memory_gb=requires_memory_gb,
     )
 
     job = AlgorithmJobFactory(
         algorithm_image=ai,
-        requires_gpu_type=ai.requires_gpu_type,
-        requires_memory_gb=ai.requires_memory_gb,
+        requires_gpu_type=ai.algorithm.job_requires_gpu_type,
+        requires_memory_gb=ai.algorithm.job_requires_memory_gb,
         time_limit=ai.algorithm.time_limit,
     )
 
@@ -1059,14 +1058,12 @@ def test_min_credits_per_job(min_credits, time_limit, expected_credits):
         is_desired_version=True,
         algorithm__time_limit=time_limit,
         algorithm__minimum_credits_per_job=min_credits,
-        requires_gpu=False,
-        requires_memory_gb=4,
     )
 
     job = AlgorithmJobFactory(
         algorithm_image=ai,
-        requires_gpu_type=ai.requires_gpu_type,
-        requires_memory_gb=ai.requires_memory_gb,
+        requires_gpu_type=ai.algorithm.job_requires_gpu_type,
+        requires_memory_gb=ai.algorithm.job_requires_memory_gb,
         time_limit=ai.algorithm.time_limit,
     )
 

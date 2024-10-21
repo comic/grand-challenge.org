@@ -27,9 +27,9 @@ from grandchallenge.evaluation.models import Evaluation, Method
     (
         (10, GPUTypeChoices.T4, "ml.g4dn.xlarge"),
         (30, GPUTypeChoices.T4, "ml.g4dn.2xlarge"),
-        (6, "", "ml.m5.large"),
-        (10, "", "ml.m5.xlarge"),
-        (30, "", "ml.m5.2xlarge"),
+        (6, GPUTypeChoices.NO_GPU, "ml.m5.large"),
+        (10, GPUTypeChoices.NO_GPU, "ml.m5.xlarge"),
+        (30, GPUTypeChoices.NO_GPU, "ml.m5.2xlarge"),
         (10, GPUTypeChoices.V100, "ml.p3.2xlarge"),
         (30, GPUTypeChoices.V100, "ml.p3.2xlarge"),
     ),
@@ -99,7 +99,7 @@ def test_invocation_prefix():
         exec_image_repo_tag="",
         memory_limit=4,
         time_limit=60,
-        requires_gpu_type="",
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
     )
 
     # The id of the job must be in the prefixes
@@ -155,7 +155,7 @@ def test_execute(settings):
         algorithm_model=None,
         memory_limit=4,
         time_limit=60,
-        requires_gpu_type="",
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
     )
 
     with Stubber(executor._sagemaker_client) as s:
@@ -227,7 +227,7 @@ def test_set_duration():
         exec_image_repo_tag="",
         memory_limit=4,
         time_limit=60,
-        requires_gpu_type="",
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
     )
 
     assert executor.duration is None
@@ -252,7 +252,7 @@ def test_get_log_stream_name(settings):
         exec_image_repo_tag="",
         memory_limit=4,
         time_limit=60,
-        requires_gpu_type="",
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
     )
 
     with Stubber(executor._logs_client) as s:
@@ -282,7 +282,7 @@ def test_set_task_logs(settings):
         exec_image_repo_tag="",
         memory_limit=4,
         time_limit=60,
-        requires_gpu_type="",
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
     )
 
     assert executor.stdout == ""
@@ -387,7 +387,7 @@ def test_set_runtime_metrics(settings):
         exec_image_repo_tag="",
         memory_limit=4,
         time_limit=60,
-        requires_gpu_type="",
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
     )
 
     assert executor.runtime_metrics == {}
@@ -446,7 +446,7 @@ def test_set_runtime_metrics(settings):
     assert executor.runtime_metrics == {
         "instance": {
             "cpu": 2,
-            "gpu_type": None,
+            "gpu_type": "",
             "gpus": 0,
             "memory": 8,
             "name": "ml.m5.large",
@@ -481,7 +481,7 @@ def test_handle_completed_job():
         exec_image_repo_tag="",
         memory_limit=4,
         time_limit=60,
-        requires_gpu_type="",
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
     )
 
     return_code = 0
@@ -511,7 +511,7 @@ def test_handle_time_limit_exceded(settings):
         exec_image_repo_tag="",
         memory_limit=4,
         time_limit=60,
-        requires_gpu_type="",
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
     )
 
     with pytest.raises(ComponentException) as error:
@@ -534,7 +534,7 @@ def test_handle_stopped_event(settings):
         exec_image_repo_tag="",
         memory_limit=4,
         time_limit=60,
-        requires_gpu_type="",
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
     )
 
     with Stubber(executor._logs_client) as logs:
@@ -579,7 +579,7 @@ def test_deprovision(settings):
         exec_image_repo_tag="",
         memory_limit=4,
         time_limit=60,
-        requires_gpu_type="",
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
     )
 
     created_files = (

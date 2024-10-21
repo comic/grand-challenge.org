@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
 {% load url %}
+{% load static %}
 
 {% block title %}
-    {{ object|yesno:"Update,Create" }} -{% if object %} {{ object }} -{% endif %} {{ block.super }}
+    {{ object|yesno:"Update,Create Algorithm" }} {% if object %} - {{ object }} {% else %} - Algorithms {% endif %} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -14,7 +15,7 @@
                     href="{{ object.get_absolute_url }}">{{ object }}</a></li>
         {% endif %}
         <li class="breadcrumb-item active"
-            aria-current="page">{{ object|yesno:"Update,Create"}}</li>
+            aria-current="page">{{ object|yesno:"Update,Create Algorithm" }}</li>
     </ol>
 {% endblock %}
 
@@ -61,4 +62,10 @@
         {% crispy form %}
     {% endif %}
 
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="text/javascript"
+            src="{% static "js/unsavedform.js" %}"></script>
 {% endblock %}

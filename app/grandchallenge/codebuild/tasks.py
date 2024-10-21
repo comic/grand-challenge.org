@@ -34,11 +34,8 @@ def create_codebuild_build(*, pk):
         # Repository is not linked to algorithm
         return
 
-    algorithm_image = AlgorithmImage.objects.create(
-        algorithm=algorithm,
-        requires_gpu=algorithm.image_requires_gpu,
-        requires_memory_gb=algorithm.image_requires_memory_gb,
-    )
+    algorithm_image = AlgorithmImage.objects.create(algorithm=algorithm)
+
     Build.objects.create(webhook_message=ghwm, algorithm_image=algorithm_image)
 
 
