@@ -6,6 +6,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models import BooleanField, Case, Exists, OuterRef, When
 from django.db.transaction import on_commit
 from django.forms import (
@@ -28,6 +29,7 @@ from grandchallenge.challenges.models import Challenge, ChallengeRequest
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.components.models import (
     ComponentInterface,
+    GPUTypeChoices,
     ImportStatusChoices,
 )
 from grandchallenge.components.tasks import assign_tarball_from_upload
@@ -75,6 +77,7 @@ submission_options = (
 )
 
 scoring_options = (
+    "evaluation_requires_memory_gb",
     "score_title",
     "score_jsonpath",
     "score_error_jsonpath",
@@ -142,12 +145,18 @@ class PhaseCreateForm(PhaseTitleMixin, SaveFormInitMixin, forms.ModelForm):
 class PhaseUpdateForm(
     PhaseTitleMixin,
     WorkstationUserFilterMixin,
+    SaveFormInitMixin,
     forms.ModelForm,
 ):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
         self.fields["parent"].queryset = self.instance.parent_phase_choices
-        self.helper = FormHelper(self)
+        self.fields["evaluation_requires_memory_gb"].validators = [
+            MinValueValidator(settings.ALGORITHMS_MIN_MEMORY_GB),
+            MaxValueValidator(settings.ALGORITHMS_MAX_MEMORY_GB),
+        ]
+
         self.helper.layout = Layout(
             TabHolder(
                 Tab("Phase", *phase_options),
@@ -158,6 +167,7 @@ class PhaseUpdateForm(
             ),
             ButtonHolder(Submit("save", "Save")),
         )
+
         if self.instance.submission_kind == SubmissionKindChoices.ALGORITHM:
             self.helper.layout[0].append(
                 Tab(
@@ -257,18 +267,9 @@ class MethodForm(ContainerImageForm):
 
 
 class MethodUpdateForm(SaveFormInitMixin, forms.ModelForm):
-    requires_memory_gb = forms.IntegerField(
-        min_value=settings.ALGORITHMS_MIN_MEMORY_GB,
-        max_value=settings.ALGORITHMS_MAX_MEMORY_GB,
-        help_text="The maximum system memory required by the algorithm in gigabytes.",
-    )
-
     class Meta:
         model = Method
-        fields = (
-            "requires_memory_gb",
-            "comment",
-        )
+        fields = ("comment",)
 
 
 class AlgorithmChoiceField(ModelChoiceField):
@@ -621,12 +622,12 @@ class SubmissionForm(
         if self._phase.submission_kind == SubmissionKindChoices.ALGORITHM:
             self.instance.algorithm_requires_gpu_type = self.cleaned_data[
                 "algorithm_image"
-            ].requires_gpu_type
+            ].algorithm.job_requires_gpu_type
             self.instance.algorithm_requires_memory_gb = self.cleaned_data[
                 "algorithm_image"
-            ].requires_memory_gb
+            ].algorithm.job_requires_memory_gb
         else:
-            self.instance.algorithm_requires_gpu_type = ""
+            self.instance.algorithm_requires_gpu_type = GPUTypeChoices.NO_GPU
             self.instance.algorithm_requires_memory_gb = 0
 
         return super().save(*args, **kwargs)

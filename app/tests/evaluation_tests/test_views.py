@@ -860,7 +860,7 @@ def test_create_algorithm_for_phase_presets(client):
         user=admin,
         data={
             "title": "Test algorithm",
-            "image_requires_memory_gb": 8,
+            "job_requires_memory_gb": 8,
             "inputs": [
                 response.context_data["form"]["inputs"].initial.get().pk
             ],
@@ -904,6 +904,7 @@ def test_create_algorithm_for_phase_presets(client):
     assert list(algorithm.modalities.all()) == []
     assert algorithm.logo == phase.challenge.logo
     assert algorithm.time_limit == 10 * 60
+    assert algorithm.job_requires_memory_gb == 8
 
     # try to set different values
     ci3, ci4 = ComponentInterfaceFactory.create_batch(2)
@@ -923,7 +924,7 @@ def test_create_algorithm_for_phase_presets(client):
         user=admin,
         data={
             "title": "Test algorithm",
-            "image_requires_memory_gb": 8,
+            "job_requires_memory_gb": 8,
             "inputs": [ci3.pk],
             "outputs": [ci2.pk],
             "workstation": ws.pk,
@@ -950,6 +951,7 @@ def test_create_algorithm_for_phase_presets(client):
     assert alg2.view_content != "{}"
     assert alg2.workstation.slug != ws
     assert alg2.logo == phase.challenge.logo
+    assert alg2.job_requires_memory_gb == 8
 
 
 @pytest.mark.django_db
@@ -1066,7 +1068,6 @@ def test_create_algorithm_for_phase_limits(client):
         user=u1,
         data={
             "title": "Foo",
-            "image_requires_memory_gb": 1,
         },
     )
     assert (
@@ -1122,7 +1123,8 @@ def test_evaluation_admin_list(client):
 def test_method_update_view(client):
     challenge = ChallengeFactory()
     method = MethodFactory(
-        phase=PhaseFactory(challenge=challenge), requires_memory_gb=4
+        phase=PhaseFactory(challenge=challenge),
+        phase__evaluation_requires_memory_gb=4,
     )
     user = UserFactory()
 
@@ -1138,13 +1140,13 @@ def test_method_update_view(client):
         },
         user=user,
         method=client.post,
-        data={"requires_memory_gb": 16},
+        data={"comment": "blah"},
     )
 
     assert response.status_code == 302
 
     method.refresh_from_db()
-    assert method.requires_memory_gb == 16
+    assert method.comment == "blah"
 
 
 @pytest.mark.django_db
@@ -1554,9 +1556,8 @@ def test_submission_create_sets_limits_correctly_with_algorithm(client):
         is_manifest_valid=True,
         is_in_registry=True,
         is_desired_version=True,
-        requires_gpu=True,
-        desired_gpu_type=GPUTypeChoices.V100,
-        requires_memory_gb=1337,
+        algorithm__job_requires_gpu_type=GPUTypeChoices.V100,
+        algorithm__job_requires_memory_gb=1337,
     )
     algorithm_image.algorithm.inputs.set(inputs)
     algorithm_image.algorithm.outputs.set(outputs)
@@ -1666,5 +1667,56 @@ def test_submission_create_sets_limits_correctly_with_predictions(client):
 
     submission = Submission.objects.get()
 
-    assert submission.algorithm_requires_gpu_type == ""
+    assert submission.algorithm_requires_gpu_type == GPUTypeChoices.NO_GPU
     assert submission.algorithm_requires_memory_gb == 0
+
+
+@pytest.mark.django_db
+def test_phase_archive_info_permissions(client):
+    phase1, phase2 = PhaseFactory.create_batch(2, title="Test")
+    editor, user = UserFactory.create_batch(2)
+    phase1.challenge.add_admin(editor)
+
+    response = get_view_for_user(
+        client=client,
+        viewname="evaluation:phase-archive-info",
+        reverse_kwargs={
+            "slug": phase2.slug,
+            "challenge_short_name": phase2.challenge.short_name,
+        },
+        user=user,
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        client=client,
+        viewname="evaluation:phase-archive-info",
+        reverse_kwargs={
+            "slug": phase2.slug,
+            "challenge_short_name": phase2.challenge.short_name,
+        },
+        user=editor,
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        client=client,
+        viewname="evaluation:phase-archive-info",
+        reverse_kwargs={
+            "slug": phase1.slug,
+            "challenge_short_name": phase1.challenge.short_name,
+        },
+        user=user,
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        client=client,
+        viewname="evaluation:phase-archive-info",
+        reverse_kwargs={
+            "slug": phase1.slug,
+            "challenge_short_name": phase1.challenge.short_name,
+        },
+        user=editor,
+    )
+    assert response.status_code == 200

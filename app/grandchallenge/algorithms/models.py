@@ -11,7 +11,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.db.models import Count, Min, Q, Sum
+from django.db.models import Count, Q, Sum
 from django.db.models.signals import post_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
@@ -36,6 +36,7 @@ from grandchallenge.components.models import (  # noqa: F401
     ComponentInterfaceValue,
     ComponentJob,
     ComponentJobManager,
+    GPUTypeChoices,
     ImportStatusChoices,
     Tarball,
 )
@@ -198,6 +199,17 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
             ),
         ],
     )
+    job_requires_gpu_type = models.CharField(
+        max_length=4,
+        blank=True,
+        default=GPUTypeChoices.NO_GPU,
+        choices=GPUTypeChoices.choices,
+        help_text="What GPU to attach to this algorithms inference jobs",
+    )
+    job_requires_memory_gb = models.PositiveSmallIntegerField(
+        default=8,
+        help_text="How much memory to assign to this algorithms inference jobs",
+    )
     average_duration = models.DurationField(
         null=True,
         default=None,
@@ -205,8 +217,6 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         help_text="The average duration of successful jobs.",
     )
     repo_name = models.CharField(blank=True, max_length=512)
-    image_requires_gpu = models.BooleanField(default=True)
-    image_requires_memory_gb = models.PositiveIntegerField(default=15)
     recurse_submodules = models.BooleanField(
         default=False,
         help_text="Do a recursive git pull when a GitHub repo is linked to this algorithm.",
@@ -378,8 +388,8 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         job = Job(
             algorithm_image=self.active_image,
             time_limit=self.time_limit,
-            requires_gpu_type=self.active_image.requires_gpu_type,
-            requires_memory_gb=self.active_image.requires_memory_gb,
+            requires_gpu_type=self.job_requires_gpu_type,
+            requires_memory_gb=self.job_requires_memory_gb,
         )
         job.init_credits_consumed()
         return job.credits_consumed
@@ -725,11 +735,9 @@ class JobManager(ComponentJobManager):
                 creator=user,
                 created__gt=timezone.now() - relativedelta(months=1),
             )
-            .order_by("created")
             .exclude(is_complimentary=True)
             .aggregate(
                 total=Sum("credits_consumed", default=0),
-                oldest=Min("created"),
             )
         )
 

@@ -499,21 +499,20 @@ class JobCreate(
 
     def form_valid(self, form):
         inputs = form.cleaned_data.pop("inputs")
+
+        algorithm = form.cleaned_data["algorithm_image"].algorithm
+
         self.object = Job.objects.create(
             **form.cleaned_data,
-            time_limit=form.cleaned_data[
-                "algorithm_image"
-            ].algorithm.time_limit,
-            requires_gpu_type=form.cleaned_data[
-                "algorithm_image"
-            ].requires_gpu_type,
-            requires_memory_gb=form.cleaned_data[
-                "algorithm_image"
-            ].requires_memory_gb,
-            extra_logs_viewer_groups=[self.algorithm.editors_group],
+            time_limit=algorithm.time_limit,
+            requires_gpu_type=algorithm.job_requires_gpu_type,
+            requires_memory_gb=algorithm.job_requires_memory_gb,
+            extra_logs_viewer_groups=[algorithm.editors_group],
             status=Job.VALIDATING_INPUTS,
         )
+
         self.object.validate_inputs_and_execute(inputs=inputs)
+
         return super().form_valid(form)
 
     def get_success_url(self):

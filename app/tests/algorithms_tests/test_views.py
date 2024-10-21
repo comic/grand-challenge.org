@@ -857,8 +857,6 @@ def test_import_view(
 
     algorithm_image = algorithm.algorithm_container_images.get()
     assert str(algorithm_image.pk) == "cad9106c-e3cb-45fa-bda0-068ddacafb59"
-    assert algorithm_image.requires_gpu is True
-    assert algorithm_image.requires_memory_gb == 15
     assert (
         algorithm_image.import_status
         == algorithm_image.ImportStatusChoices.INITIALIZED
@@ -1651,15 +1649,15 @@ def test_job_time_limit(client):
 def test_job_gpu_type_set(client, settings):
     settings.COMPONENTS_DEFAULT_BACKEND = "grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor"
 
-    algorithm = AlgorithmFactory()
+    algorithm = AlgorithmFactory(
+        job_requires_gpu_type=GPUTypeChoices.T4,
+        job_requires_memory_gb=64,
+    )
     algorithm_image = AlgorithmImageFactory(
         algorithm=algorithm,
         is_desired_version=True,
         is_manifest_valid=True,
         is_in_registry=True,
-        requires_gpu=True,
-        desired_gpu_type=GPUTypeChoices.T4,
-        requires_memory_gb=64,
     )
     user = UserFactory()
     VerificationFactory(user=user, is_verified=True)
@@ -1701,15 +1699,15 @@ def test_job_gpu_type_set(client, settings):
 def test_job_gpu_type_set_with_api(client, settings):
     settings.COMPONENTS_DEFAULT_BACKEND = "grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor"
 
-    algorithm = AlgorithmFactory()
+    algorithm = AlgorithmFactory(
+        job_requires_gpu_type=GPUTypeChoices.A10G,
+        job_requires_memory_gb=64,
+    )
     algorithm_image = AlgorithmImageFactory(
         algorithm=algorithm,
         is_desired_version=True,
         is_manifest_valid=True,
         is_in_registry=True,
-        requires_gpu=True,
-        desired_gpu_type=GPUTypeChoices.A10G,
-        requires_memory_gb=64,
     )
     user = UserFactory()
     VerificationFactory(user=user, is_verified=True)
@@ -2011,3 +2009,58 @@ def test_job_list_row_template_ajax_renders(client):
     assert response_content["recordsTotal"] == 1
     assert len(response_content["data"]) == 1
     assert job_details_url in response_content["data"][0][0]
+
+
+@pytest.mark.django_db
+def test_update_view_limits_gpu_choice(client):
+    algorithm = AlgorithmFactory(title="test-algorithm")
+
+    editor = UserFactory()
+    VerificationFactory(user=editor, is_verified=True)
+    algorithm.add_editor(user=editor)
+
+    response = get_view_for_user(
+        client=client,
+        viewname="algorithms:update",
+        reverse_kwargs={"slug": algorithm.slug},
+        method=client.post,
+        user=editor,
+        data={
+            "title": algorithm.title,
+            "contact_email": "foo@bar.com",
+            "access_request_handling": algorithm.access_request_handling,
+            "minimum_credits_per_job": algorithm.minimum_credits_per_job,
+            "workstation": algorithm.workstation.pk,
+            "job_requires_gpu_type": GPUTypeChoices.V100,
+            "job_requires_memory_gb": 64,
+        },
+    )
+
+    assert response.status_code == 200
+    assert "job_requires_gpu_type" in response.context["form"].errors
+    assert response.context["form"].errors["job_requires_gpu_type"] == [
+        "Select a valid choice. V100 is not one of the available choices."
+    ]
+    assert "job_requires_memory_gb" in response.context["form"].errors
+    assert response.context["form"].errors["job_requires_memory_gb"] == [
+        "Ensure this value is less than or equal to 32."
+    ]
+
+    response = get_view_for_user(
+        client=client,
+        viewname="algorithms:update",
+        reverse_kwargs={"slug": algorithm.slug},
+        method=client.post,
+        user=editor,
+        data={
+            "title": algorithm.title,
+            "contact_email": "foo@bar.com",
+            "access_request_handling": algorithm.access_request_handling,
+            "minimum_credits_per_job": algorithm.minimum_credits_per_job,
+            "workstation": algorithm.workstation.pk,
+            "job_requires_gpu_type": GPUTypeChoices.NO_GPU,
+            "job_requires_memory_gb": 16,
+        },
+    )
+
+    assert response.status_code == 302

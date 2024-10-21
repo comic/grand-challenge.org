@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
 {% load url %}
+{% load static %}
 
 {% block title %}
     {{ object|yesno:"Update,Create Algorithm" }} {% if object %} - {{ object }} {% else %} - Algorithms {% endif %} - {{ block.super }}
@@ -61,4 +62,10 @@
         {% crispy form %}
     {% endif %}
 
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="text/javascript"
+            src="{% static "js/unsavedform.js" %}"></script>
 {% endblock %}
