@@ -77,7 +77,10 @@ from grandchallenge.core.forms import (
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
-from grandchallenge.core.widgets import JSONEditorWidget, MarkdownEditorWidget
+from grandchallenge.core.widgets import (
+    JSONEditorWidget,
+    MarkdownEditorInlineWidget,
+)
 from grandchallenge.evaluation.utils import get
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.hanging_protocols.models import VIEW_CONTENT_SCHEMA
@@ -301,9 +304,9 @@ class AlgorithmForm(
         )
         widgets = {
             "description": TextInput,
-            "job_create_page_markdown": MarkdownEditorWidget,
-            "additional_terms_markdown": MarkdownEditorWidget,
-            "result_template": MarkdownEditorWidget,
+            "job_create_page_markdown": MarkdownEditorInlineWidget,
+            "additional_terms_markdown": MarkdownEditorInlineWidget,
+            "result_template": MarkdownEditorInlineWidget,
             "publications": Select2MultipleWidget,
             "modalities": Select2MultipleWidget,
             "structures": Select2MultipleWidget,
@@ -582,13 +585,13 @@ class AlgorithmDescriptionForm(ModelForm):
             "editor_notes",
         )
         widgets = {
-            "summary": MarkdownEditorWidget,
-            "mechanism": MarkdownEditorWidget,
-            "uses_and_directions": MarkdownEditorWidget,
-            "validation_and_performance": MarkdownEditorWidget,
-            "warnings": MarkdownEditorWidget,
-            "common_error_messages": MarkdownEditorWidget,
-            "editor_notes": MarkdownEditorWidget,
+            "summary": MarkdownEditorInlineWidget,
+            "mechanism": MarkdownEditorInlineWidget,
+            "uses_and_directions": MarkdownEditorInlineWidget,
+            "validation_and_performance": MarkdownEditorInlineWidget,
+            "warnings": MarkdownEditorInlineWidget,
+            "common_error_messages": MarkdownEditorInlineWidget,
+            "editor_notes": MarkdownEditorInlineWidget,
         }
         help_texts = {
             "validation_and_performance": "If you have performance metrics about your algorithm, you can report them here. We recommend doing this in a table. <br>"

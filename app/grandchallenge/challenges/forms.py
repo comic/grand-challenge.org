@@ -16,7 +16,7 @@ from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
-from grandchallenge.core.widgets import MarkdownEditorWidget
+from grandchallenge.core.widgets import MarkdownEditorInlineWidget
 from grandchallenge.subdomains.utils import reverse_lazy
 
 information_items = (
@@ -81,7 +81,7 @@ class ChallengeUpdateForm(forms.ModelForm):
             "organizations": Select2MultipleWidget,
             "series": Select2MultipleWidget,
             "publications": Select2MultipleWidget,
-            "registration_page_markdown": MarkdownEditorWidget,
+            "registration_page_markdown": MarkdownEditorInlineWidget,
         }
         help_texts = {
             "publications": format_lazy(

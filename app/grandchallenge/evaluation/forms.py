@@ -42,7 +42,10 @@ from grandchallenge.core.guardian import (
     get_objects_for_user,
 )
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
-from grandchallenge.core.widgets import JSONEditorWidget, MarkdownEditorWidget
+from grandchallenge.core.widgets import (
+    JSONEditorWidget,
+    MarkdownEditorInlineWidget,
+)
 from grandchallenge.evaluation.models import (
     EXTRA_RESULT_COLUMNS_SCHEMA,
     CombinedLeaderboard,
@@ -199,7 +202,7 @@ class PhaseUpdateForm(
             *algorithm_setting_options,
         )
         widgets = {
-            "submission_page_markdown": MarkdownEditorWidget,
+            "submission_page_markdown": MarkdownEditorInlineWidget,
             "extra_results_columns": JSONEditorWidget(
                 schema=EXTRA_RESULT_COLUMNS_SCHEMA
             ),
