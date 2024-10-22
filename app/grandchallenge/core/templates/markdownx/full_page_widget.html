@@ -2,22 +2,15 @@
     <div>
         {% include "markdownx/partials/notes.html" %}
     </div>
-    <div class="row">
-        <div class="col-md-6">
-            {% include "markdownx/partials/toolbar.html" %}
-        </div>
-        <div class="col-md-6 my-auto">
-            <p class="m-0">Preview</p>
-        </div>
-    </div>
-    <div class="row">
+    {% include "markdownx/partials/toolbar.html" %}
+    <div class="row no-gutters">
         <div class="col-md-6">
             <div id="editor-{{ widget.attrs.id }}" aria-labelledby="editor-panel-{{ widget.attrs.id }}">
                 {% include "markdownx/partials/textarea.html" %}
             </div>
         </div>
         <div class="col-md-6">
-            <div id="preview-{{ widget.attrs.id }}" aria-labelledby="preview-panel-{{ widget.attrs.id }}">
+            <div class="border" id="preview-{{ widget.attrs.id }}" aria-labelledby="preview-panel-{{ widget.attrs.id }}">
                 <div class="markdownx-preview overflow-auto"></div>
             </div>
         </div>
