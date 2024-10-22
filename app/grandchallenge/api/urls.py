@@ -21,6 +21,7 @@ from grandchallenge.notifications.views import (
     FollowViewSet,
     NotificationViewSet,
 )
+from grandchallenge.participants.api import RegistrationRequestViewSet
 from grandchallenge.profiles.views import UserProfileViewSet
 from grandchallenge.reader_studies.views import (
     AnswerViewSet,
@@ -64,6 +65,13 @@ router.register(
 
 # Challenges
 router.register(r"challenges", ChallengeViewSet, basename="challenge")
+
+# Participants
+router.register(
+    r"participants/registration-requests",
+    RegistrationRequestViewSet,
+    basename="registration-request",
+)
 
 # Component Interfaces
 router.register(
