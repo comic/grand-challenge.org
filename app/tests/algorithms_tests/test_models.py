@@ -364,6 +364,7 @@ class TestJobLimits:
             user=user,
             algorithm=ai.algorithm,
             credits=user_credits,
+            valid_from=(now() - timedelta(hours=48)).date(),
             expires_on=(now() + timedelta(hours=48)).date(),
         )
 
@@ -417,6 +418,7 @@ class TestJobLimits:
             user=user,
             algorithm=ai.algorithm,
             credits=user_credits,
+            valid_from=(now() - timedelta(hours=48)).date(),
             expires_on=(now() + timedelta(hours=48)).date(),
         )
 

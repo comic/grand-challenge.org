@@ -563,7 +563,11 @@ class AlgorithmUserCredit(UUIDModel):
     )
     credits = models.PositiveIntegerField(
         blank=False,
-        help_text="The extra credits that a user can spend per month on running this algorithm.",
+        help_text="The credits that a user can spend during the validity period on running this algorithm",
+    )
+    valid_from = models.DateField(
+        blank=False,
+        help_text="When these credits are valid from",
     )
     expires_on = models.DateField(
         blank=False,
