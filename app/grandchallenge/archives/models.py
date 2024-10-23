@@ -30,7 +30,6 @@ from grandchallenge.core.utils.access_requests import (
 )
 from grandchallenge.hanging_protocols.models import HangingProtocolMixin
 from grandchallenge.modalities.models import ImagingModality
-from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
 from grandchallenge.subdomains.utils import reverse
@@ -359,14 +358,6 @@ class ArchiveItem(
     @property
     def is_editable(self):
         return True
-
-    def handle_civ_error(self, interface, error_message, user=None):
-        Notification.send(
-            kind=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
-            message=f"Validation for interface {interface.title} failed.",
-            description=f"Validation for interface {interface.title} failed: {error_message}",
-            actor=user,
-        )
 
     def add_civ(self, *, civ):
         super().add_civ(civ=civ)

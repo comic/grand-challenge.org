@@ -52,6 +52,12 @@ from grandchallenge.components.validators import (
     validate_no_slash_at_ends,
     validate_safe_path,
 )
+from grandchallenge.core.error_handlers import (
+    JobCIVErrorHandler,
+    RawImageUploadSessionCIVErrorHandler,
+    SystemCIVErrorHandler,
+    UserUploadCIVErrorHandler,
+)
 from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import (
     private_s3_storage,
@@ -1503,9 +1509,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
     stderr = models.TextField(default="")
     runtime_metrics = models.JSONField(default=dict, editable=False)
     error_message = models.CharField(max_length=1024, default="")
-    detailed_error_message = models.JSONField(
-        blank=True, null=True, default=dict
-    )
+    detailed_error_message = models.JSONField(blank=True, default=dict)
     started_at = models.DateTimeField(null=True)
     completed_at = models.DateTimeField(null=True)
     compute_cost_euro_millicents = models.PositiveIntegerField(
@@ -2228,7 +2232,9 @@ class CIVForObjectMixin:
             return
 
         ci = ComponentInterface.objects.get(slug=civ_data.interface_slug)
-        current_civ = self.get_current_value_for_interface(interface=ci)
+        current_civ = self.get_current_value_for_interface(
+            interface=ci, user=user
+        )
 
         if ci.is_json_kind and not ci.requires_file:
             return self.create_civ_for_value(
@@ -2284,7 +2290,8 @@ class CIVForObjectMixin:
                 if new_value in ci.default_field.empty_values:
                     self.remove_civ(civ=current_civ)
                 else:
-                    self.handle_civ_validation_error(
+                    error_handler = self.get_error_handler()
+                    error_handler.handle_error(
                         interface=ci,
                         error_message=format_validation_error_message(error=e),
                         user=user,
@@ -2320,7 +2327,8 @@ class CIVForObjectMixin:
                     civ.full_clean()
                 except ValidationError as e:
                     civ.delete()
-                    self.handle_civ_validation_error(
+                    error_handler = self.get_error_handler()
+                    error_handler.handle_error(
                         interface=ci,
                         error_message=format_validation_error_message(error=e),
                         user=user,
@@ -2413,36 +2421,37 @@ class CIVForObjectMixin:
     def get_civ_for_interface(self, interface):
         raise NotImplementedError
 
-    def get_current_value_for_interface(
-        self, *, interface, user_upload=None, upload_session=None
-    ):
+    def get_current_value_for_interface(self, *, interface, user):
         try:
             return self.get_civ_for_interface(interface=interface)
         except ObjectDoesNotExist:
             return None
         except MultipleObjectsReturned as e:
-            self.handle_civ_validation_error(
+            error_handler = self.get_error_handler()
+            error_handler.handle_error(
                 interface=interface,
                 error_message="An unexpected error occurred",
-                user=user_upload.creator if user_upload else None,
-                upload_session=upload_session,
+                user=user,
             )
             raise e
 
-    def handle_civ_validation_error(
-        self, *, interface, error_message, user=None, upload_session=None
-    ):
-        if upload_session:
-            upload_session.update_status(
-                error_message="One or more of the inputs failed validation.",
-                detailed_error_message={interface.title: error_message},
-                status=RawImageUploadSession.FAILURE,
-                linked_object=self,
+    def get_error_handler(self, linked_object=None):
+        # local imports to prevent circular dependency
+        from grandchallenge.algorithms.models import Job
+
+        if linked_object and isinstance(linked_object, RawImageUploadSession):
+            return RawImageUploadSessionCIVErrorHandler(
+                upload_session=linked_object,
+                linked_job=self if isinstance(self, Job) else None,
+            )
+        elif isinstance(self, Job):
+            return JobCIVErrorHandler(job=self)
+        elif linked_object and isinstance(linked_object, UserUpload):
+            return UserUploadCIVErrorHandler(
+                user_upload=linked_object,
             )
         else:
-            self.handle_civ_error(
-                interface=interface, error_message=error_message, user=user
-            )
+            return SystemCIVErrorHandler()
 
 
 class InterfacesAndValues(NamedTuple):

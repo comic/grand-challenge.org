@@ -1003,6 +1003,7 @@ class DisplaySetViewSet(
                                 user_upload or upload_session or image or value
                             ),
                         ),
+                        user=self.context["request"].user,
                     )
             else:
                 raise DRFValidationError(serialized_data.errors)

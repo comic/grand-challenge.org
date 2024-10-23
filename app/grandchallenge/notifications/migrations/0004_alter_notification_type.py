@@ -26,6 +26,7 @@ class Migration(migrations.Migration):
                     ("JOB-STATUS", "Job status update"),
                     ("IMAGE-IMPORT", "Image import status update"),
                     ("FILE-COPY", "Validation failed while copying file"),
+                    ("SYSTEM", "An unexpected error occurred"),
                 ],
                 default="GENERIC",
                 help_text="Of what type is this notification?",

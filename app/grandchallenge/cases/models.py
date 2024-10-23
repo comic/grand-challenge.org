@@ -25,6 +25,10 @@ from panimg.models import (
 )
 from storages.utils import clean_name
 
+from grandchallenge.core.error_handlers import (
+    RawImageUploadSessionBuildErrorHandler,
+    RawImageUploadSessionCIVErrorHandler,
+)
 from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import protected_s3_storage
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
@@ -130,6 +134,21 @@ class RawImageUploadSession(UUIDModel):
                 f"{n_errors} file{pluralize(n_errors)} could not be imported"
             )
 
+    def get_error_handler(self, linked_object=None):
+        from grandchallenge.algorithms.models import Job
+
+        if linked_object:
+            return RawImageUploadSessionCIVErrorHandler(
+                upload_session=self,
+                linked_job=(
+                    linked_object if isinstance(linked_object, Job) else None
+                ),
+            )
+        else:
+            return RawImageUploadSessionBuildErrorHandler(
+                upload_session=self,
+            )
+
     def update_status(
         self,
         *,
@@ -164,13 +183,16 @@ class RawImageUploadSession(UUIDModel):
                 description=notification_description,
                 action_object=self,
             )
+        from grandchallenge.algorithms.models import Job
 
         if (
             self.error_message
             and linked_object
-            and hasattr(linked_object, "update_status")
+            and isinstance(linked_object, Job)
         ):
-            detailed_error_message_dict = linked_object.detailed_error_message
+            detailed_error_message_dict = (
+                linked_object.detailed_error_message.copy()
+            )
             for key, val in detailed_error_message.items():
                 detailed_error_message_dict[key] = val
 
