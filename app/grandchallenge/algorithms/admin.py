@@ -89,17 +89,28 @@ class AlgorithmUserCreditAdmin(ModelAdmin):
         "valid_from",
         "valid_until",
         "comment",
-        "remaining_specific_credits",
-        "remaining_general_credits",
-        "specific_compute_costs",
-        "other_compute_costs",
     )
     readonly_fields = (
+        "is_active",
         "remaining_specific_credits",
         "remaining_general_credits",
         "specific_compute_costs",
         "other_compute_costs",
     )
+
+    def get_fields(self, request, obj=None):
+        fields = super().get_fields(request, obj)
+
+        if obj:
+            fields += (
+                "is_active",
+                "remaining_specific_credits",
+                "remaining_general_credits",
+                "specific_compute_costs",
+                "other_compute_costs",
+            )
+
+        return fields
 
     def remaining_specific_credits(self, obj):
         try:
