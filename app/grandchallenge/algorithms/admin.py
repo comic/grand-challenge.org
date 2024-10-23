@@ -71,7 +71,15 @@ class AlgorithmAdmin(GuardedModelAdmin):
 
 @admin.register(AlgorithmUserCredit)
 class AlgorithmUserCreditAdmin(ModelAdmin):
-    list_display = ("user", "algorithm", "credits", "expires_on", "comment")
+    list_display = (
+        "user",
+        "algorithm",
+        "credits",
+        "valid_from",
+        "valid_until",
+        "is_active",
+        "comment",
+    )
     autocomplete_fields = ("user", "algorithm")
     search_fields = ("user__username", "user__email", "algorithm__slug")
     fields = (
@@ -79,7 +87,7 @@ class AlgorithmUserCreditAdmin(ModelAdmin):
         "algorithm",
         "credits",
         "valid_from",
-        "expires_on",
+        "valid_until",
         "comment",
         "remaining_specific_credits",
         "remaining_general_credits",

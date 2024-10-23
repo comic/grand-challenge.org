@@ -8,7 +8,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Count, Q, Sum
@@ -551,10 +551,9 @@ def delete_algorithm_groups_hook(*_, instance: Algorithm, using, **__):
 class AlgorithmUserCreditManager(models.QuerySet):
     def active_credits(self):
         today = now().date()
-
         return self.filter(
             valid_from__lte=today,
-            expires_on__gt=today,
+            valid_until__gte=today,
         )
 
 
@@ -577,11 +576,11 @@ class AlgorithmUserCredit(UUIDModel):
     )
     valid_from = models.DateField(
         blank=False,
-        help_text="When these credits are valid from",
+        help_text="Inclusive date from which these credits are valid",
     )
-    expires_on = models.DateField(
+    valid_until = models.DateField(
         blank=False,
-        help_text="When these credits expire",
+        help_text="Inclusive date until these credits are valid",
     )
     comment = models.TextField(
         blank=False,
@@ -595,6 +594,33 @@ class AlgorithmUserCredit(UUIDModel):
 
     def __str__(self):
         return f"Credits for {self.user} for {self.algorithm}"
+
+    @property
+    def is_active(self):
+        today = now().date()
+        return self.valid_from <= today and self.valid_until >= today
+
+    def clean(self):
+        super().clean()
+
+        try:
+            if self.user.username == settings.ANONYMOUS_USER_NAME:
+                raise ValidationError(
+                    {"user": "The anonymous user cannot be assigned credits"}
+                )
+        except ObjectDoesNotExist:
+            raise ValidationError("The user must be set")
+
+        try:
+            if self.valid_until < self.valid_from:
+                raise ValidationError(
+                    {
+                        "valid_from": "This must be less than or equal to Valid Until",
+                        "valid_until": "This must be greater than or equal to Valid From",
+                    }
+                )
+        except TypeError:
+            raise ValidationError("The validity period must be set")
 
 
 class AlgorithmImage(UUIDModel, ComponentImage):
@@ -633,9 +659,6 @@ class AlgorithmImage(UUIDModel, ComponentImage):
             return 0
 
     def get_remaining_non_complimentary_jobs(self, *, user):
-        if user.username == settings.ANONYMOUS_USER_NAME:
-            raise RuntimeError("Anonymous users cannot run jobs")
-
         try:
             credits_left = self.get_remaining_specific_credits(
                 user=user, algorithm=self.algorithm
@@ -647,30 +670,27 @@ class AlgorithmImage(UUIDModel, ComponentImage):
 
     @staticmethod
     def get_remaining_specific_credits(*, user, algorithm):
-        if user.username == settings.ANONYMOUS_USER_NAME:
-            raise RuntimeError("Anonymous users cannot run jobs")
-
-        specific_credits = AlgorithmUserCredit.objects.active_credits().get(
+        user_credit = AlgorithmUserCredit.objects.active_credits().get(
             user=user,
             algorithm=algorithm,
         )
 
         spent_credits = Job.objects.filter(
-            creator=specific_credits.user,
+            creator=user_credit.user,
             is_complimentary=False,
-            created__date__gte=specific_credits.valid_from,
-            created__date__lt=specific_credits.expires_on,
-            algorithm_image__algorithm=specific_credits.algorithm,
+            created__date__gte=user_credit.valid_from,
+            created__date__lte=user_credit.valid_until,
+            algorithm_image__algorithm=user_credit.algorithm,
         ).aggregate(
             total=Sum("credits_consumed", default=0),
         )
 
-        return specific_credits.credits - spent_credits["total"]
+        return user_credit.credits - spent_credits["total"]
 
     @staticmethod
     def get_remaining_general_credits(*, user):
         if user.username == settings.ANONYMOUS_USER_NAME:
-            raise RuntimeError("Anonymous users cannot run jobs")
+            return 0
 
         user_credits = settings.ALGORITHMS_DEFAULT_USER_CREDITS
 
@@ -686,7 +706,7 @@ class AlgorithmImage(UUIDModel, ComponentImage):
             Job.objects.filter(
                 creator=user,
                 is_complimentary=False,
-                created__gt=timezone.now() - relativedelta(months=1),
+                created__gte=timezone.now() - relativedelta(months=1),
             )
             .exclude(
                 algorithm_image__algorithm__in=[
