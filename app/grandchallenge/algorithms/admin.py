@@ -1,6 +1,7 @@
 from dateutil.relativedelta import relativedelta
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count, Sum
 from django.forms import ModelForm
 from django.utils.timezone import now
@@ -80,25 +81,28 @@ class AlgorithmUserCreditAdmin(ModelAdmin):
         "credits",
         "expires_on",
         "comment",
-        "total_credits_consumed_past_month",
-        "credits_consumed_past_month",
+        "get_remaining_specific_credits",
+        "get_remaining_general_credits",
         "total_compute_costs_past_month",
         "compute_costs_past_month",
     )
     readonly_fields = (
-        "total_credits_consumed_past_month",
-        "credits_consumed_past_month",
+        "get_remaining_specific_credits",
+        "get_remaining_general_credits",
         "total_compute_costs_past_month",
         "compute_costs_past_month",
     )
 
-    def total_credits_consumed_past_month(self, obj):
-        return Job.objects.credits_consumed_past_month(user=obj.user)["total"]
+    def get_remaining_specific_credits(self, obj):
+        try:
+            return AlgorithmImage.get_remaining_specific_credits(
+                user=obj.user, algorithm=obj.algorithm
+            )
+        except ObjectDoesNotExist:
+            return 0
 
-    def credits_consumed_past_month(self, obj):
-        return Job.objects.filter(
-            algorithm_image__algorithm=obj.algorithm
-        ).credits_consumed_past_month(user=obj.user)["total"]
+    def get_remaining_general_credits(self, obj):
+        return AlgorithmImage.get_remaining_general_credits(user=obj.user)
 
     def total_compute_costs_past_month(self, obj):
         return millicents_to_euro(

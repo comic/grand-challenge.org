@@ -548,6 +548,16 @@ def delete_algorithm_groups_hook(*_, instance: Algorithm, using, **__):
         pass
 
 
+class AlgorithmUserCreditManager(models.QuerySet):
+    def active_credits(self):
+        today = now().date()
+
+        return self.filter(
+            valid_from__lte=today,
+            expires_on__gt=today,
+        )
+
+
 class AlgorithmUserCredit(UUIDModel):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -577,6 +587,8 @@ class AlgorithmUserCredit(UUIDModel):
         blank=False,
         help_text="Who agreed to these credits have been assigned and where the costs are coming from",
     )
+
+    objects = AlgorithmUserCreditManager.as_manager()
 
     class Meta:
         unique_together = ("user", "algorithm")
@@ -623,25 +635,71 @@ class AlgorithmImage(UUIDModel, ComponentImage):
     def get_remaining_non_complimentary_jobs(self, *, user):
         if user.username == settings.ANONYMOUS_USER_NAME:
             raise RuntimeError("Anonymous users cannot run jobs")
-        else:
-            user_credits = settings.ALGORITHMS_DEFAULT_USER_CREDITS
 
         try:
-            user_credits += AlgorithmUserCredit.objects.get(
-                user=user,
-                algorithm=self.algorithm,
-                expires_on__gt=now().date(),
-            ).credits
+            credits_left = self.get_remaining_specific_credits(
+                user=user, algorithm=self.algorithm
+            )
         except ObjectDoesNotExist:
-            pass
-
-        spent_credits = Job.objects.credits_consumed_past_month(user=user)[
-            "total"
-        ]
-
-        credits_left = user_credits - spent_credits
+            credits_left = self.get_remaining_general_credits(user=user)
 
         return max(credits_left, 0) // max(self.algorithm.credits_per_job, 1)
+
+    @staticmethod
+    def get_remaining_specific_credits(*, user, algorithm):
+        if user.username == settings.ANONYMOUS_USER_NAME:
+            raise RuntimeError("Anonymous users cannot run jobs")
+
+        specific_credits = AlgorithmUserCredit.objects.active_credits().get(
+            user=user,
+            algorithm=algorithm,
+        )
+
+        spent_credits = Job.objects.filter(
+            creator=specific_credits.user,
+            is_complimentary=False,
+            created__date__gte=specific_credits.valid_from,
+            created__date__lt=specific_credits.expires_on,
+            algorithm_image__algorithm=specific_credits.algorithm,
+        ).aggregate(
+            total=Sum("credits_consumed", default=0),
+        )
+
+        return specific_credits.credits - spent_credits["total"]
+
+    @staticmethod
+    def get_remaining_general_credits(*, user):
+        if user.username == settings.ANONYMOUS_USER_NAME:
+            raise RuntimeError("Anonymous users cannot run jobs")
+
+        user_credits = settings.ALGORITHMS_DEFAULT_USER_CREDITS
+
+        user_algorithms_with_active_credits = (
+            AlgorithmUserCredit.objects.active_credits()
+            .filter(
+                user=user,
+            )
+            .select_related("algorithm")
+        )
+
+        spent_credits = (
+            Job.objects.filter(
+                creator=user,
+                is_complimentary=False,
+                created__gt=timezone.now() - relativedelta(months=1),
+            )
+            .exclude(
+                algorithm_image__algorithm__in=[
+                    credits.algorithm
+                    for credits in user_algorithms_with_active_credits
+                ]
+            )
+            .aggregate(
+                total=Sum("credits_consumed", default=0),
+            )
+        )
+
+        return user_credits - spent_credits["total"]
 
     def get_remaining_jobs(self, *, user):
         return self.get_remaining_non_complimentary_jobs(
@@ -778,18 +836,6 @@ class JobManager(ComponentJobManager):
         )
 
         return existing_jobs
-
-    def credits_consumed_past_month(self, user):
-        return (
-            self.filter(
-                creator=user,
-                created__gt=timezone.now() - relativedelta(months=1),
-            )
-            .exclude(is_complimentary=True)
-            .aggregate(
-                total=Sum("credits_consumed", default=0),
-            )
-        )
 
 
 def algorithm_models_path(instance, filename):

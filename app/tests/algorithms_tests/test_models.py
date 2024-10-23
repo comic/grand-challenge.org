@@ -339,11 +339,11 @@ class TestJobLimits:
     @pytest.mark.parametrize(
         "minimum_credits_per_job,user_credits,expected_jobs",
         (
-            (100, 0, 10),
-            (100, 50, 10),
-            (100, 200, 12),
+            (100, 0, 0),
+            (100, 50, 0),
+            (100, 200, 2),
             # Uses system minumum credits per job (20)
-            (0, 100, 55),
+            (0, 100, 5),
         ),
     )
     def test_limited_jobs(
@@ -373,11 +373,12 @@ class TestJobLimits:
     @pytest.mark.parametrize(
         "minimum_credits_per_job,user_credits,expected_jobs",
         (
-            (100, 0, 8),
-            (100, 50, 8),
-            (100, 200, 10),
-            (0, 100, 53),
-            (30, 100, 34),
+            (100, 0, 0),
+            (100, 50, 0),
+            (100, 100, 0),
+            (100, 200, 1),
+            (0, 100, 4),
+            (30, 100, 2),
         ),
     )
     def test_limited_jobs_with_existing(
