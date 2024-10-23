@@ -91,7 +91,7 @@ class UserUploadCIVErrorHandler(ErrorHandler):
 class SystemCIVErrorHandler(ErrorHandler):
     def handle_error(self, *, error_message, user, interface):
         Notification.send(
-            kind=NotificationType.NotificationTypeChoices.SYSTEM,
+            kind=NotificationType.NotificationTypeChoices.CIV_VALIDATION,
             message=f"Validation for interface {interface.title} failed.",
             description=f"Validation for interface {interface.title} failed: {error_message}",
             actor=user,

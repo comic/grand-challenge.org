@@ -2435,7 +2435,7 @@ class CIVForObjectMixin:
             )
             raise e
 
-    def get_error_handler(self, linked_object=None):
+    def get_error_handler(self, *, linked_object=None):
         # local imports to prevent circular dependency
         from grandchallenge.algorithms.models import Job
 

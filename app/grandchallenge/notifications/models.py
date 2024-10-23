@@ -39,7 +39,9 @@ class NotificationTypeChoices(models.TextChoices):
     JOB_STATUS = "JOB-STATUS", _("Job status update")
     IMAGE_IMPORT_STATUS = "IMAGE-IMPORT", _("Image import status update")
     FILE_COPY_STATUS = "FILE-COPY", _("Validation failed while copying file")
-    SYSTEM = "SYSTEM", ("An unexpected error occurred")
+    CIV_VALIDATION = "CIV-VALIDATION", (
+        "Component Interface Value validation failed"
+    )
 
 
 class NotificationType:
@@ -229,7 +231,7 @@ class Notification(UUIDModel):
             return followers(action_object)
         elif kind in [
             NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
-            NotificationType.NotificationTypeChoices.SYSTEM,
+            NotificationType.NotificationTypeChoices.CIV_VALIDATION,
         ]:
             return {actor}
         else:
@@ -466,7 +468,7 @@ class Notification(UUIDModel):
             )
         elif self.type in [
             NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
-            NotificationType.NotificationTypeChoices.SYSTEM,
+            NotificationType.NotificationTypeChoices.CIV_VALIDATION,
         ]:
             return self.description
 

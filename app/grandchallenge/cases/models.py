@@ -134,7 +134,7 @@ class RawImageUploadSession(UUIDModel):
                 f"{n_errors} file{pluralize(n_errors)} could not be imported"
             )
 
-    def get_error_handler(self, linked_object=None):
+    def get_error_handler(self, *, linked_object=None):
         from grandchallenge.algorithms.models import Job
 
         if linked_object:

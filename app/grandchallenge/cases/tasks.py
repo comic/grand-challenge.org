@@ -140,6 +140,8 @@ def build_images(  # noqa:C901
     )
     if linked_interface_slug:
         ci = ComponentInterface.objects.get(slug=linked_interface_slug)
+    else:
+        ci = None
 
     if linked_object_pk:
         try:
@@ -178,18 +180,18 @@ def build_images(  # noqa:C901
     except DuplicateFilesException as e:
         _delete_session_files(upload_session=upload_session)
         error_handler.handle_error(
-            interface=ci if linked_interface_slug else None,
+            interface=ci,
             error_message=str(e),
         )
     except (SoftTimeLimitExceeded, TimeLimitExceeded):
         error_handler.handle_error(
-            interface=ci if linked_interface_slug else None,
+            interface=ci,
             error_message="Time limit exceeded",
         )
     except Exception:
         _delete_session_files(upload_session=upload_session)
         error_handler.handle_error(
-            interface=ci if linked_interface_slug else None,
+            interface=ci,
             error_message="An unexpected error occurred",
         )
         logger.error("An unexpected error occurred", exc_info=True)
