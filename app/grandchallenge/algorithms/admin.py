@@ -1,10 +1,8 @@
-from dateutil.relativedelta import relativedelta
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count, Sum
 from django.forms import ModelForm
-from django.utils.timezone import now
 from guardian.admin import GuardedModelAdmin
 
 from grandchallenge.algorithms.forms import AlgorithmIOValidationMixin
@@ -78,22 +76,24 @@ class AlgorithmUserCreditAdmin(ModelAdmin):
     search_fields = ("user__username", "user__email", "algorithm__slug")
     fields = (
         "user",
+        "algorithm",
         "credits",
+        "valid_from",
         "expires_on",
         "comment",
-        "get_remaining_specific_credits",
-        "get_remaining_general_credits",
-        "total_compute_costs_past_month",
-        "compute_costs_past_month",
+        "remaining_specific_credits",
+        "remaining_general_credits",
+        "specific_compute_costs",
+        "other_compute_costs",
     )
     readonly_fields = (
-        "get_remaining_specific_credits",
-        "get_remaining_general_credits",
-        "total_compute_costs_past_month",
-        "compute_costs_past_month",
+        "remaining_specific_credits",
+        "remaining_general_credits",
+        "specific_compute_costs",
+        "other_compute_costs",
     )
 
-    def get_remaining_specific_credits(self, obj):
+    def remaining_specific_credits(self, obj):
         try:
             return AlgorithmImage.get_remaining_specific_credits(
                 user=obj.user, algorithm=obj.algorithm
@@ -101,14 +101,14 @@ class AlgorithmUserCreditAdmin(ModelAdmin):
         except ObjectDoesNotExist:
             return 0
 
-    def get_remaining_general_credits(self, obj):
+    def remaining_general_credits(self, obj):
         return AlgorithmImage.get_remaining_general_credits(user=obj.user)
 
-    def total_compute_costs_past_month(self, obj):
+    def specific_compute_costs(self, obj):
         return millicents_to_euro(
             Job.objects.filter(
+                algorithm_image__algorithm=obj.algorithm,
                 creator=obj.user,
-                created__gt=now() - relativedelta(months=1),
             ).aggregate(
                 total=Sum("compute_cost_euro_millicents", default=0),
             )[
@@ -116,17 +116,15 @@ class AlgorithmUserCreditAdmin(ModelAdmin):
             ]
         )
 
-    def compute_costs_past_month(self, obj):
+    def other_compute_costs(self, obj):
         return millicents_to_euro(
             Job.objects.filter(
-                algorithm_image__algorithm=obj.algorithm,
                 creator=obj.user,
-                created__gt=now() - relativedelta(months=1),
-            ).aggregate(
+            )
+            .exclude(algorithm_image__algorithm=obj.algorithm)
+            .aggregate(
                 total=Sum("compute_cost_euro_millicents", default=0),
-            )[
-                "total"
-            ]
+            )["total"]
         )
 
 

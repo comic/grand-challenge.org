@@ -342,7 +342,7 @@ class TestJobLimits:
             (100, 0, 0),
             (100, 50, 0),
             (100, 200, 2),
-            # Uses system minumum credits per job (20)
+            # Uses system minimum credits per job (20)
             (0, 100, 5),
         ),
     )
