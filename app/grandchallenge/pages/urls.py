@@ -7,6 +7,7 @@ from grandchallenge.pages.views import (
     PageDelete,
     PageDetail,
     PageList,
+    PageMetadata,
     PageUpdate,
 )
 
@@ -19,5 +20,6 @@ urlpatterns = [
     path("", ChallengeHome.as_view(), name="home"),
     path("<slug>/", PageDetail.as_view(), name="detail"),
     path("<slug>/update/", PageUpdate.as_view(), name="update"),
+    path("<slug>/metadata/", PageMetadata.as_view(), name="metadata"),
     path("<slug>/delete/", PageDelete.as_view(), name="delete"),
 ]

@@ -19,7 +19,7 @@ from grandchallenge.challenges.views import ActiveChallengeRequiredMixin
 from grandchallenge.charts.specs import stacked_bar, world_map
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
 from grandchallenge.evaluation.models import Evaluation, Submission
-from grandchallenge.pages.forms import PageCreateForm, PageUpdateForm
+from grandchallenge.pages.forms import PageMetadataForm, PageUpdateForm
 from grandchallenge.pages.models import Page
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
@@ -44,7 +44,7 @@ class PageCreate(
     CreateView,
 ):
     model = Page
-    form_class = PageCreateForm
+    form_class = PageMetadataForm
     permission_required = "change_challenge"
     raise_exception = True
     login_url = reverse_lazy("account_login")
@@ -114,6 +114,10 @@ class PageUpdate(
         response = super().form_valid(form)
         self.object.move(form.cleaned_data["move"])
         return response
+
+
+class PageMetadata(PageUpdate):
+    form_class = PageMetadataForm
 
 
 class PageDelete(
