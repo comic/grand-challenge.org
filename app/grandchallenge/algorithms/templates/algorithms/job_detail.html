@@ -130,7 +130,13 @@
 
                 {% if object.detailed_error_message %}
                     <dt class="col-sm-3">Detailed Error Message</dt>
-                    <dd class="col-sm-9"><pre>{{ object.detailed_error_message|json_dumps }}</pre></dd>
+                    <dd class="col-sm-9">
+                        <dl>
+                            {% for interface, error in object.detailed_error_message.items %}
+                                <dt>{{ interface }}</dt> <dd>{{ error }}</dd>
+                            {% endfor %}
+                        </dl>
+                    </dd>
                 {% endif %}
 
                 {% if object.duration %}
