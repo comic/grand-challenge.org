@@ -7,7 +7,7 @@ from grandchallenge.core.widgets import MarkdownEditorFullPageWidget
 from grandchallenge.pages.models import Page
 
 
-class PageMetadataForm(SaveFormInitMixin, forms.ModelForm):
+class PageCreateForm(SaveFormInitMixin, forms.ModelForm):
     class Meta:
         model = Page
         fields = (
@@ -28,12 +28,8 @@ class PageMetadataForm(SaveFormInitMixin, forms.ModelForm):
         return display_title
 
 
-class PageUpdateForm(PageMetadataForm):
-    class Meta(PageMetadataForm.Meta):
-        fields = ("content_markdown",)
-        widgets = {
-            "content_markdown": MarkdownEditorFullPageWidget,
-        }
+class PageMetadataForm(PageCreateForm):
+    """Like the page create form, but you can also move the page."""
 
     move = forms.CharField(widget=forms.Select)
     move.required = False
@@ -44,3 +40,11 @@ class PageUpdateForm(PageMetadataForm):
         (Page.DOWN, "Down"),
         (Page.LAST, "Last"),
     )
+
+
+class PageUpdateForm(PageMetadataForm):
+    class Meta(PageMetadataForm.Meta):
+        fields = ("content_markdown",)
+        widgets = {
+            "content_markdown": MarkdownEditorFullPageWidget,
+        }
