@@ -8,14 +8,17 @@ from django.db.models import ProtectedError
 from django.test import TestCase
 from django.utils.timezone import now
 
-from grandchallenge.algorithms.models import Algorithm, Job
+from grandchallenge.algorithms.models import (
+    Algorithm,
+    AlgorithmUserCredit,
+    Job,
+)
 from grandchallenge.components.models import (
     CIVData,
     ComponentInterface,
     ComponentInterfaceValue,
     GPUTypeChoices,
 )
-from grandchallenge.credits.models import Credit
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
@@ -339,7 +342,7 @@ class TestJobLimits:
             (100, 0, 0),
             (100, 50, 0),
             (100, 200, 2),
-            # Uses system minumum credits per job (20)
+            # Uses system minimum credits per job (20)
             (0, 100, 5),
         ),
     )
@@ -357,9 +360,13 @@ class TestJobLimits:
             is_desired_version=True,
         )
 
-        user_credit = Credit.objects.get(user=user)
-        user_credit.credits = user_credits
-        user_credit.save()
+        AlgorithmUserCredit.objects.create(
+            user=user,
+            algorithm=ai.algorithm,
+            credits=user_credits,
+            valid_from=now().date(),
+            valid_until=now().date(),
+        )
 
         assert ai.get_remaining_jobs(user=user) == expected_jobs
 
@@ -368,9 +375,10 @@ class TestJobLimits:
         (
             (100, 0, 0),
             (100, 50, 0),
-            (100, 200, 0),
-            (0, 100, 3),
-            (30, 100, 1),
+            (100, 100, 0),
+            (100, 200, 1),
+            (0, 100, 4),
+            (30, 100, 2),
         ),
     )
     def test_limited_jobs_with_existing(
@@ -407,9 +415,13 @@ class TestJobLimits:
             time_limit=algorithm2.time_limit,
         )
 
-        user_credit = Credit.objects.get(user=user)
-        user_credit.credits = user_credits
-        user_credit.save()
+        AlgorithmUserCredit.objects.create(
+            user=user,
+            algorithm=ai.algorithm,
+            credits=user_credits,
+            valid_from=now().date(),
+            valid_until=now().date(),
+        )
 
         assert ai.get_remaining_jobs(user=user) == expected_jobs
 
@@ -885,9 +897,7 @@ def test_remaining_complimentary_jobs(settings):
 @pytest.mark.django_db
 def test_get_remaining_non_complimentary_jobs(settings):
     settings.ALGORITHM_IMAGES_COMPLIMENTARY_EDITOR_JOBS = 1
-
-    # Check the default, the rest are assuming this
-    assert Credit._meta.get_field("credits").get_default() == 1000
+    settings.ALGORITHMS_DEFAULT_USER_CREDITS = 1000
 
     minimum_credits_per_job = 300
 
@@ -934,9 +944,8 @@ def test_get_remaining_non_complimentary_jobs(settings):
 
 
 @pytest.mark.django_db
-def test_non_editor_remaining_jobs():
-    # Check the default, the rest are assuming this
-    assert Credit._meta.get_field("credits").get_default() == 1000
+def test_non_editor_remaining_jobs(settings):
+    settings.ALGORITHMS_DEFAULT_USER_CREDITS = 1000
 
     minimum_credits_per_job = 300
 

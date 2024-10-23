@@ -1,5 +1,7 @@
 from django.contrib import admin
-from django.db.models import Count
+from django.contrib.admin import ModelAdmin
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Count, Sum
 from django.forms import ModelForm
 from guardian.admin import GuardedModelAdmin
 
@@ -14,6 +16,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmModelGroupObjectPermission,
     AlgorithmModelUserObjectPermission,
     AlgorithmPermissionRequest,
+    AlgorithmUserCredit,
     AlgorithmUserObjectPermission,
     Job,
     JobGroupObjectPermission,
@@ -29,6 +32,7 @@ from grandchallenge.core.admin import (
     GroupObjectPermissionAdmin,
     UserObjectPermissionAdmin,
 )
+from grandchallenge.core.templatetags.costs import millicents_to_euro
 
 
 class AlgorithmAdminForm(AlgorithmIOValidationMixin, ModelForm):
@@ -63,6 +67,84 @@ class AlgorithmAdmin(GuardedModelAdmin):
             container_count=Count("algorithm_container_images")
         )
         return queryset
+
+
+@admin.register(AlgorithmUserCredit)
+class AlgorithmUserCreditAdmin(ModelAdmin):
+    list_display = (
+        "user",
+        "algorithm",
+        "credits",
+        "valid_from",
+        "valid_until",
+        "is_active",
+        "comment",
+    )
+    autocomplete_fields = ("user", "algorithm")
+    search_fields = ("user__username", "user__email", "algorithm__slug")
+    fields = (
+        "user",
+        "algorithm",
+        "credits",
+        "valid_from",
+        "valid_until",
+        "comment",
+    )
+    readonly_fields = (
+        "is_active",
+        "remaining_specific_credits",
+        "remaining_general_credits",
+        "specific_compute_costs",
+        "other_compute_costs",
+    )
+
+    def get_fields(self, request, obj=None):
+        fields = super().get_fields(request, obj)
+
+        if obj:
+            fields += (
+                "is_active",
+                "remaining_specific_credits",
+                "remaining_general_credits",
+                "specific_compute_costs",
+                "other_compute_costs",
+            )
+
+        return fields
+
+    def remaining_specific_credits(self, obj):
+        try:
+            return AlgorithmImage.get_remaining_specific_credits(
+                user=obj.user, algorithm=obj.algorithm
+            )
+        except ObjectDoesNotExist:
+            return 0
+
+    def remaining_general_credits(self, obj):
+        return AlgorithmImage.get_remaining_general_credits(user=obj.user)
+
+    def specific_compute_costs(self, obj):
+        return millicents_to_euro(
+            Job.objects.filter(
+                algorithm_image__algorithm=obj.algorithm,
+                creator=obj.user,
+            ).aggregate(
+                total=Sum("compute_cost_euro_millicents", default=0),
+            )[
+                "total"
+            ]
+        )
+
+    def other_compute_costs(self, obj):
+        return millicents_to_euro(
+            Job.objects.filter(
+                creator=obj.user,
+            )
+            .exclude(algorithm_image__algorithm=obj.algorithm)
+            .aggregate(
+                total=Sum("compute_cost_euro_millicents", default=0),
+            )["total"]
+        )
 
 
 @admin.register(Job)

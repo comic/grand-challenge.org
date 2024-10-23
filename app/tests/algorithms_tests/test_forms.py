@@ -507,8 +507,12 @@ def test_only_publish_successful_jobs():
 
 @pytest.mark.django_db
 class TestJobCreateLimits:
-    def test_form_invalid_without_enough_credits(self):
-        algorithm = AlgorithmFactory(minimum_credits_per_job=100)
+    def test_form_invalid_without_enough_credits(self, settings):
+        algorithm = AlgorithmFactory(
+            minimum_credits_per_job=(
+                settings.ALGORITHMS_DEFAULT_USER_CREDITS + 1
+            ),
+        )
         algorithm.inputs.clear()
         user = UserFactory()
         AlgorithmImageFactory(
@@ -518,9 +522,6 @@ class TestJobCreateLimits:
             is_desired_version=True,
         )
 
-        user.user_credit.credits = 0
-        user.user_credit.save()
-
         form = JobCreateForm(algorithm=algorithm, user=user, data={})
 
         assert not form.is_valid()
@@ -528,8 +529,12 @@ class TestJobCreateLimits:
             "__all__": ["You have run out of algorithm credits"],
         }
 
-    def test_form_valid_for_editor(self):
-        algorithm = AlgorithmFactory(minimum_credits_per_job=100)
+    def test_form_valid_for_editor(self, settings):
+        algorithm = AlgorithmFactory(
+            minimum_credits_per_job=(
+                settings.ALGORITHMS_DEFAULT_USER_CREDITS + 1
+            ),
+        )
         algorithm.inputs.clear()
         algorithm_image = AlgorithmImageFactory(
             algorithm=algorithm,
@@ -538,9 +543,6 @@ class TestJobCreateLimits:
             is_desired_version=True,
         )
         user = UserFactory()
-
-        user.user_credit.credits = 0
-        user.user_credit.save()
 
         algorithm.add_editor(user=user)
 
