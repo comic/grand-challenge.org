@@ -56,6 +56,15 @@ class PageCreate(
         form.instance.challenge = self.request.challenge
         return super().form_valid(form)
 
+    def get_success_url(self):
+        return reverse(
+            "pages:update",
+            kwargs={
+                "challenge_short_name": self.object.challenge.short_name,
+                "slug": self.object.slug,
+            },
+        )
+
 
 class PageList(
     LoginRequiredMixin,
