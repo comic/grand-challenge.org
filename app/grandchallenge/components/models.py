@@ -1707,6 +1707,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             self.EXECUTED,
             self.PARSING,
             self.EXECUTING_PREREQUISITES,
+            self.VALIDATING_INPUTS,
         }
 
     @property
@@ -1728,6 +1729,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             self.EXECUTED,
             self.PARSING,
             self.EXECUTING_PREREQUISITES,
+            self.VALIDATING_INPUTS,
         }:
             return "info"
         else:
