@@ -108,15 +108,11 @@
             </span>
         </dd>
 
-        <dt>Requires GPU</dt>
-        <dd>
-            <span class="badge badge-{{ object.requires_gpu|yesno:'success,danger' }}">
-                {{ object.requires_gpu }}
-            </span>
-        </dd>
+        <dt>Requires GPU Type</dt>
+        <dd>{{ object.algorithm.job_requires_gpu_type }}</dd>
 
         <dt>Requires Memory</dt>
-        <dd>{{ object.requires_memory_gb }} GB</dd>
+        <dd>{{ object.algorithm.job_requires_memory_gb }} GB</dd>
 
         <dt>Comment</dt>
         <dd>{{ object.comment }}</dd>
