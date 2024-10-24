@@ -4,17 +4,15 @@
 {% load static %}
 
 {% block title %}
-    Copy -{% if object %} {{ object }} -{% endif %} {{ block.super }}
+    Copy - {{ object }} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'reader-studies:list' %}">Reader
             Studies</a></li>
-        {% if object %}
-            <li class="breadcrumb-item"><a
-                    href="{{ object.get_absolute_url }}">{{ object }}</a></li>
-        {% endif %}
+        <li class="breadcrumb-item"><a
+            href="{{ object.get_absolute_url }}">{{ object }}</a></li>
         <li class="breadcrumb-item active"
             aria-current="page">Copy</li>
     </ol>
