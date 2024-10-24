@@ -21,7 +21,7 @@ from grandchallenge.core.admin import (
 )
 from grandchallenge.core.templatetags.costs import millicents_to_euro
 from grandchallenge.core.utils.grand_challenge_forge import (
-    get_forge_json_description,
+    get_forge_challenge_pack_context,
 )
 from grandchallenge.subdomains.utils import reverse
 
@@ -61,7 +61,7 @@ class ChallengeAdmin(ModelAdmin):
 
     @staticmethod
     def challenge_forge_json(obj):
-        json_desc = get_forge_json_description(challenge=obj)
+        json_desc = get_forge_challenge_pack_context(challenge=obj)
         return format_html(
             "<pre>{json_desc}</pre>", json_desc=json.dumps(json_desc, indent=2)
         )
