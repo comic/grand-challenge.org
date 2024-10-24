@@ -109,7 +109,11 @@
         </dd>
 
         <dt>Requires GPU Type</dt>
-        <dd>{{ object.algorithm.job_requires_gpu_type }}</dd>
+        <dd>
+            <span class="badge badge-{% if object.algorithm.job_requires_gpu_type %}info{% else %}danger{% endif %}">
+                {% if object.algorithm.job_requires_gpu_type %}{{ object.algorithm.job_requires_gpu_type }}{% else %}No GPU{% endif %}
+            </span>
+        </dd>
 
         <dt>Requires Memory</dt>
         <dd>{{ object.algorithm.job_requires_memory_gb }} GB</dd>
