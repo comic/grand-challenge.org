@@ -4,10 +4,6 @@
 {% load bleach %}
 {% load static %}
 
-{% block title %}
-    Challenge Admin - {% firstof challenge.title challenge.short_name %} - {{ block.super }}
-{% endblock %}
-
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'challenges:list' %}">Challenges</a></li>

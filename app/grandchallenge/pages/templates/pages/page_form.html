@@ -4,7 +4,7 @@
 {% load url %}
 
 {% block title %}
-    {% if object %}Update{% else %}Create{% endif %} -{% if object %} {{ object|title }} -{% endif %} {{ block.super }}
+    {{ object|yesno:"Update,Create Page" }} {% if object %} - {{ object|title }} {% else %} - Pages {% endif %} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -23,7 +23,7 @@
             </a></li>
         {% endif %}
         <li class="breadcrumb-item active"
-            aria-current="page">{% if object %}Update{% else %}Create{% endif %}
+            aria-current="page">{{ object|yesno:"Update,Create Page" }}
         </li>
     </ol>
 {% endblock %}
