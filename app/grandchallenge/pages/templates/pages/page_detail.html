@@ -88,6 +88,12 @@
                 >
                     <i class="fas fa-edit"></i>
                 </a>
+                <a class="btn btn-primary"
+                   href="{% url 'pages:metadata' challenge_short_name=object.challenge.short_name slug=object.slug %}"
+                   title="Edit metadata of this page"
+                >
+                    <i class="fas fa-tools"></i>
+                </a>
             {% endif %}
         {% endif %}
     </div>
