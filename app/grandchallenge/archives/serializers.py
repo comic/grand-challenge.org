@@ -107,5 +107,6 @@ class ArchiveItemPostSerializer(ArchiveItemSerializer):
                     interface_slug=interface.slug,
                     value=upload_session or user_upload or image or value,
                 ),
+                user=self.context["request"].user,
             )
         return instance

@@ -52,6 +52,12 @@ from grandchallenge.components.validators import (
     validate_no_slash_at_ends,
     validate_safe_path,
 )
+from grandchallenge.core.error_handlers import (
+    JobCIVErrorHandler,
+    RawImageUploadSessionCIVErrorHandler,
+    SystemCIVErrorHandler,
+    UserUploadCIVErrorHandler,
+)
 from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import (
     private_s3_storage,
@@ -1503,9 +1509,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
     stderr = models.TextField(default="")
     runtime_metrics = models.JSONField(default=dict, editable=False)
     error_message = models.CharField(max_length=1024, default="")
-    detailed_error_message = models.JSONField(
-        blank=True, null=True, default=None
-    )
+    detailed_error_message = models.JSONField(blank=True, default=dict)
     started_at = models.DateTimeField(null=True)
     completed_at = models.DateTimeField(null=True)
     compute_cost_euro_millicents = models.PositiveIntegerField(
@@ -2219,18 +2223,25 @@ class CIVForObjectMixin:
 
     def create_civ(self, *, civ_data, user=None, linked_task=None):
         if not self.is_editable:
-            raise RuntimeError(
-                f"{self} is not editable. CIVs cannot be added or removed from it."
+            # This can happen for Jobs with multiple inputs,
+            # if another input has already failed validation
+            logger.error(
+                f"{self} is not editable. CIVs cannot be added or removed from it.",
+                exc_info=True,
             )
+            return
 
         ci = ComponentInterface.objects.get(slug=civ_data.interface_slug)
-        current_civ = self.get_current_value_for_interface(interface=ci)
+        current_civ = self.get_current_value_for_interface(
+            interface=ci, user=user
+        )
 
         if ci.is_json_kind and not ci.requires_file:
             return self.create_civ_for_value(
                 ci=ci,
                 current_civ=current_civ,
                 new_value=civ_data.value,
+                user=user,
                 linked_task=linked_task,
             )
         elif ci.is_image_kind:
@@ -2255,7 +2266,7 @@ class CIVForObjectMixin:
             NotImplementedError(f"CIV creation for {ci} not handled.")
 
     def create_civ_for_value(
-        self, *, ci, current_civ, new_value, linked_task=None
+        self, *, ci, current_civ, new_value, user, linked_task=None
     ):
         current_value = current_civ.value if current_civ else None
 
@@ -2273,13 +2284,20 @@ class CIVForObjectMixin:
                 self.add_civ(civ=civ)
                 self.remove_civ(civ=current_civ)
             except ValidationError as e:
+                if created:
+                    civ.delete()
+
                 if new_value in ci.default_field.empty_values:
                     self.remove_civ(civ=current_civ)
                 else:
-                    self.handle_error(
-                        error_message=format_validation_error_message(e),
+                    error_handler = self.get_error_handler()
+                    error_handler.handle_error(
+                        interface=ci,
+                        error_message=format_validation_error_message(error=e),
+                        user=user,
                     )
-                    raise e
+                    return
+
             except RuntimeError as e:
                 logger.error(e, exc_info=True)
                 return
@@ -2308,10 +2326,15 @@ class CIVForObjectMixin:
                 try:
                     civ.full_clean()
                 except ValidationError as e:
-                    self.handle_error(
-                        error_message=format_validation_error_message(e),
+                    civ.delete()
+                    error_handler = self.get_error_handler()
+                    error_handler.handle_error(
+                        interface=ci,
+                        error_message=format_validation_error_message(error=e),
+                        user=user,
                     )
-                    raise e
+                    return
+
             try:
                 self.remove_civ(civ=current_civ)
                 self.add_civ(civ=civ)
@@ -2341,6 +2364,7 @@ class CIVForObjectMixin:
                 linked_app_label=self._meta.app_label,
                 linked_model_name=self._meta.model_name,
                 linked_object_pk=self.pk,
+                linked_interface_slug=ci.slug,
                 linked_task=add_image_to_object.signature(
                     kwargs={
                         "app_label": self._meta.app_label,
@@ -2397,24 +2421,37 @@ class CIVForObjectMixin:
     def get_civ_for_interface(self, interface):
         raise NotImplementedError
 
-    def get_current_value_for_interface(
-        self, *, interface, user_upload=None, upload_session=None
-    ):
+    def get_current_value_for_interface(self, *, interface, user):
         try:
             return self.get_civ_for_interface(interface=interface)
         except ObjectDoesNotExist:
             return None
         except MultipleObjectsReturned as e:
-            if user_upload:
-                user_upload.handle_file_validation_failure(
-                    error_message="An unexpected error occurred"
-                )
-            elif upload_session:
-                upload_session.update_status(
-                    error_message="An unexpected error occurred",
-                    status=RawImageUploadSession.FAILURE,
-                )
+            error_handler = self.get_error_handler()
+            error_handler.handle_error(
+                interface=interface,
+                error_message="An unexpected error occurred",
+                user=user,
+            )
             raise e
+
+    def get_error_handler(self, *, linked_object=None):
+        # local imports to prevent circular dependency
+        from grandchallenge.algorithms.models import Job
+
+        if linked_object and isinstance(linked_object, RawImageUploadSession):
+            return RawImageUploadSessionCIVErrorHandler(
+                upload_session=linked_object,
+                linked_job=self if isinstance(self, Job) else None,
+            )
+        elif isinstance(self, Job):
+            return JobCIVErrorHandler(job=self)
+        elif linked_object and isinstance(linked_object, UserUpload):
+            return UserUploadCIVErrorHandler(
+                user_upload=linked_object,
+            )
+        else:
+            return SystemCIVErrorHandler()
 
 
 class InterfacesAndValues(NamedTuple):

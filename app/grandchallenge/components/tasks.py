@@ -1188,19 +1188,20 @@ def add_image_to_object(
     object = lock_model_instance(
         app_label=app_label, model_name=model_name, pk=object_pk
     )
+    error_handler = object.get_error_handler(linked_object=upload_session)
 
     try:
         image = Image.objects.get(origin_id=upload_session_pk)
     except (Image.DoesNotExist, Image.MultipleObjectsReturned):
-        upload_session.update_status(
-            status=RawImageUploadSession.FAILURE,
-            error_message=f"File for interface {interface.title} failed validation: Image imports should result in a single image",
-            linked_object=object,
+        error_handler.handle_error(
+            interface=interface,
+            error_message="Image imports should result in a single image",
+            user=upload_session.creator,
         )
         return
 
     current_value = object.get_current_value_for_interface(
-        interface=interface, upload_session=upload_session
+        interface=interface, user=upload_session.creator
     )
 
     civ, created = ComponentInterfaceValue.objects.get_first_or_create(
@@ -1211,17 +1212,17 @@ def add_image_to_object(
         try:
             civ.full_clean()
         except ValidationError as e:
-            upload_session.update_status(
-                status=RawImageUploadSession.FAILURE,
-                error_message=f"File for interface {interface.title} failed validation: {format_validation_error_message(e)}",
-                linked_object=object,
+            error_handler.handle_error(
+                interface=interface,
+                error_message=format_validation_error_message(error=e),
+                user=upload_session.creator,
             )
             return
         except Exception as e:
-            upload_session.update_status(
-                status=RawImageUploadSession.FAILURE,
+            error_handler.handle_error(
+                interface=interface,
                 error_message="An unexpected error occurred",
-                linked_object=object,
+                user=upload_session.creator,
             )
             logger.error(e, exc_info=True)
             return
@@ -1262,9 +1263,10 @@ def add_file_to_object(
     object = lock_model_instance(
         app_label=app_label, model_name=model_name, pk=object_pk
     )
+    error_handler = object.get_error_handler(linked_object=user_upload)
 
     current_value = object.get_current_value_for_interface(
-        interface=interface, user_upload=user_upload
+        interface=interface, user=user_upload.creator
     )
 
     civ = ComponentInterfaceValue(interface=interface)
@@ -1274,14 +1276,17 @@ def add_file_to_object(
         civ.save()
         user_upload.copy_object(to_field=civ.file)
     except ValidationError as e:
-        user_upload.handle_file_validation_failure(
-            error_message=f"File for interface {interface.title} failed validation:{format_validation_error_message(error=e)}.",
-            linked_object=object,
+        error_handler.handle_error(
+            interface=interface,
+            error_message=format_validation_error_message(e),
+            user=user_upload.creator,
         )
         return
     except Exception as e:
-        user_upload.handle_file_validation_failure(
-            error_message="An unexpected error occurred", linked_object=object
+        error_handler.handle_error(
+            interface=interface,
+            error_message="An unexpected error occurred",
+            user=user_upload.creator,
         )
         logger.error(e, exc_info=True)
         return
