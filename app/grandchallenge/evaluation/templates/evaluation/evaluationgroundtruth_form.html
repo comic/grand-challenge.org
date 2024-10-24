@@ -3,7 +3,7 @@
 {% load url %}
 
 {% block title %}
-    {{ object|yesno:"Update,Create" }} -{% if object %} {{ object.pk }} -{% endif %} {{ block.super }}
+    {{ object|yesno:"Update,Create Ground Truth" }} {% if object %} - {{ object.pk }} {% else %} - Ground Truths {% endif %} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -22,7 +22,7 @@
             </li>
         {% endif %}
         <li class="breadcrumb-item active"
-            aria-current="page">{{ object|yesno:"Update,Create" }}</li>
+            aria-current="page">{{ object|yesno:"Update,Create Ground Truth" }}</li>
     </ol>
 {% endblock %}
 

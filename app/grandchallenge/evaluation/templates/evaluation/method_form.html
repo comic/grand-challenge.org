@@ -3,7 +3,7 @@
 {% load url %}
 
 {% block title %}
-    {{ object|yesno:"Update,Create" }} -{% if object %} {{ object.pk }} -{% endif %} {{ block.super }}
+    {{ object|yesno:"Update,Create Evaluation Method" }} {% if object %} - {{ object.pk }} {% else %} - Evaluation Methods {% endif %} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -22,7 +22,7 @@
             </li>
         {% endif %}
         <li class="breadcrumb-item active"
-            aria-current="page">{{ object|yesno:"Update,Create" }}</li>
+            aria-current="page">{{ object|yesno:"Update,Create Evaluation Method" }}</li>
     </ol>
 {% endblock %}
 

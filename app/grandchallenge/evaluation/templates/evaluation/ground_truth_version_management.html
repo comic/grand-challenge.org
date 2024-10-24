@@ -2,7 +2,7 @@
 {% load crispy_forms_tags %}
 
 {% block title %}
-    Ground Truth Version Management - Ground truths - {{ block.super }}
+    Ground Truth Version Management - Ground Truths - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -15,7 +15,7 @@
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
         <li class="breadcrumb-item">
             <a href="{% url 'evaluation:ground-truth-list' challenge_short_name=challenge.short_name slug=phase.slug %}">
-                Ground truths</a>
+                Ground Truths</a>
         </li>
         <li class="breadcrumb-item active"
             aria-current="page">Ground Truth Version Management</li>

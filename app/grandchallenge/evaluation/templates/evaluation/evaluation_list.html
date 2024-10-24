@@ -6,7 +6,7 @@
 {% load static %}
 
 {% block title %}
-    Evaluations - {% firstof challenge.title challenge.short_name %} - {{ block.super }}
+    Evaluations for {{ phase.title }} - {% firstof challenge.title challenge.short_name %} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -17,7 +17,7 @@
         <li class="breadcrumb-item"><a
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
         <li class="breadcrumb-item active"
-            aria-current="page">Evaluations
+            aria-current="page">Evaluations for {{ phase.title }}
         </li>
     </ol>
 {% endblock %}
