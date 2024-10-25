@@ -13,6 +13,7 @@ from django.forms import (
     ModelMultipleChoiceField,
 )
 from django.utils.functional import empty
+from django.utils.text import format_lazy
 
 from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.components.form_fields import (
@@ -24,6 +25,7 @@ from grandchallenge.components.widgets import SelectUploadWidget
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.evaluation.models import Method
+from grandchallenge.subdomains.utils import reverse_lazy
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadSingleWidget
 from grandchallenge.workstations.models import WorkstationImage
@@ -215,7 +217,15 @@ class SingleCIVForm(Form):
     }
 
     def __init__(
-        self, *args, pk, interface, base_obj, user, htmx_url, **kwargs
+        self,
+        *args,
+        pk,
+        interface,
+        base_obj,
+        user,
+        htmx_url,
+        interface_viewname,
+        **kwargs,
     ):
         super().__init__(*args, **kwargs)
         data = kwargs.get("data")
@@ -267,6 +277,14 @@ class SingleCIVForm(Form):
             queryset=qs,
             widget=widget(**widget_kwargs),
             label="Interface",
+            help_text=format_lazy(
+                (
+                    'See the <a href="{}">list of interfaces</a> for more '
+                    "information about each interface. "
+                    "Please contact support if your desired interface is missing."
+                ),
+                reverse_lazy(interface_viewname),
+            ),
         )
 
         if selected_interface is not None:

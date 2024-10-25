@@ -240,6 +240,7 @@ class InterfacesCreateBaseView(ObjectPermissionRequiredMixin, TemplateView):
             "interface": self.request.GET.get("interface"),
             "user": self.request.user,
             "auto_id": f"id-{uuid.uuid4()}",
+            "interface_viewname": self.get_interface_viewname(),
             "htmx_url": self.get_htmx_url(),
         }
 

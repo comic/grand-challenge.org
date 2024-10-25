@@ -716,6 +716,9 @@ class ArchiveItemInterfaceCreate(InterfacesCreateBaseView):
     def base_object(self):
         return Archive.objects.get(slug=self.kwargs["slug"])
 
+    def get_interface_viewname(self):
+        return "components:component-interface-list-archives"
+
     def get_htmx_url(self):
         if self.kwargs.get("pk") is not None:
             return reverse_lazy(
