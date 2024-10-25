@@ -1,4 +1,4 @@
-{% extends "pages/challenge_settings_base.html" %}
+{% extends "base.html" %}
 {% load crispy from crispy_forms_tags %}
 {% load static %}
 {% load url %}
@@ -28,7 +28,9 @@
     </ol>
 {% endblock %}
 
-{% block content %}
+{% block container %}container-fluid{% endblock %}
+
+{% block outer_content %}
 
     <h2>{% if object %}Update{% else %}Create{% endif %} Page</h2>
 
