@@ -66,6 +66,7 @@ def get_forge_algorithm_template_context(algorithm):
     return {
         "algorithm": {
             "title": algorithm.title,
+            "slug": algorithm.title,
             "url": algorithm.get_absolute_url(),
             "inputs": [
                 _process_component_interface(ci)

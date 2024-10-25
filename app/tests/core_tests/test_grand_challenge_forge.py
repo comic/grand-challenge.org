@@ -136,7 +136,7 @@ def test_get_algorithm_template_context():
 
     context = get_forge_algorithm_template_context(algorithm=algorithm)
 
-    for key in ["title", "url", "inputs", "outputs"]:
+    for key in ["title", "slug", "url", "inputs", "outputs"]:
         assert key in context["algorithm"]
 
     for index, ci in enumerate(context["algorithm"]["inputs"]):
