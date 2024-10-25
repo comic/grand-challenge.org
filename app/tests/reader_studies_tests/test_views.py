@@ -852,3 +852,24 @@ def test_question_interactive_algorithms_view_permissions(client):
     assert InteractiveAlgorithmChoices.ULS23_BASELINE.value in str(
         response.content
     )
+
+
+@pytest.mark.django_db
+def test_interfaces_list_link_in_new_interface_form(client):
+    rs = ReaderStudyFactory()
+    u = UserFactory()
+    rs.add_editor(u)
+
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-new-interfaces-create",
+        client=client,
+        method=client.get,
+        reverse_kwargs={
+            "slug": rs.slug,
+        },
+        user=u,
+    )
+    assert (
+        reverse("components:component-interface-list-reader-studies")
+        in response.rendered_content
+    )

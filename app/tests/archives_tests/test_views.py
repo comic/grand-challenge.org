@@ -1458,3 +1458,24 @@ def test_item_job_list_row_template_ajax_renders(client):
     assert response_content["recordsTotal"] == 1
     assert len(response_content["data"]) == 1
     assert job_details_url in response_content["data"][0][0]
+
+
+@pytest.mark.django_db
+def test_interfaces_list_link_in_new_interface_form(client):
+    ar = ArchiveFactory()
+    u = UserFactory()
+    ar.add_editor(u)
+
+    response = get_view_for_user(
+        viewname="archives:item-new-interface-create",
+        client=client,
+        method=client.get,
+        reverse_kwargs={
+            "slug": ar.slug,
+        },
+        user=u,
+    )
+    assert (
+        reverse("components:component-interface-list-archives")
+        in response.rendered_content
+    )
