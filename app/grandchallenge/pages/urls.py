@@ -3,12 +3,12 @@ from django.urls import path
 from grandchallenge.pages.views import (
     ChallengeHome,
     ChallengeStatistics,
+    PageContentUpdate,
     PageCreate,
     PageDelete,
     PageDetail,
     PageList,
-    PageMetadata,
-    PageUpdate,
+    PageMetadataUpdate,
 )
 
 app_name = "pages"
@@ -19,7 +19,15 @@ urlpatterns = [
     path("statistics/", ChallengeStatistics.as_view(), name="statistics"),
     path("", ChallengeHome.as_view(), name="home"),
     path("<slug>/", PageDetail.as_view(), name="detail"),
-    path("<slug>/update/", PageUpdate.as_view(), name="update"),
-    path("<slug>/metadata/", PageMetadata.as_view(), name="metadata"),
+    path(
+        "<slug>/content-update/",
+        PageContentUpdate.as_view(),
+        name="content-update",
+    ),
+    path(
+        "<slug>/metadata-update/",
+        PageMetadataUpdate.as_view(),
+        name="metadata-update",
+    ),
     path("<slug>/delete/", PageDelete.as_view(), name="delete"),
 ]

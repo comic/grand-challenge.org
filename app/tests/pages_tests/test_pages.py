@@ -39,7 +39,7 @@ def test_page_update_permissions(client, two_challenge_sets):
         display_title="challenge1page1permissiontest",
     )
     validate_admin_only_view(
-        viewname="pages:update",
+        viewname="pages:content-update",
         two_challenge_set=two_challenge_sets,
         client=client,
         reverse_kwargs={"slug": p1.slug},
@@ -91,7 +91,7 @@ def test_page_create(client, two_challenge_sets):
         },
     )
     assert response.status_code == 302
-    assert response.url.endswith(f"{page_title}/update/")
+    assert response.url.endswith(f"{page_title}/content-update/")
     response = get_view_for_user(
         url=response.url,
         client=client,
@@ -127,20 +127,20 @@ def test_page_create(client, two_challenge_sets):
 
 
 @pytest.mark.django_db
-def test_page_metadata(client, two_challenge_sets):
+def test_page_metadata_update(client, two_challenge_sets):
     p1 = PageFactory(
         challenge=two_challenge_sets.challenge_set_1.challenge,
         display_title="page1metadatatest",
-        content_markdown="oldhtml",
+        content_markdown="",
     )
     # page with the same name in another challenge to check selection
     PageFactory(
         challenge=two_challenge_sets.challenge_set_2.challenge,
         display_title="page1metadatatest",
-        content_markdown="oldhtml",
+        content_markdown="",
     )
     response = get_view_for_user(
-        viewname="pages:metadata",
+        viewname="pages:metadata-update",
         client=client,
         challenge=two_challenge_sets.challenge_set_1.challenge,
         user=two_challenge_sets.admin12,
@@ -149,7 +149,7 @@ def test_page_metadata(client, two_challenge_sets):
     assert response.status_code == 200
     assert 'value="page1metadatatest"' in str(response.content)
     response = get_view_for_user(
-        viewname="pages:metadata",
+        viewname="pages:metadata-update",
         client=client,
         method=client.post,
         challenge=two_challenge_sets.challenge_set_1.challenge,
@@ -164,7 +164,7 @@ def test_page_metadata(client, two_challenge_sets):
 
     # The slug shouldn't change
     response = get_view_for_user(
-        viewname="pages:metadata",
+        viewname="pages:metadata-update",
         client=client,
         challenge=two_challenge_sets.challenge_set_1.challenge,
         user=two_challenge_sets.admin12,
@@ -175,7 +175,7 @@ def test_page_metadata(client, two_challenge_sets):
 
     # check that the other page is unaffected
     response = get_view_for_user(
-        viewname="pages:metadata",
+        viewname="pages:metadata-update",
         client=client,
         challenge=two_challenge_sets.challenge_set_2.challenge,
         user=two_challenge_sets.admin12,
@@ -186,7 +186,7 @@ def test_page_metadata(client, two_challenge_sets):
 
 
 @pytest.mark.django_db
-def test_page_update(client, two_challenge_sets):
+def test_page_content_update(client, two_challenge_sets):
     p1 = PageFactory(
         challenge=two_challenge_sets.challenge_set_1.challenge,
         display_title="page1updatetest",
@@ -199,7 +199,7 @@ def test_page_update(client, two_challenge_sets):
         content_markdown="oldhtml",
     )
     response = get_view_for_user(
-        viewname="pages:update",
+        viewname="pages:detail",
         client=client,
         challenge=two_challenge_sets.challenge_set_1.challenge,
         user=two_challenge_sets.admin12,
@@ -208,7 +208,7 @@ def test_page_update(client, two_challenge_sets):
     assert response.status_code == 200
     assert "oldhtml" in str(response.content)
     response = get_view_for_user(
-        viewname="pages:update",
+        viewname="pages:content-update",
         client=client,
         method=client.post,
         challenge=two_challenge_sets.challenge_set_1.challenge,
@@ -305,7 +305,7 @@ def test_page_move(
     assert [p.order for p in c2_pages] == [1, 2, 3, 4]
 
     response = get_view_for_user(
-        viewname="pages:update",
+        viewname="pages:metadata-update",
         client=client,
         method=client.post,
         challenge=two_challenge_sets.challenge_set_1.challenge,

@@ -28,7 +28,7 @@ class PageCreateForm(SaveFormInitMixin, forms.ModelForm):
         return display_title
 
 
-class PageMetadataForm(PageCreateForm):
+class PageMetadataUpdateForm(PageCreateForm):
     """Like the page create form, but you can also move the page."""
 
     move = forms.CharField(widget=forms.Select)
@@ -42,8 +42,9 @@ class PageMetadataForm(PageCreateForm):
     )
 
 
-class PageUpdateForm(PageMetadataForm):
-    class Meta(PageMetadataForm.Meta):
+class PageContentUpdateForm(SaveFormInitMixin, forms.ModelForm):
+    class Meta:
+        model = Page
         fields = ("content_markdown",)
         widgets = {
             "content_markdown": MarkdownEditorFullPageWidget,

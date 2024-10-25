@@ -76,7 +76,7 @@
                     </li>
                     {% if "change_challenge" in challenge_perms %}
                         <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.view_name in 'challenge-update,pages:update,pages:delete,pages:create,update,pages:list,participants:list,participants:registration-list,evaluation:phase-create,evaluation:phase-update,evaluation:create,evaluation:method-list,evaluation:method-create,evaluation:evaluation-admin-list,evaluation:method-detail,evaluation:combined-leaderboard-update,evaluation:combined-leaderboard-create,evaluation:combined-leaderboard-delete' or request.resolver_match.app_name == 'admins' %}active{% endif %}"
+                            <a class="nav-link {% if request.resolver_match.view_name in 'challenge-update,pages:content-update,pages:delete,pages:create,update,pages:list,participants:list,participants:registration-list,evaluation:phase-create,evaluation:phase-update,evaluation:create,evaluation:method-list,evaluation:method-create,evaluation:evaluation-admin-list,evaluation:method-detail,evaluation:combined-leaderboard-update,evaluation:combined-leaderboard-create,evaluation:combined-leaderboard-delete' or request.resolver_match.app_name == 'admins' %}active{% endif %}"
                                href="{% url 'challenge-update' challenge_short_name=challenge.short_name %}">
                                 <i class="fas fa-cog fa-fw"></i>
                                     Admin
