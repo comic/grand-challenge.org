@@ -104,7 +104,14 @@
         </dd>
 
         <dt>Requires Memory</dt>
-        <dd>{{ object.requires_memory_gb }} GB</dd>
+        <dd>{{ object.phase.evaluation_requires_memory_gb }} GB</dd>
+
+        <dt>Requires GPU Type</dt>
+        <dd>
+            <span class="badge badge-{% if object.phase.evaluation_requires_gpu_type %}info{% else %}danger{% endif %}">
+                {{ object.phase.get_evaluation_requires_gpu_type_display }}
+            </span>
+        </dd>
 
         <dt>Comment</dt>
         <dd>{{ object.comment }}</dd>
