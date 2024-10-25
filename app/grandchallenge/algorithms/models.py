@@ -692,7 +692,7 @@ class AlgorithmImage(UUIDModel, ComponentImage):
         if user.username == settings.ANONYMOUS_USER_NAME:
             return 0
 
-        user_credits = settings.ALGORITHMS_DEFAULT_USER_CREDITS
+        user_credits = settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER
 
         user_algorithms_with_active_credits = (
             AlgorithmUserCredit.objects.active_credits()
@@ -1065,8 +1065,8 @@ class Job(CIVForObjectMixin, ComponentJob):
 
     def init_credits_consumed(self):
         overall_min_credits_per_job = (
-            settings.ALGORITHMS_DEFAULT_USER_CREDITS
-            / settings.ALGORITHMS_MAX_DEFAULT_JOBS_PER_MONTH
+            settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER
+            / settings.ALGORITHMS_MAX_GENERAL_JOBS_PER_MONTH_PER_USER
         )
 
         executor = self.get_executor(
@@ -1084,8 +1084,8 @@ class Job(CIVForObjectMixin, ComponentJob):
             int(
                 round(
                     maximum_cents_per_job
-                    * settings.ALGORITHMS_DEFAULT_USER_CREDITS
-                    / settings.ALGORITHMS_USER_CENTS_PER_MONTH,
+                    * settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER
+                    / settings.ALGORITHMS_GENERAL_CENTS_PER_MONTH_PER_USER,
                     -1,
                 )
             ),

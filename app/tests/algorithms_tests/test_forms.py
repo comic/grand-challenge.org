@@ -510,7 +510,7 @@ class TestJobCreateLimits:
     def test_form_invalid_without_enough_credits(self, settings):
         algorithm = AlgorithmFactory(
             minimum_credits_per_job=(
-                settings.ALGORITHMS_DEFAULT_USER_CREDITS + 1
+                settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER + 1
             ),
         )
         algorithm.inputs.clear()
@@ -532,7 +532,7 @@ class TestJobCreateLimits:
     def test_form_valid_for_editor(self, settings):
         algorithm = AlgorithmFactory(
             minimum_credits_per_job=(
-                settings.ALGORITHMS_DEFAULT_USER_CREDITS + 1
+                settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER + 1
             ),
         )
         algorithm.inputs.clear()

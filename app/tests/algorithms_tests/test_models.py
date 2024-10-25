@@ -897,7 +897,7 @@ def test_remaining_complimentary_jobs(settings):
 @pytest.mark.django_db
 def test_get_remaining_non_complimentary_jobs(settings):
     settings.ALGORITHM_IMAGES_COMPLIMENTARY_EDITOR_JOBS = 1
-    settings.ALGORITHMS_DEFAULT_USER_CREDITS = 1000
+    settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER = 1000
 
     minimum_credits_per_job = 300
 
@@ -945,7 +945,7 @@ def test_get_remaining_non_complimentary_jobs(settings):
 
 @pytest.mark.django_db
 def test_non_editor_remaining_jobs(settings):
-    settings.ALGORITHMS_DEFAULT_USER_CREDITS = 1000
+    settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER = 1000
 
     minimum_credits_per_job = 300
 

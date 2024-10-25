@@ -243,7 +243,7 @@ class TestJobCreateLimits:
             is_in_registry=True,
             is_desired_version=True,
             algorithm__minimum_credits_per_job=(
-                settings.ALGORITHMS_DEFAULT_USER_CREDITS + 1
+                settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER + 1
             ),
         )
         algorithm_image.algorithm.inputs.clear()
@@ -277,7 +277,7 @@ class TestJobCreateLimits:
             is_in_registry=True,
             is_desired_version=True,
             algorithm__minimum_credits_per_job=(
-                settings.ALGORITHMS_DEFAULT_USER_CREDITS + 1
+                settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER + 1
             ),
         )
         algorithm_image.algorithm.inputs.clear()
