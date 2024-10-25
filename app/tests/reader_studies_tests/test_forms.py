@@ -1330,6 +1330,7 @@ def test_display_set_add_interface_form():
         base_obj=rs,
         interface=None,
         user=user,
+        interface_viewname="components:component-interface-list-reader-studies",
         htmx_url="foo",
         auto_id="1",
     )
@@ -1340,6 +1341,7 @@ def test_display_set_add_interface_form():
         base_obj=rs,
         interface=ci_file.pk,
         user=user,
+        interface_viewname="components:component-interface-list-reader-studies",
         htmx_url="foo",
         auto_id="1",
     )
@@ -1357,6 +1359,7 @@ def test_display_set_add_interface_form():
         base_obj=rs,
         interface=ci_value.pk,
         user=user,
+        interface_viewname="components:component-interface-list-reader-studies",
         htmx_url="foo",
         auto_id="1",
     )
@@ -1374,6 +1377,7 @@ def test_display_set_add_interface_form():
         base_obj=rs,
         interface=ci_image.pk,
         user=user,
+        interface_viewname="components:component-interface-list-reader-studies",
         htmx_url="foo",
         auto_id="1",
     )
