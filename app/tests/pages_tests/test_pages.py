@@ -4,6 +4,7 @@ import pytest
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.db.models import BLANK_CHOICE_DASH
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.pages.models import Page
 from tests.evaluation_tests.factories import PhaseFactory
@@ -127,6 +128,35 @@ def test_page_create(client, two_challenge_sets):
 
 
 @pytest.mark.django_db
+def test_page_create_permission(client):
+    def attempt_create():
+        return get_view_for_user(
+            viewname="pages:create",
+            client=client,
+            method=client.post,
+            challenge=challenge,
+            data={
+                "display_title": "page 1",
+                "permission_level": Page.ALL,
+            },
+            user=user,
+        )
+
+    user = UserFactory()
+    challenge = ChallengeFactory()
+    n_pages = Page.objects.count()
+    response = attempt_create()
+    assert response.status_code == 403
+    assert Page.objects.count() == n_pages
+
+    assign_perm("change_challenge", user, challenge)
+    response = attempt_create()
+    assert response.status_code == 302
+    assert Page.objects.count() == n_pages + 1
+    assert Page.objects.all()[n_pages].display_title == "page 1"
+
+
+@pytest.mark.django_db
 def test_page_metadata_update(client, two_challenge_sets):
     p1 = PageFactory(
         challenge=two_challenge_sets.challenge_set_1.challenge,
@@ -186,6 +216,33 @@ def test_page_metadata_update(client, two_challenge_sets):
 
 
 @pytest.mark.django_db
+def test_page_metadata_update_permission(client):
+    def attempt_metadata_update():
+        return get_view_for_user(
+            viewname="pages:metadata-update",
+            client=client,
+            method=client.post,
+            challenge=page.challenge,
+            data={
+                "display_title": "new title",
+                "permission_level": Page.ALL,
+            },
+            reverse_kwargs={"slug": page.slug},
+            user=user,
+        )
+
+    user = UserFactory()
+    page = PageFactory(display_title="old title")
+    response = attempt_metadata_update()
+    assert response.status_code == 403
+    assign_perm("change_challenge", user, page.challenge)
+    response = attempt_metadata_update()
+    assert response.status_code == 302
+    page.refresh_from_db()
+    assert page.display_title == "new title"
+
+
+@pytest.mark.django_db
 def test_page_content_update(client, two_challenge_sets):
     p1 = PageFactory(
         challenge=two_challenge_sets.challenge_set_1.challenge,
@@ -240,6 +297,37 @@ def test_page_content_update(client, two_challenge_sets):
     )
     assert response.status_code == 200
     assert "oldhtml" in str(response.content)
+
+
+@pytest.mark.django_db
+def test_page_content_update_permission(client):
+    def attempt_content_update():
+        return get_view_for_user(
+            viewname="pages:content-update",
+            client=client,
+            method=client.post,
+            challenge=page.challenge,
+            data={
+                "content_markdown": "new content",
+            },
+            reverse_kwargs={"slug": page.slug},
+            user=user,
+        )
+
+    user = UserFactory()
+    page = PageFactory(content_markdown="old content")
+
+    response = attempt_content_update()
+
+    assert response.status_code == 403
+
+    assign_perm("change_challenge", user, page.challenge)
+
+    response = attempt_content_update()
+    page.refresh_from_db()
+
+    assert response.status_code == 302
+    assert page.content_markdown == "new content"
 
 
 @pytest.mark.django_db
