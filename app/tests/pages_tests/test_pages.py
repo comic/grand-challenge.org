@@ -87,8 +87,19 @@ def test_page_create(client, two_challenge_sets):
         user=two_challenge_sets.challenge_set_1.admin,
         data={
             "display_title": page_title,
-            "content_markdown": page_markdown,
             "permission_level": Page.ALL,
+        },
+    )
+    assert response.status_code == 302
+    assert response.url.endswith(f"{page_title}/update/")
+    response = get_view_for_user(
+        url=response.url,
+        client=client,
+        method=client.post,
+        challenge=two_challenge_sets.challenge_set_1.challenge,
+        user=two_challenge_sets.challenge_set_1.admin,
+        data={
+            "content_markdown": page_markdown,
         },
     )
     assert response.status_code == 302
@@ -116,6 +127,65 @@ def test_page_create(client, two_challenge_sets):
 
 
 @pytest.mark.django_db
+def test_page_metadata(client, two_challenge_sets):
+    p1 = PageFactory(
+        challenge=two_challenge_sets.challenge_set_1.challenge,
+        display_title="page1metadatatest",
+        content_markdown="oldhtml",
+    )
+    # page with the same name in another challenge to check selection
+    PageFactory(
+        challenge=two_challenge_sets.challenge_set_2.challenge,
+        display_title="page1metadatatest",
+        content_markdown="oldhtml",
+    )
+    response = get_view_for_user(
+        viewname="pages:metadata",
+        client=client,
+        challenge=two_challenge_sets.challenge_set_1.challenge,
+        user=two_challenge_sets.admin12,
+        reverse_kwargs={"slug": p1.slug},
+    )
+    assert response.status_code == 200
+    assert 'value="page1metadatatest"' in str(response.content)
+    response = get_view_for_user(
+        viewname="pages:metadata",
+        client=client,
+        method=client.post,
+        challenge=two_challenge_sets.challenge_set_1.challenge,
+        user=two_challenge_sets.admin12,
+        reverse_kwargs={"slug": p1.slug},
+        data={
+            "display_title": "editedtitle",
+            "permission_level": Page.ALL,
+        },
+    )
+    assert response.status_code == 302
+
+    # The slug shouldn't change
+    response = get_view_for_user(
+        viewname="pages:metadata",
+        client=client,
+        challenge=two_challenge_sets.challenge_set_1.challenge,
+        user=two_challenge_sets.admin12,
+        reverse_kwargs={"slug": "page1metadatatest"},
+    )
+    assert response.status_code == 200
+    assert 'value="editedtitle"' in str(response.content)
+
+    # check that the other page is unaffected
+    response = get_view_for_user(
+        viewname="pages:metadata",
+        client=client,
+        challenge=two_challenge_sets.challenge_set_2.challenge,
+        user=two_challenge_sets.admin12,
+        reverse_kwargs={"slug": "page1metadatatest"},
+    )
+    assert response.status_code == 200
+    assert 'value="page1metadatatest"' in str(response.content)
+
+
+@pytest.mark.django_db
 def test_page_update(client, two_challenge_sets):
     p1 = PageFactory(
         challenge=two_challenge_sets.challenge_set_1.challenge,
@@ -136,7 +206,7 @@ def test_page_update(client, two_challenge_sets):
         reverse_kwargs={"slug": p1.slug},
     )
     assert response.status_code == 200
-    assert 'value="page1updatetest"' in str(response.content)
+    assert "oldhtml" in str(response.content)
     response = get_view_for_user(
         viewname="pages:update",
         client=client,
@@ -145,14 +215,11 @@ def test_page_update(client, two_challenge_sets):
         user=two_challenge_sets.admin12,
         reverse_kwargs={"slug": p1.slug},
         data={
-            "display_title": "editedtitle",
-            "permission_level": Page.ALL,
             "content_markdown": "newhtml",
         },
     )
     assert response.status_code == 302
 
-    # The slug shouldn't change
     response = get_view_for_user(
         viewname="pages:detail",
         client=client,
