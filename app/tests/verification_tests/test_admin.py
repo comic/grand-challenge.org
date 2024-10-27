@@ -1,8 +1,34 @@
 import pytest
 
-from grandchallenge.verifications.admin import deactivate_vus_users
-from grandchallenge.verifications.models import VerificationUserSet
-from tests.factories import UserFactory
+from grandchallenge.core.models import RequestBase
+from grandchallenge.core.utils.access_requests import (
+    AccessRequestHandlingOptions,
+)
+from grandchallenge.verifications.admin import (
+    deactivate_vus_users,
+    mark_verified,
+)
+from grandchallenge.verifications.models import (
+    Verification,
+    VerificationUserSet,
+)
+from tests.algorithms_tests.factories import (
+    AlgorithmFactory,
+    AlgorithmPermissionRequestFactory,
+)
+from tests.archives_tests.factories import (
+    ArchiveFactory,
+    ArchivePermissionRequestFactory,
+)
+from tests.factories import (
+    ChallengeFactory,
+    RegistrationRequestFactory,
+    UserFactory,
+)
+from tests.reader_studies_tests.factories import (
+    ReaderStudyFactory,
+    ReaderStudyPermissionRequestFactory,
+)
 from tests.verification_tests.factories import (
     VerificationFactory,
     VerificationUserSetFactory,
@@ -52,3 +78,71 @@ def test_deactivate_users(django_capture_on_commit_callbacks, settings):
     assert users[3].is_active is True
     assert users[3].verification.is_verified is True
     assert users[4].is_active is True
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "perm_request_factory, perm_request_entity_attr, entity_factory",
+    [
+        (AlgorithmPermissionRequestFactory, "algorithm", AlgorithmFactory),
+        (ArchivePermissionRequestFactory, "archive", ArchiveFactory),
+        (
+            ReaderStudyPermissionRequestFactory,
+            "reader_study",
+            ReaderStudyFactory,
+        ),
+        (RegistrationRequestFactory, "challenge", ChallengeFactory),
+    ],
+)
+@pytest.mark.parametrize(
+    "access_request_handling, expected_request_status_without_verification, expected_request_status_with_verification",
+    [
+        (
+            AccessRequestHandlingOptions.ACCEPT_ALL,
+            RequestBase.ACCEPTED,
+            RequestBase.ACCEPTED,
+        ),
+        (
+            AccessRequestHandlingOptions.ACCEPT_VERIFIED_USERS,
+            RequestBase.PENDING,
+            RequestBase.ACCEPTED,
+        ),
+        (
+            AccessRequestHandlingOptions.MANUAL_REVIEW,
+            RequestBase.PENDING,
+            RequestBase.PENDING,
+        ),
+    ],
+)
+def test_verify_users_and_accept_pending_requests(
+    django_capture_on_commit_callbacks,
+    settings,
+    perm_request_factory,
+    perm_request_entity_attr,
+    entity_factory,
+    access_request_handling,
+    expected_request_status_without_verification,
+    expected_request_status_with_verification,
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    usr = UserFactory()
+
+    t = entity_factory(access_request_handling=access_request_handling)
+    pr = perm_request_factory(**{"user": usr, perm_request_entity_attr: t})
+
+    VerificationFactory(user=usr, email_is_verified=True, is_verified=False)
+
+    assert pr.status == expected_request_status_without_verification
+
+    with django_capture_on_commit_callbacks(execute=True):
+        mark_verified(
+            None,
+            None,
+            Verification.objects.filter(user_id=usr.pk),
+        )
+
+    pr.refresh_from_db()
+
+    assert pr.status == expected_request_status_with_verification
