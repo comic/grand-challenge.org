@@ -204,6 +204,8 @@ class UserUpload(UUIDModel):
 
         response = self._client.head_object(Bucket=self.bucket, Key=self.key)
         object_size = int(response["ContentLength"])
+
+        # 2048 bytes for best results with libmagic
         max_bytes = min(2047, object_size)
 
         if max_bytes == 0:
@@ -212,7 +214,6 @@ class UserUpload(UUIDModel):
             header = self._client.get_object(
                 Bucket=self.bucket,
                 Key=self.key,
-                # 2048 bytes for best results with libmagic
                 Range=f"bytes=0-{max_bytes}",
             )["Body"].read()
 
