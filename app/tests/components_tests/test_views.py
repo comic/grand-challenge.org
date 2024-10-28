@@ -6,6 +6,7 @@ from django.conf import settings
 from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.components.models import InterfaceKindChoices
 from grandchallenge.reader_studies.models import DisplaySet, ReaderStudy
+from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import (
@@ -503,3 +504,38 @@ def test_display_ci_example_value(client):
     assert response.status_code == 200
     assert v.value in response.rendered_content
     assert v.extra_info in response.rendered_content
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "object_factory, viewname, interface_list_viewname",
+    [
+        [
+            ReaderStudyFactory,
+            "reader-studies:display-set-new-interfaces-create",
+            "components:component-interface-list-reader-studies",
+        ],
+        [
+            ArchiveFactory,
+            "archives:item-new-interface-create",
+            "components:component-interface-list-archives",
+        ],
+    ],
+)
+def test_interfaces_list_link_in_new_interface_form(
+    client, object_factory, viewname, interface_list_viewname
+):
+    object = object_factory()
+    u = UserFactory()
+    object.add_editor(u)
+
+    response = get_view_for_user(
+        viewname=viewname,
+        client=client,
+        method=client.get,
+        reverse_kwargs={
+            "slug": object.slug,
+        },
+        user=u,
+    )
+    assert reverse(interface_list_viewname) in response.rendered_content
