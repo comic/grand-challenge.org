@@ -135,15 +135,9 @@ class RawImageUploadSession(UUIDModel):
             )
 
     def get_error_handler(self, *, linked_object=None):
-        from grandchallenge.algorithms.models import Job
-
         return RawImageUploadSessionErrorHandler(
             upload_session=self,
-            linked_job=(
-                linked_object
-                if linked_object and isinstance(linked_object, Job)
-                else None
-            ),
+            linked_object=linked_object,
         )
 
     def update_status(

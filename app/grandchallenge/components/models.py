@@ -2444,7 +2444,7 @@ class CIVForObjectMixin:
         if linked_object and isinstance(linked_object, RawImageUploadSession):
             return RawImageUploadSessionErrorHandler(
                 upload_session=linked_object,
-                linked_job=self if isinstance(self, Job) else None,
+                linked_object=self,
             )
         elif isinstance(self, Job):
             return JobCIVErrorHandler(job=self)

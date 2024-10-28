@@ -47,29 +47,24 @@ class RawImageUploadSessionErrorHandler(ErrorHandler):
     Use this error handler instead of the JobCIVErrorHandler whenever there is an upload_session object.
     """
 
-    def __init__(self, *args, upload_session, linked_job, **kwargs):
+    def __init__(self, *args, upload_session, linked_object, **kwargs):
         super().__init__(*args, **kwargs)
-
-        from grandchallenge.algorithms.models import Job
 
         if not upload_session:
             raise RuntimeError(
                 "You need to provide a RawImageUploadSession instance to this error handler."
             )
 
-        if linked_job and not isinstance(linked_job, Job):
-            raise RuntimeError("The linked_job needs to be a Job instance.")
-
         self._upload_session = upload_session
-        self._job = linked_job
+        self._linked_object = linked_object
 
     def handle_error(self, *, error_message, interface, user=None):
-        if self._job:
+        if self._linked_object:
             self._upload_session.update_status(
                 status=self._upload_session.FAILURE,
                 error_message=("One or more of the inputs failed validation."),
                 detailed_error_message=({interface.title: error_message}),
-                linked_object=self._job,
+                linked_object=self._linked_object,
             )
         else:
             self._upload_session.update_status(
