@@ -115,8 +115,6 @@ def test_deactivate_users(django_capture_on_commit_callbacks, settings):
     ],
 )
 def test_verify_users_and_accept_pending_requests(
-    django_capture_on_commit_callbacks,
-    settings,
     perm_request_factory,
     perm_request_entity_attr,
     entity_factory,
@@ -124,9 +122,6 @@ def test_verify_users_and_accept_pending_requests(
     expected_request_status_without_verification,
     expected_request_status_with_verification,
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
     usr = UserFactory()
 
     t = entity_factory(access_request_handling=access_request_handling)
@@ -136,12 +131,11 @@ def test_verify_users_and_accept_pending_requests(
 
     assert pr.status == expected_request_status_without_verification
 
-    with django_capture_on_commit_callbacks(execute=True):
-        mark_verified(
-            None,
-            None,
-            Verification.objects.filter(user_id=usr.pk),
-        )
+    mark_verified(
+        None,
+        None,
+        Verification.objects.filter(user_id=usr.pk),
+    )
 
     pr.refresh_from_db()
 
