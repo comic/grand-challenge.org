@@ -61,6 +61,7 @@ class PageCreate(
         return super().form_valid(form)
 
     def get_success_url(self):
+        """On successful creation, go to content update."""
         return reverse(
             "pages:content-update",
             kwargs={
