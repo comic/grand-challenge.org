@@ -1,8 +1,22 @@
 from grandchallenge.evaluation.utils import SubmissionKindChoices
-from grandchallenge.subdomains.utils import reverse
 
 
-def get_forge_json_description(challenge, phase_pks=None):
+def _process_component_interface(component_interface):
+    result = {
+        "slug": component_interface.slug,
+        "kind": component_interface.get_kind_display(),
+        "super_kind": component_interface.super_kind.label,
+        "relative_path": component_interface.relative_path,
+        "example_value": None,
+    }
+
+    if component_interface.is_json_kind:
+        result["example_value"] = component_interface.json_kind_example.value
+
+    return result
+
+
+def get_forge_challenge_pack_context(challenge, phase_pks=None):
     """
     Generates a JSON description of the challenge and phases suitable for
     grand-challenge-forge to generate a challenge pack.
@@ -21,15 +35,7 @@ def get_forge_json_description(challenge, phase_pks=None):
     def process_archive(archive):
         return {
             "slug": archive.slug,
-            "url": reverse("archives:detail", kwargs={"slug": archive.slug}),
-        }
-
-    def process_component_interface(component_interface):
-        return {
-            "slug": component_interface.slug,
-            "kind": component_interface.get_kind_display(),
-            "super_kind": component_interface.super_kind.label,
-            "relative_path": component_interface.relative_path,
+            "url": archive.get_absolute_url(),
         }
 
     def process_phase(phase):
@@ -37,11 +43,11 @@ def get_forge_json_description(challenge, phase_pks=None):
             "slug": phase.slug,
             "archive": process_archive(phase.archive),
             "algorithm_inputs": [
-                process_component_interface(ci)
+                _process_component_interface(ci)
                 for ci in phase.algorithm_inputs.all()
             ],
             "algorithm_outputs": [
-                process_component_interface(ci)
+                _process_component_interface(ci)
                 for ci in phase.algorithm_outputs.all()
             ],
         }
@@ -49,7 +55,26 @@ def get_forge_json_description(challenge, phase_pks=None):
     return {
         "challenge": {
             "slug": challenge.slug,
+            "url": challenge.get_absolute_url(),
             "phases": [process_phase(p) for p in phases],
             "archives": [process_archive(a) for a in archives],
+        }
+    }
+
+
+def get_forge_algorithm_template_context(algorithm):
+    return {
+        "algorithm": {
+            "title": algorithm.title,
+            "slug": algorithm.slug,
+            "url": algorithm.get_absolute_url(),
+            "inputs": [
+                _process_component_interface(ci)
+                for ci in algorithm.inputs.all()
+            ],
+            "outputs": [
+                _process_component_interface(ci)
+                for ci in algorithm.outputs.all()
+            ],
         }
     }

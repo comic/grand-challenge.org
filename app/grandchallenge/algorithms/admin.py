@@ -1,6 +1,9 @@
+import json
+
 from django.contrib import admin
 from django.db.models import Count
 from django.forms import ModelForm
+from django.utils.html import format_html
 from guardian.admin import GuardedModelAdmin
 
 from grandchallenge.algorithms.forms import AlgorithmIOValidationMixin
@@ -29,6 +32,9 @@ from grandchallenge.core.admin import (
     GroupObjectPermissionAdmin,
     UserObjectPermissionAdmin,
 )
+from grandchallenge.core.utils.grand_challenge_forge import (
+    get_forge_algorithm_template_context,
+)
 
 
 class AlgorithmAdminForm(AlgorithmIOValidationMixin, ModelForm):
@@ -39,6 +45,7 @@ class AlgorithmAdminForm(AlgorithmIOValidationMixin, ModelForm):
 
 @admin.register(Algorithm)
 class AlgorithmAdmin(GuardedModelAdmin):
+    readonly_fields = ("algorithm_forge_json",)
     list_display = (
         "title",
         "created",
@@ -56,6 +63,13 @@ class AlgorithmAdmin(GuardedModelAdmin):
 
     def container_count(self, obj):
         return obj.container_count
+
+    @staticmethod
+    def algorithm_forge_json(obj):
+        json_desc = get_forge_algorithm_template_context(algorithm=obj)
+        return format_html(
+            "<pre>{json_desc}</pre>", json_desc=json.dumps(json_desc, indent=2)
+        )
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
