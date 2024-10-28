@@ -1,4 +1,9 @@
+import io
 import logging
+import os
+import tempfile
+from pathlib import Path
+from zipfile import ZipFile
 
 from django.conf import settings
 from django.contrib import messages
@@ -12,7 +17,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Window
 from django.db.models.functions import Rank
 from django.forms.utils import ErrorList
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import FileResponse, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.utils.html import format_html
@@ -25,6 +30,7 @@ from django.views.generic import (
     UpdateView,
 )
 from django_filters.rest_framework import DjangoFilterBackend
+from grand_challenge_forge.forge import generate_algorithm_template
 from guardian.mixins import LoginRequiredMixin
 from guardian.shortcuts import get_perms
 from rest_framework.mixins import (
@@ -80,6 +86,9 @@ from grandchallenge.core.guardian import (
     filter_by_permission,
 )
 from grandchallenge.core.templatetags.random_encode import random_encode
+from grandchallenge.core.utils.grand_challenge_forge import (
+    get_forge_algorithm_template_context,
+)
 from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.models import Evaluation
@@ -1013,3 +1022,52 @@ class AlgorithmModelVersionControl(
 
     def get_success_url(self):
         return self.algorithm.get_absolute_url() + "#models"
+
+
+class AlgorithmImageTemplate(ObjectPermissionRequiredMixin, DetailView):
+    model = Algorithm
+    permission_required = "algorithms.change_algorithm"
+    raise_exception = True
+    queryset = Algorithm.objects.prefetch_related("inputs", "outputs")
+
+    def get(self, *_, **__):
+        algorithm = self.get_object()
+
+        forge_context = get_forge_algorithm_template_context(algorithm)
+
+        # Step 1: Create a temporary directory for generating content
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Step 2: Generate the content in the temp directory
+            algorithm_template_path = generate_algorithm_template(
+                context=forge_context,
+                output_path=Path(temp_dir),
+            )
+
+            # Step 3: Create an in-memory buffer to store the ZIP file
+            zip_buffer = io.BytesIO()
+
+            # Step 4: Create the ZIP archive in memory
+            with ZipFile(zip_buffer, "w") as zipf:
+                for foldername, _, filenames in os.walk(
+                    algorithm_template_path
+                ):
+                    for filename in filenames:
+                        file_path = os.path.join(foldername, filename)
+                        zipf.write(
+                            file_path,
+                            os.path.relpath(
+                                file_path, algorithm_template_path
+                            ),
+                        )
+
+            # Step 5: Seek to the beginning of the BytesIO buffer
+            zip_buffer.seek(0)
+
+            # Step 6: Return the ZIP file as a downloadable response
+            response = FileResponse(zip_buffer, content_type="application/zip")
+            filename = f"{algorithm.slug}-template.zip"
+
+            response["Content-Disposition"] = (
+                f"attachment; filename={filename}"
+            )
+            return response
