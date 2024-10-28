@@ -156,7 +156,7 @@ def build_images(  # noqa:C901
                 DisplaySet._meta.model_name,
             ]:
                 # users can delete archive items and display sets before this task runs
-                linked_object = None
+                return
             else:
                 raise e
     else:

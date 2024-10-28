@@ -1,3 +1,4 @@
+import copy
 import logging
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -26,8 +27,7 @@ from panimg.models import (
 from storages.utils import clean_name
 
 from grandchallenge.core.error_handlers import (
-    RawImageUploadSessionBuildErrorHandler,
-    RawImageUploadSessionCIVErrorHandler,
+    RawImageUploadSessionErrorHandler,
 )
 from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import protected_s3_storage
@@ -137,17 +137,14 @@ class RawImageUploadSession(UUIDModel):
     def get_error_handler(self, *, linked_object=None):
         from grandchallenge.algorithms.models import Job
 
-        if linked_object:
-            return RawImageUploadSessionCIVErrorHandler(
-                upload_session=self,
-                linked_job=(
-                    linked_object if isinstance(linked_object, Job) else None
-                ),
-            )
-        else:
-            return RawImageUploadSessionBuildErrorHandler(
-                upload_session=self,
-            )
+        return RawImageUploadSessionErrorHandler(
+            upload_session=self,
+            linked_job=(
+                linked_object
+                if linked_object and isinstance(linked_object, Job)
+                else None
+            ),
+        )
 
     def update_status(
         self,
@@ -190,8 +187,8 @@ class RawImageUploadSession(UUIDModel):
             and linked_object
             and isinstance(linked_object, Job)
         ):
-            detailed_error_message_dict = (
-                linked_object.detailed_error_message.copy()
+            detailed_error_message_dict = copy.deepcopy(
+                linked_object.detailed_error_message
             )
             for key, val in detailed_error_message.items():
                 detailed_error_message_dict[key] = val

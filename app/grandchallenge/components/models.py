@@ -53,9 +53,9 @@ from grandchallenge.components.validators import (
     validate_safe_path,
 )
 from grandchallenge.core.error_handlers import (
+    FallbackCIVValidationErrorHandler,
     JobCIVErrorHandler,
-    RawImageUploadSessionCIVErrorHandler,
-    SystemCIVErrorHandler,
+    RawImageUploadSessionErrorHandler,
     UserUploadCIVErrorHandler,
 )
 from grandchallenge.core.models import FieldChangeMixin, UUIDModel
@@ -2438,9 +2438,11 @@ class CIVForObjectMixin:
     def get_error_handler(self, *, linked_object=None):
         # local imports to prevent circular dependency
         from grandchallenge.algorithms.models import Job
+        from grandchallenge.archives.models import ArchiveItem
+        from grandchallenge.reader_studies.models import DisplaySet
 
         if linked_object and isinstance(linked_object, RawImageUploadSession):
-            return RawImageUploadSessionCIVErrorHandler(
+            return RawImageUploadSessionErrorHandler(
                 upload_session=linked_object,
                 linked_job=self if isinstance(self, Job) else None,
             )
@@ -2450,8 +2452,10 @@ class CIVForObjectMixin:
             return UserUploadCIVErrorHandler(
                 user_upload=linked_object,
             )
+        elif isinstance(self, [ArchiveItem, DisplaySet]) and not linked_object:
+            FallbackCIVValidationErrorHandler()
         else:
-            return SystemCIVErrorHandler()
+            return RuntimeError("No appropriate error handler found.")
 
 
 class InterfacesAndValues(NamedTuple):
