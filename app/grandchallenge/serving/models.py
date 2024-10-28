@@ -60,6 +60,7 @@ def get_component_interface_values_for_user(
         queryset=Job.objects.all(),
         user=user,
         codename="view_job",
+        accept_user_perms=False,
     )
     job_inputs_query = job_query.filter(inputs__pk__in=OuterRef("pk"))
     job_outputs_query = job_query.filter(outputs__pk__in=OuterRef("pk"))
@@ -68,12 +69,14 @@ def get_component_interface_values_for_user(
         queryset=DisplaySet.objects.all(),
         user=user,
         codename="view_displayset",
+        accept_user_perms=False,
     ).filter(values__pk__in=OuterRef("pk"))
 
     archive_item_query = filter_by_permission(
         queryset=ArchiveItem.objects.all(),
         user=user,
         codename="view_archiveitem",
+        accept_user_perms=False,
     ).filter(values__pk__in=OuterRef("pk"))
 
     extra_filter_kwargs = {}
