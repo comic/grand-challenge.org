@@ -137,6 +137,7 @@ class PageContentUpdate(
 ):
     model = Page
     form_class = PageContentUpdateForm
+    template_name_suffix = "_content_update"
     permission_required = "change_challenge"
     raise_exception = True
     login_url = reverse_lazy("account_login")
