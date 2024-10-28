@@ -17,10 +17,10 @@ from grandchallenge.verifications.models import (
     permissions=("change",),
 )
 def mark_verified(modeladmin, request, queryset):
-    for verfication in queryset:
-        verfication.is_verified = True
-        verfication.verified_at = now()
-        verfication.save()
+    for verification in queryset:
+        verification.is_verified = True
+        verification.verified_at = now()
+        verification.save()
 
 
 @admin.action(
