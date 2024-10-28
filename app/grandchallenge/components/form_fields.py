@@ -182,8 +182,8 @@ class InterfaceFormField:
 
     @cached_property
     def civs_for_user_for_interface(self):
-        return get_component_interface_values_for_user(user=self.user).filter(
-            interface=self.instance
+        return get_component_interface_values_for_user(
+            user=self.user, interface=self.instance
         )
 
     @property
