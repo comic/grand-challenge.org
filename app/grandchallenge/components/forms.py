@@ -224,7 +224,6 @@ class SingleCIVForm(Form):
         base_obj,
         user,
         htmx_url,
-        interface_viewname,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
@@ -283,7 +282,7 @@ class SingleCIVForm(Form):
                     "information about each interface. "
                     "Please contact support if your desired interface is missing."
                 ),
-                reverse_lazy(interface_viewname),
+                reverse_lazy(base_obj.interface_viewname),
             ),
         )
 

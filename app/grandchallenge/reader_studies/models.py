@@ -737,6 +737,10 @@ class ReaderStudy(
         )
 
     @property
+    def interface_viewname(self):
+        return "components:component-interface-list-reader-studies"
+
+    @property
     def list_url(self):
         return reverse("reader-studies:list")
 

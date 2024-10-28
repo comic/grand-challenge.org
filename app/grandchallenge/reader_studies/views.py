@@ -1321,9 +1321,6 @@ class DisplaySetInterfacesCreate(InterfacesCreateBaseView):
     def base_object(self):
         return ReaderStudy.objects.get(slug=self.kwargs["slug"])
 
-    def get_interface_viewname(self):
-        return "components:component-interface-list-reader-studies"
-
     def get_htmx_url(self):
         if self.kwargs.get("pk") is not None:
             return reverse_lazy(
