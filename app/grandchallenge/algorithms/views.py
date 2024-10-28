@@ -511,7 +511,9 @@ class JobCreate(
             status=Job.VALIDATING_INPUTS,
         )
 
-        self.object.validate_inputs_and_execute(inputs=inputs)
+        self.object.validate_values_and_execute_linked_task(
+            values=inputs, user=self.object.creator
+        )
 
         return super().form_valid(form)
 

@@ -273,7 +273,9 @@ class JobPostSerializer(JobSerializer):
             status=Job.VALIDATING_INPUTS,
         )
 
-        job.validate_inputs_and_execute(inputs=self.inputs)
+        job.validate_values_and_execute_linked_task(
+            values=self.inputs, user=validated_data["creator"]
+        )
 
         return job
 

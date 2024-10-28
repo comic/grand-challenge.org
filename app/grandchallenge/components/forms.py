@@ -166,15 +166,19 @@ class MultipleCIVForm(Form):
                 ).field
 
     def process_object_data(self):
+        civs = []
         for key, value in self.cleaned_data.items():
             if key.startswith(INTERFACE_FORM_FIELD_PREFIX):
-                self.instance.create_civ(
-                    civ_data=CIVData(
+                civs.append(
+                    CIVData(
                         interface_slug=key[len(INTERFACE_FORM_FIELD_PREFIX) :],
                         value=value,
-                    ),
-                    user=self.user,
+                    )
                 )
+        self.instance.validate_values_and_execute_linked_task(
+            values=civs,
+            user=self.user,
+        )
 
 
 class CIVSetCreateFormMixin:

@@ -990,21 +990,26 @@ class DisplaySetViewSet(
                 many=True, data=values, context={"request": request}
             )
             if serialized_data.is_valid():
+                civs = []
                 for value in serialized_data.validated_data:
                     interface = value.get("interface", None)
                     user_upload = value.get("user_upload", None)
                     upload_session = value.get("upload_session", None)
                     image = value.get("image", None)
                     value = value.get("value", None)
-                    instance.create_civ(
-                        civ_data=CIVData(
+                    civs.append(
+                        CIVData(
                             interface_slug=interface.slug,
-                            value=(
-                                user_upload or upload_session or image or value
-                            ),
-                        ),
-                        user=request.user,
+                            value=upload_session
+                            or user_upload
+                            or image
+                            or value,
+                        )
                     )
+                instance.validate_values_and_execute_linked_task(
+                    values=civs,
+                    user=request.user,
+                )
             else:
                 raise DRFValidationError(serialized_data.errors)
         return super().partial_update(request, pk)

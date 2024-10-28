@@ -96,17 +96,21 @@ class ArchiveItemPostSerializer(ArchiveItemSerializer):
 
     def update(self, instance, validated_data):
         values = validated_data.pop("values")
+        civs = []
         for value in values:
             interface = value.get("interface", None)
             upload_session = value.get("upload_session", None)
             user_upload = value.get("user_upload", None)
             image = value.get("image", None)
             value = value.get("value", None)
-            instance.create_civ(
-                civ_data=CIVData(
+            civs.append(
+                CIVData(
                     interface_slug=interface.slug,
                     value=upload_session or user_upload or image or value,
-                ),
-                user=self.context["request"].user,
+                )
             )
+        instance.validate_values_and_execute_linked_task(
+            values=civs,
+            user=self.context["request"].user,
+        )
         return instance

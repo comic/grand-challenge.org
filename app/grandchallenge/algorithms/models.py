@@ -1039,7 +1039,9 @@ class Job(CIVForObjectMixin, ComponentJob):
     def get_civ_for_interface(self, interface):
         return self.inputs.get(interface=interface)
 
-    def validate_inputs_and_execute(self, *, inputs):
+    def validate_values_and_execute_linked_task(
+        self, *, values, user, linked_task=None
+    ):
         from grandchallenge.algorithms.tasks import (
             execute_algorithm_job_for_inputs,
         )
@@ -1048,17 +1050,9 @@ class Job(CIVForObjectMixin, ComponentJob):
             kwargs={"job_pk": self.pk}, immutable=True
         )
 
-        if not self.is_editable:
-            raise RuntimeError(
-                "Job is not editable. No CIVs can be added or removed from it."
-            )
-        else:
-            for civ_data in inputs:
-                self.create_civ(
-                    civ_data=civ_data,
-                    user=self.creator,
-                    linked_task=linked_task,
-                )
+        return super().validate_values_and_execute_linked_task(
+            values=values, user=user, linked_task=linked_task
+        )
 
     @property
     def is_editable(self):

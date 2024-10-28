@@ -2221,15 +2221,35 @@ class CIVForObjectMixin:
         if not self.is_editable:
             raise RuntimeError(f"{self} is not editable.")
 
+    def validate_values_and_execute_linked_task(
+        self, *, values, user, linked_task=None
+    ):
+        if not self.is_editable:
+            raise RuntimeError(
+                f"{self} is not editable. No CIVs can be added or removed from it."
+            )
+        else:
+            for civ_data in values:
+                try:
+                    self.create_civ(
+                        civ_data=civ_data,
+                        user=user,
+                        linked_task=linked_task,
+                    )
+                except RuntimeError:
+                    # This can happen for Jobs with multiple inputs,
+                    # if one input has already failed validation
+                    logger.error(
+                        f"{self} is not editable. CIVs cannot be added or removed from it.",
+                        exc_info=True,
+                    )
+                    break
+
     def create_civ(self, *, civ_data, user=None, linked_task=None):
         if not self.is_editable:
-            # This can happen for Jobs with multiple inputs,
-            # if another input has already failed validation
-            logger.error(
+            raise RuntimeError(
                 f"{self} is not editable. CIVs cannot be added or removed from it.",
-                exc_info=True,
             )
-            return
 
         ci = ComponentInterface.objects.get(slug=civ_data.interface_slug)
         current_civ = self.get_current_value_for_interface(
