@@ -1493,7 +1493,7 @@ else:
             f"https://{UPLOADS_S3_BUCKET_NAME}.s3.{AWS_DEFAULT_REGION}.amazonaws.com",
         )
 
-ENABLE_DEBUG_TOOLBAR = True
+ENABLE_DEBUG_TOOLBAR = False
 
 if DEBUG:
     # Allow localhost in development
