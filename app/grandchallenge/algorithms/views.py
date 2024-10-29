@@ -1033,8 +1033,8 @@ class AlgorithmImageTemplate(ObjectPermissionRequiredMixin, DetailView):
     permission_required = "algorithms.change_algorithm"
     raise_exception = True
     queryset = Algorithm.objects.prefetch_related(
-        "inputs__json_kind_example",
-        "outputs__json_kind_example",
+        "inputs",
+        "outputs",
     )
 
     def get(self, *_, **__):
