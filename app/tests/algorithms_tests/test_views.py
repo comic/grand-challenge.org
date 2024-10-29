@@ -1,6 +1,7 @@
 import datetime
 import io
 import json
+import os
 import tempfile
 import zipfile
 from pathlib import Path
@@ -8,7 +9,6 @@ from unittest.mock import patch
 
 import pytest
 from django.contrib.auth.models import Group
-from django.core.exceptions import SuspiciousFileOperation
 from django.core.files.base import ContentFile
 from django.test import override_settings
 from django.utils import timezone
@@ -17,7 +17,7 @@ from guardian.shortcuts import assign_perm, remove_perm
 from requests import put
 
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
-from grandchallenge.algorithms.views import AlgorithmImageTemplate, JobsList
+from grandchallenge.algorithms.views import JobsList
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -2067,24 +2067,7 @@ def test_algorithm_template_download(client):
     # Spot check for expected files in the zip
     expected_files = ["README.md", "Dockerfile", "inference.py"]
     for file_name in expected_files:
+        relative_file_path = os.path.join(f"{alg.slug}-template", file_name)
         assert (
-            file_name in zip_file.namelist()
-        ), f"{file_name} is in the ZIP file"
-
-
-def test_algorithm_template_zip_memory_buffer(tmp_path):
-
-    allowed_base = tmp_path / "allowed_base"
-    allowed_base.mkdir()
-
-    file_path = tmp_path / "test_file.txt"
-    file_path.write_text("This is a test file.")
-
-    symlink_path = allowed_base / "symlink_to_test_file.txt"
-    symlink_path.symlink_to(file_path)
-
-    with pytest.raises(SuspiciousFileOperation):
-        AlgorithmImageTemplate.zip_memory_buffer(
-            source=allowed_base,
-            allowed_base=allowed_base,
-        )
+            relative_file_path in zip_file.namelist()
+        ), f"{relative_file_path} is in the ZIP file"

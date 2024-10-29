@@ -1,9 +1,6 @@
-import io
 import logging
-import os
 import tempfile
 from pathlib import Path
-from zipfile import ZipFile
 
 from django.conf import settings
 from django.contrib import messages
@@ -13,11 +10,7 @@ from django.contrib.auth.mixins import (
 )
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
-from django.core.exceptions import (
-    PermissionDenied,
-    SuspiciousFileOperation,
-    ValidationError,
-)
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Window
 from django.db.models.functions import Rank
 from django.forms.utils import ErrorList
@@ -93,6 +86,7 @@ from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.utils.grand_challenge_forge import (
     get_forge_algorithm_template_context,
 )
+from grandchallenge.core.utils.zip import zip_memory_buffer
 from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.models import Evaluation
@@ -1043,39 +1037,14 @@ class AlgorithmImageTemplate(ObjectPermissionRequiredMixin, DetailView):
         forge_context = get_forge_algorithm_template_context(algorithm)
 
         with tempfile.TemporaryDirectory() as temp_dir:
-            algorithm_template_path = generate_algorithm_template(
+            generate_algorithm_template(
                 context=forge_context,
                 output_path=Path(temp_dir),
             )
 
             return FileResponse(
-                streaming_content=self.zip_memory_buffer(
-                    source_path=algorithm_template_path,
-                    allowed_base_path=Path(temp_dir),
-                ),
+                streaming_content=zip_memory_buffer(source=temp_dir),
                 as_attachment=True,
                 filename=f"{algorithm.slug}-template.zip",
                 content_type="application/zip",
             )
-
-    @staticmethod
-    def zip_memory_buffer(*, source_path, allowed_base_path):
-        buffer = io.BytesIO()
-        with ZipFile(buffer, "w") as zipf:
-            for foldername, _, filenames in os.walk(
-                source_path, followlinks=True
-            ):
-                for filename in filenames:
-                    file_path = Path(foldername) / filename
-                    file_path = file_path.resolve()
-
-                    if allowed_base_path not in file_path.parents:
-                        raise SuspiciousFileOperation(
-                            "Only files within the allowed base directory can be included."
-                        )
-
-                    zipf.write(file_path, file_path.relative_to(source_path))
-
-        buffer.seek(0)
-
-        return buffer
