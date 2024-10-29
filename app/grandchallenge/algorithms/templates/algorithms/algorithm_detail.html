@@ -36,6 +36,12 @@
 
             {% if "change_algorithm" in algorithm_perms %}
                 <a class="nav-link" id="v-pills-containers-tab" data-toggle="pill"
+                href="#templates" role="tab"
+                aria-controls="v-pills-containers"
+                aria-selected="false">
+                <i class="fas fa-hard-hat fa-fw"></i>&nbsp;Templates</a>
+
+                <a class="nav-link" id="v-pills-containers-tab" data-toggle="pill"
                    href="#containers" role="tab"
                    aria-controls="v-pills-containers"
                    aria-selected="false">
@@ -434,6 +440,23 @@
                             request{{ pending_permission_requests|pluralize }}.</b>
                     {% endif %}
                 </p>
+
+            </div>
+
+            <div class="tab-pane fade" id="templates" role="tabpanel"
+                 aria-labelledby="v-pills-containers">
+
+                <h2>Algorithm Image Template</h2>
+
+                <p>
+                    The template offers tailored examples for your algorithm, including input reading and output writing.
+                    It provides a solid foundation for developing an algorithm image or setting up a GitHub repository
+                </p>
+
+                <a class="btn btn-primary"
+                    href="{% url 'algorithms:image-template' slug=object.slug %}">
+                    <i class="fa fa-download pl-1"></i> Download Algorithm Image Template
+                </a>
 
             </div>
 

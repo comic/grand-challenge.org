@@ -1,6 +1,9 @@
 import datetime
+import io
 import json
+import os
 import tempfile
+import zipfile
 from pathlib import Path
 from unittest.mock import patch
 
@@ -386,6 +389,13 @@ class TestObjectPermissionRequiredViews:
                 {"slug": ai.algorithm.slug, "pk": ai.pk},
                 "change_algorithmimage",
                 ai,
+                None,
+            ),
+            (
+                "image-template",
+                {"slug": ai.algorithm.slug},
+                "change_algorithm",
+                ai.algorithm,
                 None,
             ),
             (
@@ -2018,3 +2028,46 @@ def test_update_view_limits_gpu_choice(client):
     )
 
     assert response.status_code == 302
+
+
+@pytest.mark.django_db
+def test_algorithm_template_download(client):
+    alg = AlgorithmFactory()
+    editor = UserFactory()
+    alg.add_editor(editor)
+
+    response = get_view_for_user(
+        viewname="algorithms:image-template",
+        reverse_kwargs={"slug": alg.slug},
+        client=client,
+        user=editor,
+    )
+
+    assert (
+        response.status_code == 200
+    ), "Editor can download template"  # Sanity
+
+    assert (
+        response["Content-Type"] == "application/zip"
+    ), "Response is a ZIP file"
+
+    assert (
+        "attachment" in response["Content-Disposition"]
+    ), "Response is a downloadable attachment"
+    assert response["Content-Disposition"].endswith(
+        '.zip"'
+    ), "Filename ends with .zip"
+
+    # Load the response content into a BytesIO object to read as a zip
+    buffer = io.BytesIO(
+        b"".join(chunk for chunk in response.streaming_content)
+    )
+    zip_file = zipfile.ZipFile(buffer)
+
+    # Spot check for expected files in the zip
+    expected_files = ["README.md", "Dockerfile", "inference.py"]
+    for file_name in expected_files:
+        relative_file_path = os.path.join(f"{alg.slug}-template", file_name)
+        assert (
+            relative_file_path in zip_file.namelist()
+        ), f"{relative_file_path} is in the ZIP file"
