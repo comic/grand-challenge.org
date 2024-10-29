@@ -1035,18 +1035,14 @@ class AlgorithmImageTemplate(ObjectPermissionRequiredMixin, DetailView):
 
         forge_context = get_forge_algorithm_template_context(algorithm)
 
-        # Step 1: Create a temporary directory for generating content
         with tempfile.TemporaryDirectory() as temp_dir:
-            # Step 2: Generate the content in the temp directory
             algorithm_template_path = generate_algorithm_template(
                 context=forge_context,
                 output_path=Path(temp_dir),
             )
 
-            # Step 3: Create an in-memory buffer to store the ZIP file
             zip_buffer = io.BytesIO()
 
-            # Step 4: Create the ZIP archive in memory
             with ZipFile(zip_buffer, "w") as zipf:
                 for foldername, _, filenames in os.walk(
                     algorithm_template_path
@@ -1059,11 +1055,8 @@ class AlgorithmImageTemplate(ObjectPermissionRequiredMixin, DetailView):
                                 file_path, algorithm_template_path
                             ),
                         )
-
-            # Step 5: Seek to the beginning of the BytesIO buffer
             zip_buffer.seek(0)
 
-            # Step 6: Return the ZIP file as a downloadable response
             response = FileResponse(zip_buffer, content_type="application/zip")
             filename = f"{algorithm.slug}-template.zip"
 
