@@ -114,13 +114,7 @@
 
                 <dt class="col-sm-3">Status</dt>
                 <dd class="col-sm-9">
-                    <span class="badge badge-{{ object.status_context }}">
-                        {% if object.animate %}
-                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                        {% endif %}
-                        {{ object.get_status_display }}{% if object.status == object.SUCCESS and object.stderr %},
-                            with warnings{% endif %}
-                    </span>
+                    <div hx-get="{% url 'algorithms:job-status-badge-detail' slug=object.algorithm_image.algorithm.slug pk=object.pk %}" hx-trigger="revealed"></div>
                 </dd>
 
                 {% if object.error_message %}

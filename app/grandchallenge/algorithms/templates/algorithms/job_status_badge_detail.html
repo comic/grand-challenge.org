@@ -1,0 +1,7 @@
+<span class="badge badge-{{ object.status_context }}">
+    {% if object.animate %}
+        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+    {% endif %}
+    {{ object.get_status_display }}{% if object.status == object.SUCCESS and object.stderr %},
+        with warnings{% endif %}
+</span>
