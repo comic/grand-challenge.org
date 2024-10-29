@@ -114,7 +114,7 @@
 
                 <dt class="col-sm-3">Status</dt>
                 <dd class="col-sm-9">
-                    {% include "algorithms/job_status_badge_detail.html" %}
+                    {% include "algorithms/job_status_badge_detail.html" with delay=5 %}
                 </dd>
 
                 {% if object.error_message %}
