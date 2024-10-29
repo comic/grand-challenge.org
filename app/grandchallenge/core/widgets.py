@@ -102,7 +102,7 @@ class MarkdownEditorFullPageWidget(MarkdownEditorInlineWidget):
     template_name = "markdownx/full_page_widget.html"
 
     def __init__(self, attrs=None):
-        default_attrs = {"rows": "40"}
+        default_attrs = {"rows": "30"}
         if attrs:
             default_attrs.update(attrs)
         super().__init__(default_attrs)

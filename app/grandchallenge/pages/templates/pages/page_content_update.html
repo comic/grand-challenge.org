@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load crispy from crispy_forms_tags %}
+{% load static %}
+{% load url %}
+
+{% block title %}
+    Update -{% if object %} {{ object|title }} -{% endif %} {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'pages:list' challenge_short_name=challenge.short_name %}">Pages</a>
+        </li>
+        {% if object %}
+            <li class="breadcrumb-item"><a
+                    href="{{ object.get_absolute_url }}">
+                {{ object|title }}
+            </a></li>
+        {% endif %}
+        <li class="breadcrumb-item active"
+            aria-current="page">Update
+        </li>
+    </ol>
+{% endblock %}
+
+{% block container %}container-fluid{% endblock %}
+
+{% block outer_content %}
+
+    <h2>Update Page</h2>
+
+    {% crispy form %}
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="text/javascript" src="{% static "js/unsavedform.js" %}"></script>
+{% endblock %}

@@ -71,8 +71,11 @@
                         {% endif %}
                     </td>
                     <td>
-                        <a href="{% url 'pages:update' challenge_short_name=challenge.short_name slug=page.slug %}">
+                        <a href="{% url 'pages:content-update' challenge_short_name=challenge.short_name slug=page.slug %}">
                             <i class="fa fa-edit" title="Edit Page"></i>
+                        </a>
+                        <a href="{% url 'pages:metadata-update' challenge_short_name=challenge.short_name slug=page.slug %}">
+                            <i class="fa fa-tools" title="Edit Metadata"></i>
                         </a>
                     </td>
                     <td>

@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import BLANK_CHOICE_DASH
 
 from grandchallenge.core.forms import SaveFormInitMixin
-from grandchallenge.core.widgets import MarkdownEditorInlineWidget
+from grandchallenge.core.widgets import MarkdownEditorFullPageWidget
 from grandchallenge.pages.models import Page
 
 
@@ -14,11 +14,7 @@ class PageCreateForm(SaveFormInitMixin, forms.ModelForm):
             "display_title",
             "permission_level",
             "hidden",
-            "content_markdown",
         )
-        widgets = {
-            "content_markdown": MarkdownEditorInlineWidget,
-        }
 
     def clean_display_title(self):
         display_title = self.cleaned_data["display_title"]
@@ -32,8 +28,8 @@ class PageCreateForm(SaveFormInitMixin, forms.ModelForm):
         return display_title
 
 
-class PageUpdateForm(PageCreateForm):
-    """Like the page update form but you can also move the page."""
+class PageMetadataUpdateForm(PageCreateForm):
+    """Like the page create form, but you can also move the page."""
 
     move = forms.CharField(widget=forms.Select)
     move.required = False
@@ -44,3 +40,12 @@ class PageUpdateForm(PageCreateForm):
         (Page.DOWN, "Down"),
         (Page.LAST, "Last"),
     )
+
+
+class PageContentUpdateForm(SaveFormInitMixin, forms.ModelForm):
+    class Meta:
+        model = Page
+        fields = ("content_markdown",)
+        widgets = {
+            "content_markdown": MarkdownEditorFullPageWidget,
+        }
