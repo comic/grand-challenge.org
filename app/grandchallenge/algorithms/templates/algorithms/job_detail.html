@@ -114,7 +114,7 @@
 
                 <dt class="col-sm-3">Status</dt>
                 <dd class="col-sm-9">
-                    <div hx-get="{% url 'algorithms:job-status-badge-detail' slug=object.algorithm_image.algorithm.slug pk=object.pk %}" hx-trigger="revealed" hx-swap="outerHTML"></div>
+                    <div hx-get="{% url 'algorithms:job-status-badge-detail' slug=object.algorithm_image.algorithm.slug pk=object.pk %}" hx-trigger="every 2s" {% if object.finished %}hx-swap="outerHTML"{% endif %}></div>
                 </dd>
 
                 {% if object.error_message %}
