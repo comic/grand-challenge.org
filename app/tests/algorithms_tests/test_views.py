@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 import pytest
 from django.contrib.auth.models import Group
+from django.core.exceptions import SuspiciousFileOperation
 from django.core.files.base import ContentFile
 from django.test import override_settings
 from django.utils import timezone
@@ -2082,7 +2083,7 @@ def test_algorithm_template_zip_memory_buffer(tmp_path):
     symlink_path = allowed_base / "symlink_to_test_file.txt"
     symlink_path.symlink_to(file_path)
 
-    with pytest.raises(PermissionError):
+    with pytest.raises(SuspiciousFileOperation):
         AlgorithmImageTemplate.zip_memory_buffer(
             source=allowed_base,
             allowed_base=allowed_base,

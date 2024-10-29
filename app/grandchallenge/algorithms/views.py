@@ -13,7 +13,11 @@ from django.contrib.auth.mixins import (
 )
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import (
+    PermissionDenied,
+    SuspiciousFileOperation,
+    ValidationError,
+)
 from django.db.models import Window
 from django.db.models.functions import Rank
 from django.forms.utils import ErrorList
@@ -1066,7 +1070,7 @@ class AlgorithmImageTemplate(ObjectPermissionRequiredMixin, DetailView):
                     file_path = file_path.resolve()
 
                     if allowed_base_path not in file_path.parents:
-                        raise PermissionError(
+                        raise SuspiciousFileOperation(
                             "Only files within the allowed base directory can be included."
                         )
 
