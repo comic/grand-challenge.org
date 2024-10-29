@@ -391,6 +391,13 @@ class TestObjectPermissionRequiredViews:
                 None,
             ),
             (
+                "image-template",
+                {"slug": ai.algorithm.slug},
+                "change_algorithm",
+                ai.algorithm,
+                None,
+            ),
+            (
                 "job-create",
                 {"slug": ai.algorithm.slug},
                 "execute_algorithm",
@@ -2025,31 +2032,19 @@ def test_update_view_limits_gpu_choice(client):
 @pytest.mark.django_db
 def test_algorithm_template_download(client):
     alg = AlgorithmFactory()
-
-    user = UserFactory()
-    alogorithm_editor = UserFactory()
-
-    alg.add_editor(alogorithm_editor)
+    editor = UserFactory()
+    alg.add_editor(editor)
 
     response = get_view_for_user(
         viewname="algorithms:image-template",
         reverse_kwargs={"slug": alg.slug},
         client=client,
-        user=user,
+        user=editor,
     )
 
     assert (
-        response.status_code == 403
-    ), "Non editor user is not allowed to download template"
-
-    response = get_view_for_user(
-        viewname="algorithms:image-template",
-        reverse_kwargs={"slug": alg.slug},
-        client=client,
-        user=alogorithm_editor,
-    )
-
-    assert response.status_code == 200, "Editor can download template"
+        response.status_code == 200
+    ), "Editor can download template"  # Sanity
 
     assert (
         response["Content-Type"] == "application/zip"
@@ -2059,7 +2054,7 @@ def test_algorithm_template_download(client):
         "attachment" in response["Content-Disposition"]
     ), "Response is a downloadable attachment"
     assert response["Content-Disposition"].endswith(
-        ".zip"
+        '.zip"'
     ), "Filename ends with .zip"
 
     # Load the response content into a BytesIO object to read as a zip
