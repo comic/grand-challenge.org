@@ -47,6 +47,9 @@ $(document).ready(() => {
             url: "",
         },
         ordering: true,
+        initComplete: (settings, json) => {
+            htmx.process("#ajaxDataTable");
+        },
     });
 });
 
