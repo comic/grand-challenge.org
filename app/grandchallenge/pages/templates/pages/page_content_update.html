@@ -4,7 +4,7 @@
 {% load url %}
 
 {% block title %}
-    {% if object %}Update{% else %}Create{% endif %} -{% if object %} {{ object|title }} -{% endif %} {{ block.super }}
+    Update -{% if object %} {{ object|title }} -{% endif %} {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -23,7 +23,7 @@
             </a></li>
         {% endif %}
         <li class="breadcrumb-item active"
-            aria-current="page">{% if object %}Update{% else %}Create{% endif %}
+            aria-current="page">Update
         </li>
     </ol>
 {% endblock %}
@@ -32,7 +32,7 @@
 
 {% block outer_content %}
 
-    <h2>{% if object %}Update{% else %}Create{% endif %} Page</h2>
+    <h2>Update Page</h2>
 
     {% crispy form %}
 {% endblock %}
