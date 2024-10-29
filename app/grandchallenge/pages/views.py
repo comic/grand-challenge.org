@@ -122,7 +122,7 @@ class PageMetadataUpdate(
     login_url = reverse_lazy("account_login")
 
     def get_permission_object(self):
-        return self.request.challenge
+        return self.get_object().challenge
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -144,7 +144,7 @@ class PageContentUpdate(
     login_url = reverse_lazy("account_login")
 
     def get_permission_object(self):
-        return self.request.challenge
+        return self.get_object().challenge
 
 
 class PageDelete(
@@ -161,7 +161,7 @@ class PageDelete(
     login_url = reverse_lazy("account_login")
 
     def get_permission_object(self):
-        return self.request.challenge
+        return self.get_object().challenge
 
     def get_success_url(self):
         return reverse(
