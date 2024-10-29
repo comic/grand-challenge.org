@@ -99,6 +99,7 @@ pycurl = "!=7.45.3" # Import issue with 7.45.3 (https://github.com/comic/grand-c
 pyjwt = "*"
 beautifulsoup4 = "*"
 pymdown-extensions = "*"
+grand-challenge-forge = "*"
 
 [tool.poetry.group.dev.dependencies]
 pytest-django = "*"
