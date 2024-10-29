@@ -1028,7 +1028,10 @@ class AlgorithmImageTemplate(ObjectPermissionRequiredMixin, DetailView):
     model = Algorithm
     permission_required = "algorithms.change_algorithm"
     raise_exception = True
-    queryset = Algorithm.objects.prefetch_related("inputs", "outputs")
+    queryset = Algorithm.objects.prefetch_related(
+        "inputs__json_kind_example",
+        "outputs__json_kind_example",
+    )
 
     def get(self, *_, **__):
         algorithm = self.get_object()
@@ -1041,26 +1044,34 @@ class AlgorithmImageTemplate(ObjectPermissionRequiredMixin, DetailView):
                 output_path=Path(temp_dir),
             )
 
-            zip_buffer = io.BytesIO()
-
-            with ZipFile(zip_buffer, "w") as zipf:
-                for foldername, _, filenames in os.walk(
-                    algorithm_template_path
-                ):
-                    for filename in filenames:
-                        file_path = os.path.join(foldername, filename)
-                        zipf.write(
-                            file_path,
-                            os.path.relpath(
-                                file_path, algorithm_template_path
-                            ),
-                        )
-            zip_buffer.seek(0)
-
-            response = FileResponse(zip_buffer, content_type="application/zip")
-            filename = f"{algorithm.slug}-template.zip"
-
-            response["Content-Disposition"] = (
-                f"attachment; filename={filename}"
+            return FileResponse(
+                streaming_content=self.zip_memory_buffer(
+                    source_path=algorithm_template_path,
+                    allowed_base_path=Path(temp_dir),
+                ),
+                as_attachment=True,
+                filename=f"{algorithm.slug}-template.zip",
+                content_type="application/zip",
             )
-            return response
+
+    @staticmethod
+    def zip_memory_buffer(*, source_path, allowed_base_path):
+        buffer = io.BytesIO()
+        with ZipFile(buffer, "w") as zipf:
+            for foldername, _, filenames in os.walk(
+                source_path, followlinks=True
+            ):
+                for filename in filenames:
+                    file_path = Path(foldername) / filename
+                    file_path = file_path.resolve()
+
+                    if allowed_base_path not in file_path.parents:
+                        raise PermissionError(
+                            "Only files within the allowed base directory can be included."
+                        )
+
+                    zipf.write(file_path, file_path.relative_to(source_path))
+
+        buffer.seek(0)
+
+        return buffer

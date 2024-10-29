@@ -16,7 +16,7 @@ from guardian.shortcuts import assign_perm, remove_perm
 from requests import put
 
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
-from grandchallenge.algorithms.views import JobsList
+from grandchallenge.algorithms.views import AlgorithmImageTemplate, JobsList
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -2069,3 +2069,21 @@ def test_algorithm_template_download(client):
         assert (
             file_name in zip_file.namelist()
         ), f"{file_name} is in the ZIP file"
+
+
+def test_algorithm_template_zip_memory_buffer(tmp_path):
+
+    allowed_base = tmp_path / "allowed_base"
+    allowed_base.mkdir()
+
+    file_path = tmp_path / "test_file.txt"
+    file_path.write_text("This is a test file.")
+
+    symlink_path = allowed_base / "symlink_to_test_file.txt"
+    symlink_path.symlink_to(file_path)
+
+    with pytest.raises(PermissionError):
+        AlgorithmImageTemplate.zip_memory_buffer(
+            source=allowed_base,
+            allowed_base=allowed_base,
+        )
