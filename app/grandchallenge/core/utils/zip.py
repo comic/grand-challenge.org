@@ -7,7 +7,7 @@ from django.core.exceptions import SuspiciousFileOperation
 
 
 def zip_memory_buffer(*, source):
-    """Creates a ZIP archive from the content of the source and returns it as a memory buffer"""
+    """Creates a memory-loaded ZIP archive from the content of the source"""
     source_path = Path(source)
     buffer = io.BytesIO()
 
