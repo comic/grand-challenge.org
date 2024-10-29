@@ -7,7 +7,7 @@ ARG GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI
 ##################
 # Test Container #
 ##################
-FROM ${GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI}:${PYTHON_VERSION}-${POETRY_HASH} as test
+FROM ${GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI}:${PYTHON_VERSION}-${POETRY_HASH} AS test
 
 COPY --chown=django:django setup.cfg /home/django
 
@@ -18,7 +18,7 @@ COPY --chown=django:django ./app/ /app/
 ##################
 # Dist Container #
 ##################
-FROM ${GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI}:${PYTHON_VERSION}-${POETRY_HASH} as dist
+FROM ${GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI}:${PYTHON_VERSION}-${POETRY_HASH} AS dist
 
 WORKDIR /app
 COPY --chown=django:django ./app/ /app/

@@ -365,6 +365,7 @@ def test_can_upload_more_other_objects(settings):
 @pytest.mark.parametrize(
     "content,expected_mimetype",
     (
+        (b"", "application/x-empty"),
         (b"hello", "text/plain"),
         (
             b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x00\x00\x00\x00:~\x9bU\x00\x00\x00\nIDATx\x9cc`\x00\x00\x00\x02\x00\x01H\xaf\xa4q\x00\x00\x00\x00IEND\xaeB`\x82",

@@ -5,7 +5,7 @@ from guardian.utils import get_anonymous_user
 
 from grandchallenge.blogs.models import Post
 from grandchallenge.core.forms import SaveFormInitMixin
-from grandchallenge.core.widgets import MarkdownEditorWidget
+from grandchallenge.core.widgets import MarkdownEditorInlineWidget
 from grandchallenge.groups.forms import UserGroupForm
 
 
@@ -43,7 +43,10 @@ class PostForm(SaveFormInitMixin, forms.ModelForm):
 class PostUpdateForm(PostForm):
     class Meta(PostForm.Meta):
         fields = (*PostForm.Meta.fields, "published", "content")
-        widgets = {**PostForm.Meta.widgets, "content": MarkdownEditorWidget}
+        widgets = {
+            **PostForm.Meta.widgets,
+            "content": MarkdownEditorInlineWidget,
+        }
 
 
 class AuthorsForm(UserGroupForm):

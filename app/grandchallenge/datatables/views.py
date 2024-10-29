@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from functools import reduce
 from operator import or_
 
+from django.core.paginator import EmptyPage
 from django.db.models import Q
 from django.http import JsonResponse
 from django.template.loader import render_to_string
@@ -54,7 +55,12 @@ class PaginatedTableListView(ListView):
         order_by = f"{'-' if order_dir == 'desc' else ''}{order_by}"
         data = self.filter_queryset(self.object_list, search, order_by)
         paginator = self.get_paginator(queryset=data, per_page=page_size)
-        objects = paginator.page(page)
+
+        try:
+            objects = paginator.page(page)
+        except EmptyPage:
+            # If the page is out of range, show the last page
+            objects = paginator.page(paginator.num_pages)
 
         return JsonResponse(
             {

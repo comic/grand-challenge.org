@@ -1,0 +1,22 @@
+<div>
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="editor-tab-{{ widget.attrs.id }}" data-toggle="tab" href="#editor-{{ widget.attrs.id }}" role="tab" aria-controls="editor-{{ widget.attrs.id }}" aria-selected="true">Editor</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="preview-tab-{{ widget.attrs.id }}" data-toggle="tab" href="#preview-{{ widget.attrs.id }}" role="tab" aria-controls="preview-{{ widget.attrs.id }}" aria-selected="false">Preview</a>
+        </li>
+    </ul>
+</div>
+<div class="markdownx tab-content">
+    <div class="tab-pane fade show active" id="editor-{{ widget.attrs.id }}" role="tabpanel" aria-labelledby="editor-tab-{{ widget.attrs.id }}">
+        {% include "markdownx/partials/toolbar.html" %}
+        {% include "markdownx/partials/textarea.html" %}
+        <div class="¨m-0">
+            {% include "markdownx/partials/notes.html" %}
+        </div>
+    </div>
+    <div class="tab-pane fade" id="preview-{{ widget.attrs.id }}" role="tabpanel" aria-labelledby="preview-tab-{{ widget.attrs.id }}">
+        <div class="markdownx-preview"></div>
+    </div>
+</div>

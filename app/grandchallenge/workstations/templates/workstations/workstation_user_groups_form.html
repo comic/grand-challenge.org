@@ -2,13 +2,13 @@
 {% load url %}
 
 {% block title %}
-    Add user - {{ object.title }} - {{ block.super }}
+    Add User - {{ object.title }} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'workstations:list' %}">Viewers</a></li>
         <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object.title }}</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Add user</li>
+        <li class="breadcrumb-item active" aria-current="page">Add User</li>
     </ol>
 {% endblock %}

@@ -3,7 +3,7 @@
 ###################
 ARG PYTHON_VERSION
 
-FROM python:${PYTHON_VERSION}-slim-bookworm as base
+FROM python:${PYTHON_VERSION}-slim-bookworm AS base
 
 # Install system dependencies
 RUN apt-get update \
@@ -107,7 +107,7 @@ RUN python -m pip install -U pip \
 ##################
 # TEST CONTAINER #
 ##################
-FROM base as test-base
+FROM base AS test-base
 
 USER root
 RUN apt-get update \

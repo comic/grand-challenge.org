@@ -201,12 +201,22 @@ class UserUpload(UUIDModel):
     def mimetype_from_file(self):
         if self.status != self.StatusChoices.COMPLETED:
             raise RuntimeError("Cannot get mimetype of incomplete upload")
-        header = self._client.get_object(
-            Bucket=self.bucket,
-            Key=self.key,
-            # 2048 bytes for best results with libmagic
-            Range="bytes=0-2047",
-        )["Body"].read()
+
+        response = self._client.head_object(Bucket=self.bucket, Key=self.key)
+        object_size = int(response["ContentLength"])
+
+        # 2048 bytes for best results with libmagic
+        max_bytes = min(2047, object_size)
+
+        if max_bytes == 0:
+            return "application/x-empty"
+        else:
+            header = self._client.get_object(
+                Bucket=self.bucket,
+                Key=self.key,
+                Range=f"bytes=0-{max_bytes}",
+            )["Body"].read()
+
         return magic.from_buffer(header, mime=True)
 
     def create_multipart_upload(self):

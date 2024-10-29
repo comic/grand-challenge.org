@@ -1,10 +1,10 @@
-{% extends "pages/challenge_settings_base.html" %}
+{% extends "base.html" %}
 {% load crispy from crispy_forms_tags %}
 {% load static %}
 {% load url %}
 
 {% block title %}
-    {{ object|yesno:"Update,Create Page" }} {% if object %} - {{ object|title }} {% else %} - Pages {% endif %} - {{ block.super }}
+    Update -{% if object %} {{ object|title }} -{% endif %} {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -23,14 +23,16 @@
             </a></li>
         {% endif %}
         <li class="breadcrumb-item active"
-            aria-current="page">{{ object|yesno:"Update,Create Page" }}
+            aria-current="page">Update
         </li>
     </ol>
 {% endblock %}
 
-{% block content %}
+{% block container %}container-fluid{% endblock %}
 
-    <h2>{% if object %}Update{% else %}Create{% endif %} Page</h2>
+{% block outer_content %}
+
+    <h2>Update Page</h2>
 
     {% crispy form %}
 {% endblock %}

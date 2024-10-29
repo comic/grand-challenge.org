@@ -260,6 +260,10 @@ class Archive(
         )
 
     @property
+    def interface_viewname(self):
+        return "components:component-interface-list-archives"
+
+    @property
     def civ_sets_related_manager(self):
         return self.items
 
