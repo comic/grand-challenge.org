@@ -126,6 +126,9 @@ class AlgorithmUserCreditAdmin(ModelAdmin):
 
         return fields
 
+    @admin.display(
+        description="The remaining specific credits for this algorithm for this User"
+    )
     def remaining_specific_credits(self, obj):
         try:
             return AlgorithmImage.get_remaining_specific_credits(
@@ -134,9 +137,13 @@ class AlgorithmUserCreditAdmin(ModelAdmin):
         except ObjectDoesNotExist:
             return 0
 
+    @admin.display(description="The remaining general credits for this User")
     def remaining_general_credits(self, obj):
         return AlgorithmImage.get_remaining_general_credits(user=obj.user)
 
+    @admin.display(
+        description="Total compute costs for this algorithm by this User"
+    )
     def specific_compute_costs(self, obj):
         return millicents_to_euro(
             Job.objects.filter(
@@ -149,6 +156,9 @@ class AlgorithmUserCreditAdmin(ModelAdmin):
             ]
         )
 
+    @admin.display(
+        description="Total compute costs for all other algorithms by this User"
+    )
     def other_compute_costs(self, obj):
         return millicents_to_euro(
             Job.objects.filter(
