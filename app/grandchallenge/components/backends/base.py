@@ -343,10 +343,19 @@ class Executor(ABC):
                 output_files=output_files, tmpdir=tmpdir, prefix=prefix
             )
 
-            importer_result = import_images(
-                input_directory=tmpdir,
-                builders=[image_builder_mhd, image_builder_tiff],
-            )
+            try:
+                importer_result = import_images(
+                    input_directory=tmpdir,
+                    builders=[image_builder_mhd, image_builder_tiff],
+                )
+            except RuntimeError as error:
+                if "std::bad_alloc" in str(error):
+                    raise ComponentException(
+                        "The output image was too large to process, "
+                        "please try again with smaller images"
+                    ) from error
+                else:
+                    raise
 
         if len(importer_result.new_images) == 0:
             raise ComponentException(
