@@ -1,5 +1,4 @@
 import logging
-import random
 import tempfile
 from pathlib import Path
 
@@ -667,15 +666,6 @@ class JobStatusBadgeDetail(ObjectPermissionRequiredMixin, DetailView):
     permission_required = "algorithms.view_job"
     template_name_suffix = "_status_badge_detail"
     model = Job
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(
-            {
-                "delay": random.randint(20, 40),
-            }
-        )
-        return context
 
 
 class DisplaySetFromJobCreate(

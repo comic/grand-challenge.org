@@ -27,7 +27,7 @@
 
 <split></split>
 
-<div hx-get="{% url 'algorithms:job-status-badge-detail' slug=object.algorithm_image.algorithm.slug pk=object.pk %}" hx-trigger="revealed" hx-swap="outerHTML"></div>
+{% include "algorithms/job_status_badge_detail.html" %}
 <split></split>
 
 {% if object.public %}
