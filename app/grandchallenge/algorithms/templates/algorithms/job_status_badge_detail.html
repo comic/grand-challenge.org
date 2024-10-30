@@ -1,4 +1,4 @@
-<span class="badge badge-{{ object.status_context }}" {% if not object.finished %}hx-get="{% url 'algorithms:job-status-badge-detail' slug=object.algorithm_image.algorithm.slug pk=object.pk %}" hx-trigger="every {{ delay }}s" hx-swap="outerHTML"{% endif %}>
+<span class="badge badge-{{ object.status_context }}" {% if not object.finished %}hx-get="{% url 'algorithms:job-status-badge-detail' slug=object.algorithm_image.algorithm.slug pk=object.pk %}" hx-trigger="every {{ delay|default:"5" }}s" hx-swap="outerHTML"{% endif %}>
     {% if object.animate %}
         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
     {% endif %}
