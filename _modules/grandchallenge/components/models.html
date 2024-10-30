@@ -78,6 +78,9 @@
 <span class="kn">from</span> <span class="nn">grandchallenge.cases.models</span> <span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">ImageFile</span><span class="p">,</span> <span class="n">RawImageUploadSession</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.cases.widgets</span> <span class="kn">import</span> <span class="n">FlexibleImageField</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.charts.specs</span> <span class="kn">import</span> <span class="n">components_line</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.components.backends.exceptions</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CIVNotEditableException</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.schemas</span> <span class="kn">import</span> <span class="n">INTERFACE_VALUE_SCHEMA</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.tasks</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">_repo_login_and_run</span><span class="p">,</span>
@@ -89,6 +92,12 @@
 <span class="kn">from</span> <span class="nn">grandchallenge.components.validators</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">validate_no_slash_at_ends</span><span class="p">,</span>
     <span class="n">validate_safe_path</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.core.error_handlers</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FallbackCIVValidationErrorHandler</span><span class="p">,</span>
+    <span class="n">JobCIVErrorHandler</span><span class="p">,</span>
+    <span class="n">RawImageUploadSessionErrorHandler</span><span class="p">,</span>
+    <span class="n">UserUploadCIVErrorHandler</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.core.models</span> <span class="kn">import</span> <span class="n">FieldChangeMixin</span><span class="p">,</span> <span class="n">UUIDModel</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.core.storage</span> <span class="kn">import</span> <span class="p">(</span>
@@ -1612,9 +1621,7 @@
     <span class="n">stderr</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
     <span class="n">runtime_metrics</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">JSONField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">error_message</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
-    <span class="n">detailed_error_message</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">JSONField</span><span class="p">(</span>
-        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span>
-    <span class="p">)</span>
+    <span class="n">detailed_error_message</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">JSONField</span><span class="p">(</span><span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="n">started_at</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">completed_at</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">compute_cost_euro_millicents</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span>
@@ -2335,26 +2342,39 @@
 
     <span class="k">def</span> <span class="nf">add_civ</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">civ</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_editable</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> is not editable.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">CIVNotEditableException</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> is not editable.&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">remove_civ</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">civ</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_editable</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> is not editable.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">CIVNotEditableException</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> is not editable.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">validate_values_and_execute_linked_task</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">linked_task</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="k">for</span> <span class="n">civ_data</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">create_civ</span><span class="p">(</span>
+                <span class="n">civ_data</span><span class="o">=</span><span class="n">civ_data</span><span class="p">,</span>
+                <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
+                <span class="n">linked_task</span><span class="o">=</span><span class="n">linked_task</span><span class="p">,</span>
+            <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">create_civ</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">civ_data</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">linked_task</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_editable</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> is not editable. CIVs cannot be added or removed from it.&quot;</span>
+            <span class="k">raise</span> <span class="n">CIVNotEditableException</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> is not editable. CIVs cannot be added or removed from it.&quot;</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="n">ci</span> <span class="o">=</span> <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">slug</span><span class="o">=</span><span class="n">civ_data</span><span class="o">.</span><span class="n">interface_slug</span><span class="p">)</span>
-        <span class="n">current_civ</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_current_value_for_interface</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">ci</span><span class="p">)</span>
+        <span class="n">current_civ</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_current_value_for_interface</span><span class="p">(</span>
+            <span class="n">interface</span><span class="o">=</span><span class="n">ci</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="n">user</span>
+        <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">ci</span><span class="o">.</span><span class="n">is_json_kind</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ci</span><span class="o">.</span><span class="n">requires_file</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_civ_for_value</span><span class="p">(</span>
                 <span class="n">ci</span><span class="o">=</span><span class="n">ci</span><span class="p">,</span>
                 <span class="n">current_civ</span><span class="o">=</span><span class="n">current_civ</span><span class="p">,</span>
                 <span class="n">new_value</span><span class="o">=</span><span class="n">civ_data</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
                 <span class="n">linked_task</span><span class="o">=</span><span class="n">linked_task</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">elif</span> <span class="n">ci</span><span class="o">.</span><span class="n">is_image_kind</span><span class="p">:</span>
@@ -2379,7 +2399,7 @@
             <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CIV creation for </span><span class="si">{</span><span class="n">ci</span><span class="si">}</span><span class="s2"> not handled.&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">create_civ_for_value</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">ci</span><span class="p">,</span> <span class="n">current_civ</span><span class="p">,</span> <span class="n">new_value</span><span class="p">,</span> <span class="n">linked_task</span><span class="o">=</span><span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">ci</span><span class="p">,</span> <span class="n">current_civ</span><span class="p">,</span> <span class="n">new_value</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">linked_task</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">):</span>
         <span class="n">current_value</span> <span class="o">=</span> <span class="n">current_civ</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="n">current_civ</span> <span class="k">else</span> <span class="kc">None</span>
 
@@ -2397,16 +2417,19 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">add_civ</span><span class="p">(</span><span class="n">civ</span><span class="o">=</span><span class="n">civ</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">remove_civ</span><span class="p">(</span><span class="n">civ</span><span class="o">=</span><span class="n">current_civ</span><span class="p">)</span>
             <span class="k">except</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">created</span><span class="p">:</span>
+                    <span class="n">civ</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+
                 <span class="k">if</span> <span class="n">new_value</span> <span class="ow">in</span> <span class="n">ci</span><span class="o">.</span><span class="n">default_field</span><span class="o">.</span><span class="n">empty_values</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">remove_civ</span><span class="p">(</span><span class="n">civ</span><span class="o">=</span><span class="n">current_civ</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">handle_error</span><span class="p">(</span>
-                        <span class="n">error_message</span><span class="o">=</span><span class="n">format_validation_error_message</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
+                    <span class="n">error_handler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_error_handler</span><span class="p">()</span>
+                    <span class="n">error_handler</span><span class="o">.</span><span class="n">handle_error</span><span class="p">(</span>
+                        <span class="n">interface</span><span class="o">=</span><span class="n">ci</span><span class="p">,</span>
+                        <span class="n">error_message</span><span class="o">=</span><span class="n">format_validation_error_message</span><span class="p">(</span><span class="n">error</span><span class="o">=</span><span class="n">e</span><span class="p">),</span>
+                        <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
                     <span class="p">)</span>
-                    <span class="k">raise</span> <span class="n">e</span>
-            <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-                <span class="k">return</span>
+                    <span class="k">return</span>
 
             <span class="k">if</span> <span class="n">linked_task</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">on_commit</span><span class="p">(</span><span class="n">signature</span><span class="p">(</span><span class="n">linked_task</span><span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">)</span>
@@ -2432,16 +2455,17 @@
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">civ</span><span class="o">.</span><span class="n">full_clean</span><span class="p">()</span>
                 <span class="k">except</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">handle_error</span><span class="p">(</span>
-                        <span class="n">error_message</span><span class="o">=</span><span class="n">format_validation_error_message</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
+                    <span class="n">civ</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+                    <span class="n">error_handler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_error_handler</span><span class="p">()</span>
+                    <span class="n">error_handler</span><span class="o">.</span><span class="n">handle_error</span><span class="p">(</span>
+                        <span class="n">interface</span><span class="o">=</span><span class="n">ci</span><span class="p">,</span>
+                        <span class="n">error_message</span><span class="o">=</span><span class="n">format_validation_error_message</span><span class="p">(</span><span class="n">error</span><span class="o">=</span><span class="n">e</span><span class="p">),</span>
+                        <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
                     <span class="p">)</span>
-                    <span class="k">raise</span> <span class="n">e</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">remove_civ</span><span class="p">(</span><span class="n">civ</span><span class="o">=</span><span class="n">current_civ</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">add_civ</span><span class="p">(</span><span class="n">civ</span><span class="o">=</span><span class="n">civ</span><span class="p">)</span>
-            <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-                <span class="k">return</span>
+                    <span class="k">return</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">remove_civ</span><span class="p">(</span><span class="n">civ</span><span class="o">=</span><span class="n">current_civ</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_civ</span><span class="p">(</span><span class="n">civ</span><span class="o">=</span><span class="n">civ</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">linked_task</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">on_commit</span><span class="p">(</span><span class="n">signature</span><span class="p">(</span><span class="n">linked_task</span><span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">)</span>
@@ -2465,6 +2489,7 @@
                 <span class="n">linked_app_label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="p">,</span>
                 <span class="n">linked_model_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="p">,</span>
                 <span class="n">linked_object_pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+                <span class="n">linked_interface_slug</span><span class="o">=</span><span class="n">ci</span><span class="o">.</span><span class="n">slug</span><span class="p">,</span>
                 <span class="n">linked_task</span><span class="o">=</span><span class="n">add_image_to_object</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
                     <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
                         <span class="s2">&quot;app_label&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="p">,</span>
@@ -2487,12 +2512,8 @@
         <span class="n">linked_task</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="k">if</span> <span class="n">file_civ</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">remove_civ</span><span class="p">(</span><span class="n">civ</span><span class="o">=</span><span class="n">current_civ</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">add_civ</span><span class="p">(</span><span class="n">civ</span><span class="o">=</span><span class="n">file_civ</span><span class="p">)</span>
-            <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-                <span class="k">return</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">remove_civ</span><span class="p">(</span><span class="n">civ</span><span class="o">=</span><span class="n">current_civ</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_civ</span><span class="p">(</span><span class="n">civ</span><span class="o">=</span><span class="n">file_civ</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">linked_task</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">on_commit</span><span class="p">(</span><span class="n">signature</span><span class="p">(</span><span class="n">linked_task</span><span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">)</span>
@@ -2521,24 +2542,41 @@
     <span class="k">def</span> <span class="nf">get_civ_for_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
-    <span class="k">def</span> <span class="nf">get_current_value_for_interface</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">interface</span><span class="p">,</span> <span class="n">user_upload</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">upload_session</span><span class="o">=</span><span class="kc">None</span>
-    <span class="p">):</span>
+    <span class="k">def</span> <span class="nf">get_current_value_for_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">interface</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_civ_for_interface</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">interface</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">ObjectDoesNotExist</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
         <span class="k">except</span> <span class="n">MultipleObjectsReturned</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">user_upload</span><span class="p">:</span>
-                <span class="n">user_upload</span><span class="o">.</span><span class="n">handle_file_validation_failure</span><span class="p">(</span>
-                    <span class="n">error_message</span><span class="o">=</span><span class="s2">&quot;An unexpected error occurred&quot;</span>
-                <span class="p">)</span>
-            <span class="k">elif</span> <span class="n">upload_session</span><span class="p">:</span>
-                <span class="n">upload_session</span><span class="o">.</span><span class="n">update_status</span><span class="p">(</span>
-                    <span class="n">error_message</span><span class="o">=</span><span class="s2">&quot;An unexpected error occurred&quot;</span><span class="p">,</span>
-                    <span class="n">status</span><span class="o">=</span><span class="n">RawImageUploadSession</span><span class="o">.</span><span class="n">FAILURE</span><span class="p">,</span>
-                <span class="p">)</span>
+            <span class="n">error_handler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_error_handler</span><span class="p">()</span>
+            <span class="n">error_handler</span><span class="o">.</span><span class="n">handle_error</span><span class="p">(</span>
+                <span class="n">interface</span><span class="o">=</span><span class="n">interface</span><span class="p">,</span>
+                <span class="n">error_message</span><span class="o">=</span><span class="s2">&quot;An unexpected error occurred&quot;</span><span class="p">,</span>
+                <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
+            <span class="p">)</span>
             <span class="k">raise</span> <span class="n">e</span>
+
+    <span class="k">def</span> <span class="nf">get_error_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">linked_object</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="c1"># local imports to prevent circular dependency</span>
+        <span class="kn">from</span> <span class="nn">grandchallenge.algorithms.models</span> <span class="kn">import</span> <span class="n">Job</span>
+        <span class="kn">from</span> <span class="nn">grandchallenge.archives.models</span> <span class="kn">import</span> <span class="n">ArchiveItem</span>
+        <span class="kn">from</span> <span class="nn">grandchallenge.reader_studies.models</span> <span class="kn">import</span> <span class="n">DisplaySet</span>
+
+        <span class="k">if</span> <span class="n">linked_object</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">linked_object</span><span class="p">,</span> <span class="n">RawImageUploadSession</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">RawImageUploadSessionErrorHandler</span><span class="p">(</span>
+                <span class="n">upload_session</span><span class="o">=</span><span class="n">linked_object</span><span class="p">,</span>
+                <span class="n">linked_object</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Job</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">JobCIVErrorHandler</span><span class="p">(</span><span class="n">job</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">linked_object</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">linked_object</span><span class="p">,</span> <span class="n">UserUpload</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">UserUploadCIVErrorHandler</span><span class="p">(</span>
+                <span class="n">user_upload</span><span class="o">=</span><span class="n">linked_object</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">(</span><span class="n">ArchiveItem</span><span class="p">,</span> <span class="n">DisplaySet</span><span class="p">))</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">linked_object</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">FallbackCIVValidationErrorHandler</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;No appropriate error handler found.&quot;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="InterfacesAndValues">
