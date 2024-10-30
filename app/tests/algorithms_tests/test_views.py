@@ -24,6 +24,7 @@ from grandchallenge.components.models import (
     GPUTypeChoices,
     ImportStatusChoices,
     InterfaceKind,
+    InterfaceKindChoices,
 )
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import (
@@ -1368,9 +1369,11 @@ class TestJobCreateView:
         # but in cancelled state and with an error message
         assert job.status == Job.CANCELLED
         assert (
-            "JSON does not fulfill schema: instance is not of type 'array'."
-            in job.error_message
+            "One or more of the inputs failed validation." == job.error_message
         )
+        assert job.detailed_error_message == {
+            algorithm_with_multiple_inputs.ci_json_file.title: "JSON does not fulfill schema: instance is not of type 'array'"
+        }
         # and no CIVs should have been created
         assert ComponentInterfaceValue.objects.count() == 0
 
@@ -1438,8 +1441,71 @@ class TestJobCreateView:
         # but in cancelled state and with an error message
         assert job.status == Job.CANCELLED
         assert (
-            "Image imports should result in a single image"
-            in job.error_message
+            "One or more of the inputs failed validation." == job.error_message
+        )
+        assert "Image imports should result in a single image" in str(
+            job.detailed_error_message
+        )
+        # and no CIVs should have been created
+        assert ComponentInterfaceValue.objects.count() == 0
+
+    @override_settings(task_eager_propagates=True, task_always_eager=True)
+    def test_create_job_with_multiple_faulty_existing_image_inputs(
+        self,
+        client,
+        django_capture_on_commit_callbacks,
+        algorithm_with_multiple_inputs,
+    ):
+        # configure multiple inputs
+        ci1, ci2 = ComponentInterfaceFactory.create_batch(
+            2, kind=InterfaceKindChoices.SEGMENTATION
+        )
+
+        for ci in [ci1, ci2]:
+            ci.overlay_segments = [
+                {"name": "s1", "visible": True, "voxel_value": 1}
+            ]
+            ci.save()
+
+        algorithm_with_multiple_inputs.algorithm.inputs.set(
+            [
+                ci1,
+                ci2,
+            ]
+        )
+
+        assert ComponentInterfaceValue.objects.count() == 0
+
+        response = self.create_job(
+            client=client,
+            django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+            algorithm=algorithm_with_multiple_inputs.algorithm,
+            user=algorithm_with_multiple_inputs.editor,
+            inputs={
+                **get_interface_form_data(
+                    interface_slug=ci1.slug,
+                    data=algorithm_with_multiple_inputs.image_1.pk,
+                    existing_data=True,
+                ),
+                **get_interface_form_data(
+                    interface_slug=ci2.slug,
+                    data=algorithm_with_multiple_inputs.image_2.pk,
+                    existing_data=True,
+                ),
+            },
+        )
+        assert response.status_code == 200
+        assert Job.objects.count() == 1
+
+        job = Job.objects.get()
+        assert job.status == job.CANCELLED
+        assert job.inputs.count() == 0
+        assert (
+            "One or more of the inputs failed validation." == job.error_message
+        )
+        assert (
+            "Image segments could not be determined, ensure the voxel values are integers and that it contains no more than 64 segments"
+            in str(job.detailed_error_message)
         )
         # and no CIVs should have been created
         assert ComponentInterfaceValue.objects.count() == 0

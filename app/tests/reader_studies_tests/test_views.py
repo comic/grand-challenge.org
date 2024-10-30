@@ -8,6 +8,7 @@ from requests import put
 from grandchallenge.cases.widgets import FlexibleImageField, WidgetChoices
 from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import ComponentInterfaceValue
+from grandchallenge.notifications.models import Notification
 from grandchallenge.reader_studies.models import (
     Answer,
     AnswerType,
@@ -714,6 +715,37 @@ def test_add_display_set_to_reader_study(
     assert ds.values.get(interface=ci_img_new) == civ_new_img
     assert ds.values.get(interface=ci_str_new).value == "new"
     assert ds.values.get(interface=ci_json).file.read() == b'{"foo": "bar"}'
+
+
+@pytest.mark.django_db
+def test_add_display_set_update_when_disabled(client):
+    editor = UserFactory()
+    rs = ReaderStudyFactory()
+    ds = DisplaySetFactory(reader_study=rs)
+    rs.add_editor(editor)
+    ci_str = ComponentInterfaceFactory(kind="STR")
+
+    # add an answer for the ds
+    AnswerFactory(question__reader_study=rs, display_set=ds, answer="true")
+
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-update",
+        client=client,
+        reverse_kwargs={"slug": rs.slug, "pk": ds.pk},
+        data={
+            **get_interface_form_data(
+                interface_slug=ci_str.slug, data="new-content"
+            ),
+        },
+        user=editor,
+        method=client.post,
+    )
+    assert response.status_code == 302
+
+    assert Notification.objects.count() == 1
+    notification = Notification.objects.first()
+    assert notification.user == editor
+    assert notification.message == "An unexpected error occurred"
 
 
 @pytest.mark.parametrize(

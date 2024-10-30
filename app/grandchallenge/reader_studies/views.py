@@ -1,4 +1,5 @@
 import csv
+import logging
 
 from django.contrib import messages
 from django.contrib.admin.utils import NestedObjects
@@ -56,6 +57,9 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.archives.forms import AddCasesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
+from grandchallenge.components.backends.exceptions import (
+    CIVNotEditableException,
+)
 from grandchallenge.components.models import CIVData
 from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
@@ -118,6 +122,8 @@ from grandchallenge.reader_studies.tasks import (
     create_display_sets_for_upload_session,
 )
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
+
+logger = logging.getLogger(__name__)
 
 
 class HttpResponseSeeOther(HttpResponseRedirect):
@@ -990,20 +996,34 @@ class DisplaySetViewSet(
                 many=True, data=values, context={"request": request}
             )
             if serialized_data.is_valid():
+                civs = []
                 for value in serialized_data.validated_data:
                     interface = value.get("interface", None)
                     user_upload = value.get("user_upload", None)
                     upload_session = value.get("upload_session", None)
                     image = value.get("image", None)
                     value = value.get("value", None)
-                    instance.create_civ(
-                        civ_data=CIVData(
+                    civs.append(
+                        CIVData(
                             interface_slug=interface.slug,
-                            value=(
-                                user_upload or upload_session or image or value
-                            ),
-                        ),
+                            value=upload_session
+                            or user_upload
+                            or image
+                            or value,
+                        )
                     )
+                try:
+                    instance.validate_values_and_execute_linked_task(
+                        values=civs,
+                        user=request.user,
+                    )
+                except CIVNotEditableException as e:
+                    error_handler = self.instance.get_error_handler()
+                    error_handler.handle_error(
+                        error_message="An unexpected error occurred",
+                        user=request.user,
+                    )
+                    logger.error(e, exc_info=True)
             else:
                 raise DRFValidationError(serialized_data.errors)
         return super().partial_update(request, pk)

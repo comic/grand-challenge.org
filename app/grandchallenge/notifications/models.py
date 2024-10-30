@@ -39,6 +39,9 @@ class NotificationTypeChoices(models.TextChoices):
     JOB_STATUS = "JOB-STATUS", _("Job status update")
     IMAGE_IMPORT_STATUS = "IMAGE-IMPORT", _("Image import status update")
     FILE_COPY_STATUS = "FILE-COPY", _("Validation failed while copying file")
+    CIV_VALIDATION = "CIV-VALIDATION", (
+        "Component Interface Value validation failed"
+    )
 
 
 class NotificationType:
@@ -226,7 +229,10 @@ class Notification(UUIDModel):
             == NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS
         ):
             return followers(action_object)
-        elif kind == NotificationType.NotificationTypeChoices.FILE_COPY_STATUS:
+        elif kind in [
+            NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
+            NotificationType.NotificationTypeChoices.CIV_VALIDATION,
+        ]:
             return {actor}
         else:
             raise RuntimeError(f"Unhandled notification type {kind!r}")
@@ -458,12 +464,12 @@ class Notification(UUIDModel):
                     "upload",
                 ),
                 time=naturaltime(self.created),
-                message=self.message,
+                message=self.description,
             )
-        elif (
-            self.type
-            == NotificationType.NotificationTypeChoices.FILE_COPY_STATUS
-        ):
+        elif self.type in [
+            NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
+            NotificationType.NotificationTypeChoices.CIV_VALIDATION,
+        ]:
             return self.description
 
 

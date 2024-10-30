@@ -73,6 +73,9 @@ from grandchallenge.algorithms.serializers import (
     HyperlinkedJobSerializer,
     JobPostSerializer,
 )
+from grandchallenge.components.backends.exceptions import (
+    CIVNotEditableException,
+)
 from grandchallenge.components.models import ImportStatusChoices
 from grandchallenge.components.tasks import upload_to_registry_and_sagemaker
 from grandchallenge.core.filters import FilterMixin
@@ -518,7 +521,21 @@ class JobCreate(
             status=Job.VALIDATING_INPUTS,
         )
 
-        self.object.validate_inputs_and_execute(inputs=inputs)
+        try:
+            self.object.validate_values_and_execute_linked_task(
+                values=inputs, user=self.object.creator
+            )
+        except CIVNotEditableException as e:
+            if self.object.status == self.object.CANCELLED:
+                # this can happen for jobs with multiple inputs
+                # if one of them fails validation
+                pass
+            else:
+                error_handler = self.object.get_error_handler()
+                error_handler.handle_error(
+                    error_message="An unexpected error occurred",
+                )
+                logger.error(e, exc_info=True)
 
         return super().form_valid(form)
 
