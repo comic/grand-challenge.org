@@ -1400,8 +1400,13 @@ class ComponentInterfaceValue(models.Model):
             with self.file.open("r") as f:
                 try:
                     value = json.loads(f.read().decode("utf-8"))
-                except JSONDecodeError as e:
-                    raise ValidationError(e)
+                except JSONDecodeError as error:
+                    raise ValidationError(error)
+                except MemoryError as error:
+                    raise ValidationError(
+                        "The file was too large to process, "
+                        "please try again with a smaller file"
+                    ) from error
         else:
             self._validate_value_only()
             value = self.value
