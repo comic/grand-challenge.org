@@ -622,6 +622,10 @@ class AlgorithmUserCredit(UUIDModel):
         except TypeError:
             raise ValidationError("The validity period must be set")
 
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
 
 class AlgorithmImage(UUIDModel, ComponentImage):
     algorithm = models.ForeignKey(
