@@ -1,5 +1,7 @@
 import logging
 import random
+import tempfile
+from pathlib import Path
 
 from django.conf import settings
 from django.contrib import messages
@@ -13,7 +15,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Window
 from django.db.models.functions import Rank
 from django.forms.utils import ErrorList
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import FileResponse, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.utils.html import format_html
@@ -26,6 +28,7 @@ from django.views.generic import (
     UpdateView,
 )
 from django_filters.rest_framework import DjangoFilterBackend
+from grand_challenge_forge.forge import generate_algorithm_template
 from guardian.mixins import LoginRequiredMixin
 from guardian.shortcuts import get_perms
 from rest_framework.mixins import (
@@ -81,6 +84,10 @@ from grandchallenge.core.guardian import (
     filter_by_permission,
 )
 from grandchallenge.core.templatetags.random_encode import random_encode
+from grandchallenge.core.utils.grand_challenge_forge import (
+    get_forge_algorithm_template_context,
+)
+from grandchallenge.core.utils.zip import zip_memory_buffer
 from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.models import Evaluation
@@ -1029,3 +1036,31 @@ class AlgorithmModelVersionControl(
 
     def get_success_url(self):
         return self.algorithm.get_absolute_url() + "#models"
+
+
+class AlgorithmImageTemplate(ObjectPermissionRequiredMixin, DetailView):
+    model = Algorithm
+    permission_required = "algorithms.change_algorithm"
+    raise_exception = True
+    queryset = Algorithm.objects.prefetch_related(
+        "inputs",
+        "outputs",
+    )
+
+    def get(self, *_, **__):
+        algorithm = self.get_object()
+
+        forge_context = get_forge_algorithm_template_context(algorithm)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            generate_algorithm_template(
+                context=forge_context,
+                output_path=Path(temp_dir),
+            )
+
+            return FileResponse(
+                streaming_content=zip_memory_buffer(source=temp_dir),
+                as_attachment=True,
+                filename=f"{algorithm.slug}-template.zip",
+                content_type="application/zip",
+            )

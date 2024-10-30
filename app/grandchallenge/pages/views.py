@@ -19,7 +19,11 @@ from grandchallenge.challenges.views import ActiveChallengeRequiredMixin
 from grandchallenge.charts.specs import stacked_bar, world_map
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
 from grandchallenge.evaluation.models import Evaluation, Submission
-from grandchallenge.pages.forms import PageCreateForm, PageUpdateForm
+from grandchallenge.pages.forms import (
+    PageContentUpdateForm,
+    PageCreateForm,
+    PageMetadataUpdateForm,
+)
 from grandchallenge.pages.models import Page
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
@@ -55,6 +59,16 @@ class PageCreate(
     def form_valid(self, form):
         form.instance.challenge = self.request.challenge
         return super().form_valid(form)
+
+    def get_success_url(self):
+        """On successful creation, go to content update."""
+        return reverse(
+            "pages:content-update",
+            kwargs={
+                "challenge_short_name": self.object.challenge.short_name,
+                "slug": self.object.slug,
+            },
+        )
 
 
 class PageList(
@@ -95,25 +109,42 @@ class ChallengeHome(PageDetail):
         return page
 
 
-class PageUpdate(
+class PageMetadataUpdate(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     ChallengeFilteredQuerysetMixin,
     UpdateView,
 ):
     model = Page
-    form_class = PageUpdateForm
+    form_class = PageMetadataUpdateForm
     permission_required = "change_challenge"
     raise_exception = True
     login_url = reverse_lazy("account_login")
 
     def get_permission_object(self):
-        return self.request.challenge
+        return self.get_object().challenge
 
     def form_valid(self, form):
         response = super().form_valid(form)
         self.object.move(form.cleaned_data["move"])
         return response
+
+
+class PageContentUpdate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    ChallengeFilteredQuerysetMixin,
+    UpdateView,
+):
+    model = Page
+    form_class = PageContentUpdateForm
+    template_name_suffix = "_content_update"
+    permission_required = "change_challenge"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_permission_object(self):
+        return self.get_object().challenge
 
 
 class PageDelete(
@@ -130,7 +161,7 @@ class PageDelete(
     login_url = reverse_lazy("account_login")
 
     def get_permission_object(self):
-        return self.request.challenge
+        return self.get_object().challenge
 
     def get_success_url(self):
         return reverse(

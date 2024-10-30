@@ -7,6 +7,7 @@ from grandchallenge.algorithms.views import (
     AlgorithmImageActivate,
     AlgorithmImageCreate,
     AlgorithmImageDetail,
+    AlgorithmImageTemplate,
     AlgorithmImageUpdate,
     AlgorithmImportView,
     AlgorithmList,
@@ -65,6 +66,11 @@ urlpatterns = [
         "<slug>/images/activate/",
         AlgorithmImageActivate.as_view(),
         name="image-activate",
+    ),
+    path(
+        "<slug>/images/template/",
+        AlgorithmImageTemplate.as_view(),
+        name="image-template",
     ),
     path(
         "<slug>/images/<uuid:pk>/update/",
