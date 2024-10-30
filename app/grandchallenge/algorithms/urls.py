@@ -106,7 +106,7 @@ urlpatterns = [
     path("<slug>/jobs/create/", JobCreate.as_view(), name="job-create"),
     path("<slug>/jobs/<uuid:pk>/", JobDetail.as_view(), name="job-detail"),
     path(
-        "<slug>/jobs/<uuid:pk>/status-badge",
+        "<slug>/jobs/<uuid:pk>/status-badge/",
         JobStatusBadgeDetail.as_view(),
         name="job-status-badge-detail",
     ),
