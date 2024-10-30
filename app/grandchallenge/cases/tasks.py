@@ -176,22 +176,21 @@ def build_images(  # noqa:C901
             )
 
         upload_session.update_status(status=RawImageUploadSession.SUCCESS)
+
     except RuntimeError as error:
         _delete_session_files(upload_session=upload_session)
         if "std::bad_alloc" in str(error):
-            upload_session.update_status(
-                status=RawImageUploadSession.FAILURE,
+            error_handler.handle_error(
+                interface=ci,
                 error_message=(
                     "The uploaded images were too large to process, "
                     "please try again with smaller images"
                 ),
-                linked_object=linked_object,
             )
         else:
-            upload_session.update_status(
-                status=RawImageUploadSession.FAILURE,
+            error_handler.handle_error(
+                interface=ci,
                 error_message="An unexpected error occurred",
-                linked_object=linked_object,
             )
             logger.error("An unexpected error occurred", exc_info=True)
     except DuplicateFilesException:
