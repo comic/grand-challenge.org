@@ -28,16 +28,21 @@ class JobCIVErrorHandler(ErrorHandler):
 
         self._job = job
 
-    def handle_error(self, *, error_message, interface, user=None):
-        detailed_error_message = copy.deepcopy(
-            self._job.detailed_error_message
-        )
-        detailed_error_message[interface.title] = error_message
-        self._job.update_status(
-            status=self._job.CANCELLED,
-            error_message="One or more of the inputs failed validation.",
-            detailed_error_message=detailed_error_message,
-        )
+    def handle_error(self, *, error_message, interface=None, user=None):
+        if interface:
+            detailed_error_message = copy.deepcopy(
+                self._job.detailed_error_message
+            )
+            detailed_error_message[interface.title] = error_message
+            self._job.update_status(
+                status=self._job.CANCELLED,
+                error_message="One or more of the inputs failed validation.",
+                detailed_error_message=detailed_error_message,
+            )
+        else:
+            self._job.update_status(
+                status=self._job.CANCELLED, error_message=error_message
+            )
 
 
 class RawImageUploadSessionErrorHandler(ErrorHandler):
@@ -109,10 +114,18 @@ class FallbackCIVValidationErrorHandler(ErrorHandler):
     Handle_error() sends a CIV_VALIDATION notification.
     """
 
-    def handle_error(self, *, error_message, user, interface):
-        Notification.send(
-            kind=NotificationType.NotificationTypeChoices.CIV_VALIDATION,
-            message=f"Validation for interface {interface.title} failed.",
-            description=f"Validation for interface {interface.title} failed: {error_message}",
-            actor=user,
-        )
+    def handle_error(self, *, error_message, user, interface=None):
+        if interface:
+            Notification.send(
+                kind=NotificationType.NotificationTypeChoices.CIV_VALIDATION,
+                message=f"Validation for interface {interface.title} failed.",
+                description=f"Validation for interface {interface.title} failed: {error_message}",
+                actor=user,
+            )
+        else:
+            Notification.send(
+                kind=NotificationType.NotificationTypeChoices.CIV_VALIDATION,
+                message=error_message,
+                description=error_message,
+                actor=user,
+            )

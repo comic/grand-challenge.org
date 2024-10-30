@@ -40,6 +40,9 @@ from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.cases.widgets import FlexibleImageField
 from grandchallenge.charts.specs import components_line
+from grandchallenge.components.backends.exceptions import (
+    CIVNotEditableException,
+)
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.tasks import (
     _repo_login_and_run,
@@ -2215,39 +2218,25 @@ class CIVForObjectMixin:
 
     def add_civ(self, *, civ):
         if not self.is_editable:
-            raise RuntimeError(f"{self} is not editable.")
+            raise CIVNotEditableException(f"{self} is not editable.")
 
     def remove_civ(self, *, civ):
         if not self.is_editable:
-            raise RuntimeError(f"{self} is not editable.")
+            raise CIVNotEditableException(f"{self} is not editable.")
 
     def validate_values_and_execute_linked_task(
         self, *, values, user, linked_task=None
     ):
-        if not self.is_editable:
-            raise RuntimeError(
-                f"{self} is not editable. No CIVs can be added or removed from it."
+        for civ_data in values:
+            self.create_civ(
+                civ_data=civ_data,
+                user=user,
+                linked_task=linked_task,
             )
-        else:
-            for civ_data in values:
-                try:
-                    self.create_civ(
-                        civ_data=civ_data,
-                        user=user,
-                        linked_task=linked_task,
-                    )
-                except RuntimeError:
-                    # This can happen for Jobs with multiple inputs,
-                    # if one input has already failed validation
-                    logger.error(
-                        f"{self} is not editable. CIVs cannot be added or removed from it.",
-                        exc_info=True,
-                    )
-                    break
 
     def create_civ(self, *, civ_data, user=None, linked_task=None):
         if not self.is_editable:
-            raise RuntimeError(
+            raise CIVNotEditableException(
                 f"{self} is not editable. CIVs cannot be added or removed from it.",
             )
 
@@ -2318,10 +2307,6 @@ class CIVForObjectMixin:
                     )
                     return
 
-            except RuntimeError as e:
-                logger.error(e, exc_info=True)
-                return
-
             if linked_task is not None:
                 on_commit(signature(linked_task).apply_async)
 
@@ -2355,12 +2340,8 @@ class CIVForObjectMixin:
                     )
                     return
 
-            try:
-                self.remove_civ(civ=current_civ)
-                self.add_civ(civ=civ)
-            except RuntimeError as e:
-                logger.error(e, exc_info=True)
-                return
+            self.remove_civ(civ=current_civ)
+            self.add_civ(civ=civ)
 
             if linked_task is not None:
                 on_commit(signature(linked_task).apply_async)
@@ -2407,12 +2388,8 @@ class CIVForObjectMixin:
         linked_task=None,
     ):
         if file_civ:
-            try:
-                self.remove_civ(civ=current_civ)
-                self.add_civ(civ=file_civ)
-            except RuntimeError as e:
-                logger.error(e, exc_info=True)
-                return
+            self.remove_civ(civ=current_civ)
+            self.add_civ(civ=file_civ)
 
             if linked_task is not None:
                 on_commit(signature(linked_task).apply_async)
@@ -2472,8 +2449,8 @@ class CIVForObjectMixin:
             return UserUploadCIVErrorHandler(
                 user_upload=linked_object,
             )
-        elif isinstance(self, [ArchiveItem, DisplaySet]) and not linked_object:
-            FallbackCIVValidationErrorHandler()
+        elif isinstance(self, (ArchiveItem, DisplaySet)) and not linked_object:
+            return FallbackCIVValidationErrorHandler()
         else:
             return RuntimeError("No appropriate error handler found.")
 

@@ -25,3 +25,12 @@ class TaskCancelled(ComponentBaseException):
 
 class UncleanExit(ComponentBaseException):
     """Raised if the process did not exit cleanly"""
+
+
+class CIVNotEditableException(Exception):
+    """
+    Raised during attempt to update an archive item,
+    display set or algorithm job when they were not editable
+    """
+
+    pass

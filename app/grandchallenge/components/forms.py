@@ -1,3 +1,5 @@
+import logging
+
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Layout, Submit
 from dal import autocomplete
@@ -15,6 +17,9 @@ from django.forms import (
 from django.utils.functional import empty
 
 from grandchallenge.algorithms.models import AlgorithmImage
+from grandchallenge.components.backends.exceptions import (
+    CIVNotEditableException,
+)
 from grandchallenge.components.form_fields import (
     INTERFACE_FORM_FIELD_PREFIX,
     InterfaceFormField,
@@ -27,6 +32,8 @@ from grandchallenge.evaluation.models import Method
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadSingleWidget
 from grandchallenge.workstations.models import WorkstationImage
+
+logger = logging.getLogger(__name__)
 
 
 class ContainerImageForm(SaveFormInitMixin, ModelForm):
@@ -175,10 +182,18 @@ class MultipleCIVForm(Form):
                         value=value,
                     )
                 )
-        self.instance.validate_values_and_execute_linked_task(
-            values=civs,
-            user=self.user,
-        )
+
+        try:
+            self.instance.validate_values_and_execute_linked_task(
+                values=civs,
+                user=self.user,
+            )
+        except CIVNotEditableException as e:
+            error_handler = self.instance.get_error_handler()
+            error_handler.handle_error(
+                error_message="An unexpected error occurred", user=self.user
+            )
+            logger.error(e, exc_info=True)
 
 
 class CIVSetCreateFormMixin:

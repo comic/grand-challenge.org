@@ -1,3 +1,5 @@
+import logging
+
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
 from rest_framework.fields import (
@@ -17,6 +19,9 @@ from grandchallenge.algorithms.models import (
     AlgorithmModel,
     Job,
 )
+from grandchallenge.components.backends.exceptions import (
+    CIVNotEditableException,
+)
 from grandchallenge.components.models import CIVData, ComponentInterface
 from grandchallenge.components.serializers import (
     ComponentInterfaceSerializer,
@@ -28,6 +33,8 @@ from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.hanging_protocols.serializers import (
     HangingProtocolSerializer,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class AlgorithmSerializer(serializers.ModelSerializer):
@@ -273,9 +280,21 @@ class JobPostSerializer(JobSerializer):
             status=Job.VALIDATING_INPUTS,
         )
 
-        job.validate_values_and_execute_linked_task(
-            values=self.inputs, user=validated_data["creator"]
-        )
+        try:
+            job.validate_values_and_execute_linked_task(
+                values=self.inputs, user=validated_data["creator"]
+            )
+        except CIVNotEditableException as e:
+            if job.status == job.CANCELLED:
+                # this can happen for jobs with multiple inputs
+                # if one of them fails validation
+                pass
+            else:
+                error_handler = job.get_error_handler()
+                error_handler.handle_error(
+                    error_message="An unexpected error occurred",
+                )
+                logger.error(e, exc_info=True)
 
         return job
 

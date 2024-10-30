@@ -31,6 +31,7 @@ from panimg.models import SimpleITKImage
 
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.components.backends.exceptions import (
+    CIVNotEditableException,
     ComponentException,
     RetryStep,
     RetryTask,
@@ -1169,7 +1170,7 @@ def validate_voxel_values(*, civ_pk):
     retry_on=(LockNotAcquiredException,), delayed_retry=False
 )
 @transaction.atomic
-def add_image_to_object(
+def add_image_to_object(  # noqa: C901
     *,
     app_label,
     model_name,
@@ -1178,6 +1179,7 @@ def add_image_to_object(
     upload_session_pk,
     linked_task=None,
 ):
+    from grandchallenge.algorithms.models import Job
     from grandchallenge.components.models import (
         ComponentInterface,
         ComponentInterfaceValue,
@@ -1230,11 +1232,17 @@ def add_image_to_object(
     try:
         object.remove_civ(civ=current_value)
         object.add_civ(civ=civ)
-    except RuntimeError as e:
-        # for Jobs this happens when validation for another input failed
-        # and the job status was updated to CANCELLED
-        logger.error(e, exc_info=True)
-        return
+    except CIVNotEditableException as e:
+        if isinstance(object, Job) and object.status == Job.CANCELLED:
+            return
+        else:
+            error_handler.handle_error(
+                interface=interface,
+                error_message="An unexpected error occurred",
+                user=upload_session.creator,
+            )
+            logger.error(e, exc_info=True)
+            return
 
     if linked_task is not None:
         on_commit(signature(linked_task).apply_async)
@@ -1253,6 +1261,7 @@ def add_file_to_object(
     interface_pk,
     linked_task=None,
 ):
+    from grandchallenge.algorithms.models import Job
     from grandchallenge.components.models import (
         ComponentInterface,
         ComponentInterfaceValue,
@@ -1294,11 +1303,17 @@ def add_file_to_object(
     try:
         object.remove_civ(civ=current_value)
         object.add_civ(civ=civ)
-    except RuntimeError as e:
-        # for Jobs this happens when validation for another input failed
-        # and the job status was updated to CANCELLED
-        logger.error(e, exc_info=True)
-        return
+    except CIVNotEditableException as e:
+        if isinstance(object, Job) and object.status == Job.CANCELLED:
+            return
+        else:
+            error_handler.handle_error(
+                interface=interface,
+                error_message="An unexpected error occurred",
+                user=user_upload.creator,
+            )
+            logger.error(e, exc_info=True)
+            return
 
     if linked_task is not None:
         on_commit(signature(linked_task).apply_async)

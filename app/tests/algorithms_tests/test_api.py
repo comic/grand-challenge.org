@@ -479,18 +479,28 @@ class TestJobCreationThroughAPI:
         assert ComponentInterfaceValue.objects.count() == 0
 
     @override_settings(task_eager_propagates=True, task_always_eager=True)
-    def test_create_job_with_faulty_existing_image_input(
+    def test_create_job_with_multiple_faulty_existing_image_inputs(
         self,
         client,
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
-        ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.SEGMENTATION)
-        ci.overlay_segments = [
-            {"name": "s1", "visible": True, "voxel_value": 1}
-        ]
-        ci.save()
-        algorithm_with_multiple_inputs.algorithm.inputs.set([ci])
+        ci1, ci2 = ComponentInterfaceFactory.create_batch(
+            2, kind=InterfaceKindChoices.SEGMENTATION
+        )
+
+        for ci in [ci1, ci2]:
+            ci.overlay_segments = [
+                {"name": "s1", "visible": True, "voxel_value": 1}
+            ]
+            ci.save()
+
+        algorithm_with_multiple_inputs.algorithm.inputs.set(
+            [
+                ci1,
+                ci2,
+            ]
+        )
 
         im = ImageFactory()
         im.files.set([ImageFileFactoryWithMHDFile()])
@@ -505,7 +515,11 @@ class TestJobCreationThroughAPI:
             user=algorithm_with_multiple_inputs.editor,
             inputs=[
                 {
-                    "interface": ci.slug,
+                    "interface": ci1.slug,
+                    "image": im.api_url,
+                },
+                {
+                    "interface": ci2.slug,
                     "image": im.api_url,
                 },
             ],
