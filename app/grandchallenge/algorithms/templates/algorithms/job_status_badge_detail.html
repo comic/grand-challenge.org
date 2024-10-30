@@ -1,9 +1,8 @@
-{% with delay_options="20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40" %}
-    <span class="badge badge-{{ object.status_context }}" {% if not object.finished %}hx-get="{% url 'algorithms:job-status-badge-detail' slug=object.algorithm_image.algorithm.slug pk=object.pk %}" hx-trigger="every {{ delay_options.split|random }}s" hx-swap="outerHTML"{% endif %}>
-        {% if object.animate %}
-            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-        {% endif %}
-        {{ object.get_status_display }}{% if object.status == object.SUCCESS and object.stderr %},
-            with warnings{% endif %}
-    </span>
-{% endwith %}
+{% load job_status_badge %}
+<span class="badge badge-{{ object.status_context }}" {% if not object.finished %}hx-get="{% url 'algorithms:job-status-badge-detail' slug=object.algorithm_image.algorithm.slug pk=object.pk %}" hx-trigger="delay {% randint 20 40 %}s" hx-swap="outerHTML"{% endif %}>
+    {% if object.animate %}
+        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+    {% endif %}
+    {{ object.get_status_display }}{% if object.status == object.SUCCESS and object.stderr %},
+        with warnings{% endif %}
+</span>
