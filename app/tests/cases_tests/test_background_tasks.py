@@ -166,7 +166,10 @@ def test_errors_on_files_with_duplicate_file_names(
 
     session.refresh_from_db()
     assert session.status == session.FAILURE
-    assert session.error_message == "Duplicate files uploaded"
+    assert (
+        session.error_message
+        == "Duplicate files uploaded, please try again with a unique set of files"
+    )
     assert session.import_result is None
 
 
