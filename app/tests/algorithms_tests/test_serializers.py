@@ -193,9 +193,7 @@ def test_algorithm_job_post_serializer_create(
 
     # setup
     user = UserFactory()
-    upload = RawImageUploadSessionFactory(
-        creator=user, status=RawImageUploadSession.SUCCESS
-    )
+    upload = RawImageUploadSessionFactory(creator=user)
     image1, image2 = ImageFactory.create_batch(2)
     upload.image_set.set([image1])
     for im in [image1, image2]:
@@ -230,6 +228,10 @@ def test_algorithm_job_post_serializer_create(
 
     # verify
     assert serializer.is_valid()
+    # fake successful upload
+    upload.status = RawImageUploadSession.SUCCESS
+    upload.save()
+
     with django_capture_on_commit_callbacks(execute=True):
         serializer.create(serializer.validated_data)
     assert len(Job.objects.all()) == 1

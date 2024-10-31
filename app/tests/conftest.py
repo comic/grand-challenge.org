@@ -12,7 +12,6 @@ from django.contrib.sites.models import Site
 from guardian.shortcuts import assign_perm
 from requests import put
 
-from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.cases.widgets import WidgetChoices
 from grandchallenge.components.backends import docker_client
 from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
@@ -558,9 +557,7 @@ def algorithm_with_multiple_inputs():
     )
 
     # Create inputs
-    im_upload_through_api = RawImageUploadSessionFactory(
-        creator=user, status=RawImageUploadSession.SUCCESS
-    )
+    im_upload_through_api = RawImageUploadSessionFactory(creator=user)
     image_1, image_2 = ImageFactory.create_batch(2)
     mhd1, mhd2 = ImageFileFactoryWithMHDFile.create_batch(2)
     image_1.files.set([mhd1])
