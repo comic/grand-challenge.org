@@ -1,9 +1,14 @@
+import logging
+
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.fields import JSONField, ReadOnlyField, URLField
 from rest_framework.relations import HyperlinkedRelatedField
 
 from grandchallenge.archives.models import Archive, ArchiveItem
+from grandchallenge.components.backends.exceptions import (
+    CIVNotEditableException,
+)
 from grandchallenge.components.models import CIVData
 from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
@@ -13,6 +18,8 @@ from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.hanging_protocols.serializers import (
     HangingProtocolSerializer,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ArchiveItemSerializer(serializers.ModelSerializer):
@@ -96,16 +103,30 @@ class ArchiveItemPostSerializer(ArchiveItemSerializer):
 
     def update(self, instance, validated_data):
         values = validated_data.pop("values")
+        civs = []
         for value in values:
             interface = value.get("interface", None)
             upload_session = value.get("upload_session", None)
             user_upload = value.get("user_upload", None)
             image = value.get("image", None)
             value = value.get("value", None)
-            instance.create_civ(
-                civ_data=CIVData(
+            civs.append(
+                CIVData(
                     interface_slug=interface.slug,
                     value=upload_session or user_upload or image or value,
-                ),
+                )
             )
+        try:
+            instance.validate_values_and_execute_linked_task(
+                values=civs,
+                user=self.context["request"].user,
+            )
+        except CIVNotEditableException as e:
+            error_handler = instance.get_error_handler()
+            error_handler.handle_error(
+                error_message="An unexpected error occurred",
+                user=self.context["request"].user,
+            )
+            logger.error(e, exc_info=True)
+
         return instance

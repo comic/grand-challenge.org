@@ -339,32 +339,23 @@ class Executor(ABC):
             )
 
         with TemporaryDirectory() as tmpdir:
-            for file in output_files:
-                try:
-                    root_key = safe_join("/", file["Key"])
-                    dest = safe_join(
-                        tmpdir, Path(root_key).relative_to(prefix)
-                    )
-                except (SuspiciousFileOperation, ValueError):
-                    logger.warning(f"Skipping {file=} for {interface=}")
-                    continue
-
-                logger.info(
-                    f"Downloading {file['Key']} to {dest} from "
-                    f"{settings.COMPONENTS_OUTPUT_BUCKET_NAME}"
-                )
-
-                Path(dest).parent.mkdir(parents=True, exist_ok=True)
-                self._s3_client.download_file(
-                    Filename=dest,
-                    Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-                    Key=file["Key"],
-                )
-
-            importer_result = import_images(
-                input_directory=tmpdir,
-                builders=[image_builder_mhd, image_builder_tiff],
+            self._download_output_files(
+                output_files=output_files, tmpdir=tmpdir, prefix=prefix
             )
+
+            try:
+                importer_result = import_images(
+                    input_directory=tmpdir,
+                    builders=[image_builder_mhd, image_builder_tiff],
+                )
+            except RuntimeError as error:
+                if "std::bad_alloc" in str(error):
+                    raise ComponentException(
+                        "The output image was too large to process, "
+                        "please try again with smaller images"
+                    ) from error
+                else:
+                    raise
 
         if len(importer_result.new_images) == 0:
             raise ComponentException(
@@ -387,6 +378,27 @@ class Executor(ABC):
             )
 
         return civ
+
+    def _download_output_files(self, *, output_files, tmpdir, prefix):
+        for file in output_files:
+            try:
+                root_key = safe_join("/", file["Key"])
+                dest = safe_join(tmpdir, Path(root_key).relative_to(prefix))
+            except (SuspiciousFileOperation, ValueError):
+                logger.warning(f"Skipping {file=}")
+                continue
+
+            logger.info(
+                f"Downloading {file['Key']} to {dest} from "
+                f"{settings.COMPONENTS_OUTPUT_BUCKET_NAME}"
+            )
+
+            Path(dest).parent.mkdir(parents=True, exist_ok=True)
+            self._s3_client.download_file(
+                Filename=dest,
+                Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+                Key=file["Key"],
+            )
 
     def _create_json_result(self, *, interface):
         key = safe_join(self._io_prefix, interface.relative_path)
