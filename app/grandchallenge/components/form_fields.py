@@ -106,8 +106,8 @@ class InterfaceFormField:
     def get_image_field(self):
 
         current_value = None
-        submitted_value = None
-        submitted_widget_choice = None
+        submit_value = None
+        submit_widget_choice = None
 
         if self.initial is not None and not isinstance(
             self.initial, ComponentInterfaceValue
@@ -120,16 +120,16 @@ class InterfaceFormField:
                 and self.form_data[widget_choice_key]
                 not in WidgetChoices.names
             ):
-                widget_choice_key = f"SubmittedWidgetChoice-{INTERFACE_FORM_FIELD_PREFIX}{self.instance.slug}"
+                widget_choice_key = f"SubmitWidgetChoice-{INTERFACE_FORM_FIELD_PREFIX}{self.instance.slug}"
 
             if widget_choice_key in self.form_data:
-                submitted_widget_choice = self.form_data[widget_choice_key]
+                submit_widget_choice = self.form_data[widget_choice_key]
                 if self.form_data[widget_choice_key] == "IMAGE_SEARCH":
-                    submitted_value = Image.objects.filter(
+                    submit_value = Image.objects.filter(
                         pk=self.initial
                     ).first()
                 elif self.form_data[widget_choice_key] == "IMAGE_UPLOAD":
-                    submitted_value = UserUpload.objects.filter(
+                    submit_value = UserUpload.objects.filter(
                         pk=self.initial
                     ).first()
         else:
@@ -139,8 +139,8 @@ class InterfaceFormField:
             help_text=self.help_text,
             user=self.user,
             current_value=current_value,
-            submitted_value=submitted_value,
-            submitted_widget_choice=submitted_widget_choice,
+            submit_value=submit_value,
+            submit_widget_choice=submit_widget_choice,
             # also passing the CIV as current value here so that we can
             # show the image name to the user rather than its pk
         )
