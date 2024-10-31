@@ -2,9 +2,11 @@ from django import forms
 from django.forms import ModelChoiceField
 from django.utils.functional import cached_property
 
+from grandchallenge.cases.models import Image
 from grandchallenge.cases.widgets import (
     FlexibleImageField,
     FlexibleImageWidget,
+    WidgetChoices,
 )
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
@@ -102,10 +104,43 @@ class InterfaceFormField:
             return self.initial
 
     def get_image_field(self):
+
+        current_value = None
+        submitted_value = None
+        submitted_widget_choice = None
+
+        if self.initial is not None and not isinstance(
+            self.initial, ComponentInterfaceValue
+        ):
+
+            widget_choice_key = f"WidgetChoice-{INTERFACE_FORM_FIELD_PREFIX}{self.instance.slug}"
+
+            if (
+                widget_choice_key in self.form_data
+                and self.form_data[widget_choice_key]
+                not in WidgetChoices.names
+            ):
+                widget_choice_key = f"SubmittedWidgetChoice-{INTERFACE_FORM_FIELD_PREFIX}{self.instance.slug}"
+
+            if widget_choice_key in self.form_data:
+                submitted_widget_choice = self.form_data[widget_choice_key]
+                if self.form_data[widget_choice_key] == "IMAGE_SEARCH":
+                    submitted_value = Image.objects.filter(
+                        pk=self.initial
+                    ).first()
+                elif self.form_data[widget_choice_key] == "IMAGE_UPLOAD":
+                    submitted_value = UserUpload.objects.filter(
+                        pk=self.initial
+                    ).first()
+        else:
+            current_value = self.initial
+
         self.kwargs["widget"] = FlexibleImageWidget(
             help_text=self.help_text,
             user=self.user,
-            current_value=self.initial,
+            current_value=current_value,
+            submitted_value=submitted_value,
+            submitted_widget_choice=submitted_widget_choice,
             # also passing the CIV as current value here so that we can
             # show the image name to the user rather than its pk
         )

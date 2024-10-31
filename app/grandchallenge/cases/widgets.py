@@ -45,6 +45,8 @@ class FlexibleImageWidget(MultiWidget):
         help_text=None,
         user=None,
         current_value=None,
+        submitted_value=None,
+        submitted_widget_choice=None,
         disabled=False,
         **kwargs,
     ):
@@ -58,6 +60,8 @@ class FlexibleImageWidget(MultiWidget):
             "disabled": disabled,
             "user": user,
             "current_value": current_value,
+            "submitted_value": submitted_value,
+            "submitted_widget_choice": submitted_widget_choice,
             "widget_choices": {
                 choice.name: choice.value for choice in WidgetChoices
             },
