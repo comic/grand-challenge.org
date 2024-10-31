@@ -8,8 +8,8 @@
         hx-trigger="widgetSelected, change"
         hx-include="[id='values-{{ widget.name }}']"
 >
-    {% if widget.attrs.submitted_value %}
-        <option value="{{ widget.attrs.submitted_value.pk }}">{{ widget.attrs.submitted_value }}</option>
+    {% if widget.attrs.submit_value %}
+        <option value="{{ widget.attrs.submit_value.pk }}">{{ widget.attrs.submit_value }}</option>
     {% elif widget.attrs.current_value %}
         <option value="{{ widget.attrs.current_value.image.pk }}">{{ widget.attrs.current_value }}</option>
     {% else %}
@@ -26,9 +26,9 @@
 </div>
 
 <div class="mt-3" id="area-{{ widget.name }}">
-    {% if widget.attrs.submitted_value %}
-        <input type="hidden" name="{{ widget.name }}" value="{{ widget.attrs.submitted_value.pk }}">
-        <input type="hidden" name="SubmittedWidgetChoice-{{ widget.name }}" value="{{ widget.attrs.submitted_widget_choice }}">
+    {% if widget.attrs.submit_value %}
+        <input type="hidden" name="{{ widget.name }}" value="{{ widget.attrs.submit_value.pk }}">
+        <input type="hidden" name="SubmitWidgetChoice-{{ widget.name }}" value="{{ widget.attrs.submit_widget_choice }}">
     {% endif %}
 </div>
 
