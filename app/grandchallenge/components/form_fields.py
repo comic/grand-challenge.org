@@ -109,9 +109,7 @@ class InterfaceFormField:
         submit_value = None
         submit_widget_choice = None
 
-        if self.initial is not None and not isinstance(
-            self.initial, ComponentInterfaceValue
-        ):
+        if not isinstance(self.initial, ComponentInterfaceValue):
 
             widget_choice_key = f"WidgetChoice-{INTERFACE_FORM_FIELD_PREFIX}{self.instance.slug}"
 
