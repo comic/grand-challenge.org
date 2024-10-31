@@ -1723,6 +1723,14 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         }
 
     @property
+    def finished(self):
+        return self.status in {
+            self.FAILURE,
+            self.SUCCESS,
+            self.CANCELLED,
+        }
+
+    @property
     def status_context(self):
         if self.status == self.SUCCESS:
             if self.stderr:

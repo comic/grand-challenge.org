@@ -586,6 +586,32 @@ class TestJobDetailView:
 
 
 @pytest.mark.django_db
+class TestJobStatusBadgeDetail:
+    def test_guarded_content_visibility(self, client):
+        j = AlgorithmJobFactory(time_limit=60)
+        u = UserFactory()
+
+        view_kwargs = {
+            "client": client,
+            "viewname": "algorithms:job-status-badge-detail",
+            "reverse_kwargs": {
+                "slug": j.algorithm_image.algorithm.slug,
+                "pk": j.pk,
+            },
+            "user": u,
+        }
+        response = get_view_for_user(**view_kwargs)
+
+        assert response.status_code == 302
+
+        assign_perm("view_job", u, j)
+
+        response = get_view_for_user(**view_kwargs)
+
+        assert response.status_code == 200
+
+
+@pytest.mark.django_db
 def test_display_set_from_job(client):
     u = UserFactory()
     rs = ReaderStudyFactory()
