@@ -1,7 +1,6 @@
 import datetime
 import io
 import json
-import os
 import tempfile
 import zipfile
 from pathlib import Path
@@ -2133,7 +2132,6 @@ def test_algorithm_template_download(client):
     # Spot check for expected files in the zip
     expected_files = ["README.md", "Dockerfile", "inference.py"]
     for file_name in expected_files:
-        relative_file_path = os.path.join(f"{alg.slug}-template", file_name)
         assert (
-            relative_file_path in zip_file.namelist()
-        ), f"{relative_file_path} is in the ZIP file"
+            file_name in zip_file.namelist()
+        ), f"{file_name} is in the ZIP file"

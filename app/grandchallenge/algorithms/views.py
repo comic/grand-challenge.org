@@ -1054,13 +1054,19 @@ class AlgorithmImageTemplate(ObjectPermissionRequiredMixin, DetailView):
         forge_context = get_forge_algorithm_template_context(algorithm)
 
         with tempfile.TemporaryDirectory() as temp_dir:
+            output_path = Path(temp_dir)
+
             generate_algorithm_template(
                 context=forge_context,
-                output_path=Path(temp_dir),
+                output_path=output_path,
+            )
+
+            buffer = zip_memory_buffer(
+                source=output_path / f"{algorithm.slug}-template"
             )
 
             return FileResponse(
-                streaming_content=zip_memory_buffer(source=temp_dir),
+                streaming_content=buffer,
                 as_attachment=True,
                 filename=f"{algorithm.slug}-template.zip",
                 content_type="application/zip",
