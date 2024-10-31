@@ -7,6 +7,7 @@ from grandchallenge.algorithms.serializers import (
     HyperlinkedJobSerializer,
     JobPostSerializer,
 )
+from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.models import ComponentInterface
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
@@ -192,7 +193,9 @@ def test_algorithm_job_post_serializer_create(
 
     # setup
     user = UserFactory()
-    upload = RawImageUploadSessionFactory(creator=user)
+    upload = RawImageUploadSessionFactory(
+        creator=user, status=RawImageUploadSession.SUCCESS
+    )
     image1, image2 = ImageFactory.create_batch(2)
     upload.image_set.set([image1])
     for im in [image1, image2]:
