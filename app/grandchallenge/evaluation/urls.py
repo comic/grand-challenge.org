@@ -15,6 +15,7 @@ from grandchallenge.evaluation.views import (
     EvaluationGroundTruthUpdate,
     EvaluationGroundTruthVersionManagement,
     EvaluationList,
+    EvaluationStatusBadgeDetail,
     EvaluationUpdate,
     LeaderboardDetail,
     LeaderboardRedirect,
@@ -35,6 +36,11 @@ app_name = "evaluation"
 
 urlpatterns = [
     path("<uuid:pk>/", EvaluationDetail.as_view(), name="detail"),
+    path(
+        "<uuid:pk>/status-badge/",
+        EvaluationStatusBadgeDetail.as_view(),
+        name="evaluation-status-badge-detail",
+    ),
     # UUID should be matched before slugs
     path("<uuid:pk>/update/", EvaluationUpdate.as_view(), name="update"),
     path("phase/create/", PhaseCreate.as_view(), name="phase-create"),

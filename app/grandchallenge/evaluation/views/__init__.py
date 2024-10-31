@@ -600,6 +600,12 @@ class EvaluationDetail(ObjectPermissionRequiredMixin, DetailView):
         return context
 
 
+class EvaluationStatusBadgeDetail(ObjectPermissionRequiredMixin, DetailView):
+    permission_required = "view_evaluation"
+    template_name_suffix = "_status_badge_detail"
+    model = Evaluation
+
+
 class LeaderboardRedirect(RedirectView):
     permanent = False
 

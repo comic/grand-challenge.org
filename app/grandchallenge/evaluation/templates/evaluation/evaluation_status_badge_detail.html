@@ -1,0 +1,4 @@
+{% load url %}
+
+{% url 'evaluation:evaluation-status-badge-detail' challenge_short_name=challenge.short_name pk=object.pk as status_badge_url %}
+{% include "components/job_status_badge_detail.html" %}
