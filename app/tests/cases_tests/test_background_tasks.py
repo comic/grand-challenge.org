@@ -293,7 +293,7 @@ def test_build_zip_file(settings, django_capture_on_commit_callbacks):
 
 @pytest.mark.django_db
 @mock.patch(
-    "grandchallenge.cases.tasks._handle_raw_image_files",
+    "grandchallenge.cases.tasks._handle_raw_files",
     side_effect=SoftTimeLimitExceeded(),
 )
 def test_soft_time_limit(_):
