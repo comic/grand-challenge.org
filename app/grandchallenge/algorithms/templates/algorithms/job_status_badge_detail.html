@@ -1,9 +1,4 @@
 {% load url %}
 
-<span class="badge badge-{{ object.status_context }}" {% if not object.finished %}hx-get="{% url 'algorithms:job-status-badge-detail' slug=object.algorithm_image.algorithm.slug pk=object.pk %}" hx-trigger="load delay:30s" hx-swap="outerHTML"{% endif %}>
-    {% if object.animate %}
-        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-    {% endif %}
-    {{ object.get_status_display }}{% if object.status == object.SUCCESS and object.stderr %},
-        with warnings{% endif %}
-</span>
+{% url 'algorithms:job-status-badge-detail' slug=object.algorithm_image.algorithm.slug pk=object.pk as status_badge_url %}
+{% include "components/job_status_badge_detail.html" %}
