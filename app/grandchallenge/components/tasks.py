@@ -1192,6 +1192,10 @@ def add_image_to_object(  # noqa: C901
     )
     error_handler = object.get_error_handler(linked_object=upload_session)
 
+    if upload_session.status != upload_session.SUCCESS:
+        logger.info("Nothing to do: upload session was not successful.")
+        return
+
     try:
         image = Image.objects.get(origin_id=upload_session_pk)
     except (Image.DoesNotExist, Image.MultipleObjectsReturned):

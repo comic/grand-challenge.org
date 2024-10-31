@@ -14,6 +14,7 @@ from grandchallenge.archives.views import (
 )
 from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
+from grandchallenge.notifications.models import Notification
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import AlgorithmJobFactory, Job
 from tests.archives_tests.factories import (
@@ -1458,3 +1459,45 @@ def test_item_job_list_row_template_ajax_renders(client):
     assert response_content["recordsTotal"] == 1
     assert len(response_content["data"]) == 1
     assert job_details_url in response_content["data"][0][0]
+
+
+@pytest.mark.django_db
+def test_archive_item_upload_corrupt_image(
+    client, settings, django_capture_on_commit_callbacks
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    editor = UserFactory()
+    archive = ArchiveFactory()
+    archive.add_editor(editor)
+    ci_img = ComponentInterfaceFactory(kind="IMG")
+
+    im_upload = create_upload_from_file(
+        file_path=RESOURCE_PATH / "corrupt.png",
+        creator=editor,
+    )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="archives:item-create",
+            client=client,
+            reverse_kwargs={"slug": archive.slug},
+            data={
+                **get_interface_form_data(
+                    interface_slug=ci_img.slug, data=str(im_upload.pk)
+                ),
+                "order": 11,
+            },
+            user=editor,
+            method=client.post,
+        )
+
+    assert response.status_code == 302
+    assert ArchiveItem.objects.count() == 1
+    ai = ArchiveItem.objects.get()
+    assert ai.values.count() == 0
+    assert Notification.objects.count() == 1
+    notification = Notification.objects.get()
+    assert notification.user == editor
+    assert "1 file could not be imported" in notification.description

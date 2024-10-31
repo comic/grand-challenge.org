@@ -170,15 +170,24 @@ def build_images(  # noqa:C901
         with TemporaryDirectory() as tmp_dir:
             tmp_dir = Path(tmp_dir).resolve()
             _populate_tmp_dir(tmp_dir, upload_session)
-            _handle_raw_image_files(
-                tmp_dir=tmp_dir,
+            importer_result = import_images(
+                input_directory=tmp_dir, origin=upload_session
+            )
+            _handle_raw_files(
+                consumed_files=importer_result.consumed_files,
+                file_errors=importer_result.file_errors,
+                base_directory=tmp_dir,
                 upload_session=upload_session,
             )
 
-        upload_session.update_status(status=RawImageUploadSession.SUCCESS)
-
+        if upload_session.image_set.count() == 0:
+            error_handler.handle_error(
+                interface=ci,
+                error_message=upload_session.default_error_message,
+            )
+        else:
+            upload_session.update_status(status=RawImageUploadSession.SUCCESS)
     except RuntimeError as error:
-        _delete_session_files(upload_session=upload_session)
         if "std::bad_alloc" in str(error):
             error_handler.handle_error(
                 interface=ci,
@@ -194,7 +203,6 @@ def build_images(  # noqa:C901
             )
             logger.error("An unexpected error occurred", exc_info=True)
     except DuplicateFilesException:
-        _delete_session_files(upload_session=upload_session)
         error_handler.handle_error(
             interface=ci,
             error_message=(
@@ -208,27 +216,13 @@ def build_images(  # noqa:C901
             error_message="Time limit exceeded",
         )
     except Exception:
-        _delete_session_files(upload_session=upload_session)
         error_handler.handle_error(
             interface=ci,
             error_message="An unexpected error occurred",
         )
         logger.error("An unexpected error occurred", exc_info=True)
-
-
-def _handle_raw_image_files(*, tmp_dir, upload_session):
-    importer_result = import_images(
-        input_directory=tmp_dir, origin=upload_session
-    )
-
-    _handle_raw_files(
-        consumed_files=importer_result.consumed_files,
-        file_errors=importer_result.file_errors,
-        base_directory=tmp_dir,
-        upload_session=upload_session,
-    )
-
-    _delete_session_files(upload_session=upload_session)
+    finally:
+        upload_session.user_uploads.all().delete()
 
 
 @dataclass
@@ -383,10 +377,6 @@ def _handle_raw_files(
             if k not in consumed_files
         },
     }
-
-
-def _delete_session_files(*, upload_session):
-    upload_session.user_uploads.all().delete()
 
 
 @acks_late_2xlarge_task

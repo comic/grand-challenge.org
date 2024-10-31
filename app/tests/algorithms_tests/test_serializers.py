@@ -7,6 +7,7 @@ from grandchallenge.algorithms.serializers import (
     HyperlinkedJobSerializer,
     JobPostSerializer,
 )
+from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.models import ComponentInterface
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
@@ -227,6 +228,10 @@ def test_algorithm_job_post_serializer_create(
 
     # verify
     assert serializer.is_valid()
+    # fake successful upload
+    upload.status = RawImageUploadSession.SUCCESS
+    upload.save()
+
     with django_capture_on_commit_callbacks(execute=True):
         serializer.create(serializer.validated_data)
     assert len(Job.objects.all()) == 1

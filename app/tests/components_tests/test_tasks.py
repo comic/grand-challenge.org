@@ -379,7 +379,7 @@ def test_add_image_to_object(
     settings.task_always_eager = (True,)
 
     obj = object_type(**extra_object_kwargs)
-    us = RawImageUploadSessionFactory()
+    us = RawImageUploadSessionFactory(status=RawImageUploadSession.SUCCESS)
     ci = ComponentInterfaceFactory(kind="IMG")
     ImageFactory(origin=us)
 
@@ -415,7 +415,7 @@ def test_add_image_to_object_updates_upload_session_on_validation_fail(
     settings.task_always_eager = (True,)
 
     obj = object_type()
-    us = RawImageUploadSessionFactory()
+    us = RawImageUploadSessionFactory(status=RawImageUploadSession.SUCCESS)
     ci = ComponentInterfaceFactory(kind="IMG")
 
     error_message = f"Image validation for interface {ci.title} failed with error: Image imports should result in a single image. "
@@ -450,7 +450,7 @@ def test_add_image_to_object_marks_job_as_failed_on_validation_fail(
     settings.task_always_eager = (True,)
 
     obj = AlgorithmJobFactory(time_limit=10)
-    us = RawImageUploadSessionFactory()
+    us = RawImageUploadSessionFactory(status=RawImageUploadSession.SUCCESS)
     ci = ComponentInterfaceFactory(kind="IMG")
 
     error_message = f"Image validation for interface {ci.title} failed with error: Image imports should result in a single image. "
