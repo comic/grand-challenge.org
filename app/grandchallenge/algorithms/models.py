@@ -703,7 +703,7 @@ class AlgorithmImage(UUIDModel, ComponentImage):
             .filter(
                 user=user,
             )
-            .select_related("algorithm")
+            .values_list("algorithm__pk", flat=True)
         )
 
         spent_credits = (
@@ -713,10 +713,7 @@ class AlgorithmImage(UUIDModel, ComponentImage):
                 created__gte=timezone.now() - relativedelta(months=1),
             )
             .exclude(
-                algorithm_image__algorithm__in=[
-                    credits.algorithm
-                    for credits in user_algorithms_with_active_credits
-                ]
+                algorithm_image__algorithm__pk__in=user_algorithms_with_active_credits
             )
             .aggregate(
                 total=Sum("credits_consumed", default=0),
