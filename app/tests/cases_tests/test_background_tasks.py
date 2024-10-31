@@ -138,7 +138,7 @@ def test_no_convertible_file(settings, django_capture_on_commit_callbacks):
     )
 
     session.refresh_from_db()
-    assert session.status == session.SUCCESS
+    assert session.status == session.FAILURE
     assert f"{len(images)} file" in session.error_message
 
     assert session.import_result["consumed_files"] == []
