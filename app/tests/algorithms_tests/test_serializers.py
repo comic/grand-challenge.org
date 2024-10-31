@@ -237,18 +237,17 @@ def test_algorithm_job_post_serializer_create(
 
 @pytest.mark.django_db
 class TestJobCreateLimits:
-    def test_form_invalid_without_enough_credits(self, rf):
+    def test_form_invalid_without_enough_credits(self, rf, settings):
         algorithm_image = AlgorithmImageFactory(
             is_manifest_valid=True,
             is_in_registry=True,
             is_desired_version=True,
-            algorithm__minimum_credits_per_job=100,
+            algorithm__minimum_credits_per_job=(
+                settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER + 1
+            ),
         )
         algorithm_image.algorithm.inputs.clear()
         user = UserFactory()
-
-        user.user_credit.credits = 0
-        user.user_credit.save()
 
         algorithm_image.algorithm.add_user(user=user)
 
@@ -272,18 +271,17 @@ class TestJobCreateLimits:
             ]
         }
 
-    def test_form_valid_for_editor(self, rf):
+    def test_form_valid_for_editor(self, rf, settings):
         algorithm_image = AlgorithmImageFactory(
             is_manifest_valid=True,
             is_in_registry=True,
             is_desired_version=True,
-            algorithm__minimum_credits_per_job=100,
+            algorithm__minimum_credits_per_job=(
+                settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER + 1
+            ),
         )
         algorithm_image.algorithm.inputs.clear()
         user = UserFactory()
-
-        user.user_credit.credits = 0
-        user.user_credit.save()
 
         algorithm_image.algorithm.add_editor(user=user)
 

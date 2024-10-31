@@ -8,7 +8,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Count, Q, Sum
@@ -19,6 +19,7 @@ from django.template.defaultfilters import truncatechars
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
+from django.utils.timezone import now
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
@@ -54,7 +55,6 @@ from grandchallenge.core.utils.access_requests import (
     process_access_request,
 )
 from grandchallenge.core.validators import ExtensionValidator
-from grandchallenge.credits.models import Credit
 from grandchallenge.evaluation.utils import get
 from grandchallenge.hanging_protocols.models import HangingProtocolMixin
 from grandchallenge.modalities.models import ImagingModality
@@ -548,6 +548,85 @@ def delete_algorithm_groups_hook(*_, instance: Algorithm, using, **__):
         pass
 
 
+class AlgorithmUserCreditManager(models.QuerySet):
+    def active_credits(self):
+        today = now().date()
+        return self.filter(
+            valid_from__lte=today,
+            valid_until__gte=today,
+        )
+
+
+class AlgorithmUserCredit(UUIDModel):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        blank=False,
+        on_delete=models.CASCADE,
+        help_text="The user who these credits are applied to",
+    )
+    algorithm = models.ForeignKey(
+        Algorithm,
+        blank=False,
+        on_delete=models.CASCADE,
+        help_text="The algorithm that these credits can be used with",
+    )
+    credits = models.PositiveIntegerField(
+        blank=False,
+        help_text="The credits that a user can spend during the validity period on running this algorithm",
+    )
+    valid_from = models.DateField(
+        blank=False,
+        help_text="Inclusive date from which these credits are valid",
+    )
+    valid_until = models.DateField(
+        blank=False,
+        help_text="Inclusive date until these credits are valid",
+    )
+    comment = models.TextField(
+        blank=False,
+        help_text="Who agreed to these credits have been assigned and where the costs are coming from",
+    )
+
+    objects = AlgorithmUserCreditManager.as_manager()
+
+    class Meta:
+        unique_together = ("user", "algorithm")
+
+    def __str__(self):
+        return f"Credits for {self.user} for {self.algorithm}"
+
+    @property
+    def is_active(self):
+        today = now().date()
+        return self.valid_from <= today and self.valid_until >= today
+
+    def clean(self):
+        super().clean()
+
+        try:
+            if self.user.username == settings.ANONYMOUS_USER_NAME:
+                raise ValidationError(
+                    {"user": "The anonymous user cannot be assigned credits"}
+                )
+        except ObjectDoesNotExist:
+            raise ValidationError("The user must be set")
+
+        try:
+            if self.valid_until < self.valid_from:
+                raise ValidationError(
+                    {
+                        "valid_from": "This must be less than or equal to Valid Until",
+                        "valid_until": "This must be greater than or equal to Valid From",
+                    }
+                )
+        except TypeError:
+            raise ValidationError("The validity period must be set")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+
 class AlgorithmImage(UUIDModel, ComponentImage):
     algorithm = models.ForeignKey(
         Algorithm,
@@ -584,14 +663,64 @@ class AlgorithmImage(UUIDModel, ComponentImage):
             return 0
 
     def get_remaining_non_complimentary_jobs(self, *, user):
-        user_credits = Credit.objects.get(user=user).credits
-        spent_credits = Job.objects.credits_consumed_past_month(user=user)[
-            "total"
-        ]
-
-        credits_left = user_credits - spent_credits
+        try:
+            credits_left = self.get_remaining_specific_credits(
+                user=user, algorithm=self.algorithm
+            )
+        except ObjectDoesNotExist:
+            credits_left = self.get_remaining_general_credits(user=user)
 
         return max(credits_left, 0) // max(self.algorithm.credits_per_job, 1)
+
+    @staticmethod
+    def get_remaining_specific_credits(*, user, algorithm):
+        user_credit = AlgorithmUserCredit.objects.active_credits().get(
+            user=user,
+            algorithm=algorithm,
+        )
+
+        spent_credits = Job.objects.filter(
+            creator=user_credit.user,
+            is_complimentary=False,
+            created__date__gte=user_credit.valid_from,
+            created__date__lte=user_credit.valid_until,
+            algorithm_image__algorithm=user_credit.algorithm,
+        ).aggregate(
+            total=Sum("credits_consumed", default=0),
+        )
+
+        return user_credit.credits - spent_credits["total"]
+
+    @staticmethod
+    def get_remaining_general_credits(*, user):
+        if user.username == settings.ANONYMOUS_USER_NAME:
+            return 0
+
+        user_credits = settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER
+
+        user_algorithms_with_active_credits = (
+            AlgorithmUserCredit.objects.active_credits()
+            .filter(
+                user=user,
+            )
+            .values_list("algorithm__pk", flat=True)
+        )
+
+        spent_credits = (
+            Job.objects.filter(
+                creator=user,
+                is_complimentary=False,
+                created__gte=timezone.now() - relativedelta(months=1),
+            )
+            .exclude(
+                algorithm_image__algorithm__pk__in=user_algorithms_with_active_credits
+            )
+            .aggregate(
+                total=Sum("credits_consumed", default=0),
+            )
+        )
+
+        return user_credits - spent_credits["total"]
 
     def get_remaining_jobs(self, *, user):
         return self.get_remaining_non_complimentary_jobs(
@@ -728,18 +857,6 @@ class JobManager(ComponentJobManager):
         )
 
         return existing_jobs
-
-    def credits_consumed_past_month(self, user):
-        return (
-            self.filter(
-                creator=user,
-                created__gt=timezone.now() - relativedelta(months=1),
-            )
-            .exclude(is_complimentary=True)
-            .aggregate(
-                total=Sum("credits_consumed", default=0),
-            )
-        )
 
 
 def algorithm_models_path(instance, filename):
@@ -948,12 +1065,9 @@ class Job(CIVForObjectMixin, ComponentJob):
         )
 
     def init_credits_consumed(self):
-        default_credits_per_month = Credit._meta.get_field(
-            "credits"
-        ).get_default()
         overall_min_credits_per_job = (
-            default_credits_per_month
-            / settings.ALGORITHMS_MAX_DEFAULT_JOBS_PER_MONTH
+            settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER
+            / settings.ALGORITHMS_MAX_GENERAL_JOBS_PER_MONTH_PER_USER
         )
 
         executor = self.get_executor(
@@ -971,8 +1085,8 @@ class Job(CIVForObjectMixin, ComponentJob):
             int(
                 round(
                     maximum_cents_per_job
-                    * default_credits_per_month
-                    / settings.ALGORITHMS_USER_CENTS_PER_MONTH,
+                    * settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER
+                    / settings.ALGORITHMS_GENERAL_CENTS_PER_MONTH_PER_USER,
                     -1,
                 )
             ),
