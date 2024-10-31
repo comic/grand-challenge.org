@@ -1,6 +1,4 @@
 import io
-import os
-from pathlib import Path
 from zipfile import ZipFile
 
 from django.core.exceptions import SuspiciousFileOperation
@@ -8,22 +6,20 @@ from django.core.exceptions import SuspiciousFileOperation
 
 def zip_memory_buffer(*, source):
     """Creates a memory-loaded ZIP archive from the content of the source"""
-    source_path = Path(source)
+    source = source.resolve()
     buffer = io.BytesIO()
 
     with ZipFile(buffer, "w") as zipf:
-        for root, _, filenames in os.walk(source_path):
-            root = Path(root)
+        for file_path in source.rglob("*"):
+            if file_path.is_file():
+                resolved_path = file_path.resolve()
 
-            for filename in filenames:
-                file_path = root / filename
-
-                if source_path not in file_path.resolve().parents:
+                if source not in resolved_path.parents:
                     raise SuspiciousFileOperation(
                         "Only files under the source can be included."
                     )
 
-                zipf.write(file_path, file_path.relative_to(source_path))
+                zipf.write(file_path, file_path.relative_to(source))
 
     buffer.seek(0)
 
