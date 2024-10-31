@@ -215,6 +215,12 @@ class TestObjectPermissionRequiredViews:
         for view_name, kwargs, permission, obj in [
             ("update", {"pk": e.pk}, "change_evaluation", e),
             ("detail", {"pk": e.pk}, "view_evaluation", e),
+            (
+                "evaluation-status-badge-detail",
+                {"pk": e.pk},
+                "view_evaluation",
+                e,
+            ),
         ]:
             response = get_view_for_user(
                 client=client,
