@@ -179,6 +179,14 @@ def build_images(  # noqa:C901
                 base_directory=tmp_dir,
                 upload_session=upload_session,
             )
+
+        if len(upload_session.import_result["consumed_files"]) == 0:
+            error_handler.handle_error(
+                interface=ci,
+                error_message=upload_session.default_error_message,
+            )
+        else:
+            upload_session.update_status(status=RawImageUploadSession.SUCCESS)
     except RuntimeError as error:
         if "std::bad_alloc" in str(error):
             error_handler.handle_error(
@@ -215,18 +223,6 @@ def build_images(  # noqa:C901
         logger.error("An unexpected error occurred", exc_info=True)
     finally:
         upload_session.user_uploads.all().delete()
-
-    if (
-        len(upload_session.import_result["file_errors"]) != 0
-        and len(upload_session.import_result["consumed_files"]) == 0
-    ):
-        # if no files were imported successfully, mark the session as failed
-        error_handler.handle_error(
-            interface=ci,
-            error_message=upload_session.default_error_message,
-        )
-    else:
-        upload_session.update_status(status=RawImageUploadSession.SUCCESS)
 
 
 @dataclass
