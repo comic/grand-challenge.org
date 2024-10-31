@@ -385,6 +385,13 @@ class TestObjectPermissionRequiredViews:
                 None,
             ),
             (
+                "image-import-status-badge-detail",
+                {"slug": ai.algorithm.slug, "pk": ai.pk},
+                "view_algorithmimage",
+                ai,
+                None,
+            ),
+            (
                 "image-update",
                 {"slug": ai.algorithm.slug, "pk": ai.pk},
                 "change_algorithmimage",

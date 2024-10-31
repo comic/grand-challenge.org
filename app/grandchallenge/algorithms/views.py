@@ -395,6 +395,14 @@ class AlgorithmImageDetail(
         return context
 
 
+class AlgorithmImageImportStatusBadgeDetail(
+    ObjectPermissionRequiredMixin, DetailView
+):
+    permission_required = "algorithms.view_algorithmimage"
+    template_name_suffix = "_import_status_badge_detail"
+    model = AlgorithmImage
+
+
 class AlgorithmImageUpdate(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
 ):
