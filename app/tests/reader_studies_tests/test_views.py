@@ -884,3 +884,45 @@ def test_question_interactive_algorithms_view_permissions(client):
     assert InteractiveAlgorithmChoices.ULS23_BASELINE.value in str(
         response.content
     )
+
+
+@pytest.mark.django_db
+def test_display_set_upload_corrupt_image(
+    client, settings, django_capture_on_commit_callbacks
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    editor = UserFactory()
+    rs = ReaderStudyFactory()
+    rs.add_editor(editor)
+    ci_img = ComponentInterfaceFactory(kind="IMG")
+
+    im_upload = create_upload_from_file(
+        file_path=RESOURCE_PATH / "corrupt.png",
+        creator=editor,
+    )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="reader-studies:display-set-create",
+            client=client,
+            reverse_kwargs={"slug": rs.slug},
+            data={
+                **get_interface_form_data(
+                    interface_slug=ci_img.slug, data=str(im_upload.pk)
+                ),
+                "order": 11,
+            },
+            user=editor,
+            method=client.post,
+        )
+
+    assert response.status_code == 302
+    assert DisplaySet.objects.count() == 1
+    ds = DisplaySet.objects.get()
+    assert ds.values.count() == 0
+    assert Notification.objects.count() == 1
+    notification = Notification.objects.get()
+    assert notification.user == editor
+    assert "1 file could not be imported" in notification.description

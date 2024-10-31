@@ -171,7 +171,7 @@ class RawImageUploadSession(UUIDModel):
             Notification.send(
                 kind=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
                 message=error_message,
-                description=notification_description,
+                description=self.error_message,
                 action_object=self,
             )
         from grandchallenge.algorithms.models import Job

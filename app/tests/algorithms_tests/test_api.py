@@ -472,7 +472,7 @@ class TestJobCreationThroughAPI:
         assert (
             "One or more of the inputs failed validation." == job.error_message
         )
-        assert "Image imports should result in a single image" in str(
+        assert "1 file could not be imported" in str(
             job.detailed_error_message
         )
         # and no CIVs should have been created

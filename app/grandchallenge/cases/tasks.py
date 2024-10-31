@@ -175,7 +175,17 @@ def build_images(  # noqa:C901
                 upload_session=upload_session,
             )
 
-        upload_session.update_status(status=RawImageUploadSession.SUCCESS)
+        if (
+            len(upload_session.import_result["file_errors"]) != 0
+            and len(upload_session.import_result["consumed_files"]) == 0
+        ):
+            # if no files were imported successfully, mark the session as failed
+            error_handler.handle_error(
+                interface=ci,
+                error_message=upload_session.default_error_message,
+            )
+        else:
+            upload_session.update_status(status=RawImageUploadSession.SUCCESS)
 
     except RuntimeError as error:
         _delete_session_files(upload_session=upload_session)
