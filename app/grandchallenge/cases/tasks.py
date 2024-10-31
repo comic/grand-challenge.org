@@ -180,7 +180,7 @@ def build_images(  # noqa:C901
                 upload_session=upload_session,
             )
 
-        if len(upload_session.import_result["consumed_files"]) == 0:
+        if upload_session.image_set.count() == 0:
             error_handler.handle_error(
                 interface=ci,
                 error_message=upload_session.default_error_message,
