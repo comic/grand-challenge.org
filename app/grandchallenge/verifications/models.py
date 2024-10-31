@@ -167,13 +167,15 @@ class Verification(FieldChangeMixin, models.Model):
             object_name,
             request_class,
         ) in permission_request_classes.items():
-            request_class.objects.filter(
+            for request_object in request_class.objects.filter(
                 **{
                     "user": self.user,
                     "status": request_class.PENDING,
                     f"{object_name}__access_request_handling": AccessRequestHandlingOptions.ACCEPT_VERIFIED_USERS,
                 }
-            ).update(status=request_class.ACCEPTED)
+            ):
+                request_object.status = request_class.ACCEPTED
+                request_object.save()
 
 
 def create_verification(email_address, *_, **__):
