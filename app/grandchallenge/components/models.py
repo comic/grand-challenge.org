@@ -2030,7 +2030,12 @@ class ComponentImage(FieldChangeMixin, models.Model):
 
     @property
     def animate(self):
-        return self.import_status == self.ImportStatusChoices.STARTED
+        return self.import_status in {
+            ImportStatusChoices.INITIALIZED,
+            ImportStatusChoices.QUEUED,
+            ImportStatusChoices.RETRY,
+            ImportStatusChoices.STARTED,
+        }
 
     @property
     def finished(self):
@@ -2601,7 +2606,12 @@ class Tarball(UUIDModel):
 
     @property
     def animate(self):
-        return self.import_status == ImportStatusChoices.INITIALIZED
+        return self.import_status in {
+            ImportStatusChoices.INITIALIZED,
+            ImportStatusChoices.QUEUED,
+            ImportStatusChoices.RETRY,
+            ImportStatusChoices.STARTED,
+        }
 
     @property
     def finished(self):
