@@ -11,6 +11,7 @@ from grandchallenge.evaluation.views import (
     EvaluationDetail,
     EvaluationGroundTruthCreate,
     EvaluationGroundTruthDetail,
+    EvaluationGroundTruthImportStatusDetail,
     EvaluationGroundTruthList,
     EvaluationGroundTruthUpdate,
     EvaluationGroundTruthVersionManagement,
@@ -113,9 +114,9 @@ urlpatterns = [
         name="ground-truth-detail",
     ),
     path(
-        "<slug>/ground-truths/<uuid:pk>/",
-        EvaluationGroundTruthDetail.as_view(),
-        name="ground-truth-detail",
+        "<slug>/ground-truths/<uuid:pk>/import-status/",
+        EvaluationGroundTruthImportStatusDetail.as_view(),
+        name="ground-truth-import-status-detail",
     ),
     path(
         "<slug>/ground-truths/<uuid:pk>/update/",
@@ -135,7 +136,7 @@ urlpatterns = [
         name="method-detail",
     ),
     path(
-        "<slug>/methods/<uuid:pk>/",
+        "<slug>/methods/<uuid:pk>/import-status/",
         MethodImportStatusDetail.as_view(),
         name="method-import-status-detail",
     ),
