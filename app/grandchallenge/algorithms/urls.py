@@ -14,6 +14,7 @@ from grandchallenge.algorithms.views import (
     AlgorithmList,
     AlgorithmModelCreate,
     AlgorithmModelDetail,
+    AlgorithmModelImportStatusBadgeDetail,
     AlgorithmModelUpdate,
     AlgorithmModelVersionControl,
     AlgorithmPermissionRequestCreate,
@@ -87,6 +88,11 @@ urlpatterns = [
         "<slug>/models/<uuid:pk>/",
         AlgorithmModelDetail.as_view(),
         name="model-detail",
+    ),
+    path(
+        "<slug>/models/<uuid:pk>/import-status-badge/",
+        AlgorithmModelImportStatusBadgeDetail.as_view(),
+        name="model-import-status-badge-detail",
     ),
     path(
         "<slug>/models/create/",

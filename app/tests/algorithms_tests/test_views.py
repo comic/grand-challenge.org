@@ -490,6 +490,13 @@ class TestObjectPermissionRequiredViews:
                 None,
             ),
             (
+                "model-import-status-badge-detail",
+                {"slug": am.algorithm.slug, "pk": am.pk},
+                "view_algorithmmodel",
+                am,
+                None,
+            ),
+            (
                 "model-update",
                 {"slug": am.algorithm.slug, "pk": am.pk},
                 "change_algorithmmodel",

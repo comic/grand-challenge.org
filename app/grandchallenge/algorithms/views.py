@@ -983,6 +983,17 @@ class AlgorithmModelDetail(
         return context
 
 
+class AlgorithmModelImportStatusBadgeDetail(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    DetailView,
+):
+    model = AlgorithmModel
+    permission_required = "algorithms.view_algorithmmodel"
+    template_name_suffix = "_import_status_badge_detail"
+    raise_exception = True
+
+
 class AlgorithmModelUpdate(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
