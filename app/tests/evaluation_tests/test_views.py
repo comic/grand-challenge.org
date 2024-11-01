@@ -1441,6 +1441,8 @@ def test_ground_truth_permissions(client):
         response = _get_view()
         assert response.status_code == 200
 
+        remove_perm(permission, u, obj)
+
 
 @pytest.mark.django_db
 def test_ground_truth_version_management(settings, client):
