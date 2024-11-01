@@ -2600,5 +2600,13 @@ class Tarball(UUIDModel):
             return "info"
 
     @property
-    def import_in_progress(self):
+    def animate(self):
         return self.import_status == ImportStatusChoices.INITIALIZED
+
+    @property
+    def finished(self):
+        return self.import_status in {
+            self.ImportStatusChoices.FAILED,
+            self.ImportStatusChoices.COMPLETED,
+            self.ImportStatusChoices.CANCELLED,
+        }

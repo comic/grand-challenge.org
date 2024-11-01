@@ -1105,6 +1105,17 @@ class EvaluationGroundTruthDetail(
         return context
 
 
+class EvaluationGroundTruthImportStatusDetail(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    DetailView,
+):
+    model = EvaluationGroundTruth
+    permission_required = "evaluation.view_evaluationgroundtruth"
+    template_name_suffix = "_import_status_detail"
+    raise_exception = True
+
+
 class EvaluationGroundTruthList(
     LoginRequiredMixin, PermissionListMixin, CachedPhaseMixin, ListView
 ):

@@ -1407,6 +1407,12 @@ def test_ground_truth_permissions(client):
             "evaluation.change_evaluationgroundtruth",
             gt,
         ),
+        (
+            "ground-truth-import-status-detail",
+            {"pk": gt.pk},
+            "evaluation.view_evaluationgroundtruth",
+            gt,
+        ),
     ]:
 
         def _get_view():

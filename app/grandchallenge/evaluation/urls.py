@@ -112,6 +112,11 @@ urlpatterns = [
         name="ground-truth-detail",
     ),
     path(
+        "<slug>/ground-truths/<uuid:pk>/",
+        EvaluationGroundTruthDetail.as_view(),
+        name="ground-truth-detail",
+    ),
+    path(
         "<slug>/ground-truths/<uuid:pk>/update/",
         EvaluationGroundTruthUpdate.as_view(),
         name="ground-truth-update",
