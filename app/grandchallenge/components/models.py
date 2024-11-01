@@ -2033,6 +2033,14 @@ class ComponentImage(FieldChangeMixin, models.Model):
         return self.import_status == self.ImportStatusChoices.STARTED
 
     @property
+    def finished(self):
+        return self.import_status in {
+            self.ImportStatusChoices.FAILED,
+            self.ImportStatusChoices.COMPLETED,
+            self.ImportStatusChoices.CANCELLED,
+        }
+
+    @property
     def import_status_context(self):
         if self.import_status == self.ImportStatusChoices.COMPLETED:
             return "success"
