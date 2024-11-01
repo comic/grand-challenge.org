@@ -385,7 +385,7 @@ class TestObjectPermissionRequiredViews:
                 None,
             ),
             (
-                "image-import-status-badge-detail",
+                "image-import-status-detail",
                 {"slug": ai.algorithm.slug, "pk": ai.pk},
                 "view_algorithmimage",
                 ai,
@@ -490,7 +490,7 @@ class TestObjectPermissionRequiredViews:
                 None,
             ),
             (
-                "model-import-status-badge-detail",
+                "model-import-status-detail",
                 {"slug": am.algorithm.slug, "pk": am.pk},
                 "view_algorithmmodel",
                 am,

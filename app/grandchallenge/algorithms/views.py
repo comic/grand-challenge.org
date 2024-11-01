@@ -395,11 +395,11 @@ class AlgorithmImageDetail(
         return context
 
 
-class AlgorithmImageImportStatusBadgeDetail(
+class AlgorithmImageImportStatusDetail(
     ObjectPermissionRequiredMixin, DetailView
 ):
     permission_required = "algorithms.view_algorithmimage"
-    template_name_suffix = "_import_status_badge_detail"
+    template_name_suffix = "_import_status_detail"
     model = AlgorithmImage
     raise_exception = True
 
@@ -983,14 +983,14 @@ class AlgorithmModelDetail(
         return context
 
 
-class AlgorithmModelImportStatusBadgeDetail(
+class AlgorithmModelImportStatusDetail(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     DetailView,
 ):
     model = AlgorithmModel
     permission_required = "algorithms.view_algorithmmodel"
-    template_name_suffix = "_import_status_badge_detail"
+    template_name_suffix = "_import_status_detail"
     raise_exception = True
 
 

@@ -1,9 +1,0 @@
-{% load url %}
-
-<span class="badge badge-{{ object.import_status_context }}" {% if not object.finished %}hx-get="{% url 'algorithms:model-import-status-badge-detail' slug=object.algorithm.slug pk=object.pk %}" hx-trigger="load delay:30s" hx-swap="outerHTML"{% endif %}>
-    {% if object.animate %}
-        <span class="spinner-border spinner-border-sm" role="status"
-              aria-hidden="true"></span>
-    {% endif %}
-    {{ object.get_import_status_display }}
-</span>
