@@ -526,13 +526,7 @@
                                 <a href="{{ image.build.webhook_message.tag_url }}">{{ image.build.webhook_message.repo_name }}:{{ image.build.webhook_message.tag }}</a>
                             {% endif %}
 
-                            <span class="badge badge-{{ image.import_status_context }}">
-                                {% if image.animate %}
-                                    <span class="spinner-border spinner-border-sm" role="status"
-                                          aria-hidden="true"></span>
-                                {% endif %}
-                                Import {{ image.get_import_status_display }}
-                            </span>
+                            {% include 'algorithms/algorithmimage_import_status_detail.html' with object=image %}
 
                             {% if image.can_execute and image == object.active_image %}
                                 <span class="badge badge-success">
@@ -578,13 +572,7 @@
 
                             Model uploaded by {{ model.creator }} {{ model.created|naturaltime }} {% if model.comment %}({{ model.comment }}) {% endif %}
 
-                            <span class="badge badge-{{ model.import_status_context }}">
-                                {% if model.import_in_progress %}
-                                    <span class="spinner-border spinner-border-sm" role="status"
-                                          aria-hidden="true"></span>
-                                {% endif %}
-                                Import {{ model.get_import_status_display }}
-                            </span>
+                            {% include 'algorithms/algorithmmodel_import_status_detail.html' with object=model %}
 
                             {% if model == object.active_model %}
                                 <span class="badge badge-success">
