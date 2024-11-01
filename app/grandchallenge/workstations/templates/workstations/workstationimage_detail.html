@@ -55,13 +55,7 @@
 
         <dt>Import Status</dt>
         <dd>
-            <span class="badge badge-{{ object.import_status_context }}">
-                {% if object.animate %}
-                    <span class="spinner-border spinner-border-sm" role="status"
-                          aria-hidden="true"></span>
-                {% endif %}
-                {{ object.get_import_status_display }}
-            </span>
+            {% include "workstation/workstationimage_import_status_detail.html" %}
         </dd>
 
         {% if object.is_manifest_valid is not None %}

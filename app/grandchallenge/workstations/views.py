@@ -212,6 +212,15 @@ class WorkstationImageDetail(
     raise_exception = True
 
 
+class WorkstationImageImportStatusDetail(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
+    model = WorkstationImage
+    permission_required = f"{WorkstationImage._meta.app_label}.view_{WorkstationImage._meta.model_name}"
+    template_name_suffix = "_import_status_detail"
+    raise_exception = True
+
+
 class WorkstationImageUpdate(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
 ):
