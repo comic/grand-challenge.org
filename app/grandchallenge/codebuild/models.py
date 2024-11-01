@@ -158,6 +158,10 @@ class Build(UUIDModel):
         return self.status == BuildStatusChoices.IN_PROGRESS
 
     @property
+    def finished(self):
+        return self.status != BuildStatusChoices.IN_PROGRESS
+
+    @property
     def status_context(self):
         if self.status == BuildStatusChoices.SUCCEEDED:
             return "success"

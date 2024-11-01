@@ -404,6 +404,15 @@ class AlgorithmImageImportStatusDetail(
     raise_exception = True
 
 
+class AlgorithmImageBuildStatusDetail(
+    ObjectPermissionRequiredMixin, DetailView
+):
+    permission_required = "algorithms.view_algorithmimage"
+    template_name_suffix = "_build_status_detail"
+    model = AlgorithmImage
+    raise_exception = True
+
+
 class AlgorithmImageUpdate(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
 ):

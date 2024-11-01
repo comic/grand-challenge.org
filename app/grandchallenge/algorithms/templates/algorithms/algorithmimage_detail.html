@@ -125,12 +125,7 @@
 
             <dt>Status</dt>
             <dd>
-                <span class="badge badge-{{ object.build.status_context }}">
-                    {% if object.build.animate %}
-                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    {% endif %}
-                    {{ object.build.get_status_display }}
-                </span>
+                {% include "algorithms/algorithmimage_build_status_detail.html" %}
             </dd>
         </dl>
 
