@@ -21,7 +21,7 @@
                     <a href="{{ evaluation.submission.get_absolute_url }}">{{ evaluation.submission.id }}</a>
                 </td>
                 <td>
-                    {% include 'evaluation/evaluation_status_badge_detail.html' with object=evaluation %}
+                    {% include 'evaluation/evaluation_status_detail.html' with object=evaluation %}
                 </td>
                 <td>
                     {% if evaluation.status == evaluation.SUCCESS %}

@@ -89,7 +89,7 @@
                         <a href="{{ evaluation.method.get_absolute_url }}">{{ evaluation.method.id }}</a>
                     </td>
                     <td>
-                        {% include 'evaluation/evaluation_status_badge_detail.html' with object=evaluation %}
+                        {% include 'evaluation/evaluation_status_detail.html' with object=evaluation %}
                     </td>
                     <td>
                         {% if evaluation.status == evaluation.SUCCESS %}

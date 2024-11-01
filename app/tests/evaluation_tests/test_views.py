@@ -216,7 +216,7 @@ class TestObjectPermissionRequiredViews:
             ("update", {"pk": e.pk}, "change_evaluation", e),
             ("detail", {"pk": e.pk}, "view_evaluation", e),
             (
-                "evaluation-status-badge-detail",
+                "status-detail",
                 {"pk": e.pk},
                 "view_evaluation",
                 e,

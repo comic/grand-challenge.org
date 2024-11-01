@@ -420,7 +420,7 @@ class TestObjectPermissionRequiredViews:
                 None,
             ),
             (
-                "job-status-badge-detail",
+                "job-status-detail",
                 {"slug": ai.algorithm.slug, "pk": j.pk},
                 "view_job",
                 j,
