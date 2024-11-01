@@ -48,7 +48,19 @@ class TestObjectPermissionRequiredViews:
         u = UserFactory()
         VerificationFactory(user=u, is_verified=True)
 
-        for view_name, kwargs, permission, obj in [
+        def _get_view():
+            return get_view_for_user(
+                client=client,
+                viewname=f"workstations:{_view_name}",
+                reverse_kwargs={
+                    "slug": ws.slug,
+                    "pk": wsi.pk,
+                    **_kwargs,
+                },
+                user=u,
+            )
+
+        for _view_name, _kwargs, permission, obj in [
             (
                 "image-import-status-detail",
                 {},
@@ -56,31 +68,13 @@ class TestObjectPermissionRequiredViews:
                 wsi,
             ),
         ]:
-            response = get_view_for_user(
-                client=client,
-                viewname=f"workstations:{view_name}",
-                reverse_kwargs={
-                    "slug": ws.slug,
-                    "pk": wsi.pk,
-                    **kwargs,
-                },
-                user=u,
-            )
+            response = _get_view()
 
             assert response.status_code == 403
 
             assign_perm(permission, u, obj)
 
-            response = get_view_for_user(
-                client=client,
-                viewname=f"workstations:{view_name}",
-                reverse_kwargs={
-                    "slug": ws.slug,
-                    "pk": wsi.pk,
-                    **kwargs,
-                },
-                user=u,
-            )
+            response = _get_view()
 
             assert response.status_code == 200
 
