@@ -401,6 +401,7 @@ class AlgorithmImageImportStatusBadgeDetail(
     permission_required = "algorithms.view_algorithmimage"
     template_name_suffix = "_import_status_badge_detail"
     model = AlgorithmImage
+    raise_exception = True
 
 
 class AlgorithmImageUpdate(
