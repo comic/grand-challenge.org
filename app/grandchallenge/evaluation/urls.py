@@ -21,6 +21,7 @@ from grandchallenge.evaluation.views import (
     LeaderboardRedirect,
     MethodCreate,
     MethodDetail,
+    MethodImportStatusDetail,
     MethodList,
     MethodUpdate,
     PhaseAlgorithmCreate,
@@ -132,6 +133,11 @@ urlpatterns = [
         "<slug>/methods/<uuid:pk>/",
         MethodDetail.as_view(),
         name="method-detail",
+    ),
+    path(
+        "<slug>/methods/<uuid:pk>/",
+        MethodImportStatusDetail.as_view(),
+        name="method-import-status-detail",
     ),
     path(
         "<slug>/methods/<uuid:pk>/update/",

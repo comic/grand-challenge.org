@@ -153,6 +153,12 @@ class TestObjectPermissionRequiredViews:
                 e.method,
             ),
             (
+                "method-import-status-detail",
+                {"pk": e.method.pk, "slug": e.submission.phase.slug},
+                "view_method",
+                e.method,
+            ),
+            (
                 "method-update",
                 {"pk": e.method.pk, "slug": e.submission.phase.slug},
                 "change_method",

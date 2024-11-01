@@ -280,6 +280,19 @@ class MethodDetail(
     login_url = reverse_lazy("account_login")
 
 
+class MethodImportStatusDetail(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    CachedPhaseMixin,
+    DetailView,
+):
+    model = Method
+    permission_required = "view_method"
+    raise_exception = True
+    template_name_suffix = "_import_status_detail"
+    login_url = reverse_lazy("account_login")
+
+
 class MethodUpdate(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
