@@ -94,6 +94,10 @@ class UserUpload(UUIDModel):
             )
 
     @property
+    def title(self):
+        return self.filename
+
+    @property
     def _client(self):
         return _UPLOADS_CLIENT
 
