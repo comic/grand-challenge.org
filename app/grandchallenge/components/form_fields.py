@@ -111,6 +111,8 @@ class InterfaceFormField:
             current_value = Image.objects.get(pk=self.initial)
         elif UserUpload.objects.filter(pk=self.initial).exists():
             current_value = UserUpload.objects.get(pk=self.initial)
+        elif self.initial:
+            raise RuntimeError(f"Unknown image pk: {self.initial}")
 
         self.kwargs["widget"] = FlexibleImageWidget(
             help_text=self.help_text,
