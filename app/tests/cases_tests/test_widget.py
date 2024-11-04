@@ -1,5 +1,6 @@
 import pytest
 from django.core.exceptions import ValidationError
+from django.utils.html import format_html
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.cases.widgets import FlexibleImageField, WidgetChoices
@@ -147,6 +148,22 @@ def test_flexible_image_widget(client):
         },
     )
     assert response3.content == b""
+
+    image = ImageFactory()
+    assign_perm("cases.view_image", user, image)
+    response4 = get_view_for_user(
+        viewname="cases:select-image-widget",
+        client=client,
+        user=user,
+        data={
+            f"WidgetChoice-{ci.slug}": WidgetChoices.IMAGE_SELECTED.name,
+            "interface_slug": ci.slug,
+            "current_value": image.pk,
+        },
+    )
+    assert format_html(
+        '<input type="hidden" name="{}" value="{}">', ci.slug, image.pk
+    ) in str(response4.content)
 
 
 @pytest.mark.django_db
