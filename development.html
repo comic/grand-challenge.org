@@ -96,22 +96,13 @@ Some default users are created with specific permissions, each user has the same
 These users include <code class="docutils literal notranslate"><span class="pre">archive</span></code>, <code class="docutils literal notranslate"><span class="pre">readerstudy</span></code>, <code class="docutils literal notranslate"><span class="pre">demo</span></code>, <code class="docutils literal notranslate"><span class="pre">algorithm</span></code> and <code class="docutils literal notranslate"><span class="pre">workstation</span></code>,
 who have permission to administer the existing fixtures and create new ones.</p>
 <p>If you would like to test out the algorithms you can create a simple algorithm that lists its inputs in a <cite>results.json</cite> file by running</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>make<span class="w"> </span>create_io_algorithm
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>make<span class="w"> </span>algorithm_evaluation_fixtures
 </pre></div>
 </div>
 <p>Before you run</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>make<span class="w"> </span>runserver
 </pre></div>
 </div>
-<p>You can also download an <a class="reference external" href="https://hub.docker.com/r/grandchallenge/otsu">Example Algorithm Image</a> from Docker Hub.
-Save it locally with</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>pull<span class="w"> </span>grandchallenge/otsu
-<span class="gp">$ </span>docker<span class="w"> </span>save<span class="w"> </span>grandchallenge/otsu<span class="w"> </span>&gt;<span class="w"> </span>otsu.tar
-</pre></div>
-</div>
-<p>You can then upload <code class="docutils literal notranslate"><span class="pre">otsu.tar</span></code> as a container image to the local site.</p>
-<p>If you would like to generate your own Algorithm or Evaluation containers you can do this using <a class="reference external" href="https://pypi.org/project/evalutils/">Evalutils</a>,
-please see the <a class="reference external" href="https://evalutils.readthedocs.io/en/latest/usage.html#getting-started">Getting Started with Evalutils</a> documentation.</p>
 <p>There is an interactive debugger from <code class="docutils literal notranslate"><span class="pre">django-extensions</span></code> which will halt on exceptions (see the <a class="reference external" href="https://django-extensions.readthedocs.io/en/latest/runserver_plus.html">RunServerPlus</a> documentation),
 it’s really handy for interactive debugging to place <code class="docutils literal notranslate"><span class="pre">1/0</span></code> in your code as a breakpoint.</p>
 </section>
@@ -235,11 +226,11 @@ To add a new dependency use</p>
 <p>and then commit the <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> and <code class="docutils literal notranslate"><span class="pre">poetry.lock</span></code>.
 If this is a development dependency then use the <code class="docutils literal notranslate"><span class="pre">--dev</span></code> flag, see the <code class="docutils literal notranslate"><span class="pre">poetry</span></code> documentation for more details.</p>
 <p>Versions are unpinned in the <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> file, to update the resolved dependencies use</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>poetry<span class="w"> </span>lock
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>poetry<span class="w"> </span>update<span class="w"> </span>&lt;whatever&gt;
 </pre></div>
 </div>
-<p>and commit the update <code class="docutils literal notranslate"><span class="pre">poetry.lock</span></code>.
-The containers will need to be rebuilt after running these steps, so stop the <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">runserver</span></code> process with <code class="docutils literal notranslate"><span class="pre">CTRL+C</span></code> and restart.</p>
+<p>and commit the updated <code class="docutils literal notranslate"><span class="pre">poetry.lock</span></code>.</p>
+<p>The containers will need to be rebuilt after running these steps, so stop the <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">runserver</span></code> process with <code class="docutils literal notranslate"><span class="pre">CTRL+C</span></code> and restart.</p>
 </section>
 <section id="going-to-production">
 <h2>Going to Production<a class="headerlink" href="#going-to-production" title="Link to this heading">¶</a></h2>
