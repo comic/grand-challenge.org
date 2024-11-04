@@ -32,6 +32,7 @@ from grandchallenge.algorithms.models import Algorithm, Job
 from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.views import ActiveChallengeRequiredMixin
 from grandchallenge.components.models import ImportStatusChoices
+from grandchallenge.components.views import ImportStatusMixin
 from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
@@ -284,12 +285,11 @@ class MethodImportStatusDetail(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     CachedPhaseMixin,
+    ImportStatusMixin,
     DetailView,
 ):
     model = Method
     permission_required = "view_method"
-    raise_exception = True
-    template_name_suffix = "_import_status_detail"
     login_url = reverse_lazy("account_login")
 
 
@@ -1121,12 +1121,11 @@ class EvaluationGroundTruthDetail(
 class EvaluationGroundTruthImportStatusDetail(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
+    ImportStatusMixin,
     DetailView,
 ):
     model = EvaluationGroundTruth
     permission_required = "evaluation.view_evaluationgroundtruth"
-    template_name_suffix = "_import_status_detail"
-    raise_exception = True
 
 
 class EvaluationGroundTruthList(

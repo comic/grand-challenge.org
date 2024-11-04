@@ -78,6 +78,7 @@ from grandchallenge.components.backends.exceptions import (
 )
 from grandchallenge.components.models import ImportStatusChoices
 from grandchallenge.components.tasks import upload_to_registry_and_sagemaker
+from grandchallenge.components.views import ImportStatusMixin
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
@@ -396,12 +397,10 @@ class AlgorithmImageDetail(
 
 
 class AlgorithmImageImportStatusDetail(
-    ObjectPermissionRequiredMixin, DetailView
+    ObjectPermissionRequiredMixin, ImportStatusMixin, DetailView
 ):
     permission_required = "algorithms.view_algorithmimage"
-    template_name_suffix = "_import_status_detail"
     model = AlgorithmImage
-    raise_exception = True
 
 
 class AlgorithmImageBuildStatusDetail(
@@ -995,12 +994,11 @@ class AlgorithmModelDetail(
 class AlgorithmModelImportStatusDetail(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
+    ImportStatusMixin,
     DetailView,
 ):
     model = AlgorithmModel
     permission_required = "algorithms.view_algorithmmodel"
-    template_name_suffix = "_import_status_detail"
-    raise_exception = True
 
 
 class AlgorithmModelUpdate(

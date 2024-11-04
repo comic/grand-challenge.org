@@ -472,3 +472,8 @@ class FileUploadFormFieldView(LoginRequiredMixin, AccessMixin, View):
             },
         )
         return HttpResponse(html_content)
+
+
+class ImportStatusMixin(DetailView):
+    template_name = "components/import_status_detail.html"
+    raise_exception = True
