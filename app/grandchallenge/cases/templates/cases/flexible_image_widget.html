@@ -9,7 +9,7 @@
         hx-include="[id='values-{{ widget.name }}']"
 >
     {% if widget.attrs.current_value %}
-        <option value="{{ widget.attrs.current_value.pk }}">{{ widget.attrs.current_value.title }}</option>
+        <option value="{{ widget.attrs.widget_choices.IMAGE_SELECTED }}">{{ widget.attrs.current_value.title }}</option>
     {% else %}
         <option value="{{ widget.attrs.widget_choices.UNDEFINED }}">Choose data source...</option>
     {% endif %}

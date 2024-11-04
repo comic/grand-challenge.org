@@ -144,9 +144,13 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
                 },
             )
             return HttpResponse(html_content)
-        elif current_value and (
-            Image.objects.filter(pk=current_value).exists()
-            or UserUpload.objects.filter(pk=current_value).exists()
+        elif (
+            widget_name == WidgetChoices.IMAGE_SELECTED.name
+            and current_value
+            and (
+                Image.objects.filter(pk=current_value).exists()
+                or UserUpload.objects.filter(pk=current_value).exists()
+            )
         ):
             # this can happen on the display set update view or redisplay of
             # form upon validation, where one of the options is the current
