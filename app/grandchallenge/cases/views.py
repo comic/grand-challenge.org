@@ -151,14 +151,8 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
             # this can happen on the display set update view or redisplay of
             # form upon validation, where one of the options is the current
             # image, this enables switching back from one of the above widgets
-            # to the chosen image. In the case of form redisplay on validation
-            # error, current_value will be set in the flexible image widget
-            # select dropdown element with name starting with "WidgetChoice-"
-            # which will not be captured on resubmission, because the
-            # current_value is looked up from the form data element with
-            # interface name (in JobCreateForm and MultipleCIVForm). This make
-            # sure the form element with the right name is available on
-            # resubmission.
+            # to the chosen image. This make sure the form element with the
+            # right name is available on resubmission.
             html_content = render_to_string(
                 HiddenInput.template_name,
                 {
