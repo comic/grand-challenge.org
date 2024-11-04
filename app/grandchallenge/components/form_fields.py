@@ -108,9 +108,9 @@ class InterfaceFormField:
         if isinstance(self.initial, ComponentInterfaceValue):
             current_value = self.initial.image
         elif Image.objects.filter(pk=self.initial).exists():
-            current_value = Image.objects.filter(pk=self.initial).first()
+            current_value = Image.objects.get(pk=self.initial)
         elif UserUpload.objects.filter(pk=self.initial).exists():
-            current_value = UserUpload.objects.filter(pk=self.initial).first()
+            current_value = UserUpload.objects.get(pk=self.initial)
 
         self.kwargs["widget"] = FlexibleImageWidget(
             help_text=self.help_text,
