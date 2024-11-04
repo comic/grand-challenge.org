@@ -607,6 +607,38 @@ class EvaluationStatusBadgeDetail(ObjectPermissionRequiredMixin, DetailView):
     raise_exception = True
 
 
+class EvaluationIncompleteJobsDetail(
+    ObjectPermissionRequiredMixin, DetailView
+):
+    permission_required = "view_evaluation"
+    template_name_suffix = "_incomplete_jobs_detail"
+    model = Evaluation
+    raise_exception = True
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        incomplete_jobs = filter_by_permission(
+            queryset=Job.objects.exclude(status=Job.SUCCESS)
+            .filter(
+                algorithm_image=self.object.submission.algorithm_image,
+                inputs__archive_items__archive=self.object.submission.phase.archive,
+            )
+            .distinct()
+            .order_by("status"),
+            user=self.request.user,
+            codename="view_job",
+        )
+
+        context.update(
+            {
+                "incomplete_jobs": incomplete_jobs,
+            }
+        )
+
+        return context
+
+
 class LeaderboardRedirect(RedirectView):
     permanent = False
 
