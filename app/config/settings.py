@@ -151,7 +151,11 @@ CHALLENGE_NUM_SUPPORT_YEARS = int(
     os.environ.get("CHALLENGE_NUM_SUPPORT_YEARS", 5)
 )
 
-GCAPI_LOWEST_SUPPORTED_VERSION = "0.13.0"
+GCAPI_LATEST_VERSION = os.environ.get("GCAPI_LATEST_VERSION", "0.13.0")
+GCAPI_LOWEST_SUPPORTED_VERSION = os.environ.get(
+    "GCAPI_LOWEST_SUPPORTED_VERSION", "0.13.0"
+)
+
 
 ##############################################################################
 #
@@ -570,7 +574,6 @@ LOCAL_APPS = [
     "grandchallenge.blogs",
     "grandchallenge.publications",
     "grandchallenge.verifications",
-    "grandchallenge.credits",
     "grandchallenge.task_categories",
     "grandchallenge.modalities",
     "grandchallenge.datatables",
@@ -1295,11 +1298,14 @@ ALGORITHMS_JOB_DEFAULT_TIME_LIMIT_SECONDS = os.environ.get(
     "ALGORITHMS_JOB_DEFAULT_TIME_LIMIT_SECONDS", "3600"
 )
 # How many cents per month each user receives by default
-ALGORITHMS_USER_CENTS_PER_MONTH = int(
-    os.environ.get("ALGORITHMS_USER_CENTS_PER_MONTH", "1000")
+ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER = int(
+    os.environ.get("ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER", "1000")
 )
-ALGORITHMS_MAX_DEFAULT_JOBS_PER_MONTH = int(
-    os.environ.get("ALGORITHMS_MAX_DEFAULT_JOBS_PER_MONTH", "50")
+ALGORITHMS_GENERAL_CENTS_PER_MONTH_PER_USER = int(
+    os.environ.get("ALGORITHMS_GENERAL_CENTS_PER_MONTH_PER_USER", "1000")
+)
+ALGORITHMS_MAX_GENERAL_JOBS_PER_MONTH_PER_USER = int(
+    os.environ.get("ALGORITHMS_MAX_GENERAL_JOBS_PER_MONTH_PER_USER", "50")
 )
 ALGORITHMS_MAX_NUMBER_PER_USER_PER_PHASE = int(
     os.environ.get("ALGORITHMS_MAX_NUMBER_PER_USER_PER_PHASE", "3")

@@ -21,12 +21,7 @@
                     <a href="{{ evaluation.submission.get_absolute_url }}">{{ evaluation.submission.id }}</a>
                 </td>
                 <td>
-                    <span class="badge badge-{{ evaluation.status_context }}">
-                        {% if evaluation.animate %}
-                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                        {% endif %}
-                        {{ evaluation.get_status_display }}
-                    </span>
+                    {% include 'evaluation/evaluation_status_badge_detail.html' with object=evaluation %}
                 </td>
                 <td>
                     {% if evaluation.status == evaluation.SUCCESS %}

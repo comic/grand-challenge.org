@@ -5,6 +5,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmImage,
     AlgorithmModel,
     AlgorithmPermissionRequest,
+    AlgorithmUserCredit,
     Job,
 )
 from grandchallenge.components.models import GPUTypeChoices
@@ -75,3 +76,11 @@ class AlgorithmPermissionRequestFactory(factory.django.DjangoModelFactory):
 
     algorithm = factory.SubFactory(AlgorithmFactory)
     user = factory.SubFactory(UserFactory)
+
+
+class AlgorithmUserCreditFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = AlgorithmUserCredit
+
+    user = factory.SubFactory(UserFactory)
+    algorithm = factory.SubFactory(AlgorithmFactory)

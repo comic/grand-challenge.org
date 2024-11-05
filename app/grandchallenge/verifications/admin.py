@@ -17,9 +17,10 @@ from grandchallenge.verifications.models import (
     permissions=("change",),
 )
 def mark_verified(modeladmin, request, queryset):
-    queryset.filter(email_is_verified=True).update(
-        is_verified=True, verified_at=now()
-    )
+    for verification in queryset.filter(email_is_verified=True):
+        verification.is_verified = True
+        verification.verified_at = now()
+        verification.save()
 
 
 @admin.action(

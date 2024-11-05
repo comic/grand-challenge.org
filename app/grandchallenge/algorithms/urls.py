@@ -7,6 +7,7 @@ from grandchallenge.algorithms.views import (
     AlgorithmImageActivate,
     AlgorithmImageCreate,
     AlgorithmImageDetail,
+    AlgorithmImageTemplate,
     AlgorithmImageUpdate,
     AlgorithmImportView,
     AlgorithmList,
@@ -26,6 +27,7 @@ from grandchallenge.algorithms.views import (
     JobDetail,
     JobProgressDetail,
     JobsList,
+    JobStatusBadgeDetail,
     JobUpdate,
     JobViewersUpdate,
     UsersUpdate,
@@ -66,6 +68,11 @@ urlpatterns = [
         name="image-activate",
     ),
     path(
+        "<slug>/images/template/",
+        AlgorithmImageTemplate.as_view(),
+        name="image-template",
+    ),
+    path(
         "<slug>/images/<uuid:pk>/update/",
         AlgorithmImageUpdate.as_view(),
         name="image-update",
@@ -98,6 +105,11 @@ urlpatterns = [
     path("<slug>/jobs/", JobsList.as_view(), name="job-list"),
     path("<slug>/jobs/create/", JobCreate.as_view(), name="job-create"),
     path("<slug>/jobs/<uuid:pk>/", JobDetail.as_view(), name="job-detail"),
+    path(
+        "<slug>/jobs/<uuid:pk>/status-badge/",
+        JobStatusBadgeDetail.as_view(),
+        name="job-status-badge-detail",
+    ),
     path(
         "<slug>/jobs/<uuid:pk>/update/", JobUpdate.as_view(), name="job-update"
     ),

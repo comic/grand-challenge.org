@@ -379,7 +379,7 @@ def test_add_image_to_object(
     settings.task_always_eager = (True,)
 
     obj = object_type(**extra_object_kwargs)
-    us = RawImageUploadSessionFactory()
+    us = RawImageUploadSessionFactory(status=RawImageUploadSession.SUCCESS)
     ci = ComponentInterfaceFactory(kind="IMG")
     ImageFactory(origin=us)
 
@@ -415,10 +415,10 @@ def test_add_image_to_object_updates_upload_session_on_validation_fail(
     settings.task_always_eager = (True,)
 
     obj = object_type()
-    us = RawImageUploadSessionFactory()
+    us = RawImageUploadSessionFactory(status=RawImageUploadSession.SUCCESS)
     ci = ComponentInterfaceFactory(kind="IMG")
 
-    error_message = f"File for interface {ci.title} failed validation: Image imports should result in a single image"
+    error_message = f"Image validation for interface {ci.title} failed with error: Image imports should result in a single image. "
 
     linked_task = some_async_task.signature(
         kwargs={"foo": "bar"}, immutable=True
@@ -450,10 +450,10 @@ def test_add_image_to_object_marks_job_as_failed_on_validation_fail(
     settings.task_always_eager = (True,)
 
     obj = AlgorithmJobFactory(time_limit=10)
-    us = RawImageUploadSessionFactory()
+    us = RawImageUploadSessionFactory(status=RawImageUploadSession.SUCCESS)
     ci = ComponentInterfaceFactory(kind="IMG")
 
-    error_message = f"File for interface {ci.title} failed validation: Image imports should result in a single image"
+    error_message = f"Image validation for interface {ci.title} failed with error: Image imports should result in a single image. "
 
     linked_task = some_async_task.signature(
         kwargs={"foo": "bar"}, immutable=True
@@ -475,7 +475,10 @@ def test_add_image_to_object_marks_job_as_failed_on_validation_fail(
     assert us.error_message == error_message
     obj.refresh_from_db()
     assert obj.status == obj.CANCELLED
-    assert obj.error_message == error_message
+    assert obj.error_message == "One or more of the inputs failed validation."
+    assert "Image imports should result in a single image" in str(
+        obj.detailed_error_message
+    )
     assert "some_async_task" not in str(callbacks)
 
 
@@ -588,7 +591,7 @@ def test_add_file_to_object_sends_notification_on_validation_fail(
     us.refresh_from_db()
     assert Notification.objects.count() == 1
     assert (
-        f"File for interface {ci.title} failed validation"
+        f"Validation for interface {ci.title} failed."
         in Notification.objects.first().message
     )
     assert "some_async_task" not in str(callbacks)
@@ -637,13 +640,11 @@ def test_add_file_to_object_updates_job_on_validation_fail(
     assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 0
     obj.refresh_from_db()
     assert obj.status == obj.CANCELLED
-    assert f"File for interface {ci.title} failed validation" in str(
-        obj.error_message
+    assert "One or more of the inputs failed validation." == obj.error_message
+    assert (
+        "JSON does not fulfill schema: instance is not of type 'array'"
+        in str(obj.detailed_error_message)
     )
-    assert Notification.objects.count() == 1
-    notification = Notification.objects.first()
-    assert "Your file upload failed with the error" in notification.message
-    assert notification.user == creator
     assert "some_async_task" not in str(callbacks)
 
 

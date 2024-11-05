@@ -13,7 +13,6 @@ from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import copy_s3_object
-from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.models import Verification
 
@@ -79,19 +78,6 @@ class UserUpload(UUIDModel):
 
         if adding:
             self.assign_permissions()
-
-    def handle_file_validation_failure(self, *, error_message, linked_object):
-        Notification.send(
-            kind=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
-            actor=self.creator,
-            message=f"Your file upload failed with the error: {error_message}",
-            target=linked_object.base_object,
-            description=error_message,
-        )
-        if linked_object and hasattr(linked_object, "update_status"):
-            linked_object.update_status(
-                status=linked_object.CANCELLED, error_message=error_message
-            )
 
     @property
     def title(self):
@@ -205,12 +191,22 @@ class UserUpload(UUIDModel):
     def mimetype_from_file(self):
         if self.status != self.StatusChoices.COMPLETED:
             raise RuntimeError("Cannot get mimetype of incomplete upload")
-        header = self._client.get_object(
-            Bucket=self.bucket,
-            Key=self.key,
-            # 2048 bytes for best results with libmagic
-            Range="bytes=0-2047",
-        )["Body"].read()
+
+        response = self._client.head_object(Bucket=self.bucket, Key=self.key)
+        object_size = int(response["ContentLength"])
+
+        # 2048 bytes for best results with libmagic
+        max_bytes = min(2047, object_size)
+
+        if max_bytes == 0:
+            return "application/x-empty"
+        else:
+            header = self._client.get_object(
+                Bucket=self.bucket,
+                Key=self.key,
+                Range=f"bytes=0-{max_bytes}",
+            )["Body"].read()
+
         return magic.from_buffer(header, mime=True)
 
     def create_multipart_upload(self):

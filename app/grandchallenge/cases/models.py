@@ -1,3 +1,4 @@
+import copy
 import logging
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -25,8 +26,12 @@ from panimg.models import (
 )
 from storages.utils import clean_name
 
+from grandchallenge.core.error_handlers import (
+    RawImageUploadSessionErrorHandler,
+)
 from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import protected_s3_storage
+from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.notifications.models import Notification, NotificationType
@@ -129,10 +134,36 @@ class RawImageUploadSession(UUIDModel):
                 f"{n_errors} file{pluralize(n_errors)} could not be imported"
             )
 
-    def update_status(self, *, status, error_message=None, linked_object=None):
+    def get_error_handler(self, *, linked_object=None):
+        return RawImageUploadSessionErrorHandler(
+            upload_session=self,
+            linked_object=linked_object,
+        )
+
+    def update_status(
+        self,
+        *,
+        status,
+        error_message=None,
+        detailed_error_message=None,
+        linked_object=None,
+    ):
         self.status = status
+
+        if detailed_error_message:
+            notification_description = oxford_comma(
+                [
+                    f"Image validation for interface {key} failed with error: {val}. "
+                    for key, val in detailed_error_message.items()
+                ]
+            )
+        else:
+            notification_description = error_message
+
         self.error_message = (
-            error_message if error_message else self.default_error_message
+            notification_description
+            if notification_description
+            else self.default_error_message
         )
         self.save()
 
@@ -140,16 +171,26 @@ class RawImageUploadSession(UUIDModel):
             Notification.send(
                 kind=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
                 message=error_message,
+                description=self.error_message,
                 action_object=self,
             )
+        from grandchallenge.algorithms.models import Job
 
         if (
             self.error_message
             and linked_object
-            and hasattr(linked_object, "update_status")
+            and isinstance(linked_object, Job)
         ):
+            detailed_error_message_dict = copy.deepcopy(
+                linked_object.detailed_error_message
+            )
+            for key, val in detailed_error_message.items():
+                detailed_error_message_dict[key] = val
+
             linked_object.update_status(
-                status=linked_object.CANCELLED, error_message=error_message
+                status=linked_object.CANCELLED,
+                error_message=error_message,
+                detailed_error_message=detailed_error_message_dict,
             )
 
     def process_images(
@@ -158,6 +199,7 @@ class RawImageUploadSession(UUIDModel):
         linked_app_label=None,
         linked_model_name=None,
         linked_object_pk=None,
+        linked_interface_slug=None,
         linked_task=None,
     ):
         """
@@ -186,6 +228,7 @@ class RawImageUploadSession(UUIDModel):
                 "linked_app_label": linked_app_label,
                 "linked_model_name": linked_model_name,
                 "linked_object_pk": linked_object_pk,
+                "linked_interface_slug": linked_interface_slug,
             }
         )
         if linked_task is not None:

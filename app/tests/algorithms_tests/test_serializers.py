@@ -7,6 +7,7 @@ from grandchallenge.algorithms.serializers import (
     HyperlinkedJobSerializer,
     JobPostSerializer,
 )
+from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.models import ComponentInterface
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
@@ -227,6 +228,10 @@ def test_algorithm_job_post_serializer_create(
 
     # verify
     assert serializer.is_valid()
+    # fake successful upload
+    upload.status = RawImageUploadSession.SUCCESS
+    upload.save()
+
     with django_capture_on_commit_callbacks(execute=True):
         serializer.create(serializer.validated_data)
     assert len(Job.objects.all()) == 1
@@ -237,18 +242,17 @@ def test_algorithm_job_post_serializer_create(
 
 @pytest.mark.django_db
 class TestJobCreateLimits:
-    def test_form_invalid_without_enough_credits(self, rf):
+    def test_form_invalid_without_enough_credits(self, rf, settings):
         algorithm_image = AlgorithmImageFactory(
             is_manifest_valid=True,
             is_in_registry=True,
             is_desired_version=True,
-            algorithm__minimum_credits_per_job=100,
+            algorithm__minimum_credits_per_job=(
+                settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER + 1
+            ),
         )
         algorithm_image.algorithm.inputs.clear()
         user = UserFactory()
-
-        user.user_credit.credits = 0
-        user.user_credit.save()
 
         algorithm_image.algorithm.add_user(user=user)
 
@@ -272,18 +276,17 @@ class TestJobCreateLimits:
             ]
         }
 
-    def test_form_valid_for_editor(self, rf):
+    def test_form_valid_for_editor(self, rf, settings):
         algorithm_image = AlgorithmImageFactory(
             is_manifest_valid=True,
             is_in_registry=True,
             is_desired_version=True,
-            algorithm__minimum_credits_per_job=100,
+            algorithm__minimum_credits_per_job=(
+                settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER + 1
+            ),
         )
         algorithm_image.algorithm.inputs.clear()
         user = UserFactory()
-
-        user.user_credit.credits = 0
-        user.user_credit.save()
 
         algorithm_image.algorithm.add_editor(user=user)
 

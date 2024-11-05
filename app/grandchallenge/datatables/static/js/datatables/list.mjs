@@ -47,6 +47,10 @@ $(document).ready(() => {
             url: "",
         },
         ordering: true,
+        drawCallback: settings => {
+            // trigger htmx process after the page has been updated.
+            htmx.process("#ajaxDataTable");
+        },
     });
 });
 

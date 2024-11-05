@@ -2,25 +2,31 @@ import json
 from datetime import datetime, timedelta, timezone
 
 import pytest
-from django.core.exceptions import ObjectDoesNotExist
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
 from django.db.models import ProtectedError
 from django.test import TestCase
 from django.utils.timezone import now
 
-from grandchallenge.algorithms.models import Algorithm, Job
+from grandchallenge.algorithms.models import (
+    Algorithm,
+    AlgorithmUserCredit,
+    Job,
+)
 from grandchallenge.components.models import (
     CIVData,
     ComponentInterface,
     ComponentInterfaceValue,
     GPUTypeChoices,
 )
-from grandchallenge.credits.models import Credit
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
     AlgorithmJobFactory,
     AlgorithmModelFactory,
+    AlgorithmUserCreditFactory,
 )
 from tests.cases_tests import RESOURCE_PATH
 from tests.cases_tests.factories import RawImageUploadSessionFactory
@@ -339,7 +345,7 @@ class TestJobLimits:
             (100, 0, 0),
             (100, 50, 0),
             (100, 200, 2),
-            # Uses system minumum credits per job (20)
+            # Uses system minimum credits per job (20)
             (0, 100, 5),
         ),
     )
@@ -357,9 +363,14 @@ class TestJobLimits:
             is_desired_version=True,
         )
 
-        user_credit = Credit.objects.get(user=user)
-        user_credit.credits = user_credits
-        user_credit.save()
+        AlgorithmUserCredit.objects.create(
+            user=user,
+            algorithm=ai.algorithm,
+            credits=user_credits,
+            valid_from=now().date(),
+            valid_until=now().date(),
+            comment="test",
+        )
 
         assert ai.get_remaining_jobs(user=user) == expected_jobs
 
@@ -368,9 +379,10 @@ class TestJobLimits:
         (
             (100, 0, 0),
             (100, 50, 0),
-            (100, 200, 0),
-            (0, 100, 3),
-            (30, 100, 1),
+            (100, 100, 0),
+            (100, 200, 1),
+            (0, 100, 4),
+            (30, 100, 2),
         ),
     )
     def test_limited_jobs_with_existing(
@@ -407,9 +419,14 @@ class TestJobLimits:
             time_limit=algorithm2.time_limit,
         )
 
-        user_credit = Credit.objects.get(user=user)
-        user_credit.credits = user_credits
-        user_credit.save()
+        AlgorithmUserCredit.objects.create(
+            user=user,
+            algorithm=ai.algorithm,
+            credits=user_credits,
+            valid_from=now().date(),
+            valid_until=now().date(),
+            comment="test",
+        )
 
         assert ai.get_remaining_jobs(user=user) == expected_jobs
 
@@ -885,9 +902,7 @@ def test_remaining_complimentary_jobs(settings):
 @pytest.mark.django_db
 def test_get_remaining_non_complimentary_jobs(settings):
     settings.ALGORITHM_IMAGES_COMPLIMENTARY_EDITOR_JOBS = 1
-
-    # Check the default, the rest are assuming this
-    assert Credit._meta.get_field("credits").get_default() == 1000
+    settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER = 1000
 
     minimum_credits_per_job = 300
 
@@ -934,9 +949,8 @@ def test_get_remaining_non_complimentary_jobs(settings):
 
 
 @pytest.mark.django_db
-def test_non_editor_remaining_jobs():
-    # Check the default, the rest are assuming this
-    assert Credit._meta.get_field("credits").get_default() == 1000
+def test_non_editor_remaining_jobs(settings):
+    settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER = 1000
 
     minimum_credits_per_job = 300
 
@@ -1105,3 +1119,263 @@ def test_time_limit_unchangable():
         job.save()
 
     assert "time_limit cannot be changed" in str(error)
+
+
+@pytest.mark.django_db
+class TestAlgorithmUserCreditValidation:
+    def test_anonymous_user_validation(self):
+        """Test that credits cannot be assigned to anonymous users"""
+        anonymous_user = get_user_model().objects.get(
+            username=settings.ANONYMOUS_USER_NAME
+        )
+        algorithm = AlgorithmFactory()
+
+        with pytest.raises(ValidationError) as error:
+            AlgorithmUserCredit.objects.create(
+                user=anonymous_user,
+                algorithm=algorithm,
+                credits=100,
+                valid_from=now().date(),
+                valid_until=now().date() + timedelta(days=30),
+                comment="Test credit",
+            )
+
+        assert "The anonymous user cannot be assigned credits" in str(
+            error.value
+        )
+
+    def test_date_validation(self):
+        """Test that valid_until cannot be before valid_from"""
+        today = now().date()
+        yesterday = today - timedelta(days=1)
+        algorithm = AlgorithmFactory()
+
+        with pytest.raises(ValidationError) as error:
+            AlgorithmUserCredit.objects.create(
+                user=UserFactory(),
+                algorithm=algorithm,
+                credits=100,
+                valid_from=today,
+                valid_until=yesterday,
+                comment="Test credit",
+            )
+
+        assert "This must be less than or equal to Valid Until" in str(
+            error.value
+        )
+        assert "This must be greater than or equal to Valid From" in str(
+            error.value
+        )
+
+    def test_missing_dates(self):
+        """Test that both dates must be set"""
+        algorithm = AlgorithmFactory()
+
+        with pytest.raises(ValidationError) as error:
+            AlgorithmUserCredit.objects.create(
+                user=UserFactory(),
+                algorithm=algorithm,
+                credits=100,
+                valid_from=None,
+                valid_until=None,
+                comment="Test credit",
+            )
+
+        assert "The validity period must be set" in str(error.value)
+
+    def test_valid_credit_creation(self):
+        """Test that valid credits can be created"""
+        today = now().date()
+        next_month = today + timedelta(days=30)
+        user = UserFactory()
+        algorithm = AlgorithmFactory()
+
+        credit = AlgorithmUserCredit.objects.create(
+            user=user,
+            algorithm=algorithm,
+            credits=100,
+            valid_from=today,
+            valid_until=next_month,
+            comment="Test credit",
+        )
+
+        assert credit.user == user
+        assert credit.algorithm == algorithm
+        assert credit.credits == 100
+        assert credit.valid_from == today
+        assert credit.valid_until == next_month
+        assert credit.comment == "Test credit"
+
+
+@pytest.mark.django_db
+class TestAlgorithmImageCredits:
+    def test_no_credits(self, settings):
+        settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER = 1000
+
+        user = UserFactory()
+        algorithm = AlgorithmFactory(minimum_credits_per_job=500)
+        algorithm_image = AlgorithmImageFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+            algorithm=algorithm,
+        )
+
+        n_jobs = settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER // 500
+
+        assert (
+            algorithm_image.get_remaining_non_complimentary_jobs(user=user)
+            == n_jobs
+        )
+
+        # Create some jobs that use up all credits
+        for _ in range(n_jobs):
+            job = AlgorithmJobFactory(
+                creator=user,
+                algorithm_image=algorithm_image,
+                is_complimentary=False,
+                time_limit=3600,
+            )
+            job.credits_consumed = 500
+            job.save()
+
+        # User should now have no credits left
+        assert (
+            algorithm_image.get_remaining_non_complimentary_jobs(user=user)
+            == 0
+        )
+
+    def test_credits_for_other_algorithm(self, settings):
+        settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER = 1000
+
+        user = UserFactory()
+        algorithm1 = AlgorithmFactory(minimum_credits_per_job=200)
+        algorithm2 = AlgorithmFactory(minimum_credits_per_job=200)
+
+        algorithm_image1 = AlgorithmImageFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+            algorithm=algorithm1,
+        )
+        algorithm_image2 = AlgorithmImageFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+            algorithm=algorithm2,
+        )
+
+        # Give user credits for algorithm1
+        AlgorithmUserCreditFactory(
+            user=user,
+            algorithm=algorithm1,
+            credits=10000,
+            valid_from=now().date(),
+            valid_until=now().date() + timedelta(days=30),
+            comment="test",
+        )
+
+        # User should have 50 jobs for algorithm1 (10000 credits / 200 credits per job)
+        assert (
+            algorithm_image1.get_remaining_non_complimentary_jobs(user=user)
+            == 50
+        )
+
+        # For algorithm2, user should have general credits
+        assert (
+            algorithm_image2.get_remaining_non_complimentary_jobs(user=user)
+            == 5
+        )
+
+    def test_expired_credits(self, settings):
+        settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER = 1000
+
+        # Test that expired credits are not counted
+        user = UserFactory()
+        algorithm = AlgorithmFactory(minimum_credits_per_job=200)
+        algorithm_image = AlgorithmImageFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+            algorithm=algorithm,
+        )
+
+        # Create expired credits
+        AlgorithmUserCreditFactory(
+            user=user,
+            algorithm=algorithm,
+            credits=10000,
+            valid_from=now().date() - timedelta(days=60),
+            valid_until=now().date() - timedelta(days=30),
+            comment="test",
+        )
+
+        # User should only have general credits since the specific credits are expired
+        assert (
+            algorithm_image.get_remaining_non_complimentary_jobs(user=user)
+            == 5
+        )
+
+    def test_future_credits(self, settings):
+        settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER = 1000
+
+        # Test that future credits are not counted
+        user = UserFactory()
+        algorithm = AlgorithmFactory(minimum_credits_per_job=200)
+        algorithm_image = AlgorithmImageFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+            algorithm=algorithm,
+        )
+
+        # Create future credits
+        AlgorithmUserCreditFactory(
+            user=user,
+            algorithm=algorithm,
+            credits=10000,
+            valid_from=now().date() + timedelta(days=30),
+            valid_until=now().date() + timedelta(days=60),
+            comment="test",
+        )
+
+        # User should only have general credits since the specific credits are in the future
+        assert (
+            algorithm_image.get_remaining_non_complimentary_jobs(user=user)
+            == 5
+        )
+
+    def test_active_credits_with_spent_credits(self):
+
+        user = UserFactory()
+        algorithm = AlgorithmFactory(minimum_credits_per_job=200)
+        algorithm_image = AlgorithmImageFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+            algorithm=algorithm,
+        )
+
+        AlgorithmUserCreditFactory(
+            user=user,
+            algorithm=algorithm,
+            credits=2000,
+            valid_from=now().date(),
+            valid_until=now().date() + timedelta(days=30),
+            comment="test",
+        )
+
+        for _ in range(5):
+            job = AlgorithmJobFactory(
+                creator=user,
+                algorithm_image=algorithm_image,
+                is_complimentary=False,
+                time_limit=3600,
+            )
+            job.credits_consumed = 200
+            job.save()
+
+        assert (
+            algorithm_image.get_remaining_non_complimentary_jobs(user=user)
+            == 5
+        )

@@ -31,6 +31,7 @@ from panimg.models import SimpleITKImage
 
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.components.backends.exceptions import (
+    CIVNotEditableException,
     ComponentException,
     RetryStep,
     RetryTask,
@@ -1169,7 +1170,7 @@ def validate_voxel_values(*, civ_pk):
     retry_on=(LockNotAcquiredException,), delayed_retry=False
 )
 @transaction.atomic
-def add_image_to_object(
+def add_image_to_object(  # noqa: C901
     *,
     app_label,
     model_name,
@@ -1178,6 +1179,7 @@ def add_image_to_object(
     upload_session_pk,
     linked_task=None,
 ):
+    from grandchallenge.algorithms.models import Job
     from grandchallenge.components.models import (
         ComponentInterface,
         ComponentInterfaceValue,
@@ -1188,19 +1190,24 @@ def add_image_to_object(
     object = lock_model_instance(
         app_label=app_label, model_name=model_name, pk=object_pk
     )
+    error_handler = object.get_error_handler(linked_object=upload_session)
+
+    if upload_session.status != upload_session.SUCCESS:
+        logger.info("Nothing to do: upload session was not successful.")
+        return
 
     try:
         image = Image.objects.get(origin_id=upload_session_pk)
     except (Image.DoesNotExist, Image.MultipleObjectsReturned):
-        upload_session.update_status(
-            status=RawImageUploadSession.FAILURE,
-            error_message=f"File for interface {interface.title} failed validation: Image imports should result in a single image",
-            linked_object=object,
+        error_handler.handle_error(
+            interface=interface,
+            error_message="Image imports should result in a single image",
+            user=upload_session.creator,
         )
         return
 
     current_value = object.get_current_value_for_interface(
-        interface=interface, upload_session=upload_session
+        interface=interface, user=upload_session.creator
     )
 
     civ, created = ComponentInterfaceValue.objects.get_first_or_create(
@@ -1211,17 +1218,17 @@ def add_image_to_object(
         try:
             civ.full_clean()
         except ValidationError as e:
-            upload_session.update_status(
-                status=RawImageUploadSession.FAILURE,
-                error_message=f"File for interface {interface.title} failed validation: {format_validation_error_message(e)}",
-                linked_object=object,
+            error_handler.handle_error(
+                interface=interface,
+                error_message=format_validation_error_message(error=e),
+                user=upload_session.creator,
             )
             return
         except Exception as e:
-            upload_session.update_status(
-                status=RawImageUploadSession.FAILURE,
+            error_handler.handle_error(
+                interface=interface,
                 error_message="An unexpected error occurred",
-                linked_object=object,
+                user=upload_session.creator,
             )
             logger.error(e, exc_info=True)
             return
@@ -1229,11 +1236,17 @@ def add_image_to_object(
     try:
         object.remove_civ(civ=current_value)
         object.add_civ(civ=civ)
-    except RuntimeError as e:
-        # for Jobs this happens when validation for another input failed
-        # and the job status was updated to CANCELLED
-        logger.error(e, exc_info=True)
-        return
+    except CIVNotEditableException as e:
+        if isinstance(object, Job) and object.status == Job.CANCELLED:
+            return
+        else:
+            error_handler.handle_error(
+                interface=interface,
+                error_message="An unexpected error occurred",
+                user=upload_session.creator,
+            )
+            logger.error(e, exc_info=True)
+            return
 
     if linked_task is not None:
         on_commit(signature(linked_task).apply_async)
@@ -1252,6 +1265,7 @@ def add_file_to_object(
     interface_pk,
     linked_task=None,
 ):
+    from grandchallenge.algorithms.models import Job
     from grandchallenge.components.models import (
         ComponentInterface,
         ComponentInterfaceValue,
@@ -1262,9 +1276,10 @@ def add_file_to_object(
     object = lock_model_instance(
         app_label=app_label, model_name=model_name, pk=object_pk
     )
+    error_handler = object.get_error_handler(linked_object=user_upload)
 
     current_value = object.get_current_value_for_interface(
-        interface=interface, user_upload=user_upload
+        interface=interface, user=user_upload.creator
     )
 
     civ = ComponentInterfaceValue(interface=interface)
@@ -1274,14 +1289,17 @@ def add_file_to_object(
         civ.save()
         user_upload.copy_object(to_field=civ.file)
     except ValidationError as e:
-        user_upload.handle_file_validation_failure(
-            error_message=f"File for interface {interface.title} failed validation:{format_validation_error_message(error=e)}.",
-            linked_object=object,
+        error_handler.handle_error(
+            interface=interface,
+            error_message=format_validation_error_message(e),
+            user=user_upload.creator,
         )
         return
     except Exception as e:
-        user_upload.handle_file_validation_failure(
-            error_message="An unexpected error occurred", linked_object=object
+        error_handler.handle_error(
+            interface=interface,
+            error_message="An unexpected error occurred",
+            user=user_upload.creator,
         )
         logger.error(e, exc_info=True)
         return
@@ -1289,11 +1307,17 @@ def add_file_to_object(
     try:
         object.remove_civ(civ=current_value)
         object.add_civ(civ=civ)
-    except RuntimeError as e:
-        # for Jobs this happens when validation for another input failed
-        # and the job status was updated to CANCELLED
-        logger.error(e, exc_info=True)
-        return
+    except CIVNotEditableException as e:
+        if isinstance(object, Job) and object.status == Job.CANCELLED:
+            return
+        else:
+            error_handler.handle_error(
+                interface=interface,
+                error_message="An unexpected error occurred",
+                user=user_upload.creator,
+            )
+            logger.error(e, exc_info=True)
+            return
 
     if linked_task is not None:
         on_commit(signature(linked_task).apply_async)

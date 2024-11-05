@@ -53,13 +53,7 @@
 
         <dt>Status</dt>
         <dd>
-            <span class="badge badge-{{ evaluation.status_context }}">
-                {% if evaluation.animate %}
-                    <span class="spinner-border spinner-border-sm" role="status"
-                          aria-hidden="true"></span>
-                {% endif %}
-                {{ evaluation.get_status_display }}
-            </span>
+            {% include 'evaluation/evaluation_status_badge_detail.html' %}
         </dd>
 
         <dt>User</dt>
@@ -209,49 +203,7 @@
                 </div>
             {% endif %}
 
-            {% if object.status != object.SUCCESS and incomplete_jobs %}
-                <div class="card-body">
-                    <h3 class="card-title">Prerequisite Jobs</h3>
-
-                    <p>
-                        The successful completion of the algorithm jobs listed below is a prerequisite for executing
-                        the evaluation method on the predictions.
-                        Any algorithm jobs mentioned here that have not encountered failures or been cancelled are
-                        presently undergoing execution within the platform.
-                        Your patience is appreciated during this process.
-                        If any of these algorithm jobs have unfortunately failed, it is typically necessary to get in
-                        touch with the participant to address any issues within their algorithm container.
-                        A job is only marked as cancelled if another job within this set has experienced a failure.
-                    </p>
-
-                    <table class="table table-borderless table-hover table-sm">
-                        <thead class="thead-light">
-                        <tr>
-                            <th>ID</th>
-                            <th>Created</th>
-                            <th>Status</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {% for job in incomplete_jobs %}
-                            <tr>
-                                <td><a href="{{ job.get_absolute_url }}">{{ job.pk }}</a></td>
-                                <td>{{ job.created }}</td>
-                                <td>
-                                    <span class="badge badge-{{ job.status_context }}">
-                                    {% if job.animate %}
-                                        <span class="spinner-border spinner-border-sm" role="status"
-                                            aria-hidden="true"></span>
-                                    {% endif %}
-                                    {{ job.get_status_display }}
-                                    </span>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% endif %}
+            {% include "evaluation/evaluation_incomplete_jobs_detail.html" %}
 
             <div class="card-body">
                 <h3 class="card-title">Predictions</h3>

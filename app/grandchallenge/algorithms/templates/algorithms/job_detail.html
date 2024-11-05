@@ -114,13 +114,7 @@
 
                 <dt class="col-sm-3">Status</dt>
                 <dd class="col-sm-9">
-                    <span class="badge badge-{{ object.status_context }}">
-                        {% if object.animate %}
-                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                        {% endif %}
-                        {{ object.get_status_display }}{% if object.status == object.SUCCESS and object.stderr %},
-                            with warnings{% endif %}
-                    </span>
+                    {% include "algorithms/job_status_badge_detail.html" %}
                 </dd>
 
                 {% if object.error_message %}
@@ -130,7 +124,13 @@
 
                 {% if object.detailed_error_message %}
                     <dt class="col-sm-3">Detailed Error Message</dt>
-                    <dd class="col-sm-9"><pre>{{ object.detailed_error_message|json_dumps }}</pre></dd>
+                    <dd class="col-sm-9">
+                        <dl>
+                            {% for interface, error in object.detailed_error_message.items %}
+                                <dt>{{ interface }}</dt> <dd>{{ error }}</dd>
+                            {% endfor %}
+                        </dl>
+                    </dd>
                 {% endif %}
 
                 {% if object.duration %}

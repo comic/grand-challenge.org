@@ -56,13 +56,7 @@
                         <ul class="list-unstyled">
                             {% for evaluation in submission.evaluation_set.all %}
                                 <li>
-                                    <span class="badge badge-{{ evaluation.status_context }}">
-                                    {% if evaluation.animate %}
-                                        <span class="spinner-border spinner-border-sm" role="status"
-                                              aria-hidden="true"></span>
-                                    {% endif %}
-                                    {{ evaluation.get_status_display }}
-                                    </span>
+                                    {% include 'evaluation/evaluation_status_badge_detail.html' with object=evaluation %}
                                     {% if evaluation.status == evaluation.SUCCESS %}
                                         {% if evaluation.published %}
                                             <a href="{{ evaluation.get_absolute_url }}">Result</a>

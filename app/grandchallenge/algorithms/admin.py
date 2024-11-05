@@ -1,6 +1,11 @@
+import json
+
 from django.contrib import admin
-from django.db.models import Count
+from django.contrib.admin import ModelAdmin
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Count, Sum
 from django.forms import ModelForm
+from django.utils.html import format_html
 from guardian.admin import GuardedModelAdmin
 
 from grandchallenge.algorithms.forms import AlgorithmIOValidationMixin
@@ -14,6 +19,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmModelGroupObjectPermission,
     AlgorithmModelUserObjectPermission,
     AlgorithmPermissionRequest,
+    AlgorithmUserCredit,
     AlgorithmUserObjectPermission,
     Job,
     JobGroupObjectPermission,
@@ -29,6 +35,10 @@ from grandchallenge.core.admin import (
     GroupObjectPermissionAdmin,
     UserObjectPermissionAdmin,
 )
+from grandchallenge.core.templatetags.costs import millicents_to_euro
+from grandchallenge.core.utils.grand_challenge_forge import (
+    get_forge_algorithm_template_context,
+)
 
 
 class AlgorithmAdminForm(AlgorithmIOValidationMixin, ModelForm):
@@ -39,6 +49,7 @@ class AlgorithmAdminForm(AlgorithmIOValidationMixin, ModelForm):
 
 @admin.register(Algorithm)
 class AlgorithmAdmin(GuardedModelAdmin):
+    readonly_fields = ("algorithm_forge_json",)
     list_display = (
         "title",
         "created",
@@ -57,12 +68,107 @@ class AlgorithmAdmin(GuardedModelAdmin):
     def container_count(self, obj):
         return obj.container_count
 
+    @staticmethod
+    def algorithm_forge_json(obj):
+        json_desc = get_forge_algorithm_template_context(algorithm=obj)
+        return format_html(
+            "<pre>{json_desc}</pre>", json_desc=json.dumps(json_desc, indent=2)
+        )
+
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
         queryset = queryset.annotate(
             container_count=Count("algorithm_container_images")
         )
         return queryset
+
+
+@admin.register(AlgorithmUserCredit)
+class AlgorithmUserCreditAdmin(ModelAdmin):
+    list_display = (
+        "user",
+        "algorithm",
+        "credits",
+        "valid_from",
+        "valid_until",
+        "is_active",
+        "comment",
+    )
+    autocomplete_fields = ("user", "algorithm")
+    search_fields = ("user__username", "user__email", "algorithm__slug")
+    fields = (
+        "user",
+        "algorithm",
+        "credits",
+        "valid_from",
+        "valid_until",
+        "comment",
+    )
+    readonly_fields = (
+        "is_active",
+        "remaining_specific_credits",
+        "remaining_general_credits",
+        "specific_compute_costs",
+        "other_compute_costs",
+    )
+
+    def get_fields(self, request, obj=None):
+        fields = super().get_fields(request, obj)
+
+        if obj:
+            fields += (
+                "is_active",
+                "remaining_specific_credits",
+                "remaining_general_credits",
+                "specific_compute_costs",
+                "other_compute_costs",
+            )
+
+        return fields
+
+    @admin.display(
+        description="The remaining specific credits for this algorithm for this User"
+    )
+    def remaining_specific_credits(self, obj):
+        try:
+            return AlgorithmImage.get_remaining_specific_credits(
+                user=obj.user, algorithm=obj.algorithm
+            )
+        except ObjectDoesNotExist:
+            return 0
+
+    @admin.display(description="The remaining general credits for this User")
+    def remaining_general_credits(self, obj):
+        return AlgorithmImage.get_remaining_general_credits(user=obj.user)
+
+    @admin.display(
+        description="Total compute costs for this algorithm by this User"
+    )
+    def specific_compute_costs(self, obj):
+        return millicents_to_euro(
+            Job.objects.filter(
+                algorithm_image__algorithm=obj.algorithm,
+                creator=obj.user,
+            ).aggregate(
+                total=Sum("compute_cost_euro_millicents", default=0),
+            )[
+                "total"
+            ]
+        )
+
+    @admin.display(
+        description="Total compute costs for all other algorithms by this User"
+    )
+    def other_compute_costs(self, obj):
+        return millicents_to_euro(
+            Job.objects.filter(
+                creator=obj.user,
+            )
+            .exclude(algorithm_image__algorithm=obj.algorithm)
+            .aggregate(
+                total=Sum("compute_cost_euro_millicents", default=0),
+            )["total"]
+        )
 
 
 @admin.register(Job)

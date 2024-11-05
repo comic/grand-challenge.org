@@ -8,7 +8,7 @@ from tempfile import TemporaryDirectory
 
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files import File
 from django.db import transaction
 from django.db.transaction import on_commit
@@ -17,14 +17,17 @@ from django.utils.module_loading import import_string
 from panimg import convert, post_process
 from panimg.models import PanImgFile, PanImgResult
 
+from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.components.backends.utils import safe_extract
+from grandchallenge.components.models import ComponentInterface
 from grandchallenge.components.tasks import (
     get_model_instance,
     lock_model_instance,
 )
 from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.core.exceptions import LockNotAcquiredException
+from grandchallenge.reader_studies.models import DisplaySet
 from grandchallenge.uploads.models import UserUpload
 
 logger = logging.getLogger(__name__)
@@ -100,6 +103,7 @@ def build_images(  # noqa:C901
     linked_app_label=None,
     linked_model_name=None,
     linked_object_pk=None,
+    linked_interface_slug=None,
 ):
     """
     Task which analyzes an upload session and attempts to extract and store
@@ -125,6 +129,8 @@ def build_images(  # noqa:C901
         The app_label of the linked object.
     linked_model_name:
         The model_name of the linked object.
+    linked_interface_slug:
+        The slug of the linked interface.
     """
 
     upload_session = lock_model_instance(
@@ -132,65 +138,91 @@ def build_images(  # noqa:C901
         app_label=RawImageUploadSession._meta.app_label,
         model_name=RawImageUploadSession._meta.model_name,
     )
+    if linked_interface_slug:
+        ci = ComponentInterface.objects.get(slug=linked_interface_slug)
+    else:
+        ci = None
 
     if linked_object_pk:
-        linked_object = get_model_instance(
-            app_label=linked_app_label,
-            model_name=linked_model_name,
-            pk=linked_object_pk,
-        )
+        try:
+            linked_object = get_model_instance(
+                app_label=linked_app_label,
+                model_name=linked_model_name,
+                pk=linked_object_pk,
+            )
+        except ObjectDoesNotExist as e:
+            if linked_model_name in [
+                ArchiveItem._meta.model_name,
+                DisplaySet._meta.model_name,
+            ]:
+                # users can delete archive items and display sets before this task runs
+                return
+            else:
+                raise e
     else:
         linked_object = None
+
+    error_handler = upload_session.get_error_handler(
+        linked_object=linked_object
+    )
 
     try:
         with TemporaryDirectory() as tmp_dir:
             tmp_dir = Path(tmp_dir).resolve()
             _populate_tmp_dir(tmp_dir, upload_session)
-            _handle_raw_image_files(
-                tmp_dir=tmp_dir,
+            importer_result = import_images(
+                input_directory=tmp_dir, origin=upload_session
+            )
+            _handle_raw_files(
+                consumed_files=importer_result.consumed_files,
+                file_errors=importer_result.file_errors,
+                base_directory=tmp_dir,
                 upload_session=upload_session,
             )
 
-        upload_session.update_status(
-            status=RawImageUploadSession.SUCCESS, linked_object=linked_object
-        )
-
-    except DuplicateFilesException as e:
-        _delete_session_files(upload_session=upload_session)
-        upload_session.update_status(
-            status=RawImageUploadSession.FAILURE,
-            error_message=str(e),
-            linked_object=linked_object,
+        if upload_session.image_set.count() == 0:
+            error_handler.handle_error(
+                interface=ci,
+                error_message=upload_session.default_error_message,
+            )
+        else:
+            upload_session.update_status(status=RawImageUploadSession.SUCCESS)
+    except RuntimeError as error:
+        if "std::bad_alloc" in str(error):
+            error_handler.handle_error(
+                interface=ci,
+                error_message=(
+                    "The uploaded images were too large to process, "
+                    "please try again with smaller images"
+                ),
+            )
+        else:
+            error_handler.handle_error(
+                interface=ci,
+                error_message="An unexpected error occurred",
+            )
+            logger.error("An unexpected error occurred", exc_info=True)
+    except DuplicateFilesException:
+        error_handler.handle_error(
+            interface=ci,
+            error_message=(
+                "Duplicate files uploaded, "
+                "please try again with a unique set of files"
+            ),
         )
     except (SoftTimeLimitExceeded, TimeLimitExceeded):
-        upload_session.update_status(
-            status=RawImageUploadSession.FAILURE,
+        error_handler.handle_error(
+            interface=ci,
             error_message="Time limit exceeded",
-            linked_object=linked_object,
         )
     except Exception:
-        _delete_session_files(upload_session=upload_session)
-        upload_session.update_status(
-            status=RawImageUploadSession.FAILURE,
+        error_handler.handle_error(
+            interface=ci,
             error_message="An unexpected error occurred",
-            linked_object=linked_object,
         )
         logger.error("An unexpected error occurred", exc_info=True)
-
-
-def _handle_raw_image_files(*, tmp_dir, upload_session):
-    importer_result = import_images(
-        input_directory=tmp_dir, origin=upload_session
-    )
-
-    _handle_raw_files(
-        consumed_files=importer_result.consumed_files,
-        file_errors=importer_result.file_errors,
-        base_directory=tmp_dir,
-        upload_session=upload_session,
-    )
-
-    _delete_session_files(upload_session=upload_session)
+    finally:
+        upload_session.user_uploads.all().delete()
 
 
 @dataclass
@@ -345,10 +377,6 @@ def _handle_raw_files(
             if k not in consumed_files
         },
     }
-
-
-def _delete_session_files(*, upload_session):
-    upload_session.user_uploads.all().delete()
 
 
 @acks_late_2xlarge_task

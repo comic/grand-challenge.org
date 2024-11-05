@@ -40,6 +40,9 @@ from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.cases.widgets import FlexibleImageField
 from grandchallenge.charts.specs import components_line
+from grandchallenge.components.backends.exceptions import (
+    CIVNotEditableException,
+)
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.tasks import (
     _repo_login_and_run,
@@ -51,6 +54,12 @@ from grandchallenge.components.tasks import (
 from grandchallenge.components.validators import (
     validate_no_slash_at_ends,
     validate_safe_path,
+)
+from grandchallenge.core.error_handlers import (
+    FallbackCIVValidationErrorHandler,
+    JobCIVErrorHandler,
+    RawImageUploadSessionErrorHandler,
+    UserUploadCIVErrorHandler,
 )
 from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import (
@@ -1400,8 +1409,13 @@ class ComponentInterfaceValue(models.Model):
             with self.file.open("r") as f:
                 try:
                     value = json.loads(f.read().decode("utf-8"))
-                except JSONDecodeError as e:
-                    raise ValidationError(e)
+                except JSONDecodeError as error:
+                    raise ValidationError(error)
+                except MemoryError as error:
+                    raise ValidationError(
+                        "The file was too large to process, "
+                        "please try again with a smaller file"
+                    ) from error
         else:
             self._validate_value_only()
             value = self.value
@@ -1503,9 +1517,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
     stderr = models.TextField(default="")
     runtime_metrics = models.JSONField(default=dict, editable=False)
     error_message = models.CharField(max_length=1024, default="")
-    detailed_error_message = models.JSONField(
-        blank=True, null=True, default=None
-    )
+    detailed_error_message = models.JSONField(blank=True, default=dict)
     started_at = models.DateTimeField(null=True)
     completed_at = models.DateTimeField(null=True)
     compute_cost_euro_millicents = models.PositiveIntegerField(
@@ -1707,6 +1719,15 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             self.EXECUTED,
             self.PARSING,
             self.EXECUTING_PREREQUISITES,
+            self.VALIDATING_INPUTS,
+        }
+
+    @property
+    def finished(self):
+        return self.status in {
+            self.FAILURE,
+            self.SUCCESS,
+            self.CANCELLED,
         }
 
     @property
@@ -1728,6 +1749,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             self.EXECUTED,
             self.PARSING,
             self.EXECUTING_PREREQUISITES,
+            self.VALIDATING_INPUTS,
         }:
             return "info"
         else:
@@ -2211,26 +2233,39 @@ class CIVForObjectMixin:
 
     def add_civ(self, *, civ):
         if not self.is_editable:
-            raise RuntimeError(f"{self} is not editable.")
+            raise CIVNotEditableException(f"{self} is not editable.")
 
     def remove_civ(self, *, civ):
         if not self.is_editable:
-            raise RuntimeError(f"{self} is not editable.")
+            raise CIVNotEditableException(f"{self} is not editable.")
+
+    def validate_values_and_execute_linked_task(
+        self, *, values, user, linked_task=None
+    ):
+        for civ_data in values:
+            self.create_civ(
+                civ_data=civ_data,
+                user=user,
+                linked_task=linked_task,
+            )
 
     def create_civ(self, *, civ_data, user=None, linked_task=None):
         if not self.is_editable:
-            raise RuntimeError(
-                f"{self} is not editable. CIVs cannot be added or removed from it."
+            raise CIVNotEditableException(
+                f"{self} is not editable. CIVs cannot be added or removed from it.",
             )
 
         ci = ComponentInterface.objects.get(slug=civ_data.interface_slug)
-        current_civ = self.get_current_value_for_interface(interface=ci)
+        current_civ = self.get_current_value_for_interface(
+            interface=ci, user=user
+        )
 
         if ci.is_json_kind and not ci.requires_file:
             return self.create_civ_for_value(
                 ci=ci,
                 current_civ=current_civ,
                 new_value=civ_data.value,
+                user=user,
                 linked_task=linked_task,
             )
         elif ci.is_image_kind:
@@ -2255,7 +2290,7 @@ class CIVForObjectMixin:
             NotImplementedError(f"CIV creation for {ci} not handled.")
 
     def create_civ_for_value(
-        self, *, ci, current_civ, new_value, linked_task=None
+        self, *, ci, current_civ, new_value, user, linked_task=None
     ):
         current_value = current_civ.value if current_civ else None
 
@@ -2273,16 +2308,19 @@ class CIVForObjectMixin:
                 self.add_civ(civ=civ)
                 self.remove_civ(civ=current_civ)
             except ValidationError as e:
+                if created:
+                    civ.delete()
+
                 if new_value in ci.default_field.empty_values:
                     self.remove_civ(civ=current_civ)
                 else:
-                    self.handle_error(
-                        error_message=format_validation_error_message(e),
+                    error_handler = self.get_error_handler()
+                    error_handler.handle_error(
+                        interface=ci,
+                        error_message=format_validation_error_message(error=e),
+                        user=user,
                     )
-                    raise e
-            except RuntimeError as e:
-                logger.error(e, exc_info=True)
-                return
+                    return
 
             if linked_task is not None:
                 on_commit(signature(linked_task).apply_async)
@@ -2308,16 +2346,17 @@ class CIVForObjectMixin:
                 try:
                     civ.full_clean()
                 except ValidationError as e:
-                    self.handle_error(
-                        error_message=format_validation_error_message(e),
+                    civ.delete()
+                    error_handler = self.get_error_handler()
+                    error_handler.handle_error(
+                        interface=ci,
+                        error_message=format_validation_error_message(error=e),
+                        user=user,
                     )
-                    raise e
-            try:
-                self.remove_civ(civ=current_civ)
-                self.add_civ(civ=civ)
-            except RuntimeError as e:
-                logger.error(e, exc_info=True)
-                return
+                    return
+
+            self.remove_civ(civ=current_civ)
+            self.add_civ(civ=civ)
 
             if linked_task is not None:
                 on_commit(signature(linked_task).apply_async)
@@ -2341,6 +2380,7 @@ class CIVForObjectMixin:
                 linked_app_label=self._meta.app_label,
                 linked_model_name=self._meta.model_name,
                 linked_object_pk=self.pk,
+                linked_interface_slug=ci.slug,
                 linked_task=add_image_to_object.signature(
                     kwargs={
                         "app_label": self._meta.app_label,
@@ -2363,12 +2403,8 @@ class CIVForObjectMixin:
         linked_task=None,
     ):
         if file_civ:
-            try:
-                self.remove_civ(civ=current_civ)
-                self.add_civ(civ=file_civ)
-            except RuntimeError as e:
-                logger.error(e, exc_info=True)
-                return
+            self.remove_civ(civ=current_civ)
+            self.add_civ(civ=file_civ)
 
             if linked_task is not None:
                 on_commit(signature(linked_task).apply_async)
@@ -2397,24 +2433,41 @@ class CIVForObjectMixin:
     def get_civ_for_interface(self, interface):
         raise NotImplementedError
 
-    def get_current_value_for_interface(
-        self, *, interface, user_upload=None, upload_session=None
-    ):
+    def get_current_value_for_interface(self, *, interface, user):
         try:
             return self.get_civ_for_interface(interface=interface)
         except ObjectDoesNotExist:
             return None
         except MultipleObjectsReturned as e:
-            if user_upload:
-                user_upload.handle_file_validation_failure(
-                    error_message="An unexpected error occurred"
-                )
-            elif upload_session:
-                upload_session.update_status(
-                    error_message="An unexpected error occurred",
-                    status=RawImageUploadSession.FAILURE,
-                )
+            error_handler = self.get_error_handler()
+            error_handler.handle_error(
+                interface=interface,
+                error_message="An unexpected error occurred",
+                user=user,
+            )
             raise e
+
+    def get_error_handler(self, *, linked_object=None):
+        # local imports to prevent circular dependency
+        from grandchallenge.algorithms.models import Job
+        from grandchallenge.archives.models import ArchiveItem
+        from grandchallenge.reader_studies.models import DisplaySet
+
+        if linked_object and isinstance(linked_object, RawImageUploadSession):
+            return RawImageUploadSessionErrorHandler(
+                upload_session=linked_object,
+                linked_object=self,
+            )
+        elif isinstance(self, Job):
+            return JobCIVErrorHandler(job=self)
+        elif linked_object and isinstance(linked_object, UserUpload):
+            return UserUploadCIVErrorHandler(
+                user_upload=linked_object,
+            )
+        elif isinstance(self, (ArchiveItem, DisplaySet)) and not linked_object:
+            return FallbackCIVValidationErrorHandler()
+        else:
+            return RuntimeError("No appropriate error handler found.")
 
 
 class InterfacesAndValues(NamedTuple):

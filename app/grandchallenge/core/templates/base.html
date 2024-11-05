@@ -72,10 +72,12 @@
             {% include "grandchallenge/partials/jumbotron.html" %}
         {% endblock %}
 
-        <div class="container pb-3 mt-3">
+        <div class="{% block container %}container{% endblock %} pb-3 mt-3">
 
             {% block messages %}
-                {% include 'challenges/challenge_banner.html' %}
+                {% block challenge_banner %}
+                    {% include 'challenges/challenge_banner.html' %}
+                {% endblock %}
                 <div id="messages">
                     {% include "grandchallenge/partials/messages.html" %}
                 </div>

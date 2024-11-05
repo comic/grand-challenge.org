@@ -1,0 +1,8 @@
+{% load url %}
+
+<span class="badge badge-{{ object.status_context }}" {% if not object.finished %}hx-get="{% url 'evaluation:evaluation-status-badge-detail' challenge_short_name=challenge.short_name pk=object.pk %}" hx-trigger="load delay:30s" hx-swap="outerHTML"{% endif %}>
+    {% if object.animate %}
+        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+    {% endif %}
+    {{ object.get_status_display }}
+</span>
