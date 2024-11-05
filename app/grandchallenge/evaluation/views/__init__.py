@@ -535,7 +535,36 @@ class EvaluationAdminList(
         return context
 
 
-class EvaluationDetail(ObjectPermissionRequiredMixin, DetailView):
+class EvaluationIncompleteJobsMixin(ObjectPermissionRequiredMixin, DetailView):
+    model = Evaluation
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        incomplete_jobs = filter_by_permission(
+            queryset=Job.objects.exclude(status=Job.SUCCESS)
+            .filter(
+                algorithm_image=self.object.submission.algorithm_image,
+                inputs__archive_items__archive=self.object.submission.phase.archive,
+            )
+            .distinct()
+            .order_by("status"),
+            user=self.request.user,
+            codename="view_job",
+        )
+
+        context.update(
+            {
+                "incomplete_jobs": incomplete_jobs,
+            }
+        )
+
+        return context
+
+
+class EvaluationDetail(
+    EvaluationIncompleteJobsMixin, ObjectPermissionRequiredMixin, DetailView
+):
     model = Evaluation
     permission_required = "view_evaluation"
     raise_exception = True
@@ -576,23 +605,10 @@ class EvaluationDetail(ObjectPermissionRequiredMixin, DetailView):
         except ObjectDoesNotExist:
             predictions = None
 
-        incomplete_jobs = filter_by_permission(
-            queryset=Job.objects.exclude(status=Job.SUCCESS)
-            .filter(
-                algorithm_image=self.object.submission.algorithm_image,
-                inputs__archive_items__archive=self.object.submission.phase.archive,
-            )
-            .distinct()
-            .order_by("status"),
-            user=self.request.user,
-            codename="view_job",
-        )
-
         context.update(
             {
                 "metrics": metrics,
                 "predictions": predictions,
-                "incomplete_jobs": incomplete_jobs,
                 "conversation_form": self.get_conversation_form(),
             }
         )
@@ -608,35 +624,12 @@ class EvaluationStatusBadgeDetail(ObjectPermissionRequiredMixin, DetailView):
 
 
 class EvaluationIncompleteJobsDetail(
-    ObjectPermissionRequiredMixin, DetailView
+    EvaluationIncompleteJobsMixin, ObjectPermissionRequiredMixin, DetailView
 ):
     permission_required = "change_evaluation"
     template_name_suffix = "_incomplete_jobs_detail"
     model = Evaluation
     raise_exception = True
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        incomplete_jobs = filter_by_permission(
-            queryset=Job.objects.exclude(status=Job.SUCCESS)
-            .filter(
-                algorithm_image=self.object.submission.algorithm_image,
-                inputs__archive_items__archive=self.object.submission.phase.archive,
-            )
-            .distinct()
-            .order_by("status"),
-            user=self.request.user,
-            codename="view_job",
-        )
-
-        context.update(
-            {
-                "incomplete_jobs": incomplete_jobs,
-            }
-        )
-
-        return context
 
 
 class LeaderboardRedirect(RedirectView):
