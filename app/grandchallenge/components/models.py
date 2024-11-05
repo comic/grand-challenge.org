@@ -1905,6 +1905,12 @@ class ComponentImage(FieldChangeMixin, models.Model):
     )
     is_desired_version = models.BooleanField(default=False, editable=False)
 
+    def get_absolute_url(self):
+        raise NotImplementedError
+
+    def get_import_status_absolute_url(self):
+        raise NotImplementedError
+
     def __str__(self):
         out = f"{self._meta.verbose_name.title()} {self.pk_display} (SHA256: {self.sha256_display}"
 
@@ -2567,6 +2573,9 @@ class Tarball(UUIDModel):
         raise NotImplementedError
 
     def get_absolute_url(self):
+        raise NotImplementedError
+
+    def get_import_status_absolute_url(self):
         raise NotImplementedError
 
     def get_peer_tarballs(self):
