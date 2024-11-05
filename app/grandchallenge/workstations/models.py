@@ -246,7 +246,8 @@ class WorkstationImage(UUIDModel, ComponentImage):
             kwargs={"slug": self.workstation.slug, "pk": self.pk},
         )
 
-    def get_import_status_absolute_url(self):
+    @property
+    def import_status_url(self) -> str:
         return reverse(
             "workstations:image-import-status-detail",
             kwargs={"slug": self.workstation.slug, "pk": self.pk},

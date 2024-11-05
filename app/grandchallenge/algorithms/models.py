@@ -646,7 +646,8 @@ class AlgorithmImage(UUIDModel, ComponentImage):
             kwargs={"slug": self.algorithm.slug, "pk": self.pk},
         )
 
-    def get_import_status_absolute_url(self):
+    @property
+    def import_status_url(self) -> str:
         return reverse(
             "algorithms:image-import-status-detail",
             kwargs={"slug": self.algorithm.slug, "pk": self.pk},
@@ -921,7 +922,8 @@ class AlgorithmModel(Tarball):
             kwargs={"slug": self.algorithm.slug, "pk": self.pk},
         )
 
-    def get_import_status_absolute_url(self):
+    @property
+    def import_status_url(self) -> str:
         return reverse(
             "algorithms:model-import-status-detail",
             kwargs={"slug": self.algorithm.slug, "pk": self.pk},

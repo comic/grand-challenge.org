@@ -1164,7 +1164,8 @@ class Method(UUIDModel, ComponentImage):
             },
         )
 
-    def get_import_status_absolute_url(self):
+    @property
+    def import_status_url(self) -> str:
         return reverse(
             "evaluation:method-import-status-detail",
             kwargs={
@@ -1428,7 +1429,8 @@ class EvaluationGroundTruth(Tarball):
             },
         )
 
-    def get_import_status_absolute_url(self):
+    @property
+    def import_status_url(self) -> str:
         return reverse(
             "evaluation:ground-truth-import-status-detail",
             kwargs={

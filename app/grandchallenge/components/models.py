@@ -1908,7 +1908,8 @@ class ComponentImage(FieldChangeMixin, models.Model):
     def get_absolute_url(self):
         raise NotImplementedError
 
-    def get_import_status_absolute_url(self):
+    @property
+    def import_status_url(self) -> str:
         raise NotImplementedError
 
     def __str__(self):
@@ -2575,7 +2576,8 @@ class Tarball(UUIDModel):
     def get_absolute_url(self):
         raise NotImplementedError
 
-    def get_import_status_absolute_url(self):
+    @property
+    def import_status_url(self) -> str:
         raise NotImplementedError
 
     def get_peer_tarballs(self):
