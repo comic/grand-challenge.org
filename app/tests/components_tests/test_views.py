@@ -574,7 +574,7 @@ def test_image_widget_populated_value_on_update_view_validation_error(
 
     annotation = "{}"
     annotation_ci = ComponentInterfaceFactory(
-        kind=ComponentInterface.Kind.TWO_D_BOUNDING_BOX, title="annotation"
+        kind=ComponentInterface.Kind.TWO_D_BOUNDING_BOX
     )
     annotation_civ = ComponentInterfaceValueFactory(
         interface=annotation_ci, value=annotation
@@ -584,8 +584,8 @@ def test_image_widget_populated_value_on_update_view_validation_error(
     base_obj = base_object_factory()
     base_obj.add_editor(editor)
 
-    ob = object_factory(**{base_obj_lookup: base_obj})
-    ob.values.set([image1_civ, annotation_civ])
+    object = object_factory(**{base_obj_lookup: base_obj})
+    object.values.set([image1_civ, annotation_civ])
 
     image2 = ImageFactory()
     data = {
@@ -604,7 +604,7 @@ def test_image_widget_populated_value_on_update_view_validation_error(
     response = get_view_for_user(
         client=client,
         viewname=viewname,
-        reverse_kwargs={"slug": base_obj.slug, "pk": ob.pk},
+        reverse_kwargs={"slug": base_obj.slug, "pk": object.pk},
         user=editor,
         method=client.post,
         follow=True,
