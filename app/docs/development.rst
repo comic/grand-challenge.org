@@ -62,7 +62,7 @@ If you would like to test out the algorithms you can create a simple algorithm t
 
 .. code-block:: console
 
-    $ make create_io_algorithm
+    $ make algorithm_evaluation_fixtures
 
 Before you run
 
@@ -71,18 +71,6 @@ Before you run
     $ make runserver
 
 
-You can also download an `Example Algorithm Image`_ from Docker Hub.
-Save it locally with
-
-.. code-block:: console
-
-    $ docker pull grandchallenge/otsu
-    $ docker save grandchallenge/otsu > otsu.tar
-
-You can then upload ``otsu.tar`` as a container image to the local site.
-
-If you would like to generate your own Algorithm or Evaluation containers you can do this using `Evalutils`_,
-please see the `Getting Started with Evalutils`_ documentation.
 
 There is an interactive debugger from ``django-extensions`` which will halt on exceptions (see the `RunServerPlus`_ documentation),
 it's really handy for interactive debugging to place ``1/0`` in your code as a breakpoint.
@@ -228,9 +216,10 @@ Versions are unpinned in the ``pyproject.toml`` file, to update the resolved dep
 
 .. code-block:: console
 
-    $ poetry lock
+    $ poetry update <whatever>
 
-and commit the update ``poetry.lock``.
+and commit the updated ``poetry.lock``.
+
 The containers will need to be rebuilt after running these steps, so stop the ``make runserver`` process with ``CTRL+C`` and restart.
 
 Going to Production
@@ -251,6 +240,3 @@ If you want to run this in a production environment you will need to make severa
 .. _`Docker Buildx`: https://docs.docker.com/buildx/working-with-buildx/#install
 .. _`RunServerPlus`: https://django-extensions.readthedocs.io/en/latest/runserver_plus.html
 .. _`Running WSL GUI Apps on Windows 10`: https://techcommunity.microsoft.com/t5/windows-dev-appconsult/running-wsl-gui-apps-on-windows-10/ba-p/1493242
-.. _`Example Algorithm Image`: https://hub.docker.com/r/grandchallenge/otsu
-.. _`Evalutils`: https://pypi.org/project/evalutils/
-.. _`Getting Started with Evalutils`: https://evalutils.readthedocs.io/en/latest/usage.html#getting-started
