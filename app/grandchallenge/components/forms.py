@@ -163,9 +163,16 @@ class MultipleCIVForm(Form):
                 interface = ComponentInterface.objects.filter(
                     slug=interface_slug
                 ).get()
+
+                current_value = None
+                if interface.kind == ComponentInterface.Kind.ANY:
+                    current_value = self.data.getlist(slug)
+                else:
+                    current_value = self.data[slug]
+
                 self.fields[slug] = InterfaceFormField(
                     instance=interface,
-                    initial=None,
+                    initial=current_value,
                     required=False,
                     user=self.user,
                     form_data=self.data,
