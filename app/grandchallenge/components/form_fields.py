@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from django import forms
 from django.forms import ModelChoiceField
 from django.utils.functional import cached_property
@@ -107,12 +109,18 @@ class InterfaceFormField:
 
         if isinstance(self.initial, ComponentInterfaceValue):
             current_value = self.initial.image
-        elif Image.objects.filter(pk=self.initial).exists():
-            current_value = Image.objects.get(pk=self.initial)
-        elif UserUpload.objects.filter(pk=self.initial).exists():
-            current_value = UserUpload.objects.get(pk=self.initial)
         elif self.initial:
-            raise RuntimeError(f"Unknown image pk: {self.initial}")
+            try:
+                uuid = UUID(self.initial, version=4)
+            except ValueError:
+                uuid = None
+
+            if uuid and Image.objects.filter(pk=uuid).exists():
+                current_value = Image.objects.get(pk=uuid)
+            elif uuid and UserUpload.objects.filter(pk=uuid).exists():
+                current_value = UserUpload.objects.get(pk=uuid)
+            else:
+                raise RuntimeError(f"Unknown image pk: {uuid}")
 
         self.kwargs["widget"] = FlexibleImageWidget(
             help_text=self.help_text,
