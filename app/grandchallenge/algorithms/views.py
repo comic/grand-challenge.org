@@ -96,7 +96,7 @@ from grandchallenge.evaluation.models import Evaluation
 from grandchallenge.github.views import GitHubInstallationRequiredMixin
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
-from grandchallenge.subdomains.utils import reverse
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.verifications.views import VerificationRequiredMixin
 
 logger = logging.getLogger(__name__)
@@ -1001,6 +1001,7 @@ class AlgorithmModelImportStatusDetail(
     permission_required = "algorithms.view_algorithmmodel"
     template_name = "components/import_status_detail.html"
     raise_exception = True
+    login_url = reverse_lazy("account_login")
 
 
 class AlgorithmModelUpdate(

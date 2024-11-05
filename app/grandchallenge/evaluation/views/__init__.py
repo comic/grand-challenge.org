@@ -1126,6 +1126,7 @@ class EvaluationGroundTruthImportStatusDetail(
     permission_required = "evaluation.view_evaluationgroundtruth"
     template_name = "components/import_status_detail.html"
     raise_exception = True
+    login_url = reverse_lazy("account_login")
 
 
 class EvaluationGroundTruthList(

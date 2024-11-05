@@ -34,7 +34,7 @@ from grandchallenge.core.guardian import (
 )
 from grandchallenge.groups.forms import EditorsForm, UsersForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
-from grandchallenge.subdomains.utils import reverse
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.verifications.views import VerificationRequiredMixin
 from grandchallenge.workstations.forms import (
     DebugSessionForm,
@@ -221,6 +221,7 @@ class WorkstationImageImportStatusDetail(
     permission_required = f"{WorkstationImage._meta.app_label}.view_{WorkstationImage._meta.model_name}"
     template_name = "components/import_status_detail.html"
     raise_exception = True
+    login_url = reverse_lazy("account_login")
 
 
 class WorkstationImageUpdate(
