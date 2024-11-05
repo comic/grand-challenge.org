@@ -544,7 +544,7 @@ def test_interfaces_list_link_in_new_interface_form(
     )
     assert reverse(interface_list_viewname) in response.rendered_content
 
-    
+
 @pytest.mark.parametrize(
     "base_object_factory,base_obj_lookup,object_factory,viewname",
     (
