@@ -221,6 +221,12 @@ class TestObjectPermissionRequiredViews:
                 "view_evaluation",
                 e,
             ),
+            (
+                "evaluation-incomplete-jobs-detail",
+                {"pk": e.pk},
+                "change_evaluation",
+                e,
+            ),
         ]:
             response = get_view_for_user(
                 client=client,
