@@ -610,7 +610,7 @@ class EvaluationStatusBadgeDetail(ObjectPermissionRequiredMixin, DetailView):
 class EvaluationIncompleteJobsDetail(
     ObjectPermissionRequiredMixin, DetailView
 ):
-    permission_required = "view_evaluation"
+    permission_required = "change_evaluation"
     template_name_suffix = "_incomplete_jobs_detail"
     model = Evaluation
     raise_exception = True

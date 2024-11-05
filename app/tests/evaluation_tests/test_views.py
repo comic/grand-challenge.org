@@ -224,7 +224,7 @@ class TestObjectPermissionRequiredViews:
             (
                 "evaluation-incomplete-jobs-detail",
                 {"pk": e.pk},
-                "view_evaluation",
+                "change_evaluation",
                 e,
             ),
         ]:
