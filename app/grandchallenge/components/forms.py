@@ -124,11 +124,11 @@ class MultipleCIVForm(Form):
                     current_value = self.data.getlist(prefixed_interface_slug)
                 else:
                     current_value = self.data[prefixed_interface_slug]
-            else:
-                if instance:
-                    current_value = instance.values.filter(
-                        interface__slug=slug
-                    ).first()
+
+            if not current_value and instance:
+                current_value = instance.values.filter(
+                    interface__slug=slug
+                ).first()
 
             if (
                 interface.requires_file
