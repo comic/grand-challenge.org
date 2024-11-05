@@ -510,14 +510,7 @@
                             </a>
 
                             {% if image.build %}
-                                <a class="btn btn-sm btn-{{ image.build.status_context }}"
-                                    href="{{ image.get_absolute_url }}">
-                                    {% if image.build.animate %}
-                                        <span class="spinner-border spinner-border-sm" role="status"
-                                              aria-hidden="true"></span>
-                                    {% endif %}
-                                    Build {{ image.build.get_status_display }}
-                                </a>
+                                {% include "algorithms/algorithmimage_build_status_detail.html" with object=image %}
                             {% endif %}
 
                             {{ image }}
