@@ -29,7 +29,7 @@
                         <td><a href="{{ job.get_absolute_url }}">{{ job.pk }}</a></td>
                         <td>{{ job.created }}</td>
                         <td>
-                            {% include "algorithms/job_status_badge_detail.html" with object=job %}
+                            {% include "algorithms/job_status_detail.html" with object=job %}
                         </td>
                     </tr>
                 {% endfor %}
