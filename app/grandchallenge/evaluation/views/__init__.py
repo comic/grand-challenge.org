@@ -535,8 +535,7 @@ class EvaluationAdminList(
         return context
 
 
-class EvaluationIncompleteJobsMixin(ObjectPermissionRequiredMixin, DetailView):
-    model = Evaluation
+class EvaluationIncompleteJobsMixin:
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
