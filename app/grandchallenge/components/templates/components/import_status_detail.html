@@ -1,5 +1,3 @@
-{% load url %}
-
 <span class="badge badge-{{ object.import_status_context }}" {% if not object.finished %}hx-get="{{ object.import_status_url }}" hx-trigger="load delay:30s" hx-swap="outerHTML"{% endif %}>
     {% if object.animate %}
         <span class="spinner-border spinner-border-sm" role="status"
