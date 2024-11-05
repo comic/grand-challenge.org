@@ -654,6 +654,13 @@ class AlgorithmImage(UUIDModel, ComponentImage):
         )
 
     @property
+    def build_status_url(self) -> str:
+        return reverse(
+            "algorithms:image-build-status-detail",
+            kwargs={"slug": self.algorithm.slug, "pk": self.pk},
+        )
+
+    @property
     def api_url(self) -> str:
         return reverse("api:algorithms-image-detail", kwargs={"pk": self.pk})
 
