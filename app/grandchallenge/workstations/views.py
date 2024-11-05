@@ -27,7 +27,6 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 from ua_parser.user_agent_parser import ParseUserAgent
 
-from grandchallenge.components.views import ImportStatusMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
@@ -216,11 +215,12 @@ class WorkstationImageDetail(
 class WorkstationImageImportStatusDetail(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
-    ImportStatusMixin,
     DetailView,
 ):
     model = WorkstationImage
     permission_required = f"{WorkstationImage._meta.app_label}.view_{WorkstationImage._meta.model_name}"
+    template_name = "components/import_status_detail.html"
+    raise_exception = True
 
 
 class WorkstationImageUpdate(
