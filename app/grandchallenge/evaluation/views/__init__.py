@@ -284,7 +284,6 @@ class MethodDetail(
 class MethodImportStatusDetail(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
-    CachedPhaseMixin,
     ImportStatusMixin,
     DetailView,
 ):
