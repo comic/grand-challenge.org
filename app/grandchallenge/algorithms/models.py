@@ -1024,6 +1024,16 @@ class Job(CIVForObjectMixin, ComponentJob):
         )
 
     @property
+    def status_url(self) -> str:
+        return reverse(
+            "algorithms:job-status-detail",
+            kwargs={
+                "slug": self.algorithm_image.algorithm.slug,
+                "pk": self.pk,
+            },
+        )
+
+    @property
     def api_url(self) -> str:
         return reverse("api:algorithms-job-detail", kwargs={"pk": self.pk})
 
