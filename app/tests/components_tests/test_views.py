@@ -4,7 +4,10 @@ import pytest
 from django.conf import settings
 
 from grandchallenge.archives.models import ArchiveItem
-from grandchallenge.components.models import InterfaceKindChoices
+from grandchallenge.components.models import (
+    ComponentInterface,
+    InterfaceKindChoices,
+)
 from grandchallenge.reader_studies.models import DisplaySet, ReaderStudy
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
@@ -13,7 +16,8 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
-from tests.factories import UserFactory
+from tests.conftest import get_interface_form_data
+from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     DisplaySetFactory,
     ReaderStudyFactory,
@@ -503,3 +507,74 @@ def test_display_ci_example_value(client):
     assert response.status_code == 200
     assert v.value in response.rendered_content
     assert v.extra_info in response.rendered_content
+
+
+@pytest.mark.parametrize(
+    "base_object_factory,base_obj_lookup,object_factory,viewname",
+    (
+        (
+            ReaderStudyFactory,
+            "reader_study",
+            DisplaySetFactory,
+            "reader-studies:display-set-update",
+        ),
+        (
+            ArchiveFactory,
+            "archive",
+            ArchiveItemFactory,
+            "archives:item-edit",
+        ),
+    ),
+)
+@pytest.mark.django_db
+def test_image_widget_populated_value_on_update_view_validation_error(
+    client, base_object_factory, base_obj_lookup, object_factory, viewname
+):
+    image1 = ImageFactory()
+    image_ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
+    image1_civ = ComponentInterfaceValueFactory(
+        interface=image_ci, image=image1
+    )
+
+    annotation = "{}"
+    annotation_ci = ComponentInterfaceFactory(
+        kind=ComponentInterface.Kind.TWO_D_BOUNDING_BOX, title="annotation"
+    )
+    annotation_civ = ComponentInterfaceValueFactory(
+        interface=annotation_ci, value=annotation
+    )
+
+    editor = UserFactory()
+    base_obj = base_object_factory()
+    base_obj.add_editor(editor)
+
+    ob = object_factory(**{base_obj_lookup: base_obj})
+    ob.values.set([image1_civ, annotation_civ])
+
+    image2 = ImageFactory()
+    data = {
+        "interface_slug": image_ci.slug,
+        "current_value": image2.pk,
+    }
+    data.update(
+        **get_interface_form_data(interface_slug=image_ci.slug, data=image2.pk)
+    )
+    data.update(
+        **get_interface_form_data(
+            interface_slug=annotation_ci.slug, data='{"1":1}'
+        )
+    )
+
+    response = get_view_for_user(
+        client=client,
+        viewname=viewname,
+        reverse_kwargs={"slug": base_obj.slug, "pk": ob.pk},
+        user=editor,
+        method=client.post,
+        follow=True,
+        data=data,
+    )
+    assert response.status_code == 200
+    assert f'<option value="IMAGE_SELECTED">{image2.title}</option>' in str(
+        response.rendered_content
+    )
