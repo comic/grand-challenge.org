@@ -38,6 +38,7 @@ def test_api_lowest_gcapi_version_check(client):
         url=reverse("api:gcapi"),
         client=client,
     )
+    assert response.data["latest_version"] == settings.GCAPI_LATEST_VERSION
     assert (
         response.data["lowest_supported_version"]
         == settings.GCAPI_LOWEST_SUPPORTED_VERSION

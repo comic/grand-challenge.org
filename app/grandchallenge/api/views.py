@@ -12,7 +12,8 @@ class GCAPIView(GenericAPIView):
 
     def get(self, request):
         data = {
-            "lowest_supported_version": settings.GCAPI_LOWEST_SUPPORTED_VERSION
+            "latest_version": settings.GCAPI_LATEST_VERSION,
+            "lowest_supported_version": settings.GCAPI_LOWEST_SUPPORTED_VERSION,
         }
         serializer = self.get_serializer(data)
         return Response(serializer.data)
