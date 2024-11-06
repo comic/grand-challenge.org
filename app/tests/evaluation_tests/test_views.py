@@ -153,6 +153,12 @@ class TestObjectPermissionRequiredViews:
                 e.method,
             ),
             (
+                "method-import-status-detail",
+                {"pk": e.method.pk, "slug": e.submission.phase.slug},
+                "view_method",
+                e.method,
+            ),
+            (
                 "method-update",
                 {"pk": e.method.pk, "slug": e.submission.phase.slug},
                 "change_method",
@@ -1413,6 +1419,12 @@ def test_ground_truth_permissions(client):
             "evaluation.change_evaluationgroundtruth",
             gt,
         ),
+        (
+            "ground-truth-import-status-detail",
+            {"pk": gt.pk},
+            "evaluation.view_evaluationgroundtruth",
+            gt,
+        ),
     ]:
 
         def _get_view():
@@ -1434,6 +1446,8 @@ def test_ground_truth_permissions(client):
 
         response = _get_view()
         assert response.status_code == 200
+
+        remove_perm(permission, u, obj)
 
 
 @pytest.mark.django_db

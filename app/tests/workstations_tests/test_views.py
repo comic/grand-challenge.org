@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.http import Http404
 from django.utils.text import slugify
+from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.reader_studies.models import InteractiveAlgorithmChoices
 from grandchallenge.subdomains.utils import reverse
@@ -37,6 +38,47 @@ def workstation_creator():
     g = Group.objects.get(name=settings.WORKSTATIONS_CREATORS_GROUP_NAME)
     g.user_set.add(u)
     return u
+
+
+@pytest.mark.django_db
+class TestObjectPermissionRequiredViews:
+    def test_permission_required_views(self, client):
+        ws = WorkstationFactory()
+        wsi = WorkstationImageFactory(workstation=ws)
+        u = UserFactory()
+        VerificationFactory(user=u, is_verified=True)
+
+        def _get_view():
+            return get_view_for_user(
+                client=client,
+                viewname=f"workstations:{_view_name}",
+                reverse_kwargs={
+                    "slug": ws.slug,
+                    "pk": wsi.pk,
+                    **_kwargs,
+                },
+                user=u,
+            )
+
+        for _view_name, _kwargs, permission, obj in [
+            (
+                "image-import-status-detail",
+                {},
+                "view_workstationimage",
+                wsi,
+            ),
+        ]:
+            response = _get_view()
+
+            assert response.status_code == 403
+
+            assign_perm(permission, u, obj)
+
+            response = _get_view()
+
+            assert response.status_code == 200
+
+            remove_perm(permission, u, obj)
 
 
 @pytest.mark.django_db

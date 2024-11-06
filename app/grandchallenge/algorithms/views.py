@@ -96,7 +96,7 @@ from grandchallenge.evaluation.models import Evaluation
 from grandchallenge.github.views import GitHubInstallationRequiredMixin
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
-from grandchallenge.subdomains.utils import reverse
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.verifications.views import VerificationRequiredMixin
 
 logger = logging.getLogger(__name__)
@@ -393,6 +393,24 @@ class AlgorithmImageDetail(
         )
 
         return context
+
+
+class AlgorithmImageImportStatusDetail(
+    ObjectPermissionRequiredMixin, DetailView
+):
+    permission_required = "algorithms.view_algorithmimage"
+    model = AlgorithmImage
+    template_name = "components/import_status_detail.html"
+    raise_exception = True
+
+
+class AlgorithmImageBuildStatusDetail(
+    ObjectPermissionRequiredMixin, DetailView
+):
+    permission_required = "algorithms.view_algorithmimage"
+    template_name_suffix = "_build_status_detail"
+    model = AlgorithmImage
+    raise_exception = True
 
 
 class AlgorithmImageUpdate(
@@ -973,6 +991,18 @@ class AlgorithmModelDetail(
         )
 
         return context
+
+
+class AlgorithmModelImportStatusDetail(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    DetailView,
+):
+    model = AlgorithmModel
+    permission_required = "algorithms.view_algorithmmodel"
+    template_name = "components/import_status_detail.html"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
 
 
 class AlgorithmModelUpdate(

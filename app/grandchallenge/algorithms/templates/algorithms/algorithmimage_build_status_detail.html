@@ -1,0 +1,7 @@
+<span class="badge badge-{{ object.build.status_context }}" {% if not object.build.finished %}hx-get="{{ object.build_status_url }}" hx-trigger="load delay:30s" hx-swap="outerHTML"{% endif %}>
+    {% if object.build.animate %}
+        <span class="spinner-border spinner-border-sm" role="status"
+              aria-hidden="true"></span>
+    {% endif %}
+    Build {{ object.build.get_status_display }}
+</span>

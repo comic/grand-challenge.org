@@ -385,6 +385,20 @@ class TestObjectPermissionRequiredViews:
                 None,
             ),
             (
+                "image-import-status-detail",
+                {"slug": ai.algorithm.slug, "pk": ai.pk},
+                "view_algorithmimage",
+                ai,
+                None,
+            ),
+            (
+                "image-build-status-detail",
+                {"slug": ai.algorithm.slug, "pk": ai.pk},
+                "view_algorithmimage",
+                ai,
+                None,
+            ),
+            (
                 "image-update",
                 {"slug": ai.algorithm.slug, "pk": ai.pk},
                 "change_algorithmimage",
@@ -484,6 +498,13 @@ class TestObjectPermissionRequiredViews:
             ),
             (
                 "model-detail",
+                {"slug": am.algorithm.slug, "pk": am.pk},
+                "view_algorithmmodel",
+                am,
+                None,
+            ),
+            (
+                "model-import-status-detail",
                 {"slug": am.algorithm.slug, "pk": am.pk},
                 "view_algorithmmodel",
                 am,

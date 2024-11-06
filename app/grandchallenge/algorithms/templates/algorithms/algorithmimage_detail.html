@@ -78,13 +78,7 @@
 
         <dt>Import Status</dt>
         <dd>
-            <span class="badge badge-{{ object.import_status_context }}">
-                {% if object.animate %}
-                    <span class="spinner-border spinner-border-sm" role="status"
-                          aria-hidden="true"></span>
-                {% endif %}
-                {{ object.get_import_status_display }}
-            </span>
+            {% include 'components/import_status_detail.html' %}
         </dd>
 
         {% if object.is_manifest_valid is not None %}
@@ -131,12 +125,7 @@
 
             <dt>Status</dt>
             <dd>
-                <span class="badge badge-{{ object.build.status_context }}">
-                    {% if object.build.animate %}
-                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    {% endif %}
-                    {{ object.build.get_status_display }}
-                </span>
+                {% include "algorithms/algorithmimage_build_status_detail.html" %}
             </dd>
         </dl>
 

@@ -280,6 +280,18 @@ class MethodDetail(
     login_url = reverse_lazy("account_login")
 
 
+class MethodImportStatusDetail(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    DetailView,
+):
+    model = Method
+    permission_required = "view_method"
+    template_name = "components/import_status_detail.html"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+
 class MethodUpdate(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
@@ -1127,6 +1139,18 @@ class EvaluationGroundTruthDetail(
         )
 
         return context
+
+
+class EvaluationGroundTruthImportStatusDetail(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    DetailView,
+):
+    model = EvaluationGroundTruth
+    permission_required = "evaluation.view_evaluationgroundtruth"
+    template_name = "components/import_status_detail.html"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
 
 
 class EvaluationGroundTruthList(

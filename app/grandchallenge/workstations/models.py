@@ -246,6 +246,13 @@ class WorkstationImage(UUIDModel, ComponentImage):
             kwargs={"slug": self.workstation.slug, "pk": self.pk},
         )
 
+    @property
+    def import_status_url(self) -> str:
+        return reverse(
+            "workstations:image-import-status-detail",
+            kwargs={"slug": self.workstation.slug, "pk": self.pk},
+        )
+
     def assign_permissions(self):
         # Allow the editors group to view this workstation image
         assign_perm(

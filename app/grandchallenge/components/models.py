@@ -1909,6 +1909,13 @@ class ComponentImage(FieldChangeMixin, models.Model):
     )
     is_desired_version = models.BooleanField(default=False, editable=False)
 
+    def get_absolute_url(self):
+        raise NotImplementedError
+
+    @property
+    def import_status_url(self) -> str:
+        raise NotImplementedError
+
     def __str__(self):
         out = f"{self._meta.verbose_name.title()} {self.pk_display} (SHA256: {self.sha256_display}"
 
@@ -2035,6 +2042,14 @@ class ComponentImage(FieldChangeMixin, models.Model):
     @property
     def animate(self):
         return self.import_status == self.ImportStatusChoices.STARTED
+
+    @property
+    def finished(self):
+        return self.import_status in {
+            self.ImportStatusChoices.FAILED,
+            self.ImportStatusChoices.COMPLETED,
+            self.ImportStatusChoices.CANCELLED,
+        }
 
     @property
     def import_status_context(self):
@@ -2565,6 +2580,10 @@ class Tarball(UUIDModel):
     def get_absolute_url(self):
         raise NotImplementedError
 
+    @property
+    def import_status_url(self) -> str:
+        raise NotImplementedError
+
     def get_peer_tarballs(self):
         raise NotImplementedError
 
@@ -2596,5 +2615,13 @@ class Tarball(UUIDModel):
             return "info"
 
     @property
-    def import_in_progress(self):
+    def animate(self):
         return self.import_status == ImportStatusChoices.INITIALIZED
+
+    @property
+    def finished(self):
+        return self.import_status in {
+            self.ImportStatusChoices.FAILED,
+            self.ImportStatusChoices.COMPLETED,
+            self.ImportStatusChoices.CANCELLED,
+        }
