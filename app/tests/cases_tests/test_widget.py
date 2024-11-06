@@ -150,7 +150,6 @@ def test_flexible_image_widget(client):
     assert response3.content == b""
 
     image = ImageFactory()
-    assign_perm("cases.view_image", user, image)
     response4 = get_view_for_user(
         viewname="cases:select-image-widget",
         client=client,
@@ -164,6 +163,21 @@ def test_flexible_image_widget(client):
     assert format_html(
         '<input type="hidden" name="{}" value="{}">', ci.slug, image.pk
     ) in str(response4.content)
+
+    user_upload = UserUploadFactory()
+    response5 = get_view_for_user(
+        viewname="cases:select-image-widget",
+        client=client,
+        user=user,
+        data={
+            f"WidgetChoice-{ci.slug}": WidgetChoices.IMAGE_SELECTED.name,
+            "interface_slug": ci.slug,
+            "current_value": user_upload.pk,
+        },
+    )
+    assert format_html(
+        '<input type="hidden" name="{}" value="{}">', ci.slug, user_upload.pk
+    ) in str(response5.content)
 
 
 @pytest.mark.django_db
