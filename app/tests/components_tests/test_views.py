@@ -23,6 +23,7 @@ from tests.reader_studies_tests.factories import (
     DisplaySetFactory,
     ReaderStudyFactory,
 )
+from tests.uploads_tests.factories import UserUploadFactory
 from tests.utils import get_view_for_user
 
 
@@ -578,6 +579,13 @@ def test_interfaces_list_link_in_new_interface_form(
         ),
     ),
 )
+@pytest.mark.parametrize(
+    "widget_type_object_factory",
+    (
+        ImageFactory,
+        UserUploadFactory,
+    ),
+)
 @pytest.mark.django_db
 def test_image_widget_populated_value_on_form_view_validation_error(
     client,
@@ -586,6 +594,7 @@ def test_image_widget_populated_value_on_form_view_validation_error(
     object_factory,
     viewname,
     is_edit_view,
+    widget_type_object_factory,
 ):
     image1 = ImageFactory()
     image_ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
@@ -608,12 +617,12 @@ def test_image_widget_populated_value_on_form_view_validation_error(
     object = object_factory(**{base_obj_lookup: base_obj})
     object.values.set([image1_civ, annotation_civ])
 
-    image2 = ImageFactory()
+    wt_object = widget_type_object_factory()
     data = {
         "interface_slug": image_ci.slug,
-        "current_value": image2.pk,
+        "current_value": wt_object.pk,
         **get_interface_form_data(
-            interface_slug=image_ci.slug, data=image2.pk
+            interface_slug=image_ci.slug, data=wt_object.pk
         ),
         **get_interface_form_data(
             interface_slug=annotation_ci.slug, data='{"1":1}'
@@ -634,6 +643,6 @@ def test_image_widget_populated_value_on_form_view_validation_error(
         data=data,
     )
     assert response.status_code == 200
-    assert f'<option value="IMAGE_SELECTED">{image2.title}</option>' in str(
+    assert f'<option value="IMAGE_SELECTED">{wt_object.title}</option>' in str(
         response.rendered_content
     )
