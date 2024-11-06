@@ -2027,6 +2027,13 @@
     <span class="p">)</span>
     <span class="n">is_desired_version</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">import_status_url</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">out</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">verbose_name</span><span class="o">.</span><span class="n">title</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pk_display</span><span class="si">}</span><span class="s2"> (SHA256: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sha256_display</span><span class="si">}</span><span class="s2">&quot;</span>
 
@@ -2156,6 +2163,14 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">animate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">STARTED</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">finished</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="ow">in</span> <span class="p">{</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">FAILED</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">COMPLETED</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">CANCELLED</span><span class="p">,</span>
+        <span class="p">}</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">import_status_context</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -2695,6 +2710,10 @@
     <span class="k">def</span> <span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">import_status_url</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
     <span class="k">def</span> <span class="nf">get_peer_tarballs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
@@ -2726,8 +2745,16 @@
             <span class="k">return</span> <span class="s2">&quot;info&quot;</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">import_in_progress</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="o">==</span> <span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">INITIALIZED</span></div>
+    <span class="k">def</span> <span class="nf">animate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="o">==</span> <span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">INITIALIZED</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">finished</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="ow">in</span> <span class="p">{</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">FAILED</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">COMPLETED</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">CANCELLED</span><span class="p">,</span>
+        <span class="p">}</span></div>
 
 </pre></div>
 
