@@ -596,11 +596,9 @@ def test_image_widget_populated_value_on_form_view_validation_error(
     is_edit_view,
     widget_type_object_factory,
 ):
-    image1 = ImageFactory()
+    image = ImageFactory()
     image_ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
-    image1_civ = ComponentInterfaceValueFactory(
-        interface=image_ci, image=image1
-    )
+    image_civ = ComponentInterfaceValueFactory(interface=image_ci, image=image)
 
     annotation = "{}"
     annotation_ci = ComponentInterfaceFactory(
@@ -615,7 +613,7 @@ def test_image_widget_populated_value_on_form_view_validation_error(
     base_obj.add_editor(editor)
 
     object = object_factory(**{base_obj_lookup: base_obj})
-    object.values.set([image1_civ, annotation_civ])
+    object.values.set([image_civ, annotation_civ])
 
     wt_object = widget_type_object_factory()
     data = {
