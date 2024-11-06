@@ -546,25 +546,46 @@ def test_interfaces_list_link_in_new_interface_form(
 
 
 @pytest.mark.parametrize(
-    "base_object_factory,base_obj_lookup,object_factory,viewname",
+    "base_object_factory,base_obj_lookup,object_factory,viewname,is_edit_view",
     (
         (
             ReaderStudyFactory,
             "reader_study",
             DisplaySetFactory,
+            "reader-studies:display-set-create",
+            False,
+        ),
+        (
+            ReaderStudyFactory,
+            "reader_study",
+            DisplaySetFactory,
             "reader-studies:display-set-update",
+            True,
+        ),
+        (
+            ArchiveFactory,
+            "archive",
+            ArchiveItemFactory,
+            "archives:item-create",
+            False,
         ),
         (
             ArchiveFactory,
             "archive",
             ArchiveItemFactory,
             "archives:item-edit",
+            True,
         ),
     ),
 )
 @pytest.mark.django_db
-def test_image_widget_populated_value_on_update_view_validation_error(
-    client, base_object_factory, base_obj_lookup, object_factory, viewname
+def test_image_widget_populated_value_on_form_view_validation_error(
+    client,
+    base_object_factory,
+    base_obj_lookup,
+    object_factory,
+    viewname,
+    is_edit_view,
 ):
     image1 = ImageFactory()
     image_ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
@@ -591,20 +612,22 @@ def test_image_widget_populated_value_on_update_view_validation_error(
     data = {
         "interface_slug": image_ci.slug,
         "current_value": image2.pk,
-    }
-    data.update(
-        **get_interface_form_data(interface_slug=image_ci.slug, data=image2.pk)
-    )
-    data.update(
+        **get_interface_form_data(
+            interface_slug=image_ci.slug, data=image2.pk
+        ),
         **get_interface_form_data(
             interface_slug=annotation_ci.slug, data='{"1":1}'
-        )
-    )
+        ),
+    }
+
+    reverse_kwargs = {"slug": base_obj.slug}
+    if is_edit_view:
+        reverse_kwargs["pk"] = object.pk
 
     response = get_view_for_user(
         client=client,
         viewname=viewname,
-        reverse_kwargs={"slug": base_obj.slug, "pk": object.pk},
+        reverse_kwargs=reverse_kwargs,
         user=editor,
         method=client.post,
         follow=True,
