@@ -16,7 +16,7 @@ from grandchallenge.evaluation.views import (
     EvaluationGroundTruthVersionManagement,
     EvaluationIncompleteJobsDetail,
     EvaluationList,
-    EvaluationStatusBadgeDetail,
+    EvaluationStatusDetail,
     EvaluationUpdate,
     LeaderboardDetail,
     LeaderboardRedirect,
@@ -38,9 +38,9 @@ app_name = "evaluation"
 urlpatterns = [
     path("<uuid:pk>/", EvaluationDetail.as_view(), name="detail"),
     path(
-        "<uuid:pk>/status-badge/",
-        EvaluationStatusBadgeDetail.as_view(),
-        name="evaluation-status-badge-detail",
+        "<uuid:pk>/status/",
+        EvaluationStatusDetail.as_view(),
+        name="status-detail",
     ),
     path(
         "<uuid:pk>/incomplete-jobs/",

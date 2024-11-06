@@ -1581,6 +1581,10 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
 
     objects = ComponentJobManager.as_manager()
 
+    @property
+    def status_url(self) -> str:
+        raise NotImplementedError
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 

@@ -420,6 +420,13 @@ class TestObjectPermissionRequiredViews:
                 None,
             ),
             (
+                "job-status-detail",
+                {"slug": ai.algorithm.slug, "pk": j.pk},
+                "view_job",
+                j,
+                None,
+            ),
+            (
                 "job-update",
                 {"slug": ai.algorithm.slug, "pk": j.pk},
                 "change_job",
@@ -583,32 +590,6 @@ class TestJobDetailView:
             assert content in response.rendered_content
 
             remove_perm(permission, u, permission_object)
-
-
-@pytest.mark.django_db
-class TestJobStatusBadgeDetail:
-    def test_guarded_content_visibility(self, client):
-        j = AlgorithmJobFactory(time_limit=60)
-        u = UserFactory()
-
-        view_kwargs = {
-            "client": client,
-            "viewname": "algorithms:job-status-badge-detail",
-            "reverse_kwargs": {
-                "slug": j.algorithm_image.algorithm.slug,
-                "pk": j.pk,
-            },
-            "user": u,
-        }
-        response = get_view_for_user(**view_kwargs)
-
-        assert response.status_code == 302
-
-        assign_perm("view_job", u, j)
-
-        response = get_view_for_user(**view_kwargs)
-
-        assert response.status_code == 200
 
 
 @pytest.mark.django_db

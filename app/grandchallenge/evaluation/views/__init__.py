@@ -615,9 +615,9 @@ class EvaluationDetail(
         return context
 
 
-class EvaluationStatusBadgeDetail(ObjectPermissionRequiredMixin, DetailView):
+class EvaluationStatusDetail(ObjectPermissionRequiredMixin, DetailView):
     permission_required = "view_evaluation"
-    template_name_suffix = "_status_badge_detail"
+    template_name_suffix = "_status_detail"
     model = Evaluation
     raise_exception = True
 

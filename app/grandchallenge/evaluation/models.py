@@ -1653,6 +1653,16 @@ class Evaluation(ComponentJob):
             },
         )
 
+    @property
+    def status_url(self) -> str:
+        return reverse(
+            "evaluation:status-detail",
+            kwargs={
+                "pk": self.pk,
+                "challenge_short_name": self.submission.phase.challenge.short_name,
+            },
+        )
+
 
 class EvaluationUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(Evaluation, on_delete=models.CASCADE)

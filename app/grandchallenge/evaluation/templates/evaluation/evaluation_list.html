@@ -71,7 +71,7 @@
                         </td>
                     {% endif %}
                     <td>
-                        {% include 'evaluation/evaluation_status_badge_detail.html' with object=evaluation %}
+                        {% include 'evaluation/evaluation_status_detail.html' with object=evaluation %}
                     </td>
 
                     {% if "change_challenge" in challenge_perms %}

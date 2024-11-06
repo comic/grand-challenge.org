@@ -27,7 +27,7 @@ from grandchallenge.algorithms.views import (
     JobDetail,
     JobProgressDetail,
     JobsList,
-    JobStatusBadgeDetail,
+    JobStatusDetail,
     JobUpdate,
     JobViewersUpdate,
     UsersUpdate,
@@ -106,9 +106,9 @@ urlpatterns = [
     path("<slug>/jobs/create/", JobCreate.as_view(), name="job-create"),
     path("<slug>/jobs/<uuid:pk>/", JobDetail.as_view(), name="job-detail"),
     path(
-        "<slug>/jobs/<uuid:pk>/status-badge/",
-        JobStatusBadgeDetail.as_view(),
-        name="job-status-badge-detail",
+        "<slug>/jobs/<uuid:pk>/status/",
+        JobStatusDetail.as_view(),
+        name="job-status-detail",
     ),
     path(
         "<slug>/jobs/<uuid:pk>/update/", JobUpdate.as_view(), name="job-update"

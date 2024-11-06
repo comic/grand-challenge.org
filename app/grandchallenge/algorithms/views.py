@@ -679,10 +679,11 @@ class JobUpdate(LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView):
     raise_exception = True
 
 
-class JobStatusBadgeDetail(ObjectPermissionRequiredMixin, DetailView):
+class JobStatusDetail(ObjectPermissionRequiredMixin, DetailView):
     permission_required = "algorithms.view_job"
-    template_name_suffix = "_status_badge_detail"
+    template_name_suffix = "_status_detail"
     model = Job
+    raise_exception = True
 
 
 class DisplaySetFromJobCreate(
