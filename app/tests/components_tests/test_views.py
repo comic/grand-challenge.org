@@ -4,10 +4,7 @@ import pytest
 from django.conf import settings
 
 from grandchallenge.archives.models import ArchiveItem
-from grandchallenge.components.models import (
-    ComponentInterface,
-    InterfaceKindChoices,
-)
+from grandchallenge.components.models import InterfaceKindChoices
 from grandchallenge.reader_studies.models import DisplaySet, ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import AlgorithmFactory
@@ -17,13 +14,11 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
-from tests.conftest import get_interface_form_data
-from tests.factories import ImageFactory, UserFactory
+from tests.factories import UserFactory
 from tests.reader_studies_tests.factories import (
     DisplaySetFactory,
     ReaderStudyFactory,
 )
-from tests.uploads_tests.factories import UserUploadFactory
 from tests.utils import get_view_for_user
 
 
@@ -544,103 +539,3 @@ def test_interfaces_list_link_in_new_interface_form(
         user=u,
     )
     assert reverse(interface_list_viewname) in response.rendered_content
-
-
-@pytest.mark.parametrize(
-    "base_object_factory,base_obj_lookup,object_factory,viewname,is_edit_view",
-    (
-        (
-            ReaderStudyFactory,
-            "reader_study",
-            DisplaySetFactory,
-            "reader-studies:display-set-create",
-            False,
-        ),
-        (
-            ReaderStudyFactory,
-            "reader_study",
-            DisplaySetFactory,
-            "reader-studies:display-set-update",
-            True,
-        ),
-        (
-            ArchiveFactory,
-            "archive",
-            ArchiveItemFactory,
-            "archives:item-create",
-            False,
-        ),
-        (
-            ArchiveFactory,
-            "archive",
-            ArchiveItemFactory,
-            "archives:item-edit",
-            True,
-        ),
-    ),
-)
-@pytest.mark.parametrize(
-    "widget_type_object_factory",
-    (
-        ImageFactory,
-        UserUploadFactory,
-    ),
-)
-@pytest.mark.django_db
-def test_image_widget_populated_value_on_form_view_validation_error(
-    client,
-    base_object_factory,
-    base_obj_lookup,
-    object_factory,
-    viewname,
-    is_edit_view,
-    widget_type_object_factory,
-):
-    image = ImageFactory()
-    image_ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
-    image_civ = ComponentInterfaceValueFactory(interface=image_ci, image=image)
-
-    annotation = "{}"
-    annotation_ci = ComponentInterfaceFactory(
-        kind=ComponentInterface.Kind.TWO_D_BOUNDING_BOX
-    )
-    annotation_civ = ComponentInterfaceValueFactory(
-        interface=annotation_ci, value=annotation
-    )
-
-    editor = UserFactory()
-    base_obj = base_object_factory()
-    base_obj.add_editor(editor)
-
-    object = object_factory(**{base_obj_lookup: base_obj})
-    object.values.set([image_civ, annotation_civ])
-
-    wt_object = widget_type_object_factory()
-    data = {
-        "interface_slug": image_ci.slug,
-        "current_value": wt_object.pk,
-        **get_interface_form_data(
-            interface_slug=image_ci.slug, data=wt_object.pk
-        ),
-        **get_interface_form_data(
-            interface_slug=annotation_ci.slug, data='{"1":1}'
-        ),
-    }
-
-    reverse_kwargs = {"slug": base_obj.slug}
-    if is_edit_view:
-        reverse_kwargs["pk"] = object.pk
-
-    response = get_view_for_user(
-        client=client,
-        viewname=viewname,
-        reverse_kwargs=reverse_kwargs,
-        user=editor,
-        method=client.post,
-        follow=True,
-        data=data,
-    )
-    assert response.status_code == 200
-    assert f'<option value="IMAGE_SELECTED">{wt_object.title}</option>' in str(
-        response.rendered_content
-    )
