@@ -5,11 +5,17 @@ from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.blogs.filters import BlogFilter
-from grandchallenge.blogs.forms import AuthorsForm, PostForm, PostUpdateForm
+from grandchallenge.blogs.forms import (
+    AuthorsForm,
+    PostContentUpdateForm,
+    PostForm,
+    PostMetaDataUpdateForm,
+)
 from grandchallenge.blogs.models import Post
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
 from grandchallenge.groups.views import UserGroupUpdateMixin
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
 class AuthorFormKwargsMixin:
@@ -38,6 +44,15 @@ class PostCreate(
     permission_required = "blogs.add_post"
     raise_exception = True
 
+    def get_success_url(self):
+        """On successful creation, go to content update."""
+        return reverse(
+            "blogs:content-update",
+            kwargs={
+                "slug": self.object.slug,
+            },
+        )
+
 
 class PostList(FilterMixin, ListView):
     model = Post
@@ -56,16 +71,30 @@ class PostDetail(DetailView):
         return qs
 
 
-class PostUpdate(
+class PostMetaDataUpdate(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     AuthorFormKwargsMixin,
     UpdateView,
 ):
     model = Post
-    form_class = PostUpdateForm
+    form_class = PostMetaDataUpdateForm
     permission_required = "blogs.change_post"
     raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+
+class PostContentUpdate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    UpdateView,
+):
+    model = Post
+    form_class = PostContentUpdateForm
+    template_name = "blogs/post_content_update.html"
+    permission_required = "blogs.change_post"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
 
 
 class AuthorsUpdate(UserGroupUpdateMixin):

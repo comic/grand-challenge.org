@@ -65,9 +65,15 @@
                     </div>
 		{% endif %}
                 <p>
-                    <a href="{% url "blogs:update" slug=object.slug %}"
+                    <a href="{% url "blogs:content-update" slug=object.slug %}"
                        class="btn btn-primary">
                         <i class="fa fa-edit"></i> Edit post
+                    </a>
+                </p>
+                <p>
+                    <a href="{% url "blogs:metadata-update" slug=object.slug %}"
+                        class="btn btn-primary">
+                     <i class="fa fa-tools"></i> Edit metadata
                     </a>
                 </p>
             {% endif %}
