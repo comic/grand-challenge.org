@@ -5,11 +5,11 @@
         id="widgetSelect-{{ widget.name }}"
         hx-get="{% url 'cases:select-image-widget' %}"
         hx-target="#area-{{ widget.name }}"
-        hx-trigger="widgetSelected, change"
+        hx-trigger="widgetSelected, change, load"
         hx-include="[id='values-{{ widget.name }}']"
 >
     {% if widget.attrs.current_value %}
-        <option value="{{ widget.attrs.current_value.image.pk }}">{{ widget.attrs.current_value }}</option>
+        <option value="{{ widget.attrs.widget_choices.IMAGE_SELECTED }}">{{ widget.attrs.current_value.title }}</option>
     {% else %}
         <option value="{{ widget.attrs.widget_choices.UNDEFINED }}">Choose data source...</option>
     {% endif %}
@@ -20,7 +20,7 @@
 <div id="values-{{ widget.name }}">
     <input type="hidden" name="interface_slug" value="{{ widget.name }}">
     <input type="hidden" name="help_text" value="{{ widget.attrs.help_text }}">
-    <input type="hidden" name="current_value" value="{{ widget.attrs.current_value.image.pk }}">
+    <input type="hidden" name="current_value" value="{{ widget.attrs.current_value.pk }}">
 </div>
 
 <div class="mt-3" id="area-{{ widget.name }}"></div>

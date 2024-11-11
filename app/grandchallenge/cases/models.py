@@ -434,6 +434,10 @@ class Image(UUIDModel):
         return f"Image {self.name} {self.shape_without_color}"
 
     @property
+    def title(self):
+        return self.name
+
+    @property
     def shape_without_color(self) -> list[int]:
         """
         Return the shape of the image without the color channel.

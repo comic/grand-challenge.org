@@ -1,5 +1,6 @@
 import pytest
 from django.core.exceptions import ValidationError
+from django.utils.html import format_html
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.cases.widgets import FlexibleImageField, WidgetChoices
@@ -148,6 +149,36 @@ def test_flexible_image_widget(client):
     )
     assert response3.content == b""
 
+    image = ImageFactory()
+    response4 = get_view_for_user(
+        viewname="cases:select-image-widget",
+        client=client,
+        user=user,
+        data={
+            f"WidgetChoice-{ci.slug}": WidgetChoices.IMAGE_SELECTED.name,
+            "interface_slug": ci.slug,
+            "current_value": image.pk,
+        },
+    )
+    assert format_html(
+        '<input type="hidden" name="{}" value="{}">', ci.slug, image.pk
+    ) in str(response4.content)
+
+    user_upload = UserUploadFactory()
+    response5 = get_view_for_user(
+        viewname="cases:select-image-widget",
+        client=client,
+        user=user,
+        data={
+            f"WidgetChoice-{ci.slug}": WidgetChoices.IMAGE_SELECTED.name,
+            "interface_slug": ci.slug,
+            "current_value": user_upload.pk,
+        },
+    )
+    assert format_html(
+        '<input type="hidden" name="{}" value="{}">', ci.slug, user_upload.pk
+    ) in str(response5.content)
+
 
 @pytest.mark.django_db
 def test_flexible_image_widget_prepopulated_value():
@@ -156,5 +187,5 @@ def test_flexible_image_widget_prepopulated_value():
     ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
     civ = ComponentInterfaceValueFactory(interface=ci, image=im)
     field = InterfaceFormField(instance=ci, user=user, initial=civ)
-    assert field.field.widget.attrs["current_value"] == civ
+    assert field.field.widget.attrs["current_value"] == civ.image
     assert field.field.initial == civ.image.pk

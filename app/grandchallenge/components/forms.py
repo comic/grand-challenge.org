@@ -125,13 +125,19 @@ class MultipleCIVForm(Form):
         for slug in base_obj.values_for_interfaces.keys():
             current_value = None
 
-            if instance:
+            interface = ComponentInterface.objects.filter(slug=slug).get()
+            prefixed_interface_slug = f"{INTERFACE_FORM_FIELD_PREFIX}{slug}"
+
+            if prefixed_interface_slug in self.data:
+                if interface.kind == ComponentInterface.Kind.ANY:
+                    current_value = self.data.getlist(prefixed_interface_slug)
+                else:
+                    current_value = self.data[prefixed_interface_slug]
+
+            if not current_value and instance:
                 current_value = instance.values.filter(
                     interface__slug=slug
                 ).first()
-
-            interface = ComponentInterface.objects.filter(slug=slug).get()
-            prefixed_interface_slug = f"{INTERFACE_FORM_FIELD_PREFIX}{slug}"
 
             if (
                 interface.requires_file
@@ -166,9 +172,16 @@ class MultipleCIVForm(Form):
                 interface = ComponentInterface.objects.filter(
                     slug=interface_slug
                 ).get()
+
+                current_value = None
+                if interface.kind == ComponentInterface.Kind.ANY:
+                    current_value = self.data.getlist(slug)
+                else:
+                    current_value = self.data[slug]
+
                 self.fields[slug] = InterfaceFormField(
                     instance=interface,
-                    initial=None,
+                    initial=current_value,
                     required=False,
                     user=self.user,
                     form_data=self.data,

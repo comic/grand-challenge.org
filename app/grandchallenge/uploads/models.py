@@ -80,6 +80,10 @@ class UserUpload(UUIDModel):
             self.assign_permissions()
 
     @property
+    def title(self):
+        return self.filename
+
+    @property
     def _client(self):
         return _UPLOADS_CLIENT
 

@@ -3,6 +3,7 @@ from operator import or_
 
 from django.conf import settings
 from django.db.models import Q
+from django.forms import HiddenInput
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
@@ -37,6 +38,7 @@ from grandchallenge.core.guardian import (
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.subdomains.utils import reverse_lazy
+from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadMultipleWidget
 from grandchallenge.workstations.models import Workstation
 
@@ -142,11 +144,30 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
                 },
             )
             return HttpResponse(html_content)
-        elif current_value and Image.objects.filter(pk=current_value).exists():
-            # this can happen on the display set update view, where one of the options
-            # is the current image, this enables switching back from one of the
-            # above widgets to the chosen image
-            return HttpResponse()
+        elif (
+            widget_name == WidgetChoices.IMAGE_SELECTED.name
+            and current_value
+            and (
+                Image.objects.filter(pk=current_value).exists()
+                or UserUpload.objects.filter(pk=current_value).exists()
+            )
+        ):
+            # this can happen on the display set update view or redisplay of
+            # form upon validation, where one of the options is the current
+            # image, this enables switching back from one of the above widgets
+            # to the chosen image. This make sure the form element with the
+            # right name is available on resubmission.
+            html_content = render_to_string(
+                HiddenInput.template_name,
+                {
+                    "widget": {
+                        "name": interface,
+                        "value": current_value,
+                        "type": "hidden",
+                    },
+                },
+            )
+            return HttpResponse(html_content)
         elif widget_name == WidgetChoices.UNDEFINED.name:
             # this happens when switching back from one of the
             # above widgets to the "Choose data source" option
