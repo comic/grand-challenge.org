@@ -47,21 +47,23 @@ def test_interface_form_field_image_queryset_filter():
 
 
 @pytest.mark.parametrize(
-    "form_class,base_object_factory",
+    "form_class,base_object_factory,extra_form_kwargs",
     (
         (
             DisplaySetCreateForm,
             ReaderStudyFactory,
+            {"order": 1},
         ),
         (
             ArchiveItemCreateForm,
             ArchiveFactory,
+            {},
         ),
     ),
 )
 @pytest.mark.django_db
 def test_image_widget_current_value_in_archive_item_and_display_set_create_forms(
-    form_class, base_object_factory
+    form_class, base_object_factory, extra_form_kwargs
 ):
     user = UserFactory()
     image_ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
@@ -78,7 +80,7 @@ def test_image_widget_current_value_in_archive_item_and_display_set_create_forms
         instance=None,
         base_obj=base_object_factory(),
         data={
-            "order": 1,
+            **extra_form_kwargs,
             **get_interface_form_data(
                 interface_slug=image_ci.slug, data=image.pk, existing_data=True
             ),
@@ -97,7 +99,7 @@ def test_image_widget_current_value_in_archive_item_and_display_set_create_forms
         instance=None,
         base_obj=base_object_factory(),
         data={
-            "order": 1,
+            **extra_form_kwargs,
             **get_interface_form_data(
                 interface_slug=image_ci.slug, data=user_upload.pk
             ),
@@ -113,21 +115,23 @@ def test_image_widget_current_value_in_archive_item_and_display_set_create_forms
 
 
 @pytest.mark.parametrize(
-    "form_class,object_factory",
+    "form_class,object_factory,extra_form_kwargs",
     (
         (
             DisplaySetUpdateForm,
             DisplaySetFactory,
+            {"order": 1},
         ),
         (
             ArchiveItemUpdateForm,
             ArchiveItemFactory,
+            {},
         ),
     ),
 )
 @pytest.mark.django_db
 def test_image_widget_current_value_in_archive_item_and_display_set_update_forms(
-    form_class, object_factory
+    form_class, object_factory, extra_form_kwargs
 ):
     user = UserFactory()
     image_ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
@@ -152,7 +156,7 @@ def test_image_widget_current_value_in_archive_item_and_display_set_update_forms
         instance=instance,
         base_obj=instance.base_object,
         data={
-            "order": 1,
+            **extra_form_kwargs,
             **get_interface_form_data(
                 interface_slug=image_ci.slug,
                 data=image2.pk,
@@ -173,7 +177,7 @@ def test_image_widget_current_value_in_archive_item_and_display_set_update_forms
         instance=instance,
         base_obj=instance.base_object,
         data={
-            "order": 1,
+            **extra_form_kwargs,
             **get_interface_form_data(
                 interface_slug=image_ci.slug, data=user_upload.pk
             ),
