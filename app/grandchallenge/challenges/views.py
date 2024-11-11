@@ -4,15 +4,8 @@ from django.contrib.auth.mixins import AccessMixin, PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import F, Prefetch, Q
 from django.http import HttpResponse
-from django.template.response import TemplateResponse
 from django.utils.html import format_html
-from django.views.generic import (
-    CreateView,
-    DetailView,
-    ListView,
-    TemplateView,
-    UpdateView,
-)
+from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.viewsets import ReadOnlyModelViewSet
@@ -199,6 +192,7 @@ class ChallengeRequestDetail(
         context.update(
             {
                 "fields": fields,
+                "num_support_years": settings.CHALLENGE_NUM_SUPPORT_YEARS,
             }
         )
         return context
@@ -275,91 +269,6 @@ class ChallengeCostOverview(
             .order_by(
                 F("most_recent_submission_datetime").desc(nulls_last=True)
             )
-        )
-
-
-class ChallengeCostCalculation(
-    LoginRequiredMixin, VerificationRequiredMixin, TemplateView
-):
-    template_name = "challenges/challenge_cost.html"
-
-    def get(self, request, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
-        try:
-            number_of_tasks = int(request.GET.get("number_of_tasks"))
-            average_size_of_test_image_in_mb = int(
-                request.GET.get("average_size_of_test_image_in_mb")
-            )
-            inference_time_limit_in_minutes = int(
-                request.GET.get("inference_time_limit_in_minutes")
-            )
-            phase_1_number_of_test_images = int(
-                request.GET.get("phase_1_number_of_test_images")
-            )
-            phase_2_number_of_test_images = int(
-                request.GET.get("phase_2_number_of_test_images")
-            )
-            phase_1_number_of_submissions_per_team = int(
-                request.GET.get("phase_1_number_of_submissions_per_team")
-            )
-            phase_2_number_of_submissions_per_team = int(
-                request.GET.get("phase_2_number_of_submissions_per_team")
-            )
-            expected_number_of_teams = int(
-                request.GET.get("expected_number_of_teams")
-            )
-            challenge_request = ChallengeRequest(
-                number_of_tasks=number_of_tasks,
-                average_size_of_test_image_in_mb=average_size_of_test_image_in_mb,
-                expected_number_of_teams=expected_number_of_teams,
-                inference_time_limit_in_minutes=inference_time_limit_in_minutes,
-                phase_1_number_of_test_images=phase_1_number_of_test_images,
-                phase_2_number_of_test_images=phase_2_number_of_test_images,
-                phase_1_number_of_submissions_per_team=phase_1_number_of_submissions_per_team,
-                phase_2_number_of_submissions_per_team=phase_2_number_of_submissions_per_team,
-            )
-
-            context.update(
-                {
-                    "object": challenge_request,
-                    "num_support_years": settings.CHALLENGE_NUM_SUPPORT_YEARS,
-                }
-            )
-
-            if (
-                phase_1_number_of_test_images > 1000
-                or phase_2_number_of_test_images > 1000
-            ):
-                context["image_warning"] = format_html(
-                    (
-                        "You specified more than 1000 test images in one or both of your phases. "
-                        "Be reminded that Grand Challenge starts a separate algorithm job per image. "
-                        "When the images are small, it is better to <a href='{}'>bundle them into sets of images</a>."
-                    ),
-                    "https://grand-challenge.org/documentation/create-your-own-challenge/#budget-batched-images",
-                )
-
-            if inference_time_limit_in_minutes < 5:
-                context["runtime_warning"] = (
-                    "You specified an average algorithm job run time of less than 5 minutes. "
-                    "This is unrealistic since this time includes i/o operations, "
-                    "model loading and preprocessing next to the actual algorithm run time. "
-                    "In our experience, a reasonable lower limit is 5 minutes."
-                )
-
-            if average_size_of_test_image_in_mb > 10000:
-                context["image_size_warning"] = (
-                    "The maximum image size is 10GB."
-                )
-        except (ValueError, TypeError):
-            context["error"] = (
-                "You need to fill in all the fields in the cost estimate box to calculate the costs."
-            )
-
-        return TemplateResponse(
-            request=request,
-            template=self.template_name,
-            context=context,
         )
 
 

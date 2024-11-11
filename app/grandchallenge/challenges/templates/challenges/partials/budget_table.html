@@ -1,4 +1,5 @@
 {% load url %}
+{% load naturaldelta %}
 
 <p>
 Based on the following information provided by the challenge requester:
@@ -11,13 +12,39 @@ Based on the following information provided by the challenge requester:
     {% endfor %}
 </ul>
 
+{% if object.phase_1_number_of_test_images > 1000 or object.phase_2_number_of_test_images > 1000 %}
+    <div class="bg-warning rounded text-whit p-3 my-3"><i class="fa fa-exclamation-circle" aria-hidden="true"></i>
+        The user specified more than 1000 images in one or both phases. Grand Challenge starts one algorithm job per image. Consider batching them to limit costs and overhead.
+    </div>
+{% endif %}
+
 <div class="table-responsive">
     <table class="table table-hover table-sm">
         {% for field, value in object.budget.items %}
-            <tr {% if "Total" in field %}class="table-light"{% endif %}>
-                <td class="font-weight-bold">{{ field }}</td>
-                <td>€&nbsp;{{ value }}</td>
+            <tr class="{% if "Total" in field or "Base" in field %}table-light{% endif %}">
+                <td class="col-5 font-weight-bold">{{ field }}</td>
+                <td class="col-7 text-right">{{ value }} €</td>
             </tr>
         {% endfor %}
+        <tr class="table-info">
+            <td class="col-5 font-weight-bold">Total to be invoiced</td>
+            <td class="col-7 text-right font-weight-bold">{{ object.total_challenge_cost }}</td>
+        </tr>
+        <tr>
+            <td class="col-5 font-weight-bold">Total number of submissions to the challenge</td>
+            <td class="col-7 text-right">{{ object.total_num_submissions }}
+                {% if object.total_num_submissions > 500 %}
+                    <br><small class="text-danger">This is an unusually high number of submissions. Reconsider the number of submissions for each phase. </small>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td class="col-5 font-weight-bold">Total data stored for {{ num_support_years }} year{{ num_support_years|pluralize }}</td>
+            <td class="col-7 text-right">{{ object.total_data_and_docker_storage_bytes|naturalsize }}</td>
+        </tr>
+        <tr>
+            <td class="col-5 font-weight-bold">Total estimated on-demand GPU time</td>
+            <td class="col-7 text-right">{{ object.total_compute_time|naturaldelta }}</td>
+        </tr>
     </table>
 </div>

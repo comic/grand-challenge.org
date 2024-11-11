@@ -1234,13 +1234,16 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             return settings.CHALLENGE_BASE_COST_IN_EURO
 
     @property
-    def total_euros(self):
+    def total_storage_and_compute(self):
         return (
             self.phase_1_total_euros
             + self.phase_2_total_euros
             + self.docker_storage_costs_euros
-            + self.base_cost_euros
         )
+
+    @property
+    def total_euros(self):
+        return self.total_storage_and_compute + self.base_cost_euros
 
     @cached_property
     def budget(self):
@@ -1258,6 +1261,29 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             }
         except TypeError:
             return None
+
+    @property
+    def storage_and_compute_cost_surplus(self):
+        return max(
+            self.total_storage_and_compute
+            - settings.CHALLENGE_MINIMAL_COMPUTE_AND_STORAGE_IN_EURO,
+            0,
+        )
+
+    @property
+    def total_challenge_cost(self):
+        if self.storage_and_compute_cost_surplus == 0:
+            return 6000
+        else:
+            nr_of_packs = math.ceil(
+                self.storage_and_compute_cost_surplus
+                / settings.CHALLENGE_ADDITIONAL_COMPUTE_AND_STORAGE_PACK_SIZE_IN_EURO
+            )
+            return (
+                6000
+                + nr_of_packs
+                * settings.CHALLENGE_ADDITIONAL_COMPUTE_AND_STORAGE_PACK_SIZE_IN_EURO
+            )
 
 
 class ChallengeRequestUserObjectPermission(UserObjectPermissionBase):

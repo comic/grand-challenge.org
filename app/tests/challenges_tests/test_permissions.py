@@ -35,21 +35,9 @@ def test_request_challenge_only_when_verified(client):
         client=client, viewname="challenges:requests-create", user=user
     )
     assert response.status_code == 403
-    response = get_view_for_user(
-        client=client,
-        viewname="challenges:requests-cost-calculation",
-        user=user,
-    )
-    assert response.status_code == 403
     Verification.objects.create(user=user, is_verified=True)
     response = get_view_for_user(
         client=client, viewname="challenges:requests-create", user=user
-    )
-    assert response.status_code == 200
-    response = get_view_for_user(
-        client=client,
-        viewname="challenges:requests-cost-calculation",
-        user=user,
     )
     assert response.status_code == 200
 
