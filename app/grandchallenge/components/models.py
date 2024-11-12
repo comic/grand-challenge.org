@@ -52,6 +52,7 @@ from grandchallenge.components.tasks import (
     validate_docker_image,
 )
 from grandchallenge.components.validators import (
+    validate_newick,
     validate_no_slash_at_ends,
     validate_safe_path,
 )
@@ -1451,6 +1452,9 @@ class ComponentInterfaceValue(models.Model):
             except JSONDecodeError as e:
                 raise ValidationError(e)
             self.interface.validate_against_schema(value=value)
+        elif self.interface.kind == InterfaceKindChoices.NEWICK:
+            validate_newick(tree=user_upload.read_object())
+
         self._user_upload_validated = True
 
     def update_size_in_storage(self):

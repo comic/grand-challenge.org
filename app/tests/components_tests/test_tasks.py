@@ -13,6 +13,7 @@ from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.models import (
     ComponentInterfaceValue,
     ImportStatusChoices,
+    InterfaceKind,
 )
 from grandchallenge.components.tasks import (
     _get_image_config_and_sha256,
@@ -645,6 +646,56 @@ def test_add_file_to_object_updates_job_on_validation_fail(
         "JSON does not fulfill schema: instance is not of type 'array'"
         in str(obj.detailed_error_message)
     )
+    assert "some_async_task" not in str(callbacks)
+
+
+@pytest.mark.django_db
+def test_add_file_to_object_validates_newick(
+    settings,
+    django_capture_on_commit_callbacks,
+    mocker,
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    creator = UserFactory()
+    obj = AlgorithmJobFactory(time_limit=10)
+    linked_task = some_async_task.signature(
+        kwargs={"foo": "bar"}, immutable=True
+    )
+
+    us = UserUploadFactory(filename="file.newick", creator=creator)
+    presigned_urls = us.generate_presigned_urls(part_numbers=[1])
+    response = put(presigned_urls["1"], data=b"();")
+    us.complete_multipart_upload(
+        parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
+    )
+    us.save()
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.NEWICK,
+        store_in_database=False,
+    )
+
+    mock_validate_newick = mocker.patch(
+        "grandchallenge.components.models.validate_newick"
+    )
+
+    # Sanity
+    mock_validate_newick.assert_not_called()
+    assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 0
+
+    with django_capture_on_commit_callbacks(execute=True) as callbacks:
+        add_file_to_object(
+            app_label=obj._meta.app_label,
+            model_name=obj._meta.model_name,
+            object_pk=obj.pk,
+            user_upload_pk=us.pk,
+            interface_pk=ci.pk,
+            linked_task=linked_task,
+        )
+
+    mock_validate_newick.assert_called_once()
+    assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 1
     assert "some_async_task" not in str(callbacks)
 
 
