@@ -63,8 +63,16 @@ from tests.components_tests.factories import ComponentInterfaceFactory
         ),
     ),
 )
+@pytest.mark.parametrize(
+    "overlay_type",
+    (
+        InterfaceKindChoices.SEGMENTATION,
+        InterfaceKindChoices.HEAT_MAP,
+        InterfaceKindChoices.DISPLACEMENT_FIELD,
+    ),
+)
 def test_generate_view_content_example(
-    number_of_images, number_of_overlays, expected_example
+    number_of_images, number_of_overlays, expected_example, overlay_type
 ):
 
     for i in range(number_of_images):
@@ -74,7 +82,7 @@ def test_generate_view_content_example(
 
     for i in range(number_of_overlays):
         ComponentInterfaceFactory(
-            kind=InterfaceKindChoices.SEGMENTATION,
+            kind=overlay_type,
             title=f"test-ci-overlay-{i}",
         )
 
