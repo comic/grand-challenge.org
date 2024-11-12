@@ -1,0 +1,11 @@
+{% extends "blogs/post_form.html" %}
+{% load crispy from crispy_forms_tags %}
+
+{% block container %}container-fluid{% endblock %}
+
+{% block outer_content %}
+
+    <h2>Update Post</h2>
+
+    {% crispy form %}
+{% endblock %}

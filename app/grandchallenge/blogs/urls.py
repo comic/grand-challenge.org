@@ -2,10 +2,11 @@ from django.urls import path
 
 from grandchallenge.blogs.views import (
     AuthorsUpdate,
+    PostContentUpdate,
     PostCreate,
     PostDetail,
     PostList,
-    PostUpdate,
+    PostMetaDataUpdate,
 )
 
 app_name = "blogs"
@@ -19,5 +20,14 @@ urlpatterns = [
         name="authors-update",
     ),
     path("<slug>/", PostDetail.as_view(), name="detail"),
-    path("<slug>/update/", PostUpdate.as_view(), name="update"),
+    path(
+        "<slug>/metadata-update/",
+        PostMetaDataUpdate.as_view(),
+        name="metadata-update",
+    ),
+    path(
+        "<slug>/content-update/",
+        PostContentUpdate.as_view(),
+        name="content-update",
+    ),
 ]
