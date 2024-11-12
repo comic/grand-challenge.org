@@ -5,9 +5,16 @@ class UserUploadWidgetMixin:
     template_name = "uploads/widget.html"
     input_type = None
 
-    def __init__(self, *args, allowed_file_types=None, **kwargs):
+    def __init__(
+        self,
+        *args,
+        allowed_file_types=None,
+        allowed_file_extensions=None,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
-        self.allowed_file_types = allowed_file_types
+        self.allowed_file_types = allowed_file_types or []
+        self.allowed_file_extensions = allowed_file_extensions or []
 
     def get_context(self, *args, **kwargs):
         context = super().get_context(*args, **kwargs)
@@ -15,7 +22,7 @@ class UserUploadWidgetMixin:
         context["widget"]["attrs"]["id"] = widget_id
         context["widget"]["allowed_file_types"] = {
             "id": f"{widget_id}AllowedFileTypes",
-            "value": self.allowed_file_types,
+            "value": [*self.allowed_file_types, *self.allowed_file_extensions],
         }
         return context
 

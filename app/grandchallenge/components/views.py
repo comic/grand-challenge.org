@@ -458,7 +458,8 @@ class FileUploadFormFieldView(LoginRequiredMixin, AccessMixin, View):
             UserUploadMultipleWidget.template_name,
             {
                 "widget": UserUploadMultipleWidget(
-                    allowed_file_types=self.interface.file_mimetypes
+                    allowed_file_types=self.interface.file_mimetypes,
+                    allowed_file_extensions=self.interface.file_extensions,
                 ).get_context(
                     name=widget_name,
                     value=None,

@@ -145,6 +145,7 @@ class InterfaceKindChoices(models.TextChoices):
     THUMBNAIL_PNG = "PNG", _("Thumbnail png")
     OBJ = "OBJ", _("OBJ file")
     MP4 = "MP4", _("MP4 file")
+    NEWICK = "NEWCK", _("Newick tree-format file")
 
     # Legacy support
     CSV = "CSV", _("CSV file")
@@ -270,6 +271,7 @@ class InterfaceKind:
         * Thumbnail PNG
         * OBJ file
         * MP4 file
+        * Newick file
         """
         return {
             InterfaceKind.InterfaceKindChoices.CSV,
@@ -280,6 +282,7 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
             InterfaceKind.InterfaceKindChoices.OBJ,
             InterfaceKind.InterfaceKindChoices.MP4,
+            InterfaceKind.InterfaceKindChoices.NEWICK,
         }
 
     @staticmethod
@@ -300,6 +303,7 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.CSV,
             InterfaceKind.InterfaceKindChoices.ZIP,
             InterfaceKind.InterfaceKindChoices.OBJ,
+            InterfaceKind.InterfaceKindChoices.NEWICK,
         }
 
 
@@ -534,7 +538,7 @@ class ComponentInterface(OverlaySegmentsMixin):
             return forms.JSONField
 
     @property
-    def file_mimetypes(self):
+    def file_mimetypes(self):  # noqa:C901
         if self.kind == InterfaceKind.InterfaceKindChoices.CSV:
             return (
                 "application/csv",
@@ -565,8 +569,26 @@ class ComponentInterface(OverlaySegmentsMixin):
             )
         elif self.kind == InterfaceKind.InterfaceKindChoices.MP4:
             return ("video/mp4",)
+        elif self.kind == InterfaceKind.InterfaceKindChoices.NEWICK:
+            return ("text/plain", "application/octet-stream")
         else:
             raise RuntimeError(f"Unknown kind {self.kind}")
+
+    @property
+    def file_extensions(self):
+        return (self.file_extension,)
+
+    @property
+    def file_extension(self):
+        if self.is_json_kind:
+            return ".json"
+
+        if self.is_file_kind:
+            if self.kind == InterfaceKind.InterfaceKindChoices.NEWICK:
+                return ".newick"
+            return f".{self.kind.lower()}"
+
+        raise RuntimeError(f"Unknown kind {self.kind}")
 
     def create_instance(self, *, image=None, value=None, fileobj=None):
         civ = ComponentInterfaceValue.objects.create(interface=self)
@@ -633,14 +655,11 @@ class ComponentInterface(OverlaySegmentsMixin):
             )
 
     def _clean_relative_path(self):
-        if self.is_json_kind:
-            if not self.relative_path.endswith(".json"):
-                raise ValidationError("Relative path should end with .json")
-        elif self.is_file_kind and not self.relative_path.endswith(
-            f".{self.kind.lower()}"
-        ):
+        if (
+            self.is_file_kind or self.is_json_kind
+        ) and not self.relative_path.endswith(self.file_extension):
             raise ValidationError(
-                f"Relative path should end with .{self.kind.lower()}"
+                f"Relative path should end with {self.file_extension}"
             )
 
         if self.is_image_kind:
@@ -1216,6 +1235,7 @@ class ComponentInterfaceValue(models.Model):
                     ".sqreg",
                     ".obj",
                     ".mp4",
+                    ".newick",
                 )
             ),
             MimeTypeValidator(
