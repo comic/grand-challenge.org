@@ -69,6 +69,7 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.components.serializers import ComponentInterfaceSerializer
 from grandchallenge.components.tasks import assign_tarball_from_upload
+from grandchallenge.components.utils import generate_view_content_example
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
@@ -379,14 +380,15 @@ class AlgorithmForm(
         ]
 
         if self.instance:
-            interface_slugs = (
-                (self.instance.inputs.all() | self.instance.outputs.all())
-                .distinct()
-                .values_list("slug", flat=True)
-            )
+            interfaces = (
+                self.instance.inputs.all() | self.instance.outputs.all()
+            ).distinct()
+            interface_slugs = interfaces.values_list("slug", flat=True)
+
             self.fields["view_content"].help_text += (
                 " The following interfaces are used in your algorithm: "
-                f"{oxford_comma(interface_slugs)}."
+                f"{oxford_comma(interface_slugs)}. "
+                f"Example usage: {generate_view_content_example(interfaces)}."
             )
 
 
