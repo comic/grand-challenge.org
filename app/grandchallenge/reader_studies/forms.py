@@ -41,7 +41,8 @@ from grandchallenge.components.forms import (
     CIVSetUpdateFormMixin,
     MultipleCIVForm,
 )
-from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.models import ComponentInterface, InterfaceKind
+from grandchallenge.components.utils import generate_view_content_example
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
@@ -50,6 +51,7 @@ from grandchallenge.core.forms import (
     WorkstationUserFilterMixin,
 )
 from grandchallenge.core.layout import Formset
+from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.widgets import (
     ColorEditorWidget,
     JSONEditorWidget,
@@ -69,7 +71,7 @@ from grandchallenge.reader_studies.models import (
     ReaderStudy,
     ReaderStudyPermissionRequest,
 )
-from grandchallenge.subdomains.utils import reverse_lazy
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.workstation_configs.models import OVERLAY_SEGMENTS_SCHEMA
 
 logger = logging.getLogger(__name__)
@@ -256,16 +258,37 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        interface_slugs = (
-            self.instance.display_sets.exclude(values__isnull=True)
-            .values_list("values__interface__slug", flat=True)
-            .order_by()
-            .distinct()
-        )
-        self.fields["view_content"].help_text += (
-            " The following interfaces are used in your reader study: "
-            f"{', '.join(interface_slugs)}."
-        )
+
+        if self.instance:
+            interfaces = (
+                ComponentInterface.objects.filter(
+                    componentinterfacevalue__in=self.instance.display_sets.exclude(
+                        values__isnull=True
+                    ).values_list(
+                        "values", flat=True
+                    )
+                )
+                .order_by()
+                .distinct()
+            )
+
+            non_image_interfaces = interfaces.exclude(
+                kind__in=InterfaceKind.interface_type_image()
+            )
+            interface_slugs = non_image_interfaces.values_list(
+                "slug", flat=True
+            )
+
+            self.fields["view_content"].help_text = format_lazy(
+                (
+                    "The following interfaces are used in your reader study: {}. "
+                    "Example usage: {}. "
+                    'Refer to the <a href="{}">documentation</a> for more information'
+                ),
+                oxford_comma(interface_slugs),
+                generate_view_content_example(interfaces),
+                reverse("documentation:detail", args=["viewer-content"]),
+            )
 
 
 class ReaderStudyCopyForm(Form):
