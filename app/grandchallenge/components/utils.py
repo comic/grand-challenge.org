@@ -14,6 +14,10 @@ def generate_view_content_example(interfaces):
         .order_by("slug")
         .values_list("slug", flat=True)
     )
+
+    if not images:
+        return None
+
     overlays = list(
         interfaces.filter(
             kind__in=[
@@ -26,15 +30,20 @@ def generate_view_content_example(interfaces):
         .values_list("slug", flat=True)
     )
     view_content_example = {}
+    overlays_per_image = len(overlays) // len(images)
+    remaining_overlays = len(overlays) % len(images)
 
     for port in ViewportNames.values:
         if len(images) == 0:
             break
 
         view_content_example[port] = [images.pop(0)]
-        if len(overlays) > 0:
+        for _ in range(overlays_per_image):
             view_content_example[port].append(overlays.pop(0))
+        if remaining_overlays > 0:
+            view_content_example[port].append(overlays.pop(0))
+            remaining_overlays -= 1
 
     JSONValidator(schema=VIEW_CONTENT_SCHEMA)(value=view_content_example)
 
-    return json.dumps(view_content_example) if view_content_example else None
+    return json.dumps(view_content_example)
