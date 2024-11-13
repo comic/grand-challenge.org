@@ -9,8 +9,13 @@ from machina.apps.forum_conversation.models import Topic
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.notifications.models import Notification
-from tests.factories import ChallengeFactory, UserFactory
+from tests.factories import (
+    ChallengeFactory,
+    ChallengeRequestFactory,
+    UserFactory,
+)
 from tests.notifications_tests.factories import TopicFactory
+from tests.organizations_tests.factories import OrganizationFactory
 
 
 @pytest.mark.django_db
@@ -99,3 +104,29 @@ def test_non_posters_notified(group):
 def test_is_active_until_set():
     c = ChallengeFactory()
     assert c.is_active_until == today().date() + relativedelta(months=12)
+
+
+@pytest.mark.django_db
+def test_total_challenge_cost():
+    user_exempt_from_base_cost, normal_user = UserFactory.create_batch(2)
+    request1 = ChallengeRequestFactory(
+        creator=user_exempt_from_base_cost, expected_number_of_teams=3
+    )
+    request2 = ChallengeRequestFactory(
+        creator=normal_user, expected_number_of_teams=3
+    )
+    request3 = ChallengeRequestFactory(
+        creator=normal_user, expected_number_of_teams=10
+    )
+
+    organisation = OrganizationFactory(exempt_from_base_costs=True)
+    organisation.members_group.user_set.add(user_exempt_from_base_cost)
+
+    assert request1.storage_and_compute_cost_surplus == 0
+    assert request1.total_challenge_cost == 1000
+
+    assert request2.storage_and_compute_cost_surplus == 0
+    assert request2.total_challenge_cost == 6000
+
+    assert request3.storage_and_compute_cost_surplus == 1290
+    assert request3.total_challenge_cost == 7500

@@ -193,6 +193,8 @@ class ChallengeRequestDetail(
             {
                 "fields": fields,
                 "num_support_years": settings.CHALLENGE_NUM_SUPPORT_YEARS,
+                "minimal_storage_and_compute": settings.CHALLENGE_MINIMAL_COMPUTE_AND_STORAGE_IN_EURO,
+                "additional_capacity_pack_size": settings.CHALLENGE_ADDITIONAL_COMPUTE_AND_STORAGE_PACK_SIZE_IN_EURO,
             }
         )
         return context

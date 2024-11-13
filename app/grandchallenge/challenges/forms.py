@@ -457,55 +457,64 @@ class ChallengeRequestForm(
                 ),
                 Div(
                     HTML(
-                        "<h3 class='d-flex justify-content-center'>Compute and storage cost estimation</h3><br>"
+                        "<h3 class='d-flex justify-content-center'>"
+                        "Compute and storage cost estimation"
+                        "</h3><br>"
                     ),
                     HTML(
-                        "<p>Since challenges involve running algorithm "
-                        "containers on our AWS infrastructure on a hidden test "
-                        "set, we need to know how computationally expensive "
-                        "your challenge submissions will be and how much data "
-                        "storage your challenge requires. Please read our "
-                        "<a href="
-                        "'https://grand-challenge.org/challenge-policy-and-pricing/'"
-                        "target='_blank'>challenge pricing policy</a> before you continue. "
-                        "We will use the below information as a basis to determine "
-                        "the compute and storage costs for your challenge. "
-                        "Our reviewers will assess and adjust these numbers as necessary "
-                        "during the review process together with you, to reach a "
-                        "cost agreement that works for you. </p>"
-                        "<p> If you are unfamiliar with how challenges work on "
-                        "Grand Challenge, please <a href="
-                        "'https://grand-challenge.org/documentation/challenge-setup/'"
-                        "target='_blank'> first read our challenge documentation</a>.</p> "
-                        "<p>To help you fill in the below form correctly, "
-                        "<a href='https://grand-challenge.org/documentation/create-your-own-challenge/'"
-                        "target='_blank'> we have assembled example budgets "
-                        "here</a>. Please take a look at those before "
-                        "proceeding to fill in this form. </p><br>"
+                        format_html(
+                            (
+                                "<p>Challenge submissions require running algorithm "
+                                "containers on hidden test data, and hence require "
+                                "storage and compute capacity. Please review our "
+                                "<a href='{policy_link}' target='_blank'>"
+                                "challenge pricing policy</a> before continuing.</p>"
+                                "<p>The information you provide below will serve as "
+                                "a starting point for estimating the compute and "
+                                "storage costs for your challenge. "
+                                "Our team will review and, if necessary, adjust "
+                                "these estimates with you to establish a cost "
+                                "structure that aligns with your needs.</p>"
+                                "<p>If you are new to Grand Challenge, please "
+                                "<a href='{documentation_link}' target='_blank'> "
+                                "refer to our challenge documentation</a> "
+                                "for guidance. We have also prepared "
+                                "<a href='{link_to_examples}' target='_blank'> "
+                                "example budgets </a> to help you complete this "
+                                "form accurately.</p><br>"
+                            ),
+                            policy_link="https://grand-challenge.org/challenge-policy-and-pricing/",
+                            documentation_link="https://grand-challenge.org/documentation/challenge-setup/",
+                            link_to_examples="https://grand-challenge.org/documentation/create-your-own-challenge/#compute-and-storage-costs",
+                        )
                     ),
                     "expected_number_of_teams",
                     "number_of_tasks",
                     "average_size_of_test_image_in_mb",
                     "inference_time_limit_in_minutes",
                     HTML(
-                        "<br><p>Challenges usually consist of 2 phases. "
-                        "The first of those tends to be a "
-                        "<b>preliminary test phase</b>, "
-                        "and the second the <b>final test phase</b>. The "
-                        "number of test images used for these phases and "
-                        "often the amount of times that users can submit to "
-                        "them differs, which is why we ask for separate "
-                        "estimates for the two phases below."
-                        " Should your challenge have only one phase, enter 0 in "
-                        "all fields for phase 2. Should your challenge have "
-                        "multiple tasks and hence more than N*2 phases, "
-                        "please provide the average numbers across tasks for "
-                        "each phase below and indicate the number of "
-                        "tasks above accordingly. For examples of those"
-                        " and other scenarios, have a look "
-                        "<a href='https://grand-challenge.org/documentation/create-your-own-challenge/'"
-                        "target='_blank'>at our example cost calculations</a>"
-                        ".</p><h4>Phase 1</h4>"
+                        format_html(
+                            (
+                                "<br><p>Challenges usually consist of 2 phases: "
+                                "a <b>preliminary debug phase</b>, and "
+                                "a <b>final test phase</b>. "
+                                "The number of test images used for these "
+                                "phases and often the amount of times that "
+                                "users can submit to them differs, which is "
+                                "why we ask for separate estimates for the two "
+                                "phases below. "
+                                "Should your challenge have multiple tasks "
+                                "and hence more than 2 phases, "
+                                "please provide the average numbers across tasks for "
+                                "each phase below and indicate the number of "
+                                "tasks above accordingly. For examples of those "
+                                "and other scenarios, have a look "
+                                "<a href='{documentation_link}' target='_blank'>"
+                                "at our example cost calculations</a>"
+                                ".</p><h4>Phase 1</h4>"
+                            ),
+                            documentation_link="https://grand-challenge.org/documentation/create-your-own-challenge/",
+                        )
                     ),
                     *phase_1_items,
                     HTML("<h4>Phase 2</h4>"),

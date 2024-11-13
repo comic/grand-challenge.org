@@ -1229,9 +1229,12 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                 exempt_from_base_costs=True, members_group__user=self.creator
             ).exists()
         ):
-            return 0
+            return settings.CHALLENGE_MINIMAL_COMPUTE_AND_STORAGE_IN_EURO
         else:
-            return settings.CHALLENGE_BASE_COST_IN_EURO
+            return (
+                settings.CHALLENGE_BASE_COST_IN_EURO
+                + settings.CHALLENGE_MINIMAL_COMPUTE_AND_STORAGE_IN_EURO
+            )
 
     @property
     def total_storage_and_compute(self):
@@ -1249,7 +1252,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     def budget(self):
         try:
             return {
-                "Base cost": self.base_cost_euros,
                 "Data storage cost for phase 1": self.phase_1_data_storage_euros,
                 "Compute costs for phase 1": self.phase_1_compute_costs_euros,
                 "Total phase 1": self.phase_1_total_euros,
@@ -1273,14 +1275,14 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     @property
     def total_challenge_cost(self):
         if self.storage_and_compute_cost_surplus == 0:
-            return 6000
+            return self.base_cost_euros
         else:
             nr_of_packs = math.ceil(
                 self.storage_and_compute_cost_surplus
                 / settings.CHALLENGE_ADDITIONAL_COMPUTE_AND_STORAGE_PACK_SIZE_IN_EURO
             )
             return (
-                6000
+                self.base_cost_euros
                 + nr_of_packs
                 * settings.CHALLENGE_ADDITIONAL_COMPUTE_AND_STORAGE_PACK_SIZE_IN_EURO
             )
