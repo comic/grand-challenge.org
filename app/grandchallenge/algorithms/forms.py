@@ -65,6 +65,7 @@ from grandchallenge.components.models import (
     ComponentJob,
     GPUTypeChoices,
     ImportStatusChoices,
+    InterfaceKind,
     InterfaceKindChoices,
 )
 from grandchallenge.components.serializers import ComponentInterfaceSerializer
@@ -383,12 +384,23 @@ class AlgorithmForm(
             interfaces = (
                 self.instance.inputs.all() | self.instance.outputs.all()
             ).distinct()
-            interface_slugs = interfaces.values_list("slug", flat=True)
 
-            self.fields["view_content"].help_text += (
-                " The following interfaces are used in your algorithm: "
-                f"{oxford_comma(interface_slugs)}. "
-                f"Example usage: {generate_view_content_example(interfaces)}."
+            non_image_interfaces = interfaces.exclude(
+                kind__in=InterfaceKind.interface_type_image()
+            )
+            interface_slugs = non_image_interfaces.values_list(
+                "slug", flat=True
+            )
+
+            self.fields["view_content"].help_text = format_lazy(
+                (
+                    "The following interfaces are used in your algorithm: {}. "
+                    "Example usage: {}. "
+                    'Refer to the <a href="{}">documentation</a> for more information'
+                ),
+                oxford_comma(interface_slugs),
+                generate_view_content_example(interfaces),
+                reverse("documentation:detail", args=["viewer-content"]),
             )
 
 
