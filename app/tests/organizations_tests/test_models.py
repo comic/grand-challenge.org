@@ -13,7 +13,7 @@ def test_user_exempt_from_base_costs(settings):
 
     assert (
         request.base_cost_euros
-        == settings.CHALLENGE_BASE_COST
+        == settings.CHALLENGE_BASE_COST_IN_EURO
         + settings.CHALLENGE_MINIMAL_COMPUTE_AND_STORAGE_IN_EURO
     )
 
