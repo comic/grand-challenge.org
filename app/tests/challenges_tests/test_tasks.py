@@ -63,13 +63,12 @@ def test_challenge_request_budget_calculation(settings):
     )
 
     assert challenge_request.budget == {
-        "Base cost": 5000,
         "Compute costs for phase 1": 1960,
         "Compute costs for phase 2": 97910,
         "Data storage cost for phase 1": 10,
         "Data storage cost for phase 2": 40,
         "Docker storage cost": 4440,
-        "Total": 109360,
+        "Total across phases": 109360,
         "Total phase 1": 1970,
         "Total phase 2": 97950,
     }
@@ -85,11 +84,10 @@ def test_challenge_request_budget_calculation(settings):
         + challenge_request.budget["Compute costs for phase 1"]
     )
     assert (
-        challenge_request.budget["Total"]
+        challenge_request.budget["Total across phases"]
         == challenge_request.budget["Total phase 1"]
         + challenge_request.budget["Total phase 2"]
         + challenge_request.budget["Docker storage cost"]
-        + challenge_request.budget["Base cost"]
     )
 
     challenge_request.number_of_tasks = 2
@@ -97,13 +95,12 @@ def test_challenge_request_budget_calculation(settings):
     del challenge_request.budget
 
     assert challenge_request.budget == {
-        "Base cost": 5000,
         "Compute costs for phase 1": 3920,
         "Compute costs for phase 2": 195820,
         "Data storage cost for phase 1": 20,
         "Data storage cost for phase 2": 70,
         "Docker storage cost": 8880,
-        "Total": 213710,
+        "Total across phases": 213710,
         "Total phase 1": 3940,
         "Total phase 2": 195890,
     }
@@ -118,9 +115,8 @@ def test_challenge_request_budget_calculation(settings):
         + challenge_request.budget["Compute costs for phase 1"]
     )
     assert (
-        challenge_request.budget["Total"]
+        challenge_request.budget["Total across phases"]
         == challenge_request.budget["Total phase 1"]
         + challenge_request.budget["Total phase 2"]
         + challenge_request.budget["Docker storage cost"]
-        + challenge_request.budget["Base cost"]
     )
