@@ -23,7 +23,6 @@ from django.utils.html import format_html
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 
-from app.grandchallenge.components.utils import generate_view_content_example
 from grandchallenge.algorithms.forms import UserAlgorithmsForPhaseMixin
 from grandchallenge.algorithms.models import Job
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
@@ -35,6 +34,7 @@ from grandchallenge.components.models import (
     InterfaceKind,
 )
 from grandchallenge.components.tasks import assign_tarball_from_upload
+from grandchallenge.components.utils import generate_view_content_example
 from grandchallenge.core.forms import (
     SaveFormInitMixin,
     WorkstationUserFilterMixin,
