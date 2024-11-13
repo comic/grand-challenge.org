@@ -25,6 +25,7 @@ from grandchallenge.components.forms import (
     MultipleCIVForm,
 )
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
+from grandchallenge.components.utils import generate_view_content_example
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
@@ -33,6 +34,7 @@ from grandchallenge.core.forms import (
     WorkstationUserFilterMixin,
 )
 from grandchallenge.core.guardian import get_objects_for_user
+from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.widgets import (
     JSONEditorWidget,
     MarkdownEditorInlineWidget,
@@ -40,7 +42,7 @@ from grandchallenge.core.widgets import (
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.hanging_protocols.models import VIEW_CONTENT_SCHEMA
 from grandchallenge.reader_studies.models import ReaderStudy
-from grandchallenge.subdomains.utils import reverse_lazy
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
 class ArchiveForm(
@@ -68,15 +70,32 @@ class ArchiveForm(
             .distinct()
         )
         if self.instance:
-            interface_slugs = (
-                self.instance.items.exclude(values__isnull=True)
-                .values_list("values__interface__slug", flat=True)
+            interfaces = (
+                ComponentInterface.objects.filter(
+                    componentinterfacevalue__in=self.instance.items.exclude(
+                        values__isnull=True
+                    ).values_list("values", flat=True)
+                )
                 .order_by()
                 .distinct()
             )
-            self.fields["view_content"].help_text += (
-                " The following interfaces are used in your archive: "
-                f"{', '.join(interface_slugs)}."
+
+            non_image_interfaces = interfaces.exclude(
+                kind__in=InterfaceKind.interface_type_image()
+            )
+            interface_slugs = non_image_interfaces.values_list(
+                "slug", flat=True
+            )
+
+            self.fields["view_content"].help_text = format_lazy(
+                (
+                    "The following interfaces are used in your archive: {}. "
+                    "Example usage: {}. "
+                    'Refer to the <a href="{}">documentation</a> for more information'
+                ),
+                oxford_comma(interface_slugs),
+                generate_view_content_example(interfaces),
+                reverse("documentation:detail", args=["viewer-content"]),
             )
 
     class Meta:
