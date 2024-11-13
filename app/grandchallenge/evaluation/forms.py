@@ -23,6 +23,7 @@ from django.utils.html import format_html
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 
+from app.grandchallenge.components.utils import generate_view_content_example
 from grandchallenge.algorithms.forms import UserAlgorithmsForPhaseMixin
 from grandchallenge.algorithms.models import Job
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
@@ -31,6 +32,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     GPUTypeChoices,
     ImportStatusChoices,
+    InterfaceKind,
 )
 from grandchallenge.components.tasks import assign_tarball_from_upload
 from grandchallenge.core.forms import (
@@ -189,6 +191,29 @@ class PhaseUpdateForm(
             )
             self.fields["creator_must_be_verified"].widget = CheckboxInput(
                 attrs={"checked": True}
+            )
+
+        if self.instance:
+            interfaces = (
+                self.instance.inputs.all() | self.instance.outputs.all()
+            ).distinct()
+
+            non_image_interfaces = interfaces.exclude(
+                kind__in=InterfaceKind.interface_type_image()
+            )
+            interface_slugs = non_image_interfaces.values_list(
+                "slug", flat=True
+            )
+
+            self.fields["view_content"].help_text = format_lazy(
+                (
+                    "The following interfaces are used in your phase: {}. "
+                    "Example usage: {}. "
+                    'Refer to the <a href="{}">documentation</a> for more information'
+                ),
+                oxford_comma(interface_slugs),
+                generate_view_content_example(interfaces),
+                reverse("documentation:detail", args=["viewer-content"]),
             )
 
     class Meta:
