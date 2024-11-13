@@ -1255,7 +1255,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                 "Compute costs for phase 2": self.phase_2_compute_costs_euros,
                 "Total phase 2": self.phase_2_total_euros,
                 "Docker storage cost": self.docker_storage_costs_euros,
-                "Total": self.total_storage_and_compute,
+                "Total across phases": self.total_storage_and_compute,
             }
         except TypeError:
             return None

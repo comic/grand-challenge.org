@@ -457,9 +457,7 @@ class ChallengeRequestForm(
                 ),
                 Div(
                     HTML(
-                        "<h3 class='d-flex justify-content-center'>"
-                        "Compute and storage cost estimation"
-                        "</h3><br>"
+                        "<h3 class='d-flex justify-content-center'>Compute and storage cost estimation</h3><br>"
                     ),
                     HTML(
                         format_html(
