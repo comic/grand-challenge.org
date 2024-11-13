@@ -677,7 +677,7 @@ def test_add_file_to_object_validates_newick(
     )
 
     mock_validate_newick = mocker.patch(
-        "grandchallenge.components.models.validate_newick"
+        "grandchallenge.components.models.validate_newick_tree_format"
     )
 
     # Sanity

@@ -52,7 +52,7 @@ from grandchallenge.components.tasks import (
     validate_docker_image,
 )
 from grandchallenge.components.validators import (
-    validate_newick,
+    validate_newick_tree_format,
     validate_no_slash_at_ends,
     validate_safe_path,
 )
@@ -571,13 +571,18 @@ class ComponentInterface(OverlaySegmentsMixin):
         elif self.kind == InterfaceKind.InterfaceKindChoices.MP4:
             return ("video/mp4",)
         elif self.kind == InterfaceKind.InterfaceKindChoices.NEWICK:
-            return ("text/plain", "application/octet-stream")
+            return ("text/x-nh", "application/octet-stream")
         else:
             raise RuntimeError(f"Unknown kind {self.kind}")
 
     @property
     def file_extensions(self):
-        return (self.file_extension,)
+        exts = [self.file_extension]
+
+        if self.kind == InterfaceKind.InterfaceKindChoices.NEWICK:
+            exts.extend([".nwk", ".tree"])
+
+        return exts
 
     @property
     def file_extension(self):
@@ -1453,7 +1458,7 @@ class ComponentInterfaceValue(models.Model):
                 raise ValidationError(e)
             self.interface.validate_against_schema(value=value)
         elif self.interface.kind == InterfaceKindChoices.NEWICK:
-            validate_newick(tree=user_upload.read_object())
+            validate_newick_tree_format(tree=user_upload.read_object())
 
         self._user_upload_validated = True
 

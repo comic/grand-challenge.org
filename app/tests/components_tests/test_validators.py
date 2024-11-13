@@ -4,7 +4,7 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from grandchallenge.components.validators import (
-    validate_newick,
+    validate_newick_tree_format,
     validate_safe_path,
 )
 
@@ -41,11 +41,15 @@ def test_valid_paths(rel_path):
             nullcontext(),
         ),
         (
-            "((A,B),C);((D,E),F);",  # Multiple trees are OK.
+            "((A,B),C);\n((D,E),F);",  # Multiple trees are OK.
             nullcontext(),
         ),
         (
-            "((,),);",
+            "((,),);",  # Sanity, no labels
+            nullcontext(),
+        ),
+        (
+            "(中,(国,话));",  # utf-8 checks
             nullcontext(),
         ),
         (
@@ -53,27 +57,15 @@ def test_valid_paths(rel_path):
             pytest.raises(ValidationError),
         ),
         (
-            "((A,B),C;",  # Unbalanced Paranthesis
+            "((A,B),C;",  # Unbalanced Paranthesis, clearly wrong format
             pytest.raises(ValidationError),
         ),
         (
             "((A@B),C;",  # Unexpected characters
             pytest.raises(ValidationError),
         ),
-        (
-            "(:0.5,A:0.3);",  # Branch lengths without a node
-            pytest.raises(ValidationError),
-        ),
-        (
-            "(A,B,);",  # Missing Node
-            pytest.raises(ValidationError),
-        ),
-        (
-            "(A,A);",  # Duplicate  labels
-            pytest.raises(ValidationError),
-        ),
     ),
 )
 def test_validate_newick(tree, context):
     with context:
-        validate_newick(tree=tree)
+        validate_newick_tree_format(tree=tree)

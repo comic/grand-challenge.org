@@ -1,3 +1,4 @@
+from Bio import Phylo
 from django.core.exceptions import SuspiciousFileOperation, ValidationError
 from django.utils._os import safe_join
 
@@ -22,5 +23,15 @@ def validate_no_slash_at_ends(value):
         raise ValidationError("Path must not begin or end with '/'")
 
 
-def validate_newick(tree):
-    pass
+def validate_newick_tree_format(tree):
+    """Validates a Newick tree by passing it through a validator"""
+    parser = Phylo.NewickIO.Parser.from_string(tree)
+
+    try:
+        has_tree = False
+        for _ in parser.parse():
+            has_tree = True
+        if not has_tree:
+            raise ValueError("No tree found")
+    except Exception as e:
+        raise ValidationError("Invalid Newick tree format:", e)
