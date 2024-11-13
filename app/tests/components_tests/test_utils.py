@@ -12,7 +12,7 @@ from tests.components_tests.factories import ComponentInterfaceFactory
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "number_of_images, number_of_overlays, expected_example",
+    "number_of_images, number_of_overlays, expected_example_json",
     (
         (
             0,
@@ -56,9 +56,44 @@ from tests.components_tests.factories import ComponentInterfaceFactory
             3,
             6,
             {
-                "main": ["test-ci-image-0", "test-ci-overlay-0"],
-                "secondary": ["test-ci-image-1", "test-ci-overlay-1"],
-                "tertiary": ["test-ci-image-2", "test-ci-overlay-2"],
+                "main": [
+                    "test-ci-image-0",
+                    "test-ci-overlay-0",
+                    "test-ci-overlay-1",
+                ],
+                "secondary": [
+                    "test-ci-image-1",
+                    "test-ci-overlay-2",
+                    "test-ci-overlay-3",
+                ],
+                "tertiary": [
+                    "test-ci-image-2",
+                    "test-ci-overlay-4",
+                    "test-ci-overlay-5",
+                ],
+            },
+        ),
+        (
+            3,
+            8,
+            {
+                "main": [
+                    "test-ci-image-0",
+                    "test-ci-overlay-0",
+                    "test-ci-overlay-1",
+                    "test-ci-overlay-2",
+                ],
+                "secondary": [
+                    "test-ci-image-1",
+                    "test-ci-overlay-3",
+                    "test-ci-overlay-4",
+                    "test-ci-overlay-5",
+                ],
+                "tertiary": [
+                    "test-ci-image-2",
+                    "test-ci-overlay-6",
+                    "test-ci-overlay-7",
+                ],
             },
         ),
     ),
@@ -72,7 +107,7 @@ from tests.components_tests.factories import ComponentInterfaceFactory
     ),
 )
 def test_generate_view_content_example(
-    number_of_images, number_of_overlays, expected_example, overlay_type
+    number_of_images, number_of_overlays, expected_example_json, overlay_type
 ):
 
     for i in range(number_of_images):
@@ -95,4 +130,4 @@ def test_generate_view_content_example(
         json.loads(view_content_example) if view_content_example else None
     )
 
-    assert view_content_example_json == expected_example
+    assert view_content_example_json == expected_example_json
