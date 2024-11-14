@@ -51,21 +51,28 @@ Based on the following information provided by the challenge requester:
         <tr>
             <td class="col-9 font-weight-bold">
                 Base cost
-                <br><small class="text-dark">This covers the first {{ minimal_storage_and_compute }}€ of compute & storage + a contribution towards platform maintenance, development and support.</small>
+                <br><small class="text-dark">This covers a contribution towards platform maintenance, development and support.</small>
             </td>
             <td class="col-3 text-right font-weight-bold">{{ object.base_cost_euros }} €</td>
         </tr>
         <tr>
             <td class="col-9 font-weight-bold">
-                Additional compute and storage
-                <br><small class="text-dark">This covers compute and storage costs beyond the {{ minimal_storage_and_compute }}€ included in the base cost. We round these to the nearest {{ additional_capacity_pack_size }}€ for invoicing.</small>
+                Total compute cost
+                <br><small class="text-dark">Total compute costs adjusted based on "Total to be invoiced".</small>
             </td>
-            <td class="col-3 text-right font-weight-bold">{{ object.storage_and_compute_cost_surplus }} €</td>
+            <td class="col-3 text-right font-weight-bold">{{ object.total_compute_to_be_invoiced }} €</td>
+        </tr>
+        <tr>
+            <td class="col-9 font-weight-bold">
+                Total storage cost
+                <br><small class="text-dark">Total storage costs adjusted based on "Total to be invoiced".</small>
+            </td>
+            <td class="col-3 text-right font-weight-bold">{{ object.total_storage_to_be_invoiced }} €</td>
         </tr>
         <tr class="table-info">
             <td class="col-9 font-weight-bold">
                 Total to be invoiced
-                <br><small class="text-dark">Base cost + additional compute and storage rounded to the nearest {{ additional_capacity_pack_size }}€</small>
+                <br><small class="text-dark">Base cost + initial compute and storage ({{ minimal_storage_and_compute }}€) + additional compute and storage rounded to the nearest {{ additional_capacity_pack_size }}€</small>
             </td>
             <td class="col-3 text-right font-weight-bold">{{ object.total_challenge_cost }} €</td>
         </tr>

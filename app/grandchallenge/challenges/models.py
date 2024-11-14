@@ -1229,15 +1229,12 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                 exempt_from_base_costs=True, members_group__user=self.creator
             ).exists()
         ):
-            return settings.CHALLENGE_MINIMAL_COMPUTE_AND_STORAGE_IN_EURO
+            return 0
         else:
-            return (
-                settings.CHALLENGE_BASE_COST_IN_EURO
-                + settings.CHALLENGE_MINIMAL_COMPUTE_AND_STORAGE_IN_EURO
-            )
+            return settings.CHALLENGE_BASE_COST_IN_EURO
 
     @property
-    def total_storage_and_compute(self):
+    def total_euros_storage_and_compute(self):
         return (
             self.phase_1_total_euros
             + self.phase_2_total_euros
@@ -1255,33 +1252,92 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                 "Compute costs for phase 2": self.phase_2_compute_costs_euros,
                 "Total phase 2": self.phase_2_total_euros,
                 "Docker storage cost": self.docker_storage_costs_euros,
-                "Total across phases": self.total_storage_and_compute,
+                "Total across phases": self.total_euros_storage_and_compute,
             }
         except TypeError:
             return None
 
     @property
     def storage_and_compute_cost_surplus(self):
-        return max(
-            self.total_storage_and_compute
-            - settings.CHALLENGE_MINIMAL_COMPUTE_AND_STORAGE_IN_EURO,
-            0,
+        return (
+            self.total_euros_storage_and_compute
+            - settings.CHALLENGE_MINIMAL_COMPUTE_AND_STORAGE_IN_EURO
         )
 
     @property
-    def total_challenge_cost(self):
-        if self.storage_and_compute_cost_surplus == 0:
-            return self.base_cost_euros
-        else:
-            nr_of_packs = math.ceil(
-                self.storage_and_compute_cost_surplus
-                / settings.CHALLENGE_ADDITIONAL_COMPUTE_AND_STORAGE_PACK_SIZE_IN_EURO
+    def total_storage_costs_euros(self):
+        return self.get_data_storage_costs_euros(
+            self.total_data_and_docker_storage_bytes
+        )
+
+    @property
+    def total_compute_costs_euros(self):
+        return self.get_compute_costs_euros(self.total_compute_time)
+
+    def calculate_invoiced_amount(self, cost, ratio):
+        if self.storage_and_compute_cost_surplus <= 0:
+            # Below minimum prize, add proportional shortfall
+            return round(
+                cost + ratio * abs(self.storage_and_compute_cost_surplus)
             )
+        else:
+            # Above minimum prize, allocate surplus proportionally
+            return round(
+                ratio
+                * (
+                    self.additional_compute_and_storage_costs
+                    + settings.CHALLENGE_MINIMAL_COMPUTE_AND_STORAGE_IN_EURO
+                )
+            )
+
+    @property
+    def total_storage_to_be_invoiced(self):
+        storage_ratio = (
+            self.total_storage_costs_euros
+            / self.total_euros_storage_and_compute
+        )
+        return self.calculate_invoiced_amount(
+            cost=self.total_storage_costs_euros,
+            ratio=storage_ratio,
+        )
+
+    @property
+    def total_compute_to_be_invoiced(self):
+        compute_ratio = (
+            self.total_compute_costs_euros
+            / self.total_euros_storage_and_compute
+        )
+        return self.calculate_invoiced_amount(
+            cost=self.total_compute_costs_euros,
+            ratio=compute_ratio,
+        )
+
+    @property
+    def minimal_challenge_cost(self):
+        return (
+            self.base_cost_euros
+            + settings.CHALLENGE_MINIMAL_COMPUTE_AND_STORAGE_IN_EURO
+        )
+
+    @property
+    def additional_compute_and_storage_costs(self):
+        if self.storage_and_compute_cost_surplus <= 0:
+            return 0
+        else:
             return (
-                self.base_cost_euros
-                + nr_of_packs
+                math.ceil(
+                    self.storage_and_compute_cost_surplus
+                    / settings.CHALLENGE_ADDITIONAL_COMPUTE_AND_STORAGE_PACK_SIZE_IN_EURO
+                )
                 * settings.CHALLENGE_ADDITIONAL_COMPUTE_AND_STORAGE_PACK_SIZE_IN_EURO
             )
+
+    @property
+    def total_challenge_cost(self):
+        return (
+            self.minimal_challenge_cost
+            + self.additional_compute_and_storage_costs
+        )
 
 
 class ChallengeRequestUserObjectPermission(UserObjectPermissionBase):
