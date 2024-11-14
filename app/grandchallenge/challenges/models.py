@@ -1291,25 +1291,24 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             )
 
     @property
-    def total_storage_to_be_invoiced(self):
-        storage_ratio = (
-            self.total_storage_costs_euros
+    def compute_cost_ratio(self):
+        return (
+            self.total_compute_costs_euros
             / self.total_euros_storage_and_compute
         )
+
+    @property
+    def total_storage_to_be_invoiced(self):
         return self.calculate_invoiced_amount(
             cost=self.total_storage_costs_euros,
-            ratio=storage_ratio,
+            ratio=1 - self.compute_cost_ratio,
         )
 
     @property
     def total_compute_to_be_invoiced(self):
-        compute_ratio = (
-            self.total_compute_costs_euros
-            / self.total_euros_storage_and_compute
-        )
         return self.calculate_invoiced_amount(
             cost=self.total_compute_costs_euros,
-            ratio=compute_ratio,
+            ratio=self.compute_cost_ratio,
         )
 
     @property
