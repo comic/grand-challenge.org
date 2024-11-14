@@ -41,7 +41,7 @@ from grandchallenge.components.forms import (
     CIVSetUpdateFormMixin,
     MultipleCIVForm,
 )
-from grandchallenge.components.models import ComponentInterface, InterfaceKind
+from grandchallenge.components.models import ComponentInterface
 from grandchallenge.components.utils import generate_view_content_example
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
@@ -272,12 +272,7 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
                 .distinct()
             )
 
-            non_image_interfaces = interfaces.exclude(
-                kind__in=InterfaceKind.interface_type_image()
-            )
-            interface_slugs = non_image_interfaces.values_list(
-                "slug", flat=True
-            )
+            interface_slugs = interfaces.values_list("slug", flat=True)
 
             self.fields["view_content"].help_text = format_lazy(
                 (
