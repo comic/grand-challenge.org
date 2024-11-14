@@ -475,6 +475,26 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         blank=True,
         help_text="The output interfaces that the algorithms for this phase must use",
     )
+    selectable_gpu_types = models.JSONField(
+        blank=True,
+        default=list,
+        help_text=(
+            "The GPU type choices that participants will be able to select "
+            "for their algorithm inference jobs and challenge editors will "
+            "be able to set for the evaluation method. The setting on the "
+            "algorithm will be validated against this on submission."
+        ),
+    )
+    maximum_settable_memory_gb = models.PositiveSmallIntegerField(
+        default=32,
+        help_text=(
+            "Maximum amount of memory that participants will be allowed to "
+            "assign to algorithm inference jobs for submission and challenge "
+            "editors will be allowed to assign for the evaluation method. "
+            "The setting on the algorithm will be validated against this on "
+            "submission."
+        ),
+    )
     algorithm_time_limit = models.PositiveIntegerField(
         default=20 * 60,
         help_text="Time limit for inference jobs in seconds",
