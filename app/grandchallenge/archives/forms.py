@@ -80,12 +80,7 @@ class ArchiveForm(
                 .distinct()
             )
 
-            non_image_interfaces = interfaces.exclude(
-                kind__in=InterfaceKind.interface_type_image()
-            )
-            interface_slugs = non_image_interfaces.values_list(
-                "slug", flat=True
-            )
+            interface_slugs = interfaces.values_list("slug", flat=True)
 
             self.fields["view_content"].help_text = format_lazy(
                 (
