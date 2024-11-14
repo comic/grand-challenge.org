@@ -636,6 +636,12 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             ("configure_algorithm_phase", "Configure Algorithm Phase"),
         )
 
+    def get_selectable_gpu_types(self):
+        choices = {GPUTypeChoices.NO_GPU, GPUTypeChoices.T4}
+        for choice in self.selectable_gpu_types:
+            choices.add(GPUTypeChoices(choice))
+        return choices
+
     def __str__(self):
         return f"{self.title} Evaluation for {self.challenge.short_name}"
 
