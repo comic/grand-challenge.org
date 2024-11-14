@@ -134,6 +134,14 @@ EXTRA_RESULT_COLUMNS_SCHEMA = {
     },
 }
 
+SELECTABLE_GPU_TYPES_SCHEMA = {
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "type": "array",
+    "title": "The Selectable GPU Types Schema",
+    "items": {"type": "string", "required": [], "properties": {}},
+    "uniqueItems": True,
+}
+
 
 class PhaseManager(models.Manager):
     def get_queryset(self):
@@ -477,13 +485,16 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
     )
     selectable_gpu_types = models.JSONField(
         blank=True,
+        null=True,
         default=list,
         help_text=(
             "The GPU type choices that participants will be able to select "
             "for their algorithm inference jobs and challenge editors will "
             "be able to set for the evaluation method. The setting on the "
-            "algorithm will be validated against this on submission."
+            "algorithm will be validated against this on submission. Options "
+            f"are {GPUTypeChoices.names}."
         ),
+        validators=[JSONValidator(schema=SELECTABLE_GPU_TYPES_SCHEMA)],
     )
     maximum_settable_memory_gb = models.PositiveSmallIntegerField(
         default=32,
@@ -638,8 +649,11 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
 
     def get_selectable_gpu_types(self):
         choices = {GPUTypeChoices.NO_GPU, GPUTypeChoices.T4}
-        for choice in self.selectable_gpu_types:
-            choices.add(GPUTypeChoices(choice))
+        if self.selectable_gpu_types and isinstance(
+            self.selectable_gpu_types, list
+        ):
+            for choice in self.selectable_gpu_types:
+                choices.add(GPUTypeChoices[choice])
         return choices
 
     def __str__(self):
@@ -771,13 +785,22 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                 )
 
     def _clean_evaluation_requirements(self):
+        if self.selectable_gpu_types:
+            for option in self.selectable_gpu_types:
+                try:
+                    GPUTypeChoices[option]
+                except KeyError:
+                    raise ValidationError(
+                        f"{option!r} is not a valid option for selectable "
+                        f"gpu types. Options are {GPUTypeChoices.names}."
+                    )
         if (
             self.evaluation_requires_gpu_type
             and self.evaluation_requires_gpu_type
             not in self.get_selectable_gpu_types()
         ):
             raise ValidationError(
-                f"{self.evaluation_requires_gpu_type:!r} is not a valid choice "
+                f"{self.evaluation_requires_gpu_type!r} is not a valid choice "
                 f"for Evaluation requires gpu type. Either change the choice or "
                 f"add it to the list of selectable gpu types."
             )
