@@ -31,7 +31,6 @@ from grandchallenge.components.models import (
     ComponentInterface,
     GPUTypeChoices,
     ImportStatusChoices,
-    InterfaceKind,
 )
 from grandchallenge.components.tasks import assign_tarball_from_upload
 from grandchallenge.components.utils import generate_view_content_example
@@ -198,12 +197,7 @@ class PhaseUpdateForm(
                 self.instance.inputs.all() | self.instance.outputs.all()
             ).distinct()
 
-            non_image_interfaces = interfaces.exclude(
-                kind__in=InterfaceKind.interface_type_image()
-            )
-            interface_slugs = non_image_interfaces.values_list(
-                "slug", flat=True
-            )
+            interface_slugs = interfaces.values_list("slug", flat=True)
 
             self.fields["view_content"].help_text = format_lazy(
                 (
