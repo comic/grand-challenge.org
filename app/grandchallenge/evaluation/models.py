@@ -691,6 +691,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         self._clean_submission_limits()
         self._clean_parent_phase()
         self._clean_external_evaluation()
+        self._clean_evaluation_requirements()
 
     def _clean_algorithm_submission_settings(self):
         if self.submission_kind == SubmissionKindChoices.ALGORITHM:
@@ -768,6 +769,28 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                 raise ValidationError(
                     "An external evaluation phase must have a parent phase."
                 )
+
+    def _clean_evaluation_requirements(self):
+        if (
+            self.evaluation_requires_gpu_type
+            and self.evaluation_requires_gpu_type
+            not in self.get_selectable_gpu_types()
+        ):
+            raise ValidationError(
+                f"{self.evaluation_requires_gpu_type:!r} is not a valid choice "
+                f"for Evaluation requires gpu type. Either change the choice or "
+                f"add it to the list of selectable gpu types."
+            )
+        if (
+            self.evaluation_requires_memory_gb
+            > self.maximum_settable_memory_gb
+        ):
+            raise ValidationError(
+                f"Ensure the value for Evaluation requires memory gb (currently "
+                f"{self.evaluation_requires_memory_gb}) is less than or equal "
+                f"to the maximum settable (currently "
+                f"{self.maximum_settable_memory_gb})."
+            )
 
     @property
     def scoring_method(self):
