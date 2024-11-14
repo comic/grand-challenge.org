@@ -63,6 +63,11 @@ from grandchallenge.uploads.widgets import UserUploadSingleWidget
 
 phase_options = ("title", "public", "parent")
 
+evaluation_options = (
+    "evaluation_requires_gpu_type",
+    "evaluation_requires_memory_gb",
+)
+
 submission_options = (
     "submissions_open_at",
     "submissions_close_at",
@@ -80,7 +85,6 @@ submission_options = (
 )
 
 scoring_options = (
-    "evaluation_requires_memory_gb",
     "score_title",
     "score_jsonpath",
     "score_error_jsonpath",
@@ -163,6 +167,7 @@ class PhaseUpdateForm(
         self.helper.layout = Layout(
             TabHolder(
                 Tab("Phase", *phase_options),
+                Tab("Evaluation", *evaluation_options),
                 Tab("Submission", *submission_options),
                 Tab("Scoring", *scoring_options),
                 Tab("Leaderboard", *leaderboard_options),
@@ -195,6 +200,7 @@ class PhaseUpdateForm(
         model = Phase
         fields = (
             *phase_options,
+            *evaluation_options,
             *submission_options,
             *scoring_options,
             *leaderboard_options,
