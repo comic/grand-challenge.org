@@ -198,17 +198,22 @@ class PhaseUpdateForm(
             ).distinct()
 
             interface_slugs = interfaces.values_list("slug", flat=True)
+            view_content_example = generate_view_content_example(interfaces)
 
-            self.fields["view_content"].help_text = format_lazy(
-                (
-                    "The following interfaces are used in your phase: {}. "
-                    "Example usage: {}. "
-                    'Refer to the <a href="{}">documentation</a> for more information'
-                ),
-                oxford_comma(interface_slugs),
-                generate_view_content_example(interfaces),
-                reverse("documentation:detail", args=["viewer-content"]),
-            )
+            if interface_slugs.count() > 0:
+                self.fields[
+                    "view_content"
+                ].help_text += f"The following interfaces are used in your phase: {oxford_comma(interface_slugs)}. "
+
+            if view_content_example:
+                self.fields[
+                    "view_content"
+                ].help_text += f"Example usage: {view_content_example}. "
+
+        self.fields["view_content"].help_text += format_lazy(
+            'Refer to the <a href="{}">documentation</a> for more information',
+            reverse("documentation:detail", args=["viewer-content"]),
+        )
 
     class Meta:
         model = Phase
