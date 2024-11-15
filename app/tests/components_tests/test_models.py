@@ -256,8 +256,14 @@ def test_all_interfaces_covered():
 @pytest.mark.parametrize(
     "kind,context",
     (
-        *((k, nullcontext()) for k in InterfaceKind.interface_type_file()),
-        *((k, nullcontext()) for k in InterfaceKind.interface_type_json()),
+        *(
+            (k, nullcontext())
+            for k in sorted(InterfaceKind.interface_type_file())
+        ),
+        *(
+            (k, nullcontext())
+            for k in sorted(InterfaceKind.interface_type_json())
+        ),
         (
             InterfaceKind.InterfaceKindChoices.IMAGE,
             pytest.raises(RuntimeError),
