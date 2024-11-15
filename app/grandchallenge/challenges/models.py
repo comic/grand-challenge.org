@@ -1266,13 +1266,17 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
     @property
     def total_storage_costs_euros(self):
-        return self.get_data_storage_costs_euros(
-            self.total_data_and_docker_storage_bytes
+        return (
+            self.phase_1_data_storage_euros
+            + self.phase_2_data_storage_euros
+            + self.docker_storage_costs_euros
         )
 
     @property
     def total_compute_costs_euros(self):
-        return self.get_compute_costs_euros(self.total_compute_time)
+        return (
+            self.phase_1_compute_costs_euros + self.phase_2_compute_costs_euros
+        )
 
     def calculate_invoiced_amount(self, cost, ratio):
         if self.storage_and_compute_cost_surplus <= 0:

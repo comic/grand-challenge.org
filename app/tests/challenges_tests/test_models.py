@@ -141,13 +141,13 @@ def test_storage_and_compute_cost_add_up_to_total():
     for _ in range(10):
         request = ChallengeRequestFactory(
             creator=user,
-            expected_number_of_teams=random.randint(5, 50),
-            inference_time_limit_in_minutes=random.randint(5, 50),
-            average_size_of_test_image_in_mb=random.randint(5, 500),
-            phase_1_number_of_submissions_per_team=random.randint(5, 50),
-            phase_2_number_of_submissions_per_team=random.randint(5, 50),
-            phase_1_number_of_test_images=random.randint(5, 50),
-            phase_2_number_of_test_images=random.randint(5, 50),
+            expected_number_of_teams=random.randint(0, 50),
+            inference_time_limit_in_minutes=random.randint(0, 50),
+            average_size_of_test_image_in_mb=random.randint(0, 500),
+            phase_1_number_of_submissions_per_team=random.randint(0, 50),
+            phase_2_number_of_submissions_per_team=random.randint(0, 50),
+            phase_1_number_of_test_images=random.randint(0, 50),
+            phase_2_number_of_test_images=random.randint(0, 50),
         )
         assert (
             request.total_challenge_cost
