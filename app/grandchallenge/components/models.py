@@ -1150,6 +1150,7 @@ INTERFACE_TYPE_JSON_EXAMPLES = {
 }
 
 INTERFACE_KIND_TO_ALLOWED_FILE_TYPES = {
+    # Can be both a file extension or a mimetype
     InterfaceKindChoices.CSV: (
         "application/csv",
         "application/vnd.ms-excel",

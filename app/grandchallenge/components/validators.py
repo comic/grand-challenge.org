@@ -1,4 +1,5 @@
-from Bio import Phylo
+from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
+from Bio.Phylo import NewickIO
 from django.core.exceptions import SuspiciousFileOperation, ValidationError
 from django.utils._os import safe_join
 
@@ -23,15 +24,23 @@ def validate_no_slash_at_ends(value):
         raise ValidationError("Path must not begin or end with '/'")
 
 
+def _newick_parser(tree):
+    return NewickIO.Parser.from_string(tree)
+
+
 def validate_newick_tree_format(tree):
-    """Validates a Newick tree by passing it through a validator"""
-    parser = Phylo.NewickIO.Parser.from_string(tree)
+    """Validates a Newick tree by passing it through a parser"""
+    parser = _newick_parser(tree)
+
+    has_tree = False
 
     try:
-        has_tree = False
         for _ in parser.parse():
             has_tree = True
-        if not has_tree:
-            raise ValueError("No tree found")
-    except Exception as e:
-        raise ValidationError("Invalid Newick tree format:", e)
+    except (MemoryError, SoftTimeLimitExceeded, TimeLimitExceeded):
+        raise ValidationError("The file is too large")
+    except NewickIO.NewickError as e:
+        raise ValidationError(f"Invalid Newick tree format: {e}")
+
+    if not has_tree:
+        raise ValidationError("No Newick tree found")
