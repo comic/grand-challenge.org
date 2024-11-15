@@ -539,62 +539,18 @@ class ComponentInterface(OverlaySegmentsMixin):
             return forms.JSONField
 
     @property
-    def file_mimetypes(self):  # noqa:C901
-        if self.kind == InterfaceKind.InterfaceKindChoices.CSV:
-            return (
-                "application/csv",
-                "application/vnd.ms-excel",
-                "text/csv",
-                "text/plain",
-            )
-        elif self.kind == InterfaceKind.InterfaceKindChoices.ZIP:
-            return ("application/zip", "application/x-zip-compressed")
-        elif self.kind == InterfaceKind.InterfaceKindChoices.PDF:
-            return ("application/pdf",)
-        elif self.kind == InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG:
-            return ("image/jpeg",)
-        elif self.kind == InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG:
-            return ("image/png",)
-        elif self.kind == InterfaceKind.InterfaceKindChoices.SQREG:
-            return (
-                "application/octet-stream",
-                "application/x-sqlite3",
-                "application/vnd.sqlite3",
-            )
-        elif self.kind == InterfaceKind.InterfaceKindChoices.OBJ:
-            return ("text/plain", "application/octet-stream")
-        elif self.kind in InterfaceKind.interface_type_json():
-            return (
-                "text/plain",
-                "application/json",
-            )
-        elif self.kind == InterfaceKind.InterfaceKindChoices.MP4:
-            return ("video/mp4",)
-        elif self.kind == InterfaceKind.InterfaceKindChoices.NEWICK:
-            return ("text/x-nh", "application/octet-stream")
-        else:
-            raise RuntimeError(f"Unknown kind {self.kind}")
-
-    @property
-    def file_extensions(self):
-        exts = [self.file_extension]
-
-        if self.kind == InterfaceKind.InterfaceKindChoices.NEWICK:
-            exts.extend([".nwk", ".tree"])
-
-        return exts
+    def allowed_file_types(self):
+        try:
+            return INTERFACE_ALLOWED_FILE_TYPES[self.kind]
+        except KeyError as e:
+            raise RuntimeError(f"Unknown kind {self.kind}") from e
 
     @property
     def file_extension(self):
-        if self.is_json_kind:
-            return ".json"
-
-        if self.is_file_kind:
-            if self.kind == InterfaceKind.InterfaceKindChoices.NEWICK:
-                return ".newick"
-            return f".{self.kind.lower()}"
-
-        raise RuntimeError(f"Unknown kind {self.kind}")
+        try:
+            return INTERFACE_FILE_EXTENSION[self.kind]
+        except KeyError as e:
+            raise RuntimeError(f"Unknown kind {self.kind}") from e
 
     def create_instance(self, *, image=None, value=None, fileobj=None):
         civ = ComponentInterfaceValue.objects.create(interface=self)
@@ -1191,6 +1147,60 @@ INTERFACE_TYPE_JSON_EXAMPLES = {
     InterfaceKindChoices.MULTIPLE_CHOICE: ComponentInterfaceExampleValue(
         value=["Choice 1", "Choice 2"],
     ),
+}
+
+INTERFACE_ALLOWED_FILE_TYPES = {
+    InterfaceKindChoices.CSV: (
+        "application/csv",
+        "application/vnd.ms-excel",
+        "text/csv",
+        "text/plain",
+    ),
+    InterfaceKindChoices.ZIP: (
+        "application/zip",
+        "application/x-zip-compressed",
+    ),
+    InterfaceKindChoices.PDF: ("application/pdf",),
+    InterfaceKindChoices.THUMBNAIL_JPG: ("image/jpeg",),
+    InterfaceKindChoices.THUMBNAIL_PNG: ("image/png",),
+    InterfaceKindChoices.SQREG: (
+        "application/octet-stream",
+        "application/x-sqlite3",
+        "application/vnd.sqlite3",
+    ),
+    InterfaceKindChoices.MP4: ("video/mp4",),
+    InterfaceKindChoices.NEWICK: (
+        ".newick",
+        ".nwk",
+        ".tree",
+        "text/x-nh",
+        "application/octet-stream",
+    ),
+    InterfaceKindChoices.OBJ: (
+        "text/plain",
+        "application/octet-stream",
+    ),
+    **{
+        kind: (
+            "text/plain",
+            "application/json",
+        )
+        for kind in InterfaceKind.interface_type_json()
+    },
+}
+
+
+INTERFACE_FILE_EXTENSION = {
+    InterfaceKindChoices.CSV: ".csv",
+    InterfaceKindChoices.ZIP: ".zip",
+    InterfaceKind.InterfaceKindChoices.PDF: ".pdf",
+    InterfaceKindChoices.SQREG: ".sqreg",
+    InterfaceKindChoices.THUMBNAIL_JPG: ".jpeg",
+    InterfaceKindChoices.THUMBNAIL_PNG: ".png",
+    InterfaceKindChoices.OBJ: ".obj",
+    InterfaceKindChoices.MP4: ".mp4",
+    InterfaceKindChoices.NEWICK: ".newick",
+    **{kind: ".json" for kind in InterfaceKind.interface_type_json()},
 }
 
 

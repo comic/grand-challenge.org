@@ -253,6 +253,27 @@ def test_all_interfaces_covered():
     }
 
 
+@pytest.mark.parametrize(
+    "kind,context",
+    (
+        *((k, nullcontext()) for k in InterfaceKind.interface_type_file()),
+        *((k, nullcontext()) for k in InterfaceKind.interface_type_json()),
+        (
+            InterfaceKind.InterfaceKindChoices.IMAGE,
+            pytest.raises(RuntimeError),
+        ),
+    ),
+)
+def test_all_file_type_covered(kind, context):
+    ci = ComponentInterfaceFactory.build(kind=kind)
+
+    with context:
+        ci.allowed_file_types
+
+    with context:
+        ci.file_extension
+
+
 @pytest.mark.django_db
 def test_no_uuid_validation():
     # For multi job inputs we add uuid prefixes, so check that the relative
