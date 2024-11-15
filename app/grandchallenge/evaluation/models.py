@@ -497,7 +497,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         validators=[JSONValidator(schema=SELECTABLE_GPU_TYPES_SCHEMA)],
     )
     maximum_settable_memory_gb = models.PositiveSmallIntegerField(
-        default=32,
+        default=settings.ALGORITHMS_MAX_MEMORY_GB,
         help_text=(
             "Maximum amount of memory that participants will be allowed to "
             "assign to algorithm inference jobs for submission and challenge "
