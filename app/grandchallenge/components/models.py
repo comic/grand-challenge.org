@@ -541,14 +541,14 @@ class ComponentInterface(OverlaySegmentsMixin):
     @property
     def allowed_file_types(self):
         try:
-            return INTERFACE_ALLOWED_FILE_TYPES[self.kind]
+            return INTERFACE_KIND_TO_ALLOWED_FILE_TYPES[self.kind]
         except KeyError as e:
             raise RuntimeError(f"Unknown kind {self.kind}") from e
 
     @property
     def file_extension(self):
         try:
-            return INTERFACE_FILE_EXTENSION[self.kind]
+            return INTERFACE_KIND_TO_FILE_EXTENSION[self.kind]
         except KeyError as e:
             raise RuntimeError(f"Unknown kind {self.kind}") from e
 
@@ -1149,7 +1149,7 @@ INTERFACE_TYPE_JSON_EXAMPLES = {
     ),
 }
 
-INTERFACE_ALLOWED_FILE_TYPES = {
+INTERFACE_KIND_TO_ALLOWED_FILE_TYPES = {
     InterfaceKindChoices.CSV: (
         "application/csv",
         "application/vnd.ms-excel",
@@ -1190,7 +1190,7 @@ INTERFACE_ALLOWED_FILE_TYPES = {
 }
 
 
-INTERFACE_FILE_EXTENSION = {
+INTERFACE_KIND_TO_FILE_EXTENSION = {
     InterfaceKindChoices.CSV: ".csv",
     InterfaceKindChoices.ZIP: ".zip",
     InterfaceKind.InterfaceKindChoices.PDF: ".pdf",
