@@ -1,11 +1,19 @@
 import pytest
 from django.forms import ModelForm
+from django.utils.text import format_lazy
 from guardian.shortcuts import assign_perm
 
+from grandchallenge.algorithms.forms import AlgorithmForm
+from grandchallenge.archives.forms import ArchiveForm
 from grandchallenge.components.models import InterfaceKindChoices
 from grandchallenge.hanging_protocols.forms import HangingProtocolForm
 from grandchallenge.hanging_protocols.models import HangingProtocol
-from tests.components_tests.factories import ComponentInterfaceFactory
+from tests.algorithms_tests.factories import AlgorithmFactory
+from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.factories import UserFactory
 from tests.hanging_protocols_tests.factories import HangingProtocolFactory
 from tests.hanging_protocols_tests.test_models import HangingProtocolTestModel
@@ -294,3 +302,100 @@ def test_hanging_protocol_clientside():
         }
     )
     assert form.is_valid()
+
+
+@pytest.mark.parametrize(
+    "number_of_images,number_of_overlays,expected_help_text",
+    (
+        (
+            0,
+            0,
+            'Refer to the <a href="https://testserver/documentation/viewer-content/">documentation</a> for more information',
+        ),
+        (
+            1,
+            0,
+            'The following interfaces are used in your {}: test-ci-image-0. Example usage: {{"main": ["test-ci-image-0"]}}. Refer to the <a href="https://testserver/documentation/viewer-content/">documentation</a> for more information',
+        ),
+        (
+            0,
+            1,
+            'The following interfaces are used in your {}: test-ci-overlay-0. Refer to the <a href="https://testserver/documentation/viewer-content/">documentation</a> for more information',
+        ),
+        (
+            1,
+            1,
+            'The following interfaces are used in your {}: test-ci-image-0 and test-ci-overlay-0. Example usage: {{"main": ["test-ci-image-0", "test-ci-overlay-0"]}}. Refer to the <a href="https://testserver/documentation/viewer-content/">documentation</a> for more information',
+        ),
+    ),
+)
+@pytest.mark.parametrize(
+    "overlay_type",
+    (
+        InterfaceKindChoices.SEGMENTATION,
+        InterfaceKindChoices.HEAT_MAP,
+        InterfaceKindChoices.DISPLACEMENT_FIELD,
+    ),
+)
+@pytest.mark.django_db
+def test_forms_view_content_help_text(
+    number_of_images, number_of_overlays, overlay_type, expected_help_text
+):
+
+    ci_list = []
+    civ_list = []
+
+    for i in range(number_of_images):
+        ci = ComponentInterfaceFactory(
+            kind=InterfaceKindChoices.IMAGE,
+            title=f"test-ci-image-{i}",
+        )
+        civ = ComponentInterfaceValueFactory(
+            interface=ci,
+        )
+
+        ci_list.append(ci)
+        civ_list.append(civ)
+
+    for i in range(number_of_overlays):
+        ci = ComponentInterfaceFactory(
+            kind=overlay_type,
+            title=f"test-ci-overlay-{i}",
+        )
+        civ = ComponentInterfaceValueFactory(
+            interface=ci,
+        )
+
+        ci_list.append(ci)
+        civ_list.append(civ)
+
+    creator = UserFactory()
+
+    algorithm = AlgorithmFactory()
+    algorithm.add_editor(user=creator)
+    algorithm.inputs.set(ci_list)
+
+    algorithm_form = AlgorithmForm(
+        user=creator,
+        instance=algorithm,
+    )
+
+    assert algorithm_form.fields["view_content"].help_text == format_lazy(
+        expected_help_text, "algorithm"
+    )
+
+    archive = ArchiveFactory()
+    archive.editors_group.user_set.add(creator)
+    archive_item = ArchiveItemFactory(
+        archive=archive,
+    )
+    archive_item.values.set(civ_list)
+
+    archive_form = ArchiveForm(
+        user=creator,
+        instance=archive,
+    )
+
+    assert archive_form.fields["view_content"].help_text == format_lazy(
+        expected_help_text, "archive"
+    )
