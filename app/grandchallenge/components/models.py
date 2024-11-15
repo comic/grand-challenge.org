@@ -540,6 +540,7 @@ class ComponentInterface(OverlaySegmentsMixin):
 
     @property
     def allowed_file_types(self):
+        """The allowed file types of the interface that is relevant when uploading"""
         try:
             return INTERFACE_KIND_TO_ALLOWED_FILE_TYPES[self.kind]
         except KeyError as e:
@@ -547,6 +548,7 @@ class ComponentInterface(OverlaySegmentsMixin):
 
     @property
     def file_extension(self):
+        """The dot filename extension (e.g. '.jpg') of an interface that is relevant when writing"""
         try:
             return INTERFACE_KIND_TO_FILE_EXTENSION[self.kind]
         except KeyError as e:
@@ -1150,7 +1152,11 @@ INTERFACE_TYPE_JSON_EXAMPLES = {
 }
 
 INTERFACE_KIND_TO_ALLOWED_FILE_TYPES = {
-    # Can be both a file extension or a mimetype
+    # Can contain:
+    # - file extensions (e.g. '.jpg')
+    # - subtype MIME type (e.g. 'text/plain')
+    # - maintype MIME type (wildcard, e.g. 'text/*')
+    # See: https://uppy.io/docs/uppy/#restrictions.
     InterfaceKindChoices.CSV: (
         "application/csv",
         "application/vnd.ms-excel",
@@ -1171,11 +1177,13 @@ INTERFACE_KIND_TO_ALLOWED_FILE_TYPES = {
     ),
     InterfaceKindChoices.MP4: ("video/mp4",),
     InterfaceKindChoices.NEWICK: (
+        # MIME types
+        "text/x-nh",
+        "application/octet-stream",
+        # File extensions
         ".newick",
         ".nwk",
         ".tree",
-        "text/x-nh",
-        "application/octet-stream",
     ),
     InterfaceKindChoices.OBJ: (
         "text/plain",
