@@ -1278,14 +1278,14 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             self.phase_1_compute_costs_euros + self.phase_2_compute_costs_euros
         )
 
-    def calculate_invoiced_amount(self, cost, ratio):
+    def calculate_invoiced_amount(self, *, cost, ratio):
         if self.storage_and_compute_cost_surplus <= 0:
-            # Below minimum prize, add proportional shortfall
+            # Below minimum price, add proportional shortfall
             return round(
                 cost + ratio * abs(self.storage_and_compute_cost_surplus)
             )
         else:
-            # Above minimum prize, allocate surplus proportionally
+            # Above minimum price, allocate surplus proportionally
             return round(
                 ratio
                 * (
