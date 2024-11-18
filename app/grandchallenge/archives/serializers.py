@@ -87,14 +87,14 @@ class ArchiveItemPostSerializer(ArchiveItemSerializer):
             many=True, context=self.context
         )
 
-        if "request" in self.context:
-            user = self.context["request"].user
-
-            self.fields["archive"].queryset = filter_by_permission(
+        if request := self.context.get("request"):
+            archive_field = self.fields["archive"]
+            archive_field.queryset = filter_by_permission(
                 queryset=Archive.objects.all(),
-                user=user,
+                user=request.user,
                 codename="upload_archive",
             )
+            archive_field.required = request.method == "POST"
 
     def create(self, validated_data):
         if validated_data.pop("values") != []:
