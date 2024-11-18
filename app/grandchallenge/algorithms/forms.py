@@ -69,10 +69,10 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.components.serializers import ComponentInterfaceSerializer
 from grandchallenge.components.tasks import assign_tarball_from_upload
-from grandchallenge.components.utils import generate_view_content_example
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
+    ViewContentExampleMixin,
     WorkstationUserFilterMixin,
 )
 from grandchallenge.core.guardian import get_objects_for_user
@@ -242,6 +242,7 @@ class AlgorithmForm(
     AlgorithmIOValidationMixin,
     WorkstationUserFilterMixin,
     SaveFormInitMixin,
+    ViewContentExampleMixin,
     ModelForm,
 ):
     inputs = ModelMultipleChoiceField(
@@ -378,29 +379,6 @@ class AlgorithmForm(
             MinValueValidator(settings.ALGORITHMS_MIN_MEMORY_GB),
             MaxValueValidator(settings.ALGORITHMS_MAX_MEMORY_GB),
         ]
-
-        if self.instance:
-            interfaces = (
-                self.instance.inputs.all() | self.instance.outputs.all()
-            ).distinct()
-
-            interface_slugs = interfaces.values_list("slug", flat=True)
-            view_content_example = generate_view_content_example(interfaces)
-
-            if interface_slugs.count() > 0:
-                self.fields[
-                    "view_content"
-                ].help_text += f"The following interfaces are used in your algorithm: {oxford_comma(interface_slugs)}. "
-
-            if view_content_example:
-                self.fields[
-                    "view_content"
-                ].help_text += f"Example usage: {view_content_example}. "
-
-        self.fields["view_content"].help_text += format_lazy(
-            'Refer to the <a href="{}">documentation</a> for more information',
-            reverse("documentation:detail", args=["viewer-content"]),
-        )
 
 
 class UserAlgorithmsForPhaseMixin:

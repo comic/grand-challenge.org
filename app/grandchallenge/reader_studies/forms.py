@@ -42,16 +42,15 @@ from grandchallenge.components.forms import (
     MultipleCIVForm,
 )
 from grandchallenge.components.models import ComponentInterface
-from grandchallenge.components.utils import generate_view_content_example
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
     UniqueTitleCreateFormMixin,
     UniqueTitleUpdateFormMixin,
+    ViewContentExampleMixin,
     WorkstationUserFilterMixin,
 )
 from grandchallenge.core.layout import Formset
-from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.widgets import (
     ColorEditorWidget,
     JSONEditorWidget,
@@ -71,7 +70,7 @@ from grandchallenge.reader_studies.models import (
     ReaderStudy,
     ReaderStudyPermissionRequest,
 )
-from grandchallenge.subdomains.utils import reverse, reverse_lazy
+from grandchallenge.subdomains.utils import reverse_lazy
 from grandchallenge.workstation_configs.models import OVERLAY_SEGMENTS_SCHEMA
 
 logger = logging.getLogger(__name__)
@@ -191,7 +190,9 @@ class ReaderStudyCreateForm(
             )
 
 
-class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
+class ReaderStudyUpdateForm(
+    ReaderStudyCreateForm, ViewContentExampleMixin, ModelForm
+):
     class Meta(ReaderStudyCreateForm.Meta):
         fields = (
             "title",
@@ -255,40 +256,6 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
                 reverse_lazy("hanging-protocols:list"),
             ),
         }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        if self.instance:
-            interfaces = (
-                ComponentInterface.objects.filter(
-                    componentinterfacevalue__in=self.instance.display_sets.exclude(
-                        values__isnull=True
-                    ).values_list(
-                        "values", flat=True
-                    )
-                )
-                .order_by()
-                .distinct()
-            )
-
-            interface_slugs = interfaces.values_list("slug", flat=True)
-            view_content_example = generate_view_content_example(interfaces)
-
-            if interface_slugs.count() > 0:
-                self.fields[
-                    "view_content"
-                ].help_text += f"The following interfaces are used in your reader study: {oxford_comma(interface_slugs)}. "
-
-            if view_content_example:
-                self.fields[
-                    "view_content"
-                ].help_text += f"Example usage: {view_content_example}. "
-
-        self.fields["view_content"].help_text += format_lazy(
-            'Refer to the <a href="{}">documentation</a> for more information',
-            reverse("documentation:detail", args=["viewer-content"]),
-        )
 
 
 class ReaderStudyCopyForm(Form):

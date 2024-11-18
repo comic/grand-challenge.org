@@ -25,16 +25,15 @@ from grandchallenge.components.forms import (
     MultipleCIVForm,
 )
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
-from grandchallenge.components.utils import generate_view_content_example
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
     UniqueTitleCreateFormMixin,
     UniqueTitleUpdateFormMixin,
+    ViewContentExampleMixin,
     WorkstationUserFilterMixin,
 )
 from grandchallenge.core.guardian import get_objects_for_user
-from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.widgets import (
     JSONEditorWidget,
     MarkdownEditorInlineWidget,
@@ -42,12 +41,13 @@ from grandchallenge.core.widgets import (
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.hanging_protocols.models import VIEW_CONTENT_SCHEMA
 from grandchallenge.reader_studies.models import ReaderStudy
-from grandchallenge.subdomains.utils import reverse, reverse_lazy
+from grandchallenge.subdomains.utils import reverse_lazy
 
 
 class ArchiveForm(
     WorkstationUserFilterMixin,
     SaveFormInitMixin,
+    ViewContentExampleMixin,
     ModelForm,
 ):
     def __init__(self, *args, **kwargs):
@@ -68,34 +68,6 @@ class ArchiveForm(
             .annotate(has_active_image=Exists(active_image_subquery))
             .filter(has_active_image=True)
             .distinct()
-        )
-        if self.instance:
-            interfaces = (
-                ComponentInterface.objects.filter(
-                    componentinterfacevalue__in=self.instance.items.exclude(
-                        values__isnull=True
-                    ).values_list("values", flat=True)
-                )
-                .order_by()
-                .distinct()
-            )
-
-            interface_slugs = interfaces.values_list("slug", flat=True)
-            view_content_example = generate_view_content_example(interfaces)
-
-            if interface_slugs.count() > 0:
-                self.fields[
-                    "view_content"
-                ].help_text += f"The following interfaces are used in your archive: {oxford_comma(interface_slugs)}. "
-
-            if view_content_example:
-                self.fields[
-                    "view_content"
-                ].help_text += f"Example usage: {view_content_example}. "
-
-        self.fields["view_content"].help_text += format_lazy(
-            'Refer to the <a href="{}">documentation</a> for more information',
-            reverse("documentation:detail", args=["viewer-content"]),
         )
 
     class Meta:

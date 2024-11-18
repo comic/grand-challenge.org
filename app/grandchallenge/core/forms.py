@@ -1,12 +1,83 @@
+import json
+
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.forms import CharField, ModelForm
+from django.utils.text import format_lazy
 
+from grandchallenge.components.models import InterfaceKindChoices
 from grandchallenge.core.guardian import get_objects_for_user
+from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
+from grandchallenge.hanging_protocols.models import ViewportNames
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstation_configs.models import WorkstationConfig
 from grandchallenge.workstations.models import Workstation
+
+
+class ViewContentExampleMixin:
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance:
+            interface_slugs = self.instance.interfaces.values_list(
+                "slug", flat=True
+            )
+
+            if interface_slugs.count() > 0:
+                self.fields[
+                    "view_content"
+                ].help_text += f"The following interfaces are used in your {self.instance._meta.verbose_name}: {oxford_comma(interface_slugs)}. "
+
+            view_content_example = self.generate_view_content_example()
+
+            if view_content_example:
+                self.fields[
+                    "view_content"
+                ].help_text += f"Example usage: {view_content_example}. "
+
+        self.fields["view_content"].help_text += format_lazy(
+            'Refer to the <a href="{}">documentation</a> for more information',
+            reverse("documentation:detail", args=["viewer-content"]),
+        )
+
+    def generate_view_content_example(self):
+        images = list(
+            self.instance.interfaces.filter(kind=InterfaceKindChoices.IMAGE)
+            .order_by("slug")
+            .values_list("slug", flat=True)
+        )
+
+        if not images:
+            return None
+
+        overlays = list(
+            self.instance.interfaces.filter(
+                kind__in=[
+                    InterfaceKindChoices.SEGMENTATION,
+                    InterfaceKindChoices.HEAT_MAP,
+                    InterfaceKindChoices.DISPLACEMENT_FIELD,
+                ]
+            )
+            .order_by("slug")
+            .values_list("slug", flat=True)
+        )
+        view_content_example = {}
+        overlays_per_image = len(overlays) // len(images)
+        remaining_overlays = len(overlays) % len(images)
+
+        for port in ViewportNames.values:
+            if len(images) == 0:
+                break
+
+            view_content_example[port] = [images.pop(0)]
+            for _ in range(overlays_per_image):
+                view_content_example[port].append(overlays.pop(0))
+            if remaining_overlays > 0:
+                view_content_example[port].append(overlays.pop(0))
+                remaining_overlays -= 1
+
+        return json.dumps(view_content_example)
 
 
 class SaveFormInitMixin:

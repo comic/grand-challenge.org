@@ -33,9 +33,9 @@ from grandchallenge.components.models import (
     ImportStatusChoices,
 )
 from grandchallenge.components.tasks import assign_tarball_from_upload
-from grandchallenge.components.utils import generate_view_content_example
 from grandchallenge.core.forms import (
     SaveFormInitMixin,
+    ViewContentExampleMixin,
     WorkstationUserFilterMixin,
 )
 from grandchallenge.core.guardian import (
@@ -150,6 +150,7 @@ class PhaseUpdateForm(
     PhaseTitleMixin,
     WorkstationUserFilterMixin,
     SaveFormInitMixin,
+    ViewContentExampleMixin,
     forms.ModelForm,
 ):
     def __init__(self, *args, **kwargs):
@@ -191,29 +192,6 @@ class PhaseUpdateForm(
             self.fields["creator_must_be_verified"].widget = CheckboxInput(
                 attrs={"checked": True}
             )
-
-        if self.instance:
-            interfaces = (
-                self.instance.inputs.all() | self.instance.outputs.all()
-            ).distinct()
-
-            interface_slugs = interfaces.values_list("slug", flat=True)
-            view_content_example = generate_view_content_example(interfaces)
-
-            if interface_slugs.count() > 0:
-                self.fields[
-                    "view_content"
-                ].help_text += f"The following interfaces are used in your phase: {oxford_comma(interface_slugs)}. "
-
-            if view_content_example:
-                self.fields[
-                    "view_content"
-                ].help_text += f"Example usage: {view_content_example}. "
-
-        self.fields["view_content"].help_text += format_lazy(
-            'Refer to the <a href="{}">documentation</a> for more information',
-            reverse("documentation:detail", args=["viewer-content"]),
-        )
 
     class Meta:
         model = Phase
