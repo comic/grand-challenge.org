@@ -39,11 +39,8 @@ def send_challenge_requested_email_to_reviewers(challengerequest):
 
 def send_challenge_requested_email_to_requester(challengerequest):
     link = reverse("challenges:requests-list")
-    budget = {}
-    for key, value in challengerequest.budget.items():
-        budget[key] = value
+
     context = {
-        "budget": budget,
         "link": link,
     }
     message = render_to_string(
