@@ -443,6 +443,10 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
     def remove_user(self, user):
         return user.groups.remove(self.users_group)
 
+    @property
+    def interfaces(self):
+        return (self.inputs.all() | self.outputs.all()).distinct()
+
     @cached_property
     def user_statistics(self):
         return (

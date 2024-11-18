@@ -15,6 +15,7 @@ from grandchallenge.components.models import (
     CIVForObjectMixin,
     CIVSetObjectPermissionsMixin,
     CIVSetStringRepresentationMixin,
+    ComponentInterface,
     ComponentInterfaceValue,
     ValuesForInterfacesMixin,
 )
@@ -266,6 +267,14 @@ class Archive(
     @property
     def civ_sets_related_manager(self):
         return self.items
+
+    @property
+    def interfaces(self):
+        return ComponentInterface.objects.filter(
+            slug__in=self.items.exclude(values__isnull=True).values_list(
+                "values__interface__slug", flat=True
+            )
+        ).distinct()
 
     @property
     def civ_set_model(self):

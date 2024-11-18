@@ -749,6 +749,14 @@ class ReaderStudy(
         return self.display_sets
 
     @property
+    def interfaces(self):
+        return ComponentInterface.objects.filter(
+            slug__in=self.display_sets.exclude(
+                values__isnull=True
+            ).values_list("values__interface__slug", flat=True)
+        ).distinct()
+
+    @property
     def civ_set_model(self):
         return DisplaySet
 
