@@ -162,19 +162,14 @@ class InterfaceFormField:
             type = "uuid"
 
         if type == "uuid":
-            ext = (
-                "json"
-                if self.instance.is_json_kind
-                else self.instance.kind.lower()
-            )
-            extra_help = f"{file_upload_text} .{ext}"
+            extra_help = f"{file_upload_text} {self.instance.file_extension}"
             return ModelChoiceField(
                 queryset=get_objects_for_user(
                     self.user,
                     "uploads.change_userupload",
                 ).filter(status=UserUpload.StatusChoices.COMPLETED),
                 widget=UserUploadSingleWidget(
-                    allowed_file_types=self.instance.file_mimetypes
+                    allowed_file_types=self.instance.allowed_file_types,
                 ),
                 help_text=_join_with_br(self.help_text, extra_help),
                 **self.kwargs,
