@@ -79,6 +79,7 @@ class ArchiveItemPostSerializer(ArchiveItemSerializer):
         queryset=Archive.objects.none(),
         view_name="api:archive-detail",
         write_only=True,
+        required=False,
     )
 
     def __init__(self, *args, **kwargs):
@@ -105,7 +106,7 @@ class ArchiveItemPostSerializer(ArchiveItemSerializer):
         values = validated_data.pop("values")
         civs = []
         for value in values:
-            interface = value.get("interface", None)
+            interface = value["interface"]
             upload_session = value.get("upload_session", None)
             user_upload = value.get("user_upload", None)
             image = value.get("image", None)
