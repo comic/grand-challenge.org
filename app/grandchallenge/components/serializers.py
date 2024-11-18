@@ -1,9 +1,16 @@
+import logging
+
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.fields import SerializerMethodField
 from rest_framework.relations import SlugRelatedField
 
 from grandchallenge.cases.models import Image, RawImageUploadSession
+from grandchallenge.components.backends.exceptions import (
+    CIVNotEditableException,
+)
 from grandchallenge.components.models import (
+    CIVData,
     ComponentInterface,
     ComponentInterfaceValue,
 )
@@ -12,6 +19,8 @@ from grandchallenge.uploads.models import UserUpload
 from grandchallenge.workstation_configs.serializers import (
     LookUpTableSerializer,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ComponentInterfaceSerializer(serializers.ModelSerializer):
@@ -172,3 +181,64 @@ class HyperlinkedComponentInterfaceValueSerializer(
         read_only=True,
         allow_null=True,
     )
+
+
+class CIVSetPostSerializerMixin:
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["values"] = ComponentInterfaceValuePostSerializer(
+            many=True,
+            context=self.context,
+            required=False,
+        )
+
+    def create(self, validated_data):
+        if "values" in validated_data and validated_data.pop("values") != []:
+            raise DRFValidationError("Values can only be added via update")
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        request = self.context["request"]
+
+        values = validated_data.pop("values")
+
+        civs = []
+
+        for value in values:
+            interface = value["interface"]
+            upload_session = value.get("upload_session", None)
+            user_upload = value.get("user_upload", None)
+            image = value.get("image", None)
+            value = value.get("value", None)
+            civs.append(
+                CIVData(
+                    interface_slug=interface.slug,
+                    value=upload_session or user_upload or image or value,
+                )
+            )
+        try:
+            instance.validate_values_and_execute_linked_task(
+                values=civs,
+                user=request.user,
+            )
+        except CIVNotEditableException as e:
+            error_handler = instance.get_error_handler()
+            error_handler.handle_error(
+                error_message="An unexpected error occurred",
+                user=request.user,
+            )
+            logger.error(e, exc_info=True)
+
+        if not self.partial:
+            instance.refresh_from_db()
+            current_civs = {
+                civ.interface.slug: civ for civ in instance.values.all()
+            }
+            current_interfaces = set(current_civs.keys())
+            updated_interfaces = {v["interface"].slug for v in values}
+            for interface in current_interfaces - updated_interfaces:
+                self.instance.remove_civ(civ=current_civs[interface])
+
+        return instance

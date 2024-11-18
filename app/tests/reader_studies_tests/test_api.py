@@ -1716,6 +1716,8 @@ def test_display_set_add_and_edit(
         data={"reader_study": rs.slug},
     )
 
+    assert response.status_code == 201
+
     ds = DisplaySet.objects.get(pk=response.json()["pk"])
     with django_capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
@@ -1818,6 +1820,22 @@ def test_display_set_add_and_edit(
     ds.refresh_from_db()
     assert ds.values.count() == 3
 
+    with django_capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:reader-studies-display-set-detail",
+            reverse_kwargs={"pk": ds.pk},
+            user=r1,
+            client=client,
+            method=client.put,
+            content_type="application/json",
+            data={
+                "values": [{"interface": ci.slug, "value": True}],
+            },
+        )
+
+    ds.refresh_from_db()
+    assert ds.values.count() == 1
+
     # Create another display set
     ds2 = DisplaySetFactory(reader_study=rs)
     civ = ComponentInterfaceValueFactory(interface=ci, value=False)
@@ -1839,9 +1857,9 @@ def test_display_set_add_and_edit(
     )
 
     assert response.status_code == 400
-    assert response.content.decode("utf-8") == (
+    assert response.json() == [
         "This display set cannot be changed, as answers for it already exist."
-    )
+    ]
 
 
 @pytest.mark.django_db

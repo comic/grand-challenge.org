@@ -342,7 +342,7 @@ def test_api_archive_item_add_and_update_value(
         django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
     )
 
-    assert response.status_code == 200
+    assert response.status_code == 200, response.content
     assert response.json()["pk"] == str(item.pk)
     item.refresh_from_db()
 
