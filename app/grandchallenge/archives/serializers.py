@@ -129,4 +129,14 @@ class ArchiveItemPostSerializer(ArchiveItemSerializer):
             )
             logger.error(e, exc_info=True)
 
+        if not self.partial:
+            instance.refresh_from_db()
+            current_civs = {
+                civ.interface.slug: civ for civ in instance.values.all()
+            }
+            current_interfaces = set(current_civs.keys())
+            updated_interfaces = {v["interface"].slug for v in values}
+            for interface in current_interfaces - updated_interfaces:
+                self.instance.remove_civ(civ=current_civs[interface])
+
         return instance

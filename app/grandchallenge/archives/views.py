@@ -541,7 +541,7 @@ class ArchiveItemViewSet(
     filterset_fields = ["archive"]
 
     def get_serializer_class(self):
-        if "update" in self.action or "create" in self.action:
+        if self.action in ["partial_update", "update", "create"]:
             return ArchiveItemPostSerializer
         else:
             return ArchiveItemSerializer

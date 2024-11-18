@@ -145,6 +145,7 @@ class InterfaceKindChoices(models.TextChoices):
     THUMBNAIL_PNG = "PNG", _("Thumbnail png")
     OBJ = "OBJ", _("OBJ file")
     MP4 = "MP4", _("MP4 file")
+    NEWICK = "NEWCK", _("Newick tree-format file")
 
     # Legacy support
     CSV = "CSV", _("CSV file")
@@ -270,6 +271,7 @@ class InterfaceKind:
         * Thumbnail PNG
         * OBJ file
         * MP4 file
+        * Newick file
         """
         return {
             InterfaceKind.InterfaceKindChoices.CSV,
@@ -280,6 +282,7 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
             InterfaceKind.InterfaceKindChoices.OBJ,
             InterfaceKind.InterfaceKindChoices.MP4,
+            InterfaceKind.InterfaceKindChoices.NEWICK,
         }
 
     @staticmethod
@@ -300,6 +303,7 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.CSV,
             InterfaceKind.InterfaceKindChoices.ZIP,
             InterfaceKind.InterfaceKindChoices.OBJ,
+            InterfaceKind.InterfaceKindChoices.NEWICK,
         }
 
 
@@ -534,39 +538,20 @@ class ComponentInterface(OverlaySegmentsMixin):
             return forms.JSONField
 
     @property
-    def file_mimetypes(self):
-        if self.kind == InterfaceKind.InterfaceKindChoices.CSV:
-            return (
-                "application/csv",
-                "application/vnd.ms-excel",
-                "text/csv",
-                "text/plain",
-            )
-        elif self.kind == InterfaceKind.InterfaceKindChoices.ZIP:
-            return ("application/zip", "application/x-zip-compressed")
-        elif self.kind == InterfaceKind.InterfaceKindChoices.PDF:
-            return ("application/pdf",)
-        elif self.kind == InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG:
-            return ("image/jpeg",)
-        elif self.kind == InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG:
-            return ("image/png",)
-        elif self.kind == InterfaceKind.InterfaceKindChoices.SQREG:
-            return (
-                "application/octet-stream",
-                "application/x-sqlite3",
-                "application/vnd.sqlite3",
-            )
-        elif self.kind == InterfaceKind.InterfaceKindChoices.OBJ:
-            return ("text/plain", "application/octet-stream")
-        elif self.kind in InterfaceKind.interface_type_json():
-            return (
-                "text/plain",
-                "application/json",
-            )
-        elif self.kind == InterfaceKind.InterfaceKindChoices.MP4:
-            return ("video/mp4",)
-        else:
-            raise RuntimeError(f"Unknown kind {self.kind}")
+    def allowed_file_types(self):
+        """The allowed file types of the interface that is relevant when uploading"""
+        try:
+            return INTERFACE_KIND_TO_ALLOWED_FILE_TYPES[self.kind]
+        except KeyError as e:
+            raise RuntimeError(f"Unknown kind {self.kind}") from e
+
+    @property
+    def file_extension(self):
+        """The dot filename extension (e.g. '.jpg') of an interface that is relevant when writing"""
+        try:
+            return INTERFACE_KIND_TO_FILE_EXTENSION[self.kind]
+        except KeyError as e:
+            raise RuntimeError(f"Unknown kind {self.kind}") from e
 
     def create_instance(self, *, image=None, value=None, fileobj=None):
         civ = ComponentInterfaceValue.objects.create(interface=self)
@@ -633,14 +618,11 @@ class ComponentInterface(OverlaySegmentsMixin):
             )
 
     def _clean_relative_path(self):
-        if self.is_json_kind:
-            if not self.relative_path.endswith(".json"):
-                raise ValidationError("Relative path should end with .json")
-        elif self.is_file_kind and not self.relative_path.endswith(
-            f".{self.kind.lower()}"
-        ):
+        if (
+            self.is_file_kind or self.is_json_kind
+        ) and not self.relative_path.endswith(self.file_extension):
             raise ValidationError(
-                f"Relative path should end with .{self.kind.lower()}"
+                f"Relative path should end with {self.file_extension}"
             )
 
         if self.is_image_kind:
@@ -1168,6 +1150,67 @@ INTERFACE_TYPE_JSON_EXAMPLES = {
     ),
 }
 
+INTERFACE_KIND_TO_ALLOWED_FILE_TYPES = {
+    # Can contain:
+    # - file extensions (e.g. '.jpg')
+    # - subtype MIME type (e.g. 'text/plain')
+    # - maintype MIME type (wildcard, e.g. 'text/*')
+    # See: https://uppy.io/docs/uppy/#restrictions.
+    InterfaceKindChoices.CSV: (
+        "application/csv",
+        "application/vnd.ms-excel",
+        "text/csv",
+        "text/plain",
+    ),
+    InterfaceKindChoices.ZIP: (
+        "application/zip",
+        "application/x-zip-compressed",
+    ),
+    InterfaceKindChoices.PDF: ("application/pdf",),
+    InterfaceKindChoices.THUMBNAIL_JPG: ("image/jpeg",),
+    InterfaceKindChoices.THUMBNAIL_PNG: ("image/png",),
+    InterfaceKindChoices.SQREG: (
+        "application/octet-stream",
+        "application/x-sqlite3",
+        "application/vnd.sqlite3",
+    ),
+    InterfaceKindChoices.MP4: ("video/mp4",),
+    InterfaceKindChoices.NEWICK: (
+        # MIME types
+        "text/x-nh",
+        "application/octet-stream",
+        # File extensions
+        ".newick",
+        ".nwk",
+        ".tree",
+    ),
+    InterfaceKindChoices.OBJ: (
+        "text/plain",
+        "application/octet-stream",
+    ),
+    **{
+        kind: (
+            "text/plain",
+            "application/json",
+        )
+        for kind in InterfaceKind.interface_type_json()
+    },
+}
+
+
+INTERFACE_KIND_TO_FILE_EXTENSION = {
+    InterfaceKindChoices.CSV: ".csv",
+    InterfaceKindChoices.ZIP: ".zip",
+    InterfaceKind.InterfaceKindChoices.PDF: ".pdf",
+    InterfaceKindChoices.SQREG: ".sqreg",
+    InterfaceKindChoices.THUMBNAIL_JPG: ".jpeg",
+    InterfaceKindChoices.THUMBNAIL_PNG: ".png",
+    InterfaceKindChoices.OBJ: ".obj",
+    InterfaceKindChoices.MP4: ".mp4",
+    InterfaceKindChoices.NEWICK: ".newick",
+    **{kind: ".json" for kind in InterfaceKind.interface_type_json()},
+}
+
 
 def component_interface_value_path(instance, filename):
     # Convert the pk to a hex, padded to 4 chars with zeros
@@ -1216,6 +1259,7 @@ class ComponentInterfaceValue(models.Model):
                     ".sqreg",
                     ".obj",
                     ".mp4",
+                    ".newick",
                 )
             ),
             MimeTypeValidator(
