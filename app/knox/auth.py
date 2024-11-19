@@ -13,7 +13,6 @@ from django.utils.translation import gettext_lazy as _
 from knox.crypto import hash_token
 from knox.models import AuthToken
 from knox.settings import CONSTANTS
-from knox.signals import token_expired
 from rest_framework import exceptions
 from rest_framework.authentication import (
     BaseAuthentication,
@@ -96,20 +95,8 @@ class TokenAuthentication(BaseAuthentication):
             if other_token.digest != auth_token.digest and other_token.expiry:
                 if other_token.expiry < timezone.now():
                     other_token.delete()
-                    username = other_token.user.get_username()
-                    token_expired.send(
-                        sender=self.__class__,
-                        username=username,
-                        source="other_token",
-                    )
         if auth_token.expiry is not None:
             if auth_token.expiry < timezone.now():
-                username = auth_token.user.get_username()
                 auth_token.delete()
-                token_expired.send(
-                    sender=self.__class__,
-                    username=username,
-                    source="auth_token",
-                )
                 return True
         return False

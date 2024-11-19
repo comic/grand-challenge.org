@@ -6,7 +6,6 @@ from freezegun import freeze_time
 from knox.auth import TokenAuthentication
 from knox.models import AuthToken
 from knox.settings import CONSTANTS
-from knox.signals import token_expired
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.test import APIRequestFactory
 from rest_framework.test import APITestCase as TestCase
@@ -118,22 +117,6 @@ class AuthTestCase(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(original_expiry, AuthToken.objects.get().expiry)
-
-    def test_expiry_signals(self):
-        self.signal_was_called = False
-
-        def handler(sender, username, **kwargs):
-            self.signal_was_called = True
-
-        token_expired.connect(handler)
-
-        instance, token = AuthToken.objects.create(
-            user=self.user, expiry=timedelta(seconds=-1)
-        )
-        self.client.credentials(HTTP_AUTHORIZATION=("Bearer %s" % token))
-        self.client.post(root_url, {}, format="json")
-
-        self.assertTrue(self.signal_was_called)
 
     def test_invalid_prefix_return_401(self):
         instance, token = AuthToken.objects.create(user=self.user)
