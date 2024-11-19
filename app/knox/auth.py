@@ -1,18 +1,9 @@
-try:
-    from hmac import compare_digest
-except ImportError:
-
-    def compare_digest(a, b):
-        return a == b
-
-
 import binascii
 
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from knox.crypto import hash_token
 from knox.models import AuthToken
-from knox.settings import CONSTANTS
 from rest_framework import exceptions
 from rest_framework.authentication import (
     BaseAuthentication,
@@ -58,27 +49,23 @@ class TokenAuthentication(BaseAuthentication):
         return (user, auth_token)
 
     def authenticate_credentials(self, token):
-        """
-        Due to the random nature of hashing a value, this must inspect
-        each auth_token individually to find the correct one.
-
-        Tokens that have expired will be deleted and skipped
-        """
         msg = _("Invalid token.")
         token = token.decode("utf-8")
-        for auth_token in AuthToken.objects.filter(
-            token_key=token[: CONSTANTS.TOKEN_KEY_LENGTH]
-        ):
-            if self._cleanup_token(auth_token):
-                continue
 
-            try:
-                digest = hash_token(token)
-            except (TypeError, binascii.Error):
-                raise exceptions.AuthenticationFailed(msg)
-            if compare_digest(digest, auth_token.digest):
-                return self.validate_user(auth_token)
-        raise exceptions.AuthenticationFailed(msg)
+        try:
+            digest = hash_token(token)
+        except (TypeError, binascii.Error):
+            raise exceptions.AuthenticationFailed(msg)
+
+        try:
+            auth_token = AuthToken.objects.get(digest=digest)
+        except AuthToken.DoesNotExist:
+            raise exceptions.AuthenticationFailed(msg)
+
+        if self._cleanup_token(auth_token):
+            raise exceptions.AuthenticationFailed(msg)
+
+        return self.validate_user(auth_token)
 
     def validate_user(self, auth_token):
         if not auth_token.user.is_active:
