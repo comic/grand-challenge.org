@@ -38,6 +38,10 @@ class ViewContentExampleMixin:
                 self.fields[
                     "view_content"
                 ].help_text += f"Example usage: {view_content_example}. "
+            else:
+                self.fields[
+                    "view_content"
+                ].help_text += "No interfaces of type (image, chart, pdf, mp4, thumbnail_jpg, thumbnail_png) are used. At least one interface of those types is needed to config the viewer. "
 
         self.fields["view_content"].help_text += format_lazy(
             'Refer to the <a href="{}">documentation</a> for more information',
