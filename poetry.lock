@@ -1534,22 +1534,6 @@ redis = ">=3,<4.0.0 || >4.0.0,<4.0.1 || >4.0.1"
 hiredis = ["redis[hiredis] (>=3,!=4.0.0,!=4.0.1)"]
 
 [[package]]
-name = "django-rest-knox"
-version = "4.2.0"
-description = "Authentication for django rest framework"
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "django-rest-knox-4.2.0.tar.gz", hash = "sha256:4595f1dc23d6e41af7939e5f2d8fdaf6ade0a74a656218e7b56683db5566fcc9"},
-    {file = "django_rest_knox-4.2.0-py3-none-any.whl", hash = "sha256:62b8e374a44cd4e9617eaefe27c915b301bf224fa6550633d3013d3f9f415113"},
-]
-
-[package.dependencies]
-cryptography = "*"
-django = ">=3.2"
-djangorestframework = "*"
-
-[[package]]
 name = "django-select2"
 version = "8.2.1"
 description = "This is a Django_ integration of Select2_."
@@ -5255,4 +5239,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.13"
-content-hash = "d7daf7a3a3da74241be72f5992af2546c5301be8e111798145037127f70e65dc"
+content-hash = "e4a2704ed304f5416b42c2250672a96063f881c2b8330d23dcf3776e53b058dd"
