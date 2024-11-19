@@ -4,7 +4,9 @@ from drf_spectacular.views import SpectacularAPIView
 
 
 @pytest.mark.django_db
-def test_schema_is_valid():
+def test_schema_is_valid(settings):
+    settings.ROOT_URLCONF = "config.urls.root"
+
     schema_view = SpectacularAPIView()
 
     generator = schema_view.generator_class(
