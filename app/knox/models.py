@@ -13,14 +13,14 @@ DEFAULT_EXPIRY = timedelta(hours=10)
 class AuthTokenManager(models.Manager):
     def create(self, user, expiry=DEFAULT_EXPIRY):
         token = crypto.create_token_string()
-        digest = crypto.hash_token(token)
+        key = crypto.hash_token(token)
 
         if expiry is not None:
             expiry = timezone.now() + expiry
 
         instance = super().create(
+            key=key,
             token_key=token[: CONSTANTS.TOKEN_KEY_LENGTH],
-            digest=digest,
             user=user,
             expiry=expiry,
         )
@@ -31,7 +31,7 @@ class AuthToken(models.Model):
 
     objects = AuthTokenManager()
 
-    digest = models.CharField(max_length=128, primary_key=True)
+    key = models.CharField(max_length=128, primary_key=True)
     token_key = models.CharField(
         max_length=CONSTANTS.TOKEN_KEY_LENGTH, db_index=True
     )
@@ -46,4 +46,4 @@ class AuthToken(models.Model):
     expiry = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.digest} : {self.user}"
+        return f"{self.key} : {self.user}"

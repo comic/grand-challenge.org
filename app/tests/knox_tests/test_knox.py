@@ -135,13 +135,13 @@ class AuthTestCase(TestCase):
         )
         # Hash generated using crypto.hash_token on 4.2.0 with
         # SECURE_HASH_ALGORITHM = 'cryptography.hazmat.primitives.hashes.SHA512'
-        old_hash = "d74a4d2e7b8cb90e432aba33d75b8a6d803091d5a5d758d0ae70558573ceae01439cffbe43182470b73e7001dbbd96cbf12cbcbebe36b24cf4c4cb3198b936fc"
+        old_key = "d74a4d2e7b8cb90e432aba33d75b8a6d803091d5a5d758d0ae70558573ceae01439cffbe43182470b73e7001dbbd96cbf12cbcbebe36b24cf4c4cb3198b936fc"
 
-        AuthToken(digest=old_hash, user=self.user).save()
+        AuthToken(key=old_key, user=self.user).save()
 
         rf = APIRequestFactory()
         request = rf.get("/")
         request.META = {"HTTP_AUTHORIZATION": f"Bearer {old_token}"}
         user, auth_token = TokenAuthentication().authenticate(request)
         self.assertEqual(self.user, user)
-        self.assertEqual(old_hash, auth_token.digest)
+        self.assertEqual(old_key, auth_token.key)
