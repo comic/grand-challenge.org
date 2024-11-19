@@ -13,7 +13,11 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
-from grandchallenge.hanging_protocols.models import ViewportNames
+from grandchallenge.core.validators import JSONValidator, ViewContentValidator
+from grandchallenge.hanging_protocols.models import (
+    VIEW_CONTENT_SCHEMA,
+    ViewportNames,
+)
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstation_configs.models import WorkstationConfig
 from grandchallenge.workstations.models import Workstation
@@ -92,6 +96,16 @@ class ViewContentExampleMixin:
                 if remaining_overlays > 0:
                     view_content_example[port].append(overlays.pop(0))
                     remaining_overlays -= 1
+
+        try:
+            JSONValidator(schema=VIEW_CONTENT_SCHEMA)(
+                value=view_content_example
+            )
+            ViewContentValidator(view_content_example)
+        except ValidationError as e:
+            raise RuntimeError(
+                f"view_content example is not valid. Validation error: {e.messages}"
+            )
 
         return json.dumps(view_content_example)
 
