@@ -194,7 +194,7 @@ class JSONSchemaValidator:
 
 @deconstructible
 class ViewContentValidator:
-    """Validates view_content JSON and against governing rules."""
+    """Validates view_content JSON against governing rules."""
 
     def __call__(self, value):
         if not hasattr(value, "items"):
