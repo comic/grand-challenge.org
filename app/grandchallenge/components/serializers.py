@@ -195,14 +195,16 @@ class CIVSetPostSerializerMixin:
         )
 
     def create(self, validated_data):
-        if "values" in validated_data and validated_data.pop("values") != []:
+        if validated_data.pop("values", None):
             raise DRFValidationError("Values can only be added via update")
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
-        request = self.context["request"]
+        values = validated_data.pop("values", [])
 
-        values = validated_data.pop("values")
+        instance = super().update(instance, validated_data)
+
+        request = self.context["request"]
 
         civs = []
 

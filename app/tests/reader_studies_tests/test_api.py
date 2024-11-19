@@ -1707,6 +1707,7 @@ def test_display_set_add_and_edit(
     )
     assert response.json() == ["Values can only be added via update"]
 
+    # Add display set
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-list",
         user=r1,
@@ -1834,6 +1835,30 @@ def test_display_set_add_and_edit(
         )
 
     ds.refresh_from_db()
+    assert ds.values.count() == 1
+
+    # Test updating title and order (no values)
+    assert ds.title == ""
+    old_order = ds.order
+
+    with django_capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:reader-studies-display-set-detail",
+            reverse_kwargs={"pk": ds.pk},
+            user=r1,
+            client=client,
+            method=client.patch,
+            content_type="application/json",
+            data={
+                "title": "foo",
+                "order": old_order + 1,
+            },
+        )
+
+    assert response.status_code == 200
+    ds.refresh_from_db()
+    assert ds.title == "foo"
+    assert ds.order == old_order + 1
     assert ds.values.count() == 1
 
     # Create another display set
