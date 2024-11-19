@@ -98,7 +98,6 @@ class NotificationList(
                 "action_object_content_type",
                 "user__verification",
             )
-            .order_by("-created")
         )
 
     def get_context_data(self, **kwargs):

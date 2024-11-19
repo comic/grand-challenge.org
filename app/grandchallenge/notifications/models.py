@@ -122,6 +122,9 @@ class Notification(UUIDModel):
         "action_object_content_type", "action_object_object_id"
     )
 
+    class Meta:
+        ordering = ("-created",)
+
     def __str__(self):
         return f"Notification for {self.user}"
 
