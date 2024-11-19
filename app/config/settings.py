@@ -1422,7 +1422,7 @@ ALLOWED_JSON_SCHEMA_REF_SRC_REGEXES = (
 # CONTENT SECURITY POLICY
 ##########################
 
-CSP_REPORT_ONLY = strtobool(os.environ.get("CSP_REPORT_ONLY", "True"))
+CSP_REPORT_ONLY = strtobool(os.environ.get("CSP_REPORT_ONLY", "False"))
 
 CSP_REPORT_URI = os.environ.get("CSP_REPORT_URI")
 CSP_REPORT_PERCENTAGE = float(os.environ.get("CSP_REPORT_PERCENTAGE", "0"))
