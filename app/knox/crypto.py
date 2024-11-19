@@ -1,8 +1,6 @@
 import binascii
+import hashlib
 from os import urandom as generate_bytes
-
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes
 
 
 def create_token_string():
@@ -15,11 +13,9 @@ def create_token_string():
 def hash_token(token):
     """
     Calculates the hash of a token.
-    input is unhexlified
-
-    token must contain an even number of hex digits or a binascii.Error
-    exception will be raised
+    Token must contain an even number of hex digits or
+    a binascii.Error exception will be raised.
     """
-    digest = hashes.Hash(hashes.SHA512(), backend=default_backend())
+    digest = hashlib.sha512()
     digest.update(binascii.unhexlify(token))
-    return binascii.hexlify(digest.finalize()).decode()
+    return digest.hexdigest()
