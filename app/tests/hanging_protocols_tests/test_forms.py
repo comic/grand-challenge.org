@@ -47,7 +47,7 @@ def test_view_content_mixin():
 
     assert not form.is_valid()
     assert form.errors == {
-        "__all__": [
+        "view_content": [
             "Unknown interfaces in view content for viewport main: test"
         ]
     }
