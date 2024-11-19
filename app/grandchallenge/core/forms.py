@@ -7,7 +7,10 @@ from django.core.exceptions import ValidationError
 from django.forms import CharField, ModelForm
 from django.utils.text import format_lazy
 
-from grandchallenge.components.models import InterfaceKindChoices
+from grandchallenge.components.models import (
+    InterfaceKind,
+    InterfaceKindChoices,
+)
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.hanging_protocols.models import ViewportNames
@@ -47,35 +50,44 @@ class ViewContentExampleMixin:
             .order_by("slug")
             .values_list("slug", flat=True)
         )
-
-        if not images:
-            return None
-
-        overlays = list(
+        mandatory_isolation_interfaces = list(
             self.instance.interfaces.filter(
-                kind__in=[
-                    InterfaceKindChoices.SEGMENTATION,
-                    InterfaceKindChoices.HEAT_MAP,
-                    InterfaceKindChoices.DISPLACEMENT_FIELD,
-                ]
+                kind__in=InterfaceKind.interface_type_mandatory_isolation()
             )
             .order_by("slug")
             .values_list("slug", flat=True)
         )
+
+        if not images and not mandatory_isolation_interfaces:
+            return None
+
+        overlays = list(
+            self.instance.interfaces.exclude(
+                kind__in=InterfaceKind.interface_type_undisplayable()
+                | InterfaceKind.interface_type_mandatory_isolation()
+                | {InterfaceKindChoices.IMAGE}
+            )
+            .order_by("slug")
+            .values_list("slug", flat=True)
+        )
+        if images:
+            overlays_per_image = len(overlays) // len(images)
+            remaining_overlays = len(overlays) % len(images)
+
         view_content_example = {}
-        overlays_per_image = len(overlays) // len(images)
-        remaining_overlays = len(overlays) % len(images)
 
         for port in ViewportNames.values:
-            if len(images) == 0:
-                break
-
-            view_content_example[port] = [images.pop(0)]
-            for _ in range(overlays_per_image):
-                view_content_example[port].append(overlays.pop(0))
-            if remaining_overlays > 0:
-                view_content_example[port].append(overlays.pop(0))
-                remaining_overlays -= 1
+            if mandatory_isolation_interfaces:
+                view_content_example[port] = [
+                    mandatory_isolation_interfaces.pop(0)
+                ]
+            elif images:
+                view_content_example[port] = [images.pop(0)]
+                for _ in range(overlays_per_image):
+                    view_content_example[port].append(overlays.pop(0))
+                if remaining_overlays > 0:
+                    view_content_example[port].append(overlays.pop(0))
+                    remaining_overlays -= 1
 
         return json.dumps(view_content_example)
 
