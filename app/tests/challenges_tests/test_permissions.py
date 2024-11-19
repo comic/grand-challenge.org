@@ -35,21 +35,9 @@ def test_request_challenge_only_when_verified(client):
         client=client, viewname="challenges:requests-create", user=user
     )
     assert response.status_code == 403
-    response = get_view_for_user(
-        client=client,
-        viewname="challenges:requests-cost-calculation",
-        user=user,
-    )
-    assert response.status_code == 403
     Verification.objects.create(user=user, is_verified=True)
     response = get_view_for_user(
         client=client, viewname="challenges:requests-create", user=user
-    )
-    assert response.status_code == 200
-    response = get_view_for_user(
-        client=client,
-        viewname="challenges:requests-cost-calculation",
-        user=user,
     )
     assert response.status_code == 200
 
@@ -85,6 +73,7 @@ def test_view_and_update_challenge_request(
     if "detail" in viewname:
         assert response.status_code == 200
         assert "Edit budget fields" not in str(response.content)
+        assert "Budget estimate" not in str(response.content)
     else:
         assert response.status_code == 403
 
@@ -97,6 +86,7 @@ def test_view_and_update_challenge_request(
     assert response.status_code == 200
     if "detail" in viewname:
         assert "Edit budget fields" in str(response.content)
+        assert "Budget estimate" in str(response.content)
 
 
 @pytest.mark.django_db

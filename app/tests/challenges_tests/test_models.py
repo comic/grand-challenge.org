@@ -1,3 +1,5 @@
+import random
+
 import pytest
 from actstream.actions import is_following
 from actstream.models import Action
@@ -9,8 +11,13 @@ from machina.apps.forum_conversation.models import Topic
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.notifications.models import Notification
-from tests.factories import ChallengeFactory, UserFactory
+from tests.factories import (
+    ChallengeFactory,
+    ChallengeRequestFactory,
+    UserFactory,
+)
 from tests.notifications_tests.factories import TopicFactory
+from tests.organizations_tests.factories import OrganizationFactory
 
 
 @pytest.mark.django_db
@@ -99,3 +106,52 @@ def test_non_posters_notified(group):
 def test_is_active_until_set():
     c = ChallengeFactory()
     assert c.is_active_until == today().date() + relativedelta(months=12)
+
+
+@pytest.mark.django_db
+def test_total_challenge_cost():
+    user_exempt_from_base_cost, normal_user = UserFactory.create_batch(2)
+    request1 = ChallengeRequestFactory(
+        creator=user_exempt_from_base_cost, expected_number_of_teams=3
+    )
+    request2 = ChallengeRequestFactory(
+        creator=normal_user, expected_number_of_teams=3
+    )
+    request3 = ChallengeRequestFactory(
+        creator=normal_user, expected_number_of_teams=10
+    )
+
+    organisation = OrganizationFactory(exempt_from_base_costs=True)
+    organisation.members_group.user_set.add(user_exempt_from_base_cost)
+
+    assert request1.storage_and_compute_cost_surplus == -300
+    assert request1.total_challenge_cost == 1000
+
+    assert request2.storage_and_compute_cost_surplus == -300
+    assert request2.total_challenge_cost == 6000
+
+    assert request3.storage_and_compute_cost_surplus == 1290
+    assert request3.total_challenge_cost == 7500
+
+
+@pytest.mark.django_db
+def test_storage_and_compute_cost_add_up_to_total():
+    user = UserFactory()
+
+    for _ in range(10):
+        request = ChallengeRequestFactory(
+            creator=user,
+            expected_number_of_teams=random.randint(0, 50),
+            inference_time_limit_in_minutes=random.randint(0, 50),
+            average_size_of_test_image_in_mb=random.randint(0, 500),
+            phase_1_number_of_submissions_per_team=random.randint(0, 50),
+            phase_2_number_of_submissions_per_team=random.randint(0, 50),
+            phase_1_number_of_test_images=random.randint(0, 50),
+            phase_2_number_of_test_images=random.randint(0, 50),
+        )
+        assert (
+            request.total_challenge_cost
+            == request.base_cost_euros
+            + request.total_storage_to_be_invoiced
+            + request.total_compute_to_be_invoiced
+        )

@@ -157,6 +157,7 @@ def test_average_duration_filtering():
         (InterfaceKindChoices.THUMBNAIL_PNG, True, False),
         (InterfaceKindChoices.OBJ, True, False),
         (InterfaceKindChoices.MP4, True, False),
+        (InterfaceKindChoices.NEWICK, True, False),
     ),
 )
 def test_saved_in_object_store(kind, object_store_required, is_image):
@@ -220,6 +221,8 @@ def test_saved_in_object_store(kind, object_store_required, is_image):
         (InterfaceKindChoices.SQREG, True),
         (InterfaceKindChoices.THUMBNAIL_JPG, True),
         (InterfaceKindChoices.THUMBNAIL_PNG, True),
+        (InterfaceKindChoices.MP4, True),
+        (InterfaceKindChoices.NEWICK, True),
     ),
 )
 def test_clean_store_in_db(kind, object_store_required):
@@ -250,6 +253,33 @@ def test_all_interfaces_covered():
     }
 
 
+@pytest.mark.parametrize(
+    "kind,context",
+    (
+        *(
+            (k, nullcontext())
+            for k in sorted(InterfaceKind.interface_type_file())
+        ),
+        *(
+            (k, nullcontext())
+            for k in sorted(InterfaceKind.interface_type_json())
+        ),
+        (
+            InterfaceKind.InterfaceKindChoices.IMAGE,
+            pytest.raises(RuntimeError),
+        ),
+    ),
+)
+def test_all_file_type_covered(kind, context):
+    ci = ComponentInterfaceFactory.build(kind=kind)
+
+    with context:
+        ci.allowed_file_types
+
+    with context:
+        ci.file_extension
+
+
 @pytest.mark.django_db
 def test_no_uuid_validation():
     # For multi job inputs we add uuid prefixes, so check that the relative
@@ -265,18 +295,21 @@ def test_no_uuid_validation():
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "kind",
+    "kind, good_suffix",
     (
-        *InterfaceKind.interface_type_file(),
-        *InterfaceKind.interface_type_json(),
+        (InterfaceKind.InterfaceKindChoices.CSV, "csv"),
+        (InterfaceKind.InterfaceKindChoices.ZIP, "zip"),
+        (InterfaceKind.InterfaceKindChoices.PDF, "pdf"),
+        (InterfaceKind.InterfaceKindChoices.SQREG, "sqreg"),
+        (InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG, "jpeg"),
+        (InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG, "png"),
+        (InterfaceKind.InterfaceKindChoices.OBJ, "obj"),
+        (InterfaceKind.InterfaceKindChoices.MP4, "mp4"),
+        (InterfaceKind.InterfaceKindChoices.NEWICK, "newick"),
+        *((k, "json") for k in InterfaceKind.interface_type_json()),
     ),
 )
-def test_relative_path_file_ending(kind):
-    if kind in InterfaceKind.interface_type_json():
-        good_suffix = "json"
-    else:
-        good_suffix = kind.lower()
-
+def test_relative_path_file_ending(kind, good_suffix):
     i = ComponentInterfaceFactory(
         kind=kind,
         relative_path=f"foo/bar.{good_suffix}",
