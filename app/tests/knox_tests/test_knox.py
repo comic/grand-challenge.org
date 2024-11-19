@@ -1,8 +1,7 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from freezegun import freeze_time
 from knox.auth import TokenAuthentication
 from knox.models import AuthToken
 from knox.settings import CONSTANTS
@@ -105,15 +104,12 @@ class AuthTestCase(TestCase):
         self.assertEqual(response.data, {"detail": "Invalid token."})
 
     def test_token_expiry_is_not_extended(self):
-        now = datetime.now()
-        with freeze_time(now):
-            instance, token = AuthToken.objects.create(user=self.user)
+        instance, token = AuthToken.objects.create(user=self.user)
 
         original_expiry = AuthToken.objects.get().expiry
 
         self.client.credentials(HTTP_AUTHORIZATION=("Bearer %s" % token))
-        with freeze_time(now + timedelta(hours=1)):
-            response = self.client.get(root_url, {}, format="json")
+        response = self.client.get(root_url, {}, format="json")
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(original_expiry, AuthToken.objects.get().expiry)

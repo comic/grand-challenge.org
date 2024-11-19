@@ -121,7 +121,6 @@ playwright = "*"
 pytest-playwright = "*"
 pytest-rerunfailures = "*"
 sphinx-exec-code = "*"
-freezegun = "*"
 
 [tool.amass]
 output = "app/grandchallenge/core/static/vendored"
