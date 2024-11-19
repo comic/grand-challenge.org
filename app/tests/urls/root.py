@@ -1,4 +1,4 @@
-from django.urls import include, path
+from django.urls import path
 
 from config.urls.root import urlpatterns as root_urlpatterns
 from tests.knox_tests.views import RootView
@@ -25,7 +25,6 @@ urlpatterns = [
         name="new-session-test-with-path-param",
     ),
     path("workstation/", WorkstationView.as_view(), name="workstation-mock"),
-    path("knox-api/", include("knox.urls")),
     path("knox-api/", RootView.as_view(), name="knox-api-root"),
     *root_urlpatterns,
 ]

@@ -944,8 +944,6 @@ SPECTACULAR_SETTINGS = {
     "COMPONENT_SPLIT_REQUEST": True,
 }
 
-REST_KNOX = {"AUTH_HEADER_PREFIX": "Bearer"}
-
 ###############################################################################
 #
 # CORS

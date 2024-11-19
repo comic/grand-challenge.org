@@ -3,14 +3,12 @@ from os import urandom as generate_bytes
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
-from knox.settings import knox_settings
-
-sha = knox_settings.SECURE_HASH_ALGORITHM
 
 
 def create_token_string():
+    auth_token_character_length = 64
     return binascii.hexlify(
-        generate_bytes(int(knox_settings.AUTH_TOKEN_CHARACTER_LENGTH / 2))
+        generate_bytes(int(auth_token_character_length / 2))
     ).decode()
 
 
@@ -22,6 +20,6 @@ def hash_token(token):
     token must contain an even number of hex digits or a binascii.Error
     exception will be raised
     """
-    digest = hashes.Hash(sha(), backend=default_backend())
+    digest = hashes.Hash(hashes.SHA512(), backend=default_backend())
     digest.update(binascii.unhexlify(token))
     return binascii.hexlify(digest.finalize()).decode()

@@ -1,14 +1,17 @@
+from datetime import timedelta
+
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from knox import crypto
-from knox.settings import CONSTANTS, knox_settings
+from knox.settings import CONSTANTS
 
 User = settings.AUTH_USER_MODEL
+DEFAULT_EXPIRY = timedelta(hours=10)
 
 
 class AuthTokenManager(models.Manager):
-    def create(self, user, expiry=knox_settings.TOKEN_TTL):
+    def create(self, user, expiry=DEFAULT_EXPIRY):
         token = crypto.create_token_string()
         digest = crypto.hash_token(token)
 
@@ -28,9 +31,7 @@ class AuthToken(models.Model):
 
     objects = AuthTokenManager()
 
-    digest = models.CharField(
-        max_length=CONSTANTS.DIGEST_LENGTH, primary_key=True
-    )
+    digest = models.CharField(max_length=128, primary_key=True)
     token_key = models.CharField(
         max_length=CONSTANTS.TOKEN_KEY_LENGTH, db_index=True
     )
