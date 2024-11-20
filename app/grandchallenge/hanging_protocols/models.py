@@ -328,8 +328,7 @@ class HangingProtocolMixin(models.Model):
     def clean(self):
         super().clean()
 
-        self.check_consistent_viewports()
-        self.check_all_interfaces_in_view_content_exist()
+        self.clean_view_content()
 
     def check_consistent_viewports(self):
         if self.view_content and self.hanging_protocol:
@@ -396,6 +395,10 @@ class HangingProtocolMixin(models.Model):
                     f"found {len(undisplayable_interfaces)} for viewport {viewport}: "
                     f"{', '.join(i.slug for i in undisplayable_interfaces)}"
                 )
+
+    def clean_view_content(self):
+        self.check_consistent_viewports()
+        self.check_all_interfaces_in_view_content_exist()
 
     class Meta:
         abstract = True
