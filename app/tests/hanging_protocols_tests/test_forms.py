@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from django.forms import ModelForm
 from django.utils.text import format_lazy
@@ -6,6 +8,7 @@ from guardian.shortcuts import assign_perm
 from grandchallenge.algorithms.forms import AlgorithmForm
 from grandchallenge.archives.forms import ArchiveForm
 from grandchallenge.components.models import (
+    ComponentInterface,
     InterfaceKind,
     InterfaceKindChoices,
 )
@@ -521,3 +524,142 @@ def test_forms_view_content_help_text(
     assert form.fields["view_content"].help_text == format_lazy(
         expected_help_text, base_obj._meta.verbose_name
     )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "number_of_isolated_ci,number_of_images,number_of_overlays,expected_example_json",
+    (
+        (
+            0,
+            0,
+            0,
+            None,
+        ),
+        (
+            0,
+            1,
+            0,
+            {"main": ["test-ci-image-0"]},
+        ),
+        (
+            0,
+            0,
+            1,
+            None,
+        ),
+        (
+            0,
+            5,
+            5,
+            {
+                "main": ["test-ci-image-0", "test-ci-overlay-0"],
+                "secondary": ["test-ci-image-1", "test-ci-overlay-1"],
+                "tertiary": ["test-ci-image-2", "test-ci-overlay-2"],
+                "quaternary": ["test-ci-image-3", "test-ci-overlay-3"],
+                "quinary": ["test-ci-image-4", "test-ci-overlay-4"],
+            },
+        ),
+        (
+            1,
+            6,
+            3,
+            {
+                "main": ["test-ci-isolated-0"],
+                "secondary": ["test-ci-image-0", "test-ci-overlay-0"],
+                "tertiary": ["test-ci-image-1", "test-ci-overlay-1"],
+                "quaternary": ["test-ci-image-2", "test-ci-overlay-2"],
+                "quinary": ["test-ci-image-3"],
+                "senary": ["test-ci-image-4"],
+                "septenary": ["test-ci-image-5"],
+            },
+        ),
+        (
+            1,
+            3,
+            6,
+            {
+                "main": ["test-ci-isolated-0"],
+                "secondary": [
+                    "test-ci-image-0",
+                    "test-ci-overlay-0",
+                    "test-ci-overlay-1",
+                ],
+                "tertiary": [
+                    "test-ci-image-1",
+                    "test-ci-overlay-2",
+                    "test-ci-overlay-3",
+                ],
+                "quaternary": [
+                    "test-ci-image-2",
+                    "test-ci-overlay-4",
+                    "test-ci-overlay-5",
+                ],
+            },
+        ),
+        (
+            1,
+            3,
+            8,
+            {
+                "main": ["test-ci-isolated-0"],
+                "secondary": [
+                    "test-ci-image-0",
+                    "test-ci-overlay-0",
+                    "test-ci-overlay-1",
+                    "test-ci-overlay-2",
+                ],
+                "tertiary": [
+                    "test-ci-image-1",
+                    "test-ci-overlay-3",
+                    "test-ci-overlay-4",
+                    "test-ci-overlay-5",
+                ],
+                "quaternary": [
+                    "test-ci-image-2",
+                    "test-ci-overlay-6",
+                    "test-ci-overlay-7",
+                ],
+            },
+        ),
+    ),
+)
+def test_generate_view_content_example(
+    number_of_isolated_ci,
+    number_of_images,
+    number_of_overlays,
+    expected_example_json,
+):
+    for i in range(number_of_isolated_ci):
+        ComponentInterfaceFactory(
+            kind=InterfaceKindChoices.CHART, title=f"test-ci-isolated-{i}"
+        )
+
+    for i in range(number_of_images):
+        ComponentInterfaceFactory(
+            kind=InterfaceKindChoices.IMAGE, title=f"test-ci-image-{i}"
+        )
+
+    for i in range(number_of_overlays):
+        ComponentInterfaceFactory(
+            kind=InterfaceKindChoices.SEGMENTATION,
+            title=f"test-ci-overlay-{i}",
+        )
+
+    interfaces = ComponentInterface.objects.filter(
+        title__startswith="test-ci-"
+    ).all()
+
+    base_obj = AlgorithmFactory()
+
+    base_obj.inputs.set(interfaces)
+    base_obj.outputs.set([])
+
+    form = AlgorithmForm(user=UserFactory(), instance=base_obj)
+
+    view_content_example = form.generate_view_content_example()
+    view_content_example_json = (
+        json.loads(view_content_example) if view_content_example else None
+    )
+
+    assert view_content_example_json == expected_example_json
