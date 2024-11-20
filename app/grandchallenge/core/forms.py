@@ -54,16 +54,14 @@ class ViewContentExampleMixin:
 
     def generate_view_content_example(self):
         images = list(
-            self.instance.interfaces.filter(kind=InterfaceKindChoices.IMAGE)
-            .order_by("slug")
-            .values_list("slug", flat=True)
+            self.instance.interfaces.filter(
+                kind=InterfaceKindChoices.IMAGE
+            ).values_list("slug", flat=True)
         )
         mandatory_isolation_interfaces = list(
             self.instance.interfaces.filter(
                 kind__in=InterfaceKind.interface_type_mandatory_isolation()
-            )
-            .order_by("slug")
-            .values_list("slug", flat=True)
+            ).values_list("slug", flat=True)
         )
 
         if not images and not mandatory_isolation_interfaces:
@@ -74,9 +72,7 @@ class ViewContentExampleMixin:
                 kind__in=InterfaceKind.interface_type_undisplayable()
                 | InterfaceKind.interface_type_mandatory_isolation()
                 | {InterfaceKindChoices.IMAGE}
-            )
-            .order_by("slug")
-            .values_list("slug", flat=True)
+            ).values_list("slug", flat=True)
         )
         if images:
             overlays_per_image = len(overlays) // len(images)
