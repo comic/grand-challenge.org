@@ -13,7 +13,7 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
-from grandchallenge.core.validators import JSONValidator, ViewContentValidator
+from grandchallenge.core.validators import JSONValidator
 from grandchallenge.hanging_protocols.models import (
     VIEW_CONTENT_SCHEMA,
     ViewportNames,
@@ -101,7 +101,6 @@ class ViewContentExampleMixin:
             JSONValidator(schema=VIEW_CONTENT_SCHEMA)(
                 value=view_content_example
             )
-            ViewContentValidator(view_content_example)
         except ValidationError as e:
             raise RuntimeError(
                 f"view_content example is not valid. Validation error: {e.messages}"

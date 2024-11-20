@@ -13,8 +13,6 @@ from jsonschema import SchemaError
 from jsonschema import ValidationError as JSONValidationError
 from jsonschema import validate, validators
 
-from grandchallenge.components import models as components_models
-
 
 @deconstructible
 class MimeTypeValidator:
@@ -190,72 +188,3 @@ class JSONSchemaValidator:
 
     def __ne__(self, other):
         return not (self == other)
-
-
-@deconstructible
-class ViewContentValidator:
-    """Validates view_content JSON against governing rules."""
-
-    def __call__(self, value):
-        if not hasattr(value, "items"):
-            raise ValidationError("View content is invalid")
-
-        for viewport, slugs in value.items():
-            viewport_interfaces = (
-                components_models.ComponentInterface.objects.filter(
-                    slug__in=slugs
-                )
-            )
-
-            if set(slugs) != {i.slug for i in viewport_interfaces}:
-                raise ValidationError(
-                    f"Unknown interfaces in view content for viewport {viewport}: {', '.join(slugs)}"
-                )
-
-            image_interfaces = [
-                i
-                for i in viewport_interfaces
-                if i.kind
-                == components_models.InterfaceKind.InterfaceKindChoices.IMAGE
-            ]
-
-            if len(image_interfaces) > 1:
-                raise ValidationError(
-                    "Maximum of one image interface is allowed per viewport, "
-                    f"got {len(image_interfaces)} for viewport {viewport}: "
-                    f"{', '.join(i.slug for i in image_interfaces)}"
-                )
-
-            mandatory_isolation_interfaces = [
-                i
-                for i in viewport_interfaces
-                if i.kind
-                in components_models.InterfaceKind.interface_type_mandatory_isolation()
-            ]
-
-            if len(mandatory_isolation_interfaces) > 1 or (
-                len(mandatory_isolation_interfaces) == 1
-                and len(viewport_interfaces) > 1
-            ):
-                raise ValidationError(
-                    "Some of the selected interfaces can only be displayed in isolation, "
-                    f"found {len(mandatory_isolation_interfaces)} for viewport {viewport}: "
-                    f"{', '.join(i.slug for i in mandatory_isolation_interfaces)}"
-                )
-
-            undisplayable_interfaces = [
-                i
-                for i in viewport_interfaces
-                if i.kind
-                in components_models.InterfaceKind.interface_type_undisplayable()
-            ]
-
-            if len(undisplayable_interfaces) > 0:
-                raise ValidationError(
-                    "Some of the selected interfaces cannot be displayed, "
-                    f"found {len(undisplayable_interfaces)} for viewport {viewport}: "
-                    f"{', '.join(i.slug for i in undisplayable_interfaces)}"
-                )
-
-    def __eq__(self, other):
-        return isinstance(other, ViewContentValidator)

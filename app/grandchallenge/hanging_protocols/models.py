@@ -5,8 +5,9 @@ from django.utils.html import format_html
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
+from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.core.models import TitleSlugDescriptionModel, UUIDModel
-from grandchallenge.core.validators import JSONValidator, ViewContentValidator
+from grandchallenge.core.validators import JSONValidator
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -307,7 +308,6 @@ class HangingProtocolMixin(models.Model):
         default=dict,
         validators=[
             JSONValidator(schema=VIEW_CONTENT_SCHEMA),
-            ViewContentValidator(),
         ],
     )
     hanging_protocol = models.ForeignKey(
@@ -329,6 +329,7 @@ class HangingProtocolMixin(models.Model):
         super().clean()
 
         self.check_consistent_viewports()
+        self.check_all_interfaces_in_view_content_exist()
 
     def check_consistent_viewports(self):
         if self.view_content and self.hanging_protocol:
@@ -338,6 +339,62 @@ class HangingProtocolMixin(models.Model):
                 raise ValidationError(
                     "Image ports in view_content do not match "
                     "those in the selected hanging protocol."
+                )
+
+    def check_all_interfaces_in_view_content_exist(self):
+        if not hasattr(self.view_content, "items"):
+            raise ValidationError("View content is invalid")
+
+        for viewport, slugs in self.view_content.items():
+            viewport_interfaces = ComponentInterface.objects.filter(
+                slug__in=slugs
+            )
+
+            if set(slugs) != {i.slug for i in viewport_interfaces}:
+                raise ValidationError(
+                    f"Unknown interfaces in view content for viewport {viewport}: {', '.join(slugs)}"
+                )
+
+            image_interfaces = [
+                i
+                for i in viewport_interfaces
+                if i.kind == InterfaceKind.InterfaceKindChoices.IMAGE
+            ]
+
+            if len(image_interfaces) > 1:
+                raise ValidationError(
+                    "Maximum of one image interface is allowed per viewport, "
+                    f"got {len(image_interfaces)} for viewport {viewport}: "
+                    f"{', '.join(i.slug for i in image_interfaces)}"
+                )
+
+            mandatory_isolation_interfaces = [
+                i
+                for i in viewport_interfaces
+                if i.kind in InterfaceKind.interface_type_mandatory_isolation()
+            ]
+
+            if len(mandatory_isolation_interfaces) > 1 or (
+                len(mandatory_isolation_interfaces) == 1
+                and len(viewport_interfaces) > 1
+            ):
+                raise ValidationError(
+                    "Some of the selected interfaces can only be displayed in isolation, "
+                    f"found {len(mandatory_isolation_interfaces)} for viewport {viewport}: "
+                    f"{', '.join(i.slug for i in mandatory_isolation_interfaces)}"
+                )
+
+            undisplayable_interfaces = [
+                i
+                for i in viewport_interfaces
+                if i.kind in InterfaceKind.interface_type_undisplayable()
+            ]
+
+            if len(undisplayable_interfaces) > 0:
+                raise ValidationError(
+                    "Some of the selected interfaces cannot be displayed, "
+                    f"found {len(undisplayable_interfaces)} for viewport {viewport}: "
+                    f"{', '.join(i.slug for i in undisplayable_interfaces)}"
                 )
 
     class Meta:
