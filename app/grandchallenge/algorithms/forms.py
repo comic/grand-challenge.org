@@ -72,7 +72,6 @@ from grandchallenge.components.tasks import assign_tarball_from_upload
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
-    ViewContentExampleMixin,
     WorkstationUserFilterMixin,
 )
 from grandchallenge.core.guardian import get_objects_for_user
@@ -84,6 +83,7 @@ from grandchallenge.core.widgets import (
 )
 from grandchallenge.evaluation.utils import get
 from grandchallenge.groups.forms import UserGroupForm
+from grandchallenge.hanging_protocols.forms import ViewContentExampleMixin
 from grandchallenge.hanging_protocols.models import VIEW_CONTENT_SCHEMA
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse, reverse_lazy

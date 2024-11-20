@@ -47,7 +47,6 @@ from grandchallenge.core.forms import (
     SaveFormInitMixin,
     UniqueTitleCreateFormMixin,
     UniqueTitleUpdateFormMixin,
-    ViewContentExampleMixin,
     WorkstationUserFilterMixin,
 )
 from grandchallenge.core.layout import Formset
@@ -57,6 +56,7 @@ from grandchallenge.core.widgets import (
     MarkdownEditorInlineWidget,
 )
 from grandchallenge.groups.forms import UserGroupForm
+from grandchallenge.hanging_protocols.forms import ViewContentExampleMixin
 from grandchallenge.hanging_protocols.models import VIEW_CONTENT_SCHEMA
 from grandchallenge.reader_studies.models import (
     ANSWER_TYPE_TO_INTERACTIVE_ALGORITHM_CHOICES,

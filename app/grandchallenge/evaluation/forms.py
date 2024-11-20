@@ -35,7 +35,6 @@ from grandchallenge.components.models import (
 from grandchallenge.components.tasks import assign_tarball_from_upload
 from grandchallenge.core.forms import (
     SaveFormInitMixin,
-    ViewContentExampleMixin,
     WorkstationUserFilterMixin,
 )
 from grandchallenge.core.guardian import (
@@ -57,6 +56,7 @@ from grandchallenge.evaluation.models import (
     Submission,
 )
 from grandchallenge.evaluation.utils import SubmissionKindChoices
+from grandchallenge.hanging_protocols.forms import ViewContentExampleMixin
 from grandchallenge.hanging_protocols.models import VIEW_CONTENT_SCHEMA
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.uploads.models import UserUpload
