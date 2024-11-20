@@ -489,7 +489,9 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         default=list,
         help_text=(
             "The GPU type choices that challenge admins will be able to set for the "
-            f"evaluation method. Options are {GPUTypeChoices.names}."
+            f"evaluation method. Options are {GPUTypeChoices.names}.".replace(
+                "'", '"'
+            )
         ),
         validators=[JSONValidator(schema=SELECTABLE_GPU_TYPES_SCHEMA)],
     )
