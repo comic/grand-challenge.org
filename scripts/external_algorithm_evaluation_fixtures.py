@@ -1,8 +1,7 @@
 from allauth.account.models import EmailAddress
 from django.contrib.auth import get_user_model
 from faker import Faker
-from knox import crypto
-from knox.models import AuthToken
+from knox.models import AuthToken, hash_token
 from knox.settings import CONSTANTS
 
 from grandchallenge.challenges.models import Challenge
@@ -120,7 +119,7 @@ def _get_or_create_evaluator():
 
     AuthToken(
         token_key=token[: CONSTANTS.TOKEN_KEY_LENGTH],
-        digest=crypto.hash_token(token),
+        key=hash_token(token),
         user=user,
         expiry=None,
     ).save()

@@ -5,10 +5,14 @@ from knox import models
 @admin.register(models.AuthToken)
 class AuthTokenAdmin(admin.ModelAdmin):
     list_display = (
-        "key",
+        "token_key",
         "user",
         "created",
         "expiry",
     )
     fields = ()
-    raw_id_fields = ("user",)
+    readonly_fields = (
+        "user",
+        "token_key",
+        "key",
+    )

@@ -13,8 +13,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
 from django.db import IntegrityError
 from faker import Faker
-from knox import crypto
-from knox.models import AuthToken
+from knox.models import AuthToken, hash_token
 from knox.settings import CONSTANTS
 from machina.apps.forum.models import Forum
 
@@ -484,7 +483,6 @@ def _create_archive(users):
 
 
 def _create_user_tokens(users):
-    # Hard code tokens used in gcapi integration tests
     user_tokens = {
         "admin": "1b9436200001f2eaf57cd77db075cbb60a49a00a",
         "readerstudy": "01614a77b1c0b4ecd402be50a8ff96188d5b011d",
@@ -494,11 +492,9 @@ def _create_user_tokens(users):
 
     out = f"{'*' * 80}\n"
     for user, token in user_tokens.items():
-        digest = crypto.hash_token(token)
-
         AuthToken(
             token_key=token[: CONSTANTS.TOKEN_KEY_LENGTH],
-            digest=digest,
+            key=hash_token(token),
             user=users[user],
             expiry=None,
         ).save()
