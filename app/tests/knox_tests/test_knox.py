@@ -1,13 +1,16 @@
 from datetime import timedelta
 
+import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from knox.auth import TokenAuthentication
-from knox.models import AuthToken
+from knox.models import AuthToken, hash_token
 from knox.settings import CONSTANTS
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.test import APIRequestFactory
 from rest_framework.test import APITestCase as TestCase
+
+from tests.factories import UserFactory
 
 User = get_user_model()
 root_url = reverse("knox-api-root")
@@ -42,7 +45,7 @@ class AuthTestCase(TestCase):
 
     def test_update_token_key(self):
         self.assertEqual(AuthToken.objects.count(), 0)
-        instance, token = AuthToken.objects.create(self.user)
+        instance, token = AuthToken.objects.create(user=self.user)
         rf = APIRequestFactory()
         request = rf.get("/")
         request.META = {"HTTP_AUTHORIZATION": f"Bearer {token}"}
@@ -94,7 +97,7 @@ class AuthTestCase(TestCase):
         self.assertEqual(response.data, {"detail": "Invalid token."})
 
     def test_invalid_odd_length_token_returns_401_code(self):
-        instance, token = AuthToken.objects.create(self.user)
+        instance, token = AuthToken.objects.create(user=self.user)
         odd_length_token = token + "1"
         self.client.credentials(
             HTTP_AUTHORIZATION=("Bearer %s" % odd_length_token)
@@ -141,3 +144,44 @@ class AuthTestCase(TestCase):
         user, auth_token = TokenAuthentication().authenticate(request)
         self.assertEqual(self.user, user)
         self.assertEqual(old_key, auth_token.key)
+
+
+@pytest.mark.django_db
+def test_token_lengths():
+    user = UserFactory()
+
+    _, token = AuthToken.objects.create(user=user, expiry=None)
+
+    auth_token = user.auth_token_set.get()
+
+    assert auth_token.user == user
+    assert auth_token.key == hash_token(token)
+    assert auth_token.token_key == token[:8]
+    assert auth_token.expiry is None
+    assert len(auth_token.key) == 128  # Matches what is used in models.py
+    assert len(auth_token.token_key) == 8
+    assert len(token) == 64
+
+
+@pytest.mark.django_db
+def test_default_expiry():
+    user = UserFactory()
+
+    auth_token, _ = AuthToken.objects.create(user=user)
+
+    assert (
+        auth_token.expiry - auth_token.created
+    ).total_seconds() == pytest.approx(timedelta(hours=10).total_seconds())
+
+
+@pytest.mark.django_db
+def test_provided_expiry():
+    user = UserFactory()
+
+    auth_token, _ = AuthToken.objects.create(
+        user=user, expiry=timedelta(hours=100)
+    )
+
+    assert (
+        auth_token.expiry - auth_token.created
+    ).total_seconds() == pytest.approx(timedelta(hours=100).total_seconds())

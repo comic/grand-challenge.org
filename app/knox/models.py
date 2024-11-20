@@ -1,19 +1,25 @@
+import binascii
+import hashlib
+import secrets
 from datetime import timedelta
 
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
-from knox import crypto
 from knox.settings import CONSTANTS
 
 User = settings.AUTH_USER_MODEL
 DEFAULT_EXPIRY = timedelta(hours=10)
 
 
+def hash_token(token):
+    return hashlib.sha512(binascii.unhexlify(token)).hexdigest()
+
+
 class AuthTokenManager(models.Manager):
-    def create(self, user, expiry=DEFAULT_EXPIRY):
-        token = crypto.create_token_string()
-        key = crypto.hash_token(token)
+    def create(self, *, user, expiry=DEFAULT_EXPIRY):
+        token = secrets.token_hex()
+        key = hash_token(token)
 
         if expiry is not None:
             expiry = timezone.now() + expiry

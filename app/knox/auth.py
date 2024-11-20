@@ -2,8 +2,7 @@ import binascii
 
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from knox.crypto import hash_token
-from knox.models import AuthToken
+from knox.models import AuthToken, hash_token
 from rest_framework import exceptions
 from rest_framework.authentication import (
     TokenAuthentication as BaseTokenAuthentication,
