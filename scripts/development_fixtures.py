@@ -494,11 +494,9 @@ def _create_user_tokens(users):
 
     out = f"{'*' * 80}\n"
     for user, token in user_tokens.items():
-        digest = crypto.hash_token(token)
-
         AuthToken(
             token_key=token[: CONSTANTS.TOKEN_KEY_LENGTH],
-            digest=digest,
+            key=crypto.hash_token(token),
             user=users[user],
             expiry=None,
         ).save()

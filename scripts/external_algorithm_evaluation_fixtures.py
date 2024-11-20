@@ -120,7 +120,7 @@ def _get_or_create_evaluator():
 
     AuthToken(
         token_key=token[: CONSTANTS.TOKEN_KEY_LENGTH],
-        digest=crypto.hash_token(token),
+        key=crypto.hash_token(token),
         user=user,
         expiry=None,
     ).save()
