@@ -7,7 +7,7 @@ class UserUploadWidgetMixin:
 
     def __init__(self, *args, allowed_file_types=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.allowed_file_types = allowed_file_types or []
+        self.allowed_file_types = allowed_file_types
 
     def get_context(self, *args, **kwargs):
         context = super().get_context(*args, **kwargs)
