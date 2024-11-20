@@ -421,7 +421,7 @@ def test_hanging_protocol_clientside():
     ),
 )
 @pytest.mark.parametrize(
-    "base_object_factory,base_object_lookup,object_factory,form_class,form_class_dependencies",
+    "base_object_factory,base_object_lookup,object_factory,form_class,form_extra_kwargs",
     (
         (AlgorithmFactory, "algorithm", None, AlgorithmForm, {}),
         (
@@ -454,7 +454,7 @@ def test_forms_view_content_help_text(
     base_object_lookup,
     object_factory,
     form_class,
-    form_class_dependencies,
+    form_extra_kwargs,
 ):
     ci_list = []
     civ_list = []
@@ -515,7 +515,7 @@ def test_forms_view_content_help_text(
         base_obj.outputs.set([])
 
     form = form_class(
-        user=UserFactory(), instance=base_obj, **form_class_dependencies
+        user=UserFactory(), instance=base_obj, **form_extra_kwargs
     )
 
     assert form.fields["view_content"].help_text == format_lazy(
