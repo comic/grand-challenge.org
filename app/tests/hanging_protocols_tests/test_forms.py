@@ -20,7 +20,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.evaluation_tests.factories import PhaseFactory
-from tests.factories import UserFactory
+from tests.factories import ChallengeFactory, UserFactory
 from tests.hanging_protocols_tests.factories import HangingProtocolFactory
 from tests.hanging_protocols_tests.test_models import HangingProtocolTestModel
 from tests.reader_studies_tests.factories import (
@@ -420,6 +420,27 @@ def test_hanging_protocol_clientside():
         InterfaceKind.InterfaceKindChoices.PDF,
     ),
 )
+@pytest.mark.parametrize(
+    "base_object_factory,base_object_lookup,object_factory,form_class,form_class_dependencies",
+    (
+        (AlgorithmFactory, "algorithm", None, AlgorithmForm, {}),
+        (
+            PhaseFactory,
+            "phase",
+            None,
+            PhaseUpdateForm,
+            {"challenge": ChallengeFactory},
+        ),
+        (ArchiveFactory, "archive", ArchiveItemFactory, ArchiveForm, {}),
+        (
+            ReaderStudyFactory,
+            "reader_study",
+            DisplaySetFactory,
+            ReaderStudyUpdateForm,
+            {},
+        ),
+    ),
+)
 @pytest.mark.django_db
 def test_forms_view_content_help_text(
     number_of_images,
@@ -429,6 +450,11 @@ def test_forms_view_content_help_text(
     overlay_type,
     isolated_interface_type,
     expected_help_text,
+    base_object_factory,
+    base_object_lookup,
+    object_factory,
+    form_class,
+    form_class_dependencies,
 ):
     ci_list = []
     civ_list = []
@@ -477,58 +503,21 @@ def test_forms_view_content_help_text(
         ci_list.append(ci)
         civ_list.append(civ)
 
-    algorithm = AlgorithmFactory()
-    algorithm.inputs.set(ci_list)
+    base_obj = base_object_factory()
 
-    algorithm_form = AlgorithmForm(
-        user=UserFactory(),
-        instance=algorithm,
+    if object_factory:
+        object = object_factory(
+            **{base_object_lookup: base_obj},
+        )
+        object.values.set(civ_list)
+    else:
+        base_obj.inputs.set(ci_list)
+        base_obj.outputs.set([])
+
+    form = form_class(
+        user=UserFactory(), instance=base_obj, **form_class_dependencies
     )
 
-    assert algorithm_form.fields["view_content"].help_text == format_lazy(
-        expected_help_text, "algorithm"
-    )
-
-    archive = ArchiveFactory()
-    archive_item = ArchiveItemFactory(
-        archive=archive,
-    )
-    archive_item.values.set(civ_list)
-
-    archive_form = ArchiveForm(
-        user=UserFactory(),
-        instance=archive,
-    )
-
-    assert archive_form.fields["view_content"].help_text == format_lazy(
-        expected_help_text, "archive"
-    )
-
-    rs = ReaderStudyFactory()
-    display_set = DisplaySetFactory(
-        reader_study=rs,
-    )
-    display_set.values.set(civ_list)
-
-    rs_form = ReaderStudyUpdateForm(
-        user=UserFactory(),
-        instance=rs,
-    )
-
-    assert rs_form.fields["view_content"].help_text == format_lazy(
-        expected_help_text, "reader study"
-    )
-
-    phase = PhaseFactory()
-    phase.inputs.set(ci_list)
-    phase.outputs.set([])
-
-    phase_form = PhaseUpdateForm(
-        challenge=phase.challenge,
-        user=UserFactory(),
-        instance=phase,
-    )
-
-    assert phase_form.fields["view_content"].help_text == format_lazy(
-        expected_help_text, "phase"
+    assert form.fields["view_content"].help_text == format_lazy(
+        expected_help_text, base_obj._meta.verbose_name
     )
