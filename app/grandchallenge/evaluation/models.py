@@ -483,7 +483,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         blank=True,
         help_text="The output interfaces that the algorithms for this phase must use",
     )
-    selectable_gpu_type_choices_evaluation = models.JSONField(
+    selectable_gpu_type_choices_evaluation: list[str] = models.JSONField(
         blank=True,
         null=True,
         default=list,
@@ -645,9 +645,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
 
     def get_selectable_gpu_type_choices_evaluation(self):
         choices = {GPUTypeChoices.NO_GPU, GPUTypeChoices.T4}
-        if self.selectable_gpu_type_choices_evaluation and isinstance(
-            self.selectable_gpu_type_choices_evaluation, list
-        ):
+        if self.selectable_gpu_type_choices_evaluation:
             for choice in self.selectable_gpu_type_choices_evaluation:
                 choices.add(GPUTypeChoices[choice])
         return choices
