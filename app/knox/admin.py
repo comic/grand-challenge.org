@@ -14,5 +14,5 @@ class AuthTokenAdmin(admin.ModelAdmin):
     readonly_fields = (
         "user",
         "token_key",
-        "token",
+        "key",
     )
