@@ -101,6 +101,8 @@ class ViewContentExampleMixin:
             JSONValidator(schema=VIEW_CONTENT_SCHEMA)(
                 value=view_content_example
             )
+            self.instance.view_content = view_content_example
+            self.instance.clean_view_content()
         except ValidationError as e:
             raise RuntimeError(
                 f"view_content example is not valid. Validation error: {e.messages}"
