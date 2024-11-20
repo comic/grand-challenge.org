@@ -1194,7 +1194,7 @@ def test_phase_update_form_gpu_type_limited_choices():
 @pytest.mark.django_db
 def test_phase_update_form_gpu_type_with_additional_selectable_gpu_types():
     phase = PhaseFactory()
-    phase.selectable_gpu_types = ["V100"]
+    phase.selectable_gpu_type_choices_evaluation = ["V100"]
     form = PhaseUpdateForm(
         instance=phase, challenge=phase.challenge, user=UserFactory.build()
     )

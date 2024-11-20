@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name="phase",
-            name="maximum_settable_memory_gb",
+            name="maximum_settable_memory_gb_evaluation",
             field=models.PositiveSmallIntegerField(
                 default=32,
                 help_text="Maximum amount of memory that participants will be allowed to assign to algorithm inference jobs for submission and challenge editors will be allowed to assign for the evaluation method. The setting on the algorithm will be validated against this on submission.",
@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name="phase",
-            name="selectable_gpu_types",
+            name="selectable_gpu_type_choices_evaluation",
             field=models.JSONField(
                 blank=True,
                 default=list,

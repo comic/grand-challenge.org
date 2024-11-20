@@ -483,27 +483,21 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         blank=True,
         help_text="The output interfaces that the algorithms for this phase must use",
     )
-    selectable_gpu_types = models.JSONField(
+    selectable_gpu_type_choices_evaluation = models.JSONField(
         blank=True,
         null=True,
         default=list,
         help_text=(
-            "The GPU type choices that participants will be able to select "
-            "for their algorithm inference jobs and challenge editors will "
-            "be able to set for the evaluation method. The setting on the "
-            "algorithm will be validated against this on submission. Options "
-            f"are {GPUTypeChoices.names}."
+            "The GPU type choices that challenge admins will be able to set for the "
+            f"evaluation method. Options are {GPUTypeChoices.names}."
         ),
         validators=[JSONValidator(schema=SELECTABLE_GPU_TYPES_SCHEMA)],
     )
-    maximum_settable_memory_gb = models.PositiveSmallIntegerField(
+    maximum_settable_memory_gb_evaluation = models.PositiveSmallIntegerField(
         default=settings.ALGORITHMS_MAX_MEMORY_GB,
         help_text=(
-            "Maximum amount of memory that participants will be allowed to "
-            "assign to algorithm inference jobs for submission and challenge "
-            "editors will be allowed to assign for the evaluation method. "
-            "The setting on the algorithm will be validated against this on "
-            "submission."
+            "Maximum amount of memory that challenge admins will be able to "
+            "assign for the evaluation method."
         ),
     )
     algorithm_time_limit = models.PositiveIntegerField(
@@ -647,12 +641,12 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             ("configure_algorithm_phase", "Configure Algorithm Phase"),
         )
 
-    def get_selectable_gpu_types(self):
+    def get_selectable_gpu_type_choices_evaluation(self):
         choices = {GPUTypeChoices.NO_GPU, GPUTypeChoices.T4}
-        if self.selectable_gpu_types and isinstance(
-            self.selectable_gpu_types, list
+        if self.selectable_gpu_type_choices_evaluation and isinstance(
+            self.selectable_gpu_type_choices_evaluation, list
         ):
-            for choice in self.selectable_gpu_types:
+            for choice in self.selectable_gpu_type_choices_evaluation:
                 choices.add(GPUTypeChoices[choice])
         return choices
 
@@ -785,8 +779,8 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                 )
 
     def _clean_evaluation_requirements(self):
-        if self.selectable_gpu_types:
-            for option in self.selectable_gpu_types:
+        if self.selectable_gpu_type_choices_evaluation:
+            for option in self.selectable_gpu_type_choices_evaluation:
                 try:
                     GPUTypeChoices[option]
                 except KeyError:
@@ -797,7 +791,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         if (
             self.evaluation_requires_gpu_type
             and self.evaluation_requires_gpu_type
-            not in self.get_selectable_gpu_types()
+            not in self.get_selectable_gpu_type_choices_evaluation()
         ):
             raise ValidationError(
                 f"{self.evaluation_requires_gpu_type!r} is not a valid choice "
@@ -806,13 +800,13 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             )
         if (
             self.evaluation_requires_memory_gb
-            > self.maximum_settable_memory_gb
+            > self.maximum_settable_memory_gb_evaluation
         ):
             raise ValidationError(
                 f"Ensure the value for Evaluation requires memory gb (currently "
                 f"{self.evaluation_requires_memory_gb}) is less than or equal "
                 f"to the maximum settable (currently "
-                f"{self.maximum_settable_memory_gb})."
+                f"{self.maximum_settable_memory_gb_evaluation})."
             )
 
     @property
