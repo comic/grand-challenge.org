@@ -146,6 +146,10 @@ SELECTABLE_GPU_TYPES_SCHEMA = {
 }
 
 
+def get_default_gpu_type_choices():
+    return [GPUTypeChoices.NO_GPU, GPUTypeChoices.T4]
+
+
 class PhaseManager(models.Manager):
     def get_queryset(self):
         return (
@@ -487,10 +491,10 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         help_text="The output interfaces that the algorithms for this phase must use",
     )
     selectable_gpu_type_choices_evaluation = models.JSONField(
-        default=list,
+        default=get_default_gpu_type_choices,
         help_text=(
             "The GPU type choices that challenge admins will be able to set for the "
-            f"evaluation method. Options are {GPUTypeChoices.names}.".replace(
+            f"evaluation method. Options are {GPUTypeChoices.values}.".replace(
                 "'", '"'
             )
         ),
@@ -644,13 +648,6 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             ("configure_algorithm_phase", "Configure Algorithm Phase"),
         )
 
-    def get_selectable_gpu_type_choices_evaluation(self):
-        choices = {GPUTypeChoices.NO_GPU, GPUTypeChoices.T4}
-        if self.selectable_gpu_type_choices_evaluation:
-            for choice in self.selectable_gpu_type_choices_evaluation:
-                choices.add(GPUTypeChoices[choice])
-        return choices
-
     def __str__(self):
         return f"{self.title} Evaluation for {self.challenge.short_name}"
 
@@ -782,8 +779,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
     def _clean_evaluation_requirements(self):
         if (
             self.evaluation_requires_gpu_type
-            and self.evaluation_requires_gpu_type
-            not in self.get_selectable_gpu_type_choices_evaluation()
+            not in self.selectable_gpu_type_choices_evaluation
         ):
             raise ValidationError(
                 f"{self.evaluation_requires_gpu_type!r} is not a valid choice "
