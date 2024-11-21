@@ -328,9 +328,9 @@ class HangingProtocolMixin(models.Model):
     def clean(self):
         super().clean()
 
-        self.clean_view_content()
+        self.clean_view_content(self.view_content)
 
-    def check_consistent_viewports(self):
+    def check_consistent_viewports(self, view_content):
         if self.view_content and self.hanging_protocol:
             if set(self.view_content.keys()) != {
                 x["viewport_name"] for x in self.hanging_protocol.json
@@ -340,7 +340,7 @@ class HangingProtocolMixin(models.Model):
                     "those in the selected hanging protocol."
                 )
 
-    def check_all_interfaces_in_view_content_exist(self):
+    def check_all_interfaces_in_view_content_exist(self, view_content):
         if not hasattr(self.view_content, "items"):
             raise ValidationError("View content is invalid")
 
@@ -396,9 +396,9 @@ class HangingProtocolMixin(models.Model):
                     f"{', '.join(i.slug for i in undisplayable_interfaces)}"
                 )
 
-    def clean_view_content(self):
-        self.check_consistent_viewports()
-        self.check_all_interfaces_in_view_content_exist()
+    def clean_view_content(self, view_content):
+        self.check_consistent_viewports(view_content)
+        self.check_all_interfaces_in_view_content_exist(view_content)
 
     class Meta:
         abstract = True
