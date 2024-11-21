@@ -80,6 +80,7 @@ submission_options = (
 )
 
 scoring_options = (
+    "evaluation_requires_gpu_type",
     "evaluation_requires_memory_gb",
     "score_title",
     "score_jsonpath",
@@ -157,7 +158,13 @@ class PhaseUpdateForm(
         self.fields["parent"].queryset = self.instance.parent_phase_choices
         self.fields["evaluation_requires_memory_gb"].validators = [
             MinValueValidator(settings.ALGORITHMS_MIN_MEMORY_GB),
-            MaxValueValidator(settings.ALGORITHMS_MAX_MEMORY_GB),
+            MaxValueValidator(
+                self.instance.evaluation_maximum_settable_memory_gb
+            ),
+        ]
+        self.fields["evaluation_requires_gpu_type"].choices = [
+            (c, GPUTypeChoices(c).label)
+            for c in self.instance.evaluation_selectable_gpu_type_choices
         ]
 
         self.helper.layout = Layout(

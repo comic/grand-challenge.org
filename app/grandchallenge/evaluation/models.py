@@ -134,6 +134,21 @@ EXTRA_RESULT_COLUMNS_SCHEMA = {
     },
 }
 
+SELECTABLE_GPU_TYPES_SCHEMA = {
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "type": "array",
+    "title": "The Selectable GPU Types Schema",
+    "items": {
+        "enum": [choice for choice in GPUTypeChoices],
+        "type": "string",
+    },
+    "uniqueItems": True,
+}
+
+
+def get_default_gpu_type_choices():
+    return [GPUTypeChoices.NO_GPU, GPUTypeChoices.T4]
+
 
 class PhaseManager(models.Manager):
     def get_queryset(self):
@@ -516,6 +531,16 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             ),
         ],
     )
+    evaluation_selectable_gpu_type_choices = models.JSONField(
+        default=get_default_gpu_type_choices,
+        help_text=(
+            "The GPU type choices that challenge admins will be able to set for the "
+            f"evaluation method. Options are {GPUTypeChoices.values}.".replace(
+                "'", '"'
+            )
+        ),
+        validators=[JSONValidator(schema=SELECTABLE_GPU_TYPES_SCHEMA)],
+    )
     evaluation_requires_gpu_type = models.CharField(
         max_length=4,
         blank=True,
@@ -525,6 +550,13 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             "What GPU to attach to this phases evaluations. "
             "Note that the GPU attached to any algorithm inference jobs "
             "is determined by the submitted algorithm."
+        ),
+    )
+    evaluation_maximum_settable_memory_gb = models.PositiveSmallIntegerField(
+        default=settings.ALGORITHMS_MAX_MEMORY_GB,
+        help_text=(
+            "Maximum amount of memory that challenge admins will be able to "
+            "assign for the evaluation method."
         ),
     )
     evaluation_requires_memory_gb = models.PositiveSmallIntegerField(
@@ -665,6 +697,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         self._clean_submission_limits()
         self._clean_parent_phase()
         self._clean_external_evaluation()
+        self._clean_evaluation_requirements()
 
     def _clean_algorithm_submission_settings(self):
         if self.submission_kind == SubmissionKindChoices.ALGORITHM:
@@ -742,6 +775,27 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                 raise ValidationError(
                     "An external evaluation phase must have a parent phase."
                 )
+
+    def _clean_evaluation_requirements(self):
+        if (
+            self.evaluation_requires_gpu_type
+            not in self.evaluation_selectable_gpu_type_choices
+        ):
+            raise ValidationError(
+                f"{self.evaluation_requires_gpu_type!r} is not a valid choice "
+                f"for Evaluation requires gpu type. Either change the choice or "
+                f"add it to the list of selectable gpu types."
+            )
+        if (
+            self.evaluation_requires_memory_gb
+            > self.evaluation_maximum_settable_memory_gb
+        ):
+            raise ValidationError(
+                f"Ensure the value for Evaluation requires memory gb (currently "
+                f"{self.evaluation_requires_memory_gb}) is less than or equal "
+                f"to the maximum settable (currently "
+                f"{self.evaluation_maximum_settable_memory_gb})."
+            )
 
     @property
     def scoring_method(self):

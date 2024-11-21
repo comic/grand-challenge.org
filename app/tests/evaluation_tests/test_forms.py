@@ -6,7 +6,10 @@ from factory.django import ImageField
 
 from grandchallenge.algorithms.forms import AlgorithmForPhaseForm
 from grandchallenge.algorithms.models import Job
-from grandchallenge.components.models import ImportStatusChoices
+from grandchallenge.components.models import (
+    GPUTypeChoices,
+    ImportStatusChoices,
+)
 from grandchallenge.evaluation.forms import (
     ConfigureAlgorithmPhasesForm,
     EvaluationGroundTruthForm,
@@ -1170,3 +1173,34 @@ def test_phase_update_form_gpu_limited_choices():
     )
     assert max_validator is not None
     assert max_validator.limit_value == 32
+
+
+@pytest.mark.django_db
+def test_phase_update_form_gpu_type_limited_choices():
+    phase = PhaseFactory()
+    form = PhaseUpdateForm(
+        instance=phase, challenge=phase.challenge, user=UserFactory.build()
+    )
+
+    choices = form.fields["evaluation_requires_gpu_type"].widget.choices
+
+    assert choices is not None
+    choice = GPUTypeChoices.NO_GPU
+    assert (choice.value, choice.label) in choices
+    choice = GPUTypeChoices.V100
+    assert (choice.value, choice.label) not in choices
+
+
+@pytest.mark.django_db
+def test_phase_update_form_gpu_type_with_additional_selectable_gpu_types():
+    phase = PhaseFactory()
+    phase.evaluation_selectable_gpu_type_choices = ["V100"]
+    form = PhaseUpdateForm(
+        instance=phase, challenge=phase.challenge, user=UserFactory.build()
+    )
+
+    choices = form.fields["evaluation_requires_gpu_type"].widget.choices
+
+    assert choices is not None
+    choice = GPUTypeChoices.V100
+    assert (choice.value, choice.label) in choices

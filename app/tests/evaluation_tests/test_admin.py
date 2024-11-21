@@ -49,3 +49,18 @@ def test_read_only_fields_disabled():
         instance=p3,
     )
     assert form.fields["submission_kind"].disabled
+
+
+@pytest.mark.django_db
+def test_selectable_gpu_type_choices_invalid():
+    phase = PhaseFactory()
+    form = PhaseAdmin.form(
+        instance=phase,
+        data={"evaluation_selectable_gpu_type_choices": '["invalid_choice"]'},
+    )
+
+    assert form.is_valid() is False
+    assert (
+        "JSON does not fulfill schema: instance &#x27;invalid_choice&#x27; is not "
+        "one of " in str(form.errors)
+    )
