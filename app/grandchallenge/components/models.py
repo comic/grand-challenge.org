@@ -554,6 +554,13 @@ class ComponentInterface(OverlaySegmentsMixin):
         except KeyError as e:
             raise RuntimeError(f"Unknown kind {self.kind}") from e
 
+    @property
+    def custom_upload_processing_queue(self):
+        try:
+            return INTERFACE_KIND_TO_CUSTOM_QUEUE[self.kind]
+        except KeyError:
+            return None  # No custom queue: use default
+
     def create_instance(self, *, image=None, value=None, fileobj=None):
         civ = ComponentInterfaceValue.objects.create(interface=self)
 
@@ -1210,6 +1217,10 @@ INTERFACE_KIND_TO_FILE_EXTENSION = {
     InterfaceKindChoices.MP4: ".mp4",
     InterfaceKindChoices.NEWICK: ".newick",
     **{kind: ".json" for kind in InterfaceKind.interface_type_json()},
+}
+
+INTERFACE_KIND_TO_CUSTOM_QUEUE = {
+    InterfaceKindChoices.NEWICK: "acks-late-2xlarge",
 }
 
 
@@ -2488,7 +2499,8 @@ class CIVForObjectMixin:
                         "interface_pk": str(ci.pk),
                         "object_pk": self.pk,
                         "linked_task": linked_task,
-                    }
+                    },
+                    queue=ci.custom_upload_processing_queue,
                 ).apply_async
             )
 
