@@ -552,12 +552,12 @@ class AlgorithmForPhaseForm(
         self.fields["time_limit"].disabled = True
 
         self.fields["job_requires_gpu_type"].choices = [
-            (choice.value, choice.label)
-            for choice in [GPUTypeChoices.NO_GPU, GPUTypeChoices.T4]
+            (choice, GPUTypeChoices(choice).label)
+            for choice in phase.algorithm_selectable_gpu_type_choices
         ]
         self.fields["job_requires_memory_gb"].validators = [
             MinValueValidator(settings.ALGORITHMS_MIN_MEMORY_GB),
-            MaxValueValidator(settings.ALGORITHMS_MAX_MEMORY_GB),
+            MaxValueValidator(phase.algorithm_maximum_settable_memory_gb),
         ]
 
     def clean(self):
