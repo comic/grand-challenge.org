@@ -146,6 +146,9 @@ class DisplaySetPostSerializer(
     CIVSetPostSerializerMixin,
     DisplaySetSerializer,
 ):
+    editability_error_message = (
+        "This display set cannot be changed, as answers for it already exist."
+    )
     reader_study = SlugRelatedField(
         slug_field="slug", queryset=ReaderStudy.objects.none(), required=False
     )
@@ -164,12 +167,6 @@ class DisplaySetPostSerializer(
                 user=user,
                 codename="change_readerstudy",
             )
-
-    # def update(self, instance, validated_data):
-    #     assert (
-    #         not instance.is_editable
-    #     ), "This display set cannot be changed, as answers for it already exist."
-    #     return super().update(instance, validated_data)
 
 
 class ReaderStudySerializer(HyperlinkedModelSerializer):

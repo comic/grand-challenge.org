@@ -975,22 +975,6 @@ class DisplaySetViewSet(
             return DisplaySetPostSerializer
         return DisplaySetSerializer
 
-    def partial_update(self, *args, **kwargs):
-        self._check_editable()
-        return super().partial_update(*args, **kwargs)
-
-    def update(self, *args, **kwargs):
-        self._check_editable()
-        return super().update(*args, **kwargs)
-
-    def _check_editable(self):
-        instance = self.get_object()
-        if not instance.is_editable:
-            raise DRFValidationError(
-                "This display set cannot be changed, "
-                "as answers for it already exist."
-            )
-
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         # Note: if more fields besides 'reader_study' are added to the
