@@ -163,8 +163,8 @@ class PhaseUpdateForm(
             ),
         ]
         self.fields["evaluation_requires_gpu_type"].choices = [
-            (c.value, c.label)
-            for c in self.instance.get_selectable_gpu_type_choices_evaluation()
+            (c, GPUTypeChoices(c).label)
+            for c in self.instance.selectable_gpu_type_choices_evaluation
         ]
 
         self.helper.layout = Layout(
