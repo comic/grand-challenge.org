@@ -487,8 +487,6 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         help_text="The output interfaces that the algorithms for this phase must use",
     )
     selectable_gpu_type_choices_evaluation = models.JSONField(
-        blank=True,
-        null=True,
         default=list,
         help_text=(
             "The GPU type choices that challenge admins will be able to set for the "
