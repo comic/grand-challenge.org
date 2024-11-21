@@ -814,9 +814,11 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             [ComponentInterface.objects.get(slug="metrics-json-file")]
         )
 
-    @property
+    @cached_property
     def interfaces(self):
-        return (self.algorithm_inputs.all() | self.algorithm_outputs.all()).distinct()
+        return (
+            self.algorithm_inputs.all() | self.algorithm_outputs.all()
+        ).distinct()
 
     def assign_permissions(self):
         assign_perm("view_phase", self.challenge.admins_group, self)
