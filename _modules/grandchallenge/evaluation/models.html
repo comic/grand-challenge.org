@@ -172,6 +172,21 @@
     <span class="p">},</span>
 <span class="p">}</span>
 
+<span class="n">SELECTABLE_GPU_TYPES_SCHEMA</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;$schema&quot;</span><span class="p">:</span> <span class="s2">&quot;http://json-schema.org/draft-07/schema&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;array&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;The Selectable GPU Types Schema&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;items&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;enum&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">choice</span> <span class="k">for</span> <span class="n">choice</span> <span class="ow">in</span> <span class="n">GPUTypeChoices</span><span class="p">],</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;uniqueItems&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span> <span class="nf">get_default_gpu_type_choices</span><span class="p">():</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">GPUTypeChoices</span><span class="o">.</span><span class="n">NO_GPU</span><span class="p">,</span> <span class="n">GPUTypeChoices</span><span class="o">.</span><span class="n">T4</span><span class="p">]</span>
+
 
 <span class="k">class</span> <span class="nc">PhaseManager</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Manager</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -556,6 +571,16 @@
             <span class="p">),</span>
         <span class="p">],</span>
     <span class="p">)</span>
+    <span class="n">evaluation_selectable_gpu_type_choices</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">JSONField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">get_default_gpu_type_choices</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;The GPU type choices that challenge admins will be able to set for the &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;evaluation method. Options are </span><span class="si">{</span><span class="n">GPUTypeChoices</span><span class="o">.</span><span class="n">values</span><span class="si">}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+                <span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s1">&#39;&quot;&#39;</span>
+            <span class="p">)</span>
+        <span class="p">),</span>
+        <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">JSONValidator</span><span class="p">(</span><span class="n">schema</span><span class="o">=</span><span class="n">SELECTABLE_GPU_TYPES_SCHEMA</span><span class="p">)],</span>
+    <span class="p">)</span>
     <span class="n">evaluation_requires_gpu_type</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
         <span class="n">max_length</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -565,6 +590,13 @@
             <span class="s2">&quot;What GPU to attach to this phases evaluations. &quot;</span>
             <span class="s2">&quot;Note that the GPU attached to any algorithm inference jobs &quot;</span>
             <span class="s2">&quot;is determined by the submitted algorithm.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">evaluation_maximum_settable_memory_gb</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">ALGORITHMS_MAX_MEMORY_GB</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Maximum amount of memory that challenge admins will be able to &quot;</span>
+            <span class="s2">&quot;assign for the evaluation method.&quot;</span>
         <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">evaluation_requires_memory_gb</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
@@ -709,7 +741,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_algorithm_submission_settings</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_submission_limits</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_parent_phase</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_clean_external_evaluation</span><span class="p">()</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clean_external_evaluation</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clean_evaluation_requirements</span><span class="p">()</span></div>
 
 
     <span class="k">def</span> <span class="nf">_clean_algorithm_submission_settings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -788,6 +821,27 @@
                 <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                     <span class="s2">&quot;An external evaluation phase must have a parent phase.&quot;</span>
                 <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_clean_evaluation_requirements</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">evaluation_requires_gpu_type</span>
+            <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluation_selectable_gpu_type_choices</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">evaluation_requires_gpu_type</span><span class="si">!r}</span><span class="s2"> is not a valid choice &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;for Evaluation requires gpu type. Either change the choice or &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;add it to the list of selectable gpu types.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">evaluation_requires_memory_gb</span>
+            <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluation_maximum_settable_memory_gb</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Ensure the value for Evaluation requires memory gb (currently &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">evaluation_requires_memory_gb</span><span class="si">}</span><span class="s2">) is less than or equal &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;to the maximum settable (currently &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">evaluation_maximum_settable_memory_gb</span><span class="si">}</span><span class="s2">).&quot;</span>
+            <span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">scoring_method</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
