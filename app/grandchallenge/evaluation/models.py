@@ -490,23 +490,6 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         blank=True,
         help_text="The output interfaces that the algorithms for this phase must use",
     )
-    selectable_gpu_type_choices_evaluation = models.JSONField(
-        default=get_default_gpu_type_choices,
-        help_text=(
-            "The GPU type choices that challenge admins will be able to set for the "
-            f"evaluation method. Options are {GPUTypeChoices.values}.".replace(
-                "'", '"'
-            )
-        ),
-        validators=[JSONValidator(schema=SELECTABLE_GPU_TYPES_SCHEMA)],
-    )
-    maximum_settable_memory_gb_evaluation = models.PositiveSmallIntegerField(
-        default=settings.ALGORITHMS_MAX_MEMORY_GB,
-        help_text=(
-            "Maximum amount of memory that challenge admins will be able to "
-            "assign for the evaluation method."
-        ),
-    )
     algorithm_time_limit = models.PositiveIntegerField(
         default=20 * 60,
         help_text="Time limit for inference jobs in seconds",
@@ -548,6 +531,16 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             ),
         ],
     )
+    selectable_gpu_type_choices_evaluation = models.JSONField(
+        default=get_default_gpu_type_choices,
+        help_text=(
+            "The GPU type choices that challenge admins will be able to set for the "
+            f"evaluation method. Options are {GPUTypeChoices.values}.".replace(
+                "'", '"'
+            )
+        ),
+        validators=[JSONValidator(schema=SELECTABLE_GPU_TYPES_SCHEMA)],
+    )
     evaluation_requires_gpu_type = models.CharField(
         max_length=4,
         blank=True,
@@ -557,6 +550,13 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             "What GPU to attach to this phases evaluations. "
             "Note that the GPU attached to any algorithm inference jobs "
             "is determined by the submitted algorithm."
+        ),
+    )
+    maximum_settable_memory_gb_evaluation = models.PositiveSmallIntegerField(
+        default=settings.ALGORITHMS_MAX_MEMORY_GB,
+        help_text=(
+            "Maximum amount of memory that challenge admins will be able to "
+            "assign for the evaluation method."
         ),
     )
     evaluation_requires_memory_gb = models.PositiveSmallIntegerField(
