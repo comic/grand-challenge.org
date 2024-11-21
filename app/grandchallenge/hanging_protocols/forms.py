@@ -206,9 +206,7 @@ class ViewContentExampleMixin:
                 value=view_content_example
             )
             self.instance.clean_view_content(view_content_example)
-        except ValidationError as e:
-            raise RuntimeError(
-                f"view_content example is not valid. Validation error: {e.messages}"
-            )
+        except ValidationError as error:
+            raise RuntimeError("view_content example is not valid.") from error
 
         return json.dumps(view_content_example)
