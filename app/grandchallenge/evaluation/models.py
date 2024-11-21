@@ -531,7 +531,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             ),
         ],
     )
-    selectable_gpu_type_choices_evaluation = models.JSONField(
+    evaluation_selectable_gpu_type_choices = models.JSONField(
         default=get_default_gpu_type_choices,
         help_text=(
             "The GPU type choices that challenge admins will be able to set for the "
@@ -552,7 +552,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             "is determined by the submitted algorithm."
         ),
     )
-    maximum_settable_memory_gb_evaluation = models.PositiveSmallIntegerField(
+    evaluation_maximum_settable_memory_gb = models.PositiveSmallIntegerField(
         default=settings.ALGORITHMS_MAX_MEMORY_GB,
         help_text=(
             "Maximum amount of memory that challenge admins will be able to "
@@ -779,7 +779,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
     def _clean_evaluation_requirements(self):
         if (
             self.evaluation_requires_gpu_type
-            not in self.selectable_gpu_type_choices_evaluation
+            not in self.evaluation_selectable_gpu_type_choices
         ):
             raise ValidationError(
                 f"{self.evaluation_requires_gpu_type!r} is not a valid choice "
@@ -788,13 +788,13 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             )
         if (
             self.evaluation_requires_memory_gb
-            > self.maximum_settable_memory_gb_evaluation
+            > self.evaluation_maximum_settable_memory_gb
         ):
             raise ValidationError(
                 f"Ensure the value for Evaluation requires memory gb (currently "
                 f"{self.evaluation_requires_memory_gb}) is less than or equal "
                 f"to the maximum settable (currently "
-                f"{self.maximum_settable_memory_gb_evaluation})."
+                f"{self.evaluation_maximum_settable_memory_gb})."
             )
 
     @property

@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name="phase",
-            name="maximum_settable_memory_gb_evaluation",
+            name="evaluation_maximum_settable_memory_gb",
             field=models.PositiveSmallIntegerField(
                 default=32,
                 help_text="Maximum amount of memory that challenge admins will be able to assign for the evaluation method.",
@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name="phase",
-            name="selectable_gpu_type_choices_evaluation",
+            name="evaluation_selectable_gpu_type_choices",
             field=models.JSONField(
                 default=grandchallenge.evaluation.models.get_default_gpu_type_choices,
                 help_text='The GPU type choices that challenge admins will be able to set for the evaluation method. Options are ["", "A100", "A10G", "V100", "K80", "T4"].',

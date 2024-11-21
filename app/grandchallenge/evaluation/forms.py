@@ -159,12 +159,12 @@ class PhaseUpdateForm(
         self.fields["evaluation_requires_memory_gb"].validators = [
             MinValueValidator(settings.ALGORITHMS_MIN_MEMORY_GB),
             MaxValueValidator(
-                self.instance.maximum_settable_memory_gb_evaluation
+                self.instance.evaluation_maximum_settable_memory_gb
             ),
         ]
         self.fields["evaluation_requires_gpu_type"].choices = [
             (c, GPUTypeChoices(c).label)
-            for c in self.instance.selectable_gpu_type_choices_evaluation
+            for c in self.instance.evaluation_selectable_gpu_type_choices
         ]
 
         self.helper.layout = Layout(

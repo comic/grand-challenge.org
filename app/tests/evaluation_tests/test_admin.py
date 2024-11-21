@@ -56,7 +56,7 @@ def test_selectable_gpu_type_choices_invalid():
     phase = PhaseFactory()
     form = PhaseAdmin.form(
         instance=phase,
-        data={"selectable_gpu_type_choices_evaluation": '["invalid_choice"]'},
+        data={"evaluation_selectable_gpu_type_choices": '["invalid_choice"]'},
     )
 
     assert form.is_valid() is False
