@@ -138,7 +138,10 @@ SELECTABLE_GPU_TYPES_SCHEMA = {
     "$schema": "http://json-schema.org/draft-07/schema",
     "type": "array",
     "title": "The Selectable GPU Types Schema",
-    "items": {"type": "string", "required": [], "properties": {}},
+    "items": {
+        "enum": [choice for choice in GPUTypeChoices],
+        "type": "string",
+    },
     "uniqueItems": True,
 }
 
@@ -779,15 +782,6 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                 )
 
     def _clean_evaluation_requirements(self):
-        if self.selectable_gpu_type_choices_evaluation:
-            for option in self.selectable_gpu_type_choices_evaluation:
-                try:
-                    GPUTypeChoices[option]
-                except KeyError:
-                    raise ValidationError(
-                        f"{option!r} is not a valid option for selectable "
-                        f"gpu types. Options are {GPUTypeChoices.names}."
-                    )
         if (
             self.evaluation_requires_gpu_type
             and self.evaluation_requires_gpu_type
