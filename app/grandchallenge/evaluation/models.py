@@ -816,7 +816,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
 
     @property
     def interfaces(self):
-        return (self.inputs.all() | self.outputs.all()).distinct()
+        return (self.algorithm_inputs.all() | self.algorithm_outputs.all()).distinct()
 
     def assign_permissions(self):
         assign_perm("view_phase", self.challenge.admins_group, self)
