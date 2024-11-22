@@ -148,6 +148,7 @@ class InterfaceKindChoices(models.TextChoices):
     OBJ = "OBJ", _("OBJ file")
     MP4 = "MP4", _("MP4 file")
     NEWICK = "NEWCK", _("Newick tree-format file")
+    BIOM = "BIOM", _("BIOM format")
 
     # Legacy support
     CSV = "CSV", _("CSV file")
@@ -274,6 +275,7 @@ class InterfaceKind:
         * OBJ file
         * MP4 file
         * Newick file
+        * BIOM file
         """
         return {
             InterfaceKind.InterfaceKindChoices.CSV,
@@ -285,6 +287,7 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.OBJ,
             InterfaceKind.InterfaceKindChoices.MP4,
             InterfaceKind.InterfaceKindChoices.NEWICK,
+            InterfaceKind.InterfaceKindChoices.BIOM,
         }
 
     @staticmethod
@@ -306,6 +309,7 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.ZIP,
             InterfaceKind.InterfaceKindChoices.OBJ,
             InterfaceKind.InterfaceKindChoices.NEWICK,
+            InterfaceKind.InterfaceKindChoices.BIOM,
         }
 
 
@@ -1186,6 +1190,12 @@ INTERFACE_KIND_TO_ALLOWED_FILE_TYPES = {
         ".nwk",
         ".tree",
     ),
+    InterfaceKindChoices.BIOM: (
+        # MIME type
+        "application/octet-stream",
+        # File extension
+        ".biom",
+    ),
     InterfaceKindChoices.OBJ: (
         "text/plain",
         "application/octet-stream",
@@ -1210,6 +1220,7 @@ INTERFACE_KIND_TO_FILE_EXTENSION = {
     InterfaceKindChoices.OBJ: ".obj",
     InterfaceKindChoices.MP4: ".mp4",
     InterfaceKindChoices.NEWICK: ".newick",
+    InterfaceKindChoices.BIOM: ".biom",
     **{kind: ".json" for kind in InterfaceKind.interface_type_json()},
 }
 
@@ -1266,6 +1277,7 @@ class ComponentInterfaceValue(models.Model):
                     ".obj",
                     ".mp4",
                     ".newick",
+                    ".biom",
                 )
             ),
             MimeTypeValidator(

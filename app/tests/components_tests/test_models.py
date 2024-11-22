@@ -160,6 +160,7 @@ def test_average_duration_filtering():
         (InterfaceKindChoices.OBJ, True, False),
         (InterfaceKindChoices.MP4, True, False),
         (InterfaceKindChoices.NEWICK, True, False),
+        (InterfaceKindChoices.BIOM, True, False),
     ),
 )
 def test_saved_in_object_store(kind, object_store_required, is_image):
@@ -225,6 +226,7 @@ def test_saved_in_object_store(kind, object_store_required, is_image):
         (InterfaceKindChoices.THUMBNAIL_PNG, True),
         (InterfaceKindChoices.MP4, True),
         (InterfaceKindChoices.NEWICK, True),
+        (InterfaceKindChoices.BIOM, True),
     ),
 )
 def test_clean_store_in_db(kind, object_store_required):
@@ -308,6 +310,7 @@ def test_no_uuid_validation():
         (InterfaceKind.InterfaceKindChoices.OBJ, "obj"),
         (InterfaceKind.InterfaceKindChoices.MP4, "mp4"),
         (InterfaceKind.InterfaceKindChoices.NEWICK, "newick"),
+        (InterfaceKind.InterfaceKindChoices.BIOM, "biom"),
         *((k, "json") for k in InterfaceKind.interface_type_json()),
     ),
 )
