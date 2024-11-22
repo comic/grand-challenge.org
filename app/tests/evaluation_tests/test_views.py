@@ -1601,6 +1601,8 @@ def test_submission_create_sets_limits_correctly_with_algorithm(client):
         archive=archive,
         submission_kind=SubmissionKindChoices.ALGORITHM,
         submissions_limit_per_user_per_period=1,
+        algorithm_selectable_gpu_type_choices=[GPUTypeChoices.V100],
+        algorithm_maximum_settable_memory_gb=1337,
     )
     phase.algorithm_inputs.set(inputs)
     phase.algorithm_outputs.set(outputs)
