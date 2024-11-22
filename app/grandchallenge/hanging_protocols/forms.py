@@ -163,12 +163,12 @@ class ViewContentExampleMixin:
     def generate_view_content_example(self):
         images = [
             interface.slug
-            for interface in self.instance.interfaces.all()
+            for interface in self.instance.interfaces
             if interface.kind == InterfaceKindChoices.IMAGE
         ]
         mandatory_isolation_interfaces = [
             interface.slug
-            for interface in self.instance.interfaces.all()
+            for interface in self.instance.interfaces
             if interface.kind
             in InterfaceKind.interface_type_mandatory_isolation()
         ]
@@ -178,7 +178,7 @@ class ViewContentExampleMixin:
 
         overlays = [
             interface.slug
-            for interface in self.instance.interfaces.all()
+            for interface in self.instance.interfaces
             if interface.kind
             not in (
                 *InterfaceKind.interface_type_undisplayable(),
