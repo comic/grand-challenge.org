@@ -52,6 +52,7 @@ from grandchallenge.components.tasks import (
     validate_docker_image,
 )
 from grandchallenge.components.validators import (
+    validate_biom_format,
     validate_newick_tree_format,
     validate_no_slash_at_ends,
     validate_safe_path,
@@ -1504,6 +1505,8 @@ class ComponentInterfaceValue(models.Model):
             self.interface.validate_against_schema(value=value)
         elif self.interface.kind == InterfaceKindChoices.NEWICK:
             validate_newick_tree_format(tree=user_upload.read_object())
+        elif self.interface.kind == InterfaceKindChoices.BIOM:
+            validate_biom_format(user_upload=user_upload)
 
         self._user_upload_validated = True
 
