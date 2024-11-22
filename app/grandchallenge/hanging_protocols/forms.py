@@ -211,7 +211,8 @@ class ViewContentExampleMixin:
                 value=view_content_example
             )
             self.instance.clean_view_content(
-                view_content_example, self.instance.hanging_protocol
+                view_content=view_content_example,
+                hanging_protocol=self.instance.hanging_protocol,
             )
         except ValidationError as error:
             raise RuntimeError("view_content example is not valid.") from error
