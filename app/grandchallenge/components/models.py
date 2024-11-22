@@ -2487,7 +2487,6 @@ class CIVForObjectMixin:
             custom_queue = INTERFACE_KIND_TO_CUSTOM_QUEUE.get(ci.kind, False)
             task_queue_kwarg = {}
             if custom_queue:
-                # Providing None would have Celery use the Celery-scope default
                 task_queue_kwarg["queue"] = custom_queue
 
             transaction.on_commit(
