@@ -506,9 +506,7 @@ def test_algorithm_form_view_content_help_text(
     expected_help_text,
 ):
     algorithm = AlgorithmFactory()
-
     algorithm.inputs.set(ci_list)
-    algorithm.outputs.set([])
 
     form = AlgorithmForm(user=UserFactory(), instance=algorithm)
 
