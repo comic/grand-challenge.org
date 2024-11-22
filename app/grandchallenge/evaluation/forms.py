@@ -662,11 +662,11 @@ class SubmissionForm(
     def save(self, *args, **kwargs):
         if self._phase.submission_kind == SubmissionKindChoices.ALGORITHM:
             self.instance.algorithm_requires_gpu_type = self.cleaned_data[
-                "algorithm_image"
-            ].algorithm.job_requires_gpu_type
+                "algorithm"
+            ].job_requires_gpu_type
             self.instance.algorithm_requires_memory_gb = self.cleaned_data[
-                "algorithm_image"
-            ].algorithm.job_requires_memory_gb
+                "algorithm"
+            ].job_requires_memory_gb
         else:
             self.instance.algorithm_requires_gpu_type = GPUTypeChoices.NO_GPU
             self.instance.algorithm_requires_memory_gb = 0
