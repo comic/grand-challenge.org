@@ -56,6 +56,7 @@ from grandchallenge.components.validators import (
     validate_no_slash_at_ends,
     validate_safe_path,
 )
+from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.core.error_handlers import (
     FallbackCIVValidationErrorHandler,
     JobCIVErrorHandler,
@@ -559,7 +560,7 @@ class ComponentInterface(OverlaySegmentsMixin):
         try:
             return INTERFACE_KIND_TO_CUSTOM_QUEUE[self.kind]
         except KeyError:
-            return None  # No custom queue: use default
+            return False  # No custom queue
 
     def create_instance(self, *, image=None, value=None, fileobj=None):
         civ = ComponentInterfaceValue.objects.create(interface=self)
@@ -1220,7 +1221,7 @@ INTERFACE_KIND_TO_FILE_EXTENSION = {
 }
 
 INTERFACE_KIND_TO_CUSTOM_QUEUE = {
-    InterfaceKindChoices.NEWICK: "acks-late-2xlarge",
+    InterfaceKindChoices.NEWICK: acks_late_2xlarge_task.queue,
 }
 
 
@@ -2490,17 +2491,21 @@ class CIVForObjectMixin:
         elif user_upload:
             from grandchallenge.components.tasks import add_file_to_object
 
+            task_signature_kwargs = {
+                "kwargs": {
+                    "app_label": self._meta.app_label,
+                    "model_name": self._meta.model_name,
+                    "user_upload_pk": str(user_upload.pk),
+                    "interface_pk": str(ci.pk),
+                    "object_pk": self.pk,
+                    "linked_task": linked_task,
+                },
+            }
+            if queue := ci.custom_upload_processing_queue:
+                task_signature_kwargs["queue"] = queue
             transaction.on_commit(
                 add_file_to_object.signature(
-                    kwargs={
-                        "app_label": self._meta.app_label,
-                        "model_name": self._meta.model_name,
-                        "user_upload_pk": str(user_upload.pk),
-                        "interface_pk": str(ci.pk),
-                        "object_pk": self.pk,
-                        "linked_task": linked_task,
-                    },
-                    queue=ci.custom_upload_processing_queue,
+                    **task_signature_kwargs
                 ).apply_async
             )
 
