@@ -81,7 +81,7 @@ from grandchallenge.core.widgets import (
     JSONEditorWidget,
     MarkdownEditorInlineWidget,
 )
-from grandchallenge.evaluation.utils import get
+from grandchallenge.evaluation.utils import SubmissionKindChoices, get
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.hanging_protocols.models import VIEW_CONTENT_SCHEMA
 from grandchallenge.reader_studies.models import ReaderStudy
@@ -363,19 +363,19 @@ class AlgorithmForm(
             "workstation_config": "Viewer Configuration",
         }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, *args, user, **kwargs):
+        super().__init__(*args, user=user, **kwargs)
+        self._user = user
 
         self.fields["contact_email"].required = True
         self.fields["display_editors"].required = True
 
-        self.fields["job_requires_gpu_type"].choices = [
-            (choice.value, choice.label)
-            for choice in [GPUTypeChoices.NO_GPU, GPUTypeChoices.T4]
-        ]
+        self.fields["job_requires_gpu_type"].choices = (
+            self.get_selectable_gpu_type_choices()
+        )
         self.fields["job_requires_memory_gb"].validators = [
             MinValueValidator(settings.ALGORITHMS_MIN_MEMORY_GB),
-            MaxValueValidator(settings.ALGORITHMS_MAX_MEMORY_GB),
+            MaxValueValidator(self.get_maximum_settable_memory_gb()),
         ]
 
         if self.instance:
@@ -388,6 +388,69 @@ class AlgorithmForm(
                 " The following interfaces are used in your algorithm: "
                 f"{oxford_comma(interface_slugs)}."
             )
+
+    @cached_property
+    def relevant_phases(self):
+        qs = get_objects_for_user(
+            self._user, "evaluation.create_phase_submission"
+        )
+        inputs = self.instance.inputs.all()
+        outputs = self.instance.outputs.all()
+        return qs.annotate(
+            total_algorithm_input_count=Count(
+                "algorithm_inputs", distinct=True
+            ),
+            total_algorithm_output_count=Count(
+                "algorithm_outputs", distinct=True
+            ),
+            relevant_algorithm_input_count=Count(
+                "algorithm_inputs",
+                filter=Q(algorithm_inputs__in=inputs),
+                distinct=True,
+            ),
+            relevant_algorithm_output_count=Count(
+                "algorithm_outputs",
+                filter=Q(algorithm_outputs__in=outputs),
+                distinct=True,
+            ),
+        ).filter(
+            submission_kind=SubmissionKindChoices.ALGORITHM,
+            public=True,
+            total_algorithm_input_count=len(inputs),
+            total_algorithm_output_count=len(outputs),
+            relevant_algorithm_input_count=len(inputs),
+            relevant_algorithm_output_count=len(outputs),
+        )
+
+    def get_selectable_gpu_type_choices(self):
+        choices = [GPUTypeChoices.NO_GPU, GPUTypeChoices.T4]
+        choices.extend(
+            chain.from_iterable(
+                self.relevant_phases.order_by()
+                .exclude(algorithm_selectable_gpu_type_choices=None)
+                .values_list(
+                    "algorithm_selectable_gpu_type_choices", flat=True
+                )
+                .distinct()
+            )
+        )
+        choices = list(dict.fromkeys(choices))
+        return [(choice, GPUTypeChoices(choice).label) for choice in choices]
+
+    def get_maximum_settable_memory_gb(self):
+        phases = self.relevant_phases
+        if phases:
+            return max(
+                settings.ALGORITHMS_MAX_MEMORY_GB,
+                phases.order_by(
+                    "-algorithm_maximum_settable_memory_gb"
+                ).values_list(
+                    "algorithm_maximum_settable_memory_gb", flat=True
+                )[
+                    0
+                ],
+            )
+        return settings.ALGORITHMS_MAX_MEMORY_GB
 
 
 class UserAlgorithmsForPhaseMixin:
