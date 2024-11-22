@@ -17,19 +17,16 @@ from grandchallenge.hanging_protocols.forms import HangingProtocolForm
 from grandchallenge.hanging_protocols.models import HangingProtocol
 from grandchallenge.reader_studies.forms import ReaderStudyUpdateForm
 from tests.algorithms_tests.factories import AlgorithmFactory
-from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
+from tests.archives_tests.factories import ArchiveItemFactory
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
 from tests.evaluation_tests.factories import PhaseFactory
-from tests.factories import ChallengeFactory, UserFactory
+from tests.factories import UserFactory
 from tests.hanging_protocols_tests.factories import HangingProtocolFactory
 from tests.hanging_protocols_tests.test_models import HangingProtocolTestModel
-from tests.reader_studies_tests.factories import (
-    DisplaySetFactory,
-    ReaderStudyFactory,
-)
+from tests.reader_studies_tests.factories import DisplaySetFactory
 from tests.utils import get_view_for_user
 
 
@@ -326,40 +323,7 @@ def test_hanging_protocol_clientside():
             0,
             0,
             (
-                "No interfaces of type (image, chart, pdf, mp4, thumbnail_jpg, thumbnail_png) are used. At least one interface of those types is needed to config the viewer. "
-                'Refer to the <a href="https://testserver/documentation/viewer-content/">documentation</a> for more information'
-            ),
-        ),
-        (
-            0,
-            0,
-            0,
-            1,
-            (
-                "The following interfaces are used in your {}: test-ci-undisplayable-0. "
-                "No interfaces of type (image, chart, pdf, mp4, thumbnail_jpg, thumbnail_png) are used. At least one interface of those types is needed to config the viewer. "
-                'Refer to the <a href="https://testserver/documentation/viewer-content/">documentation</a> for more information'
-            ),
-        ),
-        (
-            1,
-            0,
-            0,
-            1,
-            (
-                "The following interfaces are used in your {}: test-ci-image-0 and test-ci-undisplayable-0. "
-                'Example usage: {{"main": ["test-ci-image-0"]}}. '
-                'Refer to the <a href="https://testserver/documentation/viewer-content/">documentation</a> for more information'
-            ),
-        ),
-        (
-            1,
-            0,
-            1,
-            1,
-            (
-                "The following interfaces are used in your {}: test-ci-isolated-0, test-ci-image-0, and test-ci-undisplayable-0. "
-                'Example usage: {{"main": ["test-ci-isolated-0"], "secondary": ["test-ci-image-0"]}}. '
+                "No interfaces of type image, chart, pdf, mp4, thumbnail_jpg or thumbnail_png are used. At least one interface of those types is needed to configure the viewer. "
                 'Refer to the <a href="https://testserver/documentation/viewer-content/">documentation</a> for more information'
             ),
         ),
@@ -370,29 +334,7 @@ def test_hanging_protocol_clientside():
             1,
             (
                 "The following interfaces are used in your {}: test-ci-overlay-0 and test-ci-undisplayable-0. "
-                "No interfaces of type (image, chart, pdf, mp4, thumbnail_jpg, thumbnail_png) are used. At least one interface of those types is needed to config the viewer. "
-                'Refer to the <a href="https://testserver/documentation/viewer-content/">documentation</a> for more information'
-            ),
-        ),
-        (
-            0,
-            1,
-            1,
-            1,
-            (
-                "The following interfaces are used in your {}: test-ci-isolated-0, test-ci-overlay-0, and test-ci-undisplayable-0. "
-                'Example usage: {{"main": ["test-ci-isolated-0"]}}. '
-                'Refer to the <a href="https://testserver/documentation/viewer-content/">documentation</a> for more information'
-            ),
-        ),
-        (
-            1,
-            1,
-            0,
-            1,
-            (
-                "The following interfaces are used in your {}: test-ci-image-0, test-ci-overlay-0, and test-ci-undisplayable-0. "
-                'Example usage: {{"main": ["test-ci-image-0", "test-ci-overlay-0"]}}. '
+                "No interfaces of type image, chart, pdf, mp4, thumbnail_jpg or thumbnail_png are used. At least one interface of those types is needed to configure the viewer. "
                 'Refer to the <a href="https://testserver/documentation/viewer-content/">documentation</a> for more information'
             ),
         ),
@@ -410,120 +352,239 @@ def test_hanging_protocol_clientside():
     ),
 )
 @pytest.mark.parametrize(
-    "overlay_type",
+    "object_factory,form_class",
     (
-        InterfaceKindChoices.SEGMENTATION,
-        InterfaceKindChoices.STRING,
-    ),
-)
-@pytest.mark.parametrize(
-    "isolated_interface_type",
-    (
-        InterfaceKind.InterfaceKindChoices.CHART,
-        InterfaceKind.InterfaceKindChoices.PDF,
-    ),
-)
-@pytest.mark.parametrize(
-    "base_object_factory,base_object_lookup,object_factory,form_class,form_extra_kwargs",
-    (
-        (AlgorithmFactory, "algorithm", None, AlgorithmForm, {}),
-        (
-            PhaseFactory,
-            "phase",
-            None,
-            PhaseUpdateForm,
-            {"challenge": ChallengeFactory},
-        ),
-        (ArchiveFactory, "archive", ArchiveItemFactory, ArchiveForm, {}),
-        (
-            ReaderStudyFactory,
-            "reader_study",
-            DisplaySetFactory,
-            ReaderStudyUpdateForm,
-            {},
-        ),
+        (ArchiveItemFactory, ArchiveForm),
+        (DisplaySetFactory, ReaderStudyUpdateForm),
     ),
 )
 @pytest.mark.django_db
-def test_forms_view_content_help_text(
+def test_archive_and_reader_study_forms_view_content_help_text(
     number_of_images,
     number_of_overlays,
     number_of_isolated_interfaces,
     number_of_undisplayable_interfaces,
-    overlay_type,
-    isolated_interface_type,
     expected_help_text,
-    base_object_factory,
-    base_object_lookup,
     object_factory,
     form_class,
-    form_extra_kwargs,
 ):
-    ci_list = []
     civ_list = []
 
     for i in range(number_of_isolated_interfaces):
+        civ = ComponentInterfaceValueFactory(
+            interface=ComponentInterfaceFactory(
+                kind=InterfaceKindChoices.CHART,
+                title=f"test-ci-isolated-{i}",
+            ),
+        )
+        civ_list.append(civ)
+
+    for i in range(number_of_images):
+        civ = ComponentInterfaceValueFactory(
+            interface=ComponentInterfaceFactory(
+                kind=InterfaceKindChoices.IMAGE,
+                title=f"test-ci-image-{i}",
+            ),
+        )
+        civ_list.append(civ)
+
+    for i in range(number_of_overlays):
+        civ = ComponentInterfaceValueFactory(
+            interface=ComponentInterfaceFactory(
+                kind=InterfaceKindChoices.SEGMENTATION,
+                title=f"test-ci-overlay-{i}",
+            ),
+        )
+        civ_list.append(civ)
+
+    for i in range(number_of_undisplayable_interfaces):
+        civ = ComponentInterfaceValueFactory(
+            interface=ComponentInterfaceFactory(
+                kind=InterfaceKind.InterfaceKindChoices.ZIP,
+                title=f"test-ci-undisplayable-{i}",
+            ),
+        )
+        civ_list.append(civ)
+
+    object = object_factory()
+    object.values.set(civ_list)
+
+    form = form_class(user=UserFactory(), instance=object.base_object)
+
+    assert form.fields["view_content"].help_text == format_lazy(
+        expected_help_text, object.base_object._meta.verbose_name
+    )
+
+
+@pytest.mark.parametrize(
+    "number_of_images,number_of_overlays,number_of_isolated_interfaces,number_of_undisplayable_interfaces,expected_help_text",
+    (
+        (
+            0,
+            0,
+            0,
+            0,
+            (
+                "No interfaces of type image, chart, pdf, mp4, thumbnail_jpg or thumbnail_png are used. At least one interface of those types is needed to configure the viewer. "
+                'Refer to the <a href="https://testserver/documentation/viewer-content/">documentation</a> for more information'
+            ),
+        ),
+        (
+            0,
+            1,
+            0,
+            1,
+            (
+                "The following interfaces are used in your algorithm: test-ci-overlay-0 and test-ci-undisplayable-0. "
+                "No interfaces of type image, chart, pdf, mp4, thumbnail_jpg or thumbnail_png are used. At least one interface of those types is needed to configure the viewer. "
+                'Refer to the <a href="https://testserver/documentation/viewer-content/">documentation</a> for more information'
+            ),
+        ),
+        (
+            1,
+            1,
+            1,
+            1,
+            (
+                "The following interfaces are used in your algorithm: test-ci-isolated-0, test-ci-image-0, test-ci-overlay-0, and test-ci-undisplayable-0. "
+                'Example usage: {"main": ["test-ci-isolated-0"], "secondary": ["test-ci-image-0", "test-ci-overlay-0"]}. '
+                'Refer to the <a href="https://testserver/documentation/viewer-content/">documentation</a> for more information'
+            ),
+        ),
+    ),
+)
+@pytest.mark.django_db
+def test_algorithm_form_view_content_help_text(
+    number_of_images,
+    number_of_overlays,
+    number_of_isolated_interfaces,
+    number_of_undisplayable_interfaces,
+    expected_help_text,
+):
+    ci_list = []
+
+    for i in range(number_of_isolated_interfaces):
         ci = ComponentInterfaceFactory(
-            kind=isolated_interface_type,
+            kind=InterfaceKindChoices.CHART,
             title=f"test-ci-isolated-{i}",
         )
-        civ = ComponentInterfaceValueFactory(
-            interface=ci,
-        )
         ci_list.append(ci)
-        civ_list.append(civ)
 
     for i in range(number_of_images):
         ci = ComponentInterfaceFactory(
             kind=InterfaceKindChoices.IMAGE,
             title=f"test-ci-image-{i}",
         )
-        civ = ComponentInterfaceValueFactory(
-            interface=ci,
-        )
         ci_list.append(ci)
-        civ_list.append(civ)
 
     for i in range(number_of_overlays):
         ci = ComponentInterfaceFactory(
-            kind=overlay_type,
+            kind=InterfaceKindChoices.SEGMENTATION,
             title=f"test-ci-overlay-{i}",
         )
-        civ = ComponentInterfaceValueFactory(
-            interface=ci,
-        )
         ci_list.append(ci)
-        civ_list.append(civ)
 
     for i in range(number_of_undisplayable_interfaces):
         ci = ComponentInterfaceFactory(
             kind=InterfaceKind.InterfaceKindChoices.ZIP,
             title=f"test-ci-undisplayable-{i}",
         )
-        civ = ComponentInterfaceValueFactory(
-            interface=ci,
+        ci_list.append(ci)
+
+    algorithm = AlgorithmFactory()
+
+    algorithm.inputs.set(ci_list)
+    algorithm.outputs.set([])
+
+    form = AlgorithmForm(user=UserFactory(), instance=algorithm)
+
+    assert form.fields["view_content"].help_text == expected_help_text
+
+
+@pytest.mark.parametrize(
+    "number_of_images,number_of_overlays,number_of_isolated_interfaces,number_of_undisplayable_interfaces,expected_help_text",
+    (
+        (
+            0,
+            0,
+            0,
+            0,
+            (
+                "No interfaces of type image, chart, pdf, mp4, thumbnail_jpg or thumbnail_png are used. At least one interface of those types is needed to configure the viewer. "
+                'Refer to the <a href="https://testserver/documentation/viewer-content/">documentation</a> for more information'
+            ),
+        ),
+        (
+            0,
+            1,
+            0,
+            1,
+            (
+                "The following interfaces are used in your phase: test-ci-overlay-0 and test-ci-undisplayable-0. "
+                "No interfaces of type image, chart, pdf, mp4, thumbnail_jpg or thumbnail_png are used. At least one interface of those types is needed to configure the viewer. "
+                'Refer to the <a href="https://testserver/documentation/viewer-content/">documentation</a> for more information'
+            ),
+        ),
+        (
+            1,
+            1,
+            1,
+            1,
+            (
+                "The following interfaces are used in your phase: test-ci-isolated-0, test-ci-image-0, test-ci-overlay-0, and test-ci-undisplayable-0. "
+                'Example usage: {"main": ["test-ci-isolated-0"], "secondary": ["test-ci-image-0", "test-ci-overlay-0"]}. '
+                'Refer to the <a href="https://testserver/documentation/viewer-content/">documentation</a> for more information'
+            ),
+        ),
+    ),
+)
+@pytest.mark.django_db
+def test_phase_update_form_view_content_help_text(
+    number_of_images,
+    number_of_overlays,
+    number_of_isolated_interfaces,
+    number_of_undisplayable_interfaces,
+    expected_help_text,
+):
+    ci_list = []
+
+    for i in range(number_of_isolated_interfaces):
+        ci = ComponentInterfaceFactory(
+            kind=InterfaceKindChoices.CHART,
+            title=f"test-ci-isolated-{i}",
         )
         ci_list.append(ci)
-        civ_list.append(civ)
 
-    base_obj = base_object_factory()
-
-    if object_factory:
-        object = object_factory(
-            **{base_object_lookup: base_obj},
+    for i in range(number_of_images):
+        ci = ComponentInterfaceFactory(
+            kind=InterfaceKindChoices.IMAGE,
+            title=f"test-ci-image-{i}",
         )
-        object.values.set(civ_list)
-    else:
-        base_obj.inputs.set(ci_list)
-        base_obj.outputs.set([])
+        ci_list.append(ci)
 
-    form = form_class(
-        user=UserFactory(), instance=base_obj, **form_extra_kwargs
+    for i in range(number_of_overlays):
+        ci = ComponentInterfaceFactory(
+            kind=InterfaceKindChoices.SEGMENTATION,
+            title=f"test-ci-overlay-{i}",
+        )
+        ci_list.append(ci)
+
+    for i in range(number_of_undisplayable_interfaces):
+        ci = ComponentInterfaceFactory(
+            kind=InterfaceKind.InterfaceKindChoices.ZIP,
+            title=f"test-ci-undisplayable-{i}",
+        )
+        ci_list.append(ci)
+
+    phase = PhaseFactory()
+    phase.algorithm_inputs.set(ci_list)
+    phase.algorithm_outputs.set([])
+
+    form = PhaseUpdateForm(
+        user=UserFactory(), instance=phase, **{"challenge": phase.challenge}
     )
 
-    assert form.fields["view_content"].help_text == format_lazy(
-        expected_help_text, base_obj._meta.verbose_name
-    )
+    assert form.fields["view_content"].help_text == expected_help_text
 
 
 @pytest.mark.django_db
