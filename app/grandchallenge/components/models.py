@@ -555,13 +555,6 @@ class ComponentInterface(OverlaySegmentsMixin):
         except KeyError as e:
             raise RuntimeError(f"Unknown kind {self.kind}") from e
 
-    @property
-    def custom_upload_processing_queue(self):
-        try:
-            return INTERFACE_KIND_TO_CUSTOM_QUEUE[self.kind]
-        except KeyError:
-            return False  # No custom queue
-
     def create_instance(self, *, image=None, value=None, fileobj=None):
         civ = ComponentInterfaceValue.objects.create(interface=self)
 
@@ -2491,21 +2484,23 @@ class CIVForObjectMixin:
         elif user_upload:
             from grandchallenge.components.tasks import add_file_to_object
 
-            task_signature_kwargs = {
-                "kwargs": {
-                    "app_label": self._meta.app_label,
-                    "model_name": self._meta.model_name,
-                    "user_upload_pk": str(user_upload.pk),
-                    "interface_pk": str(ci.pk),
-                    "object_pk": self.pk,
-                    "linked_task": linked_task,
-                },
-            }
-            if queue := ci.custom_upload_processing_queue:
-                task_signature_kwargs["queue"] = queue
+            custom_queue = INTERFACE_KIND_TO_CUSTOM_QUEUE.get(ci.kind, False)
+            task_queue_kwarg = {}
+            if custom_queue:
+                # Providing None would have Celery use the Celery-scope default
+                task_queue_kwarg["queue"] = custom_queue
+
             transaction.on_commit(
                 add_file_to_object.signature(
-                    **task_signature_kwargs
+                    kwargs={
+                        "app_label": self._meta.app_label,
+                        "model_name": self._meta.model_name,
+                        "user_upload_pk": str(user_upload.pk),
+                        "interface_pk": str(ci.pk),
+                        "object_pk": self.pk,
+                        "linked_task": linked_task,
+                    },
+                    **task_queue_kwarg,
                 ).apply_async
             )
 
