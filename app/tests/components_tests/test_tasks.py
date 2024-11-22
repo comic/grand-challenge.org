@@ -650,7 +650,22 @@ def test_add_file_to_object_updates_job_on_validation_fail(
 
 
 @pytest.mark.django_db
-def test_add_file_to_object_validates_newick(
+@pytest.mark.parametrize(
+    "kind,mock_validator_path",
+    (
+        (
+            InterfaceKind.InterfaceKindChoices.NEWICK,
+            "grandchallenge.components.models.validate_newick_tree_format",
+        ),
+        (
+            InterfaceKind.InterfaceKindChoices.BIOM,
+            "grandchallenge.components.models.validate_biom_format",
+        ),
+    ),
+)
+def test_add_file_to_object_validates_kinds(
+    kind,
+    mock_validator_path,
     settings,
     django_capture_on_commit_callbacks,
     mocker,
@@ -672,16 +687,14 @@ def test_add_file_to_object_validates_newick(
     )
     us.save()
     ci = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.NEWICK,
+        kind=kind,
         store_in_database=False,
     )
 
-    mock_validate_newick = mocker.patch(
-        "grandchallenge.components.models.validate_newick_tree_format"
-    )
+    mock_validator = mocker.patch(mock_validator_path)
 
     # Sanity
-    mock_validate_newick.assert_not_called()
+    mock_validator.assert_not_called()
     assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 0
 
     with django_capture_on_commit_callbacks(execute=True) as callbacks:
@@ -694,7 +707,7 @@ def test_add_file_to_object_validates_newick(
             linked_task=linked_task,
         )
 
-    mock_validate_newick.assert_called_once()
+    mock_validator.assert_called_once()
     assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 1
     assert "some_async_task" not in str(callbacks)
 
