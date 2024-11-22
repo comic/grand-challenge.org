@@ -427,7 +427,6 @@ class AlgorithmForm(
         choices.extend(
             chain.from_iterable(
                 self.relevant_phases.order_by()
-                .exclude(algorithm_selectable_gpu_type_choices=None)
                 .values_list(
                     "algorithm_selectable_gpu_type_choices", flat=True
                 )
@@ -438,19 +437,13 @@ class AlgorithmForm(
         return [(choice, GPUTypeChoices(choice).label) for choice in choices]
 
     def get_maximum_settable_memory_gb(self):
-        phases = self.relevant_phases
-        if phases:
-            return max(
-                settings.ALGORITHMS_MAX_MEMORY_GB,
-                phases.order_by(
-                    "-algorithm_maximum_settable_memory_gb"
-                ).values_list(
-                    "algorithm_maximum_settable_memory_gb", flat=True
-                )[
-                    0
-                ],
-            )
-        return settings.ALGORITHMS_MAX_MEMORY_GB
+        value = settings.ALGORITHMS_MAX_MEMORY_GB
+        maxima_in_phases = self.relevant_phases.order_by(
+            "-algorithm_maximum_settable_memory_gb"
+        ).values_list("algorithm_maximum_settable_memory_gb", flat=True)
+        if maxima_in_phases:
+            value = max(value, maxima_in_phases[0])
+        return value
 
 
 class UserAlgorithmsForPhaseMixin:
