@@ -99,6 +99,7 @@ beautifulsoup4 = "*"
 pymdown-extensions = "*"
 grand-challenge-forge = "*"
 biopython = "*"
+biom-format = "*"
 
 [tool.poetry.group.dev.dependencies]
 pytest-django = "*"
