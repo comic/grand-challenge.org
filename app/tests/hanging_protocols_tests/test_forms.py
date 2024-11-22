@@ -314,6 +314,94 @@ def test_hanging_protocol_clientside():
     assert form.is_valid()
 
 
+@pytest.fixture
+def civ_list(
+    number_of_isolated_interfaces,
+    number_of_images,
+    number_of_overlays,
+    number_of_undisplayable_interfaces,
+):
+    civ_list = []
+
+    for i in range(number_of_isolated_interfaces):
+        civ = ComponentInterfaceValueFactory(
+            interface=ComponentInterfaceFactory(
+                kind=InterfaceKindChoices.CHART,
+                title=f"test-ci-isolated-{i}",
+            ),
+        )
+        civ_list.append(civ)
+
+    for i in range(number_of_images):
+        civ = ComponentInterfaceValueFactory(
+            interface=ComponentInterfaceFactory(
+                kind=InterfaceKindChoices.IMAGE,
+                title=f"test-ci-image-{i}",
+            ),
+        )
+        civ_list.append(civ)
+
+    for i in range(number_of_overlays):
+        civ = ComponentInterfaceValueFactory(
+            interface=ComponentInterfaceFactory(
+                kind=InterfaceKindChoices.SEGMENTATION,
+                title=f"test-ci-overlay-{i}",
+            ),
+        )
+        civ_list.append(civ)
+
+    for i in range(number_of_undisplayable_interfaces):
+        civ = ComponentInterfaceValueFactory(
+            interface=ComponentInterfaceFactory(
+                kind=InterfaceKind.InterfaceKindChoices.ZIP,
+                title=f"test-ci-undisplayable-{i}",
+            ),
+        )
+        civ_list.append(civ)
+
+    return civ_list
+
+
+@pytest.fixture
+def ci_list(
+    number_of_isolated_interfaces,
+    number_of_images,
+    number_of_overlays,
+    number_of_undisplayable_interfaces,
+):
+    ci_list = []
+
+    for i in range(number_of_isolated_interfaces):
+        ci = ComponentInterfaceFactory(
+            kind=InterfaceKindChoices.CHART,
+            title=f"test-ci-isolated-{i}",
+        )
+        ci_list.append(ci)
+
+    for i in range(number_of_images):
+        ci = ComponentInterfaceFactory(
+            kind=InterfaceKindChoices.IMAGE,
+            title=f"test-ci-image-{i}",
+        )
+        ci_list.append(ci)
+
+    for i in range(number_of_overlays):
+        ci = ComponentInterfaceFactory(
+            kind=InterfaceKindChoices.SEGMENTATION,
+            title=f"test-ci-overlay-{i}",
+        )
+        ci_list.append(ci)
+
+    for i in range(number_of_undisplayable_interfaces):
+        ci = ComponentInterfaceFactory(
+            kind=InterfaceKind.InterfaceKindChoices.ZIP,
+            title=f"test-ci-undisplayable-{i}",
+        )
+        ci_list.append(ci)
+
+    return ci_list
+
+
 @pytest.mark.parametrize(
     "number_of_images,number_of_overlays,number_of_isolated_interfaces,number_of_undisplayable_interfaces,expected_help_text",
     (
@@ -360,52 +448,11 @@ def test_hanging_protocol_clientside():
 )
 @pytest.mark.django_db
 def test_archive_and_reader_study_forms_view_content_help_text(
-    number_of_images,
-    number_of_overlays,
-    number_of_isolated_interfaces,
-    number_of_undisplayable_interfaces,
+    civ_list,
     expected_help_text,
     object_factory,
     form_class,
 ):
-    civ_list = []
-
-    for i in range(number_of_isolated_interfaces):
-        civ = ComponentInterfaceValueFactory(
-            interface=ComponentInterfaceFactory(
-                kind=InterfaceKindChoices.CHART,
-                title=f"test-ci-isolated-{i}",
-            ),
-        )
-        civ_list.append(civ)
-
-    for i in range(number_of_images):
-        civ = ComponentInterfaceValueFactory(
-            interface=ComponentInterfaceFactory(
-                kind=InterfaceKindChoices.IMAGE,
-                title=f"test-ci-image-{i}",
-            ),
-        )
-        civ_list.append(civ)
-
-    for i in range(number_of_overlays):
-        civ = ComponentInterfaceValueFactory(
-            interface=ComponentInterfaceFactory(
-                kind=InterfaceKindChoices.SEGMENTATION,
-                title=f"test-ci-overlay-{i}",
-            ),
-        )
-        civ_list.append(civ)
-
-    for i in range(number_of_undisplayable_interfaces):
-        civ = ComponentInterfaceValueFactory(
-            interface=ComponentInterfaceFactory(
-                kind=InterfaceKind.InterfaceKindChoices.ZIP,
-                title=f"test-ci-undisplayable-{i}",
-            ),
-        )
-        civ_list.append(civ)
-
     object = object_factory()
     object.values.set(civ_list)
 
@@ -455,42 +502,9 @@ def test_archive_and_reader_study_forms_view_content_help_text(
 )
 @pytest.mark.django_db
 def test_algorithm_form_view_content_help_text(
-    number_of_images,
-    number_of_overlays,
-    number_of_isolated_interfaces,
-    number_of_undisplayable_interfaces,
+    ci_list,
     expected_help_text,
 ):
-    ci_list = []
-
-    for i in range(number_of_isolated_interfaces):
-        ci = ComponentInterfaceFactory(
-            kind=InterfaceKindChoices.CHART,
-            title=f"test-ci-isolated-{i}",
-        )
-        ci_list.append(ci)
-
-    for i in range(number_of_images):
-        ci = ComponentInterfaceFactory(
-            kind=InterfaceKindChoices.IMAGE,
-            title=f"test-ci-image-{i}",
-        )
-        ci_list.append(ci)
-
-    for i in range(number_of_overlays):
-        ci = ComponentInterfaceFactory(
-            kind=InterfaceKindChoices.SEGMENTATION,
-            title=f"test-ci-overlay-{i}",
-        )
-        ci_list.append(ci)
-
-    for i in range(number_of_undisplayable_interfaces):
-        ci = ComponentInterfaceFactory(
-            kind=InterfaceKind.InterfaceKindChoices.ZIP,
-            title=f"test-ci-undisplayable-{i}",
-        )
-        ci_list.append(ci)
-
     algorithm = AlgorithmFactory()
 
     algorithm.inputs.set(ci_list)
@@ -540,42 +554,9 @@ def test_algorithm_form_view_content_help_text(
 )
 @pytest.mark.django_db
 def test_phase_update_form_view_content_help_text(
-    number_of_images,
-    number_of_overlays,
-    number_of_isolated_interfaces,
-    number_of_undisplayable_interfaces,
+    ci_list,
     expected_help_text,
 ):
-    ci_list = []
-
-    for i in range(number_of_isolated_interfaces):
-        ci = ComponentInterfaceFactory(
-            kind=InterfaceKindChoices.CHART,
-            title=f"test-ci-isolated-{i}",
-        )
-        ci_list.append(ci)
-
-    for i in range(number_of_images):
-        ci = ComponentInterfaceFactory(
-            kind=InterfaceKindChoices.IMAGE,
-            title=f"test-ci-image-{i}",
-        )
-        ci_list.append(ci)
-
-    for i in range(number_of_overlays):
-        ci = ComponentInterfaceFactory(
-            kind=InterfaceKindChoices.SEGMENTATION,
-            title=f"test-ci-overlay-{i}",
-        )
-        ci_list.append(ci)
-
-    for i in range(number_of_undisplayable_interfaces):
-        ci = ComponentInterfaceFactory(
-            kind=InterfaceKind.InterfaceKindChoices.ZIP,
-            title=f"test-ci-undisplayable-{i}",
-        )
-        ci_list.append(ci)
-
     phase = PhaseFactory()
     phase.algorithm_inputs.set(ci_list)
     phase.algorithm_outputs.set([])
