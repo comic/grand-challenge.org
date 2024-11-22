@@ -63,7 +63,7 @@ def validate_newick_tree_format(tree):
 
 @_handle_validation_resource_errors
 def validate_biom_format(*, user_upload):
-    """Validates an uploaded BIOM file by passing it's content through a parser"""
+    """Validates an uploaded BIOM file by passing its content through a parser"""
 
     with BytesIO() as fileobj:
         # Get the object into memory
