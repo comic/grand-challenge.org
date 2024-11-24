@@ -691,9 +691,7 @@ def test_generate_view_content_example(
     ).all()
 
     base_obj = AlgorithmFactory()
-
     base_obj.inputs.set(interfaces)
-
     form = AlgorithmForm(user=UserFactory(), instance=base_obj)
 
     view_content_example = form.generate_view_content_example()
