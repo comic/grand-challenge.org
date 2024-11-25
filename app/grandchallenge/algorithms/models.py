@@ -444,6 +444,10 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         return user.groups.remove(self.users_group)
 
     @cached_property
+    def interfaces(self):
+        return (self.inputs.all() | self.outputs.all()).distinct()
+
+    @cached_property
     def user_statistics(self):
         return (
             get_user_model()

@@ -2578,6 +2578,14 @@ class ValuesForInterfacesMixin:
         }
         return values_for_interfaces
 
+    @cached_property
+    def interfaces(self):
+        return ComponentInterface.objects.filter(
+            pk__in=self.civ_sets_related_manager.exclude(
+                values__isnull=True
+            ).values_list("values__interface__pk", flat=True)
+        ).distinct()
+
 
 class Tarball(UUIDModel):
     ImportStatusChoices = ImportStatusChoices

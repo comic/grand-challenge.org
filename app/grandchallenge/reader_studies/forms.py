@@ -56,6 +56,7 @@ from grandchallenge.core.widgets import (
     MarkdownEditorInlineWidget,
 )
 from grandchallenge.groups.forms import UserGroupForm
+from grandchallenge.hanging_protocols.forms import ViewContentExampleMixin
 from grandchallenge.hanging_protocols.models import VIEW_CONTENT_SCHEMA
 from grandchallenge.reader_studies.models import (
     ANSWER_TYPE_TO_INTERACTIVE_ALGORITHM_CHOICES,
@@ -189,7 +190,9 @@ class ReaderStudyCreateForm(
             )
 
 
-class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
+class ReaderStudyUpdateForm(
+    ReaderStudyCreateForm, ViewContentExampleMixin, ModelForm
+):
     class Meta(ReaderStudyCreateForm.Meta):
         fields = (
             "title",
@@ -253,19 +256,6 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
                 reverse_lazy("hanging-protocols:list"),
             ),
         }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        interface_slugs = (
-            self.instance.display_sets.exclude(values__isnull=True)
-            .values_list("values__interface__slug", flat=True)
-            .order_by()
-            .distinct()
-        )
-        self.fields["view_content"].help_text += (
-            " The following interfaces are used in your reader study: "
-            f"{', '.join(interface_slugs)}."
-        )
 
 
 class ReaderStudyCopyForm(Form):
