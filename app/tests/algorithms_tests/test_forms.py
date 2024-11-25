@@ -5,6 +5,7 @@ from actstream.actions import is_following
 from django.core.validators import MaxValueValidator, MinValueValidator
 from factory.django import ImageField
 
+from grandchallenge.algorithms.admin import AlgorithmInterfaceAdminForm
 from grandchallenge.algorithms.forms import (
     AlgorithmForm,
     AlgorithmForPhaseForm,
@@ -35,6 +36,7 @@ from grandchallenge.verifications.models import Verification
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
+    AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
     AlgorithmModelFactory,
     AlgorithmPermissionRequestFactory,
@@ -155,7 +157,6 @@ def test_algorithm_create(client, uploaded_image):
     VerificationFactory(user=creator, is_verified=True)
 
     ws = WorkstationFactory()
-    ci = ComponentInterface.objects.get(slug="generic-medical-image")
 
     def try_create_algorithm():
         return get_view_for_user(
@@ -166,8 +167,7 @@ def test_algorithm_create(client, uploaded_image):
                 "title": "foo bar",
                 "logo": uploaded_image(),
                 "workstation": ws.pk,
-                "inputs": [ci.pk],
-                "outputs": [ComponentInterfaceFactory().pk],
+                "interfaces": AlgorithmInterfaceFactory(),
                 "minimum_credits_per_job": 20,
                 "job_requires_gpu_type": GPUTypeChoices.NO_GPU,
                 "job_requires_memory_gb": 4,
@@ -889,3 +889,28 @@ def test_algorithm_for_phase_form_memory_limited():
     )
     assert max_validator is not None
     assert max_validator.limit_value == 32
+
+
+@pytest.mark.django_db
+def test_algorithm_interface_check_for_uniqueness():
+    interface = AlgorithmInterfaceFactory()
+    ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
+    interface.inputs.set([ci1])
+    interface.outputs.set([ci2])
+
+    form = AlgorithmInterfaceAdminForm(
+        data={"inputs": [ci1], "outputs": [ci2]}
+    )
+    assert form.is_valid() is False
+    assert (
+        "An AlgorithmIO with the same combination of inputs and outputs already exists."
+        in str(form.errors)
+    )
+
+
+@pytest.mark.django_db
+def test_algorithm_interface_disjoint_interfaces():
+    ci = ComponentInterfaceFactory()
+    form = AlgorithmInterfaceAdminForm(data={"inputs": [ci], "outputs": [ci]})
+    assert form.is_valid() is False
+    assert "The sets of Inputs and Outputs must be unique" in str(form.errors)

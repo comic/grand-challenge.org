@@ -3,6 +3,7 @@ import factory
 from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmImage,
+    AlgorithmInterface,
     AlgorithmModel,
     AlgorithmPermissionRequest,
     AlgorithmUserCredit,
@@ -84,3 +85,8 @@ class AlgorithmUserCreditFactory(factory.django.DjangoModelFactory):
 
     user = factory.SubFactory(UserFactory)
     algorithm = factory.SubFactory(AlgorithmFactory)
+
+
+class AlgorithmInterfaceFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = AlgorithmInterface

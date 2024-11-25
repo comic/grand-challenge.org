@@ -69,6 +69,38 @@ logger = logging.getLogger(__name__)
 JINJA_ENGINE = sandbox.ImmutableSandboxedEnvironment()
 
 
+class AlgorithmInterfaceManager(models.Manager):
+    def get_existing_interface_for_inputs_and_outputs(
+        self, *, inputs, outputs
+    ):
+        try:
+            return self.annotate(
+                input_count=Count("inputs", distinct=True),
+                output_count=Count("outputs", distinct=True),
+            ).get(
+                inputs__in=inputs,
+                outputs__in=outputs,
+                input_count=len(inputs),
+                output_count=len(outputs),
+            )
+        except ObjectDoesNotExist:
+            return None
+
+
+class AlgorithmInterface(models.Model):
+    inputs = models.ManyToManyField(
+        to=ComponentInterface, related_name="inputs"
+    )
+    outputs = models.ManyToManyField(
+        to=ComponentInterface, related_name="outputs"
+    )
+
+    objects = AlgorithmInterfaceManager()
+
+    def delete(self, *args, **kwargs):
+        raise ValidationError("AlgorithmInterfaces cannot be deleted.")
+
+
 class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
     editors_group = models.OneToOneField(
         Group,
@@ -147,6 +179,11 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
             "{{ key }}  {{ value }}"
             "{% endfor %}"
         ),
+    )
+    interfaces = models.ManyToManyField(
+        to=AlgorithmInterface,
+        related_name="algorithm_interfaces",
+        through="algorithms.AlgorithmInterfaceThroughTable",
     )
     inputs = models.ManyToManyField(
         to=ComponentInterface, related_name="algorithm_inputs", blank=False
@@ -519,6 +556,28 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         else:
             title += " (Active model: None)"
         return title
+
+
+class AlgorithmInterfaceThroughTable(models.Model):
+    algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
+    interface = models.ForeignKey(AlgorithmInterface, on_delete=models.CASCADE)
+    is_default = models.BooleanField(default=False)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["algorithm"],
+                condition=Q(is_default=True),
+                name="unique_default_interface_per_algorithm",
+            ),
+            models.UniqueConstraint(
+                fields=["algorithm", "interface"],
+                name="unique_algorithm_interface_combination",
+            ),
+        ]
+
+    def __str__(self):
+        return str(self.interface)
 
 
 class AlgorithmUserObjectPermission(UserObjectPermissionBase):

@@ -30,7 +30,6 @@ from django.forms import (
     HiddenInput,
     ModelChoiceField,
     ModelForm,
-    ModelMultipleChoiceField,
     Select,
     TextInput,
     URLField,
@@ -45,6 +44,7 @@ from django_select2.forms import Select2MultipleWidget
 from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmImage,
+    AlgorithmInterface,
     AlgorithmModel,
     AlgorithmPermissionRequest,
     Job,
@@ -238,42 +238,10 @@ class AlgorithmIOValidationMixin:
 
 
 class AlgorithmForm(
-    AlgorithmIOValidationMixin,
     WorkstationUserFilterMixin,
     SaveFormInitMixin,
     ModelForm,
 ):
-    inputs = ModelMultipleChoiceField(
-        queryset=ComponentInterface.objects.exclude(
-            slug__in=[*NON_ALGORITHM_INTERFACES, "results-json-file"]
-        ),
-        widget=Select2MultipleWidget,
-        help_text=format_lazy(
-            (
-                "The inputs to this algorithm. "
-                'See the <a href="{}">list of interfaces</a> for more '
-                "information about each interface. "
-                "Please contact support if your desired input is missing."
-            ),
-            reverse_lazy("components:component-interface-list-algorithms"),
-        ),
-    )
-    outputs = ModelMultipleChoiceField(
-        queryset=ComponentInterface.objects.exclude(
-            slug__in=NON_ALGORITHM_INTERFACES
-        ),
-        widget=Select2MultipleWidget,
-        help_text=format_lazy(
-            (
-                "The outputs to this algorithm. "
-                'See the <a href="{}">list of interfaces</a> for more '
-                "information about each interface. "
-                "Please contact support if your desired output is missing."
-            ),
-            reverse_lazy("components:component-interface-list-algorithms"),
-        ),
-    )
-
     class Meta:
         model = Algorithm
         fields = (
@@ -293,8 +261,6 @@ class AlgorithmForm(
             "hanging_protocol",
             "optional_hanging_protocols",
             "view_content",
-            "inputs",
-            "outputs",
             "minimum_credits_per_job",
             "job_requires_gpu_type",
             "job_requires_memory_gb",
@@ -1289,6 +1255,7 @@ class AlgorithmModelVersionControlForm(Form):
         )
 
         if hide_algorithm_model_input:
+
             self.fields["algorithm_model"].widget = HiddenInput()
         self.helper = FormHelper(self)
         if activate:
@@ -1317,3 +1284,23 @@ class AlgorithmModelVersionControlForm(Form):
             raise ValidationError("Model updating already in progress.")
 
         return algorithm_model
+
+
+class AlgorithmInterfaceBaseForm(
+    SaveFormInitMixin, AlgorithmIOValidationMixin, ModelForm
+):
+    class Meta:
+        model = AlgorithmInterface
+        fields = ("inputs", "outputs")
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        self.cleaned_data["existing_io"] = (
+            AlgorithmInterface.objects.get_existing_interface_for_inputs_and_outputs(
+                inputs=self.cleaned_data["inputs"],
+                outputs=self.cleaned_data["outputs"],
+            )
+        )
+
+        return cleaned_data
