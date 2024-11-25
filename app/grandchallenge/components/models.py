@@ -1456,6 +1456,8 @@ class ComponentInterfaceValue(models.Model):
                     value = json.loads(f.read().decode("utf-8"))
                 except JSONDecodeError as error:
                     raise ValidationError(error)
+                except UnicodeDecodeError:
+                    raise ValidationError("The file could not be decoded")
                 except MemoryError as error:
                     raise ValidationError(
                         "The file was too large to process, "
@@ -1475,6 +1477,8 @@ class ComponentInterfaceValue(models.Model):
                 value = json.loads(user_upload.read_object())
             except JSONDecodeError as error:
                 raise ValidationError(error)
+            except UnicodeDecodeError:
+                raise ValidationError("The file could not be decoded")
             except MemoryError as error:
                 raise ValidationError(
                     "The file was too large to process, "
