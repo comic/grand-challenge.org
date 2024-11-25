@@ -83,6 +83,7 @@ from grandchallenge.core.widgets import (
 )
 from grandchallenge.evaluation.utils import SubmissionKindChoices, get
 from grandchallenge.groups.forms import UserGroupForm
+from grandchallenge.hanging_protocols.forms import ViewContentExampleMixin
 from grandchallenge.hanging_protocols.models import VIEW_CONTENT_SCHEMA
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
@@ -241,6 +242,7 @@ class AlgorithmForm(
     AlgorithmIOValidationMixin,
     WorkstationUserFilterMixin,
     SaveFormInitMixin,
+    ViewContentExampleMixin,
     ModelForm,
 ):
     inputs = ModelMultipleChoiceField(
@@ -377,17 +379,6 @@ class AlgorithmForm(
             MinValueValidator(settings.ALGORITHMS_MIN_MEMORY_GB),
             MaxValueValidator(self.get_maximum_settable_memory_gb()),
         ]
-
-        if self.instance:
-            interface_slugs = (
-                (self.instance.inputs.all() | self.instance.outputs.all())
-                .distinct()
-                .values_list("slug", flat=True)
-            )
-            self.fields["view_content"].help_text += (
-                " The following interfaces are used in your algorithm: "
-                f"{oxford_comma(interface_slugs)}."
-            )
 
     @cached_property
     def relevant_phases(self):

@@ -306,7 +306,9 @@ class HangingProtocolMixin(models.Model):
     view_content = models.JSONField(
         blank=True,
         default=dict,
-        validators=[JSONValidator(schema=VIEW_CONTENT_SCHEMA)],
+        validators=[
+            JSONValidator(schema=VIEW_CONTENT_SCHEMA),
+        ],
     )
     hanging_protocol = models.ForeignKey(
         "hanging_protocols.HangingProtocol",
@@ -326,24 +328,28 @@ class HangingProtocolMixin(models.Model):
     def clean(self):
         super().clean()
 
-        self.check_consistent_viewports()
-        self.check_all_interfaces_in_view_content_exist()
+        self.clean_view_content(
+            view_content=self.view_content,
+            hanging_protocol=self.hanging_protocol,
+        )
 
-    def check_consistent_viewports(self):
-        if self.view_content and self.hanging_protocol:
-            if set(self.view_content.keys()) != {
-                x["viewport_name"] for x in self.hanging_protocol.json
+    @staticmethod
+    def check_consistent_viewports(*, view_content, hanging_protocol):
+        if view_content and hanging_protocol:
+            if set(view_content.keys()) != {
+                x["viewport_name"] for x in hanging_protocol.json
             }:
                 raise ValidationError(
                     "Image ports in view_content do not match "
                     "those in the selected hanging protocol."
                 )
 
-    def check_all_interfaces_in_view_content_exist(self):
-        if not hasattr(self.view_content, "items"):
+    @staticmethod
+    def check_all_interfaces_in_view_content_exist(*, view_content):
+        if not hasattr(view_content, "items"):
             raise ValidationError("View content is invalid")
 
-        for viewport, slugs in self.view_content.items():
+        for viewport, slugs in view_content.items():
             viewport_interfaces = ComponentInterface.objects.filter(
                 slug__in=slugs
             )
@@ -394,6 +400,15 @@ class HangingProtocolMixin(models.Model):
                     f"found {len(undisplayable_interfaces)} for viewport {viewport}: "
                     f"{', '.join(i.slug for i in undisplayable_interfaces)}"
                 )
+
+    @staticmethod
+    def clean_view_content(*, view_content, hanging_protocol):
+        HangingProtocolMixin.check_consistent_viewports(
+            view_content=view_content, hanging_protocol=hanging_protocol
+        )
+        HangingProtocolMixin.check_all_interfaces_in_view_content_exist(
+            view_content=view_content
+        )
 
     class Meta:
         abstract = True
