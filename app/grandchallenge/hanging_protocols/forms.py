@@ -135,11 +135,11 @@ class ViewContentExampleMixin:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance:
-            interface_slugs = self.instance.interfaces.values_list(
-                "slug", flat=True
-            )
+            interface_slugs = [
+                interface.slug for interface in self.instance.interfaces
+            ]
 
-            if interface_slugs.count() > 0:
+            if len(interface_slugs) > 0:
                 self.fields[
                     "view_content"
                 ].help_text += f"The following interfaces are used in your {self.instance._meta.verbose_name}: {oxford_comma(interface_slugs)}. "
