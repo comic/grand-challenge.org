@@ -70,7 +70,7 @@ from grandchallenge.reader_studies.models import (
     ReaderStudy,
     ReaderStudyPermissionRequest,
 )
-from grandchallenge.subdomains.utils import reverse_lazy
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.workstation_configs.models import OVERLAY_SEGMENTS_SCHEMA
 
 logger = logging.getLogger(__name__)
@@ -305,6 +305,11 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
             *BLANK_CHOICE_DASH,
             *AnswerType.choices,
         ]
+
+        self.fields["overlay_segments"].help_text += format_lazy(
+            'Refer to the <a href="{}#segmentation-masks">documentation</a> for more information',
+            reverse("documentation:detail", args=["interfaces"]),
+        )
 
         if not self.user_can_add_interactive_algorithm:
             self.fields["interactive_algorithm"].widget = HiddenInput()
