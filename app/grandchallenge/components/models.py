@@ -1456,6 +1456,8 @@ class ComponentInterfaceValue(models.Model):
                     value = json.loads(f.read().decode("utf-8"))
                 except JSONDecodeError as error:
                     raise ValidationError(error)
+                except UnicodeDecodeError:
+                    raise ValidationError("The file could not be decoded")
                 except MemoryError as error:
                     raise ValidationError(
                         "The file was too large to process, "
@@ -1473,8 +1475,15 @@ class ComponentInterfaceValue(models.Model):
         if self.interface.is_json_kind:
             try:
                 value = json.loads(user_upload.read_object())
-            except JSONDecodeError as e:
-                raise ValidationError(e)
+            except JSONDecodeError as error:
+                raise ValidationError(error)
+            except UnicodeDecodeError:
+                raise ValidationError("The file could not be decoded")
+            except MemoryError as error:
+                raise ValidationError(
+                    "The file was too large to process, "
+                    "please try again with a smaller file"
+                ) from error
             self.interface.validate_against_schema(value=value)
         elif self.interface.kind == InterfaceKindChoices.NEWICK:
             validate_newick_tree_format(tree=user_upload.read_object())
