@@ -94,6 +94,7 @@
     <span class="n">validate_no_slash_at_ends</span><span class="p">,</span>
     <span class="n">validate_safe_path</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.core.celery</span> <span class="kn">import</span> <span class="n">acks_late_2xlarge_task</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.core.error_handlers</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">FallbackCIVValidationErrorHandler</span><span class="p">,</span>
     <span class="n">JobCIVErrorHandler</span><span class="p">,</span>
@@ -1296,6 +1297,10 @@
     <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MP4</span><span class="p">:</span> <span class="s2">&quot;.mp4&quot;</span><span class="p">,</span>
     <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">NEWICK</span><span class="p">:</span> <span class="s2">&quot;.newick&quot;</span><span class="p">,</span>
     <span class="o">**</span><span class="p">{</span><span class="n">kind</span><span class="p">:</span> <span class="s2">&quot;.json&quot;</span> <span class="k">for</span> <span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_json</span><span class="p">()},</span>
+<span class="p">}</span>
+
+<span class="n">INTERFACE_KIND_TO_CUSTOM_QUEUE</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">NEWICK</span><span class="p">:</span> <span class="n">acks_late_2xlarge_task</span><span class="o">.</span><span class="n">queue</span><span class="p">,</span>
 <span class="p">}</span>
 
 
@@ -2610,6 +2615,11 @@
         <span class="k">elif</span> <span class="n">user_upload</span><span class="p">:</span>
             <span class="kn">from</span> <span class="nn">grandchallenge.components.tasks</span> <span class="kn">import</span> <span class="n">add_file_to_object</span>
 
+            <span class="n">custom_queue</span> <span class="o">=</span> <span class="n">INTERFACE_KIND_TO_CUSTOM_QUEUE</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ci</span><span class="o">.</span><span class="n">kind</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+            <span class="n">task_queue_kwarg</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">if</span> <span class="n">custom_queue</span><span class="p">:</span>
+                <span class="n">task_queue_kwarg</span><span class="p">[</span><span class="s2">&quot;queue&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">custom_queue</span>
+
             <span class="n">transaction</span><span class="o">.</span><span class="n">on_commit</span><span class="p">(</span>
                 <span class="n">add_file_to_object</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
                     <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
@@ -2619,7 +2629,8 @@
                         <span class="s2">&quot;interface_pk&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">ci</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span>
                         <span class="s2">&quot;object_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
                         <span class="s2">&quot;linked_task&quot;</span><span class="p">:</span> <span class="n">linked_task</span><span class="p">,</span>
-                    <span class="p">}</span>
+                    <span class="p">},</span>
+                    <span class="o">**</span><span class="n">task_queue_kwarg</span><span class="p">,</span>
                 <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span>
             <span class="p">)</span>
 
