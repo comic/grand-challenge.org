@@ -1640,13 +1640,21 @@ def test_component_interface_value_manager():
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "kind,expected_queue",
+    "kind,expected_kwargs",
     (
-        (InterfaceKindChoices.STRING, False),
-        (InterfaceKindChoices.NEWICK, "acks-late-2xlarge"),
+        # Ensure queue is not passed since setting to None would
+        # have Celery use the Celery-scope default ("celerly")
+        (
+            InterfaceKindChoices.STRING,
+            {},
+        ),
+        (
+            InterfaceKindChoices.NEWICK,
+            {"queue": "acks-late-2xlarge"},
+        ),
     ),
 )
-def test_component_interface_custom_queue(kind, expected_queue, mocker):
+def test_component_interface_custom_queue(kind, expected_kwargs, mocker):
 
     ci = ComponentInterfaceFactory(
         kind=kind,
@@ -1671,12 +1679,9 @@ def test_component_interface_custom_queue(kind, expected_queue, mocker):
         ],
         user=user,
     )
-    assert mock_task_signature.called_once()
+    assert mock_task_signature.called_once()  # Sanity
 
-    kwargs = mock_task_signature.call_args.kwargs
-    if not expected_queue:
-        # Ensure it's not passed since setting to None would
-        # have Celery use the Celery-scope default ("celerly")
-        assert "queue" not in kwargs
-    else:
-        assert kwargs["queue"] == expected_queue
+    # Ignore the to-task keyword arguments
+    del mock_task_signature.call_args.kwargs["kwargs"]
+
+    assert mock_task_signature.call_args.kwargs == expected_kwargs
