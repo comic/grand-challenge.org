@@ -564,10 +564,10 @@ class SubmissionForm(
             job_requirement_errors.append(
                 ValidationError(
                     "The requested GPU type for this algorithm "
-                    f"({GPUTypeChoices(algorithm.job_requires_gpu_type).label}) is "
-                    "not allowed for this phase. Options are "
-                    f"{[GPUTypeChoices(c).label for c in phase.algorithm_selectable_gpu_type_choices]}. "
-                    "Please adjust the options on the algorithm."
+                    f"({GPUTypeChoices(algorithm.job_requires_gpu_type).name}) is "
+                    "not allowed for this phase. Options are: "
+                    f"{', '.join([GPUTypeChoices(c).name for c in phase.algorithm_selectable_gpu_type_choices])}. "
+                    "Please adjust the setting on the algorithm."
                 )
             )
         if job_requirement_errors:
