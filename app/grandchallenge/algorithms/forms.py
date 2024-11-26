@@ -380,7 +380,7 @@ class AlgorithmForm(
             MaxValueValidator(self.maximum_settable_memory_gb),
         ]
 
-    @cached_property
+    @property
     def relevant_phases(self):
         qs = get_objects_for_user(
             self._user, "evaluation.create_phase_submission"
