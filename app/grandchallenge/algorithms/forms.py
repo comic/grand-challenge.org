@@ -425,7 +425,11 @@ class AlgorithmForm(
             )
         )
         choices_set = set(choices)
-        return [(choice.value, choice.label) for choice in GPUTypeChoices if choice in choices_set]
+        return [
+            (choice.value, choice.label)
+            for choice in GPUTypeChoices
+            if choice in choices_set
+        ]
 
     def get_maximum_settable_memory_gb(self):
         value = settings.ALGORITHMS_MAX_MEMORY_GB
