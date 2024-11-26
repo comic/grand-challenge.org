@@ -15,6 +15,7 @@ from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.cases.models import Image
 from grandchallenge.components.models import (
     INTERFACE_TYPE_JSON_EXAMPLES,
+    CIVData,
     ComponentInterface,
     ComponentInterfaceExampleValue,
     ComponentInterfaceValue,
@@ -45,12 +46,13 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.evaluation_tests.factories import EvaluationFactory, MethodFactory
-from tests.factories import ImageFactory, WorkstationImageFactory
+from tests.factories import ImageFactory, UserFactory, WorkstationImageFactory
 from tests.reader_studies_tests.factories import (
     DisplaySetFactory,
     QuestionFactory,
     ReaderStudyFactory,
 )
+from tests.uploads_tests.factories import UserUploadFactory
 from tests.utils import create_raw_upload_image_session
 
 
@@ -1634,3 +1636,52 @@ def test_component_interface_value_manager():
 
     assert civ == civ1
     assert not created
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "kind,expected_kwargs",
+    (
+        # Ensure queue is not passed since setting to None would
+        # have Celery use the Celery-scope default ("celerly")
+        (
+            InterfaceKindChoices.STRING,
+            {},
+        ),
+        (
+            InterfaceKindChoices.NEWICK,
+            {"queue": "acks-late-2xlarge"},
+        ),
+    ),
+)
+def test_component_interface_custom_queue(kind, expected_kwargs, mocker):
+
+    ci = ComponentInterfaceFactory(
+        kind=kind,
+        store_in_database=False,
+    )
+    user = UserFactory()
+
+    # Need an existing CIVSet, use archive here since it is slightly easier setup
+    archive = ArchiveFactory()
+    archive.add_editor(user)
+    ai = ArchiveItemFactory.build(archive=None)
+
+    mock_task_signature = mocker.patch(
+        "grandchallenge.components.tasks.add_file_to_object.signature"
+    )
+    ai.validate_values_and_execute_linked_task(
+        values=[
+            CIVData(
+                interface_slug=ci.slug,
+                value=UserUploadFactory(creator=user),
+            )
+        ],
+        user=user,
+    )
+    assert mock_task_signature.called_once()  # Sanity
+
+    # Ignore the to-task keyword arguments
+    del mock_task_signature.call_args.kwargs["kwargs"]
+
+    assert mock_task_signature.call_args.kwargs == expected_kwargs

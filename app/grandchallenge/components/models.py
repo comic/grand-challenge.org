@@ -56,6 +56,7 @@ from grandchallenge.components.validators import (
     validate_no_slash_at_ends,
     validate_safe_path,
 )
+from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.core.error_handlers import (
     FallbackCIVValidationErrorHandler,
     JobCIVErrorHandler,
@@ -1210,6 +1211,10 @@ INTERFACE_KIND_TO_FILE_EXTENSION = {
     InterfaceKindChoices.MP4: ".mp4",
     InterfaceKindChoices.NEWICK: ".newick",
     **{kind: ".json" for kind in InterfaceKind.interface_type_json()},
+}
+
+INTERFACE_KIND_TO_CUSTOM_QUEUE = {
+    InterfaceKindChoices.NEWICK: acks_late_2xlarge_task.queue,
 }
 
 
@@ -2488,6 +2493,11 @@ class CIVForObjectMixin:
         elif user_upload:
             from grandchallenge.components.tasks import add_file_to_object
 
+            custom_queue = INTERFACE_KIND_TO_CUSTOM_QUEUE.get(ci.kind, False)
+            task_queue_kwarg = {}
+            if custom_queue:
+                task_queue_kwarg["queue"] = custom_queue
+
             transaction.on_commit(
                 add_file_to_object.signature(
                     kwargs={
@@ -2497,7 +2507,8 @@ class CIVForObjectMixin:
                         "interface_pk": str(ci.pk),
                         "object_pk": self.pk,
                         "linked_task": linked_task,
-                    }
+                    },
+                    **task_queue_kwarg,
                 ).apply_async
             )
 
