@@ -314,7 +314,10 @@ class OverlaySegmentsMixin(models.Model):
         default=list,
         help_text=(
             "The schema that defines how categories of values in the overlay "
-            "images are differentiated."
+            "images are differentiated. "
+            "Example usage: "
+            '[{{"name": "background", "visible": true, "voxel_value": 0}},'
+            '{{"name": "tissue", "visible": true, "voxel_value": 1}}]. '
         ),
         validators=[JSONValidator(schema=OVERLAY_SEGMENTS_SCHEMA)],
     )
