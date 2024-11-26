@@ -435,11 +435,15 @@ class AlgorithmForm(
     @property
     def maximum_settable_memory_gb(self):
         value = settings.ALGORITHMS_MAX_MEMORY_GB
-        maxima_in_phases = self.relevant_phases.order_by(
-            "-algorithm_maximum_settable_memory_gb"
-        ).values_list("algorithm_maximum_settable_memory_gb", flat=True)
-        if maxima_in_phases:
-            value = max(value, maxima_in_phases[0])
+        maximum_in_phases = (
+            self.relevant_phases.order_by(
+                "-algorithm_maximum_settable_memory_gb"
+            )
+            .values_list("algorithm_maximum_settable_memory_gb", flat=True)
+            .first()
+        )
+        if maximum_in_phases is not None:
+            value = max(value, maximum_in_phases)
         return value
 
 
