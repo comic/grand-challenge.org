@@ -373,11 +373,11 @@ class AlgorithmForm(
         self.fields["display_editors"].required = True
 
         self.fields["job_requires_gpu_type"].choices = (
-            self.get_selectable_gpu_type_choices()
+            self.selectable_gpu_type_choices
         )
         self.fields["job_requires_memory_gb"].validators = [
             MinValueValidator(settings.ALGORITHMS_MIN_MEMORY_GB),
-            MaxValueValidator(self.get_maximum_settable_memory_gb()),
+            MaxValueValidator(self.maximum_settable_memory_gb),
         ]
 
     @cached_property
@@ -413,7 +413,8 @@ class AlgorithmForm(
             relevant_algorithm_output_count=len(outputs),
         )
 
-    def get_selectable_gpu_type_choices(self):
+    @property
+    def selectable_gpu_type_choices(self):
         choices = [GPUTypeChoices.NO_GPU, GPUTypeChoices.T4]
         choices.extend(
             chain.from_iterable(
@@ -431,7 +432,8 @@ class AlgorithmForm(
             if choice in choices_set
         ]
 
-    def get_maximum_settable_memory_gb(self):
+    @property
+    def maximum_settable_memory_gb(self):
         value = settings.ALGORITHMS_MAX_MEMORY_GB
         maxima_in_phases = self.relevant_phases.order_by(
             "-algorithm_maximum_settable_memory_gb"
