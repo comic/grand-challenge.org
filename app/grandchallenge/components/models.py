@@ -30,7 +30,7 @@ from django.forms.models import model_to_dict
 from django.template.defaultfilters import truncatewords
 from django.utils.functional import cached_property
 from django.utils.module_loading import import_string
-from django.utils.text import get_valid_filename
+from django.utils.text import format_lazy, get_valid_filename
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_deprecate_fields import deprecate_field
@@ -76,6 +76,7 @@ from grandchallenge.core.validators import (
     JSONValidator,
     MimeTypeValidator,
 )
+from grandchallenge.subdomains.utils import reverse_lazy
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.validators import validate_gzip_mimetype
 from grandchallenge.workstation_configs.models import (
@@ -312,12 +313,14 @@ class OverlaySegmentsMixin(models.Model):
     overlay_segments = models.JSONField(
         blank=True,
         default=list,
-        help_text=(
+        help_text=format_lazy(
             "The schema that defines how categories of values in the overlay "
             "images are differentiated. "
             "Example usage: "
             '[{{"name": "background", "visible": true, "voxel_value": 0}},'
             '{{"name": "tissue", "visible": true, "voxel_value": 1}}]. '
+            'Refer to the <a href="{}#segmentation-masks">documentation</a> for more information',
+            reverse_lazy("documentation:detail", args=["interfaces"]),
         ),
         validators=[JSONValidator(schema=OVERLAY_SEGMENTS_SCHEMA)],
     )
