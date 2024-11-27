@@ -1706,6 +1706,10 @@ def test_validate_user_upload_resource_error_handling(
             InterfaceKindChoices.NEWICK,
             {"queue": "acks-late-2xlarge"},
         ),
+        (
+            InterfaceKindChoices.BIOM,
+            {"queue": "acks-late-2xlarge"},
+        ),
     ),
 )
 def test_component_interface_custom_queue(kind, expected_kwargs, mocker):
@@ -1721,8 +1725,8 @@ def test_component_interface_custom_queue(kind, expected_kwargs, mocker):
     archive.add_editor(user)
     ai = ArchiveItemFactory.build(archive=None)
 
-    mock_task_signature = mocker.patch(
-        "grandchallenge.components.tasks.add_file_to_object.signature"
+    mock_task = mocker.patch(
+        "grandchallenge.components.tasks.add_file_to_object"
     )
     ai.validate_values_and_execute_linked_task(
         values=[
@@ -1733,12 +1737,12 @@ def test_component_interface_custom_queue(kind, expected_kwargs, mocker):
         ],
         user=user,
     )
-    assert mock_task_signature.called_once()  # Sanity
+    assert mock_task.signature.called_once()  # Sanity
 
     # Ignore the to-task keyword arguments
-    del mock_task_signature.call_args.kwargs["kwargs"]
+    del mock_task.signature.call_args.kwargs["kwargs"]
 
-    assert mock_task_signature.call_args.kwargs == expected_kwargs
+    assert mock_task.signature.call_args.kwargs == expected_kwargs
 
 @pytest.mark.parametrize(
     "mock_error, expected_error, msg",

@@ -1229,6 +1229,7 @@ INTERFACE_KIND_TO_FILE_EXTENSION = {
 
 INTERFACE_KIND_TO_CUSTOM_QUEUE = {
     InterfaceKindChoices.NEWICK: acks_late_2xlarge_task.queue,
+    InterfaceKindChoices.BIOM: acks_late_2xlarge_task.queue,
 }
 
 
@@ -1505,11 +1506,15 @@ class ComponentInterfaceValue(models.Model):
                 with NamedTemporaryFile() as temp_file:
                     user_upload.download_fileobj(temp_file)
                     validate_biom_format(file=temp_file.name)
-        except (MemoryError, SoftTimeLimitExceeded, TimeLimitExceeded) as error:
+        except (
+            MemoryError,
+            SoftTimeLimitExceeded,
+            TimeLimitExceeded,
+        ) as error:
             raise ValidationError(
-                    "The file was too large to process, "
-                    "please try again with a smaller file"
-                ) from error
+                "The file was too large to process, "
+                "please try again with a smaller file"
+            ) from error
 
         self._user_upload_validated = True
 
