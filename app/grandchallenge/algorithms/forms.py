@@ -15,6 +15,7 @@ from crispy_forms.layout import (
 from dal import autocomplete
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
 from django.core.validators import (
@@ -23,7 +24,6 @@ from django.core.validators import (
     RegexValidator,
 )
 from django.db.models import Count, Exists, OuterRef, Q
-from django.db.models.expressions import RawSQL
 from django.db.transaction import on_commit
 from django.forms import (
     CharField,
@@ -418,15 +418,13 @@ class AlgorithmForm(
     def selectable_gpu_type_choices(self):
         choices = [GPUTypeChoices.NO_GPU, GPUTypeChoices.T4]
         choices.extend(
-            self.relevant_phases.annotate(
-                choices_arr=RawSQL(
-                    "jsonb_array_elements_text(algorithm_selectable_gpu_type_choices)",
-                    [],
-                )
+            chain.from_iterable(
+                self.relevant_phases.aggregate(
+                    choices=ArrayAgg(
+                        "algorithm_selectable_gpu_type_choices", distinct=True
+                    )
+                )["choices"]
             )
-            .values_list("choices_arr", flat=True)
-            .order_by()
-            .distinct()
         )
         choices_set = set(choices)
         return [
