@@ -4,8 +4,10 @@ import re
 from datetime import timedelta
 from json import JSONDecodeError
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from typing import NamedTuple
 
+from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import signature
 from django import forms
 from django.apps import apps
@@ -1490,23 +1492,24 @@ class ComponentInterfaceValue(models.Model):
     def validate_user_upload(self, user_upload):
         if not user_upload.is_completed:
             raise ValidationError("User upload is not completed.")
-        if self.interface.is_json_kind:
-            try:
-                value = json.loads(user_upload.read_object())
-            except JSONDecodeError as error:
-                raise ValidationError(error)
-            except UnicodeDecodeError:
-                raise ValidationError("The file could not be decoded")
-            except MemoryError as error:
-                raise ValidationError(
+        try:
+            if self.interface.is_json_kind:
+                try:
+                    value = json.loads(user_upload.read_object())
+                except JSONDecodeError as error:
+                    raise ValidationError(error)
+                self.interface.validate_against_schema(value=value)
+            elif self.interface.kind == InterfaceKindChoices.NEWICK:
+                validate_newick_tree_format(tree=user_upload.read_object())
+            elif self.interface.kind == InterfaceKindChoices.BIOM:
+                with NamedTemporaryFile() as temp_file:
+                    user_upload.download_fileobj(temp_file)
+                    validate_biom_format(file=temp_file.name)
+        except (MemoryError, SoftTimeLimitExceeded, TimeLimitExceeded) as error:
+            raise ValidationError(
                     "The file was too large to process, "
                     "please try again with a smaller file"
                 ) from error
-            self.interface.validate_against_schema(value=value)
-        elif self.interface.kind == InterfaceKindChoices.NEWICK:
-            validate_newick_tree_format(tree=user_upload.read_object())
-        elif self.interface.kind == InterfaceKindChoices.BIOM:
-            validate_biom_format(user_upload=user_upload)
 
         self._user_upload_validated = True
 

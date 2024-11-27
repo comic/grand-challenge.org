@@ -1,12 +1,13 @@
-from functools import wraps
-from io import BytesIO
+import subprocess
+from pathlib import Path
 
-import biom
-import h5py
-from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from Bio.Phylo import NewickIO
+from django.conf import settings
 from django.core.exceptions import SuspiciousFileOperation, ValidationError
 from django.utils._os import safe_join
+
+from grandchallenge.components.utils.virtualenvs import run_script_in_venv
+from grandchallenge.components.validate_scripts import VALIDATION_SCRIPT_DIR
 
 
 def validate_safe_path(value):
@@ -29,22 +30,10 @@ def validate_no_slash_at_ends(value):
         raise ValidationError("Path must not begin or end with '/'")
 
 
-def _handle_validation_resource_errors(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        try:
-            func(*args, **kwargs)
-        except (MemoryError, SoftTimeLimitExceeded, TimeLimitExceeded):
-            raise ValidationError("The file is too large")
-
-    return wrapper
-
-
 def _newick_parser(tree):
     return NewickIO.Parser.from_string(tree)
 
 
-@_handle_validation_resource_errors
 def validate_newick_tree_format(tree):
     """Validates a Newick tree by passing it through a parser"""
     parser = _newick_parser(tree)
@@ -61,27 +50,28 @@ def validate_newick_tree_format(tree):
         raise ValidationError("No Newick tree found")
 
 
-@_handle_validation_resource_errors
-def validate_biom_format(*, user_upload):
+def validate_biom_format(*, file):
     """Validates an uploaded BIOM file by passing its content through a parser"""
+    file = Path(file).resolve()
 
-    with BytesIO() as fileobj:
-        # Get the object into memory
-        user_upload.download_fileobj(fileobj)
-        fileobj.seek(0)
+    try:
+        run_script_in_venv(
+            venv_location=settings.COMPONENTS_VIRTUAL_ENV_BIOM_LOCATION,
+            python_script=VALIDATION_SCRIPT_DIR / "validate_biom.py",
+            args=[str(file)],
+        )
+    except subprocess.CalledProcessError as e:
+        # return e
+        error_lines = e.stderr.strip().split("\n")
 
-        # Attempt to wrap it in a hdf5 handler
-        try:
-            hdf5_file = h5py.File(fileobj, "r")
-        except OSError:
-            raise ValidationError(
-                "Only BIOM in valid HDF5 binary file format are supported"
-            )
-
-        # Attempt to parse it as a BIOM table
-        try:
-            _handle_validation_resource_errors(biom.Table.from_hdf5)(hdf5_file)
-        except ValidationError as e:
-            raise e
-        except Exception:
-            raise ValidationError("Does not appear to be a BIOM-format file")
+        for line in error_lines:
+            # Pass along any validation errors
+            print(line)
+            if line.startswith("ValidationError"):
+                error_message = line.split(":", 1)[1].strip()
+                raise ValidationError(
+                    error_message.strip()
+                    or "Does not appear to be a BIOM-format file"
+                )
+        else:
+            raise RuntimeError(f"An unexpected error occured: {e.stderr}")

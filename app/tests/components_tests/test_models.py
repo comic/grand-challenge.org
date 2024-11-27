@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest.mock import call
 
 import pytest
+from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from django.core.exceptions import MultipleObjectsReturned, ValidationError
 from django.core.files.base import ContentFile
 from django.utils import timezone
@@ -1639,6 +1640,55 @@ def test_component_interface_value_manager():
 
     assert civ == civ1
     assert not created
+
+
+@pytest.mark.parametrize(
+    "mock_error, expected_error, msg",
+    (
+        # Ensure all resource errors are covered
+        (
+            MemoryError,
+            ValidationError,
+            "The file is too large",
+        ),
+        (
+            TimeLimitExceeded,
+            ValidationError,
+            "The file is too large",
+        ),
+        (
+            SoftTimeLimitExceeded,
+            ValidationError,
+            "The file is too large",
+        ),
+        # Other Exceptions are not a ValidationError
+        (
+            RuntimeError("Some secret"),
+            RuntimeError,
+            "Some secret",
+        ),
+    ),
+)
+def test_validate_user_upload_resource_error_handling(
+    mock_error, msg, expected_error
+):
+    ci = ComponentInterfaceFactory.build(kind=InterfaceKindChoices.FLOAT)
+    civ = ComponentInterfaceValueFactory.build(interface=ci)
+
+    assert ci.is_json_kind  # sanity
+
+    class MockUserUpload:
+        is_completed = True
+
+        @classmethod
+        def read_object(cls, *_, **__):
+            raise mock_error
+
+    with pytest.raises(expected_error) as err:
+        civ.validate_user_upload(user_upload=MockUserUpload)
+
+    if msg:
+        assert msg in str(err)
 
 
 @pytest.mark.django_db
