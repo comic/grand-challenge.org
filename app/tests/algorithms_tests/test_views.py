@@ -1636,31 +1636,6 @@ def test_algorithm_image_activate(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("interfaces_editable", (True, False))
-def test_algorithm_interfaces_editable(client, interfaces_editable):
-    creator = UserFactory()
-    VerificationFactory(user=creator, is_verified=True)
-
-    if interfaces_editable:
-        assign_perm("algorithms.add_algorithm", creator)
-
-    alg = AlgorithmFactory()
-    alg.add_editor(user=creator)
-
-    response = get_view_for_user(
-        viewname="algorithms:update",
-        client=client,
-        reverse_kwargs={"slug": alg.slug},
-        user=creator,
-    )
-
-    assert ("inputs" in response.context["form"].fields) is interfaces_editable
-    assert (
-        "outputs" in response.context["form"].fields
-    ) is interfaces_editable
-
-
-@pytest.mark.django_db
 def test_job_time_limit(client):
     algorithm = AlgorithmFactory(time_limit=600)
     algorithm_image = AlgorithmImageFactory(

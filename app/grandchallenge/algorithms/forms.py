@@ -604,15 +604,6 @@ class AlgorithmDescriptionForm(ModelForm):
         )
 
 
-class AlgorithmUpdateForm(AlgorithmForm):
-    def __init__(self, *args, interfaces_editable, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        if not interfaces_editable:
-            for field_key in ("inputs", "outputs"):
-                self.fields.pop(field_key)
-
-
 class AlgorithmImageForm(ContainerImageForm):
     algorithm = ModelChoiceField(widget=HiddenInput(), queryset=None)
 

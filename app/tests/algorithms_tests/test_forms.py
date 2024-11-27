@@ -408,16 +408,6 @@ def create_algorithm_with_input(slug):
 
 
 @pytest.mark.django_db
-def test_disjoint_interfaces():
-    i = ComponentInterfaceFactory()
-    form = AlgorithmForm(
-        user=UserFactory(), data={"inputs": [i.pk], "outputs": [i.pk]}
-    )
-    assert form.is_valid() is False
-    assert "The sets of Inputs and Outputs must be unique" in str(form.errors)
-
-
-@pytest.mark.django_db
 def test_publish_algorithm():
     algorithm = AlgorithmFactory()
 
