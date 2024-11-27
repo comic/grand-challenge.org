@@ -61,17 +61,13 @@ def validate_biom_format(*, file):
             args=[str(file)],
         )
     except subprocess.CalledProcessError as e:
-        # return e
         error_lines = e.stderr.strip().split("\n")
-
         for line in error_lines:
             # Pass along any validation errors
-            print(line)
             if line.startswith("ValidationError"):
                 error_message = line.split(":", 1)[1].strip()
                 raise ValidationError(
-                    error_message.strip()
-                    or "Does not appear to be a BIOM-format file"
+                    error_message or "Does not appear to be a BIOM-format file"
                 )
         else:
             raise RuntimeError(f"An unexpected error occured: {e.stderr}")
