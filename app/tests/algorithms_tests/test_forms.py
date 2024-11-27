@@ -846,9 +846,9 @@ def test_algorithm_form_gpu_choices_from_phases():
 
     expected_choices = [
         (GPUTypeChoices.NO_GPU, "No GPU"),
-        (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
         (GPUTypeChoices.A100, "NVIDIA A100 Tensor Core GPU"),
         (GPUTypeChoices.K80, "NVIDIA K80 GPU"),
+        (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
     ]
 
     actual_choices = form.fields["job_requires_gpu_type"].choices
@@ -910,8 +910,8 @@ def test_algorithm_for_phase_form_gpu_additional_choices():
 
     expected_choices = [
         (GPUTypeChoices.NO_GPU, "No GPU"),
-        (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
         (GPUTypeChoices.A100, "NVIDIA A100 Tensor Core GPU"),
+        (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
     ]
 
     actual_choices = form.fields["job_requires_gpu_type"].choices
