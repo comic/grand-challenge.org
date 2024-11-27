@@ -1287,10 +1287,18 @@ class AlgorithmInterfaceBaseForm(
     def clean(self):
         cleaned_data = super().clean()
 
-        self.cleaned_data["existing_io"] = (
+        inputs = cleaned_data.get("inputs")
+        outputs = cleaned_data.get("outputs")
+
+        if not inputs or not outputs:
+            raise ValidationError(
+                "You must provide at least 1 input and 1 output."
+            )
+
+        cleaned_data["existing_io"] = (
             AlgorithmInterface.objects.get_existing_interface_for_inputs_and_outputs(
-                inputs=self.cleaned_data["inputs"],
-                outputs=self.cleaned_data["outputs"],
+                inputs=inputs,
+                outputs=outputs,
             )
         )
 
