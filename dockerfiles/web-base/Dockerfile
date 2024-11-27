@@ -75,6 +75,7 @@ RUN mkdir -p /opt/docker \
     && mv /opt/docker/docker/docker /usr/local/bin/ \
     && rm -r /opt/docker
 
+
 ENV PYTHONUNBUFFERED=1\
     AWS_XRAY_SDK_ENABLED=false\
     COMPONENTS_SAGEMAKER_SHIM_VERSION=0.3.5\
@@ -92,6 +93,12 @@ RUN mkdir -p /opt/sagemaker-shim \
     && echo "a0f64b99ffea8faed65a23bf0f52ff1f2a20900ca8bc6a3d13a2ff7eff1d7eb7  /opt/sagemaker-shim/sagemaker-shim-${COMPONENTS_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" | shasum -c - || exit 1 \
     && tar -C /opt/sagemaker-shim/ -xzvf "/opt/sagemaker-shim/sagemaker-shim-${COMPONENTS_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" \
     && rm "/opt/sagemaker-shim/sagemaker-shim-${COMPONENTS_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz"
+
+# Create virtual environments
+WORKDIR /opt/virtualenvs
+
+RUN python -m venv biom \
+    && biom/bin/python -m pip --no-cache-dir --no-color install biom-format
 
 WORKDIR /opt/poetry
 
