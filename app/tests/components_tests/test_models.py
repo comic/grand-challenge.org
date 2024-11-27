@@ -17,6 +17,7 @@ from grandchallenge.cases.models import Image
 from grandchallenge.components.models import (
     INTERFACE_TYPE_JSON_EXAMPLES,
     CIVData,
+    CIVData,
     ComponentInterface,
     ComponentInterfaceExampleValue,
     ComponentInterfaceValue,
@@ -1642,55 +1643,6 @@ def test_component_interface_value_manager():
     assert not created
 
 
-@pytest.mark.parametrize(
-    "mock_error, expected_error, msg",
-    (
-        # Ensure all resource errors are covered
-        (
-            MemoryError,
-            ValidationError,
-            "The file is too large",
-        ),
-        (
-            TimeLimitExceeded,
-            ValidationError,
-            "The file is too large",
-        ),
-        (
-            SoftTimeLimitExceeded,
-            ValidationError,
-            "The file is too large",
-        ),
-        # Other Exceptions are not a ValidationError
-        (
-            RuntimeError("Some secret"),
-            RuntimeError,
-            "Some secret",
-        ),
-    ),
-)
-def test_validate_user_upload_resource_error_handling(
-    mock_error, msg, expected_error
-):
-    ci = ComponentInterfaceFactory.build(kind=InterfaceKindChoices.FLOAT)
-    civ = ComponentInterfaceValueFactory.build(interface=ci)
-
-    assert ci.is_json_kind  # sanity
-
-    class MockUserUpload:
-        is_completed = True
-
-        @classmethod
-        def read_object(cls, *_, **__):
-            raise mock_error
-
-    with pytest.raises(expected_error) as err:
-        civ.validate_user_upload(user_upload=MockUserUpload)
-
-    if msg:
-        assert msg in str(err)
-
-
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "kind,expected_kwargs",
@@ -1738,3 +1690,51 @@ def test_component_interface_custom_queue(kind, expected_kwargs, mocker):
     del mock_task_signature.call_args.kwargs["kwargs"]
 
     assert mock_task_signature.call_args.kwargs == expected_kwargs
+
+@pytest.mark.parametrize(
+    "mock_error, expected_error, msg",
+    (
+        # Ensure all resource errors are covered
+        (
+            MemoryError,
+            ValidationError,
+            "The file is too large",
+        ),
+        (
+            TimeLimitExceeded,
+            ValidationError,
+            "The file is too large",
+        ),
+        (
+            SoftTimeLimitExceeded,
+            ValidationError,
+            "The file is too large",
+        ),
+        # Other Exceptions are not a ValidationError
+        (
+            RuntimeError("Some secret"),
+            RuntimeError,
+            "Some secret",
+        ),
+    ),
+)
+def test_validate_user_upload_resource_error_handling(
+    mock_error, msg, expected_error
+):
+    ci = ComponentInterfaceFactory.build(kind=InterfaceKindChoices.FLOAT)
+    civ = ComponentInterfaceValueFactory.build(interface=ci)
+
+    assert ci.is_json_kind  # sanity
+
+    class MockUserUpload:
+        is_completed = True
+
+        @classmethod
+        def read_object(cls, *_, **__):
+            raise mock_error
+
+    with pytest.raises(expected_error) as err:
+        civ.validate_user_upload(user_upload=MockUserUpload)
+
+    if msg:
+        assert msg in str(err)
