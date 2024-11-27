@@ -1506,6 +1506,8 @@ class ComponentInterfaceValue(models.Model):
                 with NamedTemporaryFile() as temp_file:
                     user_upload.download_fileobj(temp_file)
                     validate_biom_format(file=temp_file.name)
+        except UnicodeDecodeError:
+            raise ValidationError("The file could not be decoded")
         except (
             MemoryError,
             SoftTimeLimitExceeded,

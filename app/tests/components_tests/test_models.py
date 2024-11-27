@@ -1661,6 +1661,11 @@ def test_component_interface_value_manager():
             ValidationError,
             "The file was too large",
         ),
+        (
+            UnicodeDecodeError,
+            ValidationError,
+            "The file could not be decoded",
+        ),
         # Other Exceptions are not a ValidationError
         (
             RuntimeError("Some secret"),
@@ -1682,6 +1687,9 @@ def test_validate_user_upload_resource_error_handling(
 
         @classmethod
         def read_object(cls, *_, **__):
+            if mock_error is UnicodeDecodeError:
+                # Requires some args
+                raise mock_error("foo", b"", 0, 1, "bar")
             raise mock_error
 
     with pytest.raises(expected_error) as err:
