@@ -23,7 +23,7 @@ from django.core.validators import (
     MinValueValidator,
     RegexValidator,
 )
-from django.db.models import Count, Exists, OuterRef, Q
+from django.db.models import Count, Exists, Max, OuterRef, Q
 from django.db.transaction import on_commit
 from django.forms import (
     CharField,
@@ -381,37 +381,46 @@ class AlgorithmForm(
             MaxValueValidator(self.maximum_settable_memory_gb),
         ]
 
-    @property
-    def relevant_phases(self):
+    @cached_property
+    def job_requirement_properties_from_phases(self):
         qs = get_objects_for_user(
             self._user, "evaluation.create_phase_submission"
         )
         inputs = self.instance.inputs.all()
         outputs = self.instance.outputs.all()
-        return qs.annotate(
-            total_algorithm_input_count=Count(
-                "algorithm_inputs", distinct=True
-            ),
-            total_algorithm_output_count=Count(
-                "algorithm_outputs", distinct=True
-            ),
-            relevant_algorithm_input_count=Count(
-                "algorithm_inputs",
-                filter=Q(algorithm_inputs__in=inputs),
-                distinct=True,
-            ),
-            relevant_algorithm_output_count=Count(
-                "algorithm_outputs",
-                filter=Q(algorithm_outputs__in=outputs),
-                distinct=True,
-            ),
-        ).filter(
-            submission_kind=SubmissionKindChoices.ALGORITHM,
-            public=True,
-            total_algorithm_input_count=len(inputs),
-            total_algorithm_output_count=len(outputs),
-            relevant_algorithm_input_count=len(inputs),
-            relevant_algorithm_output_count=len(outputs),
+        return (
+            qs.annotate(
+                total_algorithm_input_count=Count(
+                    "algorithm_inputs", distinct=True
+                ),
+                total_algorithm_output_count=Count(
+                    "algorithm_outputs", distinct=True
+                ),
+                relevant_algorithm_input_count=Count(
+                    "algorithm_inputs",
+                    filter=Q(algorithm_inputs__in=inputs),
+                    distinct=True,
+                ),
+                relevant_algorithm_output_count=Count(
+                    "algorithm_outputs",
+                    filter=Q(algorithm_outputs__in=outputs),
+                    distinct=True,
+                ),
+            )
+            .filter(
+                submission_kind=SubmissionKindChoices.ALGORITHM,
+                public=True,
+                total_algorithm_input_count=len(inputs),
+                total_algorithm_output_count=len(outputs),
+                relevant_algorithm_input_count=len(inputs),
+                relevant_algorithm_output_count=len(outputs),
+            )
+            .aggregate(
+                max_memory=Max("algorithm_maximum_settable_memory_gb"),
+                gpu_type_choices=ArrayAgg(
+                    "algorithm_selectable_gpu_type_choices", distinct=True
+                ),
+            )
         )
 
     @property
@@ -419,11 +428,7 @@ class AlgorithmForm(
         choices = [GPUTypeChoices.NO_GPU, GPUTypeChoices.T4]
         choices.extend(
             chain.from_iterable(
-                self.relevant_phases.aggregate(
-                    choices=ArrayAgg(
-                        "algorithm_selectable_gpu_type_choices", distinct=True
-                    )
-                )["choices"]
+                self.job_requirement_properties_from_phases["gpu_type_choices"]
             )
         )
         choices_set = set(choices)
@@ -436,13 +441,9 @@ class AlgorithmForm(
     @property
     def maximum_settable_memory_gb(self):
         value = settings.ALGORITHMS_MAX_MEMORY_GB
-        maximum_in_phases = (
-            self.relevant_phases.order_by(
-                "-algorithm_maximum_settable_memory_gb"
-            )
-            .values_list("algorithm_maximum_settable_memory_gb", flat=True)
-            .first()
-        )
+        maximum_in_phases = self.job_requirement_properties_from_phases[
+            "max_memory"
+        ]
         if maximum_in_phases is not None:
             value = max(value, maximum_in_phases)
         return value
