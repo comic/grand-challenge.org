@@ -68,7 +68,7 @@ def test_valid_paths(rel_path):
         ),
     ),
 )
-def test_validate_newick_formats(tree, context):
+def test_validate_newick_format(tree, context):
     with context:
         validate_newick_tree_format(tree=tree)
 
