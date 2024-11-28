@@ -187,7 +187,9 @@ class ViewContentExampleMixin:
     def _get_viewports(self):
         if self.instance.hanging_protocol:
             return {
-                x["viewport_name"] for x in self.instance.hanging_protocol.json
+                x["viewport_name"]
+                for x in self.instance.hanging_protocol.json
+                if "viewport_name" in x
             }
         return ViewportNames.values
 
