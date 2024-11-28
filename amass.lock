@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:7436b6ffff473450608ea73aca3d3a397031afdc1d854ecbb552cc71bb506a96",
+  "content_hash": "sha256:0a7943db0d3b15f7feaa43639b886c458726c259b578c501c832af80c1c46d34",
   "dependencies": [
     {
       "name": "@github/markdown-toolbar-element",
@@ -708,7 +708,7 @@
     },
     {
       "name": "jsoneditor",
-      "version": "9.5.2",
+      "version": "10.1.1",
       "provider": "cdnjs",
       "assets": [
         {
@@ -717,19 +717,19 @@
         },
         {
           "name": "jsoneditor.css",
-          "sri": "sha512-7BNBvfwEnG/+oK7PTxRr4I5f7SQQjYdnGjLe1F4kjNU9m4sXSOxcld4x2NRtgYiYkO+ltKQ1foU5Eau7kSnkVA=="
+          "sri": "sha512-iOFdnlwX6UGb55bU5DL0tjWkS/+9jxRxw2KiRzyHMZARASUSwm0nEXBcdqsYni+t3UKJSK7vrwvlL8792/UMjQ=="
         },
         {
           "name": "jsoneditor.js",
-          "sri": "sha512-L0Ev5uNLTNswQjWgk65iN2z2q5TvDwe3qf5YYLROgs/SrVNfhqs6nwpfo+RXJ/+QM9bh/Acd7x03XvogdX5XFQ=="
+          "sri": "sha512-HePx5/4V5aGOlhxKK/l2O80+a/aHOOxzMIl/SiuPOGfBcbuLDhFwTI1WKk5CijlbvsJuHosMCZNGWik0gE7enw=="
         },
         {
           "name": "jsoneditor.min.css",
-          "sri": "sha512-oEH5lcAN+ZIIBvRXjo3cI689oL9c7HGoLxEkPnzRskQ8lSkKh2aZ/wd6rx//5+dI1eY20mPQPQTEx69UuHBu3Q=="
+          "sri": "sha512-8G+Vb2+10BSrSo+wupdzJIylDLpGtEYniQhp0rsbTigPG7Onn2S08Ai/KEGlxN2Ncx9fGqVHtRehMuOjPb9f8g=="
         },
         {
           "name": "jsoneditor.min.js",
-          "sri": "sha512-sWWNHrucAGzw6+kdky+SP1jIqkzY+bYzZRFn6H0aRw/jyaBKvj4A8hvze0bhSplOtAzY1YZyar8KrK8lDRtUdQ=="
+          "sri": "sha512-ZZTYi+tU/p2AEQSfuloqzXrZZiPkgPrXF1Pcj4OVAm4rsUnUPGme+gga6eAMbzKu+gPa1uciaOVIcxCGIsuLEQ=="
         }
       ],
       "maps": [
