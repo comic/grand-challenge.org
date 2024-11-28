@@ -673,27 +673,27 @@ def test_generate_view_content_example(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "hanging_protocol_json",
+    "hanging_protocol_json,view_content_example_json_expected_keys",
     (
-        [{}],
-        [{"viewport_name": "main"}, {"viewport_name": "secondary"}],
-        [
-            {"viewport_name": "main"},
-            {"viewport_name": "secondary"},
-            {"viewport_name": "tertiary"},
-            {"viewport_name": "quaternary"},
-        ],
-        [
-            {"viewport_name": "main"},
-            {"viewport_name": "secondary"},
-            {"viewport_name": "tertiary"},
-            {"viewport_name": "quaternary"},
-            {"viewport_name": "quinary"},
-        ],
+        (None, {"main", "secondary", "tertiary", "quaternary"}),
+        ([{}], {}),
+        (
+            [{"viewport_name": "main"}, {"viewport_name": "secondary"}],
+            {"main", "secondary"},
+        ),
+        (
+            [
+                {"viewport_name": "main"},
+                {"viewport_name": "secondary"},
+                {"viewport_name": "tertiary"},
+                {"viewport_name": "quaternary"},
+            ],
+            {"main", "secondary", "tertiary", "quaternary"},
+        ),
     ),
 )
 def test_reader_study_forms_view_content_example_with_hanging_protocol(
-    hanging_protocol_json,
+    hanging_protocol_json, view_content_example_json_expected_keys
 ):
     ci_list = make_ci_list(
         number_of_images=3,
@@ -724,10 +724,23 @@ def test_reader_study_forms_view_content_example_with_hanging_protocol(
         "instant_verification": False,
     }
 
-    hp = HangingProtocolFactory(json=hanging_protocol_json)
+    if hanging_protocol_json:
+        form_data["hanging_protocol"] = HangingProtocolFactory(
+            json=hanging_protocol_json
+        )
+
     form = ReaderStudyUpdateForm(
         user=creator,
         instance=object.base_object,
-        data={**form_data, "hanging_protocol": hp.pk},
+        data=form_data,
     )
+
     assert form.is_valid()
+
+    view_content_example = form.generate_view_content_example()
+    view_content_example_json = (
+        json.loads(view_content_example) if view_content_example else None
+    )
+    assert set(view_content_example_json.keys()) == set(
+        view_content_example_json_expected_keys
+    )
