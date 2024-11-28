@@ -6,8 +6,14 @@ from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 from stdimage import JPEGField
 
+from grandchallenge.components.utils import (
+    SELECTABLE_GPU_TYPES_SCHEMA,
+    GPUTypeChoices,
+    get_default_gpu_type_choices,
+)
 from grandchallenge.core.models import TitleSlugDescriptionModel, UUIDModel
 from grandchallenge.core.storage import get_logo_path, public_s3_storage
+from grandchallenge.core.validators import JSONValidator
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -40,6 +46,24 @@ class Organization(TitleSlugDescriptionModel, UUIDModel):
         help_text=(
             "If true, members of this organization will not be charged for "
             "base costs."
+        ),
+    )
+
+    algorithm_selectable_gpu_type_choices = models.JSONField(
+        default=get_default_gpu_type_choices,
+        help_text=(
+            "The GPU type choices that members will be able to select for their "
+            "algorithm inference jobs. Options are "
+            f"{GPUTypeChoices.values}.".replace("'", '"')
+        ),
+        validators=[JSONValidator(schema=SELECTABLE_GPU_TYPES_SCHEMA)],
+    )
+
+    algorithm_maximum_settable_memory_gb = models.PositiveSmallIntegerField(
+        default=settings.ALGORITHMS_MAX_MEMORY_GB,
+        help_text=(
+            "Maximum amount of memory that members will be allowed to "
+            "assign to algorithm inference jobs."
         ),
     )
 
