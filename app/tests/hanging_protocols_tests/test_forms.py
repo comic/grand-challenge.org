@@ -11,6 +11,9 @@ from grandchallenge.components.models import (
     InterfaceKind,
     InterfaceKindChoices,
 )
+from grandchallenge.core.utils.access_requests import (
+    AccessRequestHandlingOptions,
+)
 from grandchallenge.evaluation.forms import PhaseUpdateForm
 from grandchallenge.hanging_protocols.forms import HangingProtocolForm
 from grandchallenge.hanging_protocols.models import HangingProtocol
@@ -22,7 +25,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.evaluation_tests.factories import PhaseFactory
-from tests.factories import UserFactory
+from tests.factories import UserFactory, WorkstationFactory
 from tests.hanging_protocols_tests.factories import HangingProtocolFactory
 from tests.hanging_protocols_tests.test_models import HangingProtocolTestModel
 from tests.reader_studies_tests.factories import DisplaySetFactory
@@ -666,3 +669,85 @@ def test_generate_view_content_example(
     )
 
     assert view_content_example_json == expected_example_json
+
+
+@pytest.mark.django_db
+def test_reader_study_forms_view_content_with_hanging_protocol():
+
+    ci_list = make_ci_list(
+        number_of_images=3,
+        number_of_overlays=2,
+        number_of_isolated_interfaces=1,
+        number_of_undisplayable_interfaces=1,
+    )
+    civ_list = [ComponentInterfaceValueFactory(interface=ci) for ci in ci_list]
+
+    ws = WorkstationFactory()
+    creator = UserFactory()
+    ws.add_user(creator)
+
+    data = {
+        "title": "foo bar",
+        "workstation": ws.pk,
+        "allow_answer_modification": True,
+        "shuffle_hanging_list": False,
+        "allow_case_navigation": False,
+        "access_request_handling": AccessRequestHandlingOptions.MANUAL_REVIEW,
+        "roll_over_answers_for_n_cases": 0,
+        "public": True,
+        "description": "test description",
+        "is_educational": False,
+        "instant_verification": False,
+    }
+
+    object = DisplaySetFactory()
+    object.values.set(civ_list)
+
+    hp = HangingProtocolFactory(json=[{}])
+    form = ReaderStudyUpdateForm(
+        user=creator,
+        instance=object.base_object,
+        data={**data, "hanging_protocl": hp.pk},
+    )
+    assert form.is_valid()
+
+    hp = HangingProtocolFactory(
+        json=[{"viewport_name": "main"}, {"viewport_name": "secondary"}]
+    )
+    form = ReaderStudyUpdateForm(
+        user=creator,
+        instance=object.base_object,
+        data={**data, "hanging_protocl": hp.pk},
+    )
+    assert form.is_valid()
+
+    hp = HangingProtocolFactory(
+        json=[
+            {"viewport_name": "main"},
+            {"viewport_name": "secondary"},
+            {"viewport_name": "tertiary"},
+            {"viewport_name": "quaternary"},
+        ]
+    )
+    form = ReaderStudyUpdateForm(
+        user=creator,
+        instance=object.base_object,
+        data={**data, "hanging_protocl": hp.pk},
+    )
+    assert form.is_valid()
+
+    hp = HangingProtocolFactory(
+        json=[
+            {"viewport_name": "main"},
+            {"viewport_name": "secondary"},
+            {"viewport_name": "tertiary"},
+            {"viewport_name": "quaternary"},
+            {"viewport_name": "quinary"},
+        ]
+    )
+    form = ReaderStudyUpdateForm(
+        user=creator,
+        instance=object.base_object,
+        data={**data, "hanging_protocl": hp.pk},
+    )
+    assert form.is_valid()

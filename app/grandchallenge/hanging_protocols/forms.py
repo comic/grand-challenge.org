@@ -160,7 +160,7 @@ class ViewContentExampleMixin:
             reverse("documentation:detail", args=["viewer-content"]),
         )
 
-    def generate_view_content_example(self):
+    def _get_interface_lists(self):
         images = [
             interface.slug
             for interface in self.instance.interfaces
@@ -172,10 +172,6 @@ class ViewContentExampleMixin:
             if interface.kind
             in InterfaceKind.interface_type_mandatory_isolation()
         ]
-
-        if not images and not mandatory_isolation_interfaces:
-            return None
-
         overlays = [
             interface.slug
             for interface in self.instance.interfaces
@@ -186,14 +182,23 @@ class ViewContentExampleMixin:
                 InterfaceKindChoices.IMAGE,
             )
         ]
+        return images, mandatory_isolation_interfaces, overlays
 
-        if images:
-            overlays_per_image = len(overlays) // len(images)
-            remaining_overlays = len(overlays) % len(images)
+    def _get_viewports(self):
+        if self.instance.hanging_protocol:
+            return {
+                x["viewport_name"] for x in self.instance.hanging_protocol.json
+            }
+        return ViewportNames.values
 
+    def _build_view_content(
+        self, images, mandatory_isolation_interfaces, overlays, viewports
+    ):
         view_content_example = {}
+        overlays_per_image = len(overlays) // len(images) if images else 0
+        remaining_overlays = len(overlays) % len(images) if images else 0
 
-        for port in ViewportNames.values:
+        for port in viewports:
             if mandatory_isolation_interfaces:
                 view_content_example[port] = [
                     mandatory_isolation_interfaces.pop(0)
@@ -205,6 +210,24 @@ class ViewContentExampleMixin:
                 if remaining_overlays > 0:
                     view_content_example[port].append(overlays.pop(0))
                     remaining_overlays -= 1
+
+        return view_content_example
+
+    def generate_view_content_example(self):
+        images, mandatory_isolation_interfaces, overlays = (
+            self._get_interface_lists()
+        )
+
+        if not images and not mandatory_isolation_interfaces:
+            return None
+
+        viewports = self._get_viewports()
+        view_content_example = self._build_view_content(
+            images.copy(),
+            mandatory_isolation_interfaces.copy(),
+            overlays.copy(),
+            viewports,
+        )
 
         try:
             JSONValidator(schema=VIEW_CONTENT_SCHEMA)(
