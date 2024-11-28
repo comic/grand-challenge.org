@@ -322,7 +322,7 @@ class OverlaySegmentsMixin(models.Model):
             "algorithm's output.json can be added as an extra label to each "
             "toggle using jinja templating. "
             'For example: [{"name": "Level 0", "visible": false, "voxel_value": 0, '
-            'false, "metric_template": "{{metrics.volumes[0]}} mm³"},]. '
+            '"metric_template": "{{metrics.volumes[0]}} mm³"}]. '
         ),
         validators=[JSONValidator(schema=OVERLAY_SEGMENTS_SCHEMA)],
     )
