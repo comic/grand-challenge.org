@@ -87,13 +87,6 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
         )
 
         self.fields["overlay_segments"].help_text += format_lazy(
-            ". If a categorical overlay is shown, "
-            "it is possible to show toggles to change the visibility of the different overlay categories. "
-            "To do so, configure the categories that should be displayed. Data from the "
-            "algorithm's output.json can be added as an extra label to each "
-            "toggle using jinja templating. "
-            'Example usage: [{{"name": "background", "visible": true, "voxel_value": 0}},'
-            '{{"name": "tissue", "visible": true, "voxel_value": 1}}]. '
             'Refer to the <a href="{}#segmentation-masks">documentation</a> for more information',
             reverse("documentation:detail", args=["interfaces"]),
         )

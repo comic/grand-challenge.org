@@ -7,12 +7,15 @@ import grandchallenge.core.validators
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("components", "0022_alter_componentinterface_kind_and_more"),
+        (
+            "workstation_configs",
+            "0027_workstationconfig_point_bounding_box_size_mm",
+        ),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name="componentinterface",
+            model_name="workstationconfig",
             name="overlay_segments",
             field=models.JSONField(
                 blank=True,
