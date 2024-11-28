@@ -672,8 +672,29 @@ def test_generate_view_content_example(
 
 
 @pytest.mark.django_db
-def test_reader_study_forms_view_content_with_hanging_protocol():
-
+@pytest.mark.parametrize(
+    "hanging_protocol_json",
+    (
+        [{}],
+        [{"viewport_name": "main"}, {"viewport_name": "secondary"}],
+        [
+            {"viewport_name": "main"},
+            {"viewport_name": "secondary"},
+            {"viewport_name": "tertiary"},
+            {"viewport_name": "quaternary"},
+        ],
+        [
+            {"viewport_name": "main"},
+            {"viewport_name": "secondary"},
+            {"viewport_name": "tertiary"},
+            {"viewport_name": "quaternary"},
+            {"viewport_name": "quinary"},
+        ],
+    ),
+)
+def test_reader_study_forms_view_content_example_with_hanging_protocol(
+    hanging_protocol_json,
+):
     ci_list = make_ci_list(
         number_of_images=3,
         number_of_overlays=2,
@@ -682,11 +703,14 @@ def test_reader_study_forms_view_content_with_hanging_protocol():
     )
     civ_list = [ComponentInterfaceValueFactory(interface=ci) for ci in ci_list]
 
+    object = DisplaySetFactory()
+    object.values.set(civ_list)
+
     ws = WorkstationFactory()
     creator = UserFactory()
     ws.add_user(creator)
 
-    data = {
+    form_data = {
         "title": "foo bar",
         "workstation": ws.pk,
         "allow_answer_modification": True,
@@ -700,54 +724,10 @@ def test_reader_study_forms_view_content_with_hanging_protocol():
         "instant_verification": False,
     }
 
-    object = DisplaySetFactory()
-    object.values.set(civ_list)
-
-    hp = HangingProtocolFactory(json=[{}])
+    hp = HangingProtocolFactory(json=hanging_protocol_json)
     form = ReaderStudyUpdateForm(
         user=creator,
         instance=object.base_object,
-        data={**data, "hanging_protocl": hp.pk},
-    )
-    assert form.is_valid()
-
-    hp = HangingProtocolFactory(
-        json=[{"viewport_name": "main"}, {"viewport_name": "secondary"}]
-    )
-    form = ReaderStudyUpdateForm(
-        user=creator,
-        instance=object.base_object,
-        data={**data, "hanging_protocl": hp.pk},
-    )
-    assert form.is_valid()
-
-    hp = HangingProtocolFactory(
-        json=[
-            {"viewport_name": "main"},
-            {"viewport_name": "secondary"},
-            {"viewport_name": "tertiary"},
-            {"viewport_name": "quaternary"},
-        ]
-    )
-    form = ReaderStudyUpdateForm(
-        user=creator,
-        instance=object.base_object,
-        data={**data, "hanging_protocl": hp.pk},
-    )
-    assert form.is_valid()
-
-    hp = HangingProtocolFactory(
-        json=[
-            {"viewport_name": "main"},
-            {"viewport_name": "secondary"},
-            {"viewport_name": "tertiary"},
-            {"viewport_name": "quaternary"},
-            {"viewport_name": "quinary"},
-        ]
-    )
-    form = ReaderStudyUpdateForm(
-        user=creator,
-        instance=object.base_object,
-        data={**data, "hanging_protocl": hp.pk},
+        data={**form_data, "hanging_protocl": hp.pk},
     )
     assert form.is_valid()
