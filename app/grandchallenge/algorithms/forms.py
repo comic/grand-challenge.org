@@ -425,13 +425,13 @@ class AlgorithmForm(
 
     @property
     def selectable_gpu_type_choices(self):
-        choices = [GPUTypeChoices.NO_GPU, GPUTypeChoices.T4]
-        choices.extend(
-            chain.from_iterable(
+        choices_set = {
+            GPUTypeChoices.NO_GPU,
+            GPUTypeChoices.T4,
+            *chain.from_iterable(
                 self.job_requirement_properties_from_phases["gpu_type_choices"]
-            )
-        )
-        choices_set = set(choices)
+            ),
+        }
         return [
             (choice.value, choice.label)
             for choice in GPUTypeChoices
