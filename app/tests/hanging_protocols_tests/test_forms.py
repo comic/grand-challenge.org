@@ -728,6 +728,6 @@ def test_reader_study_forms_view_content_example_with_hanging_protocol(
     form = ReaderStudyUpdateForm(
         user=creator,
         instance=object.base_object,
-        data={**form_data, "hanging_protocl": hp.pk},
+        data={**form_data, "hanging_protocol": hp.pk},
     )
     assert form.is_valid()
