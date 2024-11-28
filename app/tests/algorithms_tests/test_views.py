@@ -20,11 +20,11 @@ from grandchallenge.algorithms.views import JobsList
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
-    GPUTypeChoices,
     ImportStatusChoices,
     InterfaceKind,
     InterfaceKindChoices,
 )
+from grandchallenge.components.utils import GPUTypeChoices
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,

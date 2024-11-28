@@ -33,9 +33,13 @@ from grandchallenge.components.models import (
     ComponentImage,
     ComponentInterface,
     ComponentJob,
-    GPUTypeChoices,
     ImportStatusChoices,
     Tarball,
+)
+from grandchallenge.components.utils import (
+    SELECTABLE_GPU_TYPES_SCHEMA,
+    GPUTypeChoices,
+    get_default_gpu_type_choices,
 )
 from grandchallenge.core.models import (
     FieldChangeMixin,
@@ -133,21 +137,6 @@ EXTRA_RESULT_COLUMNS_SCHEMA = {
         },
     },
 }
-
-SELECTABLE_GPU_TYPES_SCHEMA = {
-    "$schema": "http://json-schema.org/draft-07/schema",
-    "type": "array",
-    "title": "The Selectable GPU Types Schema",
-    "items": {
-        "enum": [choice for choice in GPUTypeChoices],
-        "type": "string",
-    },
-    "uniqueItems": True,
-}
-
-
-def get_default_gpu_type_choices():
-    return [GPUTypeChoices.NO_GPU, GPUTypeChoices.T4]
 
 
 class PhaseManager(models.Manager):

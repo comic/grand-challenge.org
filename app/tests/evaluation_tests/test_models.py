@@ -10,7 +10,8 @@ from django.utils import timezone
 from django.utils.timezone import now
 
 from grandchallenge.algorithms.models import Job
-from grandchallenge.components.models import ComponentInterface, GPUTypeChoices
+from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.utils import GPUTypeChoices
 from grandchallenge.evaluation.models import (
     SUBMISSION_WINDOW_PARENT_VALIDATION_TEXT,
     CombinedLeaderboard,

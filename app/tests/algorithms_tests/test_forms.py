@@ -24,10 +24,10 @@ from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentJob,
-    GPUTypeChoices,
     ImportStatusChoices,
     InterfaceKind,
 )
+from grandchallenge.components.utils import GPUTypeChoices
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )

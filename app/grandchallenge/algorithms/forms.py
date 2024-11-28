@@ -64,12 +64,12 @@ from grandchallenge.components.models import (
     CIVData,
     ComponentInterface,
     ComponentJob,
-    GPUTypeChoices,
     ImportStatusChoices,
     InterfaceKindChoices,
 )
 from grandchallenge.components.serializers import ComponentInterfaceSerializer
 from grandchallenge.components.tasks import assign_tarball_from_upload
+from grandchallenge.components.utils import GPUTypeChoices
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
     SaveFormInitMixin,

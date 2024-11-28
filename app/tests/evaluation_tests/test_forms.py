@@ -6,10 +6,8 @@ from factory.django import ImageField
 
 from grandchallenge.algorithms.forms import AlgorithmForPhaseForm
 from grandchallenge.algorithms.models import Job
-from grandchallenge.components.models import (
-    GPUTypeChoices,
-    ImportStatusChoices,
-)
+from grandchallenge.components.models import ImportStatusChoices
+from grandchallenge.components.utils import GPUTypeChoices
 from grandchallenge.evaluation.forms import (
     ConfigureAlgorithmPhasesForm,
     EvaluationGroundTruthForm,
