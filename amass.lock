@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:05362dd42a39941270e366ce0673eda17e4848e72943e01d624bd6a84be87497",
+  "content_hash": "sha256:7436b6ffff473450608ea73aca3d3a397031afdc1d854ecbb552cc71bb506a96",
   "dependencies": [
     {
       "name": "@github/markdown-toolbar-element",
@@ -431,54 +431,6 @@
       "maps": []
     },
     {
-      "name": "cornerstone-core",
-      "version": "2.2.4",
-      "provider": "unpkg",
-      "assets": [
-        {
-          "name": "dist/cornerstone.js",
-          "sri": "sha384-V9P/aL0q9pHtJ5T6nu+lMhECpty2o5AHEDsqq5ByENSdmSVczBubXTeqWusnVfQ8"
-        },
-        {
-          "name": "dist/cornerstone.js.map",
-          "sri": "sha384-1vkwCAGusYzE592znPE8lVIZQAPV/7DF6JckMwbfg6pXgMDch/7EKUj4Vz6BT699"
-        },
-        {
-          "name": "dist/cornerstone.min.js",
-          "sri": "sha384-axIAanIpsk+TbLbn7RXaEMJEsc0w/DJg4nIxSU87gwHTbYiGiAqm0UEkXMfO3+xV"
-        },
-        {
-          "name": "dist/cornerstone.min.js.map",
-          "sri": "sha384-7j+1ToNLmDfbvDDhe8Xj6QrLI7jx/RISJuwhPaYebm4tk8b99+3pDprBADX+KkYe"
-        }
-      ],
-      "maps": []
-    },
-    {
-      "name": "cornerstone-math",
-      "version": "0.1.6",
-      "provider": "unpkg",
-      "assets": [
-        {
-          "name": "dist/cornerstoneMath.js",
-          "sri": "sha384-t6p6Opmh59HFuC9TXYcExw8Y9+ktPG19qZbANsHnyykXOEwQBDcocYRU3xv85e+7"
-        },
-        {
-          "name": "dist/cornerstoneMath.js.map",
-          "sri": "sha384-1hXv23Bk4Wof0LUgtFqI/ae3HZE66aoLAVXgSM9ou3jp78g+v+7J9VkKyiPF3ODv"
-        },
-        {
-          "name": "dist/cornerstoneMath.min.js",
-          "sri": "sha384-b8DtrZnVyBc7YpJXY9bYyIw5wSFgxX2VlFYmGX9z0laMaBQRRWVH6BCxKhV8ETfz"
-        },
-        {
-          "name": "dist/cornerstoneMath.min.js.map",
-          "sri": "sha384-lFVUKZBwft7C7BClSfHzU//h02ySP98vJTy/KlcEgieEx8IE3AD53GO1GLoRl+7g"
-        }
-      ],
-      "maps": []
-    },
-    {
       "name": "datatables.net",
       "version": "1.11.3",
       "provider": "unpkg",
@@ -719,34 +671,6 @@
       "maps": []
     },
     {
-      "name": "itk-vtk-viewer",
-      "version": "11.11.2",
-      "provider": "unpkg",
-      "assets": [
-        {
-          "name": "dist/itkVtkViewerCDN.js",
-          "sri": "sha384-LTeflmm51FBGPPQClZZuYQKlisKD6AINeDUXFQxyoY0UsU/acHZnhG99cV4bjIvX"
-        }
-      ],
-      "maps": []
-    },
-    {
-      "name": "itk-wasm",
-      "version": "1.0.0-a.10",
-      "provider": "unpkg",
-      "assets": [
-        {
-          "name": "dist/umd/itk-wasm.js",
-          "sri": "sha384-f2/1X/J50zy+SOILsk/35q8j6EJMHjfhJSyEevmMi1vMz7bKr9EOJh8cKTKV2Oqn"
-        },
-        {
-          "name": "dist/umd/itk-wasm.min.js",
-          "sri": "sha384-g5R6BnQF/3Ypnj8/lpb91MkaPdBIBbl/lZJzTWFPKVuUmPofyszDh4X8rk8XcPi3"
-        }
-      ],
-      "maps": []
-    },
-    {
       "name": "jquery",
       "version": "3.7.0",
       "provider": "cdnjs",
@@ -824,190 +748,6 @@
         {
           "name": "moment.min.js",
           "sri": "sha512-i2CVnAiguN6SnJ3d2ChOOddMWQyvgQTzm0qSgiKhOqBMGCx4fGU5BtzXEybnKatWPDkXPFyCI0lbG42BnVjr/Q=="
-        }
-      ],
-      "maps": []
-    },
-    {
-      "name": "openseadragon",
-      "version": "2.4.1",
-      "provider": "cdnjs",
-      "assets": [
-        {
-          "name": "images/button_grouphover.png",
-          "sri": null
-        },
-        {
-          "name": "images/button_hover.png",
-          "sri": null
-        },
-        {
-          "name": "images/button_pressed.png",
-          "sri": null
-        },
-        {
-          "name": "images/button_rest.png",
-          "sri": null
-        },
-        {
-          "name": "images/flip_grouphover.png",
-          "sri": null
-        },
-        {
-          "name": "images/flip_hover.png",
-          "sri": null
-        },
-        {
-          "name": "images/flip_pressed.png",
-          "sri": null
-        },
-        {
-          "name": "images/flip_rest.png",
-          "sri": null
-        },
-        {
-          "name": "images/fullpage_grouphover.png",
-          "sri": null
-        },
-        {
-          "name": "images/fullpage_hover.png",
-          "sri": null
-        },
-        {
-          "name": "images/fullpage_pressed.png",
-          "sri": null
-        },
-        {
-          "name": "images/fullpage_rest.png",
-          "sri": null
-        },
-        {
-          "name": "images/home_grouphover.png",
-          "sri": null
-        },
-        {
-          "name": "images/home_hover.png",
-          "sri": null
-        },
-        {
-          "name": "images/home_pressed.png",
-          "sri": null
-        },
-        {
-          "name": "images/home_rest.png",
-          "sri": null
-        },
-        {
-          "name": "images/next_grouphover.png",
-          "sri": null
-        },
-        {
-          "name": "images/next_hover.png",
-          "sri": null
-        },
-        {
-          "name": "images/next_pressed.png",
-          "sri": null
-        },
-        {
-          "name": "images/next_rest.png",
-          "sri": null
-        },
-        {
-          "name": "images/previous_grouphover.png",
-          "sri": null
-        },
-        {
-          "name": "images/previous_hover.png",
-          "sri": null
-        },
-        {
-          "name": "images/previous_pressed.png",
-          "sri": null
-        },
-        {
-          "name": "images/previous_rest.png",
-          "sri": null
-        },
-        {
-          "name": "images/rotateleft_grouphover.png",
-          "sri": null
-        },
-        {
-          "name": "images/rotateleft_hover.png",
-          "sri": null
-        },
-        {
-          "name": "images/rotateleft_pressed.png",
-          "sri": null
-        },
-        {
-          "name": "images/rotateleft_rest.png",
-          "sri": null
-        },
-        {
-          "name": "images/rotateright_grouphover.png",
-          "sri": null
-        },
-        {
-          "name": "images/rotateright_hover.png",
-          "sri": null
-        },
-        {
-          "name": "images/rotateright_pressed.png",
-          "sri": null
-        },
-        {
-          "name": "images/rotateright_rest.png",
-          "sri": null
-        },
-        {
-          "name": "images/zoomin_grouphover.png",
-          "sri": null
-        },
-        {
-          "name": "images/zoomin_hover.png",
-          "sri": null
-        },
-        {
-          "name": "images/zoomin_pressed.png",
-          "sri": null
-        },
-        {
-          "name": "images/zoomin_rest.png",
-          "sri": null
-        },
-        {
-          "name": "images/zoomout_grouphover.png",
-          "sri": null
-        },
-        {
-          "name": "images/zoomout_hover.png",
-          "sri": null
-        },
-        {
-          "name": "images/zoomout_pressed.png",
-          "sri": null
-        },
-        {
-          "name": "images/zoomout_rest.png",
-          "sri": null
-        },
-        {
-          "name": "openseadragon.js",
-          "sri": "sha512-wLveiqffVDS+4JWoWKHUFKCw2zUjqsG8dHN8Q72zgGWTed/fLP4NePfxQ3nw1Ewe3hd7mvUIjO3owmLWvZyf2Q=="
-        },
-        {
-          "name": "openseadragon.js.map",
-          "sri": null
-        },
-        {
-          "name": "openseadragon.min.js",
-          "sri": "sha512-ydnIgG69uS1sVDFa1ki6qvOVkc47BmyW3RGoMwn9jATwDIFdIZ8Yuoy/w3IQEv8xzUwqFPs/yNoD2bSaQTGXYg=="
-        },
-        {
-          "name": "openseadragon.min.js.map",
-          "sri": null
         }
       ],
       "maps": []
@@ -1127,18 +867,6 @@
         {
           "name": "vega-lite.min.js.map",
           "sri": null
-        }
-      ],
-      "maps": []
-    },
-    {
-      "name": "world-atlas",
-      "version": "2.0.2",
-      "provider": "unpkg",
-      "assets": [
-        {
-          "name": "countries-110m.json",
-          "sri": "sha384-yOCJ+8ShBm8UDqtAVtAvxTDDf4gXo5edxl/YG0FmVC5OTmqVLl7utuVGBDEeZWHf"
         }
       ],
       "maps": []
