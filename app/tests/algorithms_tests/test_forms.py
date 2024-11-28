@@ -815,6 +815,12 @@ def test_algorithm_form_gpu_limited_choices():
 @pytest.mark.django_db
 def test_algorithm_form_gpu_choices_from_phases():
     user = UserFactory()
+    algorithm = AlgorithmFactory()
+    ci_in, ci_out = ComponentInterfaceFactory.create_batch(2)
+    inputs = [ci_in]
+    outputs = [ci_out]
+    algorithm.inputs.set(inputs)
+    algorithm.outputs.set(outputs)
     p1 = PhaseFactory(
         submission_kind=SubmissionKindChoices.ALGORITHM,
         algorithm_selectable_gpu_type_choices=[
@@ -823,7 +829,11 @@ def test_algorithm_form_gpu_choices_from_phases():
             GPUTypeChoices.A100,
         ],
     )
+    p1.algorithm_inputs.set(inputs)
+    p1.algorithm_outputs.set(outputs)
+    p1.challenge.participants_group.user_set.add(user)
     p2 = PhaseFactory(
+        challenge=p1.challenge,
         submission_kind=SubmissionKindChoices.ALGORITHM,
         algorithm_selectable_gpu_type_choices=[
             GPUTypeChoices.NO_GPU,
@@ -831,7 +841,10 @@ def test_algorithm_form_gpu_choices_from_phases():
             GPUTypeChoices.K80,
         ],
     )
-    PhaseFactory(
+    p2.algorithm_inputs.set(inputs)
+    p2.algorithm_outputs.set(outputs)
+    p3 = PhaseFactory(  # excluded, wrong inputs
+        challenge=p1.challenge,
         submission_kind=SubmissionKindChoices.ALGORITHM,
         algorithm_selectable_gpu_type_choices=[
             GPUTypeChoices.NO_GPU,
@@ -839,10 +852,46 @@ def test_algorithm_form_gpu_choices_from_phases():
             GPUTypeChoices.V100,
         ],
     )
-    p1.challenge.participants_group.user_set.add(user)
-    p2.challenge.participants_group.user_set.add(user)
+    p3.algorithm_outputs.set(outputs)
+    p4 = PhaseFactory(  # excluded, wrong outputs
+        challenge=p1.challenge,
+        submission_kind=SubmissionKindChoices.ALGORITHM,
+        algorithm_selectable_gpu_type_choices=[
+            GPUTypeChoices.NO_GPU,
+            GPUTypeChoices.T4,
+            GPUTypeChoices.V100,
+        ],
+    )
+    p4.algorithm_inputs.set(inputs)
+    PhaseFactory(  # excluded, not public
+        challenge=p1.challenge,
+        submission_kind=SubmissionKindChoices.ALGORITHM,
+        algorithm_selectable_gpu_type_choices=[
+            GPUTypeChoices.NO_GPU,
+            GPUTypeChoices.T4,
+            GPUTypeChoices.V100,
+        ],
+        public=False,
+    )
+    PhaseFactory(  # excluded, not algorithm submission kind
+        challenge=p1.challenge,
+        submission_kind=SubmissionKindChoices.CSV,
+        algorithm_selectable_gpu_type_choices=[
+            GPUTypeChoices.NO_GPU,
+            GPUTypeChoices.T4,
+            GPUTypeChoices.V100,
+        ],
+    )
+    PhaseFactory(  # excluded, user not participant
+        submission_kind=SubmissionKindChoices.ALGORITHM,
+        algorithm_selectable_gpu_type_choices=[
+            GPUTypeChoices.NO_GPU,
+            GPUTypeChoices.T4,
+            GPUTypeChoices.V100,
+        ],
+    )
 
-    form = AlgorithmForm(user=user)
+    form = AlgorithmForm(instance=algorithm, user=user)
 
     expected_choices = [
         (GPUTypeChoices.NO_GPU, "No GPU"),
@@ -941,22 +990,55 @@ def test_algorithm_form_memory_limited():
 @pytest.mark.django_db
 def test_algorithm_form_max_memory_from_phases():
     user = UserFactory()
+    algorithm = AlgorithmFactory()
+    ci_in, ci_out = ComponentInterfaceFactory.create_batch(2)
+    inputs = [ci_in]
+    outputs = [ci_out]
+    algorithm.inputs.set(inputs)
+    algorithm.outputs.set(outputs)
     p1 = PhaseFactory(
         submission_kind=SubmissionKindChoices.ALGORITHM,
         algorithm_maximum_settable_memory_gb=21,
     )
+    p1.algorithm_inputs.set(inputs)
+    p1.algorithm_outputs.set(outputs)
+    p1.challenge.participants_group.user_set.add(user)
     p2 = PhaseFactory(
+        challenge=p1.challenge,
         submission_kind=SubmissionKindChoices.ALGORITHM,
         algorithm_maximum_settable_memory_gb=42,
     )
-    PhaseFactory(
+    p2.algorithm_inputs.set(inputs)
+    p2.algorithm_outputs.set(outputs)
+    p3 = PhaseFactory(  # excluded, wrong inputs
+        challenge=p1.challenge,
         submission_kind=SubmissionKindChoices.ALGORITHM,
         algorithm_maximum_settable_memory_gb=1337,
     )
-    p1.challenge.participants_group.user_set.add(user)
-    p2.challenge.participants_group.user_set.add(user)
+    p3.algorithm_outputs.set(outputs)
+    p4 = PhaseFactory(  # excluded, wrong outputs
+        challenge=p1.challenge,
+        submission_kind=SubmissionKindChoices.ALGORITHM,
+        algorithm_maximum_settable_memory_gb=1337,
+    )
+    p4.algorithm_inputs.set(inputs)
+    PhaseFactory(  # excluded, not public
+        challenge=p1.challenge,
+        submission_kind=SubmissionKindChoices.ALGORITHM,
+        algorithm_maximum_settable_memory_gb=1337,
+        public=False,
+    )
+    PhaseFactory(  # excluded, not algorithm submission kind
+        challenge=p1.challenge,
+        submission_kind=SubmissionKindChoices.CSV,
+        algorithm_maximum_settable_memory_gb=1337,
+    )
+    PhaseFactory(  # excluded, user not participant
+        submission_kind=SubmissionKindChoices.ALGORITHM,
+        algorithm_maximum_settable_memory_gb=1337,
+    )
 
-    form = AlgorithmForm(user=user)
+    form = AlgorithmForm(instance=algorithm, user=user)
 
     validators = form.fields["job_requires_memory_gb"].validators
 
