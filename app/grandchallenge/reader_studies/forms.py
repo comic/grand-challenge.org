@@ -13,6 +13,7 @@ from crispy_forms.layout import (
     Layout,
     Submit,
 )
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import BLANK_CHOICE_DASH
 from django.forms import (
@@ -308,7 +309,10 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
 
         self.fields["overlay_segments"].help_text += format_lazy(
             'Refer to the <a href="{}#segmentation-masks">documentation</a> for more information',
-            reverse("documentation:detail", args=["interfaces"]),
+            reverse(
+                "documentation:detail",
+                kwargs={"slug": settings.DOCUMENTATION_HELP_INTERFACES_SLUG},
+            ),
         )
 
         if not self.user_can_add_interactive_algorithm:
