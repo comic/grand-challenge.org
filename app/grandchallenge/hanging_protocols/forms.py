@@ -3,6 +3,7 @@ import json
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Div, Layout, Submit
 from django import forms
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.text import format_lazy
 
@@ -157,7 +158,12 @@ class ViewContentExampleMixin:
 
         self.fields["view_content"].help_text += format_lazy(
             'Refer to the <a href="{}">documentation</a> for more information',
-            reverse("documentation:detail", args=["viewer-content"]),
+            reverse(
+                "documentation:detail",
+                kwargs={
+                    "slug": settings.DOCUMENTATION_HELP_VIEWER_CONTENT_SLUG
+                },
+            ),
         )
 
     def generate_view_content_example(self):
