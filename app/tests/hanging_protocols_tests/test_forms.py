@@ -690,6 +690,16 @@ def test_generate_view_content_example(
             ],
             {"main", "secondary", "tertiary", "quaternary"},
         ),
+        (
+            [
+                {"viewport_name": "main"},
+                {"viewport_name": "secondary"},
+                {"viewport_name": "tertiary"},
+                {"viewport_name": "quaternary"},
+                {"viewport_name": "quinary"},
+            ],
+            {"main", "secondary", "tertiary", "quaternary", "quinary"},
+        ),
     ),
 )
 def test_reader_study_forms_view_content_example_with_hanging_protocol(
