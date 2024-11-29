@@ -1,4 +1,5 @@
 import json
+from collections import namedtuple
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Div, Layout, Submit
@@ -161,6 +162,11 @@ class ViewContentExampleMixin:
         )
 
     def _get_interface_lists(self):
+        interface_lists = namedtuple(
+            "interface_lists",
+            ["images", "mandatory_isolation_interfaces", "overlays"],
+        )
+
         images = [
             interface.slug
             for interface in self.instance.interfaces
@@ -182,7 +188,9 @@ class ViewContentExampleMixin:
                 InterfaceKindChoices.IMAGE,
             )
         ]
-        return images, mandatory_isolation_interfaces, overlays
+        return interface_lists(
+            images, mandatory_isolation_interfaces, overlays
+        )
 
     def _get_viewports(self):
         if self.instance.hanging_protocol:
@@ -197,6 +205,14 @@ class ViewContentExampleMixin:
         self, images, mandatory_isolation_interfaces, overlays, viewports
     ):
         view_content_example = {}
+
+        if images and self.instance.hanging_protocol:
+            viewport_count = len(viewports)
+            images = (
+                images * (viewport_count // len(images))
+                + images[: (viewport_count % len(images))]
+            )
+
         overlays_per_image = len(overlays) // len(images) if images else 0
         remaining_overlays = len(overlays) % len(images) if images else 0
 
@@ -216,18 +232,19 @@ class ViewContentExampleMixin:
         return view_content_example
 
     def generate_view_content_example(self):
-        images, mandatory_isolation_interfaces, overlays = (
-            self._get_interface_lists()
-        )
+        interface_lists = self._get_interface_lists()
 
-        if not images and not mandatory_isolation_interfaces:
+        if (
+            not interface_lists.images
+            and not interface_lists.mandatory_isolation_interfaces
+        ):
             return None
 
         viewports = self._get_viewports()
         view_content_example = self._build_view_content(
-            images.copy(),
-            mandatory_isolation_interfaces.copy(),
-            overlays.copy(),
+            interface_lists.images.copy(),
+            interface_lists.mandatory_isolation_interfaces.copy(),
+            interface_lists.overlays.copy(),
             viewports,
         )
 
