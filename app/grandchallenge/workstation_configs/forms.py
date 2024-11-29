@@ -4,6 +4,7 @@ from django.forms import ModelForm
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 
+from app.config import settings
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.widgets import ColorEditorWidget, JSONEditorWidget
 from grandchallenge.subdomains.utils import reverse
@@ -88,7 +89,10 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
 
         self.fields["overlay_segments"].help_text += format_lazy(
             'Refer to the <a href="{}#segmentation-masks">documentation</a> for more information',
-            reverse("documentation:detail", args=["interfaces"]),
+            reverse(
+                "documentation:detail",
+                kwargs={"slug": settings.DOCUMENTATION_HELP_INTERFACES_SLUG},
+            ),
         )
 
         if read_only:
