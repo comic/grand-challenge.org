@@ -1,10 +1,10 @@
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Fieldset, Layout, Submit
+from django.conf import settings
 from django.forms import ModelForm
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 
-from app.config import settings
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.widgets import ColorEditorWidget, JSONEditorWidget
 from grandchallenge.subdomains.utils import reverse
