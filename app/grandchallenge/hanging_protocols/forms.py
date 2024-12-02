@@ -1,5 +1,5 @@
 import json
-from collections import namedtuple
+from typing import NamedTuple
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Div, Layout, Submit
@@ -132,6 +132,12 @@ class HangingProtocolForm(SaveFormInitMixin, forms.ModelForm):
             )
 
 
+class InterfaceLists(NamedTuple):
+    images: list[str]
+    mandatory_isolation_interfaces: list[str]
+    overlays: list[str]
+
+
 class ViewContentExampleMixin:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -162,11 +168,6 @@ class ViewContentExampleMixin:
         )
 
     def _get_interface_lists(self):
-        interface_lists = namedtuple(
-            "interface_lists",
-            ["images", "mandatory_isolation_interfaces", "overlays"],
-        )
-
         images = [
             interface.slug
             for interface in self.instance.interfaces
@@ -188,8 +189,10 @@ class ViewContentExampleMixin:
                 InterfaceKindChoices.IMAGE,
             )
         ]
-        return interface_lists(
-            images, mandatory_isolation_interfaces, overlays
+        return InterfaceLists(
+            images=images,
+            mandatory_isolation_interfaces=mandatory_isolation_interfaces,
+            overlays=overlays,
         )
 
     def _get_viewports(self):
