@@ -816,9 +816,8 @@ def test_algorithm_form_gpu_limited_choices():
 def test_algorithm_form_gpu_choices_from_phases():
     user = UserFactory()
     algorithm = AlgorithmFactory()
-    ci_in, ci_out = ComponentInterfaceFactory.create_batch(2)
-    inputs = [ci_in]
-    outputs = [ci_out]
+    inputs = ComponentInterfaceFactory.create_batch(2)
+    outputs = ComponentInterfaceFactory.create_batch(2)
     algorithm.inputs.set(inputs)
     algorithm.outputs.set(outputs)
     p1 = PhaseFactory(
@@ -991,9 +990,8 @@ def test_algorithm_form_memory_limited():
 def test_algorithm_form_max_memory_from_phases():
     user = UserFactory()
     algorithm = AlgorithmFactory()
-    ci_in, ci_out = ComponentInterfaceFactory.create_batch(2)
-    inputs = [ci_in]
-    outputs = [ci_out]
+    inputs = ComponentInterfaceFactory.create_batch(2)
+    outputs = ComponentInterfaceFactory.create_batch(2)
     algorithm.inputs.set(inputs)
     algorithm.outputs.set(outputs)
     p1 = PhaseFactory(
