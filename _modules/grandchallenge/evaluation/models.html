@@ -530,6 +530,24 @@
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The output interfaces that the algorithms for this phase must use&quot;</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="n">algorithm_selectable_gpu_type_choices</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">JSONField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">get_default_gpu_type_choices</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;The GPU type choices that participants will be able to select for their &quot;</span>
+            <span class="s2">&quot;algorithm inference jobs. The setting on the algorithm will be &quot;</span>
+            <span class="s2">&quot;validated against this on submission. Options are &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">GPUTypeChoices</span><span class="o">.</span><span class="n">values</span><span class="si">}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s1">&#39;&quot;&#39;</span><span class="p">)</span>
+        <span class="p">),</span>
+        <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">JSONValidator</span><span class="p">(</span><span class="n">schema</span><span class="o">=</span><span class="n">SELECTABLE_GPU_TYPES_SCHEMA</span><span class="p">)],</span>
+    <span class="p">)</span>
+    <span class="n">algorithm_maximum_settable_memory_gb</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">ALGORITHMS_MAX_MEMORY_GB</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Maximum amount of memory that participants will be allowed to &quot;</span>
+            <span class="s2">&quot;assign to algorithm inference jobs for submission. The setting on the &quot;</span>
+            <span class="s2">&quot;algorithm will be validated against this on submission.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
     <span class="n">algorithm_time_limit</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="mi">20</span> <span class="o">*</span> <span class="mi">60</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Time limit for inference jobs in seconds&quot;</span><span class="p">,</span>
