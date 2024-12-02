@@ -1,5 +1,24 @@
+"""
+Script that validates BIOM files by passing them through a parser.
+Provide the BIOM file as an argument to the script.
+
+If the file is valid, the script will exit cleanly (0).
+Raises a ValidationScriptError if the BIOM file is not valid.
+
+
+
+The rational for having a seperate script and virtual environment is to provide
+isolation of web-app and modality-specific libraries.
+
+In the case of BIOM the clashing HDF5 libraries of the libvips library (used in panimg)
+and those of h5py would lead to imports crashing when not using an virtual environment.
+"""
+
 import sys
 from pathlib import Path
+
+import biom
+import h5py
 
 
 class ValidationScriptError(Exception):
@@ -7,10 +26,6 @@ class ValidationScriptError(Exception):
 
 
 def run(biom_file_path):
-    # Import non-buildins locally
-    import biom
-    import h5py
-
     try:
         hdf5_file = h5py.File(biom_file_path, "r")
     except OSError:
@@ -41,5 +56,3 @@ def _get_file_path():
 
 if __name__ == "__main__":
     run(_get_file_path())
-else:
-    RuntimeError("Script use only: should not be imported")
