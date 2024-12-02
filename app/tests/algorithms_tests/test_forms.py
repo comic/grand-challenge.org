@@ -822,6 +822,21 @@ def test_algorithm_form_gpu_choices_from_phases():
     outputs = [ci3, ci4]
     algorithm.inputs.set(inputs)
     algorithm.outputs.set(outputs)
+
+    def assert_gpu_type_choices(expected_choices):
+        form = AlgorithmForm(instance=algorithm, user=user)
+
+        actual_choices = form.fields["job_requires_gpu_type"].choices
+
+        assert actual_choices == expected_choices
+
+    assert_gpu_type_choices(
+        [
+            (GPUTypeChoices.NO_GPU, "No GPU"),
+            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+        ]
+    )
+
     phases = []
     for choice in [
         GPUTypeChoices.A100,
@@ -841,13 +856,6 @@ def test_algorithm_form_gpu_choices_from_phases():
         phase.algorithm_outputs.set(outputs)
         phase.challenge.add_participant(user)
         phases.append(phase)
-
-    def assert_gpu_type_choices(expected_choices):
-        form = AlgorithmForm(instance=algorithm, user=user)
-
-        actual_choices = form.fields["job_requires_gpu_type"].choices
-
-        assert actual_choices == expected_choices
 
     assert_gpu_type_choices(
         [
@@ -942,45 +950,40 @@ def test_algorithm_form_gpu_choices_from_organizations():
         ],
     )
 
-    form = AlgorithmForm(user=user)
+    def assert_gpu_type_choices(expected_choices):
+        form = AlgorithmForm(user=user)
 
-    expected_choices = [
-        (GPUTypeChoices.NO_GPU, "No GPU"),
-        (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
-    ]
+        actual_choices = form.fields["job_requires_gpu_type"].choices
 
-    actual_choices = form.fields["job_requires_gpu_type"].choices
+        assert actual_choices == expected_choices
 
-    assert actual_choices == expected_choices
+    assert_gpu_type_choices(
+        [
+            (GPUTypeChoices.NO_GPU, "No GPU"),
+            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+        ]
+    )
 
     org1.add_member(user)
 
-    form = AlgorithmForm(user=user)
-
-    expected_choices = [
-        (GPUTypeChoices.NO_GPU, "No GPU"),
-        (GPUTypeChoices.A100, "NVIDIA A100 Tensor Core GPU"),
-        (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
-    ]
-
-    actual_choices = form.fields["job_requires_gpu_type"].choices
-
-    assert actual_choices == expected_choices
+    assert_gpu_type_choices(
+        [
+            (GPUTypeChoices.NO_GPU, "No GPU"),
+            (GPUTypeChoices.A100, "NVIDIA A100 Tensor Core GPU"),
+            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+        ]
+    )
 
     org2.add_member(user)
 
-    form = AlgorithmForm(user=user)
-
-    expected_choices = [
-        (GPUTypeChoices.NO_GPU, "No GPU"),
-        (GPUTypeChoices.A100, "NVIDIA A100 Tensor Core GPU"),
-        (GPUTypeChoices.V100, "NVIDIA V100 Tensor Core GPU"),
-        (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
-    ]
-
-    actual_choices = form.fields["job_requires_gpu_type"].choices
-
-    assert actual_choices == expected_choices
+    assert_gpu_type_choices(
+        [
+            (GPUTypeChoices.NO_GPU, "No GPU"),
+            (GPUTypeChoices.A100, "NVIDIA A100 Tensor Core GPU"),
+            (GPUTypeChoices.V100, "NVIDIA V100 Tensor Core GPU"),
+            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+        ]
+    )
 
 
 def test_algorithm_for_phase_form_gpu_limited_choices():
@@ -1127,39 +1130,26 @@ def test_algorithm_form_max_memory_from_organizations():
     org1 = OrganizationFactory(algorithm_maximum_settable_memory_gb=42)
     org2 = OrganizationFactory(algorithm_maximum_settable_memory_gb=1337)
 
-    form = AlgorithmForm(user=user)
+    def assert_max_value_validator(value):
+        form = AlgorithmForm(user=user)
 
-    validators = form.fields["job_requires_memory_gb"].validators
+        validators = form.fields["job_requires_memory_gb"].validators
 
-    max_validator = next(
-        (v for v in validators if isinstance(v, MaxValueValidator)), None
-    )
-    assert max_validator is not None
-    assert max_validator.limit_value == 32
+        max_validator = next(
+            (v for v in validators if isinstance(v, MaxValueValidator)), None
+        )
+        assert max_validator is not None
+        assert max_validator.limit_value == value
+
+    assert_max_value_validator(32)
 
     org1.add_member(user)
 
-    form = AlgorithmForm(user=user)
-
-    validators = form.fields["job_requires_memory_gb"].validators
-
-    max_validator = next(
-        (v for v in validators if isinstance(v, MaxValueValidator)), None
-    )
-    assert max_validator is not None
-    assert max_validator.limit_value == 42
+    assert_max_value_validator(42)
 
     org2.add_member(user)
 
-    form = AlgorithmForm(user=user)
-
-    validators = form.fields["job_requires_memory_gb"].validators
-
-    max_validator = next(
-        (v for v in validators if isinstance(v, MaxValueValidator)), None
-    )
-    assert max_validator is not None
-    assert max_validator.limit_value == 1337
+    assert_max_value_validator(1337)
 
 
 def test_algorithm_for_phase_form_memory_limited():
