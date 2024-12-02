@@ -64,7 +64,7 @@ def validate_biom_format(*, file):
         error_lines = e.stderr.strip().split("\n")
         for line in error_lines:
             # Pass along any validation errors
-            if line.startswith("ValidationError"):
+            if line.startswith("ValidationScriptError"):
                 error_message = line.split(":", 1)[1].strip()
                 raise ValidationError(
                     error_message or "Does not appear to be a BIOM-format file"

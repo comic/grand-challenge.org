@@ -73,38 +73,31 @@ def test_validate_newick_format(tree, context):
         validate_newick_tree_format(tree=tree)
 
 
+def test_valid_biom_format():
+    validate_biom_format(file=RESOURCE_DIR / "biom" / "valid.biom")
+
+
 @pytest.mark.parametrize(
-    "biom_file, context, msg",
+    "biom_file, msg",
     (
-        (
-            # Working example
-            RESOURCE_DIR / "biom" / "valid.biom",
-            nullcontext(),
-            None,
-        ),
         (
             # Uncompressed
             RESOURCE_DIR / "biom" / "uncompressed_OTU_json.biom",
-            pytest.raises(ValidationError),
             "Only BIOM in valid HDF5 binary file format are supported",
         ),
         (
             # Compressed, but removed first few bytes
             RESOURCE_DIR / "biom" / "broken.biom",
-            pytest.raises(ValidationError),
             "Only BIOM in valid HDF5 binary file format are supported",
         ),
         (
             # HD5 Format, but not a biom
             RESOURCE_DIR / "biom" / "not_a_biom.h5",
-            pytest.raises(ValidationError),
             "Does not appear to be a BIOM-format file",
         ),
     ),
 )
-def test_validate_biom_format(biom_file, context, msg):
-    with context as c:
+def test_invalid_biom_formats(biom_file, msg):
+    with pytest.raises(ValidationError) as error:
         validate_biom_format(file=biom_file)
-
-    if msg:
-        assert msg in str(c)
+    assert msg in str(error)

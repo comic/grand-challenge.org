@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 
 
-class ValidationError(Exception):
+class ValidationScriptError(Exception):
     pass
 
 
@@ -14,7 +14,7 @@ def run(biom_file_path):
     try:
         hdf5_file = h5py.File(biom_file_path, "r")
     except OSError:
-        raise ValidationError(
+        raise ValidationScriptError(
             "Only BIOM in valid HDF5 binary file format are supported"
         )
 
@@ -22,7 +22,7 @@ def run(biom_file_path):
     try:
         biom.Table.from_hdf5(hdf5_file)
     except Exception:
-        raise ValidationError("Does not appear to be a BIOM-format file")
+        raise ValidationScriptError("Does not appear to be a BIOM-format file")
 
 
 def _get_file_path():
