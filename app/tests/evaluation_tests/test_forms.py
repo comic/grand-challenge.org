@@ -127,7 +127,7 @@ class TestSubmissionForm:
 
         assert alg1 in form.fields["algorithm"].queryset
         assert alg2 not in form.fields["algorithm"].queryset
-        assert alg2 not in form.fields["algorithm"].queryset
+        assert alg3 not in form.fields["algorithm"].queryset
         assert alg4 not in form.fields["algorithm"].queryset
 
     def test_algorithm_queryset_if_parent_phase_exists(self):
