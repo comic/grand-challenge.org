@@ -206,12 +206,27 @@ class ViewContentExampleMixin:
     ):
         view_content_example = {}
 
-        if images and self.instance.hanging_protocol:
+        if self.instance.hanging_protocol:
             viewport_count = len(viewports)
-            images = (
-                images * (viewport_count // len(images))
-                + images[: (viewport_count % len(images))]
-            )
+
+            if mandatory_isolation_interfaces:
+                mandatory_isolation_interfaces = (
+                    mandatory_isolation_interfaces
+                    * (viewport_count // len(mandatory_isolation_interfaces))
+                    + mandatory_isolation_interfaces[
+                        : (
+                            viewport_count
+                            % len(mandatory_isolation_interfaces)
+                        )
+                    ]
+                )
+                viewport_count -= len(mandatory_isolation_interfaces)
+
+            if images:
+                images = (
+                    images * (viewport_count // len(images))
+                    + images[: (viewport_count % len(images))]
+                )
 
         overlays_per_image = len(overlays) // len(images) if images else 0
         remaining_overlays = len(overlays) % len(images) if images else 0
