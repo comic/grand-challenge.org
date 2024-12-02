@@ -6,8 +6,8 @@ from django.conf import settings
 from django.core.exceptions import SuspiciousFileOperation, ValidationError
 from django.utils._os import safe_join
 
+from grandchallenge.components import VALIDATION_SCRIPT_DIR
 from grandchallenge.components.utils.virtualenvs import run_script_in_venv
-from grandchallenge.components.validate_scripts import VALIDATION_SCRIPT_DIR
 
 
 def validate_safe_path(value):

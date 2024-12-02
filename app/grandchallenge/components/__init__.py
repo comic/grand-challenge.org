@@ -1,4 +1,8 @@
+from pathlib import Path
+
 from django.core.checks import Error, register
+
+VALIDATION_SCRIPT_DIR = Path(__file__).resolve().parent / "validate_scripts"
 
 
 @register(deploy=True)
