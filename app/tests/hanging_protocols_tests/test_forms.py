@@ -11,6 +11,9 @@ from grandchallenge.components.models import (
     InterfaceKind,
     InterfaceKindChoices,
 )
+from grandchallenge.core.utils.access_requests import (
+    AccessRequestHandlingOptions,
+)
 from grandchallenge.evaluation.forms import PhaseUpdateForm
 from grandchallenge.hanging_protocols.forms import HangingProtocolForm
 from grandchallenge.hanging_protocols.models import HangingProtocol
@@ -22,7 +25,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.evaluation_tests.factories import PhaseFactory
-from tests.factories import UserFactory
+from tests.factories import UserFactory, WorkstationFactory
 from tests.hanging_protocols_tests.factories import HangingProtocolFactory
 from tests.hanging_protocols_tests.test_models import HangingProtocolTestModel
 from tests.reader_studies_tests.factories import DisplaySetFactory
@@ -666,3 +669,103 @@ def test_generate_view_content_example(
     )
 
     assert view_content_example_json == expected_example_json
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "hanging_protocol_json,view_content_example_json_expected_keys",
+    (
+        (None, {"main", "secondary", "tertiary", "quaternary"}),
+        ([{}], {}),
+        (
+            [{"viewport_name": "main"}, {"viewport_name": "secondary"}],
+            {"main", "secondary"},
+        ),
+        (
+            [
+                {"viewport_name": "main"},
+                {"viewport_name": "secondary"},
+                {"viewport_name": "tertiary"},
+                {"viewport_name": "quaternary"},
+            ],
+            {"main", "secondary", "tertiary", "quaternary"},
+        ),
+        (
+            [
+                {"viewport_name": "main"},
+                {"viewport_name": "secondary"},
+                {"viewport_name": "tertiary"},
+                {"viewport_name": "quaternary"},
+                {"viewport_name": "quinary"},
+            ],
+            {"main", "secondary", "tertiary", "quaternary", "quinary"},
+        ),
+    ),
+)
+@pytest.mark.parametrize(
+    "num_of_images,num_of_isolated_interfaces",
+    (
+        (4, 0),
+        (1, 3),
+        (2, 2),
+        (3, 1),
+        (0, 4),
+    ),
+)
+def test_reader_study_forms_view_content_example_with_hanging_protocol(
+    hanging_protocol_json,
+    view_content_example_json_expected_keys,
+    num_of_images,
+    num_of_isolated_interfaces,
+):
+    ci_list = make_ci_list(
+        number_of_images=num_of_images,
+        number_of_overlays=2,
+        number_of_isolated_interfaces=num_of_isolated_interfaces,
+        number_of_undisplayable_interfaces=1,
+    )
+    civ_list = [ComponentInterfaceValueFactory(interface=ci) for ci in ci_list]
+
+    object = DisplaySetFactory()
+    object.values.set(civ_list)
+
+    ws = WorkstationFactory()
+    creator = UserFactory()
+    ws.add_user(creator)
+
+    form_data = {
+        "title": "foo bar",
+        "workstation": ws.pk,
+        "allow_answer_modification": True,
+        "shuffle_hanging_list": False,
+        "allow_case_navigation": False,
+        "access_request_handling": AccessRequestHandlingOptions.MANUAL_REVIEW,
+        "roll_over_answers_for_n_cases": 0,
+        "public": True,
+        "description": "test description",
+        "is_educational": False,
+        "instant_verification": False,
+    }
+
+    if hanging_protocol_json:
+        form_data["hanging_protocol"] = HangingProtocolFactory(
+            json=hanging_protocol_json
+        )
+
+    form = ReaderStudyUpdateForm(
+        user=creator,
+        instance=object.base_object,
+        data=form_data,
+    )
+
+    assert form.is_valid()
+
+    view_content_example = form.generate_view_content_example()
+    view_content_example_keys = (
+        set(json.loads(view_content_example).keys())
+        if view_content_example
+        else None
+    )
+    assert view_content_example_keys == set(
+        view_content_example_json_expected_keys
+    )
