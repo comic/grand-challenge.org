@@ -80,9 +80,9 @@ ENV PYTHONUNBUFFERED=1\
     COMPONENTS_SAGEMAKER_SHIM_VERSION=0.3.5\
     PATH="/opt/poetry/.venv/bin:/home/django/.local/bin:${PATH}"
 
-RUN mkdir -p /opt/poetry /app /static /opt/sagemaker-shim \
+RUN mkdir -p /opt/poetry /app /static /opt/sagemaker-shim /opt/virtualenvs \
     && groupadd -r django && useradd -m -r -g django django \
-    && chown django:django /opt/poetry /app /static /opt/sagemaker-shim
+    && chown django:django /opt/poetry /app /static /opt/sagemaker-shim /opt/virtualenvs
 
 USER django:django
 
