@@ -702,13 +702,26 @@ def test_generate_view_content_example(
         ),
     ),
 )
+@pytest.mark.parametrize(
+    "num_of_images,num_of_isolated_interfaces",
+    (
+        (4, 0),
+        (1, 3),
+        (2, 2),
+        (3, 1),
+        (0, 4),
+    ),
+)
 def test_reader_study_forms_view_content_example_with_hanging_protocol(
-    hanging_protocol_json, view_content_example_json_expected_keys
+    hanging_protocol_json,
+    view_content_example_json_expected_keys,
+    num_of_images,
+    num_of_isolated_interfaces,
 ):
     ci_list = make_ci_list(
-        number_of_images=3,
+        number_of_images=num_of_images,
         number_of_overlays=2,
-        number_of_isolated_interfaces=1,
+        number_of_isolated_interfaces=num_of_isolated_interfaces,
         number_of_undisplayable_interfaces=1,
     )
     civ_list = [ComponentInterfaceValueFactory(interface=ci) for ci in ci_list]
@@ -748,9 +761,11 @@ def test_reader_study_forms_view_content_example_with_hanging_protocol(
     assert form.is_valid()
 
     view_content_example = form.generate_view_content_example()
-    view_content_example_json = (
-        json.loads(view_content_example) if view_content_example else None
+    view_content_example_keys = (
+        set(json.loads(view_content_example).keys())
+        if view_content_example
+        else None
     )
-    assert set(view_content_example_json.keys()) == set(
+    assert view_content_example_keys == set(
         view_content_example_json_expected_keys
     )
