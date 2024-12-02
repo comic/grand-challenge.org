@@ -816,92 +816,111 @@ def test_algorithm_form_gpu_limited_choices():
 def test_algorithm_form_gpu_choices_from_phases():
     user = UserFactory()
     algorithm = AlgorithmFactory()
-    inputs = ComponentInterfaceFactory.create_batch(2)
-    outputs = ComponentInterfaceFactory.create_batch(2)
+    ci1, ci2, ci3, ci4, ci5, ci6 = ComponentInterfaceFactory.create_batch(6)
+    inputs = [ci1, ci2]
+    outputs = [ci3, ci4]
     algorithm.inputs.set(inputs)
     algorithm.outputs.set(outputs)
-    p1 = PhaseFactory(
-        submission_kind=SubmissionKindChoices.ALGORITHM,
-        algorithm_selectable_gpu_type_choices=[
-            GPUTypeChoices.NO_GPU,
-            GPUTypeChoices.T4,
-            GPUTypeChoices.A100,
-        ],
-    )
-    p1.algorithm_inputs.set(inputs)
-    p1.algorithm_outputs.set(outputs)
-    p1.challenge.participants_group.user_set.add(user)
-    p2 = PhaseFactory(
-        challenge=p1.challenge,
-        submission_kind=SubmissionKindChoices.ALGORITHM,
-        algorithm_selectable_gpu_type_choices=[
-            GPUTypeChoices.NO_GPU,
-            GPUTypeChoices.T4,
-            GPUTypeChoices.K80,
-        ],
-    )
-    p2.algorithm_inputs.set(inputs)
-    p2.algorithm_outputs.set(outputs)
-    p3 = PhaseFactory(  # excluded, wrong inputs
-        challenge=p1.challenge,
-        submission_kind=SubmissionKindChoices.ALGORITHM,
-        algorithm_selectable_gpu_type_choices=[
-            GPUTypeChoices.NO_GPU,
-            GPUTypeChoices.T4,
-            GPUTypeChoices.V100,
-        ],
-    )
-    p3.algorithm_outputs.set(outputs)
-    p4 = PhaseFactory(  # excluded, wrong outputs
-        challenge=p1.challenge,
-        submission_kind=SubmissionKindChoices.ALGORITHM,
-        algorithm_selectable_gpu_type_choices=[
-            GPUTypeChoices.NO_GPU,
-            GPUTypeChoices.T4,
-            GPUTypeChoices.V100,
-        ],
-    )
-    p4.algorithm_inputs.set(inputs)
-    PhaseFactory(  # excluded, not public
-        challenge=p1.challenge,
-        submission_kind=SubmissionKindChoices.ALGORITHM,
-        algorithm_selectable_gpu_type_choices=[
-            GPUTypeChoices.NO_GPU,
-            GPUTypeChoices.T4,
-            GPUTypeChoices.V100,
-        ],
-        public=False,
-    )
-    PhaseFactory(  # excluded, not algorithm submission kind
-        challenge=p1.challenge,
-        submission_kind=SubmissionKindChoices.CSV,
-        algorithm_selectable_gpu_type_choices=[
-            GPUTypeChoices.NO_GPU,
-            GPUTypeChoices.T4,
-            GPUTypeChoices.V100,
-        ],
-    )
-    PhaseFactory(  # excluded, user not participant
-        submission_kind=SubmissionKindChoices.ALGORITHM,
-        algorithm_selectable_gpu_type_choices=[
-            GPUTypeChoices.NO_GPU,
-            GPUTypeChoices.T4,
-            GPUTypeChoices.V100,
-        ],
+    phases = []
+    for choice in [
+        GPUTypeChoices.A100,
+        GPUTypeChoices.A10G,
+        GPUTypeChoices.V100,
+        GPUTypeChoices.K80,
+    ]:
+        phase = PhaseFactory(
+            submission_kind=SubmissionKindChoices.ALGORITHM,
+            algorithm_selectable_gpu_type_choices=[
+                GPUTypeChoices.NO_GPU,
+                choice,
+                GPUTypeChoices.T4,
+            ],
+        )
+        phase.algorithm_inputs.set(inputs)
+        phase.algorithm_outputs.set(outputs)
+        phase.challenge.add_participant(user)
+        phases.append(phase)
+
+    def assert_gpu_type_choices(expected_choices):
+        form = AlgorithmForm(instance=algorithm, user=user)
+
+        actual_choices = form.fields["job_requires_gpu_type"].choices
+
+        assert actual_choices == expected_choices
+
+    assert_gpu_type_choices(
+        [
+            (GPUTypeChoices.NO_GPU, "No GPU"),
+            (GPUTypeChoices.A100, "NVIDIA A100 Tensor Core GPU"),
+            (GPUTypeChoices.A10G, "NVIDIA A10G Tensor Core GPU"),
+            (GPUTypeChoices.V100, "NVIDIA V100 Tensor Core GPU"),
+            (GPUTypeChoices.K80, "NVIDIA K80 GPU"),
+            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+        ]
     )
 
-    form = AlgorithmForm(instance=algorithm, user=user)
+    phases[3].challenge.remove_participant(user)
 
-    expected_choices = [
-        (GPUTypeChoices.NO_GPU, "No GPU"),
-        (GPUTypeChoices.A100, "NVIDIA A100 Tensor Core GPU"),
-        (GPUTypeChoices.K80, "NVIDIA K80 GPU"),
-        (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
-    ]
+    assert_gpu_type_choices(
+        [
+            (GPUTypeChoices.NO_GPU, "No GPU"),
+            (GPUTypeChoices.A100, "NVIDIA A100 Tensor Core GPU"),
+            (GPUTypeChoices.A10G, "NVIDIA A10G Tensor Core GPU"),
+            (GPUTypeChoices.V100, "NVIDIA V100 Tensor Core GPU"),
+            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+        ]
+    )
 
-    actual_choices = form.fields["job_requires_gpu_type"].choices
+    phases[2].submission_kind = SubmissionKindChoices.CSV
+    phases[2].save()
 
-    assert actual_choices == expected_choices
+    assert_gpu_type_choices(
+        [
+            (GPUTypeChoices.NO_GPU, "No GPU"),
+            (GPUTypeChoices.A100, "NVIDIA A100 Tensor Core GPU"),
+            (GPUTypeChoices.A10G, "NVIDIA A10G Tensor Core GPU"),
+            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+        ]
+    )
+
+    phases[1].public = False
+    phases[1].save()
+
+    assert_gpu_type_choices(
+        [
+            (GPUTypeChoices.NO_GPU, "No GPU"),
+            (GPUTypeChoices.A100, "NVIDIA A100 Tensor Core GPU"),
+            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+        ]
+    )
+
+    phases[0].algorithm_inputs.set([ci1, ci5])
+
+    assert_gpu_type_choices(
+        [
+            (GPUTypeChoices.NO_GPU, "No GPU"),
+            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+        ]
+    )
+
+    phases[3].challenge.add_participant(user)
+
+    assert_gpu_type_choices(
+        [
+            (GPUTypeChoices.NO_GPU, "No GPU"),
+            (GPUTypeChoices.K80, "NVIDIA K80 GPU"),
+            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+        ]
+    )
+
+    phases[3].algorithm_outputs.set([ci4, ci6])
+
+    assert_gpu_type_choices(
+        [
+            (GPUTypeChoices.NO_GPU, "No GPU"),
+            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+        ]
+    )
 
 
 def test_algorithm_for_phase_form_gpu_limited_choices():
@@ -990,61 +1009,56 @@ def test_algorithm_form_memory_limited():
 def test_algorithm_form_max_memory_from_phases():
     user = UserFactory()
     algorithm = AlgorithmFactory()
-    inputs = ComponentInterfaceFactory.create_batch(2)
-    outputs = ComponentInterfaceFactory.create_batch(2)
+    ci1, ci2, ci3, ci4, ci5, ci6 = ComponentInterfaceFactory.create_batch(6)
+    inputs = [ci1, ci2]
+    outputs = [ci3, ci4]
     algorithm.inputs.set(inputs)
     algorithm.outputs.set(outputs)
-    p1 = PhaseFactory(
-        submission_kind=SubmissionKindChoices.ALGORITHM,
-        algorithm_maximum_settable_memory_gb=21,
-    )
-    p1.algorithm_inputs.set(inputs)
-    p1.algorithm_outputs.set(outputs)
-    p1.challenge.participants_group.user_set.add(user)
-    p2 = PhaseFactory(
-        challenge=p1.challenge,
-        submission_kind=SubmissionKindChoices.ALGORITHM,
-        algorithm_maximum_settable_memory_gb=42,
-    )
-    p2.algorithm_inputs.set(inputs)
-    p2.algorithm_outputs.set(outputs)
-    p3 = PhaseFactory(  # excluded, wrong inputs
-        challenge=p1.challenge,
-        submission_kind=SubmissionKindChoices.ALGORITHM,
-        algorithm_maximum_settable_memory_gb=1337,
-    )
-    p3.algorithm_outputs.set(outputs)
-    p4 = PhaseFactory(  # excluded, wrong outputs
-        challenge=p1.challenge,
-        submission_kind=SubmissionKindChoices.ALGORITHM,
-        algorithm_maximum_settable_memory_gb=1337,
-    )
-    p4.algorithm_inputs.set(inputs)
-    PhaseFactory(  # excluded, not public
-        challenge=p1.challenge,
-        submission_kind=SubmissionKindChoices.ALGORITHM,
-        algorithm_maximum_settable_memory_gb=1337,
-        public=False,
-    )
-    PhaseFactory(  # excluded, not algorithm submission kind
-        challenge=p1.challenge,
-        submission_kind=SubmissionKindChoices.CSV,
-        algorithm_maximum_settable_memory_gb=1337,
-    )
-    PhaseFactory(  # excluded, user not participant
-        submission_kind=SubmissionKindChoices.ALGORITHM,
-        algorithm_maximum_settable_memory_gb=1337,
-    )
+    phases = []
+    for max_memory in [42, 100, 200, 300, 400, 500]:
+        phase = PhaseFactory(
+            submission_kind=SubmissionKindChoices.ALGORITHM,
+            algorithm_maximum_settable_memory_gb=max_memory,
+        )
+        phase.algorithm_inputs.set(inputs)
+        phase.algorithm_outputs.set(outputs)
+        phase.challenge.add_participant(user)
+        phases.append(phase)
 
-    form = AlgorithmForm(instance=algorithm, user=user)
+    def assert_max_value_validator(value):
+        form = AlgorithmForm(instance=algorithm, user=user)
 
-    validators = form.fields["job_requires_memory_gb"].validators
+        validators = form.fields["job_requires_memory_gb"].validators
 
-    max_validator = next(
-        (v for v in validators if isinstance(v, MaxValueValidator)), None
-    )
-    assert max_validator is not None
-    assert max_validator.limit_value == 42
+        max_validator = next(
+            (v for v in validators if isinstance(v, MaxValueValidator)), None
+        )
+        assert max_validator is not None
+        assert max_validator.limit_value == value
+
+    assert_max_value_validator(500)
+
+    phases[5].challenge.remove_participant(user)
+
+    assert_max_value_validator(400)
+
+    phases[4].submission_kind = SubmissionKindChoices.CSV
+    phases[4].save()
+
+    assert_max_value_validator(300)
+
+    phases[3].public = False
+    phases[3].save()
+
+    assert_max_value_validator(200)
+
+    phases[2].algorithm_inputs.set([ci1, ci5])
+
+    assert_max_value_validator(100)
+
+    phases[1].algorithm_outputs.set([ci4, ci6])
+
+    assert_max_value_validator(42)
 
 
 def test_algorithm_for_phase_form_memory_limited():
