@@ -986,6 +986,86 @@ def test_algorithm_form_gpu_choices_from_organizations():
     )
 
 
+@pytest.mark.django_db
+def test_algorithm_form_gpu_choices_from_organizations_and_phases():
+    user = UserFactory()
+    algorithm = AlgorithmFactory()
+    ci1, ci2, ci3, ci4, ci5, ci6 = ComponentInterfaceFactory.create_batch(6)
+    inputs = [ci1, ci2]
+    outputs = [ci3, ci4]
+    algorithm.inputs.set(inputs)
+    algorithm.outputs.set(outputs)
+    org1 = OrganizationFactory(
+        algorithm_selectable_gpu_type_choices=[
+            GPUTypeChoices.NO_GPU,
+            GPUTypeChoices.A100,
+            GPUTypeChoices.T4,
+        ],
+    )
+    org2 = OrganizationFactory(
+        algorithm_selectable_gpu_type_choices=[
+            GPUTypeChoices.NO_GPU,
+            GPUTypeChoices.V100,
+            GPUTypeChoices.T4,
+        ],
+    )
+
+    def assert_gpu_type_choices(expected_choices):
+        form = AlgorithmForm(instance=algorithm, user=user)
+
+        actual_choices = form.fields["job_requires_gpu_type"].choices
+
+        assert actual_choices == expected_choices
+
+    assert_gpu_type_choices(
+        [
+            (GPUTypeChoices.NO_GPU, "No GPU"),
+            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+        ]
+    )
+
+    phases = []
+    for choice in [
+        GPUTypeChoices.A10G,
+        GPUTypeChoices.K80,
+    ]:
+        phase = PhaseFactory(
+            submission_kind=SubmissionKindChoices.ALGORITHM,
+            algorithm_selectable_gpu_type_choices=[
+                GPUTypeChoices.NO_GPU,
+                choice,
+                GPUTypeChoices.T4,
+            ],
+        )
+        phase.algorithm_inputs.set(inputs)
+        phase.algorithm_outputs.set(outputs)
+        phase.challenge.add_participant(user)
+        phases.append(phase)
+
+    assert_gpu_type_choices(
+        [
+            (GPUTypeChoices.NO_GPU, "No GPU"),
+            (GPUTypeChoices.A10G, "NVIDIA A10G Tensor Core GPU"),
+            (GPUTypeChoices.K80, "NVIDIA K80 GPU"),
+            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+        ]
+    )
+
+    org1.add_member(user)
+    org2.add_member(user)
+
+    assert_gpu_type_choices(
+        [
+            (GPUTypeChoices.NO_GPU, "No GPU"),
+            (GPUTypeChoices.A100, "NVIDIA A100 Tensor Core GPU"),
+            (GPUTypeChoices.A10G, "NVIDIA A10G Tensor Core GPU"),
+            (GPUTypeChoices.V100, "NVIDIA V100 Tensor Core GPU"),
+            (GPUTypeChoices.K80, "NVIDIA K80 GPU"),
+            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+        ]
+    )
+
+
 def test_algorithm_for_phase_form_gpu_limited_choices():
     form = AlgorithmForPhaseForm(
         workstation_config=WorkstationConfigFactory.build(),
@@ -1147,6 +1227,48 @@ def test_algorithm_form_max_memory_from_organizations():
 
     assert_max_value_validator(42)
 
+    org2.add_member(user)
+
+    assert_max_value_validator(1337)
+
+
+@pytest.mark.django_db
+def test_algorithm_form_max_memory_from_organizations_and_phases():
+    user = UserFactory()
+    algorithm = AlgorithmFactory()
+    ci1, ci2, ci3, ci4, ci5, ci6 = ComponentInterfaceFactory.create_batch(6)
+    inputs = [ci1, ci2]
+    outputs = [ci3, ci4]
+    algorithm.inputs.set(inputs)
+    algorithm.outputs.set(outputs)
+    org1 = OrganizationFactory(algorithm_maximum_settable_memory_gb=42)
+    org2 = OrganizationFactory(algorithm_maximum_settable_memory_gb=1337)
+
+    def assert_max_value_validator(value):
+        form = AlgorithmForm(instance=algorithm, user=user)
+
+        validators = form.fields["job_requires_memory_gb"].validators
+
+        max_validator = next(
+            (v for v in validators if isinstance(v, MaxValueValidator)), None
+        )
+        assert max_validator is not None
+        assert max_validator.limit_value == value
+
+    assert_max_value_validator(32)
+
+    for max_memory in [41, 42]:
+        phase = PhaseFactory(
+            submission_kind=SubmissionKindChoices.ALGORITHM,
+            algorithm_maximum_settable_memory_gb=max_memory,
+        )
+        phase.algorithm_inputs.set(inputs)
+        phase.algorithm_outputs.set(outputs)
+        phase.challenge.add_participant(user)
+
+    assert_max_value_validator(42)
+
+    org1.add_member(user)
     org2.add_member(user)
 
     assert_max_value_validator(1337)
