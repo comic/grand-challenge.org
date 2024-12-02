@@ -119,6 +119,10 @@ USE_TZ = True
 # Use AutoField for backwards compatibility
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
+DOCUMENTATION_HELP_VIEWER_CONTENT_SLUG = os.environ.get(
+    "DOCUMENTATION_HELP_VIEWER_CONTENT_SLUG", "viewer-content"
+)
+
 # General forum
 DOCUMENTATION_HELP_FORUM_PK = os.environ.get(
     "DOCUMENTATION_HELP_FORUM_PK", "1"
