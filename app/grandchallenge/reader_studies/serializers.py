@@ -18,8 +18,8 @@ from rest_framework.serializers import (
 
 from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
 from grandchallenge.components.serializers import (
+    CIVSetPostSerializerMixin,
     ComponentInterfaceSerializer,
-    ComponentInterfaceValuePostSerializer,
     HyperlinkedComponentInterfaceValueSerializer,
 )
 from grandchallenge.core.guardian import filter_by_permission
@@ -142,11 +142,16 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
         )
 
 
-class DisplaySetPostSerializer(DisplaySetSerializer):
+class DisplaySetPostSerializer(
+    CIVSetPostSerializerMixin,
+    DisplaySetSerializer,
+):
+    editability_error_message = (
+        "This display set cannot be changed, as answers for it already exist."
+    )
     reader_study = SlugRelatedField(
         slug_field="slug", queryset=ReaderStudy.objects.none(), required=False
     )
-    values = ComponentInterfaceValuePostSerializer(many=True, required=False)
 
     def create(self, validated_data):
         if validated_data.pop("values", []) != []:

@@ -15,6 +15,7 @@ from crispy_forms.layout import (
 from dal import autocomplete
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
 from django.core.validators import (
@@ -22,7 +23,7 @@ from django.core.validators import (
     MinValueValidator,
     RegexValidator,
 )
-from django.db.models import Count, Exists, OuterRef, Q
+from django.db.models import Count, Exists, Max, OuterRef, Q
 from django.db.transaction import on_commit
 from django.forms import (
     CharField,
@@ -81,7 +82,7 @@ from grandchallenge.core.widgets import (
     JSONEditorWidget,
     MarkdownEditorInlineWidget,
 )
-from grandchallenge.evaluation.utils import get
+from grandchallenge.evaluation.utils import SubmissionKindChoices, get
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.hanging_protocols.forms import ViewContentExampleMixin
 from grandchallenge.hanging_protocols.models import VIEW_CONTENT_SCHEMA
@@ -365,20 +366,87 @@ class AlgorithmForm(
             "workstation_config": "Viewer Configuration",
         }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, *args, user, **kwargs):
+        super().__init__(*args, user=user, **kwargs)
+        self._user = user
 
         self.fields["contact_email"].required = True
         self.fields["display_editors"].required = True
 
-        self.fields["job_requires_gpu_type"].choices = [
-            (choice.value, choice.label)
-            for choice in [GPUTypeChoices.NO_GPU, GPUTypeChoices.T4]
-        ]
+        self.fields["job_requires_gpu_type"].choices = (
+            self.selectable_gpu_type_choices
+        )
         self.fields["job_requires_memory_gb"].validators = [
             MinValueValidator(settings.ALGORITHMS_MIN_MEMORY_GB),
-            MaxValueValidator(settings.ALGORITHMS_MAX_MEMORY_GB),
+            MaxValueValidator(self.maximum_settable_memory_gb),
         ]
+
+    @cached_property
+    def job_requirement_properties_from_phases(self):
+        qs = get_objects_for_user(
+            self._user, "evaluation.create_phase_submission"
+        )
+        inputs = self.instance.inputs.all()
+        outputs = self.instance.outputs.all()
+        return (
+            qs.annotate(
+                total_algorithm_input_count=Count(
+                    "algorithm_inputs", distinct=True
+                ),
+                total_algorithm_output_count=Count(
+                    "algorithm_outputs", distinct=True
+                ),
+                relevant_algorithm_input_count=Count(
+                    "algorithm_inputs",
+                    filter=Q(algorithm_inputs__in=inputs),
+                    distinct=True,
+                ),
+                relevant_algorithm_output_count=Count(
+                    "algorithm_outputs",
+                    filter=Q(algorithm_outputs__in=outputs),
+                    distinct=True,
+                ),
+            )
+            .filter(
+                submission_kind=SubmissionKindChoices.ALGORITHM,
+                public=True,
+                total_algorithm_input_count=len(inputs),
+                total_algorithm_output_count=len(outputs),
+                relevant_algorithm_input_count=len(inputs),
+                relevant_algorithm_output_count=len(outputs),
+            )
+            .aggregate(
+                max_memory=Max("algorithm_maximum_settable_memory_gb"),
+                gpu_type_choices=ArrayAgg(
+                    "algorithm_selectable_gpu_type_choices", distinct=True
+                ),
+            )
+        )
+
+    @property
+    def selectable_gpu_type_choices(self):
+        choices_set = {
+            GPUTypeChoices.NO_GPU,
+            GPUTypeChoices.T4,
+            *chain.from_iterable(
+                self.job_requirement_properties_from_phases["gpu_type_choices"]
+            ),
+        }
+        return [
+            (choice.value, choice.label)
+            for choice in GPUTypeChoices
+            if choice in choices_set
+        ]
+
+    @property
+    def maximum_settable_memory_gb(self):
+        value = settings.ALGORITHMS_MAX_MEMORY_GB
+        maximum_in_phases = self.job_requirement_properties_from_phases[
+            "max_memory"
+        ]
+        if maximum_in_phases is not None:
+            value = max(value, maximum_in_phases)
+        return value
 
 
 class UserAlgorithmsForPhaseMixin:
@@ -544,11 +612,12 @@ class AlgorithmForPhaseForm(
 
         self.fields["job_requires_gpu_type"].choices = [
             (choice.value, choice.label)
-            for choice in [GPUTypeChoices.NO_GPU, GPUTypeChoices.T4]
+            for choice in GPUTypeChoices
+            if choice in phase.algorithm_selectable_gpu_type_choices
         ]
         self.fields["job_requires_memory_gb"].validators = [
             MinValueValidator(settings.ALGORITHMS_MIN_MEMORY_GB),
-            MaxValueValidator(settings.ALGORITHMS_MAX_MEMORY_GB),
+            MaxValueValidator(phase.algorithm_maximum_settable_memory_gb),
         ]
 
     def clean(self):

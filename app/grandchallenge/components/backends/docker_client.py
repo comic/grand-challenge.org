@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import shlex
 from subprocess import CalledProcessError, run
@@ -9,6 +10,8 @@ from django.utils import timezone
 
 from grandchallenge.components.registry import _get_registry_auth_config
 from grandchallenge.evaluation.utils import get
+
+logger = logging.getLogger(__name__)
 
 
 def _run_docker_command(*args, authenticate=False):
@@ -136,9 +139,18 @@ def get_logs(*, name, tail=None):
     if tail is not None:
         args.extend(["--tail", str(tail)])
 
-    result = _run_docker_command(*args, container_id)
-
-    return result.stdout.splitlines() + result.stderr.splitlines()
+    try:
+        result = _run_docker_command(*args, container_id)
+        return result.stdout.splitlines() + result.stderr.splitlines()
+    except CalledProcessError as error:
+        if (
+            "error from daemon in stream: Error grabbing logs: invalid character"
+            in error.stderr
+        ):
+            logger.error("Docker logs are corrupt", exc_info=True)
+            return error.stdout.splitlines()
+        else:
+            raise error
 
 
 def run_container(  # noqa: C901
