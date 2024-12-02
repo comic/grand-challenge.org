@@ -1103,6 +1103,9 @@ COMPONENTS_NVIDIA_VISIBLE_DEVICES = os.environ.get(
 )
 COMPONENTS_CONTAINER_PLATFORM = "linux/amd64"
 
+COMPONENTS_VIRTUAL_ENV_BIOM_LOCATION = os.environ.get(
+    "COMPONENTS_VIRTUAL_ENV_BIOM_LOCATION", "/opt/virtualenvs/biom"
+)
 # Set which template pack to use for forms
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
 CRISPY_TEMPLATE_PACK = "bootstrap4"
