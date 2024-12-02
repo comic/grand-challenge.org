@@ -314,8 +314,16 @@ class OverlaySegmentsMixin(models.Model):
         blank=True,
         default=list,
         help_text=(
-            "The schema that defines how categories of values in the overlay "
-            "images are differentiated."
+            "The schema that defines how categories of values in the overlay images are differentiated. "
+            'Example usage: [{"name": "background", "visible": true, "voxel_value": 0},'
+            '{"name": "tissue", "visible": true, "voxel_value": 1}]. '
+            "If a categorical overlay is shown, "
+            "it is possible to show toggles to change the visibility of the different overlay categories. "
+            "To do so, configure the categories that should be displayed. Data from the "
+            "algorithm's output.json can be added as an extra label to each "
+            "toggle using jinja templating. "
+            'For example: [{"name": "Level 0", "visible": false, "voxel_value": 0, '
+            '"metric_template": "{{metrics.volumes[0]}} mm³"}]. '
         ),
         validators=[JSONValidator(schema=OVERLAY_SEGMENTS_SCHEMA)],
     )

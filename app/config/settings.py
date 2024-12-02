@@ -131,6 +131,10 @@ DOCUMENTATION_HELP_FORUM_SLUG = os.environ.get(
     "DOCUMENTATION_HELP_FORUM_SLUG", "general"
 )
 
+DOCUMENTATION_HELP_INTERFACES_SLUG = os.environ.get(
+    "DOCUMENTATION_HELP_INTERFACES_SLUG", "interfaces"
+)
+
 # About Flatpage
 FLATPAGE_ABOUT_URL = os.environ.get("FLATPAGE_ABOUT_URL", "/about/")
 
