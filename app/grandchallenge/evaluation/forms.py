@@ -165,8 +165,9 @@ class PhaseUpdateForm(
             ),
         ]
         self.fields["evaluation_requires_gpu_type"].choices = [
-            (c, GPUTypeChoices(c).label)
-            for c in self.instance.evaluation_selectable_gpu_type_choices
+            (choice.value, choice.label)
+            for choice in GPUTypeChoices
+            if choice in self.instance.evaluation_selectable_gpu_type_choices
         ]
 
         self.helper.layout = Layout(
@@ -541,6 +542,37 @@ class SubmissionForm(
                 "another phase. Please wait for the other evaluation to "
                 "complete."
             )
+
+        job_requirement_errors = []
+        phase = self.cleaned_data["phase"]
+        if (
+            algorithm.job_requires_memory_gb
+            > phase.algorithm_maximum_settable_memory_gb
+        ):
+            job_requirement_errors.append(
+                ValidationError(
+                    "The requested memory for this algorithm "
+                    f"({algorithm.job_requires_memory_gb}) is too high for this "
+                    "phase. The maximum allowed memory is "
+                    f"{phase.algorithm_maximum_settable_memory_gb} GB. "
+                    "Please adjust the setting on the algorithm."
+                )
+            )
+        if (
+            algorithm.job_requires_gpu_type
+            not in phase.algorithm_selectable_gpu_type_choices
+        ):
+            job_requirement_errors.append(
+                ValidationError(
+                    "The requested GPU type for this algorithm "
+                    f"({GPUTypeChoices(algorithm.job_requires_gpu_type).name}) is "
+                    "not allowed for this phase. Options are: "
+                    f"{', '.join([GPUTypeChoices(c).name for c in phase.algorithm_selectable_gpu_type_choices])}. "
+                    "Please adjust the setting on the algorithm."
+                )
+            )
+        if job_requirement_errors:
+            raise ValidationError(job_requirement_errors)
 
         self.cleaned_data["algorithm_image"] = algorithm.active_image
         self.cleaned_data["algorithm_model"] = algorithm.active_model
