@@ -11,7 +11,7 @@ function initialize_jsoneditor_widget(jsoneditorWidgetID) {
         jsoneditorWidget.classList.remove("d-none");
     } else {
         const options = {
-            mode: "code",
+            mode: "tree",
             modes: ["code", "tree"],
             onChangeText: jsonString => {
                 const widget = document.getElementById(jsoneditorWidgetID);
