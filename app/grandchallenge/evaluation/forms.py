@@ -31,8 +31,8 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ImportStatusChoices,
 )
+from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.components.tasks import assign_tarball_from_upload
-from grandchallenge.components.utils import GPUTypeChoices
 from grandchallenge.core.forms import (
     SaveFormInitMixin,
     WorkstationUserFilterMixin,

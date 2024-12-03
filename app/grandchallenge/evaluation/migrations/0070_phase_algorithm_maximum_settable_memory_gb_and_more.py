@@ -2,7 +2,7 @@
 
 from django.db import migrations, models
 
-import grandchallenge.components.utils
+import grandchallenge.components.schemas
 import grandchallenge.core.validators
 
 
@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
             model_name="phase",
             name="algorithm_selectable_gpu_type_choices",
             field=models.JSONField(
-                default=grandchallenge.components.utils.get_default_gpu_type_choices,
+                default=grandchallenge.components.schemas.get_default_gpu_type_choices,
                 help_text='The GPU type choices that participants will be able to select for their algorithm inference jobs. The setting on the algorithm will be validated against this on submission. Options are ["", "A100", "A10G", "V100", "K80", "T4"].',
                 validators=[
                     grandchallenge.core.validators.JSONValidator(

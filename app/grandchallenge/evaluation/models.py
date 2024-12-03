@@ -36,7 +36,7 @@ from grandchallenge.components.models import (
     ImportStatusChoices,
     Tarball,
 )
-from grandchallenge.components.utils import (
+from grandchallenge.components.schemas import (
     SELECTABLE_GPU_TYPES_SCHEMA,
     GPUTypeChoices,
     get_default_gpu_type_choices,

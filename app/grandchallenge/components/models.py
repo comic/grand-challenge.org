@@ -45,7 +45,10 @@ from grandchallenge.charts.specs import components_line
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
 )
-from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
+from grandchallenge.components.schemas import (
+    INTERFACE_VALUE_SCHEMA,
+    GPUTypeChoices,
+)
 from grandchallenge.components.tasks import (
     _repo_login_and_run,
     assign_docker_image_from_upload,
@@ -53,7 +56,6 @@ from grandchallenge.components.tasks import (
     provision_job,
     validate_docker_image,
 )
-from grandchallenge.components.utils import GPUTypeChoices
 from grandchallenge.components.validators import (
     validate_biom_format,
     validate_newick_tree_format,

@@ -29,7 +29,7 @@ from grandchallenge.components.backends.utils import (
     parse_structured_log,
     user_error,
 )
-from grandchallenge.components.utils import GPUTypeChoices
+from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.evaluation.utils import get
 
 logger = logging.getLogger(__name__)

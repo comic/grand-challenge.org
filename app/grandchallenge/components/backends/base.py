@@ -21,7 +21,7 @@ from panimg.image_builders import image_builder_mhd, image_builder_tiff
 
 from grandchallenge.cases.tasks import import_images
 from grandchallenge.components.backends.exceptions import ComponentException
-from grandchallenge.components.utils import GPUTypeChoices
+from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.core.utils.error_messages import (
     format_validation_error_message,
 )

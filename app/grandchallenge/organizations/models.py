@@ -6,7 +6,7 @@ from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 from stdimage import JPEGField
 
-from grandchallenge.components.utils import (
+from grandchallenge.components.schemas import (
     SELECTABLE_GPU_TYPES_SCHEMA,
     GPUTypeChoices,
     get_default_gpu_type_choices,

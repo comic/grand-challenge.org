@@ -67,12 +67,12 @@ from grandchallenge.components.models import (
     ImportStatusChoices,
     InterfaceKindChoices,
 )
-from grandchallenge.components.serializers import ComponentInterfaceSerializer
-from grandchallenge.components.tasks import assign_tarball_from_upload
-from grandchallenge.components.utils import (
+from grandchallenge.components.schemas import (
     GPUTypeChoices,
     get_default_gpu_type_choices,
 )
+from grandchallenge.components.serializers import ComponentInterfaceSerializer
+from grandchallenge.components.tasks import assign_tarball_from_upload
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
     SaveFormInitMixin,

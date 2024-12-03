@@ -27,7 +27,7 @@ from grandchallenge.components.models import (
     ImportStatusChoices,
     InterfaceKind,
 )
-from grandchallenge.components.utils import GPUTypeChoices
+from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )

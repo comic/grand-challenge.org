@@ -24,7 +24,7 @@ from grandchallenge.components.models import (
     InterfaceKind,
     InterfaceKindChoices,
 )
-from grandchallenge.components.utils import GPUTypeChoices
+from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,

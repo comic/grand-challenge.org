@@ -16,7 +16,7 @@ from grandchallenge.components.models import (
     ImportStatusChoices,
     InterfaceKindChoices,
 )
-from grandchallenge.components.utils import GPUTypeChoices
+from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.evaluation.models import (
     CombinedLeaderboard,
