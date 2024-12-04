@@ -127,7 +127,6 @@ output = "app/grandchallenge/core/static/vendored"
 
 [tool.amass.dependencies]
 htmx = { version = "==1.7.0", include = ["htmx(.min)?.js(.map)?"] }
-handy-scroll = { version = "==2.0.3", provider = "unpkg", include = [ "src/handy-scroll.css", "dist/handy-scroll.mjs"] }
 "moment.js" = { version = "==2.24.0", include = ["moment(.min)?.js(.map)?"] }
 vega = { version = "==5.20.2", include = ["vega(.min)?.js(.map)?"], maps = ["vega.min.js.map"] }
 vega-lite = { version = "==5.1.0", include = ["vega-lite(.min)?.js(.map)?"] }
