@@ -4,6 +4,10 @@
 {# Bootstrap first, requires jquery from head_script #}
 <script src="{% static 'vendored/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 
+{# Floating scrollbar: floating-scroll, used by DataTables #}
+<script src="{% static 'vendored/floating-scroll/dist/jquery.floatingscroll.min.js' %}" defer></script>
+
+
 {# DataTables with colvis #}
 {% compress js %}
     <script src="{% static 'vendored/datatables.net/js/jquery.dataTables.min.js' %}"></script>
@@ -14,6 +18,9 @@
     <script src="{% static 'vendored/datatables.net-responsive/js/dataTables.responsive.min.js' %}"></script>
     <script src="{% static 'vendored/datatables.net-responsive-bs4/js/responsive.bootstrap4.min.js' %}"></script>
 {% endcompress %}
+
+{# Set global defaults for datatables #}
+<script type="module" src="{% static 'js/datatables.defaults.mjs' %}"></script>
 
 {# Htmx #}
 <script id="htmx-script" src="{% static 'vendored/htmx/htmx.min.js' %}" defer></script>
