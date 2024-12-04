@@ -71,9 +71,13 @@
     <span class="n">ComponentImage</span><span class="p">,</span>
     <span class="n">ComponentInterface</span><span class="p">,</span>
     <span class="n">ComponentJob</span><span class="p">,</span>
-    <span class="n">GPUTypeChoices</span><span class="p">,</span>
     <span class="n">ImportStatusChoices</span><span class="p">,</span>
     <span class="n">Tarball</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.components.schemas</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SELECTABLE_GPU_TYPES_SCHEMA</span><span class="p">,</span>
+    <span class="n">GPUTypeChoices</span><span class="p">,</span>
+    <span class="n">get_default_gpu_type_choices</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.core.models</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">FieldChangeMixin</span><span class="p">,</span>
@@ -171,21 +175,6 @@
         <span class="p">},</span>
     <span class="p">},</span>
 <span class="p">}</span>
-
-<span class="n">SELECTABLE_GPU_TYPES_SCHEMA</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;$schema&quot;</span><span class="p">:</span> <span class="s2">&quot;http://json-schema.org/draft-07/schema&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;array&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;The Selectable GPU Types Schema&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;items&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;enum&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">choice</span> <span class="k">for</span> <span class="n">choice</span> <span class="ow">in</span> <span class="n">GPUTypeChoices</span><span class="p">],</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;uniqueItems&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-<span class="p">}</span>
-
-
-<span class="k">def</span> <span class="nf">get_default_gpu_type_choices</span><span class="p">():</span>
-    <span class="k">return</span> <span class="p">[</span><span class="n">GPUTypeChoices</span><span class="o">.</span><span class="n">NO_GPU</span><span class="p">,</span> <span class="n">GPUTypeChoices</span><span class="o">.</span><span class="n">T4</span><span class="p">]</span>
 
 
 <span class="k">class</span> <span class="nc">PhaseManager</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Manager</span><span class="p">):</span>
