@@ -19,12 +19,14 @@ def create_algorithm_interfaces(apps, _schema_editor):
         "algorithms", "AlgorithmInterfaceThroughTable"
     )
 
-    for algorithm in Algorithm.objects.all():
+    for algorithm in Algorithm.objects.prefetch_related(
+        "inputs", "outputs"
+    ).all():
         inputs = algorithm.inputs.all()
         outputs = algorithm.outputs.all()
 
         io = get_existing_interface_for_inputs_and_outputs(
-            inputs=inputs, outputs=outputs
+            model=AlgorithmInterface, inputs=inputs, outputs=outputs
         )
         if not io:
             io = AlgorithmInterface.objects.create()

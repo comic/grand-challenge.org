@@ -69,27 +69,6 @@ logger = logging.getLogger(__name__)
 JINJA_ENGINE = sandbox.ImmutableSandboxedEnvironment()
 
 
-def get_existing_interface_for_inputs_and_outputs(*, inputs, outputs):
-    try:
-        return AlgorithmInterface.objects.annotate(
-            input_count=Count("inputs", distinct=True),
-            output_count=Count("outputs", distinct=True),
-            relevant_input_count=Count(
-                "inputs", filter=Q(inputs__in=inputs), distinct=True
-            ),
-            relevant_output_count=Count(
-                "outputs", filter=Q(outputs__in=outputs), distinct=True
-            ),
-        ).get(
-            relevant_input_count=len(inputs),
-            relevant_output_count=len(outputs),
-            input_count=len(inputs),
-            output_count=len(outputs),
-        )
-    except ObjectDoesNotExist:
-        return None
-
-
 class AlgorithmInterfaceManager(models.Manager):
 
     def delete(self):
@@ -122,6 +101,29 @@ class InterfaceInputThroughTable(models.Model):
 class InterfaceOutputThroughTable(models.Model):
     output = models.ForeignKey(ComponentInterface, on_delete=models.CASCADE)
     interface = models.ForeignKey(AlgorithmInterface, on_delete=models.CASCADE)
+
+
+def get_existing_interface_for_inputs_and_outputs(
+    *, inputs, outputs, model=AlgorithmInterface
+):
+    try:
+        return model.objects.annotate(
+            input_count=Count("inputs", distinct=True),
+            output_count=Count("outputs", distinct=True),
+            relevant_input_count=Count(
+                "inputs", filter=Q(inputs__in=inputs), distinct=True
+            ),
+            relevant_output_count=Count(
+                "outputs", filter=Q(outputs__in=outputs), distinct=True
+            ),
+        ).get(
+            relevant_input_count=len(inputs),
+            relevant_output_count=len(outputs),
+            input_count=len(inputs),
+            output_count=len(outputs),
+        )
+    except ObjectDoesNotExist:
+        return None
 
 
 class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
