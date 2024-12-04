@@ -16,6 +16,8 @@ from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
+from grandchallenge.components.models import GPUTypeChoices
+from grandchallenge.components.schemas import get_default_gpu_type_choices
 from grandchallenge.core.widgets import MarkdownEditorInlineWidget
 from grandchallenge.subdomains.utils import reverse_lazy
 
@@ -192,6 +194,15 @@ structured_challenge_submission_help_text = (
 class ChallengeRequestForm(
     ChallengeRequestBudgetFieldValidationMixin, forms.ModelForm
 ):
+    algorithm_selectable_gpu_type_choices = forms.MultipleChoiceField(
+        initial=get_default_gpu_type_choices(),
+        choices=GPUTypeChoices.choices,
+        widget=forms.CheckboxSelectMultiple,
+        label="",
+        help_text="The GPU type choices that participants will be able to select for "
+        "their algorithm inference jobs.",
+    )
+
     class Meta:
         model = ChallengeRequest
         fields = (
@@ -203,6 +214,7 @@ class ChallengeRequestForm(
             "number_of_tasks",
             "average_size_of_test_image_in_mb",
             "inference_time_limit_in_minutes",
+            "algorithm_maximum_settable_memory_gb",
             "algorithm_inputs",
             "algorithm_outputs",
             *phase_1_items,
@@ -260,6 +272,7 @@ class ChallengeRequestForm(
             "phase_2_number_of_submissions_per_team": "Expected number of submissions per team to Phase 2",
             "budget_for_hosting_challenge": "Budget for hosting challenge in Euros",
             "inference_time_limit_in_minutes": "Average algorithm job run time in minutes",
+            "algorithm_maximum_settable_memory_gb": "Maximum memory for algorithm jobs in GB",
             "structured_challenge_submission_doi": "DOI",
             "structured_challenge_submission_form": "PDF",
             "challenge_fee_agreement": format_html(
@@ -490,6 +503,8 @@ class ChallengeRequestForm(
                     "number_of_tasks",
                     "average_size_of_test_image_in_mb",
                     "inference_time_limit_in_minutes",
+                    "algorithm_selectable_gpu_type_choices",
+                    "algorithm_maximum_settable_memory_gb",
                     HTML(
                         format_html(
                             (
