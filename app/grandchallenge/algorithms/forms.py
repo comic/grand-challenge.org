@@ -48,6 +48,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmModel,
     AlgorithmPermissionRequest,
     Job,
+    get_existing_interface_for_inputs_and_outputs,
 )
 from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
@@ -1296,7 +1297,7 @@ class AlgorithmInterfaceBaseForm(
             )
 
         cleaned_data["existing_io"] = (
-            AlgorithmInterface.objects.get_existing_interface_for_inputs_and_outputs(
+            get_existing_interface_for_inputs_and_outputs(
                 inputs=inputs,
                 outputs=outputs,
             )

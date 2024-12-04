@@ -17,6 +17,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmInterfaceThroughTable,
     AlgorithmUserCredit,
     Job,
+    get_existing_interface_for_inputs_and_outputs,
 )
 from grandchallenge.components.models import (
     CIVData,
@@ -1387,10 +1388,13 @@ class TestAlgorithmImageCredits:
 
 @pytest.mark.django_db
 def test_algorithm_interface_cannot_be_deleted():
-    interface = AlgorithmInterfaceFactory()
+    interface, _, _ = AlgorithmInterfaceFactory.create_batch(3)
 
     with pytest.raises(ValidationError):
         interface.delete()
+
+    with pytest.raises(ValidationError):
+        AlgorithmInterface.objects.delete()
 
 
 @pytest.mark.django_db
@@ -1437,16 +1441,17 @@ def test_algorithminterfacethroughtable_unique_constraints():
         ([2], [1], None),
         ([3, 4, 5], [1], None),
         ([1], [3, 4], None),
+        ([1, 3], [4], None),
     ),
 )
 @pytest.mark.django_db
 def test_get_existing_interface_for_inputs_and_outputs(
     inputs, outputs, expected_output
 ):
-    io1, io2, io3, io4, io5 = AlgorithmInterfaceFactory.create_batch(5)
+    io1, io2, io3, io4, io5, io6 = AlgorithmInterfaceFactory.create_batch(6)
     ci1, ci2, ci3, ci4, ci5, ci6 = ComponentInterfaceFactory.create_batch(6)
 
-    interfaces = [io1, io2, io3, io4, io5]
+    interfaces = [io1, io2, io3, io4, io5, io6]
     cis = [ci1, ci2, ci3, ci4, ci5, ci6]
 
     io1.inputs.set([ci1])
@@ -1454,17 +1459,19 @@ def test_get_existing_interface_for_inputs_and_outputs(
     io3.inputs.set([ci3, ci4, ci5])
     io4.inputs.set([ci1])
     io5.inputs.set([ci5, ci6])
+    io6.inputs.set([ci1, ci2])
 
     io1.outputs.set([ci2])
     io2.outputs.set([ci3, ci4])
     io3.outputs.set([ci6])
     io4.outputs.set([ci3, ci4, ci6])
     io5.outputs.set([ci2])
+    io6.outputs.set([ci4])
 
     inputs = [cis[i - 1] for i in inputs]
     outputs = [cis[i - 1] for i in outputs]
 
-    existing_interface = AlgorithmInterface.objects.get_existing_interface_for_inputs_and_outputs(
+    existing_interface = get_existing_interface_for_inputs_and_outputs(
         inputs=inputs, outputs=outputs
     )
 

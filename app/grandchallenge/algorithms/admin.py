@@ -8,10 +8,7 @@ from django.forms import ModelForm
 from django.utils.html import format_html
 from guardian.admin import GuardedModelAdmin
 
-from grandchallenge.algorithms.forms import (
-    AlgorithmInterfaceBaseForm,
-    AlgorithmIOValidationMixin,
-)
+from grandchallenge.algorithms.forms import AlgorithmInterfaceBaseForm
 from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmGroupObjectPermission,
@@ -47,7 +44,7 @@ from grandchallenge.core.utils.grand_challenge_forge import (
 )
 
 
-class AlgorithmAdminForm(AlgorithmIOValidationMixin, ModelForm):
+class AlgorithmAdminForm(ModelForm):
     class Meta:
         model = Algorithm
         fields = "__all__"
@@ -55,7 +52,7 @@ class AlgorithmAdminForm(AlgorithmIOValidationMixin, ModelForm):
 
 @admin.register(Algorithm)
 class AlgorithmAdmin(GuardedModelAdmin):
-    readonly_fields = ("algorithm_forge_json",)
+    readonly_fields = ("algorithm_forge_json", "inputs", "outputs")
     list_display = (
         "title",
         "created",

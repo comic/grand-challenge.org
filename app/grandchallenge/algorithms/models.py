@@ -69,36 +69,59 @@ logger = logging.getLogger(__name__)
 JINJA_ENGINE = sandbox.ImmutableSandboxedEnvironment()
 
 
+def get_existing_interface_for_inputs_and_outputs(*, inputs, outputs):
+    try:
+        return AlgorithmInterface.objects.annotate(
+            input_count=Count("inputs", distinct=True),
+            output_count=Count("outputs", distinct=True),
+            relevant_input_count=Count(
+                "inputs", filter=Q(inputs__in=inputs), distinct=True
+            ),
+            relevant_output_count=Count(
+                "outputs", filter=Q(outputs__in=outputs), distinct=True
+            ),
+        ).get(
+            relevant_input_count=len(inputs),
+            relevant_output_count=len(outputs),
+            input_count=len(inputs),
+            output_count=len(outputs),
+        )
+    except ObjectDoesNotExist:
+        return None
+
+
 class AlgorithmInterfaceManager(models.Manager):
-    def get_existing_interface_for_inputs_and_outputs(
-        self, *, inputs, outputs
-    ):
-        try:
-            return self.annotate(
-                input_count=Count("inputs", distinct=True),
-                output_count=Count("outputs", distinct=True),
-            ).get(
-                inputs__in=inputs,
-                outputs__in=outputs,
-                input_count=len(inputs),
-                output_count=len(outputs),
-            )
-        except ObjectDoesNotExist:
-            return None
+
+    def delete(self):
+        raise NotImplementedError("Bulk delete is not allowed.")
 
 
-class AlgorithmInterface(models.Model):
+class AlgorithmInterface(UUIDModel):
     inputs = models.ManyToManyField(
-        to=ComponentInterface, related_name="inputs"
+        to=ComponentInterface,
+        related_name="inputs",
+        through="algorithms.InterfaceInputThroughTable",
     )
     outputs = models.ManyToManyField(
-        to=ComponentInterface, related_name="outputs"
+        to=ComponentInterface,
+        related_name="outputs",
+        through="algorithms.InterfaceOutputThroughTable",
     )
 
     objects = AlgorithmInterfaceManager()
 
     def delete(self, *args, **kwargs):
         raise ValidationError("AlgorithmInterfaces cannot be deleted.")
+
+
+class InterfaceInputThroughTable(models.Model):
+    input = models.ForeignKey(ComponentInterface, on_delete=models.CASCADE)
+    interface = models.ForeignKey(AlgorithmInterface, on_delete=models.CASCADE)
+
+
+class InterfaceOutputThroughTable(models.Model):
+    output = models.ForeignKey(ComponentInterface, on_delete=models.CASCADE)
+    interface = models.ForeignKey(AlgorithmInterface, on_delete=models.CASCADE)
 
 
 class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
