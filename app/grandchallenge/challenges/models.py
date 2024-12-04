@@ -45,7 +45,11 @@ from grandchallenge.challenges.emails import (
     send_challenge_requested_email_to_reviewers,
 )
 from grandchallenge.challenges.utils import ChallengeTypeChoices
-from grandchallenge.components.schemas import GPUTypeChoices
+from grandchallenge.components.schemas import (
+    SELECTABLE_GPU_TYPES_SCHEMA,
+    GPUTypeChoices,
+    get_default_gpu_type_choices,
+)
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import (
     get_banner_path,
@@ -59,6 +63,7 @@ from grandchallenge.core.utils.access_requests import (
 )
 from grandchallenge.core.validators import (
     ExtensionValidator,
+    JSONValidator,
     MimeTypeValidator,
 )
 from grandchallenge.evaluation.tasks import assign_evaluation_permissions
@@ -905,6 +910,22 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             MinValueValidator(limit_value=5),
             MaxValueValidator(limit_value=60),
         ],
+    )
+    algorithm_selectable_gpu_type_choices = models.JSONField(
+        default=get_default_gpu_type_choices,
+        help_text=(
+            "The GPU type choices that participants will be able to select for their "
+            "algorithm inference jobs. Options are "
+            f"{GPUTypeChoices.values}.".replace("'", '"')
+        ),
+        validators=[JSONValidator(schema=SELECTABLE_GPU_TYPES_SCHEMA)],
+    )
+    algorithm_maximum_settable_memory_gb = models.PositiveSmallIntegerField(
+        default=settings.ALGORITHMS_MAX_MEMORY_GB,
+        help_text=(
+            "Maximum amount of memory that participants will be allowed to "
+            "assign to algorithm inference jobs for submission."
+        ),
     )
     average_size_of_test_image_in_mb = models.PositiveIntegerField(
         null=True,
