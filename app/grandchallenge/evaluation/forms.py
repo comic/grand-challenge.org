@@ -29,9 +29,9 @@ from grandchallenge.challenges.models import Challenge, ChallengeRequest
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.components.models import (
     ComponentInterface,
-    GPUTypeChoices,
     ImportStatusChoices,
 )
+from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.components.tasks import assign_tarball_from_upload
 from grandchallenge.core.forms import (
     SaveFormInitMixin,

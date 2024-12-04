@@ -6,10 +6,8 @@ from factory.django import ImageField
 
 from grandchallenge.algorithms.forms import AlgorithmForPhaseForm
 from grandchallenge.algorithms.models import Job
-from grandchallenge.components.models import (
-    GPUTypeChoices,
-    ImportStatusChoices,
-)
+from grandchallenge.components.models import ImportStatusChoices
+from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.evaluation.forms import (
     ConfigureAlgorithmPhasesForm,
     EvaluationGroundTruthForm,
@@ -127,7 +125,7 @@ class TestSubmissionForm:
 
         assert alg1 in form.fields["algorithm"].queryset
         assert alg2 not in form.fields["algorithm"].queryset
-        assert alg2 not in form.fields["algorithm"].queryset
+        assert alg3 not in form.fields["algorithm"].queryset
         assert alg4 not in form.fields["algorithm"].queryset
 
     def test_algorithm_queryset_if_parent_phase_exists(self):

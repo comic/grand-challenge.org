@@ -64,9 +64,12 @@ from grandchallenge.components.models import (
     CIVData,
     ComponentInterface,
     ComponentJob,
-    GPUTypeChoices,
     ImportStatusChoices,
     InterfaceKindChoices,
+)
+from grandchallenge.components.schemas import (
+    GPUTypeChoices,
+    get_default_gpu_type_choices,
 )
 from grandchallenge.components.serializers import ComponentInterfaceSerializer
 from grandchallenge.components.tasks import assign_tarball_from_upload
@@ -86,6 +89,7 @@ from grandchallenge.evaluation.utils import SubmissionKindChoices, get
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.hanging_protocols.forms import ViewContentExampleMixin
 from grandchallenge.hanging_protocols.models import VIEW_CONTENT_SCHEMA
+from grandchallenge.organizations.models import Organization
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.uploads.models import UserUpload
@@ -423,13 +427,28 @@ class AlgorithmForm(
             )
         )
 
+    @cached_property
+    def job_requirement_properties_from_organizations(self):
+        return Organization.objects.filter(
+            members_group__user=self._user
+        ).aggregate(
+            max_memory=Max("algorithm_maximum_settable_memory_gb"),
+            gpu_type_choices=ArrayAgg(
+                "algorithm_selectable_gpu_type_choices", distinct=True
+            ),
+        )
+
     @property
     def selectable_gpu_type_choices(self):
         choices_set = {
-            GPUTypeChoices.NO_GPU,
-            GPUTypeChoices.T4,
+            *get_default_gpu_type_choices(),
             *chain.from_iterable(
                 self.job_requirement_properties_from_phases["gpu_type_choices"]
+            ),
+            *chain.from_iterable(
+                self.job_requirement_properties_from_organizations[
+                    "gpu_type_choices"
+                ]
             ),
         }
         return [
@@ -446,6 +465,11 @@ class AlgorithmForm(
         ]
         if maximum_in_phases is not None:
             value = max(value, maximum_in_phases)
+        maximum_in_organizations = (
+            self.job_requirement_properties_from_organizations["max_memory"]
+        )
+        if maximum_in_organizations is not None:
+            value = max(value, maximum_in_organizations)
         return value
 
 

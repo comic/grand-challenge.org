@@ -24,8 +24,8 @@ from grandchallenge.challenges.models import Challenge, ChallengeSeries
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
-    GPUTypeChoices,
 )
+from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.direct_messages.models import Conversation, DirectMessage
 from grandchallenge.evaluation.models import (

@@ -13,10 +13,10 @@ from guardian.shortcuts import assign_perm, remove_perm
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.components.models import (
     ComponentInterface,
-    GPUTypeChoices,
     ImportStatusChoices,
     InterfaceKindChoices,
 )
+from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.evaluation.models import (
     CombinedLeaderboard,

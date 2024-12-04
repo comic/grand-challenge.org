@@ -45,7 +45,7 @@ from grandchallenge.challenges.emails import (
     send_challenge_requested_email_to_reviewers,
 )
 from grandchallenge.challenges.utils import ChallengeTypeChoices
-from grandchallenge.components.models import GPUTypeChoices
+from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import (
     get_banner_path,

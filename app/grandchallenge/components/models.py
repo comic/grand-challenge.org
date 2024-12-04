@@ -25,7 +25,7 @@ from django.core.validators import (
     RegexValidator,
 )
 from django.db import models, transaction
-from django.db.models import Avg, F, IntegerChoices, QuerySet, Sum, TextChoices
+from django.db.models import Avg, F, IntegerChoices, QuerySet, Sum
 from django.db.transaction import on_commit
 from django.forms import ModelChoiceField
 from django.forms.models import model_to_dict
@@ -45,7 +45,10 @@ from grandchallenge.charts.specs import components_line
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
 )
-from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
+from grandchallenge.components.schemas import (
+    INTERFACE_VALUE_SCHEMA,
+    GPUTypeChoices,
+)
 from grandchallenge.components.tasks import (
     _repo_login_and_run,
     assign_docker_image_from_upload,
@@ -88,15 +91,6 @@ from grandchallenge.workstation_configs.models import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-class GPUTypeChoices(TextChoices):
-    NO_GPU = "", _("No GPU")
-    A100 = "A100", _("NVIDIA A100 Tensor Core GPU")
-    A10G = "A10G", _("NVIDIA A10G Tensor Core GPU")
-    V100 = "V100", _("NVIDIA V100 Tensor Core GPU")
-    K80 = "K80", _("NVIDIA K80 GPU")
-    T4 = "T4", _("NVIDIA T4 Tensor Core GPU")
 
 
 class InterfaceKindChoices(models.TextChoices):

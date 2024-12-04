@@ -1,6 +1,6 @@
 import factory
 
-from grandchallenge.components.models import GPUTypeChoices
+from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.evaluation.models import (
     CombinedLeaderboard,
     Evaluation,
