@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:0a7943db0d3b15f7feaa43639b886c458726c259b578c501c832af80c1c46d34",
+  "content_hash": "sha256:bfd1d601c6b442ee1208f71e4489218cb583e20426e45c83f4623e9f21e4c744",
   "dependencies": [
     {
       "name": "@github/markdown-toolbar-element",
@@ -650,6 +650,22 @@
         {
           "name": "hammer.min.js.map",
           "sri": null
+        }
+      ],
+      "maps": []
+    },
+    {
+      "name": "handy-scroll",
+      "version": "2.0.3",
+      "provider": "unpkg",
+      "assets": [
+        {
+          "name": "dist/handy-scroll.mjs",
+          "sri": "sha384-bFalNDFBRKcYPGD6PcCWp+Pq0fANfllZSKMYlSyv+4sLazbz8j3VE9qxToPNyPXB"
+        },
+        {
+          "name": "src/handy-scroll.css",
+          "sri": "sha384-ADprurB00ZkkgjTdRVDLluFFvObFdoFcsiPkCQ2GkQ3i2CEzmePbO6bXJidvXtAx"
         }
       ],
       "maps": []
