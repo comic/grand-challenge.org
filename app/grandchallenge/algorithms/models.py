@@ -71,6 +71,19 @@ JINJA_ENGINE = sandbox.ImmutableSandboxedEnvironment()
 
 class AlgorithmInterfaceManager(models.Manager):
 
+    def create(
+        self,
+        *,
+        inputs,
+        outputs,
+        **kwargs,
+    ):
+        obj = super().create(**kwargs)
+        obj.inputs.set(inputs)
+        obj.outputs.set(outputs)
+
+        return obj
+
     def delete(self):
         raise NotImplementedError("Bulk delete is not allowed.")
 
@@ -79,12 +92,12 @@ class AlgorithmInterface(UUIDModel):
     inputs = models.ManyToManyField(
         to=ComponentInterface,
         related_name="inputs",
-        through="algorithms.InterfaceInputThroughTable",
+        through="algorithms.AlgorithmInterfaceInput",
     )
     outputs = models.ManyToManyField(
         to=ComponentInterface,
         related_name="outputs",
-        through="algorithms.InterfaceOutputThroughTable",
+        through="algorithms.AlgorithmInterfaceOutput",
     )
 
     objects = AlgorithmInterfaceManager()
@@ -93,12 +106,12 @@ class AlgorithmInterface(UUIDModel):
         raise ValidationError("AlgorithmInterfaces cannot be deleted.")
 
 
-class InterfaceInputThroughTable(models.Model):
+class AlgorithmInterfaceInput(models.Model):
     input = models.ForeignKey(ComponentInterface, on_delete=models.CASCADE)
     interface = models.ForeignKey(AlgorithmInterface, on_delete=models.CASCADE)
 
 
-class InterfaceOutputThroughTable(models.Model):
+class AlgorithmInterfaceOutput(models.Model):
     output = models.ForeignKey(ComponentInterface, on_delete=models.CASCADE)
     interface = models.ForeignKey(AlgorithmInterface, on_delete=models.CASCADE)
 
@@ -208,7 +221,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
     interfaces = models.ManyToManyField(
         to=AlgorithmInterface,
         related_name="algorithm_interfaces",
-        through="algorithms.AlgorithmInterfaceThroughTable",
+        through="algorithms.AlgorithmAlgorithmInterface",
     )
     inputs = models.ManyToManyField(
         to=ComponentInterface, related_name="algorithm_inputs", blank=False
@@ -583,7 +596,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         return title
 
 
-class AlgorithmInterfaceThroughTable(models.Model):
+class AlgorithmAlgorithmInterface(models.Model):
     algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
     interface = models.ForeignKey(AlgorithmInterface, on_delete=models.CASCADE)
     is_default = models.BooleanField(default=False)

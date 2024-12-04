@@ -11,12 +11,12 @@ from guardian.admin import GuardedModelAdmin
 from grandchallenge.algorithms.forms import AlgorithmInterfaceBaseForm
 from grandchallenge.algorithms.models import (
     Algorithm,
+    AlgorithmAlgorithmInterface,
     AlgorithmGroupObjectPermission,
     AlgorithmImage,
     AlgorithmImageGroupObjectPermission,
     AlgorithmImageUserObjectPermission,
     AlgorithmInterface,
-    AlgorithmInterfaceThroughTable,
     AlgorithmModel,
     AlgorithmModelGroupObjectPermission,
     AlgorithmModelUserObjectPermission,
@@ -80,7 +80,7 @@ class AlgorithmAdmin(GuardedModelAdmin):
         )
 
     def default_io(self, obj):
-        return AlgorithmInterfaceThroughTable.objects.get(
+        return AlgorithmAlgorithmInterface.objects.get(
             algorithm=obj, is_default=True
         )
 
@@ -280,8 +280,8 @@ class AlgorithmInterfaceAdmin(GuardedModelAdmin):
         return False
 
 
-@admin.register(AlgorithmInterfaceThroughTable)
-class AlgorithmInterfaceThroughTableAdmin(GuardedModelAdmin):
+@admin.register(AlgorithmAlgorithmInterface)
+class AlgorithmAlgorithmInterfaceAdmin(GuardedModelAdmin):
     list_display = (
         "pk",
         "interface",

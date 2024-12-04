@@ -10,7 +10,10 @@ from grandchallenge.algorithms.models import (
     Job,
 )
 from grandchallenge.components.models import GPUTypeChoices
-from tests.components_tests.factories import ComponentInterfaceValueFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.factories import (
     ImageFactory,
     UserFactory,
@@ -90,3 +93,14 @@ class AlgorithmUserCreditFactory(factory.django.DjangoModelFactory):
 class AlgorithmInterfaceFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = AlgorithmInterface
+
+    @classmethod
+    def _create(cls, model_class, *args, **kwargs):
+        manager = cls._get_manager(model_class)
+        inputs = kwargs.pop("inputs", None)
+        outputs = kwargs.pop("outputs", None)
+        if not inputs:
+            inputs = [ComponentInterfaceFactory()]
+        if not outputs:
+            outputs = [ComponentInterfaceFactory()]
+        return manager.create(*args, inputs=inputs, outputs=outputs, **kwargs)

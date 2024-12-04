@@ -13,8 +13,8 @@ from django.utils.timezone import now
 
 from grandchallenge.algorithms.models import (
     Algorithm,
+    AlgorithmAlgorithmInterface,
     AlgorithmInterface,
-    AlgorithmInterfaceThroughTable,
     AlgorithmUserCredit,
     Job,
     get_existing_interface_for_inputs_and_outputs,
@@ -1393,38 +1393,38 @@ def test_algorithm_interface_cannot_be_deleted():
     with pytest.raises(ValidationError):
         interface.delete()
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(NotImplementedError):
         AlgorithmInterface.objects.delete()
 
 
 @pytest.mark.django_db
-def test_algorithminterfacethroughtable_unique_constraints():
+def test_algorithmalgorithminterface_unique_constraints():
     interface1, interface2 = AlgorithmInterfaceFactory.create_batch(2)
     algorithm = AlgorithmFactory()
 
-    io = AlgorithmInterfaceThroughTable.objects.create(
+    io = AlgorithmAlgorithmInterface.objects.create(
         interface=interface1, algorithm=algorithm, is_default=True
     )
 
     # cannot add a second default interface to an algorithm
     with pytest.raises(IntegrityError):
         with transaction.atomic():
-            AlgorithmInterfaceThroughTable.objects.create(
+            AlgorithmAlgorithmInterface.objects.create(
                 interface=interface2, algorithm=algorithm, is_default=True
             )
 
     # cannot add a second time the same interface for the same algorithm
     with pytest.raises(IntegrityError):
         with transaction.atomic():
-            AlgorithmInterfaceThroughTable.objects.create(
+            AlgorithmAlgorithmInterface.objects.create(
                 interface=interface1, algorithm=algorithm, is_default=False
             )
 
     # but you can update an existing entry from default to non-default
     io.is_default = False
     io.save()
-    assert AlgorithmInterfaceThroughTable.objects.count() == 1
-    assert not AlgorithmInterfaceThroughTable.objects.get().is_default
+    assert AlgorithmAlgorithmInterface.objects.count() == 1
+    assert not AlgorithmAlgorithmInterface.objects.get().is_default
 
 
 @pytest.mark.parametrize(
@@ -1479,3 +1479,21 @@ def test_get_existing_interface_for_inputs_and_outputs(
         assert existing_interface == interfaces[expected_output - 1]
     else:
         assert not existing_interface
+
+
+@pytest.mark.django_db
+def test_algorithminterface_create():
+    inputs = [ComponentInterfaceFactory(), ComponentInterfaceFactory()]
+    outputs = [ComponentInterfaceFactory(), ComponentInterfaceFactory()]
+
+    with pytest.raises(TypeError) as e:
+        AlgorithmInterface.objects.create()
+
+    assert (
+        "AlgorithmInterfaceManager.create() missing 2 required keyword-only arguments: 'inputs' and 'outputs'"
+        in str(e)
+    )
+
+    io = AlgorithmInterface.objects.create(inputs=inputs, outputs=outputs)
+    assert list(io.inputs.all()) == inputs
+    assert list(io.outputs.all()) == outputs
