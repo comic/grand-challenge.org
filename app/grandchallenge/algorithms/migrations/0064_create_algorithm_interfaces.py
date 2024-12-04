@@ -25,7 +25,7 @@ def create_algorithm_interfaces(apps, _schema_editor):
             io.inputs.set(inputs)
             io.outputs.set(outputs)
 
-        algorithm.interfaces.add(io, through_default={"is_default": True})
+        algorithm.interfaces.add(io, through_defaults={"is_default": True})
 
 
 class Migration(migrations.Migration):
