@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:0a7943db0d3b15f7feaa43639b886c458726c259b578c501c832af80c1c46d34",
+  "content_hash": "sha256:74a5cc80f4614ed1a49e6ee281debcbe4c437d2a894ea78577e1235f07713600",
   "dependencies": [
     {
       "name": "@github/markdown-toolbar-element",
@@ -554,6 +554,22 @@
         {
           "name": "js/responsive.bootstrap4.min.js",
           "sri": "sha384-iqV3x/YAPev0L8Y35rZF1e8LuilKG+h0gtjkpS6dr6HFEZ139n6Q8YcFQ3kZfKu/"
+        }
+      ],
+      "maps": []
+    },
+    {
+      "name": "floating-scroll",
+      "version": "3.2.0",
+      "provider": "unpkg",
+      "assets": [
+        {
+          "name": "dist/jquery.floatingscroll.css",
+          "sri": "sha384-IhiSZ9rydjTj1D6ZswgB2pCL8hba3n2U7ljG1A0IOaLieaahZNTCTyBEkTECkPaL"
+        },
+        {
+          "name": "dist/jquery.floatingscroll.min.js",
+          "sri": "sha384-gS4dgnfbPsSGHw07CtiuYGt7z8RfOScrwZbvmFGEVblveZgbTwScK+29f9wBreQV"
         }
       ],
       "maps": []
