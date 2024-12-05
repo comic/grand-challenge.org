@@ -646,6 +646,20 @@ class ChallengeRequestBudgetUpdateForm(
             "phase_2_number_of_submissions_per_team",
             "phase_2_number_of_test_images",
         )
+        labels = {
+            "phase_1_number_of_submissions_per_team": "Expected number of submissions per team to Phase 1",
+            "phase_2_number_of_submissions_per_team": "Expected number of submissions per team to Phase 2",
+            "inference_time_limit_in_minutes": "Average algorithm job run time in minutes",
+            "algorithm_maximum_settable_memory_gb": "Maximum memory for algorithm jobs in GB",
+        }
+        help_texts = {
+            "inference_time_limit_in_minutes": (
+                "The average time that you expect an algorithm job to take in minutes. "
+                "This time estimate should account for everything that needs to happen "
+                "for an algorithm container to process <u>one single image, including "
+                "model loading, i/o, preprocessing and inference.</u>"
+            ),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
