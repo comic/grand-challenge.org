@@ -1176,7 +1176,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             import_string(settings.COMPONENTS_DEFAULT_BACKEND)(
                 job_id="",
                 exec_image_repo_tag="",
-                # Assume these options picked by the participant
                 memory_limit=self.algorithm_maximum_settable_memory_gb,
                 time_limit=self.inference_time_limit_in_minutes,
                 requires_gpu_type=gpu_type,
