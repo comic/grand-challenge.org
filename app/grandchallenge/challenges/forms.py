@@ -110,47 +110,6 @@ class ChallengeUpdateForm(forms.ModelForm):
         return cleaned_data
 
 
-class ChallengeRequestBudgetFieldValidationMixin:
-    def clean(self):
-        cleaned_data = super().clean()
-        if (
-            "average_size_of_test_image_in_mb" not in cleaned_data.keys()
-            or not cleaned_data["average_size_of_test_image_in_mb"]
-        ):
-            raise ValidationError(
-                "Please provide the average test image size."
-            )
-        if (
-            "inference_time_limit_in_minutes" not in cleaned_data.keys()
-            or not cleaned_data["inference_time_limit_in_minutes"]
-        ):
-            raise ValidationError("Please provide an inference time limit.")
-        if (
-            "phase_1_number_of_submissions_per_team" not in cleaned_data.keys()
-            or "phase_2_number_of_submissions_per_team"
-            not in cleaned_data.keys()
-            or cleaned_data["phase_1_number_of_submissions_per_team"] is None
-            or cleaned_data["phase_2_number_of_submissions_per_team"] is None
-        ):
-            raise ValidationError(
-                "Please provide the number of "
-                "submissions per team for each phase. Enter 0 for phase 2 "
-                "if you only have 1 phase."
-            )
-        if (
-            "phase_1_number_of_test_images" not in cleaned_data.keys()
-            or "phase_2_number_of_test_images" not in cleaned_data.keys()
-            or cleaned_data["phase_1_number_of_test_images"] is None
-            or cleaned_data["phase_2_number_of_test_images"] is None
-        ):
-            raise ValidationError(
-                "Please provide the number of "
-                "test images for each phase. Enter 0 for phase 2 if you "
-                "only have 1 phase."
-            )
-        return cleaned_data
-
-
 general_information_items_1 = (
     "title",
     "short_name",
@@ -191,9 +150,7 @@ structured_challenge_submission_help_text = (
 )
 
 
-class ChallengeRequestForm(
-    ChallengeRequestBudgetFieldValidationMixin, forms.ModelForm
-):
+class ChallengeRequestForm(forms.ModelForm):
     algorithm_selectable_gpu_type_choices = forms.MultipleChoiceField(
         initial=get_default_gpu_type_choices(),
         choices=GPUTypeChoices.choices,
@@ -375,7 +332,8 @@ class ChallengeRequestForm(
             "phase_2_number_of_test_images": (
                 "Number of test images for this phase. If you're <a href="
                 "'https://grand-challenge.org/documentation/create-your-own-challenge/#budget-batched-images'>"
-                "bundling images</a>, enter the number of batches (not the number of single images)."
+                "bundling images</a>, enter the number of batches (not the number of single images). "
+                "Enter 0 here if you only have one phase."
             ),
             "average_size_of_test_image_in_mb": (
                 "Average size of test image in MB. If you're <a href="
@@ -390,7 +348,7 @@ class ChallengeRequestForm(
             "phase_2_number_of_submissions_per_team": (
                 "How many submissions do you expect per team to this phase? "
                 "You can enforce a submission limit in the settings for each phase "
-                "to control this."
+                "to control this. Enter 0 here if you only have one phase."
             ),
             "submission_assessment": (
                 f"{structured_challenge_submission_help_text} Otherwise, "
@@ -609,9 +567,7 @@ class ChallengeRequestStatusUpdateForm(forms.ModelForm):
         return status
 
 
-class ChallengeRequestBudgetUpdateForm(
-    ChallengeRequestBudgetFieldValidationMixin, forms.ModelForm
-):
+class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
     algorithm_selectable_gpu_type_choices = forms.MultipleChoiceField(
         initial=get_default_gpu_type_choices(),
         choices=GPUTypeChoices.choices,
