@@ -1168,17 +1168,23 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             + self.phase_2_storage_size_bytes
         )
 
-    @property
+    @cached_property
     def compute_euro_cents_per_hour(self):
-        executor = import_string(settings.COMPONENTS_DEFAULT_BACKEND)(
-            job_id="",
-            exec_image_repo_tag="",
-            # Assume these options picked by the participant
-            memory_limit=32,
-            time_limit=self.inference_time_limit_in_minutes,
-            requires_gpu_type=GPUTypeChoices.T4,
+        executors = [
+            import_string(settings.COMPONENTS_DEFAULT_BACKEND)(
+                job_id="",
+                exec_image_repo_tag="",
+                # Assume these options picked by the participant
+                memory_limit=self.algorithm_maximum_settable_memory_gb,
+                time_limit=self.inference_time_limit_in_minutes,
+                requires_gpu_type=gpu_type,
+            )
+            for gpu_type in self.algorithm_selectable_gpu_type_choices
+        ]
+        usd_cents_per_hour = max(
+            executor.usd_cents_per_hour for executor in executors
         )
-        return executor.usd_cents_per_hour * settings.COMPONENTS_USD_TO_EUR
+        return usd_cents_per_hour * settings.COMPONENTS_USD_TO_EUR
 
     def get_compute_costs_euros(self, duration):
         return self.round_to_10_euros(
