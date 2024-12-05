@@ -576,13 +576,11 @@ class ChallengeRequestStatusUpdateForm(forms.ModelForm):
 
 class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
     algorithm_selectable_gpu_type_choices = forms.MultipleChoiceField(
+        # replace NO_GPU value ("") in choices to avoid HTMX POST issue
         choices=[
-            (choice.value, choice.label)
-            for choice in [
-                GPUTypeChoices.NO_GPU,
-                GPUTypeChoices.T4,
-                GPUTypeChoices.A10G,
-            ]
+            ("no_gpu", GPUTypeChoices.NO_GPU.label),
+            (GPUTypeChoices.T4, GPUTypeChoices.T4.label),
+            (GPUTypeChoices.A10G, GPUTypeChoices.A10G.label),
         ],
         widget=forms.CheckboxSelectMultiple,
         label="Selectable GPU types for algorithm jobs",
@@ -621,6 +619,13 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if "" in (
+            initial := self.instance.algorithm_selectable_gpu_type_choices
+        ):
+            initial[initial.index("")] = "no_gpu"  # to avoid HTMX POST issue
+            self.fields["algorithm_selectable_gpu_type_choices"].initial = (
+                initial
+            )
         self.helper = FormHelper(self)
         self.helper.form_id = "budget"
         self.helper.attrs.update(
@@ -634,3 +639,11 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
             }
         )
         self.helper.layout.append(Submit("save", "Save"))
+
+    def clean_algorithm_selectable_gpu_type_choices(self):
+        data = self.cleaned_data.get(
+            "algorithm_selectable_gpu_type_choices", []
+        )
+        if "no_gpu" in data:  # to avoid HTMX POST issue
+            data[data.index("no_gpu")] = ""
+        return data
