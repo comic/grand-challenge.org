@@ -214,6 +214,7 @@ class ChallengeRequestForm(
             "number_of_tasks",
             "average_size_of_test_image_in_mb",
             "inference_time_limit_in_minutes",
+            "algorithm_selectable_gpu_type_choices",
             "algorithm_maximum_settable_memory_gb",
             "algorithm_inputs",
             "algorithm_outputs",
