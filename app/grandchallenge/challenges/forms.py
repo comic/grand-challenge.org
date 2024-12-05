@@ -153,7 +153,14 @@ structured_challenge_submission_help_text = (
 class ChallengeRequestForm(forms.ModelForm):
     algorithm_selectable_gpu_type_choices = forms.MultipleChoiceField(
         initial=get_default_gpu_type_choices(),
-        choices=GPUTypeChoices.choices,
+        choices=[
+            (choice.value, choice.label)
+            for choice in [
+                GPUTypeChoices.NO_GPU,
+                GPUTypeChoices.T4,
+                GPUTypeChoices.A10G,
+            ]
+        ],
         widget=forms.CheckboxSelectMultiple,
         label="Selectable GPU types for algorithm jobs",
         help_text="The GPU type choices that participants will be able to select for "
@@ -570,7 +577,14 @@ class ChallengeRequestStatusUpdateForm(forms.ModelForm):
 class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
     algorithm_selectable_gpu_type_choices = forms.MultipleChoiceField(
         initial=get_default_gpu_type_choices(),
-        choices=GPUTypeChoices.choices,
+        choices=[
+            (choice.value, choice.label)
+            for choice in [
+                GPUTypeChoices.NO_GPU,
+                GPUTypeChoices.T4,
+                GPUTypeChoices.A10G,
+            ]
+        ],
         widget=forms.CheckboxSelectMultiple,
         label="Selectable GPU types for algorithm jobs",
         help_text="The GPU type choices that participants will be able to select for "
