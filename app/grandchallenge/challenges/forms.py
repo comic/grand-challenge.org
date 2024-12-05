@@ -198,7 +198,7 @@ class ChallengeRequestForm(
         initial=get_default_gpu_type_choices(),
         choices=GPUTypeChoices.choices,
         widget=forms.CheckboxSelectMultiple,
-        label="",
+        label="Selectable GPU types for algorithm jobs",
         help_text="The GPU type choices that participants will be able to select for "
         "their algorithm inference jobs.",
     )
