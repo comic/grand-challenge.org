@@ -68,6 +68,7 @@ def test_challenge_request_budget_fields_required():
         "phase_2_number_of_submissions_per_team": 1,
         "phase_1_number_of_test_images": 1,
         "phase_2_number_of_test_images": 1,
+        "budget_for_hosting_challenge": 0,
     }
     form2 = ChallengeRequestForm(data=data2, creator=user)
     assert form2.is_valid()
