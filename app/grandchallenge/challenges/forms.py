@@ -409,17 +409,6 @@ class ChallengeRequestForm(
         self.instance.creator = creator
         self.fields["title"].required = True
         self.fields["challenge_fee_agreement"].required = True
-        self.fields["algorithm_inputs"].required = True
-        self.fields["algorithm_outputs"].required = True
-        self.fields["number_of_tasks"].required = True
-        self.fields["average_size_of_test_image_in_mb"].required = True
-        self.fields["inference_time_limit_in_minutes"].required = True
-        self.fields["phase_1_number_of_submissions_per_team"].required = True
-        self.fields["phase_2_number_of_submissions_per_team"].required = True
-        self.fields["phase_1_number_of_test_images"].required = True
-        self.fields["phase_2_number_of_test_images"].required = True
-        self.fields["data_license"].initial = True
-        self.fields["long_term_commitment"].initial = True
         self.helper = FormHelper(self)
         self.helper.layout = Layout(
             Fieldset(
