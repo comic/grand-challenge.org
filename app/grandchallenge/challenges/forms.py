@@ -576,7 +576,6 @@ class ChallengeRequestStatusUpdateForm(forms.ModelForm):
 
 class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
     algorithm_selectable_gpu_type_choices = forms.MultipleChoiceField(
-        initial=get_default_gpu_type_choices(),
         choices=[
             (choice.value, choice.label)
             for choice in [
