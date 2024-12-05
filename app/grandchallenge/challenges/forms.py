@@ -623,12 +623,23 @@ class ChallengeRequestStatusUpdateForm(forms.ModelForm):
 class ChallengeRequestBudgetUpdateForm(
     ChallengeRequestBudgetFieldValidationMixin, forms.ModelForm
 ):
+    algorithm_selectable_gpu_type_choices = forms.MultipleChoiceField(
+        initial=get_default_gpu_type_choices(),
+        choices=GPUTypeChoices.choices,
+        widget=forms.CheckboxSelectMultiple,
+        label="Selectable GPU types for algorithm jobs",
+        help_text="The GPU type choices that participants will be able to select for "
+        "their algorithm inference jobs.",
+    )
+
     class Meta:
         model = ChallengeRequest
         fields = (
             "expected_number_of_teams",
             "number_of_tasks",
             "inference_time_limit_in_minutes",
+            "algorithm_selectable_gpu_type_choices",
+            "algorithm_maximum_settable_memory_gb",
             "average_size_of_test_image_in_mb",
             "phase_1_number_of_submissions_per_team",
             "phase_1_number_of_test_images",
