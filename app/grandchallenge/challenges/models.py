@@ -1070,6 +1070,8 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             "expected_number_of_teams",
             "number_of_tasks",
             "inference_time_limit_in_minutes",
+            "algorithm_selectable_gpu_type_choices",
+            "algorithm_maximum_settable_memory_gb",
             "average_size_of_test_image_in_mb",
             "phase_1_number_of_submissions_per_team",
             "phase_1_number_of_test_images",
