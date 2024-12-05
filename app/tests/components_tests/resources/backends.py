@@ -20,7 +20,6 @@ from grandchallenge.components.backends.utils import (
     parse_structured_log,
     user_error,
 )
-from grandchallenge.components.schemas import GPUTypeChoices
 
 
 class InsecureDockerExecutor(DockerConnectionMixin, Executor):
@@ -76,12 +75,7 @@ class InsecureDockerExecutor(DockerConnectionMixin, Executor):
 
     @property
     def usd_cents_per_hour(self):
-        return {
-            GPUTypeChoices.NO_GPU: 50,
-            GPUTypeChoices.T4: 100,
-            GPUTypeChoices.A10G: 150,
-            GPUTypeChoices.V100: 400,
-        }.get(self._requires_gpu_type, 100)
+        return 100
 
     @property
     def runtime_metrics(self):
