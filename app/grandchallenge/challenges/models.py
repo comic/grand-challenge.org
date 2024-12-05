@@ -903,7 +903,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         validators=[MinValueValidator(limit_value=1)],
     )
     inference_time_limit_in_minutes = models.PositiveIntegerField(
-        null=True,
         help_text="Average run time per algorithm job in minutes.",
         validators=[
             MinValueValidator(limit_value=5),
@@ -927,7 +926,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         ),
     )
     average_size_of_test_image_in_mb = models.PositiveIntegerField(
-        null=True,
         help_text="Average size of a test image in MB.",
         validators=[
             MinValueValidator(limit_value=1),
@@ -935,19 +933,15 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         ],
     )
     phase_1_number_of_submissions_per_team = models.PositiveIntegerField(
-        null=True,
         help_text="How many submissions do you expect per team in this phase?",
     )
     phase_2_number_of_submissions_per_team = models.PositiveIntegerField(
-        null=True,
         help_text="How many submissions do you expect per team in this phase?",
     )
     phase_1_number_of_test_images = models.PositiveIntegerField(
-        null=True,
         help_text="Number of test images for this phase.",
     )
     phase_2_number_of_test_images = models.PositiveIntegerField(
-        null=True,
         help_text="Number of test images for this phase.",
     )
     number_of_tasks = models.PositiveIntegerField(
@@ -958,11 +952,9 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     )
     budget_for_hosting_challenge = models.PositiveIntegerField(
         default=0,
-        null=True,
         help_text="What is your budget for hosting this challenge? Please be reminded of our <a href='/challenge-policy-and-pricing/'>challenge pricing policy</a>.",
     )
     long_term_commitment = models.BooleanField(
-        null=True,
         default=True,
     )
     long_term_commitment_extra = models.CharField(
@@ -970,7 +962,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         blank=True,
     )
     data_license = models.BooleanField(
-        null=True,
         default=True,
     )
     data_license_extra = models.CharField(
