@@ -6,6 +6,7 @@ from django.core import mail
 from django.utils.timezone import now
 from guardian.shortcuts import assign_perm
 
+from grandchallenge.challenges.forms import HTMX_BLANK_CHOICE_KEY
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
 from grandchallenge.invoices.models import PaymentStatusChoices
 from grandchallenge.verifications.models import Verification
@@ -385,7 +386,11 @@ def test_budget_field_update(client, challenge_reviewer):
         data={
             "expected_number_of_teams": 500,
             "inference_time_limit_in_minutes": 10,
-            "algorithm_selectable_gpu_type_choices": ["no_gpu", "A10G", "T4"],
+            "algorithm_selectable_gpu_type_choices": [
+                HTMX_BLANK_CHOICE_KEY,
+                "A10G",
+                "T4",
+            ],
             "algorithm_maximum_settable_memory_gb": 32,
             "average_size_of_test_image_in_mb": 10,
             "phase_1_number_of_submissions_per_team": 10,

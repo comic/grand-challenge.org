@@ -47,6 +47,8 @@ registration_items = (
     "registration_page_markdown",
 )
 
+HTMX_BLANK_CHOICE_KEY = "__HTMX_BLANK_CHOICE_KEY__"
+
 
 class ChallengeUpdateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
@@ -576,9 +578,8 @@ class ChallengeRequestStatusUpdateForm(forms.ModelForm):
 
 class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
     algorithm_selectable_gpu_type_choices = forms.MultipleChoiceField(
-        # replace NO_GPU value ("") in choices to avoid HTMX POST issue
         choices=[
-            ("no_gpu", GPUTypeChoices.NO_GPU.label),
+            (HTMX_BLANK_CHOICE_KEY, GPUTypeChoices.NO_GPU.label),
             (GPUTypeChoices.T4, GPUTypeChoices.T4.label),
             (GPUTypeChoices.A10G, GPUTypeChoices.A10G.label),
         ],
@@ -622,7 +623,7 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
         if "" in (
             initial := self.instance.algorithm_selectable_gpu_type_choices
         ):
-            initial[initial.index("")] = "no_gpu"  # to avoid HTMX POST issue
+            initial[initial.index("")] = HTMX_BLANK_CHOICE_KEY
             self.fields["algorithm_selectable_gpu_type_choices"].initial = (
                 initial
             )
@@ -644,6 +645,6 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
         data = self.cleaned_data.get(
             "algorithm_selectable_gpu_type_choices", []
         )
-        if "no_gpu" in data:  # to avoid HTMX POST issue
-            data[data.index("no_gpu")] = ""
+        if HTMX_BLANK_CHOICE_KEY in data:
+            data[data.index(HTMX_BLANK_CHOICE_KEY)] = ""
         return data
