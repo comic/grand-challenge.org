@@ -441,6 +441,7 @@ class AlgorithmForm(
     @property
     def selectable_gpu_type_choices(self):
         choices_set = {
+            self.instance.job_requires_gpu_type,
             *get_default_gpu_type_choices(),
             *chain.from_iterable(
                 self.job_requirement_properties_from_phases["gpu_type_choices"]
