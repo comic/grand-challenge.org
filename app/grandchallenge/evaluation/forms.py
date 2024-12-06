@@ -754,6 +754,14 @@ class ConfigureAlgorithmPhasesForm(SaveFormInitMixin, Form):
         widget=forms.HiddenInput(),
         disabled=True,
     )
+    algorithm_selectable_gpu_type_choices = forms.JSONField(
+        widget=forms.HiddenInput(),
+        disabled=True,
+    )
+    algorithm_maximum_settable_memory_gb = forms.IntegerField(
+        widget=forms.HiddenInput(),
+        disabled=True,
+    )
 
     def __init__(self, *args, challenge, **kwargs):
         super().__init__(*args, **kwargs)
@@ -772,10 +780,29 @@ class ConfigureAlgorithmPhasesForm(SaveFormInitMixin, Form):
             challenge_request = ChallengeRequest.objects.get(
                 short_name=challenge.short_name
             )
+        except ObjectDoesNotExist:
+            challenge_request = None
+        if challenge_request:
+            self.fields["algorithm_selectable_gpu_type_choices"].initial = (
+                challenge_request.algorithm_selectable_gpu_type_choices
+            )
+            self.fields["algorithm_maximum_settable_memory_gb"].initial = (
+                challenge_request.algorithm_maximum_settable_memory_gb
+            )
             self.fields["algorithm_time_limit"].initial = (
                 challenge_request.inference_time_limit_in_minutes * 60
             )
-        except ObjectDoesNotExist:
+        else:
+            self.fields["algorithm_selectable_gpu_type_choices"].initial = (
+                Phase._meta.get_field(
+                    "algorithm_selectable_gpu_type_choices"
+                ).get_default()
+            )
+            self.fields["algorithm_maximum_settable_memory_gb"].initial = (
+                Phase._meta.get_field(
+                    "algorithm_maximum_settable_memory_gb"
+                ).get_default()
+            )
             self.fields["algorithm_time_limit"].initial = (
                 Phase._meta.get_field("algorithm_time_limit").get_default()
             )
