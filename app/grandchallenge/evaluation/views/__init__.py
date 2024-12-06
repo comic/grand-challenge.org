@@ -1045,6 +1045,12 @@ class ConfigureAlgorithmPhasesView(PermissionRequiredMixin, FormView):
                 inputs=form.cleaned_data["algorithm_inputs"],
                 outputs=form.cleaned_data["algorithm_outputs"],
                 algorithm_time_limit=form.cleaned_data["algorithm_time_limit"],
+                algorithm_selectable_gpu_type_choices=form.cleaned_data[
+                    "algorithm_selectable_gpu_type_choices"
+                ],
+                algorithm_maximum_settable_memory_gb=form.cleaned_data[
+                    "algorithm_maximum_settable_memory_gb"
+                ],
             )
         messages.success(self.request, "Phases were successfully updated")
         return super().form_valid(form)
@@ -1055,7 +1061,14 @@ class ConfigureAlgorithmPhasesView(PermissionRequiredMixin, FormView):
         )
 
     def turn_phase_into_algorithm_phase(
-        self, *, phase, inputs, outputs, algorithm_time_limit
+        self,
+        *,
+        phase,
+        inputs,
+        outputs,
+        algorithm_time_limit,
+        algorithm_selectable_gpu_type_choices,
+        algorithm_maximum_settable_memory_gb,
     ):
         archive = Archive.objects.create(
             title=format_html(
@@ -1079,6 +1092,12 @@ class ConfigureAlgorithmPhasesView(PermissionRequiredMixin, FormView):
             archive.add_editor(user)
 
         phase.algorithm_time_limit = algorithm_time_limit
+        phase.algorithm_selectable_gpu_type_choices = (
+            algorithm_selectable_gpu_type_choices
+        )
+        phase.algorithm_maximum_settable_memory_gb = (
+            algorithm_maximum_settable_memory_gb
+        )
         phase.archive = archive
         phase.submission_kind = phase.SubmissionKindChoices.ALGORITHM
         phase.creator_must_be_verified = True

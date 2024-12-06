@@ -16,6 +16,8 @@ from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
+from grandchallenge.components.models import GPUTypeChoices
+from grandchallenge.components.schemas import get_default_gpu_type_choices
 from grandchallenge.core.widgets import MarkdownEditorInlineWidget
 from grandchallenge.subdomains.utils import reverse_lazy
 
@@ -44,6 +46,8 @@ registration_items = (
     "access_request_handling",
     "registration_page_markdown",
 )
+
+HTMX_BLANK_CHOICE_KEY = "__HTMX_BLANK_CHOICE_KEY__"
 
 
 class ChallengeUpdateForm(forms.ModelForm):
@@ -108,47 +112,6 @@ class ChallengeUpdateForm(forms.ModelForm):
         return cleaned_data
 
 
-class ChallengeRequestBudgetFieldValidationMixin:
-    def clean(self):
-        cleaned_data = super().clean()
-        if (
-            "average_size_of_test_image_in_mb" not in cleaned_data.keys()
-            or not cleaned_data["average_size_of_test_image_in_mb"]
-        ):
-            raise ValidationError(
-                "Please provide the average test image size."
-            )
-        if (
-            "inference_time_limit_in_minutes" not in cleaned_data.keys()
-            or not cleaned_data["inference_time_limit_in_minutes"]
-        ):
-            raise ValidationError("Please provide an inference time limit.")
-        if (
-            "phase_1_number_of_submissions_per_team" not in cleaned_data.keys()
-            or "phase_2_number_of_submissions_per_team"
-            not in cleaned_data.keys()
-            or cleaned_data["phase_1_number_of_submissions_per_team"] is None
-            or cleaned_data["phase_2_number_of_submissions_per_team"] is None
-        ):
-            raise ValidationError(
-                "Please provide the number of "
-                "submissions per team for each phase. Enter 0 for phase 2 "
-                "if you only have 1 phase."
-            )
-        if (
-            "phase_1_number_of_test_images" not in cleaned_data.keys()
-            or "phase_2_number_of_test_images" not in cleaned_data.keys()
-            or cleaned_data["phase_1_number_of_test_images"] is None
-            or cleaned_data["phase_2_number_of_test_images"] is None
-        ):
-            raise ValidationError(
-                "Please provide the number of "
-                "test images for each phase. Enter 0 for phase 2 if you "
-                "only have 1 phase."
-            )
-        return cleaned_data
-
-
 general_information_items_1 = (
     "title",
     "short_name",
@@ -189,9 +152,23 @@ structured_challenge_submission_help_text = (
 )
 
 
-class ChallengeRequestForm(
-    ChallengeRequestBudgetFieldValidationMixin, forms.ModelForm
-):
+class ChallengeRequestForm(forms.ModelForm):
+    algorithm_selectable_gpu_type_choices = forms.MultipleChoiceField(
+        initial=get_default_gpu_type_choices(),
+        choices=[
+            (choice.value, choice.label)
+            for choice in [
+                GPUTypeChoices.NO_GPU,
+                GPUTypeChoices.T4,
+                GPUTypeChoices.A10G,
+            ]
+        ],
+        widget=forms.CheckboxSelectMultiple,
+        label="Selectable GPU types for algorithm jobs",
+        help_text="The GPU type choices that participants will be able to select for "
+        "their algorithm inference jobs.",
+    )
+
     class Meta:
         model = ChallengeRequest
         fields = (
@@ -203,6 +180,8 @@ class ChallengeRequestForm(
             "number_of_tasks",
             "average_size_of_test_image_in_mb",
             "inference_time_limit_in_minutes",
+            "algorithm_selectable_gpu_type_choices",
+            "algorithm_maximum_settable_memory_gb",
             "algorithm_inputs",
             "algorithm_outputs",
             *phase_1_items,
@@ -260,6 +239,7 @@ class ChallengeRequestForm(
             "phase_2_number_of_submissions_per_team": "Expected number of submissions per team to Phase 2",
             "budget_for_hosting_challenge": "Budget for hosting challenge in Euros",
             "inference_time_limit_in_minutes": "Average algorithm job run time in minutes",
+            "algorithm_maximum_settable_memory_gb": "Maximum memory for algorithm jobs in GB",
             "structured_challenge_submission_doi": "DOI",
             "structured_challenge_submission_form": "PDF",
             "challenge_fee_agreement": format_html(
@@ -361,7 +341,8 @@ class ChallengeRequestForm(
             "phase_2_number_of_test_images": (
                 "Number of test images for this phase. If you're <a href="
                 "'https://grand-challenge.org/documentation/create-your-own-challenge/#budget-batched-images'>"
-                "bundling images</a>, enter the number of batches (not the number of single images)."
+                "bundling images</a>, enter the number of batches (not the number of single images). "
+                "Enter 0 here if you only have one phase."
             ),
             "average_size_of_test_image_in_mb": (
                 "Average size of test image in MB. If you're <a href="
@@ -376,7 +357,7 @@ class ChallengeRequestForm(
             "phase_2_number_of_submissions_per_team": (
                 "How many submissions do you expect per team to this phase? "
                 "You can enforce a submission limit in the settings for each phase "
-                "to control this."
+                "to control this. Enter 0 here if you only have one phase."
             ),
             "submission_assessment": (
                 f"{structured_challenge_submission_help_text} Otherwise, "
@@ -395,17 +376,6 @@ class ChallengeRequestForm(
         self.instance.creator = creator
         self.fields["title"].required = True
         self.fields["challenge_fee_agreement"].required = True
-        self.fields["algorithm_inputs"].required = True
-        self.fields["algorithm_outputs"].required = True
-        self.fields["number_of_tasks"].required = True
-        self.fields["average_size_of_test_image_in_mb"].required = True
-        self.fields["inference_time_limit_in_minutes"].required = True
-        self.fields["phase_1_number_of_submissions_per_team"].required = True
-        self.fields["phase_2_number_of_submissions_per_team"].required = True
-        self.fields["phase_1_number_of_test_images"].required = True
-        self.fields["phase_2_number_of_test_images"].required = True
-        self.fields["data_license"].initial = True
-        self.fields["long_term_commitment"].initial = True
         self.helper = FormHelper(self)
         self.helper.layout = Layout(
             Fieldset(
@@ -490,6 +460,8 @@ class ChallengeRequestForm(
                     "number_of_tasks",
                     "average_size_of_test_image_in_mb",
                     "inference_time_limit_in_minutes",
+                    "algorithm_selectable_gpu_type_choices",
+                    "algorithm_maximum_settable_memory_gb",
                     HTML(
                         format_html(
                             (
@@ -604,24 +576,57 @@ class ChallengeRequestStatusUpdateForm(forms.ModelForm):
         return status
 
 
-class ChallengeRequestBudgetUpdateForm(
-    ChallengeRequestBudgetFieldValidationMixin, forms.ModelForm
-):
+class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
+    algorithm_selectable_gpu_type_choices = forms.MultipleChoiceField(
+        choices=[
+            (HTMX_BLANK_CHOICE_KEY, GPUTypeChoices.NO_GPU.label),
+            (GPUTypeChoices.T4, GPUTypeChoices.T4.label),
+            (GPUTypeChoices.A10G, GPUTypeChoices.A10G.label),
+        ],
+        widget=forms.CheckboxSelectMultiple,
+        label="Selectable GPU types for algorithm jobs",
+        help_text="The GPU type choices that participants will be able to select for "
+        "their algorithm inference jobs.",
+    )
+
     class Meta:
         model = ChallengeRequest
         fields = (
             "expected_number_of_teams",
             "number_of_tasks",
             "inference_time_limit_in_minutes",
+            "algorithm_selectable_gpu_type_choices",
+            "algorithm_maximum_settable_memory_gb",
             "average_size_of_test_image_in_mb",
             "phase_1_number_of_submissions_per_team",
             "phase_1_number_of_test_images",
             "phase_2_number_of_submissions_per_team",
             "phase_2_number_of_test_images",
         )
+        labels = {
+            "phase_1_number_of_submissions_per_team": "Expected number of submissions per team to Phase 1",
+            "phase_2_number_of_submissions_per_team": "Expected number of submissions per team to Phase 2",
+            "inference_time_limit_in_minutes": "Average algorithm job run time in minutes",
+            "algorithm_maximum_settable_memory_gb": "Maximum memory for algorithm jobs in GB",
+        }
+        help_texts = {
+            "inference_time_limit_in_minutes": (
+                "The average time that you expect an algorithm job to take in minutes. "
+                "This time estimate should account for everything that needs to happen "
+                "for an algorithm container to process <u>one single image, including "
+                "model loading, i/o, preprocessing and inference.</u>"
+            ),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if "" in (
+            initial := self.instance.algorithm_selectable_gpu_type_choices
+        ):
+            initial[initial.index("")] = HTMX_BLANK_CHOICE_KEY
+            self.fields["algorithm_selectable_gpu_type_choices"].initial = (
+                initial
+            )
         self.helper = FormHelper(self)
         self.helper.form_id = "budget"
         self.helper.attrs.update(
@@ -635,3 +640,11 @@ class ChallengeRequestBudgetUpdateForm(
             }
         )
         self.helper.layout.append(Submit("save", "Save"))
+
+    def clean_algorithm_selectable_gpu_type_choices(self):
+        data = self.cleaned_data.get(
+            "algorithm_selectable_gpu_type_choices", []
+        )
+        if HTMX_BLANK_CHOICE_KEY in data:
+            data[data.index(HTMX_BLANK_CHOICE_KEY)] = ""
+        return data

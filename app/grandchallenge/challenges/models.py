@@ -45,7 +45,11 @@ from grandchallenge.challenges.emails import (
     send_challenge_requested_email_to_reviewers,
 )
 from grandchallenge.challenges.utils import ChallengeTypeChoices
-from grandchallenge.components.schemas import GPUTypeChoices
+from grandchallenge.components.schemas import (
+    SELECTABLE_GPU_TYPES_SCHEMA,
+    GPUTypeChoices,
+    get_default_gpu_type_choices,
+)
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import (
     get_banner_path,
@@ -59,6 +63,7 @@ from grandchallenge.core.utils.access_requests import (
 )
 from grandchallenge.core.validators import (
     ExtensionValidator,
+    JSONValidator,
     MimeTypeValidator,
 )
 from grandchallenge.evaluation.tasks import assign_evaluation_permissions
@@ -898,17 +903,29 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         validators=[MinValueValidator(limit_value=1)],
     )
     inference_time_limit_in_minutes = models.PositiveIntegerField(
-        blank=True,
-        null=True,
         help_text="Average run time per algorithm job in minutes.",
         validators=[
             MinValueValidator(limit_value=5),
             MaxValueValidator(limit_value=60),
         ],
     )
+    algorithm_selectable_gpu_type_choices = models.JSONField(
+        default=get_default_gpu_type_choices,
+        help_text=(
+            "The GPU type choices that participants will be able to select for their "
+            "algorithm inference jobs. Options are "
+            f"{GPUTypeChoices.values}.".replace("'", '"')
+        ),
+        validators=[JSONValidator(schema=SELECTABLE_GPU_TYPES_SCHEMA)],
+    )
+    algorithm_maximum_settable_memory_gb = models.PositiveSmallIntegerField(
+        default=settings.ALGORITHMS_MAX_MEMORY_GB,
+        help_text=(
+            "Maximum amount of memory that participants will be allowed to "
+            "assign to algorithm inference jobs for submission."
+        ),
+    )
     average_size_of_test_image_in_mb = models.PositiveIntegerField(
-        null=True,
-        blank=True,
         help_text="Average size of a test image in MB.",
         validators=[
             MinValueValidator(limit_value=1),
@@ -916,23 +933,15 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         ],
     )
     phase_1_number_of_submissions_per_team = models.PositiveIntegerField(
-        null=True,
-        blank=True,
         help_text="How many submissions do you expect per team in this phase?",
     )
     phase_2_number_of_submissions_per_team = models.PositiveIntegerField(
-        null=True,
-        blank=True,
         help_text="How many submissions do you expect per team in this phase?",
     )
     phase_1_number_of_test_images = models.PositiveIntegerField(
-        null=True,
-        blank=True,
         help_text="Number of test images for this phase.",
     )
     phase_2_number_of_test_images = models.PositiveIntegerField(
-        null=True,
-        blank=True,
         help_text="Number of test images for this phase.",
     )
     number_of_tasks = models.PositiveIntegerField(
@@ -943,21 +952,17 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     )
     budget_for_hosting_challenge = models.PositiveIntegerField(
         default=0,
-        null=True,
-        blank=True,
         help_text="What is your budget for hosting this challenge? Please be reminded of our <a href='/challenge-policy-and-pricing/'>challenge pricing policy</a>.",
     )
     long_term_commitment = models.BooleanField(
-        null=True,
-        blank=True,
+        default=True,
     )
     long_term_commitment_extra = models.CharField(
         max_length=2000,
         blank=True,
     )
     data_license = models.BooleanField(
-        null=True,
-        blank=True,
+        default=True,
     )
     data_license_extra = models.CharField(
         max_length=2000,
@@ -968,7 +973,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         help_text="If you have any comments, remarks or questions, please leave them here.",
     )
     algorithm_inputs = models.TextField(
-        blank=True,
         help_text="What are the inputs to the algorithms submitted as solutions to "
         "your challenge going to be? "
         "Please describe in detail "
@@ -977,7 +981,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         "supports .mha and .tiff image files and json files for algorithms.",
     )
     algorithm_outputs = models.TextField(
-        blank=True,
         help_text="What are the outputs to the algorithms submitted as solutions to "
         "your challenge going to be? "
         "Please describe in detail what the output(s) "
@@ -1049,6 +1052,8 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             "expected_number_of_teams",
             "number_of_tasks",
             "inference_time_limit_in_minutes",
+            "algorithm_selectable_gpu_type_choices",
+            "algorithm_maximum_settable_memory_gb",
             "average_size_of_test_image_in_mb",
             "phase_1_number_of_submissions_per_team",
             "phase_1_number_of_test_images",
@@ -1147,17 +1152,22 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             + self.phase_2_storage_size_bytes
         )
 
-    @property
+    @cached_property
     def compute_euro_cents_per_hour(self):
-        executor = import_string(settings.COMPONENTS_DEFAULT_BACKEND)(
-            job_id="",
-            exec_image_repo_tag="",
-            # Assume these options picked by the participant
-            memory_limit=32,
-            time_limit=self.inference_time_limit_in_minutes,
-            requires_gpu_type=GPUTypeChoices.T4,
+        executors = [
+            import_string(settings.COMPONENTS_DEFAULT_BACKEND)(
+                job_id="",
+                exec_image_repo_tag="",
+                memory_limit=self.algorithm_maximum_settable_memory_gb,
+                time_limit=self.inference_time_limit_in_minutes,
+                requires_gpu_type=gpu_type,
+            )
+            for gpu_type in self.algorithm_selectable_gpu_type_choices
+        ]
+        usd_cents_per_hour = max(
+            executor.usd_cents_per_hour for executor in executors
         )
-        return executor.usd_cents_per_hour * settings.COMPONENTS_USD_TO_EUR
+        return usd_cents_per_hour * settings.COMPONENTS_USD_TO_EUR
 
     def get_compute_costs_euros(self, duration):
         return self.round_to_10_euros(

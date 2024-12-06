@@ -109,7 +109,9 @@ def test_is_active_until_set():
 
 
 @pytest.mark.django_db
-def test_total_challenge_cost():
+def test_total_challenge_cost(settings):
+    settings.COMPONENTS_DEFAULT_BACKEND = "grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor"
+
     user_exempt_from_base_cost, normal_user = UserFactory.create_batch(2)
     request1 = ChallengeRequestFactory(
         creator=user_exempt_from_base_cost, expected_number_of_teams=3
@@ -120,18 +122,26 @@ def test_total_challenge_cost():
     request3 = ChallengeRequestFactory(
         creator=normal_user, expected_number_of_teams=10
     )
+    request4 = ChallengeRequestFactory(
+        creator=normal_user,
+        expected_number_of_teams=10,
+        algorithm_selectable_gpu_type_choices=["", "A10G", "T4"],
+    )
 
     organisation = OrganizationFactory(exempt_from_base_costs=True)
     organisation.members_group.user_set.add(user_exempt_from_base_cost)
 
-    assert request1.storage_and_compute_cost_surplus == -300
+    assert request1.storage_and_compute_cost_surplus == -270
     assert request1.total_challenge_cost == 1000
 
-    assert request2.storage_and_compute_cost_surplus == -300
+    assert request2.storage_and_compute_cost_surplus == -270
     assert request2.total_challenge_cost == 6000
 
-    assert request3.storage_and_compute_cost_surplus == 1290
+    assert request3.storage_and_compute_cost_surplus == 1380
     assert request3.total_challenge_cost == 7500
+
+    assert request4.storage_and_compute_cost_surplus == 2580
+    assert request4.total_challenge_cost == 9000
 
 
 @pytest.mark.django_db
