@@ -221,23 +221,6 @@ NON_ALGORITHM_INTERFACES = [
 ]
 
 
-class AlgorithmIOValidationMixin:
-    def clean(self):
-        cleaned_data = super().clean()
-
-        duplicate_interfaces = {*cleaned_data.get("inputs", [])}.intersection(
-            {*cleaned_data.get("outputs", [])}
-        )
-
-        if duplicate_interfaces:
-            raise ValidationError(
-                f"The sets of Inputs and Outputs must be unique: "
-                f"{oxford_comma(duplicate_interfaces)} present in both"
-            )
-
-        return cleaned_data
-
-
 class AlgorithmForm(
     WorkstationUserFilterMixin,
     SaveFormInitMixin,
@@ -1278,9 +1261,7 @@ class AlgorithmModelVersionControlForm(Form):
         return algorithm_model
 
 
-class AlgorithmInterfaceBaseForm(
-    SaveFormInitMixin, AlgorithmIOValidationMixin, ModelForm
-):
+class AlgorithmInterfaceBaseForm(SaveFormInitMixin, ModelForm):
     class Meta:
         model = AlgorithmInterface
         fields = ("inputs", "outputs")
@@ -1288,12 +1269,20 @@ class AlgorithmInterfaceBaseForm(
     def clean(self):
         cleaned_data = super().clean()
 
-        inputs = cleaned_data.get("inputs")
-        outputs = cleaned_data.get("outputs")
+        inputs = cleaned_data.get("inputs", [])
+        outputs = cleaned_data.get("outputs", [])
 
         if not inputs or not outputs:
             raise ValidationError(
                 "You must provide at least 1 input and 1 output."
+            )
+
+        duplicate_interfaces = {*inputs}.intersection({*outputs})
+
+        if duplicate_interfaces:
+            raise ValidationError(
+                f"The sets of Inputs and Outputs must be unique: "
+                f"{oxford_comma(duplicate_interfaces)} present in both"
             )
 
         cleaned_data["existing_io"] = (
