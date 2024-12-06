@@ -144,7 +144,8 @@ class ViewContentExampleMixin:
         super().__init__(*args, **kwargs)
         if self.instance:
             interface_slugs = [
-                interface.slug for interface in self.instance.interfaces
+                interface.slug
+                for interface in self.instance.linked_component_interfaces
             ]
 
             if len(interface_slugs) > 0:
@@ -176,18 +177,18 @@ class ViewContentExampleMixin:
     def _get_interface_lists(self):
         images = [
             interface.slug
-            for interface in self.instance.interfaces
+            for interface in self.instance.linked_component_interfaces
             if interface.kind == InterfaceKindChoices.IMAGE
         ]
         mandatory_isolation_interfaces = [
             interface.slug
-            for interface in self.instance.interfaces
+            for interface in self.instance.linked_component_interfaces
             if interface.kind
             in InterfaceKind.interface_type_mandatory_isolation()
         ]
         overlays = [
             interface.slug
-            for interface in self.instance.interfaces
+            for interface in self.instance.linked_component_interfaces
             if interface.kind
             not in (
                 *InterfaceKind.interface_type_undisplayable(),

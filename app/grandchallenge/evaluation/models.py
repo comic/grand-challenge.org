@@ -876,7 +876,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         )
 
     @cached_property
-    def interfaces(self):
+    def linked_component_interfaces(self):
         return (
             self.algorithm_inputs.all() | self.algorithm_outputs.all()
         ).distinct()

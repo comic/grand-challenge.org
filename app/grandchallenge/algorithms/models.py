@@ -444,7 +444,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         return user.groups.remove(self.users_group)
 
     @cached_property
-    def interfaces(self):
+    def linked_component_interfaces(self):
         return (self.inputs.all() | self.outputs.all()).distinct()
 
     @cached_property
