@@ -79,7 +79,7 @@ class AlgorithmInterfaceManager(models.Manager):
         **kwargs,
     ):
         obj = get_existing_interface_for_inputs_and_outputs(
-            model=AlgorithmInterface, inputs=inputs, outputs=outputs
+            inputs=inputs, outputs=outputs
         )
         if not obj:
             obj = super().create(**kwargs)
