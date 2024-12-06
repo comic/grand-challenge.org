@@ -5,7 +5,6 @@ from actstream.actions import is_following
 from actstream.models import Action
 from dateutil.relativedelta import relativedelta
 from dateutil.utils import today
-from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import ProtectedError
 from machina.apps.forum_conversation.models import Topic
@@ -110,8 +109,9 @@ def test_is_active_until_set():
 
 
 @pytest.mark.django_db
-def test_total_challenge_cost():
+def test_total_challenge_cost(settings):
     settings.COMPONENTS_DEFAULT_BACKEND = "grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor"
+
     user_exempt_from_base_cost, normal_user = UserFactory.create_batch(2)
     request1 = ChallengeRequestFactory(
         creator=user_exempt_from_base_cost, expected_number_of_teams=3
