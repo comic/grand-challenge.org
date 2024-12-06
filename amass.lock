@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:0a7943db0d3b15f7feaa43639b886c458726c259b578c501c832af80c1c46d34",
+  "content_hash": "sha256:745a7a8d083ae88fa0420aa15309a4498d5c306e2d78547fd614451b650292a1",
   "dependencies": [
     {
       "name": "@github/markdown-toolbar-element",
@@ -519,41 +519,17 @@
       "maps": []
     },
     {
-      "name": "datatables.net-responsive",
-      "version": "2.2.9",
+      "name": "floating-scroll",
+      "version": "3.2.0",
       "provider": "unpkg",
       "assets": [
         {
-          "name": "js/dataTables.responsive.js",
-          "sri": "sha384-eY9M0GbvpniuOcFCVB7On6oTCecP/MaxuJZhhsKhE/hESC989j4Tnk2FaA8NZ8qc"
+          "name": "dist/jquery.floatingscroll.css",
+          "sri": "sha384-IhiSZ9rydjTj1D6ZswgB2pCL8hba3n2U7ljG1A0IOaLieaahZNTCTyBEkTECkPaL"
         },
         {
-          "name": "js/dataTables.responsive.min.js",
-          "sri": "sha384-ziUH70yXeghwn7LIJvtjobzpllxs+w4FJL4/ssbFYWoYof46CveVyQ+GCaR1eTXj"
-        }
-      ],
-      "maps": []
-    },
-    {
-      "name": "datatables.net-responsive-bs4",
-      "version": "2.2.9",
-      "provider": "unpkg",
-      "assets": [
-        {
-          "name": "css/responsive.bootstrap4.css",
-          "sri": "sha384-FG1U1mmuc4wFohqjCo1SISm217nX0ImWshs+Wu6nFbi/Me23QK9QnZM9ffbOi0N7"
-        },
-        {
-          "name": "css/responsive.bootstrap4.min.css",
-          "sri": "sha384-lePQI47qegn3yPIKwMvp5YLKtqliO3UWhA8XdAuPyDLLD41HBbdLmNHXco/IMAok"
-        },
-        {
-          "name": "js/responsive.bootstrap4.js",
-          "sri": "sha384-+u4gb6q8N/RnCi1rp9KpC+RNKEySqC0ASHSScqmY/C7vZnrJYM7hKPnl+Og6AKCK"
-        },
-        {
-          "name": "js/responsive.bootstrap4.min.js",
-          "sri": "sha384-iqV3x/YAPev0L8Y35rZF1e8LuilKG+h0gtjkpS6dr6HFEZ139n6Q8YcFQ3kZfKu/"
+          "name": "dist/jquery.floatingscroll.min.js",
+          "sri": "sha384-gS4dgnfbPsSGHw07CtiuYGt7z8RfOScrwZbvmFGEVblveZgbTwScK+29f9wBreQV"
         }
       ],
       "maps": []
