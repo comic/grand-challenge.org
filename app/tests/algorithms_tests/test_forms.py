@@ -1149,6 +1149,62 @@ def test_algorithm_form_memory_limited():
 
 
 @pytest.mark.django_db
+def test_algorithm_form_max_memory_from_phases_for_admins():
+    user = UserFactory()
+    algorithm = AlgorithmFactory()
+    ci1, ci2, ci3, ci4, ci5, ci6 = ComponentInterfaceFactory.create_batch(6)
+    inputs = [ci1, ci2]
+    outputs = [ci3, ci4]
+    algorithm.inputs.set(inputs)
+    algorithm.outputs.set(outputs)
+    phases = []
+    for max_memory in [42, 100, 200, 300, 400]:
+        phase = PhaseFactory(
+            submission_kind=SubmissionKindChoices.ALGORITHM,
+            algorithm_maximum_settable_memory_gb=max_memory,
+        )
+        phase.algorithm_inputs.set(inputs)
+        phase.algorithm_outputs.set(outputs)
+        phase.challenge.add_admin(user)
+        phases.append(phase)
+
+    def assert_max_value_validator(value):
+        form = AlgorithmForm(instance=algorithm, user=user)
+
+        validators = form.fields["job_requires_memory_gb"].validators
+
+        max_validator = next(
+            (v for v in validators if isinstance(v, MaxValueValidator)), None
+        )
+        assert max_validator is not None
+        assert max_validator.limit_value == value
+
+    assert_max_value_validator(400)
+
+    phases[4].public = False
+    phases[4].save()
+
+    assert_max_value_validator(400)
+
+    phases[4].challenge.remove_admin(user)
+
+    assert_max_value_validator(300)
+
+    phases[3].submission_kind = SubmissionKindChoices.CSV
+    phases[3].save()
+
+    assert_max_value_validator(200)
+
+    phases[2].algorithm_inputs.set([ci1, ci5])
+
+    assert_max_value_validator(100)
+
+    phases[1].algorithm_outputs.set([ci4, ci6])
+
+    assert_max_value_validator(42)
+
+
+@pytest.mark.django_db
 def test_algorithm_form_max_memory_from_phases():
     user = UserFactory()
     algorithm = AlgorithmFactory()

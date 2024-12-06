@@ -413,7 +413,6 @@ class AlgorithmForm(
             )
             .filter(
                 submission_kind=SubmissionKindChoices.ALGORITHM,
-                public=True,
                 total_algorithm_input_count=len(inputs),
                 total_algorithm_output_count=len(outputs),
                 relevant_algorithm_input_count=len(inputs),
