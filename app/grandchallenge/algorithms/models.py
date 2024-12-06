@@ -69,6 +69,80 @@ logger = logging.getLogger(__name__)
 JINJA_ENGINE = sandbox.ImmutableSandboxedEnvironment()
 
 
+class AlgorithmInterfaceManager(models.Manager):
+
+    def create(
+        self,
+        *,
+        inputs,
+        outputs,
+        **kwargs,
+    ):
+        obj = get_existing_interface_for_inputs_and_outputs(
+            inputs=inputs, outputs=outputs
+        )
+        if not obj:
+            obj = super().create(**kwargs)
+            obj.inputs.set(inputs)
+            obj.outputs.set(outputs)
+
+        return obj
+
+    def delete(self):
+        raise NotImplementedError("Bulk delete is not allowed.")
+
+
+class AlgorithmInterface(UUIDModel):
+    inputs = models.ManyToManyField(
+        to=ComponentInterface,
+        related_name="inputs",
+        through="algorithms.AlgorithmInterfaceInput",
+    )
+    outputs = models.ManyToManyField(
+        to=ComponentInterface,
+        related_name="outputs",
+        through="algorithms.AlgorithmInterfaceOutput",
+    )
+
+    objects = AlgorithmInterfaceManager()
+
+    def delete(self, *args, **kwargs):
+        raise ValidationError("AlgorithmInterfaces cannot be deleted.")
+
+
+class AlgorithmInterfaceInput(models.Model):
+    input = models.ForeignKey(ComponentInterface, on_delete=models.CASCADE)
+    interface = models.ForeignKey(AlgorithmInterface, on_delete=models.CASCADE)
+
+
+class AlgorithmInterfaceOutput(models.Model):
+    output = models.ForeignKey(ComponentInterface, on_delete=models.CASCADE)
+    interface = models.ForeignKey(AlgorithmInterface, on_delete=models.CASCADE)
+
+
+def get_existing_interface_for_inputs_and_outputs(
+    *, inputs, outputs, model=AlgorithmInterface
+):
+    try:
+        return model.objects.annotate(
+            input_count=Count("inputs", distinct=True),
+            output_count=Count("outputs", distinct=True),
+            relevant_input_count=Count(
+                "inputs", filter=Q(inputs__in=inputs), distinct=True
+            ),
+            relevant_output_count=Count(
+                "outputs", filter=Q(outputs__in=outputs), distinct=True
+            ),
+        ).get(
+            relevant_input_count=len(inputs),
+            relevant_output_count=len(outputs),
+            input_count=len(inputs),
+            output_count=len(outputs),
+        )
+    except ObjectDoesNotExist:
+        return None
+
+
 class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
     editors_group = models.OneToOneField(
         Group,
@@ -147,6 +221,11 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
             "{{ key }}  {{ value }}"
             "{% endfor %}"
         ),
+    )
+    interfaces = models.ManyToManyField(
+        to=AlgorithmInterface,
+        related_name="algorithm_interfaces",
+        through="algorithms.AlgorithmAlgorithmInterface",
     )
     inputs = models.ManyToManyField(
         to=ComponentInterface, related_name="algorithm_inputs", blank=False
@@ -519,6 +598,28 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         else:
             title += " (Active model: None)"
         return title
+
+
+class AlgorithmAlgorithmInterface(models.Model):
+    algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
+    interface = models.ForeignKey(AlgorithmInterface, on_delete=models.CASCADE)
+    is_default = models.BooleanField(default=False)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["algorithm"],
+                condition=Q(is_default=True),
+                name="unique_default_interface_per_algorithm",
+            ),
+            models.UniqueConstraint(
+                fields=["algorithm", "interface"],
+                name="unique_algorithm_interface_combination",
+            ),
+        ]
+
+    def __str__(self):
+        return str(self.interface)
 
 
 class AlgorithmUserObjectPermission(UserObjectPermissionBase):

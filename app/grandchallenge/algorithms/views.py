@@ -52,7 +52,6 @@ from grandchallenge.algorithms.forms import (
     AlgorithmPermissionRequestUpdateForm,
     AlgorithmPublishForm,
     AlgorithmRepoForm,
-    AlgorithmUpdateForm,
     DisplaySetFromJobForm,
     ImageActivateForm,
     JobCreateForm,
@@ -253,25 +252,9 @@ class AlgorithmUpdate(
     UpdateView,
 ):
     model = Algorithm
-    form_class = AlgorithmUpdateForm
+    form_class = AlgorithmForm
     permission_required = "algorithms.change_algorithm"
     raise_exception = True
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-
-        # Only users with the add_algorithm permission can change
-        # the input and output interfaces, other users must use
-        # the interfaces pre-set by the Phase
-        kwargs.update(
-            {
-                "interfaces_editable": self.request.user.has_perm(
-                    "algorithms.add_algorithm"
-                )
-            }
-        )
-
-        return kwargs
 
 
 class AlgorithmDescriptionUpdate(

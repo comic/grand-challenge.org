@@ -2,19 +2,21 @@ import json
 
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Count, Sum
 from django.forms import ModelForm
 from django.utils.html import format_html
 from guardian.admin import GuardedModelAdmin
 
-from grandchallenge.algorithms.forms import AlgorithmIOValidationMixin
+from grandchallenge.algorithms.forms import AlgorithmInterfaceBaseForm
 from grandchallenge.algorithms.models import (
     Algorithm,
+    AlgorithmAlgorithmInterface,
     AlgorithmGroupObjectPermission,
     AlgorithmImage,
     AlgorithmImageGroupObjectPermission,
     AlgorithmImageUserObjectPermission,
+    AlgorithmInterface,
     AlgorithmModel,
     AlgorithmModelGroupObjectPermission,
     AlgorithmModelUserObjectPermission,
@@ -36,12 +38,13 @@ from grandchallenge.core.admin import (
     UserObjectPermissionAdmin,
 )
 from grandchallenge.core.templatetags.costs import millicents_to_euro
+from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.utils.grand_challenge_forge import (
     get_forge_algorithm_template_context,
 )
 
 
-class AlgorithmAdminForm(AlgorithmIOValidationMixin, ModelForm):
+class AlgorithmAdminForm(ModelForm):
     class Meta:
         model = Algorithm
         fields = "__all__"
@@ -49,11 +52,12 @@ class AlgorithmAdminForm(AlgorithmIOValidationMixin, ModelForm):
 
 @admin.register(Algorithm)
 class AlgorithmAdmin(GuardedModelAdmin):
-    readonly_fields = ("algorithm_forge_json",)
+    readonly_fields = ("algorithm_forge_json", "inputs", "outputs")
     list_display = (
         "title",
         "created",
         "public",
+        "default_io",
         "time_limit",
         "job_requires_gpu_type",
         "job_requires_memory_gb",
@@ -73,6 +77,11 @@ class AlgorithmAdmin(GuardedModelAdmin):
         json_desc = get_forge_algorithm_template_context(algorithm=obj)
         return format_html(
             "<pre>{json_desc}</pre>", json_desc=json.dumps(json_desc, indent=2)
+        )
+
+    def default_io(self, obj):
+        return AlgorithmAlgorithmInterface.objects.get(
+            algorithm=obj, is_default=True
         )
 
     def get_queryset(self, request):
@@ -233,6 +242,53 @@ class AlgorithmModelAdmin(GuardedModelAdmin):
     list_filter = ("is_desired_version",)
     search_fields = ("algorithm__title", "comment")
     readonly_fields = ("creator", "algorithm", "sha256", "size_in_storage")
+
+
+class AlgorithmInterfaceAdminForm(AlgorithmInterfaceBaseForm):
+    def clean(self):
+        cleaned_data = super().clean()
+        if cleaned_data["existing_io"]:
+            raise ValidationError(
+                "An AlgorithmIO with the same combination of inputs and outputs already exists."
+            )
+        return cleaned_data
+
+
+@admin.register(AlgorithmInterface)
+class AlgorithmInterfaceAdmin(GuardedModelAdmin):
+    list_display = (
+        "pk",
+        "algorithm_inputs",
+        "algorithm_outputs",
+    )
+    search_fields = (
+        "inputs__slug",
+        "outputs__slug",
+    )
+    form = AlgorithmInterfaceAdminForm
+
+    def algorithm_inputs(self, obj):
+        return oxford_comma(obj.inputs.all())
+
+    def algorithm_outputs(self, obj):
+        return oxford_comma(obj.outputs.all())
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(AlgorithmAlgorithmInterface)
+class AlgorithmAlgorithmInterfaceAdmin(GuardedModelAdmin):
+    list_display = (
+        "pk",
+        "interface",
+        "is_default",
+        "algorithm",
+    )
+    list_filter = ("is_default", "algorithm")
 
 
 admin.site.register(AlgorithmUserObjectPermission, UserObjectPermissionAdmin)

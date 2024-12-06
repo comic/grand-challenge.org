@@ -30,7 +30,6 @@ from django.forms import (
     HiddenInput,
     ModelChoiceField,
     ModelForm,
-    ModelMultipleChoiceField,
     Select,
     TextInput,
     URLField,
@@ -45,9 +44,11 @@ from django_select2.forms import Select2MultipleWidget
 from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmImage,
+    AlgorithmInterface,
     AlgorithmModel,
     AlgorithmPermissionRequest,
     Job,
+    get_existing_interface_for_inputs_and_outputs,
 )
 from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
@@ -220,60 +221,11 @@ NON_ALGORITHM_INTERFACES = [
 ]
 
 
-class AlgorithmIOValidationMixin:
-    def clean(self):
-        cleaned_data = super().clean()
-
-        duplicate_interfaces = {*cleaned_data.get("inputs", [])}.intersection(
-            {*cleaned_data.get("outputs", [])}
-        )
-
-        if duplicate_interfaces:
-            raise ValidationError(
-                f"The sets of Inputs and Outputs must be unique: "
-                f"{oxford_comma(duplicate_interfaces)} present in both"
-            )
-
-        return cleaned_data
-
-
 class AlgorithmForm(
-    AlgorithmIOValidationMixin,
     WorkstationUserFilterMixin,
     SaveFormInitMixin,
     ModelForm,
 ):
-    inputs = ModelMultipleChoiceField(
-        queryset=ComponentInterface.objects.exclude(
-            slug__in=[*NON_ALGORITHM_INTERFACES, "results-json-file"]
-        ),
-        widget=Select2MultipleWidget,
-        help_text=format_lazy(
-            (
-                "The inputs to this algorithm. "
-                'See the <a href="{}">list of interfaces</a> for more '
-                "information about each interface. "
-                "Please contact support if your desired input is missing."
-            ),
-            reverse_lazy("components:component-interface-list-algorithms"),
-        ),
-    )
-    outputs = ModelMultipleChoiceField(
-        queryset=ComponentInterface.objects.exclude(
-            slug__in=NON_ALGORITHM_INTERFACES
-        ),
-        widget=Select2MultipleWidget,
-        help_text=format_lazy(
-            (
-                "The outputs to this algorithm. "
-                'See the <a href="{}">list of interfaces</a> for more '
-                "information about each interface. "
-                "Please contact support if your desired output is missing."
-            ),
-            reverse_lazy("components:component-interface-list-algorithms"),
-        ),
-    )
-
     class Meta:
         model = Algorithm
         fields = (
@@ -293,8 +245,6 @@ class AlgorithmForm(
             "hanging_protocol",
             "optional_hanging_protocols",
             "view_content",
-            "inputs",
-            "outputs",
             "minimum_credits_per_job",
             "job_requires_gpu_type",
             "job_requires_memory_gb",
@@ -636,15 +586,6 @@ class AlgorithmDescriptionForm(ModelForm):
             ),
             ButtonHolder(Submit("save", "Save")),
         )
-
-
-class AlgorithmUpdateForm(AlgorithmForm):
-    def __init__(self, *args, interfaces_editable, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        if not interfaces_editable:
-            for field_key in ("inputs", "outputs"):
-                self.fields.pop(field_key)
 
 
 class AlgorithmImageForm(ContainerImageForm):
@@ -1289,6 +1230,7 @@ class AlgorithmModelVersionControlForm(Form):
         )
 
         if hide_algorithm_model_input:
+
             self.fields["algorithm_model"].widget = HiddenInput()
         self.helper = FormHelper(self)
         if activate:
@@ -1317,3 +1259,37 @@ class AlgorithmModelVersionControlForm(Form):
             raise ValidationError("Model updating already in progress.")
 
         return algorithm_model
+
+
+class AlgorithmInterfaceBaseForm(SaveFormInitMixin, ModelForm):
+    class Meta:
+        model = AlgorithmInterface
+        fields = ("inputs", "outputs")
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        inputs = cleaned_data.get("inputs", [])
+        outputs = cleaned_data.get("outputs", [])
+
+        if not inputs or not outputs:
+            raise ValidationError(
+                "You must provide at least 1 input and 1 output."
+            )
+
+        duplicate_interfaces = {*inputs}.intersection({*outputs})
+
+        if duplicate_interfaces:
+            raise ValidationError(
+                f"The sets of Inputs and Outputs must be unique: "
+                f"{oxford_comma(duplicate_interfaces)} present in both"
+            )
+
+        cleaned_data["existing_io"] = (
+            get_existing_interface_for_inputs_and_outputs(
+                inputs=inputs,
+                outputs=outputs,
+            )
+        )
+
+        return cleaned_data
