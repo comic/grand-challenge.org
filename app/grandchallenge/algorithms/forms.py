@@ -26,11 +26,13 @@ from django.core.validators import (
 from django.db.models import Count, Exists, Max, OuterRef, Q
 from django.db.transaction import on_commit
 from django.forms import (
+    BooleanField,
     CharField,
     Form,
     HiddenInput,
     ModelChoiceField,
     ModelForm,
+    ModelMultipleChoiceField,
     Select,
     TextInput,
     URLField,
@@ -44,6 +46,7 @@ from django_select2.forms import Select2MultipleWidget
 
 from grandchallenge.algorithms.models import (
     Algorithm,
+    AlgorithmAlgorithmInterface,
     AlgorithmImage,
     AlgorithmInterface,
     AlgorithmModel,
@@ -1377,3 +1380,72 @@ class AlgorithmInterfaceBaseForm(SaveFormInitMixin, ModelForm):
         )
 
         return cleaned_data
+
+
+class AlgorithmInterfaceGetOrCreateForm(AlgorithmInterfaceBaseForm):
+    inputs = ModelMultipleChoiceField(
+        queryset=ComponentInterface.objects.exclude(
+            slug__in=[*NON_ALGORITHM_INTERFACES, "results-json-file"]
+        ),
+        widget=Select2MultipleWidget,
+    )
+    outputs = ModelMultipleChoiceField(
+        queryset=ComponentInterface.objects.exclude(
+            slug__in=[*NON_ALGORITHM_INTERFACES, "results-json-file"]
+        ),
+        widget=Select2MultipleWidget,
+    )
+    set_as_default = BooleanField(required=False)
+
+    class Meta(AlgorithmInterfaceBaseForm.Meta):
+        fields = (
+            *AlgorithmInterfaceBaseForm.Meta.fields,
+            "set_as_default",
+        )
+
+    def __init__(self, *args, algorithm, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._algorithm = algorithm
+
+        if self._algorithm.needs_default_interface:
+            self.fields["set_as_default"].initial = True
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if (
+            cleaned_data["existing_io"]
+            and AlgorithmAlgorithmInterface.objects.filter(
+                algorithm=self._algorithm,
+                interface=cleaned_data["existing_io"],
+            ).exists()
+        ):
+            raise ValidationError(
+                "Your algorithm already has an interface with these inputs "
+                "and outputs. If you would like to update the 'is_default' "
+                "property of the interface, you can do so by updating the "
+                "existing interface on the interface list."
+            )
+
+        return cleaned_data
+
+    def save(self):
+        io = (
+            self.cleaned_data["existing_io"]
+            if self.cleaned_data["existing_io"]
+            else super().save()
+        )
+
+        if self.cleaned_data["set_as_default"]:
+            AlgorithmAlgorithmInterface.objects.filter(
+                algorithm=self._algorithm
+            ).update(is_default=False)
+
+        self._algorithm.interfaces.add(
+            io,
+            through_defaults={
+                "is_default": self.cleaned_data["set_as_default"]
+            },
+        )
+
+        return io
