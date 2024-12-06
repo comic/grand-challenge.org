@@ -922,7 +922,7 @@
         <span class="p">)</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">linked_component_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_inputs</span><span class="o">.</span><span class="n">all</span><span class="p">()</span> <span class="o">|</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_outputs</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
         <span class="p">)</span><span class="o">.</span><span class="n">distinct</span><span class="p">()</span>

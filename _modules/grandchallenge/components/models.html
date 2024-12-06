@@ -2748,7 +2748,7 @@
         <span class="k">return</span> <span class="n">values_for_interfaces</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">linked_component_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
             <span class="n">pk__in</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">civ_sets_related_manager</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
                 <span class="n">values__isnull</span><span class="o">=</span><span class="kc">True</span>
