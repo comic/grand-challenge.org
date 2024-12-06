@@ -59,7 +59,9 @@ class HangingProtocolForm(SaveFormInitMixin, forms.ModelForm):
 
     def clean_json(self):
         json = self.cleaned_data["json"]
-        viewport_names = [x["viewport_name"] for x in json]
+        viewport_names = [
+            x["viewport_name"] for x in json if "viewport_name" in x
+        ]
 
         self._validate_viewport_uniqueness(viewport_names=viewport_names)
         self._validate_dimensions(value=json)
