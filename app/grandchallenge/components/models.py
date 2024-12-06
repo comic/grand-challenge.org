@@ -2626,7 +2626,7 @@ class ValuesForInterfacesMixin:
         return values_for_interfaces
 
     @cached_property
-    def interfaces(self):
+    def linked_component_interfaces(self):
         return ComponentInterface.objects.filter(
             pk__in=self.civ_sets_related_manager.exclude(
                 values__isnull=True
