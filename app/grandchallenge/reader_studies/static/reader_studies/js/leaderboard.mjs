@@ -5,9 +5,3 @@ $(document).ready(() => {
         });
     });
 });
-
-$(window).resize(() => {
-    $(".table").each(function () {
-        $(this).DataTable().columns.adjust();
-    });
-});
