@@ -114,7 +114,7 @@ def test_budget_update_form():
     data2 = {
         "expected_number_of_teams": 100,
         "inference_time_limit_in_minutes": 10,
-        "algorithm_selectable_gpu_type_choices": ["", "A10G", "T4"],
+        "algorithm_selectable_gpu_type_choices": ["no_gpu", "A10G", "T4"],
         "algorithm_maximum_settable_memory_gb": 32,
         "average_size_of_test_image_in_mb": 10,
         "phase_1_number_of_submissions_per_team": 10,
