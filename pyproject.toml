@@ -147,5 +147,3 @@ floating-scroll = { version = "==3.2.0", provider = "unpkg", include = ["dist/jq
 "datatables.net-bs4" = { version = "==1.11.3", provider = "unpkg", include = ["css/dataTables.bootstrap4(.min)?.css", "js/dataTables.bootstrap4(.min)?.js"]}
 "datatables.net-buttons" = { version = "==2.0.1", provider = "unpkg", include = ["js/dataTables.buttons(.min)?.js", "js/buttons.colVis(.min)?.js"]}
 "datatables.net-buttons-bs4" = { version = "==2.0.1", provider = "unpkg", include = ["css/buttons.bootstrap4(.min)?.css", "js/buttons.bootstrap4(.min)?.js"]}
-"datatables.net-responsive" = { version = "==2.2.9", provider = "unpkg", include = ["js/dataTables.responsive(.min)?.js"]}
-"datatables.net-responsive-bs4" = { version = "==2.2.9", provider = "unpkg", include = ["css/responsive.bootstrap4(.min)?.css", "js/responsive.bootstrap4(.min)?.js"]}

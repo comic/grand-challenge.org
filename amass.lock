@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:74a5cc80f4614ed1a49e6ee281debcbe4c437d2a894ea78577e1235f07713600",
+  "content_hash": "sha256:745a7a8d083ae88fa0420aa15309a4498d5c306e2d78547fd614451b650292a1",
   "dependencies": [
     {
       "name": "@github/markdown-toolbar-element",
@@ -514,46 +514,6 @@
         {
           "name": "js/buttons.bootstrap4.min.js",
           "sri": "sha384-39HSGlFa/ZBzWGrpbpXEnLn7D25fRe7nSgMuD9OovM0Hmm/73enw1iF3zgQfJ9OZ"
-        }
-      ],
-      "maps": []
-    },
-    {
-      "name": "datatables.net-responsive",
-      "version": "2.2.9",
-      "provider": "unpkg",
-      "assets": [
-        {
-          "name": "js/dataTables.responsive.js",
-          "sri": "sha384-eY9M0GbvpniuOcFCVB7On6oTCecP/MaxuJZhhsKhE/hESC989j4Tnk2FaA8NZ8qc"
-        },
-        {
-          "name": "js/dataTables.responsive.min.js",
-          "sri": "sha384-ziUH70yXeghwn7LIJvtjobzpllxs+w4FJL4/ssbFYWoYof46CveVyQ+GCaR1eTXj"
-        }
-      ],
-      "maps": []
-    },
-    {
-      "name": "datatables.net-responsive-bs4",
-      "version": "2.2.9",
-      "provider": "unpkg",
-      "assets": [
-        {
-          "name": "css/responsive.bootstrap4.css",
-          "sri": "sha384-FG1U1mmuc4wFohqjCo1SISm217nX0ImWshs+Wu6nFbi/Me23QK9QnZM9ffbOi0N7"
-        },
-        {
-          "name": "css/responsive.bootstrap4.min.css",
-          "sri": "sha384-lePQI47qegn3yPIKwMvp5YLKtqliO3UWhA8XdAuPyDLLD41HBbdLmNHXco/IMAok"
-        },
-        {
-          "name": "js/responsive.bootstrap4.js",
-          "sri": "sha384-+u4gb6q8N/RnCi1rp9KpC+RNKEySqC0ASHSScqmY/C7vZnrJYM7hKPnl+Og6AKCK"
-        },
-        {
-          "name": "js/responsive.bootstrap4.min.js",
-          "sri": "sha384-iqV3x/YAPev0L8Y35rZF1e8LuilKG+h0gtjkpS6dr6HFEZ139n6Q8YcFQ3kZfKu/"
         }
       ],
       "maps": []
