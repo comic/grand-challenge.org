@@ -413,7 +413,6 @@ class AlgorithmForm(
             )
             .filter(
                 submission_kind=SubmissionKindChoices.ALGORITHM,
-                public=True,
                 total_algorithm_input_count=len(inputs),
                 total_algorithm_output_count=len(outputs),
                 relevant_algorithm_input_count=len(inputs),
@@ -441,6 +440,7 @@ class AlgorithmForm(
     @property
     def selectable_gpu_type_choices(self):
         choices_set = {
+            self.instance.job_requires_gpu_type,
             *get_default_gpu_type_choices(),
             *chain.from_iterable(
                 self.job_requirement_properties_from_phases["gpu_type_choices"]
