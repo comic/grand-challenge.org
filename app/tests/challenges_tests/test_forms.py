@@ -36,6 +36,7 @@ def test_challenge_request_budget_fields_required():
         "expected_number_of_teams": 10,
         "number_of_tasks": 1,
         "challenge_fee_agreement": True,
+        "budget_for_hosting_challenge": 0,
     }
     form = ChallengeRequestForm(data=data, creator=user)
     assert not form.is_valid()
@@ -58,6 +59,7 @@ def test_challenge_request_budget_fields_required():
         "expected_number_of_teams": 10,
         "number_of_tasks": 1,
         "challenge_fee_agreement": True,
+        "budget_for_hosting_challenge": 0,
         "algorithm_inputs": "foo",
         "algorithm_outputs": "foo",
         "average_size_of_test_image_in_mb": 1,
@@ -68,7 +70,6 @@ def test_challenge_request_budget_fields_required():
         "phase_2_number_of_submissions_per_team": 1,
         "phase_1_number_of_test_images": 1,
         "phase_2_number_of_test_images": 1,
-        "budget_for_hosting_challenge": 0,
     }
     form2 = ChallengeRequestForm(data=data2, creator=user)
     assert form2.is_valid()
