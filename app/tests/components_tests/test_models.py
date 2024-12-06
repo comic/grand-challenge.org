@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest.mock import call
 
 import pytest
+from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from django.core.exceptions import MultipleObjectsReturned, ValidationError
 from django.core.files.base import ContentFile
 from django.utils import timezone
@@ -15,6 +16,7 @@ from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.cases.models import Image
 from grandchallenge.components.models import (
     INTERFACE_TYPE_JSON_EXAMPLES,
+    CIVData,
     ComponentInterface,
     ComponentInterfaceExampleValue,
     ComponentInterfaceValue,
@@ -45,12 +47,13 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.evaluation_tests.factories import EvaluationFactory, MethodFactory
-from tests.factories import ImageFactory, WorkstationImageFactory
+from tests.factories import ImageFactory, UserFactory, WorkstationImageFactory
 from tests.reader_studies_tests.factories import (
     DisplaySetFactory,
     QuestionFactory,
     ReaderStudyFactory,
 )
+from tests.uploads_tests.factories import UserUploadFactory
 from tests.utils import create_raw_upload_image_session
 
 
@@ -158,6 +161,7 @@ def test_average_duration_filtering():
         (InterfaceKindChoices.OBJ, True, False),
         (InterfaceKindChoices.MP4, True, False),
         (InterfaceKindChoices.NEWICK, True, False),
+        (InterfaceKindChoices.BIOM, True, False),
     ),
 )
 def test_saved_in_object_store(kind, object_store_required, is_image):
@@ -223,6 +227,7 @@ def test_saved_in_object_store(kind, object_store_required, is_image):
         (InterfaceKindChoices.THUMBNAIL_PNG, True),
         (InterfaceKindChoices.MP4, True),
         (InterfaceKindChoices.NEWICK, True),
+        (InterfaceKindChoices.BIOM, True),
     ),
 )
 def test_clean_store_in_db(kind, object_store_required):
@@ -306,6 +311,7 @@ def test_no_uuid_validation():
         (InterfaceKind.InterfaceKindChoices.OBJ, "obj"),
         (InterfaceKind.InterfaceKindChoices.MP4, "mp4"),
         (InterfaceKind.InterfaceKindChoices.NEWICK, "newick"),
+        (InterfaceKind.InterfaceKindChoices.BIOM, "biom"),
         *((k, "json") for k in InterfaceKind.interface_type_json()),
     ),
 )
@@ -1634,3 +1640,113 @@ def test_component_interface_value_manager():
 
     assert civ == civ1
     assert not created
+
+
+@pytest.mark.parametrize(
+    "mock_error, expected_error, msg",
+    (
+        # Ensure all resource errors are covered
+        (
+            MemoryError,
+            ValidationError,
+            "The file was too large",
+        ),
+        (
+            TimeLimitExceeded,
+            ValidationError,
+            "The file was too large",
+        ),
+        (
+            SoftTimeLimitExceeded,
+            ValidationError,
+            "The file was too large",
+        ),
+        (
+            UnicodeDecodeError,
+            ValidationError,
+            "The file could not be decoded",
+        ),
+        # Other Exceptions are not a ValidationError
+        (
+            RuntimeError("Some secret"),
+            RuntimeError,
+            "Some secret",
+        ),
+    ),
+)
+def test_validate_user_upload_resource_error_handling(
+    mock_error, msg, expected_error
+):
+    ci = ComponentInterfaceFactory.build(kind=InterfaceKindChoices.FLOAT)
+    civ = ComponentInterfaceValueFactory.build(interface=ci)
+
+    assert ci.is_json_kind  # sanity
+
+    class MockUserUpload:
+        is_completed = True
+
+        @classmethod
+        def read_object(cls, *_, **__):
+            if mock_error is UnicodeDecodeError:
+                # Requires some args
+                raise mock_error("foo", b"", 0, 1, "bar")
+            raise mock_error
+
+    with pytest.raises(expected_error) as err:
+        civ.validate_user_upload(user_upload=MockUserUpload)
+
+    if msg:
+        assert msg in str(err)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "kind,expected_kwargs",
+    (
+        # Ensure queue is not passed since setting to None would
+        # have Celery use the Celery-scope default ("celerly")
+        (
+            InterfaceKindChoices.STRING,
+            {},
+        ),
+        (
+            InterfaceKindChoices.NEWICK,
+            {"queue": "acks-late-2xlarge"},
+        ),
+        (
+            InterfaceKindChoices.BIOM,
+            {"queue": "acks-late-2xlarge"},
+        ),
+    ),
+)
+def test_component_interface_custom_queue(kind, expected_kwargs, mocker):
+
+    ci = ComponentInterfaceFactory(
+        kind=kind,
+        store_in_database=False,
+    )
+    user = UserFactory()
+
+    # Need an existing CIVSet, use archive here since it is slightly easier setup
+    archive = ArchiveFactory()
+    archive.add_editor(user)
+    ai = ArchiveItemFactory.build(archive=None)
+
+    mock_task = mocker.patch(
+        "grandchallenge.components.tasks.add_file_to_object"
+    )
+    ai.validate_values_and_execute_linked_task(
+        values=[
+            CIVData(
+                interface_slug=ci.slug,
+                value=UserUploadFactory(creator=user),
+            )
+        ],
+        user=user,
+    )
+    assert mock_task.signature.called_once()  # Sanity
+
+    # Ignore the to-task keyword arguments
+    del mock_task.signature.call_args.kwargs["kwargs"]
+
+    assert mock_task.signature.call_args.kwargs == expected_kwargs

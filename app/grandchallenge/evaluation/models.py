@@ -33,9 +33,13 @@ from grandchallenge.components.models import (
     ComponentImage,
     ComponentInterface,
     ComponentJob,
-    GPUTypeChoices,
     ImportStatusChoices,
     Tarball,
+)
+from grandchallenge.components.schemas import (
+    SELECTABLE_GPU_TYPES_SCHEMA,
+    GPUTypeChoices,
+    get_default_gpu_type_choices,
 )
 from grandchallenge.core.models import (
     FieldChangeMixin,
@@ -133,21 +137,6 @@ EXTRA_RESULT_COLUMNS_SCHEMA = {
         },
     },
 }
-
-SELECTABLE_GPU_TYPES_SCHEMA = {
-    "$schema": "http://json-schema.org/draft-07/schema",
-    "type": "array",
-    "title": "The Selectable GPU Types Schema",
-    "items": {
-        "enum": [choice for choice in GPUTypeChoices],
-        "type": "string",
-    },
-    "uniqueItems": True,
-}
-
-
-def get_default_gpu_type_choices():
-    return [GPUTypeChoices.NO_GPU, GPUTypeChoices.T4]
 
 
 class PhaseManager(models.Manager):
@@ -489,6 +478,24 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         related_name="+",
         blank=True,
         help_text="The output interfaces that the algorithms for this phase must use",
+    )
+    algorithm_selectable_gpu_type_choices = models.JSONField(
+        default=get_default_gpu_type_choices,
+        help_text=(
+            "The GPU type choices that participants will be able to select for their "
+            "algorithm inference jobs. The setting on the algorithm will be "
+            "validated against this on submission. Options are "
+            f"{GPUTypeChoices.values}.".replace("'", '"')
+        ),
+        validators=[JSONValidator(schema=SELECTABLE_GPU_TYPES_SCHEMA)],
+    )
+    algorithm_maximum_settable_memory_gb = models.PositiveSmallIntegerField(
+        default=settings.ALGORITHMS_MAX_MEMORY_GB,
+        help_text=(
+            "Maximum amount of memory that participants will be allowed to "
+            "assign to algorithm inference jobs for submission. The setting on the "
+            "algorithm will be validated against this on submission."
+        ),
     )
     algorithm_time_limit = models.PositiveIntegerField(
         default=20 * 60,
@@ -867,6 +874,12 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         self.outputs.set(
             [ComponentInterface.objects.get(slug="metrics-json-file")]
         )
+
+    @cached_property
+    def linked_component_interfaces(self):
+        return (
+            self.algorithm_inputs.all() | self.algorithm_outputs.all()
+        ).distinct()
 
     def assign_permissions(self):
         assign_perm("view_phase", self.challenge.admins_group, self)

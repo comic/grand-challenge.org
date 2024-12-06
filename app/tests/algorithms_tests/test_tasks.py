@@ -17,8 +17,8 @@ from grandchallenge.algorithms.tasks import (
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
-    GPUTypeChoices,
 )
+from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.components.tasks import (
     add_image_to_component_interface_value,
     validate_docker_image,

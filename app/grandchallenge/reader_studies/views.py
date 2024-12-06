@@ -17,7 +17,6 @@ from django.forms.utils import ErrorList
 from django.http import (
     Http404,
     HttpResponse,
-    HttpResponseBadRequest,
     HttpResponseForbidden,
     HttpResponseRedirect,
     JsonResponse,
@@ -57,13 +56,6 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.archives.forms import AddCasesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
-from grandchallenge.components.backends.exceptions import (
-    CIVNotEditableException,
-)
-from grandchallenge.components.models import CIVData
-from grandchallenge.components.serializers import (
-    ComponentInterfaceValuePostSerializer,
-)
 from grandchallenge.components.views import (
     CIVSetBulkDelete,
     CIVSetDelete,
@@ -982,51 +974,6 @@ class DisplaySetViewSet(
         if self.action in ["partial_update", "update", "create"]:
             return DisplaySetPostSerializer
         return DisplaySetSerializer
-
-    def partial_update(self, request, pk=None):
-        instance = self.get_object()
-        if not instance.is_editable:
-            return HttpResponseBadRequest(
-                "This display set cannot be changed, "
-                "as answers for it already exist."
-            )
-        values = request.data.pop("values", None)
-        if values:
-            serialized_data = ComponentInterfaceValuePostSerializer(
-                many=True, data=values, context={"request": request}
-            )
-            if serialized_data.is_valid():
-                civs = []
-                for value in serialized_data.validated_data:
-                    interface = value.get("interface", None)
-                    user_upload = value.get("user_upload", None)
-                    upload_session = value.get("upload_session", None)
-                    image = value.get("image", None)
-                    value = value.get("value", None)
-                    civs.append(
-                        CIVData(
-                            interface_slug=interface.slug,
-                            value=upload_session
-                            or user_upload
-                            or image
-                            or value,
-                        )
-                    )
-                try:
-                    instance.validate_values_and_execute_linked_task(
-                        values=civs,
-                        user=request.user,
-                    )
-                except CIVNotEditableException as e:
-                    error_handler = self.instance.get_error_handler()
-                    error_handler.handle_error(
-                        error_message="An unexpected error occurred",
-                        user=request.user,
-                    )
-                    logger.error(e, exc_info=True)
-            else:
-                raise DRFValidationError(serialized_data.errors)
-        return super().partial_update(request, pk)
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())

@@ -15,22 +15,37 @@ function initialize_jsoneditor_widget(jsoneditorWidgetID) {
             modes: ["code", "tree"],
             onChangeText: jsonString => {
                 const widget = document.getElementById(jsoneditorWidgetID);
+                // There is only a text area if in "code" mode
+                // That also happens to be the only mode that can contain
+                // faulty JSON
+                const aceTextArea = container.querySelector("textarea");
                 try {
                     JSON.parse(jsonString);
                     widget.value = jsonString;
-                    widget.setCustomValidity("");
+                    aceTextArea?.setCustomValidity("");
                 } catch (err) {
-                    widget.setCustomValidity("JSON is invalid");
+                    aceTextArea?.setCustomValidity("JSON is invalid");
                 }
             },
         };
 
         const editor = new JSONEditor(container, options);
 
-        editor.set(
-            JSON.parse(document.getElementById(jsoneditorWidgetID).value),
-        );
-        editor.expandAll();
+        let data;
+        try {
+            const data = JSON.parse(jsoneditorWidget.value);
+        } catch (err) {
+            console.warn(
+                "Could not parse JSON data:",
+                jsoneditorWidget.value,
+                err,
+            );
+        }
+
+        if (typeof data !== "undefined") {
+            editor.set(data);
+            editor.expandAll();
+        }
 
         if (schema !== undefined) {
             editor.setSchema(schema);

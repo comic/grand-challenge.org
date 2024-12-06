@@ -13,6 +13,7 @@ from crispy_forms.layout import (
     Layout,
     Submit,
 )
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import BLANK_CHOICE_DASH
 from django.forms import (
@@ -56,6 +57,7 @@ from grandchallenge.core.widgets import (
     MarkdownEditorInlineWidget,
 )
 from grandchallenge.groups.forms import UserGroupForm
+from grandchallenge.hanging_protocols.forms import ViewContentExampleMixin
 from grandchallenge.hanging_protocols.models import VIEW_CONTENT_SCHEMA
 from grandchallenge.reader_studies.models import (
     ANSWER_TYPE_TO_INTERACTIVE_ALGORITHM_CHOICES,
@@ -69,7 +71,7 @@ from grandchallenge.reader_studies.models import (
     ReaderStudy,
     ReaderStudyPermissionRequest,
 )
-from grandchallenge.subdomains.utils import reverse_lazy
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.workstation_configs.models import OVERLAY_SEGMENTS_SCHEMA
 
 logger = logging.getLogger(__name__)
@@ -189,7 +191,9 @@ class ReaderStudyCreateForm(
             )
 
 
-class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
+class ReaderStudyUpdateForm(
+    ReaderStudyCreateForm, ViewContentExampleMixin, ModelForm
+):
     class Meta(ReaderStudyCreateForm.Meta):
         fields = (
             "title",
@@ -254,19 +258,6 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
             ),
         }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        interface_slugs = (
-            self.instance.display_sets.exclude(values__isnull=True)
-            .values_list("values__interface__slug", flat=True)
-            .order_by()
-            .distinct()
-        )
-        self.fields["view_content"].help_text += (
-            " The following interfaces are used in your reader study: "
-            f"{', '.join(interface_slugs)}."
-        )
-
 
 class ReaderStudyCopyForm(Form):
     title = CharField(required=True)
@@ -315,6 +306,14 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
             *BLANK_CHOICE_DASH,
             *AnswerType.choices,
         ]
+
+        self.fields["overlay_segments"].help_text += format_lazy(
+            'Refer to the <a href="{}#segmentation-masks">documentation</a> for more information',
+            reverse(
+                "documentation:detail",
+                kwargs={"slug": settings.DOCUMENTATION_HELP_INTERFACES_SLUG},
+            ),
+        )
 
         if not self.user_can_add_interactive_algorithm:
             self.fields["interactive_algorithm"].widget = HiddenInput()

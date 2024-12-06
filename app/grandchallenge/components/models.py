@@ -4,8 +4,10 @@ import re
 from datetime import timedelta
 from json import JSONDecodeError
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from typing import NamedTuple
 
+from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import signature
 from django import forms
 from django.apps import apps
@@ -23,7 +25,7 @@ from django.core.validators import (
     RegexValidator,
 )
 from django.db import models, transaction
-from django.db.models import Avg, F, IntegerChoices, QuerySet, Sum, TextChoices
+from django.db.models import Avg, F, IntegerChoices, QuerySet, Sum
 from django.db.transaction import on_commit
 from django.forms import ModelChoiceField
 from django.forms.models import model_to_dict
@@ -43,7 +45,10 @@ from grandchallenge.charts.specs import components_line
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
 )
-from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
+from grandchallenge.components.schemas import (
+    INTERFACE_VALUE_SCHEMA,
+    GPUTypeChoices,
+)
 from grandchallenge.components.tasks import (
     _repo_login_and_run,
     assign_docker_image_from_upload,
@@ -52,10 +57,12 @@ from grandchallenge.components.tasks import (
     validate_docker_image,
 )
 from grandchallenge.components.validators import (
+    validate_biom_format,
     validate_newick_tree_format,
     validate_no_slash_at_ends,
     validate_safe_path,
 )
+from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.core.error_handlers import (
     FallbackCIVValidationErrorHandler,
     JobCIVErrorHandler,
@@ -84,15 +91,6 @@ from grandchallenge.workstation_configs.models import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-class GPUTypeChoices(TextChoices):
-    NO_GPU = "", _("No GPU")
-    A100 = "A100", _("NVIDIA A100 Tensor Core GPU")
-    A10G = "A10G", _("NVIDIA A10G Tensor Core GPU")
-    V100 = "V100", _("NVIDIA V100 Tensor Core GPU")
-    K80 = "K80", _("NVIDIA K80 GPU")
-    T4 = "T4", _("NVIDIA T4 Tensor Core GPU")
 
 
 class InterfaceKindChoices(models.TextChoices):
@@ -147,6 +145,7 @@ class InterfaceKindChoices(models.TextChoices):
     OBJ = "OBJ", _("OBJ file")
     MP4 = "MP4", _("MP4 file")
     NEWICK = "NEWCK", _("Newick tree-format file")
+    BIOM = "BIOM", _("BIOM format")
 
     # Legacy support
     CSV = "CSV", _("CSV file")
@@ -273,6 +272,7 @@ class InterfaceKind:
         * OBJ file
         * MP4 file
         * Newick file
+        * BIOM file
         """
         return {
             InterfaceKind.InterfaceKindChoices.CSV,
@@ -284,6 +284,7 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.OBJ,
             InterfaceKind.InterfaceKindChoices.MP4,
             InterfaceKind.InterfaceKindChoices.NEWICK,
+            InterfaceKind.InterfaceKindChoices.BIOM,
         }
 
     @staticmethod
@@ -305,6 +306,7 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.ZIP,
             InterfaceKind.InterfaceKindChoices.OBJ,
             InterfaceKind.InterfaceKindChoices.NEWICK,
+            InterfaceKind.InterfaceKindChoices.BIOM,
         }
 
 
@@ -313,8 +315,16 @@ class OverlaySegmentsMixin(models.Model):
         blank=True,
         default=list,
         help_text=(
-            "The schema that defines how categories of values in the overlay "
-            "images are differentiated."
+            "The schema that defines how categories of values in the overlay images are differentiated. "
+            'Example usage: [{"name": "background", "visible": true, "voxel_value": 0},'
+            '{"name": "tissue", "visible": true, "voxel_value": 1}]. '
+            "If a categorical overlay is shown, "
+            "it is possible to show toggles to change the visibility of the different overlay categories. "
+            "To do so, configure the categories that should be displayed. Data from the "
+            "algorithm's output.json can be added as an extra label to each "
+            "toggle using jinja templating. "
+            'For example: [{"name": "Level 0", "visible": false, "voxel_value": 0, '
+            '"metric_template": "{{metrics.volumes[0]}} mm³"}]. '
         ),
         validators=[JSONValidator(schema=OVERLAY_SEGMENTS_SCHEMA)],
     )
@@ -1185,6 +1195,12 @@ INTERFACE_KIND_TO_ALLOWED_FILE_TYPES = {
         ".nwk",
         ".tree",
     ),
+    InterfaceKindChoices.BIOM: (
+        # MIME type
+        "application/octet-stream",
+        # File extension
+        ".biom",
+    ),
     InterfaceKindChoices.OBJ: (
         "text/plain",
         "application/octet-stream",
@@ -1209,7 +1225,13 @@ INTERFACE_KIND_TO_FILE_EXTENSION = {
     InterfaceKindChoices.OBJ: ".obj",
     InterfaceKindChoices.MP4: ".mp4",
     InterfaceKindChoices.NEWICK: ".newick",
+    InterfaceKindChoices.BIOM: ".biom",
     **{kind: ".json" for kind in InterfaceKind.interface_type_json()},
+}
+
+INTERFACE_KIND_TO_CUSTOM_QUEUE = {
+    InterfaceKindChoices.NEWICK: acks_late_2xlarge_task.queue,
+    InterfaceKindChoices.BIOM: acks_late_2xlarge_task.queue,
 }
 
 
@@ -1261,6 +1283,7 @@ class ComponentInterfaceValue(models.Model):
                     ".obj",
                     ".mp4",
                     ".newick",
+                    ".biom",
                 )
             ),
             MimeTypeValidator(
@@ -1456,6 +1479,8 @@ class ComponentInterfaceValue(models.Model):
                     value = json.loads(f.read().decode("utf-8"))
                 except JSONDecodeError as error:
                     raise ValidationError(error)
+                except UnicodeDecodeError:
+                    raise ValidationError("The file could not be decoded")
                 except MemoryError as error:
                     raise ValidationError(
                         "The file was too large to process, "
@@ -1470,14 +1495,30 @@ class ComponentInterfaceValue(models.Model):
     def validate_user_upload(self, user_upload):
         if not user_upload.is_completed:
             raise ValidationError("User upload is not completed.")
-        if self.interface.is_json_kind:
-            try:
-                value = json.loads(user_upload.read_object())
-            except JSONDecodeError as e:
-                raise ValidationError(e)
-            self.interface.validate_against_schema(value=value)
-        elif self.interface.kind == InterfaceKindChoices.NEWICK:
-            validate_newick_tree_format(tree=user_upload.read_object())
+        try:
+            if self.interface.is_json_kind:
+                try:
+                    value = json.loads(user_upload.read_object())
+                except JSONDecodeError as error:
+                    raise ValidationError(error)
+                self.interface.validate_against_schema(value=value)
+            elif self.interface.kind == InterfaceKindChoices.NEWICK:
+                validate_newick_tree_format(tree=user_upload.read_object())
+            elif self.interface.kind == InterfaceKindChoices.BIOM:
+                with NamedTemporaryFile() as temp_file:
+                    user_upload.download_fileobj(temp_file)
+                    validate_biom_format(file=temp_file.name)
+        except UnicodeDecodeError:
+            raise ValidationError("The file could not be decoded")
+        except (
+            MemoryError,
+            SoftTimeLimitExceeded,
+            TimeLimitExceeded,
+        ) as error:
+            raise ValidationError(
+                "The file was too large to process, "
+                "please try again with a smaller file"
+            ) from error
 
         self._user_upload_validated = True
 
@@ -2479,6 +2520,11 @@ class CIVForObjectMixin:
         elif user_upload:
             from grandchallenge.components.tasks import add_file_to_object
 
+            custom_queue = INTERFACE_KIND_TO_CUSTOM_QUEUE.get(ci.kind, False)
+            task_queue_kwarg = {}
+            if custom_queue:
+                task_queue_kwarg["queue"] = custom_queue
+
             transaction.on_commit(
                 add_file_to_object.signature(
                     kwargs={
@@ -2488,7 +2534,8 @@ class CIVForObjectMixin:
                         "interface_pk": str(ci.pk),
                         "object_pk": self.pk,
                         "linked_task": linked_task,
-                    }
+                    },
+                    **task_queue_kwarg,
                 ).apply_async
             )
 
@@ -2577,6 +2624,14 @@ class ValuesForInterfacesMixin:
             for interface in interfaces_and_values.interfaces
         }
         return values_for_interfaces
+
+    @cached_property
+    def linked_component_interfaces(self):
+        return ComponentInterface.objects.filter(
+            pk__in=self.civ_sets_related_manager.exclude(
+                values__isnull=True
+            ).values_list("values__interface__pk", flat=True)
+        ).distinct()
 
 
 class Tarball(UUIDModel):

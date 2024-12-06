@@ -1,14 +1,14 @@
 from contextlib import nullcontext
 
 import pytest
-from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
-from Bio.Phylo.NewickIO import NewickError
 from django.core.exceptions import ValidationError
 
 from grandchallenge.components.validators import (
+    validate_biom_format,
     validate_newick_tree_format,
     validate_safe_path,
 )
+from tests.components_tests import RESOURCE_DIR
 
 
 @pytest.mark.parametrize(
@@ -68,40 +68,36 @@ def test_valid_paths(rel_path):
         ),
     ),
 )
-def test_validate_newick_formats(tree, context):
+def test_validate_newick_format(tree, context):
     with context:
         validate_newick_tree_format(tree=tree)
 
 
+def test_valid_biom_format():
+    validate_biom_format(file=RESOURCE_DIR / "biom" / "valid.biom")
+
+
 @pytest.mark.parametrize(
-    "error, msg, expected_error",
+    "biom_file, msg",
     (
-        (MemoryError, "The file is too large", ValidationError),
-        (SoftTimeLimitExceeded, "The file is too large", ValidationError),
-        (TimeLimitExceeded, "The file is too large", ValidationError),
-        (NewickError, "Invalid Newick tree format", ValidationError),
-        (  # No secrets: only ValidationErrors are returned to user
-            Exception,
-            "",
-            Exception,
+        (
+            # Uncompressed
+            RESOURCE_DIR / "biom" / "uncompressed_OTU_json.biom",
+            "Only BIOM in valid HDF5 binary file format are supported",
+        ),
+        (
+            # Compressed, but removed first few bytes
+            RESOURCE_DIR / "biom" / "broken.biom",
+            "Only BIOM in valid HDF5 binary file format are supported",
+        ),
+        (
+            # HD5 Format, but not a biom
+            RESOURCE_DIR / "biom" / "not_a_biom.h5",
+            "Does not appear to be a BIOM-format file",
         ),
     ),
 )
-def test_validate_newick_exception_handling(
-    error, msg, expected_error, mocker
-):
-
-    class MockParser:
-        @staticmethod
-        def parse(*_, **__):
-            raise error
-
-    mocker.patch(
-        "grandchallenge.components.validators._newick_parser",
-        return_value=MockParser,
-    )
-
-    with pytest.raises(expected_error) as err:
-        validate_newick_tree_format("();")
-
-    assert msg in str(err)
+def test_invalid_biom_formats(biom_file, msg):
+    with pytest.raises(ValidationError) as error:
+        validate_biom_format(file=biom_file)
+    assert msg in str(error)

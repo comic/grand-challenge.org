@@ -80,9 +80,9 @@ ENV PYTHONUNBUFFERED=1\
     COMPONENTS_SAGEMAKER_SHIM_VERSION=0.3.5\
     PATH="/opt/poetry/.venv/bin:/home/django/.local/bin:${PATH}"
 
-RUN mkdir -p /opt/poetry /app /static /opt/sagemaker-shim \
+RUN mkdir -p /opt/poetry /app /static /opt/sagemaker-shim /opt/virtualenvs \
     && groupadd -r django && useradd -m -r -g django django \
-    && chown django:django /opt/poetry /app /static /opt/sagemaker-shim
+    && chown django:django /opt/poetry /app /static /opt/sagemaker-shim /opt/virtualenvs
 
 USER django:django
 
@@ -92,6 +92,11 @@ RUN mkdir -p /opt/sagemaker-shim \
     && echo "a0f64b99ffea8faed65a23bf0f52ff1f2a20900ca8bc6a3d13a2ff7eff1d7eb7  /opt/sagemaker-shim/sagemaker-shim-${COMPONENTS_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" | shasum -c - || exit 1 \
     && tar -C /opt/sagemaker-shim/ -xzvf "/opt/sagemaker-shim/sagemaker-shim-${COMPONENTS_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" \
     && rm "/opt/sagemaker-shim/sagemaker-shim-${COMPONENTS_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz"
+
+# Create virtual environments
+RUN mkdir -p /opt/virtualenvs \
+    && python -m venv /opt/virtualenvs/biom \
+    && /opt/virtualenvs/biom/bin/python -m pip --no-cache-dir --no-color install biom-format
 
 WORKDIR /opt/poetry
 

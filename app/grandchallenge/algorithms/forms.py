@@ -15,6 +15,7 @@ from crispy_forms.layout import (
 from dal import autocomplete
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
 from django.core.validators import (
@@ -22,7 +23,7 @@ from django.core.validators import (
     MinValueValidator,
     RegexValidator,
 )
-from django.db.models import Count, Exists, OuterRef, Q
+from django.db.models import Count, Exists, Max, OuterRef, Q
 from django.db.transaction import on_commit
 from django.forms import (
     CharField,
@@ -64,9 +65,12 @@ from grandchallenge.components.models import (
     CIVData,
     ComponentInterface,
     ComponentJob,
-    GPUTypeChoices,
     ImportStatusChoices,
     InterfaceKindChoices,
+)
+from grandchallenge.components.schemas import (
+    GPUTypeChoices,
+    get_default_gpu_type_choices,
 )
 from grandchallenge.components.serializers import ComponentInterfaceSerializer
 from grandchallenge.components.tasks import assign_tarball_from_upload
@@ -82,9 +86,11 @@ from grandchallenge.core.widgets import (
     JSONEditorWidget,
     MarkdownEditorInlineWidget,
 )
-from grandchallenge.evaluation.utils import get
+from grandchallenge.evaluation.utils import SubmissionKindChoices, get
 from grandchallenge.groups.forms import UserGroupForm
+from grandchallenge.hanging_protocols.forms import ViewContentExampleMixin
 from grandchallenge.hanging_protocols.models import VIEW_CONTENT_SCHEMA
+from grandchallenge.organizations.models import Organization
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.uploads.models import UserUpload
@@ -224,6 +230,7 @@ NON_ALGORITHM_INTERFACES = [
 class AlgorithmForm(
     WorkstationUserFilterMixin,
     SaveFormInitMixin,
+    ViewContentExampleMixin,
     ModelForm,
 ):
     class Meta:
@@ -313,31 +320,107 @@ class AlgorithmForm(
             "workstation_config": "Viewer Configuration",
         }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, *args, user, **kwargs):
+        super().__init__(*args, user=user, **kwargs)
+        self._user = user
 
         self.fields["contact_email"].required = True
         self.fields["display_editors"].required = True
 
-        self.fields["job_requires_gpu_type"].choices = [
-            (choice.value, choice.label)
-            for choice in [GPUTypeChoices.NO_GPU, GPUTypeChoices.T4]
-        ]
+        self.fields["job_requires_gpu_type"].choices = (
+            self.selectable_gpu_type_choices
+        )
         self.fields["job_requires_memory_gb"].validators = [
             MinValueValidator(settings.ALGORITHMS_MIN_MEMORY_GB),
-            MaxValueValidator(settings.ALGORITHMS_MAX_MEMORY_GB),
+            MaxValueValidator(self.maximum_settable_memory_gb),
         ]
 
-        if self.instance:
-            interface_slugs = (
-                (self.instance.inputs.all() | self.instance.outputs.all())
-                .distinct()
-                .values_list("slug", flat=True)
+    @cached_property
+    def job_requirement_properties_from_phases(self):
+        qs = get_objects_for_user(
+            self._user, "evaluation.create_phase_submission"
+        )
+        inputs = self.instance.inputs.all()
+        outputs = self.instance.outputs.all()
+        return (
+            qs.annotate(
+                total_algorithm_input_count=Count(
+                    "algorithm_inputs", distinct=True
+                ),
+                total_algorithm_output_count=Count(
+                    "algorithm_outputs", distinct=True
+                ),
+                relevant_algorithm_input_count=Count(
+                    "algorithm_inputs",
+                    filter=Q(algorithm_inputs__in=inputs),
+                    distinct=True,
+                ),
+                relevant_algorithm_output_count=Count(
+                    "algorithm_outputs",
+                    filter=Q(algorithm_outputs__in=outputs),
+                    distinct=True,
+                ),
             )
-            self.fields["view_content"].help_text += (
-                " The following interfaces are used in your algorithm: "
-                f"{oxford_comma(interface_slugs)}."
+            .filter(
+                submission_kind=SubmissionKindChoices.ALGORITHM,
+                public=True,
+                total_algorithm_input_count=len(inputs),
+                total_algorithm_output_count=len(outputs),
+                relevant_algorithm_input_count=len(inputs),
+                relevant_algorithm_output_count=len(outputs),
             )
+            .aggregate(
+                max_memory=Max("algorithm_maximum_settable_memory_gb"),
+                gpu_type_choices=ArrayAgg(
+                    "algorithm_selectable_gpu_type_choices", distinct=True
+                ),
+            )
+        )
+
+    @cached_property
+    def job_requirement_properties_from_organizations(self):
+        return Organization.objects.filter(
+            members_group__user=self._user
+        ).aggregate(
+            max_memory=Max("algorithm_maximum_settable_memory_gb"),
+            gpu_type_choices=ArrayAgg(
+                "algorithm_selectable_gpu_type_choices", distinct=True
+            ),
+        )
+
+    @property
+    def selectable_gpu_type_choices(self):
+        choices_set = {
+            *get_default_gpu_type_choices(),
+            *chain.from_iterable(
+                self.job_requirement_properties_from_phases["gpu_type_choices"]
+            ),
+            *chain.from_iterable(
+                self.job_requirement_properties_from_organizations[
+                    "gpu_type_choices"
+                ]
+            ),
+        }
+        return [
+            (choice.value, choice.label)
+            for choice in GPUTypeChoices
+            if choice in choices_set
+        ]
+
+    @property
+    def maximum_settable_memory_gb(self):
+        value = settings.ALGORITHMS_MAX_MEMORY_GB
+        maximum_in_phases = self.job_requirement_properties_from_phases[
+            "max_memory"
+        ]
+        if maximum_in_phases is not None:
+            value = max(value, maximum_in_phases)
+        maximum_in_organizations = (
+            self.job_requirement_properties_from_organizations["max_memory"]
+        )
+        if maximum_in_organizations is not None:
+            value = max(value, maximum_in_organizations)
+        return value
 
 
 class UserAlgorithmsForPhaseMixin:
@@ -503,11 +586,12 @@ class AlgorithmForPhaseForm(
 
         self.fields["job_requires_gpu_type"].choices = [
             (choice.value, choice.label)
-            for choice in [GPUTypeChoices.NO_GPU, GPUTypeChoices.T4]
+            for choice in GPUTypeChoices
+            if choice in phase.algorithm_selectable_gpu_type_choices
         ]
         self.fields["job_requires_memory_gb"].validators = [
             MinValueValidator(settings.ALGORITHMS_MIN_MEMORY_GB),
-            MaxValueValidator(settings.ALGORITHMS_MAX_MEMORY_GB),
+            MaxValueValidator(phase.algorithm_maximum_settable_memory_gb),
         ]
 
     def clean(self):

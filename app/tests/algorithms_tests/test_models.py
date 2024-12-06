@@ -23,8 +23,8 @@ from grandchallenge.components.models import (
     CIVData,
     ComponentInterface,
     ComponentInterfaceValue,
-    GPUTypeChoices,
 )
+from grandchallenge.components.schemas import GPUTypeChoices
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,

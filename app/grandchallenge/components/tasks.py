@@ -691,7 +691,7 @@ def execute_job(  # noqa: C901
         raise PriorStepFailed("Job is not set to be executed")
 
     if not job.container.can_execute:
-        msg = f"Method {job.container.pk} was not ready to be used"
+        msg = f"Container Image {job.container.pk} was not ready to be used"
         job.update_status(status=job.FAILURE, error_message=msg)
         raise PriorStepFailed(msg)
 

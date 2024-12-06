@@ -29,9 +29,9 @@ from grandchallenge.challenges.models import Challenge, ChallengeRequest
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.components.models import (
     ComponentInterface,
-    GPUTypeChoices,
     ImportStatusChoices,
 )
+from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.components.tasks import assign_tarball_from_upload
 from grandchallenge.core.forms import (
     SaveFormInitMixin,
@@ -56,6 +56,7 @@ from grandchallenge.evaluation.models import (
     Submission,
 )
 from grandchallenge.evaluation.utils import SubmissionKindChoices
+from grandchallenge.hanging_protocols.forms import ViewContentExampleMixin
 from grandchallenge.hanging_protocols.models import VIEW_CONTENT_SCHEMA
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.uploads.models import UserUpload
@@ -150,6 +151,7 @@ class PhaseUpdateForm(
     PhaseTitleMixin,
     WorkstationUserFilterMixin,
     SaveFormInitMixin,
+    ViewContentExampleMixin,
     forms.ModelForm,
 ):
     def __init__(self, *args, **kwargs):
@@ -163,8 +165,9 @@ class PhaseUpdateForm(
             ),
         ]
         self.fields["evaluation_requires_gpu_type"].choices = [
-            (c, GPUTypeChoices(c).label)
-            for c in self.instance.evaluation_selectable_gpu_type_choices
+            (choice.value, choice.label)
+            for choice in GPUTypeChoices
+            if choice in self.instance.evaluation_selectable_gpu_type_choices
         ]
 
         self.helper.layout = Layout(
@@ -539,6 +542,37 @@ class SubmissionForm(
                 "another phase. Please wait for the other evaluation to "
                 "complete."
             )
+
+        job_requirement_errors = []
+        phase = self.cleaned_data["phase"]
+        if (
+            algorithm.job_requires_memory_gb
+            > phase.algorithm_maximum_settable_memory_gb
+        ):
+            job_requirement_errors.append(
+                ValidationError(
+                    "The requested memory for this algorithm "
+                    f"({algorithm.job_requires_memory_gb}) is too high for this "
+                    "phase. The maximum allowed memory is "
+                    f"{phase.algorithm_maximum_settable_memory_gb} GB. "
+                    "Please adjust the setting on the algorithm."
+                )
+            )
+        if (
+            algorithm.job_requires_gpu_type
+            not in phase.algorithm_selectable_gpu_type_choices
+        ):
+            job_requirement_errors.append(
+                ValidationError(
+                    "The requested GPU type for this algorithm "
+                    f"({GPUTypeChoices(algorithm.job_requires_gpu_type).name}) is "
+                    "not allowed for this phase. Options are: "
+                    f"{', '.join([GPUTypeChoices(c).name for c in phase.algorithm_selectable_gpu_type_choices])}. "
+                    "Please adjust the setting on the algorithm."
+                )
+            )
+        if job_requirement_errors:
+            raise ValidationError(job_requirement_errors)
 
         self.cleaned_data["algorithm_image"] = algorithm.active_image
         self.cleaned_data["algorithm_model"] = algorithm.active_model

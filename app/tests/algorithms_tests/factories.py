@@ -9,7 +9,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmUserCredit,
     Job,
 )
-from grandchallenge.components.models import GPUTypeChoices
+from grandchallenge.components.schemas import GPUTypeChoices
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,

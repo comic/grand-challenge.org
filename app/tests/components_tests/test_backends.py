@@ -8,7 +8,7 @@ from grandchallenge.components.backends.utils import (
     _filter_members,
     user_error,
 )
-from grandchallenge.components.models import GPUTypeChoices
+from grandchallenge.components.schemas import GPUTypeChoices
 from tests.components_tests.resources.backends import InsecureDockerExecutor
 
 
