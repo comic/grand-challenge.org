@@ -73,7 +73,7 @@ class PaginatedTableListView(ListView):
 
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
-
+        print("#### TEST", request.headers)
         if request.headers.get("x-requested-with") == "XMLHttpRequest":
             return self.draw_response(form_data=request.POST or request.GET)
         else:
