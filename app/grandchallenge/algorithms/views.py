@@ -65,6 +65,7 @@ from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmAlgorithmInterface,
     AlgorithmImage,
+    AlgorithmInterface,
     AlgorithmModel,
     AlgorithmPermissionRequest,
     Job,
@@ -1115,7 +1116,7 @@ class AlgorithmInterfacePermissionMixin(
 class AlgorithmInterfaceForAlgorithmCreate(
     AlgorithmInterfacePermissionMixin, CreateView
 ):
-    model = AlgorithmAlgorithmInterface
+    model = AlgorithmInterface
     form_class = AlgorithmInterfaceGetOrCreateForm
     success_message = "Algorithm interface successfully added"
 
