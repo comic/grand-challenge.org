@@ -316,6 +316,49 @@ def test_hanging_protocol_clientside():
     assert form.is_valid()
 
 
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "hanging_protocol_json, form_is_valid, form_errors",
+    (
+        ("[]", False, {"json": ["This field is required."]}),
+        (
+            "[{}]",
+            False,
+            {
+                "json": [
+                    "JSON does not fulfill schema: instance 'viewport_name' is a required property"
+                ]
+            },
+        ),
+        (
+            '[{"test":1}]',
+            False,
+            {
+                "json": [
+                    "JSON does not fulfill schema: instance 'viewport_name' is a required property"
+                ]
+            },
+        ),
+        (
+            '[{"viewport_name": "main"}]',
+            True,
+            {},
+        ),
+    ),
+)
+def test_hanging_protocol_form_json_validation(
+    hanging_protocol_json, form_is_valid, form_errors
+):
+    form = HangingProtocolForm(
+        {
+            "title": "main",
+            "json": hanging_protocol_json,
+        }
+    )
+    assert form.is_valid() is form_is_valid
+    assert form.errors == form_errors
+
+
 def make_ci_list(
     *,
     number_of_images,
