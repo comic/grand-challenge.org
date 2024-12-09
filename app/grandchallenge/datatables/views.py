@@ -48,9 +48,7 @@ class PaginatedTableListView(ListView):
             order_by = self.columns[int(column_index)].sort_field
         except IndexError:
             return None
-        direction = (
-            form_data.get("order[0][dir]", "desc") or self.default_sort_order
-        )
+        direction = form_data.get("order[0][dir]") or self.default_sort_order
         return f"{'-' if direction == 'desc' else ''}{order_by}"
 
     def draw_response(self, *, form_data):
