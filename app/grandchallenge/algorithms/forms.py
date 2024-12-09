@@ -1349,6 +1349,19 @@ class AlgorithmModelVersionControlForm(Form):
 
 
 class AlgorithmInterfaceBaseForm(SaveFormInitMixin, ModelForm):
+    inputs = ModelMultipleChoiceField(
+        queryset=ComponentInterface.objects.exclude(
+            slug__in=[*NON_ALGORITHM_INTERFACES, "results-json-file"]
+        ),
+        widget=Select2MultipleWidget,
+    )
+    outputs = ModelMultipleChoiceField(
+        queryset=ComponentInterface.objects.exclude(
+            slug__in=[*NON_ALGORITHM_INTERFACES, "results-json-file"]
+        ),
+        widget=Select2MultipleWidget,
+    )
+
     class Meta:
         model = AlgorithmInterface
         fields = ("inputs", "outputs")
@@ -1383,18 +1396,6 @@ class AlgorithmInterfaceBaseForm(SaveFormInitMixin, ModelForm):
 
 
 class AlgorithmInterfaceGetOrCreateForm(AlgorithmInterfaceBaseForm):
-    inputs = ModelMultipleChoiceField(
-        queryset=ComponentInterface.objects.exclude(
-            slug__in=[*NON_ALGORITHM_INTERFACES, "results-json-file"]
-        ),
-        widget=Select2MultipleWidget,
-    )
-    outputs = ModelMultipleChoiceField(
-        queryset=ComponentInterface.objects.exclude(
-            slug__in=[*NON_ALGORITHM_INTERFACES, "results-json-file"]
-        ),
-        widget=Select2MultipleWidget,
-    )
     set_as_default = BooleanField(required=False)
 
     class Meta(AlgorithmInterfaceBaseForm.Meta):

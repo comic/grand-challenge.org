@@ -2153,52 +2153,45 @@ def test_algorithm_template_download(client):
 @pytest.mark.django_db
 def test_algorithm_interface_view_permission(client, viewname):
     (
-        user_with_perm,
-        user_without_perm,
-        algorithm_editor_with_perm,
-        verified_alg_editor_with_perm,
-    ) = UserFactory.create_batch(4)
-    assign_perm("algorithms.add_algorithm", user_with_perm)
-    assign_perm("algorithms.add_algorithm", algorithm_editor_with_perm)
-    assign_perm("algorithms.add_algorithm", verified_alg_editor_with_perm)
+        user_with_alg_add_perm,
+        user_without_alg_add_perm,
+        algorithm_editor_with_alg_add,
+        algorithm_editor_without_alg_add,
+        verified_alg_editor_with_alg_add,
+        verified_alg_editor_without_alg_add,
+    ) = UserFactory.create_batch(6)
+    assign_perm("algorithms.add_algorithm", user_with_alg_add_perm)
+    assign_perm("algorithms.add_algorithm", algorithm_editor_with_alg_add)
+    assign_perm("algorithms.add_algorithm", verified_alg_editor_with_alg_add)
 
     alg = AlgorithmFactory()
-    alg.add_editor(algorithm_editor_with_perm)
-    alg.add_editor(verified_alg_editor_with_perm)
+    alg.add_editor(algorithm_editor_with_alg_add)
+    alg.add_editor(algorithm_editor_without_alg_add)
+    alg.add_editor(verified_alg_editor_with_alg_add)
+    alg.add_editor(verified_alg_editor_without_alg_add)
 
-    VerificationFactory(user=verified_alg_editor_with_perm, is_verified=True)
-
-    response = get_view_for_user(
-        viewname=viewname,
-        client=client,
-        reverse_kwargs={"slug": alg.slug},
-        user=user_without_perm,
+    VerificationFactory(
+        user=verified_alg_editor_with_alg_add, is_verified=True
     )
-    assert response.status_code == 403
-
-    response = get_view_for_user(
-        viewname=viewname,
-        client=client,
-        reverse_kwargs={"slug": alg.slug},
-        user=user_with_perm,
+    VerificationFactory(
+        user=verified_alg_editor_without_alg_add, is_verified=True
     )
-    assert response.status_code == 403
 
-    response = get_view_for_user(
-        viewname=viewname,
-        client=client,
-        reverse_kwargs={"slug": alg.slug},
-        user=algorithm_editor_with_perm,
-    )
-    assert response.status_code == 403
-
-    response = get_view_for_user(
-        viewname=viewname,
-        client=client,
-        reverse_kwargs={"slug": alg.slug},
-        user=verified_alg_editor_with_perm,
-    )
-    assert response.status_code == 200
+    for user, status in [
+        [user_with_alg_add_perm, 403],
+        [user_without_alg_add_perm, 403],
+        [algorithm_editor_with_alg_add, 403],
+        [algorithm_editor_without_alg_add, 403],
+        [verified_alg_editor_with_alg_add, 200],
+        [verified_alg_editor_without_alg_add, 403],
+    ]:
+        response = get_view_for_user(
+            viewname=viewname,
+            client=client,
+            reverse_kwargs={"slug": alg.slug},
+            user=user,
+        )
+        assert response.status_code == status
 
 
 @pytest.mark.django_db
@@ -2245,6 +2238,7 @@ def test_algorithm_interfaces_list_queryset(client):
     assign_perm("algorithms.add_algorithm", user)
     alg, alg2 = AlgorithmFactory.create_batch(2)
     alg.add_editor(user)
+    VerificationFactory(user=user, is_verified=True)
 
     io1, io2, io3, io4 = AlgorithmInterfaceFactory.create_batch(4)
 
@@ -2252,8 +2246,6 @@ def test_algorithm_interfaces_list_queryset(client):
     alg2.interfaces.set([io3, io4])
 
     iots = AlgorithmAlgorithmInterface.objects.order_by("id").all()
-
-    VerificationFactory(user=user, is_verified=True)
 
     response = get_view_for_user(
         viewname="algorithms:interface-list",
