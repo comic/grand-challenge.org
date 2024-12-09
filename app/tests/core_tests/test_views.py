@@ -39,7 +39,6 @@ def test_paginated_table_list_view_get():
     request.GET["length"] = 50
     request.GET["draw"] = 1
     view.model = Algorithm
-    view.order_by = "created"
     view.request = request
     resp = view.get(request)
 
@@ -59,7 +58,6 @@ def test_paginated_table_list_view_post():
     request.POST["length"] = 50
     request.POST["draw"] = 1
     view.model = Algorithm
-    view.order_by = "created"
     view.request = request
     resp = view.post(request)
 

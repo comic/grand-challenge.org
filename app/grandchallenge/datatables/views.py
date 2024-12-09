@@ -40,19 +40,25 @@ class PaginatedTableListView(ListView):
             for o in object_list
         ]
 
+    def get_order_by(self, form_data):
+        column_index = (
+            form_data.get("order[0][column]") or self.default_sort_column
+        )
+        try:
+            order_by = self.columns[int(column_index)].sort_field
+        except IndexError:
+            return None
+        direction = (
+            form_data.get("order[0][dir]", "desc") or self.default_sort_order
+        )
+        return f"{'-' if direction == 'desc' else ''}{order_by}"
+
     def draw_response(self, *, form_data):
         start = int(form_data.get("start", 0))
         page_size = int(form_data.get("length"))
         search = form_data.get("search[value]")
         page = start // page_size + 1
-        order_by = form_data.get("order[0][column]")
-        order_by = (
-            self.columns[int(order_by)].sort_field
-            if order_by
-            else self.order_by
-        )
-        order_dir = form_data.get("order[0][dir]", "desc")
-        order_by = f"{'-' if order_dir == 'desc' else ''}{order_by}"
+        order_by = self.get_order_by(form_data)
         data = self.filter_queryset(self.object_list, search, order_by)
         paginator = self.get_paginator(queryset=data, per_page=page_size)
 
@@ -90,7 +96,9 @@ class PaginatedTableListView(ListView):
                 Q(),
             )
             queryset = queryset.filter(q)
-        return queryset.order_by(order_by).distinct()
+        if order_by:
+            queryset = queryset.order_by(order_by)
+        return queryset.distinct()
 
 
 @dataclass
