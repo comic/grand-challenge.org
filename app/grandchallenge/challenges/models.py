@@ -962,7 +962,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         blank=True,
     )
     data_license = models.BooleanField(
-        default=True,
+        default=False,
     )
     data_license_extra = models.CharField(
         max_length=2000,
