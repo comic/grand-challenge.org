@@ -5,6 +5,7 @@ from django.contrib.admin import ModelAdmin
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Count, Sum
 from django.forms import ModelForm
+from django.urls import reverse
 from django.utils.html import format_html
 from guardian.admin import GuardedModelAdmin
 
@@ -52,12 +53,17 @@ class AlgorithmAdminForm(ModelForm):
 
 @admin.register(Algorithm)
 class AlgorithmAdmin(GuardedModelAdmin):
-    readonly_fields = ("algorithm_forge_json", "inputs", "outputs")
+    readonly_fields = (
+        "algorithm_forge_json",
+        "default_interface_link",
+        "inputs",
+        "outputs",
+    )
     list_display = (
         "title",
         "created",
         "public",
-        "default_io",
+        "default_interface_link",
         "time_limit",
         "job_requires_gpu_type",
         "job_requires_memory_gb",
@@ -72,16 +78,24 @@ class AlgorithmAdmin(GuardedModelAdmin):
     def container_count(self, obj):
         return obj.container_count
 
+    def default_interface_link(self, obj):
+        if obj.default_interface:
+            return format_html(
+                '<a href="{link}">{default_interface}</a>',
+                link=reverse(
+                    "admin:algorithms_algorithminterface_change",
+                    kwargs={"object_id": obj.default_interface.pk},
+                ),
+                default_interface=obj.default_interface,
+            )
+        else:
+            return None
+
     @staticmethod
     def algorithm_forge_json(obj):
         json_desc = get_forge_algorithm_template_context(algorithm=obj)
         return format_html(
             "<pre>{json_desc}</pre>", json_desc=json.dumps(json_desc, indent=2)
-        )
-
-    def default_io(self, obj):
-        return AlgorithmAlgorithmInterface.objects.get(
-            algorithm=obj, is_default=True
         )
 
     def get_queryset(self, request):

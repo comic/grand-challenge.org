@@ -1407,7 +1407,7 @@ class AlgorithmInterfaceGetOrCreateForm(AlgorithmInterfaceBaseForm):
         super().__init__(*args, **kwargs)
         self._algorithm = algorithm
 
-        if self._algorithm.needs_default_interface:
+        if not self._algorithm.default_interface:
             self.fields["set_as_default"].initial = True
 
     def clean(self):

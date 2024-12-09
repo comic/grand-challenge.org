@@ -2218,7 +2218,11 @@ def test_algorithm_interface_create(client):
         client=client,
         method=client.post,
         reverse_kwargs={"slug": alg.slug},
-        data={"inputs": [ci_1.pk], "outputs": [ci_2.pk]},
+        data={
+            "inputs": [ci_1.pk],
+            "outputs": [ci_2.pk],
+            "set_as_default": True,
+        },
         user=user,
     )
     assert response.status_code == 302
@@ -2247,7 +2251,7 @@ def test_algorithm_interfaces_list_queryset(client):
     alg.interfaces.set([io1, io2])
     alg2.interfaces.set([io3, io4])
 
-    iots = AlgorithmAlgorithmInterface.objects.order_by("created").all()
+    iots = AlgorithmAlgorithmInterface.objects.order_by("id").all()
 
     VerificationFactory(user=user, is_verified=True)
 

@@ -504,9 +504,14 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
 
         return w
 
-    @property
-    def needs_default_interface(self):
-        return not self.interfaces.exists()
+    @cached_property
+    def default_interface(self):
+        try:
+            return self.interfaces.get(
+                algorithmalgorithminterface__is_default=True
+            )
+        except ObjectDoesNotExist:
+            return None
 
     def is_editor(self, user):
         return user.groups.filter(pk=self.editors_group.pk).exists()
