@@ -859,7 +859,7 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
             raise RetryTask("No current capacity for the chosen instance type")
 
         if failure_reason == (
-            "InternalServerError: We encountered an internal error.  "
+            "InternalServerError: We encountered an internal error. "
             "Please try again."
         ):
             if (
