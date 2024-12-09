@@ -1112,7 +1112,9 @@ class AlgorithmInterfacePermissionMixin(
             return self.handle_no_permission()
 
 
-class AlgorithmInterfaceCreate(AlgorithmInterfacePermissionMixin, CreateView):
+class AlgorithmInterfaceForAlgorithmCreate(
+    AlgorithmInterfacePermissionMixin, CreateView
+):
     model = AlgorithmAlgorithmInterface
     form_class = AlgorithmInterfaceGetOrCreateForm
     success_message = "Algorithm interface successfully added"

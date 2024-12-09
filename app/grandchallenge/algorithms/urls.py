@@ -12,7 +12,7 @@ from grandchallenge.algorithms.views import (
     AlgorithmImageTemplate,
     AlgorithmImageUpdate,
     AlgorithmImportView,
-    AlgorithmInterfaceCreate,
+    AlgorithmInterfaceForAlgorithmCreate,
     AlgorithmInterfacesForAlgorithmList,
     AlgorithmList,
     AlgorithmModelCreate,
@@ -59,7 +59,7 @@ urlpatterns = [
     ),
     path(
         "<slug>/interfaces/create/",
-        AlgorithmInterfaceCreate.as_view(),
+        AlgorithmInterfaceForAlgorithmCreate.as_view(),
         name="interface-create",
     ),
     path(
