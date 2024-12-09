@@ -107,16 +107,16 @@ def test_paginated_table_list_view_ordering():
     assert view.default_sort_column == 0
     assert view.default_sort_order == "desc"
 
-    assert "AaaaaA" == json_resp["data"][0][1]
-    assert "BbbbbB" in json_resp["data"][1][1]
+    assert "AaaaaA" == json_resp["data"][0][1].strip()
+    assert "BbbbbB" in json_resp["data"][1][1].strip()
 
     # Swap direction
     request.POST["order[0][dir]"] = "asc"
     resp = view.post(request)
     json_resp = json.loads(resp.content)
     # Also swaped rows
-    assert "BbbbbB" == json_resp["data"][0][1]
-    assert "AaaaaA" == json_resp["data"][1][1]
+    assert "BbbbbB" == json_resp["data"][0][1].strip()
+    assert "AaaaaA" == json_resp["data"][1][1].strip()
 
     # Change order column
     request.POST["order[0][column]"] = "1"
@@ -124,8 +124,8 @@ def test_paginated_table_list_view_ordering():
     json_resp = json.loads(resp.content)
 
     # Also changes the rows
-    assert "AaaaaA" == json_resp["data"][0][1]
-    assert "BbbbbB" == json_resp["data"][1][1]
+    assert "AaaaaA" == json_resp["data"][0][1].strip()
+    assert "BbbbbB" == json_resp["data"][1][1].strip()
 
 
 @pytest.mark.django_db
