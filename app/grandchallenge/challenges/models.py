@@ -955,7 +955,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         help_text="What is your budget for hosting this challenge? Please be reminded of our <a href='/challenge-policy-and-pricing/'>challenge pricing policy</a>.",
     )
     long_term_commitment = models.BooleanField(
-        default=True,
+        default=False,
     )
     long_term_commitment_extra = models.CharField(
         max_length=2000,

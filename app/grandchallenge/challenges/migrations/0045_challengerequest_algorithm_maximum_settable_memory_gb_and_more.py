@@ -104,7 +104,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="challengerequest",
             name="long_term_commitment",
-            field=models.BooleanField(default=True),
+            field=models.BooleanField(default=False),
         ),
         migrations.AlterField(
             model_name="challengerequest",
