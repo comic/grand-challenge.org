@@ -1361,7 +1361,11 @@ class TestAlgorithmInterfaceGetOrCreateForm:
         )
         assert form.fields["set_as_default"].initial
 
-        alg.interfaces.add(AlgorithmInterfaceFactory())
+        alg.interfaces.add(
+            AlgorithmInterfaceFactory(), through_defaults={"is_default": True}
+        )
+
+        del alg.default_interface
 
         form = AlgorithmInterfaceGetOrCreateForm(
             algorithm=alg,
