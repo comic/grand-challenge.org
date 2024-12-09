@@ -8,7 +8,7 @@ const defaultSortOrder = JSON.parse(
     document.getElementById("defaultSortOrder").textContent,
 );
 
-$(document).ready(() => {
+document.addEventListener("DOMContentLoaded", () => {
     renderVegaChartsObserver.observe(document.getElementById("ajaxDataTable"), {
         childList: true,
         subtree: true,
@@ -31,7 +31,7 @@ $(document).ready(() => {
             },
         ],
         ajax: {
-            url: "",
+            url: ".",
         },
         ordering: true,
         drawCallback: settings => {

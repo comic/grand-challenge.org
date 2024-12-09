@@ -17,7 +17,7 @@ $(document).ready(() => {
         pageLength: 50,
         serverSide: true,
         ajax: {
-            url: "",
+            url: ".",
             type: "POST",
             headers: {
                 "X-CSRFToken": getCookie("_csrftoken"),
