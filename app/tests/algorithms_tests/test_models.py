@@ -1497,3 +1497,16 @@ def test_algorithminterface_create():
     io = AlgorithmInterface.objects.create(inputs=inputs, outputs=outputs)
     assert list(io.inputs.all()) == inputs
     assert list(io.outputs.all()) == outputs
+
+
+@pytest.mark.django_db
+def test_has_default_interface():
+    alg1, alg2, alg3 = AlgorithmFactory.create_batch(3)
+    io1, io2 = AlgorithmInterfaceFactory.create_batch(2)
+
+    alg1.interfaces.add(io1, through_defaults={"is_default": True})
+    alg2.interfaces.add(io2)
+
+    assert alg1.default_interface == io1
+    assert not alg2.default_interface
+    assert not alg3.default_interface
