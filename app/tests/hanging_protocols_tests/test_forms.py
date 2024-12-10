@@ -316,6 +316,132 @@ def test_hanging_protocol_clientside():
     assert form.is_valid()
 
 
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "hanging_protocol_json, form_is_valid, form_errors",
+    (
+        (
+            12345,
+            False,
+            {
+                "json": [
+                    "JSON does not fulfill schema: instance is not of type 'array'"
+                ]
+            },
+        ),
+        ("main", False, {"json": ["Enter a valid JSON."]}),
+        (
+            "[1,2,3,4,5]",
+            False,
+            {
+                "json": [
+                    "JSON does not fulfill schema: instance None of are valid under the given schema"
+                ]
+            },
+        ),
+        (
+            '["test1", "test2", "test3"]',
+            False,
+            {
+                "json": [
+                    "JSON does not fulfill schema: instance None of are valid under the given schema"
+                ]
+            },
+        ),
+        (
+            "[[],[],[]]",
+            False,
+            {
+                "json": [
+                    "JSON does not fulfill schema: instance None of are valid under the given schema"
+                ]
+            },
+        ),
+        (
+            "[{},{},{}]",
+            False,
+            {
+                "json": [
+                    "JSON does not fulfill schema: instance has non-unique elements"
+                ]
+            },
+        ),
+        (
+            "true",
+            False,
+            {
+                "json": [
+                    "JSON does not fulfill schema: instance is not of type 'array'"
+                ]
+            },
+        ),
+        (
+            "false",
+            False,
+            {
+                "json": [
+                    "JSON does not fulfill schema: instance is not of type 'array'"
+                ]
+            },
+        ),
+        (
+            '{"viewport_name": "main"}',
+            False,
+            {
+                "json": [
+                    "JSON does not fulfill schema: instance is not of type 'array'"
+                ]
+            },
+        ),
+        ("[]", False, {"json": ["This field is required."]}),
+        ("{}", False, {"json": ["This field is required."]}),
+        (
+            "[{}]",
+            False,
+            {
+                "json": [
+                    "JSON does not fulfill schema: instance 'viewport_name' is a required property"
+                ]
+            },
+        ),
+        (
+            '[{"test":1}]',
+            False,
+            {
+                "json": [
+                    "JSON does not fulfill schema: instance 'viewport_name' is a required property"
+                ]
+            },
+        ),
+        (
+            '[{"test1":"main"},{"test2":"secondary"}]',
+            False,
+            {
+                "json": [
+                    "JSON does not fulfill schema: instance 'viewport_name' is a required property"
+                ]
+            },
+        ),
+        (
+            '[{"viewport_name": "main"}]',
+            True,
+            {},
+        ),
+    ),
+)
+def test_hanging_protocol_form_json_validation(
+    hanging_protocol_json, form_is_valid, form_errors
+):
+    form = HangingProtocolForm(
+        {
+            "title": "main",
+            "json": hanging_protocol_json,
+        }
+    )
+    assert form.is_valid() is form_is_valid
+    assert form.errors == form_errors
+
+
 def make_ci_list(
     *,
     number_of_images,
