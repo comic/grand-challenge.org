@@ -113,10 +113,7 @@ def test_hanging_protocol_form(client):
     )
 
     assert response.status_code == 200
-    assert (
-        "JSON does not fulfill schema: instance has non-unique elements"
-        in response.rendered_content
-    )
+    assert "Each viewport can only be used once." in response.rendered_content
     assert HangingProtocol.objects.count() == 0
 
     response = get_view_for_user(
@@ -206,7 +203,7 @@ def test_hanging_protocol_parent_id_draggable():
     form = HangingProtocolForm(
         {
             "title": "main",
-            "json": '[{"viewport_name": "main", "parent_id": "secondary", "draggable": true}]',
+            "json": '[{"viewport_name": "main", "parent_id": "foo", "draggable": true}]',
         }
     )
     assert (
@@ -228,7 +225,7 @@ def test_hanging_protocol_parent_id_draggable():
     form = HangingProtocolForm(
         {
             "title": "main",
-            "json": '[{"viewport_name": "main", "parent_id": "secondary"}]',
+            "json": '[{"viewport_name": "main", "parent_id": "foo"}]',
         }
     )
     assert len(form.errors["json"]) == 2
@@ -324,7 +321,7 @@ def test_hanging_protocol_clientside():
     "hanging_protocol_json, form_is_valid, form_errors",
     (
         (
-            12344,
+            12345,
             False,
             {
                 "json": [
@@ -333,6 +330,24 @@ def test_hanging_protocol_clientside():
             },
         ),
         ("main", False, {"json": ["Enter a valid JSON."]}),
+        (
+            "true",
+            False,
+            {
+                "json": [
+                    "JSON does not fulfill schema: instance is not of type 'array'"
+                ]
+            },
+        ),
+        (
+            "false",
+            False,
+            {
+                "json": [
+                    "JSON does not fulfill schema: instance is not of type 'array'"
+                ]
+            },
+        ),
         (
             '{"viewport_name": "main"}',
             False,
@@ -343,6 +358,7 @@ def test_hanging_protocol_clientside():
             },
         ),
         ("[]", False, {"json": ["This field is required."]}),
+        ("{}", False, {"json": ["This field is required."]}),
         (
             "[{}]",
             False,
@@ -354,6 +370,15 @@ def test_hanging_protocol_clientside():
         ),
         (
             '[{"test":1}]',
+            False,
+            {
+                "json": [
+                    "JSON does not fulfill schema: instance 'viewport_name' is a required property"
+                ]
+            },
+        ),
+        (
+            '[{"test1":"main"},{"test2":"secondary"}]',
             False,
             {
                 "json": [
