@@ -66,8 +66,11 @@ class HangingProtocolForm(SaveFormInitMixin, forms.ModelForm):
         viewport_names = [
             viewport["viewport_name"]
             for viewport in hanging_protocol_json
-            if "viewport_name" in viewport
+            if isinstance(viewport, dict) and "viewport_name" in viewport
         ]
+
+        if not viewport_names:
+            return hanging_protocol_json
 
         self._validate_viewport_uniqueness(viewport_names=viewport_names)
         self._validate_dimensions(value=hanging_protocol_json)
