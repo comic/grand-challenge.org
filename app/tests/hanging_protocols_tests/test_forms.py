@@ -323,6 +323,25 @@ def test_hanging_protocol_clientside():
 @pytest.mark.parametrize(
     "hanging_protocol_json, form_is_valid, form_errors",
     (
+        (
+            12344,
+            False,
+            {
+                "json": [
+                    "JSON does not fulfill schema: instance is not of type 'array'"
+                ]
+            },
+        ),
+        ("main", False, {"json": ["Enter a valid JSON."]}),
+        (
+            '{"viewport_name": "main"}',
+            False,
+            {
+                "json": [
+                    "JSON does not fulfill schema: instance is not of type 'array'"
+                ]
+            },
+        ),
         ("[]", False, {"json": ["This field is required."]}),
         (
             "[{}]",
