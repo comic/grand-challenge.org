@@ -26,19 +26,19 @@ from grandchallenge.subdomains.utils import reverse
 
 
 class HangingProtocolForm(SaveFormInitMixin, forms.ModelForm):
+    json = forms.JSONField(
+        validators=[JSONValidator(schema=HANGING_PROTOCOL_SCHEMA)],
+        widget=JSONEditorWidget(schema=HANGING_PROTOCOL_SCHEMA),
+        help_text="To display a single image in full size, define the "
+        "protocol as follows: "
+        '[{"viewport_name": "main", "x": 0,"y": 0,"w": 1,"h": 1,'
+        '"fullsizable": true,"draggable": false,"selectable": true,'
+        '"order": 0}]',
+    )
+
     class Meta:
         model = HangingProtocol
         fields = ("title", "description", "json")
-        widgets = {"json": JSONEditorWidget(schema=HANGING_PROTOCOL_SCHEMA)}
-        help_texts = {
-            "json": (
-                "To display a single image in full size, define the "
-                "protocol as follows: "
-                '[{"viewport_name": "main", "x": 0,"y": 0,"w": 1,"h": 1,'
-                '"fullsizable": true,"draggable": false,"selectable": true,'
-                '"order": 0}]'
-            )
-        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
