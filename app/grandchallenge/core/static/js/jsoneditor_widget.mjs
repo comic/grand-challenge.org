@@ -33,7 +33,7 @@ function initialize_jsoneditor_widget(jsoneditorWidgetID) {
 
         let data;
         try {
-            const data = JSON.parse(jsoneditorWidget.value);
+            data = JSON.parse(jsoneditorWidget.value);
         } catch (err) {
             console.warn(
                 "Could not parse JSON data:",
