@@ -331,6 +331,42 @@ def test_hanging_protocol_clientside():
         ),
         ("main", False, {"json": ["Enter a valid JSON."]}),
         (
+            "[1,2,3,4,5]",
+            False,
+            {
+                "json": [
+                    "JSON does not fulfill schema: instance None of are valid under the given schema"
+                ]
+            },
+        ),
+        (
+            '["test1", "test2", "test3"]',
+            False,
+            {
+                "json": [
+                    "JSON does not fulfill schema: instance None of are valid under the given schema"
+                ]
+            },
+        ),
+        (
+            "[[],[],[]]",
+            False,
+            {
+                "json": [
+                    "JSON does not fulfill schema: instance None of are valid under the given schema"
+                ]
+            },
+        ),
+        (
+            "[{},{},{}]",
+            False,
+            {
+                "json": [
+                    "JSON does not fulfill schema: instance has non-unique elements"
+                ]
+            },
+        ),
+        (
             "true",
             False,
             {
