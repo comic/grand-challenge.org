@@ -1,5 +1,12 @@
 $.extend(true, DataTable.defaults, {
     scrollX: true,
+    language: {
+        paginate: {
+            next: "Next",
+            previous: "Previous",
+        },
+    },
+    pagingType: "simple_numbers",
 });
 
 $(document).on("init.dt", () => {

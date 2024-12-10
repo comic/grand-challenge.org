@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:745a7a8d083ae88fa0420aa15309a4498d5c306e2d78547fd614451b650292a1",
+  "content_hash": "sha256:55376154d6570a2830cb23147f93b61f4d43d3af635c6e3c4e1c7845d964c6bd",
   "dependencies": [
     {
       "name": "@github/markdown-toolbar-element",
@@ -432,88 +432,88 @@
     },
     {
       "name": "datatables.net",
-      "version": "1.11.3",
+      "version": "2.1.8",
       "provider": "unpkg",
       "assets": [
         {
-          "name": "js/jquery.dataTables.js",
-          "sri": "sha384-ffdocMECdI5Mr/PiXXjgHO0Yj4n6iCzP4ivRh4iF3pxOS4iLTGyYImqTNMjcvgCQ"
+          "name": "js/dataTables.js",
+          "sri": "sha384-cDXquhvkdBprgcpTQsrhfhxXRN4wfwmWauQ3wR5ZTyYtGrET2jd68wvJ1LlDqlQG"
         },
         {
-          "name": "js/jquery.dataTables.min.js",
-          "sri": "sha384-Ys7dhgZ13dNQE2uo7PY+FIKiwwu0WNSnKCAOPPNoC9KT+fW+OAh+Ym0z3eiREmpZ"
+          "name": "js/dataTables.min.js",
+          "sri": "sha384-MgwUq0TVErv5Lkj/jIAgQpC+iUIqwhwXxJMfrZQVAOhr++1MR02yXH8aXdPc3fk0"
         }
       ],
       "maps": []
     },
     {
       "name": "datatables.net-bs4",
-      "version": "1.11.3",
+      "version": "2.1.8",
       "provider": "unpkg",
       "assets": [
         {
           "name": "css/dataTables.bootstrap4.css",
-          "sri": "sha384-EvIr2PlbcGMb0zxwU9/FJBagUw3KateXm545CaPe5guMZKVKKaK2VRpFVSbcL+ym"
+          "sri": "sha384-1QBwR4jM75CjZBwJk69i7nwaVySAvCxM2yILRHu7b4Q0YMsRSRX405VX7dCiay52"
         },
         {
           "name": "css/dataTables.bootstrap4.min.css",
-          "sri": "sha384-d9W9+gJYgHf3dPgkLbdt0l6ohsATXXYEBZNKxeJj6aybLr8PFOCHFXFWtVMXeXP3"
+          "sri": "sha384-0KscpVDhBnNtS+8A0GBYhIcV5+eSYeo2IhiT53C+ztHx7PGbwekJz3qcyk0HVqHs"
         },
         {
           "name": "js/dataTables.bootstrap4.js",
-          "sri": "sha384-yh2DKHGQ1YQGa6VRaEQmJkz4wJnrPoPlF+qWvcav0Af/ynTt2JMP8/0P2T0Y/67u"
+          "sri": "sha384-zNhLQXVfbsNMy4yxmaWgoZ7RVDmzTYQ3/y1HXPwR2sakXOh563PWfrivaYmDAzDz"
         },
         {
           "name": "js/dataTables.bootstrap4.min.js",
-          "sri": "sha384-bX64nQ/u/Jovgh0rdhdtHy2BMWv9TOOds6b4reiVcJ0KcA76JdIxmwar1pN2NsUj"
+          "sri": "sha384-lzE84zE76t/xTDUpoKl8o6c0h10nNP8YllhiEMM0c/sSn4F16OzlMehMoHkVTsTN"
         }
       ],
       "maps": []
     },
     {
       "name": "datatables.net-buttons",
-      "version": "2.0.1",
+      "version": "3.2.0",
       "provider": "unpkg",
       "assets": [
         {
           "name": "js/buttons.colVis.js",
-          "sri": "sha384-AbV5HVbLCLmZJidGbIdYIXa+jUM76ualbJ9VxjEk1XApV0QD4kBJ03Okikmvcps0"
+          "sri": "sha384-i6Z7TESDTMWWMiPn4glNtpuvZKnfRC8IRXtzYgtiFgpuLgRPoUyRO4uJJ8H22IyH"
         },
         {
           "name": "js/buttons.colVis.min.js",
-          "sri": "sha384-enGTgEZOvC7C8P91Jt/27n1V3xD5SIzGi1e+DzYJvAts546YTsj3CNmnL0G/zlVn"
+          "sri": "sha384-LC8PmH0Tdjy6c1Hesl75hUSKQuoIo3PCAr3svr0xJ4y90sNaTEMLK5n68Fl5VBqB"
         },
         {
           "name": "js/dataTables.buttons.js",
-          "sri": "sha384-8LM8BoZwX5XkG/uPMRUUlo5btOd9W42awa7ky9qUj7B7r7IXLYoxnZnDNMfypbrX"
+          "sri": "sha384-m1YnvBcNGjKAtJ9d9O4s6EuBhKPlLADOZwIu9q7rZBl9d52CUmsHElEO7fNmajv9"
         },
         {
           "name": "js/dataTables.buttons.min.js",
-          "sri": "sha384-MGimb05YiSGNcXiLlj03UNahXBECHmFTe5iVBqh6sf2G7ccabI3/EOqzBnNw97/T"
+          "sri": "sha384-1yo9s/77ZWiY2Xvn1BPaWyS3ErmUO+k734D+PxbLD2Iv8WJt4miQdnhv8IiMMY7j"
         }
       ],
       "maps": []
     },
     {
       "name": "datatables.net-buttons-bs4",
-      "version": "2.0.1",
+      "version": "3.2.0",
       "provider": "unpkg",
       "assets": [
         {
           "name": "css/buttons.bootstrap4.css",
-          "sri": "sha384-q4EZq/gM8ljWYtB8R40hnwfyZj3WIvbcEzgREtSQVdAsOtwP9LvOtwsUVjgY/U8S"
+          "sri": "sha384-fpLaDkiKo85dyvJ2qKPGz+2rJlKiBUbgeu7UQ+Ka2wjB8r1zn9scWvltGqppEARE"
         },
         {
           "name": "css/buttons.bootstrap4.min.css",
-          "sri": "sha384-edc+aE6Ik81hVXxTAc5hJy5+51r8isS15Bg5ABuEQvzK/WJKD4OGi6rHI49qr3y8"
+          "sri": "sha384-3tdfacHAFSZHsvYb3sbANSxCJHbmLfOFbrdLuSrPG6avz0/yEu68qMSY0dupV7zK"
         },
         {
           "name": "js/buttons.bootstrap4.js",
-          "sri": "sha384-IMnD0fgb6WzFOenYYLbPmzMvsBZupbK31cTb1Jx9J5WJ0jIG+wfLvHIH75coZEYp"
+          "sri": "sha384-slk9S0+eL62v+SlIlVYXXMej29KaVsy4K59oNptoqxIypW6ZAHIqwOXUPC89A1ug"
         },
         {
           "name": "js/buttons.bootstrap4.min.js",
-          "sri": "sha384-39HSGlFa/ZBzWGrpbpXEnLn7D25fRe7nSgMuD9OovM0Hmm/73enw1iF3zgQfJ9OZ"
+          "sri": "sha384-1oeq8jb8l26AfnhvoQ1kcuVi2ty/y+QuzyJCi5E+GC31PymbE9QEla3XuYTwZHBC"
         }
       ],
       "maps": []
