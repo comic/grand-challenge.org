@@ -211,6 +211,10 @@ class ChallengeBase(models.Model):
         abstract = True
 
 
+def get_default_percent_budget_consumed_warning_thresholds():
+    return [70, 90, 100]
+
+
 class Challenge(ChallengeBase):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
@@ -374,6 +378,20 @@ class Challenge(ChallengeBase):
         blank=True,
         default="",
         help_text="This email will be listed as the contact email for the challenge and will be visible to all users of Grand Challenge.",
+    )
+
+    percent_budget_consumed_warning_thresholds = models.JSONField(
+        default=get_default_percent_budget_consumed_warning_thresholds,
+        validators=[
+            JSONValidator(
+                schema={
+                    "$schema": "http://json-schema.org/draft-07/schema",
+                    "type": "array",
+                    "items": {"type": "integer"},
+                    "uniqueItems": True,
+                }
+            )
+        ],
     )
 
     accumulated_compute_cost_in_cents = deprecate_field(
