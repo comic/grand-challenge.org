@@ -26,11 +26,13 @@ from django.core.validators import (
 from django.db.models import Count, Exists, Max, OuterRef, Q
 from django.db.transaction import on_commit
 from django.forms import (
+    BooleanField,
     CharField,
     Form,
     HiddenInput,
     ModelChoiceField,
     ModelForm,
+    ModelMultipleChoiceField,
     Select,
     TextInput,
     URLField,
@@ -44,12 +46,12 @@ from django_select2.forms import Select2MultipleWidget
 
 from grandchallenge.algorithms.models import (
     Algorithm,
+    AlgorithmAlgorithmInterface,
     AlgorithmImage,
     AlgorithmInterface,
     AlgorithmModel,
     AlgorithmPermissionRequest,
     Job,
-    get_existing_interface_for_inputs_and_outputs,
 )
 from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
@@ -1345,10 +1347,35 @@ class AlgorithmModelVersionControlForm(Form):
         return algorithm_model
 
 
-class AlgorithmInterfaceBaseForm(SaveFormInitMixin, ModelForm):
+class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
+    inputs = ModelMultipleChoiceField(
+        queryset=ComponentInterface.objects.exclude(
+            slug__in=[*NON_ALGORITHM_INTERFACES, "results-json-file"]
+        ),
+        widget=Select2MultipleWidget,
+    )
+    outputs = ModelMultipleChoiceField(
+        queryset=ComponentInterface.objects.exclude(
+            slug__in=[*NON_ALGORITHM_INTERFACES, "results-json-file"]
+        ),
+        widget=Select2MultipleWidget,
+    )
+    set_as_default = BooleanField(required=False)
+
     class Meta:
         model = AlgorithmInterface
-        fields = ("inputs", "outputs")
+        fields = (
+            "inputs",
+            "outputs",
+            "set_as_default",
+        )
+
+    def __init__(self, *args, algorithm, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._algorithm = algorithm
+
+        if not self._algorithm.default_interface:
+            self.fields["set_as_default"].initial = True
 
     def clean(self):
         cleaned_data = super().clean()
@@ -1369,11 +1396,34 @@ class AlgorithmInterfaceBaseForm(SaveFormInitMixin, ModelForm):
                 f"{oxford_comma(duplicate_interfaces)} present in both"
             )
 
-        cleaned_data["existing_io"] = (
-            get_existing_interface_for_inputs_and_outputs(
-                inputs=inputs,
-                outputs=outputs,
-            )
+        return cleaned_data
+
+    def save(self):
+        interface = AlgorithmInterface.objects.create(
+            inputs=self.cleaned_data["inputs"],
+            outputs=self.cleaned_data["outputs"],
         )
 
-        return cleaned_data
+        if self.cleaned_data["set_as_default"]:
+            AlgorithmAlgorithmInterface.objects.filter(
+                algorithm=self._algorithm
+            ).update(is_default=False)
+
+        matched_rows = AlgorithmAlgorithmInterface.objects.filter(
+            algorithm=self._algorithm, interface=interface
+        ).update(is_default=self.cleaned_data["set_as_default"])
+
+        if matched_rows == 0:
+            self._algorithm.interfaces.add(
+                interface,
+                through_defaults={
+                    "is_default": self.cleaned_data["set_as_default"]
+                },
+            )
+        elif matched_rows > 1:
+            raise RuntimeError(
+                "This algorithm and interface are associated "
+                "with each other more than once."
+            )
+
+        return interface

@@ -12,6 +12,8 @@ from grandchallenge.algorithms.views import (
     AlgorithmImageTemplate,
     AlgorithmImageUpdate,
     AlgorithmImportView,
+    AlgorithmInterfaceForAlgorithmCreate,
+    AlgorithmInterfacesForAlgorithmList,
     AlgorithmList,
     AlgorithmModelCreate,
     AlgorithmModelDetail,
@@ -49,6 +51,16 @@ urlpatterns = [
         "<slug>/description-update/",
         AlgorithmDescriptionUpdate.as_view(),
         name="description-update",
+    ),
+    path(
+        "<slug>/interfaces/",
+        AlgorithmInterfacesForAlgorithmList.as_view(),
+        name="interface-list",
+    ),
+    path(
+        "<slug>/interfaces/create/",
+        AlgorithmInterfaceForAlgorithmCreate.as_view(),
+        name="interface-create",
     ),
     path(
         "<slug>/repository/",

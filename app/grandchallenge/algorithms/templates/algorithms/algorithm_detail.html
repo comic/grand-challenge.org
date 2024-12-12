@@ -36,6 +36,10 @@
 
             {% if "change_algorithm" in algorithm_perms %}
                 {% if perms.algorithms.add_algorithm %}
+                    <a class="nav-link"
+                        href="{% url 'algorithms:interface-list' slug=object.slug %}"
+                    ><i class="fas fa-sliders-h fa-fw"></i>&nbsp;Interfaces
+                   </a>
                     <a class="nav-link" id="v-pills-templates-tab" data-toggle="pill"
                         href="#templates" role="tab"
                         aria-controls="v-pills-templates"

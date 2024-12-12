@@ -2,13 +2,12 @@ import json
 
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count, Sum
 from django.forms import ModelForm
 from django.utils.html import format_html
 from guardian.admin import GuardedModelAdmin
 
-from grandchallenge.algorithms.forms import AlgorithmInterfaceBaseForm
 from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmAlgorithmInterface,
@@ -52,12 +51,17 @@ class AlgorithmAdminForm(ModelForm):
 
 @admin.register(Algorithm)
 class AlgorithmAdmin(GuardedModelAdmin):
-    readonly_fields = ("algorithm_forge_json", "inputs", "outputs")
+    readonly_fields = (
+        "algorithm_forge_json",
+        "default_interface",
+        "inputs",
+        "outputs",
+    )
     list_display = (
         "title",
         "created",
         "public",
-        "default_io",
+        "default_interface",
         "time_limit",
         "job_requires_gpu_type",
         "job_requires_memory_gb",
@@ -77,11 +81,6 @@ class AlgorithmAdmin(GuardedModelAdmin):
         json_desc = get_forge_algorithm_template_context(algorithm=obj)
         return format_html(
             "<pre>{json_desc}</pre>", json_desc=json.dumps(json_desc, indent=2)
-        )
-
-    def default_io(self, obj):
-        return AlgorithmAlgorithmInterface.objects.get(
-            algorithm=obj, is_default=True
         )
 
     def get_queryset(self, request):
@@ -244,16 +243,6 @@ class AlgorithmModelAdmin(GuardedModelAdmin):
     readonly_fields = ("creator", "algorithm", "sha256", "size_in_storage")
 
 
-class AlgorithmInterfaceAdminForm(AlgorithmInterfaceBaseForm):
-    def clean(self):
-        cleaned_data = super().clean()
-        if cleaned_data["existing_io"]:
-            raise ValidationError(
-                "An AlgorithmIO with the same combination of inputs and outputs already exists."
-            )
-        return cleaned_data
-
-
 @admin.register(AlgorithmInterface)
 class AlgorithmInterfaceAdmin(GuardedModelAdmin):
     list_display = (
@@ -262,10 +251,10 @@ class AlgorithmInterfaceAdmin(GuardedModelAdmin):
         "algorithm_outputs",
     )
     search_fields = (
+        "pk",
         "inputs__slug",
         "outputs__slug",
     )
-    form = AlgorithmInterfaceAdminForm
 
     def algorithm_inputs(self, obj):
         return oxford_comma(obj.inputs.all())
@@ -277,6 +266,9 @@ class AlgorithmInterfaceAdmin(GuardedModelAdmin):
         return False
 
     def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request, obj=None):
         return False
 
 

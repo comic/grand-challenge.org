@@ -15,7 +15,13 @@ from django.utils.text import slugify
 from guardian.shortcuts import assign_perm, remove_perm
 from requests import put
 
-from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
+from grandchallenge.algorithms.models import (
+    Algorithm,
+    AlgorithmAlgorithmInterface,
+    AlgorithmImage,
+    AlgorithmInterface,
+    Job,
+)
 from grandchallenge.algorithms.views import JobsList
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -29,6 +35,7 @@ from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
+    AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
     AlgorithmModelFactory,
     AlgorithmPermissionRequestFactory,
@@ -2138,3 +2145,101 @@ def test_algorithm_template_download(client):
         assert (
             file_name in zip_file.namelist()
         ), f"{file_name} is in the ZIP file"
+
+
+@pytest.mark.parametrize(
+    "viewname", ["algorithms:interface-list", "algorithms:interface-create"]
+)
+@pytest.mark.django_db
+def test_algorithm_interface_view_permission(client, viewname):
+    (
+        user_with_alg_add_perm,
+        user_without_alg_add_perm,
+        algorithm_editor_with_alg_add,
+        algorithm_editor_without_alg_add,
+    ) = UserFactory.create_batch(4)
+    assign_perm("algorithms.add_algorithm", user_with_alg_add_perm)
+    assign_perm("algorithms.add_algorithm", algorithm_editor_with_alg_add)
+
+    alg = AlgorithmFactory()
+    alg.add_editor(algorithm_editor_with_alg_add)
+    alg.add_editor(algorithm_editor_without_alg_add)
+
+    for user, status in [
+        [user_with_alg_add_perm, 403],
+        [user_without_alg_add_perm, 403],
+        [algorithm_editor_with_alg_add, 200],
+        [algorithm_editor_without_alg_add, 403],
+    ]:
+        response = get_view_for_user(
+            viewname=viewname,
+            client=client,
+            reverse_kwargs={"slug": alg.slug},
+            user=user,
+        )
+        assert response.status_code == status
+
+
+@pytest.mark.django_db
+def test_algorithm_interface_create(client):
+    user = UserFactory()
+    assign_perm("algorithms.add_algorithm", user)
+    alg = AlgorithmFactory()
+    alg.add_editor(user)
+
+    ci_1 = ComponentInterfaceFactory()
+    ci_2 = ComponentInterfaceFactory()
+
+    response = get_view_for_user(
+        viewname="algorithms:interface-create",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": alg.slug},
+        data={
+            "inputs": [ci_1.pk],
+            "outputs": [ci_2.pk],
+            "set_as_default": True,
+        },
+        user=user,
+    )
+    assert response.status_code == 302
+
+    assert AlgorithmInterface.objects.count() == 1
+    io = AlgorithmInterface.objects.get()
+    assert io.inputs.get() == ci_1
+    assert io.outputs.get() == ci_2
+
+    assert AlgorithmAlgorithmInterface.objects.count() == 1
+    io_through = AlgorithmAlgorithmInterface.objects.get()
+    assert io_through.algorithm == alg
+    assert io_through.interface == io
+    assert io_through.is_default
+
+
+@pytest.mark.django_db
+def test_algorithm_interfaces_list_queryset(client):
+    user = UserFactory()
+    assign_perm("algorithms.add_algorithm", user)
+    alg, alg2 = AlgorithmFactory.create_batch(2)
+    alg.add_editor(user)
+    VerificationFactory(user=user, is_verified=True)
+
+    io1, io2, io3, io4 = AlgorithmInterfaceFactory.create_batch(4)
+
+    alg.interfaces.set([io1, io2])
+    alg2.interfaces.set([io3, io4])
+
+    iots = AlgorithmAlgorithmInterface.objects.order_by("id").all()
+
+    response = get_view_for_user(
+        viewname="algorithms:interface-list",
+        client=client,
+        reverse_kwargs={"slug": alg.slug},
+        user=user,
+    )
+    assert response.status_code == 200
+    assert response.context["object_list"].count() == 2
+    assert iots[0] in response.context["object_list"]
+    assert iots[1] in response.context["object_list"]
+    assert iots[2] not in response.context["object_list"]
+    assert iots[3] not in response.context["object_list"]
