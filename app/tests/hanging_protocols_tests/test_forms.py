@@ -320,12 +320,19 @@ def test_hanging_protocol_clientside():
 @pytest.mark.parametrize(
     "hanging_protocol_json, form_is_valid, form_errors",
     (
+        ("[]", False, {"json": ["This field is required."]}),
+        ("{}", False, {"json": ["This field is required."]}),
+        (
+            '[{"viewport_name": "main"}]',
+            True,
+            {},
+        ),
         (
             12345,
             False,
             {
                 "json": [
-                    "JSON does not fulfill schema: instance is not of type 'array'"
+                    "Hanging protocol definition is invalid. Have a look at the example in the helptext."
                 ]
             },
         ),
@@ -335,7 +342,7 @@ def test_hanging_protocol_clientside():
             False,
             {
                 "json": [
-                    "JSON does not fulfill schema: instance None of are valid under the given schema"
+                    "Hanging protocol definition is invalid. Have a look at the example in the helptext."
                 ]
             },
         ),
@@ -344,7 +351,7 @@ def test_hanging_protocol_clientside():
             False,
             {
                 "json": [
-                    "JSON does not fulfill schema: instance None of are valid under the given schema"
+                    "Hanging protocol definition is invalid. Have a look at the example in the helptext."
                 ]
             },
         ),
@@ -353,7 +360,7 @@ def test_hanging_protocol_clientside():
             False,
             {
                 "json": [
-                    "JSON does not fulfill schema: instance None of are valid under the given schema"
+                    "Hanging protocol definition is invalid. Have a look at the example in the helptext."
                 ]
             },
         ),
@@ -362,7 +369,7 @@ def test_hanging_protocol_clientside():
             False,
             {
                 "json": [
-                    "JSON does not fulfill schema: instance has non-unique elements"
+                    "Hanging protocol definition is invalid. Have a look at the example in the helptext."
                 ]
             },
         ),
@@ -371,7 +378,7 @@ def test_hanging_protocol_clientside():
             False,
             {
                 "json": [
-                    "JSON does not fulfill schema: instance is not of type 'array'"
+                    "Hanging protocol definition is invalid. Have a look at the example in the helptext."
                 ]
             },
         ),
@@ -380,7 +387,7 @@ def test_hanging_protocol_clientside():
             False,
             {
                 "json": [
-                    "JSON does not fulfill schema: instance is not of type 'array'"
+                    "Hanging protocol definition is invalid. Have a look at the example in the helptext."
                 ]
             },
         ),
@@ -389,18 +396,16 @@ def test_hanging_protocol_clientside():
             False,
             {
                 "json": [
-                    "JSON does not fulfill schema: instance is not of type 'array'"
+                    "Hanging protocol definition is invalid. Have a look at the example in the helptext."
                 ]
             },
         ),
-        ("[]", False, {"json": ["This field is required."]}),
-        ("{}", False, {"json": ["This field is required."]}),
         (
             "[{}]",
             False,
             {
                 "json": [
-                    "JSON does not fulfill schema: instance 'viewport_name' is a required property"
+                    "Hanging protocol definition is invalid. Have a look at the example in the helptext."
                 ]
             },
         ),
@@ -409,7 +414,7 @@ def test_hanging_protocol_clientside():
             False,
             {
                 "json": [
-                    "JSON does not fulfill schema: instance 'viewport_name' is a required property"
+                    "Hanging protocol definition is invalid. Have a look at the example in the helptext."
                 ]
             },
         ),
@@ -418,14 +423,9 @@ def test_hanging_protocol_clientside():
             False,
             {
                 "json": [
-                    "JSON does not fulfill schema: instance 'viewport_name' is a required property"
+                    "Hanging protocol definition is invalid. Have a look at the example in the helptext."
                 ]
             },
-        ),
-        (
-            '[{"viewport_name": "main"}]',
-            True,
-            {},
         ),
     ),
 )
