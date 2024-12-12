@@ -5,6 +5,7 @@ from pathlib import Path
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import (
+    AccessMixin,
     PermissionRequiredMixin,
     UserPassesTestMixin,
 )
@@ -46,6 +47,7 @@ from grandchallenge.algorithms.forms import (
     AlgorithmImageForm,
     AlgorithmImageUpdateForm,
     AlgorithmImportForm,
+    AlgorithmInterfaceForm,
     AlgorithmModelForm,
     AlgorithmModelUpdateForm,
     AlgorithmModelVersionControlForm,
@@ -61,7 +63,9 @@ from grandchallenge.algorithms.forms import (
 )
 from grandchallenge.algorithms.models import (
     Algorithm,
+    AlgorithmAlgorithmInterface,
     AlgorithmImage,
+    AlgorithmInterface,
     AlgorithmModel,
     AlgorithmPermissionRequest,
     Job,
@@ -1091,3 +1095,59 @@ class AlgorithmImageTemplate(ObjectPermissionRequiredMixin, DetailView):
                 filename=f"{algorithm.slug}-template.zip",
                 content_type="application/zip",
             )
+
+
+class AlgorithmInterfacePermissionMixin(AccessMixin):
+    @property
+    def algorithm(self):
+        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.has_perm(
+            "change_algorithm", self.algorithm
+        ) and request.user.has_perm("algorithms.add_algorithm"):
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            return self.handle_no_permission()
+
+
+class AlgorithmInterfaceForAlgorithmCreate(
+    AlgorithmInterfacePermissionMixin, CreateView
+):
+    model = AlgorithmInterface
+    form_class = AlgorithmInterfaceForm
+    success_message = "Algorithm interface successfully added"
+
+    def get_success_url(self):
+        return reverse(
+            "algorithms:interface-list", kwargs={"slug": self.algorithm.slug}
+        )
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update({"algorithm": self.algorithm})
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"algorithm": self.algorithm})
+        return kwargs
+
+
+class AlgorithmInterfacesForAlgorithmList(
+    AlgorithmInterfacePermissionMixin, ListView
+):
+    model = AlgorithmAlgorithmInterface
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return qs.filter(algorithm=self.algorithm)
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update(
+            {
+                "algorithm": self.algorithm,
+            }
+        )
+        return context
