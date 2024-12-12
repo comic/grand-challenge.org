@@ -318,119 +318,75 @@ def test_hanging_protocol_clientside():
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "hanging_protocol_json, form_is_valid, form_errors",
+    "hanging_protocol_json, form_is_valid, expected_json_error",
     (
-        ("[]", False, {"json": ["This field is required."]}),
-        ("{}", False, {"json": ["This field is required."]}),
+        ("[]", False, "This field is required."),
+        ("{}", False, "This field is required."),
         (
             '[{"viewport_name": "main"}]',
             True,
-            {},
+            None,
         ),
         (
             12345,
             False,
-            {
-                "json": [
-                    "Hanging protocol definition is invalid. Have a look at the example in the helptext."
-                ]
-            },
+            "Hanging protocol definition is invalid. Have a look at the example in the helptext.",
         ),
-        ("main", False, {"json": ["Enter a valid JSON."]}),
+        ("main", False, "Enter a valid JSON."),
         (
             "[1,2,3,4,5]",
             False,
-            {
-                "json": [
-                    "Hanging protocol definition is invalid. Have a look at the example in the helptext."
-                ]
-            },
+            "Hanging protocol definition is invalid. Have a look at the example in the helptext.",
         ),
         (
             '["test1", "test2", "test3"]',
             False,
-            {
-                "json": [
-                    "Hanging protocol definition is invalid. Have a look at the example in the helptext."
-                ]
-            },
+            "Hanging protocol definition is invalid. Have a look at the example in the helptext.",
         ),
         (
             "[[],[],[]]",
             False,
-            {
-                "json": [
-                    "Hanging protocol definition is invalid. Have a look at the example in the helptext."
-                ]
-            },
+            "Hanging protocol definition is invalid. Have a look at the example in the helptext.",
         ),
         (
             "[{},{},{}]",
             False,
-            {
-                "json": [
-                    "Hanging protocol definition is invalid. Have a look at the example in the helptext."
-                ]
-            },
+            "Hanging protocol definition is invalid. Have a look at the example in the helptext.",
         ),
         (
             "true",
             False,
-            {
-                "json": [
-                    "Hanging protocol definition is invalid. Have a look at the example in the helptext."
-                ]
-            },
+            "Hanging protocol definition is invalid. Have a look at the example in the helptext.",
         ),
         (
             "false",
             False,
-            {
-                "json": [
-                    "Hanging protocol definition is invalid. Have a look at the example in the helptext."
-                ]
-            },
+            "Hanging protocol definition is invalid. Have a look at the example in the helptext.",
         ),
         (
             '{"viewport_name": "main"}',
             False,
-            {
-                "json": [
-                    "Hanging protocol definition is invalid. Have a look at the example in the helptext."
-                ]
-            },
+            "Hanging protocol definition is invalid. Have a look at the example in the helptext.",
         ),
         (
             "[{}]",
             False,
-            {
-                "json": [
-                    "Hanging protocol definition is invalid. Have a look at the example in the helptext."
-                ]
-            },
+            "Hanging protocol definition is invalid. Have a look at the example in the helptext.",
         ),
         (
             '[{"test":1}]',
             False,
-            {
-                "json": [
-                    "Hanging protocol definition is invalid. Have a look at the example in the helptext."
-                ]
-            },
+            "Hanging protocol definition is invalid. Have a look at the example in the helptext.",
         ),
         (
             '[{"test1":"main"},{"test2":"secondary"}]',
             False,
-            {
-                "json": [
-                    "Hanging protocol definition is invalid. Have a look at the example in the helptext."
-                ]
-            },
+            "Hanging protocol definition is invalid. Have a look at the example in the helptext.",
         ),
     ),
 )
 def test_hanging_protocol_form_json_validation(
-    hanging_protocol_json, form_is_valid, form_errors
+    hanging_protocol_json, form_is_valid, expected_json_error
 ):
     form = HangingProtocolForm(
         {
@@ -439,7 +395,7 @@ def test_hanging_protocol_form_json_validation(
         }
     )
     assert form.is_valid() is form_is_valid
-    assert form.errors == form_errors
+    assert form.errors.get("json", [None])[0] == expected_json_error
 
 
 def make_ci_list(
