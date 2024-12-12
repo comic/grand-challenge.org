@@ -91,3 +91,24 @@ def send_challenge_status_update_email(challengerequest, challenge=None):
         recipients=[challengerequest.creator],
         subscription_type=EmailSubscriptionTypes.SYSTEM,
     )
+
+
+def send_email_percent_budget_consumed_alert(challenge, warning_threshold):
+    send_standard_email_batch(
+        site=Site.objects.get_current(),
+        subject=format_html(
+            "[{challenge_name}] Challenge {warning_threshold}% Budget Consumed Alert",
+            challenge_name=challenge.short_name,
+            warning_threshold=warning_threshold,
+        ),
+        markdown_message=format_html(
+            "We would like to inform you that {percent_budget_consumed}% of the "
+            "compute budget for your challenge has been used.",
+            percent_budget_consumed=challenge.percent_budget_consumed,
+        ),
+        recipients=[
+            *challenge.get_admins(),
+            *get_user_model().objects.filter(is_staff=True, is_active=True),
+        ],
+        subscription_type=EmailSubscriptionTypes.SYSTEM,
+    )

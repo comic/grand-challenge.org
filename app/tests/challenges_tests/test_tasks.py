@@ -1,9 +1,19 @@
 import pytest
+from django.core import mail
 
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
-from grandchallenge.challenges.tasks import update_challenge_results_cache
-from tests.evaluation_tests.factories import EvaluationFactory
-from tests.factories import ChallengeFactory, ChallengeRequestFactory
+from grandchallenge.challenges.tasks import (
+    update_challenge_results_cache,
+    update_compute_costs_and_storage_size,
+)
+from grandchallenge.invoices.models import PaymentStatusChoices
+from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
+from tests.factories import (
+    ChallengeFactory,
+    ChallengeRequestFactory,
+    UserFactory,
+)
+from tests.invoices_tests.factories import InvoiceFactory
 
 
 @pytest.mark.django_db
@@ -120,4 +130,43 @@ def test_challenge_request_budget_calculation(settings):
         == challenge_request.budget["Total phase 1"]
         + challenge_request.budget["Total phase 2"]
         + challenge_request.budget["Docker storage cost"]
+    )
+
+
+@pytest.mark.django_db
+def test_challenge_budget_alert_email():
+    challenge = ChallengeFactory(
+        short_name="test",
+    )
+    challenge_admin = UserFactory()
+    challenge.add_admin(challenge_admin)
+    staff_user = UserFactory(is_staff=True)
+    InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=10,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.PAID,
+    )
+    phase = PhaseFactory(challenge=challenge)
+    EvaluationFactory(
+        submission__phase=phase,
+        compute_cost_euro_millicents=800000,
+        time_limit=60,
+    )
+    update_compute_costs_and_storage_size()
+    assert len(mail.outbox) == 3
+    recipients = [r for m in mail.outbox for r in m.to]
+    assert recipients == [
+        challenge.creator.email,
+        challenge_admin.email,
+        staff_user.email,
+    ]
+    assert (
+        mail.outbox[0].subject
+        == "[testserver] [test] Challenge 70% Budget Consumed Alert"
+    )
+    assert (
+        "We would like to inform you that 80% of the compute budget for your challenge has been used."
+        in mail.outbox[0].body
     )

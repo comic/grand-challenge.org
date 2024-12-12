@@ -5,6 +5,9 @@ from grandchallenge.challenges.costs import (
     annotate_compute_costs_and_storage_size,
     annotate_job_duration_and_compute_costs,
 )
+from grandchallenge.challenges.emails import (
+    send_email_percent_budget_consumed_alert,
+)
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.evaluation.models import Evaluation, Phase
@@ -55,12 +58,34 @@ def update_challenge_results_cache():
     )
 
 
+def send_alert_if_budget_consumed_warning_threshold_exceeded(challenge):
+    if (
+        challenge.has_changed("compute_cost_euro_millicents")
+        and challenge.approved_compute_costs_euro_millicents
+    ):
+        for threshold in sorted(
+            challenge.percent_budget_consumed_warning_thresholds, reverse=True
+        ):
+            if (
+                challenge.initial_value("compute_cost_euro_millicents")
+                < challenge.approved_compute_costs_euro_millicents
+                * threshold
+                / 100
+                <= challenge.compute_cost_euro_millicents
+            ):
+                send_email_percent_budget_consumed_alert(challenge, threshold)
+                break
+
+
 @acks_late_2xlarge_task
 def update_compute_costs_and_storage_size():
     challenges = Challenge.objects.all()
 
-    for challenge in challenges:
+    for challenge in challenges.with_available_compute():
         annotate_compute_costs_and_storage_size(challenge=challenge)
+        send_alert_if_budget_consumed_warning_threshold_exceeded(
+            challenge=challenge
+        )
 
     Challenge.objects.bulk_update(
         challenges,

@@ -50,7 +50,7 @@ from grandchallenge.components.schemas import (
     GPUTypeChoices,
     get_default_gpu_type_choices,
 )
-from grandchallenge.core.models import UUIDModel
+from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import (
     get_banner_path,
     get_logo_path,
@@ -215,7 +215,7 @@ def get_default_percent_budget_consumed_warning_thresholds():
     return [70, 90, 100]
 
 
-class Challenge(ChallengeBase):
+class Challenge(ChallengeBase, FieldChangeMixin):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     description = models.CharField(
@@ -725,7 +725,7 @@ class Challenge(ChallengeBase):
             for phase in self.phase_set.all()
         )
 
-    @cached_property
+    @property
     def percent_budget_consumed(self):
         if self.approved_compute_costs_euro_millicents:
             return int(
