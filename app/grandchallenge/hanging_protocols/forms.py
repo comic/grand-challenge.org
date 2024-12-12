@@ -60,17 +60,14 @@ class HangingProtocolForm(SaveFormInitMixin, forms.ModelForm):
     def clean_json(self):
         hanging_protocol_json = self.cleaned_data["json"]
 
-        if not isinstance(hanging_protocol_json, list):
-            return hanging_protocol_json
-
-        viewport_names = [
-            viewport["viewport_name"]
-            for viewport in hanging_protocol_json
-            if isinstance(viewport, dict) and "viewport_name" in viewport
-        ]
-
-        if not viewport_names:
-            return hanging_protocol_json
+        try:
+            viewport_names = [
+                viewport["viewport_name"] for viewport in hanging_protocol_json
+            ]
+        except (KeyError, TypeError):
+            raise ValidationError(
+                "Hanging protocol definition is invalid. Have a look at the example in the helptext."
+            )
 
         self._validate_viewport_uniqueness(viewport_names=viewport_names)
         self._validate_dimensions(value=hanging_protocol_json)
