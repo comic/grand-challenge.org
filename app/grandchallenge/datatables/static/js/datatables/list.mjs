@@ -8,7 +8,7 @@ const defaultSortOrder = JSON.parse(
     document.getElementById("defaultSortOrder").textContent,
 );
 
-$(document).ready(() => {
+document.addEventListener("DOMContentLoaded", () => {
     renderVegaChartsObserver.observe(document.getElementById("ajaxDataTable"), {
         childList: true,
         subtree: true,
@@ -19,19 +19,6 @@ $(document).ready(() => {
         lengthChange: false,
         pageLength: 25,
         serverSide: true,
-        responsive: {
-            details: {
-                renderer: (api, rowIdx, columns) => {
-                    const data = $.map(columns, (col, i) =>
-                        col.hidden
-                            ? `<tr data-dt-row="${col.rowIndex}" data-dt-column="${col.columnIndex}"><td class="font-weight-bold">${col.title}:</td> <td>${col.data}</td></tr>`
-                            : "",
-                    ).join("");
-
-                    return data ? $("<table/>").append(data) : false;
-                },
-            },
-        },
         columnDefs: [
             {
                 targets: "nonSortable",
@@ -44,7 +31,7 @@ $(document).ready(() => {
             },
         ],
         ajax: {
-            url: "",
+            url: ".",
         },
         ordering: true,
         drawCallback: settings => {
@@ -52,13 +39,4 @@ $(document).ready(() => {
             htmx.process("#ajaxDataTable");
         },
     });
-});
-
-$("#ajaxDataTable").on("init.dt", () => {
-    // This is a work-around to get the table to resize properly on extra-large Bootstrap viewport
-    setTimeout($("#ajaxDataTable").DataTable().columns.adjust, 1000);
-});
-
-$(window).resize(() => {
-    $("#ajaxDataTable").DataTable().columns.adjust();
 });

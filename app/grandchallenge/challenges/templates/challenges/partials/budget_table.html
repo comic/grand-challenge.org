@@ -8,7 +8,9 @@ Based on the following information provided by the challenge requester:
 <ul>
     {% for field, value in object.budget_fields.items %}
         <li><span class="font-weight-bold">{% if field == "inference time limit in minutes" %}Average algorithm job run
-            time in minutes{% else %}{{ field|capfirst }}{% endif %}</span>: {{ value }}</li>
+            time in minutes{% elif field == "algorithm selectable gpu type choices" %}Selectable GPU types for algorithm
+            jobs{% elif field == "algorithm maximum settable memory gb" %}Maximum memory for algorithm jobs in GB
+            {% else %}{{ field|capfirst }}{% endif %}</span>: {{ value }}</li>
     {% endfor %}
 </ul>
 

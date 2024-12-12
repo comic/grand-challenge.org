@@ -8,7 +8,7 @@ from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
 from grandchallenge.core.views import RedirectPath
-from grandchallenge.datatables.views import PaginatedTableListView
+from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.factories import ArchiveFactory
@@ -39,7 +39,6 @@ def test_paginated_table_list_view_get():
     request.GET["length"] = 50
     request.GET["draw"] = 1
     view.model = Algorithm
-    view.order_by = "created"
     view.request = request
     resp = view.get(request)
 
@@ -59,7 +58,6 @@ def test_paginated_table_list_view_post():
     request.POST["length"] = 50
     request.POST["draw"] = 1
     view.model = Algorithm
-    view.order_by = "created"
     view.request = request
     resp = view.post(request)
 
@@ -69,6 +67,65 @@ def test_paginated_table_list_view_post():
         "recordsFiltered": 0,
         "data": [],
     }
+
+
+@pytest.mark.django_db
+def test_paginated_table_list_view_ordering():
+    view = PaginatedTableListView()
+
+    request = HttpRequest()
+    request.META["HTTP_X_REQUESTED_WITH"] = "XMLHttpRequest"
+    request.POST["length"] = 50
+    request.POST["draw"] = 1
+
+    view.model = Algorithm
+    view.row_template = "datatable_row_template.html"
+
+    view.columns = [
+        Column(
+            title="Created",
+            sort_field="created",
+        ),
+        Column(
+            title="Title",
+            sort_field="title",
+        ),
+    ]
+
+    AlgorithmFactory(title="BbbbbB")
+    AlgorithmFactory(title="AaaaaA")
+
+    view.request = request
+
+    resp = view.post(request)
+    json_resp = json.loads(resp.content)
+
+    assert json_resp["draw"] == 1
+    assert json_resp["recordsTotal"] == 2
+
+    # No ordering via AJAX, check defaults
+    assert view.default_sort_column == 0
+    assert view.default_sort_order == "desc"
+
+    assert "AaaaaA" == json_resp["data"][0][1].strip()
+    assert "BbbbbB" in json_resp["data"][1][1].strip()
+
+    # Swap direction
+    request.POST["order[0][dir]"] = "asc"
+    resp = view.post(request)
+    json_resp = json.loads(resp.content)
+    # Also swaped rows
+    assert "BbbbbB" == json_resp["data"][0][1].strip()
+    assert "AaaaaA" == json_resp["data"][1][1].strip()
+
+    # Change order column
+    request.POST["order[0][column]"] = "1"
+    resp = view.post(request)
+    json_resp = json.loads(resp.content)
+
+    # Also changes the rows
+    assert "AaaaaA" == json_resp["data"][0][1].strip()
+    assert "BbbbbB" == json_resp["data"][1][1].strip()
 
 
 @pytest.mark.django_db

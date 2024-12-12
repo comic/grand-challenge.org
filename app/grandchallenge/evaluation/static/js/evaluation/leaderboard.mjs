@@ -17,7 +17,7 @@ $(document).ready(() => {
         pageLength: 50,
         serverSide: true,
         ajax: {
-            url: "",
+            url: ".",
             type: "POST",
             headers: {
                 "X-CSRFToken": getCookie("_csrftoken"),
@@ -70,10 +70,6 @@ $(document).ready(() => {
             </button>
         `;
     }
-});
-
-$(window).resize(() => {
-    resultsTable.DataTable().columns.adjust();
 });
 
 function getDataTablesDOMTemplate() {

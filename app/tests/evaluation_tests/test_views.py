@@ -1391,6 +1391,14 @@ def test_configure_algorithm_phases_view(client):
         phase.algorithm_time_limit
         == challenge_request.inference_time_limit_in_minutes * 60
     )
+    assert (
+        phase.algorithm_selectable_gpu_type_choices
+        == challenge_request.algorithm_selectable_gpu_type_choices
+    )
+    assert (
+        phase.algorithm_maximum_settable_memory_gb
+        == challenge_request.algorithm_maximum_settable_memory_gb
+    )
 
 
 @pytest.mark.django_db

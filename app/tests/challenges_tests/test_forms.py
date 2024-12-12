@@ -3,6 +3,7 @@ import datetime
 import pytest
 
 from grandchallenge.challenges.forms import (
+    HTMX_BLANK_CHOICE_KEY,
     ChallengeRequestBudgetUpdateForm,
     ChallengeRequestForm,
     ChallengeRequestStatusUpdateForm,
@@ -36,6 +37,7 @@ def test_challenge_request_budget_fields_required():
         "expected_number_of_teams": 10,
         "number_of_tasks": 1,
         "challenge_fee_agreement": True,
+        "budget_for_hosting_challenge": 0,
     }
     form = ChallengeRequestForm(data=data, creator=user)
     assert not form.is_valid()
@@ -58,10 +60,13 @@ def test_challenge_request_budget_fields_required():
         "expected_number_of_teams": 10,
         "number_of_tasks": 1,
         "challenge_fee_agreement": True,
+        "budget_for_hosting_challenge": 0,
         "algorithm_inputs": "foo",
         "algorithm_outputs": "foo",
         "average_size_of_test_image_in_mb": 1,
         "inference_time_limit_in_minutes": 11,
+        "algorithm_selectable_gpu_type_choices": ["", "A10G", "T4"],
+        "algorithm_maximum_settable_memory_gb": 32,
         "phase_1_number_of_submissions_per_team": 1,
         "phase_2_number_of_submissions_per_team": 1,
         "phase_1_number_of_test_images": 1,
@@ -105,11 +110,17 @@ def test_budget_update_form():
         data=data, instance=challenge_request
     )
     assert not form.is_valid()
-    assert "Please provide an inference time limit." in str(form.errors)
+    assert "inference_time_limit_in_minutes" in form.errors.keys()
 
     data2 = {
         "expected_number_of_teams": 100,
         "inference_time_limit_in_minutes": 10,
+        "algorithm_selectable_gpu_type_choices": [
+            HTMX_BLANK_CHOICE_KEY,
+            "A10G",
+            "T4",
+        ],
+        "algorithm_maximum_settable_memory_gb": 32,
         "average_size_of_test_image_in_mb": 10,
         "phase_1_number_of_submissions_per_team": 10,
         "phase_2_number_of_submissions_per_team": 1,
