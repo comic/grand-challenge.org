@@ -1301,7 +1301,9 @@ def test_algorithm_for_phase_form_memory_limited():
 @pytest.mark.django_db
 def test_algorithm_interface_disjoint_interfaces():
     ci = ComponentInterfaceFactory()
-    form = AlgorithmInterfaceForm(data={"inputs": [ci], "outputs": [ci]})
+    form = AlgorithmInterfaceForm(
+        algorithm=AlgorithmFactory(), data={"inputs": [ci], "outputs": [ci]}
+    )
     assert form.is_valid() is False
     assert "The sets of Inputs and Outputs must be unique" in str(form.errors)
 
