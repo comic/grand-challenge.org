@@ -1409,18 +1409,18 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
                 algorithm=self._algorithm
             ).update(is_default=False)
 
-        if AlgorithmAlgorithmInterface.objects.filter(
+        matched_rows = AlgorithmAlgorithmInterface.objects.filter(
             algorithm=self._algorithm, interface=interface
-        ).exists():
-            AlgorithmAlgorithmInterface.objects.filter(
-                algorithm=self._algorithm, interface=interface
-            ).update(is_default=self.cleaned_data["set_as_default"])
-        else:
+        ).update(is_default=self.cleaned_data["set_as_default"])
+
+        if matched_rows == 0:
             self._algorithm.interfaces.add(
                 interface,
                 through_defaults={
                     "is_default": self.cleaned_data["set_as_default"]
                 },
             )
+        elif matched_rows > 1:
+            raise RuntimeError("This _really_ shouldn't happen")
 
         return interface
