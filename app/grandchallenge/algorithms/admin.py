@@ -5,7 +5,6 @@ from django.contrib.admin import ModelAdmin
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count, Sum
 from django.forms import ModelForm
-from django.urls import reverse
 from django.utils.html import format_html
 from guardian.admin import GuardedModelAdmin
 
@@ -54,7 +53,7 @@ class AlgorithmAdminForm(ModelForm):
 class AlgorithmAdmin(GuardedModelAdmin):
     readonly_fields = (
         "algorithm_forge_json",
-        "default_interface_link",
+        "default_interface",
         "inputs",
         "outputs",
     )
@@ -62,7 +61,7 @@ class AlgorithmAdmin(GuardedModelAdmin):
         "title",
         "created",
         "public",
-        "default_interface_link",
+        "default_interface",
         "time_limit",
         "job_requires_gpu_type",
         "job_requires_memory_gb",
@@ -76,19 +75,6 @@ class AlgorithmAdmin(GuardedModelAdmin):
 
     def container_count(self, obj):
         return obj.container_count
-
-    def default_interface_link(self, obj):
-        if obj.default_interface:
-            return format_html(
-                '<a href="{link}">{default_interface}</a>',
-                link=reverse(
-                    "admin:algorithms_algorithminterface_change",
-                    kwargs={"object_id": obj.default_interface.pk},
-                ),
-                default_interface=obj.default_interface,
-            )
-        else:
-            return None
 
     @staticmethod
     def algorithm_forge_json(obj):
