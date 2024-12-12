@@ -1,4 +1,4 @@
-$.extend(true, DataTable.defaults, {
+$.extend($.fn.dataTable.defaults, {
     scrollX: true,
     language: {
         paginate: {
