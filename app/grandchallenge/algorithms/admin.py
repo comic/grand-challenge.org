@@ -251,6 +251,7 @@ class AlgorithmInterfaceAdmin(GuardedModelAdmin):
         "algorithm_outputs",
     )
     search_fields = (
+        "pk",
         "inputs__slug",
         "outputs__slug",
     )
