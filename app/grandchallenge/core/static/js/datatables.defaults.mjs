@@ -10,6 +10,13 @@ $.extend(true, DataTable.defaults, {
 });
 
 $(document).on("init.dt", () => {
-    // Set up floating scroll, note that the target class only shows up when scrollX is set to true
-    $(".dataTables_scrollBody").floatingScroll();
+    const element = $(".dt-scroll-body");
+
+    if (element.length === 0) {
+        console.warn(
+            "Warning: Element for floating-scroll attachment could not be located",
+        );
+    }
+
+    element.floatingScroll();
 });
