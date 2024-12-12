@@ -1421,6 +1421,9 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
                 },
             )
         elif matched_rows > 1:
-            raise RuntimeError("This _really_ shouldn't happen")
+            raise RuntimeError(
+                "This algorithm and interface are associated "
+                "with each other more than once."
+            )
 
         return interface
