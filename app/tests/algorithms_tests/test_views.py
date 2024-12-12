@@ -2157,33 +2157,19 @@ def test_algorithm_interface_view_permission(client, viewname):
         user_without_alg_add_perm,
         algorithm_editor_with_alg_add,
         algorithm_editor_without_alg_add,
-        verified_alg_editor_with_alg_add,
-        verified_alg_editor_without_alg_add,
-    ) = UserFactory.create_batch(6)
+    ) = UserFactory.create_batch(4)
     assign_perm("algorithms.add_algorithm", user_with_alg_add_perm)
     assign_perm("algorithms.add_algorithm", algorithm_editor_with_alg_add)
-    assign_perm("algorithms.add_algorithm", verified_alg_editor_with_alg_add)
 
     alg = AlgorithmFactory()
     alg.add_editor(algorithm_editor_with_alg_add)
     alg.add_editor(algorithm_editor_without_alg_add)
-    alg.add_editor(verified_alg_editor_with_alg_add)
-    alg.add_editor(verified_alg_editor_without_alg_add)
-
-    VerificationFactory(
-        user=verified_alg_editor_with_alg_add, is_verified=True
-    )
-    VerificationFactory(
-        user=verified_alg_editor_without_alg_add, is_verified=True
-    )
 
     for user, status in [
         [user_with_alg_add_perm, 403],
         [user_without_alg_add_perm, 403],
-        [algorithm_editor_with_alg_add, 403],
+        [algorithm_editor_with_alg_add, 200],
         [algorithm_editor_without_alg_add, 403],
-        [verified_alg_editor_with_alg_add, 200],
-        [verified_alg_editor_without_alg_add, 403],
     ]:
         response = get_view_for_user(
             viewname=viewname,
@@ -2200,8 +2186,6 @@ def test_algorithm_interface_create(client):
     assign_perm("algorithms.add_algorithm", user)
     alg = AlgorithmFactory()
     alg.add_editor(user)
-
-    VerificationFactory(user=user, is_verified=True)
 
     ci_1 = ComponentInterfaceFactory()
     ci_2 = ComponentInterfaceFactory()

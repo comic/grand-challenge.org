@@ -52,7 +52,6 @@ from grandchallenge.algorithms.models import (
     AlgorithmModel,
     AlgorithmPermissionRequest,
     Job,
-    get_existing_interface_for_inputs_and_outputs,
 )
 from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
@@ -1348,7 +1347,7 @@ class AlgorithmModelVersionControlForm(Form):
         return algorithm_model
 
 
-class AlgorithmInterfaceBaseForm(SaveFormInitMixin, ModelForm):
+class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
     inputs = ModelMultipleChoiceField(
         queryset=ComponentInterface.objects.exclude(
             slug__in=[*NON_ALGORITHM_INTERFACES, "results-json-file"]
@@ -1361,10 +1360,22 @@ class AlgorithmInterfaceBaseForm(SaveFormInitMixin, ModelForm):
         ),
         widget=Select2MultipleWidget,
     )
+    set_as_default = BooleanField(required=False)
 
     class Meta:
         model = AlgorithmInterface
-        fields = ("inputs", "outputs")
+        fields = (
+            "inputs",
+            "outputs",
+            "set_as_default",
+        )
+
+    def __init__(self, *args, algorithm, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._algorithm = algorithm
+
+        if not self._algorithm.default_interface:
+            self.fields["set_as_default"].initial = True
 
     def clean(self):
         cleaned_data = super().clean()
@@ -1385,56 +1396,12 @@ class AlgorithmInterfaceBaseForm(SaveFormInitMixin, ModelForm):
                 f"{oxford_comma(duplicate_interfaces)} present in both"
             )
 
-        cleaned_data["existing_io"] = (
-            get_existing_interface_for_inputs_and_outputs(
-                inputs=inputs,
-                outputs=outputs,
-            )
-        )
-
-        return cleaned_data
-
-
-class AlgorithmInterfaceGetOrCreateForm(AlgorithmInterfaceBaseForm):
-    set_as_default = BooleanField(required=False)
-
-    class Meta(AlgorithmInterfaceBaseForm.Meta):
-        fields = (
-            *AlgorithmInterfaceBaseForm.Meta.fields,
-            "set_as_default",
-        )
-
-    def __init__(self, *args, algorithm, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._algorithm = algorithm
-
-        if not self._algorithm.default_interface:
-            self.fields["set_as_default"].initial = True
-
-    def clean(self):
-        cleaned_data = super().clean()
-
-        if (
-            cleaned_data["existing_io"]
-            and AlgorithmAlgorithmInterface.objects.filter(
-                algorithm=self._algorithm,
-                interface=cleaned_data["existing_io"],
-            ).exists()
-        ):
-            raise ValidationError(
-                "Your algorithm already has an interface with these inputs "
-                "and outputs. If you would like to update the 'is_default' "
-                "property of the interface, you can do so by updating the "
-                "existing interface on the interface list."
-            )
-
         return cleaned_data
 
     def save(self):
-        io = (
-            self.cleaned_data["existing_io"]
-            if self.cleaned_data["existing_io"]
-            else super().save()
+        interface = AlgorithmInterface.objects.create(
+            inputs=self.cleaned_data["inputs"],
+            outputs=self.cleaned_data["outputs"],
         )
 
         if self.cleaned_data["set_as_default"]:
@@ -1442,11 +1409,18 @@ class AlgorithmInterfaceGetOrCreateForm(AlgorithmInterfaceBaseForm):
                 algorithm=self._algorithm
             ).update(is_default=False)
 
-        self._algorithm.interfaces.add(
-            io,
-            through_defaults={
-                "is_default": self.cleaned_data["set_as_default"]
-            },
-        )
+        if AlgorithmAlgorithmInterface.objects.filter(
+            algorithm=self._algorithm, interface=interface
+        ).exists():
+            AlgorithmAlgorithmInterface.objects.filter(
+                algorithm=self._algorithm, interface=interface
+            ).update(is_default=self.cleaned_data["set_as_default"])
+        else:
+            self._algorithm.interfaces.add(
+                interface,
+                through_defaults={
+                    "is_default": self.cleaned_data["set_as_default"]
+                },
+            )
 
-        return io
+        return interface

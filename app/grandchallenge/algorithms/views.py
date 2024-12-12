@@ -47,7 +47,7 @@ from grandchallenge.algorithms.forms import (
     AlgorithmImageForm,
     AlgorithmImageUpdateForm,
     AlgorithmImportForm,
-    AlgorithmInterfaceGetOrCreateForm,
+    AlgorithmInterfaceForm,
     AlgorithmModelForm,
     AlgorithmModelUpdateForm,
     AlgorithmModelVersionControlForm,
@@ -1097,9 +1097,7 @@ class AlgorithmImageTemplate(ObjectPermissionRequiredMixin, DetailView):
             )
 
 
-class AlgorithmInterfacePermissionMixin(
-    VerificationRequiredMixin, AccessMixin
-):
+class AlgorithmInterfacePermissionMixin(AccessMixin):
     @property
     def algorithm(self):
         return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
@@ -1117,7 +1115,7 @@ class AlgorithmInterfaceForAlgorithmCreate(
     AlgorithmInterfacePermissionMixin, CreateView
 ):
     model = AlgorithmInterface
-    form_class = AlgorithmInterfaceGetOrCreateForm
+    form_class = AlgorithmInterfaceForm
     success_message = "Algorithm interface successfully added"
 
     def get_success_url(self):
