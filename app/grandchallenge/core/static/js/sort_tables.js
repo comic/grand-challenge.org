@@ -1,11 +1,8 @@
 $(document).ready(() => {
     $("table.sortable").dataTable({
-        bJQueryUI: false,
-        sPaginationType: "full_numbers",
-        bPaginate: false,
-        bLengthChange: false,
-        bFilter: false,
-        bInfo: false,
-        bAutoWidth: false,
+        paginate: false,
+        lengthChange: false,
+        filter: false,
+        info: false,
     });
 });
