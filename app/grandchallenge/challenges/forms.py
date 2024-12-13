@@ -193,16 +193,6 @@ class ChallengeRequestForm(forms.ModelForm):
         widgets = {
             "start_date": forms.TextInput(attrs={"type": "date"}),
             "end_date": forms.TextInput(attrs={"type": "date"}),
-            "long_term_commitment": forms.CheckboxInput(
-                attrs={
-                    "onchange": "updateExtraField('long_term_commitment', 'support this challenge long-term');"
-                }
-            ),
-            "data_license": forms.CheckboxInput(
-                attrs={
-                    "onchange": "updateExtraField('data_license', 'use a CC-BY license for your data');"
-                }
-            ),
             "expected_number_of_teams": forms.NumberInput(
                 attrs={"oninput": "validity.valid||(value='');"}
             ),

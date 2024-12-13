@@ -21,6 +21,6 @@
 
 {% block script %}
     {{ block.super }}
-    <script type="text/javascript" src="{% static "js/challenges/challenge_request_dynamic_fields.js" type="module" defer %}"></script>
+    <script type="module" src="{% static "js/challenges/challenge_request_dynamic_fields.mjs" %}"></script>
     <script type="text/javascript" src="{% static "js/unsavedform.js" %}"></script>
 {% endblock %}
