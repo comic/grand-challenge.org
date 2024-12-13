@@ -81,7 +81,6 @@ class Migration(migrations.Migration):
             model_name="challengerequest",
             name="budget_for_hosting_challenge",
             field=models.PositiveIntegerField(
-                default=0,
                 help_text="What is your budget for hosting this challenge? Please be reminded of our <a href='/challenge-policy-and-pricing/'>challenge pricing policy</a>.",
             ),
         ),
