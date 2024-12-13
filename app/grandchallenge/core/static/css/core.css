@@ -242,3 +242,10 @@ a[aria-expanded="false"] .fa-chevron-down {
 .htmx-request.htmx-indicator {
     display: inline-block;
 }
+
+blockquote {
+    padding: 0 1em;
+    font-size: inherit !important;
+    border-left: .25em solid var(--dark);
+    color: #595959;
+}
