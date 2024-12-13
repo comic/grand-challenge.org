@@ -193,33 +193,6 @@ class ChallengeRequestForm(forms.ModelForm):
         widgets = {
             "start_date": forms.TextInput(attrs={"type": "date"}),
             "end_date": forms.TextInput(attrs={"type": "date"}),
-            "expected_number_of_teams": forms.NumberInput(
-                attrs={"oninput": "validity.valid||(value='');"}
-            ),
-            "number_of_tasks": forms.NumberInput(
-                attrs={"oninput": "validity.valid||(value='');"}
-            ),
-            "average_size_of_test_image_in_mb": forms.NumberInput(
-                attrs={"oninput": "validity.valid||(value='');"}
-            ),
-            "inference_time_limit_in_minutes": forms.NumberInput(
-                attrs={"oninput": "validity.valid||(value='');"}
-            ),
-            "phase_1_number_of_submissions_per_team": forms.NumberInput(
-                attrs={"oninput": "validity.valid||(value='');"}
-            ),
-            "phase_2_number_of_submissions_per_team": forms.NumberInput(
-                attrs={"oninput": "validity.valid||(value='');"}
-            ),
-            "phase_1_number_of_test_images": forms.NumberInput(
-                attrs={"oninput": "validity.valid||(value='');"}
-            ),
-            "phase_2_number_of_test_images": forms.NumberInput(
-                attrs={"oninput": "validity.valid||(value='');"}
-            ),
-            "budget_for_hosting_challenge": forms.NumberInput(
-                attrs={"oninput": "validity.valid||(value='');"}
-            ),
         }
         labels = {
             "short_name": "Acronym",
