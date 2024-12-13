@@ -242,3 +242,29 @@ a[aria-expanded="false"] .fa-chevron-down {
 .htmx-request.htmx-indicator {
     display: inline-block;
 }
+
+/* datatables */
+.dt-layout-start,
+.dt-layout-end {
+    padding-top: 0.2rem;
+    padding-bottom: 0.2rem;
+}
+
+.dt-container ul.pagination {
+    justify-content: right;
+}
+
+.dt-layout-full,
+.dt-layout-start,
+.dt-layout-end {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.dt-scroll-body {
+    border-bottom: none !important;
+}
+
+.dt-orderable-none .dt-column-order {
+    display: none;
+}
