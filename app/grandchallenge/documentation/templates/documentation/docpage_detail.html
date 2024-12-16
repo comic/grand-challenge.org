@@ -138,7 +138,7 @@
             {% if search_results %}
                 {% for result in search_results %}
                     <div class="card rounded border-light my-1">
-                        <a href="{% url 'documentation:detail' slug=result.slug %}"><h5 class="pl-3 pt-3">{{ result.title }}</h5></a>
+                        <a href="{% url 'documentation:detail' slug=result.slug %}"><h5 class="p-3 m-0">{{ result.title }}</h5></a>
                     </div>
                 {% endfor %}
             {% else %}
