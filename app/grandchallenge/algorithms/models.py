@@ -976,13 +976,13 @@ class JobManager(ComponentJobManager):
         return existing_civs
 
     def get_jobs_with_same_inputs(
-        self, *, inputs, algorithm_image, algorithm_model
+        self, *, inputs, interface, algorithm_image, algorithm_model
     ):
         existing_civs = self.retrieve_existing_civs(civ_data=inputs)
         unique_kwargs = {
             "algorithm_image": algorithm_image,
         }
-        input_interface_count = algorithm_image.algorithm.inputs.count()
+        input_interface_count = interface.inputs.count()
 
         if algorithm_model:
             unique_kwargs["algorithm_model"] = algorithm_model

@@ -27,6 +27,7 @@ from grandchallenge.notifications.models import Notification
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
+    AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
     AlgorithmModelFactory,
 )
@@ -219,8 +220,13 @@ def test_algorithm(
         slug="results-json-file"
     )
     heatmap_interface = ComponentInterface.objects.get(slug="generic-overlay")
-    ai.algorithm.inputs.set([input_interface])
-    ai.algorithm.outputs.set([json_result_interface, heatmap_interface])
+    interface = AlgorithmInterfaceFactory(
+        inputs=[input_interface],
+        outputs=[json_result_interface, heatmap_interface],
+    )
+    ai.algorithm.interfaces.add(
+        interface, through_defaults={"is_default": True}
+    )
 
     civ = ComponentInterfaceValueFactory(
         image=image_file.image, interface=input_interface, file=None
@@ -343,9 +349,12 @@ def test_algorithm_with_invalid_output(
         slug="detection-json-file",
         kind=ComponentInterface.Kind.ANY,
     )
-    ai.algorithm.inputs.add(input_interface)
-    ai.algorithm.outputs.add(detection_interface)
-    ai.save()
+    interface = AlgorithmInterfaceFactory(
+        inputs=[input_interface], outputs=[detection_interface]
+    )
+    ai.algorithm.interfaces.add(
+        interface, through_defaults={"is_default": True}
+    )
 
     image_file = ImageFileFactory(
         file__from_path=Path(__file__).parent / "resources" / "input_file.tif"
@@ -422,11 +431,17 @@ def test_execute_algorithm_job_for_missing_inputs(settings):
     # create the job without value for the ComponentInterfaceValues
     ci = ComponentInterface.objects.get(slug="generic-medical-image")
     ComponentInterfaceValue.objects.create(interface=ci)
-    alg.algorithm.inputs.add(ci)
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ci], outputs=[ComponentInterfaceFactory()]
+    )
+    alg.algorithm.interfaces.add(
+        interface, through_defaults={"is_default": True}
+    )
     job = AlgorithmJobFactory(
         creator=creator,
         algorithm_image=alg,
         time_limit=alg.algorithm.time_limit,
+        algorithm_interface=interface,
     )
     execute_algorithm_job_for_inputs(job_pk=job.pk)
 

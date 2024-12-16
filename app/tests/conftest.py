@@ -21,6 +21,7 @@ from grandchallenge.reader_studies.models import Question
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
+    AlgorithmInterfaceFactory,
     AlgorithmModelFactory,
 )
 from tests.cases_tests import RESOURCE_PATH
@@ -480,7 +481,10 @@ def algorithm_with_image_and_model_and_two_inputs():
     ci1, ci2 = ComponentInterfaceFactory.create_batch(
         2, kind=ComponentInterface.Kind.STRING
     )
-    alg.inputs.set([ci1, ci2])
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ci1, ci2], outputs=[ComponentInterfaceFactory()]
+    )
+    alg.interfaces.add(interface, through_defaults={"is_default": True})
     civs = [
         ComponentInterfaceValueFactory(interface=ci1, value="foo"),
         ComponentInterfaceValueFactory(interface=ci2, value="bar"),
