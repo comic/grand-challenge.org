@@ -102,9 +102,9 @@ def send_email_percent_budget_consumed_alert(challenge, warning_threshold):
             warning_threshold=warning_threshold,
         ),
         markdown_message=format_html(
-            "We would like to inform you that {percent_budget_consumed}% of the "
+            "We would like to inform you that more than {warning_threshold}% of the "
             "compute budget for your challenge has been used.",
-            percent_budget_consumed=challenge.percent_budget_consumed,
+            warning_threshold=warning_threshold,
         ),
         recipients=[
             *challenge.get_admins(),
