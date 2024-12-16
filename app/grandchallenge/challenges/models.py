@@ -725,7 +725,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             for phase in self.phase_set.all()
         )
 
-    @property
+    @cached_property
     def percent_budget_consumed(self):
         if self.approved_compute_costs_euro_millicents:
             return int(
