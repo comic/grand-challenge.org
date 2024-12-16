@@ -97,7 +97,7 @@ def send_email_percent_budget_consumed_alert(challenge, warning_threshold):
     send_standard_email_batch(
         site=Site.objects.get_current(),
         subject=format_html(
-            "[{challenge_name}] Challenge {warning_threshold}% Budget Consumed Alert",
+            "[{challenge_name}] {warning_threshold}% Budget Consumed Alert",
             challenge_name=challenge.short_name,
             warning_threshold=warning_threshold,
         ),
