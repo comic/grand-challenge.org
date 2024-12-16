@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
+from django.core.mail import mail_managers
 from django.template.loader import render_to_string
 from django.utils.html import format_html
 
@@ -94,21 +95,25 @@ def send_challenge_status_update_email(challengerequest, challenge=None):
 
 
 def send_email_percent_budget_consumed_alert(challenge, warning_threshold):
+    subject = format_html(
+        "[{challenge_name}] {warning_threshold}% Budget Consumed Alert",
+        challenge_name=challenge.short_name,
+        warning_threshold=warning_threshold,
+    )
+    message = format_html(
+        "We would like to inform you that more than {warning_threshold}% of the "
+        "compute budget for the {challenge_name} challenge has been used.",
+        challenge_name=challenge.short_name,
+        warning_threshold=warning_threshold,
+    )
     send_standard_email_batch(
         site=Site.objects.get_current(),
-        subject=format_html(
-            "[{challenge_name}] {warning_threshold}% Budget Consumed Alert",
-            challenge_name=challenge.short_name,
-            warning_threshold=warning_threshold,
-        ),
-        markdown_message=format_html(
-            "We would like to inform you that more than {warning_threshold}% of the "
-            "compute budget for your challenge has been used.",
-            warning_threshold=warning_threshold,
-        ),
-        recipients=[
-            *challenge.get_admins(),
-            *get_user_model().objects.filter(is_staff=True, is_active=True),
-        ],
+        subject=subject,
+        markdown_message=message,
+        recipients=[*challenge.get_admins()],
         subscription_type=EmailSubscriptionTypes.SYSTEM,
+    )
+    mail_managers(
+        subject=subject,
+        message=message,
     )
