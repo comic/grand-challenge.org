@@ -134,13 +134,14 @@ def test_challenge_request_budget_calculation(settings):
 
 
 @pytest.mark.django_db
-def test_challenge_budget_alert_email():
+def test_challenge_budget_alert_email(settings):
     challenge = ChallengeFactory(
         short_name="test",
     )
     challenge_admin = UserFactory()
     challenge.add_admin(challenge_admin)
     staff_user = UserFactory(is_staff=True)
+    settings.MANAGERS = [(staff_user.last_name, staff_user.email)]
     InvoiceFactory(
         challenge=challenge,
         support_costs_euros=0,
@@ -164,9 +165,10 @@ def test_challenge_budget_alert_email():
     ]
     assert (
         mail.outbox[0].subject
-        == "[testserver] [test] Challenge 70% Budget Consumed Alert"
+        == "[testserver] [test] 70% Budget Consumed Alert"
     )
     assert (
-        "We would like to inform you that 80% of the compute budget for your challenge has been used."
-        in mail.outbox[0].body
+        "We would like to inform you that more than 70% of the compute budget for "
+        "the test challenge has been used. You can find an overview of the costs "
+        "[here](https://test.testserver/statistics/)." in mail.outbox[0].body
     )
