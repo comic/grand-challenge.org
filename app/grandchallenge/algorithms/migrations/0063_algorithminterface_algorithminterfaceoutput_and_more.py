@@ -159,4 +159,14 @@ class Migration(migrations.Migration):
                 name="unique_algorithm_interface_combination",
             ),
         ),
+        migrations.AddField(
+            model_name="job",
+            name="algorithm_interface",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                to="algorithms.algorithminterface",
+            ),
+        ),
     ]

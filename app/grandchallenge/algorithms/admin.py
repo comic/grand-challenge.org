@@ -216,6 +216,7 @@ class JobAdmin(GuardedModelAdmin):
         "task_on_success",
         "task_on_failure",
         "runtime_metrics",
+        "algorithm_interface",
     )
     search_fields = (
         "creator__username",

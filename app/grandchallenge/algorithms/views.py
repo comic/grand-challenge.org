@@ -58,6 +58,7 @@ from grandchallenge.algorithms.forms import (
     ImageActivateForm,
     JobCreateForm,
     JobForm,
+    JobInterfaceSelectForm,
     UsersForm,
     ViewersForm,
 )
@@ -478,15 +479,11 @@ class AlgorithmImageActivate(
         return self.algorithm.get_absolute_url()
 
 
-class JobCreate(
+class JobCreatePermissionMixin(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     VerificationRequiredMixin,
-    UserFormKwargsMixin,
-    FormView,
 ):
-    form_class = JobCreateForm
-    template_name = "algorithms/job_form_create.html"
     permission_required = "algorithms.execute_algorithm"
     raise_exception = True
 
@@ -497,9 +494,70 @@ class JobCreate(
     def get_permission_object(self):
         return self.algorithm
 
+
+class JobInterfaceSelect(
+    JobCreatePermissionMixin,
+    FormView,
+):
+    form_class = JobInterfaceSelectForm
+    template_name = "algorithms/job_form_create.html"
+    selected_interface = None
+
+    def get(self, request, *args, **kwargs):
+        if self.algorithm.requires_interface_selection_for_job:
+            return super().get(request, *args, **kwargs)
+        else:
+            self.selected_interface = self.algorithm.default_interface_for_job
+            return HttpResponseRedirect(self.get_success_url())
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs.update({"algorithm": self.algorithm})
+        return kwargs
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update(
+            {
+                "algorithm": self.algorithm,
+                "editors_job_limit": settings.ALGORITHM_IMAGES_COMPLIMENTARY_EDITOR_JOBS,
+            }
+        )
+        return context
+
+    def form_valid(self, form):
+        self.selected_interface = form.cleaned_data.pop("algorithm_interface")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse(
+            "algorithms:job-create",
+            kwargs={
+                "slug": self.algorithm.slug,
+                "interface": self.selected_interface.pk,
+            },
+        )
+
+
+class JobCreate(
+    JobCreatePermissionMixin,
+    UserFormKwargsMixin,
+    FormView,
+):
+    form_class = JobCreateForm
+    template_name = "algorithms/job_form_create.html"
+
+    @cached_property
+    def interface(self):
+        return get_object_or_404(
+            AlgorithmInterface, pk=self.kwargs["interface"]
+        )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {"algorithm": self.algorithm, "interface": self.interface}
+        )
         return kwargs
 
     def get_context_data(self, *args, **kwargs):

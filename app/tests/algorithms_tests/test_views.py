@@ -427,6 +427,13 @@ class TestObjectPermissionRequiredViews:
                 None,
             ),
             (
+                "job-interface-select",
+                {"slug": ai.algorithm.slug},
+                "execute_algorithm",
+                ai.algorithm,
+                None,
+            ),
+            (
                 "job-progress-detail",
                 {"slug": ai.algorithm.slug, "pk": j.pk},
                 "view_job",
