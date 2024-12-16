@@ -102,9 +102,14 @@ def send_email_percent_budget_consumed_alert(challenge, warning_threshold):
     )
     message = format_html(
         "We would like to inform you that more than {warning_threshold}% of the "
-        "compute budget for the {challenge_name} challenge has been used.",
+        "compute budget for the {challenge_name} challenge has been used. "
+        "You can find an overview of the costs [here]({statistics_url}).",
         challenge_name=challenge.short_name,
         warning_threshold=warning_threshold,
+        statistics_url=reverse(
+            "pages:statistics",
+            kwargs={"challenge_short_name": challenge.short_name},
+        ),
     )
     send_standard_email_batch(
         site=Site.objects.get_current(),
