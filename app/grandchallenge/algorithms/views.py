@@ -504,11 +504,11 @@ class JobInterfaceSelect(
     selected_interface = None
 
     def get(self, request, *args, **kwargs):
-        if self.algorithm.requires_interface_selection_for_job:
-            return super().get(request, *args, **kwargs)
-        else:
-            self.selected_interface = self.algorithm.default_interface_for_job
+        if self.algorithm.interfaces.count() == 1:
+            self.selected_interface = self.algorithm.default_interface
             return HttpResponseRedirect(self.get_success_url())
+        else:
+            return super().get(request, *args, **kwargs)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

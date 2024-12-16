@@ -1463,7 +1463,7 @@ class JobInterfaceSelectForm(SaveFormInitMixin, Form):
             self._algorithm.interfaces.all()
         )
         self.fields["algorithm_interface"].initial = (
-            self._algorithm.default_interface_for_job
+            self._algorithm.default_interface
         )
         self.fields["algorithm_interface"].widget.choices = {
             (
