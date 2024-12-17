@@ -42,3 +42,10 @@ $pagination-disabled-bg: lighten($blue, 15%) !default;
 .btn {
     margin: $btn-focus-width;
 }
+
+blockquote {
+    padding: 0 $spacer;
+    font-size: inherit !important;
+    border-left: $spacer * .25 solid $primary;
+    color: $primary;
+}
