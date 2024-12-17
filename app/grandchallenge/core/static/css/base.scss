@@ -18,6 +18,7 @@ $pagination-disabled-bg: lighten($blue, 15%) !default;
 @import "../vendored/bootswatch/dist/flatly/variables";
 @import "../vendored/bootstrap/scss/bootstrap";
 @import "../vendored/bootswatch/dist/flatly/bootswatch";
+@import "datatables";
 
 // Fix https://github.com/comic/grand-challenge.org/issues/1201
 .custom-select {
