@@ -21,6 +21,17 @@ $.extend($.fn.dataTable.defaults, {
             orderable: false,
         },
     ],
+    drawCallback: function () {
+        const api = this.api();
+        api.columns().every(function () {
+            if (this.orderable) {
+                this.header().setAttribute(
+                    "title",
+                    "Activate to sort. Hold Shift to sort by multiple columns.",
+                );
+            }
+        });
+    },
 });
 
 $(document).on("init.dt", () => {
