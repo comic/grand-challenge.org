@@ -5,6 +5,5 @@ document.addEventListener("DOMContentLoaded", event => {
             [2, "asc"],
         ],
         lengthChange: false,
-        pageLength: 50,
     });
 });

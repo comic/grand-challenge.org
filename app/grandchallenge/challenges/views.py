@@ -268,9 +268,6 @@ class ChallengeCostOverview(
             .with_available_compute()
             .with_most_recent_submission_datetime()
             .prefetch_related("phase_set")
-            .order_by(
-                F("most_recent_submission_datetime").desc(nulls_last=True)
-            )
         )
 
 
