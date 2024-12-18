@@ -172,3 +172,16 @@ def test_challenge_budget_alert_email(settings):
         "the test challenge has been used. You can find an overview of the costs "
         "[here](https://test.testserver/statistics/)." in mail.outbox[0].body
     )
+
+
+@pytest.mark.django_db
+def test_challenge_budget_alert_no_budget():
+    challenge = ChallengeFactory()
+    phase = PhaseFactory(challenge=challenge)
+    EvaluationFactory(
+        submission__phase=phase,
+        compute_cost_euro_millicents=1,
+        time_limit=60,
+    )
+    update_compute_costs_and_storage_size()
+    assert len(mail.outbox) != 0
