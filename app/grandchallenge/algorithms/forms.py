@@ -1377,6 +1377,14 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
         if not self._algorithm.default_interface:
             self.fields["set_as_default"].initial = True
 
+    def clean_set_as_default(self):
+        set_as_default = self.cleaned_data["set_as_default"]
+
+        if not set_as_default and not self._algorithm.default_interface:
+            raise ValidationError("Your algorithm needs a default interface.")
+
+        return set_as_default
+
     def clean(self):
         cleaned_data = super().clean()
 
