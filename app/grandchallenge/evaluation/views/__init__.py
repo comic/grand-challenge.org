@@ -99,8 +99,8 @@ class UserCanSubmitAlgorithmToPhaseMixin(VerificationRequiredMixin):
 
     def dispatch(self, request, *args, **kwargs):
         if not (
-            self.phase.challenge.is_admin(self.request.user)
-            or self.phase.challenge.is_participant(self.request.user)
+            self.phase.challenge.is_admin(request.user)
+            or self.phase.challenge.is_participant(request.user)
         ):
             error_message = (
                 "You need to be either an admin or a participant of "
@@ -112,8 +112,8 @@ class UserCanSubmitAlgorithmToPhaseMixin(VerificationRequiredMixin):
             )
             return self.handle_no_permission()
         elif (
-            self.phase.challenge.is_participant(self.request.user)
-            and not self.phase.challenge.is_admin(self.request.user)
+            self.phase.challenge.is_participant(request.user)
+            and not self.phase.challenge.is_admin(request.user)
             and not self.phase.open_for_submissions
         ):
             error_message = "The phase is currently not open for submissions. Please come back later."
@@ -154,8 +154,8 @@ class UserCanSubmitAlgorithmToPhaseMixin(VerificationRequiredMixin):
                 error_message,
             )
             return self.handle_no_permission()
-
-        return super().dispatch(request, *args, **kwargs)
+        else:
+            return super().dispatch(request, *args, **kwargs)
 
 
 class PhaseCreate(
