@@ -480,19 +480,18 @@ class AlgorithmImageActivate(
 
 
 class JobCreatePermissionMixin(
-    LoginRequiredMixin,
-    ObjectPermissionRequiredMixin,
-    VerificationRequiredMixin,
+    LoginRequiredMixin, VerificationRequiredMixin, AccessMixin
 ):
-    permission_required = "algorithms.execute_algorithm"
-    raise_exception = True
-
     @cached_property
     def algorithm(self) -> Algorithm:
         return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
 
-    def get_permission_object(self):
-        return self.algorithm
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.has_perm(
+            "algorithms.execute_algorithm", self.algorithm
+        ):
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
 
 
 class JobInterfaceSelect(
