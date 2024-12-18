@@ -64,16 +64,19 @@ def send_alert_if_budget_consumed_warning_threshold_exceeded(challenge):
         challenge.has_changed("compute_cost_euro_millicents")
         and challenge.approved_compute_costs_euro_millicents
     ):
-        for threshold in sorted(
+        for percent_threshold in sorted(
             challenge.percent_budget_consumed_warning_thresholds, reverse=True
         ):
-            if (
-                challenge.initial_value("compute_cost_euro_millicents")
-                < challenge.approved_compute_costs_euro_millicents
-                * threshold
+            previous_cost = challenge.initial_value(
+                "compute_cost_euro_millicents"
+            )
+            threshold = (
+                challenge.approved_compute_costs_euro_millicents
+                * percent_threshold
                 / 100
-                <= challenge.compute_cost_euro_millicents
-            ):
+            )
+            current_cost = challenge.compute_cost_euro_millicents
+            if previous_cost < threshold <= current_cost:
                 send_email_percent_budget_consumed_alert(challenge, threshold)
                 break
 
