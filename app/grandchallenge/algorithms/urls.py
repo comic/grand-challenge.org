@@ -135,12 +135,12 @@ urlpatterns = [
     ),
     path("<slug>/jobs/", JobsList.as_view(), name="job-list"),
     path(
-        "<slug>/jobs/interface-select/",
+        "<slug:slug>/jobs/interface-select/",
         JobInterfaceSelect.as_view(),
         name="job-interface-select",
     ),
     path(
-        "<slug>/<interface>/jobs/create/",
+        "<slug:slug>/<uuid:interface>/jobs/create/",
         JobCreate.as_view(),
         name="job-create",
     ),
