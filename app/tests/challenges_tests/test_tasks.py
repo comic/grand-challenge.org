@@ -135,9 +135,7 @@ def test_challenge_request_budget_calculation(settings):
 
 @pytest.mark.django_db
 def test_challenge_budget_alert_email(settings):
-    challenge = ChallengeFactory(
-        short_name="test",
-    )
+    challenge = ChallengeFactory(short_name="test")
     challenge_admin = UserFactory()
     challenge.add_admin(challenge_admin)
     staff_user = UserFactory(is_staff=True)
@@ -152,10 +150,22 @@ def test_challenge_budget_alert_email(settings):
     phase = PhaseFactory(challenge=challenge)
     EvaluationFactory(
         submission__phase=phase,
-        compute_cost_euro_millicents=800000,
+        compute_cost_euro_millicents=500000,
         time_limit=60,
     )
     update_compute_costs_and_storage_size()
+
+    # Budget alert threshold not exceeded
+    assert len(mail.outbox) == 0
+
+    EvaluationFactory(
+        submission__phase=phase,
+        compute_cost_euro_millicents=300000,
+        time_limit=60,
+    )
+    update_compute_costs_and_storage_size()
+
+    # Budget alert threshold exceeded
     assert len(mail.outbox) == 3
     recipients = [r for m in mail.outbox for r in m.to]
     assert recipients == [
@@ -172,6 +182,27 @@ def test_challenge_budget_alert_email(settings):
         "the test challenge has been used. You can find an overview of the costs "
         "[here](https://test.testserver/statistics/)." in mail.outbox[0].body
     )
+
+    mail.outbox.clear()
+    EvaluationFactory(
+        submission__phase=phase,
+        compute_cost_euro_millicents=100000,
+        time_limit=60,
+    )
+    update_compute_costs_and_storage_size()
+
+    # Next budget alert threshold not exceeded
+    assert len(mail.outbox) == 0
+
+    EvaluationFactory(
+        submission__phase=phase,
+        compute_cost_euro_millicents=1,
+        time_limit=60,
+    )
+    update_compute_costs_and_storage_size()
+
+    # Next budget alert threshold exceeded
+    assert len(mail.outbox) != 0
 
 
 @pytest.mark.django_db
