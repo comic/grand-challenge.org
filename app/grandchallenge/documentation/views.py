@@ -1,6 +1,5 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.postgres.search import (
-    SearchHeadline,
     SearchQuery,
     SearchRank,
     SearchVector,
@@ -44,10 +43,8 @@ class DocPageDetail(DetailView):
         if keywords:
             query = SearchQuery(keywords)
             vector = SearchVector("title", "content")
-            headline = SearchHeadline("content", query)
             qs = (
-                qs.annotate(headline=headline)
-                .annotate(rank=SearchRank(vector, query))
+                qs.annotate(rank=SearchRank(vector, query))
                 .annotate(
                     similarity=TrigramSimilarity("title", keywords)
                     + TrigramSimilarity("content", keywords)

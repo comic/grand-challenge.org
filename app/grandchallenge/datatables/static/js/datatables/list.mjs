@@ -20,11 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
         pageLength: 25,
         serverSide: true,
         columnDefs: [
-            {
-                targets: "nonSortable",
-                searchable: false,
-                orderable: false,
-            },
+            ...$.fn.dataTable.defaults.columnDefs,
             {
                 className: `align-middle text-${textAlign}`,
                 targets: "_all",
