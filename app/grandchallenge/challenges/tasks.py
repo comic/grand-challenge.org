@@ -83,9 +83,9 @@ def send_alert_if_budget_consumed_warning_threshold_exceeded(challenge):
 @acks_late_2xlarge_task
 @transaction.atomic
 def update_compute_costs_and_storage_size():
-    challenges = Challenge.objects.all()
+    challenges = Challenge.objects.all().with_available_compute()
 
-    for challenge in challenges.with_available_compute():
+    for challenge in challenges:
         annotate_compute_costs_and_storage_size(challenge=challenge)
         send_alert_if_budget_consumed_warning_threshold_exceeded(
             challenge=challenge
