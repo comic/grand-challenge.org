@@ -1364,6 +1364,30 @@ def test_algorithm_interface_disjoint_interfaces():
     assert "The sets of Inputs and Outputs must be unique" in str(form.errors)
 
 
+@pytest.mark.django_db
+def test_algorithm_interface_default_interface_required():
+    ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
+    alg = AlgorithmFactory()
+    form = AlgorithmInterfaceForm(
+        algorithm=alg,
+        data={"inputs": [ci1], "outputs": [ci2], "set_as_default": False},
+    )
+    assert form.is_valid() is False
+    assert "Your algorithm needs a default interface" in str(
+        form.errors["set_as_default"]
+    )
+
+    alg.interfaces.add(
+        AlgorithmInterfaceFactory(), through_defaults={"is_default": True}
+    )
+    del alg.default_interface
+    form = AlgorithmInterfaceForm(
+        algorithm=alg,
+        data={"inputs": [ci1], "outputs": [ci2], "set_as_default": False},
+    )
+    assert form.is_valid()
+
+
 def test_algorithm_for_phase_form_memory():
     form = AlgorithmForPhaseForm(
         workstation_config=WorkstationConfigFactory.build(),
