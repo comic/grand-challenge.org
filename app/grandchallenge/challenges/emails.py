@@ -94,18 +94,18 @@ def send_challenge_status_update_email(challengerequest, challenge=None):
     )
 
 
-def send_email_percent_budget_consumed_alert(challenge, warning_threshold):
+def send_email_percent_budget_consumed_alert(challenge, percent_threshold):
     subject = format_html(
-        "[{challenge_name}] {warning_threshold}% Budget Consumed Alert",
+        "[{challenge_name}] {percent_threshold}% Budget Consumed Alert",
         challenge_name=challenge.short_name,
-        warning_threshold=warning_threshold,
+        percent_threshold=percent_threshold,
     )
     message = format_html(
-        "We would like to inform you that more than {warning_threshold}% of the "
+        "We would like to inform you that more than {percent_threshold}% of the "
         "compute budget for the {challenge_name} challenge has been used. "
         "You can find an overview of the costs [here]({statistics_url}).",
         challenge_name=challenge.short_name,
-        warning_threshold=warning_threshold,
+        percent_threshold=percent_threshold,
         statistics_url=reverse(
             "pages:statistics",
             kwargs={"challenge_short_name": challenge.short_name},

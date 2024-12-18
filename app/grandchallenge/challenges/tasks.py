@@ -77,7 +77,9 @@ def send_alert_if_budget_consumed_warning_threshold_exceeded(challenge):
             )
             current_cost = challenge.compute_cost_euro_millicents
             if previous_cost < threshold <= current_cost:
-                send_email_percent_budget_consumed_alert(challenge, threshold)
+                send_email_percent_budget_consumed_alert(
+                    challenge, percent_threshold
+                )
                 break
 
 
