@@ -60,10 +60,7 @@ def update_challenge_results_cache():
 
 
 def send_alert_if_budget_consumed_warning_threshold_exceeded(challenge):
-    if (
-        challenge.has_changed("compute_cost_euro_millicents")
-        and challenge.approved_compute_costs_euro_millicents
-    ):
+    if challenge.has_changed("compute_cost_euro_millicents"):
         for percent_threshold in sorted(
             challenge.percent_budget_consumed_warning_thresholds, reverse=True
         ):
