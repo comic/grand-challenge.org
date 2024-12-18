@@ -1451,7 +1451,7 @@ class TestAlgorithmInterfaceForm:
             data={
                 "inputs": [inp.pk],
                 "outputs": [out.pk],
-                "set_as_default": False,
+                "set_as_default": True,
             },
         )
         assert form.is_valid()
