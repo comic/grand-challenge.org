@@ -203,6 +203,10 @@ def test_challenge_budget_alert_email(settings):
 
     # Next budget alert threshold exceeded
     assert len(mail.outbox) != 0
+    assert (
+        mail.outbox[0].subject
+        == "[testserver] [test] 90% Budget Consumed Alert"
+    )
 
 
 @pytest.mark.django_db
@@ -214,5 +218,7 @@ def test_challenge_budget_alert_no_budget():
         compute_cost_euro_millicents=1,
         time_limit=60,
     )
+    assert len(mail.outbox) == 0
     update_compute_costs_and_storage_size()
     assert len(mail.outbox) != 0
+    assert "Budget Consumed Alert" in mail.outbox[0].subject
