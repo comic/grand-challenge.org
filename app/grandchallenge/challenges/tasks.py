@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.db.models import Count, Max
 
 from grandchallenge.challenges.costs import (
@@ -78,6 +79,7 @@ def send_alert_if_budget_consumed_warning_threshold_exceeded(challenge):
 
 
 @acks_late_2xlarge_task
+@transaction.atomic
 def update_compute_costs_and_storage_size():
     challenges = Challenge.objects.all()
 
