@@ -645,6 +645,12 @@ class AlgorithmAlgorithmInterface(models.Model):
     def __str__(self):
         return str(self.interface)
 
+    def clean(self):
+        super().clean()
+
+        if not self.is_default and not self.algorithm.default_interface:
+            raise ValidationError("This algorithm needs a default interface.")
+
 
 class AlgorithmUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(Algorithm, on_delete=models.CASCADE)

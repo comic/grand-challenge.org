@@ -1,5 +1,6 @@
-$.extend(true, DataTable.defaults, {
+$.extend($.fn.dataTable.defaults, {
     scrollX: true,
+    lengthChange: false,
     language: {
         paginate: {
             next: "Next",
@@ -7,9 +8,40 @@ $.extend(true, DataTable.defaults, {
         },
     },
     pagingType: "simple_numbers",
+    columnDefs: [
+        {
+            // Prevents unexpected styling for dt-*-type datatypes
+            // Only applies to client-side tables
+            type: "string",
+            targets: "_all",
+        },
+        {
+            targets: "nonSortable",
+            searchable: false,
+            orderable: false,
+        },
+    ],
+    drawCallback: function () {
+        const api = this.api();
+        api.columns().every(function () {
+            if (this.orderable) {
+                this.header().setAttribute(
+                    "title",
+                    "Activate to sort. Hold Shift to sort by multiple columns.",
+                );
+            }
+        });
+    },
 });
 
 $(document).on("init.dt", () => {
-    // Set up floating scroll, note that the target class only shows up when scrollX is set to true
-    $(".dataTables_scrollBody").floatingScroll();
+    const element = $(".dt-scroll-body");
+
+    if (element.length === 0) {
+        console.warn(
+            "Warning: Element for floating-scroll attachment could not be located",
+        );
+    }
+
+    element.floatingScroll();
 });

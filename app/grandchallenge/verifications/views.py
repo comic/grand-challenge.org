@@ -1,8 +1,5 @@
 from django.contrib import messages
-from django.contrib.auth.mixins import (
-    PermissionRequiredMixin,
-    UserPassesTestMixin,
-)
+from django.contrib.auth.mixins import AccessMixin, PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
 from django.utils.html import format_html
@@ -22,26 +19,27 @@ from grandchallenge.verifications.models import (
 )
 
 
-class VerificationRequiredMixin(UserPassesTestMixin):
+class VerificationRequiredMixin(AccessMixin):
     """Mixin for views that require verification"""
 
-    def test_func(self):
+    def dispatch(self, request, *args, **kwargs):
         try:
-            verified = self.request.user.verification.is_verified
+            verified = request.user.verification.is_verified
         except ObjectDoesNotExist:
             verified = False
 
         if not verified:
             messages.error(
-                self.request,
+                request,
                 format_html(
                     "You need to verify your account before you can do this, "
                     "you can request this <a href='{}'>on this page</a>.",
                     reverse("verifications:create"),
                 ),
             )
-
-        return verified
+            return self.handle_no_permission()
+        else:
+            return super().dispatch(request, *args, **kwargs)
 
 
 class VerificationCreate(LoginRequiredMixin, CreateView):

@@ -115,6 +115,7 @@ class ChallengeRequestFactory(factory.django.DjangoModelFactory):
     phase_1_number_of_test_images = 100
     phase_2_number_of_test_images = 0
     number_of_tasks = 1
+    budget_for_hosting_challenge = 0
     structured_challenge_submission_doi = "10.5281/zenodo.6362337"
 
 

@@ -5,12 +5,5 @@ $(document).ready(() => {
             [0, "desc"],
         ],
         pageLength: 25,
-        columnDefs: [
-            {
-                targets: [-1],
-                searchable: false,
-                orderable: false,
-            },
-        ],
     });
 });
