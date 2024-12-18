@@ -517,12 +517,12 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         try:
             return self.interfaces.get()
         except MultipleObjectsReturned:
-            try:
-                return self.interfaces.get(
-                    algorithmalgorithminterface__is_default=True
-                )
-            except ObjectDoesNotExist:
-                return None
+            return self.interfaces.get(
+                algorithmalgorithminterface__is_default=True
+            )
+        except ObjectDoesNotExist:
+            # this is the case for newly created algorithms
+            return None
 
     def is_editor(self, user):
         return user.groups.filter(pk=self.editors_group.pk).exists()
