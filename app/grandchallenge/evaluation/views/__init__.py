@@ -97,70 +97,65 @@ class UserCanSubmitAlgorithmToPhaseMixin(VerificationRequiredMixin):
     is open for submissions.
     """
 
-    def test_func(self):
-        response = super().test_func()
-        if response:
-            if not (
-                self.phase.challenge.is_admin(self.request.user)
-                or self.phase.challenge.is_participant(self.request.user)
-            ):
-                error_message = (
-                    "You need to be either an admin or a participant of "
-                    "the challenge in order to create an algorithm for this phase."
-                )
-                messages.error(
-                    self.request,
-                    error_message,
-                )
-                return False
-            elif (
-                self.phase.challenge.is_participant(self.request.user)
-                and not self.phase.challenge.is_admin(self.request.user)
-                and not self.phase.open_for_submissions
-            ):
-                error_message = "The phase is currently not open for submissions. Please come back later."
-                messages.error(
-                    self.request,
-                    error_message,
-                )
-                return False
-            elif (
-                self.phase.challenge.is_admin(self.request.user)
-                and not self.phase.challenge.logo
-            ):
-                error_message = (
-                    "You need to first upload a logo for your challenge "
-                    "before you can create algorithms for its phases."
-                )
-                messages.error(
-                    self.request,
-                    error_message,
-                )
-                return False
-            elif (
-                not self.phase.submission_kind
-                == SubmissionKindChoices.ALGORITHM
-                or not self.phase.algorithm_inputs
-                or not self.phase.algorithm_outputs
-                or not self.phase.archive
-            ):
-                error_message = (
-                    "This phase is not configured for algorithm submission. "
-                )
-                if self.phase.challenge.is_admin(self.request.user):
-                    error_message += "You need to link an archive containing the secret test data to this phase and define the inputs and outputs that algorithms need to read/write. Please get in touch with support@grand-challenge.org to configure these settings."
-                else:
-                    error_message += "Please come back later."
+    def dispatch(self, request, *args, **kwargs):
+        if not (
+            self.phase.challenge.is_admin(request.user)
+            or self.phase.challenge.is_participant(request.user)
+        ):
+            error_message = (
+                "You need to be either an admin or a participant of "
+                "the challenge in order to create an algorithm for this phase."
+            )
+            messages.error(
+                request,
+                error_message,
+            )
+            return self.handle_no_permission()
+        elif (
+            self.phase.challenge.is_participant(request.user)
+            and not self.phase.challenge.is_admin(request.user)
+            and not self.phase.open_for_submissions
+        ):
+            error_message = "The phase is currently not open for submissions. Please come back later."
+            messages.error(
+                request,
+                error_message,
+            )
+            return self.handle_no_permission()
+        elif (
+            self.phase.challenge.is_admin(request.user)
+            and not self.phase.challenge.logo
+        ):
+            error_message = (
+                "You need to first upload a logo for your challenge "
+                "before you can create algorithms for its phases."
+            )
+            messages.error(
+                request,
+                error_message,
+            )
+            return self.handle_no_permission()
+        elif (
+            not self.phase.submission_kind == SubmissionKindChoices.ALGORITHM
+            or not self.phase.algorithm_inputs
+            or not self.phase.algorithm_outputs
+            or not self.phase.archive
+        ):
+            error_message = (
+                "This phase is not configured for algorithm submission. "
+            )
+            if self.phase.challenge.is_admin(request.user):
+                error_message += "You need to link an archive containing the secret test data to this phase and define the inputs and outputs that algorithms need to read/write. Please get in touch with support@grand-challenge.org to configure these settings."
+            else:
+                error_message += "Please come back later."
 
-                messages.error(
-                    self.request,
-                    error_message,
-                )
-                return False
-
-            return True
+            messages.error(
+                request,
+                error_message,
+            )
+            return self.handle_no_permission()
         else:
-            return False
+            return super().dispatch(request, *args, **kwargs)
 
 
 class PhaseCreate(

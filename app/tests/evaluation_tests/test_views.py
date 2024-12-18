@@ -682,21 +682,6 @@ def test_create_algorithm_for_phase_permission(client, uploaded_image):
         user=admin,
     )
     assert response.status_code == 403
-    assert "You need to verify your account before you can do this" in str(
-        response.content
-    )
-
-    VerificationFactory(user=admin, is_verified=True)
-    response = get_view_for_user(
-        viewname="evaluation:phase-algorithm-create",
-        reverse_kwargs={
-            "slug": phase.slug,
-            "challenge_short_name": phase.challenge.short_name,
-        },
-        client=client,
-        user=admin,
-    )
-    assert response.status_code == 403
     assert (
         "You need to first upload a logo for your challenge before you can create algorithms for its phases."
         in str(response.content)
@@ -724,6 +709,21 @@ def test_create_algorithm_for_phase_permission(client, uploaded_image):
     phase.algorithm_inputs.set([ComponentInterfaceFactory()])
     phase.algorithm_outputs.set([ComponentInterfaceFactory()])
     phase.save()
+
+    response = get_view_for_user(
+        viewname="evaluation:phase-algorithm-create",
+        reverse_kwargs={
+            "slug": phase.slug,
+            "challenge_short_name": phase.challenge.short_name,
+        },
+        client=client,
+        user=admin,
+    )
+    assert "You need to verify your account before you can do this" in str(
+        response.content
+    )
+
+    VerificationFactory(user=admin, is_verified=True)
     response = get_view_for_user(
         viewname="evaluation:phase-algorithm-create",
         reverse_kwargs={
@@ -748,11 +748,13 @@ def test_create_algorithm_for_phase_permission(client, uploaded_image):
         user=participant,
     )
     assert response.status_code == 403
-    assert "You need to verify your account before you can do this" in str(
+    assert "The phase is currently not open for submissions." in str(
         response.content
     )
 
-    VerificationFactory(user=participant, is_verified=True)
+    phase.submissions_limit_per_user_per_period = 1
+    phase.save()
+
     response = get_view_for_user(
         viewname="evaluation:phase-algorithm-create",
         reverse_kwargs={
@@ -763,13 +765,11 @@ def test_create_algorithm_for_phase_permission(client, uploaded_image):
         user=participant,
     )
     assert response.status_code == 403
-    assert "The phase is currently not open for submissions." in str(
+    assert "You need to verify your account before you can do this" in str(
         response.content
     )
 
-    phase.submissions_limit_per_user_per_period = 1
-    phase.save()
-
+    VerificationFactory(user=participant, is_verified=True)
     response = get_view_for_user(
         viewname="evaluation:phase-algorithm-create",
         reverse_kwargs={
