@@ -18,6 +18,7 @@ from grandchallenge.evaluation.tasks import (
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
+    AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
 )
 from tests.algorithms_tests.utils import TwoAlgorithms
@@ -313,7 +314,12 @@ class TestJobPermissions:
             kind=InterfaceKind.InterfaceKindChoices.ANY,
             store_in_database=True,
         )
-        algorithm_image.algorithm.inputs.set([ci])
+        interface = AlgorithmInterfaceFactory(
+            inputs=[ci], outputs=[ComponentInterfaceFactory()]
+        )
+        algorithm_image.algorithm.interfaces.add(
+            interface, through_defaults={"is_default": True}
+        )
 
         response = get_view_for_user(
             viewname="algorithms:job-create",
@@ -321,6 +327,7 @@ class TestJobPermissions:
             method=client.post,
             reverse_kwargs={
                 "slug": algorithm_image.algorithm.slug,
+                "interface": algorithm_image.algorithm.default_interface.pk,
             },
             user=user,
             follow=True,
