@@ -950,9 +950,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         "phase 1 and 2 cost estimates by the number of tasks.",
         validators=[MinValueValidator(limit_value=1)],
     )
-    budget_for_hosting_challenge = models.PositiveIntegerField(
-        help_text="What is your budget for hosting this challenge? Please be reminded of our <a href='/challenge-policy-and-pricing/'>challenge pricing policy</a>.",
-    )
     long_term_commitment = models.BooleanField(
         default=False,
     )
