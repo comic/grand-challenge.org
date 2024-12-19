@@ -13,14 +13,18 @@ from tests.utils import get_view_for_user
     "view, perm",
     [
         ("documentation:create", "documentation.add_docpage"),
-        ("documentation:update", "documentation.change_docpage"),
+        ("documentation:content-update", "documentation.change_docpage"),
+        ("documentation:metadata-update", "documentation.change_docpage"),
     ],
 )
 def test_permissions(client, view, perm):
     u1 = UserFactory()
     p1 = DocPageFactory()
 
-    if view == "documentation:update":
+    if view in (
+        "documentation:content-update",
+        "documentation:metadata-update",
+    ):
         reverse_kwargs = {"slug": p1.slug}
     else:
         reverse_kwargs = None
@@ -43,6 +47,7 @@ def test_permissions(client, view, perm):
 def test_docpage_create(client):
     u1 = UserFactory()
     assign_perm("documentation.add_docpage", u1)
+    assign_perm("documentation.change_docpage", u1)
 
     content = "<h1>Example content</h1>"
     title = "Test title"
@@ -51,12 +56,21 @@ def test_docpage_create(client):
         viewname="documentation:create",
         client=client,
         method=client.post,
-        data={"title": title, "content": content},
+        data={"title": title},
         user=u1,
     )
 
     assert response.status_code == 302
     assert DocPage.objects.count() == 1
+    assert response.url.endswith("test-title/content-update/")
+    response = get_view_for_user(
+        url=response.url,
+        client=client,
+        method=client.post,
+        data={"content": content},
+        user=u1,
+    )
+    assert response.status_code == 302
 
     response = get_view_for_user(url=response.url, client=client)
 
@@ -65,7 +79,30 @@ def test_docpage_create(client):
 
 
 @pytest.mark.django_db
-def test_docpage_update(client):
+def test_docpage_content_update(client):
+    u1 = UserFactory()
+    p = DocPageFactory()
+    assign_perm("documentation.change_docpage", u1)
+
+    new_content = "<h1>New content</h1>"
+
+    # change content of p
+    response = get_view_for_user(
+        viewname="documentation:content-update",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": p.slug},
+        data={"content": new_content},
+        user=u1,
+    )
+
+    assert response.status_code == 302
+    p.refresh_from_db()
+    assert p.content == new_content
+
+
+@pytest.mark.django_db
+def test_docpage_position_update(client):
     u1 = UserFactory()
     _ = DocPageFactory()
     p2 = DocPageFactory()
@@ -73,22 +110,19 @@ def test_docpage_update(client):
 
     assert p2.order == 2
 
-    new_content = "<h1>New content</h1>"
-
-    # change content and order of p2
+    # change order of p2
     response = get_view_for_user(
-        viewname="documentation:update",
+        viewname="documentation:metadata-update",
         client=client,
         method=client.post,
         reverse_kwargs={"slug": p2.slug},
-        data={"title": p2.title, "content": new_content, "position": 1},
+        data={"title": p2.title, "position": 1},
         user=u1,
     )
 
     assert response.status_code == 302
     p2.refresh_from_db()
     assert p2.order == 1
-    assert p2.content == new_content
 
 
 @pytest.mark.django_db

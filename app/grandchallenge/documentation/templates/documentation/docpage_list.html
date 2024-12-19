@@ -50,7 +50,8 @@
                     </td>
                     {% if 'documentation.change_docpage' in perms %}
                         <td>
-                            <a href="{% url 'documentation:update' slug=page.slug %}"><i class="fa fa-cog text-primary" aria-hidden="true"></i></a>
+                            <a class="text-primary" title="Edit Page" href="{% url 'documentation:content-update' slug=page.slug %}"><i class="fa fa-edit"></i></a>
+                            <a class="text-primary" title="Edit Metadata" href="{% url 'documentation:metadata-update' slug=page.slug %}"><i class="fa fa-tools"></i></a>
                         </td>
                     {% endif %}
                 </tr>
