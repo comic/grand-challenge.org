@@ -16,6 +16,7 @@ from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.notifications.models import Notification
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import AlgorithmJobFactory, Job
 from tests.archives_tests.factories import (
     ArchiveFactory,
@@ -933,6 +934,7 @@ def test_archive_item_add_file(
                     )
                 },
             )
+    assert not UserUpload.objects.filter(pk=upload.pk).exists()
     assert response.status_code == 302
     assert "test" in ArchiveItem.objects.get().values.first().file.name
 

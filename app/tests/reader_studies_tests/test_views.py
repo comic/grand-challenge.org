@@ -17,6 +17,7 @@ from grandchallenge.reader_studies.models import (
     Question,
 )
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.uploads.models import UserUpload
 from tests.cases_tests import RESOURCE_PATH
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
@@ -568,6 +569,7 @@ def test_display_set_update(
             user=user,
             method=client.post,
         )
+    assert not UserUpload.objects.filter(pk=upload.pk).exists()
     assert response.status_code == 302
     assert response.headers["HX-Redirect"] == reverse(
         "reader-studies:display_sets", kwargs={"slug": rs.slug}
