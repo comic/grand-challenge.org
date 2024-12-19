@@ -33,6 +33,7 @@ from grandchallenge.components.tasks import (
 from grandchallenge.core.celery import _retry, acks_late_micro_short_task
 from grandchallenge.notifications.models import Notification
 from grandchallenge.reader_studies.models import InteractiveAlgorithmChoices
+from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
@@ -536,6 +537,7 @@ def test_add_file_to_object(
             linked_task=linked_task,
         )
 
+    assert not UserUpload.objects.filter(pk=us.pk).exists()
     assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 1
     assert "some_async_task" in str(callbacks)
 
