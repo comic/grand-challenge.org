@@ -548,6 +548,7 @@ def algorithm_with_multiple_inputs():
         },
     )
     ci_json_file = ComponentInterfaceFactory(
+        title="ci_json_file",
         kind=InterfaceKind.InterfaceKindChoices.ANY,
         store_in_database=False,
         schema={
