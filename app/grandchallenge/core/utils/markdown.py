@@ -5,30 +5,53 @@ from markdown import Extension
 from markdown.treeprocessors import Treeprocessor
 
 
-class ExtendTagClasses:
+class BeautifulSoupWithCharEntities(BeautifulSoup):
+    """
+    Soup generator that elegantly handles reserved HTML entity placeholders.
+
+    For instance, the soup HTMLparser replaces these (e.g. '&lt;') into their
+    unicode equivalents (e.g. '<').
+
+    This messes up things if the HTML is decoded into a string again.
+    """
+
+    def __init__(self, /, markup, features="html.parser", **kwargs):
+        markup = markup.replace("&", "&amp;")
+
+        super().__init__(markup=markup, features=features, **kwargs)
+
+    def decode(self, **kwargs):
+        # Prevent entity subsitution (e.g. "&" -> "&amp")
+        kwargs["formatter"] = None
+        return super().decode(**kwargs)
+
+
+class ExtendHTMLTagClasses:
     def __init__(self, tag_classes):
-        self.tag_class_dict = tag_classes
+        # Make extensions safe
+        self.tag_class_dict = {
+            t: [escape(c).strip() for c in classes]
+            for t, classes in tag_classes.items()
+        }
 
     def __call__(self, html):
         input_is_safe = isinstance(html, SafeString)
 
-        soup = BeautifulSoup(html, "html.parser")
-        for tag, classes in self.tag_class_dict.items():
+        soup = BeautifulSoupWithCharEntities(markup=html)
 
-            # Make extensions safe
-            classes = [escape(c).strip() for c in classes]
+        for element in soup.find_all(self.tag_class_dict.keys()):
+            classes = element.get("class", [])
+            for new_class in self.tag_class_dict[element.name]:
+                if new_class not in classes:
+                    classes.append(new_class)
+            element["class"] = classes
 
-            # Add extension to the class attribute
-            for element in soup.find_all(tag):
-                current_classes = element.get("class", [])
-                element["class"] = [*current_classes, *classes]
-
-        new_html = str(soup)
+        new_markup = soup.decode()
 
         if input_is_safe:
-            new_html = mark_safe(new_html)
+            new_markup = mark_safe(new_markup)
 
-        return mark_safe(new_html)
+        return new_markup
 
 
 class LinkBlankTargetExtension(Extension):
