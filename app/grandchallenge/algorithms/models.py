@@ -8,11 +8,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import (
-    MultipleObjectsReturned,
-    ObjectDoesNotExist,
-    ValidationError,
-)
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Count, Q, Sum
@@ -515,13 +511,10 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
     @cached_property
     def default_interface(self):
         try:
-            return self.interfaces.get()
-        except MultipleObjectsReturned:
             return self.interfaces.get(
                 algorithmalgorithminterface__is_default=True
             )
         except ObjectDoesNotExist:
-            # this is the case for newly created algorithms
             return None
 
     def is_editor(self, user):
@@ -1138,7 +1131,7 @@ class Job(CIVForObjectMixin, ComponentJob):
 
     @property
     def output_interfaces(self):
-        return self.algorithm_image.algorithm.outputs
+        return self.algorithm_interface.outputs.all()
 
     @cached_property
     def inputs_complete(self):
