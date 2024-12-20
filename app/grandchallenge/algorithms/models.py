@@ -50,6 +50,7 @@ from grandchallenge.core.storage import (
     public_s3_storage,
 )
 from grandchallenge.core.templatetags.bleach import md2html
+from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
     process_access_request,
@@ -105,6 +106,9 @@ class AlgorithmInterface(UUIDModel):
     )
 
     objects = AlgorithmInterfaceManager()
+
+    def __str__(self):
+        return f"Inputs: {oxford_comma(self.inputs.all())} \n Outputs: {oxford_comma(self.outputs.all())}"
 
     def delete(self, *args, **kwargs):
         raise ValidationError("AlgorithmInterfaces cannot be deleted.")
@@ -967,13 +971,13 @@ class JobManager(ComponentJobManager):
         return existing_civs
 
     def get_jobs_with_same_inputs(
-        self, *, inputs, algorithm_image, algorithm_model
+        self, *, inputs, interface, algorithm_image, algorithm_model
     ):
         existing_civs = self.retrieve_existing_civs(civ_data=inputs)
         unique_kwargs = {
             "algorithm_image": algorithm_image,
         }
-        input_interface_count = algorithm_image.algorithm.inputs.count()
+        input_interface_count = interface.inputs.count()
 
         if algorithm_model:
             unique_kwargs["algorithm_model"] = algorithm_model
@@ -1078,6 +1082,9 @@ class Job(CIVForObjectMixin, ComponentJob):
     algorithm_model = models.ForeignKey(
         AlgorithmModel, on_delete=models.PROTECT, null=True, blank=True
     )
+    algorithm_interface = models.ForeignKey(
+        AlgorithmInterface, on_delete=models.PROTECT, null=True, blank=True
+    )
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
@@ -1124,14 +1131,14 @@ class Job(CIVForObjectMixin, ComponentJob):
 
     @property
     def output_interfaces(self):
-        return self.algorithm_image.algorithm.outputs
+        return self.algorithm_interface.outputs.all()
 
     @cached_property
     def inputs_complete(self):
         # check if all inputs are present and if they all have a value
         return {
             civ.interface for civ in self.inputs.all() if civ.has_value
-        } == {*self.algorithm_image.algorithm.inputs.all()}
+        } == {*self.algorithm_interface.inputs.all()}
 
     @cached_property
     def rendered_result_text(self) -> str:
