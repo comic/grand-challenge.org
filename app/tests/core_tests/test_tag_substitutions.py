@@ -1,3 +1,5 @@
+import textwrap
+
 import pytest
 from django.utils.safestring import SafeString, mark_safe
 
@@ -131,16 +133,13 @@ def test_no_change_with_no_tag_or_arg_match(content):
     assert s == content
 
 
-EXPECTED_YOUTUBE_EMBED = """<p><div class="embed-responsive embed-responsive-16by9 rounded border-0">
-    <iframe
-            src="https://www.youtube-nocookie.com/embed/QCYYhkTlnhQ?disablekb=1&amp;rel=0"
-            allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-            class="embed-responsive-item"
-            loading="lazy"
-            sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
-    ></iframe>
-</div>
-</p>"""
+EXPECTED_YOUTUBE_EMBED = textwrap.dedent(
+    """\
+    <p><div class="embed-responsive embed-responsive-16by9 rounded border-0">
+    <iframe allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" class="embed-responsive-item" loading="lazy" sandbox="allow-scripts allow-same-origin allow-presentation allow-popups" src="https://www.youtube-nocookie.com/embed/QCYYhkTlnhQ?disablekb=1&amp;rel=0"></iframe>
+    </div>
+    </p>"""
+)
 
 
 @pytest.mark.parametrize(

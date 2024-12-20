@@ -1,61 +1,59 @@
-from xml.etree import ElementTree
-
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup
+from django.utils.html import escape
+from django.utils.safestring import SafeString, mark_safe
 from markdown import Extension
 from markdown.treeprocessors import Treeprocessor
 
 
-class BS4Extension(Extension):
-    def extendMarkdown(self, md):  # noqa: N802
-        md.registerExtension(self)
-        md.treeprocessors.register(BS4Treeprocessor(md), "bs4_extension", 0)
+class BeautifulSoupWithCharEntities(BeautifulSoup):
+    """
+    Soup generator that elegantly handles reserved HTML entity placeholders.
+
+    For instance, the soup HTMLparser replaces these (e.g. '&lt;') into their
+    unicode equivalents (e.g. '<').
+
+    This messes up things if the HTML is decoded into a string again.
+    """
+
+    def __init__(self, /, markup, features="html.parser", **kwargs):
+        markup = markup.replace("&", "&amp;")
+
+        super().__init__(markup=markup, features=features, **kwargs)
+
+    def decode(self, **kwargs):
+        # Prevent entity subsitution (e.g. "&" -> "&amp")
+        kwargs["formatter"] = None
+        return super().decode(**kwargs)
 
 
-class BS4Treeprocessor(Treeprocessor):
-    def run(self, root):
-        el_class_dict = {
-            "img": "img-fluid",
-            "blockquote": "blockquote",
-            "table": "table table-hover table-borderless",
-            "thead": "thead-light",
-            "code": "codehilite",
+class ExtendHTMLTagClasses:
+    def __init__(self, tag_classes):
+        # Make extensions safe
+        self.clean_tag_classes = {
+            t: [escape(c).strip() for c in classes]
+            for t, classes in tag_classes.items()
         }
 
-        for el in root.iter():
-            if el.tag in el_class_dict:
-                self.set_css_class(
-                    element=el, class_name=el_class_dict[el.tag]
-                )
+    def __call__(self, html):
+        input_is_safe = isinstance(html, SafeString)
 
-        for i, html_block in enumerate(self.md.htmlStash.rawHtmlBlocks):
-            bs4block = BeautifulSoup(html_block, "html.parser")
+        soup = BeautifulSoupWithCharEntities(markup=html)
 
-            for tag, tag_class in el_class_dict.items():
-                for el in bs4block.find_all(tag):
-                    self.set_css_class(element=el, class_name=tag_class)
-                    self.md.htmlStash.rawHtmlBlocks[i] = str(bs4block)
+        tags = [*self.clean_tag_classes.keys()]
+        if tags:
+            for element in soup.find_all(tags):
+                classes = element.get("class", [])
+                for new_class in self.clean_tag_classes[element.name]:
+                    if new_class not in classes:
+                        classes.append(new_class)
+                element["class"] = classes
 
-    @staticmethod
-    def set_css_class(*, element, class_name):
-        if isinstance(element, ElementTree.Element):
-            current_class = element.attrib.get("class", "")
+        new_markup = soup.decode()
 
-            if class_name not in current_class:
-                new_class = f"{current_class} {class_name}".strip()
-                element.set("class", new_class)
+        if input_is_safe:
+            new_markup = mark_safe(new_markup)
 
-        elif isinstance(element, Tag):
-            if "class" not in element.attrs:
-                element.attrs["class"] = []
-
-            current_class = element["class"]
-
-            for name in class_name.split(" "):
-                if class_name not in current_class:
-                    current_class.append(name)
-
-        else:
-            raise TypeError("Unsupported element")
+        return new_markup
 
 
 class LinkBlankTargetExtension(Extension):
