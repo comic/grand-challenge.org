@@ -449,6 +449,7 @@ def test_api_archive_item_add_and_update_non_image_file(
     assert item.values.count() == 1
     civ = item.values.get()
     assert civ.interface.slug == ci.slug
+    assert not UserUpload.objects.filter(pk=upload.pk).exists()
 
     # partial update civ
     upload2 = create_upload_from_file(
@@ -482,6 +483,7 @@ def test_api_archive_item_add_and_update_non_image_file(
     new_civ = item.values.get()
     assert new_civ.interface.slug == ci.slug
     assert new_civ != civ
+    assert not UserUpload.objects.filter(pk=upload2.pk).exists()
 
 
 @pytest.mark.django_db
@@ -639,6 +641,7 @@ def test_api_archive_item_add_and_update_json_file(
     assert item.values.count() == 1
     civ = item.values.get()
     assert civ.interface.slug == ci.slug
+    assert not UserUpload.objects.filter(pk=upload.pk).exists()
 
     # update civ
     with tempfile.NamedTemporaryFile(mode="w+", suffix=".json") as file:
@@ -674,6 +677,7 @@ def test_api_archive_item_add_and_update_json_file(
     new_civ = item.values.get()
     assert new_civ.interface.slug == ci.slug
     assert new_civ != civ
+    assert not UserUpload.objects.filter(pk=upload2.pk).exists()
 
 
 @pytest.mark.django_db
@@ -978,6 +982,7 @@ def test_archive_item_add_json_file(
                 )
         assert response.status_code == 302
         assert file.name.split("/")[-1] in item.values.first().file.name
+        assert not UserUpload.objects.filter(pk=upload.pk).exists()
 
     item2 = ArchiveItemFactory(archive=archive)
     civ = ComponentInterfaceValueFactory(
@@ -1176,6 +1181,7 @@ def test_archive_item_create_view(
     assert ai2.values.get(interface=ci_img2).image == image
     assert ai2.values.get(interface=ci_json).file.read() == b'{"foo": "bar"}'
     assert ai2.values.get(interface=ci_json2).value == {"some": "content"}
+    assert not UserUpload.objects.filter(pk=upload.pk).exists()
 
 
 @pytest.mark.django_db
