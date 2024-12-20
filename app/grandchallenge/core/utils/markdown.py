@@ -29,7 +29,7 @@ class BeautifulSoupWithCharEntities(BeautifulSoup):
 class ExtendHTMLTagClasses:
     def __init__(self, tag_classes):
         # Make extensions safe
-        self.tag_class_dict = {
+        self.clean_tag_classes = {
             t: [escape(c).strip() for c in classes]
             for t, classes in tag_classes.items()
         }
@@ -39,12 +39,14 @@ class ExtendHTMLTagClasses:
 
         soup = BeautifulSoupWithCharEntities(markup=html)
 
-        for element in soup.find_all(self.tag_class_dict.keys()):
-            classes = element.get("class", [])
-            for new_class in self.tag_class_dict[element.name]:
-                if new_class not in classes:
-                    classes.append(new_class)
-            element["class"] = classes
+        tags = [*self.clean_tag_classes.keys()]
+        if tags:
+            for element in soup.find_all(tags):
+                classes = element.get("class", [])
+                for new_class in self.clean_tag_classes[element.name]:
+                    if new_class not in classes:
+                        classes.append(new_class)
+                element["class"] = classes
 
         new_markup = soup.decode()
 
