@@ -190,7 +190,11 @@ from grandchallenge.core.utils.markdown import ExtendHTMLTagClasses
         ),
         (
             "&lt;script&gt;alert(&quot;foo&quot;)&lt;/script&gt;",
-            "&lt;script&gt;alert(&quot;foo&quot;)&lt;/script&gt;",
+            "<p>&lt;script&gt;alert(&quot;foo&quot;)&lt;/script&gt;</p>",
+        ),
+        (
+            "[![](http://minio.localhost:9000/grand-challenge-public/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg)](https://google.com)",
+            '<p><a href="https://google.com"><img class="img-fluid" src="http://minio.localhost:9000/grand-challenge-public/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg"/></a></p>',
         ),
     ),
 )
@@ -200,108 +204,57 @@ def test_markdown_rendering(markdown_with_html, expected_output):
 
 
 @pytest.mark.parametrize(
-    "markdown_with_html, expected_output",
-    (
-        (
-            textwrap.dedent(
-                """\
-                <img src="https://rumc-gcorg-p-public.s3.amazonaws.com/i/2023/10/20/042179f0-ad8c-4c0b-af54-7e81ba389a90.jpeg"/>
-                [![](http://minio.localhost:9000/grand-challenge-public/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg)](https://google.com)"""
-            ),
-            textwrap.dedent(
-                """\
-                <p><img class="img-fluid" src="https://rumc-gcorg-p-public.s3.amazonaws.com/i/2023/10/20/042179f0-ad8c-4c0b-af54-7e81ba389a90.jpeg"/>
-                <a href="https://google.com"><img class="img-fluid" src="http://minio.localhost:9000/grand-challenge-public/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg"/></a></p>"""
-            ),
-        ),
-        (
-            textwrap.dedent(
-                """\
-                <img class="" src="https://rumc-gcorg-p-public.s3.amazonaws.com/i/2023/10/20/042179f0-ad8c-4c0b-af54-7e81ba389a90.jpeg"/>
-                [![](http://minio.localhost:9000/grand-challenge-public/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg)](https://google.com)"""
-            ),
-            textwrap.dedent(
-                """\
-                <p><img class="img-fluid" src="https://rumc-gcorg-p-public.s3.amazonaws.com/i/2023/10/20/042179f0-ad8c-4c0b-af54-7e81ba389a90.jpeg"/>
-                <a href="https://google.com"><img class="img-fluid" src="http://minio.localhost:9000/grand-challenge-public/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg"/></a></p>"""
-            ),
-        ),
-        (
-            textwrap.dedent(
-                """\
-                <img class="ml-2" src="https://rumc-gcorg-p-public.s3.amazonaws.com/i/2023/10/20/042179f0-ad8c-4c0b-af54-7e81ba389a90.jpeg"/>
-                [![](http://minio.localhost:9000/grand-challenge-public/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg)](https://google.com)"""
-            ),
-            textwrap.dedent(
-                """\
-                <p><img class="ml-2 img-fluid" src="https://rumc-gcorg-p-public.s3.amazonaws.com/i/2023/10/20/042179f0-ad8c-4c0b-af54-7e81ba389a90.jpeg"/>
-                <a href="https://google.com"><img class="img-fluid" src="http://minio.localhost:9000/grand-challenge-public/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg"/></a></p>"""
-            ),
-        ),
-        (
-            textwrap.dedent(
-                """\
-                <img class="img-fluid" src="https://rumc-gcorg-p-public.s3.amazonaws.com/i/2023/10/20/042179f0-ad8c-4c0b-af54-7e81ba389a90.jpeg"/>
-                [![](http://minio.localhost:9000/grand-challenge-public/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg)](https://google.com)"""
-            ),
-            textwrap.dedent(
-                """\
-                <p><img class="img-fluid" src="https://rumc-gcorg-p-public.s3.amazonaws.com/i/2023/10/20/042179f0-ad8c-4c0b-af54-7e81ba389a90.jpeg"/>
-                <a href="https://google.com"><img class="img-fluid" src="http://minio.localhost:9000/grand-challenge-public/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg"/></a></p>"""
-            ),
-        ),
-        (
-            textwrap.dedent(
-                """\
-                <img class="ml-2 img-fluid" src="https://rumc-gcorg-p-public.s3.amazonaws.com/i/2023/10/20/042179f0-ad8c-4c0b-af54-7e81ba389a90.jpeg"/>
-                [![](http://minio.localhost:9000/grand-challenge-public/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg)](https://google.com)"""
-            ),
-            textwrap.dedent(
-                """\
-                <p><img class="ml-2 img-fluid" src="https://rumc-gcorg-p-public.s3.amazonaws.com/i/2023/10/20/042179f0-ad8c-4c0b-af54-7e81ba389a90.jpeg"/>
-                <a href="https://google.com"><img class="img-fluid" src="http://minio.localhost:9000/grand-challenge-public/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg"/></a></p>"""
-            ),
-        ),
-    ),
-)
-def test_setting_class_to_html_img_within_markdown(
-    markdown_with_html, expected_output
-):
-    output = md2html(markdown=markdown_with_html)
-
-    assert output == expected_output
-
-
-@pytest.mark.parametrize(
-    "html, is_safe",
+    "html, tag_classes, expected_output, is_safe",
     [
-        (
+        (  # Safe input
             mark_safe("<div>Content</div>"),
+            {},
+            "<div>Content</div>",
             True,
         ),
-        (
+        (  # Unsafe input
             "<div>Content</div>",
+            {},
+            "<div>Content</div>",
+            False,
+        ),
+        (  # Escaped classes
+            mark_safe("<div>Content</div>"),
+            {"div": ['<script>alert("foo")</script>']},
+            '<div class="&lt;script&gt;alert(&quot;foo&quot;)&lt;/script&gt;">Content</div>',
+            True,
+        ),
+        (  # Empty class
+            '<div class="">Content</div>',
+            {"div": ["foo"]},
+            '<div class="foo">Content</div>',
+            False,
+        ),
+        (  # Existing class
+            '<div class="ml-2">Content</div>',
+            {"div": ["foo"]},
+            '<div class="ml-2 foo">Content</div>',
+            False,
+        ),
+        (  # Extension class already present
+            '<div class="foo">Content</div>',
+            {"div": ["foo"]},
+            '<div class="foo">Content</div>',
+            False,
+        ),
+        (  # Existing class + extension class
+            '<div class="ml-2 foo">Content</div>',
+            {"div": ["foo"]},
+            '<div class="ml-2 foo">Content</div>',
             False,
         ),
     ],
 )
-def test_extend_html_tag_classes_insecure_markup(html, is_safe):
-    tag_classes = {"div": ["new-class"]}
-
-    # Instantiate the class
+def test_extend_html_tag_classes(html, tag_classes, expected_output, is_safe):
     extender = ExtendHTMLTagClasses(tag_classes)
+    output = extender(html)
 
-    # Process the HTML
-    result = extender(html)
+    assert output == expected_output
 
     # Check if the output matches the expected safety status
-    assert isinstance(result, SafeString) == is_safe
-
-
-def test_extend_html_tag_classes_insecure_classes():
-    extender = ExtendHTMLTagClasses({"div": ['<script>alert("foo")</script>']})
-    output = extender("<div>Content</div>")
-    assert (
-        output
-        == '<div class="&lt;script&gt;alert(&quot;foo&quot;)&lt;/script&gt;">Content</div>'
-    )
+    assert isinstance(output, SafeString) == is_safe
