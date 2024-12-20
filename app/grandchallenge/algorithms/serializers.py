@@ -258,7 +258,6 @@ class JobPostSerializer(JobSerializer):
 
         if Job.objects.get_jobs_with_same_inputs(
             inputs=self.inputs,
-            interface=None,  # TODO fix this in separate PR
             algorithm_image=data["algorithm_image"],
             algorithm_model=data["algorithm_model"],
         ):

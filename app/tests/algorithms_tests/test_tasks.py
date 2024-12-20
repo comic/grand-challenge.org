@@ -5,6 +5,7 @@ import pytest
 from actstream.models import Follow
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.algorithms.tasks import (
@@ -37,6 +38,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
+from tests.conftest import get_interface_form_data
 from tests.factories import (
     GroupFactory,
     ImageFactory,
@@ -45,6 +47,7 @@ from tests.factories import (
     UserFactory,
 )
 from tests.utils import get_view_for_user, recurse_callbacks
+from tests.verification_tests.factories import VerificationFactory
 
 
 @pytest.mark.django_db
@@ -187,7 +190,7 @@ def test_jobs_workflow(django_capture_on_commit_callbacks):
 @pytest.mark.flaky(reruns=3)
 @pytest.mark.django_db
 def test_algorithm(
-    algorithm_image, settings, django_capture_on_commit_callbacks
+    algorithm_image, client, settings, django_capture_on_commit_callbacks
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
@@ -202,6 +205,10 @@ def test_algorithm(
         with open(algorithm_image, "rb") as f:
             ai.image.save(algorithm_image, ContentFile(f.read()))
 
+    user = UserFactory()
+    ai.algorithm.add_editor(user)
+    VerificationFactory(user=user, is_verified=True)
+
     recurse_callbacks(
         callbacks=callbacks,
         django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
@@ -212,6 +219,7 @@ def test_algorithm(
     image_file = ImageFileFactory(
         file__from_path=Path(__file__).parent / "resources" / "input_file.tif"
     )
+    assign_perm("cases.view_image", user, image_file.image)
 
     input_interface = ComponentInterface.objects.get(
         slug="generic-medical-image"
@@ -228,17 +236,23 @@ def test_algorithm(
         interface, through_defaults={"is_default": True}
     )
 
-    civ = ComponentInterfaceValueFactory(
-        image=image_file.image, interface=input_interface, file=None
-    )
-
     with django_capture_on_commit_callbacks() as callbacks:
-        create_algorithm_jobs(
-            algorithm_image=ai,
-            civ_sets=[{civ}],
-            time_limit=ai.algorithm.time_limit,
-            requires_gpu_type=ai.algorithm.job_requires_gpu_type,
-            requires_memory_gb=ai.algorithm.job_requires_memory_gb,
+        get_view_for_user(
+            viewname="algorithms:job-create",
+            client=client,
+            method=client.post,
+            user=user,
+            reverse_kwargs={
+                "slug": ai.algorithm.slug,
+                "interface": interface.pk,
+            },
+            follow=True,
+            data={
+                **get_interface_form_data(
+                    interface_slug=input_interface.slug,
+                    data=image_file.image.pk,
+                ),
+            },
         )
 
     recurse_callbacks(
@@ -279,22 +293,37 @@ def test_algorithm(
         slug="detection-json-file",
         kind=ComponentInterface.Kind.ANY,
     )
-    ai.algorithm.outputs.add(detection_interface)
-    ai.save()
+    interface2 = AlgorithmInterfaceFactory(
+        inputs=[input_interface],
+        outputs=[
+            json_result_interface,
+            heatmap_interface,
+            detection_interface,
+        ],
+    )
+    ai.algorithm.interfaces.add(interface2)
     image_file = ImageFileFactory(
         file__from_path=Path(__file__).parent / "resources" / "input_file.tif"
     )
-    civ = ComponentInterfaceValueFactory(
-        image=image_file.image, interface=input_interface, file=None
-    )
+    assign_perm("cases.view_image", user, image_file.image)
 
     with django_capture_on_commit_callbacks() as callbacks:
-        create_algorithm_jobs(
-            algorithm_image=ai,
-            civ_sets=[{civ}],
-            time_limit=ai.algorithm.time_limit,
-            requires_gpu_type=ai.algorithm.job_requires_gpu_type,
-            requires_memory_gb=ai.algorithm.job_requires_memory_gb,
+        get_view_for_user(
+            viewname="algorithms:job-create",
+            client=client,
+            method=client.post,
+            user=user,
+            reverse_kwargs={
+                "slug": ai.algorithm.slug,
+                "interface": interface2.pk,
+            },
+            follow=True,
+            data={
+                **get_interface_form_data(
+                    interface_slug=input_interface.slug,
+                    data=image_file.image.pk,
+                ),
+            },
         )
 
     recurse_callbacks(
@@ -318,7 +347,7 @@ def test_algorithm(
 
 @pytest.mark.django_db
 def test_algorithm_with_invalid_output(
-    algorithm_image, settings, django_capture_on_commit_callbacks
+    algorithm_image, client, settings, django_capture_on_commit_callbacks
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
@@ -332,6 +361,10 @@ def test_algorithm_with_invalid_output(
 
         with open(algorithm_image, "rb") as f:
             ai.image.save(algorithm_image, ContentFile(f.read()))
+
+    user = UserFactory()
+    ai.algorithm.add_editor(user)
+    VerificationFactory(user=user, is_verified=True)
 
     recurse_callbacks(
         callbacks=callbacks,
@@ -359,19 +392,27 @@ def test_algorithm_with_invalid_output(
     image_file = ImageFileFactory(
         file__from_path=Path(__file__).parent / "resources" / "input_file.tif"
     )
-
-    civ = ComponentInterfaceValueFactory(
-        image=image_file.image, interface=input_interface, file=None
-    )
+    assign_perm("cases.view_image", user, image_file.image)
 
     with django_capture_on_commit_callbacks() as callbacks:
-        create_algorithm_jobs(
-            algorithm_image=ai,
-            civ_sets=[{civ}],
-            time_limit=ai.algorithm.time_limit,
-            requires_gpu_type=ai.algorithm.job_requires_gpu_type,
-            requires_memory_gb=ai.algorithm.job_requires_memory_gb,
+        get_view_for_user(
+            viewname="algorithms:job-create",
+            client=client,
+            method=client.post,
+            user=user,
+            reverse_kwargs={
+                "slug": ai.algorithm.slug,
+                "interface": interface.pk,
+            },
+            follow=True,
+            data={
+                **get_interface_form_data(
+                    interface_slug=input_interface.slug,
+                    data=image_file.image.pk,
+                ),
+            },
         )
+
     recurse_callbacks(
         callbacks=callbacks,
         django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,

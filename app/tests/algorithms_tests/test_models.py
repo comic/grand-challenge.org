@@ -1535,7 +1535,8 @@ def test_has_default_interface():
     io1, io2 = AlgorithmInterfaceFactory.create_batch(2)
 
     alg1.interfaces.add(io1, through_defaults={"is_default": True})
-    alg2.interfaces.add(io2)
+    alg1.interfaces.add(io2)
+    alg2.interfaces.add(io1)
 
     assert alg1.default_interface == io1
     assert not alg2.default_interface
