@@ -970,6 +970,7 @@ def test_create_job_with_json_file(
             file.name.split("/")[-1]
             in Job.objects.get().inputs.first().file.name
         )
+        assert not UserUpload.objects.filter(pk=upload.pk).exists()
 
 
 @pytest.mark.django_db
