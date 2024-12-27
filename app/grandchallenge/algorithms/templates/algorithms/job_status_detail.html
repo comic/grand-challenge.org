@@ -1,52 +1,55 @@
-<span class="badge badge-{{ object.status_context }}">
-    {% if object.animate %}
-        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-    {% endif %}
-    {{ object.get_status_display }}{% if object.status == object.SUCCESS and object.stderr %},
-        with warnings{% endif %}
-</span>
 
-{% if object.error_message %}
+<div>
+    <span class="badge badge-{{ object.status_context }}">
+        {% if object.animate %}
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        {% endif %}
+        {{ object.get_status_display }}{% if object.status == object.SUCCESS and object.stderr %},
+            with warnings{% endif %}
+    </span>
 
-        <div class="modal"
-             id="errorInfoModal-{{ object.pk }}"
-             tabindex="-1"
-             role="dialog"
-             aria-labelledby="statusfoModalTitle"
-             aria-hidden="true"
-        >
-            <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">
-                            Error Message
-                        </h5>
-                        <button type="button" class="close" data-dismiss="modal"
-                                aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="text-left modal-body">
-                        {{ object.error_message }}
-                    </div>
-                    <div class="modal-footer">
-                        <a class="btn btn-primary" href="{{ object.get_absolute_url }}">
-                            <i class="fa fa-info-circle mr-1"></i>View Result Details
-                        </a>
+    {% if object.error_message %}
+
+            <div class="modal"
+                id="errorInfoModal-{{ object.pk }}"
+                tabindex="-1"
+                role="dialog"
+                aria-labelledby="statusfoModalTitle"
+                aria-hidden="true"
+            >
+                <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                Error Message
+                            </h5>
+                            <button type="button" class="close" data-dismiss="modal"
+                                    aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="text-left modal-body">
+                            {{ object.error_message }}
+                        </div>
+                        <div class="modal-footer">
+                            <a class="btn btn-primary" href="{{ object.get_absolute_url }}">
+                                <i class="fa fa-info-circle mr-1"></i>View Result Details
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div>
-            <a href="#errorInfoModal-{{ object.pk }}"
-                data-toggle="modal"
-                data-target="#errorInfoModal-{{ object.pk }}"
-                class="badge badge-light text-decoration-none"
-            >
-                <i class="fa fa-fw fa-eye"></i>
-                {{ object.error_message | truncatechars:16 }}
-            </a>
-        </div>
+            <div>
+                <a href="#errorInfoModal-{{ object.pk }}"
+                    data-toggle="modal"
+                    data-target="#errorInfoModal-{{ object.pk }}"
+                    class="badge badge-light text-decoration-none"
+                >
+                    <i class="fa fa-fw fa-eye"></i>
+                    {{ object.error_message | truncatechars:16 }}
+                </a>
+            </div>
 
-{% endif %}
+    {% endif %}
+</div>
