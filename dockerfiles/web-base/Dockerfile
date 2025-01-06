@@ -28,9 +28,8 @@ RUN apt-get update \
         libopenslide-dev \
         libvips-dev \
         gcc \
-        # ruby3.1 and rugged for licensee
-        ruby3.1 \
-        ruby3.1-dev \
+        # ruby3.4 and rugged for licensee
+        ruby3.4 \
         ruby-rugged \
         # git for CodeBuild integration
         git \
