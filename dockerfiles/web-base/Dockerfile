@@ -30,6 +30,7 @@ RUN apt-get update \
         gcc \
         # ruby3.1 and rugged for licensee
         ruby3.1 \
+        ruby3.1-dev \
         ruby-rugged \
         # git for CodeBuild integration
         git \
