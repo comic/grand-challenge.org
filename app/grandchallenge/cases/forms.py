@@ -9,24 +9,18 @@ from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadMultipleWidget
 
 IMAGE_UPLOAD_HELP_TEXT = """
-<p>
-    The total size of all files uploaded in a single session cannot exceed 10 GB.
-    A maximum of 100 files can be uploaded per session.
-</p>
-<p>
-    Please only upload one volume per session. If your volume is made up of multiple
-    individual slices (e.g. DICOM files), please compress the entire directory into
-    a single .zip file and upload that file.
-</p>
-<p>
-   The following file formats are supported and will be converted to MHA format:
-    .mha, .mhd, .raw, .zraw, .dcm, .nii, .nii.gz, .nrrd, .fda, .fds, .png, .jpeg, and .jpg.
-</p>
-<p>
-    The following file formats can be uploaded and will be converted to TIF format:
-    .tiff, Aperio (.svs), Hamamatsu (.vms, .vmu, .ndpi), Leica (.scn), MIRAX (.mrxs),
-    Ventana (.bif), and DICOM-WSI (.dcm)."
-</p>
+The total size of all files uploaded in a single session cannot exceed 10 GB.
+A maximum of 100 files can be uploaded per session. Please only upload one volume per session.
+<br>
+If your volume is made up of multiple individual slices (e.g. DICOM files), please
+compress the entire directory into a single .zip file and upload that file.
+<br>
+The following file formats are supported and will be converted to MHA format:
+.mha, .mhd, .raw, .zraw, .dcm, .nii, .nii.gz, .nrrd, .fda, .fds, .png, .jpeg, and .jpg.
+<br>
+The following file formats can be uploaded and will be converted to TIF format:
+.tiff, Aperio (.svs), Hamamatsu (.vms, .vmu, .ndpi), Leica (.scn), MIRAX (.mrxs),
+Ventana (.bif), and DICOM-WSI (.dcm).
 """
 
 
