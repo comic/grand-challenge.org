@@ -4,10 +4,10 @@
         <tr>
             <th>Created</th>
             <th>Updated</th>
-            <th>Evaluation</th>
-            <th>Submission</th>
+            <th class="nonSortable">Evaluation</th>
+            <th class="nonSortable">Submission</th>
             <th>Status</th>
-            <th>Result</th>
+            <th class="nonSortable">Result</th>
         </tr>
         </thead>
         <tbody>
@@ -29,8 +29,6 @@
                     {% endif %}
                 </td>
             </tr>
-        {% empty %}
-            <tr><td colspan="100%" class="text-center">No evaluations</td></tr>
         {% endfor %}
         </tbody>
     </table>

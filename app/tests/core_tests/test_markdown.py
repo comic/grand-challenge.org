@@ -54,7 +54,7 @@ from grandchallenge.core.utils.markdown import ExtendHTMLTagClasses
                 </tr>
                 </tbody>
                 </table>
-                <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">test_function</span><span class="p">():</span>
+                <div class="codehilite"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_function</span><span class="p">():</span>
                     <span class="k">pass</span>
                 </pre></div>"""
             ),
@@ -174,7 +174,7 @@ from grandchallenge.core.utils.markdown import ExtendHTMLTagClasses
                 <tbody>
                 </tbody>
                 </table>
-                <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">test_function</span><span class="p">():</span>
+                <div class="codehilite"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_function</span><span class="p">():</span>
                     <span class="k">pass</span>
                 </pre></div>
                 <div><pre><code class="codehilite">no class</code></pre></div>
