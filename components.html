@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>Components &#8212; grand-challenge.org  documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
     <script src="_static/documentation_options.js?v=5929fcd5"></script>
@@ -486,15 +486,15 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <li><p>Choice (string)</p></li>
 <li><p>Multiple choice (array of strings)</p></li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">import</span> <span class="nn">os</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 
-<span class="kn">import</span> <span class="nn">django</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">django</span>
 
 <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;DJANGO_SETTINGS_MODULE&#39;</span><span class="p">,</span> <span class="s1">&#39;config.settings&#39;</span><span class="p">)</span>
 <span class="n">django</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
 
-<span class="kn">from</span> <span class="nn">grandchallenge.components.models</span> <span class="kn">import</span> <span class="n">INTERFACE_TYPE_JSON_EXAMPLES</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">INTERFACE_TYPE_JSON_EXAMPLES</span>
 
 <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">example</span> <span class="ow">in</span> <span class="n">INTERFACE_TYPE_JSON_EXAMPLES</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
     <span class="n">title</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Example JSON file contents for </span><span class="si">{</span><span class="n">key</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">&quot;</span>

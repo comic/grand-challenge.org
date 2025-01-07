@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>grandchallenge.evaluation.models &#8212; grand-challenge.org  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../../_static/classic.css?v=2bf1fcf8" />
     
     <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
@@ -36,88 +36,88 @@
           <div class="body" role="main">
             
   <h1>Source code for grandchallenge.evaluation.models</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">timedelta</span>
-<span class="kn">from</span> <span class="nn">statistics</span> <span class="kn">import</span> <span class="n">mean</span><span class="p">,</span> <span class="n">median</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">timedelta</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">statistics</span><span class="w"> </span><span class="kn">import</span> <span class="n">mean</span><span class="p">,</span> <span class="n">median</span>
 
-<span class="kn">from</span> <span class="nn">actstream.actions</span> <span class="kn">import</span> <span class="n">follow</span><span class="p">,</span> <span class="n">is_following</span>
-<span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
-<span class="kn">from</span> <span class="nn">django.contrib.auth.models</span> <span class="kn">import</span> <span class="n">Group</span>
-<span class="kn">from</span> <span class="nn">django.contrib.sites.models</span> <span class="kn">import</span> <span class="n">Site</span>
-<span class="kn">from</span> <span class="nn">django.core.cache</span> <span class="kn">import</span> <span class="n">cache</span>
-<span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ObjectDoesNotExist</span><span class="p">,</span> <span class="n">ValidationError</span>
-<span class="kn">from</span> <span class="nn">django.core.mail</span> <span class="kn">import</span> <span class="n">mail_managers</span>
-<span class="kn">from</span> <span class="nn">django.core.validators</span> <span class="kn">import</span> <span class="n">MaxValueValidator</span><span class="p">,</span> <span class="n">MinValueValidator</span>
-<span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
-<span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Count</span><span class="p">,</span> <span class="n">Q</span>
-<span class="kn">from</span> <span class="nn">django.db.transaction</span> <span class="kn">import</span> <span class="n">on_commit</span>
-<span class="kn">from</span> <span class="nn">django.utils</span> <span class="kn">import</span> <span class="n">timezone</span>
-<span class="kn">from</span> <span class="nn">django.utils.functional</span> <span class="kn">import</span> <span class="n">cached_property</span>
-<span class="kn">from</span> <span class="nn">django.utils.html</span> <span class="kn">import</span> <span class="n">format_html</span>
-<span class="kn">from</span> <span class="nn">django.utils.text</span> <span class="kn">import</span> <span class="n">get_valid_filename</span>
-<span class="kn">from</span> <span class="nn">django.utils.timezone</span> <span class="kn">import</span> <span class="n">localtime</span>
-<span class="kn">from</span> <span class="nn">django_extensions.db.fields</span> <span class="kn">import</span> <span class="n">AutoSlugField</span>
-<span class="kn">from</span> <span class="nn">guardian.models</span> <span class="kn">import</span> <span class="n">GroupObjectPermissionBase</span><span class="p">,</span> <span class="n">UserObjectPermissionBase</span>
-<span class="kn">from</span> <span class="nn">guardian.shortcuts</span> <span class="kn">import</span> <span class="n">assign_perm</span><span class="p">,</span> <span class="n">remove_perm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">actstream.actions</span><span class="w"> </span><span class="kn">import</span> <span class="n">follow</span><span class="p">,</span> <span class="n">is_following</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.conf</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Group</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.sites.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Site</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.core.cache</span><span class="w"> </span><span class="kn">import</span> <span class="n">cache</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.core.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ObjectDoesNotExist</span><span class="p">,</span> <span class="n">ValidationError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.core.mail</span><span class="w"> </span><span class="kn">import</span> <span class="n">mail_managers</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.core.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">MaxValueValidator</span><span class="p">,</span> <span class="n">MinValueValidator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Count</span><span class="p">,</span> <span class="n">Q</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.transaction</span><span class="w"> </span><span class="kn">import</span> <span class="n">on_commit</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">timezone</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.functional</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_property</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.html</span><span class="w"> </span><span class="kn">import</span> <span class="n">format_html</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_valid_filename</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.timezone</span><span class="w"> </span><span class="kn">import</span> <span class="n">localtime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django_extensions.db.fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoSlugField</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">guardian.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">GroupObjectPermissionBase</span><span class="p">,</span> <span class="n">UserObjectPermissionBase</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">guardian.shortcuts</span><span class="w"> </span><span class="kn">import</span> <span class="n">assign_perm</span><span class="p">,</span> <span class="n">remove_perm</span>
 
-<span class="kn">from</span> <span class="nn">grandchallenge.algorithms.models</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.algorithms.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">AlgorithmImage</span><span class="p">,</span>
     <span class="n">AlgorithmModel</span><span class="p">,</span>
     <span class="n">Job</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.archives.models</span> <span class="kn">import</span> <span class="n">Archive</span><span class="p">,</span> <span class="n">ArchiveItem</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.challenges.models</span> <span class="kn">import</span> <span class="n">Challenge</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.components.models</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.archives.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Archive</span><span class="p">,</span> <span class="n">ArchiveItem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.challenges.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Challenge</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ComponentImage</span><span class="p">,</span>
     <span class="n">ComponentInterface</span><span class="p">,</span>
     <span class="n">ComponentJob</span><span class="p">,</span>
     <span class="n">ImportStatusChoices</span><span class="p">,</span>
     <span class="n">Tarball</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.components.schemas</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.schemas</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">SELECTABLE_GPU_TYPES_SCHEMA</span><span class="p">,</span>
     <span class="n">GPUTypeChoices</span><span class="p">,</span>
     <span class="n">get_default_gpu_type_choices</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.core.models</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">FieldChangeMixin</span><span class="p">,</span>
     <span class="n">TitleSlugDescriptionModel</span><span class="p">,</span>
     <span class="n">UUIDModel</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.core.storage</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.storage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">private_s3_storage</span><span class="p">,</span>
     <span class="n">protected_s3_storage</span><span class="p">,</span>
     <span class="n">public_s3_storage</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.core.templatetags.remove_whitespace</span> <span class="kn">import</span> <span class="n">oxford_comma</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.core.validators</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.templatetags.remove_whitespace</span><span class="w"> </span><span class="kn">import</span> <span class="n">oxford_comma</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.validators</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ExtensionValidator</span><span class="p">,</span>
     <span class="n">JSONValidator</span><span class="p">,</span>
     <span class="n">MimeTypeValidator</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.emails.emails</span> <span class="kn">import</span> <span class="n">send_standard_email_batch</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.evaluation.tasks</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.emails.emails</span><span class="w"> </span><span class="kn">import</span> <span class="n">send_standard_email_batch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.evaluation.tasks</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">assign_evaluation_permissions</span><span class="p">,</span>
     <span class="n">assign_submission_permissions</span><span class="p">,</span>
     <span class="n">calculate_ranks</span><span class="p">,</span>
     <span class="n">create_evaluation</span><span class="p">,</span>
     <span class="n">update_combined_leaderboard</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.evaluation.templatetags.evaluation_extras</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.evaluation.templatetags.evaluation_extras</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">get_jsonpath</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.evaluation.utils</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.evaluation.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Metric</span><span class="p">,</span>
     <span class="n">StatusChoices</span><span class="p">,</span>
     <span class="n">SubmissionKindChoices</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.hanging_protocols.models</span> <span class="kn">import</span> <span class="n">HangingProtocolMixin</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.notifications.models</span> <span class="kn">import</span> <span class="n">Notification</span><span class="p">,</span> <span class="n">NotificationType</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.profiles.models</span> <span class="kn">import</span> <span class="n">EmailSubscriptionTypes</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.profiles.tasks</span> <span class="kn">import</span> <span class="n">deactivate_user</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.subdomains.utils</span> <span class="kn">import</span> <span class="n">reverse</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.uploads.models</span> <span class="kn">import</span> <span class="n">UserUpload</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.verifications.models</span> <span class="kn">import</span> <span class="n">VerificationUserSet</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.hanging_protocols.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">HangingProtocolMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.notifications.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Notification</span><span class="p">,</span> <span class="n">NotificationType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.profiles.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">EmailSubscriptionTypes</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.profiles.tasks</span><span class="w"> </span><span class="kn">import</span> <span class="n">deactivate_user</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.subdomains.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">reverse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.uploads.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">UserUpload</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.verifications.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">VerificationUserSet</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -177,8 +177,8 @@
 <span class="p">}</span>
 
 
-<span class="k">class</span> <span class="nc">PhaseManager</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Manager</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PhaseManager</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Manager</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="nb">super</span><span class="p">()</span>
             <span class="o">.</span><span class="n">get_queryset</span><span class="p">()</span>
@@ -203,7 +203,7 @@
 
 <div class="viewcode-block" id="Phase">
 <a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase">[docs]</a>
-<span class="k">class</span> <span class="nc">Phase</span><span class="p">(</span><span class="n">FieldChangeMixin</span><span class="p">,</span> <span class="n">HangingProtocolMixin</span><span class="p">,</span> <span class="n">UUIDModel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Phase</span><span class="p">(</span><span class="n">FieldChangeMixin</span><span class="p">,</span> <span class="n">HangingProtocolMixin</span><span class="p">,</span> <span class="n">UUIDModel</span><span class="p">):</span>
     <span class="c1"># This must match the syntax used in jquery datatables</span>
     <span class="c1"># https://datatables.net/reference/option/order</span>
     <span class="n">ASCENDING</span> <span class="o">=</span> <span class="s2">&quot;asc&quot;</span>
@@ -687,7 +687,7 @@
 
     <span class="n">objects</span> <span class="o">=</span> <span class="n">PhaseManager</span><span class="p">()</span>
 
-    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
         <span class="n">unique_together</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;challenge&quot;</span><span class="p">,</span> <span class="s2">&quot;title&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;challenge&quot;</span><span class="p">,</span> <span class="s2">&quot;slug&quot;</span><span class="p">))</span>
         <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;challenge&quot;</span><span class="p">,</span> <span class="s2">&quot;submissions_open_at&quot;</span><span class="p">,</span> <span class="s2">&quot;created&quot;</span><span class="p">)</span>
         <span class="n">permissions</span> <span class="o">=</span> <span class="p">(</span>
@@ -695,12 +695,12 @@
             <span class="p">(</span><span class="s2">&quot;configure_algorithm_phase&quot;</span><span class="p">,</span> <span class="s2">&quot;Configure Algorithm Phase&quot;</span><span class="p">),</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="s2"> Evaluation for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">short_name</span><span class="si">}</span><span class="s2">&quot;</span>
 
 <div class="viewcode-block" id="Phase.save">
 <a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase.save">[docs]</a>
-    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -743,7 +743,7 @@
 
 <div class="viewcode-block" id="Phase.clean">
 <a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase.clean">[docs]</a>
-    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_algorithm_submission_settings</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_submission_limits</span><span class="p">()</span>
@@ -752,7 +752,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_evaluation_requirements</span><span class="p">()</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_clean_algorithm_submission_settings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_clean_algorithm_submission_settings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_kind</span> <span class="o">==</span> <span class="n">SubmissionKindChoices</span><span class="o">.</span><span class="n">ALGORITHM</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">creator_must_be_verified</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
@@ -782,7 +782,7 @@
                 <span class="s2">&quot;Give Algorithm Editors Job View Permissions can only be enabled for Algorithm type phases&quot;</span>
             <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_clean_submission_limits</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_clean_submission_limits</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">submissions_limit_per_user_per_period</span> <span class="o">&gt;</span> <span class="mi">0</span>
             <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_image</span>
@@ -818,7 +818,7 @@
         <span class="p">):</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="n">SUBMISSION_WINDOW_PARENT_VALIDATION_TEXT</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_clean_external_evaluation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_clean_external_evaluation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">external_evaluation</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_kind</span> <span class="o">==</span> <span class="n">SubmissionKindChoices</span><span class="o">.</span><span class="n">ALGORITHM</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
@@ -829,7 +829,7 @@
                     <span class="s2">&quot;An external evaluation phase must have a parent phase.&quot;</span>
                 <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_clean_evaluation_requirements</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_clean_evaluation_requirements</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">evaluation_requires_gpu_type</span>
             <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluation_selectable_gpu_type_choices</span>
@@ -851,10 +851,10 @@
             <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">scoring_method</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">scoring_method</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scoring_method_choice</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">ABSOLUTE</span><span class="p">:</span>
 
-            <span class="k">def</span> <span class="nf">scoring_method</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">scoring_method</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
                 <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">scoring_method_choice</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">MEAN</span><span class="p">:</span>
@@ -867,7 +867,7 @@
         <span class="k">return</span> <span class="n">scoring_method</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">valid_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">valid_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="n">Metric</span><span class="p">(</span>
                 <span class="n">path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">score_jsonpath</span><span class="p">,</span>
@@ -883,13 +883,13 @@
         <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">read_only_fields_for_dependent_phases</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read_only_fields_for_dependent_phases</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">common_fields</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;submission_kind&quot;</span><span class="p">]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_kind</span> <span class="o">==</span> <span class="n">SubmissionKindChoices</span><span class="o">.</span><span class="n">ALGORITHM</span><span class="p">:</span>
             <span class="n">common_fields</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;algorithm_inputs&quot;</span><span class="p">,</span> <span class="s2">&quot;algorithm_outputs&quot;</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">common_fields</span>
 
-    <span class="k">def</span> <span class="nf">_clean_parent_phase</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_clean_parent_phase</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_phase_choices</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
@@ -913,7 +913,7 @@
             <span class="p">):</span>
                 <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="n">SUBMISSION_WINDOW_PARENT_VALIDATION_TEXT</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">set_default_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_default_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
             <span class="p">[</span><span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">slug</span><span class="o">=</span><span class="s2">&quot;predictions-csv-file&quot;</span><span class="p">)]</span>
         <span class="p">)</span>
@@ -922,12 +922,12 @@
         <span class="p">)</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">linked_component_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">linked_component_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_inputs</span><span class="o">.</span><span class="n">all</span><span class="p">()</span> <span class="o">|</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_outputs</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
         <span class="p">)</span><span class="o">.</span><span class="n">distinct</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;view_phase&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
         <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;change_phase&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
         <span class="n">assign_perm</span><span class="p">(</span>
@@ -947,19 +947,19 @@
                 <span class="bp">self</span><span class="p">,</span>
             <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
             <span class="s2">&quot;pages:home&quot;</span><span class="p">,</span>
             <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;challenge_short_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">short_name</span><span class="p">},</span>
         <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">submission_limit_period_timedelta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">submission_limit_period_timedelta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">submission_limit_period</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Phase.get_next_submission">
 <a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase.get_next_submission">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_next_submission</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_next_submission</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Determines the number of submissions left for the user,</span>
 <span class="sd">        and when they can next submit.</span>
@@ -1016,7 +1016,7 @@
         <span class="p">}</span></div>
 
 
-    <span class="k">def</span> <span class="nf">has_pending_evaluations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">user_pks</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_pending_evaluations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">user_pks</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="n">Evaluation</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
                 <span class="n">submission__phase</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">submission__creator__pk__in</span><span class="o">=</span><span class="n">user_pks</span>
@@ -1031,7 +1031,7 @@
             <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">handle_submission_limit_avoidance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_submission_limit_avoidance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
         <span class="n">on_commit</span><span class="p">(</span>
             <span class="n">deactivate_user</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;user_pk&quot;</span><span class="p">:</span> <span class="n">user</span><span class="o">.</span><span class="n">pk</span><span class="p">})</span><span class="o">.</span><span class="n">apply_async</span>
         <span class="p">)</span>
@@ -1052,14 +1052,14 @@
         <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">submission_period_is_open_now</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">submission_period_is_open_now</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">now</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
         <span class="n">upper_bound</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submissions_close_at</span> <span class="ow">or</span> <span class="n">now</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">lower_bound</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submissions_open_at</span> <span class="ow">or</span> <span class="n">now</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">lower_bound</span> <span class="o">&lt;</span> <span class="n">now</span> <span class="o">&lt;</span> <span class="n">upper_bound</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">open_for_submissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">open_for_submissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">public</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_period_is_open_now</span>
@@ -1068,7 +1068,7 @@
         <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">status</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">status</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">now</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_for_submissions</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">StatusChoices</span><span class="o">.</span><span class="n">OPEN</span>
@@ -1081,7 +1081,7 @@
                 <span class="k">return</span> <span class="n">StatusChoices</span><span class="o">.</span><span class="n">CLOSED</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">submission_status_string</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">submission_status_string</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">StatusChoices</span><span class="o">.</span><span class="n">OPEN</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">submissions_close_at</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Accepting submissions for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="s2"> until &quot;</span>
@@ -1104,7 +1104,7 @@
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2"> not implemented&quot;</span><span class="p">)</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">active_image</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">active_image</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -1120,7 +1120,7 @@
             <span class="k">return</span> <span class="kc">None</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">active_ground_truth</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">active_ground_truth</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -1132,13 +1132,13 @@
             <span class="k">return</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">ground_truth_upload_in_progress</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ground_truth_upload_in_progress</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ground_truths</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
             <span class="n">import_status__in</span><span class="o">=</span><span class="p">(</span><span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">INITIALIZED</span><span class="p">,)</span>
         <span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">valid_archive_items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">valid_archive_items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the archive items that are valid for this phase&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">archive</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_inputs</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">archive</span><span class="o">.</span><span class="n">items</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
@@ -1153,10 +1153,10 @@
             <span class="k">return</span> <span class="n">ArchiveItem</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">none</span><span class="p">()</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">count_valid_archive_items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">count_valid_archive_items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_archive_items</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">send_give_algorithm_editors_job_view_permissions_changed_email</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">send_give_algorithm_editors_job_view_permissions_changed_email</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">message</span> <span class="o">=</span> <span class="n">format_html</span><span class="p">(</span>
             <span class="p">(</span>
                 <span class="s2">&quot;You are being emailed as you are an admin of &#39;</span><span class="si">{challenge}</span><span class="s2">&#39; &quot;</span>
@@ -1192,7 +1192,7 @@
         <span class="p">)</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">descendants</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">descendants</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">descendants</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">children</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">children</span><span class="p">:</span>
@@ -1201,7 +1201,7 @@
         <span class="k">return</span> <span class="n">descendants</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">parent_phase_choices</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">parent_phase_choices</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">extra_filters</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">extra_annotations</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_kind</span> <span class="o">==</span> <span class="n">SubmissionKindChoices</span><span class="o">.</span><span class="n">ALGORITHM</span><span class="p">:</span>
@@ -1246,20 +1246,20 @@
 
 
 
-<span class="k">class</span> <span class="nc">PhaseUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PhaseUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Phase</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">PhaseGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PhaseGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Phase</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">Method</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">ComponentImage</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Method</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">ComponentImage</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Store the methods for performing an evaluation.&quot;&quot;&quot;</span>
 
     <span class="n">phase</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Phase</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -1267,11 +1267,11 @@
         <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assign_permissions</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;view_method&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
         <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;change_method&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
             <span class="s2">&quot;evaluation:method-detail&quot;</span><span class="p">,</span>
             <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
@@ -1282,7 +1282,7 @@
         <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">import_status_url</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">import_status_url</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
             <span class="s2">&quot;evaluation:method-import-status-detail&quot;</span><span class="p">,</span>
             <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
@@ -1292,19 +1292,19 @@
             <span class="p">},</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">get_peer_images</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_peer_images</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">Method</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">phase</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">MethodUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MethodUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Method</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">MethodGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MethodGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Method</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">submission_file_path</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">submission_file_path</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
     <span class="c1"># Must match the protected serving url</span>
     <span class="k">return</span> <span class="p">(</span>
         <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">settings</span><span class="o">.</span><span class="n">EVALUATION_FILES_SUBDIRECTORY</span><span class="si">}</span><span class="s2">/&quot;</span>
@@ -1316,7 +1316,7 @@
     <span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">submission_supplementary_file_path</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">submission_supplementary_file_path</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
     <span class="k">return</span> <span class="p">(</span>
         <span class="sa">f</span><span class="s2">&quot;evaluation-supplementary/&quot;</span>
         <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">/&quot;</span>
@@ -1325,7 +1325,7 @@
     <span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">Submission</span><span class="p">(</span><span class="n">FieldChangeMixin</span><span class="p">,</span> <span class="n">UUIDModel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Submission</span><span class="p">(</span><span class="n">FieldChangeMixin</span><span class="p">,</span> <span class="n">UUIDModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Store files for evaluation.&quot;&quot;&quot;</span>
 
     <span class="n">creator</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
@@ -1394,7 +1394,7 @@
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;A URL associated with this submission.&quot;</span>
     <span class="p">)</span>
 
-    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
         <span class="n">unique_together</span> <span class="o">=</span> <span class="p">(</span>
             <span class="p">(</span>
                 <span class="s2">&quot;phase&quot;</span><span class="p">,</span>
@@ -1405,7 +1405,7 @@
         <span class="p">)</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">is_evaluated_with_active_image_and_ground_truth</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_evaluated_with_active_image_and_ground_truth</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">active_image</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">active_image</span>
         <span class="n">active_ground_truth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">active_ground_truth</span>
         <span class="k">if</span> <span class="n">active_image</span><span class="p">:</span>
@@ -1418,7 +1418,7 @@
             <span class="c1"># No active image, so nothing to do to evaluate with it</span>
             <span class="k">return</span> <span class="kc">True</span>
 
-    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">adding</span><span class="p">:</span>
@@ -1446,7 +1446,7 @@
             <span class="p">)</span>
             <span class="n">on_commit</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">apply_async</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;view_submission&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">external_evaluation</span><span class="p">:</span>
             <span class="n">external_evaluators_group</span> <span class="o">=</span> <span class="p">(</span>
@@ -1470,7 +1470,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">remove_perm</span><span class="p">(</span><span class="s2">&quot;view_submission&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">creator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
             <span class="s2">&quot;evaluation:submission-detail&quot;</span><span class="p">,</span>
             <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
@@ -1481,15 +1481,15 @@
         <span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">SubmissionUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SubmissionUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Submission</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">SubmissionGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SubmissionGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Submission</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">ground_truth_path</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">ground_truth_path</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
     <span class="k">return</span> <span class="p">(</span>
         <span class="sa">f</span><span class="s2">&quot;ground_truths/&quot;</span>
         <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">/&quot;</span>
@@ -1499,7 +1499,7 @@
     <span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">EvaluationGroundTruth</span><span class="p">(</span><span class="n">Tarball</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationGroundTruth</span><span class="p">(</span><span class="n">Tarball</span><span class="p">):</span>
     <span class="n">phase</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="n">Phase</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;ground_truths&quot;</span>
     <span class="p">)</span>
@@ -1514,10 +1514,10 @@
     <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">linked_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">linked_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ground_truth</span>
 
-    <span class="k">def</span> <span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># Challenge admins can view this ground truth</span>
         <span class="n">assign_perm</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;view_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
@@ -1531,12 +1531,12 @@
             <span class="bp">self</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">get_peer_tarballs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_peer_tarballs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">EvaluationGroundTruth</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">phase</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="p">)</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
             <span class="n">pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
             <span class="s2">&quot;evaluation:ground-truth-detail&quot;</span><span class="p">,</span>
             <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
@@ -1547,7 +1547,7 @@
         <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">import_status_url</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">import_status_url</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
             <span class="s2">&quot;evaluation:ground-truth-import-status-detail&quot;</span><span class="p">,</span>
             <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
@@ -1558,19 +1558,19 @@
         <span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">EvaluationGroundTruthUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationGroundTruthUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="n">EvaluationGroundTruth</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span>
     <span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">EvaluationGroundTruthGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationGroundTruthGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="n">EvaluationGroundTruth</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span>
     <span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">Evaluation</span><span class="p">(</span><span class="n">ComponentJob</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Evaluation</span><span class="p">(</span><span class="n">ComponentJob</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Stores information about a evaluation for a given submission.&quot;&quot;&quot;</span>
 
     <span class="n">submission</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="s2">&quot;Submission&quot;</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">)</span>
@@ -1600,11 +1600,11 @@
         <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;claimed_evaluations&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="k">class</span> <span class="nc">Meta</span><span class="p">(</span><span class="n">UUIDModel</span><span class="o">.</span><span class="n">Meta</span><span class="p">,</span> <span class="n">ComponentJob</span><span class="o">.</span><span class="n">Meta</span><span class="p">):</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">(</span><span class="n">UUIDModel</span><span class="o">.</span><span class="n">Meta</span><span class="p">,</span> <span class="n">ComponentJob</span><span class="o">.</span><span class="n">Meta</span><span class="p">):</span>
         <span class="n">unique_together</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;submission&quot;</span><span class="p">,</span> <span class="s2">&quot;method&quot;</span><span class="p">,</span> <span class="s2">&quot;ground_truth&quot;</span><span class="p">)</span>
         <span class="n">permissions</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">&quot;claim_evaluation&quot;</span><span class="p">,</span> <span class="s2">&quot;Can claim evaluation&quot;</span><span class="p">)]</span>
 
-    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
 
         <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
@@ -1621,10 +1621,10 @@
         <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">title</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">title</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;#</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">rank</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">creator</span><span class="o">.</span><span class="n">username</span><span class="si">}</span><span class="s2">&quot;</span>
 
-    <span class="k">def</span> <span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">admins_group</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span>
         <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;view_evaluation&quot;</span><span class="p">,</span> <span class="n">admins_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
         <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;change_evaluation&quot;</span><span class="p">,</span> <span class="n">admins_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
@@ -1661,19 +1661,19 @@
             <span class="n">remove_perm</span><span class="p">(</span><span class="s2">&quot;view_evaluation&quot;</span><span class="p">,</span> <span class="n">participants_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">container</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">container</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">output_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">output_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">outputs</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">algorithm_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">algorithm_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">algorithm_inputs</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">valid_archive_item_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">valid_archive_item_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="n">i</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
             <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">archive</span><span class="o">.</span><span class="n">items</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
@@ -1687,7 +1687,7 @@
         <span class="p">}</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">successful_jobs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">successful_jobs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">algorithm_model</span><span class="p">:</span>
             <span class="n">extra_filter</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;algorithm_model&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">algorithm_model</span><span class="p">}</span>
         <span class="k">else</span><span class="p">:</span>
@@ -1722,7 +1722,7 @@
         <span class="k">return</span> <span class="n">successful_jobs</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">inputs_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">inputs_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">algorithm_image</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">successful_jobs</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">valid_archive_item_values</span>
@@ -1733,20 +1733,20 @@
             <span class="k">return</span> <span class="kc">False</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">executor_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">executor_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">executor_kwargs</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">executor_kwargs</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ground_truth</span><span class="p">:</span>
             <span class="n">executor_kwargs</span><span class="p">[</span><span class="s2">&quot;ground_truth&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ground_truth</span><span class="o">.</span><span class="n">ground_truth</span>
         <span class="k">return</span> <span class="n">executor_kwargs</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">metrics_json_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">metrics_json_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">output</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">slug</span> <span class="o">==</span> <span class="s2">&quot;metrics-json-file&quot;</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">value</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">invalid_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">invalid_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="n">metric</span><span class="o">.</span><span class="n">path</span>
             <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">valid_metrics</span>
@@ -1755,7 +1755,7 @@
             <span class="p">)</span>
         <span class="p">}</span>
 
-    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="o">.</span><span class="n">phase</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="s2">&quot;The submission and method phases should&quot;</span>
@@ -1766,7 +1766,7 @@
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">update_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">res</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">update_status</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">FAILURE</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">CANCELLED</span><span class="p">]:</span>
@@ -1783,7 +1783,7 @@
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">res</span>
 
-    <span class="k">def</span> <span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
             <span class="s2">&quot;evaluation:detail&quot;</span><span class="p">,</span>
             <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
@@ -1793,7 +1793,7 @@
         <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">status_url</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">status_url</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
             <span class="s2">&quot;evaluation:status-detail&quot;</span><span class="p">,</span>
             <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
@@ -1803,21 +1803,21 @@
         <span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">EvaluationUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Evaluation</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
             <span class="s2">&quot;User permissions should not be assigned for this model&quot;</span>
         <span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">EvaluationGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Evaluation</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">CombinedLeaderboard</span><span class="p">(</span><span class="n">TitleSlugDescriptionModel</span><span class="p">,</span> <span class="n">UUIDModel</span><span class="p">):</span>
-    <span class="k">class</span> <span class="nc">CombinationMethodChoices</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CombinedLeaderboard</span><span class="p">(</span><span class="n">TitleSlugDescriptionModel</span><span class="p">,</span> <span class="n">UUIDModel</span><span class="p">):</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">CombinationMethodChoices</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
         <span class="n">MEAN</span> <span class="o">=</span> <span class="s2">&quot;MEAN&quot;</span><span class="p">,</span> <span class="s2">&quot;Mean&quot;</span>
         <span class="n">MEDIAN</span> <span class="o">=</span> <span class="s2">&quot;MEDIAN&quot;</span><span class="p">,</span> <span class="s2">&quot;Median&quot;</span>
         <span class="n">SUM</span> <span class="o">=</span> <span class="s2">&quot;SUM&quot;</span><span class="p">,</span> <span class="s2">&quot;Sum&quot;</span>
@@ -1832,15 +1832,15 @@
         <span class="n">default</span><span class="o">=</span><span class="n">CombinationMethodChoices</span><span class="o">.</span><span class="n">MEAN</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
         <span class="n">unique_together</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;challenge&quot;</span><span class="p">,</span> <span class="s2">&quot;slug&quot;</span><span class="p">),)</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">public_phases</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">public_phases</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">phases</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">public</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">concrete_combination_method</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">concrete_combination_method</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">combination_method</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">CombinationMethodChoices</span><span class="o">.</span><span class="n">MEAN</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">mean</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">combination_method</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">CombinationMethodChoices</span><span class="o">.</span><span class="n">MEDIAN</span><span class="p">:</span>
@@ -1851,7 +1851,7 @@
             <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">_combined_ranks_object</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_combined_ranks_object</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">combined_ranks_cache_key</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="p">(</span>
@@ -1865,7 +1865,7 @@
             <span class="k">return</span> <span class="n">result</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">combined_ranks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">combined_ranks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">combined_ranks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_combined_ranks_object</span>
         <span class="k">if</span> <span class="n">combined_ranks</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">combined_ranks</span><span class="p">[</span><span class="s2">&quot;results&quot;</span><span class="p">]</span>
@@ -1873,11 +1873,11 @@
             <span class="k">return</span> <span class="p">[]</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">combined_ranks_users</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">combined_ranks_users</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">cr</span><span class="p">[</span><span class="s2">&quot;user&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">cr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">combined_ranks</span><span class="p">]</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">combined_ranks_created</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">combined_ranks_created</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">combined_ranks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_combined_ranks_object</span>
         <span class="k">if</span> <span class="n">combined_ranks</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">combined_ranks</span><span class="p">[</span><span class="s2">&quot;created&quot;</span><span class="p">]</span>
@@ -1885,7 +1885,7 @@
             <span class="k">return</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">users_best_evaluation_per_phase</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">users_best_evaluation_per_phase</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">evaluations</span> <span class="o">=</span> <span class="n">Evaluation</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
             <span class="c1"># Note, only use public phases here to prevent leaking of</span>
             <span class="c1"># evaluations for hidden phases</span>
@@ -1924,10 +1924,10 @@
         <span class="k">return</span> <span class="n">users_best_evaluation_per_phase</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">combined_ranks_cache_key</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">combined_ranks_cache_key</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">.combined_ranks.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">&quot;</span>
 
-    <span class="k">def</span> <span class="nf">update_combined_ranks_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_combined_ranks_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">combined_ranks</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">num_phases</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">public_phases</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
 
@@ -1967,7 +1967,7 @@
         <span class="n">cache</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">combined_ranks_cache_key</span><span class="p">,</span> <span class="n">cache_object</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">_rank_combined_rank_scores</span><span class="p">(</span><span class="n">combined_ranks</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_rank_combined_rank_scores</span><span class="p">(</span><span class="n">combined_ranks</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;In-place addition of a rank based on the combined rank&quot;&quot;&quot;</span>
         <span class="n">combined_ranks</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;combined_rank&quot;</span><span class="p">])</span>
         <span class="n">current_score</span> <span class="o">=</span> <span class="n">current_rank</span> <span class="o">=</span> <span class="kc">None</span>
@@ -1981,18 +1981,18 @@
 
             <span class="n">combined_ranks</span><span class="p">[</span><span class="n">idx</span><span class="p">][</span><span class="s2">&quot;rank&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">current_rank</span>
 
-    <span class="k">def</span> <span class="nf">schedule_combined_ranks_update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">schedule_combined_ranks_update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">on_commit</span><span class="p">(</span>
             <span class="n">update_combined_leaderboard</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
                 <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">}</span>
             <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">schedule_combined_ranks_update</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
             <span class="s2">&quot;evaluation:combined-leaderboard-detail&quot;</span><span class="p">,</span>
             <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
@@ -2001,12 +2001,12 @@
             <span class="p">},</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">cache</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">combined_ranks_cache_key</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">CombinedLeaderboardPhase</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CombinedLeaderboardPhase</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
     <span class="c1"># Through table for the combined leaderboard</span>
     <span class="c1"># https://docs.djangoproject.com/en/4.2/topics/db/models/#intermediary-manytomany</span>
     <span class="n">phase</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Phase</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
@@ -2015,7 +2015,7 @@
     <span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">OptionalHangingProtocolPhase</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OptionalHangingProtocolPhase</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
     <span class="c1"># Through table for optional hanging protocols</span>
     <span class="c1"># https://docs.djangoproject.com/en/4.2/topics/db/models/#intermediary-manytomany</span>
     <span class="n">phase</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Phase</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>

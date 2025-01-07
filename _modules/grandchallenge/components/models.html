@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>grandchallenge.components.models &#8212; grand-challenge.org  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../../_static/classic.css?v=2bf1fcf8" />
     
     <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
@@ -36,94 +36,94 @@
           <div class="body" role="main">
             
   <h1>Source code for grandchallenge.components.models</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">import</span> <span class="nn">re</span>
-<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">timedelta</span>
-<span class="kn">from</span> <span class="nn">json</span> <span class="kn">import</span> <span class="n">JSONDecodeError</span>
-<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span> <span class="nn">tempfile</span> <span class="kn">import</span> <span class="n">NamedTemporaryFile</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">NamedTuple</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">timedelta</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">json</span><span class="w"> </span><span class="kn">import</span> <span class="n">JSONDecodeError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tempfile</span><span class="w"> </span><span class="kn">import</span> <span class="n">NamedTemporaryFile</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NamedTuple</span>
 
-<span class="kn">from</span> <span class="nn">billiard.exceptions</span> <span class="kn">import</span> <span class="n">SoftTimeLimitExceeded</span><span class="p">,</span> <span class="n">TimeLimitExceeded</span>
-<span class="kn">from</span> <span class="nn">celery</span> <span class="kn">import</span> <span class="n">signature</span>
-<span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">forms</span>
-<span class="kn">from</span> <span class="nn">django.apps</span> <span class="kn">import</span> <span class="n">apps</span>
-<span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
-<span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">billiard.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">SoftTimeLimitExceeded</span><span class="p">,</span> <span class="n">TimeLimitExceeded</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">celery</span><span class="w"> </span><span class="kn">import</span> <span class="n">signature</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django</span><span class="w"> </span><span class="kn">import</span> <span class="n">forms</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.apps</span><span class="w"> </span><span class="kn">import</span> <span class="n">apps</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.conf</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.core.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">MultipleObjectsReturned</span><span class="p">,</span>
     <span class="n">ObjectDoesNotExist</span><span class="p">,</span>
     <span class="n">ValidationError</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">django.core.files</span> <span class="kn">import</span> <span class="n">File</span>
-<span class="kn">from</span> <span class="nn">django.core.files.base</span> <span class="kn">import</span> <span class="n">ContentFile</span>
-<span class="kn">from</span> <span class="nn">django.core.validators</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.core.files</span><span class="w"> </span><span class="kn">import</span> <span class="n">File</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.core.files.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContentFile</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.core.validators</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">MaxValueValidator</span><span class="p">,</span>
     <span class="n">MinValueValidator</span><span class="p">,</span>
     <span class="n">RegexValidator</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span><span class="p">,</span> <span class="n">transaction</span>
-<span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Avg</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">IntegerChoices</span><span class="p">,</span> <span class="n">QuerySet</span><span class="p">,</span> <span class="n">Sum</span>
-<span class="kn">from</span> <span class="nn">django.db.transaction</span> <span class="kn">import</span> <span class="n">on_commit</span>
-<span class="kn">from</span> <span class="nn">django.forms</span> <span class="kn">import</span> <span class="n">ModelChoiceField</span>
-<span class="kn">from</span> <span class="nn">django.forms.models</span> <span class="kn">import</span> <span class="n">model_to_dict</span>
-<span class="kn">from</span> <span class="nn">django.template.defaultfilters</span> <span class="kn">import</span> <span class="n">truncatewords</span>
-<span class="kn">from</span> <span class="nn">django.utils.functional</span> <span class="kn">import</span> <span class="n">cached_property</span>
-<span class="kn">from</span> <span class="nn">django.utils.module_loading</span> <span class="kn">import</span> <span class="n">import_string</span>
-<span class="kn">from</span> <span class="nn">django.utils.text</span> <span class="kn">import</span> <span class="n">get_valid_filename</span>
-<span class="kn">from</span> <span class="nn">django.utils.timezone</span> <span class="kn">import</span> <span class="n">now</span>
-<span class="kn">from</span> <span class="nn">django.utils.translation</span> <span class="kn">import</span> <span class="n">gettext_lazy</span> <span class="k">as</span> <span class="n">_</span>
-<span class="kn">from</span> <span class="nn">django_deprecate_fields</span> <span class="kn">import</span> <span class="n">deprecate_field</span>
-<span class="kn">from</span> <span class="nn">django_extensions.db.fields</span> <span class="kn">import</span> <span class="n">AutoSlugField</span>
-<span class="kn">from</span> <span class="nn">panimg.models</span> <span class="kn">import</span> <span class="n">MAXIMUM_SEGMENTS_LENGTH</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">models</span><span class="p">,</span> <span class="n">transaction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Avg</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">IntegerChoices</span><span class="p">,</span> <span class="n">QuerySet</span><span class="p">,</span> <span class="n">Sum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.transaction</span><span class="w"> </span><span class="kn">import</span> <span class="n">on_commit</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.forms</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelChoiceField</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.forms.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">model_to_dict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.template.defaultfilters</span><span class="w"> </span><span class="kn">import</span> <span class="n">truncatewords</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.functional</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_property</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.module_loading</span><span class="w"> </span><span class="kn">import</span> <span class="n">import_string</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_valid_filename</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.timezone</span><span class="w"> </span><span class="kn">import</span> <span class="n">now</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.translation</span><span class="w"> </span><span class="kn">import</span> <span class="n">gettext_lazy</span> <span class="k">as</span> <span class="n">_</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django_deprecate_fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">deprecate_field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django_extensions.db.fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoSlugField</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">panimg.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">MAXIMUM_SEGMENTS_LENGTH</span>
 
-<span class="kn">from</span> <span class="nn">grandchallenge.cases.models</span> <span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">ImageFile</span><span class="p">,</span> <span class="n">RawImageUploadSession</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.cases.widgets</span> <span class="kn">import</span> <span class="n">FlexibleImageField</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.charts.specs</span> <span class="kn">import</span> <span class="n">components_line</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.components.backends.exceptions</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.cases.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">ImageFile</span><span class="p">,</span> <span class="n">RawImageUploadSession</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.cases.widgets</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexibleImageField</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.charts.specs</span><span class="w"> </span><span class="kn">import</span> <span class="n">components_line</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.backends.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">CIVNotEditableException</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.components.schemas</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.schemas</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">INTERFACE_VALUE_SCHEMA</span><span class="p">,</span>
     <span class="n">GPUTypeChoices</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.components.tasks</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.tasks</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">_repo_login_and_run</span><span class="p">,</span>
     <span class="n">assign_docker_image_from_upload</span><span class="p">,</span>
     <span class="n">deprovision_job</span><span class="p">,</span>
     <span class="n">provision_job</span><span class="p">,</span>
     <span class="n">validate_docker_image</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.components.validators</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.validators</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">validate_biom_format</span><span class="p">,</span>
     <span class="n">validate_newick_tree_format</span><span class="p">,</span>
     <span class="n">validate_no_slash_at_ends</span><span class="p">,</span>
     <span class="n">validate_safe_path</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.core.celery</span> <span class="kn">import</span> <span class="n">acks_late_2xlarge_task</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.core.error_handlers</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.celery</span><span class="w"> </span><span class="kn">import</span> <span class="n">acks_late_2xlarge_task</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.error_handlers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">FallbackCIVValidationErrorHandler</span><span class="p">,</span>
     <span class="n">JobCIVErrorHandler</span><span class="p">,</span>
     <span class="n">RawImageUploadSessionErrorHandler</span><span class="p">,</span>
     <span class="n">UserUploadCIVErrorHandler</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.core.models</span> <span class="kn">import</span> <span class="n">FieldChangeMixin</span><span class="p">,</span> <span class="n">UUIDModel</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.core.storage</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">FieldChangeMixin</span><span class="p">,</span> <span class="n">UUIDModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.storage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">private_s3_storage</span><span class="p">,</span>
     <span class="n">protected_s3_storage</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.core.utils.error_messages</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.utils.error_messages</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">format_validation_error_message</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.core.validators</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.validators</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ExtensionValidator</span><span class="p">,</span>
     <span class="n">JSONSchemaValidator</span><span class="p">,</span>
     <span class="n">JSONValidator</span><span class="p">,</span>
     <span class="n">MimeTypeValidator</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.uploads.models</span> <span class="kn">import</span> <span class="n">UserUpload</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.uploads.validators</span> <span class="kn">import</span> <span class="n">validate_gzip_mimetype</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.workstation_configs.models</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.uploads.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">UserUpload</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.uploads.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_gzip_mimetype</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.workstation_configs.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">OVERLAY_SEGMENTS_SCHEMA</span><span class="p">,</span>
     <span class="n">LookUpTable</span><span class="p">,</span>
 <span class="p">)</span>
@@ -133,7 +133,7 @@
 
 <div class="viewcode-block" id="InterfaceKindChoices">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKindChoices">[docs]</a>
-<span class="k">class</span> <span class="nc">InterfaceKindChoices</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">InterfaceKindChoices</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Interface kind choices.&quot;&quot;&quot;</span>
 
     <span class="n">STRING</span> <span class="o">=</span> <span class="s2">&quot;STR&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;String&quot;</span><span class="p">)</span>
@@ -195,7 +195,7 @@
 
 <div class="viewcode-block" id="InterfaceSuperKindChoices">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceSuperKindChoices">[docs]</a>
-<span class="k">class</span> <span class="nc">InterfaceSuperKindChoices</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">InterfaceSuperKindChoices</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
     <span class="n">IMAGE</span> <span class="o">=</span> <span class="s2">&quot;I&quot;</span><span class="p">,</span> <span class="s2">&quot;Image&quot;</span>
     <span class="n">FILE</span> <span class="o">=</span> <span class="s2">&quot;F&quot;</span><span class="p">,</span> <span class="s2">&quot;File&quot;</span>
     <span class="n">VALUE</span> <span class="o">=</span> <span class="s2">&quot;V&quot;</span><span class="p">,</span> <span class="s2">&quot;Value&quot;</span></div>
@@ -204,7 +204,7 @@
 
 <div class="viewcode-block" id="InterfaceKind">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind">[docs]</a>
-<span class="k">class</span> <span class="nc">InterfaceKind</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">InterfaceKind</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Interface kind choices.&quot;&quot;&quot;</span>
 
     <span class="n">InterfaceKindChoices</span> <span class="o">=</span> <span class="n">InterfaceKindChoices</span>
@@ -212,7 +212,7 @@
 <div class="viewcode-block" id="InterfaceKind.interface_type_json">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_type_json">[docs]</a>
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">interface_type_json</span><span class="p">():</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">interface_type_json</span><span class="p">():</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Interface kinds that are json serializable:</span>
 
 <span class="sd">        * String</span>
@@ -295,7 +295,7 @@
 <div class="viewcode-block" id="InterfaceKind.interface_type_image">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_type_image">[docs]</a>
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">interface_type_image</span><span class="p">():</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">interface_type_image</span><span class="p">():</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Interface kinds that are images:</span>
 
 <span class="sd">        * Image</span>
@@ -314,7 +314,7 @@
 <div class="viewcode-block" id="InterfaceKind.interface_type_file">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_type_file">[docs]</a>
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">interface_type_file</span><span class="p">():</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">interface_type_file</span><span class="p">():</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Interface kinds that are files:</span>
 
 <span class="sd">        * CSV file</span>
@@ -345,7 +345,7 @@
 <div class="viewcode-block" id="InterfaceKind.interface_type_mandatory_isolation">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_type_mandatory_isolation">[docs]</a>
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">interface_type_mandatory_isolation</span><span class="p">():</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">interface_type_mandatory_isolation</span><span class="p">():</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Interfaces that can only be displayed in isolation.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CHART</span><span class="p">,</span>
@@ -359,7 +359,7 @@
 <div class="viewcode-block" id="InterfaceKind.interface_type_undisplayable">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_type_undisplayable">[docs]</a>
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">interface_type_undisplayable</span><span class="p">():</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">interface_type_undisplayable</span><span class="p">():</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Interfaces that cannot be displayed.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CSV</span><span class="p">,</span>
@@ -374,7 +374,7 @@
 
 <div class="viewcode-block" id="OverlaySegmentsMixin">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.OverlaySegmentsMixin">[docs]</a>
-<span class="k">class</span> <span class="nc">OverlaySegmentsMixin</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OverlaySegmentsMixin</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
     <span class="n">overlay_segments</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">JSONField</span><span class="p">(</span>
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
@@ -401,7 +401,7 @@
     <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">overlay_segments_allowed_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">overlay_segments_allowed_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">allowed_values</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;voxel_value&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">overlay_segments</span><span class="p">}</span>
         <span class="c1"># An implicit background value of 0 is always allowed, this saves the</span>
         <span class="c1"># user having to declare it and the annotator mark it</span>
@@ -410,13 +410,13 @@
         <span class="k">return</span> <span class="n">allowed_values</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">overlay_segments_is_contiguous</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">overlay_segments_is_contiguous</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">values</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">overlay_segments_allowed_values</span><span class="p">))</span>
         <span class="k">return</span> <span class="nb">all</span><span class="p">(</span>
             <span class="n">values</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">values</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">))</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_validate_voxel_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_voxel_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">overlay_segments</span><span class="p">:</span>
             <span class="k">return</span>
 
@@ -439,7 +439,7 @@
                 <span class="sa">f</span><span class="s2">&quot;invalid as it contains the voxel values: </span><span class="si">{</span><span class="n">invalid_values</span><span class="si">}</span><span class="s2">.&quot;</span>
             <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_validate_vector_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">:</span> <span class="n">Image</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_vector_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">:</span> <span class="n">Image</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">4</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="s2">&quot;Deformation and displacement must be 4D images.&quot;</span>
@@ -454,14 +454,14 @@
                 <span class="s2">&quot;must be a 3-component vector.&quot;</span>
             <span class="p">)</span>
 
-    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
         <span class="n">abstract</span> <span class="o">=</span> <span class="kc">True</span></div>
 
 
 
 <div class="viewcode-block" id="ComponentInterface">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterface">[docs]</a>
-<span class="k">class</span> <span class="nc">ComponentInterface</span><span class="p">(</span><span class="n">OverlaySegmentsMixin</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ComponentInterface</span><span class="p">(</span><span class="n">OverlaySegmentsMixin</span><span class="p">):</span>
     <span class="n">Kind</span> <span class="o">=</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span>
     <span class="n">SuperKind</span> <span class="o">=</span> <span class="n">InterfaceSuperKindChoices</span>
 
@@ -528,35 +528,35 @@
 
 <div class="viewcode-block" id="ComponentInterface.__init__">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterface.__init__">[docs]</a>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_overlay_segments_orig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">overlay_segments</span></div>
 
 
-    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_kind_display</span><span class="p">()</span><span class="si">}</span><span class="s2">)&quot;</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">is_image_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_image_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_image</span><span class="p">()</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">is_json_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_json_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_json</span><span class="p">()</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">is_file_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_file_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_file</span><span class="p">()</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">is_thumbnail_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_thumbnail_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="p">[</span>
             <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">THUMBNAIL_JPG</span><span class="p">,</span>
             <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">THUMBNAIL_PNG</span><span class="p">,</span>
         <span class="p">]</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">is_previewable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_previewable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_in_database</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="p">[</span>
             <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">BOOL</span><span class="p">,</span>
             <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">FLOAT</span><span class="p">,</span>
@@ -565,14 +565,14 @@
         <span class="p">]</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">json_kind_example</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">json_kind_example</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">example_value</span>
         <span class="k">except</span> <span class="n">ObjectDoesNotExist</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">INTERFACE_TYPE_JSON_EXAMPLES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">super_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">super_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">saved_in_object_store</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_image_kind</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">InterfaceSuperKindChoices</span><span class="o">.</span><span class="n">IMAGE</span>
@@ -582,7 +582,7 @@
             <span class="k">return</span> <span class="n">InterfaceSuperKindChoices</span><span class="o">.</span><span class="n">VALUE</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">saved_in_object_store</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">saved_in_object_store</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># files and images should always be saved to S3, others are optional</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">is_image_kind</span>
@@ -591,7 +591,7 @@
         <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">requires_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">requires_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">is_file_kind</span>
             <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_json_kind</span>
@@ -599,7 +599,7 @@
         <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">default_field</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">default_field</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">requires_file</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">ModelChoiceField</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_image_kind</span><span class="p">:</span>
@@ -619,22 +619,22 @@
             <span class="k">return</span> <span class="n">forms</span><span class="o">.</span><span class="n">JSONField</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">allowed_file_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">allowed_file_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The allowed file types of the interface that is relevant when uploading&quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">INTERFACE_KIND_TO_ALLOWED_FILE_TYPES</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="p">]</span>
         <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown kind </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown kind </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">file_extension</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">file_extension</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The dot filename extension (e.g. &#39;.jpg&#39;) of an interface that is relevant when writing&quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">INTERFACE_KIND_TO_FILE_EXTENSION</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="p">]</span>
         <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown kind </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown kind </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 
-    <span class="k">def</span> <span class="nf">create_instance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">image</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fileobj</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_instance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">image</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fileobj</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">civ</span> <span class="o">=</span> <span class="n">ComponentInterfaceValue</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">image</span><span class="p">:</span>
@@ -657,7 +657,7 @@
 
 <div class="viewcode-block" id="ComponentInterface.clean">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterface.clean">[docs]</a>
-    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_overlay_segments</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_store_in_database</span><span class="p">()</span>
@@ -665,7 +665,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_example_value</span><span class="p">()</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_clean_overlay_segments</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_clean_overlay_segments</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">SEGMENTATION</span>
             <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">overlay_segments</span>
@@ -701,7 +701,7 @@
                 <span class="s2">&quot;for this ComponentInterface exist.&quot;</span>
             <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_clean_relative_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_clean_relative_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">is_file_kind</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_json_kind</span>
         <span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">relative_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_extension</span><span class="p">):</span>
@@ -723,7 +723,7 @@
                     <span class="s2">&quot;Relative path should not start with images/&quot;</span>
                 <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_clean_store_in_database</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_clean_store_in_database</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">object_store_required</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="p">{</span>
             <span class="o">*</span><span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_image</span><span class="p">(),</span>
             <span class="o">*</span><span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_file</span><span class="p">(),</span>
@@ -744,7 +744,7 @@
                 <span class="sa">f</span><span class="s2">&quot;Interface </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="si">}</span><span class="s2"> objects cannot be stored in the database&quot;</span>
             <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_clean_example_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_clean_example_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">example_value</span><span class="o">.</span><span class="n">full_clean</span><span class="p">()</span>
         <span class="k">except</span> <span class="n">ObjectDoesNotExist</span><span class="p">:</span>
@@ -756,7 +756,7 @@
 
 <div class="viewcode-block" id="ComponentInterface.validate_against_schema">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterface.validate_against_schema">[docs]</a>
-    <span class="k">def</span> <span class="nf">validate_against_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_against_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validates values against both default and custom schemas&quot;&quot;&quot;</span>
         <span class="n">JSONValidator</span><span class="p">(</span>
             <span class="n">schema</span><span class="o">=</span><span class="p">{</span>
@@ -770,7 +770,7 @@
 
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">value_required</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">value_required</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">value_required</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">BOOL</span><span class="p">:</span>
             <span class="n">value_required</span> <span class="o">=</span> <span class="kc">False</span>
@@ -782,14 +782,14 @@
                 <span class="k">pass</span>
         <span class="k">return</span> <span class="n">value_required</span>
 
-    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
         <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">,)</span></div>
 
 
 
 <div class="viewcode-block" id="ComponentInterfaceExampleValue">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterfaceExampleValue">[docs]</a>
-<span class="k">class</span> <span class="nc">ComponentInterfaceExampleValue</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ComponentInterfaceExampleValue</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
     <span class="n">interface</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">OneToOneField</span><span class="p">(</span>
         <span class="n">to</span><span class="o">=</span><span class="n">ComponentInterface</span><span class="p">,</span>
         <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
@@ -807,7 +807,7 @@
 
 <div class="viewcode-block" id="ComponentInterfaceExampleValue.clean">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterfaceExampleValue.clean">[docs]</a>
-    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">is_json_kind</span><span class="p">:</span>
@@ -1318,7 +1318,7 @@
 <span class="p">}</span>
 
 
-<span class="k">def</span> <span class="nf">component_interface_value_path</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">component_interface_value_path</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
     <span class="c1"># Convert the pk to a hex, padded to 4 chars with zeros</span>
     <span class="n">pk_as_padded_hex</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance</span><span class="o">.</span><span class="n">pk</span><span class="si">:</span><span class="s2">04x</span><span class="si">}</span><span class="s2">&quot;</span>
 
@@ -1330,9 +1330,9 @@
     <span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">ComponentInterfaceValueManager</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Manager</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ComponentInterfaceValueManager</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Manager</span><span class="p">):</span>
 
-    <span class="k">def</span> <span class="nf">get_first_or_create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_first_or_create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_or_create</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">MultipleObjectsReturned</span><span class="p">:</span>
@@ -1341,7 +1341,7 @@
 
 <div class="viewcode-block" id="ComponentInterfaceValue">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterfaceValue">[docs]</a>
-<span class="k">class</span> <span class="nc">ComponentInterfaceValue</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ComponentInterfaceValue</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Encapsulates the value of an interface at a certain point in the graph.&quot;&quot;&quot;</span>
 
     <span class="nb">id</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BigAutoField</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -1413,7 +1413,7 @@
     <span class="n">objects</span> <span class="o">=</span> <span class="n">ComponentInterfaceValueManager</span><span class="p">()</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">title</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">title</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="p">:</span>
@@ -1423,11 +1423,11 @@
         <span class="k">return</span> <span class="s2">&quot;&quot;</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">has_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">file</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">decompress</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decompress</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Should the CIV be decompressed?</span>
 
@@ -1438,7 +1438,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">ZIP</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">image_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">image_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The single image file for this interface&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
@@ -1452,7 +1452,7 @@
         <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">relative_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">relative_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Where should the file be located?</span>
 
@@ -1465,7 +1465,7 @@
 
         <span class="k">return</span> <span class="n">path</span>
 
-    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">title</span>
         <span class="k">else</span><span class="p">:</span>
@@ -1473,7 +1473,7 @@
 
 <div class="viewcode-block" id="ComponentInterfaceValue.__init__">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterfaceValue.__init__">[docs]</a>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_value_orig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_image_orig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">[</span><span class="s2">&quot;image&quot;</span><span class="p">]</span>
@@ -1481,14 +1481,14 @@
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">model_to_dict</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="n">field</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">fields</span><span class="p">]</span>
         <span class="p">)</span>
 
 <div class="viewcode-block" id="ComponentInterfaceValue.save">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterfaceValue.save">[docs]</a>
-    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_value_orig</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">default_value</span><span class="p">)</span>
@@ -1514,7 +1514,7 @@
 
 <div class="viewcode-block" id="ComponentInterfaceValue.clean">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterfaceValue.clean">[docs]</a>
-    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
         <span class="n">attributes</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">attribute</span>
@@ -1539,7 +1539,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate_value</span><span class="p">()</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_validate_image_only</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_image_only</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;Image must be set&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">file</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1547,7 +1547,7 @@
                 <span class="sa">f</span><span class="s2">&quot;File (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="si">}</span><span class="s2">) or value should not be set for images&quot;</span>
             <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_validate_file_only</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_file_only</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_user_upload_validated</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;File must be set&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1555,7 +1555,7 @@
                 <span class="sa">f</span><span class="s2">&quot;Image (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="si">}</span><span class="s2">) or value must not be set for files&quot;</span>
             <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_validate_value_only</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_value_only</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># Do not check self.value here, it can be anything including None.</span>
         <span class="c1"># This is checked later with interface.validate_against_schema.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="p">:</span>
@@ -1563,7 +1563,7 @@
                 <span class="sa">f</span><span class="s2">&quot;Image (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="si">}</span><span class="s2">) or file (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="si">}</span><span class="s2">) must not be set for values&quot;</span>
             <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_validate_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_user_upload_validated</span><span class="p">:</span>
             <span class="k">return</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">saved_in_object_store</span><span class="p">:</span>
@@ -1579,14 +1579,14 @@
                     <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                         <span class="s2">&quot;The file was too large to process, &quot;</span>
                         <span class="s2">&quot;please try again with a smaller file&quot;</span>
-                    <span class="p">)</span> <span class="kn">from</span> <span class="nn">error</span>
+                    <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">error</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate_value_only</span><span class="p">()</span>
             <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">validate_against_schema</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">validate_user_upload</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_upload</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_user_upload</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_upload</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">user_upload</span><span class="o">.</span><span class="n">is_completed</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;User upload is not completed.&quot;</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
@@ -1612,34 +1612,34 @@
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="s2">&quot;The file was too large to process, &quot;</span>
                 <span class="s2">&quot;please try again with a smaller file&quot;</span>
-            <span class="p">)</span> <span class="kn">from</span> <span class="nn">error</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">error</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_user_upload_validated</span> <span class="o">=</span> <span class="kc">True</span>
 
-    <span class="k">def</span> <span class="nf">update_size_in_storage</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_size_in_storage</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">size_in_storage</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">size</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
-    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
         <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">,)</span></div>
 
 
 
 <div class="viewcode-block" id="ComponentJobManager">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentJobManager">[docs]</a>
-<span class="k">class</span> <span class="nc">ComponentJobManager</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">QuerySet</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ComponentJobManager</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">QuerySet</span><span class="p">):</span>
 <div class="viewcode-block" id="ComponentJobManager.with_duration">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentJobManager.with_duration">[docs]</a>
-    <span class="k">def</span> <span class="nf">with_duration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_duration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Annotate the queryset with the duration of completed jobs&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">duration</span><span class="o">=</span><span class="n">F</span><span class="p">(</span><span class="s2">&quot;completed_at&quot;</span><span class="p">)</span> <span class="o">-</span> <span class="n">F</span><span class="p">(</span><span class="s2">&quot;started_at&quot;</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="ComponentJobManager.average_duration">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentJobManager.average_duration">[docs]</a>
-    <span class="k">def</span> <span class="nf">average_duration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">average_duration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the average duration that completed jobs ran for&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">with_duration</span><span class="p">()</span>
@@ -1648,14 +1648,14 @@
         <span class="p">)</span></div>
 
 
-    <span class="k">def</span> <span class="nf">total_duration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">total_duration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">with_duration</span><span class="p">()</span>
             <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">duration</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
             <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="s2">&quot;duration&quot;</span><span class="p">))[</span><span class="s2">&quot;duration__sum&quot;</span><span class="p">]</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">active</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">active</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
             <span class="n">status__in</span><span class="o">=</span><span class="p">[</span>
                 <span class="n">ComponentJob</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">,</span>
@@ -1669,7 +1669,7 @@
 
 <div class="viewcode-block" id="ComponentJob">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentJob">[docs]</a>
-<span class="k">class</span> <span class="nc">ComponentJob</span><span class="p">(</span><span class="n">FieldChangeMixin</span><span class="p">,</span> <span class="n">UUIDModel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ComponentJob</span><span class="p">(</span><span class="n">FieldChangeMixin</span><span class="p">,</span> <span class="n">UUIDModel</span><span class="p">):</span>
     <span class="c1"># The job statuses come directly from celery.result.AsyncResult.status:</span>
     <span class="c1"># http://docs.celeryproject.org/en/latest/reference/celery.result.html</span>
     <span class="n">PENDING</span> <span class="o">=</span> <span class="mi">0</span>
@@ -1777,12 +1777,12 @@
     <span class="n">objects</span> <span class="o">=</span> <span class="n">ComponentJobManager</span><span class="o">.</span><span class="n">as_manager</span><span class="p">()</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">status_url</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">status_url</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
 <div class="viewcode-block" id="ComponentJob.save">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentJob.save">[docs]</a>
-    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">adding</span><span class="p">:</span>
@@ -1797,7 +1797,7 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></div>
 
 
-    <span class="k">def</span> <span class="nf">update_status</span><span class="p">(</span>  <span class="c1"># noqa: C901</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_status</span><span class="p">(</span>  <span class="c1"># noqa: C901</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">status</span><span class="p">:</span> <span class="n">STATUS_CHOICES</span><span class="p">,</span>
@@ -1855,7 +1855,7 @@
             <span class="n">on_commit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">execute_task_on_failure</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">executor_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">executor_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="s2">&quot;job_id&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">attempt</span><span class="si">:</span><span class="s2">02</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
             <span class="s2">&quot;exec_image_repo_tag&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="o">.</span><span class="n">shimmed_repo_tag</span><span class="p">,</span>
@@ -1864,12 +1864,12 @@
             <span class="s2">&quot;memory_limit&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">requires_memory_gb</span><span class="p">,</span>
         <span class="p">}</span>
 
-    <span class="k">def</span> <span class="nf">get_executor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">backend</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_executor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">backend</span><span class="p">):</span>
         <span class="n">Executor</span> <span class="o">=</span> <span class="n">import_string</span><span class="p">(</span><span class="n">backend</span><span class="p">)</span>  <span class="c1"># noqa: N806</span>
         <span class="k">return</span> <span class="n">Executor</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">executor_kwargs</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">container</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ComponentImage&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">container</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ComponentImage&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns the container object associated with this instance, which</span>
 <span class="sd">        should be a foreign key to an object that is a subclass of</span>
@@ -1878,16 +1878,16 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">output_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuerySet</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">output_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuerySet</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns an unevaluated QuerySet for the output interfaces&quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">inputs_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">inputs_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">signature_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">signature_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="s2">&quot;kwargs&quot;</span><span class="p">:</span> <span class="p">{</span>
                 <span class="s2">&quot;job_pk&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span>
@@ -1898,21 +1898,21 @@
             <span class="s2">&quot;immutable&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
         <span class="p">}</span>
 
-    <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">provision_job</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">signature_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">execute_task_on_success</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute_task_on_success</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">deprovision_job</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">signature_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_on_success</span><span class="p">:</span>
             <span class="n">signature</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">task_on_success</span><span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">execute_task_on_failure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute_task_on_failure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">deprovision_job</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">signature_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_on_failure</span><span class="p">:</span>
             <span class="n">signature</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">task_on_failure</span><span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">()</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">animate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">animate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="p">{</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">STARTED</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">PROVISIONING</span><span class="p">,</span>
@@ -1925,7 +1925,7 @@
         <span class="p">}</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">finished</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">finished</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="p">{</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">FAILURE</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">,</span>
@@ -1933,7 +1933,7 @@
         <span class="p">}</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">status_context</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">status_context</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stderr</span><span class="p">:</span>
                 <span class="k">return</span> <span class="s2">&quot;warning&quot;</span>
@@ -1958,7 +1958,7 @@
             <span class="k">return</span> <span class="s2">&quot;secondary&quot;</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">runtime_metrics_chart</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">runtime_metrics_chart</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">instance_metrics</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime_metrics</span><span class="p">[</span><span class="s2">&quot;instance&quot;</span><span class="p">]</span>
         <span class="n">cpu_limit</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">*</span> <span class="n">instance_metrics</span><span class="p">[</span><span class="s2">&quot;cpu&quot;</span><span class="p">]</span>
 
@@ -1994,12 +1994,12 @@
             <span class="p">],</span>
         <span class="p">)</span>
 
-    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
         <span class="n">abstract</span> <span class="o">=</span> <span class="kc">True</span></div>
 
 
 
-<span class="k">def</span> <span class="nf">docker_image_path</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">docker_image_path</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
     <span class="k">return</span> <span class="p">(</span>
         <span class="sa">f</span><span class="s2">&quot;docker/&quot;</span>
         <span class="sa">f</span><span class="s2">&quot;images/&quot;</span>
@@ -2012,7 +2012,7 @@
 
 <div class="viewcode-block" id="ImportStatusChoices">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ImportStatusChoices">[docs]</a>
-<span class="k">class</span> <span class="nc">ImportStatusChoices</span><span class="p">(</span><span class="n">IntegerChoices</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ImportStatusChoices</span><span class="p">(</span><span class="n">IntegerChoices</span><span class="p">):</span>
     <span class="n">INITIALIZED</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Initialized&quot;</span>
     <span class="n">QUEUED</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Queued&quot;</span>
     <span class="n">RETRY</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;Re-Queued&quot;</span>
@@ -2023,17 +2023,17 @@
 
 
 
-<span class="k">class</span> <span class="nc">ComponentImageManager</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Manager</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">executable_images</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ComponentImageManager</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Manager</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">executable_images</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_manifest_valid</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_in_registry</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">active_images</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">active_images</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">executable_images</span><span class="p">()</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_desired_version</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="ComponentImage">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentImage">[docs]</a>
-<span class="k">class</span> <span class="nc">ComponentImage</span><span class="p">(</span><span class="n">FieldChangeMixin</span><span class="p">,</span> <span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ComponentImage</span><span class="p">(</span><span class="n">FieldChangeMixin</span><span class="p">,</span> <span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
     <span class="n">SHIM_IMAGE</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="n">ImportStatusChoices</span> <span class="o">=</span> <span class="n">ImportStatusChoices</span>
@@ -2113,14 +2113,14 @@
     <span class="p">)</span>
     <span class="n">is_desired_version</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">import_status_url</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">import_status_url</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
-    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">out</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">verbose_name</span><span class="o">.</span><span class="n">title</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pk_display</span><span class="si">}</span><span class="s2"> (SHA256: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sha256_display</span><span class="si">}</span><span class="s2">&quot;</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">comment</span><span class="p">:</span>
@@ -2131,7 +2131,7 @@
         <span class="k">return</span> <span class="n">out</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">can_execute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">can_execute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">executable_images</span><span class="p">()</span>
             <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
@@ -2139,21 +2139,21 @@
         <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">linked_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">linked_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">sha256_display</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sha256_display</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_sha256</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_sha256</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">][:</span><span class="mi">8</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">&quot;Unknown&quot;</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">pk_display</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pk_display</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">clear_can_execute_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear_can_execute_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">can_execute</span>
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
@@ -2161,7 +2161,7 @@
 
 <div class="viewcode-block" id="ComponentImage.save">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentImage.save">[docs]</a>
-    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">image_needs_validation</span> <span class="o">=</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="o">==</span> <span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">INITIALIZED</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_manifest_valid</span> <span class="ow">is</span> <span class="kc">None</span>
@@ -2197,7 +2197,7 @@
             <span class="p">)</span></div>
 
 
-    <span class="k">def</span> <span class="nf">assign_docker_image_from_upload</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">assign_docker_image_from_upload</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">on_commit</span><span class="p">(</span>
             <span class="n">assign_docker_image_from_upload</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
                 <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
@@ -2208,11 +2208,11 @@
             <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">get_peer_images</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_peer_images</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
     <span class="nd">@transaction</span><span class="o">.</span><span class="n">atomic</span>
-    <span class="k">def</span> <span class="nf">mark_desired_version</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mark_desired_version</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">clear_can_execute_cache</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_manifest_valid</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">can_execute</span><span class="p">:</span>
             <span class="n">images</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_peer_images</span><span class="p">()</span>
@@ -2231,7 +2231,7 @@
             <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">original_repo_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">original_repo_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The tag of this image in the container repository&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">settings</span><span class="o">.</span><span class="n">COMPONENTS_REGISTRY_URL</span><span class="si">}</span><span class="s2">/&quot;</span>
@@ -2240,18 +2240,18 @@
         <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">shimmed_repo_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">shimmed_repo_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">original_repo_tag</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">latest_shimmed_version</span><span class="si">}</span><span class="s2">&quot;</span>
 
-    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
         <span class="n">abstract</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">animate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">animate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">STARTED</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">finished</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">finished</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="ow">in</span> <span class="p">{</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">FAILED</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">COMPLETED</span><span class="p">,</span>
@@ -2259,7 +2259,7 @@
         <span class="p">}</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">import_status_context</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">import_status_context</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">COMPLETED</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">&quot;success&quot;</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="ow">in</span> <span class="p">{</span>
@@ -2277,7 +2277,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">&quot;secondary&quot;</span>
 
-    <span class="k">def</span> <span class="nf">calculate_size_in_registry</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_size_in_registry</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_in_registry</span><span class="p">:</span>
             <span class="n">command</span> <span class="o">=</span> <span class="n">_repo_login_and_run</span><span class="p">(</span>
                 <span class="n">command</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;crane&quot;</span><span class="p">,</span> <span class="s2">&quot;manifest&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">original_repo_tag</span><span class="p">]</span>
@@ -2290,7 +2290,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="mi">0</span>
 
-    <span class="k">def</span> <span class="nf">update_size_in_storage</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_size_in_storage</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">size_in_storage</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">size_in_registry</span> <span class="o">=</span> <span class="mi">0</span>
@@ -2300,37 +2300,37 @@
 
 
 
-<span class="k">class</span> <span class="nc">CIVData</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CIVData</span><span class="p">:</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">interface_slug</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">interface_slug</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interface_slug</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_json_value</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">image</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">image</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_image</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">upload_session</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">upload_session</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_upload_session</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">user_upload</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">user_upload</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_user_upload</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">user_upload_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">user_upload_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_user_upload_queryset</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">file_civ</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">file_civ</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_file_civ</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">interface_slug</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">interface_slug</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_interface_slug</span> <span class="o">=</span> <span class="n">interface_slug</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span> <span class="o">=</span> <span class="n">value</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_json_value</span> <span class="o">=</span> <span class="kc">None</span>
@@ -2351,7 +2351,7 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">_init_json_civ_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_init_json_civ_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span><span class="p">,</span>
             <span class="p">(</span><span class="nb">str</span> <span class="o">|</span> <span class="nb">bool</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">dict</span> <span class="o">|</span> <span class="nb">list</span> <span class="o">|</span> <span class="kc">None</span><span class="p">),</span>
@@ -2362,7 +2362,7 @@
                 <span class="sa">f</span><span class="s2">&quot;Unknown data type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span><span class="p">)</span><span class="si">}</span><span class="s2"> for interface </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_interface_slug</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_init_image_civ_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_init_image_civ_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span><span class="p">,</span> <span class="n">QuerySet</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_user_upload_queryset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span><span class="p">,</span> <span class="n">RawImageUploadSession</span><span class="p">):</span>
@@ -2376,7 +2376,7 @@
                 <span class="sa">f</span><span class="s2">&quot;Unknown data type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span><span class="p">)</span><span class="si">}</span><span class="s2"> for interface </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_interface_slug</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_init_file_civ_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_init_file_civ_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span><span class="p">,</span> <span class="n">UserUpload</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_user_upload</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span><span class="p">,</span> <span class="n">ComponentInterfaceValue</span><span class="p">):</span>
@@ -2388,7 +2388,7 @@
                 <span class="sa">f</span><span class="s2">&quot;Unknown data type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span><span class="p">)</span><span class="si">}</span><span class="s2"> for interface </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_interface_slug</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">unique_properties</span> <span class="o">=</span> <span class="p">[</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">,</span>
@@ -2408,8 +2408,8 @@
             <span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">CIVSetStringRepresentationMixin</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CIVSetStringRepresentationMixin</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">result</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">)]</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="p">:</span>
@@ -2419,7 +2419,7 @@
         <span class="k">return</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">__content_str</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__content_str</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">civs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
         <span class="n">nr</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">civs</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">nr</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -2432,41 +2432,41 @@
         <span class="k">return</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">CIVSetObjectPermissionsMixin</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CIVSetObjectPermissionsMixin</span><span class="p">:</span>
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">view_perm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">view_perm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;view_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">change_perm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">change_perm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;change_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">delete_perm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">delete_perm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;delete_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span>
 
-    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assign_permissions</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
 
-<span class="k">class</span> <span class="nc">CIVForObjectMixin</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CIVForObjectMixin</span><span class="p">:</span>
 
-    <span class="k">def</span> <span class="nf">add_civ</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">civ</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_civ</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">civ</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_editable</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">CIVNotEditableException</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> is not editable.&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">remove_civ</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">civ</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">remove_civ</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">civ</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_editable</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">CIVNotEditableException</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> is not editable.&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">validate_values_and_execute_linked_task</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_values_and_execute_linked_task</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">linked_task</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">):</span>
         <span class="k">for</span> <span class="n">civ_data</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
@@ -2476,7 +2476,7 @@
                 <span class="n">linked_task</span><span class="o">=</span><span class="n">linked_task</span><span class="p">,</span>
             <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">create_civ</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">civ_data</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">linked_task</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_civ</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">civ_data</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">linked_task</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_editable</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">CIVNotEditableException</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> is not editable. CIVs cannot be added or removed from it.&quot;</span><span class="p">,</span>
@@ -2516,7 +2516,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CIV creation for </span><span class="si">{</span><span class="n">ci</span><span class="si">}</span><span class="s2"> not handled.&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">create_civ_for_value</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_civ_for_value</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">ci</span><span class="p">,</span> <span class="n">current_civ</span><span class="p">,</span> <span class="n">new_value</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">linked_task</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">):</span>
         <span class="n">current_value</span> <span class="o">=</span> <span class="n">current_civ</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="n">current_civ</span> <span class="k">else</span> <span class="kc">None</span>
@@ -2552,7 +2552,7 @@
             <span class="k">if</span> <span class="n">linked_task</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">on_commit</span><span class="p">(</span><span class="n">signature</span><span class="p">(</span><span class="n">linked_task</span><span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">create_civ_for_image</span><span class="p">(</span>  <span class="c1"># noqa: C901</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_civ_for_image</span><span class="p">(</span>  <span class="c1"># noqa: C901</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">ci</span><span class="p">,</span>
@@ -2590,7 +2590,7 @@
 
         <span class="k">elif</span> <span class="n">upload_session</span> <span class="ow">or</span> <span class="n">user_upload_queryset</span><span class="p">:</span>
             <span class="c1"># Local import to avoid circular dependency</span>
-            <span class="kn">from</span> <span class="nn">grandchallenge.components.tasks</span> <span class="kn">import</span> <span class="n">add_image_to_object</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.tasks</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_image_to_object</span>
 
             <span class="k">if</span> <span class="n">user_upload_queryset</span><span class="p">:</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">user</span><span class="p">:</span>
@@ -2620,7 +2620,7 @@
                 <span class="p">),</span>
             <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">create_civ_for_file</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_civ_for_file</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">ci</span><span class="p">,</span>
@@ -2637,7 +2637,7 @@
                 <span class="n">on_commit</span><span class="p">(</span><span class="n">signature</span><span class="p">(</span><span class="n">linked_task</span><span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">)</span>
 
         <span class="k">elif</span> <span class="n">user_upload</span><span class="p">:</span>
-            <span class="kn">from</span> <span class="nn">grandchallenge.components.tasks</span> <span class="kn">import</span> <span class="n">add_file_to_object</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.tasks</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_file_to_object</span>
 
             <span class="n">custom_queue</span> <span class="o">=</span> <span class="n">INTERFACE_KIND_TO_CUSTOM_QUEUE</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ci</span><span class="o">.</span><span class="n">kind</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
             <span class="n">task_queue_kwarg</span> <span class="o">=</span> <span class="p">{}</span>
@@ -2663,10 +2663,10 @@
             <span class="c1"># delete old CIV</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">remove_civ</span><span class="p">(</span><span class="n">civ</span><span class="o">=</span><span class="n">current_civ</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">get_civ_for_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_civ_for_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
-    <span class="k">def</span> <span class="nf">get_current_value_for_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">interface</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_current_value_for_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">interface</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_civ_for_interface</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">interface</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">ObjectDoesNotExist</span><span class="p">:</span>
@@ -2680,11 +2680,11 @@
             <span class="p">)</span>
             <span class="k">raise</span> <span class="n">e</span>
 
-    <span class="k">def</span> <span class="nf">get_error_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">linked_object</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_error_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">linked_object</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="c1"># local imports to prevent circular dependency</span>
-        <span class="kn">from</span> <span class="nn">grandchallenge.algorithms.models</span> <span class="kn">import</span> <span class="n">Job</span>
-        <span class="kn">from</span> <span class="nn">grandchallenge.archives.models</span> <span class="kn">import</span> <span class="n">ArchiveItem</span>
-        <span class="kn">from</span> <span class="nn">grandchallenge.reader_studies.models</span> <span class="kn">import</span> <span class="n">DisplaySet</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.algorithms.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Job</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.archives.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArchiveItem</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.reader_studies.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">DisplaySet</span>
 
         <span class="k">if</span> <span class="n">linked_object</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">linked_object</span><span class="p">,</span> <span class="n">RawImageUploadSession</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">RawImageUploadSessionErrorHandler</span><span class="p">(</span>
@@ -2705,20 +2705,20 @@
 
 <div class="viewcode-block" id="InterfacesAndValues">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfacesAndValues">[docs]</a>
-<span class="k">class</span> <span class="nc">InterfacesAndValues</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">InterfacesAndValues</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
     <span class="n">interfaces</span><span class="p">:</span> <span class="nb">set</span>
     <span class="n">values</span><span class="p">:</span> <span class="nb">dict</span></div>
 
 
 
-<span class="k">class</span> <span class="nc">ValuesForInterfacesMixin</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ValuesForInterfacesMixin</span><span class="p">:</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">civ_sets_related_manager</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">civ_sets_related_manager</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">interfaces_and_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">interfaces_and_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">vals</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">civ_sets_related_manager</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span>
                 <span class="s2">&quot;values&quot;</span><span class="p">,</span> <span class="s2">&quot;values__interface&quot;</span><span class="p">,</span> <span class="s2">&quot;values__image&quot;</span>
@@ -2735,7 +2735,7 @@
         <span class="k">return</span> <span class="n">InterfacesAndValues</span><span class="p">(</span><span class="n">interfaces</span><span class="o">=</span><span class="nb">set</span><span class="p">(</span><span class="n">interfaces</span><span class="p">),</span> <span class="n">values</span><span class="o">=</span><span class="n">vals</span><span class="p">)</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">values_for_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">values_for_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">interfaces_and_values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interfaces_and_values</span>
         <span class="n">values_for_interfaces</span> <span class="o">=</span> <span class="p">{</span>
             <span class="n">interface</span><span class="p">:</span> <span class="p">[</span>
@@ -2748,7 +2748,7 @@
         <span class="k">return</span> <span class="n">values_for_interfaces</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">linked_component_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">linked_component_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
             <span class="n">pk__in</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">civ_sets_related_manager</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
                 <span class="n">values__isnull</span><span class="o">=</span><span class="kc">True</span>
@@ -2758,7 +2758,7 @@
 
 <div class="viewcode-block" id="Tarball">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.Tarball">[docs]</a>
-<span class="k">class</span> <span class="nc">Tarball</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Tarball</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
     <span class="n">ImportStatusChoices</span> <span class="o">=</span> <span class="n">ImportStatusChoices</span>
 
     <span class="n">creator</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
@@ -2790,12 +2790,12 @@
     <span class="p">)</span>
     <span class="n">is_desired_version</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
-    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
         <span class="n">abstract</span> <span class="o">=</span> <span class="kc">True</span>
 
 <div class="viewcode-block" id="Tarball.save">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.Tarball.save">[docs]</a>
-    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -2804,25 +2804,25 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">assign_permissions</span><span class="p">()</span></div>
 
 
-    <span class="k">def</span> <span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
-    <span class="k">def</span> <span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">import_status_url</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
-
-    <span class="k">def</span> <span class="nf">get_peer_tarballs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">linked_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">import_status_url</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_peer_tarballs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">linked_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
     <span class="nd">@transaction</span><span class="o">.</span><span class="n">atomic</span>
-    <span class="k">def</span> <span class="nf">mark_desired_version</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">peer_tarballs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mark_desired_version</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">peer_tarballs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">peer_tarballs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">peer_tarballs</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_peer_tarballs</span><span class="p">())</span>
         <span class="k">for</span> <span class="n">tb</span> <span class="ow">in</span> <span class="n">peer_tarballs</span><span class="p">:</span>
             <span class="n">tb</span><span class="o">.</span><span class="n">is_desired_version</span> <span class="o">=</span> <span class="kc">False</span>
@@ -2833,7 +2833,7 @@
         <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">import_status_context</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">import_status_context</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="o">==</span> <span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">COMPLETED</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">&quot;success&quot;</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="ow">in</span> <span class="p">{</span>
@@ -2845,11 +2845,11 @@
             <span class="k">return</span> <span class="s2">&quot;info&quot;</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">animate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">animate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="o">==</span> <span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">INITIALIZED</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">finished</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">finished</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="ow">in</span> <span class="p">{</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">FAILED</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">COMPLETED</span><span class="p">,</span>
