@@ -55,7 +55,7 @@ from grandchallenge.core.utils.markdown import BS4Treeprocessor
                 </tr>
                 </tbody>
                 </table>
-                <div class="codehilite"><pre><span></span><code class="codehilite"><span class="k">def</span> <span class="nf">test_function</span><span class="p">():</span>
+                <div class="codehilite"><pre><span></span><code class="codehilite"><span class="k">def</span><span class="w"> </span><span class="nf">test_function</span><span class="p">():</span>
                     <span class="k">pass</span>
                 </code></pre></div>"""
             ),
@@ -178,7 +178,7 @@ from grandchallenge.core.utils.markdown import BS4Treeprocessor
                 </tbody>
                 </table>
 
-                <div class="codehilite"><pre><span></span><code class="codehilite"><span class="k">def</span> <span class="nf">test_function</span><span class="p">():</span>
+                <div class="codehilite"><pre><span></span><code class="codehilite"><span class="k">def</span><span class="w"> </span><span class="nf">test_function</span><span class="p">():</span>
                     <span class="k">pass</span>
                 </code></pre></div>
 
