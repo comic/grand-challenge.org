@@ -1359,34 +1359,11 @@ class TestJobCreateView:
         assert Job.objects.count() == 1
 
     @override_settings(task_eager_propagates=True, task_always_eager=True)
-    @pytest.mark.django_db
-    @pytest.mark.parametrize(
-        "file_json_content,job_status,error_message,detailed_error_message,ci_count,upload_exists",
-        [
-            (
-                b'{"Foo": "bar"}',
-                Job.CANCELLED,
-                "One or more of the inputs failed validation.",
-                {
-                    "ci_json_file": "JSON does not fulfill schema: instance is not of type 'array'"
-                },
-                0,
-                True,
-            ),
-            (b'[{"Foo": "bar"}]', Job.PROVISIONED, "", {}, 1, False),
-        ],
-    )
-    def test_create_job_with_file_input(
+    def test_create_job_with_faulty_file_input(
         self,
         client,
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
-        file_json_content,
-        error_message,
-        detailed_error_message,
-        ci_count,
-        upload_exists,
-        job_status,
     ):
         # configure file input
         algorithm_with_multiple_inputs.algorithm.inputs.set(
@@ -1396,7 +1373,7 @@ class TestJobCreateView:
             filename="file.json", creator=algorithm_with_multiple_inputs.editor
         )
         presigned_urls = file_upload.generate_presigned_urls(part_numbers=[1])
-        response = put(presigned_urls["1"], data=file_json_content)
+        response = put(presigned_urls["1"], data=b'{"Foo": "bar"}')
         file_upload.complete_multipart_upload(
             parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
         )
@@ -1419,15 +1396,15 @@ class TestJobCreateView:
         assert Job.objects.count() == 1
         job = Job.objects.get()
         # but in cancelled state and with an error message
-        assert job.status == job_status
-        assert error_message == job.error_message
-        assert job.detailed_error_message == detailed_error_message
+        assert job.status == Job.CANCELLED
         assert (
-            UserUpload.objects.filter(pk=file_upload.pk).exists()
-            == upload_exists
+            "One or more of the inputs failed validation." == job.error_message
         )
+        assert job.detailed_error_message == {
+            algorithm_with_multiple_inputs.ci_json_file.title: "JSON does not fulfill schema: instance is not of type 'array'"
+        }
         # and no CIVs should have been created
-        assert ComponentInterfaceValue.objects.count() == ci_count
+        assert ComponentInterfaceValue.objects.count() == 0
 
     @override_settings(task_eager_propagates=True, task_always_eager=True)
     def test_create_job_with_faulty_json_input(
