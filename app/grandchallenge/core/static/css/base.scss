@@ -50,3 +50,7 @@ blockquote {
     border-left: $spacer * .25 solid $primary;
     color: $primary;
 }
+
+div.codehilite {
+    margin-bottom: $paragraph-margin-bottom;
+}
