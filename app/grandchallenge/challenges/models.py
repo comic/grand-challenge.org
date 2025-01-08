@@ -387,7 +387,11 @@ class Challenge(ChallengeBase, FieldChangeMixin):
                 schema={
                     "$schema": "http://json-schema.org/draft-07/schema",
                     "type": "array",
-                    "items": {"type": "integer"},
+                    "items": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 100,
+                    },
                     "uniqueItems": True,
                 }
             )
