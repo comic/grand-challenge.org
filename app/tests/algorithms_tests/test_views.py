@@ -26,6 +26,7 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
@@ -969,6 +970,7 @@ def test_create_job_with_json_file(
             file.name.split("/")[-1]
             in Job.objects.get().inputs.first().file.name
         )
+        assert not UserUpload.objects.filter(pk=upload.pk).exists()
 
 
 @pytest.mark.django_db
@@ -1195,6 +1197,10 @@ class TestJobCreateView:
         )
         assert job.time_limit == 600
         assert job.inputs.count() == 6
+
+        assert not UserUpload.objects.filter(
+            pk=algorithm_with_multiple_inputs.file_upload.pk
+        ).exists()
 
         assert sorted(
             [
