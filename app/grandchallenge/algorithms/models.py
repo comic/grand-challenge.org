@@ -50,7 +50,6 @@ from grandchallenge.core.storage import (
     public_s3_storage,
 )
 from grandchallenge.core.templatetags.bleach import md2html
-from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
     process_access_request,
@@ -106,9 +105,6 @@ class AlgorithmInterface(UUIDModel):
     )
 
     objects = AlgorithmInterfaceManager()
-
-    def __str__(self):
-        return f"Inputs: {oxford_comma(self.inputs.all())} \n Outputs: {oxford_comma(self.outputs.all())}"
 
     def delete(self, *args, **kwargs):
         raise ValidationError("AlgorithmInterfaces cannot be deleted.")

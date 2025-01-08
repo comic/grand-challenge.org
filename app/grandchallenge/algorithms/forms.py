@@ -1477,8 +1477,8 @@ class JobInterfaceSelectForm(SaveFormInitMixin, Form):
             (
                 interface.pk,
                 format_html(
-                    "<div>Inputs: {inputs}</div>"
-                    "<div class='mb-3'>Outputs: {outputs}</div>",
+                    "<div><b>Inputs</b>: {inputs}</div>"
+                    "<div class='mb-3'><b>Outputs</b>: {outputs}</div>",
                     inputs=oxford_comma(interface.inputs.all()),
                     outputs=oxford_comma(interface.outputs.all()),
                 ),
