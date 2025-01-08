@@ -222,6 +222,9 @@ class VerificationUserSetUser(models.Model):
     user_set = models.ForeignKey(VerificationUserSet, on_delete=models.CASCADE)
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
 
+    class Meta:
+        unique_together = (("user_set", "user"),)
+
 
 def clean_email(*, email):
     """

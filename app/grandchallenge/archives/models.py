@@ -453,3 +453,6 @@ class OptionalHangingProtocolArchive(models.Model):
     hanging_protocol = models.ForeignKey(
         "hanging_protocols.HangingProtocol", on_delete=models.CASCADE
     )
+
+    class Meta:
+        unique_together = (("archive", "hanging_protocol"),)
