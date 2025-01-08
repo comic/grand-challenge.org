@@ -210,6 +210,47 @@ def test_challenge_budget_alert_email(settings):
 
 
 @pytest.mark.django_db
+def test_challenge_budget_alert_two_thresholds_one_email(settings):
+    challenge = ChallengeFactory(short_name="test")
+    assert challenge.percent_budget_consumed_warning_thresholds == [
+        70,
+        90,
+        100,
+    ]
+    challenge_admin = UserFactory()
+    challenge.add_admin(challenge_admin)
+    staff_user = UserFactory(is_staff=True)
+    settings.MANAGERS = [(staff_user.last_name, staff_user.email)]
+    InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=10,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.PAID,
+    )
+    phase = PhaseFactory(challenge=challenge)
+    EvaluationFactory(
+        submission__phase=phase,
+        compute_cost_euro_millicents=950000,
+        time_limit=60,
+    )
+    update_compute_costs_and_storage_size()
+
+    # Two budget alert thresholds exceeded, alert only sent for last one.
+    assert len(mail.outbox) == 3
+    recipients = [r for m in mail.outbox for r in m.to]
+    assert recipients == [
+        challenge.creator.email,
+        challenge_admin.email,
+        staff_user.email,
+    ]
+    assert (
+        mail.outbox[0].subject
+        == "[testserver] [test] over 90% Budget Consumed Alert"
+    )
+
+
+@pytest.mark.django_db
 def test_challenge_budget_alert_no_budget():
     challenge = ChallengeFactory()
     phase = PhaseFactory(challenge=challenge)
