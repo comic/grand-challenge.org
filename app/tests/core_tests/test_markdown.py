@@ -213,6 +213,11 @@ def test_markdown_rendering(markdown_with_html, expected_output):
             "> Content",
             '<blockquote class="blockquote">\n<p>Content</p>\n</blockquote>',
         ),
+        (  # Mixed content
+            "> Markdown Content\n"
+            "<blockquote class=>HTML Content</blockquote>",
+            '<blockquote class="blockquote">\n<p>Markdown Content</p>\n</blockquote>\n<blockquote class="blockquote">HTML Content</blockquote>',
+        ),
         (  # Empty class
             '<blockquote class="">Content</blockquote>',
             '<blockquote class="blockquote">Content</blockquote>',
