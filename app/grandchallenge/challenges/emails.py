@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
+from django.core.mail import mail_managers
 from django.template.loader import render_to_string
 from django.utils.html import format_html
 
@@ -90,4 +91,34 @@ def send_challenge_status_update_email(challengerequest, challenge=None):
         markdown_message=message,
         recipients=[challengerequest.creator],
         subscription_type=EmailSubscriptionTypes.SYSTEM,
+    )
+
+
+def send_email_percent_budget_consumed_alert(challenge, percent_threshold):
+    subject = format_html(
+        "[{challenge_name}] over {percent_threshold}% Budget Consumed Alert",
+        challenge_name=challenge.short_name,
+        percent_threshold=percent_threshold,
+    )
+    message = format_html(
+        "We would like to inform you that more than {percent_threshold}% of the "
+        "compute budget for the {challenge_name} challenge has been used. "
+        "You can find an overview of the costs [here]({statistics_url}).",
+        challenge_name=challenge.short_name,
+        percent_threshold=percent_threshold,
+        statistics_url=reverse(
+            "pages:statistics",
+            kwargs={"challenge_short_name": challenge.short_name},
+        ),
+    )
+    send_standard_email_batch(
+        site=Site.objects.get_current(),
+        subject=subject,
+        markdown_message=message,
+        recipients=[*challenge.get_admins()],
+        subscription_type=EmailSubscriptionTypes.SYSTEM,
+    )
+    mail_managers(
+        subject=subject,
+        message=message,
     )
