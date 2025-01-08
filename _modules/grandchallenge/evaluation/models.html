@@ -2014,6 +2014,9 @@
         <span class="n">CombinedLeaderboard</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span>
     <span class="p">)</span>
 
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">unique_together</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;phase&quot;</span><span class="p">,</span> <span class="s2">&quot;combined_leaderboard&quot;</span><span class="p">),)</span>
+
 
 <span class="k">class</span><span class="w"> </span><span class="nc">OptionalHangingProtocolPhase</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
     <span class="c1"># Through table for optional hanging protocols</span>
@@ -2022,6 +2025,9 @@
     <span class="n">hanging_protocol</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="s2">&quot;hanging_protocols.HangingProtocol&quot;</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span>
     <span class="p">)</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">unique_together</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;phase&quot;</span><span class="p">,</span> <span class="s2">&quot;hanging_protocol&quot;</span><span class="p">),)</span>
 </pre></div>
 
             <div class="clearer"></div>

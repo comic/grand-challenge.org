@@ -876,7 +876,10 @@
     <span class="n">reader_study</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">ReaderStudy</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
     <span class="n">workstation_session</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="s2">&quot;workstations.Session&quot;</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span>
-    <span class="p">)</span></div>
+    <span class="p">)</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">unique_together</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;reader_study&quot;</span><span class="p">,</span> <span class="s2">&quot;workstation_session&quot;</span><span class="p">),)</span></div>
 
 
 
@@ -2151,7 +2154,10 @@
     <span class="n">reader_study</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">ReaderStudy</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
     <span class="n">hanging_protocol</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="s2">&quot;hanging_protocols.HangingProtocol&quot;</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span>
-    <span class="p">)</span></div>
+    <span class="p">)</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">unique_together</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;reader_study&quot;</span><span class="p">,</span> <span class="s2">&quot;hanging_protocol&quot;</span><span class="p">),)</span></div>
 
 </pre></div>
 
