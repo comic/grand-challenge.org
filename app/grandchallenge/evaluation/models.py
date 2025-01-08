@@ -1964,6 +1964,9 @@ class CombinedLeaderboardPhase(models.Model):
         CombinedLeaderboard, on_delete=models.CASCADE
     )
 
+    class Meta:
+        unique_together = (("phase", "combined_leaderboard"),)
+
 
 class OptionalHangingProtocolPhase(models.Model):
     # Through table for optional hanging protocols
@@ -1972,3 +1975,6 @@ class OptionalHangingProtocolPhase(models.Model):
     hanging_protocol = models.ForeignKey(
         "hanging_protocols.HangingProtocol", on_delete=models.CASCADE
     )
+
+    class Meta:
+        unique_together = (("phase", "hanging_protocol"),)
