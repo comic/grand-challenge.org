@@ -88,7 +88,6 @@ class ChallengeRequestAdmin(ModelAdmin):
         "created",
         "status",
         "total_cost",
-        "budget_for_hosting_challenge",
     )
     actions = ["create_challenge", "send_status_update_email"]
     list_filter = ["status"]

@@ -186,50 +186,12 @@ class ChallengeRequestForm(forms.ModelForm):
             "algorithm_outputs",
             *phase_1_items,
             *phase_2_items,
-            "budget_for_hosting_challenge",
             "challenge_fee_agreement",
             "comments",
         )
         widgets = {
             "start_date": forms.TextInput(attrs={"type": "date"}),
             "end_date": forms.TextInput(attrs={"type": "date"}),
-            "long_term_commitment": forms.CheckboxInput(
-                attrs={
-                    "onchange": "updateExtraField('long_term_commitment', 'support this challenge long-term');"
-                }
-            ),
-            "data_license": forms.CheckboxInput(
-                attrs={
-                    "onchange": "updateExtraField('data_license', 'use a CC-BY license for your data');"
-                }
-            ),
-            "expected_number_of_teams": forms.NumberInput(
-                attrs={"oninput": "validity.valid||(value='');"}
-            ),
-            "number_of_tasks": forms.NumberInput(
-                attrs={"oninput": "validity.valid||(value='');"}
-            ),
-            "average_size_of_test_image_in_mb": forms.NumberInput(
-                attrs={"oninput": "validity.valid||(value='');"}
-            ),
-            "inference_time_limit_in_minutes": forms.NumberInput(
-                attrs={"oninput": "validity.valid||(value='');"}
-            ),
-            "phase_1_number_of_submissions_per_team": forms.NumberInput(
-                attrs={"oninput": "validity.valid||(value='');"}
-            ),
-            "phase_2_number_of_submissions_per_team": forms.NumberInput(
-                attrs={"oninput": "validity.valid||(value='');"}
-            ),
-            "phase_1_number_of_test_images": forms.NumberInput(
-                attrs={"oninput": "validity.valid||(value='');"}
-            ),
-            "phase_2_number_of_test_images": forms.NumberInput(
-                attrs={"oninput": "validity.valid||(value='');"}
-            ),
-            "budget_for_hosting_challenge": forms.NumberInput(
-                attrs={"oninput": "validity.valid||(value='');"}
-            ),
         }
         labels = {
             "short_name": "Acronym",
@@ -237,7 +199,6 @@ class ChallengeRequestForm(forms.ModelForm):
             "data_license": "We agree to publish the data set for this challenge under a CC-BY license.",
             "phase_1_number_of_submissions_per_team": "Expected number of submissions per team to Phase 1",
             "phase_2_number_of_submissions_per_team": "Expected number of submissions per team to Phase 2",
-            "budget_for_hosting_challenge": "Budget for hosting challenge in Euros",
             "inference_time_limit_in_minutes": "Average algorithm job run time in minutes",
             "algorithm_maximum_settable_memory_gb": "Maximum memory for algorithm jobs in GB",
             "structured_challenge_submission_doi": "DOI",
@@ -491,7 +452,6 @@ class ChallengeRequestForm(forms.ModelForm):
                     *phase_2_items,
                     css_class="border rounded px-4 pt-4 my-5",
                 ),
-                "budget_for_hosting_challenge",
                 "challenge_fee_agreement",
                 "comments",
             ),

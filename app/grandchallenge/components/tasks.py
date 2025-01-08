@@ -1288,6 +1288,7 @@ def add_file_to_object(
         civ.full_clean()
         civ.save()
         user_upload.copy_object(to_field=civ.file)
+        user_upload.delete()
     except ValidationError as e:
         error_handler.handle_error(
             interface=interface,

@@ -14,7 +14,6 @@ $(document).ready(() => {
         // The column index of the default sort, must match the table set up.
         order: [[0, "asc"]],
         lengthChange: false,
-        pageLength: 50,
         serverSide: true,
         ajax: {
             url: ".",
@@ -24,11 +23,7 @@ $(document).ready(() => {
             },
         },
         columnDefs: [
-            {
-                targets: "nonSortable",
-                searchable: false,
-                orderable: false,
-            },
+            ...$.fn.dataTable.defaults.columnDefs,
             {
                 targets: "toggleable",
                 visible: false,
@@ -37,7 +32,7 @@ $(document).ready(() => {
         ],
         ordering: true,
         autoWidth: false,
-        dom: getDataTablesDOMTemplate(),
+        layout: getDatatableLayout(),
         buttons: getDataTablesButtons(),
     });
 
@@ -61,31 +56,39 @@ $(document).ready(() => {
             }
         });
     }
-
-    if (displayLeaderboardDateButton === true) {
-        document.getElementById("compare-buttons-group").innerHTML += `
-            <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#leaderboardDateModal"
-                    title="Leaderboard history">
-                <i class="fas fa-history"></i>
-            </button>
-        `;
-    }
 });
 
-function getDataTablesDOMTemplate() {
-    let DOM = "<'row'<'col-12'f>>";
+function getDatatableLayout() {
+    const dateButton = $(`
+        <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#leaderboardDateModal"
+                title="Leaderboard history">
+            <i class="fas fa-history"></i>
+        </button>
+    `);
 
-    if (
-        allowMetricsToggling === true ||
-        displayLeaderboardDateButton === true
-    ) {
-        DOM +=
-            "<'row'<'#compare-buttons-group.col-md-6'><'col px-0 text-right'B>>";
+    if (displayLeaderboardDateButton) {
+        if (!allowMetricsToggling) {
+            return {
+                topEnd: "search",
+                topStart: dateButton,
+            };
+        }
+        return {
+            top1End: "search",
+            topStart: dateButton,
+            topEnd: "buttons",
+        };
     }
 
-    DOM +=
-        "<'row'<'col-12'tr>><'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>";
-    return DOM;
+    if (!allowMetricsToggling) {
+        return {
+            topEnd: "search",
+        };
+    }
+    return {
+        top1End: "search",
+        topEnd: "buttons",
+    };
 }
 
 function getDataTablesButtons() {
