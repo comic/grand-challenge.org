@@ -175,7 +175,7 @@ def test_challenge_budget_alert_email(settings):
     ]
     assert (
         mail.outbox[0].subject
-        == "[testserver] [test] 70% Budget Consumed Alert"
+        == "[testserver] [test] over 70% Budget Consumed Alert"
     )
     assert (
         "We would like to inform you that more than 70% of the compute budget for "
@@ -205,7 +205,7 @@ def test_challenge_budget_alert_email(settings):
     assert len(mail.outbox) != 0
     assert (
         mail.outbox[0].subject
-        == "[testserver] [test] 90% Budget Consumed Alert"
+        == "[testserver] [test] over 90% Budget Consumed Alert"
     )
 
 

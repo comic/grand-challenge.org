@@ -96,7 +96,7 @@ def send_challenge_status_update_email(challengerequest, challenge=None):
 
 def send_email_percent_budget_consumed_alert(challenge, percent_threshold):
     subject = format_html(
-        "[{challenge_name}] {percent_threshold}% Budget Consumed Alert",
+        "[{challenge_name}] over {percent_threshold}% Budget Consumed Alert",
         challenge_name=challenge.short_name,
         percent_threshold=percent_threshold,
     )
