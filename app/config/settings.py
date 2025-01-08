@@ -22,7 +22,7 @@ from sentry_sdk.integrations.logging import ignore_logger
 from config.denylist import USERNAME_DENYLIST
 from grandchallenge.components.exceptions import PriorStepFailed
 from grandchallenge.core.utils import strtobool
-from grandchallenge.core.utils.markdown import ExtendHTMLTagClasses
+from grandchallenge.core.utils.markdown import BS4Extension
 
 MEGABYTE = 1024 * 1024
 GIGABYTE = 1024 * MEGABYTE
@@ -789,22 +789,9 @@ MARKDOWNX_MARKDOWN_EXTENSIONS = [
     "pymdownx.magiclink",
     "pymdownx.tasklist",
     "pymdownx.tilde",
+    BS4Extension(),
 ]
-MARKDOWN_POST_PROCESSORS = [
-    ExtendHTMLTagClasses(
-        {
-            "img": ["img-fluid"],
-            "blockquote": ["blockquote"],
-            "table": [
-                "table",
-                "table-hover",
-                "table-borderless",
-            ],
-            "thead": ["thead-light"],
-            "code": ["codehilite"],
-        }
-    ),
-]
+MARKDOWN_POST_PROCESSORS = []
 MARKDOWNX_MARKDOWNIFY_FUNCTION = (
     "grandchallenge.core.templatetags.bleach.md2html"
 )

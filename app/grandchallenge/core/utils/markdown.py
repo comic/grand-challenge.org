@@ -1,59 +1,34 @@
 from bs4 import BeautifulSoup
-from django.utils.html import escape
-from django.utils.safestring import SafeString, mark_safe
 from markdown import Extension
+from markdown.postprocessors import Postprocessor
 from markdown.treeprocessors import Treeprocessor
 
 
-class BeautifulSoupWithCharEntities(BeautifulSoup):
-    """
-    Soup generator that elegantly handles reserved HTML entity placeholders.
-
-    For instance, the soup HTMLparser replaces these (e.g. '&lt;') into their
-    unicode equivalents (e.g. '<').
-
-    This messes up things if the HTML is decoded into a string again.
-    """
-
-    def __init__(self, /, markup, features="html.parser", **kwargs):
-        markup = markup.replace("&", "&amp;")
-
-        super().__init__(markup=markup, features=features, **kwargs)
-
-    def decode(self, **kwargs):
-        # Prevent entity subsitution (e.g. "&" -> "&amp")
-        kwargs["formatter"] = None
-        return super().decode(**kwargs)
+class BS4Extension(Extension):
+    def extendMarkdown(self, md):  # noqa: N802
+        md.postprocessors.register(BS4Postprocessor(md), "bs4_extension", 0)
 
 
-class ExtendHTMLTagClasses:
-    def __init__(self, tag_classes):
-        # Make extensions safe
-        self.clean_tag_classes = {
-            t: [escape(c).strip() for c in classes]
-            for t, classes in tag_classes.items()
+class BS4Postprocessor(Postprocessor):
+    def run(self, text):
+        soup = BeautifulSoup(text, "html.parser")
+
+        class_map = {
+            "img": ["img-fluid"],
+            "blockquote": ["blockquote"],
+            "table": ["table", "table-hover", "table-borderless"],
+            "thead": ["thead-light"],
+            "code": ["codehilite"],
         }
 
-    def __call__(self, html):
-        input_is_safe = isinstance(html, SafeString)
+        for element in soup.find_all([*class_map.keys()]):
+            classes = element.get("class", [])
+            for new_class in class_map[element.name]:
+                if new_class not in classes:
+                    classes.append(new_class)
+            element["class"] = classes
 
-        soup = BeautifulSoupWithCharEntities(markup=html)
-
-        tags = [*self.clean_tag_classes.keys()]
-        if tags:
-            for element in soup.find_all(tags):
-                classes = element.get("class", [])
-                for new_class in self.clean_tag_classes[element.name]:
-                    if new_class not in classes:
-                        classes.append(new_class)
-                element["class"] = classes
-
-        new_markup = soup.decode()
-
-        if input_is_safe:
-            new_markup = mark_safe(new_markup)
-
-        return new_markup
+        return str(soup)
 
 
 class LinkBlankTargetExtension(Extension):

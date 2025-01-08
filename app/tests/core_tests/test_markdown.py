@@ -1,10 +1,9 @@
 import textwrap
 
 import pytest
-from django.utils.safestring import SafeString, mark_safe
+from markdown import markdown
 
 from grandchallenge.core.templatetags.bleach import md2html
-from grandchallenge.core.utils.markdown import ExtendHTMLTagClasses
 
 
 @pytest.mark.parametrize(
@@ -29,7 +28,7 @@ from grandchallenge.core.utils.markdown import ExtendHTMLTagClasses
             ),
             textwrap.dedent(
                 """\
-                <p><img class="img-fluid" src="test.png"/></p>
+                <p><img class="img-fluid" src="test.png"></p>
                 <blockquote class="blockquote">
                 <p>Quote Me</p>
                 </blockquote>
@@ -122,10 +121,10 @@ from grandchallenge.core.utils.markdown import ExtendHTMLTagClasses
             ),
             textwrap.dedent(
                 """\
-                <p><img class="img-fluid" src="test.png"/></p>
-                <p><img class="img-fluid" src="test-no-class.png"/></p>
-                <p><img class="img-fluid" src="test-empty-class.png"/></p>
-                <p><img class="ml-3 img-fluid" src="test-existing-class.png"/></p>
+                <p><img class="img-fluid" src="test.png"></p>
+                <p><img class="img-fluid" src="test-no-class.png"></p>
+                <p><img class="img-fluid" src="test-empty-class.png"></p>
+                <p><img class="ml-3 img-fluid" src="test-existing-class.png"></p>
                 <blockquote class="blockquote">
                 <p>Quote Me</p>
                 </blockquote>
@@ -184,17 +183,17 @@ from grandchallenge.core.utils.markdown import ExtendHTMLTagClasses
                 text<sub>a subscript</sub></p>
                 <ul>
                 <li>Just paste links directly in the document like this: <a href="https://google.com">https://google.com</a>.</li>
-                <li>Or even an email address: <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#102;&#97;&#107;&#101;&#46;&#101;&#109;&#97;&#105;&#108;&#64;&#101;&#109;&#97;&#105;&#108;&#46;&#99;&#111;&#109;">&#102;&#97;&#107;&#101;&#46;&#101;&#109;&#97;&#105;&#108;&#64;&#101;&#109;&#97;&#105;&#108;&#46;&#99;&#111;&#109;</a>.</li>
+                <li>Or even an email address: <a href="mailto:fake.email@email.com">fake.email@email.com</a>.</li>
                 </ul>"""
             ),
         ),
         (
             "&lt;script&gt;alert(&quot;foo&quot;)&lt;/script&gt;",
-            "<p>&lt;script&gt;alert(&quot;foo&quot;)&lt;/script&gt;</p>",
+            '<p>&lt;script&gt;alert("foo")&lt;/script&gt;</p>',
         ),
         (
             "[![](http://minio.localhost:9000/grand-challenge-public/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg)](https://google.com)",
-            '<p><a href="https://google.com"><img class="img-fluid" src="http://minio.localhost:9000/grand-challenge-public/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg"/></a></p>',
+            '<p><a href="https://google.com"><img class="img-fluid" src="http://minio.localhost:9000/grand-challenge-public/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg"></a></p>',
         ),
     ),
 )
@@ -204,57 +203,39 @@ def test_markdown_rendering(markdown_with_html, expected_output):
 
 
 @pytest.mark.parametrize(
-    "html, tag_classes, expected_output, is_safe",
+    "html, expected_output",
     [
-        (  # Safe input
-            mark_safe("<div>Content</div>"),
-            {},
+        (  # Unaffected element
             "<div>Content</div>",
-            True,
+            "<div>Content</div>",
         ),
-        (  # Unsafe input
-            "<div>Content</div>",
-            {},
-            "<div>Content</div>",
-            False,
-        ),
-        (  # Escaped classes
-            mark_safe("<div>Content</div>"),
-            {"div": ['<script>alert("foo")</script>']},
-            '<div class="&lt;script&gt;alert(&quot;foo&quot;)&lt;/script&gt;">Content</div>',
-            True,
+        (  # With Markdown
+            "> Content",
+            '<blockquote class="blockquote">\n<p>Content</p>\n</blockquote>',
         ),
         (  # Empty class
-            '<div class="">Content</div>',
-            {"div": ["foo"]},
-            '<div class="foo">Content</div>',
-            False,
+            '<blockquote class="">Content</blockquote>',
+            '<blockquote class="blockquote">Content</blockquote>',
         ),
         (  # Existing class
-            '<div class="ml-2">Content</div>',
-            {"div": ["foo"]},
-            '<div class="ml-2 foo">Content</div>',
-            False,
+            '<blockquote class="ml-2">Content</blockquote>',
+            '<blockquote class="ml-2 blockquote">Content</blockquote>',
         ),
         (  # Extension class already present
-            '<div class="foo">Content</div>',
-            {"div": ["foo"]},
-            '<div class="foo">Content</div>',
-            False,
+            '<blockquote class="blockquote">Content</blockquote>',
+            '<blockquote class="blockquote">Content</blockquote>',
         ),
         (  # Existing class + extension class
-            '<div class="ml-2 foo">Content</div>',
-            {"div": ["foo"]},
-            '<div class="ml-2 foo">Content</div>',
-            False,
+            '<blockquote class="ml-2 blockquote">Content</blockquote>',
+            '<blockquote class="ml-2 blockquote">Content</blockquote>',
         ),
     ],
 )
-def test_extend_html_tag_classes(html, tag_classes, expected_output, is_safe):
-    extender = ExtendHTMLTagClasses(tag_classes)
-    output = extender(html)
+def test_extend_html_tag_classes(html, expected_output, settings):
+    output = markdown(
+        text=html,
+        extensions=settings.MARKDOWNX_MARKDOWN_EXTENSIONS,
+        extension_configs=settings.MARKDOWNX_MARKDOWN_EXTENSION_CONFIGS,
+    )
 
     assert output == expected_output
-
-    # Check if the output matches the expected safety status
-    assert isinstance(output, SafeString) == is_safe
