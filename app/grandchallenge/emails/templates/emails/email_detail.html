@@ -29,7 +29,7 @@
     <div class="row ml-1">
 
         <div class="col">
-            <iframe id="emailBodyFrame" sandbox="" class="w-100 vh-100"></iframe>
+            <iframe id="emailBodyFrame" sandbox="" class="w-100 vh-100" src="{% url "emails:rendered-detail" pk=object.pk %}"></iframe>
         </div>
 
         <div class="col-4">
@@ -46,14 +46,4 @@
             {% endif %}
         </div>
     </div>
-{% endblock %}
-
-
-
-{% block script %}
-    {{ block.super }}
-
-    {{ object.rendered_body|json_script:"renderedBody" }}
-
-    <script type="module" src="{% static 'js/emails/email_detail.mjs' %}"></script>
 {% endblock %}

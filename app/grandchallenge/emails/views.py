@@ -1,5 +1,7 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
+from django.utils.decorators import method_decorator
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
 
@@ -67,6 +69,24 @@ class EmailDetail(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
     model = Email
     permission_required = "emails.view_email"
     raise_exception = True
+
+
+@method_decorator(xframe_options_sameorigin, name="dispatch")
+class RenderedEmailDetail(
+    LoginRequiredMixin, PermissionRequiredMixin, DetailView
+):
+    model = Email
+    template_name_suffix = "_rendered_detail"
+    permission_required = "emails.view_email"
+    raise_exception = True
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+
+        self.object.body = request.POST["content"]
+
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
 
 
 class EmailList(LoginRequiredMixin, PermissionRequiredMixin, ListView):

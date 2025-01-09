@@ -6,6 +6,7 @@ from grandchallenge.emails.views import (
     EmailDetail,
     EmailList,
     EmailMetadataUpdate,
+    RenderedEmailDetail,
 )
 
 app_name = "emails"
@@ -14,6 +15,11 @@ urlpatterns = [
     path("", EmailList.as_view(), name="list"),
     path("create/", EmailCreate.as_view(), name="create"),
     path("<int:pk>/", EmailDetail.as_view(), name="detail"),
+    path(
+        "<int:pk>/rendered/",
+        RenderedEmailDetail.as_view(),
+        name="rendered-detail",
+    ),
     path(
         "<int:pk>/metadata-update/",
         EmailMetadataUpdate.as_view(),
