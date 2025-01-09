@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load url %}
 {% load bleach %}
+{% load static %}
 
 {% block title %}
     {{ object.subject }} - Emails - {{ block.super }}
@@ -19,15 +20,18 @@
         <p>Sent on {{ object.sent_at|date:"j N Y" }}</p>
     {% endif %}
     <hr>
+
+    <div class="alert alert-warning ml-3" role="alert">
+        The body preview does not accurately represent how the result will be rendered in email applications!
+        Always send out a test version to check the formatting.
+    </div>
+
     <div class="row ml-1">
-        <div class="d-flex col-8 bg-light rounded p-4 justify-content-center">
-            {# The html email body is set to width:600px #}
-            <div class="bg-white rounded p-2" style="width:600px;">
-                <p>Dear user, </p>
-                {{ object.body|md2email_html }}
-                <p>&mdash; Your Grand Challenge Team</p>
-            </div>
+
+        <div class="col">
+            <iframe id="emailBodyFrame" sandbox="" class="w-100 vh-100"></iframe>
         </div>
+
         <div class="col-4">
             {% if not object.sent and "emails.change_email" in perms %}
                 <div class="alert alert-warning ml-3" role="alert">
@@ -42,4 +46,14 @@
             {% endif %}
         </div>
     </div>
+{% endblock %}
+
+
+
+{% block script %}
+    {{ block.super }}
+
+    {{ object.rendered_body|json_script:"renderedBody" }}
+
+    <script type="module" src="{% static 'js/emails/email_detail.mjs' %}"></script>
 {% endblock %}
