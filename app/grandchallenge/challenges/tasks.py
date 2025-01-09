@@ -108,10 +108,11 @@ def update_compute_costs_and_storage_size():
             @retry_with_backoff((LockNotAvailable,))
             def save_phase():
                 phase.save(
+                    skip_calculate_ranks=True,
                     update_fields=(
                         "average_algorithm_job_duration",
                         "compute_cost_euro_millicents",
-                    )
+                    ),
                 )
 
             save_phase()
