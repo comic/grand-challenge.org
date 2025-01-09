@@ -700,7 +700,7 @@
 
 <div class="viewcode-block" id="Phase.save">
 <a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase.save">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">skip_calculate_ranks</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -736,9 +736,12 @@
         <span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">send_give_algorithm_editors_job_view_permissions_changed_email</span><span class="p">()</span>
 
-        <span class="n">on_commit</span><span class="p">(</span>
-            <span class="k">lambda</span><span class="p">:</span> <span class="n">calculate_ranks</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;phase_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">})</span>
-        <span class="p">)</span></div>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">skip_calculate_ranks</span><span class="p">:</span>
+            <span class="n">on_commit</span><span class="p">(</span>
+                <span class="k">lambda</span><span class="p">:</span> <span class="n">calculate_ranks</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span>
+                    <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;phase_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">}</span>
+                <span class="p">)</span>
+            <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Phase.clean">
