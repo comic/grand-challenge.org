@@ -43,6 +43,7 @@ from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.challenges.emails import (
     send_challenge_requested_email_to_requester,
     send_challenge_requested_email_to_reviewers,
+    send_email_percent_budget_consumed_alert,
 )
 from grandchallenge.challenges.utils import ChallengeTypeChoices
 from grandchallenge.components.schemas import (
@@ -501,6 +502,9 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             )
             self.update_user_forum_permissions()
 
+        if self.has_changed("compute_cost_euro_millicents"):
+            self.send_alert_if_budget_consumed_warning_threshold_exceeded()
+
     def assign_permissions(self):
         # Editors and users can view this challenge
         assign_perm("view_challenge", self.admins_group, self)
@@ -739,6 +743,23 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             )
         else:
             return None
+
+    def send_alert_if_budget_consumed_warning_threshold_exceeded(self):
+        for percent_threshold in sorted(
+            self.percent_budget_consumed_warning_thresholds, reverse=True
+        ):
+            previous_cost = self.initial_value("compute_cost_euro_millicents")
+            threshold = (
+                self.approved_compute_costs_euro_millicents
+                * percent_threshold
+                / 100
+            )
+            current_cost = self.compute_cost_euro_millicents
+            if previous_cost <= threshold < current_cost:
+                send_email_percent_budget_consumed_alert(
+                    self, percent_threshold
+                )
+                break
 
     @cached_property
     def challenge_type(self):

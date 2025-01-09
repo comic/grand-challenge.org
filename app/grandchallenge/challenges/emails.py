@@ -100,10 +100,24 @@ def send_email_percent_budget_consumed_alert(challenge, percent_threshold):
         challenge_name=challenge.short_name,
         percent_threshold=percent_threshold,
     )
-    message = format_html(
+    challenge_admins_message = format_html(
         "We would like to inform you that more than {percent_threshold}% of the "
+        "compute budget for the {challenge_name} challenge has been used.",
+        challenge_name=challenge.short_name,
+        percent_threshold=percent_threshold,
+    )
+    send_standard_email_batch(
+        site=Site.objects.get_current(),
+        subject=subject,
+        markdown_message=challenge_admins_message,
+        recipients=[*challenge.get_admins()],
+        subscription_type=EmailSubscriptionTypes.SYSTEM,
+    )
+
+    managers_message = format_html(
+        "More than {percent_threshold}% of the "
         "compute budget for the {challenge_name} challenge has been used. "
-        "You can find an overview of the costs [here]({statistics_url}).",
+        "See {statistics_url}.",
         challenge_name=challenge.short_name,
         percent_threshold=percent_threshold,
         statistics_url=reverse(
@@ -111,14 +125,7 @@ def send_email_percent_budget_consumed_alert(challenge, percent_threshold):
             kwargs={"challenge_short_name": challenge.short_name},
         ),
     )
-    send_standard_email_batch(
-        site=Site.objects.get_current(),
-        subject=subject,
-        markdown_message=message,
-        recipients=[*challenge.get_admins()],
-        subscription_type=EmailSubscriptionTypes.SYSTEM,
-    )
     mail_managers(
         subject=subject,
-        message=message,
+        message=managers_message,
     )

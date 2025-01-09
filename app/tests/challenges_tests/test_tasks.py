@@ -179,8 +179,7 @@ def test_challenge_budget_alert_email(settings):
     )
     assert (
         "We would like to inform you that more than 70% of the compute budget for "
-        "the test challenge has been used. You can find an overview of the costs "
-        "[here](https://test.testserver/statistics/)." in mail.outbox[0].body
+        "the test challenge has been used." in mail.outbox[0].body
     )
 
     mail.outbox.clear()
