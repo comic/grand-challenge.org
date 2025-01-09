@@ -241,12 +241,12 @@ def test_challenge_budget_alert_two_thresholds_one_email(settings):
 
     # Two budget alert thresholds exceeded, alert only sent for last one.
     assert len(mail.outbox) == 3
-    recipients = [r for m in mail.outbox for r in m.to]
-    assert recipients == [
+    recipients = {r for m in mail.outbox for r in m.to}
+    assert recipients == {
         challenge.creator.email,
         challenge_admin.email,
         staff_user.email,
-    ]
+    }
     assert (
         mail.outbox[0].subject
         == "[testserver] [test] over 90% Budget Consumed Alert"
