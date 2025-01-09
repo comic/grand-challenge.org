@@ -6,9 +6,6 @@ from grandchallenge.challenges.costs import (
     annotate_compute_costs_and_storage_size,
     annotate_job_duration_and_compute_costs,
 )
-from grandchallenge.challenges.emails import (
-    send_email_percent_budget_consumed_alert,
-)
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.evaluation.models import Evaluation, Phase
@@ -59,56 +56,25 @@ def update_challenge_results_cache():
     )
 
 
-def send_alert_if_budget_consumed_warning_threshold_exceeded(challenge):
-    if challenge.has_changed("compute_cost_euro_millicents"):
-        for percent_threshold in sorted(
-            challenge.percent_budget_consumed_warning_thresholds, reverse=True
-        ):
-            previous_cost = challenge.initial_value(
-                "compute_cost_euro_millicents"
-            )
-            threshold = (
-                challenge.approved_compute_costs_euro_millicents
-                * percent_threshold
-                / 100
-            )
-            current_cost = challenge.compute_cost_euro_millicents
-            if previous_cost <= threshold < current_cost:
-                send_email_percent_budget_consumed_alert(
-                    challenge, percent_threshold
-                )
-                break
-
-
 @acks_late_2xlarge_task
-@transaction.atomic
 def update_compute_costs_and_storage_size():
-    challenges = Challenge.objects.all().with_available_compute()
+    for challenge in Challenge.objects.with_available_compute().iterator():
+        with transaction.atomic():
+            annotate_compute_costs_and_storage_size(challenge=challenge)
+            challenge.save(
+                update_fields=(
+                    "size_in_storage",
+                    "size_in_registry",
+                    "compute_cost_euro_millicents",
+                )
+            )
 
-    for challenge in challenges:
-        annotate_compute_costs_and_storage_size(challenge=challenge)
-        send_alert_if_budget_consumed_warning_threshold_exceeded(
-            challenge=challenge
-        )
-
-    Challenge.objects.bulk_update(
-        challenges,
-        [
-            "size_in_storage",
-            "size_in_registry",
-            "compute_cost_euro_millicents",
-        ],
-    )
-
-    phases = Phase.objects.all()
-
-    for phase in phases:
-        annotate_job_duration_and_compute_costs(phase=phase)
-
-    Phase.objects.bulk_update(
-        phases,
-        [
-            "average_algorithm_job_duration",
-            "compute_cost_euro_millicents",
-        ],
-    )
+    for phase in Phase.objects.iterator():
+        with transaction.atomic():
+            annotate_job_duration_and_compute_costs(phase=phase)
+            phase.save(
+                update_fields=(
+                    "average_algorithm_job_duration",
+                    "compute_cost_euro_millicents",
+                )
+            )
