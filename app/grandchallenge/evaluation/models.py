@@ -658,7 +658,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
     def __str__(self):
         return f"{self.title} Evaluation for {self.challenge.short_name}"
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, skip_calculate_ranks=False, **kwargs):
         adding = self._state.adding
 
         super().save(*args, **kwargs)
@@ -694,9 +694,12 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         ):
             self.send_give_algorithm_editors_job_view_permissions_changed_email()
 
-        on_commit(
-            lambda: calculate_ranks.apply_async(kwargs={"phase_pk": self.pk})
-        )
+        if not skip_calculate_ranks:
+            on_commit(
+                lambda: calculate_ranks.apply_async(
+                    kwargs={"phase_pk": self.pk}
+                )
+            )
 
     def clean(self):
         super().clean()
