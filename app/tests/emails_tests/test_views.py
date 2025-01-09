@@ -26,24 +26,27 @@ def test_email_create(client):
         viewname="emails:create",
         client=client,
         method=client.post,
-        data={"subject": "Test email", "body": "Some dummy content"},
+        data={"subject": "Test email"},
         user=user,
     )
     assert response.status_code == 302
     assert Email.objects.count() == 1
-    assert Email.objects.get().subject == "Test email"
-    assert Email.objects.get().body == "Some dummy content"
+
+    email = Email.objects.get()
+
+    assert response.url == f"https://testserver/emails/{email.pk}/body-update/"
+    assert email.subject == "Test email"
 
 
 @pytest.mark.django_db
-def test_email_update(client):
+def test_email_metadata_update(client):
     user = UserFactory()
     email = EmailFactory(subject="Test email", body="Test content")
     response = get_view_for_user(
-        viewname="emails:update",
+        viewname="emails:metadata-update",
         client=client,
         method=client.post,
-        data={"subject": "Updated subject", "body": "Updated content"},
+        data={"subject": "Updated subject"},
         reverse_kwargs={"pk": email.pk},
         user=user,
     )
@@ -52,33 +55,79 @@ def test_email_update(client):
     # only users with permission can create emails
     assign_perm("emails.change_email", user)
     response = get_view_for_user(
-        viewname="emails:update",
+        viewname="emails:metadata-update",
         client=client,
         method=client.post,
-        data={"subject": "Updated subject", "body": "Updated content"},
+        data={"subject": "Updated subject"},
         reverse_kwargs={"pk": email.pk},
         user=user,
     )
     assert response.status_code == 302
     email.refresh_from_db()
     assert email.subject == "Updated subject"
+    assert email.body == "Test content"
+
+    # but not when the email has been sent
+    email.sent = True
+    email.save()
+    response = get_view_for_user(
+        viewname="emails:metadata-update",
+        client=client,
+        method=client.post,
+        data={"subject": "Updated again"},
+        reverse_kwargs={"pk": email.pk},
+        user=user,
+    )
+    assert response.status_code == 403
+    email.refresh_from_db()
+    assert email.subject == "Updated subject"
+    assert email.body == "Test content"
+
+
+@pytest.mark.django_db
+def test_email_body_update(client):
+    user = UserFactory()
+    email = EmailFactory(subject="Test email", body="Test content")
+    response = get_view_for_user(
+        viewname="emails:body-update",
+        client=client,
+        method=client.post,
+        data={"body": "Updated content"},
+        reverse_kwargs={"pk": email.pk},
+        user=user,
+    )
+    assert response.status_code == 403
+
+    # only users with permission can create emails
+    assign_perm("emails.change_email", user)
+    response = get_view_for_user(
+        viewname="emails:body-update",
+        client=client,
+        method=client.post,
+        data={"body": "Updated content"},
+        reverse_kwargs={"pk": email.pk},
+        user=user,
+    )
+    assert response.status_code == 302
+    email.refresh_from_db()
+    assert email.subject == "Test email"
     assert email.body == "Updated content"
 
     # but not when the email has been sent
     email.sent = True
     email.save()
     response = get_view_for_user(
-        viewname="emails:update",
+        viewname="emails:body-update",
         client=client,
         method=client.post,
-        data={"subject": "Updated again", "body": "New content"},
+        data={"body": "New content"},
         reverse_kwargs={"pk": email.pk},
         user=user,
     )
     assert response.status_code == 403
     email.refresh_from_db()
-    assert email.subject != "Updated again"
-    assert email.body != "New content"
+    assert email.subject == "Test email"
+    assert email.body == "Updated content"
 
 
 @pytest.mark.django_db

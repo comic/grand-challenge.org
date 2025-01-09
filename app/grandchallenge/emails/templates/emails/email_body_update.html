@@ -1,0 +1,17 @@
+{% extends "emails/email_form.html" %}
+{% load crispy_forms_tags %}
+
+{% block container %}container-fluid{% endblock %}
+
+{% block content %}
+
+    <h2>Update Email</h2>
+
+        <div class="alert alert-warning ml-3" role="alert">
+            The body preview does not accurately represent how the result will be rendered in email applications!
+            Always send out a test version to check the formatting.
+        </div>
+
+    {% crispy form %}
+
+{% endblock %}

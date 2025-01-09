@@ -1,15 +1,20 @@
 from django import forms
 
 from grandchallenge.core.forms import SaveFormInitMixin
-from grandchallenge.core.widgets import MarkdownEditorInlineWidget
+from grandchallenge.core.widgets import MarkdownEditorFullPageWidget
 from grandchallenge.emails.models import Email
 
 
-class EmailForm(SaveFormInitMixin, forms.ModelForm):
+class EmailMetadataForm(SaveFormInitMixin, forms.ModelForm):
     class Meta:
         model = Email
-        fields = (
-            "subject",
-            "body",
-        )
-        widgets = {"body": MarkdownEditorInlineWidget}
+        fields = ("subject",)
+
+
+class EmailBodyForm(SaveFormInitMixin, forms.ModelForm):
+    class Meta:
+        model = Email
+        fields = ("body",)
+        widgets = {
+            "body": MarkdownEditorFullPageWidget,
+        }

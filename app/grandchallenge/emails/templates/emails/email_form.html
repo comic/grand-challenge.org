@@ -16,10 +16,9 @@
 {% endblock %}
 
 {% block content %}
+
     <h2>{% if object %}Update{% else %}Create{% endif %} Email</h2>
-      <div class="alert alert-warning ml-3" role="alert">
-            The body preview does not accurately represent how the result will be rendered in email applications!
-            Always send out a limited test version to prevent potential embarrassments.
-      </div>
+
     {% crispy form %}
+
 {% endblock %}
