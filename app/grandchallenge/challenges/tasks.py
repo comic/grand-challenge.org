@@ -61,9 +61,20 @@ def update_compute_costs_and_storage_size():
     for challenge in Challenge.objects.with_available_compute().iterator():
         with transaction.atomic():
             annotate_compute_costs_and_storage_size(challenge=challenge)
-            challenge.save()
+            challenge.save(
+                update_fields=(
+                    "size_in_storage",
+                    "size_in_registry",
+                    "compute_cost_euro_millicents",
+                )
+            )
 
     for phase in Phase.objects.iterator():
         with transaction.atomic():
             annotate_job_duration_and_compute_costs(phase=phase)
-            phase.save()
+            phase.save(
+                update_fields=(
+                    "average_algorithm_job_duration",
+                    "compute_cost_euro_millicents",
+                )
+            )

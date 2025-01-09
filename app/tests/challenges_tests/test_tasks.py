@@ -167,19 +167,23 @@ def test_challenge_budget_alert_email(settings):
 
     # Budget alert threshold exceeded
     assert len(mail.outbox) == 3
-    recipients = [r for m in mail.outbox for r in m.to]
-    assert recipients == [
+    recipients = {r for m in mail.outbox for r in m.to}
+    assert recipients == {
         challenge.creator.email,
         challenge_admin.email,
         staff_user.email,
+    }
+
+    challenge_admin_email = [
+        m for m in mail.outbox if challenge_admin.email in m.to
     ]
     assert (
-        mail.outbox[0].subject
+        challenge_admin_email[0].subject
         == "[testserver] [test] over 70% Budget Consumed Alert"
     )
     assert (
         "We would like to inform you that more than 70% of the compute budget for "
-        "the test challenge has been used." in mail.outbox[0].body
+        "the test challenge has been used." in challenge_admin_email[0].body
     )
 
     mail.outbox.clear()
