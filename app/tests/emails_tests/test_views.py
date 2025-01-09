@@ -177,6 +177,12 @@ def test_email_rendered_detail_get_permission(client):
     assert "Dear AnonymousUser," in response.rendered_content
     assert "Test content" in response.rendered_content
 
+    # Should use a system email without an unsubscribe link
+    # as the generated email is for the anonymous user, not the request.user
+    assert (
+        "This is an automated service email from" in response.rendered_content
+    )
+
 
 @pytest.mark.django_db
 def test_email_rendered_detail_get_post_permission(client):
