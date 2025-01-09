@@ -142,7 +142,7 @@ def test_email_detail_permission(client):
     )
     assert response.status_code == 403
 
-    # only users with permission can create emails
+    # only users with permission can view emails
     assign_perm("emails.view_email", user)
     response = get_view_for_user(
         viewname="emails:detail",
@@ -151,6 +151,64 @@ def test_email_detail_permission(client):
         user=user,
     )
     assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_email_rendered_detail_get_permission(client):
+    user = UserFactory()
+    email = EmailFactory(subject="Test email", body="Test content")
+    response = get_view_for_user(
+        viewname="emails:rendered-detail",
+        client=client,
+        reverse_kwargs={"pk": email.pk},
+        user=user,
+    )
+    assert response.status_code == 403
+
+    # only users with permission can view emails
+    assign_perm("emails.view_email", user)
+    response = get_view_for_user(
+        viewname="emails:rendered-detail",
+        client=client,
+        reverse_kwargs={"pk": email.pk},
+        user=user,
+    )
+    assert response.status_code == 200
+    assert "Dear AnonymousUser," in response.rendered_content
+    assert "Test content" in response.rendered_content
+
+
+@pytest.mark.django_db
+def test_email_rendered_detail_get_post_permission(client):
+    user = UserFactory()
+    email = EmailFactory(subject="Test email", body="Test content")
+    response = get_view_for_user(
+        viewname="emails:rendered-detail",
+        client=client,
+        reverse_kwargs={"pk": email.pk},
+        user=user,
+        method=client.post,
+        data={"content": "New content"},
+    )
+    assert response.status_code == 403
+
+    # only users with permission can view emails
+    assign_perm("emails.view_email", user)
+    response = get_view_for_user(
+        viewname="emails:rendered-detail",
+        client=client,
+        reverse_kwargs={"pk": email.pk},
+        user=user,
+        method=client.post,
+        data={"content": "New content"},
+    )
+    assert response.status_code == 200
+    assert "Dear AnonymousUser," in response.rendered_content
+    assert "New content" in response.rendered_content
+
+    # The email shouldn't be updated as the post is only a preview
+    email.refresh_from_db()
+    assert email.body == "Test content"
 
 
 @pytest.mark.django_db

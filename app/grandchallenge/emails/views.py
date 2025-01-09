@@ -81,6 +81,7 @@ class RenderedEmailDetail(
     raise_exception = True
 
     def post(self, request, *args, **kwargs):
+        """Generate a preview of the email with the new content"""
         self.object = self.get_object()
 
         self.object.body = request.POST["content"]
