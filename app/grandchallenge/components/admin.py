@@ -1,6 +1,5 @@
 from django.contrib import admin
 from django.db.transaction import on_commit
-from django.utils.timezone import now
 from guardian.admin import GuardedModelAdmin
 
 from grandchallenge.components.models import (
@@ -94,7 +93,7 @@ def requeue_jobs(modeladmin, request, queryset):
 
     for job in queryset:
         job.status = ComponentJob.RETRY
-        job.started_at = now()
+        job.started_at = None
         job.completed_at = None
         job.error_message = ""
         job.attempt += 1
