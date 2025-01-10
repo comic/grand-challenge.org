@@ -4,7 +4,6 @@
             id="warningInfoModal-{{ object.pk }}"
             tabindex="-1"
             role="dialog"
-            aria-labelledby="statusModalTitle"
             aria-hidden="true"
         >
             <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
@@ -36,7 +35,7 @@
             class="badge badge-{{ object.status_context }}"
             title="Click to see the warnings"
         >
-            <i class="fa fa-fw fa-eye"></i>
+            <i class="fa fa-fw fa-eye" aria-hidden="true"></i>
             {{ object.get_status_display }}, with warnings
         </a>
     </div>
@@ -46,7 +45,6 @@
             id="errorInfoModal-{{ object.pk }}"
             tabindex="-1"
             role="dialog"
-            aria-labelledby="statusModalTitle"
             aria-hidden="true"
         >
             <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
@@ -78,7 +76,7 @@
             class="badge badge-{{ object.status_context }}"
             title="Click to see the error message"
         >
-            <i class="fa fa-fw fa-eye"></i>
+            <i class="fa fa-fw fa-eye" aria-hidden="true"></i>
             {{ object.get_status_display }}, with errors
         </a>
     </div>
