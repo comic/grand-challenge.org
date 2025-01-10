@@ -165,7 +165,12 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
 
 class SortedCIVSerializer(serializers.ListSerializer):
     def to_representation(self, data):
-        sorted_data = sort_civs(data.all())
+        iterable = (
+            data.all()
+            if isinstance(data, serializers.models.manager.BaseManager)
+            else data
+        )
+        sorted_data = sort_civs(iterable)
         return super().to_representation(sorted_data)
 
 
