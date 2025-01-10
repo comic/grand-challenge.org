@@ -93,10 +93,10 @@ def requeue_jobs(modeladmin, request, queryset):
 
     for job in queryset:
         job.status = ComponentJob.RETRY
+        job.attempt += 1
         job.started_at = None
         job.completed_at = None
         job.error_message = ""
-        job.attempt += 1
         jobs.append(job)
 
         on_commit(job.execute)
