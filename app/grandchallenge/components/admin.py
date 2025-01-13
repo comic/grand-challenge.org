@@ -97,6 +97,7 @@ def requeue_jobs(modeladmin, request, queryset):
         job.started_at = None
         job.completed_at = None
         job.error_message = ""
+        job.detailed_error_message = {}
         jobs.append(job)
 
         on_commit(job.execute)
@@ -109,6 +110,7 @@ def requeue_jobs(modeladmin, request, queryset):
             "started_at",
             "completed_at",
             "error_message",
+            "detailed_error_message",
         ],
     )
 
