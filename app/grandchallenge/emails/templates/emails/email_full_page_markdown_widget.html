@@ -1,0 +1,15 @@
+<div class="markdownx markdownx-full-page">
+    {% include "markdownx/partials/toolbar.html" %}
+    <div class="row">
+        <div class="col-md-6">
+            <div id="editor-{{ widget.attrs.id }}" aria-labelledby="editor-panel-{{ widget.attrs.id }}">
+                {% include "markdownx/partials/textarea.html" %}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div id="preview-{{ widget.attrs.id }}" aria-labelledby="preview-panel-{{ widget.attrs.id }}">
+                <iframe class="markdownx-preview w-100" sandbox=""></iframe>
+            </div>
+        </div>
+    </div>
+</div>

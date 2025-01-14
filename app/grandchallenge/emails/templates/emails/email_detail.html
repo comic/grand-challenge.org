@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load url %}
 {% load bleach %}
+{% load static %}
 
 {% block title %}
     {{ object.subject }} - Emails - {{ block.super }}
@@ -19,27 +20,28 @@
         <p>Sent on {{ object.sent_at|date:"j N Y" }}</p>
     {% endif %}
     <hr>
+
+    <div class="alert alert-warning ml-3" role="alert">
+        The body preview does not accurately represent how the result will be rendered in email applications!
+        Always send out a test version to check the formatting.
+    </div>
+
     <div class="row ml-1">
-        <div class="d-flex col-8 bg-light rounded p-4 justify-content-center">
-            {# The html email body is set to width:600px #}
-            <div class="bg-white rounded p-2" style="width:600px;">
-                <p>Dear user, </p>
-                {{ object.body|md2email_html }}
-                <p>&mdash; Your Grand Challenge Team</p>
-            </div>
+
+        <div class="col">
+            <iframe id="emailBodyFrame" sandbox="" class="w-100 vh-100" src="{% url "emails:rendered-detail" pk=object.pk %}"></iframe>
         </div>
+
         <div class="col-4">
             {% if not object.sent and "emails.change_email" in perms %}
                 <div class="alert alert-warning ml-3" role="alert">
                         This email has not been sent yet.
                         You can come back and edit it. When it's ready to be sent,
-                        please contact support@grand-challenge.org to send it for you.
+                        please contact support to send it for you.
                 </div>
                 <div class="text-right">
-                    <a href="{% url "emails:update" pk=object.pk %}"
-                       class="btn btn-primary">
-                        <i class="fa fa-edit"></i> Edit email
-                    </a>
+                    <a href="{% url "emails:body-update" pk=object.pk %}" class="btn btn-primary"><i class="fa fa-edit"></i> Edit Body</a>
+                    <a href="{% url "emails:metadata-update" pk=object.pk %}" class="btn btn-primary"><i class="fa fa-tools"></i> Edit Metadata</a>
                 </div>
             {% endif %}
         </div>
