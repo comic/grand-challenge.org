@@ -85,6 +85,7 @@ from grandchallenge.core.widgets import (
     JSONEditorWidget,
     MarkdownEditorInlineWidget,
 )
+from grandchallenge.evaluation.models import Evaluation
 from grandchallenge.evaluation.utils import SubmissionKindChoices, get
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.hanging_protocols.forms import ViewContentExampleMixin
@@ -795,6 +796,26 @@ class ImageActivateForm(Form):
 
         if algorithm_image.algorithm.image_upload_in_progress:
             raise ValidationError("Image updating already in progress.")
+
+        active_image = algorithm_image.algorithm.active_image
+
+        if (
+            Evaluation.objects.filter(
+                submission__algorithm_image=active_image,
+            )
+            .exclude(
+                status__in=[
+                    Evaluation.SUCCESS,
+                    Evaluation.FAILURE,
+                    Evaluation.CANCELLED,
+                ]
+            )
+            .exists()
+        ):
+
+            raise ValidationError(
+                "Current active algorithm image cannot be deactivated. An evaluation using it is in progress."
+            )
 
         return algorithm_image
 
