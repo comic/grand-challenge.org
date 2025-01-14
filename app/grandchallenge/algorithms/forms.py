@@ -812,7 +812,6 @@ class ImageActivateForm(Form):
             )
             .exists()
         ):
-
             raise ValidationError(
                 "Current active algorithm image cannot be deactivated. An evaluation using it is in progress."
             )
