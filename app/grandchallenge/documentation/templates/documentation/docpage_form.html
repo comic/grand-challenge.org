@@ -35,7 +35,9 @@
 
 {% block content %}
     <h2>{% if object %}Update{% else %}Create{% endif %} Page</h2>
-    {% crispy form %}
+    <div class="docpage">
+        {% crispy form %}
+    </div>
 {% endblock %}
 
 {% block script %}
