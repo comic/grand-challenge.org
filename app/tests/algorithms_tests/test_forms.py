@@ -31,6 +31,7 @@ from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
+from grandchallenge.evaluation.models import Evaluation
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.verifications.models import Verification
 from tests.algorithms_tests.factories import (
@@ -43,7 +44,7 @@ from tests.algorithms_tests.factories import (
 from tests.algorithms_tests.utils import get_algorithm_creator
 from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.conftest import get_interface_form_data
-from tests.evaluation_tests.factories import PhaseFactory
+from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
 from tests.factories import (
     UserFactory,
     WorkstationConfigFactory,
@@ -1388,3 +1389,43 @@ def test_algorithm_for_phase_form_memory():
     )
     assert max_validator is not None
     assert max_validator.limit_value == 42
+
+
+@pytest.mark.django_db
+def test_image_activate_form_fail_if_active_image_is_used_in_evaluation():
+    alg = AlgorithmFactory()
+    editor = UserFactory()
+    alg.add_editor(editor)
+    i1 = AlgorithmImageFactory(
+        algorithm=alg,
+        is_manifest_valid=True,
+        is_desired_version=True,
+        is_in_registry=True,
+    )
+    i2 = AlgorithmImageFactory(
+        algorithm=alg,
+        is_manifest_valid=True,
+        is_desired_version=False,
+        is_in_registry=True,
+    )
+
+    evaluation = EvaluationFactory(
+        submission__algorithm_image=i1,
+        time_limit=i1.algorithm.time_limit,
+    )
+
+    form = ImageActivateForm(
+        user=editor, algorithm=alg, data={"algorithm_image": i2}
+    )
+    assert i1 not in form.fields["algorithm_image"].queryset
+    assert i2 in form.fields["algorithm_image"].queryset
+    assert not form.is_valid()
+
+    evaluation.status = Evaluation.SUCCESS
+    evaluation.save()
+
+    form = ImageActivateForm(
+        user=editor, algorithm=alg, data={"algorithm_image": i2}
+    )
+
+    assert form.is_valid()
