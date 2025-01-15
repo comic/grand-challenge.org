@@ -13,7 +13,7 @@ def run():
 
 [Register](https://grand-challenge.org/documentation/registration/) your account, request [verification](https://grand-challenge.org/documentation/verification/) and you're all set to participate.
 
-![](https://rumc-gcorg-p-public.s3.amazonaws.com/i/2022/02/24/23314166-bfa1-4be5-8ff5-c9f0d337bf01.png)
+![](/static/images/challenge.png)
 
 
 
@@ -51,8 +51,7 @@ We'll be using a [demo algorithm template](https://github.com/DIAGNijmegen/demo-
 Algorithm editors can find the templates via **<i class="fas fa-hard-hat fa-fw"></i> Templates -> <i class="fa fa-download pl-1"></i> Download Algorithm Image Template**:
 
 
-<img class="border shadow" src="https://rumc-gcorg-p-public.s3.amazonaws.com/i/2025/01/08/e9c4b12a-4285-4fed-925c-05a60c62bc60.png" style="width: 40em;"/>
-
+<img class="border shadow" src="/static/images/archive.png" style="width: 40em;"/>
 
 
 
@@ -62,7 +61,7 @@ In this tutorial, we will build an Algorithm image for a U-Net that segments ret
 
 The image below shows the output of a very simple U-Net that segments vessels.
 
-<img src="https://rumc-gcorg-p-public.s3.amazonaws.com/i/2021/03/22/b2f462c2-f8f2-4ebe-94a5-d9b262661c00.png" style="width: 40em;"/>
+<img src="/static/images/annotation.png" style="width: 40em;"/>
 
 To start the process, let's clone the repository that contains the weights from a pre-trained model and the Python scripts to run inference on a new fundus image.
 
