@@ -14,7 +14,7 @@ class BS4Postprocessor(Postprocessor):
         soup = BeautifulSoup(text, "html.parser")
 
         class_map = {
-            "img": ["border shadow img-fluid"],
+            "img": ["img-fluid"],
             "blockquote": ["blockquote"],
             "table": ["table", "table-hover", "table-borderless"],
             "thead": ["thead-light"],
