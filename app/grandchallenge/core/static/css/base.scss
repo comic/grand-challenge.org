@@ -60,7 +60,7 @@ div.codehilite {
 }
 
 .docpage h3:has(+h4){
-    margin-bottom: 2rem;
+    margin-bottom: 2 * $paragraph-margin-bottom;
 }
 
 .docpage :is(h1, h2, h3, h4, h5, h6) {
