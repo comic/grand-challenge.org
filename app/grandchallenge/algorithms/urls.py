@@ -140,7 +140,7 @@ urlpatterns = [
         name="job-interface-select",
     ),
     path(
-        "<slug:slug>/<uuid:interface>/jobs/create/",
+        "<slug:slug>/<uuid:interface_pk>/jobs/create/",
         JobCreate.as_view(),
         name="job-create",
     ),

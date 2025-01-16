@@ -36,13 +36,15 @@
 {% block content %}
     <h2>Try-out Algorithm</h2>
 
-    {% if not algorithm.interfaces.all %}
+    {% get_obj_perms request.user for algorithm as "algorithm_perms" %}
+
+    {% if not algorithm.interfaces.all and 'change_algorithm' in algorithm_perms %}
         <p>Your algorithm does not have any interfaces yet. You need to define at least one interface (i.e. input - output combination) before you can try it out.</p>
         <p>To define an interface, navigate <a href="{% url 'algorithms:interface-list' slug=algorithm.slug %}">here</a>.</p>
+    {% elif not algorithm.interfaces.all %}
+        <p>This algorithm is not fully configured yet and hence cannot be used.</p>
     {% else %}
         {{ algorithm.job_create_page_markdown|md2html }}
-
-        {% get_obj_perms request.user for algorithm as "algorithm_perms" %}
 
         {% if not algorithm.active_image %}
             <p>
