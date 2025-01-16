@@ -272,6 +272,7 @@ def remove_inactive_container_images():
                             )
                             .exists()
                         )
+
                     if instance_in_use:
                         continue
 
