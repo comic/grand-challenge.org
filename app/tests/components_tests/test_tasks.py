@@ -47,6 +47,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.evaluation_tests.factories import (
+    EvaluationFactory,
     EvaluationGroundTruthFactory,
     MethodFactory,
     PhaseFactory,
@@ -168,11 +169,19 @@ def test_remove_inactive_container_images(django_capture_on_commit_callbacks):
     ai1 = AlgorithmImageFactory(
         is_in_registry=True, is_manifest_valid=True, algorithm=alg
     )
+    ai2 = AlgorithmImageFactory(
+        is_in_registry=True, is_manifest_valid=True, algorithm=alg
+    )
     AlgorithmImageFactory(
         is_in_registry=True,
         is_manifest_valid=True,
         algorithm=alg,
         is_desired_version=True,
+    )
+
+    EvaluationFactory(
+        submission__algorithm_image=ai2,
+        time_limit=ai2.algorithm.time_limit,
     )
 
     with django_capture_on_commit_callbacks() as callbacks:
