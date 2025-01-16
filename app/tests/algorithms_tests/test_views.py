@@ -2240,7 +2240,7 @@ def test_algorithm_interface_view_permission(client, viewname):
         response = get_view_for_user(
             viewname=viewname,
             client=client,
-            reverse_kwargs={"algorithm_slug": alg.slug},
+            reverse_kwargs={"slug": alg.slug},
             user=user,
         )
         assert response.status_code == status
@@ -2275,7 +2275,7 @@ def test_algorithm_interface_delete_permission(client):
             viewname="algorithms:interface-delete",
             client=client,
             reverse_kwargs={
-                "algorithm_slug": alg.slug,
+                "slug": alg.slug,
                 "interface_pk": int2.pk,
             },
             user=user,
@@ -2287,7 +2287,7 @@ def test_algorithm_interface_delete_permission(client):
             viewname="algorithms:interface-delete",
             client=client,
             reverse_kwargs={
-                "algorithm_slug": alg.slug,
+                "slug": alg.slug,
                 "interface_pk": int1.pk,
             },
             user=user,
@@ -2309,7 +2309,7 @@ def test_algorithm_interface_create(client):
         viewname="algorithms:interface-create",
         client=client,
         method=client.post,
-        reverse_kwargs={"algorithm_slug": alg.slug},
+        reverse_kwargs={"slug": alg.slug},
         data={
             "inputs": [ci_1.pk],
             "outputs": [ci_2.pk],
@@ -2349,7 +2349,7 @@ def test_algorithm_interfaces_list_queryset(client):
     response = get_view_for_user(
         viewname="algorithms:interface-list",
         client=client,
-        reverse_kwargs={"algorithm_slug": alg.slug},
+        reverse_kwargs={"slug": alg.slug},
         user=user,
     )
     assert response.status_code == 200
@@ -2376,7 +2376,7 @@ def test_algorithm_interface_delete(client):
         client=client,
         method=client.post,
         reverse_kwargs={
-            "algorithm_slug": alg.slug,
+            "slug": alg.slug,
             "interface_pk": int1.pk,
         },
         user=user,
@@ -2388,7 +2388,7 @@ def test_algorithm_interface_delete(client):
         client=client,
         method=client.post,
         reverse_kwargs={
-            "algorithm_slug": alg.slug,
+            "slug": alg.slug,
             "interface_pk": int2.pk,
         },
         user=user,

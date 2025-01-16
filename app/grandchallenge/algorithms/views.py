@@ -1155,7 +1155,7 @@ class AlgorithmImageTemplate(ObjectPermissionRequiredMixin, DetailView):
 class AlgorithmInterfacePermissionMixin(AccessMixin):
     @property
     def algorithm(self):
-        return get_object_or_404(Algorithm, slug=self.kwargs["algorithm_slug"])
+        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.has_perm(
@@ -1176,7 +1176,7 @@ class AlgorithmInterfaceForAlgorithmCreate(
     def get_success_url(self):
         return reverse(
             "algorithms:interface-list",
-            kwargs={"algorithm_slug": self.algorithm.slug},
+            kwargs={"slug": self.algorithm.slug},
         )
 
     def get_context_data(self, *args, **kwargs):
@@ -1238,7 +1238,7 @@ class AlgorithmInterfaceForAlgorithmDelete(
     def get_success_url(self):
         return reverse(
             "algorithms:interface-list",
-            kwargs={"algorithm_slug": self.algorithm.slug},
+            kwargs={"slug": self.algorithm.slug},
         )
 
     def get_context_data(self, *args, **kwargs):

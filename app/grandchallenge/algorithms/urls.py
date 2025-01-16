@@ -55,17 +55,17 @@ urlpatterns = [
         name="description-update",
     ),
     path(
-        "<algorithm_slug>/interfaces/",
+        "<slug>/interfaces/",
         AlgorithmInterfacesForAlgorithmList.as_view(),
         name="interface-list",
     ),
     path(
-        "<algorithm_slug>/interfaces/create/",
+        "<slug>/interfaces/create/",
         AlgorithmInterfaceForAlgorithmCreate.as_view(),
         name="interface-create",
     ),
     path(
-        "<algorithm_slug>/interfaces/<uuid:interface_pk>/delete/",
+        "<slug>/interfaces/<uuid:interface_pk>/delete/",
         AlgorithmInterfaceForAlgorithmDelete.as_view(),
         name="interface-delete",
     ),

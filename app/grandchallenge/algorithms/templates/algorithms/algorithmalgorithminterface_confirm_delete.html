@@ -13,7 +13,7 @@
                 href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}
         </a></li>
         <li class="breadcrumb-item"><a
-                href="{% url 'algorithms:interface-list' algorithm_slug=algorithm.slug %}">Interfaces
+                href="{% url 'algorithms:interface-list' slug=algorithm.slug %}">Interfaces
         </a></li>
         <li class="breadcrumb-item active"
             aria-current="page">Delete Interface
@@ -34,7 +34,7 @@
         <p>
             <b class="text-danger">WARNING: You are not able to undo this action. Once the interface is deleted, it is deleted forever.</b>
         </p>
-        <a href="{% url 'algorithms:interface-list' algorithm_slug=algorithm.slug %}"
+        <a href="{% url 'algorithms:interface-list' slug=algorithm.slug %}"
            type="button"
            class="btn btn-secondary">Cancel</a>
         <input type="submit"

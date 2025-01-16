@@ -13,7 +13,7 @@
                 href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}
         </a></li>
         <li class="breadcrumb-item"><a
-                href="{% url 'algorithms:interface-list' algorithm_slug=algorithm.slug %}">Interfaces
+                href="{% url 'algorithms:interface-list' slug=algorithm.slug %}">Interfaces
         </a></li>
         <li class="breadcrumb-item active"
             aria-current="page">Create Interface

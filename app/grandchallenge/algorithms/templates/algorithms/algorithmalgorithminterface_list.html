@@ -27,7 +27,7 @@
      <p>
         The following interfaces are configured for your algorithm:
      </p>
-    <p><a class="btn btn-primary" href="{% url 'algorithms:interface-create' algorithm_slug=algorithm.slug %}">Add new interface</a></p>
+    <p><a class="btn btn-primary" href="{% url 'algorithms:interface-create' slug=algorithm.slug %}">Add new interface</a></p>
 
     <div class="table-responsive">
         <table class="table table-hover table-borderless">
@@ -45,7 +45,7 @@
                     <td>{% if object.is_default %}<i class="fas fa-check-circle text-success mr-1"></i>{% else %}<i class="fas fa-times-circle text-danger mr-1"></i>{% endif %}</td>
                     <td>
                         <a class="btn btn-sm btn-danger m-0 {% if object.is_default %} disabled {% endif %}"
-                           href="{% url 'algorithms:interface-delete' algorithm_slug=algorithm.slug interface_pk=object.interface.pk %}">
+                           href="{% url 'algorithms:interface-delete' slug=algorithm.slug interface_pk=object.interface.pk %}">
                             <i class="fas fa-trash"></i>
                         </a>
                     </td>
