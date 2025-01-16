@@ -22,6 +22,7 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.views.generic import (
     CreateView,
+    DeleteView,
     DetailView,
     FormView,
     ListView,
@@ -1100,7 +1101,7 @@ class AlgorithmImageTemplate(ObjectPermissionRequiredMixin, DetailView):
 class AlgorithmInterfacePermissionMixin(AccessMixin):
     @property
     def algorithm(self):
-        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
+        return get_object_or_404(Algorithm, slug=self.kwargs["algorithm_slug"])
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.has_perm(
@@ -1120,7 +1121,8 @@ class AlgorithmInterfaceForAlgorithmCreate(
 
     def get_success_url(self):
         return reverse(
-            "algorithms:interface-list", kwargs={"slug": self.algorithm.slug}
+            "algorithms:interface-list",
+            kwargs={"algorithm_slug": self.algorithm.slug},
         )
 
     def get_context_data(self, *args, **kwargs):
@@ -1142,6 +1144,48 @@ class AlgorithmInterfacesForAlgorithmList(
     def get_queryset(self):
         qs = super().get_queryset()
         return qs.filter(algorithm=self.algorithm)
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update(
+            {
+                "algorithm": self.algorithm,
+            }
+        )
+        return context
+
+
+class AlgorithmInterfaceForAlgorithmDelete(
+    AlgorithmInterfacePermissionMixin, DeleteView
+):
+    model = AlgorithmAlgorithmInterface
+
+    @property
+    def algorithm_interface(self):
+        return get_object_or_404(
+            klass=AlgorithmAlgorithmInterface,
+            algorithm=self.algorithm,
+            interface__pk=self.kwargs["interface_pk"],
+        )
+
+    def get_object(self, queryset=None):
+        return self.algorithm_interface
+
+    def dispatch(self, request, *args, **kwargs):
+        if self.algorithm_interface.is_default:
+            messages.error(
+                request,
+                "You cannot delete the default interface for an algorithm.",
+            )
+            self.handle_no_permission()
+        else:
+            return super().dispatch(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse(
+            "algorithms:interface-list",
+            kwargs={"algorithm_slug": self.algorithm.slug},
+        )
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)

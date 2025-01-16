@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load remove_whitespace %}
+
+{% block title %}
+    Delete Interface - {{ algorithm.title }} - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}
+        </a></li>
+        <li class="breadcrumb-item"><a
+                href="{% url 'algorithms:interface-list' algorithm_slug=algorithm.slug %}">Interfaces
+        </a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Delete Interface
+        </li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+
+    <h2>Confirm Algorithm Interface Deletion</h2>
+    <form action="" method="post">
+        {% csrf_token %}
+        <p>Are you sure that you want to delete the following algorithm interface from your algorithm?</p>
+        <ul>
+            <li>Inputs: {{ object.interface.inputs.all|oxford_comma }}</li>
+            <li>Outputs: {{ object.interface.outputs.all|oxford_comma }}</li>
+        </ul>
+        <p>
+            <b class="text-danger">WARNING: You are not able to undo this action. Once the interface is deleted, it is deleted forever.</b>
+        </p>
+        <a href="{% url 'algorithms:interface-list' algorithm_slug=algorithm.slug %}"
+           type="button"
+           class="btn btn-secondary">Cancel</a>
+        <input type="submit"
+               value="I understand, delete interface"
+               class="btn btn-danger"/>
+    </form>
+
+{% endblock %}

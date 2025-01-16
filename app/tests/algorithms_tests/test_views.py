@@ -2174,10 +2174,62 @@ def test_algorithm_interface_view_permission(client, viewname):
         response = get_view_for_user(
             viewname=viewname,
             client=client,
-            reverse_kwargs={"slug": alg.slug},
+            reverse_kwargs={"algorithm_slug": alg.slug},
             user=user,
         )
         assert response.status_code == status
+
+
+@pytest.mark.django_db
+def test_algorithm_interface_delete_permission(client):
+    (
+        user_with_alg_add_perm,
+        user_without_alg_add_perm,
+        algorithm_editor_with_alg_add,
+        algorithm_editor_without_alg_add,
+    ) = UserFactory.create_batch(4)
+    assign_perm("algorithms.add_algorithm", user_with_alg_add_perm)
+    assign_perm("algorithms.add_algorithm", algorithm_editor_with_alg_add)
+
+    alg = AlgorithmFactory()
+    alg.add_editor(algorithm_editor_with_alg_add)
+    alg.add_editor(algorithm_editor_without_alg_add)
+
+    int1, int2 = AlgorithmInterfaceFactory.create_batch(2)
+    alg.interfaces.add(int1, through_defaults={"is_default": True})
+    alg.interfaces.add(int2)
+
+    alg_int1 = AlgorithmAlgorithmInterface.objects.get(interface=int1)
+    alg_int2 = AlgorithmAlgorithmInterface.objects.get(interface=int2)
+
+    for user, status in [
+        [user_with_alg_add_perm, 403],
+        [user_without_alg_add_perm, 403],
+        [algorithm_editor_with_alg_add, 200],
+        [algorithm_editor_without_alg_add, 403],
+    ]:
+        response = get_view_for_user(
+            viewname="algorithms:interface-delete",
+            client=client,
+            reverse_kwargs={
+                "algorithm_slug": alg.slug,
+                "interface_pk": alg_int2.pk,
+            },
+            user=user,
+        )
+        assert response.status_code == status
+
+        # default interface cannot be deleted
+        response = get_view_for_user(
+            viewname="algorithms:interface-delete",
+            client=client,
+            reverse_kwargs={
+                "algorithm_slug": alg.slug,
+                "interface_pk": alg_int1.pk,
+            },
+            user=user,
+        )
+        assert response.status_code == 403
 
 
 @pytest.mark.django_db
@@ -2194,7 +2246,7 @@ def test_algorithm_interface_create(client):
         viewname="algorithms:interface-create",
         client=client,
         method=client.post,
-        reverse_kwargs={"slug": alg.slug},
+        reverse_kwargs={"algorithm_slug": alg.slug},
         data={
             "inputs": [ci_1.pk],
             "outputs": [ci_2.pk],
@@ -2234,7 +2286,7 @@ def test_algorithm_interfaces_list_queryset(client):
     response = get_view_for_user(
         viewname="algorithms:interface-list",
         client=client,
-        reverse_kwargs={"slug": alg.slug},
+        reverse_kwargs={"algorithm_slug": alg.slug},
         user=user,
     )
     assert response.status_code == 200
@@ -2243,3 +2295,48 @@ def test_algorithm_interfaces_list_queryset(client):
     assert iots[1] in response.context["object_list"]
     assert iots[2] not in response.context["object_list"]
     assert iots[3] not in response.context["object_list"]
+
+
+@pytest.mark.django_db
+def test_algorithm_interface_delete(client):
+    user = UserFactory()
+    assign_perm("algorithms.add_algorithm", user)
+    alg = AlgorithmFactory()
+    alg.add_editor(user)
+
+    int1, int2 = AlgorithmInterfaceFactory.create_batch(2)
+    alg.interfaces.add(int1, through_defaults={"is_default": True})
+    alg.interfaces.add(int2)
+
+    alg_int1 = AlgorithmAlgorithmInterface.objects.get(interface=int1)
+    alg_int2 = AlgorithmAlgorithmInterface.objects.get(interface=int2)
+
+    response = get_view_for_user(
+        viewname="algorithms:interface-delete",
+        client=client,
+        method=client.post,
+        reverse_kwargs={
+            "algorithm_slug": alg.slug,
+            "interface_pk": alg_int1.pk,
+        },
+        user=user,
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname="algorithms:interface-delete",
+        client=client,
+        method=client.post,
+        reverse_kwargs={
+            "algorithm_slug": alg.slug,
+            "interface_pk": alg_int2.pk,
+        },
+        user=user,
+    )
+    assert response.status_code == 302
+    # no interface was deleted
+    assert AlgorithmInterface.objects.count() == 2
+    # only the relation between interface and algorithm was deleted
+    assert AlgorithmAlgorithmInterface.objects.count() == 1
+    assert alg.interfaces.count() == 1
+    assert alg.interfaces.get() == int1
