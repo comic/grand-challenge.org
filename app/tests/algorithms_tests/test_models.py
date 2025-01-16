@@ -664,7 +664,6 @@ class TestGetJobsWithSameInputs:
 
         jobs = Job.objects.get_jobs_with_same_inputs(
             inputs=data,
-            interface=alg.default_interface,
             algorithm_image=alg.active_image,
             algorithm_model=alg.active_model,
         )
@@ -686,7 +685,6 @@ class TestGetJobsWithSameInputs:
         j.inputs.set(civs)
         jobs = Job.objects.get_jobs_with_same_inputs(
             inputs=data,
-            interface=alg.default_interface,
             algorithm_image=alg.active_image,
             algorithm_model=alg.active_model,
         )
@@ -708,7 +706,6 @@ class TestGetJobsWithSameInputs:
         j.inputs.set(civs)
         jobs = Job.objects.get_jobs_with_same_inputs(
             inputs=data,
-            interface=alg.default_interface,
             algorithm_image=alg.active_image,
             algorithm_model=alg.active_model,
         )
@@ -731,7 +728,6 @@ class TestGetJobsWithSameInputs:
         j.inputs.set(civs)
         jobs = Job.objects.get_jobs_with_same_inputs(
             inputs=data,
-            interface=alg.default_interface,
             algorithm_image=alg.active_image,
             algorithm_model=alg.active_model,
         )
@@ -753,7 +749,6 @@ class TestGetJobsWithSameInputs:
         j.inputs.set(civs)
         jobs = Job.objects.get_jobs_with_same_inputs(
             inputs=data,
-            interface=alg.default_interface,
             algorithm_image=alg.active_image,
             algorithm_model=None,
         )
@@ -774,7 +769,6 @@ class TestGetJobsWithSameInputs:
         j.inputs.set(civs)
         jobs = Job.objects.get_jobs_with_same_inputs(
             inputs=data,
-            interface=alg.default_interface,
             algorithm_image=alg.active_image,
             algorithm_model=None,
         )
@@ -801,7 +795,6 @@ class TestGetJobsWithSameInputs:
         )
         jobs = Job.objects.get_jobs_with_same_inputs(
             inputs=data,
-            interface=alg.default_interface,
             algorithm_image=alg.active_image,
             algorithm_model=None,
         )

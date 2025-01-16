@@ -205,7 +205,6 @@ class JobCreateForm(SaveFormInitMixin, Form):
 
         if Job.objects.get_jobs_with_same_inputs(
             inputs=cleaned_data["inputs"],
-            interface=cleaned_data["algorithm_interface"],
             algorithm_image=cleaned_data["algorithm_image"],
             algorithm_model=cleaned_data["algorithm_model"],
         ):
