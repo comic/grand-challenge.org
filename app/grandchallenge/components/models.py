@@ -2064,6 +2064,29 @@ class ComponentImage(FieldChangeMixin, models.Model):
         if self.has_changed("image") or self.has_changed("is_in_registry"):
             self.update_size_in_storage()
 
+        mark_as_desired = True
+
+        if self._meta.model_name == "algorithmimage":
+
+            from grandchallenge.evaluation.models import Evaluation
+
+            active_image = self.algorithm.active_image
+
+            if (
+                Evaluation.objects.filter(
+                    submission__algorithm_image=active_image,
+                )
+                .exclude(
+                    status__in=[
+                        Evaluation.SUCCESS,
+                        Evaluation.FAILURE,
+                        Evaluation.CANCELLED,
+                    ]
+                )
+                .exists()
+            ):
+                mark_as_desired = False
+
         super().save(*args, **kwargs)
 
         if validate_image_now:
@@ -2073,7 +2096,7 @@ class ComponentImage(FieldChangeMixin, models.Model):
                         "app_label": self._meta.app_label,
                         "model_name": self._meta.model_name,
                         "pk": self.pk,
-                        "mark_as_desired": True,
+                        "mark_as_desired": mark_as_desired,
                     },
                     immutable=True,
                 ).apply_async
