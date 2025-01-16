@@ -1,37 +1,17 @@
 from django.db import migrations
 
-from grandchallenge.algorithms.models import (
-    get_existing_interface_for_inputs_and_outputs,
-)
-
 
 def add_algorithm_interfaces_to_jobs(apps, _schema_editor):
-    AlgorithmInterface = apps.get_model(  # noqa: N806
-        "algorithms", "AlgorithmInterface"
-    )
+    Algorithm = apps.get_model("algorithms", "Algorithm")  # noqa: N806
     Job = apps.get_model("algorithms", "Job")  # noqa: N806
 
-    jobs = (
-        Job.objects.select_related("algorithm_image__algorithm")
-        .prefetch_related("inputs", "outputs")
-        .all()
-    )
-    for job in jobs:
-        inputs = [input.interface for input in job.inputs.all()]
-        outputs = [output.interface for output in job.outputs.all()]
-
-        interface = get_existing_interface_for_inputs_and_outputs(
-            model=AlgorithmInterface, inputs=inputs, outputs=outputs
+    for algorithm in Algorithm.objects.prefetch_related("interfaces").all():
+        default_interface = algorithm.interfaces.get(
+            algorithmalgorithminterface__is_default=True
         )
-        if not interface:
-            interface = AlgorithmInterface.objects.create()
-            interface.inputs.set(inputs)
-            interface.outputs.set(outputs)
-
-        job.algorithm_interface = interface
-        job.algorithm_image.algorithm.interfaces.add(interface)
-
-    jobs.bulk_update(jobs, ["algorithm_interface"])
+        Job.objects.filter(algorithm_image__algorithm=algorithm).update(
+            algorithm_interface=default_interface
+        )
 
 
 class Migration(migrations.Migration):
