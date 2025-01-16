@@ -61,7 +61,6 @@ class AlgorithmAdmin(GuardedModelAdmin):
         "title",
         "created",
         "public",
-        "default_interface",
         "time_limit",
         "job_requires_gpu_type",
         "job_requires_memory_gb",
@@ -216,6 +215,7 @@ class JobAdmin(GuardedModelAdmin):
         "task_on_success",
         "task_on_failure",
         "runtime_metrics",
+        "algorithm_interface",
     )
     search_fields = (
         "creator__username",
@@ -245,6 +245,7 @@ class AlgorithmModelAdmin(GuardedModelAdmin):
 
 @admin.register(AlgorithmInterface)
 class AlgorithmInterfaceAdmin(GuardedModelAdmin):
+    readonly_fields = ("algorithm_inputs", "algorithm_outputs")
     list_display = (
         "pk",
         "algorithm_inputs",

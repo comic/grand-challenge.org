@@ -37,7 +37,11 @@ from django.forms import (
     TextInput,
     URLField,
 )
-from django.forms.widgets import MultipleHiddenInput, PasswordInput
+from django.forms.widgets import (
+    MultipleHiddenInput,
+    PasswordInput,
+    RadioSelect,
+)
 from django.urls import Resolver404, resolve
 from django.utils.functional import cached_property
 from django.utils.html import format_html
@@ -116,9 +120,17 @@ class JobCreateForm(SaveFormInitMixin, Form):
     creator = ModelChoiceField(
         queryset=None, disabled=True, required=False, widget=HiddenInput
     )
+    algorithm_interface = ModelChoiceField(
+        queryset=None,
+        disabled=True,
+        required=True,
+        widget=HiddenInput,
+    )
 
-    def __init__(self, *args, algorithm, user, **kwargs):
+    def __init__(self, *args, algorithm, user, interface, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self._algorithm = algorithm
 
         self.helper = FormHelper()
 
@@ -128,7 +140,11 @@ class JobCreateForm(SaveFormInitMixin, Form):
         )
         self.fields["creator"].initial = self._user
 
-        self._algorithm = algorithm
+        self.fields["algorithm_interface"].queryset = (
+            self._algorithm.interfaces.all()
+        )
+        self.fields["algorithm_interface"].initial = interface
+
         self._algorithm_image = self._algorithm.active_image
 
         active_model = self._algorithm.active_model
@@ -145,7 +161,7 @@ class JobCreateForm(SaveFormInitMixin, Form):
             )
             self.fields["algorithm_model"].initial = active_model
 
-        for inp in self._algorithm.inputs.all():
+        for inp in interface.inputs.all():
             prefixed_interface_slug = (
                 f"{INTERFACE_FORM_FIELD_PREFIX}{inp.slug}"
             )
@@ -1435,3 +1451,36 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
             )
 
         return interface
+
+
+class JobInterfaceSelectForm(SaveFormInitMixin, Form):
+    algorithm_interface = ModelChoiceField(
+        queryset=None,
+        required=True,
+        help_text="Select an input-output combination to use for this job.",
+        widget=RadioSelect,
+    )
+
+    def __init__(self, *args, algorithm, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self._algorithm = algorithm
+
+        self.fields["algorithm_interface"].queryset = (
+            self._algorithm.interfaces.all()
+        )
+        self.fields["algorithm_interface"].initial = (
+            self._algorithm.default_interface
+        )
+        self.fields["algorithm_interface"].widget.choices = {
+            (
+                interface.pk,
+                format_html(
+                    "<div><b>Inputs</b>: {inputs}</div>"
+                    "<div class='mb-3'><b>Outputs</b>: {outputs}</div>",
+                    inputs=oxford_comma(interface.inputs.all()),
+                    outputs=oxford_comma(interface.outputs.all()),
+                ),
+            )
+            for interface in self._algorithm.interfaces.all()
+        }

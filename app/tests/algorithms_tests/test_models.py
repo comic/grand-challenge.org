@@ -656,7 +656,9 @@ class TestGetJobsWithSameInputs:
         data = self.get_civ_data(civs=civs)
 
         j = AlgorithmJobFactory(
-            algorithm_image=alg.active_image, time_limit=10
+            algorithm_image=alg.active_image,
+            time_limit=10,
+            algorithm_interface=alg.default_interface,
         )
         j.inputs.set(civs)
 
@@ -678,6 +680,7 @@ class TestGetJobsWithSameInputs:
             algorithm_image=AlgorithmImageFactory(),
             algorithm_model=alg.active_model,
             time_limit=10,
+            algorithm_interface=alg.default_interface,
         )
         j.inputs.set(civs)
         jobs = Job.objects.get_jobs_with_same_inputs(
@@ -698,6 +701,7 @@ class TestGetJobsWithSameInputs:
             algorithm_model=alg.active_model,
             algorithm_image=alg.active_image,
             time_limit=10,
+            algorithm_interface=alg.default_interface,
         )
         j.inputs.set(civs)
         jobs = Job.objects.get_jobs_with_same_inputs(
@@ -719,6 +723,7 @@ class TestGetJobsWithSameInputs:
             algorithm_model=AlgorithmModelFactory(),
             algorithm_image=AlgorithmImageFactory(),
             time_limit=10,
+            algorithm_interface=alg.default_interface,
         )
         j.inputs.set(civs)
         jobs = Job.objects.get_jobs_with_same_inputs(
@@ -739,10 +744,13 @@ class TestGetJobsWithSameInputs:
             algorithm_model=alg.active_model,
             algorithm_image=alg.active_image,
             time_limit=10,
+            algorithm_interface=alg.default_interface,
         )
         j.inputs.set(civs)
         jobs = Job.objects.get_jobs_with_same_inputs(
-            inputs=data, algorithm_image=alg.active_image, algorithm_model=None
+            inputs=data,
+            algorithm_image=alg.active_image,
+            algorithm_model=None,
         )
         assert len(jobs) == 0
 
@@ -754,11 +762,15 @@ class TestGetJobsWithSameInputs:
         data = self.get_civ_data(civs=civs)
 
         j = AlgorithmJobFactory(
-            algorithm_image=alg.active_image, time_limit=10
+            algorithm_image=alg.active_image,
+            time_limit=10,
+            algorithm_interface=alg.default_interface,
         )
         j.inputs.set(civs)
         jobs = Job.objects.get_jobs_with_same_inputs(
-            inputs=data, algorithm_image=alg.active_image, algorithm_model=None
+            inputs=data,
+            algorithm_image=alg.active_image,
+            algorithm_model=None,
         )
         assert j in jobs
         assert len(jobs) == 1
@@ -771,7 +783,9 @@ class TestGetJobsWithSameInputs:
         data = self.get_civ_data(civs=civs)
 
         j = AlgorithmJobFactory(
-            algorithm_image=alg.active_image, time_limit=10
+            algorithm_image=alg.active_image,
+            time_limit=10,
+            algorithm_interface=alg.default_interface,
         )
         j.inputs.set(
             [
@@ -780,7 +794,34 @@ class TestGetJobsWithSameInputs:
             ]
         )
         jobs = Job.objects.get_jobs_with_same_inputs(
-            inputs=data, algorithm_image=alg.active_image, algorithm_model=None
+            inputs=data,
+            algorithm_image=alg.active_image,
+            algorithm_model=None,
+        )
+        assert len(jobs) == 0
+
+    def test_job_with_partially_overlapping_input(
+        self, algorithm_with_image_and_model_and_two_inputs
+    ):
+        alg = algorithm_with_image_and_model_and_two_inputs.algorithm
+        civs = algorithm_with_image_and_model_and_two_inputs.civs
+        data = self.get_civ_data(civs=civs)
+
+        j = AlgorithmJobFactory(
+            algorithm_image=alg.active_image,
+            time_limit=10,
+            algorithm_interface=alg.default_interface,
+        )
+        j.inputs.set(
+            [
+                civs[0],
+                ComponentInterfaceValueFactory(),
+            ]
+        )
+        jobs = Job.objects.get_jobs_with_same_inputs(
+            inputs=data,
+            algorithm_image=alg.active_image,
+            algorithm_model=None,
         )
         assert len(jobs) == 0
 
@@ -982,8 +1023,15 @@ def test_inputs_complete():
     ci1, ci2, ci3 = ComponentInterfaceFactory.create_batch(
         3, kind=ComponentInterface.Kind.STRING
     )
-    alg.inputs.set([ci1, ci2, ci3])
-    job = AlgorithmJobFactory(algorithm_image__algorithm=alg, time_limit=10)
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ci1, ci2, ci3], outputs=[ComponentInterfaceFactory()]
+    )
+    alg.interfaces.add(interface, through_defaults={"is_default": True})
+    job = AlgorithmJobFactory(
+        algorithm_image__algorithm=alg,
+        time_limit=10,
+        algorithm_interface=alg.default_interface,
+    )
     civ_with_value_1 = ComponentInterfaceValueFactory(
         interface=ci1, value="Foo"
     )
@@ -1505,7 +1553,8 @@ def test_has_default_interface():
     io1, io2 = AlgorithmInterfaceFactory.create_batch(2)
 
     alg1.interfaces.add(io1, through_defaults={"is_default": True})
-    alg2.interfaces.add(io2)
+    alg1.interfaces.add(io2)
+    alg2.interfaces.add(io1)
 
     assert alg1.default_interface == io1
     assert not alg2.default_interface
