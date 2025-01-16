@@ -429,7 +429,7 @@ class TestObjectPermissionRequiredViews:
                 "job-create",
                 {
                     "slug": ai.algorithm.slug,
-                    "interface": ai.algorithm.default_interface.pk,
+                    "interface_pk": ai.algorithm.default_interface.pk,
                 },
                 "execute_algorithm",
                 ai.algorithm,
@@ -960,7 +960,7 @@ class TestJobCreateView:
                     user=user,
                     reverse_kwargs={
                         "slug": algorithm.slug,
-                        "interface": algorithm.default_interface.pk,
+                        "interface_pk": algorithm.default_interface.pk,
                     },
                     follow=True,
                     data=inputs,
@@ -1551,7 +1551,7 @@ def test_job_time_limit(client):
         method=client.post,
         reverse_kwargs={
             "slug": algorithm.slug,
-            "interface": algorithm.default_interface.pk,
+            "interface_pk": algorithm.default_interface.pk,
         },
         user=user,
         follow=True,
@@ -1602,7 +1602,7 @@ def test_job_gpu_type_set(client, settings):
         method=client.post,
         reverse_kwargs={
             "slug": algorithm.slug,
-            "interface": algorithm.default_interface.pk,
+            "interface_pk": algorithm.default_interface.pk,
         },
         user=user,
         follow=True,
@@ -1696,7 +1696,7 @@ def test_job_create_view_for_verified_users_only(client):
         viewname="algorithms:job-create",
         reverse_kwargs={
             "slug": alg.slug,
-            "interface": alg.default_interface.pk,
+            "interface_pk": alg.default_interface.pk,
         },
         client=client,
         user=user,
@@ -1707,7 +1707,7 @@ def test_job_create_view_for_verified_users_only(client):
         viewname="algorithms:job-create",
         reverse_kwargs={
             "slug": alg.slug,
-            "interface": alg.default_interface.pk,
+            "interface_pk": alg.default_interface.pk,
         },
         client=client,
         user=editor,
@@ -1832,7 +1832,7 @@ def test_job_create_denied_for_same_input_model_and_image(client):
         method=client.post,
         reverse_kwargs={
             "slug": alg.slug,
-            "interface": alg.default_interface.pk,
+            "interface_pk": alg.default_interface.pk,
         },
         user=creator,
         data={
@@ -2211,7 +2211,7 @@ def test_interface_select_automatic_redirect(client):
     assert response.status_code == 302
     assert response.url == reverse(
         "algorithms:job-create",
-        kwargs={"slug": alg.slug, "interface": interface.pk},
+        kwargs={"slug": alg.slug, "interface_pk": interface.pk},
     )
 
     # with more than 1 interfaces, user has to choose the interface

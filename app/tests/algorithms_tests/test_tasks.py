@@ -244,7 +244,7 @@ def test_algorithm(
             user=user,
             reverse_kwargs={
                 "slug": ai.algorithm.slug,
-                "interface": interface.pk,
+                "interface_pk": interface.pk,
             },
             follow=True,
             data={
@@ -315,7 +315,7 @@ def test_algorithm(
             user=user,
             reverse_kwargs={
                 "slug": ai.algorithm.slug,
-                "interface": interface2.pk,
+                "interface_pk": interface2.pk,
             },
             follow=True,
             data={
@@ -402,7 +402,7 @@ def test_algorithm_with_invalid_output(
             user=user,
             reverse_kwargs={
                 "slug": ai.algorithm.slug,
-                "interface": interface.pk,
+                "interface_pk": interface.pk,
             },
             follow=True,
             data={

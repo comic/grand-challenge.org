@@ -323,7 +323,7 @@ def test_create_job_input_fields(
         client=client,
         reverse_kwargs={
             "slug": alg.slug,
-            "interface": alg.default_interface.pk,
+            "interface_pk": alg.default_interface.pk,
         },
         follow=True,
         user=creator,
@@ -358,7 +358,7 @@ def test_create_job_json_input_field_validation(
         client=client,
         reverse_kwargs={
             "slug": alg.slug,
-            "interface": alg.default_interface.pk,
+            "interface_pk": alg.default_interface.pk,
         },
         method=client.post,
         follow=True,
@@ -392,7 +392,7 @@ def test_create_job_simple_input_field_validation(
         client=client,
         reverse_kwargs={
             "slug": alg.slug,
-            "interface": alg.default_interface.pk,
+            "interface_pk": alg.default_interface.pk,
         },
         method=client.post,
         follow=True,

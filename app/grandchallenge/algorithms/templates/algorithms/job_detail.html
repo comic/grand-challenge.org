@@ -55,7 +55,7 @@
 
             {% if object.status == object.SUCCESS and perms.reader_studies.add_readerstudy %}
                 <a class="nav-link"
-                   href="{% url "algorithms:display-set-from-job-create" slug=object.algorithm_image.algorithm.slug pk=object.pk %}">
+                   href="{% url "algorithms:display-set-from-job-create" slug=object.algorithm_image.algorithm.slug interface_pk=object.pk %}">
                     <i class="fas fa-edit fa-fw"></i>&nbsp;Edit in Reader Study
                 </a>
             {% endif %}

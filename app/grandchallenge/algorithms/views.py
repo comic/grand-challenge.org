@@ -533,7 +533,7 @@ class JobInterfaceSelect(
             "algorithms:job-create",
             kwargs={
                 "slug": self.algorithm.slug,
-                "interface": self.selected_interface.pk,
+                "interface_pk": self.selected_interface.pk,
             },
         )
 

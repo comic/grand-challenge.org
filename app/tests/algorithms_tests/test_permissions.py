@@ -327,7 +327,7 @@ class TestJobPermissions:
             method=client.post,
             reverse_kwargs={
                 "slug": algorithm_image.algorithm.slug,
-                "interface": algorithm_image.algorithm.default_interface.pk,
+                "interface_pk": algorithm_image.algorithm.default_interface.pk,
             },
             user=user,
             follow=True,

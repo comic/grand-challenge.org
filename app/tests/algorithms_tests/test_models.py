@@ -800,6 +800,31 @@ class TestGetJobsWithSameInputs:
         )
         assert len(jobs) == 0
 
+    def test_job_with_partially_overlapping_input(
+        self, algorithm_with_image_and_model_and_two_inputs
+    ):
+        alg = algorithm_with_image_and_model_and_two_inputs.algorithm
+        civs = algorithm_with_image_and_model_and_two_inputs.civs
+        data = self.get_civ_data(civs=civs)
+
+        j = AlgorithmJobFactory(
+            algorithm_image=alg.active_image,
+            time_limit=10,
+            algorithm_interface=alg.default_interface,
+        )
+        j.inputs.set(
+            [
+                civs[0],
+                ComponentInterfaceValueFactory(),
+            ]
+        )
+        jobs = Job.objects.get_jobs_with_same_inputs(
+            inputs=data,
+            algorithm_image=alg.active_image,
+            algorithm_model=None,
+        )
+        assert len(jobs) == 0
+
 
 @pytest.mark.django_db
 def test_is_complimentary_set_for_editors():
