@@ -94,11 +94,25 @@ def requeue_jobs(modeladmin, request, queryset):
     for job in queryset:
         job.status = ComponentJob.RETRY
         job.attempt += 1
+        job.started_at = None
+        job.completed_at = None
+        job.error_message = ""
+        job.detailed_error_message = {}
         jobs.append(job)
 
         on_commit(job.execute)
 
-    queryset.model.objects.bulk_update(jobs, fields=["status", "attempt"])
+    queryset.model.objects.bulk_update(
+        jobs,
+        fields=[
+            "status",
+            "attempt",
+            "started_at",
+            "completed_at",
+            "error_message",
+            "detailed_error_message",
+        ],
+    )
 
 
 @admin.action(

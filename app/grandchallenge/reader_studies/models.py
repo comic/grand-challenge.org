@@ -796,6 +796,9 @@ class WorkstationSessionReaderStudy(models.Model):
         "workstations.Session", on_delete=models.CASCADE
     )
 
+    class Meta:
+        unique_together = (("reader_study", "workstation_session"),)
+
 
 @receiver(post_delete, sender=ReaderStudy)
 def delete_reader_study_groups_hook(*_, instance: ReaderStudy, using, **__):
@@ -1992,3 +1995,6 @@ class OptionalHangingProtocolReaderStudy(models.Model):
     hanging_protocol = models.ForeignKey(
         "hanging_protocols.HangingProtocol", on_delete=models.CASCADE
     )
+
+    class Meta:
+        unique_together = (("reader_study", "hanging_protocol"),)

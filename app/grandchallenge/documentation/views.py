@@ -11,11 +11,12 @@ from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.documentation.forms import (
+    DocPageContentUpdateForm,
     DocPageCreateForm,
-    DocPageUpdateForm,
+    DocPageMetadataUpdateForm,
 )
 from grandchallenge.documentation.models import DocPage
-from grandchallenge.subdomains.utils import reverse_lazy
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
 class DocPageList(ListView):
@@ -72,9 +73,11 @@ class DocumentationHome(DocPageDetail):
         return get_object_or_404(DocPage, order=1)
 
 
-class DocPageUpdate(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+class DocPageMetadataUpdate(
+    LoginRequiredMixin, PermissionRequiredMixin, UpdateView
+):
     model = DocPage
-    form_class = DocPageUpdateForm
+    form_class = DocPageMetadataUpdateForm
     permission_required = "documentation.change_docpage"
     raise_exception = True
     login_url = reverse_lazy("account_login")
@@ -85,9 +88,29 @@ class DocPageUpdate(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
         return response
 
 
+class DocPageContentUpdate(
+    LoginRequiredMixin, PermissionRequiredMixin, UpdateView
+):
+    model = DocPage
+    form_class = DocPageContentUpdateForm
+    template_name_suffix = "_content_update"
+    permission_required = "documentation.change_docpage"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+
 class DocPageCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = DocPage
     form_class = DocPageCreateForm
     permission_required = "documentation.add_docpage"
     raise_exception = True
     login_url = reverse_lazy("account_login")
+
+    def get_success_url(self):
+        """On successful creation, go to content update."""
+        return reverse(
+            "documentation:content-update",
+            kwargs={
+                "slug": self.object.slug,
+            },
+        )

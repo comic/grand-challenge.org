@@ -78,6 +78,9 @@ class DirectMessageUnreadBy(models.Model):
     direct_message = models.ForeignKey(DirectMessage, on_delete=models.CASCADE)
     unread_by = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
 
+    class Meta:
+        unique_together = (("direct_message", "unread_by"),)
+
 
 @receiver(m2m_changed, sender=DirectMessageUnreadBy)
 def email_subscribed_users_about_new_message(
@@ -259,6 +262,9 @@ class ConversationParticipant(models.Model):
     # https://docs.djangoproject.com/en/4.2/topics/db/models/#intermediary-manytomany
     conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE)
     participant = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = (("conversation", "participant"),)
 
 
 class ConversationUserObjectPermission(UserObjectPermissionBase):

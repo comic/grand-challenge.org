@@ -122,9 +122,14 @@
         <div class="row mt-3">
             <div class="col-12 col-sm-6 col-md-7 d-inline-block text-left">
                 {% if 'documentation.change_docpage' in perms %}
-                    <a class="btn btn-md btn-outline-dark d-inline-flex" href="{% url 'documentation:list' %}">Page overview</a>
-                    <a class="btn btn-md btn-outline-dark d-inline-flex" href="{% url 'documentation:create' %}">Add</a>
-                    <a class="btn btn-md btn-outline-dark" href="{% url 'documentation:update' slug=currentdocpage.slug %}">Edit</a>
+                    <a class="btn btn-md btn-outline-dark" href="{% url 'documentation:list' %}">Page overview</a>
+                    <a class="btn btn-md btn-outline-dark" href="{% url 'documentation:create' %}">Add</a>
+                    <a class="btn btn-md btn-outline-dark" href="{% url 'documentation:content-update' slug=currentdocpage.slug %}" title="Edit page">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <a class="btn btn-md btn-outline-dark" href="{% url 'documentation:metadata-update' slug=currentdocpage.slug %}" title="Edit metadata">
+                        <i class="fas fa-tools"></i>
+                    </a>
                 {% endif %}
             </div>
             <div class="col-12 col-sm-6 col-md-5 justify-content-start justify-content-sm-end form-inline">
@@ -146,7 +151,7 @@
             {% endif %}
         </div>
     {% else %}
-        <div class="mt-4" id=pageContainer>{{ currentdocpage.content|md2html }}</div>
+        <div class="mt-4 docpage" id=pageContainer>{{ currentdocpage.content|md2html }}</div>
         <div class="row">
             <div class="d-inline-block col-6 text-left">
                 {% if currentdocpage.previous %}

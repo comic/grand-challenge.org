@@ -50,3 +50,19 @@ blockquote {
     border-left: $spacer * .25 solid $primary;
     color: $primary;
 }
+
+div.codehilite {
+    margin-bottom: $paragraph-margin-bottom;
+}
+
+.docpage h3:first-of-type {
+    text-align: center;
+}
+
+.docpage h3:has(+h4){
+    margin-bottom: 2 * $paragraph-margin-bottom;
+}
+
+.docpage :is(h1, h2, h3, h4, h5, h6) {
+    font-weight: bold;
+}

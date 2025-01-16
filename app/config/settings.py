@@ -795,7 +795,11 @@ MARKDOWN_POST_PROCESSORS = []
 MARKDOWNX_MARKDOWNIFY_FUNCTION = (
     "grandchallenge.core.templatetags.bleach.md2html"
 )
-MARKDOWNX_MARKDOWN_EXTENSION_CONFIGS = {}
+MARKDOWNX_MARKDOWN_EXTENSION_CONFIGS = {
+    "markdown.extensions.codehilite": {
+        "wrapcode": False,
+    }
+}
 MARKDOWNX_IMAGE_MAX_SIZE = {"size": (2000, 0), "quality": 90}
 MARKDOWNX_EDITOR_RESIZABLE = "False"
 

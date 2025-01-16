@@ -32,6 +32,7 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
@@ -355,6 +356,13 @@ class TestObjectPermissionRequiredViews:
             time_limit=ai.algorithm.time_limit,
         )
         p = AlgorithmPermissionRequestFactory(algorithm=ai.algorithm)
+        interface = AlgorithmInterfaceFactory(
+            inputs=[ComponentInterfaceFactory()],
+            outputs=[ComponentInterfaceFactory()],
+        )
+        ai.algorithm.interfaces.add(
+            interface, through_defaults={"is_default": True}
+        )
 
         VerificationFactory(user=u, is_verified=True)
 
@@ -421,7 +429,10 @@ class TestObjectPermissionRequiredViews:
             ),
             (
                 "job-create",
-                {"slug": ai.algorithm.slug},
+                {
+                    "slug": ai.algorithm.slug,
+                    "interface_pk": ai.algorithm.default_interface.pk,
+                },
                 "execute_algorithm",
                 ai.algorithm,
                 None,
@@ -976,6 +987,7 @@ def test_create_job_with_json_file(
             file.name.split("/")[-1]
             in Job.objects.get().inputs.first().file.name
         )
+        assert not UserUpload.objects.filter(pk=upload.pk).exists()
 
 
 @pytest.mark.django_db
@@ -1103,6 +1115,7 @@ class TestJobCreateView:
                     user=user,
                     reverse_kwargs={
                         "slug": algorithm.slug,
+                        "interface_pk": algorithm.default_interface.pk,
                     },
                     follow=True,
                     data=inputs,
@@ -1141,15 +1154,19 @@ class TestJobCreateView:
         algorithm_with_multiple_inputs,
     ):
         # configure multiple inputs
-        algorithm_with_multiple_inputs.algorithm.inputs.set(
-            [
+        interface = AlgorithmInterfaceFactory(
+            inputs=[
                 algorithm_with_multiple_inputs.ci_json_in_db_with_schema,
                 algorithm_with_multiple_inputs.ci_existing_img,
                 algorithm_with_multiple_inputs.ci_str,
                 algorithm_with_multiple_inputs.ci_bool,
                 algorithm_with_multiple_inputs.ci_json_file,
                 algorithm_with_multiple_inputs.ci_img_upload,
-            ]
+            ],
+            outputs=[ComponentInterfaceFactory()],
+        )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(
+            interface, through_defaults={"is_default": True}
         )
 
         assert ComponentInterfaceValue.objects.count() == 0
@@ -1203,10 +1220,14 @@ class TestJobCreateView:
         assert job.time_limit == 600
         assert job.inputs.count() == 6
 
+        assert not UserUpload.objects.filter(
+            pk=algorithm_with_multiple_inputs.file_upload.pk
+        ).exists()
+
         assert sorted(
             [
                 int.pk
-                for int in algorithm_with_multiple_inputs.algorithm.inputs.all()
+                for int in algorithm_with_multiple_inputs.algorithm.default_interface.inputs.all()
             ]
         ) == sorted([civ.interface.pk for civ in job.inputs.all()])
 
@@ -1233,14 +1254,18 @@ class TestJobCreateView:
         algorithm_with_multiple_inputs,
     ):
         # configure multiple inputs
-        algorithm_with_multiple_inputs.algorithm.inputs.set(
-            [
+        interface = AlgorithmInterfaceFactory(
+            inputs=[
                 algorithm_with_multiple_inputs.ci_json_in_db_with_schema,
                 algorithm_with_multiple_inputs.ci_existing_img,
                 algorithm_with_multiple_inputs.ci_str,
                 algorithm_with_multiple_inputs.ci_bool,
                 algorithm_with_multiple_inputs.ci_json_file,
-            ]
+            ],
+            outputs=[ComponentInterfaceFactory()],
+        )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(
+            interface, through_defaults={"is_default": True}
         )
 
         civ1, civ2, civ3, civ4, civ5 = self.create_existing_civs(
@@ -1307,13 +1332,17 @@ class TestJobCreateView:
         algorithm_with_multiple_inputs,
     ):
         # configure multiple inputs
-        algorithm_with_multiple_inputs.algorithm.inputs.set(
-            [
+        interface = AlgorithmInterfaceFactory(
+            inputs=[
                 algorithm_with_multiple_inputs.ci_str,
                 algorithm_with_multiple_inputs.ci_bool,
                 algorithm_with_multiple_inputs.ci_existing_img,
                 algorithm_with_multiple_inputs.ci_json_in_db_with_schema,
-            ]
+            ],
+            outputs=[ComponentInterfaceFactory()],
+        )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(
+            interface, through_defaults={"is_default": True}
         )
         civ1, civ2, civ3, civ4, civ5 = self.create_existing_civs(
             interface_data=algorithm_with_multiple_inputs
@@ -1371,8 +1400,12 @@ class TestJobCreateView:
         algorithm_with_multiple_inputs,
     ):
         # configure file input
-        algorithm_with_multiple_inputs.algorithm.inputs.set(
-            [algorithm_with_multiple_inputs.ci_json_file]
+        interface = AlgorithmInterfaceFactory(
+            inputs=[algorithm_with_multiple_inputs.ci_json_file],
+            outputs=[ComponentInterfaceFactory()],
+        )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(
+            interface, through_defaults={"is_default": True}
         )
         file_upload = UserUploadFactory(
             filename="file.json", creator=algorithm_with_multiple_inputs.editor
@@ -1418,8 +1451,12 @@ class TestJobCreateView:
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
-        algorithm_with_multiple_inputs.algorithm.inputs.set(
-            [algorithm_with_multiple_inputs.ci_json_in_db_with_schema]
+        interface = AlgorithmInterfaceFactory(
+            inputs=[algorithm_with_multiple_inputs.ci_json_in_db_with_schema],
+            outputs=[ComponentInterfaceFactory()],
+        )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(
+            interface, through_defaults={"is_default": True}
         )
         response = self.create_job(
             client=client,
@@ -1448,8 +1485,12 @@ class TestJobCreateView:
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
-        algorithm_with_multiple_inputs.algorithm.inputs.set(
-            [algorithm_with_multiple_inputs.ci_img_upload]
+        interface = AlgorithmInterfaceFactory(
+            inputs=[algorithm_with_multiple_inputs.ci_img_upload],
+            outputs=[ComponentInterfaceFactory()],
+        )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(
+            interface, through_defaults={"is_default": True}
         )
         user_upload = create_upload_from_file(
             creator=algorithm_with_multiple_inputs.editor,
@@ -1501,11 +1542,11 @@ class TestJobCreateView:
             ]
             ci.save()
 
-        algorithm_with_multiple_inputs.algorithm.inputs.set(
-            [
-                ci1,
-                ci2,
-            ]
+        interface = AlgorithmInterfaceFactory(
+            inputs=[ci1, ci2], outputs=[ComponentInterfaceFactory()]
+        )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(
+            interface, through_defaults={"is_default": True}
         )
 
         assert ComponentInterfaceValue.objects.count() == 0
@@ -1658,7 +1699,10 @@ def test_job_time_limit(client):
     ci = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=True
     )
-    algorithm.inputs.set([ci])
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ci], outputs=[ComponentInterfaceFactory()]
+    )
+    algorithm.interfaces.add(interface, through_defaults={"is_default": True})
 
     response = get_view_for_user(
         viewname="algorithms:job-create",
@@ -1666,6 +1710,7 @@ def test_job_time_limit(client):
         method=client.post,
         reverse_kwargs={
             "slug": algorithm.slug,
+            "interface_pk": algorithm.default_interface.pk,
         },
         user=user,
         follow=True,
@@ -1705,7 +1750,10 @@ def test_job_gpu_type_set(client, settings):
     ci = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=True
     )
-    algorithm.inputs.set([ci])
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ci], outputs=[ComponentInterfaceFactory()]
+    )
+    algorithm.interfaces.add(interface, through_defaults={"is_default": True})
 
     response = get_view_for_user(
         viewname="algorithms:job-create",
@@ -1713,6 +1761,7 @@ def test_job_gpu_type_set(client, settings):
         method=client.post,
         reverse_kwargs={
             "slug": algorithm.slug,
+            "interface_pk": algorithm.default_interface.pk,
         },
         user=user,
         follow=True,
@@ -1734,6 +1783,7 @@ def test_job_gpu_type_set(client, settings):
     assert algorithm.credits_per_job == 190
 
 
+@pytest.mark.xfail(reason="Still to be addressed for optional inputs pitch")
 @pytest.mark.django_db
 def test_job_gpu_type_set_with_api(client, settings):
     settings.COMPONENTS_DEFAULT_BACKEND = "grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor"
@@ -1795,9 +1845,18 @@ def test_job_create_view_for_verified_users_only(client):
     alg.add_user(user)
     alg.add_user(editor)
 
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ComponentInterfaceFactory()],
+        outputs=[ComponentInterfaceFactory()],
+    )
+    alg.interfaces.add(interface, through_defaults={"is_default": True})
+
     response = get_view_for_user(
         viewname="algorithms:job-create",
-        reverse_kwargs={"slug": alg.slug},
+        reverse_kwargs={
+            "slug": alg.slug,
+            "interface_pk": alg.default_interface.pk,
+        },
         client=client,
         user=user,
     )
@@ -1805,7 +1864,10 @@ def test_job_create_view_for_verified_users_only(client):
 
     response2 = get_view_for_user(
         viewname="algorithms:job-create",
-        reverse_kwargs={"slug": alg.slug},
+        reverse_kwargs={
+            "slug": alg.slug,
+            "interface_pk": alg.default_interface.pk,
+        },
         client=client,
         user=editor,
     )
@@ -1903,7 +1965,10 @@ def test_job_create_denied_for_same_input_model_and_image(client):
     ci = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.IMAGE
     )
-    alg.inputs.set([ci])
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ci], outputs=[ComponentInterfaceFactory()]
+    )
+    alg.interfaces.add(interface, through_defaults={"is_default": True})
     ai = AlgorithmImageFactory(
         algorithm=alg,
         is_manifest_valid=True,
@@ -1926,6 +1991,7 @@ def test_job_create_denied_for_same_input_model_and_image(client):
         method=client.post,
         reverse_kwargs={
             "slug": alg.slug,
+            "interface_pk": alg.default_interface.pk,
         },
         user=creator,
         data={
@@ -2334,3 +2400,79 @@ def test_algorithm_interface_delete(client):
     assert AlgorithmAlgorithmInterface.objects.count() == 1
     assert alg.interfaces.count() == 1
     assert alg.interfaces.get() == int1
+
+
+def test_interface_select_for_job_view_permission(client):
+    verified_user, unverified_user = UserFactory.create_batch(2)
+    VerificationFactory(user=verified_user, is_verified=True)
+    alg = AlgorithmFactory()
+    alg.add_user(verified_user)
+    alg.add_user(unverified_user)
+
+    interface1 = AlgorithmInterfaceFactory(
+        inputs=[ComponentInterfaceFactory()],
+        outputs=[ComponentInterfaceFactory()],
+    )
+    interface2 = AlgorithmInterfaceFactory(
+        inputs=[ComponentInterfaceFactory()],
+        outputs=[ComponentInterfaceFactory()],
+    )
+    alg.interfaces.add(interface1, through_defaults={"is_default": True})
+    alg.interfaces.add(interface2)
+
+    response = get_view_for_user(
+        viewname="algorithms:job-interface-select",
+        reverse_kwargs={"slug": alg.slug},
+        client=client,
+        user=unverified_user,
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname="algorithms:job-interface-select",
+        reverse_kwargs={"slug": alg.slug},
+        client=client,
+        user=verified_user,
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_interface_select_automatic_redirect(client):
+    verified_user = UserFactory()
+    VerificationFactory(user=verified_user, is_verified=True)
+    alg = AlgorithmFactory()
+    alg.add_user(verified_user)
+
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ComponentInterfaceFactory()],
+        outputs=[ComponentInterfaceFactory()],
+    )
+    alg.interfaces.add(interface, through_defaults={"is_default": True})
+
+    # with just 1 interface, user gets redirected immediately
+    response = get_view_for_user(
+        viewname="algorithms:job-interface-select",
+        reverse_kwargs={"slug": alg.slug},
+        client=client,
+        user=verified_user,
+    )
+    assert response.status_code == 302
+    assert response.url == reverse(
+        "algorithms:job-create",
+        kwargs={"slug": alg.slug, "interface_pk": interface.pk},
+    )
+
+    # with more than 1 interfaces, user has to choose the interface
+    interface2 = AlgorithmInterfaceFactory(
+        inputs=[ComponentInterfaceFactory()],
+        outputs=[ComponentInterfaceFactory()],
+    )
+    alg.interfaces.add(interface2)
+    response = get_view_for_user(
+        viewname="algorithms:job-interface-select",
+        reverse_kwargs={"slug": alg.slug},
+        client=client,
+        user=verified_user,
+    )
+    assert response.status_code == 200

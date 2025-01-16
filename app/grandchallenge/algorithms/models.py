@@ -973,7 +973,7 @@ class JobManager(ComponentJobManager):
         unique_kwargs = {
             "algorithm_image": algorithm_image,
         }
-        input_interface_count = algorithm_image.algorithm.inputs.count()
+        input_interface_count = len(inputs)
 
         if algorithm_model:
             unique_kwargs["algorithm_model"] = algorithm_model
@@ -1078,6 +1078,9 @@ class Job(CIVForObjectMixin, ComponentJob):
     algorithm_model = models.ForeignKey(
         AlgorithmModel, on_delete=models.PROTECT, null=True, blank=True
     )
+    algorithm_interface = models.ForeignKey(
+        AlgorithmInterface, on_delete=models.PROTECT, null=True, blank=True
+    )
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
@@ -1124,14 +1127,14 @@ class Job(CIVForObjectMixin, ComponentJob):
 
     @property
     def output_interfaces(self):
-        return self.algorithm_image.algorithm.outputs
+        return self.algorithm_interface.outputs.all()
 
     @cached_property
     def inputs_complete(self):
         # check if all inputs are present and if they all have a value
         return {
             civ.interface for civ in self.inputs.all() if civ.has_value
-        } == {*self.algorithm_image.algorithm.inputs.all()}
+        } == {*self.algorithm_interface.inputs.all()}
 
     @cached_property
     def rendered_result_text(self) -> str:
@@ -1468,3 +1471,6 @@ class OptionalHangingProtocolAlgorithm(models.Model):
     hanging_protocol = models.ForeignKey(
         "hanging_protocols.HangingProtocol", on_delete=models.CASCADE
     )
+
+    class Meta:
+        unique_together = (("algorithm", "hanging_protocol"),)

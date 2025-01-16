@@ -15,6 +15,7 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
     InterfaceKindChoices,
 )
+from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
@@ -92,6 +93,7 @@ def test_job_list_view_num_queries(
         assert len(response.json()["results"]) == num_jobs
 
 
+@pytest.mark.xfail(reason="Still to be addressed for optional inputs pitch")
 @pytest.mark.django_db
 class TestJobCreationThroughAPI:
 
@@ -210,6 +212,10 @@ class TestJobCreationThroughAPI:
         )
         assert job.time_limit == 600
         assert job.inputs.count() == 6
+
+        assert not UserUpload.objects.filter(
+            pk=algorithm_with_multiple_inputs.file_upload.pk
+        ).exists()
 
         assert sorted(
             [

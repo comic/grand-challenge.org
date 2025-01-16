@@ -208,8 +208,8 @@ class PhaseUpdate(
     queryset = Phase.objects.prefetch_related("optional_hanging_protocols")
 
     def get_object(self, queryset=None):
-        return Phase.objects.get(
-            challenge=self.request.challenge, slug=self.kwargs["slug"]
+        return get_object_or_404(
+            Phase, challenge=self.request.challenge, slug=self.kwargs["slug"]
         )
 
     def get_form_kwargs(self):
@@ -325,8 +325,8 @@ class SubmissionCreate(
 
     @cached_property
     def phase(self):
-        return Phase.objects.get(
-            challenge=self.request.challenge, slug=self.kwargs["slug"]
+        return get_object_or_404(
+            Phase, challenge=self.request.challenge, slug=self.kwargs["slug"]
         )
 
     def get_form_kwargs(self):
@@ -868,8 +868,8 @@ class PhaseAlgorithmCreate(
 
     @cached_property
     def phase(self):
-        return Phase.objects.get(
-            slug=self.kwargs["slug"], challenge=self.request.challenge
+        return get_object_or_404(
+            Phase, slug=self.kwargs["slug"], challenge=self.request.challenge
         )
 
     def get_success_url(self):

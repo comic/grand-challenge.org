@@ -186,7 +186,6 @@ class ChallengeRequestForm(forms.ModelForm):
             "algorithm_outputs",
             *phase_1_items,
             *phase_2_items,
-            "budget_for_hosting_challenge",
             "challenge_fee_agreement",
             "comments",
         )
@@ -200,7 +199,6 @@ class ChallengeRequestForm(forms.ModelForm):
             "data_license": "We agree to publish the data set for this challenge under a CC-BY license.",
             "phase_1_number_of_submissions_per_team": "Expected number of submissions per team to Phase 1",
             "phase_2_number_of_submissions_per_team": "Expected number of submissions per team to Phase 2",
-            "budget_for_hosting_challenge": "Budget for hosting challenge in Euros",
             "inference_time_limit_in_minutes": "Average algorithm job run time in minutes",
             "algorithm_maximum_settable_memory_gb": "Maximum memory for algorithm jobs in GB",
             "structured_challenge_submission_doi": "DOI",
@@ -454,7 +452,6 @@ class ChallengeRequestForm(forms.ModelForm):
                     *phase_2_items,
                     css_class="border rounded px-4 pt-4 my-5",
                 ),
-                "budget_for_hosting_challenge",
                 "challenge_fee_agreement",
                 "comments",
             ),

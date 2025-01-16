@@ -321,7 +321,10 @@ def test_create_job_input_fields(
     response = get_view_for_user(
         viewname="algorithms:job-create",
         client=client,
-        reverse_kwargs={"slug": alg.slug},
+        reverse_kwargs={
+            "slug": alg.slug,
+            "interface_pk": alg.default_interface.pk,
+        },
         follow=True,
         user=creator,
     )
@@ -353,7 +356,10 @@ def test_create_job_json_input_field_validation(
     response = get_view_for_user(
         viewname="algorithms:job-create",
         client=client,
-        reverse_kwargs={"slug": alg.slug},
+        reverse_kwargs={
+            "slug": alg.slug,
+            "interface_pk": alg.default_interface.pk,
+        },
         method=client.post,
         follow=True,
         user=creator,
@@ -384,7 +390,10 @@ def test_create_job_simple_input_field_validation(
     response = get_view_for_user(
         viewname="algorithms:job-create",
         client=client,
-        reverse_kwargs={"slug": alg.slug},
+        reverse_kwargs={
+            "slug": alg.slug,
+            "interface_pk": alg.default_interface.pk,
+        },
         method=client.post,
         follow=True,
         user=creator,
@@ -400,7 +409,11 @@ def create_algorithm_with_input(slug):
     VerificationFactory(user=creator, is_verified=True)
     alg = AlgorithmFactory()
     alg.add_editor(user=creator)
-    alg.inputs.set([ComponentInterface.objects.get(slug=slug)])
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ComponentInterface.objects.get(slug=slug)],
+        outputs=[ComponentInterfaceFactory()],
+    )
+    alg.interfaces.add(interface, through_defaults={"is_default": True})
     AlgorithmImageFactory(
         algorithm=alg,
         is_manifest_valid=True,
@@ -500,13 +513,34 @@ def test_only_publish_successful_jobs():
 
 @pytest.mark.django_db
 class TestJobCreateLimits:
+
+    def create_form(self, algorithm, user, algorithm_image=None):
+        ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.STRING)
+        interface = AlgorithmInterfaceFactory(inputs=[ci])
+        algorithm.interfaces.add(interface)
+
+        algorithm_image_kwargs = {}
+        if algorithm_image:
+            algorithm_image_kwargs = {
+                "algorithm_image": str(algorithm_image.pk)
+            }
+
+        return JobCreateForm(
+            algorithm=algorithm,
+            user=user,
+            interface=interface,
+            data={
+                **algorithm_image_kwargs,
+                **get_interface_form_data(interface_slug=ci.slug, data="Foo"),
+            },
+        )
+
     def test_form_invalid_without_enough_credits(self, settings):
         algorithm = AlgorithmFactory(
             minimum_credits_per_job=(
                 settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER + 1
             ),
         )
-        algorithm.inputs.clear()
         user = UserFactory()
         AlgorithmImageFactory(
             algorithm=algorithm,
@@ -514,13 +548,11 @@ class TestJobCreateLimits:
             is_in_registry=True,
             is_desired_version=True,
         )
-
-        form = JobCreateForm(algorithm=algorithm, user=user, data={})
-
+        form = self.create_form(algorithm=algorithm, user=user)
         assert not form.is_valid()
-        assert form.errors == {
-            "__all__": ["You have run out of algorithm credits"],
-        }
+        assert "You have run out of algorithm credits" in str(
+            form.errors["__all__"]
+        )
 
     def test_form_valid_for_editor(self, settings):
         algorithm = AlgorithmFactory(
@@ -528,7 +560,6 @@ class TestJobCreateLimits:
                 settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER + 1
             ),
         )
-        algorithm.inputs.clear()
         algorithm_image = AlgorithmImageFactory(
             algorithm=algorithm,
             is_manifest_valid=True,
@@ -539,17 +570,15 @@ class TestJobCreateLimits:
 
         algorithm.add_editor(user=user)
 
-        form = JobCreateForm(
+        form = self.create_form(
             algorithm=algorithm,
             user=user,
-            data={"algorithm_image": str(algorithm_image.pk)},
+            algorithm_image=algorithm_image,
         )
-
         assert form.is_valid()
 
     def test_form_valid_with_credits(self):
         algorithm = AlgorithmFactory(minimum_credits_per_job=1)
-        algorithm.inputs.clear()
         algorithm_image = AlgorithmImageFactory(
             algorithm=algorithm,
             is_manifest_valid=True,
@@ -558,12 +587,11 @@ class TestJobCreateLimits:
         )
         user = UserFactory()
 
-        form = JobCreateForm(
+        form = self.create_form(
             algorithm=algorithm,
             user=user,
-            data={"algorithm_image": str(algorithm_image.pk)},
+            algorithm_image=algorithm_image,
         )
-
         assert form.is_valid()
 
 
@@ -710,7 +738,12 @@ class TestJobCreateForm:
     ):
         algorithm = algorithm_with_image_and_model_and_two_inputs.algorithm
         editor = algorithm.editors_group.user_set.first()
-        form = JobCreateForm(algorithm=algorithm, user=editor, data={})
+        form = JobCreateForm(
+            algorithm=algorithm,
+            user=editor,
+            interface=algorithm.default_interface,
+            data={},
+        )
         assert list(form.fields["creator"].queryset.all()) == [editor]
         assert form.fields["creator"].initial == editor
 
@@ -726,7 +759,12 @@ class TestJobCreateForm:
             is_manifest_valid=True,
             is_in_registry=True,
         )
-        form = JobCreateForm(algorithm=algorithm, user=editor, data={})
+        form = JobCreateForm(
+            algorithm=algorithm,
+            user=editor,
+            interface=algorithm.default_interface,
+            data={},
+        )
         ai_qs = form.fields["algorithm_image"].queryset.all()
         assert algorithm.active_image in ai_qs
         assert inactive_image not in ai_qs
@@ -745,12 +783,14 @@ class TestJobCreateForm:
             algorithm_model=algorithm.active_model,
             status=Job.SUCCESS,
             time_limit=123,
+            algorithm_interface=algorithm.default_interface,
         )
         job.inputs.set(civs)
 
         form = JobCreateForm(
             algorithm=algorithm,
             user=editor,
+            interface=algorithm.default_interface,
             data={
                 "algorithm_image": algorithm.active_image,
                 "algorithm_model": algorithm.active_model,
@@ -775,13 +815,18 @@ def test_all_inputs_required_on_job_creation(algorithm_with_multiple_inputs):
         kind=InterfaceKind.InterfaceKindChoices.ANY,
         store_in_database=True,
     )
-    algorithm_with_multiple_inputs.algorithm.inputs.add(
-        ci_json_in_db_without_schema
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ci_json_in_db_without_schema],
+        outputs=[ComponentInterfaceFactory()],
+    )
+    algorithm_with_multiple_inputs.algorithm.interfaces.add(
+        interface, through_defaults={"is_default": True}
     )
 
     form = JobCreateForm(
         algorithm=algorithm_with_multiple_inputs.algorithm,
         user=algorithm_with_multiple_inputs.editor,
+        interface=interface,
         data={},
     )
 

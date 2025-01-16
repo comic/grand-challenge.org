@@ -28,9 +28,10 @@ RUN apt-get update \
         libopenslide-dev \
         libvips-dev \
         gcc \
-        # ruby3.1 and rugged for licensee
+        # ruby3.1, rugged and nokogiri for licensee
         ruby3.1 \
         ruby-rugged \
+        ruby-nokogiri \
         # git for CodeBuild integration
         git \
         # for dbshell \
