@@ -549,7 +549,7 @@ class JobCreate(
     @cached_property
     def interface(self):
         return get_object_or_404(
-            AlgorithmInterface, pk=self.kwargs["interface"]
+            AlgorithmInterface, pk=self.kwargs["interface_pk"]
         )
 
     def get_form_kwargs(self):
