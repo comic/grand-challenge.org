@@ -109,7 +109,6 @@ logger = logging.getLogger(__name__)
 class AlgorithmCreate(
     LoginRequiredMixin,
     PermissionRequiredMixin,
-    VerificationRequiredMixin,
     UserFormKwargsMixin,
     CreateView,
 ):
@@ -253,7 +252,6 @@ class AlgorithmUpdate(
     LoginRequiredMixin,
     UserFormKwargsMixin,
     ObjectPermissionRequiredMixin,
-    VerificationRequiredMixin,
     UpdateView,
 ):
     model = Algorithm
@@ -265,7 +263,6 @@ class AlgorithmUpdate(
 class AlgorithmDescriptionUpdate(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
-    VerificationRequiredMixin,
     UpdateView,
 ):
     model = Algorithm

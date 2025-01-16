@@ -36,7 +36,8 @@
                             {% if object.sent %}
                                 <span class="badge badge-success p-2">Sent on {{ object.sent_at|date:"j N Y" }}</span>
                             {% else %}
-                                <a class="btn btn-primary btn-sm" href="{% url 'emails:update' pk=object.pk %}">Edit</a>
+                                <a class="btn btn-primary btn-sm" href="{% url 'emails:body-update' pk=object.pk %}"><i class="fa fa-edit"></i> Edit Body</a>
+                                <a class="btn btn-primary btn-sm" href="{% url 'emails:metadata-update' pk=object.pk %}"><i class="fa fa-tools"></i> Edit Metadata</a>
                             {% endif %}
                         </td>
                     </tr>

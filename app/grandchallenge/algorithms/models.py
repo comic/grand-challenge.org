@@ -1471,3 +1471,6 @@ class OptionalHangingProtocolAlgorithm(models.Model):
     hanging_protocol = models.ForeignKey(
         "hanging_protocols.HangingProtocol", on_delete=models.CASCADE
     )
+
+    class Meta:
+        unique_together = (("algorithm", "hanging_protocol"),)

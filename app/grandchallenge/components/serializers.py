@@ -14,6 +14,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
+from grandchallenge.components.templatetags.civ import sort_civs
 from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.workstation_configs.serializers import (
@@ -162,6 +163,17 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
         return attrs
 
 
+class SortedCIVSerializer(serializers.ListSerializer):
+    def to_representation(self, data):
+        iterable = (
+            data.all()
+            if isinstance(data, serializers.models.manager.BaseManager)
+            else data
+        )
+        sorted_data = sort_civs(iterable)
+        return super().to_representation(sorted_data)
+
+
 class ComponentInterfaceValueSerializer(serializers.ModelSerializer):
     # Serializes images in place rather than with hyperlinks for internal usage
     image = SimpleImageSerializer(required=False)
@@ -170,6 +182,7 @@ class ComponentInterfaceValueSerializer(serializers.ModelSerializer):
     class Meta:
         model = ComponentInterfaceValue
         fields = ["interface", "value", "file", "image", "pk"]
+        list_serializer_class = SortedCIVSerializer
 
 
 class HyperlinkedComponentInterfaceValueSerializer(

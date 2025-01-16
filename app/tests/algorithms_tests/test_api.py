@@ -15,6 +15,7 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
     InterfaceKindChoices,
 )
+from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
@@ -211,6 +212,10 @@ class TestJobCreationThroughAPI:
         )
         assert job.time_limit == 600
         assert job.inputs.count() == 6
+
+        assert not UserUpload.objects.filter(
+            pk=algorithm_with_multiple_inputs.file_upload.pk
+        ).exists()
 
         assert sorted(
             [

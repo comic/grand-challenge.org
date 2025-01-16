@@ -463,7 +463,11 @@ def test_open_for_submission(
     open_for_submissions,
     expected_status,
 ):
-    phase = PhaseFactory()
+    PhaseFactory()
+
+    # Annotate the compute costs
+    phase = Phase.objects.get()
+
     phase.submissions_limit_per_user_per_period = (
         submissions_limit_per_user_per_period
     )

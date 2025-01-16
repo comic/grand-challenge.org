@@ -43,6 +43,7 @@ from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.challenges.emails import (
     send_challenge_requested_email_to_requester,
     send_challenge_requested_email_to_reviewers,
+    send_email_percent_budget_consumed_alert,
 )
 from grandchallenge.challenges.utils import ChallengeTypeChoices
 from grandchallenge.components.schemas import (
@@ -50,7 +51,7 @@ from grandchallenge.components.schemas import (
     GPUTypeChoices,
     get_default_gpu_type_choices,
 )
-from grandchallenge.core.models import UUIDModel
+from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import (
     get_banner_path,
     get_logo_path,
@@ -211,7 +212,11 @@ class ChallengeBase(models.Model):
         abstract = True
 
 
-class Challenge(ChallengeBase):
+def get_default_percent_budget_consumed_warning_thresholds():
+    return [70, 90, 100]
+
+
+class Challenge(ChallengeBase, FieldChangeMixin):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     description = models.CharField(
@@ -376,6 +381,24 @@ class Challenge(ChallengeBase):
         help_text="This email will be listed as the contact email for the challenge and will be visible to all users of Grand Challenge.",
     )
 
+    percent_budget_consumed_warning_thresholds = models.JSONField(
+        default=get_default_percent_budget_consumed_warning_thresholds,
+        validators=[
+            JSONValidator(
+                schema={
+                    "$schema": "http://json-schema.org/draft-07/schema",
+                    "type": "array",
+                    "items": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 100,
+                    },
+                    "uniqueItems": True,
+                }
+            )
+        ],
+    )
+
     accumulated_compute_cost_in_cents = deprecate_field(
         models.IntegerField(default=0, blank=True)
     )
@@ -478,6 +501,9 @@ class Challenge(ChallengeBase):
                 )
             )
             self.update_user_forum_permissions()
+
+        if self.has_changed("compute_cost_euro_millicents"):
+            self.send_alert_if_budget_consumed_warning_threshold_exceeded()
 
     def assign_permissions(self):
         # Editors and users can view this challenge
@@ -718,6 +744,23 @@ class Challenge(ChallengeBase):
         else:
             return None
 
+    def send_alert_if_budget_consumed_warning_threshold_exceeded(self):
+        for percent_threshold in sorted(
+            self.percent_budget_consumed_warning_thresholds, reverse=True
+        ):
+            previous_cost = self.initial_value("compute_cost_euro_millicents")
+            threshold = (
+                self.approved_compute_costs_euro_millicents
+                * percent_threshold
+                / 100
+            )
+            current_cost = self.compute_cost_euro_millicents
+            if previous_cost <= threshold < current_cost:
+                send_email_percent_budget_consumed_alert(
+                    self, percent_threshold
+                )
+                break
+
     @cached_property
     def challenge_type(self):
         phase_types = {phase.submission_kind for phase in self.visible_phases}
@@ -949,9 +992,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         help_text="If your challenge has multiple tasks, we multiply the "
         "phase 1 and 2 cost estimates by the number of tasks.",
         validators=[MinValueValidator(limit_value=1)],
-    )
-    budget_for_hosting_challenge = models.PositiveIntegerField(
-        help_text="What is your budget for hosting this challenge? Please be reminded of our <a href='/challenge-policy-and-pricing/'>challenge pricing policy</a>.",
     )
     long_term_commitment = models.BooleanField(
         default=False,

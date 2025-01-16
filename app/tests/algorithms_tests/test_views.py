@@ -1,6 +1,7 @@
 import datetime
 import io
 import json
+import tempfile
 import zipfile
 from pathlib import Path
 from unittest.mock import patch
@@ -31,6 +32,7 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
@@ -52,7 +54,7 @@ from tests.uploads_tests.factories import (
     UserUploadFactory,
     create_upload_from_file,
 )
-from tests.utils import get_view_for_user
+from tests.utils import get_view_for_user, recurse_callbacks
 from tests.verification_tests.factories import VerificationFactory
 
 
@@ -936,6 +938,159 @@ def test_import_view(
 
 
 @pytest.mark.django_db
+def test_create_job_with_json_file(
+    client, settings, algorithm_io_image, django_capture_on_commit_callbacks
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        ai = AlgorithmImageFactory(image__from_path=algorithm_io_image)
+    recurse_callbacks(
+        callbacks=callbacks,
+        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+    )
+
+    editor = UserFactory()
+    VerificationFactory(user=editor, is_verified=True)
+    ai.algorithm.add_editor(editor)
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=False
+    )
+    ai.algorithm.inputs.set([ci])
+
+    with tempfile.NamedTemporaryFile(mode="w+", suffix=".json") as file:
+        json.dump('{"Foo": "bar"}', file)
+        file.seek(0)
+        upload = create_upload_from_file(
+            creator=editor, file_path=Path(file.name)
+        )
+        with django_capture_on_commit_callbacks(execute=True):
+            with django_capture_on_commit_callbacks(execute=True):
+                response = get_view_for_user(
+                    viewname="algorithms:job-create",
+                    client=client,
+                    method=client.post,
+                    reverse_kwargs={
+                        "slug": ai.algorithm.slug,
+                    },
+                    user=editor,
+                    follow=True,
+                    data={
+                        **get_interface_form_data(
+                            interface_slug=ci.slug, data=upload.pk
+                        )
+                    },
+                )
+        assert response.status_code == 200
+        assert (
+            file.name.split("/")[-1]
+            in Job.objects.get().inputs.first().file.name
+        )
+        assert not UserUpload.objects.filter(pk=upload.pk).exists()
+
+
+@pytest.mark.django_db
+def test_algorithm_job_create_with_image_input(
+    settings, client, algorithm_io_image, django_capture_on_commit_callbacks
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        ai = AlgorithmImageFactory(image__from_path=algorithm_io_image)
+    recurse_callbacks(
+        callbacks=callbacks,
+        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+    )
+
+    editor = UserFactory()
+    VerificationFactory(user=editor, is_verified=True)
+    ai.algorithm.add_editor(editor)
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.IMAGE, store_in_database=False
+    )
+    ai.algorithm.inputs.set([ci])
+
+    image1, image2 = ImageFactory.create_batch(2)
+    assign_perm("cases.view_image", editor, image1)
+    assign_perm("cases.view_image", editor, image2)
+
+    civ = ComponentInterfaceValueFactory(interface=ci, image=image1)
+    with django_capture_on_commit_callbacks(execute=True):
+        with django_capture_on_commit_callbacks(execute=True):
+            response = get_view_for_user(
+                viewname="algorithms:job-create",
+                client=client,
+                method=client.post,
+                reverse_kwargs={
+                    "slug": ai.algorithm.slug,
+                },
+                user=editor,
+                follow=True,
+                data={
+                    **get_interface_form_data(
+                        interface_slug=ci.slug,
+                        data=image1.pk,
+                        existing_data=True,
+                    )
+                },
+            )
+    assert response.status_code == 200
+    assert str(Job.objects.get().inputs.first().image.pk) == str(image1.pk)
+    # same civ reused
+    assert Job.objects.get().inputs.first() == civ
+
+    with django_capture_on_commit_callbacks(execute=True):
+        with django_capture_on_commit_callbacks(execute=True):
+            response = get_view_for_user(
+                viewname="algorithms:job-create",
+                client=client,
+                method=client.post,
+                reverse_kwargs={
+                    "slug": ai.algorithm.slug,
+                },
+                user=editor,
+                follow=True,
+                data={
+                    **get_interface_form_data(
+                        interface_slug=ci.slug,
+                        data=image2.pk,
+                        existing_data=True,
+                    )
+                },
+            )
+    assert response.status_code == 200
+    assert str(Job.objects.last().inputs.first().image.pk) == str(image2.pk)
+    assert Job.objects.last().inputs.first() != civ
+
+    upload = create_upload_from_file(
+        file_path=RESOURCE_PATH / "image10x10x10.mha",
+        creator=editor,
+    )
+    with django_capture_on_commit_callbacks(execute=True):
+        with django_capture_on_commit_callbacks(execute=True):
+            response = get_view_for_user(
+                viewname="algorithms:job-create",
+                client=client,
+                method=client.post,
+                reverse_kwargs={
+                    "slug": ai.algorithm.slug,
+                },
+                user=editor,
+                follow=True,
+                data={
+                    **get_interface_form_data(
+                        interface_slug=ci.slug, data=upload.pk
+                    )
+                },
+            )
+    assert response.status_code == 200
+    assert Job.objects.last().inputs.first().image.name == "image10x10x10.mha"
+    assert Job.objects.last().inputs.first() != civ
+
+
+@pytest.mark.django_db
 class TestJobCreateView:
 
     def create_job(
@@ -1064,6 +1219,10 @@ class TestJobCreateView:
         )
         assert job.time_limit == 600
         assert job.inputs.count() == 6
+
+        assert not UserUpload.objects.filter(
+            pk=algorithm_with_multiple_inputs.file_upload.pk
+        ).exists()
 
         assert sorted(
             [
