@@ -2199,9 +2199,6 @@ def test_algorithm_interface_delete_permission(client):
     alg.interfaces.add(int1, through_defaults={"is_default": True})
     alg.interfaces.add(int2)
 
-    alg_int1 = AlgorithmAlgorithmInterface.objects.get(interface=int1)
-    alg_int2 = AlgorithmAlgorithmInterface.objects.get(interface=int2)
-
     for user, status in [
         [user_with_alg_add_perm, 403],
         [user_without_alg_add_perm, 403],
@@ -2213,7 +2210,7 @@ def test_algorithm_interface_delete_permission(client):
             client=client,
             reverse_kwargs={
                 "algorithm_slug": alg.slug,
-                "interface_pk": alg_int2.pk,
+                "interface_pk": int2.pk,
             },
             user=user,
         )
@@ -2225,7 +2222,7 @@ def test_algorithm_interface_delete_permission(client):
             client=client,
             reverse_kwargs={
                 "algorithm_slug": alg.slug,
-                "interface_pk": alg_int1.pk,
+                "interface_pk": int1.pk,
             },
             user=user,
         )
@@ -2308,16 +2305,13 @@ def test_algorithm_interface_delete(client):
     alg.interfaces.add(int1, through_defaults={"is_default": True})
     alg.interfaces.add(int2)
 
-    alg_int1 = AlgorithmAlgorithmInterface.objects.get(interface=int1)
-    alg_int2 = AlgorithmAlgorithmInterface.objects.get(interface=int2)
-
     response = get_view_for_user(
         viewname="algorithms:interface-delete",
         client=client,
         method=client.post,
         reverse_kwargs={
             "algorithm_slug": alg.slug,
-            "interface_pk": alg_int1.pk,
+            "interface_pk": int1.pk,
         },
         user=user,
     )
@@ -2329,7 +2323,7 @@ def test_algorithm_interface_delete(client):
         method=client.post,
         reverse_kwargs={
             "algorithm_slug": alg.slug,
-            "interface_pk": alg_int2.pk,
+            "interface_pk": int2.pk,
         },
         user=user,
     )
