@@ -192,6 +192,11 @@ def update_container_image_shim(
 @acks_late_2xlarge_task
 def remove_inactive_container_images():
     """Removes inactive container images from the registry"""
+
+    from grandchallenge.algorithms.models import AlgorithmImage, Job
+    from grandchallenge.evaluation.models import Evaluation, Method
+    from grandchallenge.workstations.models import Session, WorkstationImage
+
     for app_label, model_name, related_name in (
         ("algorithms", "algorithm", "algorithm_container_images"),
         ("evaluation", "phase", "method_set"),
@@ -208,6 +213,68 @@ def remove_inactive_container_images():
                     .exclude(pk=latest.pk)
                     .filter(is_in_registry=True)
                 ):
+
+                    instance = image
+                    instance_in_use = False
+
+                    if isinstance(instance, Method):
+                        instance_in_use = (
+                            Evaluation.objects.filter(
+                                method=instance,
+                            )
+                            .exclude(
+                                status__in=[
+                                    Evaluation.SUCCESS,
+                                    Evaluation.FAILURE,
+                                    Evaluation.CANCELLED,
+                                ]
+                            )
+                            .exists()
+                        )
+
+                    elif isinstance(instance, AlgorithmImage):
+                        instance_in_use = (
+                            Evaluation.objects.filter(
+                                submission__algorithm_image=instance,
+                            )
+                            .exclude(
+                                status__in=[
+                                    Evaluation.SUCCESS,
+                                    Evaluation.FAILURE,
+                                    Evaluation.CANCELLED,
+                                ]
+                            )
+                            .exists()
+                            or Job.objects.filter(
+                                algorithm_image=instance,
+                            )
+                            .exclude(
+                                status__in=[
+                                    Job.SUCCESS,
+                                    Job.FAILURE,
+                                    Job.CANCELLED,
+                                ]
+                            )
+                            .exists()
+                        )
+
+                    elif isinstance(instance, WorkstationImage):
+                        instance_in_use = (
+                            Session.objects.filter(
+                                workstation_image=instance,
+                            )
+                            .exclude(
+                                status__in=[
+                                    Session.RUNNING,
+                                    Session.FAILED,
+                                    Session.STOPPED,
+                                ]
+                            )
+                            .exists()
+                        )
+                    if instance_in_use:
+                        continue
+
                     on_commit(
                         remove_container_image_from_registry.signature(
                             kwargs={
