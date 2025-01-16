@@ -21,6 +21,7 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
+from grandchallenge.evaluation.models import Evaluation
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
@@ -34,10 +35,11 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
+from tests.evaluation_tests.factories import EvaluationFactory
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.uploads_tests.factories import create_upload_from_file
-from tests.utils import get_view_for_user
+from tests.utils import get_view_for_user, recurse_callbacks
 
 
 @pytest.mark.django_db
@@ -1379,3 +1381,66 @@ class TestAlgorithmImageCredits:
             algorithm_image.get_remaining_non_complimentary_jobs(user=user)
             == 5
         )
+
+
+@pytest.mark.django_db
+def test_algorithm_image_activation_on_create(
+    algorithm_image, settings, django_capture_on_commit_callbacks
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    alg = AlgorithmFactory()
+    editor = UserFactory()
+    alg.add_editor(editor)
+
+    current_active_image = AlgorithmImageFactory(
+        algorithm=alg,
+        is_manifest_valid=True,
+        is_desired_version=True,
+        is_in_registry=True,
+    )
+
+    evaluation = EvaluationFactory(
+        submission__algorithm_image=current_active_image,
+        time_limit=current_active_image.algorithm.time_limit,
+    )
+
+    assert evaluation.status == Evaluation.PENDING
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        new_algorithm_image = AlgorithmImageFactory(algorithm=alg, image=None)
+
+        with open(algorithm_image, "rb") as f:
+            new_algorithm_image.image.save(
+                algorithm_image, ContentFile(f.read())
+            )
+
+    recurse_callbacks(
+        callbacks=callbacks,
+        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+    )
+    new_algorithm_image.refresh_from_db()
+
+    assert new_algorithm_image.is_desired_version is False
+
+    new_algorithm_image.delete()
+
+    evaluation.status = Evaluation.SUCCESS
+    evaluation.save()
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        new_algorithm_image = AlgorithmImageFactory(algorithm=alg, image=None)
+
+        with open(algorithm_image, "rb") as f:
+            new_algorithm_image.image.save(
+                algorithm_image, ContentFile(f.read())
+            )
+
+    recurse_callbacks(
+        callbacks=callbacks,
+        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+    )
+    new_algorithm_image.refresh_from_db()
+
+    assert new_algorithm_image.is_desired_version is True
