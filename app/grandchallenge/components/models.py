@@ -2068,9 +2068,14 @@ class ComponentImage(FieldChangeMixin, models.Model):
 
         if self._meta.model_name == "algorithmimage":
 
+            from grandchallenge.algorithms.models import Algorithm
             from grandchallenge.evaluation.models import Evaluation
 
-            active_image = self.algorithm.active_image
+            active_image = (
+                Algorithm.objects.filter(pk=self.algorithm.pk)
+                .get()
+                .active_image
+            )
 
             if (
                 Evaluation.objects.filter(
