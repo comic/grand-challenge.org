@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
     dependencies = [
         (
             "algorithms",
-            "0063_algorithminterface_algorithminterfaceoutput_and_more",
+            "0064_algorithminterface_algorithminterfaceoutput_and_more",
         ),
     ]
 
