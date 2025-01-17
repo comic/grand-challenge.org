@@ -886,25 +886,23 @@ def test_preload_interactive_algorithms(settings):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "image_factory, image_using_model_factory, image_attribute_name, extra_args",
+    "image_factory, image_using_model_factory, image_attribute_name",
     (
-        (MethodFactory, EvaluationFactory, "method", {"time_limit": 3600}),
+        (MethodFactory, EvaluationFactory, "method"),
         (
             AlgorithmImageFactory,
             EvaluationFactory,
             "submission__algorithm_image",
-            {"time_limit": 3600},
         ),
         (
             AlgorithmImageFactory,
             AlgorithmJobFactory,
             "algorithm_image",
-            {"time_limit": 3600},
         ),
     ),
 )
 def test_remove_inactive_container_images_from_registry_if_not_in_use(
-    image_factory, image_using_model_factory, image_attribute_name, extra_args
+    image_factory, image_using_model_factory, image_attribute_name
 ):
     inactive_image = image_factory(
         is_in_registry=True, is_manifest_valid=True, is_desired_version=False
@@ -925,7 +923,7 @@ def test_remove_inactive_container_images_from_registry_if_not_in_use(
     )
 
     image_using_model_factory(
-        **{image_attribute_name: inactive_image_in_use, **extra_args}
+        **{image_attribute_name: inactive_image_in_use, "time_limit": 3600}
     )
 
     remove_container_image_from_registry(
