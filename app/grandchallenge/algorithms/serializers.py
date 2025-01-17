@@ -1,6 +1,7 @@
 import logging
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db.models import Count, Q
 from rest_framework import serializers
 from rest_framework.fields import (
     CharField,
@@ -22,7 +23,7 @@ from grandchallenge.algorithms.models import (
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
 )
-from grandchallenge.components.models import CIVData, ComponentInterface
+from grandchallenge.components.models import CIVData
 from grandchallenge.components.serializers import (
     ComponentInterfaceSerializer,
     ComponentInterfaceValuePostSerializer,
@@ -106,6 +107,7 @@ class JobSerializer(serializers.ModelSerializer):
     """Serializer without hyperlinks for internal use"""
 
     algorithm_image = StringRelatedField()
+    algorithm_interface = StringRelatedField()
 
     inputs = ComponentInterfaceValueSerializer(many=True)
     outputs = ComponentInterfaceValueSerializer(many=True)
@@ -134,6 +136,7 @@ class JobSerializer(serializers.ModelSerializer):
             "url",
             "api_url",
             "algorithm_image",
+            "algorithm_interface",
             "inputs",
             "outputs",
             "status",
@@ -215,45 +218,29 @@ class JobPostSerializer(JobSerializer):
                 "You have run out of algorithm credits"
             )
 
-        # validate that no inputs are provided that are not configured for the
-        # algorithm and that all interfaces without defaults are provided
-        algorithm_input_pks = {a.pk for a in self._algorithm.inputs.all()}
-        input_pks = {i["interface"].pk for i in data["inputs"]}
-
-        # surplus inputs: provided but interfaces not configured for the algorithm
-        surplus = ComponentInterface.objects.filter(
-            id__in=list(input_pks - algorithm_input_pks)
-        )
-        if surplus:
-            titles = ", ".join(ci.title for ci in surplus)
-            raise serializers.ValidationError(
-                f"Provided inputs(s) {titles} are not defined for this algorithm"
+        # validate that the provided inputs match one of the configured interfaces
+        # and add the matching interface to the data
+        provided_inputs = {i["interface"] for i in data["inputs"]}
+        try:
+            data["algorithm_interface"] = self._algorithm.interfaces.annotate(
+                input_count=Count("inputs", distinct=True),
+                relevant_input_count=Count(
+                    "inputs",
+                    filter=Q(inputs__in=provided_inputs),
+                    distinct=True,
+                ),
+            ).get(
+                relevant_input_count=len(provided_inputs),
+                input_count=len(provided_inputs),
             )
-
-        # missing inputs
-        missing = self._algorithm.inputs.filter(
-            id__in=list(algorithm_input_pks - input_pks),
-            default_value__isnull=True,
-        )
-        if missing:
-            titles = ", ".join(ci.title for ci in missing)
+        except ObjectDoesNotExist:
             raise serializers.ValidationError(
-                f"Interface(s) {titles} do not have a default value and should be provided."
+                f"The set of inputs provided does not match "
+                f"any of the algorithm's interfaces. This algorithm supports the "
+                f"following sets of inputs: {[interface.inputs for interface in self._algorithm.interfaces.all()]}"
             )
 
         inputs = data.pop("inputs")
-
-        default_inputs = self._algorithm.inputs.filter(
-            id__in=list(algorithm_input_pks - input_pks),
-            default_value__isnull=False,
-        )
-        # Use default interface values if not present
-        for interface in default_inputs:
-            if interface.default_value:
-                inputs.append(
-                    {"interface": interface, "value": interface.default_value}
-                )
-
         self.inputs = self.reformat_inputs(serialized_civs=inputs)
 
         if Job.objects.get_jobs_with_same_inputs(

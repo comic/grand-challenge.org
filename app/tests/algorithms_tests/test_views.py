@@ -1783,7 +1783,6 @@ def test_job_gpu_type_set(client, settings):
     assert algorithm.credits_per_job == 190
 
 
-@pytest.mark.xfail(reason="Still to be addressed for optional inputs pitch")
 @pytest.mark.django_db
 def test_job_gpu_type_set_with_api(client, settings):
     settings.COMPONENTS_DEFAULT_BACKEND = "grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor"
@@ -1805,7 +1804,10 @@ def test_job_gpu_type_set_with_api(client, settings):
     ci = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=True
     )
-    algorithm.inputs.set([ci])
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ci],
+    )
+    algorithm.interfaces.add(interface, through_defaults={"is_default": True})
 
     response = get_view_for_user(
         viewname="api:algorithms-job-list",
@@ -1829,6 +1831,7 @@ def test_job_gpu_type_set_with_api(client, settings):
 
     job = Job.objects.get()
 
+    assert job.algorithm_interface == interface
     assert job.algorithm_image == algorithm_image
     assert job.requires_gpu_type == GPUTypeChoices.A10G
     assert job.requires_memory_gb == 64

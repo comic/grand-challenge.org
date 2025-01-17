@@ -12,6 +12,7 @@ from grandchallenge.components.models import ComponentInterface
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
+    AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
 )
 from tests.cases_tests.factories import RawImageUploadSessionFactory
@@ -35,7 +36,6 @@ def test_algorithm_relations_on_job_serializer(rf):
     )
 
 
-@pytest.mark.xfail(reason="Still to be addressed for optional inputs pitch")
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "title, "
@@ -137,8 +137,11 @@ def test_algorithm_job_post_serializer_validations(
         is_desired_version=image_ready,
     )
     algorithm_image.algorithm.title = title
-    algorithm_image.algorithm.inputs.set(
-        [interfaces[title] for title in algorithm_interface_titles]
+    interface = AlgorithmInterfaceFactory(
+        inputs=[interfaces[title] for title in algorithm_interface_titles]
+    )
+    algorithm_image.algorithm.interfaces.add(
+        interface, through_defaults={"is_default": True}
     )
     if add_user:
         algorithm_image.algorithm.add_user(user)
@@ -184,7 +187,6 @@ def test_algorithm_job_post_serializer_validations(
         assert len(job.inputs.all()) == 2
 
 
-@pytest.mark.xfail(reason="Still to be addressed for optional inputs pitch")
 @pytest.mark.django_db
 def test_algorithm_job_post_serializer_create(
     rf, settings, django_capture_on_commit_callbacks
@@ -212,7 +214,10 @@ def test_algorithm_job_post_serializer_create(
     ci_img1 = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
     ci_img2 = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
 
-    algorithm_image.algorithm.inputs.set([ci_string, ci_img2, ci_img1])
+    interface = AlgorithmInterfaceFactory(inputs=[ci_string, ci_img2, ci_img1])
+    algorithm_image.algorithm.interfaces.add(
+        interface, through_defaults={"is_default": True}
+    )
     algorithm_image.algorithm.add_editor(user)
 
     job = {
@@ -242,7 +247,6 @@ def test_algorithm_job_post_serializer_create(
     assert len(job.inputs.all()) == 3
 
 
-@pytest.mark.xfail(reason="Still to be addressed for optional inputs pitch")
 @pytest.mark.django_db
 class TestJobCreateLimits:
     def test_form_invalid_without_enough_credits(self, rf, settings):
@@ -383,7 +387,6 @@ def test_reformat_inputs(rf):
     )
 
 
-@pytest.mark.xfail(reason="Still to be addressed for optional inputs pitch")
 @pytest.mark.django_db
 def test_algorithm_post_serializer_image_and_time_limit_fixed(rf):
     request = rf.get("/foo")
@@ -398,7 +401,9 @@ def test_algorithm_post_serializer_image_and_time_limit_fixed(rf):
     )
     different_ai = AlgorithmImageFactory(algorithm=alg)
     ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.STRING)
-    alg.inputs.set([ci])
+    interface = AlgorithmInterfaceFactory(inputs=[ci])
+    alg.interfaces.add(interface, through_defaults={"is_default": True})
+
     serializer = JobPostSerializer(
         data={
             "algorithm": alg.api_url,
