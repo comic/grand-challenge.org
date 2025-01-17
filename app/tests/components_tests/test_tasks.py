@@ -901,7 +901,6 @@ def test_preload_interactive_algorithms(settings):
             "algorithm_image",
             {"time_limit": 3600},
         ),
-        (WorkstationImageFactory, SessionFactory, "workstation_image", {}),
     ),
 )
 def test_remove_inactive_container_images_from_registry_if_not_in_use(

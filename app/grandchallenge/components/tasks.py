@@ -229,7 +229,6 @@ def remove_container_image_from_registry(
 
     from grandchallenge.algorithms.models import AlgorithmImage, Job
     from grandchallenge.evaluation.models import Evaluation, Method
-    from grandchallenge.workstations.models import Session, WorkstationImage
 
     instance_in_use = False
 
@@ -269,21 +268,6 @@ def remove_container_image_from_registry(
                     Job.SUCCESS,
                     Job.FAILURE,
                     Job.CANCELLED,
-                ]
-            )
-            .exists()
-        )
-
-    elif isinstance(instance, WorkstationImage):
-        instance_in_use = (
-            Session.objects.filter(
-                workstation_image=instance,
-            )
-            .exclude(
-                status__in=[
-                    Session.RUNNING,
-                    Session.FAILED,
-                    Session.STOPPED,
                 ]
             )
             .exists()
