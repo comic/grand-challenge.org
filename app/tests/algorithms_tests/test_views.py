@@ -2416,6 +2416,7 @@ def test_algorithm_interface_delete(client):
     assert alg.interfaces.get() == int1
 
 
+@pytest.mark.django_db
 def test_interface_select_for_job_view_permission(client):
     verified_user, unverified_user = UserFactory.create_batch(2)
     VerificationFactory(user=verified_user, is_verified=True)
