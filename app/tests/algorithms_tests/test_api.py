@@ -221,12 +221,9 @@ class TestJobCreationThroughAPI:
             pk=algorithm_with_multiple_inputs.file_upload.pk
         ).exists()
 
-        assert sorted(
-            [
-                int.pk
-                for int in algorithm_with_multiple_inputs.algorithm.inputs.all()
-            ]
-        ) == sorted([civ.interface.pk for civ in job.inputs.all()])
+        assert sorted([int.pk for int in interface.inputs.all()]) == sorted(
+            [civ.interface.pk for civ in job.inputs.all()]
+        )
 
         value_inputs = [civ.value for civ in job.inputs.all() if civ.value]
         assert "Foo" in value_inputs

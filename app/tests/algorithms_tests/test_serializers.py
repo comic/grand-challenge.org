@@ -79,7 +79,7 @@ def test_algorithm_relations_on_job_serializer(rf):
             True,
             ("TestInterface 1", "TestInterface 2"),
             ("testinterface-1",),
-            "Interface(s) TestInterface 2 do not have a default value and should be provided.",
+            "The set of inputs provided does not match any of the algorithm's interfaces.",
             False,
         ),
         (
@@ -88,7 +88,7 @@ def test_algorithm_relations_on_job_serializer(rf):
             True,
             ("TestInterface 1",),
             ("testinterface-1", "testinterface-2"),
-            "Provided inputs(s) TestInterface 2 are not defined for this algorithm",
+            "The set of inputs provided does not match any of the algorithm's interfaces.",
             False,
         ),
         (
@@ -164,8 +164,7 @@ def test_algorithm_job_post_serializer_validations(
     job = {
         "algorithm": algorithm_image.algorithm.api_url,
         "inputs": [
-            {"interface": interface, "value": "dummy"}
-            for interface in job_interface_slugs
+            {"interface": int, "value": "dummy"} for int in job_interface_slugs
         ],
     }
 
@@ -233,8 +232,22 @@ def test_algorithm_job_post_serializer_create(
     request.user = user
     serializer = JobPostSerializer(data=job, context={"request": request})
 
-    # verify
+    # all inputs need to be provided, also those with default value
+    assert not serializer.is_valid()
+
+    # add missing input
+    job = {
+        "algorithm": algorithm_image.algorithm.api_url,
+        "inputs": [
+            {"interface": ci_img1.slug, "upload_session": upload.api_url},
+            {"interface": ci_img2.slug, "image": image2.api_url},
+            {"interface": ci_string.slug, "value": "foo"},
+        ],
+    }
+    serializer = JobPostSerializer(data=job, context={"request": request})
+
     assert serializer.is_valid()
+
     # fake successful upload
     upload.status = RawImageUploadSession.SUCCESS
     upload.save()
@@ -245,6 +258,7 @@ def test_algorithm_job_post_serializer_create(
     job = Job.objects.first()
     assert job.creator == user
     assert len(job.inputs.all()) == 3
+    assert job.algorithm_interface == interface
 
 
 @pytest.mark.django_db
@@ -296,13 +310,20 @@ class TestJobCreateLimits:
         user = UserFactory()
 
         algorithm_image.algorithm.add_editor(user=user)
+        ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.STRING)
+        interface = AlgorithmInterfaceFactory(inputs=[ci])
+        algorithm_image.algorithm.interfaces.add(
+            interface, through_defaults={"is_default": True}
+        )
 
         request = rf.get("/foo")
         request.user = user
         serializer = JobPostSerializer(
             data={
                 "algorithm": algorithm_image.algorithm.api_url,
-                "inputs": [],
+                "inputs": [
+                    {"interface": ci.slug, "value": "foo"},
+                ],
             },
             context={"request": request},
         )
@@ -319,7 +340,9 @@ class TestJobCreateLimits:
         serializer = JobPostSerializer(
             data={
                 "algorithm": algorithm_image.algorithm.api_url,
-                "inputs": [],
+                "inputs": [
+                    {"interface": ci.slug, "value": "foo"},
+                ],
             },
             context={"request": request},
         )
@@ -337,13 +360,20 @@ class TestJobCreateLimits:
         user = UserFactory()
 
         algorithm_image.algorithm.add_user(user=user)
+        ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.STRING)
+        interface = AlgorithmInterfaceFactory(inputs=[ci])
+        algorithm_image.algorithm.interfaces.add(
+            interface, through_defaults={"is_default": True}
+        )
 
         request = rf.get("/foo")
         request.user = user
         serializer = JobPostSerializer(
             data={
                 "algorithm": algorithm_image.algorithm.api_url,
-                "inputs": [],
+                "inputs": [
+                    {"interface": ci.slug, "value": "foo"},
+                ],
             },
             context={"request": request},
         )

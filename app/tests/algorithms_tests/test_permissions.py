@@ -353,21 +353,23 @@ class TestJobPermissions:
             is_in_registry=True,
             is_desired_version=True,
         )
-        interfaces = {
-            ComponentInterfaceFactory(
-                kind=ComponentInterface.Kind.STRING,
-                title="TestInterface 1",
-                default_value="default",
-            ),
-        }
-        interface = AlgorithmInterfaceFactory(inputs=[interfaces])
+        ci = ComponentInterfaceFactory(
+            kind=ComponentInterface.Kind.STRING,
+            title="TestInterface 1",
+            default_value="default",
+        )
+
+        interface = AlgorithmInterfaceFactory(inputs=[ci])
         algorithm_image.algorithm.interfaces.add(
             interface, through_defaults={"is_default": True}
         )
         algorithm_image.algorithm.add_user(user)
         algorithm_image.algorithm.add_editor(UserFactory())
 
-        job = {"algorithm": algorithm_image.algorithm.api_url, "inputs": []}
+        job = {
+            "algorithm": algorithm_image.algorithm.api_url,
+            "inputs": [{"interface": ci.slug, "value": "foo"}],
+        }
 
         # test
         request = rf.get("/foo")
