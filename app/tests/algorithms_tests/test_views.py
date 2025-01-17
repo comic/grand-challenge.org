@@ -957,7 +957,12 @@ def test_create_job_with_json_file(
     ci = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=False
     )
-    ai.algorithm.inputs.set([ci])
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ci],
+    )
+    ai.algorithm.interfaces.add(
+        interface, through_defaults={"is_default": True}
+    )
 
     with tempfile.NamedTemporaryFile(mode="w+", suffix=".json") as file:
         json.dump('{"Foo": "bar"}', file)
@@ -973,6 +978,7 @@ def test_create_job_with_json_file(
                     method=client.post,
                     reverse_kwargs={
                         "slug": ai.algorithm.slug,
+                        "interface_pk": interface.pk,
                     },
                     user=editor,
                     follow=True,
@@ -1010,7 +1016,12 @@ def test_algorithm_job_create_with_image_input(
     ci = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.IMAGE, store_in_database=False
     )
-    ai.algorithm.inputs.set([ci])
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ci],
+    )
+    ai.algorithm.interfaces.add(
+        interface, through_defaults={"is_default": True}
+    )
 
     image1, image2 = ImageFactory.create_batch(2)
     assign_perm("cases.view_image", editor, image1)
@@ -1025,6 +1036,7 @@ def test_algorithm_job_create_with_image_input(
                 method=client.post,
                 reverse_kwargs={
                     "slug": ai.algorithm.slug,
+                    "interface_pk": interface.pk,
                 },
                 user=editor,
                 follow=True,
@@ -1049,6 +1061,7 @@ def test_algorithm_job_create_with_image_input(
                 method=client.post,
                 reverse_kwargs={
                     "slug": ai.algorithm.slug,
+                    "interface_pk": interface.pk,
                 },
                 user=editor,
                 follow=True,
@@ -1076,6 +1089,7 @@ def test_algorithm_job_create_with_image_input(
                 method=client.post,
                 reverse_kwargs={
                     "slug": ai.algorithm.slug,
+                    "interface_pk": interface.pk,
                 },
                 user=editor,
                 follow=True,
