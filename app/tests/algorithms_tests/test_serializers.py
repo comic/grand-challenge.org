@@ -451,3 +451,85 @@ def test_algorithm_post_serializer_image_and_time_limit_fixed(rf):
     assert job.algorithm_image != different_ai
     assert not job.algorithm_model
     assert job.time_limit == 10
+
+
+@pytest.mark.parametrize(
+    "inputs, interface",
+    (
+        ([1], 1),  # matches interface 1 of algorithm
+        ([1, 2], 2),  # matches interface 2 of algorithm
+        ([3, 4, 5], 3),  # matches interface 3 of algorithm
+        ([4], None),  # matches interface 4, but not configured for algorithm
+        (
+            [1, 2, 3],
+            None,
+        ),  # matches interface 5, but not configured for algorithm
+        ([2], None),  # matches no interface (implements part of interface 2)
+        (
+            [1, 3, 4],
+            None,
+        ),  # matches no interface (implements interface 3 and an additional input)
+    ),
+)
+@pytest.mark.django_db
+def test_validate_inputs_on_job_serializer(inputs, interface, rf):
+    user = UserFactory()
+    algorithm = AlgorithmFactory()
+    algorithm.add_editor(user)
+    AlgorithmImageFactory(
+        algorithm=algorithm,
+        is_desired_version=True,
+        is_manifest_valid=True,
+        is_in_registry=True,
+    )
+
+    io1, io2, io3, io4, io5 = AlgorithmInterfaceFactory.create_batch(5)
+    ci1, ci2, ci3, ci4, ci5, ci6 = ComponentInterfaceFactory.create_batch(
+        6, kind=ComponentInterface.Kind.STRING
+    )
+
+    interfaces = [io1, io2, io3]
+    cis = [ci1, ci2, ci3, ci4, ci5, ci6]
+
+    io1.inputs.set([ci1])
+    io2.inputs.set([ci1, ci2])
+    io3.inputs.set([ci3, ci4, ci5])
+    io4.inputs.set([ci1, ci2, ci3])
+    io5.inputs.set([ci4])
+    io1.outputs.set([ci6])
+    io2.outputs.set([ci3])
+    io3.outputs.set([ci1])
+    io4.outputs.set([ci1])
+    io5.outputs.set([ci1])
+
+    algorithm.interfaces.add(io1, through_defaults={"is_default": True})
+    algorithm.interfaces.add(io2)
+    algorithm.interfaces.add(io3)
+
+    algorithm_interface = interfaces[interface - 1] if interface else None
+    inputs = [cis[i - 1] for i in inputs]
+
+    job = {
+        "algorithm": algorithm.api_url,
+        "inputs": [
+            {"interface": int.slug, "value": "dummy"} for int in inputs
+        ],
+    }
+
+    request = rf.get("/foo")
+    request.user = user
+    serializer = JobPostSerializer(data=job, context={"request": request})
+
+    if interface:
+        assert serializer.is_valid()
+        assert (
+            serializer.validated_data["algorithm_interface"]
+            == algorithm_interface
+        )
+    else:
+        assert not serializer.is_valid()
+        assert (
+            "The set of inputs provided does not match any of the algorithm's interfaces."
+            in str(serializer.errors)
+        )
+        assert "algorithm_interface" not in serializer.validated_data

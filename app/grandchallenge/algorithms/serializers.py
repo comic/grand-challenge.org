@@ -31,6 +31,7 @@ from grandchallenge.components.serializers import (
     HyperlinkedComponentInterfaceValueSerializer,
 )
 from grandchallenge.core.guardian import filter_by_permission
+from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.hanging_protocols.serializers import (
     HangingProtocolSerializer,
 )
@@ -218,29 +219,10 @@ class JobPostSerializer(JobSerializer):
                 "You have run out of algorithm credits"
             )
 
-        # validate that the provided inputs match one of the configured interfaces
-        # and add the matching interface to the data
-        provided_inputs = {i["interface"] for i in data["inputs"]}
-        try:
-            data["algorithm_interface"] = self._algorithm.interfaces.annotate(
-                input_count=Count("inputs", distinct=True),
-                relevant_input_count=Count(
-                    "inputs",
-                    filter=Q(inputs__in=provided_inputs),
-                    distinct=True,
-                ),
-            ).get(
-                relevant_input_count=len(provided_inputs),
-                input_count=len(provided_inputs),
-            )
-        except ObjectDoesNotExist:
-            raise serializers.ValidationError(
-                f"The set of inputs provided does not match "
-                f"any of the algorithm's interfaces. This algorithm supports the "
-                f"following sets of inputs: {[interface.inputs for interface in self._algorithm.interfaces.all()]}"
-            )
-
         inputs = data.pop("inputs")
+        data["algorithm_interface"] = (
+            self.validate_inputs_and_return_matching_interface(inputs=inputs)
+        )
         self.inputs = self.reformat_inputs(serialized_civs=inputs)
 
         if Job.objects.get_jobs_with_same_inputs(
@@ -284,6 +266,33 @@ class JobPostSerializer(JobSerializer):
                 logger.error(e, exc_info=True)
 
         return job
+
+    def validate_inputs_and_return_matching_interface(self, *, inputs):
+        """
+        Validates that the provided inputs match one of the configured interfaces of
+        the algorithm and returns that AlgorithmInterface
+        """
+        provided_inputs = {i["interface"] for i in inputs}
+        try:
+            interface = self._algorithm.interfaces.annotate(
+                input_count=Count("inputs", distinct=True),
+                relevant_input_count=Count(
+                    "inputs",
+                    filter=Q(inputs__in=provided_inputs),
+                    distinct=True,
+                ),
+            ).get(
+                relevant_input_count=len(provided_inputs),
+                input_count=len(provided_inputs),
+            )
+            return interface
+        except ObjectDoesNotExist:
+            raise serializers.ValidationError(
+                f"The set of inputs provided does not match "
+                f"any of the algorithm's interfaces. This algorithm supports the "
+                f"following input combinations: "
+                f"{oxford_comma([f'Interface {n}: {oxford_comma(interface.inputs.all())}' for n, interface in enumerate(self._algorithm.interfaces.all(), start=1)])}"
+            )
 
     @staticmethod
     def reformat_inputs(*, serialized_civs):
