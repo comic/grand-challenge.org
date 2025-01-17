@@ -84,11 +84,17 @@
         href="#renderedResultModal-{{ object.pk }}"
         data-toggle="modal"
         data-target="#renderedResultModal-{{ object.pk }}"
-        class="text-decoration-none"
     >
         <i class="fa fa-fw fa-eye"></i>
         Result
     </a>
+{% else %}
+<a class="badge badge-primary"
+    href="{% url 'algorithms:job-detail' slug=object.algorithm_image.algorithm.slug pk=object.pk %}"
+    title="View result details">
+    <i class="fa fa-fw fa-info-circle"></i>
+    Result
+</a>
 {% endif %}
 
 <split></split>
