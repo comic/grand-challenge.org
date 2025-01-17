@@ -9,7 +9,10 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     dependencies = [
         ("components", "0022_alter_componentinterface_kind_and_more"),
-        ("algorithms", "0062_algorithmusercredit"),
+        (
+            "algorithms",
+            "0063_alter_optionalhangingprotocolalgorithm_unique_together",
+        ),
     ]
 
     operations = [

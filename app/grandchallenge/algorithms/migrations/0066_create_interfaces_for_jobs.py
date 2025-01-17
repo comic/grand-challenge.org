@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
     dependencies = [
         (
             "algorithms",
-            "0064_create_algorithm_interfaces",
+            "0065_create_algorithm_interfaces",
         ),
     ]
 
