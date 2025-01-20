@@ -903,7 +903,7 @@ def test_preload_interactive_algorithms(settings):
     ),
 )
 @pytest.mark.parametrize(
-    "job_status, expected_image_in_registry",
+    "job_status, expected_image_is_in_registry",
     (
         (ComponentJob.SUCCESS, False),
         (ComponentJob.FAILURE, False),
@@ -916,7 +916,7 @@ def test_remove_container_image_from_registry(
     job_model_factory,
     image_attribute_name,
     job_status,
-    expected_image_in_registry,
+    expected_image_is_in_registry,
     mocker,
 ):
     mocker.patch(
@@ -943,4 +943,4 @@ def test_remove_container_image_from_registry(
     )
 
     inactive_image.refresh_from_db()
-    assert inactive_image.is_in_registry is expected_image_in_registry
+    assert inactive_image.is_in_registry is expected_image_is_in_registry
