@@ -12,6 +12,7 @@ from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.models import (
     ComponentInterfaceValue,
+    ComponentJob,
     ImportStatusChoices,
     InterfaceKind,
 )
@@ -25,6 +26,7 @@ from grandchallenge.components.tasks import (
     encode_b64j,
     execute_job,
     preload_interactive_algorithms,
+    remove_container_image_from_registry,
     remove_inactive_container_images,
     update_container_image_shim,
     upload_to_registry_and_sagemaker,
@@ -47,6 +49,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.evaluation_tests.factories import (
+    EvaluationFactory,
     EvaluationGroundTruthFactory,
     MethodFactory,
     PhaseFactory,
@@ -880,3 +883,64 @@ def test_preload_interactive_algorithms(settings):
         )
 
         assert mock_instance.consolidate.call_count == 1
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "image_factory, job_model_factory, image_attribute_name",
+    (
+        (MethodFactory, EvaluationFactory, "method"),
+        (
+            AlgorithmImageFactory,
+            EvaluationFactory,
+            "submission__algorithm_image",
+        ),
+        (
+            AlgorithmImageFactory,
+            AlgorithmJobFactory,
+            "algorithm_image",
+        ),
+    ),
+)
+@pytest.mark.parametrize(
+    "job_status, expected_image_is_in_registry",
+    (
+        (ComponentJob.SUCCESS, False),
+        (ComponentJob.FAILURE, False),
+        (ComponentJob.PENDING, True),
+        (ComponentJob.EXECUTING, True),
+    ),
+)
+def test_remove_container_image_from_registry(
+    image_factory,
+    job_model_factory,
+    image_attribute_name,
+    job_status,
+    expected_image_is_in_registry,
+    mocker,
+):
+    mocker.patch(
+        # remove_tag_from_registry is only implemented for ECR
+        "grandchallenge.components.tasks.remove_tag_from_registry"
+    )
+
+    inactive_image = image_factory(
+        is_in_registry=True, is_manifest_valid=True, is_desired_version=False
+    )
+
+    job_model_factory(
+        **{
+            image_attribute_name: inactive_image,
+            "time_limit": 3600,
+            "status": job_status,
+        }
+    )
+
+    remove_container_image_from_registry(
+        pk=inactive_image.pk,
+        app_label=inactive_image._meta.app_label,
+        model_name=inactive_image._meta.model_name,
+    )
+
+    inactive_image.refresh_from_db()
+    assert inactive_image.is_in_registry is expected_image_is_in_registry
