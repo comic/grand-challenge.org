@@ -237,13 +237,7 @@ def remove_container_image_from_registry(
             Evaluation.objects.filter(
                 method=instance,
             )
-            .exclude(
-                status__in=[
-                    Evaluation.SUCCESS,
-                    Evaluation.FAILURE,
-                    Evaluation.CANCELLED,
-                ]
-            )
+            .active()
             .exists()
         )
 
@@ -252,24 +246,12 @@ def remove_container_image_from_registry(
             Evaluation.objects.filter(
                 submission__algorithm_image=instance,
             )
-            .exclude(
-                status__in=[
-                    Evaluation.SUCCESS,
-                    Evaluation.FAILURE,
-                    Evaluation.CANCELLED,
-                ]
-            )
+            .active()
             .exists()
             or Job.objects.filter(
                 algorithm_image=instance,
             )
-            .exclude(
-                status__in=[
-                    Job.SUCCESS,
-                    Job.FAILURE,
-                    Job.CANCELLED,
-                ]
-            )
+            .active()
             .exists()
         )
 
