@@ -240,7 +240,6 @@ def remove_container_image_from_registry(
             .active()
             .exists()
         )
-
     elif isinstance(instance, AlgorithmImage):
         instance_in_use = (
             Evaluation.objects.filter(
