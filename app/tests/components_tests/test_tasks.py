@@ -12,6 +12,7 @@ from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.models import (
     ComponentInterfaceValue,
+    ComponentJob,
     ImportStatusChoices,
     InterfaceKind,
 )
@@ -886,7 +887,7 @@ def test_preload_interactive_algorithms(settings):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "image_factory, image_using_model_factory, image_attribute_name",
+    "image_factory, job_model_factory, image_attribute_name",
     (
         (MethodFactory, EvaluationFactory, "method"),
         (
@@ -901,36 +902,45 @@ def test_preload_interactive_algorithms(settings):
         ),
     ),
 )
-def test_remove_inactive_container_images_from_registry_if_not_in_use(
-    image_factory, image_using_model_factory, image_attribute_name
+@pytest.mark.parametrize(
+    "job_status, expected_image_in_registry",
+    (
+        (ComponentJob.SUCCESS, False),
+        (ComponentJob.FAILURE, False),
+        (ComponentJob.PENDING, True),
+        (ComponentJob.EXECUTING, True),
+    ),
+)
+def test_remove_container_image_from_registry(
+    image_factory,
+    job_model_factory,
+    image_attribute_name,
+    job_status,
+    expected_image_in_registry,
+    mocker,
 ):
+    mocker.patch(
+        # remove_tag_from_registry is only implemented for ECR
+        "grandchallenge.components.tasks.remove_tag_from_registry"
+    )
+
     inactive_image = image_factory(
         is_in_registry=True, is_manifest_valid=True, is_desired_version=False
     )
 
-    # raising NotImplementedError implies that the image is not in use and the function proceeds to
-    # calling remove_tag_from_registry() which needs settings.settings.COMPONENTS_REGISTRY_INSECURE
-    # to be "true" to run, and which is not by default
-    with pytest.raises(NotImplementedError):
-        remove_container_image_from_registry(
-            pk=inactive_image.pk,
-            app_label=inactive_image._meta.app_label,
-            model_name=inactive_image._meta.model_name,
-        )
-
-    inactive_image_in_use = image_factory(
-        is_in_registry=True, is_manifest_valid=True, is_desired_version=False
-    )
-
-    image_using_model_factory(
-        **{image_attribute_name: inactive_image_in_use, "time_limit": 3600}
+    job_model_factory(
+        **{
+            image_attribute_name: inactive_image,
+            "time_limit": 3600,
+            "status": job_status,
+        }
     )
 
     remove_container_image_from_registry(
-        pk=inactive_image_in_use.pk,
-        app_label=inactive_image_in_use._meta.app_label,
-        model_name=inactive_image_in_use._meta.model_name,
+        pk=inactive_image.pk,
+        app_label=inactive_image._meta.app_label,
+        model_name=inactive_image._meta.model_name,
     )
 
-    inactive_image_in_use.refresh_from_db()
-    assert inactive_image_in_use.is_in_registry is True
+    inactive_image.refresh_from_db()
+    assert inactive_image.is_in_registry is expected_image_in_registry
