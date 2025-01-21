@@ -38,7 +38,7 @@ class DocPage(models.Model):
         related_name="children",
     )
 
-    history = HistoricalRecords(excluded_fields=["order", "parent"])
+    history = HistoricalRecords(excluded_fields=["order", "parent", "slug"])
 
     class Meta:
         ordering = ["order"]
