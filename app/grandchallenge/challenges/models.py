@@ -1402,3 +1402,62 @@ class ChallengeRequestGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(
         ChallengeRequest, on_delete=models.CASCADE
     )
+
+
+class TaskResponsibleChoices(models.TextChoices):
+    SUPPORT = "SUP", "Support"
+    CHALLENGE_ORGANIZERS = "ORG", "Challenge Organizers"
+
+
+class OnboardingTask(UUIDModel):
+    Responsible = TaskResponsibleChoices
+
+    class Meta:
+        permissions = [
+            ("complete_onboaringtask", "Can mark task as completed")
+        ]
+
+    challenge = models.ForeignKey(
+        Challenge,
+        on_delete=models.CASCADE,
+        editable=False,
+    )
+    complete = models.BooleanField(
+        default=False,
+        help_text="Is the task complete?",
+    )
+    title = models.CharField(
+        max_length=255,
+        help_text="Title of this task",
+    )
+    description = models.TextField(
+        blank=True, help_text="Description of this task."
+    )
+    responsible = models.CharField(
+        blank=False,
+        max_length=3,
+        choices=Responsible.choices,
+        default=Responsible.CHALLENGE_ORGANIZERS,
+        help_text="Who is responsible for completion of this task.",
+    )
+    deadline = models.DateTimeField(
+        help_text="Deadline for the task",
+    )
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if self.responsible == self.Responsible.CHALLENGE_ORGANIZERS:
+            assign_perm(
+                "complete_onboaringtask", self.challenge.admins_group, self
+            )
+        elif not self._state.adding:
+            remove_perm(
+                "complete_onboaringtask", self.challenge.admins_group, self
+            )
+
+
+class OnboardingTaskGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(
+        OnboardingTask, on_delete=models.CASCADE
+    )

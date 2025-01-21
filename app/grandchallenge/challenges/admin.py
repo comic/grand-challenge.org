@@ -14,6 +14,7 @@ from grandchallenge.challenges.models import (
     ChallengeRequestUserObjectPermission,
     ChallengeSeries,
     ChallengeUserObjectPermission,
+    OnboardingTaskGroupObjectPermission,
 )
 from grandchallenge.core.admin import (
     GroupObjectPermissionAdmin,
@@ -141,3 +142,7 @@ admin.site.register(
     ChallengeRequestGroupObjectPermission, GroupObjectPermissionAdmin
 )
 admin.site.register(ChallengeSeries)
+
+admin.site.register(
+    OnboardingTaskGroupObjectPermission, GroupObjectPermissionAdmin
+)
