@@ -9,12 +9,10 @@ register = template.Library()
 @register.filter
 def sort_civs(civs):
 
-    # Allows for X.outputs
+    # Allows for X.outputs (ommiting the .all)
     iterable = (
         civs.all() if isinstance(civs, models.manager.BaseManager) else civs
     )
-
-    iterable = iterable.order_by("interface__slug")
 
     values = []
     charts = []
@@ -23,7 +21,7 @@ def sort_civs(civs):
     files = []
     residual = []
 
-    for v in iterable:
+    for v in sorted(list(iterable), key=lambda civ: civ.interface.slug):
         if v.value is not None:
             if v.interface.kind == InterfaceKindChoices.CHART:
                 charts.append(v)
