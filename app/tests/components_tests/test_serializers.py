@@ -1,7 +1,10 @@
 import pytest
 
 from grandchallenge.cases.models import RawImageUploadSession
-from grandchallenge.components.models import InterfaceKind
+from grandchallenge.components.models import (
+    ComponentInterfaceValue,
+    InterfaceKind,
+)
 from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
     ComponentInterfaceValueSerializer,
@@ -481,6 +484,14 @@ def test_civ_serializer_list_ordering():
         ComponentInterfaceValueFactory(
             interface=ComponentInterfaceFactory(
                 kind=InterfaceKind.InterfaceKindChoices.IMAGE,
+                title="B Image Interface",
+                store_in_database=False,
+            )
+        ),
+        ComponentInterfaceValueFactory(
+            interface=ComponentInterfaceFactory(
+                kind=InterfaceKind.InterfaceKindChoices.IMAGE,
+                title="A Image Interface",
                 store_in_database=False,
             )
         ),
@@ -512,15 +523,21 @@ def test_civ_serializer_list_ordering():
 
     serializer = ComponentInterfaceValueSerializer(many=True)
 
-    produced_order = [
-        civ["interface"]["kind"]
-        for civ in serializer.to_representation(data=civs)
+    produced_order = serializer.to_representation(
+        data=ComponentInterfaceValue.objects.filter(
+            pk__in=[civ.pk for civ in civs]
+        )
+    )
+
+    expected_order = [
+        civs[4],
+        civs[2],
+        civs[5],
+        civs[3],
+        civs[1],
+        civs[0],
     ]
 
-    assert produced_order == [
-        InterfaceKind.InterfaceKindChoices.STRING.label,
-        InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG.label,
-        InterfaceKind.InterfaceKindChoices.CHART.label,
-        InterfaceKind.InterfaceKindChoices.ZIP.label,
-        InterfaceKind.InterfaceKindChoices.IMAGE.label,
+    assert [civ["interface"]["slug"] for civ in produced_order] == [
+        civ.interface.slug for civ in expected_order
     ]
