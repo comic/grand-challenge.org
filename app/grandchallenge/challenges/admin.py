@@ -186,7 +186,7 @@ class OnboardingTaskAdmin(ModelAdmin):
     )
     autocomplete_fields = ("challenge",)
     list_display = (
-        "description",
+        "title",
         "challenge",
         "on_time",
         "complete",
