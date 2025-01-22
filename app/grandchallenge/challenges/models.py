@@ -26,6 +26,7 @@ from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_deprecate_fields import deprecate_field
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
@@ -1409,49 +1410,68 @@ class TaskResponsibleChoices(models.TextChoices):
     CHALLENGE_ORGANIZERS = "ORG", "Challenge Organizers"
 
 
-class OnboardingTask(UUIDModel):
-    Responsible = TaskResponsibleChoices
+class OnboardingTask(FieldChangeMixin, UUIDModel):
+    ResponsibleChoices = TaskResponsibleChoices
 
     class Meta:
         permissions = [
-            ("complete_onboaringtask", "Can mark task as completed")
+            ("complete_onboaringtask", "Can mark this task as completed")
         ]
 
+    created = models.DateTimeField(editable=False)
     challenge = models.ForeignKey(
-        Challenge,
+        to=Challenge,
         on_delete=models.CASCADE,
-        editable=False,
-    )
-    complete = models.BooleanField(
-        default=False,
-        help_text="Is the task complete?",
+        related_name="onboarding_tasks",
     )
     title = models.CharField(
         max_length=255,
         help_text="Title of this task",
     )
+
     description = models.TextField(
         blank=True, help_text="Description of this task."
+    )
+    complete = models.BooleanField(
+        default=False,
+        help_text="If true, this task is complete.",
+    )
+    completed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Time this task was last marked completed.",
     )
     responsible = models.CharField(
         blank=False,
         max_length=3,
-        choices=Responsible.choices,
-        default=Responsible.CHALLENGE_ORGANIZERS,
+        choices=ResponsibleChoices.choices,
+        default=ResponsibleChoices.CHALLENGE_ORGANIZERS,
         help_text="Who is responsible for completion of this task.",
     )
     deadline = models.DateTimeField(
-        help_text="Deadline for the task",
+        help_text="Deadline for this task.",
     )
 
+    def is_overdue(self, reference_time):
+        return not self.complete and self.deadline < reference_time
+
     def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        _now = now()
+
+        if adding:
+            self.created = _now
+        if self.complete and (self.has_changed("complete") or adding):
+            self.completed_at = _now
+
         super().save(*args, **kwargs)
 
-        if self.responsible == self.Responsible.CHALLENGE_ORGANIZERS:
+        if self.responsible == self.ResponsibleChoices.CHALLENGE_ORGANIZERS:
             assign_perm(
                 "complete_onboaringtask", self.challenge.admins_group, self
             )
-        elif not self._state.adding:
+        elif not adding:
             remove_perm(
                 "complete_onboaringtask", self.challenge.admins_group, self
             )

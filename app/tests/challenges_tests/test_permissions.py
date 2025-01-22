@@ -127,8 +127,8 @@ def test_challenge_request_list_view_permissions(client, challenge_reviewer):
     "responsible,permitted",
     (
         (None, True),  # Default
-        (OnboardingTask.Responsible.SUPPORT, False),
-        (OnboardingTask.Responsible.CHALLENGE_ORGANIZERS, True),
+        (OnboardingTask.ResponsibleChoices.SUPPORT, False),
+        (OnboardingTask.ResponsibleChoices.CHALLENGE_ORGANIZERS, True),
     ),
 )
 def test_onboarding_task_completion_permissions(responsible, permitted):

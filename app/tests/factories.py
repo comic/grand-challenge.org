@@ -236,5 +236,6 @@ class OnboardingTaskFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = OnboardingTask
 
+    challenge = factory.SubFactory(ChallengeFactory)
     title = factory.sequence(lambda n: f"Task {n}")
     deadline = factory.LazyFunction(now)

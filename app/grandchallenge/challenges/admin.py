@@ -3,7 +3,10 @@ import json
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
 from django.core.exceptions import ValidationError
+from django.db.models import BooleanField, Case, Value, When
 from django.utils.html import format_html
+from django.utils.timezone import now
+from django.utils.translation import gettext_lazy as _
 
 from grandchallenge.challenges.emails import send_challenge_status_update_email
 from grandchallenge.challenges.models import (
@@ -14,6 +17,7 @@ from grandchallenge.challenges.models import (
     ChallengeRequestUserObjectPermission,
     ChallengeSeries,
     ChallengeUserObjectPermission,
+    OnboardingTask,
     OnboardingTaskGroupObjectPermission,
 )
 from grandchallenge.core.admin import (
@@ -131,6 +135,64 @@ class ChallengeRequestAdmin(ModelAdmin):
             send_challenge_status_update_email(
                 challengerequest=challengerequest, challenge=challenge
             )
+
+
+class OnTimeFilter(admin.SimpleListFilter):
+    title = _("on time")
+    parameter_name = "on_time"
+
+    def lookups(self, *_, **__):
+        return [
+            (True, "Yes"),
+            (False, "No"),
+        ]
+
+    def queryset(self, request, queryset):
+        if self.value() is not None:
+            queryset = queryset.filter(overdue=not self.value())
+        return queryset
+
+
+@admin.register(OnboardingTask)
+class OnboardingTaskAdmin(ModelAdmin):
+    ordering = (
+        "challenge",
+        "-deadline",
+    )
+    autocomplete_fields = ("challenge",)
+    list_display = (
+        "description",
+        "challenge",
+        "on_time",
+        "complete",
+        "deadline",
+        "responsible",
+    )
+    list_filter = (
+        OnTimeFilter,
+        "complete",
+        "challenge__short_name",
+    )
+    list_select_related = ("challenge",)
+    search_fields = ("title", "description")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._reference_time = now()
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.annotate(
+            overdue=Case(
+                When(complete=False, deadline__lt=now(), then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField(),
+            )
+        )
+
+    @admin.display(boolean=True)
+    def on_time(self, obj):
+        return not obj.overdue
 
 
 admin.site.register(ChallengeUserObjectPermission, UserObjectPermissionAdmin)
