@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 import pytest
 from django.utils.timezone import now, timedelta
 
@@ -19,7 +21,7 @@ def test_onboarding_task_mark_complete_action():
         assert not task.complete
 
     mark_task_complete(
-        None,
+        MagicMock(),
         None,
         OnboardingTask.objects.filter(pk__in=[tasks[0].pk, tasks[1].pk]),
     )
@@ -41,10 +43,14 @@ def test_onboarding_task_move_dealine_action():
     )
 
     move_task_deadline_1_week(
-        None, None, OnboardingTask.objects.filter(pk=tasks[0].pk)
+        MagicMock(),
+        None,
+        OnboardingTask.objects.filter(pk=tasks[0].pk),
     )
     move_task_deadline_4_weeks(
-        None, None, OnboardingTask.objects.filter(pk=tasks[1].pk)
+        MagicMock(),
+        None,
+        OnboardingTask.objects.filter(pk=tasks[1].pk),
     )
 
     for task in tasks:
