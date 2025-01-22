@@ -25,6 +25,7 @@ from grandchallenge.components.models import (
     InterfaceKindChoices,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
+from grandchallenge.profiles.templatetags.profiles import user_profile_link
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import (
@@ -2176,3 +2177,54 @@ def test_algorithm_template_download(client):
         assert (
             file_name in zip_file.namelist()
         ), f"{file_name} is in the ZIP file"
+
+
+@pytest.mark.django_db
+def test_algorithm_statistics_view(client):
+    alg = AlgorithmFactory()
+    ai = AlgorithmImageFactory(algorithm=alg)
+    user = UserFactory()
+    alg.add_editor(user)
+
+    succeeded_jobs = AlgorithmJobFactory.create_batch(
+        10,
+        algorithm_image=ai,
+        creator=user,
+        status=Job.SUCCESS,
+        time_limit=alg.time_limit,
+    )
+    canceleld_jobs = AlgorithmJobFactory.create_batch(
+        9,
+        algorithm_image=ai,
+        creator=user,
+        status=Job.CANCELLED,
+        time_limit=alg.time_limit,
+    )
+    failed_jobs = AlgorithmJobFactory.create_batch(
+        8,
+        algorithm_image=ai,
+        creator=user,
+        status=Job.FAILURE,
+        time_limit=alg.time_limit,
+    )
+
+    top_user_profile = user_profile_link(user)
+
+    response = get_view_for_user(
+        viewname="algorithms:statistics",
+        reverse_kwargs={"slug": alg.slug},
+        client=client,
+        user=user,
+    )
+
+    assert response.status_code == 200
+    assert "Algorithm Usage" in response.rendered_content
+    assert "Total Jobs" in response.rendered_content
+    assert "Succeeded" in response.rendered_content
+    assert f"<dd>{len(succeeded_jobs)}</dd>" in response.rendered_content
+    assert "Cancelled" in response.rendered_content
+    assert f"<dd>{len(canceleld_jobs)}</dd>" in response.rendered_content
+    assert "Failed" in response.rendered_content
+    assert f"<dd>{len(failed_jobs)}</dd>" in response.rendered_content
+    assert "Top Users" in response.rendered_content
+    assert top_user_profile in response.rendered_content
