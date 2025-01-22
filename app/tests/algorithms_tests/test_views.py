@@ -365,6 +365,13 @@ class TestObjectPermissionRequiredViews:
                 ),
             ),
             (
+                "statistics",
+                {"slug": ai.algorithm.slug},
+                "change_algorithm",
+                ai.algorithm,
+                None,
+            ),
+            (
                 "update",
                 {"slug": ai.algorithm.slug},
                 "change_algorithm",
