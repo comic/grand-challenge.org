@@ -1,9 +1,10 @@
 import json
+from datetime import timedelta
 
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
 from django.core.exceptions import ValidationError
-from django.db.models import BooleanField, Case, Value, When
+from django.db.models import BooleanField, Case, F, Value, When
 from django.utils.html import format_html
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
@@ -153,6 +154,30 @@ class OnTimeFilter(admin.SimpleListFilter):
         return queryset
 
 
+@admin.action(
+    description="Mark selected onboarding tasks complete",
+    permissions=("change",),
+)
+def mark_complete(modeladmin, request, queryset):
+    queryset.update(complete=True)
+
+
+@admin.action(
+    description="Move selected task' deadlines by 1 week",
+    permissions=("change",),
+)
+def move_deadline_1_week(modeladmin, request, queryset):
+    queryset.update(deadline=F("deadline") + timedelta(weeks=1))
+
+
+@admin.action(
+    description="Move selected task' deadlines by 4 weeks",
+    permissions=("change",),
+)
+def move_deadline_4_weeks(modeladmin, request, queryset):
+    queryset.update(deadline=F("deadline") + timedelta(weeks=4))
+
+
 @admin.register(OnboardingTask)
 class OnboardingTaskAdmin(ModelAdmin):
     ordering = (
@@ -175,6 +200,11 @@ class OnboardingTaskAdmin(ModelAdmin):
     )
     list_select_related = ("challenge",)
     search_fields = ("title", "description")
+    actions = (
+        mark_complete,
+        move_deadline_1_week,
+        move_deadline_4_weeks,
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
