@@ -1401,16 +1401,36 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
 
         return set_as_default
 
+    def clean_inputs(self):
+        inputs = self.cleaned_data.get("inputs", [])
+
+        if (
+            AlgorithmAlgorithmInterface.objects.filter(
+                algorithm=self._algorithm
+            )
+            .annotate(
+                input_count=Count("interface__inputs", distinct=True),
+                relevant_inputs_count=Count(
+                    "interface__inputs",
+                    filter=Q(interface__inputs__in=inputs),
+                    distinct=True,
+                ),
+            )
+            .filter(input_count=len(inputs), relevant_inputs_count=len(inputs))
+            .exists()
+        ):
+            raise ValidationError(
+                "An AlgorithmInterface for this algorithm with the "
+                "same inputs already exists. "
+                "Algorithm interfaces need to have unique sets of inputs."
+            )
+        return inputs
+
     def clean(self):
         cleaned_data = super().clean()
 
         inputs = cleaned_data.get("inputs", [])
         outputs = cleaned_data.get("outputs", [])
-
-        if not inputs or not outputs:
-            raise ValidationError(
-                "You must provide at least 1 input and 1 output."
-            )
 
         duplicate_interfaces = {*inputs}.intersection({*outputs})
 

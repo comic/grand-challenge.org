@@ -983,11 +983,15 @@ class JobManager(ComponentJobManager):
         existing_jobs = (
             Job.objects.filter(**unique_kwargs)
             .annotate(
-                inputs_match_count=Count(
-                    "inputs", filter=Q(inputs__in=existing_civs)
-                )
+                input_count=Count("inputs", distinct=True),
+                input_match_count=Count(
+                    "inputs", filter=Q(inputs__in=existing_civs), distinct=True
+                ),
             )
-            .filter(inputs_match_count=input_interface_count)
+            .filter(
+                input_count=input_interface_count,
+                input_match_count=input_interface_count,
+            )
         )
 
         return existing_jobs

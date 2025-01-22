@@ -283,6 +283,12 @@ class AlgorithmAlgorithmInterfaceAdmin(GuardedModelAdmin):
     )
     list_filter = ("is_default", "algorithm")
 
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
 
 admin.site.register(AlgorithmUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(AlgorithmGroupObjectPermission, GroupObjectPermissionAdmin)
