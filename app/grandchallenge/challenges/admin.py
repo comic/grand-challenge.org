@@ -144,13 +144,15 @@ class OnTimeFilter(admin.SimpleListFilter):
 
     def lookups(self, *_, **__):
         return [
-            (True, "Yes"),
-            (False, "No"),
+            ("yes", "Yes"),
+            ("no", "No"),
         ]
 
     def queryset(self, request, queryset):
-        if self.value() is not None:
-            queryset = queryset.filter(overdue=not self.value())
+        if self.value() == "yes":
+            queryset = queryset.filter(overdue=False)
+        elif self.value() == "no":
+            queryset = queryset.filter(overdue=True)
         return queryset
 
 
