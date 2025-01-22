@@ -160,24 +160,40 @@ class OnTimeFilter(admin.SimpleListFilter):
     description="Mark selected onboarding tasks complete",
     permissions=("change",),
 )
-def mark_complete(modeladmin, request, queryset):
+def mark_task_complete(modeladmin, request, queryset):
     queryset.update(complete=True)
+
+    modeladmin.message_user(
+        request, f"{len(queryset)} Tasks marked as complete", messages.SUCCESS
+    )
 
 
 @admin.action(
     description="Move selected task' deadlines by 1 week",
     permissions=("change",),
 )
-def move_deadline_1_week(modeladmin, request, queryset):
+def move_task_deadline_1_week(modeladmin, request, queryset):
     queryset.update(deadline=F("deadline") + timedelta(weeks=1))
+
+    modeladmin.message_user(
+        request,
+        f"{len(queryset)} task deadlines moved 1 week",
+        messages.SUCCESS,
+    )
 
 
 @admin.action(
     description="Move selected task' deadlines by 4 weeks",
     permissions=("change",),
 )
-def move_deadline_4_weeks(modeladmin, request, queryset):
+def move_task_deadline_4_weeks(modeladmin, request, queryset):
     queryset.update(deadline=F("deadline") + timedelta(weeks=4))
+
+    modeladmin.message_user(
+        request,
+        f"{len(queryset)} task deadlines moved 4 weeks",
+        messages.SUCCESS,
+    )
 
 
 @admin.register(OnboardingTask)
@@ -203,9 +219,9 @@ class OnboardingTaskAdmin(ModelAdmin):
     list_select_related = ("challenge",)
     search_fields = ("title", "description")
     actions = (
-        mark_complete,
-        move_deadline_1_week,
-        move_deadline_4_weeks,
+        mark_task_complete,
+        move_task_deadline_1_week,
+        move_task_deadline_4_weeks,
     )
 
     def __init__(self, *args, **kwargs):

@@ -2,9 +2,9 @@ import pytest
 from django.utils.timezone import now, timedelta
 
 from grandchallenge.challenges.admin import (
-    mark_complete,
-    move_deadline_1_week,
-    move_deadline_4_weeks,
+    mark_task_complete,
+    move_task_deadline_1_week,
+    move_task_deadline_4_weeks,
 )
 from grandchallenge.challenges.models import OnboardingTask
 from tests.factories import ChallengeFactory, OnboardingTaskFactory
@@ -18,7 +18,7 @@ def test_onboarding_task_mark_complete_action():
     for task in tasks:  # Sanity
         assert not task.complete
 
-    mark_complete(
+    mark_task_complete(
         None,
         None,
         OnboardingTask.objects.filter(pk__in=[tasks[0].pk, tasks[1].pk]),
@@ -40,10 +40,10 @@ def test_onboarding_task_move_dealine_action():
         3, challenge=ch, deadline=deadline
     )
 
-    move_deadline_1_week(
+    move_task_deadline_1_week(
         None, None, OnboardingTask.objects.filter(pk=tasks[0].pk)
     )
-    move_deadline_4_weeks(
+    move_task_deadline_4_weeks(
         None, None, OnboardingTask.objects.filter(pk=tasks[1].pk)
     )
 
