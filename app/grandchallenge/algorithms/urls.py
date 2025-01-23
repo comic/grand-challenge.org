@@ -13,6 +13,7 @@ from grandchallenge.algorithms.views import (
     AlgorithmImageUpdate,
     AlgorithmImportView,
     AlgorithmInterfaceForAlgorithmCreate,
+    AlgorithmInterfaceForAlgorithmDelete,
     AlgorithmInterfacesForAlgorithmList,
     AlgorithmList,
     AlgorithmModelCreate,
@@ -62,6 +63,11 @@ urlpatterns = [
         "<slug>/interfaces/create/",
         AlgorithmInterfaceForAlgorithmCreate.as_view(),
         name="interface-create",
+    ),
+    path(
+        "<slug>/interfaces/<uuid:interface_pk>/delete/",
+        AlgorithmInterfaceForAlgorithmDelete.as_view(),
+        name="interface-delete",
     ),
     path(
         "<slug>/repository/",
