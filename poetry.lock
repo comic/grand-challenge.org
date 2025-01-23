@@ -2951,14 +2951,14 @@ files = [
 
 [[package]]
 name = "panimg"
-version = "0.15.1"
+version = "0.15.0"
 description = "Conversion of medical images to MHA and TIFF."
 optional = false
 python-versions = "<4.0,>=3.10"
 groups = ["main"]
 files = [
-    {file = "panimg-0.15.1-py3-none-any.whl", hash = "sha256:f8ecab0eb0737ec1dac42bd800b8c0608798c0db5bfbfacb5cc9837aa73e5020"},
-    {file = "panimg-0.15.1.tar.gz", hash = "sha256:4633ffef0884f625e908975dc4c701e6bdb515326622496a0063bd918f450cc2"},
+    {file = "panimg-0.15.0-py3-none-any.whl", hash = "sha256:e53257c806011a297ca848c4f2fa547cdd31a56821dcfef30dc81c7b9b5cff97"},
+    {file = "panimg-0.15.0.tar.gz", hash = "sha256:6013f06d5ed5334474f35f1bec4c3a2055e216d419430f74f9c05496ed48bda7"},
 ]
 
 [package.dependencies]
@@ -5451,4 +5451,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.13"
-content-hash = "51cf85bb46610f708a800fbf1f55ca3c429114a1205f8c86b2c2c1cb4bd26b03"
+content-hash = "2eaf58792428b9b99c31c393eefca68a7d5d3fad13ab4baedb6ed19be4a7abe4"
