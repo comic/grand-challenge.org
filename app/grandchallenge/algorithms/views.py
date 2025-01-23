@@ -22,6 +22,7 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.views.generic import (
     CreateView,
+    DeleteView,
     DetailView,
     FormView,
     ListView,
@@ -1174,7 +1175,8 @@ class AlgorithmInterfaceForAlgorithmCreate(
 
     def get_success_url(self):
         return reverse(
-            "algorithms:interface-list", kwargs={"slug": self.algorithm.slug}
+            "algorithms:interface-list",
+            kwargs={"slug": self.algorithm.slug},
         )
 
     def get_context_data(self, *args, **kwargs):
@@ -1196,6 +1198,39 @@ class AlgorithmInterfacesForAlgorithmList(
     def get_queryset(self):
         qs = super().get_queryset()
         return qs.filter(algorithm=self.algorithm)
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update(
+            {
+                "algorithm": self.algorithm,
+            }
+        )
+        return context
+
+
+class AlgorithmInterfaceForAlgorithmDelete(
+    AlgorithmInterfacePermissionMixin, DeleteView
+):
+    model = AlgorithmAlgorithmInterface
+
+    @property
+    def algorithm_interface(self):
+        return get_object_or_404(
+            klass=AlgorithmAlgorithmInterface,
+            algorithm=self.algorithm,
+            interface__pk=self.kwargs["interface_pk"],
+            is_default=False,
+        )
+
+    def get_object(self, queryset=None):
+        return self.algorithm_interface
+
+    def get_success_url(self):
+        return reverse(
+            "algorithms:interface-list",
+            kwargs={"slug": self.algorithm.slug},
+        )
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)

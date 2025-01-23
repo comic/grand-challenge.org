@@ -2261,6 +2261,55 @@ def test_algorithm_interface_view_permission(client, viewname):
 
 
 @pytest.mark.django_db
+def test_algorithm_interface_delete_permission(client):
+    (
+        user_with_alg_add_perm,
+        user_without_alg_add_perm,
+        algorithm_editor_with_alg_add,
+        algorithm_editor_without_alg_add,
+    ) = UserFactory.create_batch(4)
+    assign_perm("algorithms.add_algorithm", user_with_alg_add_perm)
+    assign_perm("algorithms.add_algorithm", algorithm_editor_with_alg_add)
+
+    alg = AlgorithmFactory()
+    alg.add_editor(algorithm_editor_with_alg_add)
+    alg.add_editor(algorithm_editor_without_alg_add)
+
+    int1, int2 = AlgorithmInterfaceFactory.create_batch(2)
+    alg.interfaces.add(int1, through_defaults={"is_default": True})
+    alg.interfaces.add(int2)
+
+    for user, status1, status2 in [
+        [user_with_alg_add_perm, 403, 403],
+        [user_without_alg_add_perm, 403, 403],
+        [algorithm_editor_with_alg_add, 200, 404],
+        [algorithm_editor_without_alg_add, 403, 403],
+    ]:
+        response = get_view_for_user(
+            viewname="algorithms:interface-delete",
+            client=client,
+            reverse_kwargs={
+                "slug": alg.slug,
+                "interface_pk": int2.pk,
+            },
+            user=user,
+        )
+        assert response.status_code == status1
+
+        # default interface cannot be deleted
+        response = get_view_for_user(
+            viewname="algorithms:interface-delete",
+            client=client,
+            reverse_kwargs={
+                "slug": alg.slug,
+                "interface_pk": int1.pk,
+            },
+            user=user,
+        )
+        assert response.status_code == status2
+
+
+@pytest.mark.django_db
 def test_algorithm_interface_create(client):
     user = UserFactory()
     assign_perm("algorithms.add_algorithm", user)
@@ -2323,6 +2372,48 @@ def test_algorithm_interfaces_list_queryset(client):
     assert iots[1] in response.context["object_list"]
     assert iots[2] not in response.context["object_list"]
     assert iots[3] not in response.context["object_list"]
+
+
+@pytest.mark.django_db
+def test_algorithm_interface_delete(client):
+    user = UserFactory()
+    assign_perm("algorithms.add_algorithm", user)
+    alg = AlgorithmFactory()
+    alg.add_editor(user)
+
+    int1, int2 = AlgorithmInterfaceFactory.create_batch(2)
+    alg.interfaces.add(int1, through_defaults={"is_default": True})
+    alg.interfaces.add(int2)
+
+    response = get_view_for_user(
+        viewname="algorithms:interface-delete",
+        client=client,
+        method=client.post,
+        reverse_kwargs={
+            "slug": alg.slug,
+            "interface_pk": int1.pk,
+        },
+        user=user,
+    )
+    assert response.status_code == 404
+
+    response = get_view_for_user(
+        viewname="algorithms:interface-delete",
+        client=client,
+        method=client.post,
+        reverse_kwargs={
+            "slug": alg.slug,
+            "interface_pk": int2.pk,
+        },
+        user=user,
+    )
+    assert response.status_code == 302
+    # no interface was deleted
+    assert AlgorithmInterface.objects.count() == 2
+    # only the relation between interface and algorithm was deleted
+    assert AlgorithmAlgorithmInterface.objects.count() == 1
+    assert alg.interfaces.count() == 1
+    assert alg.interfaces.get() == int1
 
 
 @pytest.mark.django_db
