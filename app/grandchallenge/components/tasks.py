@@ -227,6 +227,36 @@ def remove_container_image_from_registry(
     model = apps.get_model(app_label=app_label, model_name=model_name)
     instance = model.objects.get(pk=pk)
 
+    from grandchallenge.algorithms.models import AlgorithmImage, Job
+    from grandchallenge.evaluation.models import Evaluation, Method
+
+    instance_in_use = False
+
+    if isinstance(instance, Method):
+        instance_in_use = (
+            Evaluation.objects.filter(
+                method=instance,
+            )
+            .active()
+            .exists()
+        )
+    elif isinstance(instance, AlgorithmImage):
+        instance_in_use = (
+            Evaluation.objects.filter(
+                submission__algorithm_image=instance,
+            )
+            .active()
+            .exists()
+            or Job.objects.filter(
+                algorithm_image=instance,
+            )
+            .active()
+            .exists()
+        )
+
+    if instance_in_use:
+        return
+
     if instance.latest_shimmed_version:
         remove_tag_from_registry(repo_tag=instance.shimmed_repo_tag)
         instance.latest_shimmed_version = ""

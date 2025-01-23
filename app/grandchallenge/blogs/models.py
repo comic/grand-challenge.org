@@ -47,7 +47,7 @@ class Post(models.Model):
         help_text="If selected, this blog post will appear in first position in the news carousel on the home page.",
     )
 
-    history = HistoricalRecords()
+    history = HistoricalRecords(excluded_fields=["slug"])
 
     class Meta:
         ordering = ("-created",)
