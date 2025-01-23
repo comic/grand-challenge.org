@@ -2279,11 +2279,11 @@ def test_algorithm_interface_delete_permission(client):
     alg.interfaces.add(int1, through_defaults={"is_default": True})
     alg.interfaces.add(int2)
 
-    for user, status in [
-        [user_with_alg_add_perm, 403],
-        [user_without_alg_add_perm, 403],
-        [algorithm_editor_with_alg_add, 200],
-        [algorithm_editor_without_alg_add, 403],
+    for user, status1, status2 in [
+        [user_with_alg_add_perm, 403, 403],
+        [user_without_alg_add_perm, 403, 403],
+        [algorithm_editor_with_alg_add, 200, 404],
+        [algorithm_editor_without_alg_add, 403, 403],
     ]:
         response = get_view_for_user(
             viewname="algorithms:interface-delete",
@@ -2294,7 +2294,7 @@ def test_algorithm_interface_delete_permission(client):
             },
             user=user,
         )
-        assert response.status_code == status
+        assert response.status_code == status1
 
         # default interface cannot be deleted
         response = get_view_for_user(
@@ -2306,7 +2306,7 @@ def test_algorithm_interface_delete_permission(client):
             },
             user=user,
         )
-        assert response.status_code == 403
+        assert response.status_code == status2
 
 
 @pytest.mark.django_db
@@ -2395,7 +2395,7 @@ def test_algorithm_interface_delete(client):
         },
         user=user,
     )
-    assert response.status_code == 403
+    assert response.status_code == 404
 
     response = get_view_for_user(
         viewname="algorithms:interface-delete",

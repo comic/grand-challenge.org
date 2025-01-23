@@ -1220,20 +1220,11 @@ class AlgorithmInterfaceForAlgorithmDelete(
             klass=AlgorithmAlgorithmInterface,
             algorithm=self.algorithm,
             interface__pk=self.kwargs["interface_pk"],
+            is_default=False,
         )
 
     def get_object(self, queryset=None):
         return self.algorithm_interface
-
-    def dispatch(self, request, *args, **kwargs):
-        if self.algorithm_interface.is_default:
-            messages.error(
-                request,
-                "You cannot delete the default interface for an algorithm.",
-            )
-            self.handle_no_permission()
-        else:
-            return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
         return reverse(
