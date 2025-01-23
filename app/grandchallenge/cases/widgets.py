@@ -21,7 +21,7 @@ class WidgetChoices(TextChoices):
 
 
 class ImageSearchWidget(ChoiceWidget, HiddenInput):
-    template_name = "cases/image-search-widget.html"
+    template_name = "cases/image_search_widget.html"
     input_type = None
     name = None
 
