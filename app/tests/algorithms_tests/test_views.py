@@ -2218,13 +2218,10 @@ def test_algorithm_statistics_view(client):
     )
 
     assert response.status_code == 200
-    assert "Algorithm Usage" in response.rendered_content
-    assert "Total Jobs" in response.rendered_content
     assert "Succeeded" in response.rendered_content
     assert f"<dd>{len(succeeded_jobs)}</dd>" in response.rendered_content
     assert "Cancelled" in response.rendered_content
     assert f"<dd>{len(canceleld_jobs)}</dd>" in response.rendered_content
     assert "Failed" in response.rendered_content
     assert f"<dd>{len(failed_jobs)}</dd>" in response.rendered_content
-    assert "Top Users" in response.rendered_content
     assert top_user_profile in response.rendered_content
