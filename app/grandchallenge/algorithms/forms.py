@@ -1410,13 +1410,13 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
             )
             .annotate(
                 input_count=Count("interface__inputs", distinct=True),
-                relevant_inputs_count=Count(
+                relevant_input_count=Count(
                     "interface__inputs",
                     filter=Q(interface__inputs__in=inputs),
                     distinct=True,
                 ),
             )
-            .filter(input_count=len(inputs), relevant_inputs_count=len(inputs))
+            .filter(input_count=len(inputs), relevant_input_count=len(inputs))
             .exists()
         ):
             raise ValidationError(
