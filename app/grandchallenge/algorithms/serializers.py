@@ -1,7 +1,6 @@
 import logging
 
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.db.models import Count, Q
 from rest_framework import serializers
 from rest_framework.fields import (
     CharField,
@@ -273,13 +272,8 @@ class JobPostSerializer(JobSerializer):
         """
         provided_inputs = {i["interface"] for i in inputs}
         try:
-            interface = self._algorithm.interfaces.annotate(
-                input_count=Count("inputs", distinct=True),
-                relevant_input_count=Count(
-                    "inputs",
-                    filter=Q(inputs__in=provided_inputs),
-                    distinct=True,
-                ),
+            interface = self._algorithm.interfaces.with_input_output_counts(
+                inputs=provided_inputs
             ).get(
                 relevant_input_count=len(provided_inputs),
                 input_count=len(provided_inputs),
