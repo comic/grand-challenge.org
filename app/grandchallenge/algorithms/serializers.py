@@ -108,7 +108,6 @@ class JobSerializer(serializers.ModelSerializer):
     """Serializer without hyperlinks for internal use"""
 
     algorithm_image = StringRelatedField()
-    algorithm_interface = StringRelatedField()
 
     inputs = ComponentInterfaceValueSerializer(many=True)
     outputs = ComponentInterfaceValueSerializer(many=True)
