@@ -1452,9 +1452,6 @@ class OnboardingTask(FieldChangeMixin, UUIDModel):
         help_text="Deadline for this task.",
     )
 
-    def is_overdue(self, reference_time):
-        return not self.complete and self.deadline < reference_time
-
     def save(self, *args, **kwargs):
         adding = self._state.adding
 

@@ -224,10 +224,6 @@ class OnboardingTaskAdmin(ModelAdmin):
         move_task_deadline_4_weeks,
     )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._reference_time = now()
-
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.annotate(
