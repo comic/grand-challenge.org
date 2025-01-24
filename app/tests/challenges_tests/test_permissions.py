@@ -124,7 +124,7 @@ def test_challenge_request_list_view_permissions(client, challenge_reviewer):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "responsible,permitted",
+    "expected_responsible_party,permitted",
     (
         (None, True),  # Default
         (OnboardingTask.ResponsiblePartyChoices.SUPPORT, False),
