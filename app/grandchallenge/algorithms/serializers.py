@@ -60,7 +60,7 @@ class AlgorithmSerializer(serializers.ModelSerializer):
     outputs = ComponentInterfaceSerializer(many=True, read_only=True)
     logo = URLField(source="logo.x20.url", read_only=True)
     url = URLField(source="get_absolute_url", read_only=True)
-    interfaces = AlgorithmInterfaceSerializer(many=True)
+    interfaces = AlgorithmInterfaceSerializer(many=True, read_only=True)
 
     class Meta:
         model = Algorithm
