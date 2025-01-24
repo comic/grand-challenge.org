@@ -252,9 +252,6 @@ class AlgorithmStatistics(
     template_name = "algorithms/algorithm_statistics.html"
     raise_exception = True
 
-    def get_object(self):
-        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
-
 
 class AlgorithmUpdate(
     LoginRequiredMixin,
