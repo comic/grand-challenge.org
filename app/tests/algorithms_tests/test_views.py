@@ -2186,6 +2186,19 @@ def test_algorithm_statistics_view(client):
     user = UserFactory()
     alg.add_editor(user)
 
+    response1 = get_view_for_user(
+        viewname="algorithms:statistics",
+        reverse_kwargs={"slug": alg.slug},
+        client=client,
+        user=user,
+    )
+
+    assert response1.status_code == 200
+    assert (
+        "No usage statistics are available for this algorithm"
+        in response1.rendered_content
+    )
+
     succeeded_jobs = AlgorithmJobFactory.create_batch(
         10,
         algorithm_image=ai,
@@ -2207,21 +2220,23 @@ def test_algorithm_statistics_view(client):
         status=Job.FAILURE,
         time_limit=alg.time_limit,
     )
+    total_jobs = len(succeeded_jobs) + len(canceleld_jobs) + len(failed_jobs)
 
     top_user_profile = user_profile_link(user)
 
-    response = get_view_for_user(
+    response2 = get_view_for_user(
         viewname="algorithms:statistics",
         reverse_kwargs={"slug": alg.slug},
         client=client,
         user=user,
     )
 
-    assert response.status_code == 200
-    assert "Succeeded" in response.rendered_content
-    assert f"<dd>{len(succeeded_jobs)}</dd>" in response.rendered_content
-    assert "Cancelled" in response.rendered_content
-    assert f"<dd>{len(canceleld_jobs)}</dd>" in response.rendered_content
-    assert "Failed" in response.rendered_content
-    assert f"<dd>{len(failed_jobs)}</dd>" in response.rendered_content
-    assert top_user_profile in response.rendered_content
+    assert response2.status_code == 200
+    assert "Succeeded" in response2.rendered_content
+    assert f"<dd>{len(succeeded_jobs)}</dd>" in response2.rendered_content
+    assert "Cancelled" in response2.rendered_content
+    assert f"<dd>{len(canceleld_jobs)}</dd>" in response2.rendered_content
+    assert "Failed" in response2.rendered_content
+    assert f"<dd>{len(failed_jobs)}</dd>" in response2.rendered_content
+    assert top_user_profile in response2.rendered_content
+    assert f"{total_jobs} jobs" in response2.rendered_content
