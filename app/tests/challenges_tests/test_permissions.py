@@ -131,20 +131,22 @@ def test_challenge_request_list_view_permissions(client, challenge_reviewer):
         (OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS, True),
     ),
 )
-def test_onboarding_task_completion_permissions(responsible, permitted):
+def test_onboarding_task_completion_permissions(
+    expected_responsible_party, permitted
+):
     ch = ChallengeFactory()
     user = UserFactory()
 
     kwargs = {}
-    if responsible:
-        kwargs["responsible_party"] = responsible
+    if expected_responsible_party:
+        kwargs["responsible_party"] = expected_responsible_party
 
     task = OnboardingTaskFactory(challenge=ch, **kwargs)
 
     # Sanity
     assert not user.has_perm("complete_onboaringtask", task)
-    if responsible:
-        assert task.responsible == responsible
+    if expected_responsible_party:
+        assert task.responsible_party == expected_responsible_party
 
     ch.add_admin(user)
     assert user.has_perm("complete_onboaringtask", task) == permitted
