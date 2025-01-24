@@ -2206,7 +2206,7 @@ def test_algorithm_statistics_view(client):
         status=Job.SUCCESS,
         time_limit=alg.time_limit,
     )
-    canceleld_jobs = AlgorithmJobFactory.create_batch(
+    canceled_jobs = AlgorithmJobFactory.create_batch(
         9,
         algorithm_image=ai,
         creator=user,
@@ -2220,7 +2220,7 @@ def test_algorithm_statistics_view(client):
         status=Job.FAILURE,
         time_limit=alg.time_limit,
     )
-    total_jobs = len(succeeded_jobs) + len(canceleld_jobs) + len(failed_jobs)
+    total_jobs = len(succeeded_jobs) + len(canceled_jobs) + len(failed_jobs)
 
     top_user_profile = user_profile_link(user)
 
@@ -2235,7 +2235,7 @@ def test_algorithm_statistics_view(client):
     assert "Succeeded" in response2.rendered_content
     assert f"<dd>{len(succeeded_jobs)}</dd>" in response2.rendered_content
     assert "Cancelled" in response2.rendered_content
-    assert f"<dd>{len(canceleld_jobs)}</dd>" in response2.rendered_content
+    assert f"<dd>{len(canceled_jobs)}</dd>" in response2.rendered_content
     assert "Failed" in response2.rendered_content
     assert f"<dd>{len(failed_jobs)}</dd>" in response2.rendered_content
     assert top_user_profile in response2.rendered_content
