@@ -127,8 +127,8 @@ def test_challenge_request_list_view_permissions(client, challenge_reviewer):
     "responsible,permitted",
     (
         (None, True),  # Default
-        (OnboardingTask.ResponsibleChoices.SUPPORT, False),
-        (OnboardingTask.ResponsibleChoices.CHALLENGE_ORGANIZERS, True),
+        (OnboardingTask.ResponsiblePartyChoices.SUPPORT, False),
+        (OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS, True),
     ),
 )
 def test_onboarding_task_completion_permissions(responsible, permitted):
@@ -137,7 +137,7 @@ def test_onboarding_task_completion_permissions(responsible, permitted):
 
     kwargs = {}
     if responsible:
-        kwargs["responsible"] = responsible
+        kwargs["responsible_party"] = responsible
 
     task = OnboardingTaskFactory(challenge=ch, **kwargs)
 

@@ -209,7 +209,7 @@ class OnboardingTaskAdmin(ModelAdmin):
         "on_time",
         "complete",
         "deadline",
-        "responsible",
+        "responsible_party",
     )
     list_filter = (
         OnTimeFilter,

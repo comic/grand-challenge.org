@@ -1405,13 +1405,13 @@ class ChallengeRequestGroupObjectPermission(GroupObjectPermissionBase):
     )
 
 
-class TaskResponsibleChoices(models.TextChoices):
+class TaskResponsiblePartyChoices(models.TextChoices):
     SUPPORT = "SUP", "Support"
     CHALLENGE_ORGANIZERS = "ORG", "Challenge Organizers"
 
 
 class OnboardingTask(FieldChangeMixin, UUIDModel):
-    ResponsibleChoices = TaskResponsibleChoices
+    ResponsiblePartyChoices = TaskResponsiblePartyChoices
 
     class Meta:
         permissions = [
@@ -1441,11 +1441,11 @@ class OnboardingTask(FieldChangeMixin, UUIDModel):
         blank=True,
         help_text="Time this task was last marked completed.",
     )
-    responsible = models.CharField(
+    responsible_party = models.CharField(
         blank=False,
         max_length=3,
-        choices=ResponsibleChoices.choices,
-        default=ResponsibleChoices.CHALLENGE_ORGANIZERS,
+        choices=ResponsiblePartyChoices.choices,
+        default=ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
         help_text="Who is responsible for completion of this task.",
     )
     deadline = models.DateTimeField(
@@ -1464,11 +1464,17 @@ class OnboardingTask(FieldChangeMixin, UUIDModel):
 
         super().save(*args, **kwargs)
 
-        if self.responsible == self.ResponsibleChoices.CHALLENGE_ORGANIZERS:
+        self.assign_permissions()
+
+    def assign_permissions(self):
+        if (
+            self.responsible_party
+            == self.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS
+        ):
             assign_perm(
                 "complete_onboaringtask", self.challenge.admins_group, self
             )
-        elif not adding:
+        else:
             remove_perm(
                 "complete_onboaringtask", self.challenge.admins_group, self
             )
