@@ -1404,6 +1404,9 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
     def clean_inputs(self):
         inputs = self.cleaned_data.get("inputs", [])
 
+        if not inputs:
+            raise ValidationError("You must provide at least 1 input.")
+
         if (
             AlgorithmAlgorithmInterface.objects.filter(
                 algorithm=self._algorithm
@@ -1426,19 +1429,32 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
             )
         return inputs
 
+    def clean_outputs(self):
+        outputs = self.cleaned_data.get("outputs", [])
+
+        if not outputs:
+            raise ValidationError("You must provide at least 1 output.")
+
+        return outputs
+
     def clean(self):
         cleaned_data = super().clean()
 
-        inputs = cleaned_data.get("inputs", [])
-        outputs = cleaned_data.get("outputs", [])
+        # there should always be at least one input and one output,
+        # this is checked in the individual fields clean methods
+        inputs = cleaned_data.get("inputs")
+        outputs = cleaned_data.get("outputs")
 
-        duplicate_interfaces = {*inputs}.intersection({*outputs})
+        # if either of the two fields is not provided, no need to check for
+        # duplicates here
+        if inputs and outputs:
+            duplicate_interfaces = {*inputs}.intersection({*outputs})
 
-        if duplicate_interfaces:
-            raise ValidationError(
-                f"The sets of Inputs and Outputs must be unique: "
-                f"{oxford_comma(duplicate_interfaces)} present in both"
-            )
+            if duplicate_interfaces:
+                raise ValidationError(
+                    f"The sets of Inputs and Outputs must be unique: "
+                    f"{oxford_comma(duplicate_interfaces)} present in both"
+                )
 
         return cleaned_data
 

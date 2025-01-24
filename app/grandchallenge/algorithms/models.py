@@ -78,6 +78,11 @@ class AlgorithmInterfaceManager(models.Manager):
         outputs,
         **kwargs,
     ):
+        if not inputs or not outputs:
+            raise ValidationError(
+                "An interface must have at least one input and one output."
+            )
+
         obj = get_existing_interface_for_inputs_and_outputs(
             inputs=inputs, outputs=outputs
         )
@@ -980,6 +985,10 @@ class JobManager(ComponentJobManager):
         else:
             unique_kwargs["algorithm_model__isnull"] = True
 
+        # annotate the number of inputs and the number of inputs that match
+        # the existing civs and filter on both counts so as to not include jobs
+        # with partially overlapping inputs
+        # or jobs with more inputs than the existing civs
         existing_jobs = (
             Job.objects.filter(**unique_kwargs)
             .annotate(
