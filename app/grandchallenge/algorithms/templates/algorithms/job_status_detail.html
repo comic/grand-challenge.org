@@ -1,3 +1,5 @@
+{% load log_filter %}
+
 {% if object.status == object.SUCCESS and object.stderr %}
     <div>
         <div class="modal"
@@ -18,7 +20,7 @@
                         </button>
                     </div>
                     <div class="text-left modal-body">
-                        {{ object.stderr }}
+                        {{ object.stderr | user_error | truncatechars:1024 }}
                     </div>
                     <div class="modal-footer">
                         <a class="btn btn-primary" href="{{ object.get_absolute_url }}">
