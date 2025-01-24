@@ -16,6 +16,7 @@ from rest_framework.relations import (
 from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmImage,
+    AlgorithmInterface,
     AlgorithmModel,
     Job,
 )
@@ -38,12 +39,28 @@ from grandchallenge.hanging_protocols.serializers import (
 logger = logging.getLogger(__name__)
 
 
+class AlgorithmInterfaceSerializer(serializers.ModelSerializer):
+    """Serializer without hyperlinks for internal use"""
+
+    inputs = ComponentInterfaceSerializer(many=True, read_only=True)
+    outputs = ComponentInterfaceSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = AlgorithmInterface
+        fields = [
+            "inputs",
+            "outputs",
+        ]
+
+
 class AlgorithmSerializer(serializers.ModelSerializer):
     average_duration = SerializerMethodField()
+    # TODO remove inputs and outputs
     inputs = ComponentInterfaceSerializer(many=True, read_only=True)
     outputs = ComponentInterfaceSerializer(many=True, read_only=True)
     logo = URLField(source="logo.x20.url", read_only=True)
     url = URLField(source="get_absolute_url", read_only=True)
+    interfaces = AlgorithmInterfaceSerializer(many=True)
 
     class Meta:
         model = Algorithm
@@ -58,6 +75,7 @@ class AlgorithmSerializer(serializers.ModelSerializer):
             "average_duration",
             "inputs",
             "outputs",
+            "interfaces",
         ]
 
     def get_average_duration(self, obj: Algorithm) -> float | None:
@@ -108,6 +126,7 @@ class JobSerializer(serializers.ModelSerializer):
 
     algorithm_image = StringRelatedField()
 
+    algorithm_interface = AlgorithmInterfaceSerializer(read_only=True)
     inputs = ComponentInterfaceValueSerializer(many=True)
     outputs = ComponentInterfaceValueSerializer(many=True)
 
@@ -160,7 +179,6 @@ class HyperlinkedJobSerializer(JobSerializer):
         view_name="api:algorithm-detail",
         read_only=True,
     )
-
     inputs = HyperlinkedComponentInterfaceValueSerializer(many=True)
     outputs = HyperlinkedComponentInterfaceValueSerializer(many=True)
 
