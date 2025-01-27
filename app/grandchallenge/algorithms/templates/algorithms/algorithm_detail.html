@@ -90,6 +90,13 @@
                 <i class="fas fa-file-export fa-fw"></i>&nbsp;Results
             </a>
 
+            {% if "change_algorithm" in algorithm_perms %}
+                <a class="nav-link"
+                    href="{% url 'algorithms:statistics' slug=object.slug %}">
+                    <i class="fas fa-chart-bar fa-fw"></i>&nbsp;Statistics
+                </a>
+            {% endif %}
+
             {% if "execute_algorithm" not in algorithm_perms %}
                 <a class="nav-link"
                    href="{% url 'algorithms:permission-request-create' slug=object.slug %}">
@@ -363,25 +370,6 @@
                     <h4>Notes</h4>
                     {{ object.editor_notes|md2html }}
                 {% endif %}
-                {% if object.usage_statistics %}
-                    <h4>Algorithm Usage</h4>
-                    <div class="w-100 vega-lite-chart">
-                        {{ object.usage_chart.chart|json_script:"usage" }}
-                    </div>
-                    <h5>Total Jobs</h5>
-                    <dl class="inline">
-                        {% for job_status, job_count in object.usage_chart.totals.items %}
-                            <dt>{{ job_status }}</dt>
-                            <dd>{{ job_count }}</dd>
-                        {% endfor %}
-                    </dl>
-                    <h5>Top Users</h5>
-                    <ol>
-                        {% for user in object.user_statistics %}
-                            <li>{{ user|user_profile_link }}: {{ user.job_count }} job{{ user.job_count|pluralize }}</li>
-                        {% endfor %}
-                    </ol>
-                {% endif %}
                 <p>
                     <a class="btn btn-primary"
                        href="{% url 'algorithms:update' slug=object.slug %}">
@@ -634,11 +622,4 @@
     <script type="module" src="{% static "js/refresh_sidebar.mjs" %}"></script>
     {{ csrf_token|to_string|json_script:"csrfToken" }}
     <script type="module" src="{% static 'js/htmx_config_csrf.mjs' %}"></script>
-
-    {% if object.usage_statistics and "change_algorithm" in algorithm_perms %}
-        <script src="{% static 'vendored/vega/vega.min.js' %}"></script>
-        <script src="{% static 'vendored/vega-lite/vega-lite.min.js' %}"></script>
-        <script src="{% static 'vendored/vega-embed/vega-embed.min.js' %}"></script>
-        <script type="module" src="{% static "js/charts/render_charts.mjs" %}"></script>
-    {% endif %}
 {% endblock %}

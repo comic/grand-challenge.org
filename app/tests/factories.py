@@ -5,10 +5,15 @@ import factory
 from allauth.mfa.models import Authenticator
 from django.conf import settings
 from django.contrib.auth.models import Group
+from django.utils.timezone import now
 from factory import fuzzy
 
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
-from grandchallenge.challenges.models import Challenge, ChallengeRequest
+from grandchallenge.challenges.models import (
+    Challenge,
+    ChallengeRequest,
+    OnboardingTask,
+)
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.pages.models import Page
 from grandchallenge.participants.models import (
@@ -225,3 +230,12 @@ class SessionFactory(factory.django.DjangoModelFactory):
 class PolicyFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Policy
+
+
+class OnboardingTaskFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = OnboardingTask
+
+    challenge = factory.SubFactory(ChallengeFactory)
+    title = factory.sequence(lambda n: f"Task {n}")
+    deadline = factory.LazyFunction(now)
