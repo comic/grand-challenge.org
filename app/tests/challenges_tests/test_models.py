@@ -1,4 +1,5 @@
 import random
+from unittest.mock import patch
 
 import pytest
 from actstream.actions import is_following
@@ -7,6 +8,7 @@ from dateutil.relativedelta import relativedelta
 from dateutil.utils import today
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import ProtectedError
+from django.utils.timezone import now
 from machina.apps.forum_conversation.models import Topic
 
 from grandchallenge.challenges.models import Challenge
@@ -14,6 +16,7 @@ from grandchallenge.notifications.models import Notification
 from tests.factories import (
     ChallengeFactory,
     ChallengeRequestFactory,
+    OnboardingTaskFactory,
     UserFactory,
 )
 from tests.notifications_tests.factories import TopicFactory
@@ -165,3 +168,27 @@ def test_storage_and_compute_cost_add_up_to_total():
             + request.total_storage_to_be_invoiced
             + request.total_compute_to_be_invoiced
         )
+
+
+@pytest.mark.django_db
+def test_onboarding_tasks_registering_completion_time():
+    ch = ChallengeFactory()
+    task = OnboardingTaskFactory(challenge=ch, complete=False)
+
+    # Sanity
+    assert not task.complete
+    assert task.completed_at is None
+
+    fake_now = now()
+    with patch("grandchallenge.challenges.models.now", return_value=fake_now):
+        task.complete = True
+        task.save()
+
+    task.refresh_from_db()
+    assert task.complete
+    assert task.completed_at == fake_now
+
+    fresh_task = OnboardingTaskFactory(challenge=ch, complete=True)
+
+    assert fresh_task.complete
+    assert fresh_task.created == fresh_task.completed_at

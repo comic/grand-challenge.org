@@ -1433,6 +1433,23 @@ def test_algorithm_interface_default_interface_required():
     assert form.is_valid()
 
 
+@pytest.mark.django_db
+def test_algorithm_interface_unique_inputs_required():
+    ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
+    alg = AlgorithmFactory()
+    interface = AlgorithmInterfaceFactory(inputs=[ci1])
+    alg.interfaces.add(interface, through_defaults={"is_default": True})
+
+    form = AlgorithmInterfaceForm(
+        algorithm=alg, data={"inputs": [ci1], "outputs": [ci2]}
+    )
+    assert form.is_valid() is False
+    assert (
+        "An AlgorithmInterface for this algorithm with the same inputs already exists"
+        in str(form.errors)
+    )
+
+
 def test_algorithm_for_phase_form_memory():
     form = AlgorithmForPhaseForm(
         workstation_config=WorkstationConfigFactory.build(),
@@ -1557,32 +1574,3 @@ class TestAlgorithmInterfaceForm:
         assert new_io != io
         assert not new_iot.is_default
         assert old_iot.is_default
-
-    @pytest.mark.django_db
-    def test_is_default_is_updated_when_adding_an_already_existing_interface(
-        self,
-    ):
-        alg = AlgorithmFactory()
-        ci_1, ci_2 = ComponentInterfaceFactory.create_batch(2)
-
-        io = AlgorithmInterfaceFactory()
-        io.inputs.set([ci_1])
-        io.outputs.set([ci_2])
-
-        alg.interfaces.add(io, through_defaults={"is_default": True})
-        old_iot = AlgorithmAlgorithmInterface.objects.get()
-
-        form = AlgorithmInterfaceForm(
-            algorithm=alg,
-            data={
-                "inputs": [ci_1.pk],
-                "outputs": [ci_2.pk],
-                "set_as_default": False,
-            },
-        )
-        form.is_valid()
-        new_io = form.save()
-        old_iot.refresh_from_db()
-
-        assert new_io == io
-        assert not old_iot.is_default

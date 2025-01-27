@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load static %}
+{% load profiles %}
+
+{% block title %}
+    Statistics - {{ object.title }} - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+            href="{% url 'algorithms:list' %}">Algorithms</a>
+        </li>
+        <li class="breadcrumb-item"><a
+            href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}</a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Statistics</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+
+    <h2>Statistics for {{ algorithm.title }}</h2>
+
+    {% if object.usage_statistics %}
+        <h4 class="mt-5 mb-3">Algorithm Usage</h4>
+        <div class="w-100 vega-lite-chart">
+            {{ object.usage_chart.chart|json_script:"usage" }}
+        </div>
+        <h5 class="mt-3 mb-1">Total Jobs</h5>
+        <dl class="inline">
+            {% for job_status, job_count in object.usage_chart.totals.items %}
+                <dt>{{ job_status }}</dt>
+                <dd>{{ job_count }}</dd>
+            {% endfor %}
+        </dl>
+        <h5 class="mt-3 mb-1">Top Users</h5>
+        <ol>
+            {% for user in object.user_statistics %}
+                <li>{{ user|user_profile_link }}: {{ user.job_count }} job{{ user.job_count|pluralize }}</li>
+            {% endfor %}
+        </ol>
+    {% else %}
+        <p>No usage statistics are available for this algorithm.</p>
+    {% endif %}
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+
+    {% if object.usage_statistics %}
+        <script src="{% static 'vendored/vega/vega.min.js' %}"></script>
+        <script src="{% static 'vendored/vega-lite/vega-lite.min.js' %}"></script>
+        <script src="{% static 'vendored/vega-embed/vega-embed.min.js' %}"></script>
+        <script type="module" src="{% static "js/charts/render_charts.mjs" %}"></script>
+    {% endif %}
+{% endblock %}

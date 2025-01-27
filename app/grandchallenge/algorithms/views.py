@@ -249,6 +249,15 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
         return context
 
 
+class AlgorithmStatistics(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
+    model = Algorithm
+    permission_required = "algorithms.change_algorithm"
+    template_name = "algorithms/algorithm_statistics.html"
+    raise_exception = True
+
+
 class AlgorithmUpdate(
     LoginRequiredMixin,
     UserFormKwargsMixin,
