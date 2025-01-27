@@ -1401,24 +1401,60 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
 
         return set_as_default
 
+    def clean_inputs(self):
+        inputs = self.cleaned_data.get("inputs", [])
+
+        if not inputs:
+            raise ValidationError("You must provide at least 1 input.")
+
+        if (
+            AlgorithmAlgorithmInterface.objects.filter(
+                algorithm=self._algorithm
+            )
+            .annotate(
+                input_count=Count("interface__inputs", distinct=True),
+                relevant_input_count=Count(
+                    "interface__inputs",
+                    filter=Q(interface__inputs__in=inputs),
+                    distinct=True,
+                ),
+            )
+            .filter(input_count=len(inputs), relevant_input_count=len(inputs))
+            .exists()
+        ):
+            raise ValidationError(
+                "An AlgorithmInterface for this algorithm with the "
+                "same inputs already exists. "
+                "Algorithm interfaces need to have unique sets of inputs."
+            )
+        return inputs
+
+    def clean_outputs(self):
+        outputs = self.cleaned_data.get("outputs", [])
+
+        if not outputs:
+            raise ValidationError("You must provide at least 1 output.")
+
+        return outputs
+
     def clean(self):
         cleaned_data = super().clean()
 
-        inputs = cleaned_data.get("inputs", [])
-        outputs = cleaned_data.get("outputs", [])
+        # there should always be at least one input and one output,
+        # this is checked in the individual fields clean methods
+        inputs = cleaned_data.get("inputs")
+        outputs = cleaned_data.get("outputs")
 
-        if not inputs or not outputs:
-            raise ValidationError(
-                "You must provide at least 1 input and 1 output."
-            )
+        # if either of the two fields is not provided, no need to check for
+        # duplicates here
+        if inputs and outputs:
+            duplicate_interfaces = {*inputs}.intersection({*outputs})
 
-        duplicate_interfaces = {*inputs}.intersection({*outputs})
-
-        if duplicate_interfaces:
-            raise ValidationError(
-                f"The sets of Inputs and Outputs must be unique: "
-                f"{oxford_comma(duplicate_interfaces)} present in both"
-            )
+            if duplicate_interfaces:
+                raise ValidationError(
+                    f"The sets of Inputs and Outputs must be unique: "
+                    f"{oxford_comma(duplicate_interfaces)} present in both"
+                )
 
         return cleaned_data
 

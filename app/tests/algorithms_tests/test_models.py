@@ -818,6 +818,18 @@ class TestGetJobsWithSameInputs:
                 ComponentInterfaceValueFactory(),
             ]
         )
+        j2 = AlgorithmJobFactory(
+            algorithm_image=alg.active_image,
+            time_limit=10,
+            algorithm_interface=alg.default_interface,
+        )
+        j2.inputs.set(
+            [
+                civs[0],
+                civs[1],
+                ComponentInterfaceValueFactory(),
+            ]
+        )
         jobs = Job.objects.get_jobs_with_same_inputs(
             inputs=data,
             algorithm_image=alg.active_image,
