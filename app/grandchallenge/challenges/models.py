@@ -26,6 +26,7 @@ from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_deprecate_fields import deprecate_field
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
@@ -1401,4 +1402,85 @@ class ChallengeRequestUserObjectPermission(UserObjectPermissionBase):
 class ChallengeRequestGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(
         ChallengeRequest, on_delete=models.CASCADE
+    )
+
+
+class TaskResponsiblePartyChoices(models.TextChoices):
+    SUPPORT = "SUP", "Support"
+    CHALLENGE_ORGANIZERS = "ORG", "Challenge Organizers"
+
+
+class OnboardingTask(FieldChangeMixin, UUIDModel):
+    ResponsiblePartyChoices = TaskResponsiblePartyChoices
+
+    class Meta:
+        permissions = [
+            ("complete_onboaringtask", "Can mark this task as completed")
+        ]
+
+    created = models.DateTimeField(editable=False)
+    challenge = models.ForeignKey(
+        to=Challenge,
+        on_delete=models.CASCADE,
+        related_name="onboarding_tasks",
+    )
+    title = models.CharField(
+        max_length=255,
+        help_text="Title of this task",
+    )
+
+    description = models.TextField(
+        blank=True, help_text="Description of this task."
+    )
+    complete = models.BooleanField(
+        default=False,
+        help_text="If true, this task is complete.",
+    )
+    completed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Time this task was last marked completed.",
+    )
+    responsible_party = models.CharField(
+        blank=False,
+        max_length=3,
+        choices=ResponsiblePartyChoices.choices,
+        default=ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+        help_text="Who is responsible for completion of this task.",
+    )
+    deadline = models.DateTimeField(
+        help_text="Deadline for this task.",
+    )
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        _now = now()
+
+        if adding:
+            self.created = _now
+        if self.complete and (self.has_changed("complete") or adding):
+            self.completed_at = _now
+
+        super().save(*args, **kwargs)
+
+        self.assign_permissions()
+
+    def assign_permissions(self):
+        if (
+            self.responsible_party
+            == self.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS
+        ):
+            assign_perm(
+                "complete_onboaringtask", self.challenge.admins_group, self
+            )
+        else:
+            remove_perm(
+                "complete_onboaringtask", self.challenge.admins_group, self
+            )
+
+
+class OnboardingTaskGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(
+        OnboardingTask, on_delete=models.CASCADE
     )

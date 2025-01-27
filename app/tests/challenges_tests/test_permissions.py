@@ -1,8 +1,14 @@
 import pytest
 
+from grandchallenge.challenges.models import OnboardingTask
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.models import Verification
-from tests.factories import ChallengeRequestFactory, UserFactory
+from tests.factories import (
+    ChallengeFactory,
+    ChallengeRequestFactory,
+    OnboardingTaskFactory,
+    UserFactory,
+)
 from tests.utils import (
     get_view_for_user,
     validate_admin_only_view,
@@ -114,3 +120,33 @@ def test_challenge_request_list_view_permissions(client, challenge_reviewer):
     assert response.status_code == 200
     assert r1.title in str(response.context["object_list"])
     assert r2.title in str(response.context["object_list"])
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "expected_responsible_party,permitted",
+    (
+        (None, True),  # Default
+        (OnboardingTask.ResponsiblePartyChoices.SUPPORT, False),
+        (OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS, True),
+    ),
+)
+def test_onboarding_task_completion_permissions(
+    expected_responsible_party, permitted
+):
+    ch = ChallengeFactory()
+    user = UserFactory()
+
+    kwargs = {}
+    if expected_responsible_party:
+        kwargs["responsible_party"] = expected_responsible_party
+
+    task = OnboardingTaskFactory(challenge=ch, **kwargs)
+
+    # Sanity
+    assert not user.has_perm("complete_onboaringtask", task)
+    if expected_responsible_party:
+        assert task.responsible_party == expected_responsible_party
+
+    ch.add_admin(user)
+    assert user.has_perm("complete_onboaringtask", task) == permitted

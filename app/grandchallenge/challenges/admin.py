@@ -1,9 +1,13 @@
 import json
+from datetime import timedelta
 
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
 from django.core.exceptions import ValidationError
+from django.db.models import BooleanField, Case, F, Value, When
 from django.utils.html import format_html
+from django.utils.timezone import now
+from django.utils.translation import gettext_lazy as _
 
 from grandchallenge.challenges.emails import send_challenge_status_update_email
 from grandchallenge.challenges.models import (
@@ -14,6 +18,8 @@ from grandchallenge.challenges.models import (
     ChallengeRequestUserObjectPermission,
     ChallengeSeries,
     ChallengeUserObjectPermission,
+    OnboardingTask,
+    OnboardingTaskGroupObjectPermission,
 )
 from grandchallenge.core.admin import (
     GroupObjectPermissionAdmin,
@@ -132,6 +138,107 @@ class ChallengeRequestAdmin(ModelAdmin):
             )
 
 
+class OnTimeFilter(admin.SimpleListFilter):
+    title = _("on time")
+    parameter_name = "on_time"
+
+    def lookups(self, *_, **__):
+        return [
+            ("yes", "Yes"),
+            ("no", "No"),
+        ]
+
+    def queryset(self, request, queryset):
+        if self.value() == "yes":
+            queryset = queryset.filter(overdue=False)
+        elif self.value() == "no":
+            queryset = queryset.filter(overdue=True)
+        return queryset
+
+
+@admin.action(
+    description="Mark selected onboarding tasks complete",
+    permissions=("change",),
+)
+def mark_task_complete(modeladmin, request, queryset):
+    queryset.update(complete=True)
+
+    modeladmin.message_user(
+        request, f"{len(queryset)} Tasks marked as complete", messages.SUCCESS
+    )
+
+
+@admin.action(
+    description="Move selected task' deadlines by 1 week",
+    permissions=("change",),
+)
+def move_task_deadline_1_week(modeladmin, request, queryset):
+    queryset.update(deadline=F("deadline") + timedelta(weeks=1))
+
+    modeladmin.message_user(
+        request,
+        f"{len(queryset)} task deadlines moved 1 week",
+        messages.SUCCESS,
+    )
+
+
+@admin.action(
+    description="Move selected task' deadlines by 4 weeks",
+    permissions=("change",),
+)
+def move_task_deadline_4_weeks(modeladmin, request, queryset):
+    queryset.update(deadline=F("deadline") + timedelta(weeks=4))
+
+    modeladmin.message_user(
+        request,
+        f"{len(queryset)} task deadlines moved 4 weeks",
+        messages.SUCCESS,
+    )
+
+
+@admin.register(OnboardingTask)
+class OnboardingTaskAdmin(ModelAdmin):
+    ordering = (
+        "challenge",
+        "-deadline",
+    )
+    autocomplete_fields = ("challenge",)
+    list_display = (
+        "title",
+        "challenge",
+        "on_time",
+        "complete",
+        "deadline",
+        "responsible_party",
+    )
+    list_filter = (
+        OnTimeFilter,
+        "complete",
+        "challenge__short_name",
+    )
+    list_select_related = ("challenge",)
+    search_fields = ("title", "description")
+    actions = (
+        mark_task_complete,
+        move_task_deadline_1_week,
+        move_task_deadline_4_weeks,
+    )
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.annotate(
+            overdue=Case(
+                When(complete=False, deadline__lt=now(), then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField(),
+            )
+        )
+
+    @admin.display(boolean=True)
+    def on_time(self, obj):
+        return not obj.overdue
+
+
 admin.site.register(ChallengeUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(ChallengeGroupObjectPermission, GroupObjectPermissionAdmin)
 admin.site.register(
@@ -141,3 +248,7 @@ admin.site.register(
     ChallengeRequestGroupObjectPermission, GroupObjectPermissionAdmin
 )
 admin.site.register(ChallengeSeries)
+
+admin.site.register(
+    OnboardingTaskGroupObjectPermission, GroupObjectPermissionAdmin
+)
