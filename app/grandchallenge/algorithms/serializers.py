@@ -55,7 +55,8 @@ class AlgorithmInterfaceSerializer(serializers.ModelSerializer):
 
 class AlgorithmSerializer(serializers.ModelSerializer):
     average_duration = SerializerMethodField()
-    # TODO remove inputs and outputs
+    # TODO: Still to be addressed for optional inputs pitch
+    # remove inputs and outputs
     inputs = ComponentInterfaceSerializer(many=True, read_only=True)
     outputs = ComponentInterfaceSerializer(many=True, read_only=True)
     logo = URLField(source="logo.x20.url", read_only=True)
@@ -126,7 +127,6 @@ class JobSerializer(serializers.ModelSerializer):
 
     algorithm_image = StringRelatedField()
 
-    algorithm_interface = AlgorithmInterfaceSerializer(read_only=True)
     inputs = ComponentInterfaceValueSerializer(many=True)
     outputs = ComponentInterfaceValueSerializer(many=True)
 
@@ -154,7 +154,6 @@ class JobSerializer(serializers.ModelSerializer):
             "url",
             "api_url",
             "algorithm_image",
-            "algorithm_interface",
             "inputs",
             "outputs",
             "status",
