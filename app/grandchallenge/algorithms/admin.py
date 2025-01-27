@@ -263,15 +263,16 @@ class AlgorithmInterfaceAdmin(GuardedModelAdmin):
     def algorithm_outputs(self, obj):
         return oxford_comma(obj.outputs.all())
 
-    # interfaces should only be created through the UI
-    # and cannot be modified or deleted
     def has_change_permission(self, request, obj=None):
+        # interfaces cannot be modified
         return False
 
     def has_delete_permission(self, request, obj=None):
+        # interfaces cannot be deleted
         return False
 
     def has_add_permission(self, request, obj=None):
+        # interfaces should only be created through the UI
         return False
 
 
@@ -285,12 +286,12 @@ class AlgorithmAlgorithmInterfaceAdmin(GuardedModelAdmin):
     )
     list_filter = ("is_default", "algorithm")
 
-    # through table entries should only be created through the UI
-    # and cannot be modified
     def has_add_permission(self, request, obj=None):
+        # through table entries should only be created through the UI
         return False
 
     def has_change_permission(self, request, obj=None):
+        # through table entries should only be updated through the UI
         return False
 
 
