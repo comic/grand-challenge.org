@@ -12,6 +12,7 @@ from grandchallenge.components.models import ComponentInterface
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
+    AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
 )
 from tests.cases_tests.factories import RawImageUploadSessionFactory
@@ -35,7 +36,6 @@ def test_algorithm_relations_on_job_serializer(rf):
     )
 
 
-@pytest.mark.xfail(reason="Still to be addressed for optional inputs pitch")
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "title, "
@@ -79,7 +79,7 @@ def test_algorithm_relations_on_job_serializer(rf):
             True,
             ("TestInterface 1", "TestInterface 2"),
             ("testinterface-1",),
-            "Interface(s) TestInterface 2 do not have a default value and should be provided.",
+            "The set of inputs provided does not match any of the algorithm's interfaces.",
             False,
         ),
         (
@@ -88,7 +88,7 @@ def test_algorithm_relations_on_job_serializer(rf):
             True,
             ("TestInterface 1",),
             ("testinterface-1", "testinterface-2"),
-            "Provided inputs(s) TestInterface 2 are not defined for this algorithm",
+            "The set of inputs provided does not match any of the algorithm's interfaces.",
             False,
         ),
         (
@@ -137,8 +137,11 @@ def test_algorithm_job_post_serializer_validations(
         is_desired_version=image_ready,
     )
     algorithm_image.algorithm.title = title
-    algorithm_image.algorithm.inputs.set(
-        [interfaces[title] for title in algorithm_interface_titles]
+    interface = AlgorithmInterfaceFactory(
+        inputs=[interfaces[title] for title in algorithm_interface_titles]
+    )
+    algorithm_image.algorithm.interfaces.add(
+        interface, through_defaults={"is_default": True}
     )
     if add_user:
         algorithm_image.algorithm.add_user(user)
@@ -161,8 +164,7 @@ def test_algorithm_job_post_serializer_validations(
     job = {
         "algorithm": algorithm_image.algorithm.api_url,
         "inputs": [
-            {"interface": interface, "value": "dummy"}
-            for interface in job_interface_slugs
+            {"interface": int, "value": "dummy"} for int in job_interface_slugs
         ],
     }
 
@@ -184,7 +186,6 @@ def test_algorithm_job_post_serializer_validations(
         assert len(job.inputs.all()) == 2
 
 
-@pytest.mark.xfail(reason="Still to be addressed for optional inputs pitch")
 @pytest.mark.django_db
 def test_algorithm_job_post_serializer_create(
     rf, settings, django_capture_on_commit_callbacks
@@ -212,7 +213,10 @@ def test_algorithm_job_post_serializer_create(
     ci_img1 = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
     ci_img2 = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
 
-    algorithm_image.algorithm.inputs.set([ci_string, ci_img2, ci_img1])
+    interface = AlgorithmInterfaceFactory(inputs=[ci_string, ci_img2, ci_img1])
+    algorithm_image.algorithm.interfaces.add(
+        interface, through_defaults={"is_default": True}
+    )
     algorithm_image.algorithm.add_editor(user)
 
     job = {
@@ -228,8 +232,22 @@ def test_algorithm_job_post_serializer_create(
     request.user = user
     serializer = JobPostSerializer(data=job, context={"request": request})
 
-    # verify
+    # all inputs need to be provided, also those with default value
+    assert not serializer.is_valid()
+
+    # add missing input
+    job = {
+        "algorithm": algorithm_image.algorithm.api_url,
+        "inputs": [
+            {"interface": ci_img1.slug, "upload_session": upload.api_url},
+            {"interface": ci_img2.slug, "image": image2.api_url},
+            {"interface": ci_string.slug, "value": "foo"},
+        ],
+    }
+    serializer = JobPostSerializer(data=job, context={"request": request})
+
     assert serializer.is_valid()
+
     # fake successful upload
     upload.status = RawImageUploadSession.SUCCESS
     upload.save()
@@ -240,9 +258,9 @@ def test_algorithm_job_post_serializer_create(
     job = Job.objects.first()
     assert job.creator == user
     assert len(job.inputs.all()) == 3
+    assert job.algorithm_interface == interface
 
 
-@pytest.mark.xfail(reason="Still to be addressed for optional inputs pitch")
 @pytest.mark.django_db
 class TestJobCreateLimits:
     def test_form_invalid_without_enough_credits(self, rf, settings):
@@ -292,13 +310,20 @@ class TestJobCreateLimits:
         user = UserFactory()
 
         algorithm_image.algorithm.add_editor(user=user)
+        ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.STRING)
+        interface = AlgorithmInterfaceFactory(inputs=[ci])
+        algorithm_image.algorithm.interfaces.add(
+            interface, through_defaults={"is_default": True}
+        )
 
         request = rf.get("/foo")
         request.user = user
         serializer = JobPostSerializer(
             data={
                 "algorithm": algorithm_image.algorithm.api_url,
-                "inputs": [],
+                "inputs": [
+                    {"interface": ci.slug, "value": "foo"},
+                ],
             },
             context={"request": request},
         )
@@ -315,7 +340,9 @@ class TestJobCreateLimits:
         serializer = JobPostSerializer(
             data={
                 "algorithm": algorithm_image.algorithm.api_url,
-                "inputs": [],
+                "inputs": [
+                    {"interface": ci.slug, "value": "foo"},
+                ],
             },
             context={"request": request},
         )
@@ -333,13 +360,20 @@ class TestJobCreateLimits:
         user = UserFactory()
 
         algorithm_image.algorithm.add_user(user=user)
+        ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.STRING)
+        interface = AlgorithmInterfaceFactory(inputs=[ci])
+        algorithm_image.algorithm.interfaces.add(
+            interface, through_defaults={"is_default": True}
+        )
 
         request = rf.get("/foo")
         request.user = user
         serializer = JobPostSerializer(
             data={
                 "algorithm": algorithm_image.algorithm.api_url,
-                "inputs": [],
+                "inputs": [
+                    {"interface": ci.slug, "value": "foo"},
+                ],
             },
             context={"request": request},
         )
@@ -383,7 +417,6 @@ def test_reformat_inputs(rf):
     )
 
 
-@pytest.mark.xfail(reason="Still to be addressed for optional inputs pitch")
 @pytest.mark.django_db
 def test_algorithm_post_serializer_image_and_time_limit_fixed(rf):
     request = rf.get("/foo")
@@ -398,7 +431,9 @@ def test_algorithm_post_serializer_image_and_time_limit_fixed(rf):
     )
     different_ai = AlgorithmImageFactory(algorithm=alg)
     ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.STRING)
-    alg.inputs.set([ci])
+    interface = AlgorithmInterfaceFactory(inputs=[ci])
+    alg.interfaces.add(interface, through_defaults={"is_default": True})
+
     serializer = JobPostSerializer(
         data={
             "algorithm": alg.api_url,
@@ -416,3 +451,85 @@ def test_algorithm_post_serializer_image_and_time_limit_fixed(rf):
     assert job.algorithm_image != different_ai
     assert not job.algorithm_model
     assert job.time_limit == 10
+
+
+@pytest.mark.parametrize(
+    "inputs, interface",
+    (
+        ([1], 1),  # matches interface 1 of algorithm
+        ([1, 2], 2),  # matches interface 2 of algorithm
+        ([3, 4, 5], 3),  # matches interface 3 of algorithm
+        ([4], None),  # matches interface 4, but not configured for algorithm
+        (
+            [1, 2, 3],
+            None,
+        ),  # matches interface 5, but not configured for algorithm
+        ([2], None),  # matches no interface (implements part of interface 2)
+        (
+            [1, 3, 4],
+            None,
+        ),  # matches no interface (implements interface 3 and an additional input)
+    ),
+)
+@pytest.mark.django_db
+def test_validate_inputs_on_job_serializer(inputs, interface, rf):
+    user = UserFactory()
+    algorithm = AlgorithmFactory()
+    algorithm.add_editor(user)
+    AlgorithmImageFactory(
+        algorithm=algorithm,
+        is_desired_version=True,
+        is_manifest_valid=True,
+        is_in_registry=True,
+    )
+
+    io1, io2, io3, io4, io5 = AlgorithmInterfaceFactory.create_batch(5)
+    ci1, ci2, ci3, ci4, ci5, ci6 = ComponentInterfaceFactory.create_batch(
+        6, kind=ComponentInterface.Kind.STRING
+    )
+
+    interfaces = [io1, io2, io3]
+    cis = [ci1, ci2, ci3, ci4, ci5, ci6]
+
+    io1.inputs.set([ci1])
+    io2.inputs.set([ci1, ci2])
+    io3.inputs.set([ci3, ci4, ci5])
+    io4.inputs.set([ci1, ci2, ci3])
+    io5.inputs.set([ci4])
+    io1.outputs.set([ci6])
+    io2.outputs.set([ci3])
+    io3.outputs.set([ci1])
+    io4.outputs.set([ci1])
+    io5.outputs.set([ci1])
+
+    algorithm.interfaces.add(io1, through_defaults={"is_default": True})
+    algorithm.interfaces.add(io2)
+    algorithm.interfaces.add(io3)
+
+    algorithm_interface = interfaces[interface - 1] if interface else None
+    inputs = [cis[i - 1] for i in inputs]
+
+    job = {
+        "algorithm": algorithm.api_url,
+        "inputs": [
+            {"interface": int.slug, "value": "dummy"} for int in inputs
+        ],
+    }
+
+    request = rf.get("/foo")
+    request.user = user
+    serializer = JobPostSerializer(data=job, context={"request": request})
+
+    if interface:
+        assert serializer.is_valid()
+        assert (
+            serializer.validated_data["algorithm_interface"]
+            == algorithm_interface
+        )
+    else:
+        assert not serializer.is_valid()
+        assert (
+            "The set of inputs provided does not match any of the algorithm's interfaces."
+            in str(serializer.errors)
+        )
+        assert "algorithm_interface" not in serializer.validated_data

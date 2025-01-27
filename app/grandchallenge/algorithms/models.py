@@ -96,6 +96,22 @@ class AlgorithmInterfaceManager(models.Manager):
     def delete(self):
         raise NotImplementedError("Bulk delete is not allowed.")
 
+    def with_input_output_counts(self, inputs=None, outputs=None):
+        return self.annotate(
+            input_count=Count("inputs", distinct=True),
+            output_count=Count("outputs", distinct=True),
+            relevant_input_count=Count(
+                "inputs",
+                filter=Q(inputs__in=inputs) if inputs is not None else Q(),
+                distinct=True,
+            ),
+            relevant_output_count=Count(
+                "outputs",
+                filter=Q(outputs__in=outputs) if outputs is not None else Q(),
+                distinct=True,
+            ),
+        )
+
 
 class AlgorithmInterface(UUIDModel):
     inputs = models.ManyToManyField(
@@ -129,15 +145,8 @@ def get_existing_interface_for_inputs_and_outputs(
     *, inputs, outputs, model=AlgorithmInterface
 ):
     try:
-        return model.objects.annotate(
-            input_count=Count("inputs", distinct=True),
-            output_count=Count("outputs", distinct=True),
-            relevant_input_count=Count(
-                "inputs", filter=Q(inputs__in=inputs), distinct=True
-            ),
-            relevant_output_count=Count(
-                "outputs", filter=Q(outputs__in=outputs), distinct=True
-            ),
+        return model.objects.with_input_output_counts(
+            inputs=inputs, outputs=outputs
         ).get(
             relevant_input_count=len(inputs),
             relevant_output_count=len(outputs),

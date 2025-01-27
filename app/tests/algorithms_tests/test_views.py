@@ -830,6 +830,110 @@ def test_import_view(
                                 "look_up_table": None,
                             },
                         ],
+                        "interfaces": [
+                            {
+                                "inputs": [
+                                    {
+                                        "title": "Coronal T2 Prostate MRI",
+                                        "description": "Coronal T2 MRI of the Prostate",
+                                        "slug": "coronal-t2-prostate-mri",
+                                        "kind": "Image",
+                                        "pk": 31,
+                                        "default_value": None,
+                                        "super_kind": "Image",
+                                        "relative_path": "images/coronal-t2-prostate-mri",
+                                        "overlay_segments": [],
+                                        "look_up_table": None,
+                                    },
+                                    {
+                                        "title": "Transverse T2 Prostate MRI",
+                                        "description": "Transverse T2 MRI of the Prostate",
+                                        "slug": "transverse-t2-prostate-mri",
+                                        "kind": "Image",
+                                        "pk": 32,
+                                        "default_value": None,
+                                        "super_kind": "Image",
+                                        "relative_path": "images/transverse-t2-prostate-mri",
+                                        "overlay_segments": [],
+                                        "look_up_table": None,
+                                    },
+                                    {
+                                        "title": "Sagittal T2 Prostate MRI",
+                                        "description": "Sagittal T2 MRI of the Prostate",
+                                        "slug": "sagittal-t2-prostate-mri",
+                                        "kind": "Image",
+                                        "pk": 33,
+                                        "default_value": None,
+                                        "super_kind": "Image",
+                                        "relative_path": "images/sagittal-t2-prostate-mri",
+                                        "overlay_segments": [],
+                                        "look_up_table": None,
+                                    },
+                                    {
+                                        "title": "Transverse HBV Prostate MRI",
+                                        "description": "Transverse High B-Value Prostate MRI",
+                                        "slug": "transverse-hbv-prostate-mri",
+                                        "kind": "Image",
+                                        "pk": 47,
+                                        "default_value": None,
+                                        "super_kind": "Image",
+                                        "relative_path": "images/transverse-hbv-prostate-mri",
+                                        "overlay_segments": [],
+                                        "look_up_table": None,
+                                    },
+                                    {
+                                        "title": "Transverse ADC Prostate MRI",
+                                        "description": "Transverse Apparent Diffusion Coefficient Prostate MRI",
+                                        "slug": "transverse-adc-prostate-mri",
+                                        "kind": "Image",
+                                        "pk": 48,
+                                        "default_value": None,
+                                        "super_kind": "Image",
+                                        "relative_path": "images/transverse-adc-prostate-mri",
+                                        "overlay_segments": [],
+                                        "look_up_table": None,
+                                    },
+                                    {
+                                        "title": "Clinical Information Prostate MRI",
+                                        "description": "Clinical information to support clinically significant prostate cancer detection in prostate MRI. Provided information: patient age at time of examination (patient_age), PSA level in ng/mL as reported (PSA_report), PSA density in ng/mL^2 as reported (PSAD_report), prostate volume as reported (prostate_volume_report), prostate volume derived from automatic whole-gland segmentation (prostate_volume_automatic), scanner manufacturer (scanner_manufacturer), scanner model name (scanner_model_name), diffusion b-value of (calculated) high b-value diffusion map (diffusion_high_bvalue). Values acquired from radiology reports will be missing, if not reported.",
+                                        "slug": "clinical-information-prostate-mri",
+                                        "kind": "Anything",
+                                        "pk": 156,
+                                        "default_value": None,
+                                        "super_kind": "Value",
+                                        "relative_path": "clinical-information-prostate-mri.json",
+                                        "overlay_segments": [],
+                                        "look_up_table": None,
+                                    },
+                                ],
+                                "outputs": [
+                                    {
+                                        "title": "Case-level Cancer Likelihood Prostate MRI",
+                                        "description": "Case-level likelihood of harboring clinically significant prostate cancer, in range [0,1].",
+                                        "slug": "prostate-cancer-likelihood",
+                                        "kind": "Float",
+                                        "pk": 144,
+                                        "default_value": None,
+                                        "super_kind": "Value",
+                                        "relative_path": "cspca-case-level-likelihood.json",
+                                        "overlay_segments": [],
+                                        "look_up_table": None,
+                                    },
+                                    {
+                                        "title": "Transverse Cancer Detection Map Prostate MRI",
+                                        "description": "Single-class, detection map of clinically significant prostate cancer lesions in 3D, where each voxel represents a floating point in range [0,1].",
+                                        "slug": "cspca-detection-map",
+                                        "kind": "Heat Map",
+                                        "pk": 151,
+                                        "default_value": None,
+                                        "super_kind": "Image",
+                                        "relative_path": "images/cspca-detection-map",
+                                        "overlay_segments": [],
+                                        "look_up_table": None,
+                                    },
+                                ],
+                            }
+                        ],
                     }
                 ],
             }
@@ -1805,7 +1909,6 @@ def test_job_gpu_type_set(client, settings):
     assert algorithm.credits_per_job == 190
 
 
-@pytest.mark.xfail(reason="Still to be addressed for optional inputs pitch")
 @pytest.mark.django_db
 def test_job_gpu_type_set_with_api(client, settings):
     settings.COMPONENTS_DEFAULT_BACKEND = "grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor"
@@ -1827,7 +1930,10 @@ def test_job_gpu_type_set_with_api(client, settings):
     ci = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=True
     )
-    algorithm.inputs.set([ci])
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ci],
+    )
+    algorithm.interfaces.add(interface, through_defaults={"is_default": True})
 
     response = get_view_for_user(
         viewname="api:algorithms-job-list",
@@ -1851,6 +1957,7 @@ def test_job_gpu_type_set_with_api(client, settings):
 
     job = Job.objects.get()
 
+    assert job.algorithm_interface == interface
     assert job.algorithm_image == algorithm_image
     assert job.requires_gpu_type == GPUTypeChoices.A10G
     assert job.requires_memory_gb == 64

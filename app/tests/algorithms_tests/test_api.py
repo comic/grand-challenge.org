@@ -18,6 +18,7 @@ from grandchallenge.components.models import (
 from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
+    AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
     AlgorithmModelFactory,
 )
@@ -93,7 +94,6 @@ def test_job_list_view_num_queries(
         assert len(response.json()["results"]) == num_jobs
 
 
-@pytest.mark.xfail(reason="Still to be addressed for optional inputs pitch")
 @pytest.mark.django_db
 class TestJobCreationThroughAPI:
 
@@ -151,15 +151,19 @@ class TestJobCreationThroughAPI:
         algorithm_with_multiple_inputs,
     ):
         # configure multiple inputs
-        algorithm_with_multiple_inputs.algorithm.inputs.set(
-            [
+        interface = AlgorithmInterfaceFactory(
+            inputs=[
                 algorithm_with_multiple_inputs.ci_json_in_db_with_schema,
                 algorithm_with_multiple_inputs.ci_existing_img,
                 algorithm_with_multiple_inputs.ci_str,
                 algorithm_with_multiple_inputs.ci_bool,
                 algorithm_with_multiple_inputs.ci_json_file,
                 algorithm_with_multiple_inputs.ci_img_upload,
-            ]
+            ],
+            outputs=[ComponentInterfaceFactory()],
+        )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(
+            interface, through_defaults={"is_default": True}
         )
 
         assert ComponentInterfaceValue.objects.count() == 0
@@ -217,12 +221,9 @@ class TestJobCreationThroughAPI:
             pk=algorithm_with_multiple_inputs.file_upload.pk
         ).exists()
 
-        assert sorted(
-            [
-                int.pk
-                for int in algorithm_with_multiple_inputs.algorithm.inputs.all()
-            ]
-        ) == sorted([civ.interface.pk for civ in job.inputs.all()])
+        assert sorted([int.pk for int in interface.inputs.all()]) == sorted(
+            [civ.interface.pk for civ in job.inputs.all()]
+        )
 
         value_inputs = [civ.value for civ in job.inputs.all() if civ.value]
         assert "Foo" in value_inputs
@@ -245,13 +246,17 @@ class TestJobCreationThroughAPI:
         algorithm_with_multiple_inputs,
     ):
         # configure multiple inputs
-        algorithm_with_multiple_inputs.algorithm.inputs.set(
-            [
+        interface = AlgorithmInterfaceFactory(
+            inputs=[
                 algorithm_with_multiple_inputs.ci_json_in_db_with_schema,
                 algorithm_with_multiple_inputs.ci_existing_img,
                 algorithm_with_multiple_inputs.ci_str,
                 algorithm_with_multiple_inputs.ci_bool,
-            ]
+            ],
+            outputs=[ComponentInterfaceFactory()],
+        )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(
+            interface, through_defaults={"is_default": True}
         )
 
         civ1, civ2, civ3, civ4 = self.create_existing_civs(
@@ -302,13 +307,17 @@ class TestJobCreationThroughAPI:
         algorithm_with_multiple_inputs,
     ):
         # configure multiple inputs
-        algorithm_with_multiple_inputs.algorithm.inputs.set(
-            [
+        interface = AlgorithmInterfaceFactory(
+            inputs=[
                 algorithm_with_multiple_inputs.ci_str,
                 algorithm_with_multiple_inputs.ci_bool,
                 algorithm_with_multiple_inputs.ci_existing_img,
                 algorithm_with_multiple_inputs.ci_json_in_db_with_schema,
-            ]
+            ],
+            outputs=[ComponentInterfaceFactory()],
+        )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(
+            interface, through_defaults={"is_default": True}
         )
         civ1, civ2, civ3, civ4 = self.create_existing_civs(
             interface_data=algorithm_with_multiple_inputs
@@ -366,8 +375,12 @@ class TestJobCreationThroughAPI:
         algorithm_with_multiple_inputs,
     ):
         # configure file input
-        algorithm_with_multiple_inputs.algorithm.inputs.set(
-            [algorithm_with_multiple_inputs.ci_json_file]
+        interface = AlgorithmInterfaceFactory(
+            inputs=[algorithm_with_multiple_inputs.ci_json_file],
+            outputs=[ComponentInterfaceFactory()],
+        )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(
+            interface, through_defaults={"is_default": True}
         )
         file_upload = UserUploadFactory(
             filename="file.json", creator=algorithm_with_multiple_inputs.editor
@@ -414,8 +427,12 @@ class TestJobCreationThroughAPI:
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
-        algorithm_with_multiple_inputs.algorithm.inputs.set(
-            [algorithm_with_multiple_inputs.ci_json_in_db_with_schema]
+        interface = AlgorithmInterfaceFactory(
+            inputs=[algorithm_with_multiple_inputs.ci_json_in_db_with_schema],
+            outputs=[ComponentInterfaceFactory()],
+        )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(
+            interface, through_defaults={"is_default": True}
         )
 
         response = self.create_job(
@@ -445,8 +462,12 @@ class TestJobCreationThroughAPI:
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
-        algorithm_with_multiple_inputs.algorithm.inputs.set(
-            [algorithm_with_multiple_inputs.ci_img_upload]
+        interface = AlgorithmInterfaceFactory(
+            inputs=[algorithm_with_multiple_inputs.ci_img_upload],
+            outputs=[ComponentInterfaceFactory()],
+        )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(
+            interface, through_defaults={"is_default": True}
         )
         user_upload = create_upload_from_file(
             creator=algorithm_with_multiple_inputs.editor,
@@ -501,11 +522,11 @@ class TestJobCreationThroughAPI:
             ]
             ci.save()
 
-        algorithm_with_multiple_inputs.algorithm.inputs.set(
-            [
-                ci1,
-                ci2,
-            ]
+        interface = AlgorithmInterfaceFactory(
+            inputs=[ci1, ci2], outputs=[ComponentInterfaceFactory()]
+        )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(
+            interface, through_defaults={"is_default": True}
         )
 
         im = ImageFactory()
