@@ -1467,6 +1467,7 @@ class OnboardingTask(FieldChangeMixin, UUIDModel):
         self.assign_permissions()
 
     def assign_permissions(self):
+        assign_perm("view_onboardingtask", self.challenge.admins_group, self)
         if (
             self.responsible_party
             == self.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS

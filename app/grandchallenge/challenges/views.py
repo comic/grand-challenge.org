@@ -19,10 +19,15 @@ from grandchallenge.challenges.forms import (
     ChallengeRequestStatusUpdateForm,
     ChallengeUpdateForm,
 )
-from grandchallenge.challenges.models import Challenge, ChallengeRequest
+from grandchallenge.challenges.models import (
+    Challenge,
+    ChallengeRequest,
+    OnboardingTask,
+)
 from grandchallenge.challenges.serializers import PublicChallengeSerializer
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.guardian import (
+    ObjectPermissionCheckerMixin,
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
 )
@@ -289,3 +294,21 @@ class ChallengeViewSet(ReadOnlyModelViewSet):
     # We do not want to serialize the pk so lookup by short_name, but call it slug
     lookup_field = "short_name"
     lookup_url_kwarg = "slug"
+
+
+class OnboardingTaskList(
+    LoginRequiredMixin,
+    ObjectPermissionCheckerMixin,
+    PermissionListMixin,
+    ListView,
+):
+    model = OnboardingTask
+    template_name = "onboardingtask_list.html"
+    permission_required = "view_onboardingtask"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.filter(challenge=self.request.challenge)
+        return queryset

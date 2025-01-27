@@ -14,6 +14,7 @@ from tests.evaluation_tests.factories import PhaseFactory
 from tests.factories import (
     ChallengeFactory,
     ChallengeRequestFactory,
+    OnboardingTaskFactory,
     UserFactory,
 )
 from tests.invoices_tests.factories import InvoiceFactory
@@ -544,3 +545,42 @@ def test_pages_inaccessible_when_inactive(client, viewname, add_phase):
     challenge.save()
 
     assert get().status_code == 403
+
+
+@pytest.mark.django_db
+def test_onboarding_task_list_view_permissions(client):
+    ch = ChallengeFactory()
+    admin, participant, user = UserFactory.create_batch(3)
+    ch.add_admin(admin)
+    ch.add_participant(participant)
+
+    for usr in (participant, user, admin):
+        response = get_view_for_user(
+            viewname="challenge-onboarding-task-list",
+            client=client,
+            challenge=ch,
+            user=usr,
+        )
+        assert (
+            response.status_code == 200
+        ), f"{usr} should be able to view the task list"
+        assert len(response.context_data["object_list"]) == 0  # Sanity
+
+    OnboardingTaskFactory(
+        challenge=ch,
+        title="A fairly unique onboarding task title, not seen anywhere else",
+    )
+
+    for usr, num_questions in ((participant, 0), (user, 0), (admin, 1)):
+        response = get_view_for_user(
+            viewname="challenge-onboarding-task-list",
+            client=client,
+            challenge=ch,
+            user=usr,
+        )
+        assert (
+            response.status_code == 200
+        ), f"{usr} should still be able to view the question list"
+        assert (
+            len(response.context_data["object_list"]) == num_questions
+        ), f"{usr} should see the correct number of questions"
