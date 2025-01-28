@@ -176,7 +176,7 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
             raise RuntimeError("Unknown widget type")
 
 
-class ImageSearchView(LoginRequiredMixin, ListView):
+class ImageSearchResultView(LoginRequiredMixin, ListView):
     template_name = "cases/image_search_result_select.html"
     search_fields = ["pk", "name"]
     model = Image
