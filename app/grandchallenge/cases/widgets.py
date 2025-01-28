@@ -3,14 +3,13 @@ from django.db.models import TextChoices
 from django.forms import (
     HiddenInput,
     ModelChoiceField,
-    ModelMultipleChoiceField,
     MultiValueField,
     MultiWidget,
 )
 from django.forms.widgets import ChoiceWidget
 
 from grandchallenge.cases.models import Image
-from grandchallenge.uploads.widgets import UserUploadMultipleWidget
+from grandchallenge.uploads.widgets import UserUploadSingleWidget
 
 
 class WidgetChoices(TextChoices):
@@ -51,7 +50,7 @@ class FlexibleImageWidget(MultiWidget):
     ):
         widgets = (
             ImageSearchWidget(),
-            UserUploadMultipleWidget(),
+            UserUploadSingleWidget(),
         )
         super().__init__(widgets)
         self.attrs = {
@@ -108,7 +107,7 @@ class FlexibleImageField(MultiValueField):
     ):
         list_fields = [
             ModelChoiceField(queryset=image_queryset),
-            ModelMultipleChoiceField(queryset=upload_queryset),
+            ModelChoiceField(queryset=upload_queryset),
         ]
         super().__init__(*args, fields=list_fields, **kwargs)
         self.require_all_fields = require_all_fields

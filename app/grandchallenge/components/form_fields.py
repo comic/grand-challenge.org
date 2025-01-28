@@ -18,10 +18,7 @@ from grandchallenge.serving.models import (
 )
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
-from grandchallenge.uploads.widgets import (
-    UserUploadMultipleWidget,
-    UserUploadSingleWidget,
-)
+from grandchallenge.uploads.widgets import UserUploadSingleWidget
 
 file_upload_text = (
     "The total size of all files uploaded in a single session "
@@ -42,7 +39,6 @@ INTERFACE_FORM_FIELD_PREFIX = "__INTERFACE_FIELD__"
 
 class InterfaceFormField(forms.Field):
     _possible_widgets = {
-        UserUploadMultipleWidget,
         UserUploadSingleWidget,
         JSONEditorWidget,
         FlexibleImageWidget,

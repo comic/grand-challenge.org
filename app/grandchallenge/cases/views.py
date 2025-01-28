@@ -39,7 +39,7 @@ from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.subdomains.utils import reverse_lazy
 from grandchallenge.uploads.models import UserUpload
-from grandchallenge.uploads.widgets import UserUploadMultipleWidget
+from grandchallenge.uploads.widgets import UserUploadSingleWidget
 from grandchallenge.workstations.models import Workstation
 
 
@@ -128,9 +128,9 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
             return HttpResponse(html_content)
         elif widget_name == WidgetChoices.IMAGE_UPLOAD.name:
             html_content = render_to_string(
-                UserUploadMultipleWidget.template_name,
+                UserUploadSingleWidget.template_name,
                 {
-                    "widget": UserUploadMultipleWidget().get_context(
+                    "widget": UserUploadSingleWidget().get_context(
                         name=interface,
                         value=None,
                         attrs={
