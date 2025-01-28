@@ -3,6 +3,8 @@
 {% load url %}
 {% load static %}
 {% load dict_lookup %}
+{% load humanize %}
+{% load guardian_tags %}
 
 {% block title %}
     Onboarding Tasks - {% firstof challenge.title challenge.short_name %} - {{ block.super }}
@@ -22,72 +24,93 @@
 
 {% block content %}
 
+
     <h2>Onboarding Tasks for {{ challenge.short_name }}</h2>
 
-    {% comment %} <div class="table-responsive">
-        <table class="table table-hover table-borderless table-sm w-100" id="participantsTable">
+    <div class="table-responsive">
+        <table class="table table-hover table-borderless table-sm w-100" id="onboardingTasksTable">
             <thead class="thead-light">
             <tr>
-                <th>Created</th>
-                <th>Updated</th>
-                <th>Username</th>
-                <th>Profile Info</th>
-                {% if viewable_registration_questions %}
-                    <th>Answers to questions</th>
-                {% endif %}
-                <th>Status</th>
-                <th class="nonSortable">Accept / Reject</th>
+                <th><i class="far fa-circle fa-fw"></i></th>
+                <th>Responsible</th>
+                <th>Action</th>
+                <th class="nonSortable">Title</th>
+                <th class="nonSortable">Description</th>
+                <th>Due</th>
             </tr>
             </thead>
             <tbody>
+                {% for task in object_list %}
 
-            {% for regrequest in object_list %}
-
+                {% get_obj_perms request.user for task as "task_perms" checker %}
                 <tr>
-                    <td data-order="{{ regrequest.created|date:"U" }}">
-                        {{ regrequest.created }}
-                    </td>
-                    <td data-order="{{ regrequest.changed|date:"U" }}">
-                        {{ regrequest.changed }}
-                    </td>
-                    <td>
-                        {{ regrequest.user|user_profile_link }}
-                    </td>
-                    <td>
-                        {{ regrequest.user.user_profile.user_info }}
-                    </td>
-
-                    {% if viewable_registration_questions %}
-                    <td>
-                        {% include "participants/partials/registration_question_modal.html" with challenge=challenge regrequest=regrequest viewable_registration_questions=viewable_registration_questions csrf_token=csrf_token only %}
-                    </td>
-                    {% endif %}
-                    <td data-order="{{ regrequest.status }}">
-                        {% if regrequest.status == regrequest.PENDING %}
-                            <i class="far fa-hourglass text-muted" title="Pending"></i>
-                        {% elif regrequest.status == regrequest.ACCEPTED %}
-                            <i class="fas fa-fw fa-check-circle text-success"
-                               title="Accepted"></i>
-                        {% elif regrequest.status == regrequest.REJECTED %}
-                            <i class="fas fa-fw fa-times-circle text-danger"
-                               title="Rejected"></i>
+                    <td data-order="{{ task.complete|yesno:'1,0' }}">
+                        {% if task.complete %}
+                            <i class="fas fa-check-circle fa-fw text-success" title="Completed!"></i>
+                        {% elif task.is_overdue_soon %}
+                            <i class="far fa-circle fa-fw text-warning" title="Overdue soon!"></i>
+                        {% elif task.is_overdue %}
+                            <i class="far fa-circle fa-fw text-danger" title="Overdue!"></i>
+                        {% else %}
+                            <i class="far fa-circle fa-fw text-muted" title="Not yet completed"></i>
                         {% endif %}
                     </td>
-                    <td>
-                        {% include  "participants/partials/request_accept_reject.html" with challenge=challenge regrequest=regrequest csrf_token=csrf_token only %}
+                    <td class="text-nowrap">
+                        {{ task.get_responsible_party_display }}
+                    </td>
+                    <td class="text-center">
+                        {% if "complete_onboardingtask" in task_perms %}
+                        <form method="post"
+                                action="{% url 'challenge-onboarding-task-complete' challenge_short_name=challenge.short_name pk=task.pk %}">
+                                {% csrf_token %}
+                                <input type="hidden"
+                                       name="complete"
+                                      value="{{ task.complete|yesno:'false,true' }}"
+                                >
+                                {% if task.complete %}
+                                    <button type="submit"
+                                            class="btn btn-xs btn-outline-danger"
+                                            title="Mark as incomplete">
+                                         <i class="fas fa-undo fa-fw"></i>
+                                    </button>
+                                {% else %}
+                                    <button type="submit"
+                                            class="btn btn-xs btn-success"
+                                            title="Mark as complete">
+                                         <i class="fas fa-check fa-fw"></i>
+                                    </button>
+                                {% endif %}
+                        </form>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td class="{{ task.complete|yesno:'text-muted,' }}">
+                        {{ task.title }}
+                    </td>
+                    <td class="{{ task.complete|yesno:'text-muted,' }}">
+
+                        {{ task.description }}
+                    </td>
+                    <td title="{{ task.deadline }}"
+                        data-order="{{ task.deadline|date:"U" }}"
+                        class="{{ task.complete|yesno:'text-muted,' }}"
+                    >
+                        {% if task.is_overdue_soon %}
+                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                        {% elif task.is_overdue %}
+                            <i class="fas fa-exclamation-triangle text-danger"></i>
+                        {% endif %}
+                        {{ task.deadline|naturaltime }}
                     </td>
                 </tr>
-            {% endfor %}
-
+                {% endfor %}
             </tbody>
-
         </table>
-    </div> {% endcomment %}
+    </div>
 {% endblock %}
 
 {% block script %}
     {{ block.super }}
-
-    {% comment %} <script type="module" src="{% static 'participants/js/registrationrequest_list.mjs' %}"></script> {% endcomment %}
-
+    <script type="module" src="{% static 'js/challenges/challengeonboardingtask_list_table.mjs' %}"></script>
 {% endblock %}

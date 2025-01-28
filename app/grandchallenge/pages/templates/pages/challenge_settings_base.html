@@ -22,15 +22,15 @@
     {% if "change_challenge" in challenge_perms %}
     <div class="col-12 col-sm-5 col-md-4 col-lg-3 pl-3">
           <ul class="nav nav-pills flex-column">
-            <li class="nav-item">
-                  <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'challenge-onboarding-task-list' %} active {% endif %}"
-                    href="{% url 'challenge-onboarding-task-list' challenge_short_name=challenge.short_name %}">
-                      <i class="fas fa-tasks fa-fw"></i>&nbsp;Onboarding Tasks</a>
-              </li>
               <li class="nav-item">
                   <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'challenge-update' %} active {% endif %}"
                     href="{% url 'challenge-update' challenge_short_name=challenge.short_name %}">
                       <i class="fas fa-cog fa-fw"></i>&nbsp;General Settings</a>
+              </li>
+              <li class="nav-item">
+                  <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'challenge-onboarding-task-list' %} active {% endif %}"
+                    href="{% url 'challenge-onboarding-task-list' challenge_short_name=challenge.short_name %}">
+                      <i class="fas fa-tasks fa-fw"></i>&nbsp;Onboarding Tasks</a>
               </li>
               <li class="nav-item">
                 <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'participants:registration-question-list' or request.resolver_match.view_name == 'participants:registration-question-create' or request.resolver_match.view_name == 'participants:registration-question-delete'  %}active{% endif %}"

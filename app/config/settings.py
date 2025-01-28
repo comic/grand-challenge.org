@@ -1127,6 +1127,7 @@ READER_STUDY_CREATORS_GROUP_NAME = "reader_study_creators"
 ###############################################################################
 
 CHALLENGES_DEFAULT_ACTIVE_MONTHS = 12
+CHALLENGE_ONBOARDING_TASKS_OVERDUE_SOON_CUTOFF = timedelta(hours=72)
 
 ###############################################################################
 #
@@ -1519,6 +1520,7 @@ else:
         CSP_CONNECT_SRC += (
             f"https://{UPLOADS_S3_BUCKET_NAME}.s3.{AWS_DEFAULT_REGION}.amazonaws.com",
         )
+
 
 ENABLE_DEBUG_TOOLBAR = False
 

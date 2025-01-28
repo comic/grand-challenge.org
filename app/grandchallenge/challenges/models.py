@@ -1415,7 +1415,7 @@ class OnboardingTask(FieldChangeMixin, UUIDModel):
 
     class Meta:
         permissions = [
-            ("complete_onboaringtask", "Can mark this task as completed")
+            ("complete_onboardingtask", "Can mark this task as completed")
         ]
 
     created = models.DateTimeField(editable=False)
@@ -1452,6 +1452,27 @@ class OnboardingTask(FieldChangeMixin, UUIDModel):
         help_text="Deadline for this task.",
     )
 
+    @cached_property
+    def deadline_delta(self):
+        return self.deadline - now()
+
+    @property
+    def is_overdue(self):
+        return not self.complete and self.deadline_delta <= datetime.timedelta(
+            0
+        )
+
+    @property
+    def is_overdue_soon(self):
+        return all(
+            (
+                not self.is_overdue,
+                not self.complete
+                and self.deadline_delta
+                < settings.CHALLENGE_ONBOARDING_TASKS_OVERDUE_SOON_CUTOFF,
+            )
+        )
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
@@ -1473,11 +1494,11 @@ class OnboardingTask(FieldChangeMixin, UUIDModel):
             == self.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS
         ):
             assign_perm(
-                "complete_onboaringtask", self.challenge.admins_group, self
+                "complete_onboardingtask", self.challenge.admins_group, self
             )
         else:
             remove_perm(
-                "complete_onboaringtask", self.challenge.admins_group, self
+                "complete_onboardingtask", self.challenge.admins_group, self
             )
 
 

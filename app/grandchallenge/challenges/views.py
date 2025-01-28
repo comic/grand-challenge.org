@@ -308,7 +308,51 @@ class OnboardingTaskList(
     raise_exception = True
     login_url = reverse_lazy("account_login")
 
+    def get_context_data(self, *args, object_list=None, **kwargs):
+        context = super().get_context_data(*args, object_list=None, **kwargs)
+
+        if object_list:
+            self.permission_checker.prefetch_perms(objects=object_list)
+
+        return context
+
     def get_queryset(self):
         queryset = super().get_queryset()
         queryset = queryset.filter(challenge=self.request.challenge)
+
+        # Pe-ordering the queryset ensures nothing jumps around when the datatable initializes
+        queryset = queryset.order_by("complete", "deadline")
+
         return queryset
+
+
+class OnboardingTaskComplete(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    UpdateView,
+):
+    model = OnboardingTask
+    fields = ("complete",)
+    permission_required = "complete_onboardingtask"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+    http_method_names = ["post"]
+
+    def get_success_url(self):
+        return reverse(
+            "challenge-onboarding-task-list",
+            kwargs={
+                "challenge_short_name": self.object.challenge.short_name,
+            },
+        )
+
+    def get_success_message(self, cleaned_data):
+        msg = f"Succesfully marked {self.object.title!r} "
+
+        if cleaned_data["complete"]:
+            msg += "as complete"
+        else:
+            msg += "as incomplete"
+
+        return msg

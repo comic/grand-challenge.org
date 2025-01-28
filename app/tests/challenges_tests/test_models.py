@@ -1,4 +1,5 @@
 import random
+from datetime import datetime, timedelta
 from unittest.mock import patch
 
 import pytest
@@ -11,7 +12,7 @@ from django.db.models import ProtectedError
 from django.utils.timezone import now
 from machina.apps.forum_conversation.models import Topic
 
-from grandchallenge.challenges.models import Challenge
+from grandchallenge.challenges.models import Challenge, OnboardingTask
 from grandchallenge.notifications.models import Notification
 from tests.factories import (
     ChallengeFactory,
@@ -192,3 +193,45 @@ def test_onboarding_tasks_registering_completion_time():
 
     assert fresh_task.complete
     assert fresh_task.created == fresh_task.completed_at
+
+
+@pytest.mark.parametrize(
+    "deadline, mock_now, expected_is_overdue, expected_is_overdue_soon",
+    [
+        # Test case 1: Task deadline is far away, so it's neither overdue nor almost overdue
+        (
+            datetime(2025, 1, 29, 12, 0, 0),
+            datetime(2025, 1, 29, 11, 0, 0),
+            False,
+            False,
+        ),
+        # Test case 2: Task is almost overdue (within the 1-hour cutoff)
+        (
+            datetime(2025, 1, 29, 12, 0, 0),
+            datetime(2025, 1, 29, 11, 30, 0),
+            False,
+            True,
+        ),
+        # Test case 3: Task is overdue
+        (
+            datetime(2025, 1, 29, 11, 0, 0),
+            datetime(2025, 1, 29, 12, 0, 0),
+            True,
+            False,
+        ),
+    ],
+)
+@patch(
+    "grandchallenge.challenges.models.settings.CHALLENGE_ONBOARDING_TASKS_OVERDUE_SOON_CUTOFF",
+    new=timedelta(hours=1),
+)
+def test_onboarding_tasks_due_properties(
+    deadline, mock_now, expected_is_overdue, expected_is_overdue_soon, mocker
+):
+    task = OnboardingTask(deadline=deadline)
+
+    with mocker.patch(
+        "grandchallenge.challenges.models.now", return_value=mock_now
+    ):
+        assert task.is_overdue == expected_is_overdue
+        assert task.is_overdue_soon == expected_is_overdue_soon
