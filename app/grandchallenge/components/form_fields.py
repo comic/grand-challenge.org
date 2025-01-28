@@ -40,7 +40,7 @@ def _join_with_br(a, b):
 INTERFACE_FORM_FIELD_PREFIX = "__INTERFACE_FIELD__"
 
 
-class InterfaceFormField:
+class InterfaceFormField(forms.Field):
     _possible_widgets = {
         UserUploadMultipleWidget,
         UserUploadSingleWidget,
@@ -48,28 +48,15 @@ class InterfaceFormField:
         FlexibleImageWidget,
     }
 
-    def __init__(
-        self,
-        *,
-        interface=None,
-        initial=None,
-        user=None,
-        required=None,
-        disabled=False,
-        help_text="",
-        form_data=None,
-    ):
+    def __init__(self, *, interface=None, user=None, form_data=None, **kwargs):
         self.interface = interface
-        self.initial = initial
         self.user = user
-        self.required = required
-        self.disabled = disabled
-        self.help_text = help_text
         self.form_data = form_data
+        super().__init__(**kwargs)
 
         self.kwargs = {
-            "required": required,
-            "disabled": disabled,
+            "required": self.required,
+            "disabled": self.disabled,
             "initial": self.get_initial_value(),
             "label": interface.slug.title(),
         }
