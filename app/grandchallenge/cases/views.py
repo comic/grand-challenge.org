@@ -28,7 +28,7 @@ from grandchallenge.cases.serializers import (
     HyperlinkedImageSerializer,
     RawImageUploadSessionSerializer,
 )
-from grandchallenge.cases.widgets import ImageSearchWidget, WidgetChoices
+from grandchallenge.cases.widgets import ImageSearchWidget, ImageWidgetChoices
 from grandchallenge.components.form_fields import _join_with_br
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
@@ -112,7 +112,7 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
         help_text = request.GET.get("help_text")
         current_value = request.GET.get("current_value")
 
-        if widget_name == WidgetChoices.IMAGE_SEARCH.name:
+        if widget_name == ImageWidgetChoices.IMAGE_SEARCH.name:
             html_content = render_to_string(
                 ImageSearchWidget.template_name,
                 {
@@ -126,7 +126,7 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
                 },
             )
             return HttpResponse(html_content)
-        elif widget_name == WidgetChoices.IMAGE_UPLOAD.name:
+        elif widget_name == ImageWidgetChoices.IMAGE_UPLOAD.name:
             html_content = render_to_string(
                 UserUploadSingleWidget.template_name,
                 {
@@ -145,7 +145,7 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
             )
             return HttpResponse(html_content)
         elif (
-            widget_name == WidgetChoices.IMAGE_SELECTED.name
+            widget_name == ImageWidgetChoices.IMAGE_SELECTED.name
             and current_value
             and (
                 Image.objects.filter(pk=current_value).exists()
@@ -168,7 +168,7 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
                 },
             )
             return HttpResponse(html_content)
-        elif widget_name == WidgetChoices.UNDEFINED.name:
+        elif widget_name == ImageWidgetChoices.UNDEFINED.name:
             # this happens when switching back from one of the
             # above widgets to the "Choose data source" option
             return HttpResponse()

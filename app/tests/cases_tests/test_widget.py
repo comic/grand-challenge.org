@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.utils.html import format_html
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.cases.widgets import FlexibleImageField, WidgetChoices
+from grandchallenge.cases.widgets import FlexibleImageField, ImageWidgetChoices
 from grandchallenge.components.form_fields import InterfaceFormField
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.guardian import get_objects_for_user
@@ -121,7 +121,7 @@ def test_flexible_image_widget(client):
         client=client,
         user=user,
         data={
-            f"WidgetChoice-{ci.slug}": WidgetChoices.IMAGE_SEARCH.name,
+            f"WidgetChoice-{ci.slug}": ImageWidgetChoices.IMAGE_SEARCH.name,
             "interface_slug": ci.slug,
         },
     )
@@ -132,7 +132,7 @@ def test_flexible_image_widget(client):
         client=client,
         user=user,
         data={
-            f"WidgetChoice-{ci.slug}": WidgetChoices.IMAGE_UPLOAD.name,
+            f"WidgetChoice-{ci.slug}": ImageWidgetChoices.IMAGE_UPLOAD.name,
             "interface_slug": ci.slug,
         },
     )
@@ -143,7 +143,7 @@ def test_flexible_image_widget(client):
         client=client,
         user=user,
         data={
-            f"WidgetChoice-{ci.slug}": WidgetChoices.UNDEFINED.name,
+            f"WidgetChoice-{ci.slug}": ImageWidgetChoices.UNDEFINED.name,
             "interface_slug": ci.slug,
         },
     )
@@ -155,7 +155,7 @@ def test_flexible_image_widget(client):
         client=client,
         user=user,
         data={
-            f"WidgetChoice-{ci.slug}": WidgetChoices.IMAGE_SELECTED.name,
+            f"WidgetChoice-{ci.slug}": ImageWidgetChoices.IMAGE_SELECTED.name,
             "interface_slug": ci.slug,
             "current_value": image.pk,
         },
@@ -170,7 +170,7 @@ def test_flexible_image_widget(client):
         client=client,
         user=user,
         data={
-            f"WidgetChoice-{ci.slug}": WidgetChoices.IMAGE_SELECTED.name,
+            f"WidgetChoice-{ci.slug}": ImageWidgetChoices.IMAGE_SELECTED.name,
             "interface_slug": ci.slug,
             "current_value": user_upload.pk,
         },
