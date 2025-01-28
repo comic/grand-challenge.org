@@ -142,13 +142,13 @@ class InterfaceFormField(forms.Field):
     def get_file_field(self):
         key = f"value_type_{INTERFACE_FORM_FIELD_PREFIX}{self.interface.slug}"
         if key in self.form_data.keys():
-            type = self.form_data[key]
+            value_type = self.form_data[key]
         elif self.civs_for_user_for_interface.exists():
-            type = "civ"
+            value_type = "civ"
         else:
-            type = "uuid"
+            value_type = "uuid"
 
-        if type == "uuid":
+        if value_type == "uuid":
             extra_help = f"{file_upload_text} {self.interface.file_extension}"
             return ModelChoiceField(
                 queryset=get_objects_for_user(
@@ -161,7 +161,7 @@ class InterfaceFormField(forms.Field):
                 help_text=_join_with_br(self.help_text, extra_help),
                 **self.kwargs,
             )
-        elif type == "civ":
+        elif value_type == "civ":
             file_upload_link = reverse(
                 "components:file-upload",
                 kwargs={
