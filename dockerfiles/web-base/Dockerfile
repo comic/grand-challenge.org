@@ -79,7 +79,8 @@ RUN mkdir -p /opt/docker \
 ENV PYTHONUNBUFFERED=1\
     AWS_XRAY_SDK_ENABLED=false\
     COMPONENTS_SAGEMAKER_SHIM_VERSION=0.3.5\
-    PATH="/opt/poetry/.venv/bin:/home/django/.local/bin:${PATH}"
+    PATH="/opt/poetry/.venv/bin:/home/django/.local/bin:${PATH}"\
+    PYCURL_CURL_CONFIG=/usr/bin/curl-config
 
 RUN mkdir -p /opt/poetry /app /static /opt/sagemaker-shim /opt/virtualenvs \
     && groupadd -r django && useradd -m -r -g django django \
