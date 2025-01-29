@@ -56,6 +56,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmModel,
     AlgorithmPermissionRequest,
     Job,
+    annotate_input_output_counts,
 )
 from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
@@ -462,37 +463,32 @@ class UserAlgorithmsForPhaseMixin:
         desired_model_subquery = AlgorithmModel.objects.filter(
             algorithm=OuterRef("pk"), is_desired_version=True
         )
-        return (
-            get_objects_for_user(self._user, "algorithms.change_algorithm")
-            .annotate(
-                total_input_count=Count("inputs", distinct=True),
-                total_output_count=Count("outputs", distinct=True),
-                relevant_input_count=Count(
-                    "inputs", filter=Q(inputs__in=inputs), distinct=True
-                ),
-                relevant_output_count=Count(
-                    "outputs", filter=Q(outputs__in=outputs), distinct=True
-                ),
-                has_active_image=Exists(desired_image_subquery),
-                active_image_pk=desired_image_subquery.values_list(
-                    "pk", flat=True
-                ),
-                active_model_pk=desired_model_subquery.values_list(
-                    "pk", flat=True
-                ),
-                active_image_comment=desired_image_subquery.values_list(
-                    "comment", flat=True
-                ),
-                active_model_comment=desired_model_subquery.values_list(
-                    "comment", flat=True
-                ),
-            )
-            .filter(
-                total_input_count=len(inputs),
-                total_output_count=len(outputs),
-                relevant_input_count=len(inputs),
-                relevant_output_count=len(outputs),
-            )
+        annotated_qs = annotate_input_output_counts(
+            queryset=get_objects_for_user(
+                self._user, "algorithms.change_algorithm"
+            ),
+            inputs=inputs,
+            outputs=outputs,
+        )
+        return annotated_qs.annotate(
+            has_active_image=Exists(desired_image_subquery),
+            active_image_pk=desired_image_subquery.values_list(
+                "pk", flat=True
+            ),
+            active_model_pk=desired_model_subquery.values_list(
+                "pk", flat=True
+            ),
+            active_image_comment=desired_image_subquery.values_list(
+                "comment", flat=True
+            ),
+            active_model_comment=desired_model_subquery.values_list(
+                "comment", flat=True
+            ),
+        ).filter(
+            input_count=len(inputs),
+            output_count=len(outputs),
+            relevant_input_count=len(inputs),
+            relevant_output_count=len(outputs),
         )
 
     @cached_property

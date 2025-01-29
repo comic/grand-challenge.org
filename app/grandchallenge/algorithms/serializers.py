@@ -19,6 +19,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmInterface,
     AlgorithmModel,
     Job,
+    annotate_input_output_counts,
 )
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
@@ -288,10 +289,11 @@ class JobPostSerializer(JobSerializer):
         the algorithm and returns that AlgorithmInterface
         """
         provided_inputs = {i["interface"] for i in inputs}
+        annotated_qs = annotate_input_output_counts(
+            self._algorithm.interfaces, inputs=provided_inputs
+        )
         try:
-            interface = self._algorithm.interfaces.with_input_output_counts(
-                inputs=provided_inputs
-            ).get(
+            interface = annotated_qs.get(
                 relevant_input_count=len(provided_inputs),
                 input_count=len(provided_inputs),
             )
