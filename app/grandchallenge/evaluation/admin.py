@@ -1,9 +1,9 @@
 import json
 
 from django.contrib import admin
-from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 from django.utils.html import format_html
+from guardian.admin import GuardedModelAdmin
 
 from grandchallenge.components.admin import (
     ComponentImageAdmin,
@@ -15,7 +15,6 @@ from grandchallenge.core.admin import (
     GroupObjectPermissionAdmin,
     UserObjectPermissionAdmin,
 )
-from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.utils.grand_challenge_forge import (
     get_forge_challenge_pack_context,
 )
@@ -29,6 +28,7 @@ from grandchallenge.evaluation.models import (
     MethodGroupObjectPermission,
     MethodUserObjectPermission,
     Phase,
+    PhaseAlgorithmInterface,
     PhaseGroupObjectPermission,
     PhaseUserObjectPermission,
     Submission,
@@ -51,21 +51,6 @@ class PhaseAdminForm(ModelForm):
                 field_name
             ) in self.instance.read_only_fields_for_dependent_phases:
                 self.fields[field_name].disabled = True
-
-    def clean(self):
-        cleaned_data = super().clean()
-
-        duplicate_interfaces = {
-            *cleaned_data.get("algorithm_inputs", [])
-        }.intersection({*cleaned_data.get("algorithm_outputs", [])})
-
-        if duplicate_interfaces:
-            raise ValidationError(
-                f"The sets of Algorithm Inputs and Algorithm Outputs must be unique: "
-                f"{oxford_comma(duplicate_interfaces)} present in both"
-            )
-
-        return cleaned_data
 
 
 @admin.register(Phase)
@@ -97,13 +82,15 @@ class PhaseAdmin(admin.ModelAdmin):
     autocomplete_fields = (
         "inputs",
         "outputs",
-        "algorithm_inputs",
-        "algorithm_outputs",
         "archive",
     )
     readonly_fields = (
         "give_algorithm_editors_job_view_permissions",
         "challenge_forge_json",
+        "default_interface",
+        "algorithm_interfaces",
+        "algorithm_inputs",
+        "algorithm_outputs",
     )
     form = PhaseAdminForm
 
@@ -224,6 +211,25 @@ class EvaluationGroundTruthAdmin(admin.ModelAdmin):
     list_filter = ("is_desired_version",)
     search_fields = ("phase__slug", "comment")
     readonly_fields = ("creator", "phase", "sha256", "size_in_storage")
+
+
+@admin.register(PhaseAlgorithmInterface)
+class PhaseAlgorithmInterfaceAdmin(GuardedModelAdmin):
+    list_display = (
+        "pk",
+        "interface",
+        "is_default",
+        "phase",
+    )
+    list_filter = ("is_default", "phase")
+
+    def has_add_permission(self, request, obj=None):
+        # through table entries should only be created through the UI
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        # through table entries should only be updated through the UI
+        return False
 
 
 admin.site.register(PhaseUserObjectPermission, UserObjectPermissionAdmin)

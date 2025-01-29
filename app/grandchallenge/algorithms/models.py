@@ -527,6 +527,14 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         except ObjectDoesNotExist:
             return None
 
+    @property
+    def interface_manager(self):
+        return self.interfaces
+
+    @property
+    def interface_through_model_manager(self):
+        return AlgorithmAlgorithmInterface.objects.filter(algorithm=self)
+
     def is_editor(self, user):
         return user.groups.filter(pk=self.editors_group.pk).exists()
 

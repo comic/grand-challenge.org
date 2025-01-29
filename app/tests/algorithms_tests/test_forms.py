@@ -1403,7 +1403,7 @@ def test_algorithm_for_phase_form_memory_limited():
 def test_algorithm_interface_disjoint_interfaces():
     ci = ComponentInterfaceFactory()
     form = AlgorithmInterfaceForm(
-        algorithm=AlgorithmFactory(), data={"inputs": [ci], "outputs": [ci]}
+        base_obj=AlgorithmFactory(), data={"inputs": [ci], "outputs": [ci]}
     )
     assert form.is_valid() is False
     assert "The sets of Inputs and Outputs must be unique" in str(form.errors)
@@ -1414,7 +1414,7 @@ def test_algorithm_interface_default_interface_required():
     ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
     alg = AlgorithmFactory()
     form = AlgorithmInterfaceForm(
-        algorithm=alg,
+        base_obj=alg,
         data={"inputs": [ci1], "outputs": [ci2], "set_as_default": False},
     )
     assert form.is_valid() is False
@@ -1427,7 +1427,7 @@ def test_algorithm_interface_default_interface_required():
     )
     del alg.default_interface
     form = AlgorithmInterfaceForm(
-        algorithm=alg,
+        base_obj=alg,
         data={"inputs": [ci1], "outputs": [ci2], "set_as_default": False},
     )
     assert form.is_valid()
@@ -1441,7 +1441,7 @@ def test_algorithm_interface_unique_inputs_required():
     alg.interfaces.add(interface, through_defaults={"is_default": True})
 
     form = AlgorithmInterfaceForm(
-        algorithm=alg, data={"inputs": [ci1], "outputs": [ci2]}
+        base_obj=alg, data={"inputs": [ci1], "outputs": [ci2]}
     )
     assert form.is_valid() is False
     assert (
@@ -1483,7 +1483,7 @@ class TestAlgorithmInterfaceForm:
         alg = AlgorithmFactory()
 
         form = AlgorithmInterfaceForm(
-            algorithm=alg,
+            base_obj=alg,
         )
         assert form.fields["set_as_default"].initial
 
@@ -1494,7 +1494,7 @@ class TestAlgorithmInterfaceForm:
         del alg.default_interface
 
         form = AlgorithmInterfaceForm(
-            algorithm=alg,
+            base_obj=alg,
         )
         assert not form.fields["set_as_default"].initial
 
@@ -1509,7 +1509,7 @@ class TestAlgorithmInterfaceForm:
         alg = AlgorithmFactory()
 
         form = AlgorithmInterfaceForm(
-            algorithm=alg,
+            base_obj=alg,
             data={
                 "inputs": [inp.pk],
                 "outputs": [out.pk],
@@ -1531,7 +1531,7 @@ class TestAlgorithmInterfaceForm:
         old_iot = AlgorithmAlgorithmInterface.objects.get()
 
         form = AlgorithmInterfaceForm(
-            algorithm=alg,
+            base_obj=alg,
             data={
                 "inputs": [ci_1.pk],
                 "outputs": [ci_2.pk],
@@ -1559,7 +1559,7 @@ class TestAlgorithmInterfaceForm:
         ci_1, ci_2 = ComponentInterfaceFactory.create_batch(2)
 
         form = AlgorithmInterfaceForm(
-            algorithm=alg,
+            base_obj=alg,
             data={
                 "inputs": [ci_1.pk],
                 "outputs": [ci_2.pk],

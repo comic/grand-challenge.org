@@ -50,7 +50,6 @@ from django_select2.forms import Select2MultipleWidget
 
 from grandchallenge.algorithms.models import (
     Algorithm,
-    AlgorithmAlgorithmInterface,
     AlgorithmImage,
     AlgorithmInterface,
     AlgorithmModel,
@@ -1386,18 +1385,20 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
             "set_as_default",
         )
 
-    def __init__(self, *args, algorithm, **kwargs):
+    def __init__(self, *args, base_obj, **kwargs):
         super().__init__(*args, **kwargs)
-        self._algorithm = algorithm
+        self._base_obj = base_obj
 
-        if not self._algorithm.default_interface:
+        if not self._base_obj.default_interface:
             self.fields["set_as_default"].initial = True
 
     def clean_set_as_default(self):
         set_as_default = self.cleaned_data["set_as_default"]
 
-        if not set_as_default and not self._algorithm.default_interface:
-            raise ValidationError("Your algorithm needs a default interface.")
+        if not set_as_default and not self._base_obj.default_interface:
+            raise ValidationError(
+                f"Your {self._base_obj._meta.verbose_name} needs a default interface."
+            )
 
         return set_as_default
 
@@ -1408,10 +1409,7 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
             raise ValidationError("You must provide at least 1 input.")
 
         if (
-            AlgorithmAlgorithmInterface.objects.filter(
-                algorithm=self._algorithm
-            )
-            .annotate(
+            self._base_obj.interface_through_model_manager.annotate(
                 input_count=Count("interface__inputs", distinct=True),
                 relevant_input_count=Count(
                     "interface__inputs",
@@ -1423,7 +1421,7 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
             .exists()
         ):
             raise ValidationError(
-                "An AlgorithmInterface for this algorithm with the "
+                f"An AlgorithmInterface for this {self._base_obj._meta.verbose_name} with the "
                 "same inputs already exists. "
                 "Algorithm interfaces need to have unique sets of inputs."
             )
@@ -1465,16 +1463,16 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
         )
 
         if self.cleaned_data["set_as_default"]:
-            AlgorithmAlgorithmInterface.objects.filter(
-                algorithm=self._algorithm
-            ).update(is_default=False)
+            self._base_obj.interface_through_model_manager.update(
+                is_default=False
+            )
 
-        matched_rows = AlgorithmAlgorithmInterface.objects.filter(
-            algorithm=self._algorithm, interface=interface
+        matched_rows = self._base_obj.interface_through_model_manager.filter(
+            interface=interface
         ).update(is_default=self.cleaned_data["set_as_default"])
 
         if matched_rows == 0:
-            self._algorithm.interfaces.add(
+            self._base_obj.interface_manager.add(
                 interface,
                 through_defaults={
                     "is_default": self.cleaned_data["set_as_default"]

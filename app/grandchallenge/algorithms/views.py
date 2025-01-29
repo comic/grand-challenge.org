@@ -1195,7 +1195,7 @@ class AlgorithmInterfaceForAlgorithmCreate(
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({"algorithm": self.algorithm})
+        kwargs.update({"base_obj": self.algorithm})
         return kwargs
 
 
