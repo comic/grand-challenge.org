@@ -3,6 +3,7 @@ from django.db import migrations
 from grandchallenge.algorithms.models import (
     get_existing_interface_for_inputs_and_outputs,
 )
+from grandchallenge.evaluation.utils import SubmissionKindChoices
 
 
 def add_algorithm_interfaces_for_phases(apps, _schema_editor):
@@ -11,11 +12,17 @@ def add_algorithm_interfaces_for_phases(apps, _schema_editor):
         "algorithms", "AlgorithmInterface"
     )
 
-    for phase in Phase.objects.prefetch_related(
-        "algorithm_inputs", "algorithm_outputs"
-    ).all():
+    for phase in (
+        Phase.objects.filter(submission_kind=SubmissionKindChoices.ALGORITHM)
+        .prefetch_related("algorithm_inputs", "algorithm_outputs")
+        .all()
+    ):
         inputs = phase.algorithm_inputs.all()
         outputs = phase.algorithm_outputs.all()
+
+        if not inputs or not outputs:
+            # Skip phases without inputs or outputs
+            continue
 
         io = get_existing_interface_for_inputs_and_outputs(
             model=AlgorithmInterface, inputs=inputs, outputs=outputs
