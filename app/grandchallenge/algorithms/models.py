@@ -1005,7 +1005,7 @@ class JobManager(ComponentJobManager):
         )
         existing_jobs = annotated_qs.filter(
             input_count=input_interface_count,
-            input_match_count=input_interface_count,
+            relevant_input_count=input_interface_count,
         )
 
         return existing_jobs
