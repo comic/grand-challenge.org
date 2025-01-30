@@ -1,13 +1,16 @@
 import uuid
+from functools import reduce
+from operator import or_
 
 from dal import autocomplete
 from django.contrib.auth.mixins import AccessMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q, TextChoices
-from django.forms import Media
+from django.forms import HiddenInput, Media
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
+from django.template.response import TemplateResponse
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.views import View
@@ -25,10 +28,22 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from grandchallenge.algorithms.forms import NON_ALGORITHM_INTERFACES
 from grandchallenge.api.permissions import IsAuthenticated
 from grandchallenge.archives.models import Archive
-from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
+from grandchallenge.components.form_fields import (
+    INTERFACE_FORM_FIELD_PREFIX,
+    _join_with_br,
+    file_upload_text,
+)
 from grandchallenge.components.forms import CIVSetDeleteForm, SingleCIVForm
-from grandchallenge.components.models import ComponentInterface, InterfaceKind
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+    InterfaceKind,
+)
 from grandchallenge.components.serializers import ComponentInterfaceSerializer
+from grandchallenge.components.widgets import (
+    FileSearchWidget,
+    FileWidgetChoices,
+)
 from grandchallenge.core.guardian import (
     ObjectPermissionCheckerMixin,
     ObjectPermissionRequiredMixin,
@@ -38,8 +53,15 @@ from grandchallenge.core.guardian import (
 from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.reader_studies.models import ReaderStudy
+from grandchallenge.serving.models import (
+    get_component_interface_values_for_user,
+)
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
-from grandchallenge.uploads.widgets import UserUploadMultipleWidget
+from grandchallenge.uploads.models import UserUpload
+from grandchallenge.uploads.widgets import (
+    UserUploadMultipleWidget,
+    UserUploadSingleWidget,
+)
 
 
 class ComponentInterfaceViewSet(ReadOnlyModelViewSet):
@@ -472,3 +494,113 @@ class FileUploadFormFieldView(LoginRequiredMixin, AccessMixin, View):
             },
         )
         return HttpResponse(html_content)
+
+
+class FileWidgetSelectView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        interface = request.GET.get("interface-slug")
+        widget_choice = request.GET.get(f"widget-choice-{interface}")
+        help_text = request.GET.get("help-text")
+        current_value = request.GET.get("current-value")
+
+        if widget_choice == FileWidgetChoices.FILE_SEARCH.name:
+            html_content = render_to_string(
+                FileSearchWidget.template_name,
+                {
+                    "widget": FileSearchWidget().get_context(
+                        name=interface,
+                        value=None,
+                        attrs={
+                            "help_text": help_text if help_text else None,
+                        },
+                    )["widget"],
+                },
+            )
+            return HttpResponse(html_content)
+        elif widget_choice == FileWidgetChoices.FILE_UPLOAD.name:
+            html_content = render_to_string(
+                UserUploadSingleWidget.template_name,
+                {
+                    "widget": UserUploadSingleWidget().get_context(
+                        name=interface,
+                        value=None,
+                        attrs={
+                            "id": interface,
+                            "help_text": _join_with_br(
+                                help_text if help_text else None,
+                                file_upload_text,
+                            ),
+                        },
+                    )["widget"],
+                },
+            )
+            return HttpResponse(html_content)
+        elif (
+            widget_choice == FileWidgetChoices.FILE_SELECTED.name
+            and current_value
+            and (
+                ComponentInterfaceValue.objects.filter(
+                    pk=current_value
+                ).exists()
+                or UserUpload.objects.filter(pk=current_value).exists()
+            )
+        ):
+            # this can happen on the display set update view or redisplay of
+            # form upon validation, where one of the options is the current
+            # image, this enables switching back from one of the above widgets
+            # to the chosen image. This make sure the form element with the
+            # right name is available on resubmission.
+            html_content = render_to_string(
+                HiddenInput.template_name,
+                {
+                    "widget": {
+                        "name": interface,
+                        "value": current_value,
+                        "type": "hidden",
+                    },
+                },
+            )
+            return HttpResponse(html_content)
+        elif widget_choice == FileWidgetChoices.UNDEFINED.name:
+            # this happens when switching back from one of the
+            # above widgets to the "Choose data source" option
+            return HttpResponse()
+        else:
+            raise RuntimeError("Unknown widget type")
+
+
+class FileSearchResultView(LoginRequiredMixin, ListView):
+    template_name = "components/file_search_result_select.html"
+    search_fields = ["pk", "name"]
+    model = ComponentInterfaceValue
+    paginate_by = 50
+
+    def __init__(self, *, interface=None, user=None):
+        super().__init__()
+        self.user = user
+        self.interface = interface
+
+    def get_queryset(self):
+        return get_component_interface_values_for_user(user=self.user).filter(
+            interface=self.interface
+        )
+
+    def get(self, request, *args, **kwargs):
+        qs = self.get_queryset()
+        interface = request.GET.get("interface_slug")
+        query = request.GET.get("query-" + interface)
+        if query:
+            q = reduce(
+                or_,
+                [Q(**{f"{f}__icontains": query}) for f in self.search_fields],
+                Q(),
+            )
+            qs = qs.filter(q).order_by("name")
+        self.object_list = qs
+        context = self.get_context_data(**kwargs)
+        context["interface"] = interface
+        return TemplateResponse(
+            request=request,
+            template=self.template_name,
+            context=context,
+        )

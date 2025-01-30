@@ -4,7 +4,9 @@ from grandchallenge.components.views import (
     ComponentInterfaceAutocomplete,
     ComponentInterfaceIOSwitch,
     ComponentInterfaceList,
+    FileSearchResultView,
     FileUploadFormFieldView,
+    FileWidgetSelectView,
     InterfaceListTypeOptions,
     InterfaceObjectTypeOptions,
 )
@@ -59,4 +61,10 @@ urlpatterns = [
         FileUploadFormFieldView.as_view(),
         name="file-upload",
     ),
+    path(
+        "select-file-widget",
+        FileWidgetSelectView.as_view(),
+        name="select-file-widget",
+    ),
+    path("files/search/", FileSearchResultView.as_view(), name="file-search"),
 ]
