@@ -542,7 +542,8 @@ class FileWidgetSelectView(LoginRequiredMixin, View):
                 ComponentInterfaceValue.objects.filter(
                     pk=current_value
                 ).exists()
-                or UserUpload.objects.filter(pk=current_value).exists()
+                if current_value.isdigit()
+                else UserUpload.objects.filter(pk=current_value).exists()
             )
         ):
             # this can happen on the display set update view or redisplay of
