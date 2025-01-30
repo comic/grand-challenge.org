@@ -1,0 +1,83 @@
+import pytest
+from django.utils.html import format_html
+from factory.fuzzy import FuzzyChoice
+
+from grandchallenge.components.models import InterfaceKind
+from grandchallenge.components.widgets import FileWidgetChoices
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
+from tests.factories import UserFactory
+from tests.uploads_tests.factories import UserUploadFactory
+from tests.utils import get_view_for_user
+
+
+@pytest.mark.django_db
+def test_flexible_file_widget(client):
+    user = UserFactory()
+    ci = ComponentInterfaceFactory(
+        kind=FuzzyChoice(InterfaceKind.interface_type_file())
+    )
+    response = get_view_for_user(
+        viewname="components:select-file-widget",
+        client=client,
+        user=user,
+        data={
+            f"widget-choice-{ci.slug}": FileWidgetChoices.FILE_SEARCH.name,
+            "interface-slug": ci.slug,
+        },
+    )
+    assert '<input class="form-control" type="search"' in str(response.content)
+
+    response2 = get_view_for_user(
+        viewname="components:select-file-widget",
+        client=client,
+        user=user,
+        data={
+            f"widget-choice-{ci.slug}": FileWidgetChoices.FILE_UPLOAD.name,
+            "interface-slug": ci.slug,
+        },
+    )
+    assert 'class="user-upload"' in str(response2.content)
+
+    response3 = get_view_for_user(
+        viewname="components:select-file-widget",
+        client=client,
+        user=user,
+        data={
+            f"widget-choice-{ci.slug}": FileWidgetChoices.UNDEFINED.name,
+            "interface-slug": ci.slug,
+        },
+    )
+    assert response3.content == b""
+
+    civ = ComponentInterfaceValueFactory(interface=ci)
+    response4 = get_view_for_user(
+        viewname="components:select-file-widget",
+        client=client,
+        user=user,
+        data={
+            f"widget-choice-{ci.slug}": FileWidgetChoices.FILE_SELECTED.name,
+            "interface-slug": ci.slug,
+            "current-value": civ.pk,
+        },
+    )
+    assert format_html(
+        '<input type="hidden" name="{}" value="{}">', ci.slug, civ.pk
+    ) in str(response4.content)
+
+    user_upload = UserUploadFactory()
+    response5 = get_view_for_user(
+        viewname="components:select-file-widget",
+        client=client,
+        user=user,
+        data={
+            f"widget-choice-{ci.slug}": FileWidgetChoices.FILE_SELECTED.name,
+            "interface-slug": ci.slug,
+            "current-value": user_upload.pk,
+        },
+    )
+    assert format_html(
+        '<input type="hidden" name="{}" value="{}">', ci.slug, user_upload.pk
+    ) in str(response5.content)
