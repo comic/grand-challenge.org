@@ -23,6 +23,7 @@ from grandchallenge.algorithms.views import (
     AlgorithmPermissionRequestUpdate,
     AlgorithmPublishView,
     AlgorithmRepositoryUpdate,
+    AlgorithmStatistics,
     AlgorithmUpdate,
     DisplaySetFromJobCreate,
     EditorsUpdate,
@@ -43,6 +44,9 @@ urlpatterns = [
     path("create/", AlgorithmCreate.as_view(), name="create"),
     path("import/", AlgorithmImportView.as_view(), name="import"),
     path("<slug>/", AlgorithmDetail.as_view(), name="detail"),
+    path(
+        "<slug>/statistics/", AlgorithmStatistics.as_view(), name="statistics"
+    ),
     path("<slug>/update/", AlgorithmUpdate.as_view(), name="update"),
     path("<slug>/publish/", AlgorithmPublishView.as_view(), name="publish"),
     path(
