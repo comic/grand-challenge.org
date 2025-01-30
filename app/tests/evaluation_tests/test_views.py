@@ -10,7 +10,7 @@ from django.utils import timezone
 from factory.django import ImageField
 from guardian.shortcuts import assign_perm, remove_perm
 
-from grandchallenge.algorithms.models import Algorithm
+from grandchallenge.algorithms.models import Algorithm, AlgorithmInterface
 from grandchallenge.components.models import (
     ComponentInterface,
     ImportStatusChoices,
@@ -21,6 +21,7 @@ from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.evaluation.models import (
     CombinedLeaderboard,
     Evaluation,
+    PhaseAlgorithmInterface,
     Submission,
 )
 from grandchallenge.evaluation.tasks import update_combined_leaderboard
@@ -30,6 +31,7 @@ from grandchallenge.workstations.models import Workstation
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
+    AlgorithmInterfaceFactory,
 )
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import (
@@ -1752,3 +1754,253 @@ def test_phase_archive_info_permissions(client):
         user=editor,
     )
     assert response.status_code == 200
+
+
+@pytest.mark.parametrize(
+    "viewname", ["evaluation:interface-list", "evaluation:interface-create"]
+)
+@pytest.mark.django_db
+def test_algorithm_interface_for_phase_view_permission(client, viewname):
+    (
+        participant,
+        admin,
+        user,
+    ) = UserFactory.create_batch(3)
+    staff_user = UserFactory(is_staff=True)
+    external_phase = PhaseFactory(external_evaluation=True)
+    prediction_phase = PhaseFactory(submission_kind=SubmissionKindChoices.CSV)
+    algorithm_phase = PhaseFactory(
+        submission_kind=SubmissionKindChoices.ALGORITHM
+    )
+
+    for phase in [external_phase, prediction_phase, algorithm_phase]:
+        phase.challenge.add_admin(admin)
+        phase.challenge.add_participant(participant)
+
+    for us, status1, status2 in [
+        [user, 403, 403],
+        [participant, 403, 403],
+        [admin, 403, 403],
+        [staff_user, 404, 200],
+    ]:
+        response = get_view_for_user(
+            viewname=viewname,
+            client=client,
+            reverse_kwargs={
+                "slug": external_phase.slug,
+                "challenge_short_name": external_phase.challenge.short_name,
+            },
+            user=us,
+        )
+        assert response.status_code == status1
+
+        response = get_view_for_user(
+            viewname=viewname,
+            client=client,
+            reverse_kwargs={
+                "slug": prediction_phase.slug,
+                "challenge_short_name": prediction_phase.challenge.short_name,
+            },
+            user=us,
+        )
+        assert response.status_code == status1
+
+        response = get_view_for_user(
+            viewname=viewname,
+            client=client,
+            reverse_kwargs={
+                "slug": algorithm_phase.slug,
+                "challenge_short_name": algorithm_phase.challenge.short_name,
+            },
+            user=us,
+        )
+        assert response.status_code == status2
+
+
+@pytest.mark.django_db
+def test_algorithm_interface_for_phase_delete_permission(client):
+    (
+        participant,
+        admin,
+        user,
+    ) = UserFactory.create_batch(3)
+    staff_user = UserFactory(is_staff=True)
+    external_phase = PhaseFactory(external_evaluation=True)
+    prediction_phase = PhaseFactory(submission_kind=SubmissionKindChoices.CSV)
+    algorithm_phase = PhaseFactory(
+        submission_kind=SubmissionKindChoices.ALGORITHM
+    )
+    int1, int2 = AlgorithmInterfaceFactory.create_batch(2)
+
+    for phase in [external_phase, prediction_phase, algorithm_phase]:
+        phase.challenge.add_admin(admin)
+        phase.challenge.add_participant(participant)
+        phase.algorithm_interfaces.add(
+            int1, through_defaults={"is_default": True}
+        )
+        phase.algorithm_interfaces.add(int2)
+
+    for us, status1, status2 in [
+        [user, 403, 403],
+        [participant, 403, 403],
+        [admin, 403, 403],
+        [staff_user, 404, 200],
+    ]:
+        response = get_view_for_user(
+            viewname="evaluation:interface-delete",
+            client=client,
+            reverse_kwargs={
+                "slug": external_phase.slug,
+                "interface_pk": int2.pk,
+                "challenge_short_name": external_phase.challenge.short_name,
+            },
+            user=us,
+        )
+        assert response.status_code == status1
+
+        response = get_view_for_user(
+            viewname="evaluation:interface-delete",
+            client=client,
+            reverse_kwargs={
+                "slug": prediction_phase.slug,
+                "interface_pk": int2.pk,
+                "challenge_short_name": prediction_phase.challenge.short_name,
+            },
+            user=us,
+        )
+        assert response.status_code == status1
+
+        response = get_view_for_user(
+            viewname="evaluation:interface-delete",
+            client=client,
+            reverse_kwargs={
+                "slug": algorithm_phase.slug,
+                "interface_pk": int2.pk,
+                "challenge_short_name": algorithm_phase.challenge.short_name,
+            },
+            user=us,
+        )
+        assert response.status_code == status2
+
+        # default interface cannot be deleted
+        response = get_view_for_user(
+            viewname="evaluation:interface-delete",
+            client=client,
+            reverse_kwargs={
+                "slug": algorithm_phase.slug,
+                "interface_pk": int1.pk,
+                "challenge_short_name": algorithm_phase.challenge.short_name,
+            },
+            user=us,
+        )
+        assert response.status_code == status1
+
+
+@pytest.mark.django_db
+def test_algorithm_interface_for_phase_create(client):
+    user = UserFactory(is_staff=True)
+    phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
+
+    ci_1 = ComponentInterfaceFactory()
+    ci_2 = ComponentInterfaceFactory()
+
+    response = get_view_for_user(
+        viewname="evaluation:interface-create",
+        client=client,
+        method=client.post,
+        reverse_kwargs={
+            "slug": phase.slug,
+            "challenge_short_name": phase.challenge.short_name,
+        },
+        data={
+            "inputs": [ci_1.pk],
+            "outputs": [ci_2.pk],
+            "set_as_default": True,
+        },
+        user=user,
+    )
+    assert response.status_code == 302
+
+    assert AlgorithmInterface.objects.count() == 1
+    io = AlgorithmInterface.objects.get()
+    assert io.inputs.get() == ci_1
+    assert io.outputs.get() == ci_2
+
+    assert PhaseAlgorithmInterface.objects.count() == 1
+    io_through = PhaseAlgorithmInterface.objects.get()
+    assert io_through.phase == phase
+    assert io_through.interface == io
+    assert io_through.is_default
+
+
+@pytest.mark.django_db
+def test_algorithm_interfaces_for_phase_list_queryset(client):
+    user = UserFactory(is_staff=True)
+    phase1, phase2 = PhaseFactory.create_batch(
+        2, submission_kind=SubmissionKindChoices.ALGORITHM
+    )
+
+    io1, io2, io3, io4 = AlgorithmInterfaceFactory.create_batch(4)
+
+    phase1.algorithm_interfaces.set([io1, io2])
+    phase2.algorithm_interfaces.set([io3, io4])
+
+    iots = PhaseAlgorithmInterface.objects.order_by("id").all()
+
+    response = get_view_for_user(
+        viewname="evaluation:interface-list",
+        client=client,
+        reverse_kwargs={
+            "slug": phase1.slug,
+            "challenge_short_name": phase1.challenge.short_name,
+        },
+        user=user,
+    )
+    assert response.status_code == 200
+    assert response.context["object_list"].count() == 2
+    assert iots[0] in response.context["object_list"]
+    assert iots[1] in response.context["object_list"]
+    assert iots[2] not in response.context["object_list"]
+    assert iots[3] not in response.context["object_list"]
+
+
+@pytest.mark.django_db
+def test_algorithm_interface_delete(client):
+    user = UserFactory(is_staff=True)
+    phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
+
+    int1, int2 = AlgorithmInterfaceFactory.create_batch(2)
+    phase.algorithm_interfaces.add(int1, through_defaults={"is_default": True})
+    phase.algorithm_interfaces.add(int2)
+
+    response = get_view_for_user(
+        viewname="evaluation:interface-delete",
+        client=client,
+        method=client.post,
+        reverse_kwargs={
+            "slug": phase.slug,
+            "challenge_short_name": phase.challenge.short_name,
+            "interface_pk": int1.pk,
+        },
+        user=user,
+    )
+    assert response.status_code == 404
+
+    response = get_view_for_user(
+        viewname="evaluation:interface-delete",
+        client=client,
+        method=client.post,
+        reverse_kwargs={
+            "slug": phase.slug,
+            "challenge_short_name": phase.challenge.short_name,
+            "interface_pk": int2.pk,
+        },
+        user=user,
+    )
+    assert response.status_code == 302
+    # no interface was deleted
+    assert AlgorithmInterface.objects.count() == 2
+    # only the relation between interface and algorithm was deleted
+    assert PhaseAlgorithmInterface.objects.count() == 1
+    assert phase.algorithm_interfaces.count() == 1
+    assert phase.algorithm_interfaces.get() == int1

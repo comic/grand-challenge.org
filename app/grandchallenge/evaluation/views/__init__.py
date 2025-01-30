@@ -1261,7 +1261,11 @@ class AlgorithmInterfaceForPhasePermissionMixin(AccessMixin):
     @property
     def phase(self):
         return get_object_or_404(
-            Phase, challenge=self.request.challenge, slug=self.kwargs["slug"]
+            Phase,
+            challenge=self.request.challenge,
+            challenge__phase__submission_kind=SubmissionKindChoices.ALGORITHM,
+            challenge__phase__external_evaluation=False,
+            slug=self.kwargs["slug"],
         )
 
     def dispatch(self, request, *args, **kwargs):
