@@ -61,7 +61,9 @@ class FlexibleFileWidget(MultiWidget):
         if value:
             if value in FileWidgetChoices.names:
                 return [None, None]
-            elif ComponentInterfaceValue.objects.filter(pk=value).exists():
+            elif (
+                isinstance(value, int) or value.isdigit()
+            ) and ComponentInterfaceValue.objects.filter(pk=value).exists():
                 return [value, None]
             else:
                 return [None, value]
