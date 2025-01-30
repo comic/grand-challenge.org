@@ -219,8 +219,8 @@ class FlexibleFileField(MultiValueField):
         **kwargs,
     ):
         fields = [
-            ModelChoiceField(queryset=file_search_queryset),
-            ModelChoiceField(queryset=upload_queryset),
+            ModelChoiceField(queryset=file_search_queryset, required=False),
+            ModelChoiceField(queryset=upload_queryset, required=False),
         ]
         super().__init__(
             *args,
