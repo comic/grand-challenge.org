@@ -12,7 +12,7 @@ from django.contrib.sites.models import Site
 from guardian.shortcuts import assign_perm
 from requests import put
 
-from grandchallenge.cases.widgets import WidgetChoices
+from grandchallenge.cases.widgets import ImageWidgetChoices
 from grandchallenge.components.backends import docker_client
 from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
@@ -603,11 +603,11 @@ def get_interface_form_data(*, interface_slug, data, existing_data=False):
         if existing_data:
             form_data[
                 f"WidgetChoice-{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
-            ] = WidgetChoices.IMAGE_SEARCH.name
+            ] = ImageWidgetChoices.IMAGE_SEARCH.name
         else:
             form_data[
                 f"WidgetChoice-{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
-            ] = WidgetChoices.IMAGE_UPLOAD.name
+            ] = ImageWidgetChoices.IMAGE_UPLOAD.name
     elif ci.requires_file:
         if existing_data:
             form_data[
