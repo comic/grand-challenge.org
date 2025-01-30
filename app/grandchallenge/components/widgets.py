@@ -77,7 +77,8 @@ class FlexibleFileWidget(MultiWidget):
                 value = data[f"widget-choice-{name}"]
             except KeyError:
                 value = None
-        return self.decompress(value)
+        if value:
+            return self.decompress(value)
 
 
 class SelectUploadWidget(Select):
