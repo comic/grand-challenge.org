@@ -484,7 +484,7 @@ def algorithm_with_image_and_model_and_two_inputs():
     interface = AlgorithmInterfaceFactory(
         inputs=[ci1, ci2], outputs=[ComponentInterfaceFactory()]
     )
-    alg.interfaces.add(interface, through_defaults={"is_default": True})
+    alg.interfaces.add(interface)
     civs = [
         ComponentInterfaceValueFactory(interface=ci1, value="foo"),
         ComponentInterfaceValueFactory(interface=ci2, value="bar"),

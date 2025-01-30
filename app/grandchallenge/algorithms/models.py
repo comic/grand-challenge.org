@@ -520,15 +520,6 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
 
         return w
 
-    @cached_property
-    def default_interface(self):
-        try:
-            return self.interfaces.get(
-                algorithmalgorithminterface__is_default=True
-            )
-        except ObjectDoesNotExist:
-            return None
-
     def is_editor(self, user):
         return user.groups.filter(pk=self.editors_group.pk).exists()
 
@@ -632,15 +623,9 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
 class AlgorithmAlgorithmInterface(models.Model):
     algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
     interface = models.ForeignKey(AlgorithmInterface, on_delete=models.CASCADE)
-    is_default = models.BooleanField(default=False)
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(
-                fields=["algorithm"],
-                condition=Q(is_default=True),
-                name="unique_default_interface_per_algorithm",
-            ),
             models.UniqueConstraint(
                 fields=["algorithm", "interface"],
                 name="unique_algorithm_interface_combination",
@@ -649,12 +634,6 @@ class AlgorithmAlgorithmInterface(models.Model):
 
     def __str__(self):
         return str(self.interface)
-
-    def clean(self):
-        super().clean()
-
-        if not self.is_default and not self.algorithm.default_interface:
-            raise ValidationError("This algorithm needs a default interface.")
 
 
 class AlgorithmUserObjectPermission(UserObjectPermissionBase):

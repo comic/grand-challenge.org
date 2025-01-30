@@ -361,9 +361,7 @@ class TestObjectPermissionRequiredViews:
             inputs=[ComponentInterfaceFactory()],
             outputs=[ComponentInterfaceFactory()],
         )
-        ai.algorithm.interfaces.add(
-            interface, through_defaults={"is_default": True}
-        )
+        ai.algorithm.interfaces.add(interface)
 
         VerificationFactory(user=u, is_verified=True)
 
@@ -439,7 +437,7 @@ class TestObjectPermissionRequiredViews:
                 "job-create",
                 {
                     "slug": ai.algorithm.slug,
-                    "interface_pk": ai.algorithm.default_interface.pk,
+                    "interface_pk": ai.algorithm.interfaces.first().pk,
                 },
                 "execute_algorithm",
                 ai.algorithm,
@@ -1072,9 +1070,7 @@ def test_create_job_with_json_file(
     interface = AlgorithmInterfaceFactory(
         inputs=[ci],
     )
-    ai.algorithm.interfaces.add(
-        interface, through_defaults={"is_default": True}
-    )
+    ai.algorithm.interfaces.add(interface)
 
     with tempfile.NamedTemporaryFile(mode="w+", suffix=".json") as file:
         json.dump('{"Foo": "bar"}', file)
@@ -1131,9 +1127,7 @@ def test_algorithm_job_create_with_image_input(
     interface = AlgorithmInterfaceFactory(
         inputs=[ci],
     )
-    ai.algorithm.interfaces.add(
-        interface, through_defaults={"is_default": True}
-    )
+    ai.algorithm.interfaces.add(interface)
 
     image1, image2 = ImageFactory.create_batch(2)
     assign_perm("cases.view_image", editor, image1)
@@ -1241,7 +1235,7 @@ class TestJobCreateView:
                     user=user,
                     reverse_kwargs={
                         "slug": algorithm.slug,
-                        "interface_pk": algorithm.default_interface.pk,
+                        "interface_pk": algorithm.interfaces.first().pk,
                     },
                     follow=True,
                     data=inputs,
@@ -1291,9 +1285,7 @@ class TestJobCreateView:
             ],
             outputs=[ComponentInterfaceFactory()],
         )
-        algorithm_with_multiple_inputs.algorithm.interfaces.add(
-            interface, through_defaults={"is_default": True}
-        )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(interface)
 
         assert ComponentInterfaceValue.objects.count() == 0
 
@@ -1353,7 +1345,7 @@ class TestJobCreateView:
         assert sorted(
             [
                 int.pk
-                for int in algorithm_with_multiple_inputs.algorithm.default_interface.inputs.all()
+                for int in algorithm_with_multiple_inputs.algorithm.interfaces.first().inputs.all()
             ]
         ) == sorted([civ.interface.pk for civ in job.inputs.all()])
 
@@ -1390,9 +1382,7 @@ class TestJobCreateView:
             ],
             outputs=[ComponentInterfaceFactory()],
         )
-        algorithm_with_multiple_inputs.algorithm.interfaces.add(
-            interface, through_defaults={"is_default": True}
-        )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(interface)
 
         civ1, civ2, civ3, civ4, civ5 = self.create_existing_civs(
             interface_data=algorithm_with_multiple_inputs
@@ -1467,9 +1457,7 @@ class TestJobCreateView:
             ],
             outputs=[ComponentInterfaceFactory()],
         )
-        algorithm_with_multiple_inputs.algorithm.interfaces.add(
-            interface, through_defaults={"is_default": True}
-        )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(interface)
         civ1, civ2, civ3, civ4, civ5 = self.create_existing_civs(
             interface_data=algorithm_with_multiple_inputs
         )
@@ -1530,9 +1518,7 @@ class TestJobCreateView:
             inputs=[algorithm_with_multiple_inputs.ci_json_file],
             outputs=[ComponentInterfaceFactory()],
         )
-        algorithm_with_multiple_inputs.algorithm.interfaces.add(
-            interface, through_defaults={"is_default": True}
-        )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(interface)
         file_upload = UserUploadFactory(
             filename="file.json", creator=algorithm_with_multiple_inputs.editor
         )
@@ -1581,9 +1567,7 @@ class TestJobCreateView:
             inputs=[algorithm_with_multiple_inputs.ci_json_in_db_with_schema],
             outputs=[ComponentInterfaceFactory()],
         )
-        algorithm_with_multiple_inputs.algorithm.interfaces.add(
-            interface, through_defaults={"is_default": True}
-        )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(interface)
         response = self.create_job(
             client=client,
             django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
@@ -1615,9 +1599,7 @@ class TestJobCreateView:
             inputs=[algorithm_with_multiple_inputs.ci_img_upload],
             outputs=[ComponentInterfaceFactory()],
         )
-        algorithm_with_multiple_inputs.algorithm.interfaces.add(
-            interface, through_defaults={"is_default": True}
-        )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(interface)
         user_upload = create_upload_from_file(
             creator=algorithm_with_multiple_inputs.editor,
             file_path=RESOURCE_PATH / "corrupt.png",
@@ -1671,9 +1653,7 @@ class TestJobCreateView:
         interface = AlgorithmInterfaceFactory(
             inputs=[ci1, ci2], outputs=[ComponentInterfaceFactory()]
         )
-        algorithm_with_multiple_inputs.algorithm.interfaces.add(
-            interface, through_defaults={"is_default": True}
-        )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(interface)
 
         assert ComponentInterfaceValue.objects.count() == 0
 
@@ -1828,7 +1808,7 @@ def test_job_time_limit(client):
     interface = AlgorithmInterfaceFactory(
         inputs=[ci], outputs=[ComponentInterfaceFactory()]
     )
-    algorithm.interfaces.add(interface, through_defaults={"is_default": True})
+    algorithm.interfaces.add(interface)
 
     response = get_view_for_user(
         viewname="algorithms:job-create",
@@ -1836,7 +1816,7 @@ def test_job_time_limit(client):
         method=client.post,
         reverse_kwargs={
             "slug": algorithm.slug,
-            "interface_pk": algorithm.default_interface.pk,
+            "interface_pk": algorithm.interfaces.first().pk,
         },
         user=user,
         follow=True,
@@ -1879,7 +1859,7 @@ def test_job_gpu_type_set(client, settings):
     interface = AlgorithmInterfaceFactory(
         inputs=[ci], outputs=[ComponentInterfaceFactory()]
     )
-    algorithm.interfaces.add(interface, through_defaults={"is_default": True})
+    algorithm.interfaces.add(interface)
 
     response = get_view_for_user(
         viewname="algorithms:job-create",
@@ -1887,7 +1867,7 @@ def test_job_gpu_type_set(client, settings):
         method=client.post,
         reverse_kwargs={
             "slug": algorithm.slug,
-            "interface_pk": algorithm.default_interface.pk,
+            "interface_pk": algorithm.interfaces.first().pk,
         },
         user=user,
         follow=True,
@@ -1933,7 +1913,7 @@ def test_job_gpu_type_set_with_api(client, settings):
     interface = AlgorithmInterfaceFactory(
         inputs=[ci],
     )
-    algorithm.interfaces.add(interface, through_defaults={"is_default": True})
+    algorithm.interfaces.add(interface)
 
     response = get_view_for_user(
         viewname="api:algorithms-job-list",
@@ -1978,13 +1958,13 @@ def test_job_create_view_for_verified_users_only(client):
         inputs=[ComponentInterfaceFactory()],
         outputs=[ComponentInterfaceFactory()],
     )
-    alg.interfaces.add(interface, through_defaults={"is_default": True})
+    alg.interfaces.add(interface)
 
     response = get_view_for_user(
         viewname="algorithms:job-create",
         reverse_kwargs={
             "slug": alg.slug,
-            "interface_pk": alg.default_interface.pk,
+            "interface_pk": alg.interfaces.first().pk,
         },
         client=client,
         user=user,
@@ -1995,7 +1975,7 @@ def test_job_create_view_for_verified_users_only(client):
         viewname="algorithms:job-create",
         reverse_kwargs={
             "slug": alg.slug,
-            "interface_pk": alg.default_interface.pk,
+            "interface_pk": alg.interfaces.first().pk,
         },
         client=client,
         user=editor,
@@ -2097,7 +2077,7 @@ def test_job_create_denied_for_same_input_model_and_image(client):
     interface = AlgorithmInterfaceFactory(
         inputs=[ci], outputs=[ComponentInterfaceFactory()]
     )
-    alg.interfaces.add(interface, through_defaults={"is_default": True})
+    alg.interfaces.add(interface)
     ai = AlgorithmImageFactory(
         algorithm=alg,
         is_manifest_valid=True,
@@ -2120,7 +2100,7 @@ def test_job_create_denied_for_same_input_model_and_image(client):
         method=client.post,
         reverse_kwargs={
             "slug": alg.slug,
-            "interface_pk": alg.default_interface.pk,
+            "interface_pk": alg.interfaces.first().pk,
         },
         user=creator,
         data={
@@ -2391,14 +2371,14 @@ def test_algorithm_interface_delete_permission(client):
     alg.add_editor(algorithm_editor_without_alg_add)
 
     int1, int2 = AlgorithmInterfaceFactory.create_batch(2)
-    alg.interfaces.add(int1, through_defaults={"is_default": True})
+    alg.interfaces.add(int1)
     alg.interfaces.add(int2)
 
-    for user, status1, status2 in [
-        [user_with_alg_add_perm, 403, 403],
-        [user_without_alg_add_perm, 403, 403],
-        [algorithm_editor_with_alg_add, 200, 404],
-        [algorithm_editor_without_alg_add, 403, 403],
+    for user, status in [
+        [user_with_alg_add_perm, 403],
+        [user_without_alg_add_perm, 403],
+        [algorithm_editor_with_alg_add, 200],
+        [algorithm_editor_without_alg_add, 403],
     ]:
         response = get_view_for_user(
             viewname="algorithms:interface-delete",
@@ -2409,19 +2389,7 @@ def test_algorithm_interface_delete_permission(client):
             },
             user=user,
         )
-        assert response.status_code == status1
-
-        # default interface cannot be deleted
-        response = get_view_for_user(
-            viewname="algorithms:interface-delete",
-            client=client,
-            reverse_kwargs={
-                "slug": alg.slug,
-                "interface_pk": int1.pk,
-            },
-            user=user,
-        )
-        assert response.status_code == status2
+        assert response.status_code == status
 
 
 @pytest.mark.django_db
@@ -2442,7 +2410,6 @@ def test_algorithm_interface_create(client):
         data={
             "inputs": [ci_1.pk],
             "outputs": [ci_2.pk],
-            "set_as_default": True,
         },
         user=user,
     )
@@ -2457,7 +2424,6 @@ def test_algorithm_interface_create(client):
     io_through = AlgorithmAlgorithmInterface.objects.get()
     assert io_through.algorithm == alg
     assert io_through.interface == io
-    assert io_through.is_default
 
 
 @pytest.mark.django_db
@@ -2497,20 +2463,8 @@ def test_algorithm_interface_delete(client):
     alg.add_editor(user)
 
     int1, int2 = AlgorithmInterfaceFactory.create_batch(2)
-    alg.interfaces.add(int1, through_defaults={"is_default": True})
+    alg.interfaces.add(int1)
     alg.interfaces.add(int2)
-
-    response = get_view_for_user(
-        viewname="algorithms:interface-delete",
-        client=client,
-        method=client.post,
-        reverse_kwargs={
-            "slug": alg.slug,
-            "interface_pk": int1.pk,
-        },
-        user=user,
-    )
-    assert response.status_code == 404
 
     response = get_view_for_user(
         viewname="algorithms:interface-delete",
@@ -2547,7 +2501,7 @@ def test_interface_select_for_job_view_permission(client):
         inputs=[ComponentInterfaceFactory()],
         outputs=[ComponentInterfaceFactory()],
     )
-    alg.interfaces.add(interface1, through_defaults={"is_default": True})
+    alg.interfaces.add(interface1)
     alg.interfaces.add(interface2)
 
     response = get_view_for_user(
@@ -2578,7 +2532,7 @@ def test_interface_select_automatic_redirect(client):
         inputs=[ComponentInterfaceFactory()],
         outputs=[ComponentInterfaceFactory()],
     )
-    alg.interfaces.add(interface, through_defaults={"is_default": True})
+    alg.interfaces.add(interface)
 
     # with just 1 interface, user gets redirected immediately
     response = get_view_for_user(

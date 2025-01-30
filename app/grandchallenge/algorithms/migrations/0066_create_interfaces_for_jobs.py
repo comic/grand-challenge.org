@@ -6,11 +6,8 @@ def add_algorithm_interfaces_to_jobs(apps, _schema_editor):
     Job = apps.get_model("algorithms", "Job")  # noqa: N806
 
     for algorithm in Algorithm.objects.prefetch_related("interfaces").all():
-        default_interface = algorithm.interfaces.get(
-            algorithmalgorithminterface__is_default=True
-        )
         Job.objects.filter(algorithm_image__algorithm=algorithm).update(
-            algorithm_interface=default_interface
+            algorithm_interface=algorithm.interfaces.get()
         )
 
 
