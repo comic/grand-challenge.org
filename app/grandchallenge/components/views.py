@@ -576,19 +576,21 @@ class FileSearchResultView(LoginRequiredMixin, ListView):
     model = ComponentInterfaceValue
     paginate_by = 50
 
-    def __init__(self, *, interface=None, user=None):
+    def __init__(self, *, interface_slug=None):
         super().__init__()
-        self.user = user
-        self.interface = interface
+        self.interface_slug = interface_slug
 
     def get_queryset(self):
-        return get_component_interface_values_for_user(user=self.user).filter(
-            interface=self.interface
-        )
+        return get_component_interface_values_for_user(
+            user=self.request.user
+        ).filter(interface__slug=self.interface_slug)
 
     def get(self, request, *args, **kwargs):
-        qs = self.get_queryset()
         interface = request.GET.get("interface_slug")
+        self.interface_slug = interface.replace(
+            INTERFACE_FORM_FIELD_PREFIX, ""
+        )
+        qs = self.get_queryset()
         query = request.GET.get("query-" + interface)
         if query:
             q = reduce(
