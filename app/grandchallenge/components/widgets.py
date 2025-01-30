@@ -64,7 +64,7 @@ class FlexibleFileWidget(MultiWidget):
             elif ComponentInterfaceValue.objects.filter(pk=value).exists():
                 return [value, None]
             else:
-                return [None, [value]]
+                return [None, value]
         else:
             return [None, None]
 
