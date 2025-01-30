@@ -6,7 +6,7 @@
 
 <p>The following interfaces are configured for your {{ base_obj|verbose_name }}:</p>
 <p>
-    <a class="btn btn-primary" href="{{ base_obj.interface_create_url }}">Add new interface</a>
+    <a class="btn btn-primary" href="{{ base_obj.algorithm_interface_create_url }}">Add new interface</a>
 </p>
 
 <div class="table-responsive">
@@ -25,7 +25,7 @@
                     <td>{% if object.is_default %}<i class="fas fa-check-circle text-success mr-1"></i>{% else %}<i class="fas fa-times-circle text-danger mr-1"></i>{% endif %}</td>
                     <td>
                         <a class="btn btn-sm btn-danger m-0 {% if object.is_default %} disabled {% endif %}"
-                           href="{% url base_obj.interface_delete_viewname slug=base_obj.slug interface_pk=object.interface.pk %}">
+                           href="{% url base_obj.algorithm_interface_delete_viewname slug=base_obj.slug interface_pk=object.interface.pk %}">
                             <i class="fas fa-trash"></i>
                         </a>
                     </td>

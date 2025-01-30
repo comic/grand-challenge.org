@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}
-    Create Interface - {{ algorithm.title }} - {{ block.super }}
+    Create Interface - {{ base_obj.title }} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -9,10 +9,10 @@
         <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a>
         </li>
         <li class="breadcrumb-item"><a
-                href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}
+                href="{{ algorithm.get_absolute_url }}">{{ base_obj.title }}
         </a></li>
         <li class="breadcrumb-item"><a
-                href="{% url 'algorithms:interface-list' slug=algorithm.slug %}">Interfaces
+                href="{% url 'algorithms:interface-list' slug=base_obj.slug %}">Interfaces
         </a></li>
         <li class="breadcrumb-item active"
             aria-current="page">Create Interface
@@ -21,5 +21,5 @@
 {% endblock %}
 
 {% block content %}
-    {% include 'algorithms/partials/algorithminterface_form.html' with base_obj=algorithm %}
+    {% include 'algorithms/partials/algorithminterface_form.html' %}
 {% endblock %}

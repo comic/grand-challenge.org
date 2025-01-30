@@ -1293,6 +1293,8 @@ class AlgorithmInterfaceForPhaseCreate(
 class AlgorithmInterfacesForPhaseList(
     AlgorithmInterfaceForPhasePermissionMixin, ListView
 ):
+    model = PhaseAlgorithmInterface
+
     def get_queryset(self):
         qs = super().get_queryset()
         return qs.filter(phase=self.phase)
