@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import (
+    AccessMixin,
     PermissionRequiredMixin,
     UserPassesTestMixin,
 )
@@ -29,6 +30,7 @@ from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.algorithms.forms import AlgorithmForPhaseForm
 from grandchallenge.algorithms.models import Algorithm, Job
+from grandchallenge.algorithms.views import AlgorithmInterfaceCreateBase
 from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.views import ActiveChallengeRequiredMixin
 from grandchallenge.components.models import ImportStatusChoices
@@ -60,6 +62,7 @@ from grandchallenge.evaluation.models import (
     EvaluationGroundTruth,
     Method,
     Phase,
+    PhaseAlgorithmInterface,
     Submission,
 )
 from grandchallenge.evaluation.tasks import create_evaluation
@@ -1252,3 +1255,89 @@ class PhaseArchiveInfo(
             challenge=self.request.challenge,
             slug=self.kwargs["slug"],
         )
+
+
+class AlgorithmInterfaceForPhasePermissionMixin(AccessMixin):
+    @property
+    def phase(self):
+        return get_object_or_404(
+            Phase, challenge=self.request.challenge, slug=self.kwargs["slug"]
+        )
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_staff:
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            return self.handle_no_permission()
+
+
+class AlgorithmInterfaceForPhaseCreate(
+    AlgorithmInterfaceForPhasePermissionMixin, AlgorithmInterfaceCreateBase
+):
+    template_name = "evaluation/algorithminterface_for_phase_form.html"
+
+    @property
+    def base_obj(self):
+        return self.phase
+
+    def get_success_url(self):
+        return reverse(
+            "evaluation:interface-list",
+            kwargs={
+                "slug": self.phase.slug,
+                "challenge_short_name": self.request.challenge.short_name,
+            },
+        )
+
+
+class AlgorithmInterfacesForPhaseList(
+    AlgorithmInterfaceForPhasePermissionMixin, ListView
+):
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return qs.filter(phase=self.phase)
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update(
+            {
+                "phase": self.phase,
+            }
+        )
+        return context
+
+
+class AlgorithmInterfaceForPhaseDelete(
+    AlgorithmInterfaceForPhasePermissionMixin, DeleteView
+):
+    model = PhaseAlgorithmInterface
+
+    @property
+    def algorithm_interface(self):
+        return get_object_or_404(
+            klass=PhaseAlgorithmInterface,
+            phase=self.phase,
+            interface__pk=self.kwargs["interface_pk"],
+            is_default=False,
+        )
+
+    def get_object(self, queryset=None):
+        return self.algorithm_interface
+
+    def get_success_url(self):
+        return reverse(
+            "evaluation:interface-list",
+            kwargs={
+                "slug": self.phase.slug,
+                "challenge_short_name": self.request.challenge.short_name,
+            },
+        )
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update(
+            {
+                "phase": self.phase,
+            }
+        )
+        return context

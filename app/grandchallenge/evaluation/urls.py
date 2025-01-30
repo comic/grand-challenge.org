@@ -1,6 +1,9 @@
 from django.urls import path
 
 from grandchallenge.evaluation.views import (
+    AlgorithmInterfaceForPhaseCreate,
+    AlgorithmInterfaceForPhaseDelete,
+    AlgorithmInterfacesForPhaseList,
     CombinedLeaderboardCreate,
     CombinedLeaderboardDelete,
     CombinedLeaderboardDetail,
@@ -88,6 +91,21 @@ urlpatterns = [
         "<slug>/algorithms/create/",
         PhaseAlgorithmCreate.as_view(),
         name="phase-algorithm-create",
+    ),
+    path(
+        "<slug>/interfaces/",
+        AlgorithmInterfacesForPhaseList.as_view(),
+        name="interface-list",
+    ),
+    path(
+        "<slug>/interfaces/create/",
+        AlgorithmInterfaceForPhaseCreate.as_view(),
+        name="interface-create",
+    ),
+    path(
+        "<slug>/interfaces/<uuid:interface_pk>/delete/",
+        AlgorithmInterfaceForPhaseDelete.as_view(),
+        name="interface-delete",
     ),
     path(
         "<slug>/linked-archive/",

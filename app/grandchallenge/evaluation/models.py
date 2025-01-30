@@ -1221,6 +1221,24 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
     def algorithm_interface_through_model_manager(self):
         return PhaseAlgorithmInterface.objects.filter(phase=self)
 
+    @property
+    def algorithm_interface_create_url(self):
+        return reverse(
+            "evaluation:interface-create",
+            kwargs={"challenge_short_name": self.challenge, "slug": self.slug},
+        )
+
+    @property
+    def algorithm_interface_delete_viewname(self):
+        return "evaluation:interface-delete"
+
+    @property
+    def algorithm_interface_list_url(self):
+        return reverse(
+            "evaluation:interface-list",
+            kwargs={"challenge_short_name": self.challenge, "slug": self.slug},
+        )
+
 
 class PhaseUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(Phase, on_delete=models.CASCADE)

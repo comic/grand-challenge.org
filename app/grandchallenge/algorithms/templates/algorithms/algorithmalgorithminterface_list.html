@@ -1,6 +1,4 @@
 {% extends "base.html" %}
-{% load crispy_forms_tags %}
-{% load remove_whitespace %}
 
 {% block title %}
     Interfaces - {{ algorithm.title }} - {{ block.super }}
@@ -22,38 +20,5 @@
 {% endblock %}
 
 {% block content %}
-    <h2>Algorithm Interfaces for {{ algorithm }}</h2>
-
-     <p>
-        The following interfaces are configured for your algorithm:
-     </p>
-    <p><a class="btn btn-primary" href="{% url 'algorithms:interface-create' slug=algorithm.slug %}">Add new interface</a></p>
-
-    <div class="table-responsive">
-        <table class="table table-hover table-borderless">
-            <thead class="thead-light">
-                <th>Inputs</th>
-                <th>Outputs</th>
-                <th>Default</th>
-                <th>Delete</th>
-            </thead>
-            <tbody>
-             {% for object in object_list %}
-                 <tr>
-                    <td>{{ object.interface.inputs.all|oxford_comma }}</td>
-                    <td>{{ object.interface.outputs.all|oxford_comma }}</td>
-                    <td>{% if object.is_default %}<i class="fas fa-check-circle text-success mr-1"></i>{% else %}<i class="fas fa-times-circle text-danger mr-1"></i>{% endif %}</td>
-                    <td>
-                        <a class="btn btn-sm btn-danger m-0 {% if object.is_default %} disabled {% endif %}"
-                           href="{% url 'algorithms:interface-delete' slug=algorithm.slug interface_pk=object.interface.pk %}">
-                            <i class="fas fa-trash"></i>
-                        </a>
-                    </td>
-                 </tr>
-            {% empty %}
-                <tr><td colspan="100%" class="text-center">This algorithm does not have any interfaces defined yet.</td></tr>
-             {% endfor %}
-            </tbody>
-        </table>
-    </div>
+    {% include 'algorithms/partials/algorithminterface_list.html' with base_obj=algorithm %}
 {% endblock %}

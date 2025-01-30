@@ -1,0 +1,26 @@
+{% extends "pages/challenge_settings_base.html" %}
+{% load url %}
+{% load static %}
+
+{% block title %}
+    Delete interface - {{ phase.title }} - {% firstof challenge.title challenge.short_name %} - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item"><a
+                href="{% url 'evaluation:interface-list' challenge_short_name=challenge.short_name slug=phase.slug %}">Interfaces
+        </a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Delete interface</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    {% include 'algorithms/partials/algorithminterface_confirm_delete.html' with base_obj=phase %}
+{% endblock %}
