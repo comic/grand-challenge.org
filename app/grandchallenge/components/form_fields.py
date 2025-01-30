@@ -212,7 +212,6 @@ class FlexibleFileField(MultiValueField):
     def __init__(
         self,
         *args,
-        require_all_fields=False,
         file_search_queryset=None,
         upload_queryset=None,
         disabled=False,
@@ -225,7 +224,7 @@ class FlexibleFileField(MultiValueField):
         super().__init__(
             *args,
             fields=fields,
-            require_all_fields=require_all_fields,
+            require_all_fields=False,
             **kwargs,
         )
         if disabled:
