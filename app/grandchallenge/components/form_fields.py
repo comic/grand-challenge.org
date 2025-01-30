@@ -44,8 +44,8 @@ class InterfaceFormField(forms.Field):
         FlexibleImageWidget,
     }
 
-    def __init__(self, *, interface=None, user=None, form_data=None, **kwargs):
-        self.interface = interface
+    def __init__(self, *, instance=None, user=None, form_data=None, **kwargs):
+        self.instance = instance
         self.user = user
         self.form_data = form_data
         super().__init__(**kwargs)
@@ -54,26 +54,26 @@ class InterfaceFormField(forms.Field):
             "required": self.required,
             "disabled": self.disabled,
             "initial": self.get_initial_value(),
-            "label": interface.slug.title(),
+            "label": instance.slug.title(),
         }
 
-        if interface.is_image_kind:
+        if instance.is_image_kind:
             self._field = self.get_image_field()
-        elif interface.requires_file:
+        elif instance.requires_file:
             self._field = self.get_file_field()
-        elif interface.is_json_kind:
+        elif instance.is_json_kind:
             self._field = self.get_json_field()
         else:
-            raise RuntimeError(f"Unknown interface kind: {interface}")
+            raise RuntimeError(f"Unknown interface kind: {instance}")
 
     def get_initial_value(self):
         if (
             isinstance(self.initial, ComponentInterfaceValue)
             and self.initial.has_value
         ):
-            if self.interface.is_image_kind:
+            if self.instance.is_image_kind:
                 return self.initial.image.pk
-            elif self.interface.requires_file:
+            elif self.instance.requires_file:
                 return self.initial.pk
             else:
                 return self.initial.value
@@ -119,16 +119,16 @@ class InterfaceFormField(forms.Field):
         )
 
     def get_json_field(self):
-        field_type = self.interface.default_field
+        field_type = self.instance.default_field
         default_schema = {
             **INTERFACE_VALUE_SCHEMA,
-            "anyOf": [{"$ref": f"#/definitions/{self.interface.kind}"}],
+            "anyOf": [{"$ref": f"#/definitions/{self.instance.kind}"}],
         }
         if field_type == forms.JSONField:
             self.kwargs["widget"] = JSONEditorWidget(schema=default_schema)
         self.kwargs["validators"] = [
             JSONValidator(schema=default_schema),
-            JSONValidator(schema=self.interface.schema),
+            JSONValidator(schema=self.instance.schema),
         ]
         extra_help = ""
         return field_type(
@@ -136,7 +136,7 @@ class InterfaceFormField(forms.Field):
         )
 
     def get_file_field(self):
-        key = f"value_type_{INTERFACE_FORM_FIELD_PREFIX}{self.interface.slug}"
+        key = f"value_type_{INTERFACE_FORM_FIELD_PREFIX}{self.instance.slug}"
         if key in self.form_data.keys():
             value_type = self.form_data[key]
         elif self.civs_for_user_for_interface.exists():
@@ -145,14 +145,14 @@ class InterfaceFormField(forms.Field):
             value_type = "uuid"
 
         if value_type == "uuid":
-            extra_help = f"{file_upload_text} {self.interface.file_extension}"
+            extra_help = f"{file_upload_text} {self.instance.file_extension}"
             return ModelChoiceField(
                 queryset=get_objects_for_user(
                     self.user,
                     "uploads.change_userupload",
                 ).filter(status=UserUpload.StatusChoices.COMPLETED),
                 widget=UserUploadSingleWidget(
-                    allowed_file_types=self.interface.allowed_file_types,
+                    allowed_file_types=self.instance.allowed_file_types,
                 ),
                 help_text=_join_with_br(self.help_text, extra_help),
                 **self.kwargs,
@@ -161,7 +161,7 @@ class InterfaceFormField(forms.Field):
             file_upload_link = reverse(
                 "components:file-upload",
                 kwargs={
-                    "interface_slug": self.interface.slug,
+                    "interface_slug": self.instance.slug,
                 },
             )
 
@@ -176,7 +176,7 @@ class InterfaceFormField(forms.Field):
     @cached_property
     def civs_for_user_for_interface(self):
         return get_component_interface_values_for_user(user=self.user).filter(
-            interface=self.interface
+            interface=self.instance
         )
 
     @property

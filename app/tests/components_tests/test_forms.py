@@ -39,7 +39,7 @@ def test_interface_form_field_image_queryset_filter():
     upload1.status = UserUpload.StatusChoices.COMPLETED
     upload1.save()
     ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
-    field = InterfaceFormField(interface=ci, user=user)
+    field = InterfaceFormField(instance=ci, user=user)
     assert im1 in field.field.fields[0].queryset.all()
     assert im2 not in field.field.fields[0].queryset.all()
     assert upload1 in field.field.fields[1].queryset.all()

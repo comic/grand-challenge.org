@@ -158,7 +158,7 @@ class JobCreateForm(SaveFormInitMixin, Form):
                 initial = None
 
             self.fields[prefixed_interface_slug] = InterfaceFormField(
-                interface=inp,
+                instance=inp,
                 initial=initial if initial else inp.default_value,
                 user=self._user,
                 required=True,
