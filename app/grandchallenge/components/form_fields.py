@@ -75,7 +75,7 @@ class InterfaceFormField:
             "required": required,
             "disabled": disabled,
             "initial": self.get_initial_value(),
-            "label": instance.slug.title(),
+            "label": instance.title.title(),
         }
 
         if instance.is_image_kind:
