@@ -1409,7 +1409,7 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
             raise ValidationError("You must provide at least 1 input.")
 
         if (
-            self._base_obj.interface_through_model_manager.annotate(
+            self._base_obj.algorithm_interface_through_model_manager.annotate(
                 input_count=Count("interface__inputs", distinct=True),
                 relevant_input_count=Count(
                     "interface__inputs",
@@ -1463,16 +1463,18 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
         )
 
         if self.cleaned_data["set_as_default"]:
-            self._base_obj.interface_through_model_manager.update(
+            self._base_obj.algorithm_interface_through_model_manager.update(
                 is_default=False
             )
 
-        matched_rows = self._base_obj.interface_through_model_manager.filter(
-            interface=interface
-        ).update(is_default=self.cleaned_data["set_as_default"])
+        matched_rows = (
+            self._base_obj.algorithm_interface_through_model_manager.filter(
+                interface=interface
+            ).update(is_default=self.cleaned_data["set_as_default"])
+        )
 
         if matched_rows == 0:
-            self._base_obj.interface_manager.add(
+            self._base_obj.algorithm_interface_manager.add(
                 interface,
                 through_defaults={
                     "is_default": self.cleaned_data["set_as_default"]

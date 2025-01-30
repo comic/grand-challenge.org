@@ -528,11 +528,11 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
             return None
 
     @property
-    def interface_manager(self):
+    def algorithm_interface_manager(self):
         return self.interfaces
 
     @property
-    def interface_through_model_manager(self):
+    def algorithm_interface_through_model_manager(self):
         return AlgorithmAlgorithmInterface.objects.filter(algorithm=self)
 
     def is_editor(self, user):

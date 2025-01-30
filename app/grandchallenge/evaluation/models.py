@@ -1214,11 +1214,11 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             return None
 
     @property
-    def interface_manager(self):
+    def algorithm_interface_manager(self):
         return self.algorithm_interfaces
 
     @property
-    def interface_through_model_manager(self):
+    def algorithm_interface_through_model_manager(self):
         return PhaseAlgorithmInterface.objects.filter(phase=self)
 
 
