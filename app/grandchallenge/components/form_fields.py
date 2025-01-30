@@ -40,7 +40,7 @@ def _join_with_br(a, b):
 INTERFACE_FORM_FIELD_PREFIX = "__INTERFACE_FIELD__"
 
 
-class InterfaceFormField:
+class InterfaceFormField(forms.Field):
     _possible_widgets = {
         UserUploadMultipleWidget,
         UserUploadSingleWidget,
@@ -48,28 +48,15 @@ class InterfaceFormField:
         FlexibleImageWidget,
     }
 
-    def __init__(
-        self,
-        *,
-        instance=None,
-        initial=None,
-        user=None,
-        required=None,
-        disabled=False,
-        help_text="",
-        form_data=None,
-    ):
+    def __init__(self, *, instance=None, user=None, form_data=None, **kwargs):
         self.instance = instance
-        self.initial = initial
         self.user = user
-        self.required = required
-        self.disabled = disabled
-        self.help_text = help_text
         self.form_data = form_data
+        super().__init__(**kwargs)
 
         self.kwargs = {
-            "required": required,
-            "disabled": disabled,
+            "required": self.required,
+            "disabled": self.disabled,
             "initial": self.get_initial_value(),
             "label": instance.title.title(),
         }
@@ -155,13 +142,13 @@ class InterfaceFormField:
     def get_file_field(self):
         key = f"value_type_{INTERFACE_FORM_FIELD_PREFIX}{self.instance.slug}"
         if key in self.form_data.keys():
-            type = self.form_data[key]
+            value_type = self.form_data[key]
         elif self.civs_for_user_for_interface.exists():
-            type = "civ"
+            value_type = "civ"
         else:
-            type = "uuid"
+            value_type = "uuid"
 
-        if type == "uuid":
+        if value_type == "uuid":
             extra_help = f"{file_upload_text} {self.instance.file_extension}"
             return ModelChoiceField(
                 queryset=get_objects_for_user(
@@ -174,7 +161,7 @@ class InterfaceFormField:
                 help_text=_join_with_br(self.help_text, extra_help),
                 **self.kwargs,
             )
-        elif type == "civ":
+        elif value_type == "civ":
             file_upload_link = reverse(
                 "components:file-upload",
                 kwargs={
