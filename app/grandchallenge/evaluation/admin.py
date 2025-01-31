@@ -219,7 +219,7 @@ class PhaseAlgorithmInterfaceAdmin(GuardedModelAdmin):
         "interface",
         "phase",
     )
-    list_filter = "phase"
+    list_filter = ("phase",)
 
     def has_add_permission(self, request, obj=None):
         # through table entries should only be created through the UI
