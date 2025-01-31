@@ -683,15 +683,13 @@ class ComponentInterface(OverlaySegmentsMixin):
 
     def validate_against_schema(self, *, value):
         """Validates values against both default and custom schemas"""
-        JSONValidator(
-            schema={
-                **INTERFACE_VALUE_SCHEMA,
-                "anyOf": [{"$ref": f"#/definitions/{self.kind}"}],
-            }
-        )(value=value)
-
+        schema = {
+            **INTERFACE_VALUE_SCHEMA,
+            "allOf": [{"$ref": f"#/definitions/{self.kind}"}],
+        }
         if self.schema:
-            JSONValidator(schema=self.schema)(value=value)
+            schema["allOf"].append(self.schema)
+        JSONValidator(schema=schema)(value=value)
 
     @cached_property
     def value_required(self):

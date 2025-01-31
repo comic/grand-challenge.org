@@ -8,7 +8,10 @@ from grandchallenge.cases.widgets import (
     FlexibleImageWidget,
 )
 from grandchallenge.components.models import ComponentInterfaceValue
-from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
+from grandchallenge.components.schemas import (
+    INTERFACE_VALUE_SCHEMA,
+    NULL_SCHEMA,
+)
 from grandchallenge.components.widgets import SelectUploadWidget
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.validators import JSONValidator
@@ -124,15 +127,27 @@ class InterfaceFormField(forms.Field):
 
     def get_json_field(self):
         field_type = self.instance.default_field
-        default_schema = {
-            **INTERFACE_VALUE_SCHEMA,
-            "anyOf": [{"$ref": f"#/definitions/{self.instance.kind}"}],
-        }
+        schema = {**INTERFACE_VALUE_SCHEMA, "allOf": []}
+
+        if self.instance.kind != self.instance.Kind.ANY:
+            schema["allOf"].append(
+                {"$ref": f"#/definitions/{self.instance.kind}"}
+            )
+        if self.instance.schema:  # Add custom schema
+            schema["allOf"].append(self.instance.schema)
+
+        if not self.required:
+            # Allow for null values
+            schema["oneOf"] = [
+                NULL_SCHEMA,
+                {"allOf": schema["allOf"]},
+            ]
+            del schema["allOf"]
+
         if field_type == forms.JSONField:
-            self.kwargs["widget"] = JSONEditorWidget(schema=default_schema)
+            self.kwargs["widget"] = JSONEditorWidget(schema=schema)
         self.kwargs["validators"] = [
-            JSONValidator(schema=default_schema),
-            JSONValidator(schema=self.instance.schema),
+            JSONValidator(schema=schema),
         ]
         extra_help = ""
         return field_type(

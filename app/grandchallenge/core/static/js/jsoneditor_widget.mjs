@@ -6,6 +6,11 @@ function initialize_jsoneditor_widget(jsoneditorWidgetID) {
         `jsoneditor_${jsoneditorWidgetID}`,
     );
     const jsoneditorWidget = document.getElementById(jsoneditorWidgetID);
+    const feedback = document.getElementById(
+        `jsoneditor_feedback_${jsoneditorWidgetID}`,
+    );
+
+    let validityErrors = false;
 
     if (jsoneditorWidget.disabled) {
         jsoneditorWidget.classList.remove("d-none");
@@ -13,21 +18,19 @@ function initialize_jsoneditor_widget(jsoneditorWidgetID) {
         const options = {
             mode: "tree",
             modes: ["code", "tree"],
+            allowSchemaSuggestions: true,
+            showErrorTable: ["code"],
             onChangeText: jsonString => {
-                const widget = document.getElementById(jsoneditorWidgetID);
-                // There is only a text area if in "code" mode
-                // That also happens to be the only mode that can contain
-                // faulty JSON
-                const aceTextArea = container.querySelector("textarea");
-                try {
-                    JSON.parse(jsonString);
-                    widget.value = jsonString;
-                    aceTextArea?.setCustomValidity("");
-                } catch (err) {
-                    aceTextArea?.setCustomValidity("JSON is invalid");
-                }
+                jsoneditorWidget.value = jsonString;
+            },
+            onValidationError: errors => {
+                validityErrors = errors.length > 0;
             },
         };
+
+        if (schema !== undefined) {
+            options.schema = schema;
+        }
 
         const editor = new JSONEditor(container, options);
 
@@ -47,9 +50,24 @@ function initialize_jsoneditor_widget(jsoneditorWidgetID) {
             editor.expandAll();
         }
 
-        if (schema !== undefined) {
-            editor.setSchema(schema);
+        function handleSubmitEvent(e) {
+            if (validityErrors) {
+                e.preventDefault();
+                feedback.innerHTML = "<strong>Invalid JSON</strong>";
+                container.scrollIntoView();
+                editor.focus();
+            } else {
+                feedback.innerText = "";
+            }
         }
+
+        jsoneditorWidget.form.addEventListener("submit", handleSubmitEvent);
+        jsoneditorWidget.form.addEventListener("htmx:beforeRequest", e => {
+            // Event might not be fired by form, so check.
+            if (e.srcElement === jsoneditorWidget.form && validityErrors) {
+                e.preventDefault(); // Prevent htmx request
+            }
+        });
     }
 }
 
