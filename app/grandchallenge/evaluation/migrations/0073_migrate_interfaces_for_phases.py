@@ -31,9 +31,7 @@ def add_algorithm_interfaces_for_phases(apps, _schema_editor):
             io.inputs.set(inputs)
             io.outputs.set(outputs)
 
-        phase.algorithm_interfaces.add(
-            io, through_defaults={"is_default": True}
-        )
+        phase.algorithm_interfaces.add(io)
 
 
 class Migration(migrations.Migration):
