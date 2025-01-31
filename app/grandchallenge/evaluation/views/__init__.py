@@ -1324,7 +1324,6 @@ class AlgorithmInterfaceForPhaseDelete(
             klass=PhaseAlgorithmInterface,
             phase=self.phase,
             interface__pk=self.kwargs["interface_pk"],
-            is_default=False,
         )
 
     def get_object(self, queryset=None):

@@ -1830,15 +1830,12 @@ def test_algorithm_interface_for_phase_delete_permission(client):
     algorithm_phase = PhaseFactory(
         submission_kind=SubmissionKindChoices.ALGORITHM
     )
-    int1, int2 = AlgorithmInterfaceFactory.create_batch(2)
+    int1 = AlgorithmInterfaceFactory()
 
     for phase in [external_phase, prediction_phase, algorithm_phase]:
         phase.challenge.add_admin(admin)
         phase.challenge.add_participant(participant)
-        phase.algorithm_interfaces.add(
-            int1, through_defaults={"is_default": True}
-        )
-        phase.algorithm_interfaces.add(int2)
+        phase.algorithm_interfaces.add(int1)
 
     for us, status1, status2 in [
         [user, 403, 403],
@@ -1851,7 +1848,7 @@ def test_algorithm_interface_for_phase_delete_permission(client):
             client=client,
             reverse_kwargs={
                 "slug": external_phase.slug,
-                "interface_pk": int2.pk,
+                "interface_pk": int1.pk,
                 "challenge_short_name": external_phase.challenge.short_name,
             },
             user=us,
@@ -1863,7 +1860,7 @@ def test_algorithm_interface_for_phase_delete_permission(client):
             client=client,
             reverse_kwargs={
                 "slug": prediction_phase.slug,
-                "interface_pk": int2.pk,
+                "interface_pk": int1.pk,
                 "challenge_short_name": prediction_phase.challenge.short_name,
             },
             user=us,
@@ -1875,25 +1872,12 @@ def test_algorithm_interface_for_phase_delete_permission(client):
             client=client,
             reverse_kwargs={
                 "slug": algorithm_phase.slug,
-                "interface_pk": int2.pk,
-                "challenge_short_name": algorithm_phase.challenge.short_name,
-            },
-            user=us,
-        )
-        assert response.status_code == status2
-
-        # default interface cannot be deleted
-        response = get_view_for_user(
-            viewname="evaluation:interface-delete",
-            client=client,
-            reverse_kwargs={
-                "slug": algorithm_phase.slug,
                 "interface_pk": int1.pk,
                 "challenge_short_name": algorithm_phase.challenge.short_name,
             },
             user=us,
         )
-        assert response.status_code == status1
+        assert response.status_code == status2
 
 
 @pytest.mark.django_db
@@ -1915,7 +1899,6 @@ def test_algorithm_interface_for_phase_create(client):
         data={
             "inputs": [ci_1.pk],
             "outputs": [ci_2.pk],
-            "set_as_default": True,
         },
         user=user,
     )
@@ -1930,7 +1913,6 @@ def test_algorithm_interface_for_phase_create(client):
     io_through = PhaseAlgorithmInterface.objects.get()
     assert io_through.phase == phase
     assert io_through.interface == io
-    assert io_through.is_default
 
 
 @pytest.mark.django_db
@@ -1970,7 +1952,7 @@ def test_algorithm_interface_delete(client):
     phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
 
     int1, int2 = AlgorithmInterfaceFactory.create_batch(2)
-    phase.algorithm_interfaces.add(int1, through_defaults={"is_default": True})
+    phase.algorithm_interfaces.add(int1)
     phase.algorithm_interfaces.add(int2)
 
     response = get_view_for_user(
