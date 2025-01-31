@@ -84,8 +84,7 @@ class FlexibleImageWidget(MultiWidget):
                 value = data[f"WidgetChoice-{name}"]
             except KeyError:
                 value = None
-        if value:
-            return self.decompress(value)
+        return self.decompress(value)
 
 
 class FlexibleImageField(MultiValueField):

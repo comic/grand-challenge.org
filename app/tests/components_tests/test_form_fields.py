@@ -38,7 +38,7 @@ def test_flexible_file_field_validation_empty_data_and_missing_values():
     parsed_value_for_empty_data = field.widget.value_from_datadict(
         data={}, name=ci.slug, files={}
     )
-    assert not parsed_value_for_empty_data
+    assert parsed_value_for_empty_data == [None, None]
 
     decompressed_value_for_missing_value = field.widget.decompress(value=None)
     assert decompressed_value_for_missing_value == [None, None]
