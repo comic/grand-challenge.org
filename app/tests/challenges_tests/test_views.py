@@ -570,9 +570,15 @@ def test_onboarding_task_list_view_permissions(client):
         ), f"{usr} should be able to view the task list"
         assert len(response.context_data["object_list"]) == 0  # Sanity
 
-    task = OnboardingTaskFactory(
+    org_task = OnboardingTaskFactory(
         challenge=ch,
         title="A fairly unique onboarding task title, not seen anywhere else",
+        responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+    )
+    support_task = OnboardingTaskFactory(
+        challenge=ch,
+        title="A support task title",
+        responsible_party=OnboardingTask.ResponsiblePartyChoices.SUPPORT,
     )
 
     for usr, num_questions in ((participant, 0), (user, 0), (admin, 1)):
@@ -590,7 +596,9 @@ def test_onboarding_task_list_view_permissions(client):
         ), f"{usr} should see the correct number of questions"
 
         if num_questions:
-            assert task.title in response.content
+            page_content = response.content.decode()
+            assert support_task.title not in page_content
+            assert org_task.title in page_content
 
 
 @pytest.mark.django_db
