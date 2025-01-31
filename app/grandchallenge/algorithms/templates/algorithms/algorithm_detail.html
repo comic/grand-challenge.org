@@ -224,32 +224,27 @@
                 </div>
             {% endif %}
 
-            <div class="row mb-2">
-                <div class="col-3 font-weight-bold">Inputs:</div>
-                <div class="col-9">
-                    <ul class="pl-3 pb-0 mb-0">
-                        {% for input in object.inputs.all %}
-                            <li>{{ input.title }}&nbsp;{% if input.description %}
-                                <span class="text-muted"> ({{ input.description }})</span>{% endif %}</li>
+                <h3 class="mt-5">Interfaces</h3>
+                <p>This algorithm implements the following input-output combinations: </p>
+                <table class="table table-borderless table-hover table-sm">
+                    <thead class="thead-light">
+                    <tr>
+                        <th>Inputs</th>
+                        <th>Outputs</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        {% for interface in object.interfaces.all %}
+                            <tr>
+                                <td>{{ interface.inputs.all|oxford_comma }}</td>
+                                <td>{{ interface.outputs.all|oxford_comma }}</td>
+                            </tr>
                         {% endfor %}
-                    </ul>
-                </div>
-            </div>
-
-            <div class="row mb-2">
-                <div class="col-3 font-weight-bold">Outputs:</div>
-                <div class="col-9">
-                    <ul class="pl-3 pb-0 mb-0">
-                        {% for output in object.outputs.all %}
-                            <li>{{ output.title }}&nbsp;{% if output.description %}
-                                <span class="text-muted"> ({{ output.description }})</span>{% endif %}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
+                    </tbody>
+                </table>
 
             {% if best_evaluation_per_phase %}
-                <h3>Challenge Performance</h3>
+                <h3 class="mt-5">Challenge Performance</h3>
 
                 <table class="table table-borderless table-hover table-sm">
                     <thead class="thead-light">
@@ -275,7 +270,7 @@
                 </table>
             {% endif %}
 
-            <h3>Model Facts</h3>
+            <h3 class="mt-5">Model Facts</h3>
 
             <h4 class="mt-5 mb-3">Summary</h4>
             {% if object.summary %}

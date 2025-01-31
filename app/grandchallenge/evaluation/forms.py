@@ -19,7 +19,7 @@ from django.forms import (
     ModelForm,
     ModelMultipleChoiceField,
 )
-from django.utils.html import format_html
+from django.utils.html import format_html, format_html_join
 from django.utils.text import format_lazy
 
 from grandchallenge.algorithms.forms import UserAlgorithmsForPhaseMixin
@@ -423,17 +423,35 @@ class SubmissionForm(
             self.fields["algorithm_image"].required = False
             self.fields["algorithm_model"].widget = HiddenInput()
 
-            self._algorithm_inputs = self._phase.algorithm_inputs.all()
-            self._algorithm_outputs = self._phase.algorithm_outputs.all()
-            self.fields["algorithm"].help_text = format_lazy(
-                "Select one of your algorithms to submit as a solution to this "
-                "challenge. The algorithms need to work with the following inputs: {} "
-                "and the following outputs: {}. If you have not created your "
+            self._algorithm_interfaces = self._phase.algorithm_interfaces.all()
+
+            interface_table_rows = format_html_join(
+                "",
+                "<tr><td>Interface {}</td><td>{}</td><td>{}</td></tr>",
+                (
+                    (
+                        n,
+                        oxford_comma(interface.inputs.all()),
+                        oxford_comma(interface.outputs.all()),
+                    )
+                    for n, interface in enumerate(
+                        phase.algorithm_interfaces.all(), start=1
+                    )
+                ),
+            )
+            interface_info_table = format_html(
+                "<table class='table'><thead><tr><th>Interface</th><th>Inputs</th><th>Outputs</th></tr></thead><tbody>{content}</tbody></table>",
+                content=interface_table_rows,
+            )
+
+            self.fields["algorithm"].help_text = format_html(
+                "<p>Select one of your algorithms to submit as a solution to this "
+                "challenge. The algorithms need to work with the following interfaces (i.e. input and output combinations):</p> {interfaces} "
+                "<p>If you have not created your "
                 "algorithm yet you can "
-                "do so <a href={}>on this page</a>.",
-                oxford_comma(self._algorithm_inputs),
-                oxford_comma(self._algorithm_outputs),
-                reverse(
+                "do so <a href={create_link}>on this page</a>.</p>",
+                interfaces=interface_info_table,
+                create_link=reverse(
                     "evaluation:phase-algorithm-create",
                     kwargs={
                         "slug": phase.slug,
