@@ -572,7 +572,7 @@ class FileWidgetSelectView(LoginRequiredMixin, View):
 
 class FileSearchResultView(LoginRequiredMixin, ListView):
     template_name = "components/file_search_result_select.html"
-    search_fields = ["pk", "name"]
+    search_fields = ["pk", "file"]
     model = ComponentInterfaceValue
     paginate_by = 50
 
@@ -596,7 +596,7 @@ class FileSearchResultView(LoginRequiredMixin, ListView):
                 [Q(**{f"{f}__icontains": query}) for f in self.search_fields],
                 Q(),
             )
-            qs = qs.filter(q).order_by("name")
+            qs = qs.filter(q).order_by("file")
         self.object_list = qs
         context = self.get_context_data(**kwargs)
         context["interface"] = interface
