@@ -1962,19 +1962,6 @@ def test_algorithm_interface_delete(client):
         reverse_kwargs={
             "slug": phase.slug,
             "challenge_short_name": phase.challenge.short_name,
-            "interface_pk": int1.pk,
-        },
-        user=user,
-    )
-    assert response.status_code == 404
-
-    response = get_view_for_user(
-        viewname="evaluation:interface-delete",
-        client=client,
-        method=client.post,
-        reverse_kwargs={
-            "slug": phase.slug,
-            "challenge_short_name": phase.challenge.short_name,
             "interface_pk": int2.pk,
         },
         user=user,

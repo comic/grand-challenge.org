@@ -41,7 +41,7 @@
                     <li class="nav-item pl-4">
                         <a href="{% url 'evaluation:interface-list' slug=phase.slug %}"
                            class="nav-link py-1 pl-3 {% if request.resolver_match.view_name in 'evaluation:interface-list,evaluation:interface-create,evaluation:interface-delete' and request.resolver_match.kwargs.slug == phase.slug %}active{% endif %}">
-                            <i class="fas fa-cog fa-fw"></i> Algorithm interfaces
+                            <i class="fas fa-sliders-h fa-fw"></i> Algorithm Interfaces
                         </a>
                     </li>
                 {% endif %}
