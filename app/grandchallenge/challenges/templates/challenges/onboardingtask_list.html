@@ -28,7 +28,9 @@
     <h2>Onboarding Tasks for {{ challenge.short_name }}</h2>
 
     {% if all_tasks_are_complete %}
-        <h4>All the onboarding tasks are complete!</h4>
+    <p>
+        <h4>All the onboarding tasks are complete.</h4>
+    </p>
     {% endif %}
 
     <div class="table-responsive">
@@ -45,7 +47,6 @@
             <tbody>
                 {% for task in object_list %}
 
-                {% get_obj_perms request.user for task as "task_perms" checker %}
                 <tr>
 
                     <td data-order="{{ task.complete|yesno:'1,0' }}" class="align-middle text-center">
@@ -80,7 +81,6 @@
 
                     </td>
                     <td class="align-middle text-nowrap">
-                     {% if "complete_onboardingtask" in task_perms %}
                       <form method="post"
                             action="{% url 'challenge-onboarding-task-complete' challenge_short_name=challenge.short_name pk=task.pk %}">
                             {% csrf_token %}
@@ -100,9 +100,6 @@
                                 </button>
                             {% endif %}
                         </form>
-                        {% else %}
-                            -
-                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}

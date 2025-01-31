@@ -27,7 +27,6 @@ from grandchallenge.challenges.models import (
 from grandchallenge.challenges.serializers import PublicChallengeSerializer
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.guardian import (
-    ObjectPermissionCheckerMixin,
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
 )
@@ -298,7 +297,6 @@ class ChallengeViewSet(ReadOnlyModelViewSet):
 
 class OnboardingTaskList(
     LoginRequiredMixin,
-    ObjectPermissionCheckerMixin,
     PermissionListMixin,
     ListView,
 ):
@@ -314,7 +312,6 @@ class OnboardingTaskList(
         object_list = object_list or self.object_list
 
         if context_objects := context["object_list"]:
-            self.permission_checker.prefetch_perms(context_objects)
             context["all_tasks_are_complete"] = all(
                 object.complete for object in context_objects
             )
@@ -323,10 +320,7 @@ class OnboardingTaskList(
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        queryset = queryset.filter(
-            challenge=self.request.challenge,
-            responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
-        )
+        queryset = queryset.filter(challenge=self.request.challenge)
 
         # Pe-ordering the queryset ensures nothing jumps around when the datatable initializes
         queryset = queryset.order_by("complete", "deadline")
