@@ -125,30 +125,34 @@ class InterfaceFormField(forms.Field):
             **self.kwargs,
         )
 
-    def get_json_field(self):
-        field_type = self.instance.default_field
-        schema = {**INTERFACE_VALUE_SCHEMA, "allOf": []}
+    def _gen_json_schema(self):
+        schema = {**INTERFACE_VALUE_SCHEMA}
 
-        if self.instance.kind != self.instance.Kind.ANY:
-            schema["allOf"].append(
-                {"$ref": f"#/definitions/{self.instance.kind}"}
-            )
-        if self.instance.schema:  # Add custom schema
-            schema["allOf"].append(self.instance.schema)
+        all_of = [{"$ref": f"#/definitions/{self.instance.kind}"}]
 
-        if not self.required:
-            # Allow for null values
+        if self.instance.schema:
+            all_of.append(self.instance.schema)
+
+        if self.required:
+            schema["allOf"] = all_of
+        else:
             schema["oneOf"] = [
                 NULL_SCHEMA,
-                {"allOf": schema["allOf"]},
+                {
+                    "allOf": all_of,
+                },
             ]
-            del schema["allOf"]
+
+        return schema
+
+    def get_json_field(self):
+        field_type = self.instance.default_field
+
+        schema = self._gen_json_schema()
 
         if field_type == forms.JSONField:
             self.kwargs["widget"] = JSONEditorWidget(schema=schema)
-        self.kwargs["validators"] = [
-            JSONValidator(schema=schema),
-        ]
+        self.kwargs["validators"] = [JSONValidator(schema=schema)]
         extra_help = ""
         return field_type(
             help_text=_join_with_br(self.help_text, extra_help), **self.kwargs
