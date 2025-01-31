@@ -81,3 +81,42 @@ def test_flexible_file_widget(client):
     assert format_html(
         '<input type="hidden" name="{}" value="{}">', ci.slug, user_upload.pk
     ) in str(response5.content)
+
+    civ_pk = civ.pk
+    civ.delete()
+    response6 = get_view_for_user(
+        viewname="components:select-file-widget",
+        client=client,
+        user=user,
+        data={
+            f"widget-choice-{ci.slug}": FileWidgetChoices.FILE_SELECTED.name,
+            "prefixed-interface-slug": ci.slug,
+            "current-value": civ_pk,
+        },
+    )
+    assert response6.status_code == 404
+
+    response7 = get_view_for_user(
+        viewname="components:select-file-widget",
+        client=client,
+        user=user,
+        data={
+            f"widget-choice-{ci.slug}": FileWidgetChoices.FILE_SEARCH.name
+            + "foobar",
+            "prefixed-interface-slug": ci.slug,
+        },
+    )
+    assert response7.status_code == 404
+
+    ci_slug = ci.slug
+    ci.delete()
+    response8 = get_view_for_user(
+        viewname="components:select-file-widget",
+        client=client,
+        user=user,
+        data={
+            f"widget-choice-{ci_slug}": FileWidgetChoices.FILE_SEARCH.name,
+            "prefixed-interface-slug": ci_slug,
+        },
+    )
+    assert response8.status_code == 404
