@@ -195,6 +195,7 @@ def test_onboarding_tasks_registering_completion_time():
     assert fresh_task.created == fresh_task.completed_at
 
 
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     "deadline, mock_now, expected_is_overdue, expected_is_overdue_soon",
     [
@@ -225,13 +226,13 @@ def test_onboarding_tasks_registering_completion_time():
     "grandchallenge.challenges.models.settings.CHALLENGE_ONBOARDING_TASKS_OVERDUE_SOON_CUTOFF",
     new=timedelta(hours=1),
 )
-def test_onboarding_tasks_due_properties(
+def test_onboarding_tasks_due_annotations(
     deadline, mock_now, expected_is_overdue, expected_is_overdue_soon, mocker
 ):
-    task = OnboardingTask(deadline=deadline)
-
+    OnboardingTaskFactory(deadline=deadline)
     with mocker.patch(
         "grandchallenge.challenges.models.now", return_value=mock_now
     ):
+        task = OnboardingTask.objects.get()
         assert task.is_overdue == expected_is_overdue
         assert task.is_overdue_soon == expected_is_overdue_soon

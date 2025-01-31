@@ -17,7 +17,18 @@ from django.core.validators import (
     validate_slug,
 )
 from django.db import models
-from django.db.models import ExpressionWrapper, F, OuterRef, Q, Subquery, Sum
+from django.db.models import (
+    BooleanField,
+    Case,
+    ExpressionWrapper,
+    F,
+    OuterRef,
+    Q,
+    Subquery,
+    Sum,
+    Value,
+    When,
+)
 from django.db.models.signals import post_delete, pre_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
@@ -1410,8 +1421,43 @@ class TaskResponsiblePartyChoices(models.TextChoices):
     CHALLENGE_ORGANIZERS = "ORG", "Challenge Organizers"
 
 
+class OnboardingTaskManager(models.Manager):
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+
+        _now = now()
+        soon_cutoff = (
+            _now + settings.CHALLENGE_ONBOARDING_TASKS_OVERDUE_SOON_CUTOFF
+        )
+
+        qs = qs.annotate(
+            is_overdue=Case(
+                When(complete=False, deadline__lt=_now, then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField(),
+            )
+        )
+        qs = qs.annotate(
+            is_overdue_soon=Case(
+                When(
+                    complete=False,
+                    is_overdue=False,
+                    deadline__lt=soon_cutoff,
+                    then=Value(True),
+                ),
+                default=Value(False),
+                output_field=BooleanField(),
+            ),
+        )
+
+        return qs
+
+
 class OnboardingTask(FieldChangeMixin, UUIDModel):
     ResponsiblePartyChoices = TaskResponsiblePartyChoices
+
+    objects = OnboardingTaskManager()
 
     class Meta:
         permissions = [
@@ -1451,27 +1497,6 @@ class OnboardingTask(FieldChangeMixin, UUIDModel):
     deadline = models.DateTimeField(
         help_text="Deadline for this task.",
     )
-
-    @cached_property
-    def deadline_delta(self):
-        return self.deadline - now()
-
-    @property
-    def is_overdue(self):
-        return not self.complete and self.deadline_delta <= datetime.timedelta(
-            0
-        )
-
-    @property
-    def is_overdue_soon(self):
-        return all(
-            (
-                not self.is_overdue,
-                not self.complete
-                and self.deadline_delta
-                < settings.CHALLENGE_ONBOARDING_TASKS_OVERDUE_SOON_CUTOFF,
-            )
-        )
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
