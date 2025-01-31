@@ -78,14 +78,6 @@ def test_group_deletion_reverse(group):
 
 
 @pytest.mark.django_db
-def test_no_default_interfaces_created():
-    a = AlgorithmFactory()
-
-    assert {i.kind for i in a.inputs.all()} == set()
-    assert {o.kind for o in a.outputs.all()} == set()
-
-
-@pytest.mark.django_db
 def test_rendered_result_text():
     def create_result(jb, result: dict):
         interface = ComponentInterface.objects.get(slug="results-json-file")
@@ -658,7 +650,7 @@ class TestGetJobsWithSameInputs:
         j = AlgorithmJobFactory(
             algorithm_image=alg.active_image,
             time_limit=10,
-            algorithm_interface=alg.default_interface,
+            algorithm_interface=alg.interfaces.first(),
         )
         j.inputs.set(civs)
 
@@ -680,7 +672,7 @@ class TestGetJobsWithSameInputs:
             algorithm_image=AlgorithmImageFactory(),
             algorithm_model=alg.active_model,
             time_limit=10,
-            algorithm_interface=alg.default_interface,
+            algorithm_interface=alg.interfaces.first(),
         )
         j.inputs.set(civs)
         jobs = Job.objects.get_jobs_with_same_inputs(
@@ -701,7 +693,7 @@ class TestGetJobsWithSameInputs:
             algorithm_model=alg.active_model,
             algorithm_image=alg.active_image,
             time_limit=10,
-            algorithm_interface=alg.default_interface,
+            algorithm_interface=alg.interfaces.first(),
         )
         j.inputs.set(civs)
         jobs = Job.objects.get_jobs_with_same_inputs(
@@ -723,7 +715,7 @@ class TestGetJobsWithSameInputs:
             algorithm_model=AlgorithmModelFactory(),
             algorithm_image=AlgorithmImageFactory(),
             time_limit=10,
-            algorithm_interface=alg.default_interface,
+            algorithm_interface=alg.interfaces.first(),
         )
         j.inputs.set(civs)
         jobs = Job.objects.get_jobs_with_same_inputs(
@@ -744,7 +736,7 @@ class TestGetJobsWithSameInputs:
             algorithm_model=alg.active_model,
             algorithm_image=alg.active_image,
             time_limit=10,
-            algorithm_interface=alg.default_interface,
+            algorithm_interface=alg.interfaces.first(),
         )
         j.inputs.set(civs)
         jobs = Job.objects.get_jobs_with_same_inputs(
@@ -764,7 +756,7 @@ class TestGetJobsWithSameInputs:
         j = AlgorithmJobFactory(
             algorithm_image=alg.active_image,
             time_limit=10,
-            algorithm_interface=alg.default_interface,
+            algorithm_interface=alg.interfaces.first(),
         )
         j.inputs.set(civs)
         jobs = Job.objects.get_jobs_with_same_inputs(
@@ -785,7 +777,7 @@ class TestGetJobsWithSameInputs:
         j = AlgorithmJobFactory(
             algorithm_image=alg.active_image,
             time_limit=10,
-            algorithm_interface=alg.default_interface,
+            algorithm_interface=alg.interfaces.first(),
         )
         j.inputs.set(
             [
@@ -810,7 +802,7 @@ class TestGetJobsWithSameInputs:
         j = AlgorithmJobFactory(
             algorithm_image=alg.active_image,
             time_limit=10,
-            algorithm_interface=alg.default_interface,
+            algorithm_interface=alg.interfaces.first(),
         )
         j.inputs.set(
             [
@@ -821,7 +813,7 @@ class TestGetJobsWithSameInputs:
         j2 = AlgorithmJobFactory(
             algorithm_image=alg.active_image,
             time_limit=10,
-            algorithm_interface=alg.default_interface,
+            algorithm_interface=alg.interfaces.first(),
         )
         j2.inputs.set(
             [
@@ -1038,11 +1030,11 @@ def test_inputs_complete():
     interface = AlgorithmInterfaceFactory(
         inputs=[ci1, ci2, ci3], outputs=[ComponentInterfaceFactory()]
     )
-    alg.interfaces.add(interface, through_defaults={"is_default": True})
+    alg.interfaces.add(interface)
     job = AlgorithmJobFactory(
         algorithm_image__algorithm=alg,
         time_limit=10,
-        algorithm_interface=alg.default_interface,
+        algorithm_interface=alg.interfaces.first(),
     )
     civ_with_value_1 = ComponentInterfaceValueFactory(
         interface=ci1, value="Foo"
@@ -1462,29 +1454,16 @@ def test_algorithmalgorithminterface_unique_constraints():
     interface1, interface2 = AlgorithmInterfaceFactory.create_batch(2)
     algorithm = AlgorithmFactory()
 
-    io = AlgorithmAlgorithmInterface.objects.create(
-        interface=interface1, algorithm=algorithm, is_default=True
+    AlgorithmAlgorithmInterface.objects.create(
+        interface=interface1, algorithm=algorithm
     )
-
-    # cannot add a second default interface to an algorithm
-    with pytest.raises(IntegrityError):
-        with transaction.atomic():
-            AlgorithmAlgorithmInterface.objects.create(
-                interface=interface2, algorithm=algorithm, is_default=True
-            )
 
     # cannot add a second time the same interface for the same algorithm
     with pytest.raises(IntegrityError):
         with transaction.atomic():
             AlgorithmAlgorithmInterface.objects.create(
-                interface=interface1, algorithm=algorithm, is_default=False
+                interface=interface1, algorithm=algorithm
             )
-
-    # but you can update an existing entry from default to non-default
-    io.is_default = False
-    io.save()
-    assert AlgorithmAlgorithmInterface.objects.count() == 1
-    assert not AlgorithmAlgorithmInterface.objects.get().is_default
 
 
 @pytest.mark.parametrize(
@@ -1557,17 +1536,3 @@ def test_algorithminterface_create():
     io = AlgorithmInterface.objects.create(inputs=inputs, outputs=outputs)
     assert list(io.inputs.all()) == inputs
     assert list(io.outputs.all()) == outputs
-
-
-@pytest.mark.django_db
-def test_has_default_interface():
-    alg1, alg2, alg3 = AlgorithmFactory.create_batch(3)
-    io1, io2 = AlgorithmInterfaceFactory.create_batch(2)
-
-    alg1.interfaces.add(io1, through_defaults={"is_default": True})
-    alg1.interfaces.add(io2)
-    alg2.interfaces.add(io1)
-
-    assert alg1.default_interface == io1
-    assert not alg2.default_interface
-    assert not alg3.default_interface

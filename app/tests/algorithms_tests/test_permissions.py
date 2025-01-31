@@ -317,9 +317,7 @@ class TestJobPermissions:
         interface = AlgorithmInterfaceFactory(
             inputs=[ci], outputs=[ComponentInterfaceFactory()]
         )
-        algorithm_image.algorithm.interfaces.add(
-            interface, through_defaults={"is_default": True}
-        )
+        algorithm_image.algorithm.interfaces.add(interface)
 
         response = get_view_for_user(
             viewname="algorithms:job-create",
@@ -327,7 +325,7 @@ class TestJobPermissions:
             method=client.post,
             reverse_kwargs={
                 "slug": algorithm_image.algorithm.slug,
-                "interface_pk": algorithm_image.algorithm.default_interface.pk,
+                "interface_pk": algorithm_image.algorithm.interfaces.first().pk,
             },
             user=user,
             follow=True,
@@ -360,9 +358,7 @@ class TestJobPermissions:
         )
 
         interface = AlgorithmInterfaceFactory(inputs=[ci])
-        algorithm_image.algorithm.interfaces.add(
-            interface, through_defaults={"is_default": True}
-        )
+        algorithm_image.algorithm.interfaces.add(interface)
         algorithm_image.algorithm.add_user(user)
         algorithm_image.algorithm.add_editor(UserFactory())
 

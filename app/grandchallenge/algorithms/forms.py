@@ -26,7 +26,6 @@ from django.core.validators import (
 from django.db.models import Count, Exists, Max, OuterRef, Q
 from django.db.transaction import on_commit
 from django.forms import (
-    BooleanField,
     CharField,
     Form,
     HiddenInput,
@@ -55,6 +54,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmModel,
     AlgorithmPermissionRequest,
     Job,
+    annotate_input_output_counts,
 )
 from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
@@ -461,37 +461,32 @@ class UserAlgorithmsForPhaseMixin:
         desired_model_subquery = AlgorithmModel.objects.filter(
             algorithm=OuterRef("pk"), is_desired_version=True
         )
-        return (
-            get_objects_for_user(self._user, "algorithms.change_algorithm")
-            .annotate(
-                total_input_count=Count("inputs", distinct=True),
-                total_output_count=Count("outputs", distinct=True),
-                relevant_input_count=Count(
-                    "inputs", filter=Q(inputs__in=inputs), distinct=True
-                ),
-                relevant_output_count=Count(
-                    "outputs", filter=Q(outputs__in=outputs), distinct=True
-                ),
-                has_active_image=Exists(desired_image_subquery),
-                active_image_pk=desired_image_subquery.values_list(
-                    "pk", flat=True
-                ),
-                active_model_pk=desired_model_subquery.values_list(
-                    "pk", flat=True
-                ),
-                active_image_comment=desired_image_subquery.values_list(
-                    "comment", flat=True
-                ),
-                active_model_comment=desired_model_subquery.values_list(
-                    "comment", flat=True
-                ),
-            )
-            .filter(
-                total_input_count=len(inputs),
-                total_output_count=len(outputs),
-                relevant_input_count=len(inputs),
-                relevant_output_count=len(outputs),
-            )
+        annotated_qs = annotate_input_output_counts(
+            queryset=get_objects_for_user(
+                self._user, "algorithms.change_algorithm"
+            ),
+            inputs=inputs,
+            outputs=outputs,
+        )
+        return annotated_qs.annotate(
+            has_active_image=Exists(desired_image_subquery),
+            active_image_pk=desired_image_subquery.values_list(
+                "pk", flat=True
+            ),
+            active_model_pk=desired_model_subquery.values_list(
+                "pk", flat=True
+            ),
+            active_image_comment=desired_image_subquery.values_list(
+                "comment", flat=True
+            ),
+            active_model_comment=desired_model_subquery.values_list(
+                "comment", flat=True
+            ),
+        ).filter(
+            input_count=len(inputs),
+            output_count=len(outputs),
+            relevant_input_count=len(inputs),
+            relevant_output_count=len(outputs),
         )
 
     @cached_property
@@ -1375,32 +1370,17 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
         ),
         widget=Select2MultipleWidget,
     )
-    set_as_default = BooleanField(required=False)
 
     class Meta:
         model = AlgorithmInterface
         fields = (
             "inputs",
             "outputs",
-            "set_as_default",
         )
 
     def __init__(self, *args, base_obj, **kwargs):
         super().__init__(*args, **kwargs)
         self._base_obj = base_obj
-
-        if not self._base_obj.default_interface:
-            self.fields["set_as_default"].initial = True
-
-    def clean_set_as_default(self):
-        set_as_default = self.cleaned_data["set_as_default"]
-
-        if not set_as_default and not self._base_obj.default_interface:
-            raise ValidationError(
-                f"Your {self._base_obj._meta.verbose_name} needs a default interface."
-            )
-
-        return set_as_default
 
     def clean_inputs(self):
         inputs = self.cleaned_data.get("inputs", [])
@@ -1461,31 +1441,7 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
             inputs=self.cleaned_data["inputs"],
             outputs=self.cleaned_data["outputs"],
         )
-
-        if self.cleaned_data["set_as_default"]:
-            self._base_obj.algorithm_interface_through_model_manager.update(
-                is_default=False
-            )
-
-        matched_rows = (
-            self._base_obj.algorithm_interface_through_model_manager.filter(
-                interface=interface
-            ).update(is_default=self.cleaned_data["set_as_default"])
-        )
-
-        if matched_rows == 0:
-            self._base_obj.algorithm_interface_manager.add(
-                interface,
-                through_defaults={
-                    "is_default": self.cleaned_data["set_as_default"]
-                },
-            )
-        elif matched_rows > 1:
-            raise RuntimeError(
-                "This algorithm and interface are associated "
-                "with each other more than once."
-            )
-
+        self._base_obj.algorithm_interface_manager.add(interface)
         return interface
 
 
@@ -1506,7 +1462,7 @@ class JobInterfaceSelectForm(SaveFormInitMixin, Form):
             self._algorithm.interfaces.all()
         )
         self.fields["algorithm_interface"].initial = (
-            self._algorithm.default_interface
+            self._algorithm.interfaces.first()
         )
         self.fields["algorithm_interface"].widget.choices = {
             (

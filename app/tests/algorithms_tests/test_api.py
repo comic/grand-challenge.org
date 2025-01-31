@@ -162,9 +162,7 @@ class TestJobCreationThroughAPI:
             ],
             outputs=[ComponentInterfaceFactory()],
         )
-        algorithm_with_multiple_inputs.algorithm.interfaces.add(
-            interface, through_defaults={"is_default": True}
-        )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(interface)
 
         assert ComponentInterfaceValue.objects.count() == 0
 
@@ -255,9 +253,7 @@ class TestJobCreationThroughAPI:
             ],
             outputs=[ComponentInterfaceFactory()],
         )
-        algorithm_with_multiple_inputs.algorithm.interfaces.add(
-            interface, through_defaults={"is_default": True}
-        )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(interface)
 
         civ1, civ2, civ3, civ4 = self.create_existing_civs(
             interface_data=algorithm_with_multiple_inputs
@@ -316,9 +312,7 @@ class TestJobCreationThroughAPI:
             ],
             outputs=[ComponentInterfaceFactory()],
         )
-        algorithm_with_multiple_inputs.algorithm.interfaces.add(
-            interface, through_defaults={"is_default": True}
-        )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(interface)
         civ1, civ2, civ3, civ4 = self.create_existing_civs(
             interface_data=algorithm_with_multiple_inputs
         )
@@ -379,9 +373,7 @@ class TestJobCreationThroughAPI:
             inputs=[algorithm_with_multiple_inputs.ci_json_file],
             outputs=[ComponentInterfaceFactory()],
         )
-        algorithm_with_multiple_inputs.algorithm.interfaces.add(
-            interface, through_defaults={"is_default": True}
-        )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(interface)
         file_upload = UserUploadFactory(
             filename="file.json", creator=algorithm_with_multiple_inputs.editor
         )
@@ -431,9 +423,7 @@ class TestJobCreationThroughAPI:
             inputs=[algorithm_with_multiple_inputs.ci_json_in_db_with_schema],
             outputs=[ComponentInterfaceFactory()],
         )
-        algorithm_with_multiple_inputs.algorithm.interfaces.add(
-            interface, through_defaults={"is_default": True}
-        )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(interface)
 
         response = self.create_job(
             client=client,
@@ -466,9 +456,7 @@ class TestJobCreationThroughAPI:
             inputs=[algorithm_with_multiple_inputs.ci_img_upload],
             outputs=[ComponentInterfaceFactory()],
         )
-        algorithm_with_multiple_inputs.algorithm.interfaces.add(
-            interface, through_defaults={"is_default": True}
-        )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(interface)
         user_upload = create_upload_from_file(
             creator=algorithm_with_multiple_inputs.editor,
             file_path=RESOURCE_PATH / "corrupt.png",
@@ -525,9 +513,7 @@ class TestJobCreationThroughAPI:
         interface = AlgorithmInterfaceFactory(
             inputs=[ci1, ci2], outputs=[ComponentInterfaceFactory()]
         )
-        algorithm_with_multiple_inputs.algorithm.interfaces.add(
-            interface, through_defaults={"is_default": True}
-        )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(interface)
 
         im = ImageFactory()
         im.files.set([ImageFileFactoryWithMHDFile()])

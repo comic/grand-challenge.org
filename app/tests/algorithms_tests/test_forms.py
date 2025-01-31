@@ -18,7 +18,6 @@ from grandchallenge.algorithms.forms import (
 )
 from grandchallenge.algorithms.models import (
     Algorithm,
-    AlgorithmAlgorithmInterface,
     AlgorithmPermissionRequest,
     Job,
 )
@@ -323,7 +322,7 @@ def test_create_job_input_fields(
         client=client,
         reverse_kwargs={
             "slug": alg.slug,
-            "interface_pk": alg.default_interface.pk,
+            "interface_pk": alg.interfaces.first().pk,
         },
         follow=True,
         user=creator,
@@ -358,7 +357,7 @@ def test_create_job_json_input_field_validation(
         client=client,
         reverse_kwargs={
             "slug": alg.slug,
-            "interface_pk": alg.default_interface.pk,
+            "interface_pk": alg.interfaces.first().pk,
         },
         method=client.post,
         follow=True,
@@ -392,7 +391,7 @@ def test_create_job_simple_input_field_validation(
         client=client,
         reverse_kwargs={
             "slug": alg.slug,
-            "interface_pk": alg.default_interface.pk,
+            "interface_pk": alg.interfaces.first().pk,
         },
         method=client.post,
         follow=True,
@@ -413,7 +412,7 @@ def create_algorithm_with_input(slug):
         inputs=[ComponentInterface.objects.get(slug=slug)],
         outputs=[ComponentInterfaceFactory()],
     )
-    alg.interfaces.add(interface, through_defaults={"is_default": True})
+    alg.interfaces.add(interface)
     AlgorithmImageFactory(
         algorithm=alg,
         is_manifest_valid=True,
@@ -741,7 +740,7 @@ class TestJobCreateForm:
         form = JobCreateForm(
             algorithm=algorithm,
             user=editor,
-            interface=algorithm.default_interface,
+            interface=algorithm.interfaces.first(),
             data={},
         )
         assert list(form.fields["creator"].queryset.all()) == [editor]
@@ -762,7 +761,7 @@ class TestJobCreateForm:
         form = JobCreateForm(
             algorithm=algorithm,
             user=editor,
-            interface=algorithm.default_interface,
+            interface=algorithm.interfaces.first(),
             data={},
         )
         ai_qs = form.fields["algorithm_image"].queryset.all()
@@ -783,14 +782,14 @@ class TestJobCreateForm:
             algorithm_model=algorithm.active_model,
             status=Job.SUCCESS,
             time_limit=123,
-            algorithm_interface=algorithm.default_interface,
+            algorithm_interface=algorithm.interfaces.first(),
         )
         job.inputs.set(civs)
 
         form = JobCreateForm(
             algorithm=algorithm,
             user=editor,
-            interface=algorithm.default_interface,
+            interface=algorithm.interfaces.first(),
             data={
                 "algorithm_image": algorithm.active_image,
                 "algorithm_model": algorithm.active_model,
@@ -819,9 +818,7 @@ def test_all_inputs_required_on_job_creation(algorithm_with_multiple_inputs):
         inputs=[ci_json_in_db_without_schema],
         outputs=[ComponentInterfaceFactory()],
     )
-    algorithm_with_multiple_inputs.algorithm.interfaces.add(
-        interface, through_defaults={"is_default": True}
-    )
+    algorithm_with_multiple_inputs.algorithm.interfaces.add(interface)
 
     form = JobCreateForm(
         algorithm=algorithm_with_multiple_inputs.algorithm,
@@ -1410,35 +1407,11 @@ def test_algorithm_interface_disjoint_interfaces():
 
 
 @pytest.mark.django_db
-def test_algorithm_interface_default_interface_required():
-    ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
-    alg = AlgorithmFactory()
-    form = AlgorithmInterfaceForm(
-        base_obj=alg,
-        data={"inputs": [ci1], "outputs": [ci2], "set_as_default": False},
-    )
-    assert form.is_valid() is False
-    assert "Your algorithm needs a default interface" in str(
-        form.errors["set_as_default"]
-    )
-
-    alg.interfaces.add(
-        AlgorithmInterfaceFactory(), through_defaults={"is_default": True}
-    )
-    del alg.default_interface
-    form = AlgorithmInterfaceForm(
-        base_obj=alg,
-        data={"inputs": [ci1], "outputs": [ci2], "set_as_default": False},
-    )
-    assert form.is_valid()
-
-
-@pytest.mark.django_db
 def test_algorithm_interface_unique_inputs_required():
     ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
     alg = AlgorithmFactory()
     interface = AlgorithmInterfaceFactory(inputs=[ci1])
-    alg.interfaces.add(interface, through_defaults={"is_default": True})
+    alg.interfaces.add(interface)
 
     form = AlgorithmInterfaceForm(
         base_obj=alg, data={"inputs": [ci1], "outputs": [ci2]}
@@ -1479,26 +1452,6 @@ def test_algorithm_for_phase_form_memory():
 
 class TestAlgorithmInterfaceForm:
     @pytest.mark.django_db
-    def test_set_as_default_initial_value(self):
-        alg = AlgorithmFactory()
-
-        form = AlgorithmInterfaceForm(
-            base_obj=alg,
-        )
-        assert form.fields["set_as_default"].initial
-
-        alg.interfaces.add(
-            AlgorithmInterfaceFactory(), through_defaults={"is_default": True}
-        )
-
-        del alg.default_interface
-
-        form = AlgorithmInterfaceForm(
-            base_obj=alg,
-        )
-        assert not form.fields["set_as_default"].initial
-
-    @pytest.mark.django_db
     def test_existing_io_is_reused(self):
         inp = ComponentInterfaceFactory()
         out = ComponentInterfaceFactory()
@@ -1513,64 +1466,9 @@ class TestAlgorithmInterfaceForm:
             data={
                 "inputs": [inp.pk],
                 "outputs": [out.pk],
-                "set_as_default": True,
             },
         )
         assert form.is_valid()
         new_io = form.save()
 
         assert io == new_io
-
-    @pytest.mark.django_db
-    def test_new_default_interface_updates_related_interfaces(self):
-        ci_1, ci_2 = ComponentInterfaceFactory.create_batch(2)
-        alg = AlgorithmFactory()
-        io = AlgorithmInterfaceFactory()
-        alg.interfaces.add(io, through_defaults={"is_default": True})
-
-        old_iot = AlgorithmAlgorithmInterface.objects.get()
-
-        form = AlgorithmInterfaceForm(
-            base_obj=alg,
-            data={
-                "inputs": [ci_1.pk],
-                "outputs": [ci_2.pk],
-                "set_as_default": True,
-            },
-        )
-        form.is_valid()
-        new_io = form.save()
-        new_iot = AlgorithmAlgorithmInterface.objects.get(interface=new_io)
-        old_iot.refresh_from_db()
-
-        assert new_io != io
-        assert new_iot.is_default
-        assert not old_iot.is_default
-
-    @pytest.mark.django_db
-    def test_default_interface_for_algorithm_not_updated_when_adding_new_non_default_interface(
-        self,
-    ):
-        alg = AlgorithmFactory()
-        io = AlgorithmInterfaceFactory()
-        alg.interfaces.add(io, through_defaults={"is_default": True})
-        old_iot = AlgorithmAlgorithmInterface.objects.get()
-
-        ci_1, ci_2 = ComponentInterfaceFactory.create_batch(2)
-
-        form = AlgorithmInterfaceForm(
-            base_obj=alg,
-            data={
-                "inputs": [ci_1.pk],
-                "outputs": [ci_2.pk],
-                "set_as_default": False,
-            },
-        )
-        form.is_valid()
-        new_io = form.save()
-        old_iot.refresh_from_db()
-        new_iot = AlgorithmAlgorithmInterface.objects.get(interface=new_io)
-
-        assert new_io != io
-        assert not new_iot.is_default
-        assert old_iot.is_default

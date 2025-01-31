@@ -21,8 +21,7 @@ def add_algorithm_interfaces_for_phases(apps, _schema_editor):
         outputs = phase.algorithm_outputs.all()
 
         if not inputs or not outputs:
-            # Skip phases without inputs or outputs
-            continue
+            raise RuntimeError(f"{phase} is improperly configured.")
 
         io = get_existing_interface_for_inputs_and_outputs(
             model=AlgorithmInterface, inputs=inputs, outputs=outputs
@@ -32,9 +31,7 @@ def add_algorithm_interfaces_for_phases(apps, _schema_editor):
             io.inputs.set(inputs)
             io.outputs.set(outputs)
 
-        phase.algorithm_interfaces.add(
-            io, through_defaults={"is_default": True}
-        )
+        phase.algorithm_interfaces.add(io)
 
 
 class Migration(migrations.Migration):
