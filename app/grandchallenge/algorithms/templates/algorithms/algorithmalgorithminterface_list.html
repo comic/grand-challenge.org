@@ -34,7 +34,6 @@
             <thead class="thead-light">
                 <th>Inputs</th>
                 <th>Outputs</th>
-                <th>Default</th>
                 <th>Delete</th>
             </thead>
             <tbody>
@@ -42,9 +41,8 @@
                  <tr>
                     <td>{{ object.interface.inputs.all|oxford_comma }}</td>
                     <td>{{ object.interface.outputs.all|oxford_comma }}</td>
-                    <td>{% if object.is_default %}<i class="fas fa-check-circle text-success mr-1"></i>{% else %}<i class="fas fa-times-circle text-danger mr-1"></i>{% endif %}</td>
                     <td>
-                        <a class="btn btn-sm btn-danger m-0 {% if object.is_default %} disabled {% endif %}"
+                        <a class="btn btn-sm btn-danger m-0"
                            href="{% url 'algorithms:interface-delete' slug=algorithm.slug interface_pk=object.interface.pk %}">
                             <i class="fas fa-trash"></i>
                         </a>

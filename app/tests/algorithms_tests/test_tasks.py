@@ -232,9 +232,7 @@ def test_algorithm(
         inputs=[input_interface],
         outputs=[json_result_interface, heatmap_interface],
     )
-    ai.algorithm.interfaces.add(
-        interface, through_defaults={"is_default": True}
-    )
+    ai.algorithm.interfaces.add(interface)
 
     with django_capture_on_commit_callbacks() as callbacks:
         get_view_for_user(
@@ -385,9 +383,7 @@ def test_algorithm_with_invalid_output(
     interface = AlgorithmInterfaceFactory(
         inputs=[input_interface], outputs=[detection_interface]
     )
-    ai.algorithm.interfaces.add(
-        interface, through_defaults={"is_default": True}
-    )
+    ai.algorithm.interfaces.add(interface)
 
     image_file = ImageFileFactory(
         file__from_path=Path(__file__).parent / "resources" / "input_file.tif"
@@ -475,9 +471,7 @@ def test_execute_algorithm_job_for_missing_inputs(settings):
     interface = AlgorithmInterfaceFactory(
         inputs=[ci], outputs=[ComponentInterfaceFactory()]
     )
-    alg.algorithm.interfaces.add(
-        interface, through_defaults={"is_default": True}
-    )
+    alg.algorithm.interfaces.add(interface)
     job = AlgorithmJobFactory(
         creator=creator,
         algorithm_image=alg,

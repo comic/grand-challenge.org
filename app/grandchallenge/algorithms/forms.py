@@ -26,7 +26,6 @@ from django.core.validators import (
 from django.db.models import Count, Exists, Max, OuterRef, Q
 from django.db.transaction import on_commit
 from django.forms import (
-    BooleanField,
     CharField,
     Form,
     HiddenInput,
@@ -1372,30 +1371,17 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
         ),
         widget=Select2MultipleWidget,
     )
-    set_as_default = BooleanField(required=False)
 
     class Meta:
         model = AlgorithmInterface
         fields = (
             "inputs",
             "outputs",
-            "set_as_default",
         )
 
     def __init__(self, *args, algorithm, **kwargs):
         super().__init__(*args, **kwargs)
         self._algorithm = algorithm
-
-        if not self._algorithm.default_interface:
-            self.fields["set_as_default"].initial = True
-
-    def clean_set_as_default(self):
-        set_as_default = self.cleaned_data["set_as_default"]
-
-        if not set_as_default and not self._algorithm.default_interface:
-            raise ValidationError("Your algorithm needs a default interface.")
-
-        return set_as_default
 
     def clean_inputs(self):
         inputs = self.cleaned_data.get("inputs", [])
@@ -1459,29 +1445,7 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
             inputs=self.cleaned_data["inputs"],
             outputs=self.cleaned_data["outputs"],
         )
-
-        if self.cleaned_data["set_as_default"]:
-            AlgorithmAlgorithmInterface.objects.filter(
-                algorithm=self._algorithm
-            ).update(is_default=False)
-
-        matched_rows = AlgorithmAlgorithmInterface.objects.filter(
-            algorithm=self._algorithm, interface=interface
-        ).update(is_default=self.cleaned_data["set_as_default"])
-
-        if matched_rows == 0:
-            self._algorithm.interfaces.add(
-                interface,
-                through_defaults={
-                    "is_default": self.cleaned_data["set_as_default"]
-                },
-            )
-        elif matched_rows > 1:
-            raise RuntimeError(
-                "This algorithm and interface are associated "
-                "with each other more than once."
-            )
-
+        self._algorithm.interfaces.add(interface)
         return interface
 
 
@@ -1502,7 +1466,7 @@ class JobInterfaceSelectForm(SaveFormInitMixin, Form):
             self._algorithm.interfaces.all()
         )
         self.fields["algorithm_interface"].initial = (
-            self._algorithm.default_interface
+            self._algorithm.interfaces.first()
         )
         self.fields["algorithm_interface"].widget.choices = {
             (
