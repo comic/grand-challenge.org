@@ -511,7 +511,7 @@ class JobInterfaceSelect(
 
     def get(self, request, *args, **kwargs):
         if self.algorithm.interfaces.count() == 1:
-            self.selected_interface = self.algorithm.default_interface
+            self.selected_interface = self.algorithm.interfaces.get()
             return HttpResponseRedirect(self.get_success_url())
         else:
             return super().get(request, *args, **kwargs)
@@ -1229,7 +1229,6 @@ class AlgorithmInterfaceForAlgorithmDelete(
             klass=AlgorithmAlgorithmInterface,
             algorithm=self.algorithm,
             interface__pk=self.kwargs["interface_pk"],
-            is_default=False,
         )
 
     def get_object(self, queryset=None):

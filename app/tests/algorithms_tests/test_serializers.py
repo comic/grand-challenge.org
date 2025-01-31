@@ -140,9 +140,8 @@ def test_algorithm_job_post_serializer_validations(
     interface = AlgorithmInterfaceFactory(
         inputs=[interfaces[title] for title in algorithm_interface_titles]
     )
-    algorithm_image.algorithm.interfaces.add(
-        interface, through_defaults={"is_default": True}
-    )
+    algorithm_image.algorithm.interfaces.add(interface)
+
     if add_user:
         algorithm_image.algorithm.add_user(user)
 
@@ -214,9 +213,7 @@ def test_algorithm_job_post_serializer_create(
     ci_img2 = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
 
     interface = AlgorithmInterfaceFactory(inputs=[ci_string, ci_img2, ci_img1])
-    algorithm_image.algorithm.interfaces.add(
-        interface, through_defaults={"is_default": True}
-    )
+    algorithm_image.algorithm.interfaces.add(interface)
     algorithm_image.algorithm.add_editor(user)
 
     job = {
@@ -312,9 +309,7 @@ class TestJobCreateLimits:
         algorithm_image.algorithm.add_editor(user=user)
         ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.STRING)
         interface = AlgorithmInterfaceFactory(inputs=[ci])
-        algorithm_image.algorithm.interfaces.add(
-            interface, through_defaults={"is_default": True}
-        )
+        algorithm_image.algorithm.interfaces.add(interface)
 
         request = rf.get("/foo")
         request.user = user
@@ -362,9 +357,7 @@ class TestJobCreateLimits:
         algorithm_image.algorithm.add_user(user=user)
         ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.STRING)
         interface = AlgorithmInterfaceFactory(inputs=[ci])
-        algorithm_image.algorithm.interfaces.add(
-            interface, through_defaults={"is_default": True}
-        )
+        algorithm_image.algorithm.interfaces.add(interface)
 
         request = rf.get("/foo")
         request.user = user
@@ -432,7 +425,7 @@ def test_algorithm_post_serializer_image_and_time_limit_fixed(rf):
     different_ai = AlgorithmImageFactory(algorithm=alg)
     ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.STRING)
     interface = AlgorithmInterfaceFactory(inputs=[ci])
-    alg.interfaces.add(interface, through_defaults={"is_default": True})
+    alg.interfaces.add(interface)
 
     serializer = JobPostSerializer(
         data={
@@ -502,7 +495,7 @@ def test_validate_inputs_on_job_serializer(inputs, interface, rf):
     io4.outputs.set([ci1])
     io5.outputs.set([ci1])
 
-    algorithm.interfaces.add(io1, through_defaults={"is_default": True})
+    algorithm.interfaces.add(io1)
     algorithm.interfaces.add(io2)
     algorithm.interfaces.add(io3)
 

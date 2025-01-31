@@ -121,7 +121,6 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("is_default", models.BooleanField(default=False)),
                 (
                     "algorithm",
                     models.ForeignKey(
@@ -145,14 +144,6 @@ class Migration(migrations.Migration):
                 related_name="algorithm_interfaces",
                 through="algorithms.AlgorithmAlgorithmInterface",
                 to="algorithms.algorithminterface",
-            ),
-        ),
-        migrations.AddConstraint(
-            model_name="algorithmalgorithminterface",
-            constraint=models.UniqueConstraint(
-                condition=models.Q(("is_default", True)),
-                fields=("algorithm",),
-                name="unique_default_interface_per_algorithm",
             ),
         ),
         migrations.AddConstraint(

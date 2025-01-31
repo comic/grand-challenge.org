@@ -53,7 +53,6 @@ class AlgorithmAdminForm(ModelForm):
 class AlgorithmAdmin(GuardedModelAdmin):
     readonly_fields = (
         "algorithm_forge_json",
-        "default_interface",
         "inputs",
         "outputs",
     )
@@ -281,10 +280,9 @@ class AlgorithmAlgorithmInterfaceAdmin(GuardedModelAdmin):
     list_display = (
         "pk",
         "interface",
-        "is_default",
         "algorithm",
     )
-    list_filter = ("is_default", "algorithm")
+    list_filter = ("algorithm",)
 
     def has_add_permission(self, request, obj=None):
         # through table entries should only be created through the UI

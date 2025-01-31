@@ -69,6 +69,23 @@ logger = logging.getLogger(__name__)
 JINJA_ENGINE = sandbox.ImmutableSandboxedEnvironment()
 
 
+def annotate_input_output_counts(queryset, inputs=None, outputs=None):
+    return queryset.annotate(
+        input_count=Count("inputs", distinct=True),
+        output_count=Count("outputs", distinct=True),
+        relevant_input_count=Count(
+            "inputs",
+            filter=Q(inputs__in=inputs) if inputs is not None else Q(),
+            distinct=True,
+        ),
+        relevant_output_count=Count(
+            "outputs",
+            filter=Q(outputs__in=outputs) if outputs is not None else Q(),
+            distinct=True,
+        ),
+    )
+
+
 class AlgorithmInterfaceManager(models.Manager):
 
     def create(
@@ -95,22 +112,6 @@ class AlgorithmInterfaceManager(models.Manager):
 
     def delete(self):
         raise NotImplementedError("Bulk delete is not allowed.")
-
-    def with_input_output_counts(self, inputs=None, outputs=None):
-        return self.annotate(
-            input_count=Count("inputs", distinct=True),
-            output_count=Count("outputs", distinct=True),
-            relevant_input_count=Count(
-                "inputs",
-                filter=Q(inputs__in=inputs) if inputs is not None else Q(),
-                distinct=True,
-            ),
-            relevant_output_count=Count(
-                "outputs",
-                filter=Q(outputs__in=outputs) if outputs is not None else Q(),
-                distinct=True,
-            ),
-        )
 
 
 class AlgorithmInterface(UUIDModel):
@@ -144,10 +145,11 @@ class AlgorithmInterfaceOutput(models.Model):
 def get_existing_interface_for_inputs_and_outputs(
     *, inputs, outputs, model=AlgorithmInterface
 ):
+    annotated_qs = annotate_input_output_counts(
+        model.objects.all(), inputs=inputs, outputs=outputs
+    )
     try:
-        return model.objects.with_input_output_counts(
-            inputs=inputs, outputs=outputs
-        ).get(
+        return annotated_qs.get(
             relevant_input_count=len(inputs),
             relevant_output_count=len(outputs),
             input_count=len(inputs),
@@ -518,15 +520,6 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
 
         return w
 
-    @cached_property
-    def default_interface(self):
-        try:
-            return self.interfaces.get(
-                algorithmalgorithminterface__is_default=True
-            )
-        except ObjectDoesNotExist:
-            return None
-
     @property
     def algorithm_interface_manager(self):
         return self.interfaces
@@ -638,15 +631,9 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
 class AlgorithmAlgorithmInterface(models.Model):
     algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
     interface = models.ForeignKey(AlgorithmInterface, on_delete=models.CASCADE)
-    is_default = models.BooleanField(default=False)
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(
-                fields=["algorithm"],
-                condition=Q(is_default=True),
-                name="unique_default_interface_per_algorithm",
-            ),
             models.UniqueConstraint(
                 fields=["algorithm", "interface"],
                 name="unique_algorithm_interface_combination",
@@ -655,12 +642,6 @@ class AlgorithmAlgorithmInterface(models.Model):
 
     def __str__(self):
         return str(self.interface)
-
-    def clean(self):
-        super().clean()
-
-        if not self.is_default and not self.algorithm.default_interface:
-            raise ValidationError("This algorithm needs a default interface.")
 
 
 class AlgorithmUserObjectPermission(UserObjectPermissionBase):
@@ -1006,18 +987,12 @@ class JobManager(ComponentJobManager):
         # the existing civs and filter on both counts so as to not include jobs
         # with partially overlapping inputs
         # or jobs with more inputs than the existing civs
-        existing_jobs = (
-            Job.objects.filter(**unique_kwargs)
-            .annotate(
-                input_count=Count("inputs", distinct=True),
-                input_match_count=Count(
-                    "inputs", filter=Q(inputs__in=existing_civs), distinct=True
-                ),
-            )
-            .filter(
-                input_count=input_interface_count,
-                input_match_count=input_interface_count,
-            )
+        annotated_qs = annotate_input_output_counts(
+            queryset=Job.objects.filter(**unique_kwargs), inputs=existing_civs
+        )
+        existing_jobs = annotated_qs.filter(
+            input_count=input_interface_count,
+            relevant_input_count=input_interface_count,
         )
 
         return existing_jobs
