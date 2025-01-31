@@ -144,9 +144,12 @@ def test_onboarding_task_completion_permissions(
     task = OnboardingTaskFactory(challenge=ch, **kwargs)
 
     # Sanity
-    assert not user.has_perm("complete_onboaringtask", task)
+    assert not user.has_perm("complete_onboardingtask", task)
+    assert not user.has_perm("view_onboardingtask", task)
+
     if expected_responsible_party:
         assert task.responsible_party == expected_responsible_party
 
     ch.add_admin(user)
-    assert user.has_perm("complete_onboaringtask", task) == permitted
+    assert user.has_perm("complete_onboardingtask", task) == permitted
+    assert user.has_perm("view_onboardingtask", task) == permitted
