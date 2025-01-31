@@ -25,7 +25,7 @@ def test_flexible_file_widget(client):
         user=user,
         data={
             f"widget-choice-{ci.slug}": FileWidgetChoices.FILE_SEARCH.name,
-            "interface-slug": ci.slug,
+            "prefixed-interface-slug": ci.slug,
         },
     )
     assert '<input class="form-control" type="search"' in str(response.content)
@@ -36,7 +36,7 @@ def test_flexible_file_widget(client):
         user=user,
         data={
             f"widget-choice-{ci.slug}": FileWidgetChoices.FILE_UPLOAD.name,
-            "interface-slug": ci.slug,
+            "prefixed-interface-slug": ci.slug,
         },
     )
     assert 'class="user-upload"' in str(response2.content)
@@ -47,7 +47,7 @@ def test_flexible_file_widget(client):
         user=user,
         data={
             f"widget-choice-{ci.slug}": FileWidgetChoices.UNDEFINED.name,
-            "interface-slug": ci.slug,
+            "prefixed-interface-slug": ci.slug,
         },
     )
     assert response3.content == b""
@@ -59,7 +59,7 @@ def test_flexible_file_widget(client):
         user=user,
         data={
             f"widget-choice-{ci.slug}": FileWidgetChoices.FILE_SELECTED.name,
-            "interface-slug": ci.slug,
+            "prefixed-interface-slug": ci.slug,
             "current-value": civ.pk,
         },
     )
@@ -74,7 +74,7 @@ def test_flexible_file_widget(client):
         user=user,
         data={
             f"widget-choice-{ci.slug}": FileWidgetChoices.FILE_SELECTED.name,
-            "interface-slug": ci.slug,
+            "prefixed-interface-slug": ci.slug,
             "current-value": user_upload.pk,
         },
     )

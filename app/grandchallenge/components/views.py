@@ -7,7 +7,7 @@ from django.contrib.auth.mixins import AccessMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q, TextChoices
 from django.forms import HiddenInput, Media
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
@@ -503,76 +503,91 @@ class FileUploadFormFieldView(
 
 class FileWidgetSelectView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
-        interface = request.GET.get("interface-slug")
-        widget_choice = request.GET.get(f"widget-choice-{interface}")
+        prefixed_interface_slug = self.request.GET.get(
+            "prefixed-interface-slug"
+        )
+        interface = get_object_or_404(
+            ComponentInterface,
+            slug=prefixed_interface_slug.replace(
+                INTERFACE_FORM_FIELD_PREFIX, ""
+            ),
+        )
+        widget_choice_name = request.GET.get(
+            f"widget-choice-{prefixed_interface_slug}"
+        )
+        try:
+            widget_choice = FileWidgetChoices(widget_choice_name)
+        except ValueError:
+            raise Http404(f"Widget choice {widget_choice_name} not found")
         help_text = request.GET.get("help-text")
         current_value = request.GET.get("current-value")
 
-        if widget_choice == FileWidgetChoices.FILE_SEARCH.name:
-            html_content = render_to_string(
-                FileSearchWidget.template_name,
-                {
-                    "widget": FileSearchWidget().get_context(
-                        name=interface,
-                        value=None,
-                        attrs={
-                            "help_text": help_text if help_text else None,
-                        },
-                    )["widget"],
-                },
-            )
-            return HttpResponse(html_content)
-        elif widget_choice == FileWidgetChoices.FILE_UPLOAD.name:
-            html_content = render_to_string(
-                UserUploadSingleWidget.template_name,
-                {
-                    "widget": UserUploadSingleWidget().get_context(
-                        name=interface,
-                        value=None,
-                        attrs={
-                            "id": interface,
-                            "help_text": _join_with_br(
-                                help_text if help_text else None,
-                                file_upload_text,
-                            ),
-                        },
-                    )["widget"],
-                },
-            )
-            return HttpResponse(html_content)
-        elif (
-            widget_choice == FileWidgetChoices.FILE_SELECTED.name
-            and current_value
-            and (
-                ComponentInterfaceValue.objects.filter(
-                    pk=current_value
-                ).exists()
-                if current_value.isdigit()
-                else UserUpload.objects.filter(pk=current_value).exists()
-            )
-        ):
-            # this can happen on the display set update view or redisplay of
-            # form upon validation, where one of the options is the current
-            # image, this enables switching back from one of the above widgets
-            # to the chosen image. This make sure the form element with the
-            # right name is available on resubmission.
-            html_content = render_to_string(
-                HiddenInput.template_name,
-                {
-                    "widget": {
-                        "name": interface,
-                        "value": current_value,
-                        "type": "hidden",
+        match widget_choice:
+            case FileWidgetChoices.FILE_SEARCH:
+                html_content = render_to_string(
+                    FileSearchWidget.template_name,
+                    {
+                        "widget": FileSearchWidget().get_context(
+                            name=prefixed_interface_slug,
+                            value=None,
+                            attrs={
+                                "help_text": help_text if help_text else None,
+                            },
+                        )["widget"],
                     },
-                },
-            )
-            return HttpResponse(html_content)
-        elif widget_choice == FileWidgetChoices.UNDEFINED.name:
-            # this happens when switching back from one of the
-            # above widgets to the "Choose data source" option
-            return HttpResponse()
-        else:
-            raise RuntimeError("Unknown widget type")
+                )
+                return HttpResponse(html_content)
+            case FileWidgetChoices.FILE_UPLOAD:
+                html_content = render_to_string(
+                    UserUploadSingleWidget.template_name,
+                    {
+                        "widget": UserUploadSingleWidget().get_context(
+                            name=prefixed_interface_slug,
+                            value=None,
+                            attrs={
+                                "id": interface,
+                                "help_text": _join_with_br(
+                                    help_text if help_text else None,
+                                    file_upload_text,
+                                ),
+                            },
+                        )["widget"],
+                    },
+                )
+                return HttpResponse(html_content)
+            case FileWidgetChoices.FILE_SELECTED:
+                if current_value and (
+                    ComponentInterfaceValue.objects.filter(
+                        pk=current_value
+                    ).exists()
+                    if current_value.isdigit()
+                    else UserUpload.objects.filter(pk=current_value).exists()
+                ):
+                    print("civ exists")
+                    # this can happen on the display set update view or redisplay of
+                    # form upon validation, where one of the options is the current
+                    # image, this enables switching back from one of the above widgets
+                    # to the chosen image. This make sure the form element with the
+                    # right name is available on resubmission.
+                    html_content = render_to_string(
+                        HiddenInput.template_name,
+                        {
+                            "widget": {
+                                "name": prefixed_interface_slug,
+                                "value": current_value,
+                                "type": "hidden",
+                            },
+                        },
+                    )
+                    return HttpResponse(html_content)
+                raise Http404(f"Selected file {current_value} not found")
+            case FileWidgetChoices.UNDEFINED:
+                # this happens when switching back from one of the
+                # above widgets to the "Choose data source" option
+                return HttpResponse()
+        raise NotImplementedError(
+            f"Response for widget choice {widget_choice} not implemented"
+        )
 
 
 class FileSearchResultView(
@@ -593,12 +608,12 @@ class FileSearchResultView(
         ).filter(interface__slug=self.interface_slug)
 
     def get(self, request, *args, **kwargs):
-        interface = request.GET.get("interface_slug")
-        self.interface_slug = interface.replace(
+        prefixed_interface_slug = request.GET.get("prefixed-interface-slug")
+        self.interface_slug = prefixed_interface_slug.replace(
             INTERFACE_FORM_FIELD_PREFIX, ""
         )
         qs = self.get_queryset()
-        query = request.GET.get("query-" + interface)
+        query = request.GET.get("query-" + prefixed_interface_slug)
         if query:
             q = reduce(
                 or_,
@@ -608,7 +623,7 @@ class FileSearchResultView(
             qs = qs.filter(q).order_by("file")
         self.object_list = qs
         context = self.get_context_data(**kwargs)
-        context["interface"] = interface
+        context["prefixed_interface_slug"] = prefixed_interface_slug
         return TemplateResponse(
             request=request,
             template=self.template_name,
