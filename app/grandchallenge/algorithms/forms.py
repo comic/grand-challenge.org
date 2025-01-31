@@ -49,7 +49,6 @@ from django_select2.forms import Select2MultipleWidget
 
 from grandchallenge.algorithms.models import (
     Algorithm,
-    AlgorithmAlgorithmInterface,
     AlgorithmImage,
     AlgorithmInterface,
     AlgorithmModel,
@@ -1379,9 +1378,9 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
             "outputs",
         )
 
-    def __init__(self, *args, algorithm, **kwargs):
+    def __init__(self, *args, base_obj, **kwargs):
         super().__init__(*args, **kwargs)
-        self._algorithm = algorithm
+        self._base_obj = base_obj
 
     def clean_inputs(self):
         inputs = self.cleaned_data.get("inputs", [])
@@ -1390,10 +1389,7 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
             raise ValidationError("You must provide at least 1 input.")
 
         if (
-            AlgorithmAlgorithmInterface.objects.filter(
-                algorithm=self._algorithm
-            )
-            .annotate(
+            self._base_obj.algorithm_interface_through_model_manager.annotate(
                 input_count=Count("interface__inputs", distinct=True),
                 relevant_input_count=Count(
                     "interface__inputs",
@@ -1405,7 +1401,7 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
             .exists()
         ):
             raise ValidationError(
-                "An AlgorithmInterface for this algorithm with the "
+                f"An AlgorithmInterface for this {self._base_obj._meta.verbose_name} with the "
                 "same inputs already exists. "
                 "Algorithm interfaces need to have unique sets of inputs."
             )
@@ -1445,7 +1441,7 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
             inputs=self.cleaned_data["inputs"],
             outputs=self.cleaned_data["outputs"],
         )
-        self._algorithm.interfaces.add(interface)
+        self._base_obj.algorithm_interface_manager.add(interface)
         return interface
 
 

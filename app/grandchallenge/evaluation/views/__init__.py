@@ -1037,8 +1037,6 @@ class ConfigureAlgorithmPhasesView(PermissionRequiredMixin, FormView):
         for phase in form.cleaned_data["phases"]:
             self.turn_phase_into_algorithm_phase(
                 phase=phase,
-                inputs=form.cleaned_data["algorithm_inputs"],
-                outputs=form.cleaned_data["algorithm_outputs"],
                 algorithm_time_limit=form.cleaned_data["algorithm_time_limit"],
                 algorithm_selectable_gpu_type_choices=form.cleaned_data[
                     "algorithm_selectable_gpu_type_choices"
@@ -1059,8 +1057,6 @@ class ConfigureAlgorithmPhasesView(PermissionRequiredMixin, FormView):
         self,
         *,
         phase,
-        inputs,
-        outputs,
         algorithm_time_limit,
         algorithm_selectable_gpu_type_choices,
         algorithm_maximum_settable_memory_gb,
@@ -1097,8 +1093,6 @@ class ConfigureAlgorithmPhasesView(PermissionRequiredMixin, FormView):
         phase.submission_kind = phase.SubmissionKindChoices.ALGORITHM
         phase.creator_must_be_verified = True
         phase.save()
-        phase.algorithm_outputs.add(*outputs)
-        phase.algorithm_inputs.add(*inputs)
 
 
 class EvaluationGroundTruthCreate(

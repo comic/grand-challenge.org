@@ -520,6 +520,14 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
 
         return w
 
+    @property
+    def algorithm_interface_manager(self):
+        return self.interfaces
+
+    @property
+    def algorithm_interface_through_model_manager(self):
+        return AlgorithmAlgorithmInterface.objects.filter(algorithm=self)
+
     def is_editor(self, user):
         return user.groups.filter(pk=self.editors_group.pk).exists()
 

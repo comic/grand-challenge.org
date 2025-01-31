@@ -24,6 +24,7 @@ from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.algorithms.models import (
     AlgorithmImage,
+    AlgorithmInterface,
     AlgorithmModel,
     Job,
 )
@@ -460,7 +461,12 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             "metrics.json over the API."
         ),
     )
-
+    algorithm_interfaces = models.ManyToManyField(
+        to=AlgorithmInterface,
+        through="evaluation.PhaseAlgorithmInterface",
+        blank=True,
+        help_text="The interfaces that an algorithm for this phase must implement.",
+    )
     inputs = models.ManyToManyField(
         to=ComponentInterface, related_name="evaluation_inputs"
     )
@@ -843,7 +849,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
     def read_only_fields_for_dependent_phases(self):
         common_fields = ["submission_kind"]
         if self.submission_kind == SubmissionKindChoices.ALGORITHM:
-            common_fields += ["algorithm_inputs", "algorithm_outputs"]
+            common_fields += ["algorithm_interfaces"]
         return common_fields
 
     def _clean_parent_phase(self):
@@ -1198,6 +1204,14 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             )
         )
 
+    @property
+    def algorithm_interface_manager(self):
+        return self.algorithm_interfaces
+
+    @property
+    def algorithm_interface_through_model_manager(self):
+        return PhaseAlgorithmInterface.objects.filter(phase=self)
+
 
 class PhaseUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(Phase, on_delete=models.CASCADE)
@@ -1205,6 +1219,19 @@ class PhaseUserObjectPermission(UserObjectPermissionBase):
 
 class PhaseGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(Phase, on_delete=models.CASCADE)
+
+
+class PhaseAlgorithmInterface(models.Model):
+    phase = models.ForeignKey(Phase, on_delete=models.CASCADE)
+    interface = models.ForeignKey(AlgorithmInterface, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["phase", "interface"],
+                name="unique_phase_interface_combination",
+            ),
+        ]
 
 
 class Method(UUIDModel, ComponentImage):

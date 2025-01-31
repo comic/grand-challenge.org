@@ -17,6 +17,9 @@ def create_algorithm_interfaces(apps, _schema_editor):
         inputs = algorithm.inputs.all()
         outputs = algorithm.outputs.all()
 
+        if not inputs or not outputs:
+            raise RuntimeError(f"{algorithm} is improperly configured.")
+
         io = get_existing_interface_for_inputs_and_outputs(
             model=AlgorithmInterface, inputs=inputs, outputs=outputs
         )

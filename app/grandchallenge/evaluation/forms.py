@@ -21,16 +21,12 @@ from django.forms import (
 )
 from django.utils.html import format_html
 from django.utils.text import format_lazy
-from django_select2.forms import Select2MultipleWidget
 
 from grandchallenge.algorithms.forms import UserAlgorithmsForPhaseMixin
 from grandchallenge.algorithms.models import Job
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
 from grandchallenge.components.forms import ContainerImageForm
-from grandchallenge.components.models import (
-    ComponentInterface,
-    ImportStatusChoices,
-)
+from grandchallenge.components.models import ImportStatusChoices
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.components.tasks import assign_tarball_from_upload
 from grandchallenge.core.forms import (
@@ -741,14 +737,6 @@ class ConfigureAlgorithmPhasesForm(SaveFormInitMixin, Form):
     phases = ModelMultipleChoiceField(
         queryset=None,
         widget=CheckboxSelectMultiple,
-    )
-    algorithm_inputs = ModelMultipleChoiceField(
-        queryset=ComponentInterface.objects.all(),
-        widget=Select2MultipleWidget,
-    )
-    algorithm_outputs = ModelMultipleChoiceField(
-        queryset=ComponentInterface.objects.all(),
-        widget=Select2MultipleWidget,
     )
     algorithm_time_limit = IntegerField(
         widget=forms.HiddenInput(),

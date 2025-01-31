@@ -1373,8 +1373,6 @@ def test_configure_algorithm_phases_view(client):
         },
         data={
             "phases": [phase.pk],
-            "algorithm_inputs": [ci1.pk],
-            "algorithm_outputs": [ci2.pk],
         },
     )
     assert response.status_code == 302
@@ -1385,8 +1383,6 @@ def test_configure_algorithm_phases_view(client):
         phase.archive.title
         == f"{phase.challenge.short_name} {phase.title} dataset"
     )
-    assert list(phase.algorithm_inputs.all()) == [ci1]
-    assert list(phase.algorithm_outputs.all()) == [ci2]
     assert (
         phase.algorithm_time_limit
         == challenge_request.inference_time_limit_in_minutes * 60
