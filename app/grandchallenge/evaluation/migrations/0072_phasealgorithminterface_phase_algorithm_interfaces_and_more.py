@@ -26,7 +26,6 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("is_default", models.BooleanField(default=False)),
                 (
                     "interface",
                     models.ForeignKey(
@@ -51,14 +50,6 @@ class Migration(migrations.Migration):
                 help_text="The interfaces that an algorithm for this phase must implement.",
                 through="evaluation.PhaseAlgorithmInterface",
                 to="algorithms.algorithminterface",
-            ),
-        ),
-        migrations.AddConstraint(
-            model_name="phasealgorithminterface",
-            constraint=models.UniqueConstraint(
-                condition=models.Q(("is_default", True)),
-                fields=("phase",),
-                name="unique_default_interface_per_phase",
             ),
         ),
         migrations.AddConstraint(

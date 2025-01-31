@@ -87,7 +87,6 @@ class PhaseAdmin(admin.ModelAdmin):
     readonly_fields = (
         "give_algorithm_editors_job_view_permissions",
         "challenge_forge_json",
-        "default_interface",
         "algorithm_interfaces",
         "algorithm_inputs",
         "algorithm_outputs",
@@ -218,10 +217,9 @@ class PhaseAlgorithmInterfaceAdmin(GuardedModelAdmin):
     list_display = (
         "pk",
         "interface",
-        "is_default",
         "phase",
     )
-    list_filter = ("is_default", "phase")
+    list_filter = "phase"
 
     def has_add_permission(self, request, obj=None):
         # through table entries should only be created through the UI

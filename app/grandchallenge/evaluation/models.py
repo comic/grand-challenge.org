@@ -1204,15 +1204,6 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             )
         )
 
-    @cached_property
-    def default_interface(self):
-        try:
-            return self.algorithm_interfaces.get(
-                phasealgorithminterface__is_default=True
-            )
-        except ObjectDoesNotExist:
-            return None
-
     @property
     def algorithm_interface_manager(self):
         return self.algorithm_interfaces
@@ -1233,28 +1224,14 @@ class PhaseGroupObjectPermission(GroupObjectPermissionBase):
 class PhaseAlgorithmInterface(models.Model):
     phase = models.ForeignKey(Phase, on_delete=models.CASCADE)
     interface = models.ForeignKey(AlgorithmInterface, on_delete=models.CASCADE)
-    is_default = models.BooleanField(default=False)
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(
-                fields=["phase"],
-                condition=Q(is_default=True),
-                name="unique_default_interface_per_phase",
-            ),
             models.UniqueConstraint(
                 fields=["phase", "interface"],
                 name="unique_phase_interface_combination",
             ),
         ]
-
-    def clean(self):
-        super().clean()
-
-        if not self.is_default and not self.phase.default_interface:
-            raise ValidationError(
-                "This phase needs a default algorithm interface."
-            )
 
 
 class Method(UUIDModel, ComponentImage):
