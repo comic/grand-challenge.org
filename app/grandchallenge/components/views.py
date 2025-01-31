@@ -451,7 +451,7 @@ class CIVSetBulkDelete(LoginRequiredMixin, FormView):
         return super().form_valid(form)
 
 
-class FileUploadFormFieldView(LoginRequiredMixin, AccessMixin, View):
+class FileAccessRequiredMixin:
     def dispatch(self, request, *args, **kwargs):
         algorithms = get_objects_for_user(
             self.request.user, "algorithms.execute_algorithm"
@@ -467,6 +467,11 @@ class FileUploadFormFieldView(LoginRequiredMixin, AccessMixin, View):
             return super().dispatch(request, *args, **kwargs)
         else:
             return self.handle_no_permission()
+
+
+class FileUploadFormFieldView(
+    LoginRequiredMixin, AccessMixin, FileAccessRequiredMixin, View
+):
 
     @cached_property
     def interface(self):
@@ -570,7 +575,9 @@ class FileWidgetSelectView(LoginRequiredMixin, View):
             raise RuntimeError("Unknown widget type")
 
 
-class FileSearchResultView(LoginRequiredMixin, ListView):
+class FileSearchResultView(
+    LoginRequiredMixin, AccessMixin, FileAccessRequiredMixin, ListView
+):
     template_name = "components/file_search_result_select.html"
     search_fields = ["pk", "file"]
     model = ComponentInterfaceValue
