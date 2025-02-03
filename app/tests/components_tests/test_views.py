@@ -1,11 +1,13 @@
 import json
 
+import factory.django
 import pytest
 from django.conf import settings
 from django.utils.html import format_html
 from factory.fuzzy import FuzzyChoice
 
 from grandchallenge.archives.models import ArchiveItem
+from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import (
     InterfaceKind,
     InterfaceKindChoices,
@@ -13,7 +15,10 @@ from grandchallenge.components.models import (
 from grandchallenge.components.widgets import FileWidgetChoices
 from grandchallenge.reader_studies.models import DisplaySet, ReaderStudy
 from grandchallenge.subdomains.utils import reverse
-from tests.algorithms_tests.factories import AlgorithmFactory
+from tests.algorithms_tests.factories import (
+    AlgorithmFactory,
+    AlgorithmJobFactory,
+)
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import (
     ComponentInterfaceExampleValueFactory,
@@ -655,3 +660,190 @@ def test_file_widget_select_view(client):
         },
     )
     assert response8.status_code == 404
+
+
+@pytest.mark.django_db
+def test_file_search_result_view_no_file_access(client):
+    user = UserFactory()
+    ci = ComponentInterfaceFactory(
+        kind=FuzzyChoice(InterfaceKind.interface_type_file())
+    )
+    response = get_view_for_user(
+        viewname="components:file-search",
+        client=client,
+        method=client.get,
+        data={
+            "prefixed-interface-slug": f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}",
+        },
+        user=user,
+    )
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_file_search_result_view_no_files(client):
+    user = UserFactory()
+    algorithm = AlgorithmFactory()
+    algorithm.add_editor(user)
+    ci = ComponentInterfaceFactory(
+        kind=FuzzyChoice(InterfaceKind.interface_type_file())
+    )
+    response = get_view_for_user(
+        viewname="components:file-search",
+        client=client,
+        method=client.get,
+        data={
+            "prefixed-interface-slug": f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}",
+        },
+        user=user,
+    )
+    assert response.status_code == 200
+    assert ci.slug in response.rendered_content
+    assert "No files match your search criteria." in response.rendered_content
+
+
+@pytest.mark.django_db
+def test_file_search_result_view(client):
+    user = UserFactory()
+    algorithm = AlgorithmFactory()
+    algorithm.add_editor(user)
+    ci = ComponentInterfaceFactory()
+    civ = ComponentInterfaceValueFactory(
+        interface=ci, file=factory.django.FileField()
+    )
+
+    response = get_view_for_user(
+        viewname="components:file-search",
+        client=client,
+        method=client.get,
+        data={
+            "prefixed-interface-slug": f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}",
+        },
+        user=user,
+    )
+
+    assert response.status_code == 200
+    assert ci.slug in response.rendered_content
+    assert "No files match your search criteria." in response.rendered_content
+
+    job = AlgorithmJobFactory(creator=user, time_limit=60)
+    job.inputs.set([civ])
+
+    response = get_view_for_user(
+        viewname="components:file-search",
+        client=client,
+        method=client.get,
+        data={
+            "prefixed-interface-slug": f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}",
+        },
+        user=user,
+    )
+
+    assert response.status_code == 200
+    assert ci.slug in response.rendered_content
+    assert f"{civ.title} ({civ.pk})" in response.rendered_content
+
+
+@pytest.mark.django_db
+def test_file_search_result_view_filter_by_pk(client):
+    user = UserFactory()
+    algorithm = AlgorithmFactory()
+    algorithm.add_editor(user)
+    ci = ComponentInterfaceFactory()
+    civ1, civ2, civ3, civ4 = ComponentInterfaceValueFactory.create_batch(
+        4,
+        interface=ci,
+        file=factory.django.FileField(),
+    )
+    job = AlgorithmJobFactory(creator=user, time_limit=60)
+    job.inputs.set([civ1, civ2, civ3])
+
+    response = get_view_for_user(
+        viewname="components:file-search",
+        client=client,
+        method=client.get,
+        data={
+            "prefixed-interface-slug": f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}",
+        },
+        user=user,
+    )
+
+    assert response.status_code == 200
+    assert ci.slug in response.rendered_content
+    assert f"{civ1.title} ({civ1.pk})" in response.rendered_content
+    assert f"{civ2.title} ({civ2.pk})" in response.rendered_content
+    assert f"{civ3.title} ({civ3.pk})" in response.rendered_content
+    assert f"{civ4.title} ({civ4.pk})" not in response.rendered_content
+
+    response = get_view_for_user(
+        viewname="components:file-search",
+        client=client,
+        method=client.get,
+        data={
+            "prefixed-interface-slug": f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}",
+            f"query-{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}": f"{civ1.pk}",
+        },
+        user=user,
+    )
+
+    assert response.status_code == 200
+    assert ci.slug in response.rendered_content
+    assert f"{civ1.title} ({civ1.pk})" in response.rendered_content
+    assert f"{civ2.title} ({civ2.pk})" not in response.rendered_content
+    assert f"{civ3.title} ({civ3.pk})" not in response.rendered_content
+    assert f"{civ4.title} ({civ4.pk})" not in response.rendered_content
+
+
+@pytest.mark.django_db
+def test_file_search_result_view_filter_by_name(client):
+    user = UserFactory()
+    algorithm = AlgorithmFactory()
+    algorithm.add_editor(user)
+    ci = ComponentInterfaceFactory()
+    civ1 = ComponentInterfaceValueFactory(
+        interface=ci,
+        file=factory.django.FileField(filename="foobar1.dat"),
+    )
+    civ2 = ComponentInterfaceValueFactory(
+        interface=ci,
+        file=factory.django.FileField(filename="foobar2.dat"),
+    )
+    civ3 = ComponentInterfaceValueFactory(
+        interface=ci,
+        file=factory.django.FileField(filename="foobaz.dat"),
+    )
+    job = AlgorithmJobFactory(creator=user, time_limit=60)
+    job.inputs.set([civ1, civ2, civ3])
+
+    response = get_view_for_user(
+        viewname="components:file-search",
+        client=client,
+        method=client.get,
+        data={
+            "prefixed-interface-slug": f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}",
+        },
+        user=user,
+    )
+
+    assert response.status_code == 200
+    assert ci.slug in response.rendered_content
+    assert f"{civ1.title} ({civ1.pk})" in response.rendered_content
+    assert f"{civ2.title} ({civ2.pk})" in response.rendered_content
+    assert f"{civ3.title} ({civ3.pk})" in response.rendered_content
+
+    response = get_view_for_user(
+        viewname="components:file-search",
+        client=client,
+        method=client.get,
+        data={
+            "prefixed-interface-slug": f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}",
+            f"query-{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}": "foobar",
+        },
+        user=user,
+    )
+
+    assert response.status_code == 200
+    assert ci.slug in response.rendered_content
+    assert f"{civ1.title} ({civ1.pk})" in response.rendered_content
+    assert f"{civ2.title} ({civ2.pk})" in response.rendered_content
+    assert f"{civ3.title} ({civ3.pk})" not in response.rendered_content
