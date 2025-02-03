@@ -1,0 +1,11 @@
+{% if aggregates.num_is_overdue > 0 %}
+    <span class="badge badge-pill badge-danger align-middle" title="Onboarding tasks overdue">
+        {{ aggregates.num_is_overdue }}
+    </span>
+{% endif %}
+
+{% if aggregates.num_is_overdue_soon > 0 %}
+    <span class="badge badge-pill badge-warning align-middle" title="Onboarding tasks due soon">
+        {{ aggregates.num_is_overdue_soon }}
+    </span>
+{% endif %}

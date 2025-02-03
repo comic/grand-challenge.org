@@ -320,7 +320,9 @@ class OnboardingTaskList(
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        queryset = queryset.filter(challenge=self.request.challenge)
+        queryset = queryset.filter(
+            challenge=self.request.challenge
+        ).with_overdue_status()
 
         # Pe-ordering the queryset ensures nothing jumps around when the datatable initializes
         queryset = queryset.order_by("complete", "deadline")

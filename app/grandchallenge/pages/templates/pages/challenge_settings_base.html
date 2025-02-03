@@ -30,7 +30,9 @@
               <li class="nav-item">
                   <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'challenge-onboarding-task-list' %} active {% endif %}"
                     href="{% url 'challenge-onboarding-task-list' challenge_short_name=challenge.short_name %}">
-                      <i class="fas fa-tasks fa-fw"></i>&nbsp;Onboarding Tasks</a>
+                      <i class="fas fa-tasks fa-fw"></i>&nbsp;Onboarding Tasks&nbsp;
+                      {% include "challenges/partials/challenge_onboardingtask_overdue.html" with aggregates=onboardingtask_aggregates only%}
+                      </a>
               </li>
               <li class="nav-item">
                 <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'participants:registration-question-list' or request.resolver_match.view_name == 'participants:registration-question-create' or request.resolver_match.view_name == 'participants:registration-question-delete'  %}active{% endif %}"

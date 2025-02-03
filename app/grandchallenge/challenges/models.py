@@ -20,6 +20,7 @@ from django.db import models
 from django.db.models import (
     BooleanField,
     Case,
+    Count,
     ExpressionWrapper,
     F,
     OuterRef,
@@ -63,6 +64,7 @@ from grandchallenge.components.schemas import (
     GPUTypeChoices,
     get_default_gpu_type_choices,
 )
+from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import (
     get_banner_path,
@@ -1421,23 +1423,21 @@ class TaskResponsiblePartyChoices(models.TextChoices):
     CHALLENGE_ORGANIZERS = "ORG", "Challenge Organizers"
 
 
-class OnboardingTaskManager(models.Manager):
-
-    def get_queryset(self):
-        qs = super().get_queryset()
-
+class OnboardingTaskQuerySet(models.QuerySet):
+    def with_overdue_status(self):
         _now = now()
         soon_cutoff = (
             _now + settings.CHALLENGE_ONBOARDING_TASKS_OVERDUE_SOON_CUTOFF
         )
 
-        qs = qs.annotate(
+        qs = self.annotate(
             is_overdue=Case(
                 When(complete=False, deadline__lt=_now, then=Value(True)),
                 default=Value(False),
                 output_field=BooleanField(),
             )
         )
+
         qs = qs.annotate(
             is_overdue_soon=Case(
                 When(
@@ -1453,13 +1453,29 @@ class OnboardingTaskManager(models.Manager):
 
         return qs
 
+    def completable_by(self, user):
+        return filter_by_permission(
+            queryset=self,
+            user=user,
+            codename="complete_onboardingtask",
+            accept_user_perms=False,
+        )
+
+    @property
+    def status_aggregates(self):
+        return self.aggregate(
+            num_is_overdue=Count("pk", filter=Q(is_overdue=True)),
+            num_is_overdue_soon=Count("pk", filter=Q(is_overdue_soon=True)),
+        )
+
 
 class OnboardingTask(FieldChangeMixin, UUIDModel):
     ResponsiblePartyChoices = TaskResponsiblePartyChoices
 
-    objects = OnboardingTaskManager()
+    objects = OnboardingTaskQuerySet.as_manager()
 
     class Meta:
+        # base_manager_name = "objects"  # For use from related models
         permissions = [
             ("complete_onboardingtask", "Can mark this task as completed")
         ]
