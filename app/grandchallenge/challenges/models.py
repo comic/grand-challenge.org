@@ -1475,7 +1475,6 @@ class OnboardingTask(FieldChangeMixin, UUIDModel):
     objects = OnboardingTaskQuerySet.as_manager()
 
     class Meta:
-        # base_manager_name = "objects"  # For use from related models
         permissions = [
             ("complete_onboardingtask", "Can mark this task as completed")
         ]
