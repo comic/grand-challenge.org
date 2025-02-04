@@ -1,8 +1,15 @@
+from datetime import datetime, timedelta
+
 import pytest
 from django.core import mail
 
-from grandchallenge.challenges.models import Challenge, ChallengeRequest
+from grandchallenge.challenges.models import (
+    Challenge,
+    ChallengeRequest,
+    OnboardingTask,
+)
 from grandchallenge.challenges.tasks import (
+    sent_onboarding_task_reminders,
     update_challenge_results_cache,
     update_compute_costs_and_storage_size,
 )
@@ -11,6 +18,7 @@ from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
 from tests.factories import (
     ChallengeFactory,
     ChallengeRequestFactory,
+    OnboardingTaskFactory,
     UserFactory,
 )
 from tests.invoices_tests.factories import InvoiceFactory
@@ -266,3 +274,111 @@ def test_challenge_budget_alert_no_budget():
     update_compute_costs_and_storage_size()
     assert len(mail.outbox) != 0
     assert "Budget Consumed Alert" in mail.outbox[0].subject
+
+
+_mock_now = datetime(2025, 1, 29, 11, 0, 0)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "tasks_properties, staff_email_subject, challenge_organizer_email_subject",
+    [
+        (  # Case: no tasks
+            [],
+            None,
+            None,
+        ),
+        (  # Case: task, but not overdue (Sanity)
+            [
+                dict(
+                    responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+                    deadline=_mock_now + timedelta(hours=24),
+                ),
+            ],
+            None,
+            None,
+        ),
+        (  # Case: one organizer overdue task
+            [
+                dict(
+                    responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+                    deadline=_mock_now - timedelta(hours=24),
+                ),
+            ],
+            "[{short_name}] 1 Organizer Onboarding Task Overdue",
+            "[{short_name}] Action Required: 1 Onboarding Task Overdue",
+        ),
+        (
+            # Case: organizer soon overdue
+            [
+                dict(
+                    responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+                    deadline=_mock_now + timedelta(minutes=30),
+                ),
+            ],
+            None,
+            "[{short_name}] Reminder: 1 Onboarding Task Soon Due",
+        ),
+        (  # Case: support overdue task
+            [
+                dict(
+                    responsible_party=OnboardingTask.ResponsiblePartyChoices.SUPPORT,
+                    deadline=_mock_now - timedelta(hours=24),
+                ),
+            ],
+            "[{short_name}] Action required: 1 Support Onboarding Task Overdue",
+            None,
+        ),
+    ],
+)
+def test_challenge_onboarding_task_due_emails(
+    tasks_properties,
+    staff_email_subject,
+    challenge_organizer_email_subject,
+    settings,
+    mocker,
+):
+    settings.CHALLENGE_ONBOARDING_TASKS_OVERDUE_SOON_CUTOFF = timedelta(
+        hours=1
+    )
+    challenge = ChallengeFactory()
+    challenge_admin = UserFactory()
+    challenge.add_admin(challenge_admin)
+
+    staff_user = UserFactory(is_staff=True)
+    settings.MANAGERS = [(staff_user.last_name, staff_user.email)]
+
+    for kwargs in tasks_properties:
+        OnboardingTaskFactory(
+            challenge=challenge,
+            **kwargs,
+        )
+
+    with mocker.patch(
+        "grandchallenge.challenges.models.now", return_value=_mock_now
+    ):
+        sent_onboarding_task_reminders()
+
+    if staff_email_subject:
+        staff_email = next(m for m in mail.outbox if staff_user.email in m.to)
+        expected_subject = staff_email_subject.format(
+            short_name=challenge.short_name
+        )
+        assert expected_subject in staff_email.subject
+    else:
+        assert not any(staff_user.email in m.to for m in mail.outbox)
+
+    if challenge_organizer_email_subject:
+        organizer_mail = next(
+            m for m in mail.outbox if challenge_admin.email in m.to
+        )
+        expected_subject = challenge_organizer_email_subject.format(
+            short_name=challenge.short_name
+        )
+        assert expected_subject in organizer_mail.subject
+    else:
+        assert not any(challenge_admin.email in m.to for m in mail.outbox)
+
+    for m in mail.outbox:
+        print("Subject: ", m.subject)
+        print(m.body)

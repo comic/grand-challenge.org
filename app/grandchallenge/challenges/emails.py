@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 from django.core.mail import mail_managers
+from django.template.defaultfilters import pluralize
 from django.template.loader import render_to_string
 from django.utils.html import format_html
 
@@ -128,4 +129,113 @@ def send_email_percent_budget_consumed_alert(challenge, percent_threshold):
     mail_managers(
         subject=subject,
         message=managers_message,
+    )
+
+
+def send_onboarding_task_overdue_alert(challenge, num_is_overdue):
+    plural_num = pluralize(num_is_overdue)
+    plural_verb = "are" if num_is_overdue > 1 else "is"
+
+    challenge_admins_subject = format_html(
+        "[{short_name}] Action Required: {num} Onboarding Task{plural_num} Overdue",
+        short_name=challenge.short_name,
+        num=num_is_overdue,
+        plural_num=plural_num,
+    )
+
+    challenge_admins_message = format_html(
+        "Your challenge {short_name} has {num} onboarding task{plural_num} that {plural_verb} "
+        "overdue. To view and complete onboarding tasks go [here]({list_url}).",
+        short_name=challenge.short_name,
+        num=num_is_overdue,
+        plural_num=plural_num,
+        plural_verb=plural_verb,
+        list_url=reverse(
+            viewname="challenge-onboarding-task-list",
+            kwargs={"challenge_short_name": challenge.short_name},
+        ),
+    )
+
+    send_standard_email_batch(
+        site=Site.objects.get_current(),
+        subject=challenge_admins_subject,
+        markdown_message=challenge_admins_message,
+        recipients=[*challenge.get_admins()],
+        subscription_type=EmailSubscriptionTypes.SYSTEM,
+    )
+
+    manager_subject = format_html(
+        "[{short_name}] {num} Organizer Onboarding Task{plural_num} Overdue",
+        short_name=challenge.short_name,
+        num=num_is_overdue,
+        plural_num=plural_num,
+    )
+
+    managers_message = format_html(
+        "The organizers of challenge {short_name} have {num} onboarding task{plural_num} that {plural_verb} "
+        "overdue: the organizers have been alerted.",
+        short_name=challenge.short_name,
+        num=num_is_overdue,
+        plural_num=plural_num,
+        plural_verb=plural_verb,
+    )
+
+    mail_managers(
+        subject=manager_subject,
+        message=managers_message,
+    )
+
+
+def send_onboarding_task_support_overdue_alert(challenge, num_is_overdue):
+    plural_num = pluralize(num_is_overdue)
+    manager_subject = format_html(
+        "[{short_name}] Action required: {num} Support Onboarding Task{plural_num} Overdue",
+        short_name=challenge.short_name,
+        num=num_is_overdue,
+        plural_num=plural_num,
+    )
+
+    managers_message = format_html(
+        "For the challenge {short_name}, the support staff are late on completing {num} onboarding task{plural_num}.",
+        short_name=challenge.short_name,
+        num=num_is_overdue,
+        plural_num=plural_num,
+    )
+
+    mail_managers(
+        subject=manager_subject,
+        message=managers_message,
+    )
+
+
+def send_onboarding_task_due_reminder(challenge, num_is_overdue_soon):
+    plural_num = pluralize(num_is_overdue_soon)
+    list_url = reverse(
+        viewname="challenge-onboarding-task-list",
+        kwargs={"challenge_short_name": challenge.short_name},
+    )
+
+    subject = format_html(
+        "[{short_name}] Reminder: {num} Onboarding Task{plural_num} Soon Due",
+        short_name=challenge.short_name,
+        num=num_is_overdue_soon,
+        plural_num=plural_num,
+    )
+
+    message = format_html(
+        "Your challenge {short_name} has {num} onboarding task{plural_num} that {plural_verb} "
+        "are soon due. To view and complete onboarding tasks, go [here]({list_url}).",
+        short_name=challenge.short_name,
+        num=num_is_overdue_soon,
+        plural_num=plural_num,
+        plural_verb="are" if num_is_overdue_soon > 1 else "is",
+        list_url=list_url,
+    )
+
+    send_standard_email_batch(
+        site=Site.objects.get_current(),
+        subject=subject,
+        markdown_message=message,
+        recipients=[*challenge.get_admins()],
+        subscription_type=EmailSubscriptionTypes.SYSTEM,
     )
