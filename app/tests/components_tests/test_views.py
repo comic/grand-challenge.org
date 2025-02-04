@@ -560,7 +560,7 @@ def test_file_widget_select_view(client):
         kind=FuzzyChoice(InterfaceKind.interface_type_file())
     )
     response = get_view_for_user(
-        viewname="components:select-file-widget",
+        viewname="components:file-widget-select",
         client=client,
         user=user,
         data={
@@ -571,7 +571,7 @@ def test_file_widget_select_view(client):
     assert '<input class="form-control" type="search"' in str(response.content)
 
     response2 = get_view_for_user(
-        viewname="components:select-file-widget",
+        viewname="components:file-widget-select",
         client=client,
         user=user,
         data={
@@ -582,7 +582,7 @@ def test_file_widget_select_view(client):
     assert 'class="user-upload"' in str(response2.content)
 
     response3 = get_view_for_user(
-        viewname="components:select-file-widget",
+        viewname="components:file-widget-select",
         client=client,
         user=user,
         data={
@@ -594,7 +594,7 @@ def test_file_widget_select_view(client):
 
     civ = ComponentInterfaceValueFactory(interface=ci)
     response4 = get_view_for_user(
-        viewname="components:select-file-widget",
+        viewname="components:file-widget-select",
         client=client,
         user=user,
         data={
@@ -609,7 +609,7 @@ def test_file_widget_select_view(client):
 
     user_upload = UserUploadFactory()
     response5 = get_view_for_user(
-        viewname="components:select-file-widget",
+        viewname="components:file-widget-select",
         client=client,
         user=user,
         data={
@@ -625,7 +625,7 @@ def test_file_widget_select_view(client):
     civ_pk = civ.pk
     civ.delete()
     response6 = get_view_for_user(
-        viewname="components:select-file-widget",
+        viewname="components:file-widget-select",
         client=client,
         user=user,
         data={
@@ -637,7 +637,7 @@ def test_file_widget_select_view(client):
     assert response6.status_code == 404
 
     response7 = get_view_for_user(
-        viewname="components:select-file-widget",
+        viewname="components:file-widget-select",
         client=client,
         user=user,
         data={
@@ -651,7 +651,7 @@ def test_file_widget_select_view(client):
     ci_slug = ci.slug
     ci.delete()
     response8 = get_view_for_user(
-        viewname="components:select-file-widget",
+        viewname="components:file-widget-select",
         client=client,
         user=user,
         data={

@@ -3,7 +3,7 @@
 <select class="custom-select"
         name="widget-choice-{{ widget.name }}"
         id="widget-select-{{ widget.name }}"
-        hx-get="{% url 'components:select-file-widget' %}"
+        hx-get="{% url 'components:file-widget-select' %}"
         hx-target="#area-{{ widget.name }}"
         hx-trigger="widgetSelected, change, load"
         hx-include="[id='values-{{ widget.name }}']"
