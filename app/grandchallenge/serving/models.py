@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.db import models
-from django.db.models import Exists, OuterRef
 
 from grandchallenge.algorithms.models import (
     AlgorithmImage,
@@ -12,10 +11,7 @@ from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import ChallengeRequest
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.components.widgets import ParentObjectTypeChoices
-from grandchallenge.core.guardian import (
-    filter_by_permission,
-    get_objects_for_user,
-)
+from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.evaluation.models import Submission
 from grandchallenge.reader_studies.models import DisplaySet
 from grandchallenge.workstations.models import Feedback
@@ -58,97 +54,77 @@ class Download(models.Model):
 
 
 def get_component_interface_values_for_user(
-    *, user, civ_pk=None, interface=None
+    *, user, civ_pk=None, interface=None, parent_object_type_choice=None
 ):
     extra_filter_kwargs = {}
     if interface:
         extra_filter_kwargs["interface"] = interface
     if civ_pk:
         extra_filter_kwargs["pk"] = civ_pk
+    if (
+        parent_object_type_choice is not None
+        and parent_object_type_choice not in ParentObjectTypeChoices
+    ):
+        raise ValueError(
+            f"Unknown parent object type choice: {parent_object_type_choice}"
+        )
 
     civs = ComponentInterfaceValue.objects.filter(**extra_filter_kwargs)
 
-    job_query = filter_by_permission(
-        queryset=Job.objects.all(),
-        user=user,
-        codename="view_job",
-        accept_user_perms=False,
-    )
-
-    job_inputs = (
-        job_query.filter(inputs__in=civs)
-        .distinct()
-        .values_list("inputs__pk", flat=True)
-    )
-    job_outputs = (
-        job_query.filter(outputs__in=civs)
-        .distinct()
-        .values_list("outputs__pk", flat=True)
-    )
-
-    display_set_query = (
-        filter_by_permission(
-            queryset=DisplaySet.objects.all(),
+    pks_for_filter = []
+    if parent_object_type_choice in (None, ParentObjectTypeChoices.JOB):
+        job_query = filter_by_permission(
+            queryset=Job.objects.all(),
             user=user,
-            codename="view_displayset",
+            codename="view_job",
             accept_user_perms=False,
         )
-        .filter(values__in=civs)
-        .distinct()
-        .values_list("values__pk", flat=True)
-    )
 
-    archive_item_query = (
-        filter_by_permission(
-            queryset=ArchiveItem.objects.all(),
-            user=user,
-            codename="view_archiveitem",
-            accept_user_perms=False,
+        job_inputs = (
+            job_query.filter(inputs__in=civs)
+            .distinct()
+            .values_list("inputs__pk", flat=True)
         )
-        .filter(values__in=civs)
-        .distinct()
-        .values_list("values__pk", flat=True)
-    )
+        job_outputs = (
+            job_query.filter(outputs__in=civs)
+            .distinct()
+            .values_list("outputs__pk", flat=True)
+        )
+        pks_for_filter.extend(job_inputs)
+        pks_for_filter.extend(job_outputs)
 
-    return civs.filter(
-        pk__in=[
-            *job_inputs,
-            *job_outputs,
-            *display_set_query,
-            *archive_item_query,
-        ]
-    )
-
-
-def get_component_interface_values_for_user_for_parent_object_type(
-    *, user, parent_object_type_choice
-):
-    match parent_object_type_choice:
-        case ParentObjectTypeChoices.JOB:
-            job_inputs_query = get_objects_for_user(
-                user=user, perms="algorithms.view_job"
-            ).filter(inputs__pk__in=OuterRef("pk"))
-
-            job_outputs_query = get_objects_for_user(
-                user=user, perms="algorithms.view_job"
-            ).filter(outputs__pk__in=OuterRef("pk"))
-
-            return ComponentInterfaceValue.objects.annotate(
-                user_has_view_permission=Exists(job_inputs_query)
-                | Exists(job_outputs_query)
-            ).filter(user_has_view_permission=True)
-        case ParentObjectTypeChoices.DISPLAY_SET:
-            query = get_objects_for_user(
-                user=user, perms="reader_studies.view_displayset"
-            ).filter(values__pk__in=OuterRef("pk"))
-        case ParentObjectTypeChoices.ARCHIVE_ITEM:
-            query = get_objects_for_user(
-                user=user, perms="archives.view_archiveitem"
-            ).filter(values__pk__in=OuterRef("pk"))
-        case _:
-            raise TypeError(
-                f"Unknown parent object type: {parent_object_type_choice}"
+    if parent_object_type_choice in (
+        None,
+        ParentObjectTypeChoices.DISPLAY_SET,
+    ):
+        display_sets = (
+            filter_by_permission(
+                queryset=DisplaySet.objects.all(),
+                user=user,
+                codename="view_displayset",
+                accept_user_perms=False,
             )
-    return ComponentInterfaceValue.objects.annotate(
-        user_has_view_permission=Exists(query)
-    ).filter(user_has_view_permission=True)
+            .filter(values__in=civs)
+            .distinct()
+            .values_list("values__pk", flat=True)
+        )
+        pks_for_filter.extend(display_sets)
+
+    if parent_object_type_choice in (
+        None,
+        ParentObjectTypeChoices.ARCHIVE_ITEM,
+    ):
+        archive_items = (
+            filter_by_permission(
+                queryset=ArchiveItem.objects.all(),
+                user=user,
+                codename="view_archiveitem",
+                accept_user_perms=False,
+            )
+            .filter(values__in=civs)
+            .distinct()
+            .values_list("values__pk", flat=True)
+        )
+        pks_for_filter.extend(archive_items)
+
+    return civs.filter(pk__in=pks_for_filter)

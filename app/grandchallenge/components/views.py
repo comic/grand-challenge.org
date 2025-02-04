@@ -55,7 +55,7 @@ from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.serving.models import (
-    get_component_interface_values_for_user_for_parent_object_type,
+    get_component_interface_values_for_user,
 )
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.uploads.models import UserUpload
@@ -598,29 +598,37 @@ class FileSearchResultView(
     model = ComponentInterfaceValue
     paginate_by = 50
 
-    def __init__(self, *, interface_slug=None):
+    def __init__(self):
         super().__init__()
-        self.interface_slug = interface_slug
+        self.interface = None
         self.parent_object_type_choice = None
 
     def get_queryset(self):
-        return get_component_interface_values_for_user_for_parent_object_type(
+        return get_component_interface_values_for_user(
             user=self.request.user,
+            interface=self.interface,
             parent_object_type_choice=self.parent_object_type_choice,
-        ).filter(interface__slug=self.interface_slug)
+        )
 
     def get(self, request, *args, **kwargs):
         prefixed_interface_slug = request.GET.get("prefixed-interface-slug")
-        self.interface_slug = prefixed_interface_slug.replace(
-            INTERFACE_FORM_FIELD_PREFIX, ""
+        self.interface = get_object_or_404(
+            ComponentInterface,
+            slug=prefixed_interface_slug.replace(
+                INTERFACE_FORM_FIELD_PREFIX, ""
+            ),
         )
         parent_object_type_choice_name = request.GET.get(
             f"parent-object-type-{prefixed_interface_slug}"
         )
-        if parent_object_type_choice_name in ParentObjectTypeChoices.names:
+
+        try:
             self.parent_object_type_choice = ParentObjectTypeChoices(
                 parent_object_type_choice_name
             )
+        except ValueError:
+            self.object_list = []
+        else:
             qs = self.get_queryset()
             query = request.GET.get("query-" + prefixed_interface_slug)
             if query:
@@ -634,8 +642,6 @@ class FileSearchResultView(
                 )
                 qs = qs.filter(q).order_by("file")
             self.object_list = qs
-        else:
-            self.object_list = []
         context = self.get_context_data(**kwargs)
         context["prefixed_interface_slug"] = prefixed_interface_slug
         return TemplateResponse(
