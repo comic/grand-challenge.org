@@ -629,7 +629,9 @@ class FileSearchResultView(
                 parent_object_type_choice_name
             )
         except ValueError:
-            self.object_list = []
+            raise Http404(
+                f"Parent object type {parent_object_type_choice_name} invalid"
+            )
         else:
             qs = self.get_queryset()
             query = request.GET.get("query-" + prefixed_interface_slug)
