@@ -6,6 +6,7 @@ from grandchallenge.algorithms.models import AlgorithmImage, AlgorithmModel
 from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import ChallengeRequest
 from grandchallenge.components.models import ComponentInterfaceValue
+from grandchallenge.components.widgets import ParentObjectTypeChoices
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.evaluation.models import Submission
 from grandchallenge.workstations.models import Feedback
@@ -69,4 +70,38 @@ def get_component_interface_values_for_user(*, user):
         | Exists(job_outputs_query)
         | Exists(display_set_query)
         | Exists(archive_item_query)
+    ).filter(user_has_view_permission=True)
+
+
+def get_component_interface_values_for_user_for_parent_object_type(
+    *, user, parent_object_type_choice
+):
+    match parent_object_type_choice:
+        case ParentObjectTypeChoices.JOB:
+            job_inputs_query = get_objects_for_user(
+                user=user, perms="algorithms.view_job"
+            ).filter(inputs__pk__in=OuterRef("pk"))
+
+            job_outputs_query = get_objects_for_user(
+                user=user, perms="algorithms.view_job"
+            ).filter(outputs__pk__in=OuterRef("pk"))
+
+            return ComponentInterfaceValue.objects.annotate(
+                user_has_view_permission=Exists(job_inputs_query)
+                | Exists(job_outputs_query)
+            ).filter(user_has_view_permission=True)
+        case ParentObjectTypeChoices.DISPLAY_SET:
+            query = get_objects_for_user(
+                user=user, perms="reader_studies.view_displayset"
+            ).filter(values__pk__in=OuterRef("pk"))
+        case ParentObjectTypeChoices.ARCHIVE_ITEM:
+            query = get_objects_for_user(
+                user=user, perms="archives.view_archiveitem"
+            ).filter(values__pk__in=OuterRef("pk"))
+        case _:
+            raise TypeError(
+                f"Unknown parent object type: {parent_object_type_choice}"
+            )
+    return ComponentInterfaceValue.objects.annotate(
+        user_has_view_permission=Exists(query)
     ).filter(user_has_view_permission=True)

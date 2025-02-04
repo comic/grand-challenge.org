@@ -43,6 +43,7 @@ from grandchallenge.components.serializers import ComponentInterfaceSerializer
 from grandchallenge.components.widgets import (
     FileSearchWidget,
     FileWidgetChoices,
+    ParentObjectTypeChoices,
 )
 from grandchallenge.core.guardian import (
     ObjectPermissionCheckerMixin,
@@ -54,7 +55,7 @@ from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.serving.models import (
-    get_component_interface_values_for_user,
+    get_component_interface_values_for_user_for_parent_object_type,
 )
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.uploads.models import UserUpload
@@ -600,10 +601,12 @@ class FileSearchResultView(
     def __init__(self, *, interface_slug=None):
         super().__init__()
         self.interface_slug = interface_slug
+        self.parent_object_type_choice = None
 
     def get_queryset(self):
-        return get_component_interface_values_for_user(
-            user=self.request.user
+        return get_component_interface_values_for_user_for_parent_object_type(
+            user=self.request.user,
+            parent_object_type_choice=self.parent_object_type_choice,
         ).filter(interface__slug=self.interface_slug)
 
     def get(self, request, *args, **kwargs):
@@ -611,16 +614,28 @@ class FileSearchResultView(
         self.interface_slug = prefixed_interface_slug.replace(
             INTERFACE_FORM_FIELD_PREFIX, ""
         )
-        qs = self.get_queryset()
-        query = request.GET.get("query-" + prefixed_interface_slug)
-        if query:
-            q = reduce(
-                or_,
-                [Q(**{f"{f}__icontains": query}) for f in self.search_fields],
-                Q(),
+        parent_object_type_choice_name = request.GET.get(
+            f"parent-object-type-{prefixed_interface_slug}"
+        )
+        if parent_object_type_choice_name in ParentObjectTypeChoices.names:
+            self.parent_object_type_choice = ParentObjectTypeChoices(
+                parent_object_type_choice_name
             )
-            qs = qs.filter(q).order_by("file")
-        self.object_list = qs
+            qs = self.get_queryset()
+            query = request.GET.get("query-" + prefixed_interface_slug)
+            if query:
+                q = reduce(
+                    or_,
+                    [
+                        Q(**{f"{f}__icontains": query})
+                        for f in self.search_fields
+                    ],
+                    Q(),
+                )
+                qs = qs.filter(q).order_by("file")
+            self.object_list = qs
+        else:
+            self.object_list = []
         context = self.get_context_data(**kwargs)
         context["prefixed_interface_slug"] = prefixed_interface_slug
         return TemplateResponse(
