@@ -124,7 +124,7 @@ def update_compute_costs_and_storage_size():
 
 
 @acks_late_2xlarge_task
-def sent_onboarding_task_reminders():
+def send_onboarding_task_reminder_emails():
     onboarding_task_info = (
         OnboardingTask.objects.with_overdue_status()
         .values("challenge")

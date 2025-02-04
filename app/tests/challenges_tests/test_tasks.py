@@ -9,7 +9,7 @@ from grandchallenge.challenges.models import (
     OnboardingTask,
 )
 from grandchallenge.challenges.tasks import (
-    sent_onboarding_task_reminders,
+    send_onboarding_task_reminder_emails,
     update_challenge_results_cache,
     update_compute_costs_and_storage_size,
 )
@@ -357,7 +357,7 @@ def test_challenge_onboarding_task_due_emails(
     with mocker.patch(
         "grandchallenge.challenges.models.now", return_value=_mock_now
     ):
-        sent_onboarding_task_reminders()
+        send_onboarding_task_reminder_emails()
 
     if staff_email_subject:
         staff_email = next(m for m in mail.outbox if staff_user.email in m.to)
