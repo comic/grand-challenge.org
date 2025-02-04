@@ -1,11 +1,10 @@
-from dal import autocomplete
-from django.contrib.auth import get_user_model
 from django.contrib.messages.views import SuccessMessageMixin
 from django.views.generic import FormView, ListView
 from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.admins.forms import AdminsForm
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
+from grandchallenge.groups.views import UserAutocomplete
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
@@ -35,9 +34,8 @@ class AdminsList(LoginRequiredMixin, ObjectPermissionRequiredMixin, ListView):
 
 
 class AdminsUpdateAutocomplete(
-    LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
-    autocomplete.Select2QuerySetView,
+    UserAutocomplete,
 ):
     permission_required = "change_challenge"
     raise_exception = True
@@ -45,14 +43,6 @@ class AdminsUpdateAutocomplete(
 
     def get_permission_object(self):
         return self.request.challenge
-
-    def get_queryset(self):
-        qs = get_user_model().objects.all().order_by("username")
-
-        if self.q:
-            qs = qs.filter(username__istartswith=self.q)
-
-        return qs
 
 
 class AdminsUpdate(
