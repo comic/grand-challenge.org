@@ -227,27 +227,13 @@
                 </div>
             {% endif %}
 
-                <h3 class="mt-5">Interfaces</h3>
-                <p>This algorithm implements the following input-output combinations: </p>
-                <table class="table table-borderless table-hover table-sm">
-                    <thead class="thead-light">
-                    <tr>
-                        <th>Inputs</th>
-                        <th>Outputs</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                        {% for interface in object.interfaces.all %}
-                            <tr>
-                                <td>{{ interface.inputs.all|oxford_comma }}</td>
-                                <td>{{ interface.outputs.all|oxford_comma }}</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <h3 class="mt-5">Interfaces</h3>
+            <p>This algorithm implements all of the following input-output combinations: </p>
+            {% include 'algorithms/partials/algorithminterface_table.html' with base_obj=object interfaces=object.interfaces.all delete_option=False %}
+
 
             {% if best_evaluation_per_phase %}
-                <h3 class="mt-5">Challenge Performance</h3>
+                <h3>Challenge Performance</h3>
 
                 <table class="table table-borderless table-hover table-sm">
                     <thead class="thead-light">
@@ -273,7 +259,7 @@
                 </table>
             {% endif %}
 
-            <h3 class="mt-5">Model Facts</h3>
+            <h3>Model Facts</h3>
 
             <h4 class="mt-5 mb-3">Summary</h4>
             {% if object.summary %}

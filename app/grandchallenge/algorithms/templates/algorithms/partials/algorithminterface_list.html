@@ -4,33 +4,9 @@
 
 <h2>Algorithm Interfaces for {{ base_obj }}</h2>
 
-<p>The following interfaces are configured for your {{ base_obj|verbose_name }}:</p>
+<p>The following interfaces (i.e. input-output combinations) are configured for your {{ base_obj|verbose_name }}:</p>
 <p>
     <a class="btn btn-primary" href="{{ base_obj.algorithm_interface_create_url }}">Add new interface</a>
 </p>
 
-<div class="table-responsive">
-    <table class="table table-hover table-borderless">
-        <thead class="thead-light">
-            <th>Inputs</th>
-            <th>Outputs</th>
-            <th>Delete</th>
-        </thead>
-        <tbody>
-            {% for object in object_list %}
-                 <tr>
-                    <td>{{ object.interface.inputs.all|oxford_comma }}</td>
-                    <td>{{ object.interface.outputs.all|oxford_comma }}</td>
-                    <td>
-                        <a class="btn btn-sm btn-danger m-0"
-                           href="{% url base_obj.algorithm_interface_delete_viewname slug=base_obj.slug interface_pk=object.interface.pk %}">
-                            <i class="fas fa-trash"></i>
-                        </a>
-                    </td>
-                 </tr>
-            {% empty %}
-                <tr><td colspan="100%" class="text-center">This {{ base_obj|verbose_name }} does not have any interfaces defined yet.</td></tr>
-             {% endfor %}
-        </tbody>
-    </table>
-</div>
+{% include 'algorithms/partials/algorithminterface_table.html' with base_obj=base_obj interfaces=interfaces delete_option=True %}

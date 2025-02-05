@@ -81,6 +81,8 @@
             </p>
         </div>
 
+        {% include 'evaluation/partials/algorithm_interfaces_information.html' with phase=phase form=form %}
+
         {% crispy form %}
 
     {% else %}
@@ -111,19 +113,6 @@
                     Thank you for participating in this phase.
                 {% endif %}
             </div>
-
-        {% elif phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM and not form.fields.algorithm_image.queryset.exists %}
-
-            <p>
-                Currently, you do not have any Algorithm Image that can be submitted to this phase.
-                Either upload a new Algorithm Image to one of your existing Algorithms, or create a new Algorithm.
-                As soon as your new Algorithm Image is active you can return to this page to submit it to this phase.
-            </p>
-
-            <a class="btn btn-primary"
-               href="{% url 'evaluation:phase-algorithm-create' slug=phase.slug challenge_short_name=challenge.short_name %}">
-                <i class="fa fa-plus"></i> Add a new Algorithm
-            </a>
 
         {% else %}
 
@@ -156,6 +145,8 @@
                 This phase is dependent on phase "{{ phase.parent }}". This means that you can only submit active containers that have a successful submission to phase "{{ phase.parent }}".
             </div>
         {% endif %}
+
+            {% include 'evaluation/partials/algorithm_interfaces_information.html' with phase=phase form=form %}
 
             {% crispy form %}
 

@@ -303,7 +303,10 @@ class SubmissionForm(
         label="Predictions File",
         queryset=None,
     )
-    algorithm = AlgorithmChoiceField(queryset=None)
+    algorithm = AlgorithmChoiceField(
+        queryset=None,
+        help_text="Select one of your algorithms to submit as a solution to this phase. See above for information regarding the necessary configuration of the algorithm.",
+    )
     confirm_submission = forms.BooleanField(
         required=True,
         label="I understand that by submitting my algorithm image and model "
@@ -422,8 +425,6 @@ class SubmissionForm(
             self.fields["algorithm_image"].required = False
             self.fields["algorithm_model"].widget = HiddenInput()
 
-            self._algorithm_interfaces = self._phase.algorithm_interfaces.all()
-
             if (
                 not self._phase.active_image
                 and not self._phase.external_evaluation
@@ -465,7 +466,7 @@ class SubmissionForm(
         if (
             phase.submission_kind == SubmissionKindChoices.ALGORITHM
             and not phase.external_evaluation
-            and phase.jobs_per_submission == 0
+            and phase.count_valid_archive_items == 0
         ):
             self.add_error(
                 None,

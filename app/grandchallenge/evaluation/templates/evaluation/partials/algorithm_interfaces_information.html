@@ -1,0 +1,21 @@
+{% load url %}
+
+<div class="col-12 d-flex p-0 mr-0 mb-1">
+    <div class="col-9 p-0 align-self-center">The algorithms for this phase need to implement all of the following input-output combinations:</div>
+    <div class="col-3 p-0">
+        <a class="btn btn-primary btn-sm m-2 float-right"
+           href="{% url 'evaluation:phase-algorithm-create' slug=phase.slug challenge_short_name=challenge.short_name %}">
+            <i class="fa fa-plus"></i> Manage your algorithms
+        </a>
+    </div>
+</div>
+{% include 'algorithms/partials/algorithminterface_table.html' with base_obj=phase interfaces=phase.algorithm_interfaces.all delete_option=False %}
+
+{% if phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM and not form.fields.algorithm.queryset.exists %}
+    <p>
+        Currently, you either do not have an algorithm that is compatible with this phase,
+        or none of your compatible algorithms have an active algorithm image.
+        Either upload a new algorithm image to one of your compatible algorithms, or create a new algorithm (see 'Manage your algorithms' button above).
+        As soon as your new algorithm image is active you can return to this page to submit it to this phase.
+    </p>
+{% endif %}
