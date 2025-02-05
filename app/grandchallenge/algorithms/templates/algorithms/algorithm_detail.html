@@ -227,29 +227,10 @@
                 </div>
             {% endif %}
 
-            <div class="row mb-2">
-                <div class="col-3 font-weight-bold">Inputs:</div>
-                <div class="col-9">
-                    <ul class="pl-3 pb-0 mb-0">
-                        {% for input in object.inputs.all %}
-                            <li>{{ input.title }}&nbsp;{% if input.description %}
-                                <span class="text-muted"> ({{ input.description }})</span>{% endif %}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
+            <h3 class="mt-5">Interfaces</h3>
+            <p>This algorithm implements all of the following input-output combinations: </p>
+            {% include 'algorithms/partials/algorithminterface_table.html' with base_obj=object interfaces=object.interfaces.all delete_option=False %}
 
-            <div class="row mb-2">
-                <div class="col-3 font-weight-bold">Outputs:</div>
-                <div class="col-9">
-                    <ul class="pl-3 pb-0 mb-0">
-                        {% for output in object.outputs.all %}
-                            <li>{{ output.title }}&nbsp;{% if output.description %}
-                                <span class="text-muted"> ({{ output.description }})</span>{% endif %}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
 
             {% if best_evaluation_per_phase %}
                 <h3>Challenge Performance</h3>

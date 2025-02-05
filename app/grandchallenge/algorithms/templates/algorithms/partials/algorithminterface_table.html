@@ -1,0 +1,61 @@
+{% load meta_attr %}
+
+<div class="table-responsive table-sm">
+    <table class="table">
+        <thead class="thead-light">
+            <th></th>
+            <th>Inputs</th>
+            <th>Outputs</th>
+            {% if delete_option %}
+                <th>Delete</th>
+            {% endif %}
+        </thead>
+        <tbody>
+            {% for interface in interfaces %}
+                 <tr>
+                    <td class="text-center align-middle p-3">{{ forloop.counter }}</td>
+                    <td>
+                        {% for input in interface.inputs.all %}
+                            <li>{{ input }}
+                                {% if read_write_paths %}
+                                    at
+                                    {% if input.is_image_kind %}
+                                        <code>/input{% if input.relative_path %}/{{ input.relative_path }}{% endif %}/&lt;uuid&gt;.mha</code> or
+                                        <code>/input{% if input.relative_path %}/{{ input.relative_path }}{% endif %}/&lt;uuid&gt;.tif</code>
+                                    {% else %}
+                                        <code>/input/{{ input.relative_path }}</code>
+                                    {% endif %}
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% for output in interface.outputs.all %}
+                            <li>{{ output }}
+                                {% if read_write_paths %}
+                                    at
+                                    {% if output.is_image_kind %}
+                                        <code>/output{% if output.relative_path %}/{{ output.relative_path }}{% endif %}/&lt;uuid&gt;.mha</code> or
+                                        <code>/output{% if output.relative_path %}/{{ output.relative_path }}{% endif %}/&lt;uuid&gt;.tif</code>
+                                    {% else %}
+                                        <code>/output/{{ output.relative_path }}</code>
+                                    {% endif %}
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </td>
+                     {% if delete_option %}
+                        <td class="align-middle">
+                            <a class="btn btn-sm btn-danger m-0"
+                               href="{% url base_obj.algorithm_interface_delete_viewname slug=base_obj.slug interface_pk=interface.pk %}">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                     {% endif %}
+                 </tr>
+            {% empty %}
+                <tr><td colspan="100%" class="text-center">This {{ base_obj|verbose_name }} does not have any interfaces defined yet.</td></tr>
+             {% endfor %}
+        </tbody>
+    </table>
+</div>

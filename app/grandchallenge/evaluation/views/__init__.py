@@ -1310,6 +1310,7 @@ class AlgorithmInterfacesForPhaseList(
         context.update(
             {
                 "phase": self.phase,
+                "interfaces": [obj.interface for obj in self.object_list],
             }
         )
         return context
