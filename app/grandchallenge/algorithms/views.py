@@ -1175,28 +1175,41 @@ class AlgorithmInterfacePermissionMixin(AccessMixin):
             return self.handle_no_permission()
 
 
-class AlgorithmInterfaceForAlgorithmCreate(
-    AlgorithmInterfacePermissionMixin, CreateView
-):
+class AlgorithmInterfaceCreateBase(CreateView):
     model = AlgorithmInterface
     form_class = AlgorithmInterfaceForm
     success_message = "Algorithm interface successfully added"
+
+    def get_success_url(self):
+        return NotImplementedError
+
+    @property
+    def base_obj(self):
+        return NotImplementedError
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update({"base_obj": self.base_obj})
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"base_obj": self.base_obj})
+        return kwargs
+
+
+class AlgorithmInterfaceForAlgorithmCreate(
+    AlgorithmInterfacePermissionMixin, AlgorithmInterfaceCreateBase
+):
+    @property
+    def base_obj(self):
+        return self.algorithm
 
     def get_success_url(self):
         return reverse(
             "algorithms:interface-list",
             kwargs={"slug": self.algorithm.slug},
         )
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context.update({"algorithm": self.algorithm})
-        return context
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update({"base_obj": self.algorithm})
-        return kwargs
 
 
 class AlgorithmInterfacesForAlgorithmList(

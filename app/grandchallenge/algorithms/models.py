@@ -528,6 +528,20 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
     def algorithm_interface_through_model_manager(self):
         return AlgorithmAlgorithmInterface.objects.filter(algorithm=self)
 
+    @property
+    def algorithm_interface_create_url(self):
+        return reverse(
+            "algorithms:interface-create", kwargs={"slug": self.slug}
+        )
+
+    @property
+    def algorithm_interface_delete_viewname(self):
+        return "algorithms:interface-delete"
+
+    @property
+    def algorithm_interface_list_url(self):
+        return reverse("algorithms:interface-list", kwargs={"slug": self.slug})
+
     def is_editor(self, user):
         return user.groups.filter(pk=self.editors_group.pk).exists()
 

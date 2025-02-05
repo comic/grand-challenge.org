@@ -1,7 +1,7 @@
 from django.urls import path
 
 from grandchallenge.cases.views import (
-    ImageSearchView,
+    ImageSearchResultView,
     ImageWidgetSelectView,
     RawImageUploadSessionDetail,
     RawImageUploadSessionList,
@@ -25,5 +25,7 @@ urlpatterns = [
         ImageWidgetSelectView.as_view(),
         name="select-image-widget",
     ),
-    path("images/search/", ImageSearchView.as_view(), name="image-search"),
+    path(
+        "images/search/", ImageSearchResultView.as_view(), name="image-search"
+    ),
 ]

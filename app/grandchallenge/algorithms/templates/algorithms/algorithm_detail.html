@@ -39,6 +39,9 @@
                     <a class="nav-link"
                         href="{% url 'algorithms:interface-list' slug=object.slug %}"
                     ><i class="fas fa-sliders-h fa-fw"></i>&nbsp;Interfaces
+                    {% if not object.interfaces.all %}&nbsp;
+                        <i class="fas fa-exclamation-triangle text-danger"></i>
+                    {% endif %}
                    </a>
                     <a class="nav-link" id="v-pills-templates-tab" data-toggle="pill"
                         href="#templates" role="tab"

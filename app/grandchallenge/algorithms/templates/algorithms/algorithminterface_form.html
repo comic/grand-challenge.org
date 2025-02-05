@@ -1,8 +1,7 @@
 {% extends "base.html" %}
-{% load crispy_forms_tags %}
 
 {% block title %}
-    Create Interface - {{ algorithm.title }} - {{ block.super }}
+    Create Interface - {{ base_obj.title }} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -10,10 +9,10 @@
         <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a>
         </li>
         <li class="breadcrumb-item"><a
-                href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}
+                href="{{ algorithm.get_absolute_url }}">{{ base_obj.title }}
         </a></li>
         <li class="breadcrumb-item"><a
-                href="{% url 'algorithms:interface-list' slug=algorithm.slug %}">Interfaces
+                href="{% url 'algorithms:interface-list' slug=base_obj.slug %}">Interfaces
         </a></li>
         <li class="breadcrumb-item active"
             aria-current="page">Create Interface
@@ -22,21 +21,5 @@
 {% endblock %}
 
 {% block content %}
-
-    <h2>Create An Algorithm Interface</h2>
-    <br>
-    <p>
-        Create an interface for your algorithm: define any combination of inputs and outputs, and optionally mark the interface as default for the algorithm.
-    </p>
-    <p>
-        Please see the <a href="{% url 'components:component-interface-list-input' %}">list of input options</a> and the <a href="{% url 'components:component-interface-list-output' %}">
-            list of output options
-        </a> for more information and examples.
-    </p>
-    <p>
-        If you cannot find suitable inputs or outputs, please contact <a href="mailto:support@grand-challenge.org">support@grand-challenge.org</a>.
-    </p>
-
-    {% crispy form %}
-
+    {% include 'algorithms/partials/algorithminterface_form.html' %}
 {% endblock %}

@@ -16,6 +16,10 @@ urlpatterns = [
         name="subdomain_robots_txt",
     ),
     path(
+        "components/",
+        include("grandchallenge.components.urls", namespace="components"),
+    ),
+    path(
         "evaluation/",
         include("grandchallenge.evaluation.urls", namespace="evaluation"),
     ),
