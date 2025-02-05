@@ -69,9 +69,9 @@
             </p>
             {% if phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM and not phase.external_evaluation %}
                 <p>
-                    For each submission, {{ phase.count_valid_archive_items }}
-                    algorithm job{{ phase.count_valid_archive_items|pluralize }} will be created
-                    from the {{ phase.count_valid_archive_items }} valid item{{ phase.count_valid_archive_items|pluralize }}
+                    For each submission, {{ phase.jobs_per_submission }}
+                    algorithm job{{ phase.jobs_per_submission|pluralize }} will be created
+                    from the {{ phase.jobs_per_submission }} valid item{{ phase.jobs_per_submission|pluralize }}
                     in <a href="{{ phase.archive.get_absolute_url }}">{{ phase.archive }}</a>.
                     Each individual algorithm job will have a time limit of {{ phase.algorithm_time_limit|naturaldelta }}.
                 </p>
