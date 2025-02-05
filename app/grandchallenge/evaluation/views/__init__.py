@@ -1024,9 +1024,14 @@ class CombinedLeaderboardDelete(
         return self.get_object().challenge
 
 
-class ConfigureAlgorithmPhasesView(PermissionRequiredMixin, FormView):
-    form_class = ConfigureAlgorithmPhasesForm
+class ConfigureAlgorithmPhasesPermissionMixin(PermissionRequiredMixin):
     permission_required = "evaluation.configure_algorithm_phase"
+
+
+class ConfigureAlgorithmPhasesView(
+    ConfigureAlgorithmPhasesPermissionMixin, FormView
+):
+    form_class = ConfigureAlgorithmPhasesForm
     template_name = "evaluation/configure_algorithm_phases_form.html"
     raise_exception = True
 
@@ -1256,9 +1261,7 @@ class PhaseArchiveInfo(
         )
 
 
-class AlgorithmInterfaceForPhasePermissionMixin(PermissionRequiredMixin):
-
-    permission_required = "evaluation.configure_algorithm_phase"
+class AlgorithmInterfaceForPhaseMixin:
 
     @property
     def phase(self):
@@ -1271,7 +1274,9 @@ class AlgorithmInterfaceForPhasePermissionMixin(PermissionRequiredMixin):
 
 
 class AlgorithmInterfaceForPhaseCreate(
-    AlgorithmInterfaceForPhasePermissionMixin, AlgorithmInterfaceCreateBase
+    ConfigureAlgorithmPhasesPermissionMixin,
+    AlgorithmInterfaceForPhaseMixin,
+    AlgorithmInterfaceCreateBase,
 ):
     template_name = "evaluation/algorithminterface_for_phase_form.html"
 
@@ -1290,7 +1295,9 @@ class AlgorithmInterfaceForPhaseCreate(
 
 
 class AlgorithmInterfacesForPhaseList(
-    AlgorithmInterfaceForPhasePermissionMixin, ListView
+    ConfigureAlgorithmPhasesPermissionMixin,
+    AlgorithmInterfaceForPhaseMixin,
+    ListView,
 ):
     model = PhaseAlgorithmInterface
 
@@ -1309,7 +1316,9 @@ class AlgorithmInterfacesForPhaseList(
 
 
 class AlgorithmInterfaceForPhaseDelete(
-    AlgorithmInterfaceForPhasePermissionMixin, DeleteView
+    ConfigureAlgorithmPhasesPermissionMixin,
+    AlgorithmInterfaceForPhaseMixin,
+    DeleteView,
 ):
     model = PhaseAlgorithmInterface
 
