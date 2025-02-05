@@ -356,33 +356,22 @@ class AlgorithmForm(
         qs = get_objects_for_user(
             self._user, "evaluation.create_phase_submission"
         )
-        inputs = self.instance.inputs.all()
-        outputs = self.instance.outputs.all()
+        interfaces = self.instance.interfaces.all()
         return (
             qs.annotate(
-                total_algorithm_input_count=Count(
-                    "algorithm_inputs", distinct=True
+                total_algorithm_interface_count=Count(
+                    "algorithm_interfaces", distinct=True
                 ),
-                total_algorithm_output_count=Count(
-                    "algorithm_outputs", distinct=True
-                ),
-                relevant_algorithm_input_count=Count(
-                    "algorithm_inputs",
-                    filter=Q(algorithm_inputs__in=inputs),
-                    distinct=True,
-                ),
-                relevant_algorithm_output_count=Count(
-                    "algorithm_outputs",
-                    filter=Q(algorithm_outputs__in=outputs),
+                relevant_algorithm_interface_count=Count(
+                    "algorithm_interfaces",
+                    filter=Q(algorithm_interfaces__in=interfaces),
                     distinct=True,
                 ),
             )
             .filter(
                 submission_kind=SubmissionKindChoices.ALGORITHM,
-                total_algorithm_input_count=len(inputs),
-                total_algorithm_output_count=len(outputs),
-                relevant_algorithm_input_count=len(inputs),
-                relevant_algorithm_output_count=len(outputs),
+                total_algorithm_interface_count=len(interfaces),
+                relevant_algorithm_interface_count=len(interfaces),
             )
             .aggregate(
                 max_memory=Max("algorithm_maximum_settable_memory_gb"),

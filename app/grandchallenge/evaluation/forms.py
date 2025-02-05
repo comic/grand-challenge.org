@@ -19,7 +19,7 @@ from django.forms import (
     ModelForm,
     ModelMultipleChoiceField,
 )
-from django.utils.html import format_html, format_html_join
+from django.utils.html import format_html
 from django.utils.text import format_lazy
 
 from grandchallenge.algorithms.forms import UserAlgorithmsForPhaseMixin
@@ -37,7 +37,6 @@ from grandchallenge.core.guardian import (
     filter_by_permission,
     get_objects_for_user,
 )
-from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.widgets import (
     JSONEditorWidget,
     MarkdownEditorInlineWidget,
@@ -425,40 +424,6 @@ class SubmissionForm(
 
             self._algorithm_interfaces = self._phase.algorithm_interfaces.all()
 
-            interface_table_rows = format_html_join(
-                "",
-                "<tr><td>Interface {}</td><td>{}</td><td>{}</td></tr>",
-                (
-                    (
-                        n,
-                        oxford_comma(interface.inputs.all()),
-                        oxford_comma(interface.outputs.all()),
-                    )
-                    for n, interface in enumerate(
-                        phase.algorithm_interfaces.all(), start=1
-                    )
-                ),
-            )
-            interface_info_table = format_html(
-                "<table class='table'><thead><tr><th>Interface</th><th>Inputs</th><th>Outputs</th></tr></thead><tbody>{content}</tbody></table>",
-                content=interface_table_rows,
-            )
-
-            self.fields["algorithm"].help_text = format_html(
-                "<p>Select one of your algorithms to submit as a solution to this "
-                "challenge. The algorithms need to work with the following interfaces (i.e. input and output combinations):</p> {interfaces} "
-                "<p>If you have not created your "
-                "algorithm yet you can "
-                "do so <a href={create_link}>on this page</a>.</p>",
-                interfaces=interface_info_table,
-                create_link=reverse(
-                    "evaluation:phase-algorithm-create",
-                    kwargs={
-                        "slug": phase.slug,
-                        "challenge_short_name": phase.challenge.short_name,
-                    },
-                ),
-            )
             if (
                 not self._phase.active_image
                 and not self._phase.external_evaluation
@@ -500,7 +465,7 @@ class SubmissionForm(
         if (
             phase.submission_kind == SubmissionKindChoices.ALGORITHM
             and not phase.external_evaluation
-            and phase.count_valid_archive_items == 0
+            and phase.jobs_per_submission == 0
         ):
             self.add_error(
                 None,

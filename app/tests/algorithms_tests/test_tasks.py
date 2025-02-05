@@ -12,7 +12,7 @@ from grandchallenge.algorithms.tasks import (
     create_algorithm_jobs,
     create_algorithm_jobs_for_archive,
     execute_algorithm_job_for_inputs,
-    filter_civs_for_algorithm,
+    filter_archive_items_for_algorithm,
     send_failed_job_notification,
 )
 from grandchallenge.components.models import (
@@ -512,7 +512,7 @@ class TestJobCreation:
             },
         ]
 
-        filtered_civ_sets = filter_civs_for_algorithm(
+        filtered_civ_sets = filter_archive_items_for_algorithm(
             civ_sets=civ_sets, algorithm_image=ai, algorithm_model=None
         )
 
@@ -534,7 +534,7 @@ class TestJobCreation:
             }
         ]
 
-        filtered_civ_sets = filter_civs_for_algorithm(
+        filtered_civ_sets = filter_archive_items_for_algorithm(
             civ_sets=civ_sets, algorithm_image=ai, algorithm_model=None
         )
 
@@ -590,7 +590,7 @@ class TestJobCreation:
             },
         ]
 
-        filtered_civ_sets = filter_civs_for_algorithm(
+        filtered_civ_sets = filter_archive_items_for_algorithm(
             civ_sets=civ_sets, algorithm_image=ai, algorithm_model=None
         )
 
@@ -628,7 +628,7 @@ class TestJobCreation:
             },
         ]
 
-        filtered_civ_sets = filter_civs_for_algorithm(
+        filtered_civ_sets = filter_archive_items_for_algorithm(
             civ_sets=civ_sets, algorithm_image=ai, algorithm_model=am
         )
 

@@ -8,7 +8,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.files.base import File
 from django.db import transaction
-from django.db.models import Count, Q
+from django.db.models import Count, F, Q
 from django.db.transaction import on_commit
 from django.utils._os import safe_join
 
@@ -97,11 +97,8 @@ def create_algorithm_jobs_for_archive(
                 create_algorithm_jobs(
                     algorithm_image=algorithm.active_image,
                     algorithm_model=algorithm.active_model,
-                    civ_sets=[
-                        {*ai.values.all()}
-                        for ai in archive_items.prefetch_related(
-                            "values__interface"
-                        )
+                    archive_items=[
+                        archive_items.prefetch_related("values__interface")
                     ],
                     extra_viewer_groups=archive_groups,
                     # NOTE: no emails in case the logs leak data
@@ -116,7 +113,7 @@ def create_algorithm_jobs_for_archive(
 def create_algorithm_jobs(
     *,
     algorithm_image,
-    civ_sets,
+    archive_items,
     time_limit,
     requires_gpu_type,
     requires_memory_gb,
@@ -134,8 +131,8 @@ def create_algorithm_jobs(
     ----------
     algorithm_image
         The algorithm image to use
-    civ_sets
-        The sets of component interface values that will be used as input
+    archive_items
+        Archive items whose values will be used as input
         for the algorithm image
     time_limit
         The time limit for the Job
@@ -163,54 +160,57 @@ def create_algorithm_jobs(
     if not algorithm_image:
         raise RuntimeError("Algorithm image required to create jobs.")
 
-    civ_sets = filter_civs_for_algorithm(
-        civ_sets=civ_sets,
+    valid_job_inputs = filter_archive_items_for_algorithm(
+        archive_items=archive_items,
         algorithm_image=algorithm_image,
         algorithm_model=algorithm_model,
     )
-
-    if max_jobs is not None:
-        civ_sets = civ_sets[:max_jobs]
 
     if time_limit is None:
         time_limit = settings.ALGORITHMS_JOB_DEFAULT_TIME_LIMIT_SECONDS
 
     jobs = []
-    for civ_set in civ_sets:
+    for interface, archive_items in valid_job_inputs.items():
+        for ai in archive_items:
+            if max_jobs is not None and len(jobs) >= max_jobs:
+                break
 
-        if len(jobs) >= settings.ALGORITHMS_JOB_BATCH_LIMIT:
-            raise TooManyJobsScheduled
+            if len(jobs) >= settings.ALGORITHMS_JOB_BATCH_LIMIT:
+                raise TooManyJobsScheduled
 
-        with transaction.atomic():
-            job = Job.objects.create(
-                creator=None,  # System jobs, so no creator
-                algorithm_image=algorithm_image,
-                algorithm_model=algorithm_model,
-                task_on_success=task_on_success,
-                task_on_failure=task_on_failure,
-                time_limit=time_limit,
-                requires_gpu_type=requires_gpu_type,
-                requires_memory_gb=requires_memory_gb,
-                extra_viewer_groups=extra_viewer_groups,
-                extra_logs_viewer_groups=extra_logs_viewer_groups,
-                input_civ_set=civ_set,
-            )
-            on_commit(job.execute)
+            with transaction.atomic():
+                job = Job.objects.create(
+                    creator=None,  # System jobs, so no creator
+                    algorithm_image=algorithm_image,
+                    algorithm_model=algorithm_model,
+                    algorithm_interface=interface,
+                    task_on_success=task_on_success,
+                    task_on_failure=task_on_failure,
+                    time_limit=time_limit,
+                    requires_gpu_type=requires_gpu_type,
+                    requires_memory_gb=requires_memory_gb,
+                    extra_viewer_groups=extra_viewer_groups,
+                    extra_logs_viewer_groups=extra_logs_viewer_groups,
+                    input_civ_set=ai.values.all(),
+                )
+                on_commit(job.execute)
 
-            jobs.append(job)
+                jobs.append(job)
 
     return jobs
 
 
-def filter_civs_for_algorithm(*, civ_sets, algorithm_image, algorithm_model):
+def filter_archive_items_for_algorithm(
+    *, archive_items, algorithm_image, algorithm_model
+):
     """
-    Removes sets of civs that are invalid for new jobs
+    Removes archive items that are invalid for new jobs.
+    The archive items need to contain values for all inputs of one of the algorithm's interfaces.
 
     Parameters
     ----------
-    civ_sets
-        Iterable of sets of ComponentInterfaceValues that are candidate for
-        new Jobs
+    archive_items
+        Archive items whose values are candidates for new jobs' inputs
     algorithm_image
         The algorithm image to use for new job
     algorithm_model
@@ -218,50 +218,74 @@ def filter_civs_for_algorithm(*, civ_sets, algorithm_image, algorithm_model):
 
     Returns
     -------
-    Filtered set of ComponentInterfaceValues
+    Dictionary of valid ArchiveItems for new jobs, grouped by AlgorithmInterface
     """
     from grandchallenge.algorithms.models import Job
 
-    input_interfaces = {*algorithm_image.algorithm.inputs.all()}
+    algorithm_interfaces = (
+        algorithm_image.algorithm.interfaces.prefetch_related("inputs").all()
+    )
 
+    # First, sort archive items by algorithm interface
+    # an archive item is only valid if it has values for all inputs
+    # of the algorithm interface
+    valid_job_inputs = {}
+    valid_input_counts = []
+    for interface in algorithm_interfaces:
+        inputs = interface.inputs.all()
+        n_inputs = len(inputs)
+        valid_input_counts.append(n_inputs)
+        valid_job_inputs[interface] = archive_items.annotate(
+            input_count=Count("values", distinct=True),
+            relevant_count=Count(
+                "values", filter=Q(values__interface__in=inputs), distinct=True
+            ),
+        ).filter(input_count=n_inputs, relevant_count=n_inputs)
+
+    # Next, get all system jobs that have been run for the provided archive items
+    # with the same model and image
     existing_jobs = {
         frozenset(j.inputs.all())
         for j in Job.objects.filter(
-            algorithm_image=algorithm_image, algorithm_model=algorithm_model
+            algorithm_image=algorithm_image,
+            algorithm_model=algorithm_model,
+            algorithm_interface__in=valid_job_inputs.keys(),
+            creator=None,
         )
         .annotate(
+            input_count=Count("inputs", distinct=True),
             inputs_match_count=Count(
                 "inputs",
                 filter=Q(
-                    inputs__in={civ for civ_set in civ_sets for civ in civ_set}
+                    inputs__in={
+                        civ
+                        for archive_items in valid_job_inputs.values()
+                        for item in archive_items
+                        for civ in item.values.all()
+                    }
                 ),
-            )
+                distinct=True,
+            ),
         )
-        .filter(inputs_match_count=len(input_interfaces), creator=None)
+        .filter(
+            input_count=F("inputs_match_count"),
+            input_count__in=valid_input_counts,
+        )
         .prefetch_related("inputs")
     }
 
-    valid_job_inputs = []
+    filtered_job_inputs = {}
+    for interface, archive_items in valid_job_inputs.items():
+        # exclude archive items for which there is a job already
+        filtered_inputs = archive_items.exclude(
+            ai
+            for ai in archive_items
+            if frozenset(ai.values.all()) in existing_jobs
+        )
+        if filtered_inputs.exists():
+            filtered_job_inputs[interface] = filtered_inputs
 
-    for civ_set in civ_sets:
-        # Check interfaces are complete
-        civ_interfaces = {civ.interface for civ in civ_set}
-        if input_interfaces.issubset(civ_interfaces):
-            # If the algorithm works with a subset of the interfaces
-            # present in the set then only feed these through to the algorithm
-            valid_input = {
-                civ for civ in civ_set if civ.interface in input_interfaces
-            }
-        else:
-            continue
-
-        # Check job has not been run
-        if frozenset(valid_input) in existing_jobs:
-            continue
-
-        valid_job_inputs.append(valid_input)
-
-    return valid_job_inputs
+    return filtered_job_inputs
 
 
 @acks_late_micro_short_task

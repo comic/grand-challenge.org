@@ -864,7 +864,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                     f"the current phase's children set as its parent."
                 )
 
-            if self.parent.count_valid_archive_items < 1:
+            if self.parent.jobs_per_submission < 1:
                 raise ValidationError(
                     "The parent phase needs to have at least 1 valid archive item."
                 )
