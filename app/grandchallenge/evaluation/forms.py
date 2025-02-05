@@ -37,7 +37,6 @@ from grandchallenge.core.guardian import (
     filter_by_permission,
     get_objects_for_user,
 )
-from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.widgets import (
     JSONEditorWidget,
     MarkdownEditorInlineWidget,
@@ -304,7 +303,10 @@ class SubmissionForm(
         label="Predictions File",
         queryset=None,
     )
-    algorithm = AlgorithmChoiceField(queryset=None)
+    algorithm = AlgorithmChoiceField(
+        queryset=None,
+        help_text="Select one of your algorithms to submit as a solution to this phase. See above for information regarding the necessary configuration of the algorithm.",
+    )
     confirm_submission = forms.BooleanField(
         required=True,
         label="I understand that by submitting my algorithm image and model "
@@ -423,24 +425,6 @@ class SubmissionForm(
             self.fields["algorithm_image"].required = False
             self.fields["algorithm_model"].widget = HiddenInput()
 
-            self._algorithm_inputs = self._phase.algorithm_inputs.all()
-            self._algorithm_outputs = self._phase.algorithm_outputs.all()
-            self.fields["algorithm"].help_text = format_lazy(
-                "Select one of your algorithms to submit as a solution to this "
-                "challenge. The algorithms need to work with the following inputs: {} "
-                "and the following outputs: {}. If you have not created your "
-                "algorithm yet you can "
-                "do so <a href={}>on this page</a>.",
-                oxford_comma(self._algorithm_inputs),
-                oxford_comma(self._algorithm_outputs),
-                reverse(
-                    "evaluation:phase-algorithm-create",
-                    kwargs={
-                        "slug": phase.slug,
-                        "challenge_short_name": phase.challenge.short_name,
-                    },
-                ),
-            )
             if (
                 not self._phase.active_image
                 and not self._phase.external_evaluation

@@ -1226,6 +1226,7 @@ class AlgorithmInterfacesForAlgorithmList(
         context.update(
             {
                 "algorithm": self.algorithm,
+                "interfaces": [obj.interface for obj in self.object_list],
             }
         )
         return context
