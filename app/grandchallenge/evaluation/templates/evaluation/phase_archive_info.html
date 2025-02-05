@@ -40,11 +40,11 @@
                 </ul>
             {% endfor %}
             <p>
-                Currently, for each submission, {{ object.jobs_per_submission }}
-                algorithm job{{ object.jobs_per_submission|pluralize }} will be created from the {{ object.jobs_per_submission }} valid archive item{{ object.jobs_per_submission|pluralize }}. </p>
+                Currently, for each submission, {{ object.jobs_to_schedule_per_submission }}
+                algorithm job{{ object.jobs_to_schedule_per_submission|pluralize }} will be created from the {{ object.jobs_to_schedule_per_submission }} valid archive item{{ object.jobs_to_schedule_per_submission|pluralize }}. </p>
             <p> The jobs are spread across the configured algorithm interfaces as follows:
                 <ul>
-                    {% for interface, count in object.count_valid_archive_items_per_interface.items %}
+                    {% for interface, count in object.valid_archive_item_count_per_interface.items %}
                         <li>Interface {{ forloop.counter }}: {{ count }} job{{ count|pluralize }}</li>
                     {% endfor %}
                 </ul>

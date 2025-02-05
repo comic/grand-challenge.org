@@ -221,26 +221,23 @@ def filter_archive_items_for_algorithm(
     Dictionary of valid ArchiveItems for new jobs, grouped by AlgorithmInterface
     """
     from grandchallenge.algorithms.models import Job
+    from grandchallenge.evaluation.models import (
+        get_archive_items_for_interfaces,
+    )
 
     algorithm_interfaces = (
         algorithm_image.algorithm.interfaces.prefetch_related("inputs").all()
     )
 
-    # First, sort archive items by algorithm interface
-    # an archive item is only valid if it has values for all inputs
-    # of the algorithm interface
-    valid_job_inputs = {}
-    valid_input_counts = []
-    for interface in algorithm_interfaces:
-        inputs = interface.inputs.all()
-        n_inputs = len(inputs)
-        valid_input_counts.append(n_inputs)
-        valid_job_inputs[interface] = archive_items.annotate(
-            input_count=Count("values", distinct=True),
-            relevant_count=Count(
-                "values", filter=Q(values__interface__in=inputs), distinct=True
-            ),
-        ).filter(input_count=n_inputs, relevant_count=n_inputs)
+    # First, sort archive items by algorithm interface:
+    # An archive item is only valid for an interface if it has values
+    # for all inputs of the interface
+    valid_job_inputs = get_archive_items_for_interfaces(
+        algorithm_interfaces=algorithm_interfaces, archive_items=archive_items
+    )
+    valid_input_counts = [
+        interface.inputs.count() for interface in algorithm_interfaces
+    ]
 
     # Next, get all system jobs that have been run for the provided archive items
     # with the same model and image
@@ -276,14 +273,15 @@ def filter_archive_items_for_algorithm(
 
     filtered_job_inputs = {}
     for interface, archive_items in valid_job_inputs.items():
-        # exclude archive items for which there is a job already
-        filtered_inputs = archive_items.exclude(
-            ai
+        items_with_job = [
+            ai.pk
             for ai in archive_items
             if frozenset(ai.values.all()) in existing_jobs
+        ]
+        # exclude archive items for which there is a job already
+        filtered_job_inputs[interface] = archive_items.exclude(
+            pk__in=items_with_job
         )
-        if filtered_inputs.exists():
-            filtered_job_inputs[interface] = filtered_inputs
 
     return filtered_job_inputs
 

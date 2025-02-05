@@ -1339,7 +1339,10 @@ class ComponentInterfaceValue(models.Model):
 
     @property
     def has_value(self):
-        return self.value is not None or self.image or self.file
+        if self.interface.value_required:
+            return self.value is not None or self.image or self.file
+        else:
+            return True
 
     @property
     def decompress(self):

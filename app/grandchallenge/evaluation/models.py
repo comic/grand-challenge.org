@@ -140,6 +140,19 @@ EXTRA_RESULT_COLUMNS_SCHEMA = {
 }
 
 
+def get_archive_items_for_interfaces(*, algorithm_interfaces, archive_items):
+    valid_archive_items_per_interface = {}
+    for interface in algorithm_interfaces:
+        inputs = interface.inputs.all()
+        valid_archive_items_per_interface[interface] = archive_items.annotate(
+            input_count=Count("values", distinct=True),
+            relevant_input_count=Count(
+                "values", filter=Q(values__interface__in=inputs), distinct=True
+            ),
+        ).filter(input_count=len(inputs), relevant_input_count=len(inputs))
+    return valid_archive_items_per_interface
+
+
 class PhaseManager(models.Manager):
     def get_queryset(self):
         return (
@@ -864,7 +877,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                     f"the current phase's children set as its parent."
                 )
 
-            if self.parent.jobs_per_submission < 1:
+            if self.parent.jobs_to_schedule_per_submission < 1:
                 raise ValidationError(
                     "The parent phase needs to have at least 1 valid archive item."
                 )
@@ -1099,44 +1112,28 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
 
     @cached_property
     def valid_archive_items_per_interface(self):
-        """Returns the archive items that are valid for each interface configured for this phase"""
+        """
+        Returns the archive items that are valid for
+        each interface configured for this phase
+        """
         if self.archive and self.algorithm_interfaces:
-            valid_archive_items_per_interface = {}
-            for interface in self.algorithm_interfaces.prefetch_related(
-                "inputs"
-            ).all():
-                inputs = interface.inputs.all()
-                valid_archive_items_per_interface[
-                    interface.pk
-                ] = self.archive.items.annotate(
-                    input_count=Count("values"),
-                    relevant_input_count=Count(
-                        "values", filter=Q(values__interface__in=inputs)
-                    ),
-                ).filter(
-                    input_count=len(inputs), relevant_input_count=len(inputs)
-                )
-            return valid_archive_items_per_interface
+            return get_archive_items_for_interfaces(
+                algorithm_interfaces=self.algorithm_interfaces.prefetch_related(
+                    "inputs"
+                ).all(),
+                archive_items=self.archive.items,
+            )
 
     @cached_property
-    def count_valid_archive_items_per_interface(self):
-        item_count_per_interface = {}
-        for (
-            interface,
-            valid_archive_items,
-        ) in self.valid_archive_items_per_interface.items():
-            item_count_per_interface[interface] = valid_archive_items.count()
-        return item_count_per_interface
-
-    @cached_property
-    def jobs_per_submission(self):
-        return sum(self.count_valid_archive_items_per_interface.values())
-
-    @cached_property
-    def valid_archive_item_values(self):
+    def valid_archive_item_count_per_interface(self):
         return {
-            self.submission.phase.valid_archive_items_per_interface.values()
+            interface: len(valid_archive_items)
+            for interface, valid_archive_items in self.valid_archive_items_per_interface.items()
         }
+
+    @cached_property
+    def jobs_to_schedule_per_submission(self):
+        return sum(self.valid_archive_item_count_per_interface.values())
 
     def send_give_algorithm_editors_job_view_permissions_changed_email(self):
         message = format_html(
@@ -1693,12 +1690,6 @@ class Evaluation(ComponentJob):
         return self.submission.phase.algorithm_inputs.all()
 
     @cached_property
-    def valid_archive_item_values(self):
-        return {
-            self.submission.phase.valid_archive_items_per_interface.values()
-        }
-
-    @cached_property
     def successful_jobs(self):
         if self.submission.algorithm_model:
             extra_filter = {"algorithm_model": self.submission.algorithm_model}
@@ -1709,7 +1700,7 @@ class Evaluation(ComponentJob):
             Job.objects.filter(
                 algorithm_image=self.submission.algorithm_image,
                 status=Job.SUCCESS,
-                interface__in=self.submission.phase.algorithm_interfaces.all(),
+                algorithm_interface__in=self.submission.phase.algorithm_interfaces.all(),
                 creator=None,
                 **extra_filter,
             )
@@ -1722,8 +1713,9 @@ class Evaluation(ComponentJob):
     @cached_property
     def inputs_complete(self):
         if self.submission.algorithm_image:
-            return self.successful_jobs.count() == len(
-                self.valid_archive_item_values
+            return (
+                self.successful_jobs.count()
+                == self.submission.phase.jobs_to_schedule_per_submission
             )
         elif self.submission.predictions_file:
             return True

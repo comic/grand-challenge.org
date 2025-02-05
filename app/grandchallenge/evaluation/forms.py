@@ -466,7 +466,7 @@ class SubmissionForm(
         if (
             phase.submission_kind == SubmissionKindChoices.ALGORITHM
             and not phase.external_evaluation
-            and phase.jobs_per_submission == 0
+            and phase.jobs_to_schedule_per_submission == 0
         ):
             self.add_error(
                 None,
