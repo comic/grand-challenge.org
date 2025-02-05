@@ -5,7 +5,6 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import (
-    AccessMixin,
     PermissionRequiredMixin,
     UserPassesTestMixin,
 )
@@ -1257,22 +1256,18 @@ class PhaseArchiveInfo(
         )
 
 
-class AlgorithmInterfaceForPhasePermissionMixin(AccessMixin):
+class AlgorithmInterfaceForPhasePermissionMixin(PermissionRequiredMixin):
+
+    permission_required = "evaluation.configure_algorithm_phase"
+
     @property
     def phase(self):
         return get_object_or_404(
             Phase,
             challenge=self.request.challenge,
             challenge__phase__submission_kind=SubmissionKindChoices.ALGORITHM,
-            challenge__phase__external_evaluation=False,
             slug=self.kwargs["slug"],
         )
-
-    def dispatch(self, request, *args, **kwargs):
-        if request.user.is_staff:
-            return super().dispatch(request, *args, **kwargs)
-        else:
-            return self.handle_no_permission()
 
 
 class AlgorithmInterfaceForPhaseCreate(

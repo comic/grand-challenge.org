@@ -1761,19 +1761,15 @@ def test_phase_archive_info_permissions(client):
 )
 @pytest.mark.django_db
 def test_algorithm_interface_for_phase_view_permission(client, viewname):
-    (
-        participant,
-        admin,
-        user,
-    ) = UserFactory.create_batch(3)
-    staff_user = UserFactory(is_staff=True)
-    external_phase = PhaseFactory(external_evaluation=True)
+    (participant, admin, user, user_with_perm) = UserFactory.create_batch(4)
+    assign_perm("evaluation.configure_algorithm_phase", user_with_perm)
+
     prediction_phase = PhaseFactory(submission_kind=SubmissionKindChoices.CSV)
     algorithm_phase = PhaseFactory(
         submission_kind=SubmissionKindChoices.ALGORITHM
     )
 
-    for phase in [external_phase, prediction_phase, algorithm_phase]:
+    for phase in [prediction_phase, algorithm_phase]:
         phase.challenge.add_admin(admin)
         phase.challenge.add_participant(participant)
 
@@ -1781,19 +1777,8 @@ def test_algorithm_interface_for_phase_view_permission(client, viewname):
         [user, 403, 403],
         [participant, 403, 403],
         [admin, 403, 403],
-        [staff_user, 404, 200],
+        [user_with_perm, 404, 200],
     ]:
-        response = get_view_for_user(
-            viewname=viewname,
-            client=client,
-            reverse_kwargs={
-                "slug": external_phase.slug,
-                "challenge_short_name": external_phase.challenge.short_name,
-            },
-            user=us,
-        )
-        assert response.status_code == status1
-
         response = get_view_for_user(
             viewname=viewname,
             client=client,
@@ -1819,20 +1804,15 @@ def test_algorithm_interface_for_phase_view_permission(client, viewname):
 
 @pytest.mark.django_db
 def test_algorithm_interface_for_phase_delete_permission(client):
-    (
-        participant,
-        admin,
-        user,
-    ) = UserFactory.create_batch(3)
-    staff_user = UserFactory(is_staff=True)
-    external_phase = PhaseFactory(external_evaluation=True)
+    (participant, admin, user, user_with_perm) = UserFactory.create_batch(4)
+    assign_perm("evaluation.configure_algorithm_phase", user_with_perm)
     prediction_phase = PhaseFactory(submission_kind=SubmissionKindChoices.CSV)
     algorithm_phase = PhaseFactory(
         submission_kind=SubmissionKindChoices.ALGORITHM
     )
     int1 = AlgorithmInterfaceFactory()
 
-    for phase in [external_phase, prediction_phase, algorithm_phase]:
+    for phase in [prediction_phase, algorithm_phase]:
         phase.challenge.add_admin(admin)
         phase.challenge.add_participant(participant)
         phase.algorithm_interfaces.add(int1)
@@ -1841,20 +1821,8 @@ def test_algorithm_interface_for_phase_delete_permission(client):
         [user, 403, 403],
         [participant, 403, 403],
         [admin, 403, 403],
-        [staff_user, 404, 200],
+        [user_with_perm, 404, 200],
     ]:
-        response = get_view_for_user(
-            viewname="evaluation:interface-delete",
-            client=client,
-            reverse_kwargs={
-                "slug": external_phase.slug,
-                "interface_pk": int1.pk,
-                "challenge_short_name": external_phase.challenge.short_name,
-            },
-            user=us,
-        )
-        assert response.status_code == status1
-
         response = get_view_for_user(
             viewname="evaluation:interface-delete",
             client=client,
@@ -1882,7 +1850,8 @@ def test_algorithm_interface_for_phase_delete_permission(client):
 
 @pytest.mark.django_db
 def test_algorithm_interface_for_phase_create(client):
-    user = UserFactory(is_staff=True)
+    user = UserFactory()
+    assign_perm("evaluation.configure_algorithm_phase", user)
     phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
 
     ci_1 = ComponentInterfaceFactory()
@@ -1917,7 +1886,8 @@ def test_algorithm_interface_for_phase_create(client):
 
 @pytest.mark.django_db
 def test_algorithm_interfaces_for_phase_list_queryset(client):
-    user = UserFactory(is_staff=True)
+    user = UserFactory()
+    assign_perm("evaluation.configure_algorithm_phase", user)
     phase1, phase2 = PhaseFactory.create_batch(
         2, submission_kind=SubmissionKindChoices.ALGORITHM
     )
@@ -1948,7 +1918,8 @@ def test_algorithm_interfaces_for_phase_list_queryset(client):
 
 @pytest.mark.django_db
 def test_algorithm_interface_delete(client):
-    user = UserFactory(is_staff=True)
+    user = UserFactory()
+    assign_perm("evaluation.configure_algorithm_phase", user)
     phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
 
     int1, int2 = AlgorithmInterfaceFactory.create_batch(2)

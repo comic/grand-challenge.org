@@ -93,17 +93,17 @@ urlpatterns = [
         name="phase-algorithm-create",
     ),
     path(
-        "<slug>/interfaces/",
+        "<slug:slug>/interfaces/",
         AlgorithmInterfacesForPhaseList.as_view(),
         name="interface-list",
     ),
     path(
-        "<slug>/interfaces/create/",
+        "<slug:slug>/interfaces/create/",
         AlgorithmInterfaceForPhaseCreate.as_view(),
         name="interface-create",
     ),
     path(
-        "<slug>/interfaces/<uuid:interface_pk>/delete/",
+        "<slug:slug>/interfaces/<uuid:interface_pk>/delete/",
         AlgorithmInterfaceForPhaseDelete.as_view(),
         name="interface-delete",
     ),
