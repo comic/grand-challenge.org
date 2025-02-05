@@ -28,7 +28,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmModel,
     Job,
 )
-from grandchallenge.archives.models import Archive, ArchiveItem
+from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.models import (
     ComponentImage,
@@ -1098,23 +1098,45 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         ).exists()
 
     @cached_property
-    def valid_archive_items(self):
-        """Returns the archive items that are valid for this phase"""
-        if self.archive and self.algorithm_inputs:
-            return self.archive.items.annotate(
-                interface_match_count=Count(
-                    "values",
-                    filter=Q(
-                        values__interface__in={*self.algorithm_inputs.all()}
+    def valid_archive_items_per_interface(self):
+        """Returns the archive items that are valid for each interface configured for this phase"""
+        if self.archive and self.algorithm_interfaces:
+            valid_archive_items_per_interface = {}
+            for interface in self.algorithm_interfaces.prefetch_related(
+                "inputs"
+            ).all():
+                inputs = interface.inputs.all()
+                valid_archive_items_per_interface[
+                    interface.pk
+                ] = self.archive.items.annotate(
+                    input_count=Count("values"),
+                    relevant_input_count=Count(
+                        "values", filter=Q(values__interface__in=inputs)
                     ),
+                ).filter(
+                    input_count=len(inputs), relevant_input_count=len(inputs)
                 )
-            ).filter(interface_match_count=len(self.algorithm_inputs.all()))
-        else:
-            return ArchiveItem.objects.none()
+            return valid_archive_items_per_interface
 
     @cached_property
-    def count_valid_archive_items(self):
-        return self.valid_archive_items.count()
+    def count_valid_archive_items_per_interface(self):
+        item_count_per_interface = {}
+        for (
+            interface,
+            valid_archive_items,
+        ) in self.valid_archive_items_per_interface.items():
+            item_count_per_interface[interface] = valid_archive_items.count()
+        return item_count_per_interface
+
+    @cached_property
+    def jobs_per_submission(self):
+        return sum(self.count_valid_archive_items_per_interface.values())
+
+    @cached_property
+    def valid_archive_item_values(self):
+        return {
+            self.submission.phase.valid_archive_items_per_interface.values()
+        }
 
     def send_give_algorithm_editors_job_view_permissions_changed_email(self):
         message = format_html(
@@ -1673,15 +1695,7 @@ class Evaluation(ComponentJob):
     @cached_property
     def valid_archive_item_values(self):
         return {
-            i.values.all()
-            for i in self.submission.phase.archive.items.annotate(
-                interface_match_count=Count(
-                    "values",
-                    filter=Q(values__interface__in=self.algorithm_inputs),
-                )
-            )
-            .filter(interface_match_count=len(self.algorithm_inputs))
-            .prefetch_related("values")
+            self.submission.phase.valid_archive_items_per_interface.values()
         }
 
     @cached_property
@@ -1695,23 +1709,9 @@ class Evaluation(ComponentJob):
             Job.objects.filter(
                 algorithm_image=self.submission.algorithm_image,
                 status=Job.SUCCESS,
-                **extra_filter,
-            )
-            .annotate(
-                inputs_match_count=Count(
-                    "inputs",
-                    filter=Q(
-                        inputs__in={
-                            civ
-                            for civ_set in self.valid_archive_item_values
-                            for civ in civ_set
-                        }
-                    ),
-                ),
-            )
-            .filter(
-                inputs_match_count=self.algorithm_inputs.count(),
+                interface__in=self.submission.phase.algorithm_interfaces.all(),
                 creator=None,
+                **extra_filter,
             )
             .distinct()
             .prefetch_related("outputs__interface", "inputs__interface")
