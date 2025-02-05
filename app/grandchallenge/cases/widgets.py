@@ -13,7 +13,7 @@ from grandchallenge.cases.models import Image
 from grandchallenge.uploads.widgets import UserUploadMultipleWidget
 
 
-class WidgetChoices(TextChoices):
+class ImageWidgetChoices(TextChoices):
     IMAGE_SEARCH = "IMAGE_SEARCH"
     IMAGE_UPLOAD = "IMAGE_UPLOAD"
     IMAGE_SELECTED = "IMAGE_SELECTED"
@@ -21,7 +21,7 @@ class WidgetChoices(TextChoices):
 
 
 class ImageSearchWidget(ChoiceWidget, HiddenInput):
-    template_name = "cases/image-search-widget.html"
+    template_name = "cases/image_search_widget.html"
     input_type = None
     name = None
 
@@ -60,13 +60,13 @@ class FlexibleImageWidget(MultiWidget):
             "user": user,
             "current_value": current_value,
             "widget_choices": {
-                choice.name: choice.value for choice in WidgetChoices
+                choice.name: choice.value for choice in ImageWidgetChoices
             },
         }
 
     def decompress(self, value):
         if value:
-            if value in WidgetChoices.names:
+            if value in ImageWidgetChoices.names:
                 return [None, None]
             elif Image.objects.filter(pk=value).exists():
                 return [value, None]
@@ -85,7 +85,7 @@ class FlexibleImageWidget(MultiWidget):
             except KeyError:
                 value = None
         if value:
-            if value in WidgetChoices.names:
+            if value in ImageWidgetChoices.names:
                 return [None, None]
             elif Image.objects.filter(pk=value).exists():
                 return [value, None]

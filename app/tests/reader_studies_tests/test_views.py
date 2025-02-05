@@ -5,7 +5,7 @@ from django.forms import JSONField, ModelChoiceField
 from guardian.shortcuts import assign_perm
 from requests import put
 
-from grandchallenge.cases.widgets import FlexibleImageField, WidgetChoices
+from grandchallenge.cases.widgets import FlexibleImageField, ImageWidgetChoices
 from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.notifications.models import Notification
@@ -595,7 +595,7 @@ def test_display_set_update(
             reverse_kwargs={"pk": ds1.pk, "slug": rs.slug},
             data={
                 ci_img.slug: str(im2.pk),
-                f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
+                f"WidgetChoice-{ci_img.slug}": ImageWidgetChoices.IMAGE_SEARCH.name,
                 "order": 12,
                 "title": "foobar_foobar",
             },
