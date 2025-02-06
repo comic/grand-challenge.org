@@ -97,9 +97,9 @@ def create_algorithm_jobs_for_archive(
                 create_algorithm_jobs(
                     algorithm_image=algorithm.active_image,
                     algorithm_model=algorithm.active_model,
-                    archive_items=[
-                        archive_items.prefetch_related("values__interface")
-                    ],
+                    archive_items=archive_items.prefetch_related(
+                        "values__interface"
+                    ),
                     extra_viewer_groups=archive_groups,
                     # NOTE: no emails in case the logs leak data
                     # to the algorithm editors
@@ -241,13 +241,17 @@ def filter_archive_items_for_algorithm(
 
     # Next, get all system jobs that have been run for the provided archive items
     # with the same model and image
+    if algorithm_model:
+        extra_filter = {"algorithm_model": algorithm_model}
+    else:
+        extra_filter = {"algorithm_model__isnull": True}
     existing_jobs = {
         frozenset(j.inputs.all())
         for j in Job.objects.filter(
             algorithm_image=algorithm_image,
-            algorithm_model=algorithm_model,
             algorithm_interface__in=valid_job_inputs.keys(),
             creator=None,
+            **extra_filter,
         )
         .annotate(
             input_count=Count("inputs", distinct=True),

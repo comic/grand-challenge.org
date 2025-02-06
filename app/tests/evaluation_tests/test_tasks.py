@@ -26,6 +26,7 @@ from grandchallenge.notifications.models import Notification
 from grandchallenge.profiles.templatetags.profiles import user_profile_link
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
+    AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
     AlgorithmModelFactory,
 )
@@ -224,9 +225,8 @@ def test_method_validation_not_a_docker_tar(submission_file):
 
 class TestSetEvaluationInputs(TestCase):
     def setUp(self):
-        interface = ComponentInterface.objects.get(
-            slug="generic-medical-image"
-        )
+        ci = ComponentInterface.objects.get(slug="generic-medical-image")
+        interface = AlgorithmInterfaceFactory(inputs=[ci])
 
         archive = ArchiveFactory()
         archive_items = ArchiveItemFactory.create_batch(2)

@@ -26,6 +26,7 @@ from grandchallenge.verifications.models import (
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
+    AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
     AlgorithmModelFactory,
 )
@@ -894,8 +895,7 @@ def test_algorithm_for_phase_form():
         display_editors=True,
         contact_email="test@test.com",
         workstation=WorkstationFactory.build(),
-        inputs=[ComponentInterfaceFactory.build()],
-        outputs=[ComponentInterfaceFactory.build()],
+        interfaces=[AlgorithmInterfaceFactory.build()],
         structures=[],
         modalities=[],
         logo=ImageField(filename="test.jpeg"),
@@ -903,8 +903,7 @@ def test_algorithm_for_phase_form():
         user=UserFactory.build(),
     )
 
-    assert form.fields["inputs"].disabled
-    assert form.fields["outputs"].disabled
+    assert form.fields["interfaces"].disabled
     assert form.fields["workstation_config"].disabled
     assert form.fields["hanging_protocol"].disabled
     assert form.fields["optional_hanging_protocols"].disabled
@@ -922,8 +921,7 @@ def test_algorithm_for_phase_form():
     assert not form.fields["job_requires_memory_gb"].disabled
 
     assert {
-        form.fields["inputs"],
-        form.fields["outputs"],
+        form.fields["interfaces"],
         form.fields["workstation_config"],
         form.fields["hanging_protocol"],
         form.fields["optional_hanging_protocols"],
