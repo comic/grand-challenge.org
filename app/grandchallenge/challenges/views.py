@@ -301,7 +301,6 @@ class OnboardingTaskList(
     ListView,
 ):
     model = OnboardingTask
-    template_name = "onboardingtask_list.html"
     permission_required = "view_onboardingtask"
     raise_exception = True
     login_url = reverse_lazy("account_login")
