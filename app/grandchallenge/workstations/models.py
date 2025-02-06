@@ -485,8 +485,8 @@ class Session(UUIDModel):
                 "INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS": json.dumps(
                     settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS
                 ),
-                "WORKSTATION_MAX_CONCURRENT_REQUESTS": str(
-                    settings.WORKSTATION_MAX_CONCURRENT_API_REQUESTS
+                "WORKSTATIONS_MAX_CONCURRENT_API_REQUESTS": str(
+                    settings.WORKSTATIONS_MAX_CONCURRENT_API_REQUESTS
                 ),
             }
         )
