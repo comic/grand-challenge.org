@@ -1430,15 +1430,12 @@ class OnboardingTaskQuerySet(models.QuerySet):
             _now + settings.CHALLENGE_ONBOARDING_TASKS_OVERDUE_SOON_CUTOFF
         )
 
-        qs = self.annotate(
+        return self.annotate(
             is_overdue=Case(
                 When(complete=False, deadline__lt=_now, then=Value(True)),
                 default=Value(False),
                 output_field=BooleanField(),
-            )
-        )
-
-        qs = qs.annotate(
+            ),
             is_overdue_soon=Case(
                 When(
                     complete=False,
@@ -1450,8 +1447,6 @@ class OnboardingTaskQuerySet(models.QuerySet):
                 output_field=BooleanField(),
             ),
         )
-
-        return qs
 
     def completable_by(self, user):
         return filter_by_permission(
