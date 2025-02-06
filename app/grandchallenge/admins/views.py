@@ -4,7 +4,6 @@ from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.admins.forms import AdminsForm
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
-from grandchallenge.groups.views import UserAutocomplete
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
@@ -31,18 +30,6 @@ class AdminsList(LoginRequiredMixin, ObjectPermissionRequiredMixin, ListView):
         return challenge.get_admins().select_related(
             "user_profile", "verification"
         )
-
-
-class AdminsUpdateAutocomplete(
-    ObjectPermissionRequiredMixin,
-    UserAutocomplete,
-):
-    permission_required = "change_challenge"
-    raise_exception = True
-    login_url = reverse_lazy("account_login")
-
-    def get_permission_object(self):
-        return self.request.challenge
 
 
 class AdminsUpdate(

@@ -21,14 +21,13 @@
 {% endblock %}
 
 {% block content %}
-
     <h2>Add another admin to {{ challenge.short_name }}</h2>
 
-    <form action="" method="post">
-        {% csrf_token %}
-        {{ form | crispy }}
-        <input type="submit" value="Save" class="btn btn-primary"/>
-    </form>
+    <p>
+        This user will have the ability to completely manage this challenge, including updating the site, deleting pages and other actions.
+    </p>
+
+    {% crispy form %}
 {% endblock %}
 
 {% block script %}

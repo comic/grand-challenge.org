@@ -9,15 +9,17 @@ from grandchallenge.core.forms import SaveFormInitMixin
 
 
 class UserGroupForm(SaveFormInitMixin, Form):
+    role = None
+    url = "users-autocomplete"
+
     ADD = "ADD"
     REMOVE = "REMOVE"
     CHOICES = ((ADD, "Add"), (REMOVE, "Remove"))
+
     user = ModelChoiceField(
         queryset=get_user_model().objects.all().order_by("username"),
-        help_text="Select a user that will be added to the group",
         required=True,
         widget=autocomplete.ModelSelect2(
-            url="users-autocomplete",
             attrs={
                 "data-placeholder": "Search for a user ...",
                 "data-minimum-input-length": 3,
@@ -26,9 +28,18 @@ class UserGroupForm(SaveFormInitMixin, Form):
             },
         ),
     )
+
     action = ChoiceField(
         choices=CHOICES, required=True, widget=HiddenInput(), initial=ADD
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        user_field = self.fields["user"]
+        user_field.help_text = (
+            f"Select a user that will be added as {self.role}"
+        )
+        user_field.widget.url = self.url
 
     def clean_user(self):
         user = self.cleaned_data["user"]
