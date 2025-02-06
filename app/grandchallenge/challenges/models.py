@@ -1448,11 +1448,11 @@ class OnboardingTaskQuerySet(models.QuerySet):
             ),
         )
 
-    def completable_by(self, user):
+    def updatable_by(self, user):
         return filter_by_permission(
             queryset=self,
             user=user,
-            codename="complete_onboardingtask",
+            codename="change_onboardingtask",
             accept_user_perms=False,
         )
 
@@ -1468,11 +1468,6 @@ class OnboardingTask(FieldChangeMixin, UUIDModel):
     ResponsiblePartyChoices = TaskResponsiblePartyChoices
 
     objects = OnboardingTaskQuerySet.as_manager()
-
-    class Meta:
-        permissions = [
-            ("complete_onboardingtask", "Can mark this task as completed")
-        ]
 
     created = models.DateTimeField(editable=False)
     challenge = models.ForeignKey(
@@ -1528,14 +1523,14 @@ class OnboardingTask(FieldChangeMixin, UUIDModel):
             == self.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS
         ):
             assign_perm(
-                "complete_onboardingtask", self.challenge.admins_group, self
+                "change_onboardingtask", self.challenge.admins_group, self
             )
             assign_perm(
                 "view_onboardingtask", self.challenge.admins_group, self
             )
         else:
             remove_perm(
-                "complete_onboardingtask", self.challenge.admins_group, self
+                "change_onboardingtask", self.challenge.admins_group, self
             )
             remove_perm(
                 "view_onboardingtask", self.challenge.admins_group, self

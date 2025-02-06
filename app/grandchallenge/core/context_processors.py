@@ -36,7 +36,7 @@ def challenge(request):
         "pending_requests": challenge.registrationrequest_set.filter(
             status=RegistrationRequest.PENDING
         ),
-        "onboardingtask_aggregates": challenge.onboarding_tasks.completable_by(
+        "onboardingtask_aggregates": challenge.onboarding_tasks.updatable_by(
             user
         )
         .with_overdue_status()

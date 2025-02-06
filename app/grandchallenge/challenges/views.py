@@ -334,7 +334,7 @@ class OnboardingTaskComplete(
 ):
     model = OnboardingTask
     fields = ("complete",)
-    permission_required = "complete_onboardingtask"
+    permission_required = "change_onboardingtask"
     raise_exception = True
     login_url = reverse_lazy("account_login")
     http_method_names = ["post"]
