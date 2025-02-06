@@ -102,12 +102,12 @@ class TestSubmissionForm:
         alg2.add_editor(editor)
         alg4.add_editor(editor)
         ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
-        alg1.inputs.set([ci1, ci2])
-        alg1.outputs.set([ci3, ci4])
-        alg3.inputs.set([ci1, ci2])
-        alg3.outputs.set([ci3, ci4])
-        alg4.inputs.set([ci1, ci2])
-        alg4.outputs.set([ci3, ci4])
+        interface = AlgorithmInterfaceFactory(
+            inputs=[ci1, ci2], outputs=[ci3, ci4]
+        )
+        alg1.interfaces.set([interface])
+        alg3.interfaces.set([interface])
+        alg4.interfaces.set([interface])
         for alg in [alg1, alg2, alg3]:
             AlgorithmImageFactory(
                 algorithm=alg,
@@ -117,8 +117,7 @@ class TestSubmissionForm:
             )
         AlgorithmImageFactory(algorithm=alg4)
         p = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
-        p.algorithm_inputs.set([ci1, ci2])
-        p.algorithm_outputs.set([ci3, ci4])
+        p.algorithm_interfaces.set([interface])
         form = SubmissionForm(
             user=editor,
             phase=p,
@@ -135,6 +134,9 @@ class TestSubmissionForm:
             AlgorithmFactory.create_batch(10)
         )
         ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
+        interface = AlgorithmInterfaceFactory(
+            inputs=[ci1, ci2], outputs=[ci3, ci4]
+        )
         for alg in [
             alg1,
             alg2,
@@ -148,8 +150,7 @@ class TestSubmissionForm:
             alg10,
         ]:
             alg.add_editor(editor)
-            alg.inputs.set([ci1, ci2])
-            alg.outputs.set([ci3, ci4])
+            alg.interfaces.set([interface])
             AlgorithmImageFactory(
                 algorithm=alg,
                 is_in_registry=True,
@@ -165,6 +166,7 @@ class TestSubmissionForm:
             AlgorithmJobFactory(
                 algorithm_image=alg.active_image,
                 algorithm_model=alg.active_model,
+                algorithm_interface=interface,
                 status=Job.SUCCESS,
                 time_limit=alg.time_limit,
             )
@@ -175,8 +177,7 @@ class TestSubmissionForm:
             challenge=ChallengeFactory(),
         )
         for p in [p_parent, p_child]:
-            p.algorithm_inputs.set([ci1, ci2])
-            p.algorithm_outputs.set([ci3, ci4])
+            p.algorithm_interfaces.set([interface])
         p_child.parent = p_parent
         p_child.save()
 
@@ -235,6 +236,7 @@ class TestSubmissionForm:
         AlgorithmJobFactory(
             algorithm_image=alg.active_image,
             algorithm_model=alg.active_model,
+            algorithm_interface=interface,
             status=Job.FAILURE,
             time_limit=alg.time_limit,
         )
@@ -249,6 +251,7 @@ class TestSubmissionForm:
         AlgorithmJobFactory(
             algorithm_image=AlgorithmImageFactory(algorithm=alg8),
             algorithm_model=alg.active_model,
+            algorithm_interface=interface,
             status=Job.SUCCESS,
             time_limit=alg.time_limit,
         )
@@ -263,6 +266,7 @@ class TestSubmissionForm:
         AlgorithmJobFactory(
             algorithm_image=alg9.active_image,
             algorithm_model=AlgorithmModelFactory(algorithm=alg9),
+            algorithm_interface=interface,
             status=Job.SUCCESS,
             time_limit=alg9.time_limit,
         )
@@ -389,16 +393,15 @@ class TestSubmissionForm:
         alg.add_editor(user=user)
         ci1 = ComponentInterfaceFactory()
         ci2 = ComponentInterfaceFactory()
-        alg.inputs.set([ci1])
-        alg.outputs.set([ci2])
+        interface = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci2])
+        alg.interfaces.set([interface])
         archive = ArchiveFactory()
         p = PhaseFactory(
             submission_kind=SubmissionKindChoices.ALGORITHM,
             submissions_limit_per_user_per_period=10,
             archive=archive,
         )
-        p.algorithm_inputs.set([ci1])
-        p.algorithm_outputs.set([ci2])
+        p.algorithm_interfaces.set([interface])
         civ = ComponentInterfaceValueFactory(interface=ci1)
         i = ArchiveItemFactory(archive=p.archive)
         i.values.add(civ)
@@ -420,7 +423,10 @@ class TestSubmissionForm:
             algorithm=alg,
         )
         AlgorithmJobFactory(
-            algorithm_image=ai, status=4, time_limit=ai.algorithm.time_limit
+            algorithm_image=ai,
+            algorithm_interface=interface,
+            status=4,
+            time_limit=ai.algorithm.time_limit,
         )
         MethodFactory(
             is_manifest_valid=True,
@@ -445,16 +451,15 @@ class TestSubmissionForm:
         alg.add_editor(user=user)
         ci1 = ComponentInterfaceFactory()
         ci2 = ComponentInterfaceFactory()
-        alg.inputs.set([ci1])
-        alg.outputs.set([ci2])
+        interface = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci2])
+        alg.interfaces.set([interface])
         archive = ArchiveFactory()
         p = PhaseFactory(
             submission_kind=SubmissionKindChoices.ALGORITHM,
             submissions_limit_per_user_per_period=10,
             archive=archive,
         )
-        p.algorithm_inputs.set([ci1])
-        p.algorithm_outputs.set([ci2])
+        p.algorithm_interfaces.set([interface])
         civ = ComponentInterfaceValueFactory(interface=ci1)
         i = ArchiveItemFactory(archive=p.archive)
         i.values.add(civ)
@@ -478,6 +483,7 @@ class TestSubmissionForm:
         am = AlgorithmModelFactory(algorithm=alg, is_desired_version=True)
         AlgorithmJobFactory(
             algorithm_image=ai,
+            algorithm_interface=interface,
             status=Job.SUCCESS,
             time_limit=ai.algorithm.time_limit,
         )
@@ -550,16 +556,15 @@ class TestSubmissionForm:
         alg.add_editor(user=user)
         ci1 = ComponentInterfaceFactory()
         ci2 = ComponentInterfaceFactory()
-        alg.inputs.set([ci1])
-        alg.outputs.set([ci2])
+        interface = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci2])
+        alg.interfaces.set([interface])
         archive = ArchiveFactory()
         p_alg = PhaseFactory(
             submission_kind=SubmissionKindChoices.ALGORITHM,
             submissions_limit_per_user_per_period=10,
             archive=archive,
         )
-        p_alg.algorithm_inputs.set([ci1])
-        p_alg.algorithm_outputs.set([ci2])
+        p_alg.algorithm_interfaces.set([interface])
         MethodFactory(
             phase=p_alg,
             is_manifest_valid=True,
@@ -591,7 +596,10 @@ class TestSubmissionForm:
             algorithm=alg,
         )
         AlgorithmJobFactory(
-            algorithm_image=ai, status=4, time_limit=ai.algorithm.time_limit
+            algorithm_image=ai,
+            algorithm_interface=interface,
+            status=4,
+            time_limit=ai.algorithm.time_limit,
         )
 
         upload = UserUploadFactory(creator=user)
@@ -653,16 +661,15 @@ class TestSubmissionForm:
         alg.add_editor(user=user)
         ci1 = ComponentInterfaceFactory()
         ci2 = ComponentInterfaceFactory()
-        alg.inputs.set([ci1])
-        alg.outputs.set([ci2])
+        interface = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci2])
+        alg.interfaces.set([interface])
         archive = ArchiveFactory()
         p = PhaseFactory(
             submission_kind=SubmissionKindChoices.ALGORITHM,
             submissions_limit_per_user_per_period=10,
             archive=archive,
         )
-        p.algorithm_inputs.set([ci1])
-        p.algorithm_outputs.set([ci2])
+        p.algorithm_interfaces.set([interface])
         civ = ComponentInterfaceValueFactory(interface=ci1)
         i = ArchiveItemFactory(archive=p.archive)
         i.values.add(civ)
@@ -684,7 +691,10 @@ class TestSubmissionForm:
             algorithm=alg,
         )
         AlgorithmJobFactory(
-            algorithm_image=ai, status=4, time_limit=ai.algorithm.time_limit
+            algorithm_image=ai,
+            algorithm_interface=interface,
+            status=4,
+            time_limit=ai.algorithm.time_limit,
         )
         SubmissionFactory(
             phase=p,
@@ -745,16 +755,15 @@ class TestSubmissionForm:
         alg.add_editor(user=user)
         ci1 = ComponentInterfaceFactory()
         ci2 = ComponentInterfaceFactory()
-        alg.inputs.set([ci1])
-        alg.outputs.set([ci2])
+        interface = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci2])
+        alg.interfaces.set([interface])
         archive = ArchiveFactory()
         p = PhaseFactory(
             submission_kind=SubmissionKindChoices.ALGORITHM,
             submissions_limit_per_user_per_period=10,
             archive=archive,
         )
-        p.algorithm_inputs.set([ci1])
-        p.algorithm_outputs.set([ci2])
+        p.algorithm_interfaces.set([interface])
         civ = ComponentInterfaceValueFactory(interface=ci1)
         i = ArchiveItemFactory(archive=p.archive)
         i.values.add(civ)
@@ -949,12 +958,14 @@ def test_algorithm_for_phase_form_validation():
     phase = PhaseFactory()
     alg1, alg2, alg3 = AlgorithmFactory.create_batch(3)
     ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
-    phase.algorithm_inputs.set([ci1, ci2])
-    phase.algorithm_outputs.set([ci3, ci4])
+
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ci1, ci2], outputs=[ci3, ci4]
+    )
+    phase.algorithm_interfaces.set([interface])
     for alg in [alg1, alg2]:
         alg.add_editor(user)
-        alg.inputs.set([ci1, ci2])
-        alg.outputs.set([ci3, ci4])
+        alg.interfaces.set([interface])
 
     form = AlgorithmForPhaseForm(
         workstation_config=WorkstationConfigFactory(),
@@ -964,8 +975,7 @@ def test_algorithm_for_phase_form_validation():
         display_editors=True,
         contact_email="test@test.com",
         workstation=WorkstationFactory(),
-        inputs=[ci1, ci2],
-        outputs=[ci3, ci4],
+        interfaces=[interface],
         structures=[],
         modalities=[],
         logo=ImageField(filename="test.jpeg"),
@@ -982,8 +992,7 @@ def test_algorithm_for_phase_form_validation():
     )
 
     alg3.add_editor(user)
-    alg3.inputs.set([ci1, ci2])
-    alg3.outputs.set([ci3, ci4])
+    alg3.interfaces.set([interface])
 
     form = AlgorithmForPhaseForm(
         workstation_config=WorkstationConfigFactory(),
@@ -993,8 +1002,7 @@ def test_algorithm_for_phase_form_validation():
         display_editors=True,
         contact_email="test@test.com",
         workstation=WorkstationFactory(),
-        inputs=[ci1, ci2],
-        outputs=[ci3, ci4],
+        interfaces=[interface],
         structures=[],
         modalities=[],
         logo=ImageField(filename="test.jpeg"),

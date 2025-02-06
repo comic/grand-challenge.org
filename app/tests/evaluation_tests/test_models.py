@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.utils.timezone import now
 
 from grandchallenge.algorithms.models import Job
+from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.evaluation.models import (
@@ -28,6 +29,7 @@ from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.invoices.models import PaymentStatusChoices
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
+    AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
     AlgorithmModelFactory,
 )
@@ -63,13 +65,14 @@ def algorithm_submission():
     )
     algorithm_image = AlgorithmImageFactory()
 
-    interface = ComponentInterfaceFactory()
-    algorithm_image.algorithm.inputs.set([interface])
+    ci = ComponentInterfaceFactory()
+    interface = AlgorithmInterfaceFactory(inputs=[ci])
+    algorithm_image.algorithm.interfaces.set([interface])
 
     images = ImageFactory.create_batch(3)
 
     for image in images[:2]:
-        civ = ComponentInterfaceValueFactory(image=image, interface=interface)
+        civ = ComponentInterfaceValueFactory(image=image, interface=ci)
         ai = ArchiveItemFactory(archive=method.phase.archive)
         ai.values.add(civ)
 
@@ -160,8 +163,8 @@ def test_create_algorithm_jobs_for_evaluation_sets_gpu_and_memory():
         is_in_registry=True,
         is_desired_version=True,
     )
-    algorithm_image.algorithm.inputs.set(inputs)
-    algorithm_image.algorithm.outputs.set(outputs)
+    interface = AlgorithmInterfaceFactory(inputs=inputs, outputs=outputs)
+    algorithm_image.algorithm.interfaces.set([interface])
 
     archive = ArchiveFactory()
     archive_item = ArchiveItemFactory(archive=archive)
@@ -177,8 +180,7 @@ def test_create_algorithm_jobs_for_evaluation_sets_gpu_and_memory():
         submission_kind=SubmissionKindChoices.ALGORITHM,
         submissions_limit_per_user_per_period=1,
     )
-    phase.algorithm_inputs.set(inputs)
-    phase.algorithm_outputs.set(outputs)
+    phase.algorithm_interfaces.set([interface])
 
     method = MethodFactory(
         phase=phase,
@@ -852,19 +854,19 @@ def test_evaluation_invalid_metrics(
 
 
 @pytest.mark.django_db
-def test_count_valid_archive_items():
+def test_valid_archive_items_per_interface():
     archive = ArchiveFactory()
     phase = PhaseFactory(archive=archive)
     i1, i2, i3 = ComponentInterfaceFactory.create_batch(3)
-
-    phase.algorithm_inputs.set([i1, i2])
+    interface = AlgorithmInterfaceFactory(inputs=[i1, i2])
+    phase.algorithm_interfaces.set([interface])
 
     # Valid archive item
     ai1 = ArchiveItemFactory(archive=archive)
     ai1.values.add(ComponentInterfaceValueFactory(interface=i1))
     ai1.values.add(ComponentInterfaceValueFactory(interface=i2))
 
-    # Valid, but with extra value
+    # Invalid, because it has extra value
     ai2 = ArchiveItemFactory(archive=archive)
     ai2.values.add(ComponentInterfaceValueFactory(interface=i1))
     ai2.values.add(ComponentInterfaceValueFactory(interface=i2))
@@ -882,16 +884,26 @@ def test_count_valid_archive_items():
     ai5.values.add(ComponentInterfaceValueFactory(interface=i1))
     ai5.values.add(ComponentInterfaceValueFactory(interface=i3))
 
-    cciv1 = ComponentInterfaceValueFactory(interface=i1)
-    cciv2 = ComponentInterfaceValueFactory(interface=i2)
+    civ1 = ComponentInterfaceValueFactory(interface=i1)
+    civ2 = ComponentInterfaceValueFactory(interface=i2)
 
     # Valid, reusing interfaces
     ai6 = ArchiveItemFactory(archive=archive)
-    ai6.values.set([cciv1, cciv2])
+    ai6.values.set([civ1, civ2])
     ai7 = ArchiveItemFactory(archive=archive)
-    ai7.values.set([cciv1, cciv2])
+    ai7.values.set([civ1, civ2])
 
-    assert {*phase.valid_archive_items} == {ai1, ai2, ai6, ai7}
+    assert phase.valid_archive_items_per_interface.keys() == {interface}
+    assert [
+        item.pk
+        for qs in phase.valid_archive_items_per_interface.values()
+        for item in qs.order_by("pk")
+    ] == [
+        item.pk
+        for item in ArchiveItem.objects.filter(
+            pk__in=[ai1.pk, ai6.pk, ai7.pk]
+        ).order_by("pk")
+    ]
 
 
 @pytest.mark.django_db
@@ -1010,11 +1022,11 @@ def test_clean_parent_phase():
         4, challenge=ChallengeFactory(), creator_must_be_verified=True
     )
     ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
+    interface = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci2])
 
     for phase in [p1, p2, p3, p4]:
         phase.submission_kind = SubmissionKindChoices.ALGORITHM
-        phase.algorithm_inputs.set([ci1])
-        phase.algorithm_outputs.set([ci2])
+        phase.algorithm_interfaces.set([interface])
         phase.save()
 
     ai = ArchiveItemFactory()
@@ -1146,30 +1158,30 @@ def test_is_evaluated_with_active_image_and_ground_truth():
 class TestInputsComplete(TestCase):
 
     def setUp(self):
-        self.interface = ComponentInterface.objects.get(
-            slug="generic-medical-image"
-        )
+        self.ci = ComponentInterface.objects.get(slug="generic-medical-image")
+        self.interface = AlgorithmInterfaceFactory(inputs=[self.ci])
 
         archive = ArchiveFactory()
         self.archive_items = ArchiveItemFactory.create_batch(2)
         archive.items.set(self.archive_items)
 
         input_civs = ComponentInterfaceValueFactory.create_batch(
-            2, interface=self.interface
+            2, interface=self.ci
         )
         output_civs = ComponentInterfaceValueFactory.create_batch(
-            2, interface=self.interface
+            2, interface=self.ci
         )
 
         for ai, civ in zip(self.archive_items, input_civs, strict=True):
             ai.values.set([civ])
 
         self.algorithm_image = AlgorithmImageFactory()
+        self.algorithm_image.algorithm.interfaces.set([self.interface])
         self.algorithm_model = AlgorithmModelFactory()
         submission = SubmissionFactory(algorithm_image=self.algorithm_image)
         submission.phase.archive = archive
         submission.phase.save()
-        submission.phase.algorithm_inputs.set([self.interface])
+        submission.phase.algorithm_interfaces.set([self.interface])
 
         submission_with_model = SubmissionFactory(
             algorithm_image=self.algorithm_image,
@@ -1177,7 +1189,7 @@ class TestInputsComplete(TestCase):
         )
         submission_with_model.phase.archive = archive
         submission_with_model.phase.save()
-        submission_with_model.phase.algorithm_inputs.set([self.interface])
+        submission_with_model.phase.algorithm_interfaces.set([self.interface])
 
         self.submission = submission
         self.submission_with_model = submission_with_model
@@ -1203,6 +1215,7 @@ class TestInputsComplete(TestCase):
             j = AlgorithmJobFactory(
                 status=Job.SUCCESS,
                 algorithm_image=self.algorithm_image,
+                algorithm_interface=self.interface,
                 time_limit=self.algorithm_image.algorithm.time_limit,
             )
             j.inputs.set([inpt])
@@ -1210,7 +1223,6 @@ class TestInputsComplete(TestCase):
             j.creator = None
             j.save()
 
-        del eval_alg.algorithm_inputs
         del eval_alg.successful_jobs
         del eval_alg.inputs_complete
         assert eval_alg.inputs_complete
@@ -1228,13 +1240,13 @@ class TestInputsComplete(TestCase):
                 status=Job.SUCCESS,
                 algorithm_image=self.algorithm_image,
                 algorithm_model=self.algorithm_model,
+                algorithm_interface=self.interface,
                 time_limit=self.algorithm_image.algorithm.time_limit,
             )
             j.inputs.set([inpt])
             j.outputs.set([output])
             j.creator = None
             j.save()
-        del eval_alg.algorithm_inputs
         del eval_alg.successful_jobs
         del eval_alg.inputs_complete
         assert eval_alg.inputs_complete
@@ -1249,12 +1261,12 @@ class TestInputsComplete(TestCase):
             j_irrelevant = AlgorithmJobFactory(
                 status=Job.SUCCESS,
                 algorithm_image=self.algorithm_image,
+                algorithm_interface=self.interface,
                 creator=self.algorithm_image.creator,
                 time_limit=self.algorithm_image.algorithm.time_limit,
             )
             j_irrelevant.inputs.set([inpt])
             j_irrelevant.outputs.set([output])
-        del eval_alg.algorithm_inputs
         del eval_alg.successful_jobs
         del eval_alg.inputs_complete
         assert not eval_alg.inputs_complete
@@ -1269,11 +1281,11 @@ class TestInputsComplete(TestCase):
             j_irrelevant = AlgorithmJobFactory(
                 status=Job.FAILURE,
                 algorithm_image=self.algorithm_image,
+                algorithm_interface=self.interface,
                 time_limit=self.algorithm_image.algorithm.time_limit,
             )
             j_irrelevant.inputs.set([inpt])
             j_irrelevant.outputs.set([output])
-        del eval_alg.algorithm_inputs
         del eval_alg.successful_jobs
         del eval_alg.inputs_complete
         assert not eval_alg.inputs_complete
@@ -1283,10 +1295,10 @@ class TestInputsComplete(TestCase):
         assert not eval_alg.inputs_complete
 
         other_input_civs = ComponentInterfaceValueFactory.create_batch(
-            2, interface=self.interface
+            2, interface=self.ci
         )
         other_output_civs = ComponentInterfaceValueFactory.create_batch(
-            2, interface=self.interface
+            2, interface=self.ci
         )
         for inpt, output in zip(
             other_input_civs, other_output_civs, strict=True
@@ -1294,11 +1306,11 @@ class TestInputsComplete(TestCase):
             j_irrelevant = AlgorithmJobFactory(
                 status=Job.SUCCESS,
                 algorithm_image=self.algorithm_image,
+                algorithm_interface=self.interface,
                 time_limit=self.algorithm_image.algorithm.time_limit,
             )
             j_irrelevant.inputs.set([inpt])
             j_irrelevant.outputs.set([output])
-        del eval_alg.algorithm_inputs
         del eval_alg.successful_jobs
         del eval_alg.inputs_complete
         assert not eval_alg.inputs_complete
@@ -1308,12 +1320,12 @@ class TestInputsComplete(TestCase):
         assert not eval_alg.inputs_complete
 
         # add values to archive items
-        new_interface = ComponentInterface.objects.get(slug="generic-overlay")
-        self.submission.phase.algorithm_inputs.add(new_interface)
-        self.submission.phase.save()
+        new_ci = ComponentInterface.objects.get(slug="generic-overlay")
+        new_interface = AlgorithmInterfaceFactory(inputs=[self.ci, new_ci])
+        self.submission.phase.algorithm_interfaces.set([new_interface])
 
         new_input_civs = ComponentInterfaceValueFactory.create_batch(
-            2, interface=new_interface
+            2, interface=new_ci
         )
         for ai, civ in zip(self.archive_items, new_input_civs, strict=True):
             ai.values.add(civ)
@@ -1321,17 +1333,19 @@ class TestInputsComplete(TestCase):
         for inpt, output in zip(
             self.input_civs, self.output_civs, strict=True
         ):
+            # this job has partial inputs and outputs and hence does not count
+            # as a successful job
             j = AlgorithmJobFactory(
                 status=Job.SUCCESS,
                 algorithm_image=self.algorithm_image,
+                algorithm_interface=self.interface,  # old interface
                 time_limit=self.algorithm_image.algorithm.time_limit,
             )
-            j.inputs.set([inpt])
-            j.outputs.set([output])
+            j.inputs.set([inpt])  # partial inputs
+            j.outputs.set([output])  # partial outputs
             j.creator = None
             j.save()
 
-        del eval_alg.algorithm_inputs
         del eval_alg.successful_jobs
         del eval_alg.inputs_complete
         assert not eval_alg.inputs_complete
@@ -1348,11 +1362,11 @@ class TestInputsComplete(TestCase):
             j_irrelevant = AlgorithmJobFactory(
                 status=Job.SUCCESS,
                 algorithm_image=AlgorithmImageFactory(),
+                algorithm_interface=self.interface,
                 time_limit=10,
             )
             j_irrelevant.inputs.set([inpt])
             j_irrelevant.outputs.set([output])
-        del eval_alg.algorithm_inputs
         del eval_alg.successful_jobs
         del eval_alg.inputs_complete
         assert not eval_alg.inputs_complete
@@ -1370,11 +1384,11 @@ class TestInputsComplete(TestCase):
                 status=Job.SUCCESS,
                 algorithm_image=self.algorithm_image,
                 algorithm_model=AlgorithmModelFactory(),
+                algorithm_interface=self.interface,
                 time_limit=10,
             )
             j_irrelevant.inputs.set([inpt])
             j_irrelevant.outputs.set([output])
-        del eval_alg.algorithm_inputs
         del eval_alg.successful_jobs
         del eval_alg.inputs_complete
         assert not eval_alg.inputs_complete
@@ -1394,13 +1408,13 @@ class TestInputsComplete(TestCase):
                 algorithm_model=AlgorithmModelFactory(
                     algorithm=eval_alg.submission.algorithm_image.algorithm
                 ),
+                algorithm_interface=self.interface,
                 time_limit=10,
             )
             j_with_model.inputs.set([inpt])
             j_with_model.outputs.set([output])
             j_with_model.creator = None
             j_with_model.save()
-        del eval_alg.algorithm_inputs
         del eval_alg.successful_jobs
         del eval_alg.inputs_complete
         assert not eval_alg.inputs_complete
@@ -1417,13 +1431,13 @@ class TestInputsComplete(TestCase):
             j_with_model = AlgorithmJobFactory(
                 status=Job.SUCCESS,
                 algorithm_image=eval_alg.submission.algorithm_image,
+                algorithm_interface=self.interface,
                 time_limit=10,
             )
             j_with_model.inputs.set([inpt])
             j_with_model.outputs.set([output])
             j_with_model.creator = None
             j_with_model.save()
-        del eval_alg.algorithm_inputs
         del eval_alg.successful_jobs
         del eval_alg.inputs_complete
         assert not eval_alg.inputs_complete

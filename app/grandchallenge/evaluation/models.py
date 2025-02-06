@@ -1123,6 +1123,8 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                 ).all(),
                 archive_items=self.archive.items,
             )
+        else:
+            return {}
 
     @cached_property
     def valid_archive_item_count_per_interface(self):

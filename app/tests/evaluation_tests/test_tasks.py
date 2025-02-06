@@ -11,7 +11,7 @@ from django.utils.html import format_html
 from redis.exceptions import LockError
 
 from grandchallenge.algorithms.models import Job
-from grandchallenge.components.models import ComponentInterface, InterfaceKind
+from grandchallenge.components.models import InterfaceKind
 from grandchallenge.components.tasks import (
     push_container_image,
     validate_docker_image,
@@ -225,42 +225,46 @@ def test_method_validation_not_a_docker_tar(submission_file):
 
 class TestSetEvaluationInputs(TestCase):
     def setUp(self):
-        ci = ComponentInterface.objects.get(slug="generic-medical-image")
-        interface = AlgorithmInterfaceFactory(inputs=[ci])
+        ci_inp, ci_out = ComponentInterfaceFactory.create_batch(2)
+        interface = AlgorithmInterfaceFactory(
+            inputs=[ci_inp], outputs=[ci_out]
+        )
 
         archive = ArchiveFactory()
         archive_items = ArchiveItemFactory.create_batch(2)
         archive.items.set(archive_items)
 
         input_civs = ComponentInterfaceValueFactory.create_batch(
-            2, interface=interface
+            2, interface=ci_inp
         )
         output_civs = ComponentInterfaceValueFactory.create_batch(
-            2, interface=interface
+            2, interface=ci_out
         )
 
         for ai, civ in zip(archive_items, input_civs, strict=True):
             ai.values.set([civ])
 
         algorithm_image = AlgorithmImageFactory()
+        algorithm_image.algorithm.interfaces.set([interface])
         algorithm_model = AlgorithmModelFactory()
         submission = SubmissionFactory(algorithm_image=algorithm_image)
         submission.phase.archive = archive
         submission.phase.save()
-        submission.phase.algorithm_inputs.set([interface])
+        submission.phase.algorithm_interfaces.set([interface])
 
         submission_with_model = SubmissionFactory(
             algorithm_image=algorithm_image, algorithm_model=algorithm_model
         )
         submission_with_model.phase.archive = archive
         submission_with_model.phase.save()
-        submission_with_model.phase.algorithm_inputs.set([interface])
+        submission_with_model.phase.algorithm_interfaces.set([interface])
 
         jobs = []
         for inpt, output in zip(input_civs, output_civs, strict=True):
             j = AlgorithmJobFactory(
                 status=Job.SUCCESS,
                 algorithm_image=algorithm_image,
+                algorithm_interface=interface,
                 time_limit=algorithm_image.algorithm.time_limit,
             )
             j.inputs.set([inpt])
@@ -274,6 +278,7 @@ class TestSetEvaluationInputs(TestCase):
         j_irrelevant = AlgorithmJobFactory(
             status=Job.SUCCESS,
             algorithm_image=algorithm_image,
+            algorithm_interface=interface,
             creator=algorithm_image.creator,
             time_limit=algorithm_image.algorithm.time_limit,
         )
@@ -293,7 +298,7 @@ class TestSetEvaluationInputs(TestCase):
         self.input_civs = input_civs
         self.output_civs = output_civs
         self.jobs = jobs
-        self.output_civs = output_civs
+        self.interface = interface
 
     def test_set_evaluation_inputs(self):
         set_evaluation_inputs(evaluation_pk=self.evaluation.pk)
@@ -312,6 +317,7 @@ class TestSetEvaluationInputs(TestCase):
             status=Job.PENDING,
             creator=None,
             algorithm_image=self.evaluation.submission.algorithm_image,
+            algorithm_interface=self.interface,
             time_limit=self.evaluation.submission.algorithm_image.algorithm.time_limit,
         )
         # nothing happens because there are pending jobs
@@ -329,6 +335,7 @@ class TestSetEvaluationInputs(TestCase):
             creator=None,
             algorithm_image=self.evaluation_with_model.submission.algorithm_image,
             algorithm_model=self.evaluation_with_model.submission.algorithm_model,
+            algorithm_interface=self.interface,
             time_limit=self.evaluation_with_model.submission.algorithm_image.algorithm.time_limit,
         )
         # nothing happens
@@ -348,6 +355,7 @@ class TestSetEvaluationInputs(TestCase):
             status=Job.PENDING,
             creator=None,
             algorithm_image=self.evaluation_with_model.submission.algorithm_image,
+            algorithm_interface=self.interface,
             time_limit=self.evaluation_with_model.submission.algorithm_image.algorithm.time_limit,
         )
         set_evaluation_inputs(evaluation_pk=self.evaluation_with_model.pk)
@@ -368,6 +376,7 @@ class TestSetEvaluationInputs(TestCase):
                 status=Job.SUCCESS,
                 algorithm_image=self.evaluation_with_model.submission.algorithm_image,
                 algorithm_model=self.evaluation_with_model.submission.algorithm_model,
+                algorithm_interface=self.interface,
                 time_limit=self.evaluation_with_model.submission.algorithm_image.algorithm.time_limit,
             )
             j_with_model.inputs.set([inpt])
@@ -396,6 +405,7 @@ class TestSetEvaluationInputs(TestCase):
             algorithm_model=AlgorithmModelFactory(
                 algorithm=self.evaluation.submission.algorithm_image.algorithm
             ),
+            algorithm_interface=self.interface,
             time_limit=self.evaluation.submission.algorithm_image.algorithm.time_limit,
         )
         # pending job for image with model should be ignored,
@@ -424,6 +434,7 @@ class TestSetEvaluationInputs(TestCase):
                 algorithm_model=AlgorithmModelFactory(
                     algorithm=self.evaluation.submission.algorithm_image.algorithm
                 ),
+                algorithm_interface=self.interface,
                 time_limit=self.evaluation.submission.algorithm_image.algorithm.time_limit,
             )
             j_with_model.inputs.set([inpt])
@@ -726,22 +737,18 @@ def test_evaluation_order_with_title():
         time_limit=ai.algorithm.time_limit,
     )
 
-    input_interface = ComponentInterfaceFactory(
+    input_ci = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.BOOL
     )
-
-    evaluation.submission.phase.algorithm_inputs.set([input_interface])
-    ai.algorithm.inputs.set([input_interface])
+    interface = AlgorithmInterfaceFactory(inputs=[input_ci])
+    ai.algorithm.interfaces.set([interface])
+    evaluation.submission.phase.algorithm_interfaces.set([interface])
 
     # Priority should be given to archive items with titles
     archive_item = ArchiveItemFactory(archive=archive)
-    archive_item.values.add(
-        ComponentInterfaceValueFactory(interface=input_interface)
-    )
+    archive_item.values.add(ComponentInterfaceValueFactory(interface=input_ci))
 
-    civs = ComponentInterfaceValueFactory.create_batch(
-        5, interface=input_interface
-    )
+    civs = ComponentInterfaceValueFactory.create_batch(5, interface=input_ci)
 
     for idx, civ in enumerate(civs):
         archive_item = ArchiveItemFactory(archive=archive, title=f"{5 - idx}")
@@ -767,16 +774,15 @@ def test_evaluation_order_without_title():
         time_limit=ai.algorithm.time_limit,
     )
 
-    input_interface = ComponentInterfaceFactory(
+    input_ci = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.BOOL
     )
+    interface = AlgorithmInterfaceFactory(inputs=[input_ci])
+    ai.algorithm.interfaces.set([interface])
 
-    evaluation.submission.phase.algorithm_inputs.set([input_interface])
-    ai.algorithm.inputs.set([input_interface])
+    evaluation.submission.phase.algorithm_interfaces.set([interface])
 
-    civs = ComponentInterfaceValueFactory.create_batch(
-        5, interface=input_interface
-    )
+    civs = ComponentInterfaceValueFactory.create_batch(5, interface=input_ci)
 
     for civ in civs:
         archive_item = ArchiveItemFactory(archive=archive)
