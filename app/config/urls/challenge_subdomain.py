@@ -36,7 +36,7 @@ urlpatterns = [
         name="challenge-onboarding-task-list",
     ),
     path(
-        "onboarding-tasks/<pk>/complete",
+        "onboarding-tasks/<uuid:pk>/complete/",
         OnboardingTaskComplete.as_view(),
         name="challenge-onboarding-task-complete",
     ),
