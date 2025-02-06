@@ -305,15 +305,12 @@ class OnboardingTaskList(
     raise_exception = True
     login_url = reverse_lazy("account_login")
 
-    def get_context_data(self, *args, object_list=None, **kwargs):
-        context = super().get_context_data(*args, object_list=None, **kwargs)
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
 
-        object_list = object_list or self.object_list
-
-        if context_objects := context["object_list"]:
-            context["all_tasks_are_complete"] = all(
-                object.complete for object in context_objects
-            )
+        context["all_tasks_are_complete"] = all(
+            object.complete for object in context["object_list"]
+        )
 
         return context
 
