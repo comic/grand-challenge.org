@@ -33,7 +33,7 @@ def test_flexible_image_field_validation():
         data={}, name=ci.slug, files={}
     )
     decompressed_value_for_missing_value = field.widget.decompress(value=None)
-    assert not parsed_value_for_empty_data
+    assert parsed_value_for_empty_data == [None, None]
     assert decompressed_value_for_missing_value == [None, None]
 
     parsed_value_for_image_with_permission = field.widget.value_from_datadict(

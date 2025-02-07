@@ -1,0 +1,28 @@
+{% load static %}
+
+<select class="custom-select"
+        name="widget-choice-{{ widget.name }}"
+        id="widget-select-{{ widget.name }}"
+        hx-get="{% url 'components:file-widget-select' %}"
+        hx-target="#area-{{ widget.name }}"
+        hx-trigger="widgetSelected, change, load"
+        hx-include="[id='values-{{ widget.name }}']"
+>
+    {% if widget.attrs.current_value %}
+        <option value="{{ widget.attrs.widget_choices.FILE_SELECTED }}">{{ widget.attrs.current_value.title }}</option>
+    {% else %}
+        <option value="{{ widget.attrs.widget_choices.UNDEFINED }}">Choose data source...</option>
+    {% endif %}
+    <option value="{{ widget.attrs.widget_choices.FILE_SEARCH }}">Select an existing file</option>
+    <option value="{{ widget.attrs.widget_choices.FILE_UPLOAD }}">Upload a new file</option>
+</select>
+
+<div id="values-{{ widget.name }}">
+    <input type="hidden" name="prefixed-interface-slug" value="{{ widget.name }}">
+    <input type="hidden" name="help-text" value="{{ widget.attrs.help_text }}">
+    <input type="hidden" name="current-value" value="{{ widget.attrs.current_value.pk }}">
+</div>
+
+<div class="mt-3" id="area-{{ widget.name }}"></div>
+
+<script type="module" src="{% static "components/js/flexible_file_widget.mjs" %}"></script>
