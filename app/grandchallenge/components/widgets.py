@@ -3,6 +3,7 @@ from django.forms import HiddenInput, MultiWidget, Select
 from django.forms.widgets import ChoiceWidget
 
 from grandchallenge.components.models import ComponentInterfaceValue
+from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadSingleWidget
 
 
@@ -59,14 +60,14 @@ class FlexibleFileWidget(MultiWidget):
 
     def decompress(self, value):
         if value:
-            if value in FileWidgetChoices.names:
-                return [None, None]
-            elif (
+            if (
                 isinstance(value, int) or value.isdigit()
             ) and ComponentInterfaceValue.objects.filter(pk=value).exists():
                 return [value, None]
-            else:
+            elif UserUpload.objects.filter(pk=value).exists():
                 return [None, value]
+            else:
+                return [None, None]
         else:
             return [None, None]
 
