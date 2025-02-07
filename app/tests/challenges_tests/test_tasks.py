@@ -378,7 +378,3 @@ def test_challenge_onboarding_task_due_emails(
         assert expected_subject in organizer_mail.subject
     else:
         assert not any(challenge_admin.email in m.to for m in mail.outbox)
-
-    for m in mail.outbox:
-        print("Subject: ", m.subject)
-        print(m.body)
