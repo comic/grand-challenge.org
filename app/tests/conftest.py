@@ -22,8 +22,10 @@ from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
     AlgorithmInterfaceFactory,
+    AlgorithmJobFactory,
     AlgorithmModelFactory,
 )
+from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.cases_tests import RESOURCE_PATH
 from tests.cases_tests.factories import (
     ImageFileFactoryWithMHDFile,
@@ -623,3 +625,125 @@ def get_interface_form_data(*, interface_slug, data, existing_data=False):
             ] = "uuid"
 
     return form_data
+
+
+class InterfacesAndJobs(NamedTuple):
+    archive: ArchiveFactory
+    algorithm_image: AlgorithmImageFactory
+    interface1: AlgorithmInterfaceFactory
+    interface2: AlgorithmInterfaceFactory
+    interface3: AlgorithmInterfaceFactory
+    jobs_for_interface1: list[AlgorithmJobFactory]
+    jobs_for_interface2: list[AlgorithmJobFactory]
+    jobs_for_interface3: list[AlgorithmJobFactory]
+    items_for_interface1: list[ArchiveItemFactory]
+    items_for_interface2: list[ArchiveItemFactory]
+    items_for_interface3: list[ArchiveItemFactory]
+    civs_for_interface1: list[ComponentInterfaceValueFactory]
+    civs_for_interface2: list[ComponentInterfaceValueFactory]
+    civs_for_interface3: list[ComponentInterfaceValueFactory]
+
+
+@pytest.fixture
+def archive_items_and_jobs_for_interfaces():
+    ci1, ci2, ci3 = ComponentInterfaceFactory.create_batch(3)
+
+    interface1 = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci3])
+    interface2 = AlgorithmInterfaceFactory(inputs=[ci1, ci2], outputs=[ci3])
+    interface3 = AlgorithmInterfaceFactory(inputs=[ci1, ci3], outputs=[ci3])
+
+    archive = ArchiveFactory()
+    ai1, ai2, ai3, ai4, ai5, ai6 = ArchiveItemFactory.create_batch(
+        6, archive=archive
+    )
+
+    civ_int_1a = ComponentInterfaceValueFactory(interface=ci1)
+    civ_int_1b = ComponentInterfaceValueFactory(interface=ci1)
+    civ_int_1c = ComponentInterfaceValueFactory(interface=ci1)
+    civ_int_2a = ComponentInterfaceValueFactory(interface=ci2)
+    civ_int_2b = ComponentInterfaceValueFactory(interface=ci2)
+    civ_int_3a = ComponentInterfaceValueFactory(interface=ci3)
+
+    ai1.values.set([civ_int_1a])  # valid for interface 1
+    ai2.values.set([civ_int_1b])  # valid for interface 1
+    ai3.values.set([civ_int_1c, civ_int_2a])  # valid for interface 2
+    ai4.values.set([civ_int_1b, civ_int_2b])  # valid for interface 2
+    ai5.values.set([civ_int_1a, civ_int_3a])  # valid for interface 3
+    ai6.values.set([civ_int_3a])  # not valid for any interface
+
+    algorithm_image = AlgorithmImageFactory()
+    algorithm_image.algorithm.interfaces.set([interface1, interface2])
+
+    # create jobs for interface 1
+    j1, j2, j3 = AlgorithmJobFactory.create_batch(
+        3,
+        algorithm_image=algorithm_image,
+        algorithm_interface=interface1,
+        time_limit=algorithm_image.algorithm.time_limit,
+        creator=None,
+    )
+    # outputs don't matter
+    j1.inputs.set([civ_int_1a])  # corresponds to item ai1
+    j2.inputs.set(
+        [civ_int_1c]
+    )  # matches interface1, but does not match an item (uses value from an item for interface2)
+    j3.inputs.set(
+        [ComponentInterfaceValueFactory(interface=ci1)]
+    )  # matches interface1 but does not correspond to an item (new value)
+
+    # create jobs for interface 2
+    j4, j5, j6 = AlgorithmJobFactory.create_batch(
+        3,
+        algorithm_image=algorithm_image,
+        algorithm_interface=interface2,
+        time_limit=algorithm_image.algorithm.time_limit,
+        creator=None,
+    )
+    j4.inputs.set([civ_int_1c, civ_int_2a])  # corresponds to item ai3
+    j5.inputs.set(
+        [civ_int_1a, civ_int_2a]
+    )  # valid for interface 2 but does not correspond to an item (mixes values from different items)
+    j6.inputs.set(
+        [
+            ComponentInterfaceValueFactory(interface=ci1),
+            ComponentInterfaceValueFactory(interface=ci2),
+        ]
+    )  # valid for interface 2 but does not correspond to an item (new values)
+
+    # create jobs for interface 3 (which is not configured for the algorithm)
+    (
+        j7,
+        j8,
+    ) = AlgorithmJobFactory.create_batch(
+        2,
+        algorithm_image=algorithm_image,
+        algorithm_interface=interface3,
+        time_limit=algorithm_image.algorithm.time_limit,
+        creator=None,
+    )
+    j7.inputs.set(
+        [civ_int_1a, civ_int_3a]
+    )  # valid for interface3, corresponds to item ai5
+    j8.inputs.set(
+        [civ_int_1b, civ_int_3a]
+    )  # valid for interface3, but does not match item
+
+    return InterfacesAndJobs(
+        archive=archive,
+        algorithm_image=algorithm_image,
+        interface1=interface1,
+        interface2=interface2,
+        interface3=interface3,
+        jobs_for_interface1=[j1, j2, j3],
+        jobs_for_interface2=[j4, j5, j6],
+        jobs_for_interface3=[j7, j8],
+        items_for_interface1=[ai1, ai2],
+        items_for_interface2=[ai3, ai4],
+        items_for_interface3=[ai5],
+        civs_for_interface1=[civ_int_1a, civ_int_1b, civ_int_1c],
+        civs_for_interface2=[
+            [civ_int_1c, civ_int_2a],
+            [civ_int_1b, civ_int_2b],
+        ],
+        civs_for_interface3=[civ_int_3a],
+    )

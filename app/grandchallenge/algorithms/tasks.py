@@ -8,7 +8,6 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.files.base import File
 from django.db import transaction
-from django.db.models import Count, F, Q
 from django.db.transaction import on_commit
 from django.utils._os import safe_join
 
@@ -201,7 +200,7 @@ def create_algorithm_jobs(
 
 
 def filter_archive_items_for_algorithm(
-    *, archive_items, algorithm_image, algorithm_model
+    *, archive_items, algorithm_image, algorithm_model=None
 ):
     """
     Removes archive items that are invalid for new jobs.
@@ -223,6 +222,7 @@ def filter_archive_items_for_algorithm(
     from grandchallenge.algorithms.models import Job
     from grandchallenge.evaluation.models import (
         get_archive_items_for_interfaces,
+        get_valid_jobs_for_interfaces_and_archive_items,
     )
 
     algorithm_interfaces = (
@@ -235,9 +235,6 @@ def filter_archive_items_for_algorithm(
     valid_job_inputs = get_archive_items_for_interfaces(
         algorithm_interfaces=algorithm_interfaces, archive_items=archive_items
     )
-    valid_input_counts = [
-        interface.inputs.count() for interface in algorithm_interfaces
-    ]
 
     # Next, get all system jobs that have been run for the provided archive items
     # with the same model and image
@@ -245,49 +242,39 @@ def filter_archive_items_for_algorithm(
         extra_filter = {"algorithm_model": algorithm_model}
     else:
         extra_filter = {"algorithm_model__isnull": True}
-    existing_jobs = {
-        frozenset(j.inputs.all())
-        for j in Job.objects.filter(
-            algorithm_image=algorithm_image,
-            algorithm_interface__in=valid_job_inputs.keys(),
-            creator=None,
-            **extra_filter,
-        )
-        .annotate(
-            input_count=Count("inputs", distinct=True),
-            inputs_match_count=Count(
-                "inputs",
-                filter=Q(
-                    inputs__in={
-                        civ
-                        for archive_items in valid_job_inputs.values()
-                        for item in archive_items
-                        for civ in item.values.all()
-                    }
-                ),
-                distinct=True,
-            ),
-        )
-        .filter(
-            input_count=F("inputs_match_count"),
-            input_count__in=valid_input_counts,
-        )
-        .prefetch_related("inputs")
-    }
 
-    filtered_job_inputs = {}
+    relevant_jobs = Job.objects.filter(
+        algorithm_image=algorithm_image,
+        algorithm_interface__in=valid_job_inputs.keys(),
+        creator=None,
+        **extra_filter,
+    )
+    # and group those by interface
+    existing_jobs_for_interfaces = (
+        get_valid_jobs_for_interfaces_and_archive_items(
+            algorithm_interfaces=algorithm_interfaces,
+            jobs=relevant_jobs,
+            valid_archive_items_per_interface=valid_job_inputs,
+        )
+    )
+
+    # Finally, exclude archive items for which there already is a job
+    filtered_valid_job_inputs = {}
     for interface, archive_items in valid_job_inputs.items():
         items_with_job = [
             ai.pk
             for ai in archive_items
-            if frozenset(ai.values.all()) in existing_jobs
+            if frozenset(ai.values.all())
+            in [
+                frozenset(j.inputs.all())
+                for j in existing_jobs_for_interfaces[interface]
+            ]
         ]
-        # exclude archive items for which there is a job already
-        filtered_job_inputs[interface] = archive_items.exclude(
-            pk__in=items_with_job
+        filtered_valid_job_inputs[interface] = list(
+            archive_items.exclude(pk__in=items_with_job)
         )
 
-    return filtered_job_inputs
+    return filtered_valid_job_inputs
 
 
 @acks_late_micro_short_task

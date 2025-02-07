@@ -5,7 +5,6 @@ from itertools import chain
 import pytest
 from django.core import mail
 from django.core.exceptions import ValidationError
-from django.test import TestCase
 from django.utils import timezone
 from django.utils.timezone import now
 
@@ -18,6 +17,8 @@ from grandchallenge.evaluation.models import (
     CombinedLeaderboard,
     Evaluation,
     Phase,
+    get_archive_items_for_interfaces,
+    get_valid_jobs_for_interfaces_and_archive_items,
 )
 from grandchallenge.evaluation.tasks import (
     calculate_ranks,
@@ -1155,47 +1156,7 @@ def test_is_evaluated_with_active_image_and_ground_truth():
 
 
 @pytest.mark.django_db
-class TestInputsComplete(TestCase):
-
-    def setUp(self):
-        self.ci = ComponentInterface.objects.get(slug="generic-medical-image")
-        self.interface = AlgorithmInterfaceFactory(inputs=[self.ci])
-
-        archive = ArchiveFactory()
-        self.archive_items = ArchiveItemFactory.create_batch(2)
-        archive.items.set(self.archive_items)
-
-        input_civs = ComponentInterfaceValueFactory.create_batch(
-            2, interface=self.ci
-        )
-        output_civs = ComponentInterfaceValueFactory.create_batch(
-            2, interface=self.ci
-        )
-
-        for ai, civ in zip(self.archive_items, input_civs, strict=True):
-            ai.values.set([civ])
-
-        self.algorithm_image = AlgorithmImageFactory()
-        self.algorithm_image.algorithm.interfaces.set([self.interface])
-        self.algorithm_model = AlgorithmModelFactory()
-        submission = SubmissionFactory(algorithm_image=self.algorithm_image)
-        submission.phase.archive = archive
-        submission.phase.save()
-        submission.phase.algorithm_interfaces.set([self.interface])
-
-        submission_with_model = SubmissionFactory(
-            algorithm_image=self.algorithm_image,
-            algorithm_model=self.algorithm_model,
-        )
-        submission_with_model.phase.archive = archive
-        submission_with_model.phase.save()
-        submission_with_model.phase.algorithm_interfaces.set([self.interface])
-
-        self.submission = submission
-        self.submission_with_model = submission_with_model
-        self.input_civs = input_civs
-        self.output_civs = output_civs
-
+class TestInputsComplete:
     def test_inputs_complete_for_prediction_submission(self):
         eval_pred = EvaluationFactory(
             submission__predictions_file=None, time_limit=10
@@ -1205,148 +1166,435 @@ class TestInputsComplete(TestCase):
         eval_pred2 = EvaluationFactory(time_limit=10)
         assert eval_pred2.inputs_complete
 
-    def test_inputs_complete_for_algorithm_submission_without_model(self):
-        eval_alg = EvaluationFactory(submission=self.submission, time_limit=10)
+    def test_non_successful_jobs_ignored(
+        self, archive_items_and_jobs_for_interfaces
+    ):
+        submission = SubmissionFactory(
+            algorithm_image=archive_items_and_jobs_for_interfaces.algorithm_image
+        )
+        submission.phase.archive = (
+            archive_items_and_jobs_for_interfaces.archive
+        )
+        submission.phase.save()
+        submission.phase.algorithm_interfaces.set(
+            [
+                archive_items_and_jobs_for_interfaces.interface1,
+                archive_items_and_jobs_for_interfaces.interface2,
+            ]
+        )
+
+        eval_alg = EvaluationFactory(submission=submission, time_limit=10)
         assert not eval_alg.inputs_complete
 
-        for inpt, output in zip(
-            self.input_civs, self.output_civs, strict=True
-        ):
-            j = AlgorithmJobFactory(
-                status=Job.SUCCESS,
-                algorithm_image=self.algorithm_image,
-                algorithm_interface=self.interface,
-                time_limit=self.algorithm_image.algorithm.time_limit,
-            )
-            j.inputs.set([inpt])
-            j.outputs.set([output])
-            j.creator = None
-            j.save()
+        # create 2 jobs per interface, for each of the archive items
+        j1, j2 = AlgorithmJobFactory.create_batch(
+            2,
+            creator=None,
+            algorithm_image=archive_items_and_jobs_for_interfaces.algorithm_image,
+            algorithm_interface=archive_items_and_jobs_for_interfaces.interface1,
+            time_limit=archive_items_and_jobs_for_interfaces.algorithm_image.algorithm.time_limit,
+        )
+        j1.inputs.set(
+            [archive_items_and_jobs_for_interfaces.civs_for_interface1[0]]
+        )
+        j2.inputs.set(
+            [archive_items_and_jobs_for_interfaces.civs_for_interface1[1]]
+        )
 
-        del eval_alg.successful_jobs
+        # create 2 jobs per interface, for each of the archive items
+        j3, j4 = AlgorithmJobFactory.create_batch(
+            2,
+            creator=None,
+            algorithm_image=archive_items_and_jobs_for_interfaces.algorithm_image,
+            algorithm_interface=archive_items_and_jobs_for_interfaces.interface2,
+            time_limit=archive_items_and_jobs_for_interfaces.algorithm_image.algorithm.time_limit,
+        )
+        j3.inputs.set(
+            [archive_items_and_jobs_for_interfaces.civs_for_interface2[0]]
+        )
+        j4.inputs.set(
+            [archive_items_and_jobs_for_interfaces.civs_for_interface2[1]]
+        )
+
+        del eval_alg.successful_jobs_per_interface
+        del eval_alg.successful_job_count_per_interface
+        del eval_alg.total_successful_jobs
+        del eval_alg.inputs_complete
+        assert not eval_alg.inputs_complete
+
+    def test_inputs_complete_for_algorithm_submission_without_model(
+        self, archive_items_and_jobs_for_interfaces
+    ):
+        # this test finally works, refactor later
+
+        submission = SubmissionFactory(
+            algorithm_image=archive_items_and_jobs_for_interfaces.algorithm_image
+        )
+        submission.phase.archive = (
+            archive_items_and_jobs_for_interfaces.archive
+        )
+        submission.phase.save()
+        submission.phase.algorithm_interfaces.set(
+            [
+                archive_items_and_jobs_for_interfaces.interface1,
+                archive_items_and_jobs_for_interfaces.interface2,
+            ]
+        )
+
+        eval_alg = EvaluationFactory(submission=submission, time_limit=10)
+        assert not eval_alg.inputs_complete
+
+        # create 2 jobs per interface, for each of the archive items
+        j1, j2 = AlgorithmJobFactory.create_batch(
+            2,
+            status=Job.SUCCESS,
+            creator=None,
+            algorithm_image=archive_items_and_jobs_for_interfaces.algorithm_image,
+            algorithm_interface=archive_items_and_jobs_for_interfaces.interface1,
+            time_limit=archive_items_and_jobs_for_interfaces.algorithm_image.algorithm.time_limit,
+        )
+        j1.inputs.set(
+            [archive_items_and_jobs_for_interfaces.civs_for_interface1[0]]
+        )
+        j2.inputs.set(
+            [archive_items_and_jobs_for_interfaces.civs_for_interface1[1]]
+        )
+
+        # create 2 jobs per interface, for each of the archive items
+        j3, j4 = AlgorithmJobFactory.create_batch(
+            2,
+            status=Job.SUCCESS,
+            creator=None,
+            algorithm_image=archive_items_and_jobs_for_interfaces.algorithm_image,
+            algorithm_interface=archive_items_and_jobs_for_interfaces.interface2,
+            time_limit=archive_items_and_jobs_for_interfaces.algorithm_image.algorithm.time_limit,
+        )
+        j3.inputs.set(
+            archive_items_and_jobs_for_interfaces.civs_for_interface2[0]
+        )
+        j4.inputs.set(
+            archive_items_and_jobs_for_interfaces.civs_for_interface2[1]
+        )
+
+        # no need to set outputs, we assume that only a job with valid outputs has a
+        # status of SUCCESS
+
+        del eval_alg.successful_jobs_per_interface
+        del eval_alg.successful_job_count_per_interface
+        del eval_alg.total_successful_jobs
         del eval_alg.inputs_complete
         assert eval_alg.inputs_complete
 
-    def test_inputs_complete_for_algorithm_submission_with_model(self):
-        eval_alg = EvaluationFactory(
-            submission=self.submission_with_model, time_limit=10
+    def test_inputs_complete_for_algorithm_submission_with_model(
+        self, archive_items_and_jobs_for_interfaces
+    ):
+        algorithm_model = AlgorithmModelFactory(
+            algorithm=archive_items_and_jobs_for_interfaces.algorithm_image.algorithm
         )
+        submission = SubmissionFactory(
+            algorithm_image=archive_items_and_jobs_for_interfaces.algorithm_image,
+            algorithm_model=algorithm_model,
+        )
+        submission.phase.archive = (
+            archive_items_and_jobs_for_interfaces.archive
+        )
+        submission.phase.save()
+        submission.phase.algorithm_interfaces.set(
+            [
+                archive_items_and_jobs_for_interfaces.interface1,
+                archive_items_and_jobs_for_interfaces.interface2,
+            ]
+        )
+
+        eval_alg = EvaluationFactory(submission=submission, time_limit=10)
         assert not eval_alg.inputs_complete
 
-        for inpt, output in zip(
-            self.input_civs, self.output_civs, strict=True
-        ):
-            j = AlgorithmJobFactory(
-                status=Job.SUCCESS,
-                algorithm_image=self.algorithm_image,
-                algorithm_model=self.algorithm_model,
-                algorithm_interface=self.interface,
-                time_limit=self.algorithm_image.algorithm.time_limit,
-            )
-            j.inputs.set([inpt])
-            j.outputs.set([output])
-            j.creator = None
-            j.save()
-        del eval_alg.successful_jobs
+        # create 2 jobs per interface, for each of the archive items
+        j1, j2 = AlgorithmJobFactory.create_batch(
+            2,
+            status=Job.SUCCESS,
+            creator=None,
+            algorithm_image=archive_items_and_jobs_for_interfaces.algorithm_image,
+            algorithm_model=algorithm_model,
+            algorithm_interface=archive_items_and_jobs_for_interfaces.interface1,
+            time_limit=archive_items_and_jobs_for_interfaces.algorithm_image.algorithm.time_limit,
+        )
+        j1.inputs.set(
+            [archive_items_and_jobs_for_interfaces.civs_for_interface1[0]]
+        )
+        j2.inputs.set(
+            [archive_items_and_jobs_for_interfaces.civs_for_interface1[1]]
+        )
+
+        # create 2 jobs per interface, for each of the archive items
+        j3, j4 = AlgorithmJobFactory.create_batch(
+            2,
+            status=Job.SUCCESS,
+            creator=None,
+            algorithm_image=archive_items_and_jobs_for_interfaces.algorithm_image,
+            algorithm_model=algorithm_model,
+            algorithm_interface=archive_items_and_jobs_for_interfaces.interface2,
+            time_limit=archive_items_and_jobs_for_interfaces.algorithm_image.algorithm.time_limit,
+        )
+        j3.inputs.set(
+            [archive_items_and_jobs_for_interfaces.civs_for_interface2[0]]
+        )
+        j4.inputs.set(
+            [archive_items_and_jobs_for_interfaces.civs_for_interface2[1]]
+        )
+
+        del eval_alg.successful_jobs_per_interface
+        del eval_alg.successful_job_count_per_interface
+        del eval_alg.total_successful_jobs
         del eval_alg.inputs_complete
         assert eval_alg.inputs_complete
 
-    def test_jobs_with_creator_ignored(self):
-        eval_alg = EvaluationFactory(submission=self.submission, time_limit=10)
+    def test_jobs_with_creator_ignored(
+        self, archive_items_and_jobs_for_interfaces
+    ):
+        submission = SubmissionFactory(
+            algorithm_image=archive_items_and_jobs_for_interfaces.algorithm_image
+        )
+        submission.phase.archive = (
+            archive_items_and_jobs_for_interfaces.archive
+        )
+        submission.phase.save()
+        submission.phase.algorithm_interfaces.set(
+            [
+                archive_items_and_jobs_for_interfaces.interface1,
+                archive_items_and_jobs_for_interfaces.interface2,
+            ]
+        )
+
+        eval_alg = EvaluationFactory(submission=submission, time_limit=10)
         assert not eval_alg.inputs_complete
 
-        for inpt, output in zip(
-            self.input_civs, self.output_civs, strict=True
-        ):
-            j_irrelevant = AlgorithmJobFactory(
-                status=Job.SUCCESS,
-                algorithm_image=self.algorithm_image,
-                algorithm_interface=self.interface,
-                creator=self.algorithm_image.creator,
-                time_limit=self.algorithm_image.algorithm.time_limit,
-            )
-            j_irrelevant.inputs.set([inpt])
-            j_irrelevant.outputs.set([output])
-        del eval_alg.successful_jobs
+        # create 2 jobs per interface, for each of the archive items
+        j1, j2 = AlgorithmJobFactory.create_batch(
+            2,
+            status=Job.SUCCESS,
+            creator=archive_items_and_jobs_for_interfaces.algorithm_image.creator,
+            algorithm_image=archive_items_and_jobs_for_interfaces.algorithm_image,
+            algorithm_interface=archive_items_and_jobs_for_interfaces.interface1,
+            time_limit=archive_items_and_jobs_for_interfaces.algorithm_image.algorithm.time_limit,
+        )
+        j1.inputs.set(
+            [archive_items_and_jobs_for_interfaces.civs_for_interface1[0]]
+        )
+        j2.inputs.set(
+            [archive_items_and_jobs_for_interfaces.civs_for_interface1[1]]
+        )
+
+        # create 2 jobs per interface, for each of the archive items
+        j3, j4 = AlgorithmJobFactory.create_batch(
+            2,
+            status=Job.SUCCESS,
+            creator=archive_items_and_jobs_for_interfaces.algorithm_image.creator,
+            algorithm_image=archive_items_and_jobs_for_interfaces.algorithm_image,
+            algorithm_interface=archive_items_and_jobs_for_interfaces.interface2,
+            time_limit=archive_items_and_jobs_for_interfaces.algorithm_image.algorithm.time_limit,
+        )
+        j3.inputs.set(
+            [archive_items_and_jobs_for_interfaces.civs_for_interface2[0]]
+        )
+        j4.inputs.set(
+            [archive_items_and_jobs_for_interfaces.civs_for_interface2[1]]
+        )
+
+        del eval_alg.successful_jobs_per_interface
+        del eval_alg.successful_job_count_per_interface
+        del eval_alg.total_successful_jobs
         del eval_alg.inputs_complete
         assert not eval_alg.inputs_complete
 
-    def test_failed_jobs_ignored(self):
-        eval_alg = EvaluationFactory(submission=self.submission, time_limit=10)
+    def test_jobs_with_other_inputs_ignored(
+        self, archive_items_and_jobs_for_interfaces
+    ):
+        submission = SubmissionFactory(
+            algorithm_image=archive_items_and_jobs_for_interfaces.algorithm_image
+        )
+        submission.phase.archive = (
+            archive_items_and_jobs_for_interfaces.archive
+        )
+        submission.phase.save()
+        submission.phase.algorithm_interfaces.set(
+            [
+                archive_items_and_jobs_for_interfaces.interface1,
+                archive_items_and_jobs_for_interfaces.interface2,
+            ]
+        )
+
+        eval_alg = EvaluationFactory(submission=submission, time_limit=10)
         assert not eval_alg.inputs_complete
 
-        for inpt, output in zip(
-            self.input_civs, self.output_civs, strict=True
-        ):
-            j_irrelevant = AlgorithmJobFactory(
-                status=Job.FAILURE,
-                algorithm_image=self.algorithm_image,
-                algorithm_interface=self.interface,
-                time_limit=self.algorithm_image.algorithm.time_limit,
-            )
-            j_irrelevant.inputs.set([inpt])
-            j_irrelevant.outputs.set([output])
-        del eval_alg.successful_jobs
+        # create 2 jobs per interface, for each of the archive items
+        j1, j2 = AlgorithmJobFactory.create_batch(
+            2,
+            status=Job.SUCCESS,
+            creator=None,
+            algorithm_image=archive_items_and_jobs_for_interfaces.algorithm_image,
+            algorithm_interface=archive_items_and_jobs_for_interfaces.interface1,
+            time_limit=archive_items_and_jobs_for_interfaces.algorithm_image.algorithm.time_limit,
+        )
+        j1.inputs.set(
+            [archive_items_and_jobs_for_interfaces.civs_for_interface1[0]]
+        )
+        j2.inputs.set(
+            [archive_items_and_jobs_for_interfaces.civs_for_interface1[1]]
+        )
+
+        # create 2 jobs per interface, for each of the archive items
+        j3, j4 = AlgorithmJobFactory.create_batch(
+            2,
+            status=Job.SUCCESS,
+            creator=None,
+            algorithm_image=archive_items_and_jobs_for_interfaces.algorithm_image,
+            algorithm_interface=archive_items_and_jobs_for_interfaces.interface2,
+            time_limit=archive_items_and_jobs_for_interfaces.algorithm_image.algorithm.time_limit,
+        )
+        j3.inputs.set(
+            [archive_items_and_jobs_for_interfaces.civs_for_interface2[0]]
+        )
+        j4.inputs.set(
+            [archive_items_and_jobs_for_interfaces.civs_for_interface2[1]]
+        )
+
+        # now also create jobs with other inputs, those should be ignored
+        j5, j6 = AlgorithmJobFactory.create_batch(
+            2,
+            status=Job.SUCCESS,
+            creator=None,
+            algorithm_image=archive_items_and_jobs_for_interfaces.algorithm_image,
+            algorithm_interface=archive_items_and_jobs_for_interfaces.interface1,
+            time_limit=archive_items_and_jobs_for_interfaces.algorithm_image.algorithm.time_limit,
+        )
+        j5.inputs.set(
+            [
+                ComponentInterfaceValueFactory(
+                    interface=archive_items_and_jobs_for_interfaces.interface1.inputs.get()
+                )
+            ]
+        )
+        j6.inputs.set(
+            [
+                ComponentInterfaceValueFactory(
+                    interface=archive_items_and_jobs_for_interfaces.interface1.inputs.get()
+                )
+            ]
+        )
+
+        # create 2 jobs per interface, for each of the archive items
+        j7, j8 = AlgorithmJobFactory.create_batch(
+            2,
+            status=Job.SUCCESS,
+            creator=None,
+            algorithm_image=archive_items_and_jobs_for_interfaces.algorithm_image,
+            algorithm_interface=archive_items_and_jobs_for_interfaces.interface2,
+            time_limit=archive_items_and_jobs_for_interfaces.algorithm_image.algorithm.time_limit,
+        )
+        j7.inputs.set(
+            [
+                ComponentInterfaceValueFactory(
+                    interface=archive_items_and_jobs_for_interfaces.interface2.inputs.all()[
+                        0
+                    ]
+                ),
+                ComponentInterfaceValueFactory(
+                    interface=archive_items_and_jobs_for_interfaces.interface2.inputs.all()[
+                        1
+                    ]
+                ),
+            ]
+        )
+        j8.inputs.set(
+            [
+                ComponentInterfaceValueFactory(
+                    interface=archive_items_and_jobs_for_interfaces.interface2.inputs.all()[
+                        0
+                    ]
+                ),
+                ComponentInterfaceValueFactory(
+                    interface=archive_items_and_jobs_for_interfaces.interface2.inputs.all()[
+                        1
+                    ]
+                ),
+            ]
+        )
+
+        del eval_alg.successful_jobs_per_interface
+        del eval_alg.successful_job_count_per_interface
+        del eval_alg.total_successful_jobs
         del eval_alg.inputs_complete
         assert not eval_alg.inputs_complete
 
-    def test_jobs_with_other_inputs_ignored(self):
-        eval_alg = EvaluationFactory(submission=self.submission, time_limit=10)
+    def test_jobs_with_partial_inputs_ignored(
+        self, archive_items_and_jobs_for_interfaces
+    ):
+        submission = SubmissionFactory(
+            algorithm_image=archive_items_and_jobs_for_interfaces.algorithm_image
+        )
+        submission.phase.archive = (
+            archive_items_and_jobs_for_interfaces.archive
+        )
+        submission.phase.save()
+        submission.phase.algorithm_interfaces.set(
+            [
+                archive_items_and_jobs_for_interfaces.interface1,
+                archive_items_and_jobs_for_interfaces.interface2,
+            ]
+        )
+
+        eval_alg = EvaluationFactory(submission=submission, time_limit=10)
         assert not eval_alg.inputs_complete
 
-        other_input_civs = ComponentInterfaceValueFactory.create_batch(
-            2, interface=self.ci
+        # create 2 complete jobs per interface1
+        j1, j2 = AlgorithmJobFactory.create_batch(
+            2,
+            status=Job.SUCCESS,
+            creator=None,
+            algorithm_image=archive_items_and_jobs_for_interfaces.algorithm_image,
+            algorithm_interface=archive_items_and_jobs_for_interfaces.interface1,
+            time_limit=archive_items_and_jobs_for_interfaces.algorithm_image.algorithm.time_limit,
         )
-        other_output_civs = ComponentInterfaceValueFactory.create_batch(
-            2, interface=self.ci
+        j1.inputs.set(
+            [archive_items_and_jobs_for_interfaces.civs_for_interface1[0]]
         )
-        for inpt, output in zip(
-            other_input_civs, other_output_civs, strict=True
-        ):
-            j_irrelevant = AlgorithmJobFactory(
-                status=Job.SUCCESS,
-                algorithm_image=self.algorithm_image,
-                algorithm_interface=self.interface,
-                time_limit=self.algorithm_image.algorithm.time_limit,
-            )
-            j_irrelevant.inputs.set([inpt])
-            j_irrelevant.outputs.set([output])
-        del eval_alg.successful_jobs
-        del eval_alg.inputs_complete
-        assert not eval_alg.inputs_complete
-
-    def test_jobs_with_partial_inputs_ignored(self):
-        eval_alg = EvaluationFactory(submission=self.submission, time_limit=10)
-        assert not eval_alg.inputs_complete
-
-        # add values to archive items
-        new_ci = ComponentInterface.objects.get(slug="generic-overlay")
-        new_interface = AlgorithmInterfaceFactory(inputs=[self.ci, new_ci])
-        self.submission.phase.algorithm_interfaces.set([new_interface])
-
-        new_input_civs = ComponentInterfaceValueFactory.create_batch(
-            2, interface=new_ci
+        j2.inputs.set(
+            [archive_items_and_jobs_for_interfaces.civs_for_interface1[1]]
         )
-        for ai, civ in zip(self.archive_items, new_input_civs, strict=True):
-            ai.values.add(civ)
 
-        for inpt, output in zip(
-            self.input_civs, self.output_civs, strict=True
-        ):
-            # this job has partial inputs and outputs and hence does not count
-            # as a successful job
-            j = AlgorithmJobFactory(
-                status=Job.SUCCESS,
-                algorithm_image=self.algorithm_image,
-                algorithm_interface=self.interface,  # old interface
-                time_limit=self.algorithm_image.algorithm.time_limit,
-            )
-            j.inputs.set([inpt])  # partial inputs
-            j.outputs.set([output])  # partial outputs
-            j.creator = None
-            j.save()
+        # create jobs for interface 2 with only part of the required inputs,
+        # those should not count as complete jobs
+        j3, j4 = AlgorithmJobFactory.create_batch(
+            2,
+            status=Job.SUCCESS,
+            creator=None,
+            algorithm_image=archive_items_and_jobs_for_interfaces.algorithm_image,
+            algorithm_interface=archive_items_and_jobs_for_interfaces.interface2,
+            time_limit=archive_items_and_jobs_for_interfaces.algorithm_image.algorithm.time_limit,
+        )
+        ai_new1, ai_new2 = ArchiveItemFactory.create_batch(
+            2, archive=archive_items_and_jobs_for_interfaces.archive
+        )
+        civ_new_1 = ComponentInterfaceValueFactory(
+            interface=archive_items_and_jobs_for_interfaces.interface2.inputs.all()[
+                0
+            ]
+        )
+        civ_new_2 = ComponentInterfaceValueFactory(
+            interface=archive_items_and_jobs_for_interfaces.interface2.inputs.all()[
+                0
+            ]
+        )
+        ai_new1.values.set([civ_new_1])
+        ai_new2.values.set([civ_new_2])
 
-        del eval_alg.successful_jobs
+        j3.inputs.set([civ_new_1])
+        j4.inputs.set([civ_new_2])
+
+        del eval_alg.successful_jobs_per_interface
+        del eval_alg.successful_job_count_per_interface
+        del eval_alg.total_successful_jobs
         del eval_alg.inputs_complete
         assert not eval_alg.inputs_complete
 
@@ -1465,3 +1713,135 @@ def test_algorithm_requires_memory_unchangable():
         submission.save()
 
     assert "algorithm_requires_memory_gb cannot be changed" in str(error)
+
+
+@pytest.mark.django_db
+def test_archive_item_matching_to_interfaces():
+    phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
+
+    archive = ArchiveFactory()
+    phase.archive = archive
+    phase.save()
+
+    i1, i2, i3, i4 = ArchiveItemFactory.create_batch(4, archive=archive)
+
+    ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
+    interface1 = AlgorithmInterfaceFactory(inputs=[ci1])
+    interface2 = AlgorithmInterfaceFactory(inputs=[ci1, ci2])
+    interface3 = AlgorithmInterfaceFactory(inputs=[ci2, ci3, ci4])
+
+    i1.values.add(
+        ComponentInterfaceValueFactory(interface=ci1)
+    )  # Valid for interface 1
+    i2.values.set(
+        [
+            ComponentInterfaceValueFactory(interface=ci1),
+            ComponentInterfaceValueFactory(interface=ci2),
+        ]
+    )  # valid for interface 2
+    i3.values.set(
+        [
+            ComponentInterfaceValueFactory(interface=ci1),
+            ComponentInterfaceValueFactory(
+                interface=ComponentInterfaceFactory()
+            ),
+        ]
+    )  # valid for no interface, because of additional / mismatching interface
+    i4.values.set(
+        [
+            ComponentInterfaceValueFactory(interface=ci2),
+            ComponentInterfaceValueFactory(
+                interface=ComponentInterfaceFactory()
+            ),
+        ]
+    )  # valid for no interface, because of additional / mismatching interface
+
+    phase.algorithm_interfaces.set([interface1])
+    assert phase.valid_archive_items_per_interface.keys() == {interface1}
+    assert phase.valid_archive_items_per_interface[interface1].get() == i1
+    assert phase.valid_archive_item_count_per_interface == {interface1: 1}
+    assert phase.jobs_to_schedule_per_submission == 1
+
+    del phase.valid_archive_items_per_interface
+    del phase.valid_archive_item_count_per_interface
+    del phase.jobs_to_schedule_per_submission
+    phase.algorithm_interfaces.set([interface2])
+    assert phase.valid_archive_items_per_interface.keys() == {interface2}
+    assert phase.valid_archive_items_per_interface[interface2].get() == i2
+    assert phase.valid_archive_item_count_per_interface == {interface2: 1}
+    assert phase.jobs_to_schedule_per_submission == 1
+
+    del phase.valid_archive_items_per_interface
+    del phase.valid_archive_item_count_per_interface
+    del phase.jobs_to_schedule_per_submission
+    phase.algorithm_interfaces.set([interface3])
+    assert phase.valid_archive_items_per_interface.keys() == {interface3}
+    assert not phase.valid_archive_items_per_interface[interface3].exists()
+    assert phase.valid_archive_item_count_per_interface == {interface3: 0}
+    assert phase.jobs_to_schedule_per_submission == 0
+
+    del phase.valid_archive_items_per_interface
+    del phase.valid_archive_item_count_per_interface
+    del phase.jobs_to_schedule_per_submission
+    phase.algorithm_interfaces.set([interface1, interface3])
+    assert phase.valid_archive_items_per_interface.keys() == {
+        interface1,
+        interface3,
+    }
+    assert phase.valid_archive_items_per_interface[interface1].get() == i1
+    assert not phase.valid_archive_items_per_interface[interface3].exists()
+    assert phase.valid_archive_item_count_per_interface == {
+        interface1: 1,
+        interface3: 0,
+    }
+    assert phase.jobs_to_schedule_per_submission == 1
+
+    del phase.valid_archive_items_per_interface
+    del phase.valid_archive_item_count_per_interface
+    del phase.jobs_to_schedule_per_submission
+    phase.algorithm_interfaces.set([interface1, interface2, interface3])
+    assert phase.valid_archive_items_per_interface.keys() == {
+        interface1,
+        interface2,
+        interface3,
+    }
+    assert phase.valid_archive_items_per_interface[interface1].get() == i1
+    assert phase.valid_archive_items_per_interface[interface2].get() == i2
+    assert not phase.valid_archive_items_per_interface[interface3].exists()
+    assert phase.valid_archive_item_count_per_interface == {
+        interface1: 1,
+        interface2: 1,
+        interface3: 0,
+    }
+    assert phase.jobs_to_schedule_per_submission == 2
+
+
+@pytest.mark.django_db
+def test_get_valid_jobs_for_interfaces_and_archive_items(
+    archive_items_and_jobs_for_interfaces,
+):
+
+    valid_job_inputs = get_archive_items_for_interfaces(
+        algorithm_interfaces=[
+            archive_items_and_jobs_for_interfaces.interface1,
+            archive_items_and_jobs_for_interfaces.interface2,
+        ],
+        archive_items=ArchiveItem.objects.all(),
+    )
+
+    jobs_per_interface = get_valid_jobs_for_interfaces_and_archive_items(
+        algorithm_interfaces=[
+            archive_items_and_jobs_for_interfaces.interface1,
+            archive_items_and_jobs_for_interfaces.interface2,
+        ],
+        jobs=Job.objects.all(),
+        valid_archive_items_per_interface=valid_job_inputs,
+    )
+    assert jobs_per_interface == {
+        archive_items_and_jobs_for_interfaces.interface1: [
+            archive_items_and_jobs_for_interfaces.jobs_for_interface1[0]
+        ],
+        archive_items_and_jobs_for_interfaces.interface2: [
+            archive_items_and_jobs_for_interfaces.jobs_for_interface2[0]
+        ],
+    }

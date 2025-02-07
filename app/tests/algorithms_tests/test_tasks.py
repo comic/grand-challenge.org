@@ -19,6 +19,7 @@ from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
+    InterfaceKindChoices,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.components.tasks import (
@@ -59,6 +60,9 @@ class TestCreateAlgorithmJobs:
 
     def test_no_images_does_nothing(self):
         ai = AlgorithmImageFactory()
+        interface = AlgorithmInterfaceFactory()
+        ai.algorithm.interfaces.set([interface])
+
         create_algorithm_jobs(
             algorithm_image=ai,
             archive_items=ArchiveItem.objects.none(),
@@ -101,11 +105,77 @@ class TestCreateAlgorithmJobs:
         j = Job.objects.first()
         assert j.algorithm_image == ai
         assert j.creator is None
+        assert j.algorithm_interface == interface
         assert (
             j.inputs.get(interface__slug="generic-medical-image").image
             == image
         )
         assert j.pk == jobs[0].pk
+
+    def test_creates_job_for_multiple_interfaces_correctly(self):
+        ai = AlgorithmImageFactory()
+        image = ImageFactory()
+        ci1 = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+        ci2 = ComponentInterfaceFactory(kind=InterfaceKindChoices.IMAGE)
+        ci3 = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+
+        interface1 = AlgorithmInterfaceFactory(inputs=[ci1])
+        interface2 = AlgorithmInterfaceFactory(inputs=[ci2])
+        interface3 = AlgorithmInterfaceFactory(inputs=[ci3])
+        interface4 = AlgorithmInterfaceFactory(inputs=[ci1, ci3])
+        interface5 = AlgorithmInterfaceFactory(inputs=[ci1, ci2, ci3])
+        ai.algorithm.interfaces.set(
+            [interface1, interface2, interface3, interface4, interface5]
+        )
+
+        civ1 = ComponentInterfaceValueFactory(value=False, interface=ci1)
+        civ2 = ComponentInterfaceValueFactory(image=image, interface=ci2)
+        civ3 = ComponentInterfaceValueFactory(value="foo", interface=ci3)
+        civ4 = ComponentInterfaceValueFactory()
+
+        item1, item2, item3, item4, item5, item6 = (
+            ArchiveItemFactory.create_batch(6)
+        )
+        item1.values.add(civ1)  # item for interface 1 only
+        item2.values.add(civ2)  # item for interface 2 only
+        item3.values.add(civ3)  # item for interface 3 only
+        item4.values.set([civ1, civ3])  # item for interface 4 only
+        item5.values.set([civ4])  # not a match for any interface
+        item6.values.set([civ2, civ3])  # not a match for any interface
+
+        assert Job.objects.count() == 0
+        create_algorithm_jobs(
+            algorithm_image=ai,
+            archive_items=ArchiveItem.objects.all(),
+            time_limit=ai.algorithm.time_limit,
+            requires_gpu_type=ai.algorithm.job_requires_gpu_type,
+            requires_memory_gb=ai.algorithm.job_requires_memory_gb,
+        )
+        assert Job.objects.count() == 4
+
+        for j in Job.objects.all():
+            assert j.algorithm_image == ai
+            assert j.creator is None
+
+        assert not (
+            Job.objects.get(algorithm_interface=interface1).inputs.get().value
+        )
+        assert (
+            Job.objects.get(algorithm_interface=interface2).inputs.get().image
+            == image
+        )
+        assert (
+            Job.objects.get(algorithm_interface=interface3).inputs.get().value
+            == "foo"
+        )
+        assert (
+            Job.objects.get(algorithm_interface=interface4).inputs.count() == 2
+        )
+        assert [False, "foo"] == list(
+            Job.objects.get(algorithm_interface=interface4).inputs.values_list(
+                "value", flat=True
+            )
+        )
 
     def test_is_idempotent(self):
         ai = AlgorithmImageFactory()
@@ -499,51 +569,95 @@ def test_execute_algorithm_job_for_missing_inputs(settings):
 
 @pytest.mark.django_db
 class TestJobCreation:
-    def test_unmatched_interface_filter(self):
-        ai = AlgorithmImageFactory()
-        cis = ComponentInterfaceFactory.create_batch(2)
-        interface = AlgorithmInterfaceFactory(inputs=cis)
-        ai.algorithm.interfaces.set([interface])
+    def test_interface_matching(self):
+        ai1, ai2, ai3, ai4 = AlgorithmImageFactory.create_batch(4)
+        ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
+        interface1 = AlgorithmInterfaceFactory(inputs=[ci1])
+        interface2 = AlgorithmInterfaceFactory(inputs=[ci1, ci2])
+        interface3 = AlgorithmInterfaceFactory(inputs=[ci2, ci3, ci4])
+        interface4 = AlgorithmInterfaceFactory(inputs=[ci2])
+
+        ai1.algorithm.interfaces.set([interface1])
+        ai2.algorithm.interfaces.set([interface1, interface2])
+        ai3.algorithm.interfaces.set([interface1, interface3, interface4])
+        ai4.algorithm.interfaces.set([interface4])
 
         i1, i2, i3, i4 = ArchiveItemFactory.create_batch(4)
-        i2.values.add(
-            ComponentInterfaceValueFactory(interface=cis[0])
-        )  # Missing interface
+        i1.values.add(
+            ComponentInterfaceValueFactory(interface=ci1)
+        )  # Valid for interface 1
+        i2.values.set(
+            [
+                ComponentInterfaceValueFactory(interface=ci1),
+                ComponentInterfaceValueFactory(interface=ci2),
+            ]
+        )  # valid for interface 2
         i3.values.set(
             [
-                ComponentInterfaceValueFactory(interface=cis[0]),
-                ComponentInterfaceValueFactory(interface=cis[1]),
-            ]
-        )  # OK
-        i4.values.set(
-            [
-                ComponentInterfaceValueFactory(interface=cis[0]),
+                ComponentInterfaceValueFactory(interface=ci1),
                 ComponentInterfaceValueFactory(
                     interface=ComponentInterfaceFactory()
                 ),
             ]
-        )  # Unmatched interface
+        )  # valid for no interface, because of additional / mismatching interface
+        i4.values.set(
+            [
+                ComponentInterfaceValueFactory(interface=ci2),
+                ComponentInterfaceValueFactory(
+                    interface=ComponentInterfaceFactory()
+                ),
+            ]
+        )  # valid for no interface, because of additional / mismatching interface
 
-        filtered_civ_sets = filter_archive_items_for_algorithm(
+        # filtered archive items depend on defined interfaces and archive item values
+        filtered_archive_items = filter_archive_items_for_algorithm(
             archive_items=ArchiveItem.objects.all(),
-            algorithm_image=ai,
+            algorithm_image=ai1,
             algorithm_model=None,
         )
+        assert filtered_archive_items.keys() == {interface1}
+        assert filtered_archive_items[interface1] == [i1]
 
-        assert filtered_civ_sets.keys() == {interface}
-        assert [item.get() for item in filtered_civ_sets.values()] == [i3]
+        filtered_archive_items = filter_archive_items_for_algorithm(
+            archive_items=ArchiveItem.objects.all(),
+            algorithm_image=ai2,
+            algorithm_model=None,
+        )
+        assert filtered_archive_items.keys() == {interface1, interface2}
+        assert filtered_archive_items[interface1] == [i1]
+        assert filtered_archive_items[interface2] == [i2]
 
-    def test_existing_jobs(self):
+        filtered_archive_items = filter_archive_items_for_algorithm(
+            archive_items=ArchiveItem.objects.all(),
+            algorithm_image=ai3,
+            algorithm_model=None,
+        )
+        assert filtered_archive_items.keys() == {
+            interface1,
+            interface3,
+            interface4,
+        }
+        assert filtered_archive_items[interface1] == [i1]
+        assert filtered_archive_items[interface3] == []
+        assert filtered_archive_items[interface4] == []
+
+        filtered_archive_items = filter_archive_items_for_algorithm(
+            archive_items=ArchiveItem.objects.all(),
+            algorithm_image=ai4,
+            algorithm_model=None,
+        )
+        assert filtered_archive_items.keys() == {interface4}
+        assert filtered_archive_items[interface4] == []
+
+    def test_jobs_with_creator_ignored(self):
         alg = AlgorithmFactory()
         ai = AlgorithmImageFactory(algorithm=alg)
-        am = AlgorithmModelFactory(algorithm=alg)
         cis = ComponentInterfaceFactory.create_batch(2)
         interface = AlgorithmInterfaceFactory(inputs=cis)
         ai.algorithm.interfaces.set([interface])
 
         civs1 = [ComponentInterfaceValueFactory(interface=c) for c in cis]
         civs2 = [ComponentInterfaceValueFactory(interface=c) for c in cis]
-        civs3 = [ComponentInterfaceValueFactory(interface=c) for c in cis]
 
         j1 = AlgorithmJobFactory(
             creator=None,
@@ -552,52 +666,49 @@ class TestJobCreation:
             time_limit=ai.algorithm.time_limit,
         )
         j1.inputs.set(civs1)
+        # non-system job
         j2 = AlgorithmJobFactory(
+            creator=UserFactory(),
             algorithm_image=ai,
             algorithm_interface=interface,
             time_limit=ai.algorithm.time_limit,
         )
         j2.inputs.set(civs2)
-        j3 = AlgorithmJobFactory(
-            creator=None,
-            algorithm_image=ai,
-            algorithm_model=am,
-            algorithm_interface=interface,
-            time_limit=ai.algorithm.time_limit,
-        )
-        j3.inputs.set(civs3)
 
-        i1, i2, i3, i4, i5 = ArchiveItemFactory.create_batch(5)
-        i1.values.set(civs1)  # Job already exists (system job)
-        i2.values.set(civs2)  # Job already exists but with a creator set
-        i3.values.set(civs3)  # Job exists but with an algorithm model set
-        i4.values.set(
-            [
-                ComponentInterfaceValueFactory(interface=cis[0]),
-                ComponentInterfaceValueFactory(interface=cis[1]),
-            ]
-        )  # new values
-        i5.values.set(
-            [civs1[0], ComponentInterfaceValueFactory(interface=cis[1])]
-        )  # changed values
+        item1, item2 = ArchiveItemFactory.create_batch(2)
+        item1.values.set(civs1)  # non-system job already exists
+        item2.values.set(civs2)  # non-system job should be ignored
 
         filtered_civ_sets = filter_archive_items_for_algorithm(
             archive_items=ArchiveItem.objects.all(),
             algorithm_image=ai,
-            algorithm_model=None,
         )
 
         assert filtered_civ_sets.keys() == {interface}
-        assert [
-            item.pk
-            for qs in filtered_civ_sets.values()
-            for item in qs.order_by("pk")
-        ] == [
-            item.pk
-            for item in ArchiveItem.objects.exclude(pk=i1.pk).order_by("pk")
-        ]
+        assert filtered_civ_sets[interface] == [item2]
 
-    def test_existing_jobs_with_algorithm_model(self):
+    def test_existing_jobs(self, archive_items_and_jobs_for_interfaces):
+        # image used for all jobs
+        image = archive_items_and_jobs_for_interfaces.jobs_for_interface1[
+            0
+        ].algorithm_image
+
+        filtered_civ_sets = filter_archive_items_for_algorithm(
+            archive_items=ArchiveItem.objects.all(),
+            algorithm_image=image,
+        )
+        # this should return 1 archive item per interface
+        # for which there is no job yet
+        assert filtered_civ_sets == {
+            archive_items_and_jobs_for_interfaces.interface1: [
+                archive_items_and_jobs_for_interfaces.items_for_interface1[1]
+            ],
+            archive_items_and_jobs_for_interfaces.interface2: [
+                archive_items_and_jobs_for_interfaces.items_for_interface2[1]
+            ],
+        }
+
+    def test_model_filter_for_jobs_works(self):
         alg = AlgorithmFactory()
         ai = AlgorithmImageFactory(algorithm=alg)
         am = AlgorithmModelFactory(algorithm=alg)
@@ -635,7 +746,7 @@ class TestJobCreation:
         )
 
         assert filtered_civ_sets.keys() == {interface}
-        assert [item.get() for item in filtered_civ_sets.values()] == [item2]
+        assert filtered_civ_sets[interface] == [item2]
 
 
 @pytest.mark.django_db

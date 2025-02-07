@@ -153,6 +153,54 @@ def get_archive_items_for_interfaces(*, algorithm_interfaces, archive_items):
     return valid_archive_items_per_interface
 
 
+def get_valid_jobs_for_interfaces_and_archive_items(
+    *,
+    algorithm_interfaces,
+    jobs,
+    valid_archive_items_per_interface,
+):
+    jobs_per_interface = {}
+    for interface in algorithm_interfaces:
+        jobs_per_interface[interface] = []
+        input_count = interface.inputs.count()
+
+        interface_jobs = (
+            jobs.filter(algorithm_interface=interface)
+            .annotate(
+                input_count=Count("inputs", distinct=True),
+                input_interface_match_count=Count(
+                    "inputs",
+                    filter=Q(inputs__interface__in=interface.inputs.all()),
+                    distinct=True,
+                ),
+            )
+            .filter(
+                # first filter out jobs whose inputs don't match its interface,
+                # this can happen because we migrated assuming each job for
+                # an algorithm was done with the latest sets of inputs/outputs
+                input_count=input_count,
+                input_interface_match_count=input_count,
+            )
+            .distinct()
+            .prefetch_related("outputs__interface", "inputs__interface")
+            .select_related("algorithm_image__algorithm")
+        )
+
+        for job in interface_jobs:
+            # subset to jobs whose input set exactly matches
+            # one of the valid archive items' value sets
+            list_of_job_inputs = list(job.inputs.values_list("pk", flat=True))
+            list_of_archive_item_value_sets = [
+                list(item.values.values_list("pk", flat=True))
+                for item in valid_archive_items_per_interface[interface]
+            ]
+
+            if list_of_job_inputs in list_of_archive_item_value_sets:
+                jobs_per_interface[interface].append(job)
+
+    return jobs_per_interface
+
+
 class PhaseManager(models.Manager):
     def get_queryset(self):
         return (
@@ -1692,31 +1740,48 @@ class Evaluation(ComponentJob):
         return self.submission.phase.algorithm_inputs.all()
 
     @cached_property
-    def successful_jobs(self):
+    def successful_jobs_per_interface(self):
         if self.submission.algorithm_model:
             extra_filter = {"algorithm_model": self.submission.algorithm_model}
         else:
             extra_filter = {"algorithm_model__isnull": True}
 
-        successful_jobs = (
-            Job.objects.filter(
-                algorithm_image=self.submission.algorithm_image,
-                status=Job.SUCCESS,
-                algorithm_interface__in=self.submission.phase.algorithm_interfaces.all(),
-                creator=None,
-                **extra_filter,
-            )
-            .distinct()
-            .prefetch_related("outputs__interface", "inputs__interface")
-            .select_related("algorithm_image__algorithm")
+        algorithm_interfaces = self.submission.phase.algorithm_interfaces.all()
+
+        # subset to relevant jobs only to avoid querying
+        # the full table again for each interface
+        relevant_jobs = Job.objects.filter(
+            algorithm_image=self.submission.algorithm_image,
+            status=Job.SUCCESS,
+            algorithm_interface__in=algorithm_interfaces,
+            creator=None,
+            **extra_filter,
         )
-        return successful_jobs
+
+        successful_jobs_per_interface = get_valid_jobs_for_interfaces_and_archive_items(
+            algorithm_interfaces=algorithm_interfaces,
+            jobs=relevant_jobs,
+            valid_archive_items_per_interface=self.submission.phase.valid_archive_items_per_interface,
+        )
+
+        return successful_jobs_per_interface
+
+    @cached_property
+    def successful_job_count_per_interface(self):
+        return {
+            interface: len(successful_jobs)
+            for interface, successful_jobs in self.successful_jobs_per_interface.items()
+        }
+
+    @cached_property
+    def total_successful_jobs(self):
+        return sum(self.successful_job_count_per_interface.values())
 
     @cached_property
     def inputs_complete(self):
         if self.submission.algorithm_image:
             return (
-                self.successful_jobs.count()
+                self.total_successful_jobs
                 == self.submission.phase.jobs_to_schedule_per_submission
             )
         elif self.submission.predictions_file:

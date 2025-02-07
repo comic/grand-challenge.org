@@ -936,6 +936,17 @@ def test_algorithm_form_gpu_choices_from_phases():
     )
 
     interface2 = AlgorithmInterfaceFactory(inputs=[ci1, ci5], outputs=outputs)
+    # add additional interface
+    phases[0].algorithm_interfaces.add(interface2)
+
+    assert_gpu_type_choices(
+        [
+            (GPUTypeChoices.NO_GPU, "No GPU"),
+            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+        ]
+    )
+
+    # replace with different interface
     phases[0].algorithm_interfaces.set([interface2])
 
     assert_gpu_type_choices(
@@ -955,11 +966,20 @@ def test_algorithm_form_gpu_choices_from_phases():
         ]
     )
     interface3 = AlgorithmInterfaceFactory(inputs=inputs, outputs=[ci4, ci6])
-    phases[3].algorithm_interfaces.set([interface3])
+    phases[3].algorithm_interfaces.add(interface3)
 
     assert_gpu_type_choices(
         [
             (GPUTypeChoices.NO_GPU, "No GPU"),
+            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+        ]
+    )
+
+    algorithm.interfaces.add(interface3)
+    assert_gpu_type_choices(
+        [
+            (GPUTypeChoices.NO_GPU, "No GPU"),
+            (GPUTypeChoices.K80, "NVIDIA K80 GPU"),
             (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
         ]
     )
@@ -1285,14 +1305,21 @@ def test_algorithm_form_max_memory_from_phases():
     assert_max_value_validator(200)
 
     interface2 = AlgorithmInterfaceFactory(inputs=[ci1, ci5], outputs=outputs)
+    # adding an interface
+    phases[2].algorithm_interfaces.add(interface2)
+    assert_max_value_validator(100)
+    # replacing the interface
     phases[2].algorithm_interfaces.set([interface2])
-
     assert_max_value_validator(100)
 
     interface3 = AlgorithmInterfaceFactory(inputs=inputs, outputs=[ci4, ci6])
     phases[1].algorithm_interfaces.set([interface3])
 
     assert_max_value_validator(42)
+
+    # updating the algorithm's interface
+    algorithm.interfaces.set([interface3])
+    assert_max_value_validator(100)
 
 
 @pytest.mark.django_db

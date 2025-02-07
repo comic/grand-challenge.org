@@ -962,6 +962,7 @@ def test_algorithm_for_phase_form_validation():
     interface = AlgorithmInterfaceFactory(
         inputs=[ci1, ci2], outputs=[ci3, ci4]
     )
+
     phase.algorithm_interfaces.set([interface])
     for alg in [alg1, alg2]:
         alg.add_editor(user)
@@ -1017,6 +1018,68 @@ def test_algorithm_for_phase_form_validation():
         "You have already created the maximum number of algorithms for this phase."
         in str(form.errors)
     )
+
+
+@pytest.mark.django_db
+def test_user_algorithms_for_phase():
+
+    def populate_form(interfaces):
+        return AlgorithmForPhaseForm(
+            workstation_config=WorkstationConfigFactory(),
+            hanging_protocol=HangingProtocolFactory(),
+            optional_hanging_protocols=[HangingProtocolFactory()],
+            view_content=None,
+            display_editors=True,
+            contact_email="test@test.com",
+            workstation=WorkstationFactory(),
+            interfaces=interfaces,
+            structures=[],
+            modalities=[],
+            logo=ImageField(filename="test.jpeg"),
+            phase=phase,
+            user=user,
+            data={
+                "title": "foo",
+            },
+        )
+
+    user = UserFactory()
+    phase = PhaseFactory()
+    alg1, alg2, alg3, alg4, alg5 = AlgorithmFactory.create_batch(5)
+    ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
+
+    interface1 = AlgorithmInterfaceFactory(
+        inputs=[ci1, ci2], outputs=[ci3, ci4]
+    )
+    interface2 = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci3])
+    interface3 = AlgorithmInterfaceFactory(inputs=[ci3], outputs=[ci1, ci4])
+
+    for alg in [alg1, alg2, alg3, alg4, alg5]:
+        alg.add_editor(user)
+
+    # phase has 1 interface
+    phase.algorithm_interfaces.set([interface1])
+    # only algorithms that have this interface set only should match
+    # partial matches are not valid
+    alg1.interfaces.set([interface1])  # exact match
+    alg2.interfaces.set(
+        [interface3]
+    )  # same number of interfaces, but different interface
+    alg3.interfaces.set([interface1, interface3])  # additional interface
+    alg4.interfaces.set([interface2, interface3])  # diff num, diff interfaces
+
+    form = populate_form(interfaces=[interface1])
+    assert list(form.user_algorithms_for_phase) == [alg1]
+
+    # phase with 2 interfaces
+    phase.algorithm_interfaces.set([interface1, interface3])
+    form = populate_form(interfaces=[interface1, interface3])
+    assert list(form.user_algorithms_for_phase) == [alg3]
+
+    # user needs to be owner of algorithm
+    alg3.remove_editor(user)
+    form = populate_form(interfaces=[interface1, interface3])
+    assert list(form.user_algorithms_for_phase) == []
 
 
 @pytest.mark.django_db
