@@ -6,6 +6,10 @@ function initialize_jsoneditor_widget(jsoneditorWidgetID) {
         `jsoneditor_${jsoneditorWidgetID}`,
     );
     const jsoneditorWidget = document.getElementById(jsoneditorWidgetID);
+
+    // Prevents validation on textarea itself
+    jsoneditorWidget.removeAttribute("required");
+
     const feedback = document.getElementById(
         `jsoneditor_feedback_${jsoneditorWidgetID}`,
     );
@@ -24,6 +28,8 @@ function initialize_jsoneditor_widget(jsoneditorWidgetID) {
                 jsoneditorWidget.value = jsonString;
             },
             onValidationError: errors => {
+                // Note: only fires when the errors change
+                // Invalid JSON always fire off this event
                 validityErrors = errors.length > 0;
             },
         };
@@ -50,24 +56,17 @@ function initialize_jsoneditor_widget(jsoneditorWidgetID) {
             editor.expandAll();
         }
 
-        function handleSubmitEvent(e) {
+        jsoneditorWidget.checkValidity = () => {
             if (validityErrors) {
-                e.preventDefault();
-                feedback.innerHTML = "<strong>Invalid JSON</strong>";
+                feedback.innerHTML = "<strong>Invalid JSON format</strong>";
                 container.scrollIntoView();
                 editor.focus();
             } else {
                 feedback.innerText = "";
             }
-        }
 
-        jsoneditorWidget.form.addEventListener("submit", handleSubmitEvent);
-        jsoneditorWidget.form.addEventListener("htmx:beforeRequest", e => {
-            // Event might not be fired by form, so check.
-            if (e.srcElement === jsoneditorWidget.form && validityErrors) {
-                e.preventDefault(); // Prevent htmx request
-            }
-        });
+            return !validityErrors;
+        };
     }
 }
 
