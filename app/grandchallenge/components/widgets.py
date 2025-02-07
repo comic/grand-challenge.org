@@ -61,18 +61,12 @@ class FlexibleFileWidget(MultiWidget):
         if value:
             if value in FileWidgetChoices.names:
                 return [None, None]
+            elif (
+                isinstance(value, int) or value.isdigit()
+            ) and ComponentInterfaceValue.objects.filter(pk=value).exists():
+                return [value, None]
             else:
-                try:
-                    qs = ComponentInterfaceValue.objects.filter(pk=value)
-                except ValueError as e:
-                    if "Field 'id' expected a number but got" not in str(e):
-                        raise
-                    return [None, value]
-                else:
-                    if qs.exists():
-                        return [value, None]
-                    else:
-                        return [None, None]
+                return [None, value]
         else:
             return [None, None]
 

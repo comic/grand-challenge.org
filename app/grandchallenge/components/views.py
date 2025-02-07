@@ -5,7 +5,6 @@ from operator import or_
 from dal import autocomplete
 from django.contrib.auth.mixins import AccessMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core.exceptions import ValidationError
 from django.db.models import Q, TextChoices
 from django.forms import HiddenInput, Media
 from django.http import Http404, HttpResponse
@@ -557,15 +556,14 @@ class FileWidgetSelectView(LoginRequiredMixin, View):
                 )
                 return HttpResponse(html_content)
             case FileWidgetChoices.FILE_SELECTED:
-                try:
-                    qs = UserUpload.objects.filter(pk=current_value)
-                except ValidationError as e:
-                    if "uuid" not in e.message.lower():
-                        raise
-                    qs = ComponentInterfaceValue.objects.filter(
+                if current_value and (
+                    ComponentInterfaceValue.objects.filter(
                         pk=current_value
-                    )
-                if qs.exists():
+                    ).exists()
+                    if current_value.isdigit()
+                    else UserUpload.objects.filter(pk=current_value).exists()
+                ):
+                    print("civ exists")
                     # this can happen on the display set update view or redisplay of
                     # form upon validation, where one of the options is the current
                     # image, this enables switching back from one of the above widgets
