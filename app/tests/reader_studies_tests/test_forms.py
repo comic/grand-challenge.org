@@ -36,7 +36,6 @@ from grandchallenge.reader_studies.models import (
     ReaderStudy,
 )
 from grandchallenge.uploads.models import UserUpload
-from grandchallenge.uploads.widgets import UserUploadSingleWidget
 from grandchallenge.workstation_configs.models import LookUpTable
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
@@ -1349,7 +1348,7 @@ def test_display_set_add_interface_form():
     ]
     assert isinstance(
         form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}{ci_file.slug}"].widget,
-        UserUploadSingleWidget,
+        FlexibleFileWidget,
     )
 
     form = SingleCIVForm(
