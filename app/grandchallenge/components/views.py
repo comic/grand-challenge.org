@@ -451,7 +451,7 @@ class CIVSetBulkDelete(LoginRequiredMixin, FormView):
         return super().form_valid(form)
 
 
-class FileAccessRequiredMixin:
+class FileAccessRequiredMixin(AccessMixin):
     def dispatch(self, request, *args, **kwargs):
         algorithms = get_objects_for_user(
             self.request.user, "algorithms.execute_algorithm"
@@ -470,7 +470,7 @@ class FileAccessRequiredMixin:
 
 
 class FileUploadFormFieldView(
-    LoginRequiredMixin, AccessMixin, FileAccessRequiredMixin, View
+    LoginRequiredMixin, FileAccessRequiredMixin, View
 ):
 
     @cached_property
@@ -591,7 +591,7 @@ class FileWidgetSelectView(LoginRequiredMixin, View):
 
 
 class FileSearchResultView(
-    LoginRequiredMixin, AccessMixin, FileAccessRequiredMixin, ListView
+    LoginRequiredMixin, FileAccessRequiredMixin, ListView
 ):
     template_name = "components/file_search_result_select.html"
     search_fields = ["pk", "file"]
