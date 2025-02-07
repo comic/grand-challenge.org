@@ -563,7 +563,6 @@ class FileWidgetSelectView(LoginRequiredMixin, View):
                     if current_value.isdigit()
                     else UserUpload.objects.filter(pk=current_value).exists()
                 ):
-                    print("civ exists")
                     # this can happen on the display set update view or redisplay of
                     # form upon validation, where one of the options is the current
                     # image, this enables switching back from one of the above widgets
