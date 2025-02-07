@@ -1,6 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import ModelChoiceField, MultiValueField
+from django.template.loader import render_to_string
 from django.utils.functional import cached_property
 
 from grandchallenge.cases.models import Image
@@ -64,6 +65,11 @@ class InterfaceFormField(forms.Field):
             "initial": self.get_initial_value(),
             "label": instance.title.title(),
         }
+
+        self.example_download_link = render_to_string(
+            "components/partials/example_download_link.html",
+            {"object": self.instance},
+        )
 
         if instance.is_image_kind:
             self._field = self.get_image_field()
@@ -138,7 +144,9 @@ class InterfaceFormField(forms.Field):
             JSONValidator(schema=default_schema),
             JSONValidator(schema=self.instance.schema),
         ]
-        extra_help = ""
+
+        extra_help = self.example_download_link
+
         return field_type(
             help_text=_join_with_br(self.help_text, extra_help), **self.kwargs
         )
@@ -153,7 +161,10 @@ class InterfaceFormField(forms.Field):
             value_type = "uuid"
 
         if value_type == "uuid":
-            extra_help = f"{file_upload_text} {self.instance.file_extension}"
+            extra_help = _join_with_br(
+                f"{file_upload_text} {self.instance.file_extension}",
+                self.example_download_link,
+            )
             return ModelChoiceField(
                 queryset=get_objects_for_user(
                     self.user,
