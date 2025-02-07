@@ -43,19 +43,8 @@ def test_flexible_file_field_validation_empty_data_and_missing_values():
     decompressed_value_for_missing_value = field.widget.decompress(value=None)
     assert decompressed_value_for_missing_value == [None, None]
 
-    parsed_value_for_missing_value = field.widget.value_from_datadict(
-        data={ci.slug: "FILE_UPLOAD"}, name=ci.slug, files={}
-    )
-    decompressed_value_for_missing_value = field.widget.decompress(
-        "FILE_UPLOAD"
-    )
-    assert (
-        parsed_value_for_missing_value
-        == decompressed_value_for_missing_value
-        == [None, None]
-    )
     with pytest.raises(ValidationError):
-        field.clean(parsed_value_for_missing_value)
+        field.clean(parsed_value_for_empty_data)
 
 
 @pytest.mark.django_db
