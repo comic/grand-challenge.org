@@ -129,7 +129,10 @@ class MultipleCIVForm(Form):
             prefixed_interface_slug = f"{INTERFACE_FORM_FIELD_PREFIX}{slug}"
 
             if prefixed_interface_slug in self.data:
-                if interface.kind == ComponentInterface.Kind.ANY:
+                if (
+                    not interface.requires_file
+                    and interface.kind == ComponentInterface.Kind.ANY
+                ):
                     current_value = self.data.getlist(prefixed_interface_slug)
                 else:
                     current_value = self.data[prefixed_interface_slug]
@@ -173,8 +176,10 @@ class MultipleCIVForm(Form):
                     slug=interface_slug
                 ).get()
 
-                current_value = None
-                if interface.kind == ComponentInterface.Kind.ANY:
+                if (
+                    not interface.requires_file
+                    and interface.kind == ComponentInterface.Kind.ANY
+                ):
                     current_value = self.data.getlist(slug)
                 else:
                     current_value = self.data[slug]
