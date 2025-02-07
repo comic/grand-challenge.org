@@ -1231,7 +1231,7 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(hour=5, minute=30),
     },
     "send_onboarding_task_reminder_emails": {
-        "task": "grandchallenge.challenge.tasks.send_onboarding_task_reminder_emails",
+        "task": "grandchallenge.challenges.tasks.send_onboarding_task_reminder_emails",
         "schedule": crontab(hour=6, minute=0),
     },
     "delete_users_who_dont_login": {
