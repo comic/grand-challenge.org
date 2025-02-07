@@ -1,4 +1,3 @@
-import logging
 import uuid
 from functools import reduce
 from operator import or_
@@ -63,8 +62,6 @@ from grandchallenge.uploads.widgets import (
     UserUploadMultipleWidget,
     UserUploadSingleWidget,
 )
-
-logger = logging.getLogger(__name__)
 
 
 class ComponentInterfaceViewSet(ReadOnlyModelViewSet):
@@ -559,41 +556,29 @@ class FileWidgetSelectView(LoginRequiredMixin, View):
                 )
                 return HttpResponse(html_content)
             case FileWidgetChoices.FILE_SELECTED:
-                if current_value:
-                    if current_value.isdigit():
-                        qs = ComponentInterfaceValue.objects.filter(
-                            pk=current_value
-                        )
-                    else:
-                        try:
-                            uuid.UUID(current_value)
-                        except ValueError:
-                            logger.error(
-                                ValueError(
-                                    f"Unexpected pk type ({type(current_value)}) encountered"
-                                ),
-                                exc_info=True,
-                            )
-                            return HttpResponse()
-                        else:
-                            qs = UserUpload.objects.filter(pk=current_value)
-                    if qs.exists():
-                        # this can happen on the display set update view or redisplay of
-                        # form upon validation, where one of the options is the current
-                        # image, this enables switching back from one of the above widgets
-                        # to the chosen image. This make sure the form element with the
-                        # right name is available on resubmission.
-                        html_content = render_to_string(
-                            HiddenInput.template_name,
-                            {
-                                "widget": {
-                                    "name": prefixed_interface_slug,
-                                    "value": current_value,
-                                    "type": "hidden",
-                                },
+                if current_value and (
+                    ComponentInterfaceValue.objects.filter(
+                        pk=current_value
+                    ).exists()
+                    if current_value.isdigit()
+                    else UserUpload.objects.filter(pk=current_value).exists()
+                ):
+                    # this can happen on the display set update view or redisplay of
+                    # form upon validation, where one of the options is the current
+                    # image, this enables switching back from one of the above widgets
+                    # to the chosen image. This make sure the form element with the
+                    # right name is available on resubmission.
+                    html_content = render_to_string(
+                        HiddenInput.template_name,
+                        {
+                            "widget": {
+                                "name": prefixed_interface_slug,
+                                "value": current_value,
+                                "type": "hidden",
                             },
-                        )
-                        return HttpResponse(html_content)
+                        },
+                    )
+                    return HttpResponse(html_content)
                 raise Http404(f"Selected file {current_value} not found")
             case FileWidgetChoices.UNDEFINED:
                 # this happens when switching back from one of the
