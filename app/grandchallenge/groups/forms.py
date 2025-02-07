@@ -10,7 +10,7 @@ from grandchallenge.core.forms import SaveFormInitMixin
 
 class UserGroupForm(SaveFormInitMixin, Form):
     role = None
-    url = "users-autocomplete"
+    user_complete_url = "users-autocomplete"
 
     ADD = "ADD"
     REMOVE = "REMOVE"
@@ -39,7 +39,7 @@ class UserGroupForm(SaveFormInitMixin, Form):
         user_field.help_text = (
             f"Select a user that will be added as {self.role}"
         )
-        user_field.widget.url = self.url
+        user_field.widget.url = self.user_complete_url
 
     def clean_user(self):
         user = self.cleaned_data["user"]
