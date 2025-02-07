@@ -4,9 +4,8 @@ from datetime import timedelta
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
 from django.core.exceptions import ValidationError
-from django.db.models import BooleanField, Case, F, Value, When
+from django.db.models import F
 from django.utils.html import format_html
-from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 
 from grandchallenge.challenges.emails import send_challenge_status_update_email
@@ -150,9 +149,9 @@ class OnTimeFilter(admin.SimpleListFilter):
 
     def queryset(self, request, queryset):
         if self.value() == "yes":
-            queryset = queryset.filter(overdue=False)
+            queryset = queryset.filter(is_overdue=False)
         elif self.value() == "no":
-            queryset = queryset.filter(overdue=True)
+            queryset = queryset.filter(is_overdue=True)
         return queryset
 
 
@@ -224,19 +223,9 @@ class OnboardingTaskAdmin(ModelAdmin):
         move_task_deadline_4_weeks,
     )
 
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        return qs.annotate(
-            overdue=Case(
-                When(complete=False, deadline__lt=now(), then=Value(True)),
-                default=Value(False),
-                output_field=BooleanField(),
-            )
-        )
-
     @admin.display(boolean=True)
     def on_time(self, obj):
-        return not obj.overdue
+        return not obj.is_overdue
 
 
 admin.site.register(ChallengeUserObjectPermission, UserObjectPermissionAdmin)

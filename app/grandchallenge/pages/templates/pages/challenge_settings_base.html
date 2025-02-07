@@ -25,17 +25,24 @@
               <li class="nav-item">
                   <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'challenge-update' %} active {% endif %}"
                     href="{% url 'challenge-update' challenge_short_name=challenge.short_name %}">
-                      <i class="fas fa-cog fa-fw"></i> General Settings</a>
+                      <i class="fas fa-cog fa-fw"></i>&nbsp;General Settings</a>
+              </li>
+              <li class="nav-item">
+                  <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'challenge-onboarding-task-list' %} active {% endif %}"
+                    href="{% url 'challenge-onboarding-task-list' challenge_short_name=challenge.short_name %}">
+                      <i class="fas fa-tasks fa-fw"></i>&nbsp;Onboarding Tasks&nbsp;
+                      {% include "challenges/partials/challenge_onboardingtask_overdue.html" with aggregates=onboardingtask_aggregates only%}
+                      </a>
               </li>
               <li class="nav-item">
                 <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'participants:registration-question-list' or request.resolver_match.view_name == 'participants:registration-question-create' or request.resolver_match.view_name == 'participants:registration-question-delete'  %}active{% endif %}"
                   href="{% url 'participants:registration-question-list' challenge_short_name=challenge.short_name %}">
-                    <i class="fas fa-question-circle fa-fw"></i> Registration Questions </a>
+                    <i class="fas fa-question-circle fa-fw"></i>&nbsp;Registration Questions </a>
               </li>
               <li class="nav-item">
                   <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name in 'pages:list,pages:create,pages:content-update,pages:metadata-update,pages:delete' %}active{% endif %}"
                     href="{% url 'pages:list' challenge_short_name=challenge.short_name %}">
-                      <i class="far fa-file fa-fw"></i> Pages</a>
+                      <i class="far fa-file fa-fw"></i>&nbsp;Pages</a>
               </li>
               <li class="navbar-header rounded bg-light pl-3 py-1 mt-2 mb-1"><a>Users</a></li>
               <li class="nav-item">

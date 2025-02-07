@@ -7,13 +7,18 @@ from django.utils.timezone import now
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.challenges.forms import HTMX_BLANK_CHOICE_KEY
-from grandchallenge.challenges.models import Challenge, ChallengeRequest
+from grandchallenge.challenges.models import (
+    Challenge,
+    ChallengeRequest,
+    OnboardingTask,
+)
 from grandchallenge.invoices.models import PaymentStatusChoices
 from grandchallenge.verifications.models import Verification
 from tests.evaluation_tests.factories import PhaseFactory
 from tests.factories import (
     ChallengeFactory,
     ChallengeRequestFactory,
+    OnboardingTaskFactory,
     UserFactory,
 )
 from tests.invoices_tests.factories import InvoiceFactory
@@ -544,3 +549,142 @@ def test_pages_inaccessible_when_inactive(client, viewname, add_phase):
     challenge.save()
 
     assert get().status_code == 403
+
+
+@pytest.mark.django_db
+def test_onboarding_task_list_view_permissions(client):
+    ch = ChallengeFactory()
+    admin, participant, user = UserFactory.create_batch(3)
+    ch.add_admin(admin)
+    ch.add_participant(participant)
+
+    for usr in (participant, user, admin):
+        response = get_view_for_user(
+            viewname="challenge-onboarding-task-list",
+            client=client,
+            challenge=ch,
+            user=usr,
+        )
+        assert (
+            response.status_code == 200
+        ), f"{usr} should be able to view the task list"
+        assert len(response.context_data["object_list"]) == 0  # Sanity
+
+    org_task = OnboardingTaskFactory(
+        challenge=ch,
+        title="A fairly unique onboarding task title, not seen anywhere else",
+        responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+    )
+    support_task = OnboardingTaskFactory(
+        challenge=ch,
+        title="A support task title",
+        responsible_party=OnboardingTask.ResponsiblePartyChoices.SUPPORT,
+    )
+
+    for usr, num_questions in ((participant, 0), (user, 0), (admin, 1)):
+        response = get_view_for_user(
+            viewname="challenge-onboarding-task-list",
+            client=client,
+            challenge=ch,
+            user=usr,
+        )
+        assert (
+            response.status_code == 200
+        ), f"{usr} should still be able to view the question list"
+        assert (
+            len(response.context_data["object_list"]) == num_questions
+        ), f"{usr} should see the correct number of questions"
+
+        if num_questions:
+            page_content = response.content.decode()
+            assert support_task.title not in page_content
+            assert org_task.title in page_content
+
+
+@pytest.mark.django_db
+def test_onboarding_task_list_completion(client):
+    ch = ChallengeFactory()
+    admin, participant, user = UserFactory.create_batch(3)
+    ch.add_admin(admin)
+    ch.add_participant(participant)
+
+    org_task = OnboardingTaskFactory(
+        challenge=ch,
+        responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+    )
+    support_task = OnboardingTaskFactory(
+        challenge=ch,
+        responsible_party=OnboardingTask.ResponsiblePartyChoices.SUPPORT,
+    )
+
+    # Sanity, check non-POST
+    response = get_view_for_user(
+        viewname="challenge-onboarding-task-complete",
+        client=client,
+        challenge=ch,
+        reverse_kwargs={"pk": org_task.pk},
+        method=client.get,
+        user=admin,
+    )
+    assert response.status_code == 405, "GET returns method not allowed"
+
+    # Sanity, check non admins
+    for usr in (participant, user):
+        response = get_view_for_user(
+            viewname="challenge-onboarding-task-complete",
+            client=client,
+            challenge=ch,
+            method=client.post,
+            reverse_kwargs={"pk": org_task.pk},
+            user=usr,
+        )
+        assert (
+            response.status_code == 403
+        ), f"{usr} should not be allowed to post completion"
+
+    assert not org_task.complete
+    response = get_view_for_user(
+        viewname="challenge-onboarding-task-complete",
+        client=client,
+        challenge=ch,
+        method=client.post,
+        reverse_kwargs={"pk": org_task.pk},
+        data={
+            "complete": True,
+        },
+        user=admin,
+        follow=True,
+    )
+    assert response.status_code == 200, "admin is permitted to post completion"
+
+    org_task.refresh_from_db()
+    assert org_task.complete, "Task is marked complete"
+
+    # Can also revert
+    response = get_view_for_user(
+        viewname="challenge-onboarding-task-complete",
+        client=client,
+        challenge=ch,
+        method=client.post,
+        reverse_kwargs={"pk": org_task.pk},
+        data={
+            "complete": False,
+        },
+        user=admin,
+        follow=True,
+    )
+
+    org_task.refresh_from_db()
+    assert not org_task.complete, "Task is marked incomplete"
+
+    response = get_view_for_user(
+        viewname="challenge-onboarding-task-complete",
+        client=client,
+        challenge=ch,
+        method=client.post,
+        reverse_kwargs={"pk": support_task.pk},
+        user=admin,
+    )
+    assert (
+        response.status_code == 403
+    ), "admin is not allowed to complete support task"
