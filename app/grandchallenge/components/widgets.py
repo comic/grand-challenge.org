@@ -1,5 +1,5 @@
 from django.db.models import TextChoices
-from django.forms import HiddenInput, MultiWidget, Select
+from django.forms import HiddenInput, MultiWidget
 from django.forms.widgets import ChoiceWidget
 
 from grandchallenge.components.models import ComponentInterfaceValue
@@ -90,7 +90,3 @@ class FlexibleFileWidget(MultiWidget):
             except KeyError:
                 value = None
         return self.decompress(value)
-
-
-class SelectUploadWidget(Select):
-    template_name = "components/select_upload_widget.html"

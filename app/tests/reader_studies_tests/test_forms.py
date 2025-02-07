@@ -17,7 +17,7 @@ from grandchallenge.components.models import (
     InterfaceKind,
     InterfaceKindChoices,
 )
-from grandchallenge.components.widgets import SelectUploadWidget
+from grandchallenge.components.widgets import FlexibleFileWidget
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
@@ -1161,7 +1161,7 @@ def test_display_set_update_form(form_class):
     ]
     assert isinstance(
         form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}slug-1"].widget,
-        SelectUploadWidget,
+        FlexibleFileWidget,
     )
     assert isinstance(
         form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}slug-2"].widget,
