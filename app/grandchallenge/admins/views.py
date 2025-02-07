@@ -56,5 +56,5 @@ class AdminsUpdate(
 
     def form_valid(self, form):
         challenge = self.request.challenge
-        form.add_or_remove_user(challenge=challenge, site=self.request.site)
+        form.add_or_remove_user(obj=challenge)
         return super().form_valid(form)
