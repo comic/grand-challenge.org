@@ -7,10 +7,14 @@ from grandchallenge.cases.models import Image
 from grandchallenge.cases.widgets import (
     FlexibleImageField,
     FlexibleImageWidget,
+    ImageSearchWidget,
 )
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
-from grandchallenge.components.widgets import FlexibleFileWidget
+from grandchallenge.components.widgets import (
+    FileSearchWidget,
+    FlexibleFileWidget,
+)
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.core.widgets import JSONEditorWidget
@@ -46,7 +50,9 @@ class InterfaceFormField(forms.Field):
         UserUploadSingleWidget,
         JSONEditorWidget,
         FlexibleImageWidget,
+        ImageSearchWidget,
         FlexibleFileWidget,
+        FileSearchWidget,
     }
 
     def __init__(self, *, instance=None, user=None, form_data=None, **kwargs):
