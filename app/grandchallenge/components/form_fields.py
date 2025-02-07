@@ -8,10 +8,7 @@ from grandchallenge.cases.widgets import (
     FlexibleImageWidget,
 )
 from grandchallenge.components.models import ComponentInterfaceValue
-from grandchallenge.components.schemas import (
-    INTERFACE_VALUE_SCHEMA,
-    NULL_SCHEMA,
-)
+from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.widgets import SelectUploadWidget
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.validators import JSONValidator
@@ -126,24 +123,43 @@ class InterfaceFormField(forms.Field):
         )
 
     def _gen_json_schema(self):
-        schema = {**INTERFACE_VALUE_SCHEMA}
-
-        all_of = [{"$ref": f"#/definitions/{self.instance.kind}"}]
-
-        if self.instance.schema:
-            all_of.append(self.instance.schema)
-
-        if self.required:
-            schema["allOf"] = all_of
-        else:
-            schema["oneOf"] = [
-                NULL_SCHEMA,
-                {
-                    "allOf": all_of,
-                },
-            ]
-
-        return schema
+        print("### TEST", bool(self.instance.schema), self.required)
+        if not self.instance.schema and not self.required:
+            return {
+                **INTERFACE_VALUE_SCHEMA,
+                "allOf": [
+                    {"$ref": f"#/definitions/{self.instance.kind}"},
+                ],
+            }
+        elif not self.instance.schema and self.required:
+            return {
+                **INTERFACE_VALUE_SCHEMA,
+                "anyOf": [
+                    {"type": "null"},
+                    {"$ref": f"#/definitions/{self.instance.kind}"},
+                ],
+            }
+        elif self.instance.schema and not self.required:
+            return {
+                **INTERFACE_VALUE_SCHEMA,
+                "oneOf": [
+                    {"type": "null"},
+                    {
+                        "allOF": [
+                            {"$ref": f"#/definitions/{self.instance.kind}"},
+                            self.instance.schema,
+                        ],
+                    },
+                ],
+            }
+        elif self.instance.schema and self.required:
+            return {
+                **INTERFACE_VALUE_SCHEMA,
+                "allOf": [
+                    {"$ref": f"#/definitions/{self.instance.kind}"},
+                    self.instance.schema,
+                ],
+            }
 
     def get_json_field(self):
         field_type = self.instance.default_field

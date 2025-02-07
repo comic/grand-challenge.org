@@ -614,10 +614,6 @@ AFFINE_TRANSFORM_REGISTRATION_SCHEMA = {
     "required": ["3d_affine_transform"],
 }
 
-NULL_SCHEMA = {
-    "type": "null",
-}
-
 INTERFACE_VALUE_SCHEMA = {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "definitions": {
