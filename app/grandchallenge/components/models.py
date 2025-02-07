@@ -27,7 +27,6 @@ from django.core.validators import (
 from django.db import models, transaction
 from django.db.models import Avg, F, IntegerChoices, QuerySet, Sum
 from django.db.transaction import on_commit
-from django.forms import ModelChoiceField
 from django.forms.models import model_to_dict
 from django.template.defaultfilters import truncatewords
 from django.utils.functional import cached_property
@@ -45,6 +44,7 @@ from grandchallenge.charts.specs import components_line
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
 )
+from grandchallenge.components.form_fields import FlexibleFileField
 from grandchallenge.components.schemas import (
     INTERFACE_VALUE_SCHEMA,
     GPUTypeChoices,
@@ -531,7 +531,7 @@ class ComponentInterface(OverlaySegmentsMixin):
     @property
     def default_field(self):
         if self.requires_file:
-            return ModelChoiceField
+            return FlexibleFileField
         elif self.is_image_kind:
             return FlexibleImageField
         elif self.kind in {
