@@ -159,6 +159,9 @@ def get_valid_jobs_for_interfaces_and_archive_items(
     jobs,
     valid_archive_items_per_interface,
 ):
+    # get jobs whose inputs match those of the given algorithm interfaces
+    # regardless of job status
+
     jobs_per_interface = {}
     for interface in algorithm_interfaces:
         jobs_per_interface[interface] = []
