@@ -30,8 +30,9 @@ def test_flexible_file_field_validation_empty_data_and_missing_values():
     )
     field = FlexibleFileField(
         file_search_queryset=get_component_interface_values_for_user(
-            user=user
-        ).filter(interface=ci),
+            user=user,
+            interface=ci,
+        ),
         upload_queryset=UserUpload.objects.filter(creator=user).all(),
     )
 
@@ -55,8 +56,9 @@ def test_flexible_file_field_validation_user_uploads():
     )
     field = FlexibleFileField(
         file_search_queryset=get_component_interface_values_for_user(
-            user=user
-        ).filter(interface=ci),
+            user=user,
+            interface=ci,
+        ),
         upload_queryset=UserUpload.objects.filter(creator=user).all(),
     )
     upload1 = UserUploadFactory(creator=user)
@@ -98,17 +100,18 @@ def test_flexible_file_field_validation_with_algorithm_job_inputs():
     ci = ComponentInterfaceFactory(
         kind=FuzzyChoice(InterfaceKind.interface_type_file())
     )
-    field = FlexibleFileField(
-        file_search_queryset=get_component_interface_values_for_user(
-            user=user
-        ).filter(interface=ci),
-        upload_queryset=UserUpload.objects.filter(creator=user).all(),
-    )
     civ1, civ2 = ComponentInterfaceValueFactory.create_batch(2, interface=ci)
     job_with_perm = AlgorithmJobFactory(creator=user, time_limit=60)
     job_without_perm = AlgorithmJobFactory(time_limit=60)
     job_with_perm.inputs.set([civ1])
     job_without_perm.inputs.set([civ2])
+    field = FlexibleFileField(
+        file_search_queryset=get_component_interface_values_for_user(
+            user=user,
+            interface=ci,
+        ),
+        upload_queryset=UserUpload.objects.filter(creator=user).all(),
+    )
 
     parsed_value_for_file_with_permission = field.widget.value_from_datadict(
         data={ci.slug: civ1.pk}, name=ci.slug, files={}
@@ -149,17 +152,18 @@ def test_flexible_file_field_validation_with_algorithm_job_outputs():
     ci = ComponentInterfaceFactory(
         kind=FuzzyChoice(InterfaceKind.interface_type_file())
     )
-    field = FlexibleFileField(
-        file_search_queryset=get_component_interface_values_for_user(
-            user=user
-        ).filter(interface=ci),
-        upload_queryset=UserUpload.objects.filter(creator=user).all(),
-    )
     civ1, civ2 = ComponentInterfaceValueFactory.create_batch(2, interface=ci)
     job_with_perm = AlgorithmJobFactory(creator=user, time_limit=60)
     job_without_perm = AlgorithmJobFactory(time_limit=60)
     job_with_perm.outputs.set([civ1])
     job_without_perm.outputs.set([civ2])
+    field = FlexibleFileField(
+        file_search_queryset=get_component_interface_values_for_user(
+            user=user,
+            interface=ci,
+        ),
+        upload_queryset=UserUpload.objects.filter(creator=user).all(),
+    )
 
     parsed_value_for_file_with_permission = field.widget.value_from_datadict(
         data={ci.slug: civ1.pk}, name=ci.slug, files={}
@@ -200,13 +204,6 @@ def test_flexible_file_field_validation_with_display_sets():
     ci = ComponentInterfaceFactory(
         kind=FuzzyChoice(InterfaceKind.interface_type_file())
     )
-    field = FlexibleFileField(
-        file_search_queryset=get_component_interface_values_for_user(
-            user=user
-        ).filter(interface=ci),
-        upload_queryset=UserUpload.objects.filter(creator=user).all(),
-    )
-
     civ1, civ2 = ComponentInterfaceValueFactory.create_batch(2, interface=ci)
     rs1, rs2 = ReaderStudyFactory.create_batch(2)
     rs1.add_editor(user)
@@ -214,6 +211,13 @@ def test_flexible_file_field_validation_with_display_sets():
     display_set_without_perm = DisplaySetFactory(reader_study=rs2)
     display_set_with_perm.values.add(civ1)
     display_set_without_perm.values.add(civ2)
+    field = FlexibleFileField(
+        file_search_queryset=get_component_interface_values_for_user(
+            user=user,
+            interface=ci,
+        ),
+        upload_queryset=UserUpload.objects.filter(creator=user).all(),
+    )
 
     parsed_value_for_file_with_permission = field.widget.value_from_datadict(
         data={ci.slug: civ1.pk}, name=ci.slug, files={}
@@ -254,13 +258,6 @@ def test_flexible_file_field_validation_with_archive_items():
     ci = ComponentInterfaceFactory(
         kind=FuzzyChoice(InterfaceKind.interface_type_file())
     )
-    field = FlexibleFileField(
-        file_search_queryset=get_component_interface_values_for_user(
-            user=user
-        ).filter(interface=ci),
-        upload_queryset=UserUpload.objects.filter(creator=user).all(),
-    )
-
     civ1, civ2 = ComponentInterfaceValueFactory.create_batch(2, interface=ci)
     a1, a2 = ArchiveFactory.create_batch(2)
     a1.add_editor(user)
@@ -268,6 +265,13 @@ def test_flexible_file_field_validation_with_archive_items():
     archive_item_without_perm = ArchiveItemFactory(archive=a2)
     archive_item_with_perm.values.set([civ1])
     archive_item_without_perm.values.set([civ2])
+    field = FlexibleFileField(
+        file_search_queryset=get_component_interface_values_for_user(
+            user=user,
+            interface=ci,
+        ),
+        upload_queryset=UserUpload.objects.filter(creator=user).all(),
+    )
 
     parsed_value_for_file_with_permission = field.widget.value_from_datadict(
         data={ci.slug: civ1.pk}, name=ci.slug, files={}

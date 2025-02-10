@@ -1,12 +1,15 @@
 import io
 
 import pytest
-from django.forms import JSONField, ModelChoiceField
+from django.forms import JSONField
 from guardian.shortcuts import assign_perm
 from requests import put
 
 from grandchallenge.cases.widgets import FlexibleImageField, ImageWidgetChoices
-from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
+from grandchallenge.components.form_fields import (
+    INTERFACE_FORM_FIELD_PREFIX,
+    FlexibleFileField,
+)
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.notifications.models import Notification
 from grandchallenge.reader_studies.models import (
@@ -753,7 +756,7 @@ def test_add_display_set_update_when_disabled(client):
 @pytest.mark.parametrize(
     "interface_kind, store_in_database, field_type",
     (
-        ("JSON", False, ModelChoiceField),
+        ("JSON", False, FlexibleFileField),
         ("JSON", True, JSONField),
         ("IMG", False, FlexibleImageField),
     ),

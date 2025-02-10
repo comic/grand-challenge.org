@@ -139,11 +139,9 @@ def serve_component_interface_value(
     except (MultipleObjectsReturned, ComponentInterfaceValue.DoesNotExist):
         raise Http404("No ComponentInterfaceValue found.")
 
-    if (
-        get_component_interface_values_for_user(user=user)
-        .filter(pk=civ.pk)
-        .exists()
-    ):
+    if get_component_interface_values_for_user(
+        user=user, civ_pk=civ.pk
+    ).exists():
         return protected_storage_redirect(
             name=civ.file.name, creator=user, component_interface_value=civ
         )
