@@ -14,6 +14,12 @@ class FileWidgetChoices(TextChoices):
     UNDEFINED = "UNDEFINED"
 
 
+class ParentObjectTypeChoices(TextChoices):
+    JOB = "JOB"
+    DISPLAY_SET = "DISPLAY_SET"
+    ARCHIVE_ITEM = "ARCHIVE_ITEM"
+
+
 class FileSearchWidget(ChoiceWidget, HiddenInput):
     template_name = "components/file_search_widget.html"
     input_type = None
@@ -28,6 +34,9 @@ class FileSearchWidget(ChoiceWidget, HiddenInput):
         context = super().get_context(*args, **kwargs)
         if self.name:
             context["widget"]["name"] = self.name
+        context["widget"]["parent_object_type_choices"] = {
+            choice.name: choice.value for choice in ParentObjectTypeChoices
+        }
         return context
 
 

@@ -43,6 +43,7 @@ from grandchallenge.components.serializers import ComponentInterfaceSerializer
 from grandchallenge.components.widgets import (
     FileSearchWidget,
     FileWidgetChoices,
+    ParentObjectTypeChoices,
 )
 from grandchallenge.core.guardian import (
     ObjectPermissionCheckerMixin,
@@ -597,30 +598,50 @@ class FileSearchResultView(
     model = ComponentInterfaceValue
     paginate_by = 50
 
-    def __init__(self, *, interface_slug=None):
+    def __init__(self):
         super().__init__()
-        self.interface_slug = interface_slug
+        self.interface = None
+        self.parent_object_type_choice = None
 
     def get_queryset(self):
         return get_component_interface_values_for_user(
-            user=self.request.user
-        ).filter(interface__slug=self.interface_slug)
+            user=self.request.user,
+            interface=self.interface,
+            parent_object_type_choice=self.parent_object_type_choice,
+        )
 
     def get(self, request, *args, **kwargs):
         prefixed_interface_slug = request.GET.get("prefixed-interface-slug")
-        self.interface_slug = prefixed_interface_slug.replace(
-            INTERFACE_FORM_FIELD_PREFIX, ""
+        self.interface = get_object_or_404(
+            ComponentInterface,
+            slug=prefixed_interface_slug.replace(
+                INTERFACE_FORM_FIELD_PREFIX, ""
+            ),
         )
-        qs = self.get_queryset()
-        query = request.GET.get("query-" + prefixed_interface_slug)
-        if query:
-            q = reduce(
-                or_,
-                [Q(**{f"{f}__icontains": query}) for f in self.search_fields],
-                Q(),
+        parent_object_type_choice_name = request.GET.get(
+            f"parent-object-type-{prefixed_interface_slug}"
+        )
+
+        try:
+            self.parent_object_type_choice = ParentObjectTypeChoices(
+                parent_object_type_choice_name
             )
-            qs = qs.filter(q).order_by("file")
-        self.object_list = qs
+        except ValueError:
+            self.object_list = []
+        else:
+            qs = self.get_queryset()
+            query = request.GET.get("query-" + prefixed_interface_slug)
+            if query:
+                q = reduce(
+                    or_,
+                    [
+                        Q(**{f"{f}__icontains": query})
+                        for f in self.search_fields
+                    ],
+                    Q(),
+                )
+                qs = qs.filter(q).order_by("file")
+            self.object_list = qs
         context = self.get_context_data(**kwargs)
         context["prefixed_interface_slug"] = prefixed_interface_slug
         return TemplateResponse(
