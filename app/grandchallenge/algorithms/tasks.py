@@ -172,9 +172,13 @@ def create_algorithm_jobs(
     for interface, archive_items in valid_job_inputs.items():
         for ai in archive_items:
             if max_jobs is not None and len(jobs) >= max_jobs:
+                # only schedule max_jobs amount of jobs
+                # the rest will be scheduled only after these have succeeded
+                # we do not want to retry the task here, so just stop the loop
                 break
 
             if len(jobs) >= settings.ALGORITHMS_JOB_BATCH_LIMIT:
+                # raise exception so that we retry the task
                 raise TooManyJobsScheduled
 
             with transaction.atomic():

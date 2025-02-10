@@ -1151,8 +1151,11 @@ class Job(CIVForObjectMixin, ComponentJob):
     @cached_property
     def inputs_complete(self):
         # check if all inputs are present and if they all have a value
+        # interfaces that do not require a value will be considered complete regardless
         return {
-            civ.interface for civ in self.inputs.all() if civ.has_value
+            civ.interface
+            for civ in self.inputs.all()
+            if civ.has_value or not civ.interface.value_required
         } == {*self.algorithm_interface.inputs.all()}
 
     @cached_property
