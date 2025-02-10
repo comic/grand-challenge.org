@@ -12,7 +12,10 @@ from grandchallenge.components.form_fields import (
     INTERFACE_FORM_FIELD_PREFIX,
     InterfaceFormField,
 )
-from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.models import (
+    INTERFACE_TYPE_JSON_EXAMPLES,
+    ComponentInterface,
+)
 from grandchallenge.reader_studies.forms import (
     DisplaySetCreateForm,
     DisplaySetUpdateForm,
@@ -195,10 +198,20 @@ def test_image_widget_current_value_in_archive_item_and_display_set_update_forms
     )
 
 
+@pytest.mark.parametrize(
+    "component_interface_kind",
+    [kind for kind in INTERFACE_TYPE_JSON_EXAMPLES.keys()],
+)
+@pytest.mark.parametrize("store_in_db", [True, False])
 @pytest.mark.django_db
-def test_interface_form_field_help_text_example_download_link():
-    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.ANY)
-    field = InterfaceFormField(instance=ci)
+def test_interface_form_field_help_text_example_download_link(
+    component_interface_kind, store_in_db
+):
+    user = UserFactory()
+    ci = ComponentInterfaceFactory(
+        kind=component_interface_kind, store_in_database=store_in_db
+    )
+    field = InterfaceFormField(instance=ci, user=user, form_data={})
 
     encoded_example = quote(json.dumps(ci.json_kind_example.value, indent=2))
 
