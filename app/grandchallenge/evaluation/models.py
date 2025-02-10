@@ -1778,6 +1778,16 @@ class Evaluation(ComponentJob):
         return sum(self.successful_job_count_per_interface.values())
 
     @cached_property
+    def successful_jobs(self):
+        return Job.objects.filter(
+            pk__in=[
+                j.pk
+                for sublist in self.successful_jobs_per_interface.values()
+                for j in sublist
+            ]
+        )
+
+    @cached_property
     def inputs_complete(self):
         if self.submission.algorithm_image:
             return (

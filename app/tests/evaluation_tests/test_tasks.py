@@ -6,7 +6,6 @@ import requests
 from actstream.actions import unfollow
 from django.conf import settings
 from django.core.cache import cache
-from django.test import TestCase
 from django.utils.html import format_html
 from redis.exceptions import LockError
 
@@ -223,232 +222,287 @@ def test_method_validation_not_a_docker_tar(submission_file):
     assert method.status == "Could not decompress the container image file."
 
 
-class TestSetEvaluationInputs(TestCase):
-    def setUp(self):
-        ci_inp, ci_out = ComponentInterfaceFactory.create_batch(2)
-        interface = AlgorithmInterfaceFactory(
-            inputs=[ci_inp], outputs=[ci_out]
-        )
-
-        archive = ArchiveFactory()
-        archive_items = ArchiveItemFactory.create_batch(2)
-        archive.items.set(archive_items)
-
-        input_civs = ComponentInterfaceValueFactory.create_batch(
-            2, interface=ci_inp
-        )
-        output_civs = ComponentInterfaceValueFactory.create_batch(
-            2, interface=ci_out
-        )
-
-        for ai, civ in zip(archive_items, input_civs, strict=True):
-            ai.values.set([civ])
-
-        algorithm_image = AlgorithmImageFactory()
-        algorithm_image.algorithm.interfaces.set([interface])
-        algorithm_model = AlgorithmModelFactory()
-        submission = SubmissionFactory(algorithm_image=algorithm_image)
-        submission.phase.archive = archive
-        submission.phase.save()
-        submission.phase.algorithm_interfaces.set([interface])
-
-        submission_with_model = SubmissionFactory(
-            algorithm_image=algorithm_image, algorithm_model=algorithm_model
-        )
-        submission_with_model.phase.archive = archive
-        submission_with_model.phase.save()
-        submission_with_model.phase.algorithm_interfaces.set([interface])
-
-        jobs = []
-        for inpt, output in zip(input_civs, output_civs, strict=True):
-            j = AlgorithmJobFactory(
-                status=Job.SUCCESS,
-                algorithm_image=algorithm_image,
-                algorithm_interface=interface,
-                time_limit=algorithm_image.algorithm.time_limit,
-            )
-            j.inputs.set([inpt])
-            j.outputs.set([output])
-            j.creator = None
-            j.save()
-            jobs.append(j)
-
-        # also create a job with the same input but a creator set, this job
-        # should be ignored
-        j_irrelevant = AlgorithmJobFactory(
-            status=Job.SUCCESS,
-            algorithm_image=algorithm_image,
-            algorithm_interface=interface,
-            creator=algorithm_image.creator,
-            time_limit=algorithm_image.algorithm.time_limit,
-        )
-        j_irrelevant.inputs.set([input_civs[0]])
-        j_irrelevant.outputs.set([output_civs[0]])
-
-        self.evaluation = EvaluationFactory(
-            submission=submission,
+@pytest.mark.django_db
+class TestSetEvaluationInputs:
+    def test_set_evaluation_inputs(
+        self, submission_without_model_for_optional_inputs
+    ):
+        eval = EvaluationFactory(
+            submission=submission_without_model_for_optional_inputs.submission,
             status=Evaluation.EXECUTING_PREREQUISITES,
-            time_limit=submission.phase.evaluation_time_limit,
+            time_limit=submission_without_model_for_optional_inputs.submission.phase.evaluation_time_limit,
         )
-        self.evaluation_with_model = EvaluationFactory(
-            submission=submission_with_model,
-            status=Evaluation.EXECUTING_PREREQUISITES,
-            time_limit=submission.phase.evaluation_time_limit,
-        )
-        self.input_civs = input_civs
-        self.output_civs = output_civs
-        self.jobs = jobs
-        self.interface = interface
+        set_evaluation_inputs(evaluation_pk=eval.pk)
 
-    def test_set_evaluation_inputs(self):
-        set_evaluation_inputs(evaluation_pk=self.evaluation.pk)
-
-        self.evaluation.refresh_from_db()
-        assert self.evaluation.status == self.evaluation.PENDING
-        assert self.evaluation.error_message == ""
-        assert self.evaluation.inputs.count() == 3
-        assert self.evaluation.input_prefixes == {
+        eval.refresh_from_db()
+        assert eval.status == eval.PENDING
+        assert eval.error_message == ""
+        assert eval.inputs.count() == 5
+        assert eval.input_prefixes == {
             str(civ.pk): f"{alg.pk}/output/"
-            for alg, civ in zip(self.jobs, self.output_civs, strict=True)
+            for alg, civ in zip(
+                submission_without_model_for_optional_inputs.jobs,
+                submission_without_model_for_optional_inputs.output_civs,
+                strict=True,
+            )
         }
 
-    def test_has_pending_jobs(self):
+    def test_has_pending_jobs(
+        self, submission_without_model_for_optional_inputs
+    ):
+        eval = EvaluationFactory(
+            submission=submission_without_model_for_optional_inputs.submission,
+            status=Evaluation.EXECUTING_PREREQUISITES,
+            time_limit=submission_without_model_for_optional_inputs.submission.phase.evaluation_time_limit,
+        )
         AlgorithmJobFactory(
             status=Job.PENDING,
             creator=None,
-            algorithm_image=self.evaluation.submission.algorithm_image,
-            algorithm_interface=self.interface,
-            time_limit=self.evaluation.submission.algorithm_image.algorithm.time_limit,
+            algorithm_image=eval.submission.algorithm_image,
+            algorithm_interface=submission_without_model_for_optional_inputs.interface1,
+            time_limit=eval.submission.algorithm_image.algorithm.time_limit,
         )
         # nothing happens because there are pending jobs
-        set_evaluation_inputs(evaluation_pk=self.evaluation.pk)
-        self.evaluation.refresh_from_db()
-        assert (
-            self.evaluation.status == self.evaluation.EXECUTING_PREREQUISITES
-        )
-        assert self.evaluation.inputs.count() == 0
-        assert self.evaluation.input_prefixes == {}
+        set_evaluation_inputs(evaluation_pk=eval.pk)
+        eval.refresh_from_db()
+        assert eval.status == eval.EXECUTING_PREREQUISITES
+        assert eval.inputs.count() == 0
+        assert eval.input_prefixes == {}
 
-    def test_has_pending_jobs_with_image_and_model(self):
+    def test_has_pending_jobs_with_image_and_model(
+        self, submission_with_model_for_optional_inputs
+    ):
+        evaluation_with_model = EvaluationFactory(
+            submission=submission_with_model_for_optional_inputs.submission,
+            status=Evaluation.EXECUTING_PREREQUISITES,
+            time_limit=submission_with_model_for_optional_inputs.submission.phase.evaluation_time_limit,
+        )
         AlgorithmJobFactory(
             status=Job.PENDING,
             creator=None,
-            algorithm_image=self.evaluation_with_model.submission.algorithm_image,
-            algorithm_model=self.evaluation_with_model.submission.algorithm_model,
-            algorithm_interface=self.interface,
-            time_limit=self.evaluation_with_model.submission.algorithm_image.algorithm.time_limit,
+            algorithm_image=evaluation_with_model.submission.algorithm_image,
+            algorithm_model=evaluation_with_model.submission.algorithm_model,
+            algorithm_interface=submission_with_model_for_optional_inputs.interface1,
+            time_limit=evaluation_with_model.submission.algorithm_image.algorithm.time_limit,
         )
         # nothing happens
-        set_evaluation_inputs(evaluation_pk=self.evaluation_with_model.pk)
-        self.evaluation_with_model.refresh_from_db()
+        set_evaluation_inputs(evaluation_pk=evaluation_with_model.pk)
+        evaluation_with_model.refresh_from_db()
         assert (
-            self.evaluation_with_model.status
-            == self.evaluation_with_model.EXECUTING_PREREQUISITES
+            evaluation_with_model.status
+            == evaluation_with_model.EXECUTING_PREREQUISITES
         )
-        assert self.evaluation_with_model.inputs.count() == 0
-        assert self.evaluation_with_model.input_prefixes == {}
+        assert evaluation_with_model.inputs.count() == 0
+        assert evaluation_with_model.input_prefixes == {}
 
-    def test_has_pending_jobs_with_image_but_without_model(self):
+    def test_has_pending_jobs_with_image_but_without_model(
+        self, submission_with_model_for_optional_inputs
+    ):
+        evaluation_with_model = EvaluationFactory(
+            submission=submission_with_model_for_optional_inputs.submission,
+            status=Evaluation.EXECUTING_PREREQUISITES,
+            time_limit=submission_with_model_for_optional_inputs.submission.phase.evaluation_time_limit,
+        )
         # the pending job with only the image will be ignored, but task will still
         # fail because there are no successful jobs with both the image and model yet
         AlgorithmJobFactory(
             status=Job.PENDING,
             creator=None,
-            algorithm_image=self.evaluation_with_model.submission.algorithm_image,
-            algorithm_interface=self.interface,
-            time_limit=self.evaluation_with_model.submission.algorithm_image.algorithm.time_limit,
+            algorithm_image=evaluation_with_model.submission.algorithm_image,
+            algorithm_interface=submission_with_model_for_optional_inputs.interface1,
+            time_limit=evaluation_with_model.submission.algorithm_image.algorithm.time_limit,
         )
-        set_evaluation_inputs(evaluation_pk=self.evaluation_with_model.pk)
-        self.evaluation_with_model.refresh_from_db()
+        set_evaluation_inputs(evaluation_pk=evaluation_with_model.pk)
+        evaluation_with_model.refresh_from_db()
         assert (
-            self.evaluation_with_model.status
-            == self.evaluation_with_model.EXECUTING_PREREQUISITES
+            evaluation_with_model.status
+            == evaluation_with_model.EXECUTING_PREREQUISITES
         )
-        assert self.evaluation_with_model.inputs.count() == 0
-        assert self.evaluation_with_model.input_prefixes == {}
+        assert evaluation_with_model.inputs.count() == 0
+        assert evaluation_with_model.input_prefixes == {}
 
-        # add jobs
-        jobs = []
-        for inpt, output in zip(
-            self.input_civs, self.output_civs, strict=True
-        ):
-            j_with_model = AlgorithmJobFactory(
-                status=Job.SUCCESS,
-                algorithm_image=self.evaluation_with_model.submission.algorithm_image,
-                algorithm_model=self.evaluation_with_model.submission.algorithm_model,
-                algorithm_interface=self.interface,
-                time_limit=self.evaluation_with_model.submission.algorithm_image.algorithm.time_limit,
-            )
-            j_with_model.inputs.set([inpt])
-            j_with_model.outputs.set([output])
-            j_with_model.creator = None
-            j_with_model.save()
-            jobs.append(j_with_model)
-
-        set_evaluation_inputs(evaluation_pk=self.evaluation_with_model.pk)
-        self.evaluation_with_model.refresh_from_db()
-        assert (
-            self.evaluation_with_model.status
-            == self.evaluation_with_model.PENDING
+        # add jobs, 2 for each interface with a model
+        j_with_model_1 = AlgorithmJobFactory(
+            status=Job.SUCCESS,
+            creator=None,
+            algorithm_image=evaluation_with_model.submission.algorithm_image,
+            algorithm_model=evaluation_with_model.submission.algorithm_model,
+            algorithm_interface=submission_with_model_for_optional_inputs.interface1,
+            time_limit=evaluation_with_model.submission.algorithm_image.algorithm.time_limit,
         )
-        assert self.evaluation_with_model.inputs.count() == 3
-        assert self.evaluation_with_model.input_prefixes == {
+        j_with_model_2 = AlgorithmJobFactory(
+            status=Job.SUCCESS,
+            creator=None,
+            algorithm_image=evaluation_with_model.submission.algorithm_image,
+            algorithm_model=evaluation_with_model.submission.algorithm_model,
+            algorithm_interface=submission_with_model_for_optional_inputs.interface1,
+            time_limit=evaluation_with_model.submission.algorithm_image.algorithm.time_limit,
+        )
+        j_with_model_1.inputs.set(
+            submission_with_model_for_optional_inputs.jobs[0].inputs.all()
+        )
+        j_with_model_1.outputs.set(
+            submission_with_model_for_optional_inputs.jobs[0].outputs.all()
+        )
+        j_with_model_2.inputs.set(
+            submission_with_model_for_optional_inputs.jobs[1].inputs.all()
+        )
+        j_with_model_2.outputs.set(
+            submission_with_model_for_optional_inputs.jobs[1].outputs.all()
+        )
+
+        j_with_model_3 = AlgorithmJobFactory(
+            status=Job.SUCCESS,
+            creator=None,
+            algorithm_image=evaluation_with_model.submission.algorithm_image,
+            algorithm_model=evaluation_with_model.submission.algorithm_model,
+            algorithm_interface=submission_with_model_for_optional_inputs.interface2,
+            time_limit=evaluation_with_model.submission.algorithm_image.algorithm.time_limit,
+        )
+        j_with_model_4 = AlgorithmJobFactory(
+            status=Job.SUCCESS,
+            creator=None,
+            algorithm_image=evaluation_with_model.submission.algorithm_image,
+            algorithm_model=evaluation_with_model.submission.algorithm_model,
+            algorithm_interface=submission_with_model_for_optional_inputs.interface2,
+            time_limit=evaluation_with_model.submission.algorithm_image.algorithm.time_limit,
+        )
+        j_with_model_3.inputs.set(
+            submission_with_model_for_optional_inputs.jobs[2].inputs.all()
+        )
+        j_with_model_3.outputs.set(
+            submission_with_model_for_optional_inputs.jobs[2].outputs.all()
+        )
+        j_with_model_4.inputs.set(
+            submission_with_model_for_optional_inputs.jobs[3].inputs.all()
+        )
+        j_with_model_4.outputs.set(
+            submission_with_model_for_optional_inputs.jobs[3].outputs.all()
+        )
+
+        jobs = [j_with_model_1, j_with_model_2, j_with_model_3, j_with_model_4]
+
+        set_evaluation_inputs(evaluation_pk=evaluation_with_model.pk)
+        evaluation_with_model.refresh_from_db()
+        assert evaluation_with_model.status == evaluation_with_model.PENDING
+        assert evaluation_with_model.inputs.count() == 5
+        assert evaluation_with_model.input_prefixes == {
             str(civ.pk): f"{alg.pk}/output/"
-            for alg, civ in zip(jobs, self.output_civs, strict=True)
+            for alg, civ in zip(
+                jobs,
+                submission_with_model_for_optional_inputs.output_civs,
+                strict=True,
+            )
         }
 
-    def test_has_pending_jobs_without_active_model(self):
+    def test_has_pending_jobs_without_active_model(
+        self, submission_without_model_for_optional_inputs
+    ):
+        eval = EvaluationFactory(
+            submission=submission_without_model_for_optional_inputs.submission,
+            status=Evaluation.EXECUTING_PREREQUISITES,
+            time_limit=submission_without_model_for_optional_inputs.submission.phase.evaluation_time_limit,
+        )
         AlgorithmJobFactory(
             status=Job.PENDING,
             creator=None,
-            algorithm_image=self.evaluation.submission.algorithm_image,
+            algorithm_image=eval.submission.algorithm_image,
             algorithm_model=AlgorithmModelFactory(
-                algorithm=self.evaluation.submission.algorithm_image.algorithm
+                algorithm=eval.submission.algorithm_image.algorithm
             ),
-            algorithm_interface=self.interface,
-            time_limit=self.evaluation.submission.algorithm_image.algorithm.time_limit,
+            algorithm_interface=submission_without_model_for_optional_inputs.interface1,
+            time_limit=eval.submission.algorithm_image.algorithm.time_limit,
         )
         # pending job for image with model should be ignored,
         # since active_model is None for the evaluation
-        set_evaluation_inputs(evaluation_pk=self.evaluation.pk)
-        self.evaluation.refresh_from_db()
-        assert self.evaluation.status == self.evaluation.PENDING
-        assert self.evaluation.inputs.count() == 3
-        assert self.evaluation.input_prefixes == {
+        set_evaluation_inputs(evaluation_pk=eval.pk)
+        eval.refresh_from_db()
+        assert eval.status == eval.PENDING
+        assert eval.inputs.count() == 5
+        assert eval.input_prefixes == {
             str(civ.pk): f"{alg.pk}/output/"
-            for alg, civ in zip(self.jobs, self.output_civs, strict=True)
+            for alg, civ in zip(
+                submission_without_model_for_optional_inputs.jobs,
+                submission_without_model_for_optional_inputs.output_civs,
+                strict=True,
+            )
         }
 
-    def test_successful_jobs_without_model(self):
+    def test_successful_jobs_without_model(
+        self, submission_without_model_for_optional_inputs
+    ):
         # delete jobs created in setup(),
         # create new ones with a model, these should not count
         # towards successful jobs, and eval inputs should not be set
         Job.objects.all().delete()
-        jobs = []
-        for inpt, output in zip(
-            self.input_civs, self.output_civs, strict=True
-        ):
-            j_with_model = AlgorithmJobFactory(
-                status=Job.SUCCESS,
-                algorithm_image=self.evaluation.submission.algorithm_image,
-                algorithm_model=AlgorithmModelFactory(
-                    algorithm=self.evaluation.submission.algorithm_image.algorithm
-                ),
-                algorithm_interface=self.interface,
-                time_limit=self.evaluation.submission.algorithm_image.algorithm.time_limit,
-            )
-            j_with_model.inputs.set([inpt])
-            j_with_model.outputs.set([output])
-            j_with_model.creator = None
-            j_with_model.save()
-            jobs.append(j_with_model)
-        set_evaluation_inputs(evaluation_pk=self.evaluation.pk)
-        self.evaluation.refresh_from_db()
-        assert (
-            self.evaluation.status == self.evaluation.EXECUTING_PREREQUISITES
+
+        eval = EvaluationFactory(
+            submission=submission_without_model_for_optional_inputs.submission,
+            status=Evaluation.EXECUTING_PREREQUISITES,
+            time_limit=submission_without_model_for_optional_inputs.submission.phase.evaluation_time_limit,
         )
-        assert self.evaluation.inputs.count() == 0
-        assert self.evaluation.input_prefixes == {}
+
+        # create 2 jobs per interface, for each of the archive items
+        j1, j2 = AlgorithmJobFactory.create_batch(
+            2,
+            creator=None,
+            algorithm_image=submission_without_model_for_optional_inputs.submission.algorithm_image,
+            algorithm_interface=submission_without_model_for_optional_inputs.interface1,
+            algorithm_model=AlgorithmModelFactory(
+                algorithm=eval.submission.algorithm_image.algorithm
+            ),
+            time_limit=submission_without_model_for_optional_inputs.submission.algorithm_image.algorithm.time_limit,
+        )
+        j1.inputs.set(
+            [
+                submission_without_model_for_optional_inputs.civs_for_interface1[
+                    0
+                ]
+            ]
+        )
+        j1.outputs.set(
+            [submission_without_model_for_optional_inputs.output_civs[0]]
+        )
+        j2.inputs.set(
+            [
+                submission_without_model_for_optional_inputs.civs_for_interface1[
+                    1
+                ]
+            ]
+        )
+        j2.outputs.set(
+            [submission_without_model_for_optional_inputs.output_civs[1]]
+        )
+
+        # create 2 jobs per interface, for each of the archive items
+        j3, j4 = AlgorithmJobFactory.create_batch(
+            2,
+            creator=None,
+            algorithm_image=submission_without_model_for_optional_inputs.submission.algorithm_image,
+            algorithm_model=AlgorithmModelFactory(
+                algorithm=submission_without_model_for_optional_inputs.submission.algorithm_image.algorithm
+            ),
+            algorithm_interface=submission_without_model_for_optional_inputs.interface2,
+            time_limit=submission_without_model_for_optional_inputs.submission.algorithm_image.algorithm.time_limit,
+        )
+        j3.inputs.set(
+            submission_without_model_for_optional_inputs.civs_for_interface2[0]
+        )
+        j3.outputs.set(
+            [submission_without_model_for_optional_inputs.output_civs[2]]
+        )
+        j4.inputs.set(
+            submission_without_model_for_optional_inputs.civs_for_interface2[1]
+        )
+        j4.outputs.set(
+            [submission_without_model_for_optional_inputs.output_civs[3]]
+        )
+
+        set_evaluation_inputs(evaluation_pk=eval.pk)
+        eval.refresh_from_db()
+        assert eval.status == eval.EXECUTING_PREREQUISITES
+        assert eval.inputs.count() == 0
+        assert eval.input_prefixes == {}
 
 
 @pytest.mark.django_db

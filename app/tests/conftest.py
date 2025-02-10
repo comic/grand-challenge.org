@@ -12,6 +12,7 @@ from django.contrib.sites.models import Site
 from guardian.shortcuts import assign_perm
 from requests import put
 
+from grandchallenge.algorithms.models import Job
 from grandchallenge.cases.widgets import ImageWidgetChoices
 from grandchallenge.components.backends import docker_client
 from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
@@ -35,7 +36,11 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
-from tests.evaluation_tests.factories import MethodFactory, PhaseFactory
+from tests.evaluation_tests.factories import (
+    MethodFactory,
+    PhaseFactory,
+    SubmissionFactory,
+)
 from tests.factories import ChallengeFactory, ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
@@ -642,6 +647,7 @@ class InterfacesAndJobs(NamedTuple):
     civs_for_interface1: list[ComponentInterfaceValueFactory]
     civs_for_interface2: list[ComponentInterfaceValueFactory]
     civs_for_interface3: list[ComponentInterfaceValueFactory]
+    output_civs: list[ComponentInterfaceValueFactory]
 
 
 @pytest.fixture
@@ -663,6 +669,8 @@ def archive_items_and_jobs_for_interfaces():
     civ_int_2a = ComponentInterfaceValueFactory(interface=ci2)
     civ_int_2b = ComponentInterfaceValueFactory(interface=ci2)
     civ_int_3a = ComponentInterfaceValueFactory(interface=ci3)
+
+    civs_out = ComponentInterfaceValueFactory.create_batch(6, interface=ci3)
 
     ai1.values.set([civ_int_1a])  # valid for interface 1
     ai2.values.set([civ_int_1b])  # valid for interface 1
@@ -746,4 +754,128 @@ def archive_items_and_jobs_for_interfaces():
             [civ_int_1b, civ_int_2b],
         ],
         civs_for_interface3=[civ_int_3a],
+        output_civs=civs_out,
+    )
+
+
+@pytest.fixture
+def jobs_for_optional_inputs(archive_items_and_jobs_for_interfaces):
+    # delete existing jobs
+    Job.objects.all().delete()
+
+    # create 2 successful jobs per interface, for each of the archive items
+    j1, j2 = AlgorithmJobFactory.create_batch(
+        2,
+        status=Job.SUCCESS,
+        creator=None,
+        algorithm_image=archive_items_and_jobs_for_interfaces.algorithm_image,
+        algorithm_interface=archive_items_and_jobs_for_interfaces.interface1,
+        time_limit=archive_items_and_jobs_for_interfaces.algorithm_image.algorithm.time_limit,
+    )
+    j1.inputs.set(
+        [archive_items_and_jobs_for_interfaces.civs_for_interface1[0]]
+    )
+    j1.outputs.set([archive_items_and_jobs_for_interfaces.output_civs[0]])
+    j2.inputs.set(
+        [archive_items_and_jobs_for_interfaces.civs_for_interface1[1]]
+    )
+    j2.outputs.set([archive_items_and_jobs_for_interfaces.output_civs[1]])
+
+    # create 2 jobs per interface, for each of the archive items
+    j3, j4 = AlgorithmJobFactory.create_batch(
+        2,
+        status=Job.SUCCESS,
+        creator=None,
+        algorithm_image=archive_items_and_jobs_for_interfaces.algorithm_image,
+        algorithm_interface=archive_items_and_jobs_for_interfaces.interface2,
+        time_limit=archive_items_and_jobs_for_interfaces.algorithm_image.algorithm.time_limit,
+    )
+    j3.inputs.set(archive_items_and_jobs_for_interfaces.civs_for_interface2[0])
+    j3.outputs.set([archive_items_and_jobs_for_interfaces.output_civs[2]])
+    j4.inputs.set(archive_items_and_jobs_for_interfaces.civs_for_interface2[1])
+    j4.outputs.set([archive_items_and_jobs_for_interfaces.output_civs[3]])
+
+    return InterfacesAndJobs(
+        archive=archive_items_and_jobs_for_interfaces.archive,
+        algorithm_image=archive_items_and_jobs_for_interfaces.algorithm_image,
+        interface1=archive_items_and_jobs_for_interfaces.interface1,
+        interface2=archive_items_and_jobs_for_interfaces.interface2,
+        interface3=archive_items_and_jobs_for_interfaces.interface3,
+        jobs_for_interface1=[j1, j2],
+        jobs_for_interface2=[j3, j4],
+        jobs_for_interface3=[],
+        items_for_interface1=archive_items_and_jobs_for_interfaces.items_for_interface1,
+        items_for_interface2=archive_items_and_jobs_for_interfaces.items_for_interface2,
+        items_for_interface3=archive_items_and_jobs_for_interfaces.items_for_interface3,
+        civs_for_interface1=archive_items_and_jobs_for_interfaces.civs_for_interface1,
+        civs_for_interface2=archive_items_and_jobs_for_interfaces.civs_for_interface2,
+        civs_for_interface3=archive_items_and_jobs_for_interfaces.civs_for_interface3,
+        output_civs=archive_items_and_jobs_for_interfaces.output_civs[:4],
+    )
+
+
+class SubmissionWithJobs(NamedTuple):
+    submission: SubmissionFactory
+    jobs: list[AlgorithmJobFactory]
+    interface1: AlgorithmInterfaceFactory
+    interface2: AlgorithmInterfaceFactory
+    civs_for_interface1: list[ComponentInterfaceValueFactory]
+    civs_for_interface2: list[ComponentInterfaceValueFactory]
+    output_civs: list[ComponentInterfaceValueFactory]
+
+
+@pytest.fixture
+def submission_without_model_for_optional_inputs(jobs_for_optional_inputs):
+    submission = SubmissionFactory(
+        algorithm_image=jobs_for_optional_inputs.algorithm_image
+    )
+    submission.phase.archive = jobs_for_optional_inputs.archive
+    submission.phase.save()
+    submission.phase.algorithm_interfaces.set(
+        [
+            jobs_for_optional_inputs.interface1,
+            jobs_for_optional_inputs.interface2,
+        ]
+    )
+    return SubmissionWithJobs(
+        submission=submission,
+        jobs=[
+            *jobs_for_optional_inputs.jobs_for_interface1,
+            *jobs_for_optional_inputs.jobs_for_interface2,
+        ],
+        interface1=jobs_for_optional_inputs.interface1,
+        interface2=jobs_for_optional_inputs.interface2,
+        civs_for_interface1=jobs_for_optional_inputs.civs_for_interface1,
+        civs_for_interface2=jobs_for_optional_inputs.civs_for_interface2,
+        output_civs=jobs_for_optional_inputs.output_civs,
+    )
+
+
+@pytest.fixture
+def submission_with_model_for_optional_inputs(jobs_for_optional_inputs):
+    submission_with_model = SubmissionFactory(
+        algorithm_image=jobs_for_optional_inputs.algorithm_image,
+        algorithm_model=AlgorithmModelFactory(
+            algorithm=jobs_for_optional_inputs.algorithm_image.algorithm
+        ),
+    )
+    submission_with_model.phase.archive = jobs_for_optional_inputs.archive
+    submission_with_model.phase.save()
+    submission_with_model.phase.algorithm_interfaces.set(
+        [
+            jobs_for_optional_inputs.interface1,
+            jobs_for_optional_inputs.interface2,
+        ]
+    )
+    return SubmissionWithJobs(
+        submission=submission_with_model,
+        jobs=[
+            *jobs_for_optional_inputs.jobs_for_interface1,
+            *jobs_for_optional_inputs.jobs_for_interface2,
+        ],
+        interface1=jobs_for_optional_inputs.interface1,
+        interface2=jobs_for_optional_inputs.interface2,
+        civs_for_interface1=jobs_for_optional_inputs.civs_for_interface1,
+        civs_for_interface2=jobs_for_optional_inputs.civs_for_interface2,
+        output_civs=jobs_for_optional_inputs.output_civs,
     )
