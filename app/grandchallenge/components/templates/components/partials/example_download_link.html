@@ -1,0 +1,8 @@
+{% load json %}
+
+{% if object.json_kind_example %}
+    Example usage: <a href="data:text/plain;charset=utf-8,{{ object.json_kind_example.value|json_dumps|urlencode }}"
+        download="example.json">
+        download example
+    </a>
+{% endif %}
