@@ -614,7 +614,6 @@ AFFINE_TRANSFORM_REGISTRATION_SCHEMA = {
     "required": ["3d_affine_transform"],
 }
 
-
 INTERFACE_VALUE_SCHEMA = {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "definitions": {
@@ -658,33 +657,6 @@ INTERFACE_VALUE_SCHEMA = {
         ],
         "ATRG": AFFINE_TRANSFORM_REGISTRATION_SCHEMA,
     },
-    "anyOf": [
-        {"$ref": "#/definitions/STR"},
-        {"$ref": "#/definitions/INT"},
-        {"$ref": "#/definitions/FLT"},
-        {"$ref": "#/definitions/BOOL"},
-        {"$ref": "#/definitions/JSON"},
-        {"$ref": "#/definitions/2DBB"},
-        {"$ref": "#/definitions/M2DB"},
-        {"$ref": "#/definitions/DIST"},
-        {"$ref": "#/definitions/MDIS"},
-        {"$ref": "#/definitions/POIN"},
-        {"$ref": "#/definitions/MPOI"},
-        {"$ref": "#/definitions/POLY"},
-        {"$ref": "#/definitions/MPOL"},
-        {"$ref": "#/definitions/CHOI"},
-        {"$ref": "#/definitions/MCHO"},
-        {"$ref": "#/definitions/CHART"},
-        {"$ref": "#/definitions/LINE"},
-        {"$ref": "#/definitions/MLIN"},
-        {"$ref": "#/definitions/ANGL"},
-        {"$ref": "#/definitions/MANG"},
-        {"$ref": "#/definitions/ELLI"},
-        {"$ref": "#/definitions/MELL"},
-        {"$ref": "#/definitions/3ANG"},
-        {"$ref": "#/definitions/M3AN"},
-        {"$ref": "#/definitions/ATRG"},
-    ],
 }
 
 
