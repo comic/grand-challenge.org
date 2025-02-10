@@ -399,12 +399,10 @@ class TestJobPermissions:
         im = ImageFactory()
         s.image_set.set([im])
 
-        input_interface = ComponentInterface.objects.get(
-            slug="generic-medical-image"
-        )
-        civ = ComponentInterfaceValueFactory(
-            image=im, interface=input_interface
-        )
+        ci = ComponentInterface.objects.get(slug="generic-medical-image")
+        interface = AlgorithmInterfaceFactory(inputs=[ci])
+        ai.algorithm.interfaces.add(interface)
+        civ = ComponentInterfaceValueFactory(image=im, interface=ci)
 
         archive_item = ArchiveItemFactory(archive=archive)
         with django_capture_on_commit_callbacks(execute=True):
@@ -459,12 +457,10 @@ class TestJobPermissions:
         im = ImageFactory()
         s.image_set.set([im])
 
-        input_interface = ComponentInterface.objects.get(
-            slug="generic-medical-image"
-        )
-        civ = ComponentInterfaceValueFactory(
-            image=im, interface=input_interface
-        )
+        ci = ComponentInterface.objects.get(slug="generic-medical-image")
+        interface = AlgorithmInterfaceFactory(inputs=[ci])
+        ai.algorithm.interfaces.add(interface)
+        civ = ComponentInterfaceValueFactory(image=im, interface=ci)
 
         archive_item = ArchiveItemFactory(archive=archive)
         with django_capture_on_commit_callbacks(execute=True):
@@ -517,15 +513,14 @@ class TestJobPermissions:
         im = ImageFactory()
         s.image_set.set([im])
 
-        input_interface = ComponentInterface.objects.get(
-            slug="generic-medical-image"
-        )
-        civ = ComponentInterfaceValueFactory(
-            image=im, interface=input_interface
-        )
+        ci = ComponentInterface.objects.get(slug="generic-medical-image")
+        civ = ComponentInterfaceValueFactory(image=im, interface=ci)
         archive_item = ArchiveItemFactory(archive=archive)
         with django_capture_on_commit_callbacks(execute=True):
             archive_item.values.add(civ)
+
+        interface = AlgorithmInterfaceFactory(inputs=[ci])
+        ai.algorithm.interfaces.add(interface)
 
         create_algorithm_jobs_for_evaluation(evaluation_pk=evaluation.pk)
 
