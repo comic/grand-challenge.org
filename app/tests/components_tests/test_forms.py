@@ -1,3 +1,6 @@
+import json
+from urllib.parse import quote
+
 import pytest
 from guardian.shortcuts import assign_perm
 
@@ -190,3 +193,14 @@ def test_image_widget_current_value_in_archive_item_and_display_set_update_forms
         .pk
         == user_upload.pk
     )
+
+
+@pytest.mark.django_db
+def test_interface_form_field_help_text_example_download_link():
+    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.ANY)
+    field = InterfaceFormField(instance=ci)
+
+    encoded_example = quote(json.dumps(ci.json_kind_example.value, indent=2))
+
+    assert "download example" in field.field.help_text
+    assert encoded_example in field.field.help_text
