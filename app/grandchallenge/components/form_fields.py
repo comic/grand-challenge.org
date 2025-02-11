@@ -14,6 +14,7 @@ from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.widgets import (
     FileSearchWidget,
     FlexibleFileWidget,
+    ParentObjectTypeChoices,
 )
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.validators import JSONValidator
@@ -174,13 +175,10 @@ class InterfaceFormField(forms.Field):
             # also passing the CIV as current value here so that we can
             # show the image name to the user rather than its pk
         )
-        upload_queryset = get_objects_for_user(
-            self.user,
-            "uploads.change_userupload",
-        ).filter(status=UserUpload.StatusChoices.COMPLETED)
         return FlexibleFileField(
-            upload_queryset=upload_queryset,
-            file_search_queryset=self.civs_for_user_for_interface,
+            user=self.user,
+            interface=self.instance,
+            form_data=self.form_data,
             **self.kwargs,
         )
 
@@ -202,11 +200,23 @@ class FlexibleFileField(MultiValueField):
     def __init__(
         self,
         *args,
-        file_search_queryset=None,
-        upload_queryset=None,
+        user=None,
+        interface=None,
+        form_data=None,
         disabled=False,
         **kwargs,
     ):
+        self.user = user
+        self.interface = interface
+        if form_data is None:
+            form_data = {}
+        self.form_data = form_data
+
+        file_search_queryset = ComponentInterfaceValue.objects.none()
+        upload_queryset = get_objects_for_user(
+            self.user,
+            "uploads.change_userupload",
+        ).filter(status=UserUpload.StatusChoices.COMPLETED)
         fields = [
             ModelChoiceField(queryset=file_search_queryset, required=False),
             ModelChoiceField(queryset=upload_queryset, required=False),
@@ -219,6 +229,25 @@ class FlexibleFileField(MultiValueField):
         )
         if disabled:
             self.widget.disabled = True
+
+    def clean(self, value):
+        parent_object_type_choice_name = self.form_data.get(
+            f"parent-object-type-"
+            f"{INTERFACE_FORM_FIELD_PREFIX}"
+            f"{self.interface.slug}"
+        )
+        if parent_object_type_choice_name:
+            parent_object_type_choice = ParentObjectTypeChoices(
+                parent_object_type_choice_name,
+            )
+        else:
+            parent_object_type_choice = None
+        self.fields[0].queryset = get_component_interface_values_for_user(
+            user=self.user,
+            interface=self.interface,
+            parent_object_type_choice=parent_object_type_choice,
+        )
+        super().clean(value)
 
     def compress(self, values):
         if values:
