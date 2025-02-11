@@ -206,6 +206,22 @@
             {% include "evaluation/evaluation_incomplete_jobs_detail.html" %}
 
             <div class="card-body">
+                <h3 class="card-title">Error Message</h3>
+
+                {% if not incomplete_jobs %}
+
+                    All prequisite jobs succeeded.
+
+                    {% if object.error_message %}
+                        Evaluation failed due to the following error: {{ object.error_message }}
+                    {% endif %}
+
+                {% else %}
+                    Some jobs are incomplete. Check the status and error messages of the prequisite jobs above.
+                {% endif %}
+            </div>
+
+            <div class="card-body">
                 <h3 class="card-title">Predictions</h3>
 
                  {% if object.submission.predictions_file %}
