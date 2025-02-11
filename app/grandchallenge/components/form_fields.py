@@ -245,7 +245,7 @@ class FlexibleFileField(MultiValueField):
                 interface=self.interface,
                 parent_object_type_choice=parent_object_type_choice,
             )
-        super().clean(value)
+        return super().clean(value)
 
     def compress(self, values):
         if values:
