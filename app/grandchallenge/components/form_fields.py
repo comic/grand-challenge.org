@@ -240,13 +240,11 @@ class FlexibleFileField(MultiValueField):
             parent_object_type_choice = ParentObjectTypeChoices(
                 parent_object_type_choice_name,
             )
-        else:
-            parent_object_type_choice = None
-        self.fields[0].queryset = get_component_interface_values_for_user(
-            user=self.user,
-            interface=self.interface,
-            parent_object_type_choice=parent_object_type_choice,
-        )
+            self.fields[0].queryset = get_component_interface_values_for_user(
+                user=self.user,
+                interface=self.interface,
+                parent_object_type_choice=parent_object_type_choice,
+            )
         super().clean(value)
 
     def compress(self, values):
