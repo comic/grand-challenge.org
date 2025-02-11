@@ -623,16 +623,17 @@ class FileSearchResultView(
         parent_object_type_choice_name = request.GET.get(
             f"parent-object-type-{prefixed_interface_slug}"
         )
+        self.object_list = self.get_queryset()
 
-        try:
-            self.parent_object_type_choice = ParentObjectTypeChoices(
-                parent_object_type_choice_name
-            )
-        except ValueError:
-            raise Http404(
-                f"Parent object type {parent_object_type_choice_name} invalid"
-            )
-        else:
+        if parent_object_type_choice_name:
+            try:
+                self.parent_object_type_choice = ParentObjectTypeChoices(
+                    parent_object_type_choice_name
+                )
+            except ValueError:
+                raise Http404(
+                    f"Parent object type {parent_object_type_choice_name} invalid"
+                )
             qs = self.get_queryset()
             query = request.GET.get("query-" + prefixed_interface_slug)
             if query:
@@ -648,6 +649,7 @@ class FileSearchResultView(
             self.object_list = qs
         context = self.get_context_data(**kwargs)
         context["prefixed_interface_slug"] = prefixed_interface_slug
+        context["parent_object_type_choice"] = self.parent_object_type_choice
         return TemplateResponse(
             request=request,
             template=self.template_name,

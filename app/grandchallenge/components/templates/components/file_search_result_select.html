@@ -2,12 +2,16 @@
         name="{{ prefixed_interface_slug }}"
         class="custom-select"
 >
-    {% if object_list %}
-        <option value="">Choose file...</option>
-        {% for object in object_list %}
-            <option value="{{ object.pk }}">{{ object.title }} ({{ object.pk }})</option>
-        {% endfor %}
+    {% if parent_object_type_choice %}
+        {% if object_list %}
+            <option value="">Choose file...</option>
+            {% for object in object_list %}
+                <option value="{{ object.pk }}">{{ object.title }} ({{ object.pk }})</option>
+            {% endfor %}
+        {% else %}
+            <option value="">No files match your search criteria.</option>
+        {% endif %}
     {% else %}
-        <option value="">No files match your search criteria.</option>
+        <option value="">Select where to search for files</option>
     {% endif %}
 </select>
