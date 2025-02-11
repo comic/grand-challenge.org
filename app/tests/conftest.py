@@ -597,7 +597,13 @@ def algorithm_with_multiple_inputs():
     )
 
 
-def get_interface_form_data(*, interface_slug, data, existing_data=False):
+def get_interface_form_data(
+    *,
+    interface_slug,
+    data,
+    existing_data=False,
+    parent_object_type_choice=None,
+):
     ci = ComponentInterface.objects.get(slug=interface_slug)
     form_data = {f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}": data}
     if ci.is_image_kind:
@@ -614,6 +620,10 @@ def get_interface_form_data(*, interface_slug, data, existing_data=False):
             form_data[
                 f"widget-choice-{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
             ] = FileWidgetChoices.FILE_SEARCH.name
+            if parent_object_type_choice:
+                form_data[
+                    f"parent-object-type-{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
+                ] = parent_object_type_choice.name
         else:
             form_data[
                 f"widget-choice-{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
