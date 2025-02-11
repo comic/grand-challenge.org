@@ -224,7 +224,7 @@ def send_onboarding_task_due_reminder(challenge, num_is_overdue_soon):
 
     message = format_html(
         "Your challenge {short_name} has {num} onboarding task{plural_num} that {plural_verb} "
-        "are soon due. To view and complete onboarding tasks, go [here]({list_url}).",
+        "soon due. To view and complete onboarding tasks, go [here]({list_url}).",
         short_name=challenge.short_name,
         num=num_is_overdue_soon,
         plural_num=plural_num,
