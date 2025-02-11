@@ -250,8 +250,9 @@ def test_jobs_workflow(django_capture_on_commit_callbacks):
     ai = AlgorithmImageFactory()
     images = [ImageFactory(), ImageFactory()]
     ci = ComponentInterface.objects.get(slug="generic-medical-image")
+    archive = ArchiveFactory()
     for im in images:
-        item = ArchiveItemFactory()
+        item = ArchiveItemFactory(archive=archive)
         item.values.add(ComponentInterfaceValueFactory(image=im, interface=ci))
 
     interface = AlgorithmInterfaceFactory(inputs=[ci])
@@ -582,7 +583,8 @@ class TestJobCreation:
         ai3.algorithm.interfaces.set([interface1, interface3, interface4])
         ai4.algorithm.interfaces.set([interface4])
 
-        i1, i2, i3, i4 = ArchiveItemFactory.create_batch(4)
+        archive = ArchiveFactory()
+        i1, i2, i3, i4 = ArchiveItemFactory.create_batch(4, archive=archive)
         i1.values.add(
             ComponentInterfaceValueFactory(interface=ci1)
         )  # Valid for interface 1
@@ -675,7 +677,8 @@ class TestJobCreation:
         )
         j2.inputs.set(civs2)
 
-        item1, item2 = ArchiveItemFactory.create_batch(2)
+        archive = ArchiveFactory()
+        item1, item2 = ArchiveItemFactory.create_batch(2, archive=archive)
         item1.values.set(civs1)  # non-system job already exists
         item2.values.set(civs2)  # non-system job should be ignored
 
@@ -735,7 +738,8 @@ class TestJobCreation:
         )
         j2.inputs.set(civs2)
 
-        item1, item2 = ArchiveItemFactory.create_batch(2)
+        archive = ArchiveFactory()
+        item1, item2 = ArchiveItemFactory.create_batch(2, archive=archive)
         item1.values.set(civs1)  # Job already exists with image and model
         item2.values.set(civs2)  # Job exists but only with image
 

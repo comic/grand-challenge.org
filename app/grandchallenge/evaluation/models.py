@@ -144,12 +144,18 @@ def get_archive_items_for_interfaces(*, algorithm_interfaces, archive_items):
     valid_archive_items_per_interface = {}
     for interface in algorithm_interfaces:
         inputs = interface.inputs.all()
-        valid_archive_items_per_interface[interface] = archive_items.annotate(
-            input_count=Count("values", distinct=True),
-            relevant_input_count=Count(
-                "values", filter=Q(values__interface__in=inputs), distinct=True
-            ),
-        ).filter(input_count=len(inputs), relevant_input_count=len(inputs))
+        valid_archive_items_per_interface[interface] = (
+            archive_items.annotate(
+                input_count=Count("values", distinct=True),
+                relevant_input_count=Count(
+                    "values",
+                    filter=Q(values__interface__in=inputs),
+                    distinct=True,
+                ),
+            )
+            .filter(input_count=len(inputs), relevant_input_count=len(inputs))
+            .prefetch_related("values")
+        )
     return valid_archive_items_per_interface
 
 
@@ -165,40 +171,27 @@ def get_valid_jobs_for_interfaces_and_archive_items(
     jobs_per_interface = {}
     for interface in algorithm_interfaces:
         jobs_per_interface[interface] = []
-        input_count = interface.inputs.count()
-
-        interface_jobs = (
-            jobs.filter(algorithm_interface=interface)
-            .annotate(
-                input_count=Count("inputs", distinct=True),
-                input_interface_match_count=Count(
-                    "inputs",
-                    filter=Q(inputs__interface__in=interface.inputs.all()),
-                    distinct=True,
-                ),
-            )
-            .filter(
-                # first filter out jobs whose inputs don't match its interface,
-                # this can happen because we migrated assuming each job for
-                # an algorithm was done with the latest sets of inputs/outputs
-                input_count=input_count,
-                input_interface_match_count=input_count,
+        jobs_for_interface = (
+            jobs.filter(
+                algorithm_interface=interface,
             )
             .distinct()
-            .prefetch_related("outputs__interface", "inputs__interface")
+            .prefetch_related("inputs")
             .select_related("algorithm_image__algorithm")
         )
 
-        for job in interface_jobs:
+        archive_item_value_sets = {
+            frozenset(value.pk for value in item.values.all())
+            for item in valid_archive_items_per_interface[interface]
+        }
+
+        for job in jobs_for_interface:
             # subset to jobs whose input set exactly matches
             # one of the valid archive items' value sets
-            list_of_job_inputs = list(job.inputs.values_list("pk", flat=True))
-            list_of_archive_item_value_sets = [
-                list(item.values.values_list("pk", flat=True))
-                for item in valid_archive_items_per_interface[interface]
-            ]
-
-            if list_of_job_inputs in list_of_archive_item_value_sets:
+            if (
+                frozenset(inpt.pk for inpt in job.inputs.all())
+                in archive_item_value_sets
+            ):
                 jobs_per_interface[interface].append(job)
 
     return jobs_per_interface
@@ -1758,6 +1751,7 @@ class Evaluation(ComponentJob):
             status=Job.SUCCESS,
             algorithm_interface__in=algorithm_interfaces,
             creator=None,
+            inputs__archive_items__archive=self.submission.phase.archive,
             **extra_filter,
         )
 

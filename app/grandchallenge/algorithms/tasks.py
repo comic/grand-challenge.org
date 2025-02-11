@@ -229,6 +229,16 @@ def filter_archive_items_for_algorithm(
         get_valid_jobs_for_interfaces_and_archive_items,
     )
 
+    if not archive_items:
+        return {}
+
+    archives = {ai.archive for ai in archive_items}
+    if len(archives) != 1:
+        raise RuntimeError(
+            "The archive items should all belong to the same archive."
+        )
+    (archive,) = archives
+
     algorithm_interfaces = (
         algorithm_image.algorithm.interfaces.prefetch_related("inputs").all()
     )
@@ -251,6 +261,7 @@ def filter_archive_items_for_algorithm(
         algorithm_image=algorithm_image,
         algorithm_interface__in=valid_job_inputs.keys(),
         creator=None,
+        inputs__archive_items__archive=archive,
         **extra_filter,
     )
     # and group those by interface
