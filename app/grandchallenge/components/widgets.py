@@ -81,12 +81,5 @@ class FlexibleFileWidget(MultiWidget):
             return [None, None]
 
     def value_from_datadict(self, data, files, name):
-        try:
-            value = data[name]
-        except KeyError:
-            # this happens if the data comes from the DS create / update form
-            try:
-                value = data[f"widget-choice-{name}"]
-            except KeyError:
-                value = None
+        value = data.get(name)
         return self.decompress(value)
