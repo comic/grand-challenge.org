@@ -210,14 +210,14 @@
 
                 {% if not incomplete_jobs %}
 
-                    All prequisite jobs succeeded.
+                    All prerequisite jobs succeeded.
 
                     {% if object.error_message %}
                         Evaluation failed due to the following error: {{ object.error_message }}
                     {% endif %}
 
                 {% else %}
-                    Some jobs are incomplete. Check the status and error messages of the prequisite jobs above.
+                    Some jobs are incomplete. Check the status and error messages of the prerequisite jobs above.
                 {% endif %}
             </div>
 
