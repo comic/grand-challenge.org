@@ -126,8 +126,8 @@ def update_compute_costs_and_storage_size():
             save_phase()
 
 
-@transaction.atomic
 @acks_late_micro_short_task
+@transaction.atomic
 def send_onboarding_task_reminder_emails():
     onboarding_task_info = (
         OnboardingTask.objects.with_overdue_status()
