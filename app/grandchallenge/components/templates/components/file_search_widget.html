@@ -15,10 +15,10 @@
         <div class="input-group">
             <div class="input-group-prepend"><span class="input-group-text">Select a file from</span></div>
             <select class="custom-select" name="parent-object-type-{{ widget.name }}" id="selected-parent-object-type-{{ widget.name }}">
-                <option value="">No parent object selected</option>
+                <option value="">Search for files related to...</option>
                 <option value="{{ widget.parent_object_type_choices.JOB }}">Algorithm Jobs</option>
-                <option value="{{ widget.parent_object_type_choices.DISPLAY_SET }}">Reader study display sets</option>
-                <option value="{{ widget.parent_object_type_choices.ARCHIVE_ITEM }}">Archive items</option>
+                <option value="{{ widget.parent_object_type_choices.DISPLAY_SET }}">Reader studies</option>
+                <option value="{{ widget.parent_object_type_choices.ARCHIVE_ITEM }}">Archives</option>
                 <option value="{{ widget.parent_object_type_choices.ALL }}">All items</option>
             </select>
         </div>
@@ -37,9 +37,7 @@
 
     <small class="form-text text-muted">
         Select an existing file that you have access to.
-        This could be from data that you have previously uploaded,
-        archives that you have permission to use,
-        or public algorithm results that you have access to.
+        This could be from algorithms, archives or reader studies that you have access to.
     </small>
 </div>
 
