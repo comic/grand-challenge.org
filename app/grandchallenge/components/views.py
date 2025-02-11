@@ -604,6 +604,8 @@ class FileSearchResultView(
         self.parent_object_type_choice = None
 
     def get_queryset(self):
+        if self.parent_object_type_choice is None:
+            return ComponentInterfaceValue.objects.none()
         return get_component_interface_values_for_user(
             user=self.request.user,
             interface=self.interface,
