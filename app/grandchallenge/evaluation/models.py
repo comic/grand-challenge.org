@@ -1164,8 +1164,10 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             return get_archive_items_for_interfaces(
                 algorithm_interfaces=self.algorithm_interfaces.prefetch_related(
                     "inputs"
-                ).all(),
-                archive_items=self.archive.items,
+                ),
+                archive_items=self.archive.items.prefetch_related(
+                    "values__interface"
+                ),
             )
         else:
             return {}
@@ -1742,7 +1744,11 @@ class Evaluation(ComponentJob):
         else:
             extra_filter = {"algorithm_model__isnull": True}
 
-        algorithm_interfaces = self.submission.phase.algorithm_interfaces.all()
+        algorithm_interfaces = (
+            self.submission.phase.algorithm_interfaces.prefetch_related(
+                "inputs"
+            )
+        )
 
         # subset to relevant jobs only to avoid querying
         # the full table again for each interface
