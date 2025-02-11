@@ -1849,3 +1849,21 @@ def test_evaluation_details_error_message(client):
         in response3.rendered_content
     )
     assert "Test evaluation error message" in response3.rendered_content
+
+    evaluation.status = Evaluation.SUCCESS
+    evaluation.error_message = ""
+    evaluation.save()
+
+    response4 = get_view_for_user(
+        viewname="evaluation:detail",
+        client=client,
+        method=client.get,
+        reverse_kwargs={
+            "pk": evaluation.pk,
+        },
+        user=evaluation.submission.phase.challenge.creator,
+        challenge=evaluation.submission.phase.challenge,
+    )
+
+    assert response4.status_code == 200
+    assert "Error Message" not in response4.rendered_content
