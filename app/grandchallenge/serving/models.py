@@ -54,7 +54,11 @@ class Download(models.Model):
 
 
 def get_component_interface_values_for_user(
-    *, user, civ_pk=None, interface=None, parent_object_type_choice=None
+    *,
+    user,
+    civ_pk=None,
+    interface=None,
+    parent_object_type_choice=ParentObjectTypeChoices.ALL,
 ):
     extra_filter_kwargs = {}
     if interface:
@@ -72,7 +76,10 @@ def get_component_interface_values_for_user(
     civs = ComponentInterfaceValue.objects.filter(**extra_filter_kwargs)
 
     pks_for_filter = []
-    if parent_object_type_choice in (None, ParentObjectTypeChoices.JOB):
+    if parent_object_type_choice in (
+        ParentObjectTypeChoices.ALL,
+        ParentObjectTypeChoices.JOB,
+    ):
         job_query = filter_by_permission(
             queryset=Job.objects.all(),
             user=user,
@@ -94,7 +101,7 @@ def get_component_interface_values_for_user(
         pks_for_filter.extend(job_outputs)
 
     if parent_object_type_choice in (
-        None,
+        ParentObjectTypeChoices.ALL,
         ParentObjectTypeChoices.DISPLAY_SET,
     ):
         display_sets = (
@@ -111,7 +118,7 @@ def get_component_interface_values_for_user(
         pks_for_filter.extend(display_sets)
 
     if parent_object_type_choice in (
-        None,
+        ParentObjectTypeChoices.ALL,
         ParentObjectTypeChoices.ARCHIVE_ITEM,
     ):
         archive_items = (

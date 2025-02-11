@@ -18,6 +18,7 @@ class ParentObjectTypeChoices(TextChoices):
     JOB = "JOB"
     DISPLAY_SET = "DISPLAY_SET"
     ARCHIVE_ITEM = "ARCHIVE_ITEM"
+    ALL = "ALL"
 
 
 class FileSearchWidget(ChoiceWidget, HiddenInput):
