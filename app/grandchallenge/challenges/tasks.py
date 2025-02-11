@@ -17,7 +17,10 @@ from grandchallenge.challenges.emails import (
     send_onboarding_task_support_overdue_alert,
 )
 from grandchallenge.challenges.models import Challenge, OnboardingTask
-from grandchallenge.core.celery import acks_late_2xlarge_task
+from grandchallenge.core.celery import (
+    acks_late_2xlarge_task,
+    acks_late_micro_short_task,
+)
 from grandchallenge.evaluation.models import Evaluation, Phase
 
 
@@ -123,7 +126,8 @@ def update_compute_costs_and_storage_size():
             save_phase()
 
 
-@acks_late_2xlarge_task
+@transaction.atomic
+@acks_late_micro_short_task
 def send_onboarding_task_reminder_emails():
     onboarding_task_info = (
         OnboardingTask.objects.with_overdue_status()
@@ -151,30 +155,39 @@ def send_onboarding_task_reminder_emails():
                 ),
             ),
         )
+        .exclude(
+            num_is_overdue=0,
+            num_is_overdue_soon=0,
+            num_support_is_overdue=0,
+        )
     )
 
     onboarding_task_info_by_challenge = {
         str(v["challenge"]): v for v in onboarding_task_info
     }
 
-    for c in Challenge.objects.all():
-        task_info = onboarding_task_info_by_challenge.get(str(c.pk), {})
+    challenges = Challenge.objects.filter(
+        pk__in=onboarding_task_info_by_challenge.keys()
+    )
 
-        num_is_overdue = task_info.get("num_is_overdue")
+    for c in challenges:
+        task_info = onboarding_task_info_by_challenge[str(c.pk)]
+
+        num_is_overdue = task_info["num_is_overdue"]
         if num_is_overdue:
             send_onboarding_task_overdue_alert(
                 challenge=c,
-                num_is_overdue=num_is_overdue,
+                num_is_overdue=task_info["num_is_overdue"],
             )
 
-        num_is_overdue_soon = task_info.get("num_is_overdue_soon")
+        num_is_overdue_soon = task_info["num_is_overdue_soon"]
         if num_is_overdue_soon:
             send_onboarding_task_due_reminder(
                 challenge=c,
                 num_is_overdue_soon=num_is_overdue_soon,
             )
 
-        num_support_is_overdue = task_info.get("num_support_is_overdue")
+        num_support_is_overdue = task_info["num_support_is_overdue"]
         if num_support_is_overdue:
             send_onboarding_task_support_overdue_alert(
                 challenge=c,
