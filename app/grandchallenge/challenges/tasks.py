@@ -21,6 +21,7 @@ from grandchallenge.core.celery import (
     acks_late_2xlarge_task,
     acks_late_micro_short_task,
 )
+from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.evaluation.models import Evaluation, Phase
 
 
@@ -126,7 +127,7 @@ def update_compute_costs_and_storage_size():
             save_phase()
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
 def send_onboarding_task_reminder_emails():
     onboarding_task_info = (
