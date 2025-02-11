@@ -1,0 +1,5 @@
+{% if object.error_message %}
+    {{ object.error_message }}
+{% elif object.status == object.SUCCESS and object.stderr %},
+    {{ object.stderr }}
+{% endif %}
