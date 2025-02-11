@@ -133,8 +133,9 @@ class TestCreateAlgorithmJobs:
         civ3 = ComponentInterfaceValueFactory(value="foo", interface=ci3)
         civ4 = ComponentInterfaceValueFactory()
 
+        archive = ArchiveFactory()
         item1, item2, item3, item4, item5, item6 = (
-            ArchiveItemFactory.create_batch(6)
+            ArchiveItemFactory.create_batch(6, archive=archive)
         )
         item1.values.add(civ1)  # item for interface 1 only
         item2.values.add(civ2)  # item for interface 2 only
