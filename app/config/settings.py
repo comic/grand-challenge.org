@@ -433,6 +433,8 @@ TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [
+            # Override site-wide templates
+            os.path.join(SITE_ROOT, "templates/"),
             # Override the machina templates, everything else is found with
             # django.template.loaders.app_directories.Loader
             os.path.join(SITE_ROOT, "grandchallenge/forums/templates/"),

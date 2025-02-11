@@ -1,0 +1,12 @@
+{% extends 'admin/base.html' %}
+
+{% block extrastyle %}{{ block.super }}
+    {% if not DEBUG %}
+        <style>
+            html[data-theme="light"], :root {
+            --primary:  #B71C1C;
+            --secondary: #dc3545;
+            }
+        </style>
+    {% endif %}
+{% endblock %}
