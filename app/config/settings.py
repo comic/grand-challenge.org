@@ -509,7 +509,7 @@ DJANGO_APPS = [
     "whitenoise.runserver_nostatic",  # Keep whitenoise above staticfiles
     "django.contrib.staticfiles",
     "django.contrib.humanize",
-    "grandchallenge.django_admin",
+    "grandchallenge.django_admin",  # Keep above django.contrib.admin
     "django.contrib.admin",
     "django.contrib.postgres",
     "django.contrib.flatpages",
