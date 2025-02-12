@@ -102,7 +102,11 @@ class InterfaceFormField(forms.Field):
 
         if self.initial:
             if isinstance(self.initial, ComponentInterfaceValue):
+                # This can happen when a form is presented for an existing item.
                 current_value = self.initial.image
+            # Otherwise the value is a pk taken from the form data and can be either from an Image object or a
+            # UserUpload object.
+            # We get the object for the pk so we can present the user with the image name rather than the pk.
             elif Image.objects.filter(pk=self.initial).exists():
                 current_value = Image.objects.get(pk=self.initial)
             elif UserUpload.objects.filter(pk=self.initial).exists():
@@ -116,8 +120,6 @@ class InterfaceFormField(forms.Field):
             help_text=self.help_text,
             user=self.user,
             current_value=current_value,
-            # also passing the CIV as current value here so that we can
-            # show the image name to the user rather than its pk
         )
         upload_queryset = get_objects_for_user(
             self.user,
@@ -152,7 +154,11 @@ class InterfaceFormField(forms.Field):
 
         if self.initial:
             if isinstance(self.initial, ComponentInterfaceValue):
+                # This can happen when a form is presented for an existing item.
                 current_value = self.initial.file
+            # Otherwise the value is a pk taken from the form data and can be either from a ComponentInterfaceValue
+            # object (in this case the pk is a digit) or a UserUpload object (then the pk is a UUID).
+            # We get the object for the pk so we can present the user with the file name rather than the pk.
             elif (
                 isinstance(self.initial, int) or self.initial.isdigit()
             ) and ComponentInterfaceValue.objects.filter(
@@ -172,8 +178,6 @@ class InterfaceFormField(forms.Field):
             help_text=self.help_text,
             user=self.user,
             current_value=current_value,
-            # also passing the CIV as current value here so that we can
-            # show the image name to the user rather than its pk
         )
         return FlexibleFileField(
             user=self.user,
