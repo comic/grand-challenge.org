@@ -63,8 +63,6 @@ def test_flexible_file_field_validation_user_uploads():
     upload2.status = UserUpload.StatusChoices.COMPLETED
     upload2.save()
 
-    print(upload1.status)
-
     parsed_value_for_upload_from_user = field.widget.value_from_datadict(
         data={ci.slug: str(upload1.pk)}, name=ci.slug, files={}
     )
