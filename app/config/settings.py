@@ -509,6 +509,7 @@ DJANGO_APPS = [
     "whitenoise.runserver_nostatic",  # Keep whitenoise above staticfiles
     "django.contrib.staticfiles",
     "django.contrib.humanize",
+    "grandchallenge.django_admin",  # Keep above django.contrib.admin
     "django.contrib.admin",
     "django.contrib.postgres",
     "django.contrib.flatpages",
@@ -634,7 +635,7 @@ AUTHENTICATION_BACKENDS = [
 ACCOUNT_ADAPTER = "grandchallenge.profiles.adapters.AccountAdapter"
 ACCOUNT_SIGNUP_FORM_CLASS = "grandchallenge.profiles.forms.SignupForm"
 
-ACCOUNT_AUTHENTICATION_METHOD = "username_email"
+ACCOUNT_LOGIN_METHODS = {"email", "username"}
 ACCOUNT_EMAIL_NOTIFICATIONS = True
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
