@@ -1,10 +1,12 @@
 import functools
 import random
 import time
+from typing import NamedTuple
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.db.models import Count, Max, Q
+from django.db.models import Count, Max, Min, Q
+from django.utils.timezone import datetime, timedelta
 from psycopg.errors import LockNotAvailable
 
 from grandchallenge.challenges.costs import (
@@ -126,11 +128,22 @@ def update_compute_costs_and_storage_size():
             save_phase()
 
 
+class OnboardingTaskInfo(NamedTuple):
+    challenge: str
+    num_is_overdue: int
+    num_is_overdue_soon: int
+    min_deadline: datetime
+    num_support_is_overdue: int
+    min_support_deadline: datetime
+
+
 @acks_late_micro_short_task
 @transaction.atomic
 def send_onboarding_task_reminder_emails():
     onboarding_task_info = (
-        OnboardingTask.objects.with_overdue_status()
+        OnboardingTask.objects.with_overdue_status(
+            soon_delta=timedelta(days=7)
+        )
         .values("challenge")
         .annotate(
             num_is_overdue=Count(
@@ -147,8 +160,16 @@ def send_onboarding_task_reminder_emails():
                     responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
                 ),
             ),
+            min_deadline=Min("deadline"),
             num_support_is_overdue=Count(
                 "pk",
+                filter=Q(
+                    is_overdue=True,
+                    responsible_party=OnboardingTask.ResponsiblePartyChoices.SUPPORT,
+                ),
+            ),
+            min_support_deadline=Min(
+                "deadline",
                 filter=Q(
                     is_overdue=True,
                     responsible_party=OnboardingTask.ResponsiblePartyChoices.SUPPORT,
@@ -163,7 +184,8 @@ def send_onboarding_task_reminder_emails():
     )
 
     onboarding_task_info_by_challenge = {
-        str(v["challenge"]): v for v in onboarding_task_info
+        str(v["challenge"]): OnboardingTaskInfo(**v)
+        for v in onboarding_task_info
     }
 
     challenges = Challenge.objects.filter(
@@ -173,23 +195,19 @@ def send_onboarding_task_reminder_emails():
     for c in challenges:
         task_info = onboarding_task_info_by_challenge[str(c.pk)]
 
-        num_is_overdue = task_info["num_is_overdue"]
-        if num_is_overdue:
+        if task_info.num_is_overdue:
             send_onboarding_task_overdue_alert(
                 challenge=c,
-                num_is_overdue=task_info["num_is_overdue"],
+                task_info=task_info,
             )
 
-        num_is_overdue_soon = task_info["num_is_overdue_soon"]
-        if num_is_overdue_soon:
+        if task_info.num_is_overdue_soon:
             send_onboarding_task_due_reminder(
                 challenge=c,
-                num_is_overdue_soon=num_is_overdue_soon,
+                task_info=task_info,
             )
 
-        num_support_is_overdue = task_info["num_support_is_overdue"]
-        if num_support_is_overdue:
+        if task_info.num_support_is_overdue:
             send_onboarding_task_support_overdue_alert(
-                challenge=c,
-                num_is_overdue=num_support_is_overdue,
+                challenge=c, task_info=task_info
             )

@@ -4,6 +4,8 @@ from django.core.mail import mail_managers
 from django.template.defaultfilters import pluralize
 from django.template.loader import render_to_string
 from django.utils.html import format_html
+from django.utils.timezone import now
+from humanize import naturaltime
 
 from grandchallenge.emails.emails import send_standard_email_batch
 from grandchallenge.profiles.models import EmailSubscriptionTypes
@@ -132,52 +134,42 @@ def send_email_percent_budget_consumed_alert(challenge, percent_threshold):
     )
 
 
-def send_onboarding_task_overdue_alert(challenge, num_is_overdue):
-    plural_num = pluralize(num_is_overdue)
-    plural_verb = "are" if num_is_overdue > 1 else "is"
-
+def send_onboarding_task_overdue_alert(challenge, task_info):
     challenge_admins_subject = format_html(
         "[{short_name}] Action Required: {num} Onboarding Task{plural_num} Overdue",
         short_name=challenge.short_name,
-        num=num_is_overdue,
-        plural_num=plural_num,
+        num=task_info.num_is_overdue,
+        plural_num=pluralize(task_info.num_is_overdue),
     )
 
-    challenge_admins_message = format_html(
-        "Your challenge {short_name} has {num} onboarding task{plural_num} that {plural_verb} "
-        "overdue. To view and complete onboarding tasks go [here]({list_url}).",
-        short_name=challenge.short_name,
-        num=num_is_overdue,
-        plural_num=plural_num,
-        plural_verb=plural_verb,
-        list_url=reverse(
-            viewname="challenge-onboarding-task-list",
-            kwargs={"challenge_short_name": challenge.short_name},
-        ),
+    message = render_to_string(
+        "challenges/partials/challenge_onboarding_task_alert_email.md",
+        context={
+            "challenge": challenge,
+            "num_is_overdue": task_info.num_is_overdue,
+            "min_deadline": task_info.min_deadline,
+        },
     )
 
     send_standard_email_batch(
         site=Site.objects.get_current(),
         subject=challenge_admins_subject,
-        markdown_message=challenge_admins_message,
+        markdown_message=message,
         recipients=[*challenge.get_admins()],
         subscription_type=EmailSubscriptionTypes.SYSTEM,
     )
 
     manager_subject = format_html(
-        "[{short_name}] {num} Organizer Onboarding Task{plural_num} Overdue",
+        "[{short_name}] Organizer Onboarding Tasks Overdue: {num}",
         short_name=challenge.short_name,
-        num=num_is_overdue,
-        plural_num=plural_num,
+        num=task_info.num_is_overdue,
     )
 
     managers_message = format_html(
-        "The organizers of challenge {short_name} have {num} onboarding task{plural_num} that {plural_verb} "
-        "overdue: the organizers have been alerted.",
+        "The organizers of challenge {short_name} have {num} onboarding task(s) overdue: "
+        "the organizers have been alerted.",
         short_name=challenge.short_name,
-        num=num_is_overdue,
-        plural_num=plural_num,
-        plural_verb=plural_verb,
+        num=task_info.num_is_overdue,
     )
 
     mail_managers(
@@ -186,19 +178,21 @@ def send_onboarding_task_overdue_alert(challenge, num_is_overdue):
     )
 
 
-def send_onboarding_task_support_overdue_alert(challenge, num_is_overdue):
-    plural_num = pluralize(num_is_overdue)
+def send_onboarding_task_support_overdue_alert(challenge, task_info):
+    plural_num = pluralize(task_info.num_support_is_overdue)
     manager_subject = format_html(
         "[{short_name}] Action required: {num} Support Onboarding Task{plural_num} Overdue",
         short_name=challenge.short_name,
-        num=num_is_overdue,
+        num=task_info.num_support_is_overdue,
         plural_num=plural_num,
     )
 
     managers_message = format_html(
-        "For the challenge {short_name}, the support staff are late on completing {num} onboarding task{plural_num}.",
+        "For the challenge {short_name}, the support staff are late on completing {num} support onboarding task{plural_num}. "
+        "Deadline was {time_ago}.",
         short_name=challenge.short_name,
-        num=num_is_overdue,
+        num=task_info.num_support_is_overdue,
+        time_ago=naturaltime(now() - task_info.min_support_deadline),
         plural_num=plural_num,
     )
 
@@ -208,28 +202,21 @@ def send_onboarding_task_support_overdue_alert(challenge, num_is_overdue):
     )
 
 
-def send_onboarding_task_due_reminder(challenge, num_is_overdue_soon):
-    plural_num = pluralize(num_is_overdue_soon)
-    list_url = reverse(
-        viewname="challenge-onboarding-task-list",
-        kwargs={"challenge_short_name": challenge.short_name},
-    )
+def send_onboarding_task_due_reminder(challenge, task_info):
 
     subject = format_html(
         "[{short_name}] Reminder: {num} Onboarding Task{plural_num} Soon Due",
         short_name=challenge.short_name,
-        num=num_is_overdue_soon,
-        plural_num=plural_num,
+        num=task_info.num_is_overdue_soon,
+        plural_num=pluralize(task_info.num_is_overdue_soon),
     )
 
-    message = format_html(
-        "Your challenge {short_name} has {num} onboarding task{plural_num} that {plural_verb} "
-        "soon due. To view and complete onboarding tasks, go [here]({list_url}).",
-        short_name=challenge.short_name,
-        num=num_is_overdue_soon,
-        plural_num=plural_num,
-        plural_verb="are" if num_is_overdue_soon > 1 else "is",
-        list_url=list_url,
+    message = render_to_string(
+        "challenges/partials/challenge_onboarding_task_reminder_email.md",
+        context={
+            "challenge": challenge,
+            "num_is_overdue_soon": task_info.num_is_overdue_soon,
+        },
     )
 
     send_standard_email_batch(

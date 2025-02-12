@@ -21,7 +21,6 @@ from django.db.models import (
     BooleanField,
     Case,
     Count,
-    DurationField,
     ExpressionWrapper,
     F,
     OuterRef,
@@ -1427,35 +1426,24 @@ class TaskResponsiblePartyChoices(models.TextChoices):
 class OnboardingTaskQuerySet(models.QuerySet):
     def with_overdue_status(self, soon_delta=None):
 
+        _now = now()
         soon_delta = (
             settings.CHALLENGE_ONBOARDING_TASKS_OVERDUE_SOON_CUTOFF
             if soon_delta is None
             else soon_delta
         )
 
-        zero_delta = datetime.timedelta(hours=0)
-
-        queryset = self.annotate(
-            due_timedelta=ExpressionWrapper(
-                F("deadline") - now(),
-                output_field=DurationField(),
-            )
-        )
-        return queryset.annotate(
+        return self.annotate(
             is_overdue=Case(
-                When(
-                    complete=False,
-                    due_timedelta__lte=zero_delta,
-                    then=Value(True),
-                ),
+                When(complete=False, deadline__lt=_now, then=Value(True)),
                 default=Value(False),
                 output_field=BooleanField(),
             ),
             is_overdue_soon=Case(
                 When(
                     complete=False,
-                    due_timedelta__gt=zero_delta,
-                    due_timedelta__lte=soon_delta,
+                    is_overdue=False,
+                    deadline__lt=_now + soon_delta,
                     then=Value(True),
                 ),
                 default=Value(False),

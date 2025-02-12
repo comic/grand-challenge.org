@@ -1,7 +1,8 @@
-from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 import pytest
 from django.core import mail
+from django.utils.timezone import datetime, timedelta
 
 from grandchallenge.challenges.models import (
     Challenge,
@@ -276,7 +277,7 @@ def test_challenge_budget_alert_no_budget():
     assert "Budget Consumed Alert" in mail.outbox[0].subject
 
 
-_mock_now = datetime(2025, 1, 29, 11, 0, 0)
+_fixed_now = datetime(2025, 1, 29, 11, 0, 0, tzinfo=ZoneInfo("UTC"))
 
 
 @pytest.mark.django_db
@@ -292,7 +293,7 @@ _mock_now = datetime(2025, 1, 29, 11, 0, 0)
             [
                 dict(
                     responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
-                    deadline=_mock_now + timedelta(hours=24),
+                    deadline=_fixed_now + timedelta(days=14),
                 ),
             ],
             None,
@@ -302,10 +303,10 @@ _mock_now = datetime(2025, 1, 29, 11, 0, 0)
             [
                 dict(
                     responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
-                    deadline=_mock_now - timedelta(hours=24),
+                    deadline=_fixed_now - timedelta(hours=24),
                 ),
             ],
-            "[{short_name}] 1 Organizer Onboarding Task Overdue",
+            "[{short_name}] Organizer Onboarding Tasks Overdue: 1",
             "[{short_name}] Action Required: 1 Onboarding Task Overdue",
         ),
         (
@@ -313,7 +314,7 @@ _mock_now = datetime(2025, 1, 29, 11, 0, 0)
             [
                 dict(
                     responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
-                    deadline=_mock_now + timedelta(minutes=30),
+                    deadline=_fixed_now + timedelta(minutes=30),
                 ),
             ],
             None,
@@ -323,7 +324,7 @@ _mock_now = datetime(2025, 1, 29, 11, 0, 0)
             [
                 dict(
                     responsible_party=OnboardingTask.ResponsiblePartyChoices.SUPPORT,
-                    deadline=_mock_now - timedelta(hours=24),
+                    deadline=_fixed_now - timedelta(hours=24),
                 ),
             ],
             "[{short_name}] Action required: 1 Support Onboarding Task Overdue",
@@ -338,9 +339,6 @@ def test_challenge_onboarding_task_due_emails(
     settings,
     mocker,
 ):
-    settings.CHALLENGE_ONBOARDING_TASKS_OVERDUE_SOON_CUTOFF = timedelta(
-        hours=1
-    )
     challenge = ChallengeFactory()
     challenge_admin = UserFactory()
     challenge.add_admin(challenge_admin)
@@ -354,10 +352,12 @@ def test_challenge_onboarding_task_due_emails(
             **kwargs,
         )
 
-    with mocker.patch(
-        "grandchallenge.challenges.models.now", return_value=_mock_now
-    ):
-        send_onboarding_task_reminder_emails()
+    mocker.patch(
+        "grandchallenge.challenges.models.now",
+        return_value=_fixed_now,
+    )
+
+    send_onboarding_task_reminder_emails()
 
     if staff_email_subject:
         staff_email = next(m for m in mail.outbox if staff_user.email in m.to)
@@ -378,3 +378,7 @@ def test_challenge_onboarding_task_due_emails(
         assert expected_subject in organizer_mail.subject
     else:
         assert not any(challenge_admin.email in m.to for m in mail.outbox)
+
+    for m in mail.outbox:
+        print("Subject: ", m.subject)
+        print(m.body)
