@@ -102,11 +102,12 @@ class InterfaceFormField(forms.Field):
 
         if self.initial:
             if isinstance(self.initial, ComponentInterfaceValue):
-                # This can happen when a form is presented for an existing item.
+                # This can happen on display set or archive item update forms, the value is then taken from the model
+                # instance unless the value is in the form data.
                 current_value = self.initial.image
-            # Otherwise the value is a pk taken from the form data and can be either from an Image object or a
-            # UserUpload object.
-            # We get the object for the pk so we can present the user with the image name rather than the pk.
+            # Otherwise the value is taken from the form data and will always take the form of a pk for either
+            # an Image object or a UserUpload object.
+            # We get the object so we can present the user with the image name rather than the pk.
             elif Image.objects.filter(pk=self.initial).exists():
                 current_value = Image.objects.get(pk=self.initial)
             elif UserUpload.objects.filter(pk=self.initial).exists():
@@ -154,11 +155,13 @@ class InterfaceFormField(forms.Field):
 
         if self.initial:
             if isinstance(self.initial, ComponentInterfaceValue):
-                # This can happen when a form is presented for an existing item.
+                # This can happen on display set or archive item update forms, the value is then taken from the model
+                # instance unless the value is in the form data.
                 current_value = self.initial.file
-            # Otherwise the value is a pk taken from the form data and can be either from a ComponentInterfaceValue
-            # object (in this case the pk is a digit) or a UserUpload object (then the pk is a UUID).
-            # We get the object for the pk so we can present the user with the file name rather than the pk.
+            # Otherwise the value is taken from the form data and will always take the form of a pk for either
+            # a ComponentInterfaceValue object (in this case the pk is a digit) or
+            # a UserUpload object (then the pk is a UUID).
+            # We get the object so we can present the user with the image name rather than the pk.
             elif (
                 isinstance(self.initial, int) or self.initial.isdigit()
             ) and ComponentInterfaceValue.objects.filter(
