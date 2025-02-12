@@ -433,8 +433,6 @@ TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [
-            # Override site-wide templates
-            os.path.join(SITE_ROOT, "templates/"),
             # Override the machina templates, everything else is found with
             # django.template.loaders.app_directories.Loader
             os.path.join(SITE_ROOT, "grandchallenge/forums/templates/"),
@@ -511,6 +509,7 @@ DJANGO_APPS = [
     "whitenoise.runserver_nostatic",  # Keep whitenoise above staticfiles
     "django.contrib.staticfiles",
     "django.contrib.humanize",
+    "grandchallenge.django_admin",
     "django.contrib.admin",
     "django.contrib.postgres",
     "django.contrib.flatpages",
@@ -636,7 +635,7 @@ AUTHENTICATION_BACKENDS = [
 ACCOUNT_ADAPTER = "grandchallenge.profiles.adapters.AccountAdapter"
 ACCOUNT_SIGNUP_FORM_CLASS = "grandchallenge.profiles.forms.SignupForm"
 
-ACCOUNT_AUTHENTICATION_METHOD = "username_email"
+ACCOUNT_LOGIN_METHODS = {"email", "username"}
 ACCOUNT_EMAIL_NOTIFICATIONS = True
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
