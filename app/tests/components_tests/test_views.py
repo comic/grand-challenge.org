@@ -710,6 +710,153 @@ def test_file_search_result_view_no_files(client):
 
 
 @pytest.mark.django_db
+def test_file_search_result_view_all_parent_object_types(client):
+    user = UserFactory()
+    algorithm = AlgorithmFactory()
+    algorithm.add_editor(user)
+    archive = ArchiveFactory()
+    archive.add_editor(user)
+    reader_study = ReaderStudyFactory()
+    reader_study.add_editor(user)
+    ci = ComponentInterfaceFactory()
+    civ_for_job = ComponentInterfaceValueFactory(
+        interface=ci, file=factory.django.FileField()
+    )
+    civ_for_archive_item = ComponentInterfaceValueFactory(
+        interface=ci, file=factory.django.FileField()
+    )
+    civ_for_display_set = ComponentInterfaceValueFactory(
+        interface=ci, file=factory.django.FileField()
+    )
+    prefixed_interface_slug = f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"
+    response = get_view_for_user(
+        viewname="components:file-search",
+        client=client,
+        method=client.get,
+        data={
+            "prefixed-interface-slug": prefixed_interface_slug,
+            f"parent-object-type-{prefixed_interface_slug}": ParentObjectTypeChoices.ALL,
+        },
+        user=user,
+    )
+
+    assert response.status_code == 200
+    assert ci.slug in response.rendered_content
+    assert "No files match your search criteria." in response.rendered_content
+
+    job = AlgorithmJobFactory(creator=user, time_limit=60)
+    job.inputs.set([civ_for_job])
+
+    archive_item = ArchiveItemFactory(archive=archive)
+    archive_item.values.set([civ_for_archive_item])
+
+    display_set = DisplaySetFactory(reader_study=reader_study)
+    display_set.values.set([civ_for_display_set])
+
+    response = get_view_for_user(
+        viewname="components:file-search",
+        client=client,
+        method=client.get,
+        data={
+            "prefixed-interface-slug": prefixed_interface_slug,
+            f"parent-object-type-{prefixed_interface_slug}": ParentObjectTypeChoices.JOB,
+        },
+        user=user,
+    )
+
+    assert response.status_code == 200
+    assert ci.slug in response.rendered_content
+    assert (
+        f"{civ_for_job.title} ({civ_for_job.pk})" in response.rendered_content
+    )
+    assert (
+        f"{civ_for_archive_item.title} ({civ_for_archive_item.pk})"
+        not in response.rendered_content
+    )
+    assert (
+        f"{civ_for_display_set.title} ({civ_for_display_set.pk})"
+        not in response.rendered_content
+    )
+
+    response = get_view_for_user(
+        viewname="components:file-search",
+        client=client,
+        method=client.get,
+        data={
+            "prefixed-interface-slug": prefixed_interface_slug,
+            f"parent-object-type-{prefixed_interface_slug}": ParentObjectTypeChoices.ARCHIVE_ITEM,
+        },
+        user=user,
+    )
+
+    assert response.status_code == 200
+    assert ci.slug in response.rendered_content
+    assert (
+        f"{civ_for_job.title} ({civ_for_job.pk})"
+        not in response.rendered_content
+    )
+    assert (
+        f"{civ_for_archive_item.title} ({civ_for_archive_item.pk})"
+        in response.rendered_content
+    )
+    assert (
+        f"{civ_for_display_set.title} ({civ_for_display_set.pk})"
+        not in response.rendered_content
+    )
+
+    response = get_view_for_user(
+        viewname="components:file-search",
+        client=client,
+        method=client.get,
+        data={
+            "prefixed-interface-slug": prefixed_interface_slug,
+            f"parent-object-type-{prefixed_interface_slug}": ParentObjectTypeChoices.DISPLAY_SET,
+        },
+        user=user,
+    )
+
+    assert response.status_code == 200
+    assert ci.slug in response.rendered_content
+    assert (
+        f"{civ_for_job.title} ({civ_for_job.pk})"
+        not in response.rendered_content
+    )
+    assert (
+        f"{civ_for_archive_item.title} ({civ_for_archive_item.pk})"
+        not in response.rendered_content
+    )
+    assert (
+        f"{civ_for_display_set.title} ({civ_for_display_set.pk})"
+        in response.rendered_content
+    )
+
+    response = get_view_for_user(
+        viewname="components:file-search",
+        client=client,
+        method=client.get,
+        data={
+            "prefixed-interface-slug": prefixed_interface_slug,
+            f"parent-object-type-{prefixed_interface_slug}": ParentObjectTypeChoices.ALL,
+        },
+        user=user,
+    )
+
+    assert response.status_code == 200
+    assert ci.slug in response.rendered_content
+    assert (
+        f"{civ_for_job.title} ({civ_for_job.pk})" in response.rendered_content
+    )
+    assert (
+        f"{civ_for_archive_item.title} ({civ_for_archive_item.pk})"
+        in response.rendered_content
+    )
+    assert (
+        f"{civ_for_display_set.title} ({civ_for_display_set.pk})"
+        in response.rendered_content
+    )
+
+
+@pytest.mark.django_db
 def test_file_search_result_view_algorithm_job(client):
     user = UserFactory()
     algorithm = AlgorithmFactory()
@@ -736,6 +883,21 @@ def test_file_search_result_view_algorithm_job(client):
 
     job = AlgorithmJobFactory(creator=user, time_limit=60)
     job.inputs.set([civ])
+
+    response = get_view_for_user(
+        viewname="components:file-search",
+        client=client,
+        method=client.get,
+        data={
+            "prefixed-interface-slug": prefixed_interface_slug,
+            f"parent-object-type-{prefixed_interface_slug}": ParentObjectTypeChoices.ALL,
+        },
+        user=user,
+    )
+
+    assert response.status_code == 200
+    assert ci.slug in response.rendered_content
+    assert f"{civ.title} ({civ.pk})" in response.rendered_content
 
     response = get_view_for_user(
         viewname="components:file-search",
@@ -817,6 +979,21 @@ def test_file_search_result_view_display_set(client):
         method=client.get,
         data={
             "prefixed-interface-slug": prefixed_interface_slug,
+            f"parent-object-type-{prefixed_interface_slug}": ParentObjectTypeChoices.ALL,
+        },
+        user=user,
+    )
+
+    assert response.status_code == 200
+    assert ci.slug in response.rendered_content
+    assert f"{civ.title} ({civ.pk})" in response.rendered_content
+
+    response = get_view_for_user(
+        viewname="components:file-search",
+        client=client,
+        method=client.get,
+        data={
+            "prefixed-interface-slug": prefixed_interface_slug,
             f"parent-object-type-{prefixed_interface_slug}": ParentObjectTypeChoices.DISPLAY_SET,
         },
         user=user,
@@ -884,6 +1061,21 @@ def test_file_search_result_view_archive_item(client):
 
     archive_item = ArchiveItemFactory(archive=archive)
     archive_item.values.set([civ])
+
+    response = get_view_for_user(
+        viewname="components:file-search",
+        client=client,
+        method=client.get,
+        data={
+            "prefixed-interface-slug": prefixed_interface_slug,
+            f"parent-object-type-{prefixed_interface_slug}": ParentObjectTypeChoices.ALL,
+        },
+        user=user,
+    )
+
+    assert response.status_code == 200
+    assert ci.slug in response.rendered_content
+    assert f"{civ.title} ({civ.pk})" in response.rendered_content
 
     response = get_view_for_user(
         viewname="components:file-search",
