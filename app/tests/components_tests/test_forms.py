@@ -215,5 +215,5 @@ def test_interface_form_field_help_text_example_download_link(
 
     encoded_example = quote(json.dumps(ci.json_kind_example.value, indent=2))
 
-    assert "download example" in field.field.help_text
+    assert "Download example" in field.field.help_text
     assert encoded_example in field.field.help_text
