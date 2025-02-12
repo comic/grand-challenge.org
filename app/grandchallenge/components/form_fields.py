@@ -66,11 +66,6 @@ class InterfaceFormField(forms.Field):
             "label": instance.title.title(),
         }
 
-        self.example_download_link = render_to_string(
-            "components/partials/example_download_link.html",
-            {"object": self.instance},
-        )
-
         if instance.is_image_kind:
             self._field = self.get_image_field()
         elif instance.requires_file:
@@ -201,6 +196,13 @@ class InterfaceFormField(forms.Field):
     @property
     def field(self):
         return self._field
+
+    @property
+    def example_download_link(self):
+        return render_to_string(
+            "components/partials/example_download_link.html",
+            {"object": self.instance},
+        )
 
 
 class FlexibleFileField(MultiValueField):
