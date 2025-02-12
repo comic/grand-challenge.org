@@ -1380,7 +1380,7 @@ def test_algorithm_form_max_memory_from_organizations_and_phases():
             submission_kind=SubmissionKindChoices.ALGORITHM,
             algorithm_maximum_settable_memory_gb=max_memory,
         )
-        phase.algorithm_interfaces.set(interface)
+        phase.algorithm_interfaces.set([interface])
         phase.challenge.add_participant(user)
 
     assert_max_value_validator(42)
