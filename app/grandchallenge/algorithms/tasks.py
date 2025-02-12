@@ -286,7 +286,7 @@ def filter_archive_items_for_algorithm(
             ]
         ]
         filtered_valid_job_inputs[interface] = list(
-            archive_items.exclude(pk__in=items_with_job)
+            valid_job_inputs[interface].exclude(pk__in=items_with_job)
         )
 
     return filtered_valid_job_inputs
