@@ -208,11 +208,22 @@ class FlexibleFileField(MultiValueField):
     ):
         self.user = user
         self.interface = interface
-        if form_data is None:
-            form_data = {}
-        self.form_data = form_data
-
         file_search_queryset = ComponentInterfaceValue.objects.none()
+        if form_data is not None:
+            parent_object_type_choice_name = form_data.get(
+                f"parent-object-type-"
+                f"{INTERFACE_FORM_FIELD_PREFIX}"
+                f"{self.interface.slug}"
+            )
+            if parent_object_type_choice_name:
+                parent_object_type_choice = ParentObjectTypeChoices(
+                    parent_object_type_choice_name,
+                )
+                file_search_queryset = get_component_interface_values_for_user(
+                    user=self.user,
+                    interface=self.interface,
+                    parent_object_type_choice=parent_object_type_choice,
+                )
         upload_queryset = get_objects_for_user(
             self.user,
             "uploads.change_userupload",
@@ -229,23 +240,6 @@ class FlexibleFileField(MultiValueField):
         )
         if disabled:
             self.widget.disabled = True
-
-    def clean(self, value):
-        parent_object_type_choice_name = self.form_data.get(
-            f"parent-object-type-"
-            f"{INTERFACE_FORM_FIELD_PREFIX}"
-            f"{self.interface.slug}"
-        )
-        if parent_object_type_choice_name:
-            parent_object_type_choice = ParentObjectTypeChoices(
-                parent_object_type_choice_name,
-            )
-            self.fields[0].queryset = get_component_interface_values_for_user(
-                user=self.user,
-                interface=self.interface,
-                parent_object_type_choice=parent_object_type_choice,
-            )
-        return super().clean(value)
 
     def compress(self, values):
         if values:
