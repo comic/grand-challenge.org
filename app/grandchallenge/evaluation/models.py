@@ -782,15 +782,11 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             if (
                 self.submissions_limit_per_user_per_period > 0
                 and not self.external_evaluation
-                and (
-                    not self.archive
-                    or not self.algorithm_inputs
-                    or not self.algorithm_outputs
-                )
+                and (not self.archive or not self.algorithm_interfaces)
             ):
                 raise ValidationError(
                     "To change the submission limit to above 0, you need to first link an archive containing the secret "
-                    "test data to this phase and define the inputs and outputs that the submitted algorithms need to "
+                    "test data to this phase and define the interfaces (input-output combinations) that the submitted algorithms need to "
                     "read/write. To configure these settings, please get in touch with support@grand-challenge.org."
                 )
         if (
@@ -1232,29 +1228,20 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         extra_filters = {}
         extra_annotations = {}
         if self.submission_kind == SubmissionKindChoices.ALGORITHM:
-            algorithm_inputs = self.algorithm_inputs.all()
-            algorithm_outputs = self.algorithm_outputs.all()
+            algorithm_interfaces = self.algorithm_interfaces.all()
             extra_annotations = {
-                "total_input_count": Count("algorithm_inputs", distinct=True),
-                "total_output_count": Count(
-                    "algorithm_outputs", distinct=True
+                "total_interface_count": Count(
+                    "algorithm_interfaces", distinct=True
                 ),
-                "relevant_input_count": Count(
-                    "algorithm_inputs",
-                    filter=Q(algorithm_inputs__in=algorithm_inputs),
-                    distinct=True,
-                ),
-                "relevant_output_count": Count(
-                    "algorithm_outputs",
-                    filter=Q(algorithm_outputs__in=algorithm_outputs),
+                "relevant_interface_count": Count(
+                    "algorithm_interfaces",
+                    filter=Q(algorithm_interfaces__in=algorithm_interfaces),
                     distinct=True,
                 ),
             }
             extra_filters = {
-                "total_input_count": len(algorithm_inputs),
-                "total_output_count": len(algorithm_outputs),
-                "relevant_input_count": len(algorithm_inputs),
-                "relevant_output_count": len(algorithm_outputs),
+                "total_interface_count": len(algorithm_interfaces),
+                "relevant_interface_count": len(algorithm_interfaces),
             }
         return (
             Phase.objects.annotate(**extra_annotations)

@@ -976,14 +976,14 @@ def test_parent_phase_choices():
     p5.submission_kind = SubmissionKindChoices.CSV
 
     ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
-
-    for phase in [p1, p2, p3, p4, p5, p6]:
-        phase.algorithm_inputs.set([ci1])
+    interface1 = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci2, ci3])
+    interface2 = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci2, ci4])
+    interface3 = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci2])
 
     for phase in [p1, p4, p5]:
-        phase.algorithm_outputs.set([ci2, ci3])
-    p2.algorithm_outputs.set([ci2, ci4])
-    p3.algorithm_outputs.set([ci2])
+        phase.algorithm_interfaces.set([interface1])
+    p2.algorithm_interfaces.set([interface2])
+    p3.algorithm_interfaces.set([interface3])
 
     for phase in [p1, p2, p3, p4, p5, p6]:
         phase.save()
@@ -999,10 +999,10 @@ def test_parent_phase_choices_no_circular_dependency():
         submission_kind=SubmissionKindChoices.ALGORITHM,
     )
     ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
+    interface = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci2])
 
     for phase in [p1, p2, p3, p4]:
-        phase.algorithm_inputs.set([ci1])
-        phase.algorithm_outputs.set([ci2])
+        phase.algorithm_interfaces.set([interface])
 
     p1.parent = p2
     p2.parent = p3

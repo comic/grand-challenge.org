@@ -139,8 +139,7 @@ class UserCanSubmitAlgorithmToPhaseMixin(VerificationRequiredMixin):
             return self.handle_no_permission()
         elif (
             not self.phase.submission_kind == SubmissionKindChoices.ALGORITHM
-            or not self.phase.algorithm_inputs
-            or not self.phase.algorithm_outputs
+            or not self.phase.algorithm_interfaces
             or not self.phase.archive
         ):
             error_message = (

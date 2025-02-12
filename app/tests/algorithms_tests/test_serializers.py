@@ -269,7 +269,6 @@ class TestJobCreateLimits:
                 settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER + 1
             ),
         )
-        algorithm_image.algorithm.inputs.clear()
         user = UserFactory()
 
         algorithm_image.algorithm.add_user(user=user)
@@ -303,7 +302,6 @@ class TestJobCreateLimits:
                 settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER + 1
             ),
         )
-        algorithm_image.algorithm.inputs.clear()
         user = UserFactory()
 
         algorithm_image.algorithm.add_editor(user=user)
@@ -351,7 +349,6 @@ class TestJobCreateLimits:
             is_desired_version=True,
             algorithm__minimum_credits_per_job=1,
         )
-        algorithm_image.algorithm.inputs.clear()
         user = UserFactory()
 
         algorithm_image.algorithm.add_user(user=user)

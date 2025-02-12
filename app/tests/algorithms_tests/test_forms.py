@@ -1357,8 +1357,8 @@ def test_algorithm_form_max_memory_from_organizations_and_phases():
     ci1, ci2, ci3, ci4, ci5, ci6 = ComponentInterfaceFactory.create_batch(6)
     inputs = [ci1, ci2]
     outputs = [ci3, ci4]
-    algorithm.inputs.set(inputs)
-    algorithm.outputs.set(outputs)
+    interface = AlgorithmInterfaceFactory(inputs=inputs, outputs=outputs)
+    algorithm.interfaces.set([interface])
     org1 = OrganizationFactory(algorithm_maximum_settable_memory_gb=42)
     org2 = OrganizationFactory(algorithm_maximum_settable_memory_gb=1337)
 
@@ -1380,8 +1380,7 @@ def test_algorithm_form_max_memory_from_organizations_and_phases():
             submission_kind=SubmissionKindChoices.ALGORITHM,
             algorithm_maximum_settable_memory_gb=max_memory,
         )
-        phase.algorithm_inputs.set(inputs)
-        phase.algorithm_outputs.set(outputs)
+        phase.algorithm_interfaces.set(interface)
         phase.challenge.add_participant(user)
 
     assert_max_value_validator(42)

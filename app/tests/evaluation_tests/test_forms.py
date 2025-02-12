@@ -1092,7 +1092,6 @@ def test_configure_algorithm_phases_form():
     SubmissionFactory(phase=p1)
     MethodFactory(phase=p2)
     PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
-    ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
 
     form = ConfigureAlgorithmPhasesForm(challenge=ch)
     assert list(form.fields["phases"].queryset) == [p3]
@@ -1101,8 +1100,6 @@ def test_configure_algorithm_phases_form():
         challenge=ch,
         data={
             "phases": [p3],
-            "algorithm_inputs": [ci1],
-            "algorithm_outputs": [ci2],
         },
     )
     assert form3.is_valid()

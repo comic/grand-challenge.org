@@ -708,8 +708,8 @@ def test_create_algorithm_for_phase_permission(client, uploaded_image):
     phase.submission_kind = SubmissionKindChoices.ALGORITHM
     phase.creator_must_be_verified = True
     phase.archive = ArchiveFactory()
-    phase.algorithm_inputs.set([ComponentInterfaceFactory()])
-    phase.algorithm_outputs.set([ComponentInterfaceFactory()])
+    interface = AlgorithmInterfaceFactory()
+    phase.algorithm_interfaces.set([interface])
     phase.save()
 
     response = get_view_for_user(
