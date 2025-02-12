@@ -160,7 +160,13 @@ def send_onboarding_task_reminder_emails():
                     responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
                 ),
             ),
-            min_deadline=Min("deadline"),
+            min_deadline=Min(
+                "deadline",
+                filter=Q(
+                    is_overdue=True,
+                    responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+                ),
+            ),
             num_support_is_overdue=Count(
                 "pk",
                 filter=Q(
