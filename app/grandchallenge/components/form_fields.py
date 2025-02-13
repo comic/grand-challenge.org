@@ -65,6 +65,11 @@ class InterfaceFormFieldFactory:
         help_text="",
         disabled=False,
     ):
+        if (
+            isinstance(initial, ComponentInterfaceValue)
+            and not initial.has_value
+        ):
+            initial = None
         self.interface = interface
         self.user = user
         self.initial = initial
@@ -73,7 +78,6 @@ class InterfaceFormFieldFactory:
         self.kwargs = {
             "required": required,
             "disabled": disabled,
-            "initial": self.get_initial_value(),
             "label": interface.title.title(),
         }
 
@@ -86,21 +90,12 @@ class InterfaceFormFieldFactory:
         else:
             raise RuntimeError(f"Unknown interface kind: {interface}")
 
-    def get_initial_value(self):
-        if isinstance(self.initial, ComponentInterfaceValue):
-            if self.initial.has_value:
-                if self.interface.is_image_kind:
-                    return self.initial.image.pk
-                elif self.interface.requires_file:
-                    return self.initial.pk
-                else:
-                    return self.initial.value
-            else:
-                return None
-        else:
-            return self.initial
-
     def get_image_field(self):
+        if isinstance(self.initial, ComponentInterfaceValue):
+            self.kwargs["initial"] = self.initial.image.pk
+        else:
+            self.kwargs["initial"] = self.initial
+
         current_value = None
 
         if self.initial:
@@ -137,6 +132,9 @@ class InterfaceFormFieldFactory:
         )
 
     def get_json_field(self):
+        if isinstance(self.initial, ComponentInterfaceValue):
+            self.initial = self.initial.value
+        self.kwargs["initial"] = self.initial
         field_type = self.interface.default_field
         default_schema = {
             **INTERFACE_VALUE_SCHEMA,
@@ -154,6 +152,10 @@ class InterfaceFormFieldFactory:
         )
 
     def get_file_field(self):
+        if isinstance(self.initial, ComponentInterfaceValue):
+            self.kwargs["initial"] = self.initial.pk
+        else:
+            self.kwargs["initial"] = self.initial
         current_value = None
 
         if self.initial:
