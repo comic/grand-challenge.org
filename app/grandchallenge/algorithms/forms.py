@@ -161,12 +161,12 @@ class JobCreateForm(SaveFormInitMixin, Form):
                 initial = None
 
             self.fields[prefixed_interface_slug] = InterfaceFormField(
-                instance=inp,
-                initial=initial if initial else inp.default_value,
+                interface=inp,
                 user=self._user,
                 required=True,
-                help_text=clean(inp.description) if inp.description else "",
+                initial=initial if initial else inp.default_value,
                 form_data=self.data,
+                help_text=clean(inp.description) if inp.description else "",
             ).field
 
     @cached_property

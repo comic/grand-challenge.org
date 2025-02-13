@@ -58,7 +58,7 @@ class InterfaceFormField:
     def __init__(
         self,
         *,
-        instance=None,
+        interface=None,
         user=None,
         required=True,
         initial=None,
@@ -66,7 +66,7 @@ class InterfaceFormField:
         help_text="",
         disabled=False,
     ):
-        self.instance = instance
+        self.interface = interface
         self.user = user
         self.required = required
         self.initial = initial
@@ -78,26 +78,26 @@ class InterfaceFormField:
             "required": self.required,
             "disabled": self.disabled,
             "initial": self.get_initial_value(),
-            "label": instance.title.title(),
+            "label": interface.title.title(),
         }
 
-        if instance.is_image_kind:
+        if interface.is_image_kind:
             self._field = self.get_image_field()
-        elif instance.requires_file:
+        elif interface.requires_file:
             self._field = self.get_file_field()
-        elif instance.is_json_kind:
+        elif interface.is_json_kind:
             self._field = self.get_json_field()
         else:
-            raise RuntimeError(f"Unknown interface kind: {instance}")
+            raise RuntimeError(f"Unknown interface kind: {interface}")
 
     def get_initial_value(self):
         if (
             isinstance(self.initial, ComponentInterfaceValue)
             and self.initial.has_value
         ):
-            if self.instance.is_image_kind:
+            if self.interface.is_image_kind:
                 return self.initial.image.pk
-            elif self.instance.requires_file:
+            elif self.interface.requires_file:
                 return self.initial.pk
             else:
                 return self.initial.value
@@ -146,16 +146,16 @@ class InterfaceFormField:
         )
 
     def get_json_field(self):
-        field_type = self.instance.default_field
+        field_type = self.interface.default_field
         default_schema = {
             **INTERFACE_VALUE_SCHEMA,
-            "anyOf": [{"$ref": f"#/definitions/{self.instance.kind}"}],
+            "anyOf": [{"$ref": f"#/definitions/{self.interface.kind}"}],
         }
         if field_type == forms.JSONField:
             self.kwargs["widget"] = JSONEditorWidget(schema=default_schema)
         self.kwargs["validators"] = [
             JSONValidator(schema=default_schema),
-            JSONValidator(schema=self.instance.schema),
+            JSONValidator(schema=self.interface.schema),
         ]
         extra_help = ""
         return field_type(
@@ -196,14 +196,14 @@ class InterfaceFormField:
         )
         return FlexibleFileField(
             user=self.user,
-            interface=self.instance,
+            interface=self.interface,
             **self.kwargs,
         )
 
     @cached_property
     def civs_for_user_for_interface(self):
         return get_component_interface_values_for_user(
-            user=self.user, interface=self.instance
+            user=self.user, interface=self.interface
         )
 
     @property

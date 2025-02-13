@@ -186,6 +186,6 @@ def test_flexible_image_widget_prepopulated_value():
     im = ImageFactory(name="test_image")
     ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
     civ = ComponentInterfaceValueFactory(interface=ci, image=im)
-    field = InterfaceFormField(instance=ci, user=user, initial=civ)
+    field = InterfaceFormField(interface=ci, user=user, initial=civ)
     assert field.field.widget.attrs["current_value"] == civ.image
     assert field.field.initial == civ.image.pk

@@ -139,10 +139,10 @@ class MultipleCIVForm(Form):
                 ).first()
 
             self.fields[prefixed_interface_slug] = InterfaceFormField(
-                instance=interface,
-                initial=current_value,
-                required=False,
+                interface=interface,
                 user=self.user,
+                required=False,
+                initial=current_value,
                 form_data=self.data,
             ).field
 
@@ -169,10 +169,10 @@ class MultipleCIVForm(Form):
                     current_value = self.data[slug]
 
                 self.fields[slug] = InterfaceFormField(
-                    instance=interface,
-                    initial=current_value,
-                    required=False,
+                    interface=interface,
                     user=self.user,
+                    required=False,
+                    initial=current_value,
                     form_data=self.data,
                 ).field
 
@@ -311,7 +311,7 @@ class SingleCIVForm(Form):
             self.fields[
                 f"{INTERFACE_FORM_FIELD_PREFIX}{selected_interface.slug}"
             ] = InterfaceFormField(
-                instance=selected_interface,
+                interface=selected_interface,
                 user=user,
                 required=selected_interface.value_required,
                 form_data=self.data,
