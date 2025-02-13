@@ -54,7 +54,6 @@ from grandchallenge.algorithms.models import (
     AlgorithmModel,
     AlgorithmPermissionRequest,
     Job,
-    annotate_input_output_counts,
 )
 from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
@@ -357,33 +356,22 @@ class AlgorithmForm(
         qs = get_objects_for_user(
             self._user, "evaluation.create_phase_submission"
         )
-        inputs = self.instance.inputs.all()
-        outputs = self.instance.outputs.all()
+        interfaces = self.instance.interfaces.all()
         return (
             qs.annotate(
-                total_algorithm_input_count=Count(
-                    "algorithm_inputs", distinct=True
+                total_algorithm_interface_count=Count(
+                    "algorithm_interfaces", distinct=True
                 ),
-                total_algorithm_output_count=Count(
-                    "algorithm_outputs", distinct=True
-                ),
-                relevant_algorithm_input_count=Count(
-                    "algorithm_inputs",
-                    filter=Q(algorithm_inputs__in=inputs),
-                    distinct=True,
-                ),
-                relevant_algorithm_output_count=Count(
-                    "algorithm_outputs",
-                    filter=Q(algorithm_outputs__in=outputs),
+                relevant_algorithm_interface_count=Count(
+                    "algorithm_interfaces",
+                    filter=Q(algorithm_interfaces__in=interfaces),
                     distinct=True,
                 ),
             )
             .filter(
                 submission_kind=SubmissionKindChoices.ALGORITHM,
-                total_algorithm_input_count=len(inputs),
-                total_algorithm_output_count=len(outputs),
-                relevant_algorithm_input_count=len(inputs),
-                relevant_algorithm_output_count=len(outputs),
+                total_algorithm_interface_count=len(interfaces),
+                relevant_algorithm_interface_count=len(interfaces),
             )
             .aggregate(
                 max_memory=Max("algorithm_maximum_settable_memory_gb"),
@@ -446,47 +434,45 @@ class UserAlgorithmsForPhaseMixin:
         self._user = user
         self._phase = phase
 
-    def get_phase_algorithm_inputs_outputs(self):
-        return (
-            self._phase.algorithm_inputs.all(),
-            self._phase.algorithm_outputs.all(),
-        )
-
     @cached_property
     def user_algorithms_for_phase(self):
-        inputs, outputs = self.get_phase_algorithm_inputs_outputs()
+        interfaces = self._phase.algorithm_interfaces.all()
         desired_image_subquery = AlgorithmImage.objects.filter(
             algorithm=OuterRef("pk"), is_desired_version=True
         )
         desired_model_subquery = AlgorithmModel.objects.filter(
             algorithm=OuterRef("pk"), is_desired_version=True
         )
-        annotated_qs = annotate_input_output_counts(
-            queryset=get_objects_for_user(
-                self._user, "algorithms.change_algorithm"
-            ),
-            inputs=inputs,
-            outputs=outputs,
-        )
-        return annotated_qs.annotate(
-            has_active_image=Exists(desired_image_subquery),
-            active_image_pk=desired_image_subquery.values_list(
-                "pk", flat=True
-            ),
-            active_model_pk=desired_model_subquery.values_list(
-                "pk", flat=True
-            ),
-            active_image_comment=desired_image_subquery.values_list(
-                "comment", flat=True
-            ),
-            active_model_comment=desired_model_subquery.values_list(
-                "comment", flat=True
-            ),
-        ).filter(
-            input_count=len(inputs),
-            output_count=len(outputs),
-            relevant_input_count=len(inputs),
-            relevant_output_count=len(outputs),
+
+        return (
+            get_objects_for_user(self._user, "algorithms.change_algorithm")
+            .annotate(
+                interface_count=Count("interfaces", distinct=True),
+                relevant_interfaces_count=Count(
+                    "interfaces",
+                    filter=Q(interfaces__in=interfaces),
+                    distinct=True,
+                ),
+            )
+            .filter(
+                interface_count=len(interfaces),
+                relevant_interfaces_count=len(interfaces),
+            )
+            .annotate(
+                has_active_image=Exists(desired_image_subquery),
+                active_image_pk=desired_image_subquery.values_list(
+                    "pk", flat=True
+                ),
+                active_model_pk=desired_model_subquery.values_list(
+                    "pk", flat=True
+                ),
+                active_image_comment=desired_image_subquery.values_list(
+                    "comment", flat=True
+                ),
+                active_model_comment=desired_model_subquery.values_list(
+                    "comment", flat=True
+                ),
+            )
         )
 
     @cached_property
@@ -504,8 +490,7 @@ class AlgorithmForPhaseForm(
             "description",
             "modalities",
             "structures",
-            "inputs",
-            "outputs",
+            "interfaces",
             "workstation",
             "workstation_config",
             "hanging_protocol",
@@ -527,8 +512,7 @@ class AlgorithmForPhaseForm(
             "display_editors": HiddenInput(),
             "contact_email": HiddenInput(),
             "workstation": HiddenInput(),
-            "inputs": MultipleHiddenInput(),
-            "outputs": MultipleHiddenInput(),
+            "interfaces": MultipleHiddenInput(),
             "modalities": MultipleHiddenInput(),
             "structures": MultipleHiddenInput(),
             "logo": HiddenInput(),
@@ -551,8 +535,7 @@ class AlgorithmForPhaseForm(
         display_editors,
         contact_email,
         workstation,
-        inputs,
-        outputs,
+        interfaces,
         structures,
         modalities,
         logo,
@@ -583,10 +566,8 @@ class AlgorithmForPhaseForm(
             )
         )
         self.fields["workstation"].disabled = True
-        self.fields["inputs"].initial = inputs
-        self.fields["inputs"].disabled = True
-        self.fields["outputs"].initial = outputs
-        self.fields["outputs"].disabled = True
+        self.fields["interfaces"].initial = interfaces
+        self.fields["interfaces"].disabled = True
         self.fields["modalities"].initial = modalities
         self.fields["modalities"].disabled = True
         self.fields["structures"].initial = structures

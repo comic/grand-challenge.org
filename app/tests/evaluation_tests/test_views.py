@@ -708,8 +708,8 @@ def test_create_algorithm_for_phase_permission(client, uploaded_image):
     phase.submission_kind = SubmissionKindChoices.ALGORITHM
     phase.creator_must_be_verified = True
     phase.archive = ArchiveFactory()
-    phase.algorithm_inputs.set([ComponentInterfaceFactory()])
-    phase.algorithm_outputs.set([ComponentInterfaceFactory()])
+    interface = AlgorithmInterfaceFactory()
+    phase.algorithm_interfaces.set([interface])
     phase.save()
 
     response = get_view_for_user(
@@ -814,8 +814,9 @@ def test_create_algorithm_for_phase_presets(client):
     ci1 = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
     ci2 = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
     optional_protocol = HangingProtocolFactory()
-    phase.algorithm_inputs.set([ci1])
-    phase.algorithm_outputs.set([ci2])
+
+    interface1, interface2 = AlgorithmInterfaceFactory.create_batch(2)
+    phase.algorithm_interfaces.set([interface1, interface2])
     phase.hanging_protocol = HangingProtocolFactory(
         json=[{"viewport_name": "main"}]
     )
@@ -834,8 +835,10 @@ def test_create_algorithm_for_phase_presets(client):
         client=client,
         user=admin,
     )
-    assert response.context_data["form"]["inputs"].initial.get() == ci1
-    assert response.context_data["form"]["outputs"].initial.get() == ci2
+    assert list(response.context_data["form"]["interfaces"].initial.all()) == [
+        interface1,
+        interface2,
+    ]
     assert response.context_data["form"][
         "workstation"
     ].initial == Workstation.objects.get(
@@ -881,11 +884,11 @@ def test_create_algorithm_for_phase_presets(client):
         data={
             "title": "Test algorithm",
             "job_requires_memory_gb": 8,
-            "inputs": [
-                response.context_data["form"]["inputs"].initial.get().pk
-            ],
-            "outputs": [
-                response.context_data["form"]["outputs"].initial.get().pk
+            "interfaces": [
+                interface.pk
+                for interface in response.context_data["form"][
+                    "interfaces"
+                ].initial.all()
             ],
             "workstation": response.context_data["form"][
                 "workstation"
@@ -911,8 +914,7 @@ def test_create_algorithm_for_phase_presets(client):
     assert response.status_code == 302
     assert Algorithm.objects.count() == 1
     algorithm = Algorithm.objects.get()
-    assert algorithm.inputs.get() == ci1
-    assert algorithm.outputs.get() == ci2
+    assert list(algorithm.interfaces.all()) == [interface1, interface2]
     assert algorithm.hanging_protocol == phase.hanging_protocol
     assert algorithm.optional_hanging_protocols.get() == optional_protocol
     assert algorithm.workstation_config == phase.workstation_config
@@ -957,15 +959,12 @@ def test_create_algorithm_for_phase_presets(client):
 
     # created algorithm has the initial values set, not the modified ones
     alg2 = Algorithm.objects.last()
-    assert alg2.inputs.get() == ci1
-    assert alg2.outputs.get() == ci2
+    assert list(alg2.interfaces.all()) == [interface1, interface2]
     assert alg2.hanging_protocol == phase.hanging_protocol
     assert alg2.optional_hanging_protocols.get() == optional_protocol
     assert alg2.workstation_config == phase.workstation_config
     assert alg2.view_content == phase.view_content
     assert alg2.workstation.slug == settings.DEFAULT_WORKSTATION_SLUG
-    assert alg2.inputs.get() != ci3
-    assert alg2.outputs.get() != ci4
     assert alg2.hanging_protocol != hp
     assert alg2.workstation_config != wsc
     assert alg2.view_content != "{}"
@@ -982,8 +981,10 @@ def test_create_algorithm_for_phase_limits(client):
     phase.archive = ArchiveFactory()
     ci1 = ComponentInterfaceFactory()
     ci2 = ComponentInterfaceFactory()
-    phase.algorithm_inputs.set([ci1])
-    phase.algorithm_outputs.set([ci2])
+
+    interface = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci2])
+    phase.algorithm_interfaces.set([interface])
+
     phase.submissions_limit_per_user_per_period = 10
     phase.save()
 
@@ -1005,14 +1006,16 @@ def test_create_algorithm_for_phase_limits(client):
     alg3.add_editor(u1)
     alg4.add_editor(u2)
     alg5.add_editor(u1)
-    alg6.add_editor(u1)
-    for alg in [alg1, alg2, alg3, alg4, alg5]:
-        alg.inputs.set([ci1])
-        alg.outputs.set([ci2])
+    alg6.add_editor(u2)
+    for alg in [alg1, alg2, alg3, alg4]:
+        alg.interfaces.set([interface])
     ci3 = ComponentInterfaceFactory()
-    alg5.inputs.add(ci3)
-    alg6.inputs.set([ci3])
-    alg6.outputs.set([ci2])
+
+    interface2 = AlgorithmInterfaceFactory(inputs=[ci1, ci3], outputs=[ci2])
+    alg5.interfaces.set([interface2])
+
+    interface3 = AlgorithmInterfaceFactory(inputs=[ci3], outputs=[ci2])
+    alg6.interfaces.set([interface3])
 
     response = get_view_for_user(
         viewname="evaluation:phase-algorithm-create",
@@ -1581,8 +1584,8 @@ def test_evaluation_details_zero_rank_message(client):
 
 @pytest.mark.django_db
 def test_submission_create_sets_limits_correctly_with_algorithm(client):
-    inputs = [ComponentInterfaceFactory()]
-    outputs = [ComponentInterfaceFactory()]
+    inputs = ComponentInterfaceFactory.create_batch(2)
+    interface = AlgorithmInterfaceFactory(inputs=inputs)
 
     algorithm_image = AlgorithmImageFactory(
         is_manifest_valid=True,
@@ -1591,8 +1594,7 @@ def test_submission_create_sets_limits_correctly_with_algorithm(client):
         algorithm__job_requires_gpu_type=GPUTypeChoices.V100,
         algorithm__job_requires_memory_gb=1337,
     )
-    algorithm_image.algorithm.inputs.set(inputs)
-    algorithm_image.algorithm.outputs.set(outputs)
+    algorithm_image.algorithm.interfaces.set([interface])
 
     archive = ArchiveFactory()
     archive_item = ArchiveItemFactory(archive=archive)
@@ -1610,8 +1612,7 @@ def test_submission_create_sets_limits_correctly_with_algorithm(client):
         algorithm_selectable_gpu_type_choices=[GPUTypeChoices.V100],
         algorithm_maximum_settable_memory_gb=1337,
     )
-    phase.algorithm_inputs.set(inputs)
-    phase.algorithm_outputs.set(outputs)
+    phase.algorithm_interfaces.set([interface])
 
     InvoiceFactory(
         challenge=phase.challenge,

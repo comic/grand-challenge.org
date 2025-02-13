@@ -853,8 +853,8 @@ def test_algorithm_form_gpu_choices_from_phases():
     ci1, ci2, ci3, ci4, ci5, ci6 = ComponentInterfaceFactory.create_batch(6)
     inputs = [ci1, ci2]
     outputs = [ci3, ci4]
-    algorithm.inputs.set(inputs)
-    algorithm.outputs.set(outputs)
+    interface = AlgorithmInterfaceFactory(inputs=inputs, outputs=outputs)
+    algorithm.interfaces.set([interface])
 
     def assert_gpu_type_choices(expected_choices):
         form = AlgorithmForm(instance=algorithm, user=user)
@@ -885,8 +885,7 @@ def test_algorithm_form_gpu_choices_from_phases():
                 GPUTypeChoices.T4,
             ],
         )
-        phase.algorithm_inputs.set(inputs)
-        phase.algorithm_outputs.set(outputs)
+        phase.algorithm_interfaces.set([interface])
         phase.challenge.add_participant(user)
         phases.append(phase)
 
@@ -936,7 +935,19 @@ def test_algorithm_form_gpu_choices_from_phases():
         ]
     )
 
-    phases[0].algorithm_inputs.set([ci1, ci5])
+    interface2 = AlgorithmInterfaceFactory(inputs=[ci1, ci5], outputs=outputs)
+    # add additional interface
+    phases[0].algorithm_interfaces.add(interface2)
+
+    assert_gpu_type_choices(
+        [
+            (GPUTypeChoices.NO_GPU, "No GPU"),
+            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+        ]
+    )
+
+    # replace with different interface
+    phases[0].algorithm_interfaces.set([interface2])
 
     assert_gpu_type_choices(
         [
@@ -954,12 +965,21 @@ def test_algorithm_form_gpu_choices_from_phases():
             (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
         ]
     )
-
-    phases[3].algorithm_outputs.set([ci4, ci6])
+    interface3 = AlgorithmInterfaceFactory(inputs=inputs, outputs=[ci4, ci6])
+    phases[3].algorithm_interfaces.add(interface3)
 
     assert_gpu_type_choices(
         [
             (GPUTypeChoices.NO_GPU, "No GPU"),
+            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+        ]
+    )
+
+    algorithm.interfaces.add(interface3)
+    assert_gpu_type_choices(
+        [
+            (GPUTypeChoices.NO_GPU, "No GPU"),
+            (GPUTypeChoices.K80, "NVIDIA K80 GPU"),
             (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
         ]
     )
@@ -1026,8 +1046,9 @@ def test_algorithm_form_gpu_choices_from_organizations_and_phases():
     ci1, ci2, ci3, ci4, ci5, ci6 = ComponentInterfaceFactory.create_batch(6)
     inputs = [ci1, ci2]
     outputs = [ci3, ci4]
-    algorithm.inputs.set(inputs)
-    algorithm.outputs.set(outputs)
+    interface = AlgorithmInterfaceFactory(inputs=inputs, outputs=outputs)
+    algorithm.interfaces.set([interface])
+
     org1 = OrganizationFactory(
         algorithm_selectable_gpu_type_choices=[
             GPUTypeChoices.NO_GPU,
@@ -1070,8 +1091,7 @@ def test_algorithm_form_gpu_choices_from_organizations_and_phases():
                 GPUTypeChoices.T4,
             ],
         )
-        phase.algorithm_inputs.set(inputs)
-        phase.algorithm_outputs.set(outputs)
+        phase.algorithm_interfaces.set([interface])
         phase.challenge.add_participant(user)
         phases.append(phase)
 
@@ -1108,8 +1128,7 @@ def test_algorithm_for_phase_form_gpu_limited_choices():
         display_editors=True,
         contact_email="test@test.com",
         workstation=WorkstationFactory.build(),
-        inputs=[ComponentInterfaceFactory.build()],
-        outputs=[ComponentInterfaceFactory.build()],
+        interfaces=[AlgorithmInterfaceFactory.build()],
         structures=[],
         modalities=[],
         logo=ImageField(filename="test.jpeg"),
@@ -1136,8 +1155,7 @@ def test_algorithm_for_phase_form_gpu_additional_choices():
         display_editors=True,
         contact_email="test@test.com",
         workstation=WorkstationFactory.build(),
-        inputs=[ComponentInterfaceFactory.build()],
-        outputs=[ComponentInterfaceFactory.build()],
+        interfaces=[AlgorithmInterfaceFactory.build()],
         structures=[],
         modalities=[],
         logo=ImageField(filename="test.jpeg"),
@@ -1188,16 +1206,16 @@ def test_algorithm_form_max_memory_from_phases_for_admins():
     ci1, ci2, ci3, ci4, ci5, ci6 = ComponentInterfaceFactory.create_batch(6)
     inputs = [ci1, ci2]
     outputs = [ci3, ci4]
-    algorithm.inputs.set(inputs)
-    algorithm.outputs.set(outputs)
+    interface = AlgorithmInterfaceFactory(inputs=inputs, outputs=outputs)
+    algorithm.interfaces.set([interface])
+
     phases = []
     for max_memory in [42, 100, 200, 300, 400]:
         phase = PhaseFactory(
             submission_kind=SubmissionKindChoices.ALGORITHM,
             algorithm_maximum_settable_memory_gb=max_memory,
         )
-        phase.algorithm_inputs.set(inputs)
-        phase.algorithm_outputs.set(outputs)
+        phase.algorithm_interfaces.set([interface])
         phase.challenge.add_admin(user)
         phases.append(phase)
 
@@ -1228,11 +1246,13 @@ def test_algorithm_form_max_memory_from_phases_for_admins():
 
     assert_max_value_validator(200)
 
-    phases[2].algorithm_inputs.set([ci1, ci5])
+    interface2 = AlgorithmInterfaceFactory(inputs=[ci1, ci5], outputs=outputs)
+    phases[2].algorithm_interfaces.set([interface2])
 
     assert_max_value_validator(100)
 
-    phases[1].algorithm_outputs.set([ci4, ci6])
+    interface3 = AlgorithmInterfaceFactory(inputs=inputs, outputs=[ci4, ci6])
+    phases[1].algorithm_interfaces.set([interface3])
 
     assert_max_value_validator(42)
 
@@ -1244,16 +1264,16 @@ def test_algorithm_form_max_memory_from_phases():
     ci1, ci2, ci3, ci4, ci5, ci6 = ComponentInterfaceFactory.create_batch(6)
     inputs = [ci1, ci2]
     outputs = [ci3, ci4]
-    algorithm.inputs.set(inputs)
-    algorithm.outputs.set(outputs)
+    interface = AlgorithmInterfaceFactory(inputs=inputs, outputs=outputs)
+    algorithm.interfaces.set([interface])
+
     phases = []
     for max_memory in [42, 100, 200, 300, 400, 500]:
         phase = PhaseFactory(
             submission_kind=SubmissionKindChoices.ALGORITHM,
             algorithm_maximum_settable_memory_gb=max_memory,
         )
-        phase.algorithm_inputs.set(inputs)
-        phase.algorithm_outputs.set(outputs)
+        phase.algorithm_interfaces.set([interface])
         phase.challenge.add_participant(user)
         phases.append(phase)
 
@@ -1284,13 +1304,22 @@ def test_algorithm_form_max_memory_from_phases():
 
     assert_max_value_validator(200)
 
-    phases[2].algorithm_inputs.set([ci1, ci5])
-
+    interface2 = AlgorithmInterfaceFactory(inputs=[ci1, ci5], outputs=outputs)
+    # adding an interface
+    phases[2].algorithm_interfaces.add(interface2)
+    assert_max_value_validator(100)
+    # replacing the interface
+    phases[2].algorithm_interfaces.set([interface2])
     assert_max_value_validator(100)
 
-    phases[1].algorithm_outputs.set([ci4, ci6])
+    interface3 = AlgorithmInterfaceFactory(inputs=inputs, outputs=[ci4, ci6])
+    phases[1].algorithm_interfaces.set([interface3])
 
     assert_max_value_validator(42)
+
+    # updating the algorithm's interface
+    algorithm.interfaces.set([interface3])
+    assert_max_value_validator(100)
 
 
 @pytest.mark.django_db
@@ -1328,8 +1357,8 @@ def test_algorithm_form_max_memory_from_organizations_and_phases():
     ci1, ci2, ci3, ci4, ci5, ci6 = ComponentInterfaceFactory.create_batch(6)
     inputs = [ci1, ci2]
     outputs = [ci3, ci4]
-    algorithm.inputs.set(inputs)
-    algorithm.outputs.set(outputs)
+    interface = AlgorithmInterfaceFactory(inputs=inputs, outputs=outputs)
+    algorithm.interfaces.set([interface])
     org1 = OrganizationFactory(algorithm_maximum_settable_memory_gb=42)
     org2 = OrganizationFactory(algorithm_maximum_settable_memory_gb=1337)
 
@@ -1351,8 +1380,7 @@ def test_algorithm_form_max_memory_from_organizations_and_phases():
             submission_kind=SubmissionKindChoices.ALGORITHM,
             algorithm_maximum_settable_memory_gb=max_memory,
         )
-        phase.algorithm_inputs.set(inputs)
-        phase.algorithm_outputs.set(outputs)
+        phase.algorithm_interfaces.set([interface])
         phase.challenge.add_participant(user)
 
     assert_max_value_validator(42)
@@ -1372,8 +1400,7 @@ def test_algorithm_for_phase_form_memory_limited():
         display_editors=True,
         contact_email="test@test.com",
         workstation=WorkstationFactory.build(),
-        inputs=[ComponentInterfaceFactory.build()],
-        outputs=[ComponentInterfaceFactory.build()],
+        interfaces=[AlgorithmInterfaceFactory.build()],
         structures=[],
         modalities=[],
         logo=ImageField(filename="test.jpeg"),
@@ -1432,8 +1459,7 @@ def test_algorithm_for_phase_form_memory():
         display_editors=True,
         contact_email="test@test.com",
         workstation=WorkstationFactory.build(),
-        inputs=[ComponentInterfaceFactory.build()],
-        outputs=[ComponentInterfaceFactory.build()],
+        interfaces=[AlgorithmInterfaceFactory.build()],
         structures=[],
         modalities=[],
         logo=ImageField(filename="test.jpeg"),
