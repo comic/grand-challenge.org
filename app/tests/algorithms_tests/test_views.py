@@ -728,106 +728,6 @@ def test_import_view(
                         "logo": "https://rumc-gcorg-p-public.s3.amazonaws.com/logos/algorithm/0d11fc7b-c63f-4fd7-b80b-51d2e21492c0/square_logo.x20.jpeg",
                         "slug": "the-pi-cai-challenge-baseline-nndetection",
                         "average_duration": 363.50596,
-                        "inputs": [
-                            {
-                                "title": "Coronal T2 Prostate MRI",
-                                "description": "Coronal T2 MRI of the Prostate",
-                                "slug": "coronal-t2-prostate-mri",
-                                "kind": "Image",
-                                "pk": 31,
-                                "default_value": None,
-                                "super_kind": "Image",
-                                "relative_path": "images/coronal-t2-prostate-mri",
-                                "overlay_segments": [],
-                                "look_up_table": None,
-                            },
-                            {
-                                "title": "Transverse T2 Prostate MRI",
-                                "description": "Transverse T2 MRI of the Prostate",
-                                "slug": "transverse-t2-prostate-mri",
-                                "kind": "Image",
-                                "pk": 32,
-                                "default_value": None,
-                                "super_kind": "Image",
-                                "relative_path": "images/transverse-t2-prostate-mri",
-                                "overlay_segments": [],
-                                "look_up_table": None,
-                            },
-                            {
-                                "title": "Sagittal T2 Prostate MRI",
-                                "description": "Sagittal T2 MRI of the Prostate",
-                                "slug": "sagittal-t2-prostate-mri",
-                                "kind": "Image",
-                                "pk": 33,
-                                "default_value": None,
-                                "super_kind": "Image",
-                                "relative_path": "images/sagittal-t2-prostate-mri",
-                                "overlay_segments": [],
-                                "look_up_table": None,
-                            },
-                            {
-                                "title": "Transverse HBV Prostate MRI",
-                                "description": "Transverse High B-Value Prostate MRI",
-                                "slug": "transverse-hbv-prostate-mri",
-                                "kind": "Image",
-                                "pk": 47,
-                                "default_value": None,
-                                "super_kind": "Image",
-                                "relative_path": "images/transverse-hbv-prostate-mri",
-                                "overlay_segments": [],
-                                "look_up_table": None,
-                            },
-                            {
-                                "title": "Transverse ADC Prostate MRI",
-                                "description": "Transverse Apparent Diffusion Coefficient Prostate MRI",
-                                "slug": "transverse-adc-prostate-mri",
-                                "kind": "Image",
-                                "pk": 48,
-                                "default_value": None,
-                                "super_kind": "Image",
-                                "relative_path": "images/transverse-adc-prostate-mri",
-                                "overlay_segments": [],
-                                "look_up_table": None,
-                            },
-                            {
-                                "title": "Clinical Information Prostate MRI",
-                                "description": "Clinical information to support clinically significant prostate cancer detection in prostate MRI. Provided information: patient age at time of examination (patient_age), PSA level in ng/mL as reported (PSA_report), PSA density in ng/mL^2 as reported (PSAD_report), prostate volume as reported (prostate_volume_report), prostate volume derived from automatic whole-gland segmentation (prostate_volume_automatic), scanner manufacturer (scanner_manufacturer), scanner model name (scanner_model_name), diffusion b-value of (calculated) high b-value diffusion map (diffusion_high_bvalue). Values acquired from radiology reports will be missing, if not reported.",
-                                "slug": "clinical-information-prostate-mri",
-                                "kind": "Anything",
-                                "pk": 156,
-                                "default_value": None,
-                                "super_kind": "Value",
-                                "relative_path": "clinical-information-prostate-mri.json",
-                                "overlay_segments": [],
-                                "look_up_table": None,
-                            },
-                        ],
-                        "outputs": [
-                            {
-                                "title": "Case-level Cancer Likelihood Prostate MRI",
-                                "description": "Case-level likelihood of harboring clinically significant prostate cancer, in range [0,1].",
-                                "slug": "prostate-cancer-likelihood",
-                                "kind": "Float",
-                                "pk": 144,
-                                "default_value": None,
-                                "super_kind": "Value",
-                                "relative_path": "cspca-case-level-likelihood.json",
-                                "overlay_segments": [],
-                                "look_up_table": None,
-                            },
-                            {
-                                "title": "Transverse Cancer Detection Map Prostate MRI",
-                                "description": "Single-class, detection map of clinically significant prostate cancer lesions in 3D, where each voxel represents a floating point in range [0,1].",
-                                "slug": "cspca-detection-map",
-                                "kind": "Heat Map",
-                                "pk": 151,
-                                "default_value": None,
-                                "super_kind": "Image",
-                                "relative_path": "images/cspca-detection-map",
-                                "overlay_segments": [],
-                                "look_up_table": None,
-                            },
-                        ],
                         "interfaces": [
                             {
                                 "inputs": [
@@ -1007,7 +907,10 @@ def test_import_view(
         "logos/algorithm/0d11fc7b-c63f-4fd7-b80b-51d2e21492c0/square_logo"
     )
     assert "Imported from [grand-challenge.org]" in algorithm.summary
-    assert {i.slug for i in algorithm.inputs.all()} == {
+
+    assert algorithm.interfaces.count() == 1
+    interface = algorithm.interfaces.get()
+    assert {i.slug for i in interface.inputs.all()} == {
         "clinical-information-prostate-mri",
         "coronal-t2-prostate-mri",
         "sagittal-t2-prostate-mri",
@@ -1015,7 +918,7 @@ def test_import_view(
         "transverse-hbv-prostate-mri",
         "transverse-t2-prostate-mri",
     }
-    assert {i.slug for i in algorithm.outputs.all()} == {
+    assert {i.slug for i in interface.outputs.all()} == {
         "cspca-detection-map",
         "prostate-cancer-likelihood",
     }

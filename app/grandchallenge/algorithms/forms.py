@@ -952,7 +952,8 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
         self.algorithm_serializer = None
         self.algorithm_image_serializer = None
         self.algorithm = None
-        self.new_interfaces = None
+        self.algorithm_interfaces = []
+        self.new_component_interfaces = []
 
     @property
     def remote_instance_client(self):
@@ -1058,27 +1059,16 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
         self.algorithm_image_serializer = algorithm_image_serializer
 
     def _build_interfaces(self):
-        remote_interfaces = {
-            interface["slug"]: interface
-            for interface in chain(
-                self.algorithm_serializer.initial_data["inputs"],
-                self.algorithm_serializer.initial_data["outputs"],
+        for remote_interface in self.algorithm_serializer.initial_data[
+            "interfaces"
+        ]:
+            self._validate_interface_inputs_and_outputs(
+                remote_interface=remote_interface
             )
-        }
 
-        self.new_interfaces = []
-        for slug, remote_interface in remote_interfaces.items():
-            try:
-                self._validate_existing_interface(
-                    slug=slug, remote_interface=remote_interface
-                )
-            except ObjectDoesNotExist:
-                # The remote interface does not exist locally, create it
-                self._create_new_interface(
-                    slug=slug, remote_interface=remote_interface
-                )
-
-    def _validate_existing_interface(self, *, remote_interface, slug):
+    def _validate_existing_component_interface(
+        self, *, remote_component_interface, slug
+    ):
         serialized_local_interface = ComponentInterfaceSerializer(
             instance=ComponentInterface.objects.get(slug=slug)
         )
@@ -1087,27 +1077,72 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
             # Check all the values match, some are allowed to differ
             if (
                 key not in {"pk", "description"}
-                and value != remote_interface[key]
+                and value != remote_component_interface[key]
             ):
                 raise ValidationError(
                     f"Interface {key} does not match for `{slug}`"
                 )
 
-    def _create_new_interface(self, *, remote_interface, slug):
-        new_interface = ComponentInterfaceSerializer(data=remote_interface)
+    def _create_new_component_interface(
+        self, *, remote_component_interface, slug
+    ):
+        new_interface = ComponentInterfaceSerializer(
+            data=remote_component_interface
+        )
 
         if not new_interface.is_valid():
             raise ValidationError(f"New interface {slug!r} is invalid")
 
-        self.new_interfaces.append(new_interface)
+        self.new_component_interfaces.append(new_interface)
+
+    def _validate_interface_inputs_and_outputs(self, *, remote_interface):
+        for input in remote_interface["inputs"]:
+            try:
+                self._validate_existing_component_interface(
+                    remote_component_interface=input, slug=input["slug"]
+                )
+            except ObjectDoesNotExist:
+                self._create_new_component_interface(
+                    remote_component_interface=input, slug=input["slug"]
+                )
+
+        for output in remote_interface["outputs"]:
+            try:
+                self._validate_existing_component_interface(
+                    remote_component_interface=output, slug=output["slug"]
+                )
+            except ObjectDoesNotExist:
+                self._create_new_component_interface(
+                    remote_component_interface=output, slug=output["slug"]
+                )
 
     def save(self):
+        # first save new ComponentInterfaces
+        self._save_new_component_interfaces()
+        # then get or create algorithm interfaces
         self._save_new_interfaces()
         self._save_new_algorithm()
         self._save_new_algorithm_image()
 
     def _save_new_interfaces(self):
-        for interface in self.new_interfaces:
+        for interface in self.algorithm_serializer.initial_data["interfaces"]:
+            inputs = [
+                ComponentInterface.objects.get(slug=input["slug"])
+                for input in interface["inputs"]
+            ]
+            outputs = [
+                ComponentInterface.objects.get(slug=output["slug"])
+                for output in interface["outputs"]
+            ]
+            # either get or create an AlgorithmInterface
+            # with the given inputs / outputs using the custom model manager
+            interface = AlgorithmInterface.objects.create(
+                inputs=inputs, outputs=outputs
+            )
+            self.algorithm_interfaces.append(interface)
+
+    def _save_new_component_interfaces(self):
+        for interface in self.new_component_interfaces:
             interface.save(
                 # The interface kind is a read only display value, this could
                 # be better solved with a custom DRF Field but deadlines...
@@ -1140,26 +1175,7 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
 
         self.algorithm.add_editor(user=self.user)
 
-        self.algorithm.inputs.set(
-            ComponentInterface.objects.filter(
-                slug__in={
-                    interface["slug"]
-                    for interface in self.algorithm_serializer.initial_data[
-                        "inputs"
-                    ]
-                }
-            )
-        )
-        self.algorithm.outputs.set(
-            ComponentInterface.objects.filter(
-                slug__in={
-                    interface["slug"]
-                    for interface in self.algorithm_serializer.initial_data[
-                        "outputs"
-                    ]
-                }
-            )
-        )
+        self.algorithm.interfaces.set(self.algorithm_interfaces)
 
         if logo_url := self.algorithm_serializer.initial_data["logo"]:
             response = requests.get(

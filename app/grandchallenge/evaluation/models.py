@@ -546,18 +546,6 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
     outputs = models.ManyToManyField(
         to=ComponentInterface, related_name="evaluation_outputs"
     )
-    algorithm_inputs = models.ManyToManyField(
-        to=ComponentInterface,
-        related_name="+",
-        blank=True,
-        help_text="The input interfaces that the algorithms for this phase must use",
-    )
-    algorithm_outputs = models.ManyToManyField(
-        to=ComponentInterface,
-        related_name="+",
-        blank=True,
-        help_text="The output interfaces that the algorithms for this phase must use",
-    )
     algorithm_selectable_gpu_type_choices = models.JSONField(
         default=get_default_gpu_type_choices,
         help_text=(
@@ -955,9 +943,14 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
 
     @cached_property
     def linked_component_interfaces(self):
-        return (
-            self.algorithm_inputs.all() | self.algorithm_outputs.all()
-        ).distinct()
+        return {
+            ci
+            for interface in self.algorithm_interfaces.all()
+            for ci in (
+                interface.inputs.order_by("pk")
+                | interface.outputs.order_by("pk")
+            )
+        }
 
     def assign_permissions(self):
         assign_perm("view_phase", self.challenge.admins_group, self)
@@ -1735,10 +1728,6 @@ class Evaluation(ComponentJob):
     @property
     def output_interfaces(self):
         return self.submission.phase.outputs
-
-    @cached_property
-    def algorithm_inputs(self):
-        return self.submission.phase.algorithm_inputs.all()
 
     @cached_property
     def successful_jobs_per_interface(self):

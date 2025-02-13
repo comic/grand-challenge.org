@@ -18,7 +18,10 @@ from grandchallenge.evaluation.forms import PhaseUpdateForm
 from grandchallenge.hanging_protocols.forms import HangingProtocolForm
 from grandchallenge.hanging_protocols.models import HangingProtocol
 from grandchallenge.reader_studies.forms import ReaderStudyUpdateForm
-from tests.algorithms_tests.factories import AlgorithmFactory
+from tests.algorithms_tests.factories import (
+    AlgorithmFactory,
+    AlgorithmInterfaceFactory,
+)
 from tests.archives_tests.factories import ArchiveItemFactory
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
@@ -529,7 +532,6 @@ def test_archive_and_reader_study_forms_view_content_help_text(
             0,
             1,
             (
-                "The following interfaces are used in your algorithm: test-ci-overlay-0 and test-ci-undisplayable-0. "
                 "No interfaces of type image, chart, pdf, mp4, thumbnail_jpg or thumbnail_png are used. At least one interface of those types is needed to configure the viewer. "
                 'Refer to the <a href="https://testserver/documentation/viewer-content/">documentation</a> for more information'
             ),
@@ -540,7 +542,6 @@ def test_archive_and_reader_study_forms_view_content_help_text(
             1,
             1,
             (
-                "The following interfaces are used in your algorithm: test-ci-isolated-0, test-ci-image-0, test-ci-overlay-0, and test-ci-undisplayable-0. "
                 'Example usage: {"main": ["test-ci-isolated-0"], "secondary": ["test-ci-image-0", "test-ci-overlay-0"]}. '
                 'Refer to the <a href="https://testserver/documentation/viewer-content/">documentation</a> for more information'
             ),
@@ -562,11 +563,18 @@ def test_algorithm_form_view_content_help_text(
         number_of_undisplayable_interfaces=number_of_undisplayable_interfaces,
     )
     algorithm = AlgorithmFactory()
-    algorithm.inputs.set(ci_list)
+    if ci_list:
+        interface = AlgorithmInterfaceFactory(
+            inputs=ci_list[:-1], outputs=[ci_list[-1]]
+        )
+        algorithm.interfaces.set([interface])
 
     form = AlgorithmForm(user=UserFactory(), instance=algorithm)
 
-    assert form.fields["view_content"].help_text == expected_help_text
+    assert sorted(
+        [interface.pk for interface in algorithm.linked_component_interfaces]
+    ) == [interface.pk for interface in ci_list]
+    assert expected_help_text in form.fields["view_content"].help_text
 
 
 @pytest.mark.parametrize(
@@ -588,7 +596,6 @@ def test_algorithm_form_view_content_help_text(
             0,
             1,
             (
-                "The following interfaces are used in your phase: test-ci-overlay-0 and test-ci-undisplayable-0. "
                 "No interfaces of type image, chart, pdf, mp4, thumbnail_jpg or thumbnail_png are used. At least one interface of those types is needed to configure the viewer. "
                 'Refer to the <a href="https://testserver/documentation/viewer-content/">documentation</a> for more information'
             ),
@@ -599,7 +606,6 @@ def test_algorithm_form_view_content_help_text(
             1,
             1,
             (
-                "The following interfaces are used in your phase: test-ci-isolated-0, test-ci-image-0, test-ci-overlay-0, and test-ci-undisplayable-0. "
                 'Example usage: {"main": ["test-ci-isolated-0"], "secondary": ["test-ci-image-0", "test-ci-overlay-0"]}. '
                 'Refer to the <a href="https://testserver/documentation/viewer-content/">documentation</a> for more information'
             ),
@@ -621,14 +627,20 @@ def test_phase_update_form_view_content_help_text(
         number_of_undisplayable_interfaces=number_of_undisplayable_interfaces,
     )
     phase = PhaseFactory()
-    phase.algorithm_inputs.set(ci_list)
-    phase.algorithm_outputs.set([])
+    if ci_list:
+        interface = AlgorithmInterfaceFactory(
+            inputs=ci_list[:-1], outputs=[ci_list[-1]]
+        )
+        phase.algorithm_interfaces.set([interface])
 
     form = PhaseUpdateForm(
         user=UserFactory(), instance=phase, **{"challenge": phase.challenge}
     )
 
-    assert form.fields["view_content"].help_text == expected_help_text
+    assert sorted(
+        [interface.pk for interface in phase.linked_component_interfaces]
+    ) == [interface.pk for interface in ci_list]
+    assert expected_help_text in form.fields["view_content"].help_text
 
 
 @pytest.mark.django_db
@@ -642,14 +654,14 @@ def test_phase_update_form_view_content_help_text(
             None,
         ),
         (
-            1,
+            2,
             0,
             0,
-            {"main": ["test-ci-image-0"]},
+            {"main": ["test-ci-image-0"], "secondary": ["test-ci-image-1"]},
         ),
         (
             0,
-            1,
+            2,
             0,
             None,
         ),
@@ -741,9 +753,13 @@ def test_generate_view_content_example(
         number_of_isolated_interfaces=number_of_isolated_interfaces,
         number_of_undisplayable_interfaces=0,
     )
-    base_obj = AlgorithmFactory()
-    base_obj.inputs.set(ci_list)
-    form = AlgorithmForm(user=UserFactory(), instance=base_obj)
+    alg = AlgorithmFactory()
+    if ci_list:
+        interface = AlgorithmInterfaceFactory(
+            inputs=ci_list[:-1], outputs=[ci_list[-1]]
+        )
+        alg.interfaces.set([interface])
+    form = AlgorithmForm(user=UserFactory(), instance=alg)
 
     view_content_example = form.generate_view_content_example()
     view_content_example_json = (

@@ -243,12 +243,6 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         related_name="algorithm_interfaces",
         through="algorithms.AlgorithmAlgorithmInterface",
     )
-    inputs = models.ManyToManyField(
-        to=ComponentInterface, related_name="algorithm_inputs", blank=False
-    )
-    outputs = models.ManyToManyField(
-        to=ComponentInterface, related_name="algorithm_outputs", blank=False
-    )
     publications = models.ManyToManyField(
         Publication,
         blank=True,
@@ -562,7 +556,11 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
 
     @cached_property
     def linked_component_interfaces(self):
-        return (self.inputs.all() | self.outputs.all()).distinct()
+        return {
+            ci
+            for interface in self.interfaces.all()
+            for ci in (interface.inputs.all() | interface.outputs.all())
+        }
 
     @cached_property
     def user_statistics(self):

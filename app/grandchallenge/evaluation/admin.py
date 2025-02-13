@@ -88,8 +88,6 @@ class PhaseAdmin(admin.ModelAdmin):
         "give_algorithm_editors_job_view_permissions",
         "challenge_forge_json",
         "algorithm_interfaces",
-        "algorithm_inputs",
-        "algorithm_outputs",
     )
     form = PhaseAdminForm
 
