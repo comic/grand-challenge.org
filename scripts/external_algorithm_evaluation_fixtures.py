@@ -4,6 +4,7 @@ from faker import Faker
 from knox.models import AuthToken, hash_token
 from knox.settings import CONSTANTS
 
+from grandchallenge.algorithms.models import AlgorithmInterface
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.evaluation.models import Phase
 from grandchallenge.evaluation.utils import SubmissionKindChoices
@@ -63,9 +64,10 @@ def _create_external_evaluation_phase(
     existing_phase = challenge.phase_set.get()
 
     p = Phase.objects.create(challenge=challenge, title="Phase 2")
-
-    p.algorithm_inputs.set(inputs)
-    p.algorithm_outputs.set(outputs)
+    interface = AlgorithmInterface.objects.create(
+        inputs=inputs, outputs=outputs
+    )
+    p.algorithm_interfaces.set([interface])
 
     p.title = "External Algorithm Evaluation"
     p.submission_kind = SubmissionKindChoices.ALGORITHM
