@@ -62,7 +62,6 @@ class InterfaceFormFieldFactory:
         user=None,
         required=True,
         initial=None,
-        form_data=None,
         help_text="",
         disabled=False,
     ):
@@ -70,7 +69,6 @@ class InterfaceFormFieldFactory:
         self.user = user
         self.required = required
         self.initial = initial
-        self.form_data = form_data
         self.help_text = help_text
         self.disabled = disabled
 
