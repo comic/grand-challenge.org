@@ -112,10 +112,7 @@ class InterfaceFormFieldFactory:
             JSONValidator(schema=default_schema),
             JSONValidator(schema=self.interface.schema),
         ]
-        extra_help = ""
-        return field_type(
-            help_text=_join_with_br(self.help_text, extra_help), **self.kwargs
-        )
+        return field_type(help_text=self.help_text, **self.kwargs)
 
     def get_file_field(self):
         return FlexibleFileField(
