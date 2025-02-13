@@ -6,7 +6,6 @@ from guardian.shortcuts import assign_perm
 from grandchallenge.cases.widgets import FlexibleImageField, ImageWidgetChoices
 from grandchallenge.components.form_fields import InterfaceFormFieldFactory
 from grandchallenge.components.models import ComponentInterface
-from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.uploads.models import UserUpload
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
@@ -21,14 +20,15 @@ from tests.utils import get_view_for_user
 def test_flexible_image_field_validation():
     user = UserFactory()
     upload1 = UserUploadFactory(creator=user)
+    upload1.status = UserUpload.StatusChoices.COMPLETED
+    upload1.save()
     upload2 = UserUploadFactory()
+    upload2.status = UserUpload.StatusChoices.COMPLETED
+    upload2.save()
     im1, im2 = ImageFactory.create_batch(2)
     assign_perm("cases.view_image", user, im1)
     ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
-    field = FlexibleImageField(
-        image_queryset=get_objects_for_user(user, "cases.view_image"),
-        upload_queryset=UserUpload.objects.filter(creator=user).all(),
-    )
+    field = FlexibleImageField(user=user)
     parsed_value_for_empty_data = field.widget.value_from_datadict(
         data={}, name=ci.slug, files={}
     )
