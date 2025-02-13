@@ -44,7 +44,7 @@ def _join_with_br(a, b):
 INTERFACE_FORM_FIELD_PREFIX = "__INTERFACE_FIELD__"
 
 
-class InterfaceFormField(forms.Field):
+class InterfaceFormField:
     _possible_widgets = {
         UserUploadMultipleWidget,
         UserUploadSingleWidget,
@@ -55,11 +55,24 @@ class InterfaceFormField(forms.Field):
         FileSearchWidget,
     }
 
-    def __init__(self, *, instance=None, user=None, form_data=None, **kwargs):
+    def __init__(
+        self,
+        *,
+        instance=None,
+        user=None,
+        required=True,
+        initial=None,
+        form_data=None,
+        help_text="",
+        disabled=False,
+    ):
         self.instance = instance
         self.user = user
+        self.required = required
+        self.initial = initial
         self.form_data = form_data
-        super().__init__(**kwargs)
+        self.help_text = help_text
+        self.disabled = disabled
 
         self.kwargs = {
             "required": self.required,
