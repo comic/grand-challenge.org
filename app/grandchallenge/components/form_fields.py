@@ -91,21 +91,16 @@ class InterfaceFormField:
             raise RuntimeError(f"Unknown interface kind: {interface}")
 
     def get_initial_value(self):
-        if (
-            isinstance(self.initial, ComponentInterfaceValue)
-            and self.initial.has_value
-        ):
-            if self.interface.is_image_kind:
-                return self.initial.image.pk
-            elif self.interface.requires_file:
-                return self.initial.pk
+        if isinstance(self.initial, ComponentInterfaceValue):
+            if self.initial.has_value:
+                if self.interface.is_image_kind:
+                    return self.initial.image.pk
+                elif self.interface.requires_file:
+                    return self.initial.pk
+                else:
+                    return self.initial.value
             else:
-                return self.initial.value
-        elif (
-            isinstance(self.initial, ComponentInterfaceValue)
-            and not self.initial.has_value
-        ):
-            return None
+                return None
         else:
             return self.initial
 
