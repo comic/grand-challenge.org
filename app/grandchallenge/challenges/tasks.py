@@ -6,7 +6,7 @@ from typing import NamedTuple
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import Count, Max, Min, Q
-from django.utils.timezone import datetime, timedelta
+from django.utils.timezone import datetime
 from psycopg.errors import LockNotAvailable
 
 from grandchallenge.challenges.costs import (
@@ -141,9 +141,7 @@ class OnboardingTaskInfo(NamedTuple):
 @transaction.atomic
 def send_onboarding_task_reminder_emails():
     onboarding_task_info = (
-        OnboardingTask.objects.with_overdue_status(
-            soon_delta=timedelta(days=7)
-        )
+        OnboardingTask.objects.with_overdue_status()
         .values("challenge")
         .annotate(
             num_is_overdue=Count(

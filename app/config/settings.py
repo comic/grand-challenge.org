@@ -1127,7 +1127,7 @@ READER_STUDY_CREATORS_GROUP_NAME = "reader_study_creators"
 ###############################################################################
 
 CHALLENGES_DEFAULT_ACTIVE_MONTHS = 12
-CHALLENGE_ONBOARDING_TASKS_OVERDUE_SOON_CUTOFF = timedelta(hours=72)
+CHALLENGE_ONBOARDING_TASKS_OVERDUE_SOON_CUTOFF = timedelta(days=7)
 
 ###############################################################################
 #
