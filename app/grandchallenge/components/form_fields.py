@@ -90,16 +90,9 @@ class InterfaceFormFieldFactory:
             raise RuntimeError(f"Unknown interface kind: {interface}")
 
     def get_image_field(self):
-        upload_queryset = get_objects_for_user(
-            self.user,
-            "uploads.change_userupload",
-        ).filter(status=UserUpload.StatusChoices.COMPLETED)
-        image_queryset = get_objects_for_user(self.user, "cases.view_image")
         return FlexibleImageField(
             user=self.user,
             initial=self.initial,
-            upload_queryset=upload_queryset,
-            image_queryset=image_queryset,
             help_text=self.help_text,
             **self.kwargs,
         )
