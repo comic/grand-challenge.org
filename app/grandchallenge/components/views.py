@@ -10,7 +10,6 @@ from django.forms import HiddenInput, Media
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
-from django.template.response import TemplateResponse
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.views import View
@@ -524,37 +523,29 @@ class FileWidgetSelectView(LoginRequiredMixin, View):
 
         match widget_choice:
             case FileWidgetChoices.FILE_SEARCH:
-                html_content = render_to_string(
-                    FileSearchWidget.template_name,
-                    {
-                        "widget": FileSearchWidget().get_context(
-                            name=prefixed_interface_slug,
-                            value=None,
-                            attrs={
-                                "help_text": help_text if help_text else None,
-                            },
-                        )["widget"],
-                    },
+                return HttpResponse(
+                    FileSearchWidget().render(
+                        name=prefixed_interface_slug,
+                        value=None,
+                        attrs={
+                            "help_text": help_text if help_text else None,
+                        },
+                    )
                 )
-                return HttpResponse(html_content)
             case FileWidgetChoices.FILE_UPLOAD:
-                html_content = render_to_string(
-                    UserUploadSingleWidget.template_name,
-                    {
-                        "widget": UserUploadSingleWidget().get_context(
-                            name=prefixed_interface_slug,
-                            value=None,
-                            attrs={
-                                "id": prefixed_interface_slug,
-                                "help_text": _join_with_br(
-                                    help_text if help_text else None,
-                                    file_upload_text,
-                                ),
-                            },
-                        )["widget"],
-                    },
+                return HttpResponse(
+                    UserUploadSingleWidget().render(
+                        name=prefixed_interface_slug,
+                        value=None,
+                        attrs={
+                            "id": prefixed_interface_slug,
+                            "help_text": _join_with_br(
+                                help_text if help_text else None,
+                                file_upload_text,
+                            ),
+                        },
+                    )
                 )
-                return HttpResponse(html_content)
             case FileWidgetChoices.FILE_SELECTED:
                 if current_value and (
                     ComponentInterfaceValue.objects.filter(
@@ -568,17 +559,12 @@ class FileWidgetSelectView(LoginRequiredMixin, View):
                     # image, this enables switching back from one of the above widgets
                     # to the chosen image. This make sure the form element with the
                     # right name is available on resubmission.
-                    html_content = render_to_string(
-                        HiddenInput.template_name,
-                        {
-                            "widget": {
-                                "name": prefixed_interface_slug,
-                                "value": current_value,
-                                "type": "hidden",
-                            },
-                        },
+                    return HttpResponse(
+                        HiddenInput().render(
+                            name=prefixed_interface_slug,
+                            value=current_value,
+                        )
                     )
-                    return HttpResponse(html_content)
                 raise Http404(f"Selected file {current_value} not found")
             case FileWidgetChoices.UNDEFINED:
                 # this happens when switching back from one of the
@@ -628,8 +614,4 @@ class FileSearchResultView(
         self.object_list = qs
         context = self.get_context_data(**kwargs)
         context["prefixed_interface_slug"] = prefixed_interface_slug
-        return TemplateResponse(
-            request=request,
-            template=self.template_name,
-            context=context,
-        )
+        return self.render_to_response(context=context)
