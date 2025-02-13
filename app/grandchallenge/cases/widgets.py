@@ -85,7 +85,6 @@ class FlexibleImageField(MultiValueField):
         *args,
         user=None,
         initial=None,
-        require_all_fields=False,
         **kwargs,
     ):
         self.user = user
@@ -114,11 +113,16 @@ class FlexibleImageField(MultiValueField):
         ).filter(status=UserUpload.StatusChoices.COMPLETED)
         image_queryset = get_objects_for_user(self.user, "cases.view_image")
         list_fields = [
-            ModelChoiceField(queryset=image_queryset),
-            ModelMultipleChoiceField(queryset=upload_queryset),
+            ModelChoiceField(queryset=image_queryset, required=False),
+            ModelMultipleChoiceField(queryset=upload_queryset, required=False),
         ]
-        super().__init__(*args, fields=list_fields, initial=initial, **kwargs)
-        self.require_all_fields = require_all_fields
+        super().__init__(
+            *args,
+            fields=list_fields,
+            initial=initial,
+            require_all_fields=False,
+            **kwargs,
+        )
 
     def widget_attrs(self, widget):
         attrs = super().widget_attrs(widget)
