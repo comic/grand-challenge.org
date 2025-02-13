@@ -559,13 +559,14 @@ def test_file_widget_select_view(client):
     ci = ComponentInterfaceFactory(
         kind=FuzzyChoice(InterfaceKind.interface_type_file())
     )
+    prefixed_interface_slug = f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"
     response = get_view_for_user(
         viewname="components:file-widget-select",
         client=client,
         user=user,
         data={
-            f"widget-choice-{ci.slug}": FileWidgetChoices.FILE_SEARCH.name,
-            "prefixed-interface-slug": ci.slug,
+            f"widget-choice-{prefixed_interface_slug}": FileWidgetChoices.FILE_SEARCH.name,
+            "prefixed-interface-slug": prefixed_interface_slug,
         },
     )
     assert '<input class="form-control" type="search"' in str(response.content)
@@ -575,8 +576,8 @@ def test_file_widget_select_view(client):
         client=client,
         user=user,
         data={
-            f"widget-choice-{ci.slug}": FileWidgetChoices.FILE_UPLOAD.name,
-            "prefixed-interface-slug": ci.slug,
+            f"widget-choice-{prefixed_interface_slug}": FileWidgetChoices.FILE_UPLOAD.name,
+            "prefixed-interface-slug": prefixed_interface_slug,
         },
     )
     assert 'class="user-upload"' in str(response2.content)
@@ -586,8 +587,8 @@ def test_file_widget_select_view(client):
         client=client,
         user=user,
         data={
-            f"widget-choice-{ci.slug}": FileWidgetChoices.UNDEFINED.name,
-            "prefixed-interface-slug": ci.slug,
+            f"widget-choice-{prefixed_interface_slug}": FileWidgetChoices.UNDEFINED.name,
+            "prefixed-interface-slug": prefixed_interface_slug,
         },
     )
     assert response3.content == b""
@@ -598,13 +599,15 @@ def test_file_widget_select_view(client):
         client=client,
         user=user,
         data={
-            f"widget-choice-{ci.slug}": FileWidgetChoices.FILE_SELECTED.name,
-            "prefixed-interface-slug": ci.slug,
+            f"widget-choice-{prefixed_interface_slug}": FileWidgetChoices.FILE_SELECTED.name,
+            "prefixed-interface-slug": prefixed_interface_slug,
             "current-value": civ.pk,
         },
     )
     assert format_html(
-        '<input type="hidden" name="{}" value="{}">', ci.slug, civ.pk
+        '<input type="hidden" name="{}" value="{}">',
+        prefixed_interface_slug,
+        civ.pk,
     ) in str(response4.content)
 
     user_upload = UserUploadFactory()
@@ -613,13 +616,15 @@ def test_file_widget_select_view(client):
         client=client,
         user=user,
         data={
-            f"widget-choice-{ci.slug}": FileWidgetChoices.FILE_SELECTED.name,
-            "prefixed-interface-slug": ci.slug,
+            f"widget-choice-{prefixed_interface_slug}": FileWidgetChoices.FILE_SELECTED.name,
+            "prefixed-interface-slug": prefixed_interface_slug,
             "current-value": user_upload.pk,
         },
     )
     assert format_html(
-        '<input type="hidden" name="{}" value="{}">', ci.slug, user_upload.pk
+        '<input type="hidden" name="{}" value="{}">',
+        prefixed_interface_slug,
+        user_upload.pk,
     ) in str(response5.content)
 
     civ_pk = civ.pk
@@ -629,8 +634,8 @@ def test_file_widget_select_view(client):
         client=client,
         user=user,
         data={
-            f"widget-choice-{ci.slug}": FileWidgetChoices.FILE_SELECTED.name,
-            "prefixed-interface-slug": ci.slug,
+            f"widget-choice-{prefixed_interface_slug}": FileWidgetChoices.FILE_SELECTED.name,
+            "prefixed-interface-slug": prefixed_interface_slug,
             "current-value": civ_pk,
         },
     )
@@ -641,22 +646,21 @@ def test_file_widget_select_view(client):
         client=client,
         user=user,
         data={
-            f"widget-choice-{ci.slug}": FileWidgetChoices.FILE_SEARCH.name
+            f"widget-choice-{prefixed_interface_slug}": FileWidgetChoices.FILE_SEARCH.name
             + "foobar",
-            "prefixed-interface-slug": ci.slug,
+            "prefixed-interface-slug": prefixed_interface_slug,
         },
     )
     assert response7.status_code == 404
 
-    ci_slug = ci.slug
     ci.delete()
     response8 = get_view_for_user(
         viewname="components:file-widget-select",
         client=client,
         user=user,
         data={
-            f"widget-choice-{ci_slug}": FileWidgetChoices.FILE_SEARCH.name,
-            "prefixed-interface-slug": ci_slug,
+            f"widget-choice-{prefixed_interface_slug}": FileWidgetChoices.FILE_SEARCH.name,
+            "prefixed-interface-slug": prefixed_interface_slug,
         },
     )
     assert response8.status_code == 404
@@ -926,7 +930,7 @@ def test_file_search_result_view_filter_by_pk(client):
         method=client.get,
         data={
             "prefixed-interface-slug": prefixed_interface_slug,
-            f"query-{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}": f"{civ1.pk}",
+            f"query-{prefixed_interface_slug}": f"{civ1.pk}",
         },
         user=user,
     )
@@ -981,7 +985,7 @@ def test_file_search_result_view_filter_by_name(client):
         method=client.get,
         data={
             "prefixed-interface-slug": prefixed_interface_slug,
-            f"query-{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}": "foobar",
+            f"query-{prefixed_interface_slug}": "foobar",
         },
         user=user,
     )
