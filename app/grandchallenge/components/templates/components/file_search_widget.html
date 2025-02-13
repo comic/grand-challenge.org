@@ -8,7 +8,7 @@
      hx-trigger="load once, keyup[target.value.length > 1] delay:500ms from:#query-{{ widget.name }},
      click[keyCode==8] delay:500ms from:#query-{{ widget.name }}"
      hx-target="#selected-file-{{ widget.name }}"
-     hx-swap="outerHTML"
+     hx-swap="innerHTML"
      hx-include="[id='file-input-group-{{ widget.name }}']"
 >
     <div class="input-group" id="file-input-group-{{ widget.name }}">
@@ -17,11 +17,11 @@
                id="query-{{ widget.name }}"
                placeholder="Search by pk or file name"
         >
-        <select class="custom-select" name="file"
+        <select class="custom-select"
+                name="{{ widget.name }}"
                 id="selected-file-{{ widget.name }}">
             <option value="">No file selected</option>
         </select>
-        <input type="hidden" name="prefixed-interface-slug" value="{{ widget.name }}">
     </div>
 
     <small class="form-text text-muted">
