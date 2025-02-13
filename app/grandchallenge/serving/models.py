@@ -66,8 +66,6 @@ def get_component_interface_values_for_user(
 
     civs = ComponentInterfaceValue.objects.filter(**extra_filter_kwargs)
 
-    pks_for_filter = []
-
     job_query = filter_by_permission(
         queryset=Job.objects.all(),
         user=user,
@@ -85,8 +83,6 @@ def get_component_interface_values_for_user(
         .distinct()
         .values_list("outputs__pk", flat=True)
     )
-    pks_for_filter.extend(job_inputs)
-    pks_for_filter.extend(job_outputs)
 
     display_sets = (
         filter_by_permission(
@@ -99,7 +95,6 @@ def get_component_interface_values_for_user(
         .distinct()
         .values_list("values__pk", flat=True)
     )
-    pks_for_filter.extend(display_sets)
 
     archive_items = (
         filter_by_permission(
@@ -112,6 +107,12 @@ def get_component_interface_values_for_user(
         .distinct()
         .values_list("values__pk", flat=True)
     )
-    pks_for_filter.extend(archive_items)
 
-    return civs.filter(pk__in=pks_for_filter)
+    return civs.filter(
+        pk__in=[
+            *job_inputs,
+            *job_outputs,
+            *display_sets,
+            *archive_items,
+        ]
+    )
