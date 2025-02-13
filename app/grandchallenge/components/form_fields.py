@@ -112,7 +112,7 @@ class InterfaceFormField(forms.Field):
             elif UserUpload.objects.filter(pk=self.initial).exists():
                 current_value = UserUpload.objects.get(pk=self.initial)
             else:
-                raise RuntimeError(
+                raise TypeError(
                     f"Unknown type for initial value: {self.initial}"
                 )
 
@@ -172,7 +172,7 @@ class InterfaceFormField(forms.Field):
             elif UserUpload.objects.filter(pk=self.initial).exists():
                 current_value = UserUpload.objects.get(pk=self.initial)
             else:
-                raise RuntimeError(
+                raise TypeError(
                     f"Unknown type for initial value: {self.initial}"
                 )
 
