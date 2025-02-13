@@ -156,7 +156,7 @@ class InterfaceFormField(forms.Field):
             if isinstance(self.initial, ComponentInterfaceValue):
                 # This can happen on display set or archive item update forms, the value is then taken from the model
                 # instance unless the value is in the form data.
-                current_value = self.initial.file
+                current_value = self.initial
             # Otherwise the value is taken from the form data and will always take the form of a pk for either
             # a ComponentInterfaceValue object (in this case the pk is a digit) or
             # a UserUpload object (then the pk is a UUID).
