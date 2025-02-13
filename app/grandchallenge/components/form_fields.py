@@ -67,14 +67,12 @@ class InterfaceFormFieldFactory:
     ):
         self.interface = interface
         self.user = user
-        self.required = required
         self.initial = initial
         self.help_text = help_text
-        self.disabled = disabled
 
         self.kwargs = {
-            "required": self.required,
-            "disabled": self.disabled,
+            "required": required,
+            "disabled": disabled,
             "initial": self.get_initial_value(),
             "label": interface.title.title(),
         }
