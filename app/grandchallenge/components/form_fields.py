@@ -14,7 +14,6 @@ from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.widgets import (
     FileSearchWidget,
     FlexibleFileWidget,
-    ParentObjectTypeChoices,
 )
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.validators import JSONValidator
@@ -185,7 +184,6 @@ class InterfaceFormField(forms.Field):
         return FlexibleFileField(
             user=self.user,
             interface=self.instance,
-            form_data=self.form_data,
             **self.kwargs,
         )
 
@@ -209,28 +207,15 @@ class FlexibleFileField(MultiValueField):
         *args,
         user=None,
         interface=None,
-        form_data=None,
         disabled=False,
         **kwargs,
     ):
         self.user = user
         self.interface = interface
-        file_search_queryset = ComponentInterfaceValue.objects.none()
-        if form_data is not None:
-            parent_object_type_choice_name = form_data.get(
-                f"parent-object-type-"
-                f"{INTERFACE_FORM_FIELD_PREFIX}"
-                f"{self.interface.slug}"
-            )
-            if parent_object_type_choice_name:
-                parent_object_type_choice = ParentObjectTypeChoices(
-                    parent_object_type_choice_name,
-                )
-                file_search_queryset = get_component_interface_values_for_user(
-                    user=self.user,
-                    interface=self.interface,
-                    parent_object_type_choice=parent_object_type_choice,
-                )
+        file_search_queryset = get_component_interface_values_for_user(
+            user=self.user,
+            interface=self.interface,
+        )
         upload_queryset = get_objects_for_user(
             self.user,
             "uploads.change_userupload",

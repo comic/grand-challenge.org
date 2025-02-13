@@ -2,12 +2,8 @@ import pytest
 from django.core.exceptions import ValidationError
 from factory.fuzzy import FuzzyChoice
 
-from grandchallenge.components.form_fields import (
-    INTERFACE_FORM_FIELD_PREFIX,
-    FlexibleFileField,
-)
+from grandchallenge.components.form_fields import FlexibleFileField
 from grandchallenge.components.models import InterfaceKind
-from grandchallenge.components.widgets import ParentObjectTypeChoices
 from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
@@ -107,11 +103,6 @@ def test_flexible_file_field_validation_with_algorithm_job_inputs():
     field = FlexibleFileField(
         user=user,
         interface=ci,
-        form_data={
-            f"parent-object-type-"
-            f"{INTERFACE_FORM_FIELD_PREFIX}"
-            f"{ci.slug}": ParentObjectTypeChoices.JOB.name
-        },
     )
 
     parsed_value_for_file_with_permission = field.widget.value_from_datadict(
@@ -161,11 +152,6 @@ def test_flexible_file_field_validation_with_algorithm_job_outputs():
     field = FlexibleFileField(
         user=user,
         interface=ci,
-        form_data={
-            f"parent-object-type-"
-            f"{INTERFACE_FORM_FIELD_PREFIX}"
-            f"{ci.slug}": ParentObjectTypeChoices.JOB.name
-        },
     )
 
     parsed_value_for_file_with_permission = field.widget.value_from_datadict(
@@ -214,11 +200,6 @@ def test_flexible_file_field_validation_with_display_sets():
     field = FlexibleFileField(
         user=user,
         interface=ci,
-        form_data={
-            f"parent-object-type-"
-            f"{INTERFACE_FORM_FIELD_PREFIX}"
-            f"{ci.slug}": ParentObjectTypeChoices.DISPLAY_SET.name
-        },
     )
 
     parsed_value_for_file_with_permission = field.widget.value_from_datadict(
@@ -270,11 +251,6 @@ def test_flexible_file_field_validation_with_archive_items():
     field = FlexibleFileField(
         user=user,
         interface=ci,
-        form_data={
-            f"parent-object-type-"
-            f"{INTERFACE_FORM_FIELD_PREFIX}"
-            f"{ci.slug}": ParentObjectTypeChoices.ARCHIVE_ITEM.name
-        },
     )
 
     parsed_value_for_file_with_permission = field.widget.value_from_datadict(

@@ -6,32 +6,21 @@
      id="search-file-{{ widget.name }}"
      hx-get="{% url 'components:file-search' %}"
      hx-trigger="load once, keyup[target.value.length > 1] delay:500ms from:#query-{{ widget.name }},
-     click[keyCode==8] delay:500ms from:#query-{{ widget.name }}, change from:#selected-parent-object-type-{{ widget.name }}"
+     click[keyCode==8] delay:500ms from:#query-{{ widget.name }}"
      hx-target="#selected-file-{{ widget.name }}"
      hx-swap="outerHTML"
      hx-include="[id='file-input-group-{{ widget.name }}']"
 >
     <div class="input-group" id="file-input-group-{{ widget.name }}">
-        <div class="input-group">
-            <div class="input-group-prepend"><span class="input-group-text">Select a file from</span></div>
-            <select class="custom-select" name="parent-object-type-{{ widget.name }}" id="selected-parent-object-type-{{ widget.name }}">
-                <option value="">Search for files related to...</option>
-                <option value="{{ widget.parent_object_type_choices.JOB }}">Algorithm Jobs</option>
-                <option value="{{ widget.parent_object_type_choices.DISPLAY_SET }}">Reader studies</option>
-                <option value="{{ widget.parent_object_type_choices.ARCHIVE_ITEM }}">Archives</option>
-                <option value="{{ widget.parent_object_type_choices.ALL }}">All items</option>
-            </select>
-        </div>
-        <div class="input-group">
-            <input class="form-control" type="search" name="query-{{ widget.name }}"
-                   id="query-{{ widget.name }}"
-                   placeholder="Search by pk or file name"
-            >
-            <select class="custom-select" name="file"
-                    id="selected-file-{{ widget.name }}">
-                <option value="">No file selected</option>
-            </select>
-        </div>
+        <div class="input-group-prepend"><span class="input-group-text">Select a file</span></div>
+        <input class="form-control" type="search" name="query-{{ widget.name }}"
+               id="query-{{ widget.name }}"
+               placeholder="Search by pk or file name"
+        >
+        <select class="custom-select" name="file"
+                id="selected-file-{{ widget.name }}">
+            <option value="">No file selected</option>
+        </select>
         <input type="hidden" name="prefixed-interface-slug" value="{{ widget.name }}">
     </div>
 

@@ -1,6 +1,5 @@
 import pytest
 
-from grandchallenge.components.widgets import ParentObjectTypeChoices
 from grandchallenge.serving.models import (
     get_component_interface_values_for_user,
 )
@@ -85,22 +84,3 @@ def test_get_component_interface_values_for_user():
         set(get_component_interface_values_for_user(user=user, civ_pk=civ2.pk))
         == set()
     )
-
-    # subset by parent object type choice
-    assert set(
-        get_component_interface_values_for_user(
-            user=user, parent_object_type_choice=ParentObjectTypeChoices.JOB
-        )
-    ) == {civ1, civ3, civ9, civ11}
-    assert set(
-        get_component_interface_values_for_user(
-            user=user,
-            parent_object_type_choice=ParentObjectTypeChoices.DISPLAY_SET,
-        )
-    ) == {civ5, civ13}
-    assert set(
-        get_component_interface_values_for_user(
-            user=user,
-            parent_object_type_choice=ParentObjectTypeChoices.ARCHIVE_ITEM,
-        )
-    ) == {civ7, civ15}

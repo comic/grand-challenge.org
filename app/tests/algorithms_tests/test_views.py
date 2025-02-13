@@ -25,7 +25,6 @@ from grandchallenge.components.models import (
     InterfaceKindChoices,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
-from grandchallenge.components.widgets import ParentObjectTypeChoices
 from grandchallenge.profiles.templatetags.profiles import user_profile_link
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
@@ -1290,7 +1289,6 @@ class TestJobCreateView:
                     interface_slug=algorithm_with_multiple_inputs.ci_json_file.slug,
                     data=civ5.pk,
                     existing_data=True,
-                    parent_object_type_choice=ParentObjectTypeChoices.JOB,
                 ),
                 **get_interface_form_data(
                     interface_slug=algorithm_with_multiple_inputs.ci_json_in_db_with_schema.slug,

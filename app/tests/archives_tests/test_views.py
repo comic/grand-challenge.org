@@ -14,7 +14,6 @@ from grandchallenge.archives.views import (
 )
 from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
-from grandchallenge.components.widgets import ParentObjectTypeChoices
 from grandchallenge.notifications.models import Notification
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
@@ -1008,7 +1007,6 @@ def test_archive_item_add_json_file(
                         interface_slug=ci.slug,
                         data=civ.pk,
                         existing_data=True,
-                        parent_object_type_choice=ParentObjectTypeChoices.ARCHIVE_ITEM,
                     )
                 },
             )
@@ -1166,7 +1164,6 @@ def test_archive_item_create_view(
                 **get_interface_form_data(
                     interface_slug=ci_json.slug,
                     data=str(upload.pk),
-                    parent_object_type_choice=ParentObjectTypeChoices.ARCHIVE_ITEM,
                 ),
                 **get_interface_form_data(
                     interface_slug=ci_json2.slug, data='{"some": "content"}'

@@ -11,7 +11,6 @@ from grandchallenge.components.form_fields import (
     FlexibleFileField,
 )
 from grandchallenge.components.models import ComponentInterfaceValue
-from grandchallenge.components.widgets import ParentObjectTypeChoices
 from grandchallenge.notifications.models import Notification
 from grandchallenge.reader_studies.models import (
     Answer,
@@ -493,7 +492,6 @@ def test_display_set_update(
                     interface_slug=ci_json_file.slug,
                     data=str(civ_json_file_new.pk),
                     existing_data=True,
-                    parent_object_type_choice=ParentObjectTypeChoices.DISPLAY_SET,
                 ),
                 "order": 11,
                 "title": "foobar",
