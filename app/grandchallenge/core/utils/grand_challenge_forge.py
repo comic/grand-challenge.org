@@ -25,7 +25,7 @@ def get_forge_challenge_pack_context(challenge, phase_pks=None):
     phases = challenge.phase_set.filter(
         archive__isnull=False,
         submission_kind=SubmissionKindChoices.ALGORITHM,
-    ).prefetch_related("archive", "algorithm_inputs", "algorithm_outputs")
+    ).prefetch_related("archive", "algorithm_interfaces")
 
     if phase_pks is not None:
         phases = phases.filter(pk__in=phase_pks)
@@ -39,16 +39,21 @@ def get_forge_challenge_pack_context(challenge, phase_pks=None):
         }
 
     def process_phase(phase):
+        interfaces = phase.algorithm_interfaces.all()
+        inputs = {
+            ci for interface in interfaces for ci in interface.inputs.all()
+        }
+        outputs = {
+            ci for interface in interfaces for ci in interface.outputs.all()
+        }
         return {
             "slug": phase.slug,
             "archive": process_archive(phase.archive),
             "algorithm_inputs": [
-                _process_component_interface(ci)
-                for ci in phase.algorithm_inputs.all()
+                _process_component_interface(ci) for ci in inputs
             ],
             "algorithm_outputs": [
-                _process_component_interface(ci)
-                for ci in phase.algorithm_outputs.all()
+                _process_component_interface(ci) for ci in outputs
             ],
         }
 
@@ -63,18 +68,17 @@ def get_forge_challenge_pack_context(challenge, phase_pks=None):
 
 
 def get_forge_algorithm_template_context(algorithm):
+    interfaces = algorithm.interfaces.all()
+    inputs = {ci for interface in interfaces for ci in interface.inputs.all()}
+    outputs = {
+        ci for interface in interfaces for ci in interface.outputs.all()
+    }
     return {
         "algorithm": {
             "title": algorithm.title,
             "slug": algorithm.slug,
             "url": algorithm.get_absolute_url(),
-            "inputs": [
-                _process_component_interface(ci)
-                for ci in algorithm.inputs.all()
-            ],
-            "outputs": [
-                _process_component_interface(ci)
-                for ci in algorithm.outputs.all()
-            ],
+            "inputs": [_process_component_interface(ci) for ci in inputs],
+            "outputs": [_process_component_interface(ci) for ci in outputs],
         }
     }
