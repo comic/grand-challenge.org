@@ -610,6 +610,4 @@ class FileSearchResultView(
             )
             qs = qs.filter(q).order_by("file")
         self.object_list = qs
-        context = self.get_context_data(**kwargs)
-        context["prefixed_interface_slug"] = prefixed_interface_slug
-        return self.render_to_response(context=context)
+        return self.render_to_response(self.get_context_data(**kwargs))
