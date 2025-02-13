@@ -72,10 +72,10 @@ class InterfaceFormFieldFactory:
         self.interface = interface
         self.user = user
         self.initial = initial
-        self.help_text = help_text
 
         self.kwargs = {
             "required": required,
+            "help_text": help_text,
             "disabled": disabled,
             "label": interface.title.title(),
         }
@@ -93,7 +93,6 @@ class InterfaceFormFieldFactory:
         return FlexibleImageField(
             user=self.user,
             initial=self.initial,
-            help_text=self.help_text,
             **self.kwargs,
         )
 
@@ -112,14 +111,13 @@ class InterfaceFormFieldFactory:
             JSONValidator(schema=default_schema),
             JSONValidator(schema=self.interface.schema),
         ]
-        return field_type(help_text=self.help_text, **self.kwargs)
+        return field_type(**self.kwargs)
 
     def get_file_field(self):
         return FlexibleFileField(
             user=self.user,
             interface=self.interface,
             initial=self.initial,
-            help_text=self.help_text,
             **self.kwargs,
         )
 
