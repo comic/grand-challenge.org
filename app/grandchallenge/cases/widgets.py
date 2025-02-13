@@ -10,6 +10,8 @@ from django.forms import (
 from django.forms.widgets import ChoiceWidget
 
 from grandchallenge.cases.models import Image
+from grandchallenge.components.models import ComponentInterfaceValue
+from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadMultipleWidget
 
 
@@ -81,19 +83,37 @@ class FlexibleImageField(MultiValueField):
         self,
         *args,
         user=None,
-        current_value=None,
+        initial=None,
         require_all_fields=False,
         image_queryset=None,
         upload_queryset=None,
         **kwargs,
     ):
         self.user = user
-        self.current_value = current_value
+
+        # The `current_value` is added to the widget attrs to display in the initial dropdown.
+        # We get the object so we can present the user with the image name rather than the pk.
+        self.current_value = None
+        if initial:
+            if isinstance(initial, ComponentInterfaceValue):
+                # This can happen on display set or archive item update forms, the value is then taken from the model
+                # instance unless the value is in the form data.
+                self.current_value = initial.image
+                initial = initial.image.pk
+            # Otherwise the value is taken from the form data and will always take the form of a pk for either
+            # an Image object or a UserUpload object.
+            elif Image.objects.filter(pk=initial).exists():
+                self.current_value = Image.objects.get(pk=initial)
+            elif UserUpload.objects.filter(pk=initial).exists():
+                self.current_value = UserUpload.objects.get(pk=initial)
+            else:
+                raise TypeError(f"Unknown type for initial value: {initial}")
+
         list_fields = [
             ModelChoiceField(queryset=image_queryset),
             ModelMultipleChoiceField(queryset=upload_queryset),
         ]
-        super().__init__(*args, fields=list_fields, **kwargs)
+        super().__init__(*args, fields=list_fields, initial=initial, **kwargs)
         self.require_all_fields = require_all_fields
 
     def widget_attrs(self, widget):

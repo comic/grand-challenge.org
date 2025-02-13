@@ -3,7 +3,6 @@ from django.core.exceptions import ValidationError
 from django.db.models import TextChoices
 from django.forms import ModelChoiceField, MultiValueField
 
-from grandchallenge.cases.models import Image
 from grandchallenge.cases.widgets import (
     FlexibleImageField,
     FlexibleImageWidget,
@@ -91,30 +90,6 @@ class InterfaceFormFieldFactory:
             raise RuntimeError(f"Unknown interface kind: {interface}")
 
     def get_image_field(self):
-        if isinstance(self.initial, ComponentInterfaceValue):
-            self.kwargs["initial"] = self.initial.image.pk
-        else:
-            self.kwargs["initial"] = self.initial
-
-        current_value = None
-
-        if self.initial:
-            if isinstance(self.initial, ComponentInterfaceValue):
-                # This can happen on display set or archive item update forms, the value is then taken from the model
-                # instance unless the value is in the form data.
-                current_value = self.initial.image
-            # Otherwise the value is taken from the form data and will always take the form of a pk for either
-            # an Image object or a UserUpload object.
-            # We get the object so we can present the user with the image name rather than the pk.
-            elif Image.objects.filter(pk=self.initial).exists():
-                current_value = Image.objects.get(pk=self.initial)
-            elif UserUpload.objects.filter(pk=self.initial).exists():
-                current_value = UserUpload.objects.get(pk=self.initial)
-            else:
-                raise TypeError(
-                    f"Unknown type for initial value: {self.initial}"
-                )
-
         upload_queryset = get_objects_for_user(
             self.user,
             "uploads.change_userupload",
@@ -122,7 +97,7 @@ class InterfaceFormFieldFactory:
         image_queryset = get_objects_for_user(self.user, "cases.view_image")
         return FlexibleImageField(
             user=self.user,
-            current_value=current_value,
+            initial=self.initial,
             upload_queryset=upload_queryset,
             image_queryset=image_queryset,
             help_text=self.help_text,
@@ -150,40 +125,10 @@ class InterfaceFormFieldFactory:
         )
 
     def get_file_field(self):
-        if isinstance(self.initial, ComponentInterfaceValue):
-            self.kwargs["initial"] = self.initial.pk
-        else:
-            self.kwargs["initial"] = self.initial
-        current_value = None
-
-        if self.initial:
-            if isinstance(self.initial, ComponentInterfaceValue):
-                # This can happen on display set or archive item update forms, the value is then taken from the model
-                # instance unless the value is in the form data.
-                current_value = self.initial
-            # Otherwise the value is taken from the form data and will always take the form of a pk for either
-            # a ComponentInterfaceValue object (in this case the pk is a digit) or
-            # a UserUpload object (then the pk is a UUID).
-            # We get the object so we can present the user with the image name rather than the pk.
-            elif (
-                isinstance(self.initial, int) or self.initial.isdigit()
-            ) and ComponentInterfaceValue.objects.filter(
-                pk=self.initial
-            ).exists():
-                current_value = ComponentInterfaceValue.objects.get(
-                    pk=self.initial
-                )
-            elif UserUpload.objects.filter(pk=self.initial).exists():
-                current_value = UserUpload.objects.get(pk=self.initial)
-            else:
-                raise TypeError(
-                    f"Unknown type for initial value: {self.initial}"
-                )
-
         return FlexibleFileField(
             user=self.user,
             interface=self.interface,
-            current_value=current_value,
+            initial=self.initial,
             help_text=self.help_text,
             **self.kwargs,
         )
@@ -209,12 +154,35 @@ class FlexibleFileField(MultiValueField):
         *args,
         user=None,
         interface=None,
-        current_value=None,
+        initial=None,
         **kwargs,
     ):
         self.user = user
         self.interface = interface
-        self.current_value = current_value
+
+        # The `current_value` is added to the widget attrs to display in the initial dropdown.
+        # We get the object so we can present the user with the filename rather than the pk.
+        self.current_value = None
+        if initial:
+            if isinstance(initial, ComponentInterfaceValue):
+                # This can happen on display set or archive item update forms, the value is then taken from the model
+                # instance unless the value is in the form data.
+                self.current_value = initial
+                initial = initial.pk
+            # Otherwise the value is taken from the form data and will always take the form of a pk for either
+            # a ComponentInterfaceValue object (in this case the pk is a digit) or
+            # a UserUpload object (then the pk is a UUID).
+            elif (
+                isinstance(initial, int) or initial.isdigit()
+            ) and ComponentInterfaceValue.objects.filter(pk=initial).exists():
+                self.current_value = ComponentInterfaceValue.objects.get(
+                    pk=initial
+                )
+            elif UserUpload.objects.filter(pk=initial).exists():
+                self.current_value = UserUpload.objects.get(pk=initial)
+            else:
+                raise TypeError(f"Unknown type for initial value: {initial}")
+
         file_search_queryset = get_component_interface_values_for_user(
             user=self.user,
             interface=self.interface,
@@ -231,6 +199,7 @@ class FlexibleFileField(MultiValueField):
             *args,
             fields=fields,
             require_all_fields=False,
+            initial=initial,
             **kwargs,
         )
 
