@@ -812,7 +812,6 @@ def test_create_algorithm_for_phase_presets(client):
     phase.creator_must_be_verified = True
     phase.archive = ArchiveFactory()
     ci1 = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
-    ci2 = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
     optional_protocol = HangingProtocolFactory()
 
     interface1, interface2 = AlgorithmInterfaceFactory.create_batch(2)
@@ -947,8 +946,7 @@ def test_create_algorithm_for_phase_presets(client):
         data={
             "title": "Test algorithm",
             "job_requires_memory_gb": 8,
-            "inputs": [ci3.pk],
-            "outputs": [ci2.pk],
+            "interfaces": [interface1.pk],
             "workstation": ws.pk,
             "hanging_protocol": hp.pk,
             "optional_hanging_protocols": [oph.pk],
