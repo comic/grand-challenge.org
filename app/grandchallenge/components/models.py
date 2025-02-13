@@ -40,7 +40,6 @@ from django_extensions.db.fields import AutoSlugField
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
-from grandchallenge.cases.widgets import FlexibleImageField
 from grandchallenge.charts.specs import components_line
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
@@ -533,7 +532,7 @@ class ComponentInterface(OverlaySegmentsMixin):
         if self.requires_file:
             return ModelChoiceField
         elif self.is_image_kind:
-            return FlexibleImageField
+            return ModelChoiceField
         elif self.kind in {
             InterfaceKind.InterfaceKindChoices.STRING,
             InterfaceKind.InterfaceKindChoices.CHOICE,
