@@ -40,10 +40,10 @@ def test_interface_form_field_image_queryset_filter():
     upload1.save()
     ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
     field = InterfaceFormFieldFactory(interface=ci, user=user)
-    assert im1 in field.field.fields[0].queryset.all()
-    assert im2 not in field.field.fields[0].queryset.all()
-    assert upload1 in field.field.fields[1].queryset.all()
-    assert upload2 not in field.field.fields[1].queryset.all()
+    assert im1 in field.fields[0].queryset.all()
+    assert im2 not in field.fields[0].queryset.all()
+    assert upload1 in field.fields[1].queryset.all()
+    assert upload2 not in field.fields[1].queryset.all()
 
 
 @pytest.mark.parametrize(

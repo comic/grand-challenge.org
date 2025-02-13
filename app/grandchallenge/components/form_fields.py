@@ -54,8 +54,8 @@ class InterfaceFormFieldFactory:
         FileSearchWidget,
     }
 
-    def __init__(
-        self,
+    def __new__(
+        cls,
         *,
         interface=None,
         user=None,
@@ -69,11 +69,8 @@ class InterfaceFormFieldFactory:
             and not initial.has_value
         ):
             initial = None
-        self.interface = interface
-        self.user = user
-        self.initial = initial
 
-        self.kwargs = {
+        kwargs = {
             "required": required,
             "help_text": help_text,
             "disabled": disabled,
@@ -81,49 +78,44 @@ class InterfaceFormFieldFactory:
         }
 
         if interface.is_image_kind:
-            self._field = self.get_image_field()
+            return FlexibleImageField(
+                user=user,
+                initial=initial,
+                **kwargs,
+            )
         elif interface.requires_file:
-            self._field = self.get_file_field()
+            return FlexibleFileField(
+                user=user,
+                interface=interface,
+                initial=initial,
+                **kwargs,
+            )
         elif interface.is_json_kind:
-            self._field = self.get_json_field()
+            return cls.get_json_field(
+                interface=interface,
+                initial=initial,
+                **kwargs,
+            )
         else:
             raise RuntimeError(f"Unknown interface kind: {interface}")
 
-    def get_image_field(self):
-        return FlexibleImageField(
-            user=self.user,
-            initial=self.initial,
-            **self.kwargs,
-        )
-
-    def get_json_field(self):
-        if isinstance(self.initial, ComponentInterfaceValue):
-            self.initial = self.initial.value
-        self.kwargs["initial"] = self.initial
-        field_type = self.interface.default_field
+    @staticmethod
+    def get_json_field(interface, initial, **kwargs):
+        if isinstance(initial, ComponentInterfaceValue):
+            initial = initial.value
+        kwargs["initial"] = initial
+        field_type = interface.default_field
         default_schema = {
             **INTERFACE_VALUE_SCHEMA,
-            "anyOf": [{"$ref": f"#/definitions/{self.interface.kind}"}],
+            "anyOf": [{"$ref": f"#/definitions/{interface.kind}"}],
         }
         if field_type == forms.JSONField:
-            self.kwargs["widget"] = JSONEditorWidget(schema=default_schema)
-        self.kwargs["validators"] = [
+            kwargs["widget"] = JSONEditorWidget(schema=default_schema)
+        kwargs["validators"] = [
             JSONValidator(schema=default_schema),
-            JSONValidator(schema=self.interface.schema),
+            JSONValidator(schema=interface.schema),
         ]
-        return field_type(**self.kwargs)
-
-    def get_file_field(self):
-        return FlexibleFileField(
-            user=self.user,
-            interface=self.interface,
-            initial=self.initial,
-            **self.kwargs,
-        )
-
-    @property
-    def field(self):
-        return self._field
+        return field_type(**kwargs)
 
 
 class FileWidgetChoices(TextChoices):

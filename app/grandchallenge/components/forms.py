@@ -143,7 +143,7 @@ class MultipleCIVForm(Form):
                 user=self.user,
                 required=False,
                 initial=current_value,
-            ).field
+            )
 
         # Add fields for dynamically added new interfaces:
         # These are sent along as form data like all other fields, so we can't
@@ -172,7 +172,7 @@ class MultipleCIVForm(Form):
                     user=self.user,
                     required=False,
                     initial=current_value,
-                ).field
+                )
 
     def process_object_data(self):
         civs = []
@@ -312,7 +312,7 @@ class SingleCIVForm(Form):
                 interface=selected_interface,
                 user=user,
                 required=selected_interface.value_required,
-            ).field
+            )
 
 
 class CIVSetDeleteForm(Form):
