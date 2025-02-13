@@ -1,5 +1,3 @@
-from dal import autocomplete
-from django.contrib.auth import get_user_model
 from django.contrib.messages.views import SuccessMessageMixin
 from django.views.generic import FormView, ListView
 from guardian.mixins import LoginRequiredMixin
@@ -34,27 +32,6 @@ class AdminsList(LoginRequiredMixin, ObjectPermissionRequiredMixin, ListView):
         )
 
 
-class AdminsUpdateAutocomplete(
-    LoginRequiredMixin,
-    ObjectPermissionRequiredMixin,
-    autocomplete.Select2QuerySetView,
-):
-    permission_required = "change_challenge"
-    raise_exception = True
-    login_url = reverse_lazy("account_login")
-
-    def get_permission_object(self):
-        return self.request.challenge
-
-    def get_queryset(self):
-        qs = get_user_model().objects.all().order_by("username")
-
-        if self.q:
-            qs = qs.filter(username__istartswith=self.q)
-
-        return qs
-
-
 class AdminsUpdate(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
@@ -79,5 +56,5 @@ class AdminsUpdate(
 
     def form_valid(self, form):
         challenge = self.request.challenge
-        form.add_or_remove_user(challenge=challenge, site=self.request.site)
+        form.add_or_remove_user(obj=challenge)
         return super().form_valid(form)

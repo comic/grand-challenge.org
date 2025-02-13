@@ -17,7 +17,19 @@ from django.core.validators import (
     validate_slug,
 )
 from django.db import models
-from django.db.models import ExpressionWrapper, F, OuterRef, Q, Subquery, Sum
+from django.db.models import (
+    BooleanField,
+    Case,
+    Count,
+    ExpressionWrapper,
+    F,
+    OuterRef,
+    Q,
+    Subquery,
+    Sum,
+    Value,
+    When,
+)
 from django.db.models.signals import post_delete, pre_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
@@ -52,6 +64,7 @@ from grandchallenge.components.schemas import (
     GPUTypeChoices,
     get_default_gpu_type_choices,
 )
+from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import (
     get_banner_path,
@@ -1410,13 +1423,51 @@ class TaskResponsiblePartyChoices(models.TextChoices):
     CHALLENGE_ORGANIZERS = "ORG", "Challenge Organizers"
 
 
+class OnboardingTaskQuerySet(models.QuerySet):
+    def with_overdue_status(self):
+        _now = now()
+        soon_cutoff = (
+            _now + settings.CHALLENGE_ONBOARDING_TASKS_OVERDUE_SOON_CUTOFF
+        )
+
+        return self.annotate(
+            is_overdue=Case(
+                When(complete=False, deadline__lt=_now, then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField(),
+            ),
+            is_overdue_soon=Case(
+                When(
+                    complete=False,
+                    is_overdue=False,
+                    deadline__lt=soon_cutoff,
+                    then=Value(True),
+                ),
+                default=Value(False),
+                output_field=BooleanField(),
+            ),
+        )
+
+    def updatable_by(self, user):
+        return filter_by_permission(
+            queryset=self,
+            user=user,
+            codename="change_onboardingtask",
+            accept_user_perms=False,
+        )
+
+    @property
+    def status_aggregates(self):
+        return self.aggregate(
+            num_is_overdue=Count("pk", filter=Q(is_overdue=True)),
+            num_is_overdue_soon=Count("pk", filter=Q(is_overdue_soon=True)),
+        )
+
+
 class OnboardingTask(FieldChangeMixin, UUIDModel):
     ResponsiblePartyChoices = TaskResponsiblePartyChoices
 
-    class Meta:
-        permissions = [
-            ("complete_onboaringtask", "Can mark this task as completed")
-        ]
+    objects = OnboardingTaskQuerySet.as_manager()
 
     created = models.DateTimeField(editable=False)
     challenge = models.ForeignKey(
@@ -1472,11 +1523,17 @@ class OnboardingTask(FieldChangeMixin, UUIDModel):
             == self.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS
         ):
             assign_perm(
-                "complete_onboaringtask", self.challenge.admins_group, self
+                "change_onboardingtask", self.challenge.admins_group, self
+            )
+            assign_perm(
+                "view_onboardingtask", self.challenge.admins_group, self
             )
         else:
             remove_perm(
-                "complete_onboaringtask", self.challenge.admins_group, self
+                "change_onboardingtask", self.challenge.admins_group, self
+            )
+            remove_perm(
+                "view_onboardingtask", self.challenge.admins_group, self
             )
 
 

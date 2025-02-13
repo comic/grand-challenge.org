@@ -84,13 +84,7 @@ class FlexibleImageWidget(MultiWidget):
                 value = data[f"WidgetChoice-{name}"]
             except KeyError:
                 value = None
-        if value:
-            if value in ImageWidgetChoices.names:
-                return [None, None]
-            elif Image.objects.filter(pk=value).exists():
-                return [value, None]
-            else:
-                return [None, [value]]
+        return self.decompress(value)
 
 
 class FlexibleImageField(MultiValueField):

@@ -1,13 +1,19 @@
 from django.conf import settings
 from django.db import models
-from django.db.models import Exists, OuterRef
 
-from grandchallenge.algorithms.models import AlgorithmImage, AlgorithmModel
+from grandchallenge.algorithms.models import (
+    AlgorithmImage,
+    AlgorithmModel,
+    Job,
+)
+from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import ChallengeRequest
 from grandchallenge.components.models import ComponentInterfaceValue
-from grandchallenge.core.guardian import get_objects_for_user
+from grandchallenge.components.widgets import ParentObjectTypeChoices
+from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.evaluation.models import Submission
+from grandchallenge.reader_studies.models import DisplaySet
 from grandchallenge.workstations.models import Feedback
 
 
@@ -47,26 +53,78 @@ class Download(models.Model):
     )
 
 
-def get_component_interface_values_for_user(*, user):
-    job_inputs_query = get_objects_for_user(
-        user=user, perms="algorithms.view_job"
-    ).filter(inputs__pk__in=OuterRef("pk"))
+def get_component_interface_values_for_user(
+    *, user, civ_pk=None, interface=None, parent_object_type_choice=None
+):
+    extra_filter_kwargs = {}
+    if interface:
+        extra_filter_kwargs["interface"] = interface
+    if civ_pk:
+        extra_filter_kwargs["pk"] = civ_pk
+    if (
+        parent_object_type_choice is not None
+        and parent_object_type_choice not in ParentObjectTypeChoices
+    ):
+        raise ValueError(
+            f"Unknown parent object type choice: {parent_object_type_choice}"
+        )
 
-    job_outputs_query = get_objects_for_user(
-        user=user, perms="algorithms.view_job"
-    ).filter(outputs__pk__in=OuterRef("pk"))
+    civs = ComponentInterfaceValue.objects.filter(**extra_filter_kwargs)
 
-    display_set_query = get_objects_for_user(
-        user=user, perms="reader_studies.view_displayset"
-    ).filter(values__pk__in=OuterRef("pk"))
+    pks_for_filter = []
+    if parent_object_type_choice in (None, ParentObjectTypeChoices.JOB):
+        job_query = filter_by_permission(
+            queryset=Job.objects.all(),
+            user=user,
+            codename="view_job",
+            accept_user_perms=False,
+        )
 
-    archive_item_query = get_objects_for_user(
-        user=user, perms="archives.view_archiveitem"
-    ).filter(values__pk__in=OuterRef("pk"))
+        job_inputs = (
+            job_query.filter(inputs__in=civs)
+            .distinct()
+            .values_list("inputs__pk", flat=True)
+        )
+        job_outputs = (
+            job_query.filter(outputs__in=civs)
+            .distinct()
+            .values_list("outputs__pk", flat=True)
+        )
+        pks_for_filter.extend(job_inputs)
+        pks_for_filter.extend(job_outputs)
 
-    return ComponentInterfaceValue.objects.annotate(
-        user_has_view_permission=Exists(job_inputs_query)
-        | Exists(job_outputs_query)
-        | Exists(display_set_query)
-        | Exists(archive_item_query)
-    ).filter(user_has_view_permission=True)
+    if parent_object_type_choice in (
+        None,
+        ParentObjectTypeChoices.DISPLAY_SET,
+    ):
+        display_sets = (
+            filter_by_permission(
+                queryset=DisplaySet.objects.all(),
+                user=user,
+                codename="view_displayset",
+                accept_user_perms=False,
+            )
+            .filter(values__in=civs)
+            .distinct()
+            .values_list("values__pk", flat=True)
+        )
+        pks_for_filter.extend(display_sets)
+
+    if parent_object_type_choice in (
+        None,
+        ParentObjectTypeChoices.ARCHIVE_ITEM,
+    ):
+        archive_items = (
+            filter_by_permission(
+                queryset=ArchiveItem.objects.all(),
+                user=user,
+                codename="view_archiveitem",
+                accept_user_perms=False,
+            )
+            .filter(values__in=civs)
+            .distinct()
+            .values_list("values__pk", flat=True)
+        )
+        pks_for_filter.extend(archive_items)
+
+    return civs.filter(pk__in=pks_for_filter)

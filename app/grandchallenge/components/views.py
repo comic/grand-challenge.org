@@ -1,13 +1,16 @@
 import uuid
+from functools import reduce
+from operator import or_
 
 from dal import autocomplete
 from django.contrib.auth.mixins import AccessMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q, TextChoices
-from django.forms import Media
-from django.http import HttpResponse
+from django.forms import HiddenInput, Media
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
+from django.template.response import TemplateResponse
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.views import View
@@ -25,10 +28,23 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from grandchallenge.algorithms.forms import NON_ALGORITHM_INTERFACES
 from grandchallenge.api.permissions import IsAuthenticated
 from grandchallenge.archives.models import Archive
-from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
+from grandchallenge.components.form_fields import (
+    INTERFACE_FORM_FIELD_PREFIX,
+    _join_with_br,
+    file_upload_text,
+)
 from grandchallenge.components.forms import CIVSetDeleteForm, SingleCIVForm
-from grandchallenge.components.models import ComponentInterface, InterfaceKind
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+    InterfaceKind,
+)
 from grandchallenge.components.serializers import ComponentInterfaceSerializer
+from grandchallenge.components.widgets import (
+    FileSearchWidget,
+    FileWidgetChoices,
+    ParentObjectTypeChoices,
+)
 from grandchallenge.core.guardian import (
     ObjectPermissionCheckerMixin,
     ObjectPermissionRequiredMixin,
@@ -38,8 +54,15 @@ from grandchallenge.core.guardian import (
 from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.reader_studies.models import ReaderStudy
+from grandchallenge.serving.models import (
+    get_component_interface_values_for_user,
+)
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
-from grandchallenge.uploads.widgets import UserUploadMultipleWidget
+from grandchallenge.uploads.models import UserUpload
+from grandchallenge.uploads.widgets import (
+    UserUploadMultipleWidget,
+    UserUploadSingleWidget,
+)
 
 
 class ComponentInterfaceViewSet(ReadOnlyModelViewSet):
@@ -429,7 +452,7 @@ class CIVSetBulkDelete(LoginRequiredMixin, FormView):
         return super().form_valid(form)
 
 
-class FileUploadFormFieldView(LoginRequiredMixin, AccessMixin, View):
+class FileAccessRequiredMixin(AccessMixin):
     def dispatch(self, request, *args, **kwargs):
         algorithms = get_objects_for_user(
             self.request.user, "algorithms.execute_algorithm"
@@ -445,6 +468,11 @@ class FileUploadFormFieldView(LoginRequiredMixin, AccessMixin, View):
             return super().dispatch(request, *args, **kwargs)
         else:
             return self.handle_no_permission()
+
+
+class FileUploadFormFieldView(
+    LoginRequiredMixin, FileAccessRequiredMixin, View
+):
 
     @cached_property
     def interface(self):
@@ -472,3 +500,152 @@ class FileUploadFormFieldView(LoginRequiredMixin, AccessMixin, View):
             },
         )
         return HttpResponse(html_content)
+
+
+class FileWidgetSelectView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        prefixed_interface_slug = self.request.GET.get(
+            "prefixed-interface-slug"
+        )
+        interface = get_object_or_404(
+            ComponentInterface,
+            slug=prefixed_interface_slug.replace(
+                INTERFACE_FORM_FIELD_PREFIX, ""
+            ),
+        )
+        widget_choice_name = request.GET.get(
+            f"widget-choice-{prefixed_interface_slug}"
+        )
+        try:
+            widget_choice = FileWidgetChoices(widget_choice_name)
+        except ValueError:
+            raise Http404(f"Widget choice {widget_choice_name} not found")
+        help_text = request.GET.get("help-text")
+        current_value = request.GET.get("current-value")
+
+        match widget_choice:
+            case FileWidgetChoices.FILE_SEARCH:
+                html_content = render_to_string(
+                    FileSearchWidget.template_name,
+                    {
+                        "widget": FileSearchWidget().get_context(
+                            name=prefixed_interface_slug,
+                            value=None,
+                            attrs={
+                                "help_text": help_text if help_text else None,
+                            },
+                        )["widget"],
+                    },
+                )
+                return HttpResponse(html_content)
+            case FileWidgetChoices.FILE_UPLOAD:
+                html_content = render_to_string(
+                    UserUploadSingleWidget.template_name,
+                    {
+                        "widget": UserUploadSingleWidget().get_context(
+                            name=prefixed_interface_slug,
+                            value=None,
+                            attrs={
+                                "id": interface,
+                                "help_text": _join_with_br(
+                                    help_text if help_text else None,
+                                    file_upload_text,
+                                ),
+                            },
+                        )["widget"],
+                    },
+                )
+                return HttpResponse(html_content)
+            case FileWidgetChoices.FILE_SELECTED:
+                if current_value and (
+                    ComponentInterfaceValue.objects.filter(
+                        pk=current_value
+                    ).exists()
+                    if current_value.isdigit()
+                    else UserUpload.objects.filter(pk=current_value).exists()
+                ):
+                    # this can happen on the display set update view or redisplay of
+                    # form upon validation, where one of the options is the current
+                    # image, this enables switching back from one of the above widgets
+                    # to the chosen image. This make sure the form element with the
+                    # right name is available on resubmission.
+                    html_content = render_to_string(
+                        HiddenInput.template_name,
+                        {
+                            "widget": {
+                                "name": prefixed_interface_slug,
+                                "value": current_value,
+                                "type": "hidden",
+                            },
+                        },
+                    )
+                    return HttpResponse(html_content)
+                raise Http404(f"Selected file {current_value} not found")
+            case FileWidgetChoices.UNDEFINED:
+                # this happens when switching back from one of the
+                # above widgets to the "Choose data source" option
+                return HttpResponse()
+        raise NotImplementedError(
+            f"Response for widget choice {widget_choice} not implemented"
+        )
+
+
+class FileSearchResultView(
+    LoginRequiredMixin, FileAccessRequiredMixin, ListView
+):
+    template_name = "components/file_search_result_select.html"
+    search_fields = ["pk", "file"]
+    model = ComponentInterfaceValue
+    paginate_by = 50
+
+    def __init__(self):
+        super().__init__()
+        self.interface = None
+        self.parent_object_type_choice = None
+
+    def get_queryset(self):
+        return get_component_interface_values_for_user(
+            user=self.request.user,
+            interface=self.interface,
+            parent_object_type_choice=self.parent_object_type_choice,
+        )
+
+    def get(self, request, *args, **kwargs):
+        prefixed_interface_slug = request.GET.get("prefixed-interface-slug")
+        self.interface = get_object_or_404(
+            ComponentInterface,
+            slug=prefixed_interface_slug.replace(
+                INTERFACE_FORM_FIELD_PREFIX, ""
+            ),
+        )
+        parent_object_type_choice_name = request.GET.get(
+            f"parent-object-type-{prefixed_interface_slug}"
+        )
+
+        try:
+            self.parent_object_type_choice = ParentObjectTypeChoices(
+                parent_object_type_choice_name
+            )
+        except ValueError:
+            self.object_list = []
+        else:
+            qs = self.get_queryset()
+            query = request.GET.get("query-" + prefixed_interface_slug)
+            if query:
+                q = reduce(
+                    or_,
+                    [
+                        Q(**{f"{f}__icontains": query})
+                        for f in self.search_fields
+                    ],
+                    Q(),
+                )
+                qs = qs.filter(q).order_by("file")
+            self.object_list = qs
+        context = self.get_context_data(**kwargs)
+        context["prefixed_interface_slug"] = prefixed_interface_slug
+        return TemplateResponse(
+            request=request,
+            template=self.template_name,
+            context=context,
+        )

@@ -1,0 +1,114 @@
+{% extends "pages/challenge_settings_base.html" %}
+{% load user_profile_link from profiles %}
+{% load url %}
+{% load static %}
+{% load dict_lookup %}
+{% load humanize %}
+{% load guardian_tags %}
+
+{% block title %}
+    Onboarding Tasks - {% firstof challenge.title challenge.short_name %} - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Onboarding Tasks</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+
+
+    <h2>Onboarding Tasks for {{ challenge.short_name }}</h2>
+
+    {% if all_tasks_are_complete %}
+    <p>
+        <h4>All onboarding tasks are complete.</h4>
+    </p>
+    {% endif %}
+
+    <div class="table-responsive">
+        <table class="table table-hover table-borderless table-sm w-100" id="onboardingTasksTable">
+            <thead class="thead-light">
+            <tr>
+                <th class="text-center">Status</th>
+                <th class="nonSortable">Title</th>
+                <th class="nonSortable">Description</th>
+                <th class="text-right">Due</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody>
+                {% for task in object_list %}
+
+                <tr>
+
+                    <td data-order="{{ task.complete|yesno:'1,0' }}" class="align-middle text-center">
+                      {% if task.complete %}
+                        <i  class="fas fa-check-circle fa-fw text-success" title="Completed!"></i>
+                    {% elif task.is_overdue_soon %}
+                        <i class="far fa-circle fa-fw text-warning" title="Overdue soon!"></i>
+                    {% elif task.is_overdue %}
+                        <i class="far fa-circle fa-fw text-danger" title="Overdue!"></i>
+                    {% else %}
+                        <i class="far fa-circle fa-fw text-muted" title="Not yet completed"></i>
+                    {% endif %}
+                    </td>
+                    <td  class="align-middle">
+                        {{ task.title }}
+                    </td>
+                    <td class="align-middle">
+
+                        {{ task.description }}
+                    </td>
+                    <td title="{{ task.deadline }}"
+                        data-order="{{ task.deadline|date:"U" }}"
+                        class="align-middle text-nowrap text-right"
+                         style="{{ task.complete|yesno:'text-decoration: line-through;,' }}"
+                    >
+                        {{ task.deadline|naturaltime }}
+                        {% if task.is_overdue_soon %}
+                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                        {% elif task.is_overdue %}
+                            <i class="fas fa-exclamation-triangle text-danger"></i>
+                        {% endif %}
+
+                    </td>
+                    <td class="align-middle text-nowrap">
+                      <form method="post"
+                            action="{% url 'challenge-onboarding-task-complete' challenge_short_name=challenge.short_name pk=task.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden"
+                                    name="complete"
+                                    value="{{ task.complete|yesno:'false,true' }}"
+                            >
+                            {% if task.complete %}
+                                    <button type="submit"
+                                            class="btn btn-xs btn-danger"
+                                            title="Mark as incomplete">
+                                         <i class="fas fa-undo fa-fw"></i> Undo Complete
+                                    </button>
+                                {% else %}
+                                <button type="submit" class="btn btn-success">
+                                <i  class="fas fa-check-circle fa-fw"></i> Mark Complete
+                                </button>
+                            {% endif %}
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="module" src="{% static 'js/challenges/challengeonboardingtask_list_table.mjs' %}"></script>
+{% endblock %}

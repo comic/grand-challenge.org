@@ -19,7 +19,11 @@ from grandchallenge.challenges.forms import (
     ChallengeRequestStatusUpdateForm,
     ChallengeUpdateForm,
 )
-from grandchallenge.challenges.models import Challenge, ChallengeRequest
+from grandchallenge.challenges.models import (
+    Challenge,
+    ChallengeRequest,
+    OnboardingTask,
+)
 from grandchallenge.challenges.serializers import PublicChallengeSerializer
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.guardian import (
@@ -289,3 +293,66 @@ class ChallengeViewSet(ReadOnlyModelViewSet):
     # We do not want to serialize the pk so lookup by short_name, but call it slug
     lookup_field = "short_name"
     lookup_url_kwarg = "slug"
+
+
+class OnboardingTaskList(
+    LoginRequiredMixin,
+    PermissionListMixin,
+    ListView,
+):
+    model = OnboardingTask
+    permission_required = "view_onboardingtask"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        context["all_tasks_are_complete"] = all(
+            object.complete for object in context["object_list"]
+        )
+
+        return context
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.filter(
+            challenge=self.request.challenge
+        ).with_overdue_status()
+
+        # Pe-ordering the queryset ensures nothing jumps around when the datatable initializes
+        queryset = queryset.order_by("complete", "deadline")
+
+        return queryset
+
+
+class OnboardingTaskComplete(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    UpdateView,
+):
+    model = OnboardingTask
+    fields = ("complete",)
+    permission_required = "change_onboardingtask"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+    http_method_names = ["post"]
+
+    def get_success_url(self):
+        return reverse(
+            "challenge-onboarding-task-list",
+            kwargs={
+                "challenge_short_name": self.object.challenge.short_name,
+            },
+        )
+
+    def get_success_message(self, cleaned_data):
+        msg = f"Succesfully marked {self.object.title!r} "
+
+        if cleaned_data["complete"]:
+            msg += "as complete"
+        else:
+            msg += "as incomplete"
+
+        return msg

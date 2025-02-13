@@ -1,5 +1,6 @@
 from django import forms
-from django.forms import ModelChoiceField
+from django.core.exceptions import ValidationError
+from django.forms import ModelChoiceField, MultiValueField
 from django.utils.functional import cached_property
 
 from grandchallenge.cases.models import Image
@@ -9,7 +10,10 @@ from grandchallenge.cases.widgets import (
 )
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
-from grandchallenge.components.widgets import SelectUploadWidget
+from grandchallenge.components.widgets import (
+    FlexibleFileWidget,
+    SelectUploadWidget,
+)
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.core.widgets import JSONEditorWidget
@@ -179,10 +183,45 @@ class InterfaceFormField(forms.Field):
 
     @cached_property
     def civs_for_user_for_interface(self):
-        return get_component_interface_values_for_user(user=self.user).filter(
-            interface=self.instance
+        return get_component_interface_values_for_user(
+            user=self.user, interface=self.instance
         )
 
     @property
     def field(self):
         return self._field
+
+
+class FlexibleFileField(MultiValueField):
+
+    widget = FlexibleFileWidget
+
+    def __init__(
+        self,
+        *args,
+        file_search_queryset=None,
+        upload_queryset=None,
+        disabled=False,
+        **kwargs,
+    ):
+        fields = [
+            ModelChoiceField(queryset=file_search_queryset, required=False),
+            ModelChoiceField(queryset=upload_queryset, required=False),
+        ]
+        super().__init__(
+            *args,
+            fields=fields,
+            require_all_fields=False,
+            **kwargs,
+        )
+        if disabled:
+            self.widget.disabled = True
+
+    def compress(self, values):
+        if values:
+            non_empty_values = [
+                val for val in values if val and val not in self.empty_values
+            ]
+            if len(non_empty_values) != 1:
+                raise ValidationError("Too many values returned.")
+            return non_empty_values[0]
