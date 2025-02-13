@@ -142,15 +142,15 @@ class JobCreateForm(SaveFormInitMixin, Form):
             )
             self.fields["algorithm_model"].initial = active_model
 
-        for inp in self._algorithm.inputs.all():
+        for algorithm_input in self._algorithm.inputs.all():
             prefixed_interface_slug = (
-                f"{INTERFACE_FORM_FIELD_PREFIX}{inp.slug}"
+                f"{INTERFACE_FORM_FIELD_PREFIX}{algorithm_input.slug}"
             )
 
             if prefixed_interface_slug in self.data:
                 if (
-                    not inp.requires_file
-                    and inp.kind == ComponentInterface.Kind.ANY
+                    not algorithm_input.requires_file
+                    and algorithm_input.kind == ComponentInterface.Kind.ANY
                 ):
                     # interfaces for which the data can be a list need
                     # to be retrieved with getlist() from the QueryDict
@@ -161,11 +161,11 @@ class JobCreateForm(SaveFormInitMixin, Form):
                 initial = None
 
             self.fields[prefixed_interface_slug] = InterfaceFormFieldFactory(
-                interface=inp,
+                interface=algorithm_input,
                 user=self._user,
                 required=True,
-                initial=initial if initial else inp.default_value,
-                help_text=clean(inp.description) if inp.description else "",
+                initial=initial if initial else algorithm_input.default_value,
+                help_text=clean(algorithm_input.description),
             ).field
 
     @cached_property
