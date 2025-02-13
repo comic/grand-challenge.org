@@ -1,7 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import ModelChoiceField, MultiValueField
-from django.utils.functional import cached_property
 
 from grandchallenge.cases.models import Image
 from grandchallenge.cases.widgets import (
@@ -191,12 +190,6 @@ class InterfaceFormFieldFactory:
             user=self.user,
             interface=self.interface,
             **self.kwargs,
-        )
-
-    @cached_property
-    def civs_for_user_for_interface(self):
-        return get_component_interface_values_for_user(
-            user=self.user, interface=self.interface
         )
 
     @property
