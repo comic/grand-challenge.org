@@ -1,5 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
+from django.db.models import TextChoices
 from django.forms import ModelChoiceField, MultiValueField
 
 from grandchallenge.cases.models import Image
@@ -114,16 +115,14 @@ class InterfaceFormFieldFactory:
                     f"Unknown type for initial value: {self.initial}"
                 )
 
-        self.kwargs["widget"] = FlexibleImageWidget(
-            user=self.user,
-            current_value=current_value,
-        )
         upload_queryset = get_objects_for_user(
             self.user,
             "uploads.change_userupload",
         ).filter(status=UserUpload.StatusChoices.COMPLETED)
         image_queryset = get_objects_for_user(self.user, "cases.view_image")
         return FlexibleImageField(
+            user=self.user,
+            current_value=current_value,
             upload_queryset=upload_queryset,
             image_queryset=image_queryset,
             help_text=self.help_text,
@@ -181,13 +180,10 @@ class InterfaceFormFieldFactory:
                     f"Unknown type for initial value: {self.initial}"
                 )
 
-        self.kwargs["widget"] = FlexibleFileWidget(
-            user=self.user,
-            current_value=current_value,
-        )
         return FlexibleFileField(
             user=self.user,
             interface=self.interface,
+            current_value=current_value,
             help_text=self.help_text,
             **self.kwargs,
         )
@@ -195,6 +191,13 @@ class InterfaceFormFieldFactory:
     @property
     def field(self):
         return self._field
+
+
+class FileWidgetChoices(TextChoices):
+    FILE_SEARCH = "FILE_SEARCH"
+    FILE_UPLOAD = "FILE_UPLOAD"
+    FILE_SELECTED = "FILE_SELECTED"
+    UNDEFINED = "UNDEFINED"
 
 
 class FlexibleFileField(MultiValueField):
@@ -206,10 +209,12 @@ class FlexibleFileField(MultiValueField):
         *args,
         user=None,
         interface=None,
+        current_value=None,
         **kwargs,
     ):
         self.user = user
         self.interface = interface
+        self.current_value = current_value
         file_search_queryset = get_component_interface_values_for_user(
             user=self.user,
             interface=self.interface,
@@ -228,6 +233,15 @@ class FlexibleFileField(MultiValueField):
             require_all_fields=False,
             **kwargs,
         )
+
+    def widget_attrs(self, widget):
+        attrs = super().widget_attrs(widget)
+        attrs["current_value"] = self.current_value
+        attrs["user"] = self.user
+        attrs["widget_choices"] = {
+            choice.name: choice.value for choice in FileWidgetChoices
+        }
+        return attrs
 
     def compress(self, values):
         if values:

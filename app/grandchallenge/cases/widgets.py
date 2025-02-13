@@ -42,23 +42,13 @@ class FlexibleImageWidget(MultiWidget):
 
     def __init__(
         self,
-        *args,
-        user=None,
-        current_value=None,
-        **kwargs,
+        attrs=None,
     ):
         widgets = (
             ImageSearchWidget(),
             UserUploadMultipleWidget(),
         )
-        super().__init__(widgets)
-        self.attrs = {
-            "user": user,
-            "current_value": current_value,
-            "widget_choices": {
-                choice.name: choice.value for choice in ImageWidgetChoices
-            },
-        }
+        super().__init__(widgets, attrs)
 
     def decompress(self, value):
         if value:
@@ -90,17 +80,30 @@ class FlexibleImageField(MultiValueField):
     def __init__(
         self,
         *args,
+        user=None,
+        current_value=None,
         require_all_fields=False,
         image_queryset=None,
         upload_queryset=None,
         **kwargs,
     ):
+        self.user = user
+        self.current_value = current_value
         list_fields = [
             ModelChoiceField(queryset=image_queryset),
             ModelMultipleChoiceField(queryset=upload_queryset),
         ]
         super().__init__(*args, fields=list_fields, **kwargs)
         self.require_all_fields = require_all_fields
+
+    def widget_attrs(self, widget):
+        attrs = super().widget_attrs(widget)
+        attrs["current_value"] = self.current_value
+        attrs["user"] = self.user
+        attrs["widget_choices"] = {
+            choice.name: choice.value for choice in ImageWidgetChoices
+        }
+        return attrs
 
     def compress(self, values):
         if values:

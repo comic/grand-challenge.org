@@ -1,17 +1,9 @@
-from django.db.models import TextChoices
 from django.forms import HiddenInput, MultiWidget
 from django.forms.widgets import ChoiceWidget
 
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadSingleWidget
-
-
-class FileWidgetChoices(TextChoices):
-    FILE_SEARCH = "FILE_SEARCH"
-    FILE_UPLOAD = "FILE_UPLOAD"
-    FILE_SELECTED = "FILE_SELECTED"
-    UNDEFINED = "UNDEFINED"
 
 
 class FileSearchWidget(ChoiceWidget, HiddenInput):
@@ -36,23 +28,13 @@ class FlexibleFileWidget(MultiWidget):
 
     def __init__(
         self,
-        *args,
-        user=None,
-        current_value=None,
-        **kwargs,
+        attrs=None,
     ):
         widgets = (
             FileSearchWidget(),
             UserUploadSingleWidget(),
         )
-        super().__init__(widgets)
-        self.attrs = {
-            "user": user,
-            "current_value": current_value,
-            "widget_choices": {
-                choice.name: choice.value for choice in FileWidgetChoices
-            },
-        }
+        super().__init__(widgets, attrs)
 
     def decompress(self, value):
         if value:

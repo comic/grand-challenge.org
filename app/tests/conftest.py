@@ -14,9 +14,11 @@ from requests import put
 
 from grandchallenge.cases.widgets import ImageWidgetChoices
 from grandchallenge.components.backends import docker_client
-from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
+from grandchallenge.components.form_fields import (
+    INTERFACE_FORM_FIELD_PREFIX,
+    FileWidgetChoices,
+)
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
-from grandchallenge.components.widgets import FileWidgetChoices
 from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.reader_studies.models import Question
 from tests.algorithms_tests.factories import (

@@ -29,6 +29,7 @@ from grandchallenge.api.permissions import IsAuthenticated
 from grandchallenge.archives.models import Archive
 from grandchallenge.components.form_fields import (
     INTERFACE_FORM_FIELD_PREFIX,
+    FileWidgetChoices,
     _join_with_br,
     file_upload_text,
 )
@@ -39,10 +40,7 @@ from grandchallenge.components.models import (
     InterfaceKind,
 )
 from grandchallenge.components.serializers import ComponentInterfaceSerializer
-from grandchallenge.components.widgets import (
-    FileSearchWidget,
-    FileWidgetChoices,
-)
+from grandchallenge.components.widgets import FileSearchWidget
 from grandchallenge.core.guardian import (
     ObjectPermissionCheckerMixin,
     ObjectPermissionRequiredMixin,

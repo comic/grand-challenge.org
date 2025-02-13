@@ -7,12 +7,14 @@ from django.utils.html import format_html
 from factory.fuzzy import FuzzyChoice
 
 from grandchallenge.archives.models import ArchiveItem
-from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
+from grandchallenge.components.form_fields import (
+    INTERFACE_FORM_FIELD_PREFIX,
+    FileWidgetChoices,
+)
 from grandchallenge.components.models import (
     InterfaceKind,
     InterfaceKindChoices,
 )
-from grandchallenge.components.widgets import FileWidgetChoices
 from grandchallenge.reader_studies.models import DisplaySet, ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import (
