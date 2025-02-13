@@ -556,8 +556,8 @@ class FileWidgetSelectView(LoginRequiredMixin, View):
                 ):
                     # this can happen on the display set update view or redisplay of
                     # form upon validation, where one of the options is the current
-                    # image, this enables switching back from one of the above widgets
-                    # to the chosen image. This make sure the form element with the
+                    # file, this enables switching back from one of the above widgets
+                    # to the chosen file. This makes sure the form element with the
                     # right name is available on resubmission.
                     return HttpResponse(
                         HiddenInput().render(
