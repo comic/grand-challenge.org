@@ -194,7 +194,6 @@ class FlexibleFileField(MultiValueField):
     def widget_attrs(self, widget):
         attrs = super().widget_attrs(widget)
         attrs["current_value"] = self.current_value
-        attrs["user"] = self.user
         attrs["widget_choices"] = {
             choice.name: choice.value for choice in FileWidgetChoices
         }
