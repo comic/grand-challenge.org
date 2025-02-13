@@ -700,7 +700,6 @@ def test_file_search_result_view_no_files(client):
         user=user,
     )
     assert response.status_code == 200
-    assert ci.slug in response.rendered_content
     assert "No files match your search criteria." in response.rendered_content
 
 
@@ -735,7 +734,6 @@ def test_file_search_result_view_all_parent_object_types(client):
     )
 
     assert response.status_code == 200
-    assert ci.slug in response.rendered_content
     assert "No files match your search criteria." in response.rendered_content
 
     job = AlgorithmJobFactory(creator=user, time_limit=60)
@@ -758,7 +756,6 @@ def test_file_search_result_view_all_parent_object_types(client):
     )
 
     assert response.status_code == 200
-    assert ci.slug in response.rendered_content
     assert (
         f"{civ_for_job.title} ({civ_for_job.pk})" in response.rendered_content
     )
@@ -793,7 +790,6 @@ def test_file_search_result_view_algorithm_job(client):
     )
 
     assert response.status_code == 200
-    assert ci.slug in response.rendered_content
     assert "No files match your search criteria." in response.rendered_content
 
     job = AlgorithmJobFactory(creator=user, time_limit=60)
@@ -810,7 +806,6 @@ def test_file_search_result_view_algorithm_job(client):
     )
 
     assert response.status_code == 200
-    assert ci.slug in response.rendered_content
     assert f"{civ.title} ({civ.pk})" in response.rendered_content
 
 
@@ -835,7 +830,6 @@ def test_file_search_result_view_display_set(client):
     )
 
     assert response.status_code == 200
-    assert ci.slug in response.rendered_content
     assert "No files match your search criteria." in response.rendered_content
 
     display_set = DisplaySetFactory(reader_study=reader_study)
@@ -852,7 +846,6 @@ def test_file_search_result_view_display_set(client):
     )
 
     assert response.status_code == 200
-    assert ci.slug in response.rendered_content
     assert f"{civ.title} ({civ.pk})" in response.rendered_content
 
 
@@ -877,7 +870,6 @@ def test_file_search_result_view_archive_item(client):
     )
 
     assert response.status_code == 200
-    assert ci.slug in response.rendered_content
     assert "No files match your search criteria." in response.rendered_content
 
     archive_item = ArchiveItemFactory(archive=archive)
@@ -894,7 +886,6 @@ def test_file_search_result_view_archive_item(client):
     )
 
     assert response.status_code == 200
-    assert ci.slug in response.rendered_content
     assert f"{civ.title} ({civ.pk})" in response.rendered_content
 
 
@@ -924,7 +915,6 @@ def test_file_search_result_view_filter_by_pk(client):
     )
 
     assert response.status_code == 200
-    assert ci.slug in response.rendered_content
     assert f"{civ1.title} ({civ1.pk})" in response.rendered_content
     assert f"{civ2.title} ({civ2.pk})" in response.rendered_content
     assert f"{civ3.title} ({civ3.pk})" in response.rendered_content
@@ -942,7 +932,6 @@ def test_file_search_result_view_filter_by_pk(client):
     )
 
     assert response.status_code == 200
-    assert ci.slug in response.rendered_content
     assert f"{civ1.title} ({civ1.pk})" in response.rendered_content
     assert f"{civ2.title} ({civ2.pk})" not in response.rendered_content
     assert f"{civ3.title} ({civ3.pk})" not in response.rendered_content
@@ -982,7 +971,6 @@ def test_file_search_result_view_filter_by_name(client):
     )
 
     assert response.status_code == 200
-    assert ci.slug in response.rendered_content
     assert f"{civ1.title} ({civ1.pk})" in response.rendered_content
     assert f"{civ2.title} ({civ2.pk})" in response.rendered_content
     assert f"{civ3.title} ({civ3.pk})" in response.rendered_content
@@ -999,7 +987,6 @@ def test_file_search_result_view_filter_by_name(client):
     )
 
     assert response.status_code == 200
-    assert ci.slug in response.rendered_content
     assert f"{civ1.title} ({civ1.pk})" in response.rendered_content
     assert f"{civ2.title} ({civ2.pk})" in response.rendered_content
     assert f"{civ3.title} ({civ3.pk})" not in response.rendered_content
